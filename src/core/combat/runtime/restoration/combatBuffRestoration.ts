@@ -1,4 +1,7 @@
 import type { CompiledGlobalBuffDefinition } from '../../../compiler/combatProgram.ts';
+import type { ActionBlackboard } from '../../actions/actionBlackboard';
+import type { BuffContainerState } from '../../state/instanceState';
+import type { GameplayTag } from '../../tags/gameplayTags';
 /**
  * 协调整场战斗中所有 Buff 目标的恢复阶段。
  *
@@ -33,12 +36,9 @@ export interface CombatBuffRestorationOptions {
 }
 
 export interface RestoredCombatBuffTargetDirectoryOptions {
-  readonly enemyState: import('../../state/instanceState').BuffContainerState<string> | null;
+  readonly enemyState: BuffContainerState<string> | null;
   readonly enemyTarget: BuffOperationTarget;
-  readonly operatorStates: ReadonlyMap<
-    string,
-    import('../../state/instanceState').BuffContainerState<string> | null
-  >;
+  readonly operatorStates: ReadonlyMap<string, BuffContainerState<string> | null>;
   readonly operatorTargets: ReadonlyMap<string, BuffOperationTarget>;
   readonly abilityEntities: LogicalAbilityEntityRuntime;
   readonly createAbilityEntityTarget: Parameters<typeof bindRestoredAbilityEntityBuffTargets>[1];
@@ -54,7 +54,7 @@ export function collectRestoredCombatBuffTargets(
   const targets = new Map<string, BuffOperationTarget>();
   const add = (
     ownerId: string,
-    state: import('../../state/instanceState').BuffContainerState<string> | null,
+    state: BuffContainerState<string> | null,
     target: BuffOperationTarget | undefined,
   ) => {
     if (state === null) throw new Error(`restored Buff target '${ownerId}' has no saved data`);
@@ -95,10 +95,10 @@ export function bindRestoredAbilityEntityBuffTargets(
   entities: LogicalAbilityEntityRuntime,
   create: (
     entityId: string,
-    entityBlackboard: import('../../actions/actionBlackboard').ActionBlackboard,
+    entityBlackboard: ActionBlackboard,
     target: { readonly kind: 'abilityEntity'; readonly instanceId: number },
-    bornTags: readonly import('../../tags/gameplayTags').GameplayTag[],
-    restoredState: import('../../state/instanceState').BuffContainerState<string>,
+    bornTags: readonly GameplayTag[],
+    restoredState: BuffContainerState<string>,
   ) => AbilityEntityBuffRuntime,
 ): ReadonlyMap<number, AbilityEntityBuffRuntime> {
   const targets = new Map<number, AbilityEntityBuffRuntime>();

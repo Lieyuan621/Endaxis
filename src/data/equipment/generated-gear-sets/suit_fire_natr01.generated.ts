@@ -3,32 +3,8 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 
 const definition = {
   slug: 'suit_fire_natr01',
-  iconPath: '/equipment/fire_natr01/item_equip_t4_suit_fire_natr01_edc_02.webp',
+  icon: 'endaxis:equipment/fire_natr01/item_equip_t4_suit_fire_natr01_edc_02',
   modifiers: [{ kind: 'panelStat', stat: 'artsIntensity', value: 30 }],
-  actionGraph: {
-    main: {
-      nodes: {
-        applyBuff_1: {
-          action: {
-            kind: 'applyBuff',
-            parameters: {
-              buffId: 'buff_equipsuit_fninflict_01',
-              target: 'caster',
-              blackboardAssignments: {
-                phy_spell_up: { kind: 'constant', value: 30 },
-                fire_dmg_up: { kind: 'constant', value: 0.5 },
-                nature_dmg_up: { kind: 'constant', value: 0.5 },
-                duration: { kind: 'constant', value: 10 },
-                duration2: { kind: 'constant', value: 10 },
-              },
-            },
-          },
-          next: null,
-        },
-      },
-    },
-    macros: {},
-  },
   skillId: 'passive_equipsuit_fninflict_01',
   buffDefinitions: {
     buff_equipsuit_fninflict_01: {
@@ -40,17 +16,11 @@ const definition = {
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: {
-        duration: 8,
-        duration2: 8,
-        fire_dmg_up: 0.5,
-        nature_dmg_up: 0.5,
-        phy_spell_up: 0.2,
-      },
+      blackboard: { duration: 8, duration2: 8, fire_dmg_up: 0.5, nature_dmg_up: 0.5 },
       attributeModifiers: [],
       abilityEventResponses: [
-        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'conditional_2' } },
-        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'conditional_4' } },
+        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'checkCondition_2' } },
+        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'checkCondition_4' } },
       ],
       actionGraph: {
         main: {
@@ -59,46 +29,55 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_equipsuit_fninflict_01_firedamageadd',
-                  target: 'buffOwner',
-                  source: 'buffOwner',
+                  buffs: [
+                    {
+                      buffId: 'buff_equipsuit_fninflict_01_firedamageadd',
+                      copiedBlackboardAssignments: {
+                        duration: 'duration',
+                        fire_dmg_up: 'fire_dmg_up',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'owner' },
+                  source: { kind: 'owner' },
                   inheritSourceSkillCastInfo: true,
-                  copiedBlackboardAssignments: { duration: 'duration', fire_dmg_up: 'fire_dmg_up' },
                 },
               },
               next: null,
             },
-            conditional_2: {
+            checkCondition_2: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
               },
-              next: null,
+              next: 'applyBuff_1',
             },
             applyBuff_3: {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_equipsuit_fninflict_01_poisedamageadd',
-                  target: 'buffOwner',
-                  source: 'buffOwner',
+                  buffs: [
+                    {
+                      buffId: 'buff_equipsuit_fninflict_01_poisedamageadd',
+                      copiedBlackboardAssignments: {
+                        duration: 'duration2',
+                        nature_dmg_up: 'nature_dmg_up',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'owner' },
+                  source: { kind: 'owner' },
                   inheritSourceSkillCastInfo: true,
-                  copiedBlackboardAssignments: {
-                    duration: 'duration2',
-                    nature_dmg_up: 'nature_dmg_up',
-                  },
                 },
               },
               next: null,
             },
-            conditional_4: {
+            checkCondition_4: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                whenTrue: { $sequence: 'applyBuff_3' },
               },
-              next: null,
+              next: 'applyBuff_3',
             },
           },
           dataNodes: {
@@ -133,8 +112,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_fire_dmp_up',
-        iconPath: '/icons/icon_battle_fire_dmp_up.webp',
+        icon: 'endaxis:icons/icon_battle_fire_dmp_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -175,8 +153,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_natural_up',
-        iconPath: '/icons/icon_battle_natural_up.webp',
+        icon: 'endaxis:icons/icon_battle_natural_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -209,6 +186,33 @@ const definition = {
     },
   },
   enableSequence: { $sequence: 'applyBuff_1' },
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [
+                {
+                  buffId: 'buff_equipsuit_fninflict_01',
+                  blackboardAssignments: {
+                    fire_dmg_up: { kind: 'constant', value: 0.5 },
+                    nature_dmg_up: { kind: 'constant', value: 0.5 },
+                    duration: { kind: 'constant', value: 10 },
+                    duration2: { kind: 'constant', value: 10 },
+                  },
+                },
+              ],
+              targets: { kind: 'fixed', target: 'caster' },
+            },
+          },
+          next: null,
+        },
+      },
+    },
+    macros: {},
+  },
 } as const satisfies GearSetDefinition;
 
 export default definition;

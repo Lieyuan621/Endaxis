@@ -9,7 +9,7 @@ describe('装备套装运行时定义渲染', () => {
     const graph = createActionGraphBuilder();
     const initializationSequence = graph.node({
       kind: 'applyBuff',
-      parameters: { buffId: 'buff_fixture', target: 'caster' },
+      parameters: { buffs: [{ buffId: 'buff_fixture' }], targets: { kind: 'fixed', target: 'caster' } },
     });
     const files = renderEquipmentSuitDefinitionFiles({
       definitions: [

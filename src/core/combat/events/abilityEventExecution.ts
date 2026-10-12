@@ -54,9 +54,9 @@ export function dispatchAbilityEvent<Event extends PropertyKey>(
   host: AbilityEventExecutionHost,
 ): void {
   const dispatchPhase = (phase: AbilityEventPhase) => {
-    const handlers = (state.phases[phase].get(event) ?? []).map(entry =>
-      host.resolveHandler(entry.handlerId),
-    );
+    const entries = state.phases[phase].get(event);
+    if (!entries?.length) return;
+    const handlers = entries.map(entry => host.resolveHandler(entry.handlerId));
     for (const handle of handlers) handle();
   };
   dispatchPhase('callback');

@@ -5,7 +5,8 @@ import type {
   HealModifierSide,
   HealProcessTiming,
 } from '../../../../packages/game-data-contract/src/modifiers.ts';
-import type { HealCalculationContext } from './healModifiers';
+import type { ModifierConditionRuntime } from '../actions/modifierConditionRuntime';
+import type { HealCalculationContext, HealModifierConditionInput } from './healModifiers';
 
 export function applyHealModifier(
   ownerId: string,
@@ -14,9 +15,7 @@ export function applyHealModifier(
   timing: HealProcessTiming,
   side: HealModifierSide,
   context: HealCalculationContext,
-  condition?: import('../actions/modifierConditionRuntime').ModifierConditionRuntime<
-    import('./healModifiers').HealModifierConditionInput
-  >,
+  condition?: ModifierConditionRuntime<HealModifierConditionInput>,
 ): void {
   if (side !== definition.enabledSide || context.getEntityId(side) !== ownerId) return;
   if (

@@ -3,6 +3,7 @@
  * 只按公共类型的字段解释用途；尚未覆盖的动作保留为分析障碍，不靠字符串搜索猜测无用值。
  */
 import type {
+  ActionTargetQuery,
   CombatStepDefinition,
   CombatStepForKind,
   CombatStepParameters,
@@ -14,6 +15,22 @@ import type {
 } from '../intermediateDefinitions.ts';
 import type { ActionStringOperand, LevelValues } from '../intermediateDefinitions.ts';
 
+/** 这些查询只读取已有目标身份，不创建位置或修改目标组。 */
+export function isReadOnlyTargetQuery(query: ActionTargetQuery): boolean {
+  if (query.kind === 'mainTarget') return isReadOnlyTargetQuery(query.owner);
+  return [
+    'owner',
+    'source',
+    'inputTarget',
+    'context',
+    'mainCharacter',
+    'characterTeam',
+    'fixed',
+    'battleMainTarget',
+    'godEntity',
+  ].includes(query.kind);
+}
+
 /**
  * 经对象查询读取的黑板键。记录原有目标选择条件，不把同名键并入当前技能的 direct 板。
  * Buff 查询可能找到当前实例；以后裁剪 Buff 或实体板时，仍须解析查询结果与当前板的关系。
@@ -24,8 +41,8 @@ export type DefinitionExternalValueRead =
       readonly kind: 'abilityEntity';
       /** 原动作的实体 ID 筛选；省略时不按 ID 限制。 */
       readonly abilityEntityIds?: CombatStepParameters['findOwnerSpawnedAbilityEntities']['abilityEntityIds'];
-      /** 原动作用于读取 owner 身份的目标组；省略时使用运行时施法者。 */
-      readonly ownerContextKey?: CombatStepParameters['findOwnerSpawnedAbilityEntities']['ownerContextKey'];
+      /** 原生查询所有者。 */
+      readonly owner: CombatStepParameters['findOwnerSpawnedAbilityEntities']['owner'];
       /** 原动作是否只查询同次施放创建的实体。 */
       readonly sameSourceSkillCast?: CombatStepParameters['findOwnerSpawnedAbilityEntities']['sameSourceSkillCast'];
       /** 在每个查询结果的实体板中读取的键。 */
@@ -156,6 +173,11 @@ export function analyzeConditionUsage(condition: CombatCondition): DefinitionVal
     case 'all':
     case 'any':
       return mergeDefinitionValueUsage(condition.conditions.map(analyzeConditionUsage));
+    case 'stringEquals':
+      return mergeDefinitionValueUsage([
+        actionStringUsage(condition.left),
+        actionStringUsage(condition.right),
+      ]);
     case 'actionValueCompare':
       return mergeDefinitionValueUsage([
         actionValueUsage(condition.left),
@@ -175,12 +197,46 @@ export function analyzeConditionUsage(condition: CombatCondition): DefinitionVal
           },
         ],
       };
-    case 'contextTargetCountCompare':
+    case 'entityCountCompare':
+      return {
+        ...value(condition.value, condition.outputKey === undefined ? [] : [condition.outputKey]),
+        reads: new Set(condition.outputKey === undefined ? [] : [condition.outputKey]),
+        observable: !isReadOnlyTargetQuery(condition.target),
+        mayThrow: true,
+      };
     case 'abilityEntityRemainingDurationCompare':
+      return value(condition.value);
     case 'eventConsumedBuffLayerCompare':
       return value(condition.value, condition.outputKey === undefined ? [] : [condition.outputKey]);
+    case 'targetContains':
+      return {
+        ...EMPTY,
+        mayThrow: true,
+        observable: [condition.parent, condition.child].some(
+          query => !isReadOnlyTargetQuery(query),
+        ),
+      };
+    case 'targetDistance':
+      return {
+        ...EMPTY,
+        mayThrow: true,
+        observable: [condition.source, condition.target].some(
+          query => !isReadOnlyTargetQuery(query),
+        ),
+      };
+    case 'targetFacingAngle':
+      return actionValueUsage(condition.angle);
+    case 'twoDirectionAngleCompare':
+      return {
+        ...value(condition.value),
+        observable: [
+          condition.direction1Source,
+          condition.direction1Target,
+          condition.direction2Source,
+          condition.direction2Target,
+        ].some(query => !isReadOnlyTargetQuery(query)),
+      };
     case 'enemySuperArmorCompare':
-    case 'cameraToTargetAngleCompare':
     case 'healthCompare':
     case 'poiseCompare':
     case 'contextTargetBuffStackCompare':
@@ -213,30 +269,32 @@ export function analyzeConditionUsage(condition: CombatCondition): DefinitionVal
       // Buff ID 是字符串，运行时 assign 直接覆盖，不经过数值 epsilon 检查。
       return { ...outputs(condition.buffIdOutputKey), reads: new Set() };
     case 'eventOverheal':
-      return outputs(
-        condition.overHealKey || undefined,
-        condition.finalHealKey || undefined,
-        condition.realHealKey || undefined,
-      );
+      // 原生直接 AssignDynamic，不读取旧值做 epsilon 去重。
+      return {
+        ...outputs(
+          condition.overHealKey || undefined,
+          condition.finalHealKey || undefined,
+          condition.realHealKey || undefined,
+        ),
+        reads: new Set(),
+      };
+    case 'skillHasHit':
     case 'combatActive':
     case 'singleEnemyPresent':
+    case 'comboCameraAlphaSetting':
     case 'casterControlled':
     case 'characterTypeIn':
     case 'operatorRoleIn':
     case 'enemyRankIn':
-    case 'skillBranchEnabled':
     case 'targetStaggered':
-    case 'contextFlagEquals':
     case 'contextTargetObjectTypeMatch':
     case 'actionInputTargetObjectTypeMatch':
     case 'actionInputTargetIdentityMatch':
     case 'contextTargetIdentityMatch':
     case 'contextTargetEntityTagMatch':
-    case 'statusActive':
     case 'entityTagMatch':
     case 'globalCooldownPresent':
     case 'casterComboPending':
-    case 'eventComboRingQteSucceeded':
     case 'eventDamageTagsMatch':
     case 'eventDamageGameplayTagsMatch':
     case 'eventDamageFeaturesMatch':
@@ -245,21 +303,16 @@ export function analyzeConditionUsage(condition: CombatCondition): DefinitionVal
     case 'eventSkillTypeIn':
     case 'currentSkillTypeIn':
     case 'originSkillTypeIn':
-    case 'contextTargetContains':
+    case 'skillInterruptReasonIn':
     case 'eventSkillIdIn':
     case 'eventSkillCastMatchesBuffSource':
     case 'eventBuffEndedEarly':
     case 'eventHealTagsMatch':
     case 'eventSpGainMatch':
-    case 'eventSourceTargetMatch':
-    case 'eventActionOwnerTargetMatch':
     case 'eventSourceMatchesBuffSource':
     case 'eventSourceMatchesBuffSourceEntitySource':
-    case 'eventSourceControlled':
     case 'buffSourceMatchesOwner':
     case 'ownerSpawnedAbilityEntityPresent':
-    case 'elementalInflictionPresent':
-    case 'elementalReactionActive':
     case 'deckAttributeCompare':
     case 'eventProjectilePerfectDodgeCooldownEquals':
     case 'eventProjectileIgnoreImmuneLevelCompare':
@@ -291,6 +344,11 @@ export function analyzeStepUsage(
     observable: true,
   });
   switch (step.kind) {
+    case 'invertNextResult':
+      // 改变下一动作返回值的解释，不读写变量；控制效果仍不可当作空动作删除。
+      return { ...EMPTY, observable: true };
+    case 'checkCondition':
+      return { ...analyzeConditionUsage(step.parameters.condition), observable: true };
     case 'modifyActionValue':
       return {
         ...actionValueUsage(step.parameters.value),
@@ -318,12 +376,6 @@ export function analyzeStepUsage(
         ...(step.parameters.instantAttributeModifiers?.map(modifier => modifier.value) ?? []),
         ...(step.parameters.instantDamageScaleModifiers?.map(modifier => modifier.addition) ?? []),
       ]);
-    case 'dealFixedDamage':
-      return effect([
-        step.parameters.value,
-        step.parameters.stagger,
-        step.parameters.staggerMultiplier,
-      ]);
     case 'dealStagger':
       return effect([step.parameters.value, step.parameters.valueMultiplier]);
     case 'heal':
@@ -333,17 +385,17 @@ export function analyzeStepUsage(
     case 'pickContextTarget':
       return effect([step.parameters.index]);
     case 'findOwnerSpawnedAbilityEntities': {
-      const usage = effect([], [step.parameters.saveCountToBlackboardKey]);
+      const usage = effect([]);
       const indexKey = step.parameters.circularOrder?.indexBlackboardKey;
       if (indexKey === undefined) return usage;
-      const { abilityEntityIds, ownerContextKey, sameSourceSkillCast } = step.parameters;
+      const { abilityEntityIds, owner, sameSourceSkillCast } = step.parameters;
       return {
         ...usage,
         externalReads: [
           {
             kind: 'abilityEntity',
             ...(abilityEntityIds === undefined ? {} : { abilityEntityIds }),
-            ...(ownerContextKey === undefined ? {} : { ownerContextKey }),
+            owner,
             ...(sameSourceSkillCast === undefined ? {} : { sameSourceSkillCast }),
             key: indexKey,
           },
@@ -351,23 +403,28 @@ export function analyzeStepUsage(
       };
     }
     case 'setAbilityEntityRemainingDuration':
+      return {
+        ...effect([step.parameters.value]),
+        ...(!isReadOnlyTargetQuery(step.parameters.target) ? { unknownAccess: true } : {}),
+      };
     case 'setCurrentBuffRemainingDuration':
+    case 'setBuffRemainingDuration':
     case 'setHealthFloor':
     case 'setCharacterPassiveUiValue':
     case 'adjustSkillCooldown':
       return effect([step.parameters.value]);
-    case 'applyKnockDown':
-      return effect([step.parameters.duration]);
     case 'applyPhysicalInfliction':
       return effect(
         step.parameters.type === 'airborne'
           ? [step.parameters.duration, step.parameters.height]
-          : step.parameters.type === 'crush'
-            ? [step.parameters.damageMultiplier]
-            : [],
+          : step.parameters.type === 'knockDown'
+            ? [step.parameters.duration]
+            : step.parameters.type === 'crush'
+              ? [step.parameters.damageMultiplier]
+              : [],
       );
-    case 'applyElementalReaction':
-      return effect([step.parameters.durationSeconds]);
+    case 'forceSpellStatus':
+      return effect([step.parameters.consumedLayers, step.parameters.count]);
     case 'readSkillSettingData':
       return effect(
         step.parameters.items.map(item => item.column),
@@ -390,10 +447,14 @@ export function analyzeStepUsage(
         ...effect([], [step.parameters.outputKey]),
         externalReads: [{ kind: 'eventBuff', key: step.parameters.desiredKey }],
       };
-    case 'readCurrentBuffRemainingDuration':
+    case 'saveTwoDirectionAngle':
     case 'readBuffRemainingDuration':
+      return {
+        ...effect([], [step.parameters.outputKey]),
+        reads: new Set([step.parameters.outputKey]),
+      };
     case 'readBuffStackCount':
-    case 'readAbilityEntityRemainingDuration':
+    case 'storeCharacterTypeId':
     case 'storeCurrentTimelineFrame':
     case 'storeShieldValue':
       return effect([], [step.parameters.outputKey]);
@@ -411,15 +472,32 @@ export function analyzeStepUsage(
         ],
         [step.parameters.targetKey],
       );
+    case 'dispelBuffs': {
+      const usage = effect([]);
+      return isReadOnlyTargetQuery(step.parameters.targets) &&
+        isReadOnlyTargetQuery(step.parameters.source)
+        ? usage
+        : { ...usage, unknownAccess: true };
+    }
     case 'finishBuffsByTag':
-    case 'finishBuffsById':
-      return effect([step.parameters.count]);
+    case 'finishBuffsById': {
+      const usage = effect([step.parameters.count]);
+      return isReadOnlyTargetQuery(step.parameters.targets) &&
+        (step.parameters.reason === 'other' || isReadOnlyTargetQuery(step.parameters.finishSource))
+        ? usage
+        : { ...usage, unknownAccess: true };
+    }
     case 'setGlobalCooldown':
       return effect([step.parameters.durationSeconds]);
-    case 'createTimedMarker':
-    case 'createAbilityEntityTimedMarker': {
+    case 'createTimedMarker': {
       const usage = effect([step.parameters.durationSeconds]);
-      return mergeDefinitionValueUsage([usage, actionStringUsage(step.parameters.markerId)]);
+      const result = mergeDefinitionValueUsage([
+        usage,
+        actionStringUsage(step.parameters.markerId),
+      ]);
+      return isReadOnlyTargetQuery(step.parameters.targets)
+        ? result
+        : { ...result, unknownAccess: true };
     }
     case 'startTimeDilation':
       return effect([
@@ -430,30 +508,41 @@ export function analyzeStepUsage(
       ]);
     case 'startUltimateTimeDilation':
       return effect([step.parameters.targetScale]);
-    case 'changeResourceByActionValue':
+    case 'recoverDashEnergy':
+      return effect([step.parameters.amount]);
+    case 'changeResource':
       return effect([step.parameters.amount, step.parameters.coefficient]);
+    case 'playAnimation':
+      return effect([]);
     case 'showComboRingQte':
       return effect([step.parameters.earlyDurationSeconds, step.parameters.activeDurationSeconds]);
     case 'applyCharacterInfliction':
       return effect([step.parameters.count]);
-    case 'applyBuff': {
-      const usage = effect([
-        step.parameters.count,
-        ...Object.values(step.parameters.blackboardAssignments ?? {}),
-        ...(step.parameters.keywordEnhancements?.map(enhancement => enhancement.value) ?? []),
-        ...(step.parameters.onActionEndBuffs?.flatMap(buff =>
-          Object.values(buff.blackboardAssignments ?? {}),
-        ) ?? []),
-      ]);
-      const reads = new Set([
-        ...usage.reads,
-        ...Object.values(step.parameters.copiedBlackboardAssignments ?? {}),
-      ]);
+    case 'aura':
+    case 'applyBuff':
       return mergeDefinitionValueUsage([
-        { ...usage, reads },
-        actionStringUsage(step.parameters.buffId),
+        effect([step.kind === 'applyBuff' ? step.parameters.count : undefined]),
+        ...(!isReadOnlyTargetQuery(step.parameters.targets) ||
+        (step.parameters.source !== undefined && !isReadOnlyTargetQuery(step.parameters.source))
+          ? [{ ...EMPTY, unknownAccess: true }]
+          : []),
+        ...step.parameters.buffs.map(entry => {
+          const usage = effect([
+            ...Object.values(entry.blackboardAssignments ?? {}),
+            ...(entry.keywordEnhancements?.map(enhancement => enhancement.value) ?? []),
+          ]);
+          return mergeDefinitionValueUsage([
+            {
+              ...usage,
+              reads: new Set([
+                ...usage.reads,
+                ...Object.values(entry.copiedBlackboardAssignments ?? {}),
+              ]),
+            },
+            actionStringUsage(entry.buffId),
+          ]);
+        }),
       ]);
-    }
     case 'createGlobalBuff':
       return effect([
         step.parameters.count,
@@ -471,25 +560,22 @@ export function analyzeStepUsage(
       return mergeDefinitionValueUsage([direct, inherited]);
     }
     case 'jumpTimeline':
-      return step.parameters.condition === undefined
-        ? effect()
-        : {
-            ...analyzeConditionUsage(step.parameters.condition),
-            observable: true,
-          };
+      // 跳转本身不访问变量；条件子序列由图遍历汇总，回跳由活性分析保留观察边界。
+      return effect();
+    case 'overrideMultiDashLimit':
+      return effect([step.parameters.dashCount]);
+    case 'copyContextTargets':
+    case 'findTargets':
+    case 'interruptCurrentSkill':
     case 'mergeContextTargets':
     case 'findCharacterTeamTargets':
-    case 'finishCurrentAbilityEntity':
-    case 'finishActionOwnerAbilityEntity':
-    case 'finishCurrentAbilityEntityWhenSourceDies':
-    case 'startCurrentAbilityEntityChildSkill':
+    case 'finishOwner':
     case 'startCurrentAbilityEntityChildSkillById':
     case 'applyElementalInfliction':
     case 'triggerSpellBurst':
     case 'triggerCustomAbilityEvent':
-    case 'consumeElementalReaction':
-    case 'outputAirborne':
-    case 'outputKnockDown':
+    case 'triggerCharacterInflictionEvent':
+    case 'recordPerfectDodge':
     case 'finishParentGlobalBuff':
     case 'finishGlobalBuffsById':
     case 'refreshCurrentBuffAttributeModifiers':
@@ -502,14 +588,11 @@ export function analyzeStepUsage(
     case 'restrictUltimateEnergyRecovery':
     case 'hideUi':
     case 'setIgnoreGlobalTimeScale':
-    case 'changeResource':
     case 'gainSquadUltimateEnergyFromSkillCost':
     case 'gainFinisherSp':
-    case 'applyStatus':
-    case 'consumeStatus':
-    case 'finishTimeline':
     case 'markCurrentSkillCanInterrupt':
-    case 'setContextFlag':
+    case 'reachSkillOperableBoundary':
+    case 'markCurrentSkillCanDash':
     case 'openComboWindow':
     case 'changeSkillSlot':
     case 'overrideBasicAttackMapping':

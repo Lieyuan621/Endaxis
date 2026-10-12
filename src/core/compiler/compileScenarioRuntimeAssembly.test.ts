@@ -128,6 +128,7 @@ function options(): CompileScenarioRuntimeAssemblyOptions {
       normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
     },
     environment: {
+      comboSkillPendingInterval: 5,
       enemyBuffRuntime: enemyBuffRuntime(),
       createOperationExecutor: () => operationExecutor(),
       registerComboSkillCondition: () => ({ dispose: () => undefined }),
@@ -802,14 +803,22 @@ describe('compileScenarioRuntimeAssembly', () => {
             enable: {
               action: {
                 kind: 'changeResource',
-                parameters: { resource: 'sp', amount: 2, recipient: 'team' },
+                parameters: {
+                  resource: 'sp',
+                  amount: 2,
+                  source: { kind: 'fixed' as const, target: 'caster' as const },
+                  targets: { kind: 'fixed' as const, target: 'caster' as const },
+                },
               },
               next: null,
             },
             init: {
               action: {
                 kind: 'applyBuff',
-                parameters: { buffId: 'buff.runtime-set', target: 'caster' },
+                parameters: {
+                  buffs: [{ buffId: 'buff.runtime-set' }],
+                  targets: { kind: 'fixed', target: 'caster' },
+                },
               },
               next: null,
             },
@@ -843,9 +852,19 @@ describe('compileScenarioRuntimeAssembly', () => {
       key: 'gear-set:runtime-set',
       equipmentContributionIndex: compiled.operators[0]!.equipmentContributions!.length - 1,
       enableSequence: actionSteps([
-        { kind: 'changeResource', parameters: { resource: 'sp', amount: 2, recipient: 'team' } },
+        {
+          kind: 'changeResource',
+          parameters: {
+            resource: 'sp',
+            amount: 2,
+            source: { kind: 'fixed' as const, target: 'caster' as const },
+            targets: { kind: 'fixed' as const, target: 'caster' as const },
+          },
+        },
       ]),
-      sequence: actionSteps([{ kind: 'applyBuff', parameters: { buffId: 'buff.runtime-set' } }]),
+      sequence: actionSteps([
+        { kind: 'applyBuff', parameters: { buffs: [{ buffId: 'buff.runtime-set' }] } },
+      ]),
     });
   });
 
@@ -881,64 +900,6 @@ describe('compileScenarioRuntimeAssembly', () => {
       'scenario.tracks[0].initialState.ultimateEnergy exceeds its maximum',
     );
   });
-});
-
-it('assembles a graph operator through the normal runtime assembly entry', () => {
-  const scenario = createScenario();
-  const placed = placeSkillGroup({
-    scenario,
-    trackIndex: 0,
-    operator: perlica,
-    skillGroupKey: 'battleSkill',
-    startFrame: 30,
-    ids: { allocate: () => 'cast:graph' },
-  }).scenario;
-  const weapon: WeaponDefinition = {
-    slug: 'graph-runtime-weapon',
-    rarity: 6,
-    weaponType: perlica.weaponType,
-    baseAttackAtLevelNodes: [1, 2, 3, 4, 5, 6],
-    traits: [
-      {
-        key: 'setup',
-        levelCount: 1,
-        initializationSequence: { $sequence: 'init' },
-        actionGraph: {
-          main: {
-            nodes: {
-              init: { action: { kind: 'dealStagger', parameters: { value: 2 } }, next: null },
-            },
-          },
-          macros: {},
-        },
-      },
-    ],
-  };
-  placed.tracks[0]!.weapon = {
-    weaponSlug: weapon.slug,
-    level: 90,
-    tuned: true,
-    potential: 0,
-    traitLevels: [1],
-  };
-  const baseOptions = options();
-  const compiled = compileScenarioRuntimeAssembly(placed, {
-    ...baseOptions,
-    index: {
-      ...baseOptions.index,
-      getWeapon: slug => (slug === weapon.slug ? weapon : null),
-    },
-  });
-  expect(compiled.operators[0]!.skillCasts?.map(cast => cast.castId)).toEqual(['cast:graph']);
-  const sequence = compiled.operators[0]!.skillCasts![0]!.program.timelineActions[0]!.sequence;
-  expect('steps' in sequence).toBe(false);
-  expect(
-    'steps' in compiled.operators[0]!.equipmentContributions![0]!.initializationSequence!,
-  ).toBe(false);
-  const graphRuntime = new CombatRuntimeAssembly(compiled);
-  graphRuntime.advanceFrames(90);
-  expect(graphRuntime.receipt.entries.some(entry => entry.event === 'SkillStarted')).toBe(true);
-  expect(graphRuntime.resources.snapshot()).toBeDefined();
 });
 
 it('无干员总图时，完整运行时使用独立技能和声明式附着 Buff', () => {

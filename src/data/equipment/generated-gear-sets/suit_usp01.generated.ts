@@ -3,29 +3,8 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 
 const definition = {
   slug: 'suit_usp01',
-  iconPath: '/equipment/usp01/item_equip_t3_suit_usp01_edc_02.webp',
+  icon: 'endaxis:equipment/usp01/item_equip_t3_suit_usp01_edc_02',
   modifiers: [{ kind: 'panelStat', stat: 'ultimateEnergyGainEfficiency', value: 0.2 }],
-  actionGraph: {
-    main: {
-      nodes: {
-        applyBuff_1: {
-          action: {
-            kind: 'applyBuff',
-            parameters: {
-              buffId: 'buff_equipsuit_usp_01',
-              target: 'caster',
-              blackboardAssignments: {
-                ultimate_gain_up: { kind: 'constant', value: 0.2 },
-                atb_recover: { kind: 'constant', value: 50 },
-              },
-            },
-          },
-          next: null,
-        },
-      },
-    },
-    macros: {},
-  },
   skillId: 'passive_equipsuit_usp_01',
   buffDefinitions: {
     buff_equipsuit_usp_01: {
@@ -37,11 +16,11 @@ const definition = {
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: { atb_recover: 50, has_gain_atb: 0, ultimate_gain_up: 0.2 },
+      blackboard: { atb_recover: 50, has_gain_atb: 0 },
       attributeModifiers: [],
       abilityEventResponses: [
         { event: 'enterFight', priority: 0, sequence: { $sequence: 'modifyActionValue_1' } },
-        { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'conditional_5' } },
+        { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'checkCondition_5' } },
       ],
       actionGraph: {
         main: {
@@ -57,14 +36,15 @@ const definition = {
               },
               next: null,
             },
-            changeResourceByActionValue_2: {
+            changeResource_2: {
               action: {
-                kind: 'changeResourceByActionValue',
+                kind: 'changeResource',
                 parameters: {
                   resource: 'sp',
                   amount: { kind: 'valueNode', nodeId: 'data_1' },
                   coefficient: { kind: 'constant', value: 1 },
-                  recipient: 'team',
+                  source: { kind: 'owner' },
+                  targets: { kind: 'owner' },
                   spGainKind: 'refund',
                   spGainSource: 'default',
                 },
@@ -80,23 +60,21 @@ const definition = {
                   value: { kind: 'constant', value: 1 },
                 },
               },
-              next: 'changeResourceByActionValue_2',
+              next: 'changeResource_2',
             },
-            conditional_4: {
+            checkCondition_4: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'modifyActionValue_3' },
               },
-              next: null,
+              next: 'modifyActionValue_3',
             },
-            conditional_5: {
+            checkCondition_5: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-                whenTrue: { $sequence: 'conditional_4' },
               },
-              next: null,
+              next: 'checkCondition_4',
             },
           },
           dataNodes: {
@@ -125,6 +103,28 @@ const definition = {
     },
   },
   initializationSequence: { $sequence: 'applyBuff_1' },
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [
+                {
+                  buffId: 'buff_equipsuit_usp_01',
+                  blackboardAssignments: { atb_recover: { kind: 'constant', value: 50 } },
+                },
+              ],
+              targets: { kind: 'fixed', target: 'caster' },
+            },
+          },
+          next: null,
+        },
+      },
+    },
+    macros: {},
+  },
 } as const satisfies GearSetDefinition;
 
 export default definition;

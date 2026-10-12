@@ -1,9 +1,11 @@
+import { numberInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it } from 'vitest';
 import { createKillEvent } from './killEventTestFixture';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { EventContextConditionExecutor } from './eventContextConditionExecutor';
 import { GameplayTagRegistry } from '../tags/gameplayTags';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
+import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 
 const terminal = {
   execute: () => true,
@@ -11,6 +13,33 @@ const terminal = {
 };
 
 describe('EventContextConditionExecutor', () => {
+  it('中断原因只读取当前事件载荷，切换技能与闪避分别判断', () => {
+    const executor = new EventContextConditionExecutor(terminal);
+    const condition = {
+      kind: 'skillInterruptReasonIn' as const,
+      reasons: ['castNextSkill'] as const,
+    };
+    const blackboard = new ActionBlackboard();
+    expect(executor.evaluate(condition, { blackboard })).toBe(false);
+    for (const reason of ['default', 'dash', 'castNextSkill'] as const) {
+      expect(
+        executor.evaluate(condition, {
+          blackboard,
+          event: {
+            event: 'skillInterrupted',
+            payload: {
+              sourceId: 'operator',
+              targetId: 'operator',
+              skillId: 'attack',
+              skillCastId: 1,
+              reason,
+            },
+          },
+        }),
+      ).toBe(reason === 'castNextSkill');
+    }
+  });
+
   it('技能属性读取事件技能，再回退执行技能，不读取命中属性', () => {
     const executor = new EventContextConditionExecutor(terminal);
     const condition = { kind: 'skillDamageTypeIn' as const, damageTypes: ['heat'] as const };
@@ -347,6 +376,41 @@ describe('EventContextConditionExecutor', () => {
     ).toBe(false);
   });
 
+  it('输入目标与来源、宿主比较保留实体身份，位置不等于敌人', () => {
+    const executor = new EventContextConditionExecutor(terminal);
+    const targets: readonly [RuntimeTargetRef, string | undefined][] = [
+      [{ kind: 'operator', operatorId: 'caster' }, 'caster'],
+      [{ kind: 'enemy' }, 'enemy'],
+      [{ kind: 'godEntity' }, 'god-entity'],
+      [{ kind: 'abilityEntity', instanceId: 7 }, 'ability-entity:7'],
+      [{ kind: 'spatialPoint', pointId: 1 }, undefined],
+    ];
+    for (const [actionInputTarget, identity] of targets) {
+      for (const other of ['actionSource', 'actionOwner'] as const) {
+        for (const entityId of ['caster', 'enemy', 'god-entity', 'ability-entity:7']) {
+          const context = {
+            blackboard: new ActionBlackboard(),
+            actionInputTarget,
+            actionSourceId: entityId,
+            actionOwnerId: entityId,
+          };
+          expect(
+            executor.evaluate(
+              { kind: 'actionInputTargetIdentityMatch', other, operator: 'equal' },
+              context,
+            ),
+          ).toBe(identity === entityId);
+          expect(
+            executor.evaluate(
+              { kind: 'actionInputTargetIdentityMatch', other, operator: 'notEqual' },
+              context,
+            ),
+          ).toBe(identity !== entityId);
+        }
+      }
+    }
+  });
+
   it('matches a custom ability event name exactly', () => {
     const executor = new EventContextConditionExecutor(terminal);
     const context = {
@@ -381,6 +445,17 @@ describe('EventContextConditionExecutor', () => {
     ).toBe(false);
     expect(context.blackboard.getNumber('saved')).toBeUndefined();
     const published = { ...context.event, payload: { ...context.event.payload, eventParam: 2.5 } };
+    expect(() =>
+      executor.evaluate(
+        {
+          kind: 'eventCustomAbilityNameMatch',
+          eventName: 'liino_comboskill_end',
+          outputKey: 'saved',
+        },
+        { ...context, event: published },
+      ),
+    ).toThrow("action blackboard value 'saved' is missing");
+    context.blackboard.assign({ saved: Number.NaN });
     expect(
       executor.evaluate(
         {
@@ -452,10 +527,6 @@ describe('EventContextConditionExecutor', () => {
         { ...context, buffSourceId: undefined },
       ),
     ).toThrow('Buff source');
-    // 旧的物理事件来源/目标比较语义不被新投影重新解释。
-    expect(executor.evaluate({ kind: 'eventSourceTargetMatch', operator: 'equal' }, context)).toBe(
-      false,
-    );
   });
   it('matches the event origin, never the listening Buff origin or damage tags', () => {
     const executor = new EventContextConditionExecutor(terminal);
@@ -720,43 +791,9 @@ describe('EventContextConditionExecutor', () => {
       }),
     ).toBe(false);
   });
-  it('matches the ability damage source against live control state', () => {
-    const executor = new EventContextConditionExecutor(
-      terminal,
-      operatorId => operatorId === 'operator:controlled',
-    );
-    const context = {
-      blackboard: new ActionBlackboard(),
-      event: {
-        event: 'beforeTakeDamage' as const,
-        payload: {
-          ...createKillEvent().payload,
-          sourceId: 'operator:controlled',
-          targetId: 'enemy',
-          tags: [] as const,
-          features: [] as const,
-        },
-      },
-    };
-
-    expect(executor.evaluate({ kind: 'eventSourceControlled' }, context)).toBe(true);
-    expect(
-      executor.evaluate(
-        { kind: 'eventSourceControlled' },
-        {
-          ...context,
-          event: {
-            ...context.event,
-            payload: { ...context.event.payload, sourceId: 'operator:other' },
-          },
-        },
-      ),
-    ).toBe(false);
-  });
-
   it('resolves SourceFinder through the Buff-source AbilityEntity provenance', () => {
     const executor = new EventContextConditionExecutor(terminal, undefined, entityId =>
-      entityId === 'ability-entity:7' ? 'pogranichnik' : entityId,
+      entityId === 'ability-entity:7' ? 'ability-entity:8' : 'pogranichnik',
     );
     const condition = { kind: 'eventSourceMatchesBuffSourceEntitySource' } as const;
     const context = {
@@ -765,7 +802,7 @@ describe('EventContextConditionExecutor', () => {
       event: {
         event: 'beforeTakePhysicalInfliction' as const,
         payload: {
-          sourceId: 'pogranichnik',
+          sourceId: 'ability-entity:8',
           targetId: 'ability-entity:7',
         },
       },
@@ -777,7 +814,7 @@ describe('EventContextConditionExecutor', () => {
         ...context,
         event: {
           ...context.event,
-          payload: { ...context.event.payload, sourceId: 'another-operator' },
+          payload: { ...context.event.payload, sourceId: 'pogranichnik' },
         },
       }),
     ).toBe(false);
@@ -935,7 +972,7 @@ describe('EventContextConditionExecutor', () => {
         event: {
           event: 'skillSpGained',
           payload: {
-            sourceOperatorId: 'operator',
+            sourceId: 'operator',
             source: 'skill',
             gainKind: 'gain',
             requestedAmount: 1,
@@ -1012,21 +1049,39 @@ describe('EventContextConditionExecutor', () => {
       ),
     ).toBe(true);
     expect(blackboard.snapshot()).toMatchObject({ over: 216, final: 216, real: 0 });
-    expect(
-      executor.evaluate({ kind: 'eventSourceTargetMatch', operator: 'notEqual' }, context),
-    ).toBe(true);
+    blackboard.assign({ over: 0, final: 1, real: 1 });
+    const smallHeal = {
+      ...context,
+      event: {
+        ...context.event,
+        payload: {
+          ...context.event.payload,
+          requestedHealing: 1.000001,
+          actualHealing: 1,
+          overhealing: 0.000001,
+        },
+      },
+    };
     expect(
       executor.evaluate(
-        { kind: 'eventSourceTargetMatch', operator: 'equal' },
-        {
-          ...context,
-          event: {
-            ...context.event,
-            payload: { ...context.event.payload, targetId: 'operator:healer' },
-          },
-        },
+        { kind: 'eventOverheal', overHealKey: 'over', finalHealKey: 'final', realHealKey: 'real' },
+        smallHeal,
       ),
-    ).toBe(true);
+    ).toBe(false);
+    expect(blackboard.getNumber('over')).toBe(Math.fround(1.000001 - 1));
+    expect(blackboard.getNumber('final')).toBe(Math.fround(1.000001));
+    expect(
+      executor.evaluate(
+        {
+          kind: 'eventOverheal',
+          overHealKey: 'shared',
+          finalHealKey: 'shared',
+          realHealKey: 'shared',
+        },
+        smallHeal,
+      ),
+    ).toBe(false);
+    expect(blackboard.getNumber('shared')).toBe(1);
   });
 
   it('matches consumed Buff tags and writes the event Buff identity', () => {
@@ -1070,7 +1125,7 @@ describe('EventContextConditionExecutor', () => {
       event: {
         event: 'skillSpGained' as const,
         payload: {
-          sourceOperatorId: 'operator',
+          sourceId: 'operator',
           source: 'skill' as const,
           gainKind: 'gain' as const,
           requestedAmount: 10,
@@ -1089,15 +1144,6 @@ describe('EventContextConditionExecutor', () => {
       false,
     );
     expect(executor.evaluate({ kind: 'eventSpGainMatch' }, context)).toBe(true);
-    for (const operator of ['equal', 'notEqual'] as const) {
-      expect(executor.evaluate({ kind: 'eventSourceTargetMatch', operator }, context)).toBe(false);
-      expect(
-        executor.evaluate(
-          { kind: 'eventActionOwnerTargetMatch', operator },
-          { ...context, actionOwnerId: 'operator' },
-        ),
-      ).toBe(false);
-    }
   });
 
   it('compares the consumed layer snapshot and writes the configured output key', () => {
@@ -1130,29 +1176,35 @@ describe('EventContextConditionExecutor', () => {
       ),
     ).toBe(true);
     expect(blackboard.getNumber('count')).toBe(3);
-  });
-
-  it('compares the explicit action owner with the event target', () => {
-    const executor = new EventContextConditionExecutor(terminal);
-    const context = {
-      blackboard: new ActionBlackboard(),
-      actionOwnerId: 'operator:owner',
-      event: {
-        event: 'outputHeal' as const,
-        payload: {
-          sourceId: 'operator:healer',
-          targetId: 'operator:owner',
-          requestedHealing: 10,
-          actualHealing: 10,
-          overhealing: 0,
-          tags: [],
-        },
-      },
-    };
-
+    const condition = {
+      kind: 'eventConsumedBuffLayerCompare',
+      operator: 'greaterOrEqual',
+      value: numberInput({ kind: 'blackboard', key: 'count' }),
+      outputKey: 'count',
+    } as const;
+    blackboard.assign({ count: 4 });
+    expect(executor.evaluate(condition, context)).toBe(false);
+    expect(blackboard.getNumber('count')).toBe(4);
+    blackboard.assign({ count: 2 });
+    expect(executor.evaluate(condition, context)).toBe(true);
+    expect(blackboard.getNumber('count')).toBe(3);
+    blackboard.assign({ count: Number.NaN });
     expect(
-      executor.evaluate({ kind: 'eventActionOwnerTargetMatch', operator: 'equal' }, context),
+      executor.evaluate({ ...condition, value: { kind: 'constant', value: 1 } }, context),
     ).toBe(true);
+    expect(blackboard.getNumber('count')).toBe(3);
+    expect(() =>
+      executor.evaluate(
+        { ...condition, value: { kind: 'constant', value: 1 }, outputKey: 'missing' },
+        context,
+      ),
+    ).toThrow('missing');
+    expect(
+      executor.evaluate(
+        { ...condition, value: { kind: 'constant', value: 4 }, outputKey: 'missing' },
+        context,
+      ),
+    ).toBe(false);
   });
 });
 import { createEventBuff } from './buffEventTestFixture';

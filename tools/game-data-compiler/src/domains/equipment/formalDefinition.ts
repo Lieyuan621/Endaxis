@@ -1,3 +1,4 @@
+import { imageRefFromPath } from '../../compiler/publication/imageResources.ts';
 import type {
   GearDefinition,
   GearSlotType,
@@ -36,7 +37,7 @@ export type CompiledGearTraitDefinitionSource = Readonly<
 
 export type CompiledGearDefinitionSource = Readonly<
   Pick<GearDefinition, 'slug' | 'slotType' | 'levelRequirement' | 'baseDefense' | 'gearSetSlug'> &
-    Required<Pick<GearDefinition, 'assetSlug' | 'iconPath'>>
+    Required<Pick<GearDefinition, 'assetSlug' | 'icon'>>
 > & {
   readonly traits: readonly CompiledGearTraitDefinitionSource[];
 };
@@ -125,7 +126,7 @@ export function compileEquipmentDefinitionSource(
     definition: {
       slug: equipment.equipmentId,
       assetSlug: equipment.identity.iconId,
-      iconPath: projectEquipmentIconPath(equipment.identity.iconId),
+      icon: projectEquipmentIcon(equipment.identity.iconId),
       slotType,
       levelRequirement: equipment.minimumWearLevel,
       baseDefense: baseDefenseValues[0]!,
@@ -137,12 +138,12 @@ export function compileEquipmentDefinitionSource(
 }
 
 /** ItemTable 的 iconId 自带稳定系列段；沿用既有 public/equipment 目录约定。 */
-export function projectEquipmentIconPath(iconId: string): string {
+export function projectEquipmentIcon(iconId: string): string {
   const match = /^item_equip_t\d+_(?:suit|parts)_(.+)_(?:body|hand|edc)_\d+$/.exec(iconId);
   if (match?.[1] === undefined) {
     throw new Error(`equipment icon identity '${iconId}' has no stable series segment`);
   }
-  return `/equipment/${match[1]}/${iconId}.webp`;
+  return imageRefFromPath(`/equipment/${match[1]}/${iconId}.webp`);
 }
 
 /** 批量入口固定按原生装备 ID 排序，并在渲染前关闭重复身份。 */

@@ -8,10 +8,14 @@ export function assignGeneratedDamageStepKeys<T>(definition: T, scope: string): 
     if (Array.isArray(value)) return value.map((item, index) => visit(item, `${path}/${index}`));
     if (value === null || typeof value !== 'object') return value;
     const record = value as Record<string, unknown>;
-    const result = Object.fromEntries(
-      Object.entries(record).map(([key, item]) => [key, visit(item, `${path}/${key}`)]),
-    );
-    if (record.kind === 'dealDamage' || record.kind === 'dealFixedDamage') {
+    // 标注伤害身份不能丢弃闭包分析携带的 Symbol 元数据；发布出口再移除编译期事实。
+    const result = {
+      ...record,
+      ...Object.fromEntries(
+        Object.entries(record).map(([key, item]) => [key, visit(item, `${path}/${key}`)]),
+      ),
+    };
+    if (record.kind === 'dealDamage') {
       const key =
         typeof record.key === 'string' && record.key.length ? record.key : `${scope}:${path}`;
       if (seen.has(key)) throw new Error(`duplicate damage step key ${key}`);

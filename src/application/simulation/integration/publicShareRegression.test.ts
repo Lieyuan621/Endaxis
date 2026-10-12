@@ -46,13 +46,14 @@ it('伊冯重击的同步连携检查可进入，但不插入本图步进且不�
   );
   const steps = index.root.records.filter(r => r.phase === 'execute');
   const damageIndex = steps.findIndex(
-    r => getCompiledGraphLocation(r.program, r.nodeId)?.nodeId === 'dealDamage_6',
+    r => r.program.nodes.get(r.nodeId)?.action.kind === 'dealDamage',
   );
+  expect(damageIndex).toBeGreaterThanOrEqual(0);
   const damage = steps[damageIndex]!;
-  expect(
-    getCompiledGraphLocation(steps[damageIndex + 1]!.program, steps[damageIndex + 1]!.nodeId)
-      ?.nodeId,
-  ).toBe('conditional_5');
+  // 同步回调属于子调用；本图下一步仍沿伤害节点的执行出口继续，不依赖生成编号。
+  const next = steps[damageIndex + 1]!;
+  expect(next.program).toBe(damage.program);
+  expect(next.nodeId).toBe(damage.program.nodes.get(damage.nodeId)!.next);
   const calls = index.children.get(damage.sequence)!;
   expect(calls.length).toBeGreaterThan(0);
   expect(calls.every(call => call.parent === index.root && call.caller === damage)).toBe(true);

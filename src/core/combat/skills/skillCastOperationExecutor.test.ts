@@ -205,3 +205,28 @@ describe('SkillCastOperationExecutor', () => {
     ).toThrow("deferred skill id blackboard 'dodgeSkillId' is missing");
   });
 });
+
+it('中断动作只使用查询的第一个目标，空查询仍成功', () => {
+  const interrupt = vi.fn();
+  const queryTargets = vi.fn().mockReturnValue([
+    { kind: 'operator', operatorId: 'target' },
+    { kind: 'operator', operatorId: 'other' },
+  ]);
+  const executor = new SkillCastOperationExecutor({
+    casterId: 'source',
+    request: vi.fn(),
+    queryTargets,
+    interruptCurrentSkill: interrupt,
+    delegate: { execute: () => false, evaluate: () => false },
+  });
+  const step = {
+    kind: 'interruptCurrentSkill',
+    parameters: { targets: { kind: 'inputTarget' } },
+  } satisfies ResolvedCombatOperationStep;
+  const context = { blackboard: new ActionBlackboard() };
+  expect(executor.execute(step, context)).toBe(true);
+  expect(interrupt.mock.calls).toEqual([[{ kind: 'operator', operatorId: 'target' }]]);
+  queryTargets.mockReturnValue([]);
+  expect(executor.execute(step, context)).toBe(true);
+  expect(interrupt).toHaveBeenCalledTimes(1);
+});

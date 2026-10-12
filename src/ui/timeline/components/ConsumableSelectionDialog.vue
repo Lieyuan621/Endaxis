@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { resolveImage } from '../../imageResources';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { ConsumableDefinition } from '../../../core/game-data/consumableDefinition';
@@ -60,7 +61,7 @@ const filtered = computed(() => {
             class="consumable-dialog__item"
             @click="$emit('select', item.id)"
           >
-            <img :src="item.iconPath" alt="" aria-hidden="true" />
+            <img :src="resolveImage(item.icon)" alt="" aria-hidden="true" />
             <span>
               <strong>{{ getConsumableGameName(item.id) }}</strong>
               <small>{{ getConsumableGameDescription(item.id) }}</small>

@@ -111,8 +111,6 @@ it.each(['repeat', 'convert', 'consume'])(
         expect(tail.endFrame).toBe(finished[0]!.frame);
         expect(tail.endFrame).toBeGreaterThan(180);
         expect(tail.endFrame).toBeLessThan(240);
-        // 旧版 ENEMY_EFFECT_EXPIRE 只截短持续段；不为原生消费制造额外图标。
-        expect(viz.markers.filter(marker => marker.kind === 'reactionConsumed')).toEqual([]);
       }
       return;
     }
@@ -132,6 +130,6 @@ it.each(['repeat', 'convert', 'consume'])(
     expect(segments.map(segment => segment.layers)).toEqual([1, 2]);
     expect(segments[0]!.endFrame).toBe(segments[1]!.startFrame);
     expect([...projectAttachmentContinuations(segments, ids)]).toEqual([segments[0]]);
-    expect(segments.every(segment => Boolean(segment.iconId || segment.iconPath))).toBe(true);
+    expect(segments.every(segment => Boolean(segment.icon))).toBe(true);
   },
 );

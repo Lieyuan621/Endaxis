@@ -18,7 +18,7 @@ describe('最终定义的伤害步骤身份', () => {
         {
           steps: [
             { kind: 'dealDamage', key: 'duplicate' },
-            { kind: 'dealFixedDamage', key: 'duplicate' },
+            { kind: 'dealDamage', key: 'duplicate' },
           ],
         },
         'skill',

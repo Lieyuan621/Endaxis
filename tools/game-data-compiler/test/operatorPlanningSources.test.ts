@@ -71,6 +71,7 @@ describe('干员规划读取上下文', () => {
         data: [],
         enhanceFormulas: [],
         resources: {
+          comboSkillPendingInterval: 6,
           atbRecoverInterval: 1,
           atbGainEfficiency: 1,
           atbConsumedDefaultUspGainSelf: 1,

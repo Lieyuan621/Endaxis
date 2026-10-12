@@ -28,42 +28,39 @@ export interface CompileActionSequenceProgramOptions<TLeaf, TCondition, TStep, T
     node: NativeActionNodeSource<TLeaf>,
     state: TState,
   ) => TCondition | null;
-  /** 多个原生条件动作共同表达一次带读取副作用的条件时，由领域整体投影。 */
-  readonly compileConditionSequence?: (
-    sequence: NativeSequenceSource<TLeaf>,
-    state: TState,
-  ) => TCondition | null;
-  /** 只有已证明无副作用且结果不被消费的尾条件才可删；缺省保留求值。 */
-  readonly canOmitTerminalCondition?: (condition: TCondition) => boolean;
-  /** 来源已证明纯读取时，先投影其控制的末端；末端为空就无需建立条件的运行模型。 */
-  readonly canOmitUnusedCondition?: (node: NativeActionNodeSource<TLeaf>) => boolean;
-  /** 投影后已成为无副作用常量的守卫可直接选择可达末端；返回 undefined 表示仍需运行时求值。 */
-  readonly evaluateCondition?: (condition: TCondition) => boolean | undefined;
   /** 返回值被 Switch/资格判断等外层消费；统一禁止删除决定该结果的尾守卫。 */
   readonly resultIsConsumed?: boolean;
-  readonly combineConditions: (conditions: readonly TCondition[]) => TCondition;
-  readonly negateCondition: (condition: TCondition) => TCondition;
+  /** 输出已证明不可见的纯查询；仅在后继也为空且返回值未使用时删除。 */
+  readonly canDiscardUnusedLeaf?: (node: NativeActionNodeSource<TLeaf>) => boolean;
+  /** 分支已无有效行为时，证明条件没有仍需保留的副作用。 */
+  readonly canDiscardCondition?: (node: NativeActionNodeSource<TLeaf>) => boolean;
+  readonly createConditionCheckStep: (condition: TCondition) => TStep;
+  readonly createInvertNextResultStep: () => TStep;
+  readonly createAnyConditionStep: (conditions: readonly ActionGraphReference[]) => TStep;
+  readonly createIfElseStep: (input: {
+    readonly condition: ActionGraphReference;
+    readonly whenTrue: ActionGraphReference;
+    readonly whenFalse: ActionGraphReference;
+    readonly alwaysNext: boolean;
+  }) => TStep;
   readonly compileLeaf: (
     node: NativeActionNodeSource<TLeaf>,
     state: TState,
   ) => CompiledActionNodeProgram<TStep, TState>;
-  /**
-   * 领域可把由多个相邻原生节点共同表达的语义整体降级；返回值必须明确消费至少一个节点。
-   * 这用于保存临时值后立刻消费的循环等结构，避免把中间黑板写入伪装成独立运行行为。
-   */
-  readonly compileNodePrefix?: (
-    nodes: readonly NativeActionNodeSource<TLeaf>[],
+  /** 时间轴控制只接收当前原生动作，不能消费或合并相邻动作。 */
+  readonly compileTimelineControl?: (
+    node: NativeActionNodeSource<TLeaf>,
     state: TState,
-  ) => (CompiledActionNodeProgram<TStep, TState> & { readonly consumedNodeCount: number }) | null;
+  ) => CompiledActionNodeProgram<TStep, TState> | null;
   /** 条件成立/失败可为对应分支增加编译期事实；分支写入仍不会反向污染外层。 */
-  readonly refineIfElseBranchState?: (
+  readonly refineIfElseBranch?: (
     node: NativeActionNodeSource<TLeaf> & {
       readonly body: NativeActionBodySourceMap<TLeaf>['ifElse'];
     },
     state: TState,
     branch: 'whenTrue' | 'whenFalse',
-  ) => TState;
-  /** 领域可在语义等价时把原生逐目标循环折叠为集合操作；未提供或拒绝时严格失败。 */
+  ) => CompileActionSequenceProgramOptions<TLeaf, TCondition, TStep, TState> | undefined;
+  /** 保留原生逐目标调用及子序列结果隔离；不展开为外层兄弟动作。 */
   readonly compileForEach?: (
     node: NativeActionNodeSource<TLeaf> & {
       readonly body: NativeActionBodySourceMap<TLeaf>['forEach'];
@@ -77,7 +74,7 @@ export interface CompileActionSequenceProgramOptions<TLeaf, TCondition, TStep, T
     },
     state: TState,
   ) => CompiledActionNodeProgram<TStep, TState> | null;
-  /** 领域可在固定目标模型下把有界 Channeling 精确折叠为等价次数的子序列。 */
+  /** 保留一个 Channeling 调用及其 tick 子序列，次数由原生计时规则决定。 */
   readonly compileChanneling?: (
     node: NativeActionNodeSource<TLeaf> & {
       readonly body: NativeActionBodySourceMap<TLeaf>['channeling'];
@@ -105,36 +102,12 @@ export interface CompileActionSequenceProgramOptions<TLeaf, TCondition, TStep, T
     },
     state: TState,
   ) => CompiledActionNodeProgram<TStep, TState> | null;
-  /** 领域已证明整个条件节点及两分支都不可见时，可整体省略，避免为纯表现控制流伪造输入。 */
-  readonly canOmitIfElse?: (
-    node: NativeActionNodeSource<TLeaf> & {
-      readonly body: NativeActionBodySourceMap<TLeaf>['ifElse'];
-    },
-  ) => boolean;
-  /** 固定场景已证明分支真值时，只编译可达分支；未证明必须返回 undefined。 */
-  readonly selectIfElseBranch?: (
-    node: NativeActionNodeSource<TLeaf> & {
-      readonly body: NativeActionBodySourceMap<TLeaf>['ifElse'];
-    },
-    state: TState,
-  ) => boolean | undefined;
-  /** 两分支投影完全等价且条件纯读取时，可直接保留任一分支，不必为不可见输入建立运行模型。 */
-  readonly areEquivalentIfElseBranches?: (
-    whenTrue: readonly TStep[],
-    whenFalse: readonly TStep[],
-  ) => boolean;
   /** 领域证明条件与子动作均不进入其可见模型时，允许省略整个原生动态开关。 */
   readonly canOmitTogglable?: (
     node: NativeActionNodeSource<TLeaf> & {
       readonly body: NativeActionBodySourceMap<TLeaf>['togglable'];
     },
   ) => boolean;
-  readonly createConditionalStep: (input: {
-    readonly condition: TCondition;
-    readonly whenTrue: ActionGraphReference;
-    readonly whenFalse?: ActionGraphReference;
-    readonly alwaysNext: boolean;
-  }) => TStep;
   readonly rootFilterError: string;
   readonly unsupportedNodeError: (node: NativeActionNodeSource<TLeaf>) => string;
 }
@@ -142,7 +115,7 @@ export interface CompileActionSequenceProgramOptions<TLeaf, TCondition, TStep, T
 /**
  * 原生 SequenceAction 的公共控制流投影。
  *
- * 条件叶子守卫其后的全部兄弟节点；NotNextCheckAction 只反转紧随其后的条件；IfElse 的两个分支
+ * 条件叶子保留独立调用；NotNextCheckAction 反转下一个动作的返回值；IfElse 的两个分支
  * 各自从新的局部编译上下文开始。领域适配器只负责条件和动作叶子的语义。
  */
 export function compileActionSequenceProgram<TLeaf, TCondition, TStep, TState>(
@@ -183,188 +156,107 @@ export function compileActionNodePrograms<TLeaf, TCondition, TStep, TState>(
   state: TState,
 ): TStep[] {
   if (nodes.length === 0) return [];
-  const prefix = options.compileNodePrefix?.(nodes, state) ?? null;
-  if (prefix !== null) {
-    if (prefix.consumedNodeCount <= 0 || prefix.consumedNodeCount > nodes.length) {
-      throw new Error('compileNodePrefix returned an invalid consumedNodeCount');
-    }
+  const [first, ...rest] = nodes;
+  const timelineControl = options.compileTimelineControl?.(first!, state);
+  if (timelineControl != null) {
     return [
-      ...prefix.steps,
-      ...compileActionNodePrograms(nodes.slice(prefix.consumedNodeCount), options, prefix.state),
+      ...timelineControl.steps,
+      ...compileActionNodePrograms(rest, options, timelineControl.state),
     ];
   }
-  const [first, ...rest] = nodes;
+  if (first!.body.kind === 'anyCondition') {
+    // 原生创建时跳过没有启用动作的序列；全部为空时 OR 返回 false。
+    const conditions = first!.body.conditions
+      .filter(sequence => sequence.actions.some(action => action.metadata.enabled))
+      .map(sequence =>
+        options.sequence(
+          compileActionSequenceProgramFromState(
+            sequence,
+            { ...options, resultIsConsumed: true },
+            state,
+          ),
+        ),
+      );
+    return [
+      options.createAnyConditionStep(conditions),
+      ...compileActionNodePrograms(rest, options, state),
+    ];
+  }
   if (first!.body.kind === 'negateNextResult') {
-    const [next, ...bodyNodes] = rest;
-    if (next === undefined) throw new Error(`${first!.sourcePath}: dangling NotNextCheckAction`);
-    const body = compileActionNodePrograms(bodyNodes, options, state);
-    if (
-      !options.resultIsConsumed &&
-      body.length === 0 &&
-      options.canOmitUnusedCondition?.(next) === true
-    )
-      return [];
-    const condition = options.compileCondition(next, state);
-    if (condition === null) {
-      throw new Error(`${first!.sourcePath}: NotNextCheckAction must precede a condition`);
-    }
-    const staticValue = options.evaluateCondition?.(condition);
-    if (!options.resultIsConsumed && staticValue !== undefined) return staticValue ? [] : body;
-    return !options.resultIsConsumed &&
-      body.length === 0 &&
-      options.canOmitTerminalCondition?.(condition) === true
-      ? []
-      : [
-          options.createConditionalStep({
-            condition: options.negateCondition(condition),
-            whenTrue: options.sequence(body),
-            alwaysNext: false,
-          }),
-        ];
+    return [
+      options.createInvertNextResultStep(),
+      ...compileActionNodePrograms(rest, { ...options, resultIsConsumed: true }, state),
+    ];
   }
-  // 对已证明纯读取的静态守卫，先求值再编译不可达末端。来源 parser 仍会严格读取整棵树；
-  // 这里只避免让“静止输入”等固定场景假分支要求本不可能执行的动作运行模型。
-  if (options.canOmitUnusedCondition?.(first!) === true) {
-    try {
-      const staticCondition = options.compileCondition(first!, state);
-      if (staticCondition !== null) {
-        const staticValue = options.evaluateCondition?.(staticCondition);
-        if (!options.resultIsConsumed && staticValue !== undefined) {
-          return staticValue ? compileActionNodePrograms(rest, options, state) : [];
-        }
-      }
-    } catch {
-      // 保持原有“先看末端是否仍可见”的诊断顺序；末端有效时下方会重新抛出条件错误。
-    }
-  }
-  // 纯守卫不写编译期状态，故其后续动作可以先投影；不能对普通写入动作倒序执行。
-  const guardedBody =
-    options.canOmitUnusedCondition?.(first!) === true
+  // 无可见写入的检查或查询，在后继为空且返回值无人使用时无需执行。
+  const unusedTail =
+    !options.resultIsConsumed &&
+    first!.body.kind === 'leaf' &&
+    (options.canDiscardCondition?.(first!) === true ||
+      options.canDiscardUnusedLeaf?.(first!) === true)
       ? compileActionNodePrograms(rest, options, state)
-      : undefined;
-  if (!options.resultIsConsumed && guardedBody?.length === 0) return [];
+      : null;
+  if (unusedTail?.length === 0) return [];
+  if (
+    !options.resultIsConsumed &&
+    first!.body.kind === 'ifElse' &&
+    first!.body.alwaysNext &&
+    first!.body.whenTrue.actions.every(node => !node.metadata.enabled) &&
+    first!.body.whenFalse.actions.every(node => !node.metadata.enabled) &&
+    first!.body.condition.actions.every(
+      node => !node.metadata.enabled || options.canDiscardCondition?.(node) === true,
+    )
+  )
+    return compileActionNodePrograms(rest, options, state);
   const condition = options.compileCondition(first!, state);
   if (condition !== null) {
-    const body = guardedBody ?? compileActionNodePrograms(rest, options, state);
-    const staticValue = options.evaluateCondition?.(condition);
-    if (!options.resultIsConsumed && staticValue !== undefined) return staticValue ? body : [];
-    return !options.resultIsConsumed &&
-      body.length === 0 &&
-      options.canOmitTerminalCondition?.(condition) === true
-      ? []
-      : [
-          options.createConditionalStep({
-            condition,
-            whenTrue: options.sequence(body),
-            alwaysNext: false,
-          }),
-        ];
+    return [
+      options.createConditionCheckStep(condition),
+      ...(unusedTail ?? compileActionNodePrograms(rest, options, state)),
+    ];
   }
   if (first!.body.kind === 'ifElse') {
     const branchNode = first as NativeActionNodeSource<TLeaf> & {
       readonly body: NativeActionBodySourceMap<TLeaf>['ifElse'];
     };
-    if (options.canOmitIfElse?.(branchNode) === true) {
-      return compileActionNodePrograms(rest, options, state);
-    }
-    let selectedBranch: boolean | undefined;
-    let selectionFailure: { readonly error: unknown } | undefined;
-    try {
-      selectedBranch = options.selectIfElseBranch?.(branchNode, state);
-    } catch (error) {
-      // 静态预选只是优化探测，不得抢在末端投影之前要求空间等条件模型。
-      // 仅在下方证明条件是纯读取且两侧等价/为空时才能舍弃失败；否则原样重新抛出。
-      // 不直接把未知条件判为 true，也不吞掉来源读取或有效子树的错误。
-      selectionFailure = { error };
-    }
-    if (selectedBranch !== undefined) {
-      if (!first!.body.alwaysNext) {
-        throw new Error(`${first!.sourcePath}: statically selected stopping IfElse is unsupported`);
-      }
-      const selected = compileActionSequenceProgramFromState(
-        selectedBranch ? first!.body.whenTrue : first!.body.whenFalse,
-        options,
-        options.refineIfElseBranchState?.(
-          branchNode,
-          state,
-          selectedBranch ? 'whenTrue' : 'whenFalse',
-        ) ?? state,
+
+    const compileBranch = (branch: 'whenTrue' | 'whenFalse') => {
+      const refined = options.refineIfElseBranch?.(branchNode, state, branch);
+      return compileActionSequenceProgramFromState(
+        branchNode.body[branch],
+        {
+          ...(refined ?? options),
+          // alwaysNext 覆盖正文返回值；外层消费的是 IfElse 的结果，不是正文结果。
+          resultIsConsumed: !branchNode.body.alwaysNext,
+        },
+        refined ? refined.initialState() : state,
       );
-      return [...selected, ...compileActionNodePrograms(rest, options, state)];
-    }
-    if (!first!.body.alwaysNext) {
-      throw new Error(`${first!.sourcePath}: stopping IfElse is unsupported`);
-    }
-    const whenTrue = compileActionSequenceProgramFromState(
-      first!.body.whenTrue,
-      options,
-      options.refineIfElseBranchState?.(branchNode, state, 'whenTrue') ?? state,
-    );
-    const whenFalse = compileActionSequenceProgramFromState(
-      first!.body.whenFalse,
-      options,
-      options.refineIfElseBranchState?.(branchNode, state, 'whenFalse') ?? state,
-    );
-    const conditionNodes = first!.body.condition.actions.filter(node => node.metadata.enabled);
-    const conditionsArePureReads = conditionNodes.every((child, index) =>
-      child.body.kind === 'negateNextResult'
-        ? conditionNodes[index + 1] !== undefined &&
-          options.canOmitUnusedCondition?.(conditionNodes[index + 1]!) === true
-        : options.canOmitUnusedCondition?.(child) === true,
-    );
-    if (
-      conditionsArePureReads &&
-      options.areEquivalentIfElseBranches?.(whenTrue, whenFalse) === true
-    ) {
-      return [...whenTrue, ...compileActionNodePrograms(rest, options, state)];
-    }
-    if (whenTrue.length === 0 && whenFalse.length === 0 && conditionsArePureReads) {
-      return compileActionNodePrograms(rest, options, state);
-    }
-    if (selectionFailure !== undefined) throw selectionFailure.error;
-    const combinedCondition = options.compileConditionSequence?.(first!.body.condition, state);
-    const branchConditions: TCondition[] =
-      combinedCondition === undefined || combinedCondition === null ? [] : [combinedCondition];
-    for (
-      let index = 0;
-      (combinedCondition === undefined || combinedCondition === null) &&
-      index < conditionNodes.length;
-      index += 1
-    ) {
-      const child = conditionNodes[index]!;
-      if (child.body.kind === 'negateNextResult') {
-        const next = conditionNodes[index + 1];
-        if (next === undefined)
-          throw new Error(`${child.sourcePath}: dangling NotNextCheckAction in IfElse condition`);
-        const condition = options.compileCondition(next, state);
-        if (condition === null)
-          throw new Error(`${child.sourcePath}: NotNextCheckAction must precede a condition`);
-        branchConditions.push(options.negateCondition(condition));
-        index += 1;
-        continue;
-      }
-      const condition = options.compileCondition(child, state);
-      if (condition === null)
-        throw new Error(`${child.sourcePath}: expected a condition-only sequence`);
-      branchConditions.push(condition);
-    }
-    if (branchConditions.length === 0) {
-      throw new Error(`${first!.sourcePath}: empty condition sequence`);
-    }
-    // 已支持条件也不能留下空壳 branch；没有来源级证明时，用投影后的副作用信息补判。
+    };
+    const whenTrue = compileBranch('whenTrue');
+    const whenFalse = compileBranch('whenFalse');
     if (
       whenTrue.length === 0 &&
       whenFalse.length === 0 &&
-      branchConditions.every(condition => options.canOmitTerminalCondition?.(condition) === true)
+      first!.body.alwaysNext &&
+      !options.resultIsConsumed &&
+      first!.body.condition.actions.every(
+        node => !node.metadata.enabled || options.canDiscardCondition?.(node) === true,
+      )
     ) {
       return compileActionNodePrograms(rest, options, state);
     }
+    // 先投影分支；条件结果决定分支，不能继承外层“结果未使用”的标记。
+    const condition = compileActionSequenceProgramFromState(
+      first!.body.condition,
+      { ...options, resultIsConsumed: true },
+      state,
+    );
     return [
-      options.createConditionalStep({
-        condition: options.combineConditions(branchConditions),
+      options.createIfElseStep({
+        condition: options.sequence(condition),
         whenTrue: options.sequence(whenTrue),
-        ...(whenFalse.length === 0 ? {} : { whenFalse: options.sequence(whenFalse) }),
-        alwaysNext: true,
+        whenFalse: options.sequence(whenFalse),
+        alwaysNext: first!.body.alwaysNext,
       }),
       ...compileActionNodePrograms(rest, options, state),
     ];

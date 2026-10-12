@@ -4,7 +4,7 @@ import type { GearDefinition } from '../../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'item_equip_t4_suit_usp02_body_03',
   assetSlug: 'item_equip_t4_suit_usp02_body_03',
-  iconPath: '/equipment/usp02/item_equip_t4_suit_usp02_body_03.webp',
+  icon: 'endaxis:equipment/usp02/item_equip_t4_suit_usp02_body_03',
   slotType: 'armor',
   levelRequirement: 70,
   baseDefense: 56,

@@ -1,8 +1,14 @@
-import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
-import { rootActionSteps } from '../../compiler/actionProgramInspection';
 import { describe, expect, it, vi } from 'vitest';
+import type {
+  ActionGraphDefinition,
+  ActionGraphNode,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
+import type { CombatObjectType } from '../../../../packages/game-data-contract/src/primitives';
+import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
 import { GAMEPLAY_TAG_PREDEFINE } from '../../../data/combat/gameplayTagPredefine.generated';
 import { gilberta as gilbertaGeneratedOperator } from '../../../data/operators/gilberta.generated';
+import { rootActionSteps } from '../../compiler/actionProgramInspection';
 import type {
   CompiledOperatorPassiveProgram,
   CompiledSkillProgram,
@@ -10,38 +16,33 @@ import type {
   ResolvedActionSequence,
 } from '../../compiler/combatProgram';
 import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
-import type {
-  ActionGraphNode,
-  ActionGraphStep,
-} from '../../../../packages/game-data-contract/src/actionGraph';
+import type { CombatAbilityEvent } from '../events/combatAbilityEvent';
 
+import type { CombatBuffDefinitionEntry } from '../../../../packages/game-data-contract/src/buffs';
 import type { AbilityEntityChildSkillDefinition } from '../../../../packages/game-data-contract/src/skills';
+import { ActionGraphDefinitionRepository } from '../../compiler/actionGraphDefinitionRepository';
+import { createIndependentAbilityEntityImportResolver } from '../../compiler/compileCommonAbilityEntityImports';
+import { compileIndependentBuffResource, compileSkill } from '../../compiler/compileSkill';
 import {
   logicalAbilityEntityRuntimeId,
   type RuntimeTargetRef,
 } from '../../game-data/logicalAbilityEntity';
-import { ActionGraphDefinitionRepository } from '../../compiler/actionGraphDefinitionRepository';
-import { compileIndependentBuffResource, compileSkill } from '../../compiler/compileSkill';
-import { createIndependentAbilityEntityImportResolver } from '../../compiler/compileCommonAbilityEntityImports';
+import { CombatObjectOrigins } from '../../projection/combatObjectOrigins';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatAttributeSet } from '../attributes/combatAttributes';
 import { BuffDefinitionOperationTarget } from '../buffs/buffDefinitionOperationTarget';
 import { CompiledCombatBuffDefinitions } from '../buffs/combatBuffDefinitions';
-import { type CombatBuffDefinitionEntry } from '../../../../packages/game-data-contract/src/buffs';
 import { CombatBuffContainer } from '../buffs/combatBuffs';
 import { createNativeEventFixture } from '../events/nativeEventTestFixture';
-import { CombatReceiptCollector } from '../receipt/combatReceipt';
 import { CombatVitals } from '../resources/combatVitals';
 import { CombatSkillPrograms } from '../skills/combatSkillPrograms';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
 import { createTimelineActionState, type ActionGraphExecutionState } from '../state/actionState';
 import { createBuffInstanceState } from '../state/instanceState';
-import { CombatStatusContainer } from '../status/combatStatuses';
 import { GameplayTagPredefine } from '../tags/gameplayTagPredefine';
 import { GameplayTagRegistry } from '../tags/gameplayTags';
 import { CombatRuntimeAssembly, type CombatEnemyProgram } from './combatRuntimeAssembly';
 import { prepareCombatRuntimeRestore } from './restoration/combatRuntimeRestorePreparation';
-import { CombatObjectOrigins } from '../../projection/combatObjectOrigins';
 
 const emptyEnemyBuffRuntime = {
   ownerId: 'enemy',
@@ -69,7 +70,7 @@ const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
-  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
   graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
   entry,
@@ -79,7 +80,7 @@ const compileGraphEntry = (
 const chainEntry = (
   revision: string,
   actions: readonly ActionGraphStep[],
-  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => {
   const nodes: Record<string, ActionGraphNode> = {};
   actions.forEach((action, index) => {
@@ -170,10 +171,11 @@ it('被动写入EntityBB由同角色主动技能读取，而非留在被动局�
           'passive-entitybb-writer',
           [
             {
-              kind: 'changeResourceByActionValue',
+              kind: 'changeResource',
               parameters: {
                 resource: 'ultimateEnergy',
-                recipient: 'caster',
+                source: { kind: 'fixed' as const, target: 'caster' as const },
+                targets: { kind: 'fixed' as const, target: 'caster' as const },
                 amount: { kind: 'valueNode', nodeId: 'input_1' },
                 coefficient: { kind: 'constant', value: 1 },
               },
@@ -224,10 +226,9 @@ function nativeEventRuntimeOptions() {
   return {
     registerCombatAbilityEvent: native.register,
     emitAbilityEvent: ((_owner, event, payload) =>
-      native.dispatcher.dispatch(
-        { event, payload } as import('../events/combatAbilityEvent').CombatAbilityEvent,
-        [],
-      )) as NonNullable<ConstructorParameters<typeof CombatRuntimeAssembly>[0]['emitAbilityEvent']>,
+      native.dispatcher.dispatch({ event, payload } as CombatAbilityEvent, [])) as NonNullable<
+      ConstructorParameters<typeof CombatRuntimeAssembly>[0]['emitAbilityEvent']
+    >,
   };
 }
 
@@ -320,6 +321,7 @@ function createAssembly(
     ('programs' in input ? input.createOperatorBuffRuntime : undefined) ??
     createOperatorBuffRuntime;
   return new CombatRuntimeAssembly({
+    comboSkillPendingInterval: 5,
     ...nativeEventRuntimeOptions(),
     ...('programs' in input
       ? { registerCombatAbilityEvent: input.registerCombatAbilityEvent }
@@ -962,6 +964,7 @@ describe('CombatRuntimeAssembly', () => {
         }),
       );
       const assembly = new CombatRuntimeAssembly({
+        comboSkillPendingInterval: 5,
         ...nativeEventRuntimeOptions(),
         enemy: testEnemy,
         enemyBuffRuntime: emptyEnemyBuffRuntime,
@@ -1072,6 +1075,7 @@ describe('CombatRuntimeAssembly', () => {
       }),
     );
     const assembly = new CombatRuntimeAssembly({
+      comboSkillPendingInterval: 5,
       ...nativeEventRuntimeOptions(),
       enemy: testEnemy,
       enemyBuffRuntime: emptyEnemyBuffRuntime,
@@ -1158,11 +1162,7 @@ describe('CombatRuntimeAssembly', () => {
         cost: { resource: 'ultimateEnergy' as const, value: 0, availabilityThreshold: 0 },
       },
     };
-    const sourceProbeNodes = (
-      prefix: string,
-      objectType: import('../../../../packages/game-data-contract/src/primitives').CombatObjectType,
-      name: string,
-    ) => {
+    const sourceProbeNodes = (prefix: string, objectType: CombatObjectType, name: string) => {
       const nodes: Record<string, ActionGraphNode> = {
         [`${prefix}-merge`]: {
           action: {
@@ -1233,6 +1233,7 @@ describe('CombatRuntimeAssembly', () => {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
             source,
             finish: event === 'reach' ? 'firstTickReach' : event === 'hit' ? 10 : 0.01,
             recycleDelaySeconds: 10,
@@ -1381,7 +1382,11 @@ describe('CombatRuntimeAssembly', () => {
                 'step-0': {
                   action: {
                     kind: 'launchProjectile',
-                    parameters: { finish: 0.1, recycleDelaySeconds: 0 },
+                    parameters: {
+                      inheritActionBlackboard: true,
+                      finish: 0.1,
+                      recycleDelaySeconds: 0,
+                    },
                     callbacks: [
                       {
                         event: 'finish',
@@ -1488,10 +1493,14 @@ describe('CombatRuntimeAssembly', () => {
                   sequence: chainEntry('recycle-delay-launch', [
                     {
                       kind: 'launchProjectile',
-                      parameters: { finish: 'firstTickReach', recycleDelaySeconds },
+                      parameters: {
+                        inheritActionBlackboard: true,
+                        finish: 'firstTickReach',
+                        recycleDelaySeconds,
+                      },
                       callbacks: [],
                     },
-                    { kind: 'finishTimeline', parameters: {} },
+                    { kind: 'interruptCurrentSkill', parameters: { targets: { kind: 'owner' } } },
                   ]),
                 },
               ],
@@ -1524,7 +1533,7 @@ describe('CombatRuntimeAssembly', () => {
       // 动作结束不持有此对象的释放句柄。
       assembly.advanceFrame();
       expect(assembly.timeDilation!.currentGlobalScale).toBe(globalScale);
-      expect(assembly.receipt.entries.some(entry => entry.event === 'SkillEnded')).toBe(true);
+      expect(assembly.receipt.entries.some(entry => entry.event === 'SkillInterrupted')).toBe(true);
       expect(reset).not.toHaveBeenCalled();
       for (let i = 0; i < Math.floor((recycleDelaySeconds * 30) / globalScale); i++) {
         assembly.projectileLifetimes.advanceFrame();
@@ -1559,7 +1568,6 @@ describe('CombatRuntimeAssembly', () => {
     projectile.onReset(() => calls.push('reset'));
     const savedGraph = structuredClone(assembly.stateGraph);
     expect(assembly.stateGraph.shared).toBe(assembly.sharedState);
-    expect(assembly.stateGraph.events.semantic).toBe(assembly.semanticEvents.runtimeState);
     expect(assembly.stateGraph.events.native).toBeNull();
     expect(assembly.stateGraph.instances.abilityEntities).toBe(
       assembly.abilityEntities.runtimeState,
@@ -1689,8 +1697,8 @@ describe('CombatRuntimeAssembly', () => {
             {
               kind: 'applyBuff',
               parameters: {
-                buffId: 'hidden-buff',
-                target: 'caster',
+                buffs: [{ buffId: 'hidden-buff' }],
+                targets: { kind: 'fixed', target: 'caster' },
                 inheritSourceSkillCastInfo: true,
               },
             },
@@ -1736,16 +1744,18 @@ describe('CombatRuntimeAssembly', () => {
         'hidden-buff': {
           stackingType: 'unique',
           lifecycleSequences: {
-            enable: chainEntry('hidden-buff-enable', [
-              {
-                kind: 'modifyActionValue',
-                parameters: {
-                  key: 'seen',
-                  operation: 'assign',
-                  value: { kind: 'constant', value: 1 },
+            enable: [
+              chainEntry('hidden-buff-enable', [
+                {
+                  kind: 'modifyActionValue',
+                  parameters: {
+                    key: 'seen',
+                    operation: 'assign',
+                    value: { kind: 'constant', value: 1 },
+                  },
                 },
-              },
-            ]),
+              ]),
+            ],
           },
         },
       },
@@ -1991,16 +2001,18 @@ describe('CombatRuntimeAssembly', () => {
     const parentDefinition = {
       stackingType: 'unique' as const,
       lifecycleSequences: {
-        enable: chainEntry('source-parent-enable', [
-          {
-            kind: 'applyBuff' as const,
-            parameters: {
-              buffId: 'source-child',
-              target: 'buffOwner' as const,
-              inheritSourceSkillCastInfo: true,
+        enable: [
+          chainEntry('source-parent-enable', [
+            {
+              kind: 'applyBuff' as const,
+              parameters: {
+                buffs: [{ buffId: 'source-child' }],
+                targets: { kind: 'owner' } as const,
+                inheritSourceSkillCastInfo: true,
+              },
             },
-          },
-        ]),
+          ]),
+        ],
       },
     };
     const sourceSkill = skill({
@@ -2016,8 +2028,8 @@ describe('CombatRuntimeAssembly', () => {
             {
               kind: 'applyBuff',
               parameters: {
-                buffId: 'source-parent',
-                target: 'partyExceptCaster',
+                buffs: [{ buffId: 'source-parent' }],
+                targets: { kind: 'characterTeam', excludeOwner: true },
                 inheritSourceSkillCastInfo: true,
               },
             },
@@ -2026,6 +2038,7 @@ describe('CombatRuntimeAssembly', () => {
       ],
     });
     const assembly = new CombatRuntimeAssembly({
+      comboSkillPendingInterval: 5,
       ...nativeEventRuntimeOptions(),
       enemy: testEnemy,
       resources: {
@@ -2271,6 +2284,7 @@ describe('CombatRuntimeAssembly', () => {
             {
               kind: 'spawnAbilityEntity',
               parameters: {
+                bornAt: { kind: 'owner' as const },
                 abilityEntityId: 'fixture_entity',
                 definition: {
                   lifetime: { kind: 'limited', durationSeconds: 5 },
@@ -2384,6 +2398,7 @@ describe('CombatRuntimeAssembly', () => {
               action: {
                 kind: 'spawnAbilityEntity',
                 parameters: {
+                  bornAt: { kind: 'owner' as const },
                   abilityEntityId: 'passive-host',
                   dieWhenSourceDies: false,
                   definition: {
@@ -2407,7 +2422,12 @@ describe('CombatRuntimeAssembly', () => {
                               'passive-added-buff-response': {
                                 action: {
                                   kind: 'changeResource',
-                                  parameters: { resource: 'sp', amount: 10, recipient: 'team' },
+                                  parameters: {
+                                    resource: 'sp',
+                                    amount: 10,
+                                    source: { kind: 'fixed' as const, target: 'caster' as const },
+                                    targets: { kind: 'fixed' as const, target: 'caster' as const },
+                                  },
                                 },
                                 next: null,
                               },
@@ -2472,6 +2492,7 @@ describe('CombatRuntimeAssembly', () => {
               action: {
                 kind: 'spawnAbilityEntity',
                 parameters: {
+                  bornAt: { kind: 'owner' as const },
                   abilityEntityId: 'fixture_entity',
                   dieWhenSourceDies: false,
                   definition: {
@@ -2503,7 +2524,12 @@ describe('CombatRuntimeAssembly', () => {
                             'child-resource': {
                               action: {
                                 kind: 'changeResource',
-                                parameters: { resource: 'sp', amount: 10, recipient: 'team' },
+                                parameters: {
+                                  resource: 'sp',
+                                  amount: 10,
+                                  source: { kind: 'fixed' as const, target: 'caster' as const },
+                                  targets: { kind: 'fixed' as const, target: 'caster' as const },
+                                },
                               },
                               next: null,
                             },
@@ -2570,6 +2596,7 @@ describe('CombatRuntimeAssembly', () => {
               action: {
                 kind: 'spawnAbilityEntity',
                 parameters: {
+                  bornAt: { kind: 'owner' as const },
                   abilityEntityId: 'projectile-child-host',
                   dieWhenSourceDies: false,
                   definition: {
@@ -2601,7 +2628,10 @@ describe('CombatRuntimeAssembly', () => {
                             'child-launch': {
                               action: {
                                 kind: 'launchProjectile',
-                                parameters: { finish: 'firstTickReach' },
+                                parameters: {
+                                  inheritActionBlackboard: true,
+                                  finish: 'firstTickReach',
+                                },
                                 callbacks: [],
                               },
                               next: null,
@@ -2677,6 +2707,7 @@ describe('CombatRuntimeAssembly', () => {
               action: {
                 kind: 'spawnAbilityEntity',
                 parameters: {
+                  bornAt: { kind: 'owner' as const },
                   abilityEntityId: 'buff-host',
                   dieWhenSourceDies: false,
                   definition: {
@@ -2709,8 +2740,8 @@ describe('CombatRuntimeAssembly', () => {
                               action: {
                                 kind: 'applyBuff',
                                 parameters: {
-                                  buffId: 'entity-monitor',
-                                  target: 'currentAbilityEntity',
+                                  buffs: [{ buffId: 'entity-monitor' }],
+                                  targets: { kind: 'owner' },
                                   inheritSourceSkillCastInfo: true,
                                 },
                               },
@@ -2749,17 +2780,19 @@ describe('CombatRuntimeAssembly', () => {
           waitFirstTriggerInterval: true,
           maxTriggerCount: 1,
           lifecycleSequences: {
-            trigger: chainEntry('entity-monitor-trigger', [
-              {
-                kind: 'applyBuff',
-                parameters: {
-                  buffId: 'entity-trigger-result',
-                  target: 'buffOwner',
-                  inheritSourceSkillCastInfo: true,
+            trigger: [
+              chainEntry('entity-monitor-trigger', [
+                {
+                  kind: 'applyBuff',
+                  parameters: {
+                    buffs: [{ buffId: 'entity-trigger-result' }],
+                    targets: { kind: 'owner' },
+                    inheritSourceSkillCastInfo: true,
+                  },
                 },
-              },
-              { kind: 'finishCurrentAbilityEntity', parameters: {} },
-            ]),
+                { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
+              ]),
+            ],
           },
         },
         'entity-trigger-result': { stackingType: 'unique' },
@@ -2849,7 +2882,10 @@ describe('CombatRuntimeAssembly', () => {
       timelineBlockFrames: 1,
       costFrame: undefined,
       costs: [],
-      timelineActions: [{ ...spawnAction, startFrame: 0 }],
+      // 保留前置目标查询；抽出 Spawn 并移到零帧会丢失出生位置 Context。
+      timelineActions: compiled.timelineActions.filter(
+        action => action.startFrame <= spawnAction.startFrame,
+      ),
     };
     const operatorVitals = new CombatVitals({
       health: 0,
@@ -2882,6 +2918,7 @@ describe('CombatRuntimeAssembly', () => {
     );
 
     expect(assembly.tryStartSkill('operator', program.skillId, castId)).toBe(true);
+    assembly.advanceFrames(spawnAction.startFrame);
     expect(assembly.abilityEntities.activeCount).toBe(1);
     expect(entityBuffs?.buffs.map(buff => buff.definition.id)).toEqual([
       'buff_chr_0013_aglina_normal_skill_monitor',
@@ -3339,6 +3376,7 @@ describe('CombatRuntimeAssembly', () => {
     });
     const followUp = skill({ operatorId: 'other', skillId: 'follow-up' });
     const assembly = new CombatRuntimeAssembly({
+      comboSkillPendingInterval: 5,
       ...nativeEventRuntimeOptions(),
       enemy: testEnemy,
       resources: {
@@ -3497,6 +3535,7 @@ describe('CombatRuntimeAssembly', () => {
       },
     ]);
     const assembly = new CombatRuntimeAssembly({
+      comboSkillPendingInterval: 5,
       ...nativeEventRuntimeOptions(),
       registerCombatAbilityEvent: nativeEvents.register,
       enemy: testEnemy,
@@ -3537,11 +3576,12 @@ describe('CombatRuntimeAssembly', () => {
                     'equipment-gain-sp',
                     [
                       {
-                        kind: 'changeResourceByActionValue',
+                        kind: 'changeResource',
                         parameters: {
                           resource: 'sp',
                           amount: { kind: 'valueNode', nodeId: 'input_1' },
-                          recipient: 'team',
+                          source: { kind: 'fixed' as const, target: 'caster' as const },
+                          targets: { kind: 'fixed' as const, target: 'caster' as const },
                         },
                       },
                     ],
@@ -3589,17 +3629,16 @@ describe('CombatRuntimeAssembly', () => {
         parameters: {
           resource: 'sp',
           amount: 1,
-          recipient: 'team',
+          source: { kind: 'fixed' as const, target: 'caster' as const },
+          targets: { kind: 'fixed' as const, target: 'caster' as const },
         },
       },
     ]);
     new CombatRuntimeAssembly({
+      comboSkillPendingInterval: 5,
       ...nativeEventRuntimeOptions(),
       emitAbilityEvent: (_owner, event, payload) =>
-        native.dispatcher.dispatch(
-          { event, payload } as import('../events/combatAbilityEvent').CombatAbilityEvent,
-          [],
-        ),
+        native.dispatcher.dispatch({ event, payload } as CombatAbilityEvent, []),
       registerEquipmentAbilityEventAction: (_owner, event, priority, handle) =>
         native.dispatcher.registerAction(event, priority, published => handle(published)),
       enemy: testEnemy,
@@ -3661,6 +3700,7 @@ describe('CombatRuntimeAssembly', () => {
       expect(
         () =>
           new CombatRuntimeAssembly({
+            comboSkillPendingInterval: 5,
             ...nativeEventRuntimeOptions(),
             enemy: testEnemy,
             resources: {
@@ -3747,6 +3787,7 @@ describe('CombatRuntimeAssembly', () => {
     expect(
       () =>
         new CombatRuntimeAssembly({
+          comboSkillPendingInterval: 5,
           ...nativeEventRuntimeOptions(),
           enemy: testEnemy,
           resources: {
@@ -3806,8 +3847,8 @@ describe('CombatRuntimeAssembly', () => {
             {
               kind: 'applyBuff',
               parameters: {
-                buffId: 'resource-buff',
-                target: 'caster',
+                buffs: [{ buffId: 'resource-buff' }],
+                targets: { kind: 'fixed', target: 'caster' },
                 inheritSourceSkillCastInfo: true,
               },
             },
@@ -3831,16 +3872,19 @@ describe('CombatRuntimeAssembly', () => {
         'resource-buff': {
           stackingType: 'unique',
           lifecycleSequences: {
-            start: chainEntry('resource-buff-start', [
-              {
-                kind: 'changeResource',
-                parameters: {
-                  resource: 'sp',
-                  amount: 20,
-                  recipient: 'team',
+            start: [
+              chainEntry('resource-buff-start', [
+                {
+                  kind: 'changeResource',
+                  parameters: {
+                    resource: 'sp',
+                    amount: 20,
+                    source: { kind: 'fixed' as const, target: 'caster' as const },
+                    targets: { kind: 'fixed' as const, target: 'caster' as const },
+                  },
                 },
-              },
-            ]),
+              ]),
+            ],
           },
         },
       },
@@ -3901,8 +3945,8 @@ describe('CombatRuntimeAssembly', () => {
                 action: {
                   kind: 'applyBuff',
                   parameters: {
-                    buffId: 'watched-buff',
-                    target: 'caster',
+                    buffs: [{ buffId: 'watched-buff' }],
+                    targets: { kind: 'fixed', target: 'caster' },
                   },
                 },
                 next: null,
@@ -3913,7 +3957,8 @@ describe('CombatRuntimeAssembly', () => {
                   parameters: {
                     resource: 'sp',
                     amount: 7,
-                    recipient: 'team',
+                    source: { kind: 'fixed' as const, target: 'caster' as const },
+                    targets: { kind: 'fixed' as const, target: 'caster' as const },
                   },
                 },
                 next: null,
@@ -3963,7 +4008,8 @@ describe('CombatRuntimeAssembly', () => {
               parameters: {
                 resource: 'sp',
                 amount: 10,
-                recipient: 'team',
+                source: { kind: 'fixed' as const, target: 'caster' as const },
+                targets: { kind: 'fixed' as const, target: 'caster' as const },
                 spGainKind: 'gain',
                 spGainSource: 'skill',
               },
@@ -4000,7 +4046,8 @@ describe('CombatRuntimeAssembly', () => {
               parameters: {
                 resource: 'ultimateEnergy',
                 amount: 9,
-                recipient: 'caster',
+                source: { kind: 'fixed' as const, target: 'caster' as const },
+                targets: { kind: 'fixed' as const, target: 'caster' as const },
               },
             },
             next: null,
@@ -4028,75 +4075,6 @@ describe('CombatRuntimeAssembly', () => {
     expect(assembly.resources.getUltimateEnergy('operator')).toBe(9);
   });
 
-  it('dispatches active airborne output before continuing the authored sequence', () => {
-    const program = skill({
-      costFrame: undefined,
-      costs: [],
-      timelineActions: [
-        {
-          startFrame: 0,
-          endFrame: 2,
-          sequence: compileGraphEntry('airborne-output-listener', 'step-0', {
-            'step-0': {
-              action: {
-                kind: 'listenForCombatEvents',
-                parameters: {
-                  responses: [
-                    {
-                      key: 'before-output-airborne',
-                      event: { kind: 'airborneOutput' },
-                      sequence: { $sequence: 'respond-airborne' },
-                    },
-                  ],
-                },
-              },
-              next: 'step-1',
-            },
-            'step-1': {
-              action: { kind: 'outputAirborne', parameters: { target: 'enemy' } },
-              next: 'step-2',
-            },
-            'step-2': {
-              action: {
-                kind: 'changeResource',
-                parameters: { resource: 'sp', amount: 1, recipient: 'team' },
-              },
-              next: null,
-            },
-            'respond-airborne': {
-              action: {
-                kind: 'changeResource',
-                parameters: { resource: 'sp', amount: 9, recipient: 'team' },
-              },
-              next: null,
-            },
-          }),
-        },
-      ],
-    });
-    const published: string[] = [];
-    const native = createNativeEventFixture();
-    const assembly = createAssembly({
-      programs: [program],
-      registerCombatAbilityEvent: native.register,
-      emitAbilityEvent: (_owner, event) => published.push(event),
-    });
-
-    expect(assembly.tryStartSkill('operator', 'skill')).toBe(true);
-    expect(assembly.resources.sp).toBe(110);
-    expect(published).toEqual([
-      'beforeCastSkill',
-      'skillSpGained',
-      'afterOutputPhysicalInfliction',
-      'skillSpGained',
-    ]);
-    expect(
-      assembly.receipt.entries
-        .map(entry => entry.event)
-        .filter(event => event === 'AirborneOutput' || event === 'SpChanged'),
-    ).toEqual(['AirborneOutput', 'SpChanged', 'SpChanged']);
-  });
-
   it('executes party Buff lifecycle steps relative to each actual operator owner', () => {
     const sourceBuffs = new CombatBuffContainer<string>('source', new CombatAttributeSet<string>());
     const allyBuffs = new CombatBuffContainer<string>('ally', new CombatAttributeSet<string>());
@@ -4119,8 +4097,8 @@ describe('CombatRuntimeAssembly', () => {
             {
               kind: 'applyBuff',
               parameters: {
-                buffId: 'party-owner-buff',
-                target: 'party',
+                buffs: [{ buffId: 'party-owner-buff' }],
+                targets: { kind: 'characterTeam', excludeOwner: false },
                 inheritSourceSkillCastInfo: true,
               },
             },
@@ -4129,6 +4107,7 @@ describe('CombatRuntimeAssembly', () => {
       ],
     });
     const assembly = new CombatRuntimeAssembly({
+      comboSkillPendingInterval: 5,
       ...nativeEventRuntimeOptions(),
       enemy: testEnemy,
       resources: {
@@ -4166,16 +4145,19 @@ describe('CombatRuntimeAssembly', () => {
             'party-owner-buff': {
               stackingType: 'unique',
               lifecycleSequences: {
-                start: chainEntry('party-owner-buff-start', [
-                  {
-                    kind: 'changeResource',
-                    parameters: {
-                      resource: 'ultimateEnergy',
-                      amount: 10,
-                      recipient: 'caster',
+                start: [
+                  chainEntry('party-owner-buff-start', [
+                    {
+                      kind: 'changeResource',
+                      parameters: {
+                        resource: 'ultimateEnergy',
+                        amount: 10,
+                        source: { kind: 'fixed' as const, target: 'caster' as const },
+                        targets: { kind: 'fixed' as const, target: 'caster' as const },
+                      },
                     },
-                  },
-                ]),
+                  ]),
+                ],
               },
             },
           },
@@ -4215,15 +4197,16 @@ describe('CombatRuntimeAssembly', () => {
         {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'equipment-child',
-            target: 'caster',
-            ...(owner === 'upgrade' ? {} : { source: 'eventSource' as const }),
+            buffs: [{ buffId: 'equipment-child' }],
+            targets: { kind: 'fixed', target: 'caster' },
+            source: { kind: 'source' },
             asChildBuff: true,
           },
         },
       ]);
       const create = () =>
         new CombatRuntimeAssembly({
+          comboSkillPendingInterval: 5,
           ...nativeEventRuntimeOptions(),
           enemy: testEnemy,
           resources: {
@@ -4317,6 +4300,7 @@ describe('CombatRuntimeAssembly', () => {
       compile: entry => ({ id: entry.id, stackingType: entry.stackingType }),
     });
     const assembly = new CombatRuntimeAssembly({
+      comboSkillPendingInterval: 5,
       ...nativeEventRuntimeOptions(),
       enemy: testEnemy,
       resources: {
@@ -4350,11 +4334,15 @@ describe('CombatRuntimeAssembly', () => {
                 {
                   kind: 'applyBuff',
                   parameters: {
-                    buffId: 'potential-marker',
-                    target: 'caster',
-                    blackboardAssignments: {
-                      ratio: { kind: 'constant', value: 0.5 },
-                    },
+                    buffs: [
+                      {
+                        buffId: 'potential-marker',
+                        blackboardAssignments: {
+                          ratio: { kind: 'constant', value: 0.5 },
+                        },
+                      },
+                    ],
+                    targets: { kind: 'fixed', target: 'caster' },
                   },
                 },
               ]),
@@ -4368,16 +4356,19 @@ describe('CombatRuntimeAssembly', () => {
             'talent-aura': {
               stackingType: 'unique',
               lifecycleSequences: {
-                start: chainEntry('talent-aura-start', [
-                  {
-                    kind: 'changeResource',
-                    parameters: {
-                      resource: 'sp',
-                      amount: 20,
-                      recipient: 'team',
+                start: [
+                  chainEntry('talent-aura-start', [
+                    {
+                      kind: 'changeResource',
+                      parameters: {
+                        resource: 'sp',
+                        amount: 20,
+                        source: { kind: 'fixed' as const, target: 'caster' as const },
+                        targets: { kind: 'fixed' as const, target: 'caster' as const },
+                      },
                     },
-                  },
-                ]),
+                  ]),
+                ],
               },
             },
           },
@@ -4391,12 +4382,16 @@ describe('CombatRuntimeAssembly', () => {
                   {
                     kind: 'applyBuff',
                     parameters: {
-                      buffId: 'talent-aura',
-                      target: 'caster',
+                      buffs: [
+                        {
+                          buffId: 'talent-aura',
+                          blackboardAssignments: {
+                            attackIncrease: { kind: 'valueNode', nodeId: 'input_1' },
+                          },
+                        },
+                      ],
+                      targets: { kind: 'fixed', target: 'caster' },
                       asChildBuff: true,
-                      blackboardAssignments: {
-                        attackIncrease: { kind: 'valueNode', nodeId: 'input_1' },
-                      },
                     },
                   },
                 ],
@@ -4466,6 +4461,7 @@ describe('CombatRuntimeAssembly', () => {
         }).get(entry.id)!,
     });
     new CombatRuntimeAssembly({
+      comboSkillPendingInterval: 5,
       ...nativeEventRuntimeOptions(),
       registerCombatAbilityEvent: native.register,
       enemy: testEnemy,
@@ -4502,8 +4498,8 @@ describe('CombatRuntimeAssembly', () => {
                 {
                   kind: 'applyBuff',
                   parameters: {
-                    buffId: 'attack-up',
-                    target: 'caster',
+                    buffs: [{ buffId: 'attack-up' }],
+                    targets: { kind: 'fixed', target: 'caster' },
                   },
                 },
               ]),
@@ -4525,7 +4521,7 @@ describe('CombatRuntimeAssembly', () => {
     const event = {
       event: 'skillSpGained' as const,
       payload: {
-        sourceOperatorId: 'operator',
+        sourceId: 'operator',
         source: 'skill' as const,
         gainKind: 'gain' as const,
         requestedAmount: 1,
@@ -4570,7 +4566,8 @@ describe('CombatRuntimeAssembly', () => {
               parameters: {
                 resource: 'sp',
                 amount: 20,
-                recipient: 'team',
+                source: { kind: 'fixed' as const, target: 'caster' as const },
+                targets: { kind: 'fixed' as const, target: 'caster' as const },
                 spGainKind: 'gain',
                 spGainSource: 'skill',
               },
@@ -4580,12 +4577,10 @@ describe('CombatRuntimeAssembly', () => {
       ],
     });
     const assembly = new CombatRuntimeAssembly({
+      comboSkillPendingInterval: 5,
       registerCombatAbilityEvent: native.register,
       emitAbilityEvent: (_owner, event, payload) =>
-        native.dispatcher.dispatch(
-          { event, payload } as import('../events/combatAbilityEvent').CombatAbilityEvent,
-          [],
-        ),
+        native.dispatcher.dispatch({ event, payload } as CombatAbilityEvent, []),
       enemy: testEnemy,
       resources: {
         sp: 0,
@@ -4618,8 +4613,8 @@ describe('CombatRuntimeAssembly', () => {
                 {
                   kind: 'applyBuff',
                   parameters: {
-                    buffId: 'skill-sp-listener',
-                    target: 'caster',
+                    buffs: [{ buffId: 'skill-sp-listener' }],
+                    targets: { kind: 'fixed', target: 'caster' },
                   },
                 },
               ]),
@@ -4636,8 +4631,8 @@ describe('CombatRuntimeAssembly', () => {
                     {
                       kind: 'applyBuff',
                       parameters: {
-                        buffId: 'skill-sp-listener-attack',
-                        target: 'caster',
+                        buffs: [{ buffId: 'skill-sp-listener-attack' }],
+                        targets: { kind: 'fixed', target: 'caster' },
                       },
                     },
                   ]),
@@ -4670,8 +4665,8 @@ describe('CombatRuntimeAssembly', () => {
                 {
                   kind: 'applyBuff',
                   parameters: {
-                    buffId: 'skill-sp-attack',
-                    target: 'caster',
+                    buffs: [{ buffId: 'skill-sp-attack' }],
+                    targets: { kind: 'fixed', target: 'caster' },
                   },
                 },
               ]),
@@ -4850,7 +4845,12 @@ describe('CombatRuntimeAssembly', () => {
               'grant-sp': {
                 action: {
                   kind: 'changeResource',
-                  parameters: { resource: 'sp', amount: 20, recipient: 'team' },
+                  parameters: {
+                    resource: 'sp',
+                    amount: 20,
+                    source: { kind: 'fixed' as const, target: 'caster' as const },
+                    targets: { kind: 'fixed' as const, target: 'caster' as const },
+                  },
                 },
                 next: null,
               },
@@ -4901,7 +4901,12 @@ describe('CombatRuntimeAssembly', () => {
               'rank-grant': {
                 action: {
                   kind: 'changeResource',
-                  parameters: { resource: 'sp', amount: 20, recipient: 'team' },
+                  parameters: {
+                    resource: 'sp',
+                    amount: 20,
+                    source: { kind: 'fixed' as const, target: 'caster' as const },
+                    targets: { kind: 'fixed' as const, target: 'caster' as const },
+                  },
                 },
                 next: null,
               },
@@ -4930,138 +4935,53 @@ describe('CombatRuntimeAssembly', () => {
     expect(assembly.resources.sp).toBe(120);
   });
 
-  it('routes semantic status actions and conditions through one frame-driven owner', () => {
-    const receipt = new CombatReceiptCollector();
-    const program = skill({
-      timelineActions: [
-        {
-          startFrame: 0,
-          sequence: compileGraphEntry(
-            'status-owner-routing',
-            'step-0',
-            {
-              'step-0': {
-                action: {
-                  kind: 'applyStatus',
-                  parameters: { statusKey: 'ready', target: 'caster' },
-                },
-                next: 'step-1',
-              },
-              'step-1': {
-                action: {
-                  kind: 'conditional',
-                  parameters: {
-                    condition: { kind: 'conditionNode', nodeId: 'input_1' },
+  it.each([true, false])(
+    'evaluates caster control conditions from the current simulation frame: %s',
+    controlled => {
+      const isOperatorControlled = vi.fn(() => controlled);
+      const program = skill({
+        timelineActions: [
+          {
+            startFrame: 1,
+            sequence: compileGraphEntry(
+              'caster-controlled-condition',
+              'step-0',
+              {
+                'step-0': {
+                  action: {
+                    kind: 'conditional',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'input_1' } },
+                    whenTrue: { $sequence: 'control-grant' },
                   },
-                  whenTrue: { $sequence: 'status-grant' },
+                  next: null,
                 },
-                next: null,
-              },
-              'status-grant': {
-                action: {
-                  kind: 'changeResource',
-                  parameters: { resource: 'sp', amount: 1, recipient: 'team' },
-                },
-                next: null,
-              },
-            },
-            {
-              input_1: {
-                type: 'boolean',
-                expression: {
-                  kind: 'statusActive',
-                  statusKey: 'ready',
-                  target: 'caster',
+                'control-grant': {
+                  action: {
+                    kind: 'changeResource',
+                    parameters: {
+                      resource: 'sp',
+                      amount: 20,
+                      source: { kind: 'fixed' as const, target: 'caster' as const },
+                      targets: { kind: 'fixed' as const, target: 'caster' as const },
+                    },
+                  },
+                  next: null,
                 },
               },
-            },
-          ),
-        },
-      ],
-    });
-    const assembly = new CombatRuntimeAssembly({
-      ...nativeEventRuntimeOptions(),
-      enemy: testEnemy,
-      resources: {
-        sp: 0,
-        maxSp: 300,
-        returnedSp: 0,
-        sharedSpGain: { baseGainEfficiency: 1 },
-        spRecovery: { valuePerSecond: 0, pauseDuration: 0, pauseRemaining: 0 },
-        ultimateEnergySystemUnlocked: false,
-        normalSkillUltimateEnergy: { selfGainPerSp: 0, otherGainPerSp: 0 },
-        squad: [],
-      },
-      enemyBuffRuntime: emptyEnemyBuffRuntime,
-      operators: [
-        {
-          operatorId: 'operator',
-          skills: [program],
-          statusContainer: new CombatStatusContainer('operator', [
-            {
-              statusKey: 'ready',
-              applyStacks: 1,
-              maxStacks: 1,
-              durationFrames: 2,
-              durationStacking: 'refresh',
-              consumeStacks: 'all',
-            },
-          ]),
-        },
-      ],
-      createOperationExecutor: () => rejectingExecutor,
-      receipt,
-    });
+              { input_1: { type: 'boolean', expression: { kind: 'casterControlled' } } },
+            ),
+          },
+        ],
+      });
+      const assembly = createAssembly([program], isOperatorControlled);
 
-    assembly.tryStartSkill('operator', 'skill');
-    expect(assembly.resources.sp).toBe(1);
-    assembly.advanceFrames(2);
-    expect(
-      receipt.entries
-        .filter(entry => entry.event === 'StatusChanged')
-        .map(entry => entry.data?.reason),
-    ).toEqual(['applied', 'expired']);
-  });
+      assembly.tryStartSkill('operator', 'skill');
+      assembly.advanceFrame();
 
-  it('evaluates caster control conditions from the current simulation frame', () => {
-    const isOperatorControlled = vi.fn(() => true);
-    const program = skill({
-      timelineActions: [
-        {
-          startFrame: 1,
-          sequence: compileGraphEntry(
-            'caster-controlled-condition',
-            'step-0',
-            {
-              'step-0': {
-                action: {
-                  kind: 'conditional',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'input_1' } },
-                  whenTrue: { $sequence: 'control-grant' },
-                },
-                next: null,
-              },
-              'control-grant': {
-                action: {
-                  kind: 'changeResource',
-                  parameters: { resource: 'sp', amount: 20, recipient: 'team' },
-                },
-                next: null,
-              },
-            },
-            { input_1: { type: 'boolean', expression: { kind: 'casterControlled' } } },
-          ),
-        },
-      ],
-    });
-    const assembly = createAssembly([program], isOperatorControlled);
-
-    assembly.tryStartSkill('operator', 'skill');
-    assembly.advanceFrame();
-
-    expect(isOperatorControlled).toHaveBeenCalledWith('operator', 1);
-    expect(assembly.resources.sp).toBe(21);
-  });
+      expect(isOperatorControlled).toHaveBeenCalledWith('operator', 1);
+      expect(assembly.resources.sp).toBe(controlled ? 21 : 1);
+    },
+  );
 
   it('rejects caster control conditions when the scenario did not provide control state', () => {
     const program = skill({
@@ -5125,7 +5045,8 @@ describe('CombatRuntimeAssembly', () => {
               parameters: {
                 resource: 'sp',
                 amount: 20,
-                recipient: 'team',
+                source: { kind: 'fixed' as const, target: 'caster' as const },
+                targets: { kind: 'fixed' as const, target: 'caster' as const },
                 spGainKind: 'refund',
               },
             },
@@ -5190,14 +5111,15 @@ describe('CombatRuntimeAssembly', () => {
               },
             },
             {
-              kind: 'setContextFlag',
-              parameters: { flag: 'observed', value: true, target: 'caster' },
+              kind: 'dealStagger',
+              parameters: { value: 0 },
             },
           ]),
         },
       ],
     });
     const assembly = new CombatRuntimeAssembly({
+      comboSkillPendingInterval: 5,
       ...nativeEventRuntimeOptions(),
       enemy: testEnemy,
       resources: {
@@ -5260,8 +5182,8 @@ describe('CombatRuntimeAssembly', () => {
               },
               'mark-reached': {
                 action: {
-                  kind: 'setContextFlag',
-                  parameters: { flag: 'reached', value: true, target: 'caster' },
+                  kind: 'dealStagger',
+                  parameters: { value: 0 },
                 },
                 next: null,
               },
@@ -5283,6 +5205,7 @@ describe('CombatRuntimeAssembly', () => {
       ],
     });
     const assembly = new CombatRuntimeAssembly({
+      comboSkillPendingInterval: 5,
       ...nativeEventRuntimeOptions(),
       enemy: testEnemy,
       resources: {
@@ -5307,7 +5230,7 @@ describe('CombatRuntimeAssembly', () => {
       operators: [{ operatorId: 'operator', skills: [program] }],
       createOperationExecutor: () => ({
         execute: step => {
-          reachedBranch = step.kind === 'setContextFlag';
+          reachedBranch = step.kind === 'dealStagger';
           return true;
         },
         evaluate: () => false,
@@ -5364,8 +5287,8 @@ describe('CombatRuntimeAssembly', () => {
               },
               'reader-reached': {
                 action: {
-                  kind: 'setContextFlag',
-                  parameters: { flag: 'reached', value: true, target: 'caster' },
+                  kind: 'dealStagger',
+                  parameters: { value: 0 },
                 },
                 next: null,
               },
@@ -5390,6 +5313,7 @@ describe('CombatRuntimeAssembly', () => {
       ],
     });
     const assembly = new CombatRuntimeAssembly({
+      comboSkillPendingInterval: 5,
       ...nativeEventRuntimeOptions(),
       enemy: testEnemy,
       resources: {
@@ -5414,7 +5338,7 @@ describe('CombatRuntimeAssembly', () => {
       operators: [{ operatorId: 'operator', skills: [writer, reader] }],
       createOperationExecutor: () => ({
         execute: step => {
-          reachedBranch ||= step.kind === 'setContextFlag';
+          reachedBranch ||= step.kind === 'dealStagger';
           return true;
         },
         evaluate: () => false,
@@ -5453,8 +5377,8 @@ describe('CombatRuntimeAssembly', () => {
               },
               'buff-board-reached': {
                 action: {
-                  kind: 'setContextFlag',
-                  parameters: { flag: 'reached', value: true, target: 'caster' },
+                  kind: 'dealStagger',
+                  parameters: { value: 0 },
                 },
                 next: null,
               },
@@ -5479,6 +5403,7 @@ describe('CombatRuntimeAssembly', () => {
       ],
     });
     const assembly = new CombatRuntimeAssembly({
+      comboSkillPendingInterval: 5,
       ...nativeEventRuntimeOptions(),
       enemy: testEnemy,
       resources: {
@@ -5505,7 +5430,7 @@ describe('CombatRuntimeAssembly', () => {
       ],
       createOperationExecutor: () => ({
         execute: step => {
-          reachedBranch ||= step.kind === 'setContextFlag';
+          reachedBranch ||= step.kind === 'dealStagger';
           return true;
         },
         evaluate: () => false,
@@ -5544,13 +5469,17 @@ describe('CombatRuntimeAssembly', () => {
           sequence: chainEntry('party-buff-apply', [
             {
               kind: 'applyBuff',
-              parameters: { buffId: 'party-buff', target: 'party' },
+              parameters: {
+                buffs: [{ buffId: 'party-buff' }],
+                targets: { kind: 'characterTeam', excludeOwner: false },
+              },
             },
           ]),
         },
       ],
     });
     const assembly = new CombatRuntimeAssembly({
+      comboSkillPendingInterval: 5,
       ...nativeEventRuntimeOptions(),
       enemy: testEnemy,
       resources: {
@@ -5658,12 +5587,39 @@ describe('CombatRuntimeAssembly', () => {
           {
             startFrame: 0,
             sequence: chainEntry(`teammate-shield-apply-${target}`, [
-              { kind: 'applyBuff', parameters: { buffId: 'shield', target } },
+              {
+                kind: 'findCharacterTeamTargets',
+                parameters: {
+                  saveToContextKey: 'selected',
+                  selection:
+                    target === 'casterAndControlledOperator'
+                      ? { kind: 'controlledOperator' }
+                      : { kind: 'lowestHealthRatioOperator', excludeCaster: true },
+                },
+              },
+              {
+                kind: 'mergeContextTargets',
+                parameters: {
+                  saveToContextKey: 'recipients',
+                  sources: [
+                    { kind: 'target', target: 'caster' },
+                    { kind: 'context', contextKey: 'selected' },
+                  ],
+                },
+              },
+              {
+                kind: 'applyBuff',
+                parameters: {
+                  buffs: [{ buffId: 'shield' }],
+                  targets: { kind: 'context', key: 'recipients' },
+                },
+              },
             ]),
           },
         ],
       });
       const assembly = new CombatRuntimeAssembly({
+        comboSkillPendingInterval: 5,
         ...nativeEventRuntimeOptions(),
         enemy: testEnemy,
         resources: {
@@ -5729,7 +5685,8 @@ describe('CombatRuntimeAssembly', () => {
                 action: {
                   kind: 'finishBuffsById',
                   parameters: {
-                    target: 'caster',
+                    targets: { kind: 'fixed', target: 'caster' },
+                    finishSource: { kind: 'source' },
                     buffIds: ['sword-trigger'],
                     reason: 'other',
                   },
@@ -5754,6 +5711,7 @@ describe('CombatRuntimeAssembly', () => {
       ],
     });
     const assembly = new CombatRuntimeAssembly({
+      comboSkillPendingInterval: 5,
       ...nativeEventRuntimeOptions(),
       enemy: testEnemy,
       resources: {
@@ -5788,6 +5746,7 @@ describe('CombatRuntimeAssembly', () => {
   it('processes frame input after recovery and before the skill cost tick', () => {
     const program = skill({ costFrame: 0 });
     const assembly = new CombatRuntimeAssembly({
+      comboSkillPendingInterval: 5,
       ...nativeEventRuntimeOptions(),
       enemy: testEnemy,
       resources: {

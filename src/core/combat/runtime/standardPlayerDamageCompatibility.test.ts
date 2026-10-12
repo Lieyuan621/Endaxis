@@ -1,22 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import type { CompiledSkillProgram, ResolvedActionSequence } from '../../compiler/combatProgram';
-import type { CombatOperatorProgram } from './combatRuntimeAssembly';
-import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
 import type {
+  ActionGraphDefinition,
   ActionGraphNode,
   ActionGraphStep,
 } from '../../../../packages/game-data-contract/src/actionGraph';
-import {
-  assertStandardPlayerDamageCompatibility,
-  inspectStandardPlayerDamageCompatibility,
-  StandardPlayerDamageCompatibilityError,
-} from './standardPlayerDamageCompatibility';
+import type { CompiledSkillProgram, ResolvedActionSequence } from '../../compiler/combatProgram';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import type { CombatOperatorProgram } from './combatRuntimeAssembly';
+import { inspectStandardPlayerDamageCompatibility } from './standardPlayerDamageCompatibility';
 
 const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
-  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
   graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
   entry,
@@ -26,7 +23,7 @@ const compileGraphEntry = (
 const chainEntry = (
   revision: string,
   actions: readonly ActionGraphStep[],
-  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => {
   const nodes: Record<string, ActionGraphNode> = {};
   actions.forEach((action, index) => {
@@ -193,8 +190,9 @@ describe('standardPlayerDamageCompatibility', () => {
   it('普通倒地必须有显式装配、来源面板和隐式 Buff，不能漏过 Buff 内行为', () => {
     const sequence: ResolvedActionSequence = chainEntry('compat-knockdown-root', [
       {
-        kind: 'applyKnockDown',
+        kind: 'applyPhysicalInfliction',
         parameters: {
+          type: 'knockDown' as const,
           target: 'enemy',
           duration: { kind: 'constant', value: 1 },
           force: false,
@@ -269,57 +267,34 @@ describe('standardPlayerDamageCompatibility', () => {
       }),
     ).toEqual([expect.objectContaining({ code: 'unsupported-damage-calculation' })]);
   });
-  it('Switch 不会隐藏未选分支的不兼容行为，报告包含候选路径', () => {
+  it.each(['once', 'enter', 'exit'] as const)('检查 %s 回调中的不支持行为', port => {
     const issues = inspectStandardPlayerDamageCompatibility(
       compatibilityInput(
         operator(
-          compileGraphEntry('compat-switch-branches', 'switch', {
-            switch: {
-              action: {
-                kind: 'switch',
-                parameters: { choice: { kind: 'constant', value: 0 }, alwaysNext: true },
-                options: [
-                  { value: { kind: 'constant', value: 0 }, sequence: { $sequence: null } },
-                  {
-                    value: { kind: 'constant', value: 1 },
-                    sequence: { $sequence: 'option-one' },
-                  },
-                ],
-              },
+          compileGraphEntry('compat-once-body', 'once', {
+            once: {
+              action:
+                port === 'once'
+                  ? {
+                      kind: 'once',
+                      parameters: {},
+                      body: { $sequence: 'once-body' },
+                    }
+                  : {
+                      kind: 'aura',
+                      parameters: {
+                        targets: { kind: 'characterTeam', excludeOwner: false },
+                        buffs: [],
+                      },
+                      onEnter: { $sequence: port === 'enter' ? 'once-body' : null },
+                      onExit: { $sequence: port === 'exit' ? 'once-body' : null },
+                    },
               next: null,
             },
-            'option-one': {
-              action: {
-                kind: 'changeResource',
-                parameters: { resource: 'sp', recipient: 'caster', amount: 1 },
-              },
-              next: null,
-            },
-          }),
-        ),
-      ),
-    );
-    expect(issues).toHaveLength(1);
-    expect(issues[0]!.path).toContain('.options[1].sequence.steps[0]');
-  });
-
-  it('递归检查 repeatByActionValue 的动作体，不把运行时已支持的容器误报为未支持', () => {
-    const issues = inspectStandardPlayerDamageCompatibility(
-      compatibilityInput(
-        operator(
-          compileGraphEntry('compat-repeat-body', 'repeat', {
-            repeat: {
-              action: {
-                kind: 'repeatByActionValue',
-                parameters: { count: { kind: 'constant', value: 2 } },
-                body: { $sequence: 'repeat-body' },
-              },
-              next: null,
-            },
-            'repeat-body': {
+            'once-body': {
               action: {
                 kind: 'dealDamage',
-                parameters: { damageType: 'electric', attackScale: 1, tags: [] },
+                parameters: { damageType: 'lifeDrain', attackScale: 1, tags: [] },
               },
               next: null,
             },
@@ -328,7 +303,7 @@ describe('standardPlayerDamageCompatibility', () => {
       ),
     );
 
-    expect(issues).toEqual([]);
+    expect(issues).toEqual([expect.objectContaining({ code: 'unsupported-damage-calculation' })]);
   });
 
   it('允许技能动作上下文读取既有 Buff 黑板并参与条件判断', () => {
@@ -379,8 +354,8 @@ describe('standardPlayerDamageCompatibility', () => {
             {
               kind: 'applyBuff',
               parameters: {
-                buffId: 'buff:attached',
-                target: 'caster',
+                buffs: [{ buffId: 'buff:attached' }],
+                targets: { kind: 'fixed', target: 'caster' },
                 lifetimeOwner: 'currentCastSkill',
               },
             },
@@ -467,118 +442,16 @@ describe('standardPlayerDamageCompatibility', () => {
     ).toEqual(['unsupported-step']);
   });
 
-  it('recursively reports unsupported branches and nested conditions in stable order', () => {
-    const issues = inspectStandardPlayerDamageCompatibility(
-      compatibilityInput(
-        operator(
-          compileGraphEntry(
-            'compat-nested-report',
-            'branch',
-            {
-              branch: {
-                action: {
-                  kind: 'conditional',
-                  parameters: {
-                    condition: { kind: 'conditionNode', nodeId: 'input_4' },
-                  },
-                  whenTrue: { $sequence: null },
-                  whenFalse: { $sequence: 'nested-once' },
-                },
-                next: null,
-              },
-              'nested-once': {
-                action: {
-                  kind: 'once',
-                  parameters: { scopeKey: 'nested' },
-                  body: { $sequence: 'nested-infliction' },
-                },
-                next: null,
-              },
-              'nested-infliction': {
-                action: {
-                  kind: 'applyPhysicalInfliction',
-                  parameters: {
-                    type: 'fracture',
-                    target: 'enemy',
-                    isExtra: false,
-                    noGuardBuffId: 'buff:inline',
-                    noGuardDefinition: {
-                      stackingType: 'stack',
-                      priority: 0,
-                      maxStackCount: 1,
-                      lifecycleSequences: {
-                        enable: { $sequence: 'nested-unsupported-operation' },
-                      },
-                      actionGraph: {
-                        main: {
-                          nodes: {
-                            'nested-unsupported-operation': {
-                              action: {
-                                kind: 'setContextFlag',
-                                parameters: {
-                                  flag: 'unsupported-nested-operation',
-                                  value: true,
-                                  target: 'caster',
-                                },
-                              },
-                              next: null,
-                            },
-                          },
-                        },
-                        macros: {},
-                      },
-                    },
-                    fractureBuffId: 'buff:fracture',
-                    fractureDefinition: {
-                      stackingType: 'stack',
-                      priority: 0,
-                      maxStackCount: 1,
-                    },
-                  },
-                },
-                next: null,
-              },
-            },
-            {
-              input_1: { type: 'boolean', expression: { kind: 'combatActive' } },
-              input_2: {
-                type: 'boolean',
-                expression: { kind: 'skillBranchEnabled', branchKey: 'unsupported' },
-              },
-              input_3: {
-                type: 'boolean',
-                expression: {
-                  kind: 'not',
-                  condition: { kind: 'conditionNode', nodeId: 'input_2' },
-                },
-              },
-              input_4: {
-                type: 'boolean',
-                expression: {
-                  kind: 'all',
-                  conditions: [
-                    { kind: 'conditionNode', nodeId: 'input_1' },
-                    { kind: 'conditionNode', nodeId: 'input_3' },
-                  ],
-                },
-              },
-            },
-          ),
-        ),
-      ),
-    );
-
-    expect(issues.map(issue => issue.code)).toEqual(['unsupported-condition', 'unsupported-step']);
-    expect(issues[0]?.path).toContain('.parameters.condition.conditions[1].condition');
-    expect(issues[1]?.path).toContain(
-      '.whenFalse.steps[0].body.steps[0].parameters.noGuardDefinition.lifecycleSequences.enable.steps[0]',
-    );
-  });
-
   it('does not reject unsupported skills that cannot run before the requested end frame', () => {
     const entry = operator(
       chainEntry('compat-missing-buff', [
-        { kind: 'applyBuff', parameters: { buffId: 'buff:missing', target: 'enemy' } },
+        {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff:missing' }],
+            targets: { kind: 'fixed', target: 'enemy' },
+          },
+        },
       ]),
     );
 
@@ -652,7 +525,10 @@ describe('standardPlayerDamageCompatibility', () => {
               sequence: chainEntry('compat-late-action', [
                 {
                   kind: 'applyBuff',
-                  parameters: { buffId: 'buff:missing', target: 'enemy' },
+                  parameters: {
+                    buffs: [{ buffId: 'buff:missing' }],
+                    targets: { kind: 'fixed', target: 'enemy' },
+                  },
                 },
               ]),
             },
@@ -683,16 +559,16 @@ describe('standardPlayerDamageCompatibility', () => {
                 attackScale: 1,
                 calculationMultiplier: 2,
                 tags: [],
-                attackScalePerStatusStack: {
-                  statusKey: 'marked',
-                  target: 'enemy',
-                  coefficient: 0.1,
-                },
               },
             },
             {
               kind: 'changeResource',
-              parameters: { resource: 'sp', recipient: 'caster', amount: 1 },
+              parameters: {
+                resource: 'sp',
+                source: { kind: 'fixed', target: 'caster' },
+                targets: { kind: 'fixed', target: 'caster' },
+                amount: 1,
+              },
             },
           ]),
           1,
@@ -700,11 +576,7 @@ describe('standardPlayerDamageCompatibility', () => {
       ),
     );
 
-    expect(issues.map(issue => issue.code)).toEqual([
-      'unsupported-damage-calculation',
-      'unsupported-damage-field',
-      'unsupported-resource-change',
-    ]);
+    expect(issues.map(issue => issue.code)).toEqual(['unsupported-damage-calculation']);
   });
 
   it('checks equipment handler conditions and steps instead of rejecting all listeners', () => {
@@ -768,7 +640,7 @@ describe('standardPlayerDamageCompatibility', () => {
             'step-0': {
               action: {
                 kind: 'launchProjectile',
-                parameters: { finish: 0.1, recycleDelaySeconds: 0 },
+                parameters: { inheritActionBlackboard: true, finish: 0.1, recycleDelaySeconds: 0 },
                 callbacks: [
                   {
                     event: 'finish',
@@ -803,7 +675,8 @@ describe('standardPlayerDamageCompatibility', () => {
                                 parameters: {
                                   resource: 'sp',
                                   amount: 1,
-                                  recipient: 'team',
+                                  source: { kind: 'fixed', target: 'caster' },
+                                  targets: { kind: 'fixed', target: 'caster' },
                                   spGainKind: 'gain',
                                 },
                               },
@@ -825,32 +698,5 @@ describe('standardPlayerDamageCompatibility', () => {
     );
 
     expect(issues).toEqual([]);
-  });
-
-  it('throws one aggregate error containing all issues', () => {
-    const operators = [
-      operator(
-        chainEntry('compat-aggregate-error', [
-          { kind: 'dealStagger', parameters: { value: 10 } },
-          {
-            kind: 'applyBuff',
-            parameters: { buffId: 'buff:missing', target: 'enemy' },
-          },
-          { kind: 'setContextFlag', parameters: { flag: 'ready', value: true, target: 'caster' } },
-        ]),
-      ),
-    ];
-
-    try {
-      assertStandardPlayerDamageCompatibility({
-        operators,
-        inputs: [{ frame: 0, operatorId: 'operator:1', skillId: 'battle-skill' }],
-        endFrame: 1,
-      });
-      throw new Error('expected compatibility assertion to fail');
-    } catch (error) {
-      expect(error).toBeInstanceOf(StandardPlayerDamageCompatibilityError);
-      expect((error as StandardPlayerDamageCompatibilityError).issues).toHaveLength(1);
-    }
   });
 });

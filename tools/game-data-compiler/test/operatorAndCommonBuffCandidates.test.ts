@@ -59,7 +59,7 @@ const systemRoots = readSystemBuffRoots(
 const guardedBuff: SkillBuffDefinition = {
   stackingType: 'unlimited',
   lifecycleSequences: {
-    enable: { $sequence: 'guard' },
+    enable: [{ $sequence: 'guard' }],
   },
   actionGraph: {
     main: {
@@ -201,6 +201,7 @@ describe('干员与公共 Buff 共用规划', () => {
               action: {
                 kind: 'spawnAbilityEntity',
                 parameters: {
+                  bornAt: { kind: 'owner' as const },
                   abilityEntityId: 'fixture',
                   dieWhenSourceDies: false,
                   inheritActionBlackboard: true,
@@ -261,6 +262,7 @@ describe('干员与公共 Buff 共用规划', () => {
               action: {
                 kind: 'spawnAbilityEntity',
                 parameters: {
+                  bornAt: { kind: 'owner' as const },
                   abilityEntityId: 'fixture',
                   dieWhenSourceDies: false,
                   inheritActionBlackboard: true,
@@ -369,7 +371,7 @@ describe('干员与公共 Buff 共用规划', () => {
     };
     const first: SkillBuffDefinition = {
       stackingType: 'unlimited',
-      lifecycleSequences: { enable: { $sequence: 'conditional_opt1' } },
+      lifecycleSequences: { enable: [{ $sequence: 'conditional_opt1' }] },
       actionGraph: {
         main: {
           nodes: {
@@ -396,7 +398,7 @@ describe('干员与公共 Buff 共用规划', () => {
     // 两份原始输入只在被剪除的分支内容上不同；优化后收敛为同一结果。
     const second: SkillBuffDefinition = {
       stackingType: 'unlimited',
-      lifecycleSequences: { enable: { $sequence: 'conditional_opt1' } },
+      lifecycleSequences: { enable: [{ $sequence: 'conditional_opt1' }] },
       actionGraph: {
         main: {
           nodes: {
@@ -521,6 +523,7 @@ describe('干员与公共 Buff 共用规划', () => {
                 action: {
                   kind: 'spawnAbilityEntity',
                   parameters: {
+                    bornAt: { kind: 'owner' as const },
                     abilityEntityId: 'fixture',
                     dieWhenSourceDies: false,
                     inheritActionBlackboard: true,
@@ -570,7 +573,8 @@ describe('干员与公共 Buff 共用规划', () => {
       expect(compileEntityValueConsumers).toHaveBeenCalledTimes(withCommonBuffs ? 1 : 0);
       if (withCommonBuffs)
         expect(result.entityValueConsumers).toEqual({
-          reads: ['equipmentValue', 'mechanicValue'],
+          fallbackKeys: ['equipmentValue', 'mechanicValue'],
+          externalReads: [],
           unknownAccess: false,
         });
       else expect(result.entityValueConsumers).toBeUndefined();

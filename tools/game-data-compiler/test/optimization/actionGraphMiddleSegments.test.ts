@@ -28,7 +28,7 @@ function fixture(length = 8, prefixes = ['a', 'b']) {
       };
     }
     nodes[`${prefix}-end`] = {
-      action: { kind: 'finishTimeline', key: `${prefix}-end`, parameters: {} },
+      action: { kind: 'markCurrentSkillCanInterrupt', key: `${prefix}-end`, parameters: {} },
       next: null,
     };
   }
@@ -169,15 +169,10 @@ describe('同步直线中间段宏提取', () => {
 
   const excludedActions: readonly ActionGraphStep[] = [
     { kind: 'once', parameters: {}, body: { $sequence: null } },
-    {
-      kind: 'withActionBlackboardScope',
-      parameters: { initialValues: {}, inheritParent: true },
-      body: { $sequence: null },
-    },
-    { kind: 'finishTimeline', parameters: {} },
+    { kind: 'markCurrentSkillCanInterrupt', parameters: {} },
     {
       kind: 'launchProjectile',
-      parameters: { finish: 1, recycleDelaySeconds: 2 },
+      parameters: { inheritActionBlackboard: true, finish: 1, recycleDelaySeconds: 2 },
       callbacks: [
         {
           event: 'finish',

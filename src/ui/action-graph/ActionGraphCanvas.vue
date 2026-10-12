@@ -1873,7 +1873,6 @@ defineExpose({
           call: node.isCall,
           'variable-write':
             node.kind === 'modifyActionValue' || node.kind === 'calculateActionValue',
-          'scope-node': node.kind === 'withActionBlackboardScope',
         }"
         :style="{
           left: `${node.x}px`,
@@ -2090,9 +2089,6 @@ defineExpose({
 .graph-node.variable-write .node-header {
   background: var(--graph-write-header);
 }
-.graph-node.scope-node .node-header {
-  background: var(--graph-scope-header);
-}
 .graph-node.branch .node-header {
   background: var(--graph-branch-header);
 }
@@ -2215,7 +2211,6 @@ defineExpose({
   --graph-boolean-header: #434047;
   --graph-effect-header: #614728;
   --graph-write-header: #315346;
-  --graph-scope-header: #53406c;
   --graph-branch-header: #4d5058;
   --graph-call-header: #344b6b;
   --graph-data-pin-border: #193039;
@@ -2283,7 +2278,6 @@ defineExpose({
   --graph-boolean-header: #ede2e5;
   --graph-effect-header: #f8e7ce;
   --graph-write-header: #d8eee2;
-  --graph-scope-header: #ebddf5;
   --graph-branch-header: #e1e5ea;
   --graph-call-header: #dce8f7;
   --graph-data-pin-border: #ffffff;

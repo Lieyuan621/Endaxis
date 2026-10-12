@@ -3,32 +3,8 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 
 const definition = {
   slug: 'suit_criti01',
-  iconPath: '/equipment/criti01/item_equip_t4_suit_criti01_edc_03.webp',
+  icon: 'endaxis:equipment/criti01/item_equip_t4_suit_criti01_edc_03',
   modifiers: [{ kind: 'panelStat', stat: 'criticalRate', value: 0.05 }],
-  actionGraph: {
-    main: {
-      nodes: {
-        applyBuff_1: {
-          action: {
-            kind: 'applyBuff',
-            parameters: {
-              buffId: 'buff_equipsuit_critsuit_01',
-              target: 'caster',
-              blackboardAssignments: {
-                atk_up: { kind: 'constant', value: 0.05 },
-                crit_up: { kind: 'constant', value: 0.05 },
-                duration: { kind: 'constant', value: 5 },
-                crit_up2: { kind: 'constant', value: 0.05 },
-                max_stack: { kind: 'constant', value: 5 },
-              },
-            },
-          },
-          next: null,
-        },
-      },
-    },
-    macros: {},
-  },
   skillId: 'passive_equipsuit_critsuit_01',
   buffDefinitions: {
     buff_equipsuit_critsuit_01: {
@@ -40,7 +16,7 @@ const definition = {
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: { atk_up: 0.05, crit_up: 0.7, crit_up2: 0.05, duration: 6, max_stack: 5 },
+      blackboard: { atk_up: 0.05, crit_up2: 0.05, duration: 6, max_stack: 5 },
       attributeModifiers: [],
       abilityEventResponses: [
         { event: 'outputCriticalDamage', priority: 0, sequence: { $sequence: 'applyBuff_1' } },
@@ -52,17 +28,21 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_equipsuit_critsuitatk_01',
-                  target: 'buffOwner',
-                  source: 'buffOwner',
+                  buffs: [
+                    {
+                      buffId: 'buff_equipsuit_critsuitatk_01',
+                      copiedBlackboardAssignments: {
+                        atk_up: 'atk_up',
+                        crit_up2: 'crit_up2',
+                        duration: 'duration',
+                        max_stack: 'max_stack',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'owner' },
+                  source: { kind: 'owner' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    atk_up: 'atk_up',
-                    crit_up2: 'crit_up2',
-                    duration: 'duration',
-                    max_stack: 'max_stack',
-                  },
                 },
               },
               next: null,
@@ -79,8 +59,7 @@ const definition = {
       durationSeconds: { blackboardKey: 'duration' },
       presentation: {
         visible: true,
-        iconId: 'icon_battle_buff_atk_up',
-        iconPath: '/icons/icon_battle_buff_atk_up.webp',
+        icon: 'endaxis:icons/icon_battle_buff_atk_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -106,8 +85,8 @@ const definition = {
         { attribute: 'Atk', slot: 'baseMultiplier', value: { blackboardKey: 'atk_up' } },
       ],
       lifecycleSequences: {
-        enhanceChanged: { $sequence: 'conditional_2' },
-        finish: { $sequence: 'finishBuffsById_3' },
+        enhanceChanged: [{ $sequence: 'checkCondition_2' }],
+        finish: [{ $sequence: 'finishBuffsById_3' }],
       },
       actionGraph: {
         main: {
@@ -116,29 +95,33 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_equipsuit_critsuitdmg_01',
-                  target: 'buffOwner',
-                  source: 'buffOwner',
+                  buffs: [
+                    {
+                      buffId: 'buff_equipsuit_critsuitdmg_01',
+                      copiedBlackboardAssignments: { crit_up2: 'crit_up2' },
+                    },
+                  ],
+                  targets: { kind: 'owner' },
+                  source: { kind: 'owner' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: { crit_up2: 'crit_up2' },
                 },
               },
               next: null,
             },
-            conditional_2: {
+            checkCondition_2: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
               },
-              next: null,
+              next: 'applyBuff_1',
             },
             finishBuffsById_3: {
               action: {
                 kind: 'finishBuffsById',
                 parameters: {
-                  target: 'buffOwner',
+                  targets: { kind: 'owner' },
+                  finishSource: { kind: 'source' },
                   buffIds: ['buff_equipsuit_critsuitdmg_01'],
                   reason: 'other',
                 },
@@ -169,8 +152,7 @@ const definition = {
       maxStackCount: 5,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_crit_rate_up',
-        iconPath: '/icons/icon_battle_crit_rate_up.webp',
+        icon: 'endaxis:icons/icon_battle_crit_rate_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -199,6 +181,33 @@ const definition = {
     },
   },
   enableSequence: { $sequence: 'applyBuff_1' },
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [
+                {
+                  buffId: 'buff_equipsuit_critsuit_01',
+                  blackboardAssignments: {
+                    atk_up: { kind: 'constant', value: 0.05 },
+                    duration: { kind: 'constant', value: 5 },
+                    crit_up2: { kind: 'constant', value: 0.05 },
+                    max_stack: { kind: 'constant', value: 5 },
+                  },
+                },
+              ],
+              targets: { kind: 'fixed', target: 'caster' },
+            },
+          },
+          next: null,
+        },
+      },
+    },
+    macros: {},
+  },
 } as const satisfies GearSetDefinition;
 
 export default definition;

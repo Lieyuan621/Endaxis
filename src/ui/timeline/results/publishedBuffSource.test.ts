@@ -54,7 +54,7 @@ it('captures native weapon presentation identity and custom names without retain
   const weapon = {
     slug: 'wpn_funnel_0016',
     assetSlug: 'wpn_funnel_0016',
-    iconPath: '/icons/weapons/funnel.webp',
+    icon: 'endaxis:weapons/default',
   };
   const captured = capturePublishedEquipmentSources([
     weapon,
@@ -71,7 +71,7 @@ it('captures native weapon presentation identity and custom names without retain
   ).toEqual({
     kind: 'weapon',
     slug: 'wpn_funnel_0016',
-    iconPath: '/icons/weapons/funnel.webp',
+    iconPath: '/weapons/default.webp',
   });
   expect(
     resolvePublishedBuffSource(

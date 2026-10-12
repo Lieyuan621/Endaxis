@@ -149,7 +149,6 @@ export class ComboSkillConditionRuntime {
           passed = runtime.createSequence(options.sequence).executeInstant({});
         } finally {
           if (triggerTarget !== null) targets.remove('trigger');
-          runtime.reset();
         }
         if (passed) {
           options.onPending({

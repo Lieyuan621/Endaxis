@@ -1,68 +1,84 @@
+import type { ActionTargetQuery } from '../../../../packages/game-data-contract/src/conditions';
+import type { ResolvedCombatStepParameters } from '../../compiler/combatProgram';
 import type {
-  CompiledGraphStepForKind,
   CompiledCondition,
+  CompiledGraphStepForKind,
   CompiledValueInput,
 } from '../../compiler/compiledGraphData.ts';
+import type { AuraInfluenceState } from '../state/actionState';
+import type { BuffReference } from '../state/foundationState';
+import type { ExecutionTracePhase } from './actionExecutionTrace';
+import { endChanneling, tickChanneling } from './channelingActionExecution';
 /** 图程序保持共享；控制节点的子调用仅在执行、重置或恢复时绑定。 */
-import type { CompiledActionGraph } from '../../compiler/compileActionGraph';
-import { deriveAnonymousDamageStepKey } from '../timeline/deriveHitId';
-
-export type CombatActionExecution = ActionGraphExecution;
-import type { CompiledGraphOperation } from '../../compiler/compileActionGraph';
-import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
-import type { ActionBlackboardState } from '../state/foundationState';
-import type { RuntimeTargetRef, RuntimeTargetGroup } from '../../game-data/logicalAbilityEntity';
 import type { ActionGraphReference } from '../../../../packages/game-data-contract/src/actionGraph';
-import type { CombatEventListenerState } from '../state/actionState';
+import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
+import type {
+  CompiledActionGraph,
+  CompiledGraphOperation,
+} from '../../compiler/compileActionGraph';
+import type { RuntimeTargetGroup, RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+import { sameRuntimeTarget } from '../abilities/runtimeTargetContext';
+import {
+  STEP_RESULT_MODE,
+  type CombatEventListenerState,
+  type SequenceExecutionState,
+} from '../state/actionState';
+import { deriveAnonymousDamageStepKey } from '../timeline/deriveHitId';
 import type { EventResponseExecution } from './combatActionEventListener';
 
+export type CombatActionExecution = ActionGraphExecution;
+
 import {
-  type ActionGraphExecutionState,
-  type ActionGraphNodeData,
-  type GraphLeafStepData,
-  type ActionStepState,
   COMBAT_STEP_STATE,
   createBranchActionState,
+  createChannelingActionState,
   createRepeatedActionState,
-  createTargetLoopState,
+  createTimelineJumpState,
+  type ActionGraphExecutionState,
+  type ActionGraphNodeData,
+  type ActionStepState,
+  type GraphLeafStepData,
 } from '../state/actionState';
 import {
+  endActionSequence,
   executeActionSequence,
   resetActionSequence,
   tickActionSequence,
-  endActionSequence,
   type ActionSequenceExecutionHost,
 } from './actionSequenceExecution';
 import {
+  endBranchAction,
   executeConditionalAction,
   executeSwitchAction,
-  tickBranchAction,
-  endBranchAction,
   resetConditionalAction,
   resetSwitchAction,
+  tickBranchAction,
   type BranchActionHost,
 } from './branchActionExecution';
 import { CombatStep, type CombatExecutionContext } from './combatStep';
 import {
-  executeCountedAction,
-  executeTargetLoop,
-  tickTargetLoop,
-  endTargetLoop,
-  resetTargetLoop,
-  type TargetLoopHost,
-} from './sequenceControl';
-import {
   executeRepeatedAction,
-  tickRepeatedAction,
   resetRepeatedAction,
+  tickRepeatedAction,
 } from './repeatedActionExecution';
+import { executeTimelineJump, resetTimelineJump, tickTimelineJump } from './sequenceControl';
 
 export interface ActionGraphExecutionHost {
+  readonly comboQte?: {
+    register(earlySeconds: number, activeSeconds: number): number;
+    bind(registration: number, triggered: () => void): void;
+    end(registration: number): void;
+  };
+  readonly frame?: () => number;
+  readonly inputTarget?: RuntimeTargetRef;
+  selectTargets?(selection: ActionTargetQuery, input: RuntimeTargetRef | null): RuntimeTargetGroup;
+  readonly requestTimelineJump: ((frame: number) => void) | undefined;
+  readonly executionPolicy: SequenceExecutionState;
   readonly trace?: <T>(
     program: CompiledActionGraph,
     nodeId: string,
     invocation: string,
-    phase: import('./actionExecutionTrace').ExecutionTracePhase,
+    phase: ExecutionTracePhase,
     execute: () => T,
   ) => T;
   listener(
@@ -78,21 +94,19 @@ export interface ActionGraphExecutionHost {
   targets(
     parameters: ResolvedCombatStepForKind<'forEachContextTarget'>['parameters'],
   ): RuntimeTargetGroup;
-  withTarget(target: RuntimeTargetRef): ActionGraphExecutionHost;
+  withTarget(target: RuntimeTargetRef, asInput?: boolean): ActionGraphExecutionHost;
+  withSavedInput(target: RuntimeTargetRef | null): ActionGraphExecutionHost;
+  aura?(parameters: ResolvedCombatStepParameters['aura']): {
+    targets(): readonly RuntimeTargetRef[];
+    apply(target: RuntimeTargetRef): BuffReference[];
+    finish(references: readonly BuffReference[]): void;
+  };
   bindOperation(
     action: CompiledGraphOperation,
   ): CombatStep & { readonly executionData: GraphLeafStepData };
   canExecute(): boolean;
   evaluate(condition: CompiledCondition): boolean;
   value(operand: CompiledValueInput): number;
-  once(key: string, execute: () => void): boolean;
-  scope(
-    parameters: ResolvedCombatStepForKind<'withActionBlackboardScope'>['parameters'],
-    saved?: ActionBlackboardState,
-  ): {
-    readonly host: ActionGraphExecutionHost;
-    readonly blackboard: ActionBlackboardState;
-  };
 }
 
 interface GraphNodeBinding {
@@ -145,22 +159,32 @@ function wrapMacroHost(
     return result as T;
   };
   return {
+    frame: host.frame,
+    comboQte: host.comboQte,
+    withSavedInput: target => wrapMacroHost(host.withSavedInput(target), args),
+    get inputTarget() {
+      return host.inputTarget;
+    },
+    selectTargets: host.selectTargets,
+    executionPolicy: host.executionPolicy,
+    requestTimelineJump: host.requestTimelineJump,
     ...(host.trace === undefined ? {} : { trace: host.trace }),
     listener: (responses, state, create) =>
       host.listener(substitute(responses), state, (reference, index, inner, saved) =>
         create(reference, index, wrapMacroHost(inner, args), saved),
       ),
     targets: parameters => host.targets(substitute(parameters)),
-    withTarget: target => wrapMacroHost(host.withTarget(target), args),
+    withTarget: (target, asInput) => wrapMacroHost(host.withTarget(target, asInput), args),
+    ...(host.aura === undefined
+      ? {}
+      : {
+          aura: (parameters: ResolvedCombatStepParameters['aura']) =>
+            host.aura!(substitute(parameters)),
+        }),
     bindOperation: action => host.bindOperation(substitute(action)),
     canExecute: () => host.canExecute(),
     evaluate: condition => host.evaluate(substitute(condition)),
     value: operand => host.value(substitute(operand)),
-    once: (key, execute) => host.once(key, execute),
-    scope: (parameters, saved) => {
-      const scoped = host.scope(substitute(parameters), saved);
-      return { blackboard: scoped.blackboard, host: wrapMacroHost(scoped.host, args) };
-    },
   };
 }
 
@@ -312,6 +336,49 @@ export class ActionGraphExecution extends CombatStep {
               inlineOnly: true,
               inline: create => (create ? getBody() : body),
             };
+    } else if (action.kind === 'anyCondition') {
+      if (saved && saved.kind !== 'graphConditions')
+        throw new Error(`expected condition sequences: ${id}`);
+      const data = saved ?? {
+        kind: 'graphConditions' as const,
+        sequences: new Map<number, ActionGraphExecutionState>(),
+      };
+      const children = new Map<number, ActionGraphExecution>();
+      const child = (index: number) => {
+        let body = children.get(index);
+        if (!body) {
+          const entry = action.conditions[index];
+          if (!entry) throw new Error(`invalid condition sequence: ${id}/${index}`);
+          body = this.#child(id, index, entry.$sequence, data.sequences.get(index));
+          children.set(index, body);
+          data.sequences.set(index, body.runtimeState);
+        }
+        return body;
+      };
+      for (const index of data.sequences.keys()) child(index);
+      binding = {
+        data,
+        execute: context =>
+          action.conditions.some((_, index) => child(index).executeInstant(context)),
+        reset: context => action.conditions.forEach((_, index) => child(index).reset(context)),
+        tick() {},
+        end() {},
+      };
+    } else if (action.kind === 'checkCondition' || action.kind === 'invertNextResult') {
+      if (saved && saved.kind !== 'stateless') throw new Error(`expected check state: ${id}`);
+      binding = {
+        data: saved ?? { kind: 'stateless' },
+        execute: context => {
+          if (action.kind === 'checkCondition')
+            return this.host.evaluate(action.parameters.condition);
+          if (!context.sequence) throw new Error('NotNext requires a sequence execution context');
+          context.sequence.resultMode = STEP_RESULT_MODE.invertNextResult;
+          return true;
+        },
+        reset() {},
+        tick() {},
+        end() {},
+      };
     } else if (
       action.kind === 'conditional' &&
       action.whenFalse === undefined &&
@@ -335,7 +402,11 @@ export class ActionGraphExecution extends CombatStep {
           return body;
         },
       };
-    } else if (action.kind === 'conditional' || action.kind === 'switch') {
+    } else if (
+      action.kind === 'conditional' ||
+      action.kind === 'switch' ||
+      action.kind === 'ifElse'
+    ) {
       if (saved && saved.kind !== 'graphBranch') throw new Error(`expected branch state: ${id}`);
       const data = saved ?? {
         kind: 'graphBranch' as const,
@@ -348,6 +419,7 @@ export class ActionGraphExecution extends CombatStep {
           : [
               action.whenTrue.$sequence,
               ...(action.whenFalse === undefined ? [] : [action.whenFalse.$sequence]),
+              ...(action.kind === 'ifElse' ? [action.condition.$sequence] : []),
             ];
       const bindings = new Map<number, ActionGraphExecution>();
       const branch = (index: number) => {
@@ -386,19 +458,34 @@ export class ActionGraphExecution extends CombatStep {
                 action.parameters.alwaysNext === true,
                 {
                   ...branchHost(context),
-                  evaluate: () => this.host.evaluate(action.parameters.condition),
+                  evaluate: () =>
+                    action.kind === 'ifElse'
+                      ? branch(2).executeInstant(context)
+                      : this.host.evaluate(action.parameters.condition),
                 },
               ),
-        reset: context =>
-          action.kind === 'switch'
+        reset: context => {
+          if (action.kind === 'ifElse') branch(2).reset(context);
+          return action.kind === 'switch'
             ? resetSwitchAction(entries.length, branchHost(context))
             : resetConditionalAction(
                 data.selection,
                 action.whenFalse !== undefined,
                 branchHost(context),
-              ),
-        tick: (delta, context) => tickBranchAction(data.selection, delta, branchHost(context)),
-        end: context => endBranchAction(data.selection, branchHost(context)),
+              );
+        },
+        tick: (delta, context) => {
+          if (action.kind === 'ifElse') {
+            branch(0).tick(delta, context);
+            branch(1).tick(delta, context);
+          } else tickBranchAction(data.selection, delta, branchHost(context));
+        },
+        end: context => {
+          if (action.kind === 'ifElse') {
+            branch(0).end(context);
+            branch(1).end(context);
+          } else endBranchAction(data.selection, branchHost(context));
+        },
       };
     } else if (action.kind === 'listenForCombatEvents') {
       if (saved && saved.kind !== 'graphListener')
@@ -419,175 +506,368 @@ export class ActionGraphExecution extends CombatStep {
         reset: () => listener.reset(),
         tick() {},
       };
-    } else if (action.kind === 'forEachContextTarget') {
-      if (saved && saved.kind !== 'graphTargets')
-        throw new Error(`expected target loop state: ${id}`);
+    } else if (action.kind === 'playAnimation') {
+      if (saved && saved.kind !== 'graphAnimation')
+        throw new Error(`expected animation state: ${id}`);
       const data = saved ?? {
-        kind: 'graphTargets' as const,
-        loop: createTargetLoopState<ActionGraphExecutionState>(),
+        kind: 'graphAnimation' as const,
+        active: false,
+        remainingSeconds: 0,
+        target: null,
+        body: null,
       };
-      const children = new Map<number, ActionGraphExecution>();
-      for (const [instance, body] of data.loop.bodies) {
-        children.set(
-          instance,
-          this.#child(
+      let child: ActionGraphExecution | undefined;
+      const body = () => {
+        if (!child) {
+          child = this.#child(
             id,
             0,
-            action.body.$sequence,
-            body.sequence,
-            this.host.withTarget(body.target),
-            instance,
-          ),
-        );
-      }
-      const child = (instance: number) => {
-        const body = children.get(instance);
-        if (!body) throw new Error(`target loop body ${instance} is missing`);
-        return body;
-      };
-      for (const instance of data.loop.activeBodies) child(instance);
-      const loopHost = (context: CombatExecutionContext): TargetLoopHost => ({
-        start: target => {
-          const instance = data.loop.nextBodyId++;
-          const body = this.#child(
-            id,
-            0,
-            action.body.$sequence,
-            undefined,
-            this.host.withTarget(target),
-            instance,
+            action.onEnd.$sequence,
+            data.body ?? undefined,
+            this.host.withSavedInput(data.target),
           );
-          body.reset(context);
-          body.tryExecute(context);
-          children.set(instance, body);
-          data.loop.bodies.set(instance, { target: { ...target }, sequence: body.runtimeState });
-          return instance;
+          data.body = child.runtimeState;
+        }
+        return child;
+      };
+      if (data.body !== null) body();
+      const finish = () => {
+        if (!data.active) return;
+        data.active = false;
+        if (data.remainingSeconds <= 0 || !action.parameters.executeOnNormalEndOnly)
+          body().executeInstant({});
+        data.target = null;
+      };
+      binding = {
+        data,
+        execute: () => {
+          data.active = true;
+          data.remainingSeconds = Math.fround(
+            Math.fround(action.parameters.durationSeconds) -
+              Math.fround(action.parameters.blendOutSeconds),
+          );
+          data.target = this.host.inputTarget === undefined ? null : { ...this.host.inputTarget };
+          child = undefined;
+          return true;
         },
-        tick: (instance, delta) => child(instance).tick(delta, context),
-        end: instance => child(instance).end(context),
+        tick: delta => {
+          if (!data.active) return;
+          data.remainingSeconds = Math.fround(data.remainingSeconds - Math.fround(delta));
+          if (data.remainingSeconds <= 0) finish();
+        },
+        end: finish,
+        reset: context => body().reset(context),
+      };
+    } else if (action.kind === 'showComboRingQte') {
+      if (saved && saved.kind !== 'graphComboQte') throw new Error(`expected QTE state: ${id}`);
+      const data = saved ?? {
+        kind: 'graphComboQte' as const,
+        registration: null,
+        target: null,
+        body: null,
+      };
+      const qte = this.host.comboQte;
+      if (!qte) throw new Error('QTE runtime is not configured');
+      let child: ActionGraphExecution | undefined;
+      const body = () => {
+        if (!child) {
+          child = this.#child(
+            id,
+            0,
+            action.triggeredAction.$sequence,
+            data.body ?? undefined,
+            this.host.withSavedInput(data.target),
+          );
+          data.body = child.runtimeState;
+        }
+        return child;
+      };
+      const bind = () => {
+        if (data.registration !== null)
+          qte.bind(data.registration, () => body().executeInstant({}));
+      };
+      if (data.body !== null) body();
+      bind();
+      binding = {
+        data,
+        execute: () => {
+          if (data.registration !== null) qte.end(data.registration);
+          data.target = this.host.inputTarget === undefined ? null : { ...this.host.inputTarget };
+          child = undefined;
+          data.registration = qte.register(
+            this.host.value(action.parameters.earlyDurationSeconds),
+            this.host.value(action.parameters.activeDurationSeconds),
+          );
+          bind();
+          return true;
+        },
+        tick() {},
+        reset: context => body().reset(context),
+        end: context => {
+          if (data.registration !== null) qte.end(data.registration);
+          data.registration = null;
+          body().end(context);
+          data.target = null;
+        },
+      };
+    } else if (action.kind === 'aura') {
+      if (saved && saved.kind !== 'graphAura') throw new Error(`expected Aura state: ${id}`);
+      const data = saved ?? { kind: 'graphAura' as const, active: false, influences: [] };
+      const influence = this.host.aura?.(action.parameters);
+      if (!influence) throw new Error('Aura runtime is not configured');
+      const callbacks = new Map<
+        number,
+        { enter?: ActionGraphExecution; exit?: ActionGraphExecution }
+      >();
+      const bind = (index: number) => {
+        // 空回调没有返回值消费者，也没有生命周期行为，无需创建子实例和目标宿主。
+        if (action.onEnter.$sequence === null && action.onExit.$sequence === null) return;
+        let pair = callbacks.get(index);
+        if (pair) return pair;
+        const item = data.influences[index]!;
+        const host = this.host.withTarget(item.target, true);
+        pair = {
+          ...(action.onEnter.$sequence === null
+            ? {}
+            : {
+                enter: this.#child(
+                  id,
+                  0,
+                  action.onEnter.$sequence,
+                  item.enter ?? undefined,
+                  host,
+                  index,
+                ),
+              }),
+          ...(action.onExit.$sequence === null
+            ? {}
+            : {
+                exit: this.#child(
+                  id,
+                  1,
+                  action.onExit.$sequence,
+                  item.exit ?? undefined,
+                  host,
+                  index,
+                ),
+              }),
+        };
+        item.enter = pair.enter?.runtimeState ?? null;
+        item.exit = pair.exit?.runtimeState ?? null;
+        callbacks.set(index, pair);
+        return pair;
+      };
+      // 恢复只重新绑定已有程序和状态，不执行进入、退出或重新施加。
+      data.influences.forEach((_item, index) => bind(index));
+      const leave = (index: number, context: CombatExecutionContext) => {
+        const item = data.influences[index]!;
+        if (!item.active) return;
+        item.active = false;
+        influence.finish(item.buffs);
+        item.buffs.length = 0;
+        bind(index)?.exit?.tryExecute(context, true);
+      };
+      const synchronize = (context: CombatExecutionContext) => {
+        if (!data.active) return;
+        const targets = influence.targets();
+        for (let index = data.influences.length - 1; index >= 0; index--)
+          if (
+            data.influences[index]!.active &&
+            !targets.some(target => sameRuntimeTarget(target, data.influences[index]!.target))
+          )
+            leave(index, context);
+        for (const target of targets) {
+          if (!data.active) break;
+          if (data.influences.some(item => item.active && sameRuntimeTarget(item.target, target)))
+            continue;
+          const index = data.influences.length;
+          const item: AuraInfluenceState = {
+            target: { ...target },
+            buffs: [],
+            active: true,
+            enter: null,
+            exit: null,
+          };
+          data.influences.push(item);
+          const references = influence.apply(target);
+          if (!data.active || !item.active) {
+            influence.finish(references);
+            continue;
+          }
+          item.buffs.push(...references);
+          bind(index)?.enter?.tryExecute(context, true);
+        }
+      };
+      binding = {
+        data,
+        execute: context => {
+          data.active = true;
+          synchronize(context);
+          return true;
+        },
+        tick: (_delta, context) => synchronize(context),
+        end: context => {
+          data.active = false;
+          for (let index = data.influences.length - 1; index >= 0; index--) leave(index, context);
+          for (const pair of callbacks.values()) {
+            pair.enter?.end(context);
+            pair.exit?.end(context);
+          }
+        },
+        reset: context => {
+          data.active = false;
+          for (const pair of callbacks.values()) {
+            pair.enter?.reset(context);
+            pair.exit?.reset(context);
+          }
+          callbacks.clear();
+          data.influences.length = 0;
+        },
+      };
+    } else if (action.kind === 'jumpTimeline') {
+      if (saved && saved.kind !== 'graphJump') throw new Error(`expected jump state: ${id}`);
+      const data = saved ?? {
+        kind: 'graphJump' as const,
+        jump: createTimelineJumpState(),
+        condition: null,
+      };
+      const condition = this.#child(id, 0, action.condition.$sequence, data.condition ?? undefined);
+      data.condition = condition.runtimeState;
+      const jumpHost = (context: CombatExecutionContext) => ({
+        evaluate: () => condition.executeInstant(context),
+        resolveRequest: () => {
+          const request = this.host.requestTimelineJump;
+          if (!request) throw new Error('jumpTimeline requires a timeline host');
+          return () => request(action.parameters.destinationFrame);
+        },
       });
       binding = {
         data,
         execute: context => {
-          executeTargetLoop(data.loop, this.host.targets(action.parameters), loopHost(context));
+          executeTimelineJump(data.jump, jumpHost(context));
           return true;
         },
-        tick: (delta, context) => tickTargetLoop(data.loop, delta, loopHost(context)),
-        end: context => {
-          endTargetLoop(data.loop, loopHost(context));
-          children.clear();
-        },
-        reset: () => {
-          resetTargetLoop(data.loop);
-          children.clear();
+        tick: (_delta, context) => tickTimelineJump(data.jump, jumpHost(context)),
+        end: context => condition.end(context),
+        reset: context => {
+          resetTimelineJump(data.jump);
+          condition.reset(context);
         },
       };
-    } else if (action.kind === 'withActionBlackboardScope') {
-      if (saved && saved.kind !== 'graphScope') throw new Error(`expected scope state: ${id}`);
-      const data = saved ?? { kind: 'graphScope' as const, body: null };
-      const parameters = {
-        ...action.parameters,
-        scopeKey:
-          action.parameters.scopeKey ??
-          JSON.stringify([this.runtimeState.callSite, this.#identity(id)]),
-      };
-      let body: ActionGraphExecution | undefined;
-      if (data.body) {
-        const scope = this.host.scope(parameters, data.body.blackboard);
-        body = this.#child(id, 0, action.body.$sequence, data.body.execution, scope.host);
-      }
-      const getBody = () => {
-        if (!body) {
-          const scope = this.host.scope(parameters);
-          body = this.#child(id, 0, action.body.$sequence, undefined, scope.host);
-          data.body = { blackboard: scope.blackboard, execution: body.runtimeState };
-          body.reset({});
-        }
-        return body;
+    } else if (action.kind === 'forEachContextTarget') {
+      if (saved && saved.kind !== 'graphTargets')
+        throw new Error(`expected target loop state: ${id}`);
+      const data = saved ?? { kind: 'graphTargets' as const, body: null };
+      const body = (host = this.host) => {
+        const child = this.#child(id, 0, action.body.$sequence, data.body ?? undefined, host);
+        data.body = child.runtimeState;
+        return child;
       };
       binding = {
         data,
         execute: context => {
-          if (parameters.lifetime === 'execution') {
-            body = undefined;
-            data.body = null;
-          }
-          const result = getBody().tryExecute(context);
-          return parameters.alwaysNext === true || result;
+          // 原生先复制目标列表，循环体复用同一实例和变量环境。
+          const targets = this.host.targets(action.parameters).map(target => ({ ...target }));
+          for (const target of targets)
+            body(this.host.withTarget(target, true)).executeInstant(context);
+          return true;
         },
-        tick: (delta, context) => getBody().tick(delta, context),
-        end: context => body?.end(context),
+        tick: () => {},
+        end: context => {
+          if (data.body) body().end(context);
+        },
         reset: context => {
-          body?.reset(context);
-          body = undefined;
-          data.body = null;
+          if (data.body) body().reset(context);
         },
       };
     } else if (
-      action.kind === 'once' ||
-      action.kind === 'repeatEachTick' ||
-      action.kind === 'repeatByActionValue'
+      action.kind === 'repeatEachTick' &&
+      action.parameters.nativeChanneling !== undefined
     ) {
-      const instant = (context: CombatExecutionContext) => {
-        const body = this.#child(id, 0, action.body.$sequence);
-        body.reset(context);
-        const result = body.tryExecute(context);
-        body.end(context);
-        body.reset(context);
-        return result;
+      if (saved && saved.kind !== 'channeling') throw new Error(`expected channeling state: ${id}`);
+      const data = saved ?? {
+        kind: 'channeling' as const,
+        channeling: createChannelingActionState(),
       };
-      if (action.kind === 'repeatByActionValue') {
-        if (saved && saved.kind !== 'stateless')
-          throw new Error(`expected counted repeat state: ${id}`);
+      const state = data.channeling;
+      const parameters = action.parameters.nativeChanneling;
+      const body = (host = this.host) => {
+        const child = this.#child(id, 0, action.body.$sequence, state.body ?? undefined, host);
+        state.body = child.runtimeState;
+        return child;
+      };
+      const tick = (delta: number, context: CombatExecutionContext) => {
+        if (!this.host.frame || !this.host.selectTargets)
+          throw new Error('Channeling requires a frame clock and target resolver');
+        tickChanneling(
+          state,
+          parameters,
+          this.host.frame(),
+          delta,
+          () => this.host.selectTargets!(parameters.target, state.inputTarget),
+          target => body(this.host.withTarget(target, true)).executeInstant(context),
+        );
+      };
+      binding = {
+        data,
+        execute: context => {
+          endChanneling(state);
+          state.inputTarget = this.host.inputTarget == null ? null : { ...this.host.inputTarget };
+          state.checkFrame = -1;
+          tick(0, context);
+          return true;
+        },
+        tick,
+        end: context => {
+          body().end(context);
+          endChanneling(state);
+        },
+        reset: context => body().reset(context),
+      };
+    } else if (action.kind === 'once' || action.kind === 'repeatEachTick') {
+      if (action.kind === 'once') {
+        if (saved && saved.kind !== 'graphOnce') throw new Error(`expected once state: ${id}`);
+        const data = saved ?? { kind: 'graphOnce' as const, executed: false, body: null };
+        const body = this.#child(id, 0, action.body.$sequence, data.body ?? undefined);
+        data.body = body.runtimeState;
         binding = {
-          data: saved ?? { kind: 'stateless' },
-          execute: context =>
-            executeCountedAction(this.host.value(action.parameters.count), () => {
-              instant(context);
-            }),
-          reset() {},
+          data,
+          execute: context => {
+            if (!data.executed) {
+              body.executeInstant(context);
+              data.executed = true;
+            }
+            return true;
+          },
+          reset: context => {
+            if (context.resetReason !== 'afterInstant') data.executed = false;
+            body.reset(context);
+          },
           tick() {},
-          end() {},
-        };
-      } else if (action.kind === 'once') {
-        if (saved && saved.kind !== 'stateless') throw new Error(`expected once state: ${id}`);
-        binding = {
-          data: saved ?? { kind: 'stateless' },
-          execute: context =>
-            this.host.once(
-              action.parameters.scopeKey ??
-                JSON.stringify([this.runtimeState.callSite, this.#identity(id)]),
-              () => {
-                instant(context);
-              },
-            ),
-          reset() {},
-          tick() {},
-          end() {},
+          end: context => body.end(context),
         };
       } else {
         if (saved && saved.kind !== 'repeat') throw new Error(`expected repeat state: ${id}`);
         const data = saved ?? { kind: 'repeat' as const, repetition: createRepeatedActionState() };
-        // ExecuteInterval 保留子动作到下一周期；恢复只重建执行器，不重放开始动作。
+        // 周期之间复用子动作实例；恢复不重放已执行的动作。
         let persistentBody: ActionGraphExecution | null = null;
         if (data.repetition.body !== null)
           persistentBody = this.#child(id, 0, action.body.$sequence, data.repetition.body);
         const run = (context: CombatExecutionContext) => {
+          const existingBody = persistentBody;
+          if (persistentBody === null) {
+            persistentBody = this.#child(id, 0, action.body.$sequence);
+            data.repetition.body = persistentBody.runtimeState;
+          }
           if (action.parameters.nativeExecuteInterval !== undefined) {
-            if (persistentBody === null) {
-              persistentBody = this.#child(id, 0, action.body.$sequence);
-              data.repetition.body = persistentBody.runtimeState;
-            } else {
-              persistentBody.end(context);
-            }
+            existingBody?.end(context);
             persistentBody.reset(context);
             persistentBody.tryExecute(context);
             return;
           }
           if (
-            !instant(context) &&
-            action.parameters.nativeTickInterval === undefined &&
-            action.parameters.nativeChanneling === undefined
+            !persistentBody.executeInstant(context) &&
+            action.parameters.nativeTickInterval === undefined
           )
             throw new Error(
               'repeatEachTick body returned false; repeated short-circuit is not modeled',
@@ -610,12 +890,18 @@ export class ActionGraphExecution extends CombatStep {
       }
     } else {
       if (
+        saved?.kind === 'graphAura' ||
+        saved?.kind === 'graphAnimation' ||
+        saved?.kind === 'graphComboQte' ||
         saved?.kind === 'graphBranch' ||
+        saved?.kind === 'graphConditions' ||
         saved?.kind === 'graphMacro' ||
         saved?.kind === 'graphGuard' ||
+        saved?.kind === 'graphOnce' ||
+        saved?.kind === 'channeling' ||
+        saved?.kind === 'graphJump' ||
         saved?.kind === 'graphTargets' ||
-        saved?.kind === 'graphListener' ||
-        saved?.kind === 'graphScope'
+        saved?.kind === 'graphListener'
       )
         throw new Error(`expected operation state: ${id}`);
       // 程序节点可以共享，句柄目录中的操作身份不能跨调用位置共享；恢复复用同一身份。
@@ -633,8 +919,7 @@ export class ActionGraphExecution extends CombatStep {
       if (!keyed) {
         keyed = {
           ...action,
-          ...(action.key === undefined &&
-          (action.kind === 'dealDamage' || action.kind === 'dealFixedDamage')
+          ...(action.key === undefined && action.kind === 'dealDamage'
             ? {
                 // 与命中预览共享的身份规则；不能包含 invocation 等运行时计数器，
                 // 否则静态预览无法归因模拟后的 DamageApplied 回执。
@@ -712,17 +997,25 @@ export class ActionGraphExecution extends CombatStep {
     }
   }
 
+  #executionContext(context: CombatExecutionContext): CombatExecutionContext {
+    return context.sequence === this.host.executionPolicy
+      ? context
+      : { ...context, sequence: this.host.executionPolicy };
+  }
+
   #executionHost(context: CombatExecutionContext): ActionSequenceExecutionHost<GraphNodeBinding> {
     return {
       canExecute: () => this.host.canExecute(),
       execute: binding => binding.execute(context),
-      reset: binding => binding.reset(context),
+      reset: (binding, reason) =>
+        binding.reset(reason === undefined ? context : { ...context, resetReason: reason }),
       tick: (binding, dt) => binding.tick(dt, context),
       end: binding => binding.end(context),
     };
   }
 
   tryExecute(context: CombatExecutionContext, resetAfterExecute = false): boolean {
+    context = this.#executionContext(context);
     return executeActionSequence(
       { entries: { entries: () => this.#entries(true, true) } },
       context,
@@ -738,6 +1031,7 @@ export class ActionGraphExecution extends CombatStep {
     this.tryExecute(context);
   }
   reset(context: CombatExecutionContext): void {
+    context = this.#executionContext(context);
     this.runtimeState.closed = false;
     resetActionSequence(
       { entries: { entries: () => this.#entries(true, false) } },
@@ -746,6 +1040,7 @@ export class ActionGraphExecution extends CombatStep {
     this.runtimeState.closed = false;
   }
   tick(deltaTime: number, context: CombatExecutionContext): void {
+    context = this.#executionContext(context);
     tickActionSequence(
       { entries: { entries: () => this.#entries(false, false) } },
       deltaTime,
@@ -753,6 +1048,7 @@ export class ActionGraphExecution extends CombatStep {
     );
   }
   end(context: CombatExecutionContext): void {
+    context = this.#executionContext(context);
     this.runtimeState.closed = true;
     endActionSequence(
       { entries: { entries: () => this.#entries(false, false) } },

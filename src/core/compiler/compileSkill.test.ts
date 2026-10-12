@@ -1,23 +1,26 @@
-import { skillFixture, type SkillFixtureProperties } from '../../test/skillFixture';
-import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs.ts';
-import type { AbilityEntityDefinition } from '../../../packages/game-data-contract/src/skills.ts';
-import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
-import { rootActionSteps } from './actionProgramInspection';
-import { validateSkillDefinition } from '../game-data/validateSkillDefinition';
 import { describe, expect, expectTypeOf, it } from 'vitest';
-import type { ResolvedCombatStep, ResolvedCombatStepForKind } from './combatProgram';
 import type {
+  ActionGraphDefinition,
   ActionGraphNode,
   ActionGraphResourceDefinition,
   ActionGraphStep,
 } from '../../../packages/game-data-contract/src/actionGraph';
-import { createActionGraphCompilation } from './compileActionGraph';
-import { ActionGraphDefinitionRepository } from './actionGraphDefinitionRepository';
-import { createIndependentAbilityEntityImportResolver } from './compileCommonAbilityEntityImports';
+import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs.ts';
+import type {
+  AbilityEntityDefinition,
+  SkillDefinition,
+} from '../../../packages/game-data-contract/src/skills.ts';
 import { perlica } from '../../data/operators/perlica.generated';
+import { skillFixture, type SkillFixtureProperties } from '../../test/skillFixture';
+import { validateSkillDefinition } from '../game-data/validateSkillDefinition';
+import { ActionGraphDefinitionRepository } from './actionGraphDefinitionRepository';
+import { rootActionSteps } from './actionProgramInspection';
+import type { ResolvedCombatStep, ResolvedCombatStepForKind } from './combatProgram';
+import { createActionGraphCompilation } from './compileActionGraph';
+import { createIndependentAbilityEntityImportResolver } from './compileCommonAbilityEntityImports';
 import {
-  compileIndependentBuffResource,
   compileIndependentAbilityEntityResource,
+  compileIndependentBuffResource,
   compileSkill,
 } from './compileSkill';
 
@@ -44,7 +47,7 @@ function linearSkill(
   fixture: Omit<SkillFixtureProperties, 'scheduledSequences' | 'actionGraph'> & {
     readonly startFrame?: number;
     readonly steps: readonly ActionGraphStep[];
-    readonly dataNodes?: import('../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'];
+    readonly dataNodes?: ActionGraphDefinition['dataNodes'];
   },
 ): SkillDefinition {
   const { startFrame = 0, steps, dataNodes, ...fields } = fixture;
@@ -68,11 +71,9 @@ function emptyGraphSkill(
 }
 
 it('keeps step kind, parameters and sequence fields correlated through the public member type', () => {
-  type Selected = ResolvedCombatStepForKind<
-    'conditional' | 'once' | 'dealDamage' | 'dealFixedDamage'
-  >;
+  type Selected = ResolvedCombatStepForKind<'conditional' | 'once' | 'dealDamage'>;
   expectTypeOf<Selected>().toEqualTypeOf<
-    Extract<ResolvedCombatStep, { kind: 'conditional' | 'once' | 'dealDamage' | 'dealFixedDamage' }>
+    Extract<ResolvedCombatStep, { kind: 'conditional' | 'once' | 'dealDamage' }>
   >();
   expectTypeOf<ResolvedCombatStepForKind<'once'>>().not.toBeNever();
   const emptyBody = {
@@ -116,7 +117,7 @@ describe('compileSkill', () => {
     });
     const buff: SkillBuffDefinition = {
       stackingType: 'refresh',
-      lifecycleSequences: { start: { $sequence: 'entry' } },
+      lifecycleSequences: { start: [{ $sequence: 'entry' }] },
       actionGraph: resource(1),
     };
     const entity: AbilityEntityDefinition = {
@@ -138,7 +139,7 @@ describe('compileSkill', () => {
     const programs = new ActionGraphDefinitionRepository();
     const compiledBuff = compileIndependentBuffResource(buff, 'buff', programs);
     const compiledEntity = compileIndependentAbilityEntityResource(entity, 'entity', 1, programs);
-    const buffEntry = compiledBuff.lifecycleSequences?.start;
+    const buffEntry = compiledBuff.lifecycleSequences?.start?.[0];
     const entityEntry = compiledEntity.childSkill?.timelineActions[0]?.sequence;
     expect(buffEntry?.entry).not.toBeNull();
     expect(entityEntry?.entry).not.toBeNull();
@@ -171,7 +172,11 @@ describe('compileSkill', () => {
               spawn: {
                 action: {
                   kind: 'spawnAbilityEntity',
-                  parameters: { abilityEntityId: 'self', dieWhenSourceDies: false },
+                  parameters: {
+                    bornAt: { kind: 'owner' as const },
+                    abilityEntityId: 'self',
+                    dieWhenSourceDies: false,
+                  },
                 },
                 next: null,
               },
@@ -210,7 +215,11 @@ describe('compileSkill', () => {
               entry: {
                 action: {
                   kind: 'spawnAbilityEntity',
-                  parameters: { abilityEntityId: peer, dieWhenSourceDies: false },
+                  parameters: {
+                    bornAt: { kind: 'owner' as const },
+                    abilityEntityId: peer,
+                    dieWhenSourceDies: false,
+                  },
                 },
                 next: null,
               },
@@ -239,7 +248,10 @@ describe('compileSkill', () => {
         action: { kind: 'dealStagger', parameters: { value: 3 } },
         next: `${prefix}-1`,
       },
-      [`${prefix}-1`]: { action: { kind: 'finishTimeline', parameters: {} }, next: null },
+      [`${prefix}-1`]: {
+        action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} },
+        next: null,
+      },
     });
     const skill: SkillDefinition = skillFixture({
       key: 'independent',
@@ -332,10 +344,10 @@ describe('compileSkill', () => {
             },
           },
           {
-            kind: 'dealFixedDamage',
+            kind: 'dealDamage',
             parameters: {
               damageType: 'physical',
-              value: [50, 100],
+              attackScale: [50, 100],
               tags: [],
               features: ['knockDown', 'physicalInfliction'],
             },
@@ -364,60 +376,23 @@ describe('compileSkill', () => {
       },
       {
         damageType: 'physical',
-        value: 100,
+        attackScale: 100,
         tags: [],
         features: ['knockDown', 'physicalInfliction'],
       },
     ]);
   });
-  it('compiles both inline physical-infliction Buff graphs at the skill level', () => {
+  it('keeps physical infliction Buff references without embedding definitions', () => {
+    const parameters = {
+      type: 'fracture' as const,
+      target: 'enemy' as const,
+      isExtra: false,
+    };
     const skill = linearSkill({
       key: 'fracture',
       timelineBlockFrames: 1,
-      steps: [
-        {
-          kind: 'applyPhysicalInfliction',
-          parameters: {
-            type: 'fracture',
-            target: 'enemy',
-            isExtra: false,
-            noGuardBuffId: 'buff_physical_no_guard',
-            noGuardDefinition: {
-              stackingType: 'unlimited',
-              lifecycleSequences: { start: { $sequence: 'start' } },
-              actionGraph: {
-                main: {
-                  nodes: {
-                    start: {
-                      action: { kind: 'dealStagger', parameters: { value: [2, 4] } },
-                      next: null,
-                    },
-                  },
-                },
-                macros: {},
-              },
-            },
-            fractureBuffId: 'buff_physical_fracture',
-            fractureDefinition: {
-              stackingType: 'refresh',
-              scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'entry' } }],
-              actionGraph: {
-                main: {
-                  nodes: {
-                    entry: {
-                      action: { kind: 'dealStagger', parameters: { value: [1, 3] } },
-                      next: null,
-                    },
-                  },
-                },
-                macros: {},
-              },
-            },
-          },
-        },
-      ],
+      steps: [{ kind: 'applyPhysicalInfliction', parameters }],
     });
-
     const compiled = compileSkill({
       operatorId: 'antal',
       skillGroupKey: 'comboSkill',
@@ -426,18 +401,9 @@ describe('compileSkill', () => {
       skill,
       programs: new ActionGraphDefinitionRepository(),
     });
-    const step = rootActionSteps(compiled.timelineActions[0]!.sequence)[0]!;
-    expect(step.kind).toBe('applyPhysicalInfliction');
-    if (step.kind !== 'applyPhysicalInfliction') return;
-    expect(
-      rootActionSteps(step.parameters.noGuardDefinition.lifecycleSequences?.start!)[0]?.parameters,
-    ).toEqual({ value: 4 });
-    expect(step.parameters.type).toBe('fracture');
-    if (step.parameters.type !== 'fracture') return;
-    expect(
-      rootActionSteps(step.parameters.fractureDefinition.scheduledSequences?.[0]?.sequence!)[0]
-        ?.parameters,
-    ).toEqual({ value: 3 });
+    expect(rootActionSteps(compiled.timelineActions[0]!.sequence)[0]?.parameters).toEqual(
+      parameters,
+    );
   });
 
   it('compiles operator Buff blueprints without a skill-level context', () => {
@@ -445,7 +411,7 @@ describe('compileSkill', () => {
       stackingType: 'refresh',
       priority: 0,
       maxStackCount: 1,
-      lifecycleSequences: { start: { $sequence: 'entry' } },
+      lifecycleSequences: { start: [{ $sequence: 'entry' }] },
       actionGraph: {
         main: {
           nodes: {
@@ -475,7 +441,7 @@ describe('compileSkill', () => {
       new ActionGraphDefinitionRepository(),
     );
     expect(result.stackingType).toBe('refresh');
-    expect(rootActionSteps(result.lifecycleSequences!.start!)).toMatchObject([
+    expect(rootActionSteps(result.lifecycleSequences!.start![0]!)).toMatchObject([
       {
         kind: 'dealDamage',
         parameters: {
@@ -491,7 +457,7 @@ describe('compileSkill', () => {
   it('rejects skill-level arrays inside an operator Buff blueprint', () => {
     const buff: SkillBuffDefinition = {
       stackingType: 'refresh',
-      lifecycleSequences: { start: { $sequence: 'entry' } },
+      lifecycleSequences: { start: [{ $sequence: 'entry' }] },
       actionGraph: {
         main: {
           nodes: {
@@ -561,6 +527,7 @@ describe('compileSkill', () => {
         {
           kind: 'spawnAbilityEntity',
           parameters: {
+            bornAt: { kind: 'owner' as const },
             abilityEntityId: 'entity',
             dieWhenSourceDies: false,
             definition: {
@@ -628,7 +595,11 @@ describe('compileSkill', () => {
       steps: [
         {
           kind: 'spawnAbilityEntity',
-          parameters: { abilityEntityId: 'entity', dieWhenSourceDies: false },
+          parameters: {
+            bornAt: { kind: 'owner' as const },
+            abilityEntityId: 'entity',
+            dieWhenSourceDies: false,
+          },
         },
       ],
     });
@@ -665,7 +636,11 @@ describe('compileSkill', () => {
                 'child-spawn': {
                   action: {
                     kind: 'spawnAbilityEntity',
-                    parameters: { abilityEntityId: 'entity', dieWhenSourceDies: false },
+                    parameters: {
+                      bornAt: { kind: 'owner' as const },
+                      abilityEntityId: 'entity',
+                      dieWhenSourceDies: false,
+                    },
                   },
                   next: null,
                 },
@@ -692,7 +667,11 @@ describe('compileSkill', () => {
 
     expect(rootActionSteps(program.timelineActions[0]?.sequence!)[0]).toEqual({
       kind: 'spawnAbilityEntity',
-      parameters: { abilityEntityId: 'entity', dieWhenSourceDies: false },
+      parameters: {
+        abilityEntityId: 'entity',
+        bornAt: { kind: 'owner' },
+        dieWhenSourceDies: false,
+      },
     });
     const child = program.abilityEntityDefinitions!.entity!.childSkill!;
     expect(child.initialBlackboard).toEqual({ coefficient: 2 });
@@ -700,7 +679,11 @@ describe('compileSkill', () => {
       { kind: 'dealDamage', parameters: { attackScale: 5 } },
       {
         kind: 'spawnAbilityEntity',
-        parameters: { abilityEntityId: 'entity', dieWhenSourceDies: false },
+        parameters: {
+          abilityEntityId: 'entity',
+          bornAt: { kind: 'owner' },
+          dieWhenSourceDies: false,
+        },
       },
     ]);
   });
@@ -795,7 +778,8 @@ describe('compileSkill', () => {
             resource: 'sp',
             amount: [10, 20],
             coefficient: [0.5, 0.25],
-            recipient: 'team',
+            source: { kind: 'fixed' as const, target: 'caster' as const },
+            targets: { kind: 'fixed' as const, target: 'caster' as const },
             spGainKind: 'refund',
           },
         },
@@ -817,7 +801,8 @@ describe('compileSkill', () => {
         resource: 'sp',
         amount: 20,
         coefficient: 0.25,
-        recipient: 'team',
+        source: { kind: 'fixed' as const, target: 'caster' as const },
+        targets: { kind: 'fixed' as const, target: 'caster' as const },
         spGainKind: 'refund',
       },
     });

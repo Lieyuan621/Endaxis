@@ -378,8 +378,6 @@ export function planOperatorActiveSkillRuntime(
       return condition.matcher.buffIds.flatMap(id =>
         id.kind === 'constant' && id.value.length > 0 ? [id.value] : [],
       );
-    if (condition.kind === 'any')
-      return condition.groups.flatMap(group => group.conditions.flatMap(collectObservedBuffIds));
     return [];
   };
   const combatInvisibleClosureIds = collectCombatInvisibleBuffClosureIds(
@@ -518,8 +516,11 @@ export function planOperatorActiveSkillRuntime(
     },
     visualOnlyIds,
   });
-  // 按需建立一次接收资源闭包，而不是每个键重复扫描或预先加载全部游戏数据。
-  let externalBlackboardUsage: ReturnType<typeof inspectExternalBlackboardUsage> | undefined;
+  // 按作用域缓存接收资源闭包，避免把后续技能的局部变量当成当前技能的消费者。
+  const externalBlackboardUsages = new Map<
+    'action' | 'entity',
+    ReturnType<typeof inspectExternalBlackboardUsage>
+  >();
   const externalBuffProof = new ExternalBuffReferenceProof();
   const rememberExternalReceiver = (receiver: BlackboardReceiverSource | undefined) => {
     if (receiver !== undefined) externalBuffProof.addExternalReferences(receiver.references);
@@ -531,6 +532,8 @@ export function planOperatorActiveSkillRuntime(
   ];
   externalBuffProof.addExternalReferences(externalRoots);
   const isBlackboardKeyUnusedByExternalResources = (key: string): boolean => {
+    const scope = key.startsWith('EntityBB_') ? 'entity' : 'action';
+    let externalBlackboardUsage = externalBlackboardUsages.get(scope);
     externalBlackboardUsage ??= inspectExternalBlackboardUsage(
       externalRoots,
       reference => {
@@ -596,7 +599,9 @@ export function planOperatorActiveSkillRuntime(
         });
       },
       reference => externalBuffProof.resolve(reference),
+      scope,
     );
+    externalBlackboardUsages.set(scope, externalBlackboardUsage);
     return (
       externalBlackboardUsage.unresolved.length === 0 &&
       !externalBlackboardUsage.mentionedKeys.has(key)
@@ -639,8 +644,9 @@ export function planOperatorActiveSkillRuntime(
       visualOnlyIds,
     });
   } catch (error) {
-    if (error instanceof Error && externalBlackboardUsage?.unresolved.length) {
-      const receivers = externalBlackboardUsage.unresolved
+    const unresolved = [...externalBlackboardUsages.values()].flatMap(usage => usage.unresolved);
+    if (error instanceof Error && unresolved.length > 0) {
+      const receivers = unresolved
         .map(
           reference =>
             `${reference.kind}:${reference.id ?? '(dynamic)'} at ${reference.sourcePath}`,
@@ -657,8 +663,7 @@ export function planOperatorActiveSkillRuntime(
   for (const id of args.supplementalBuffIds)
     if (!runtimeBuffIds.has(id))
       throw new Error(`supplemental Buff '${id}' is not applied by the compiled runtime`);
-  // 正式动作已经给出完整静态 Buff 身份；闭包根不能只依赖命令行手填补充项，
-  // 否则物理异常等隐式公共 Buff 会在最终内联阶段虚假报缺失。
+  // 此阶段补齐物理异常隐式依赖；普通 Buff 在干员阶段按真实目标上下文编译。
   const buffClosureRoots = [
     ...new Set([
       ...collectCompiledPhysicalInflictionBuffIds(definition),

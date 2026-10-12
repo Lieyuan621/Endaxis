@@ -43,6 +43,26 @@ const definition = {
       modifiers: [
         { kind: 'panelStat', stat: 'artsIntensity', value: [15, 18, 21, 24, 27, 30, 33, 36, 42] },
       ],
+      skillId: 'sk_wpn_funnel_0020',
+      eventHandlers: [
+        {
+          key: 'skill3:event:0:sequence:0',
+          abilityEvent: 'beforeOutputSpellBurst',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_5' },
+        },
+        {
+          key: 'skill3:event:1:sequence:0',
+          abilityEvent: 'buffEnhanceChanged',
+          priority: 0,
+          sequence: { $sequence: 'ifElse_8' },
+        },
+      ],
+      blackboard: {
+        duration: [25, 25, 25, 25, 25, 25, 25, 25, 25],
+        nature_dmg_up: [0.02, 0.024, 0.028, 0.032, 0.036, 0.04, 0.044, 0.048, 0.056],
+        nature_dmg_up2: [0.06, 0.072, 0.084, 0.096, 0.108, 0.12, 0.132, 0.144, 0.168],
+      },
       actionGraph: {
         main: {
           nodes: {
@@ -50,82 +70,97 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_funnel_0020_maxup',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_funnel_0020_maxup',
+                      copiedBlackboardAssignments: {
+                        nature_dmg_up2: 'nature_dmg_up2',
+                        duration: 'duration',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'owner' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    nature_dmg_up2: 'nature_dmg_up2',
-                    duration: 'duration',
-                  },
                 },
               },
               next: null,
             },
-            conditional_2: {
+            checkCondition_2: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
               },
-              next: null,
+              next: 'applyBuff_1',
             },
             createTimedMarker_3: {
               action: {
                 kind: 'createTimedMarker',
                 parameters: {
-                  target: 'caster',
+                  targets: { kind: 'owner' },
                   markerId: 'sk_wpn_funnel_0020',
                   durationSeconds: { kind: 'constant', value: 0.1 },
                   autoFinishByAction: false,
+                  timeDomain: 'globalScaled',
                 },
               },
-              next: 'conditional_2',
+              next: 'checkCondition_2',
             },
             applyBuff_4: {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_funnel_0020_intensityup',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_funnel_0020_intensityup',
+                      copiedBlackboardAssignments: {
+                        nature_dmg_up: 'nature_dmg_up',
+                        duration: 'duration',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'owner' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    nature_dmg_up: 'nature_dmg_up',
-                    duration: 'duration',
-                  },
                 },
               },
               next: 'createTimedMarker_3',
             },
-            conditional_5: {
+            checkCondition_5: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+              },
+              next: 'applyBuff_4',
+            },
+            checkCondition_6: {
+              action: {
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'applyBuff_4' },
               },
               next: null,
             },
-            finishBuffsById_6: {
+            finishBuffsById_7: {
               action: {
                 kind: 'finishBuffsById',
                 parameters: {
-                  target: 'caster',
+                  targets: { kind: 'owner' },
+                  finishSource: { kind: 'source' },
                   buffIds: ['buff_wpn_funnel_0020_maxup'],
                   reason: 'other',
                 },
               },
               next: null,
             },
-            conditional_7: {
+            ifElse_8: {
               action: {
-                kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'conditionNode', nodeId: 'data_4' },
-                  alwaysNext: true,
-                },
+                kind: 'ifElse',
+                parameters: { alwaysNext: true },
+                condition: { $sequence: 'checkCondition_6' },
                 whenTrue: { $sequence: null },
-                whenFalse: { $sequence: 'finishBuffsById_6' },
+                whenFalse: { $sequence: 'finishBuffsById_7' },
               },
               next: null,
             },
@@ -145,15 +180,12 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                returnTrueIfNotExists: true,
                 target: 'caster',
                 markerId: 'sk_wpn_funnel_0020',
               },
             },
             data_3: {
-              type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-            },
-            data_4: {
               type: 'boolean',
               expression: {
                 kind: 'buffIdStackCompare',
@@ -167,30 +199,10 @@ const definition = {
         },
         macros: {},
       },
-      skillId: 'sk_wpn_funnel_0020',
-      eventHandlers: [
-        {
-          key: 'skill3:event:0:sequence:0',
-          abilityEvent: 'beforeOutputSpellBurst',
-          priority: 0,
-          sequence: { $sequence: 'conditional_5' },
-        },
-        {
-          key: 'skill3:event:1:sequence:0',
-          abilityEvent: 'buffEnhanceChanged',
-          priority: 0,
-          sequence: { $sequence: 'conditional_7' },
-        },
-      ],
-      blackboard: {
-        duration: [25, 25, 25, 25, 25, 25, 25, 25, 25],
-        nature_dmg_up: [0.02, 0.024, 0.028, 0.032, 0.036, 0.04, 0.044, 0.048, 0.056],
-        nature_dmg_up2: [0.06, 0.072, 0.084, 0.096, 0.108, 0.12, 0.132, 0.144, 0.168],
-      },
     },
   ],
   assetSlug: 'wpn_funnel_0020',
-  iconPath: '/weapons/funnel/wpn_funnel_0020.webp',
+  icon: 'endaxis:weapons/funnel/wpn_funnel_0020',
   buffDefinitions: {
     buff_wpn_funnel_0020_intensityup: {
       stackingType: 'highPriorityWithMaxStack',
@@ -202,8 +214,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_natural_dmg_up',
-        iconPath: '/icons/icon_battle_natural_dmg_up.webp',
+        icon: 'endaxis:icons/icon_battle_natural_dmg_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -244,8 +255,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_natural_dmg_up',
-        iconPath: '/icons/icon_battle_natural_dmg_up.webp',
+        icon: 'endaxis:icons/icon_battle_natural_dmg_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

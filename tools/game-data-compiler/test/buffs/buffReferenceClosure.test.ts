@@ -153,7 +153,8 @@ it.each([false, true])('外部检查消费关键词候选并扫描子 Buff 的�
   data[override ? 'alternate' : 'child'] = buffFixture({
     id: override ? 'alternate' : 'child',
     applyTags: [],
-    blackboard: [{ key: 'angle', valueDouble: 1, valueStr: '', isDynamic: false }],
+    // 声明名称不算读取；字符串初值可能作为间接变量键，必须沿动态子 Buff 保守保留。
+    blackboard: [{ key: 'alias', valueDouble: 0, valueStr: 'angle', isDynamic: false }],
   });
   const proof = new ExternalBuffReferenceProof();
   const root: DefinitionReferenceSource = {

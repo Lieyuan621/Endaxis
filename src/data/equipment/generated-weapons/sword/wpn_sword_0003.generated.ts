@@ -35,6 +35,6 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_sword_0003',
-  iconPath: '/weapons/sword/wpn_sword_0003.webp',
+  icon: 'endaxis:weapons/sword/wpn_sword_0003',
 } as const satisfies WeaponDefinition;
 export default definition;

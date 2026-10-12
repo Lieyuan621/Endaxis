@@ -7,6 +7,7 @@ import {
 } from '../src/source/skillSettingDumpSource.ts';
 
 const dump = `MonoBehaviour Base
+\tfloat comboSkillPendingInterval = 6
 \tfloat atbRecoverInterval = 0.5
 \tfloat atbGainEfficiency = 1
 \tfloat atbConsumedDefaultUspGainSelf = 0.065
@@ -44,6 +45,7 @@ const dump = `MonoBehaviour Base
 
 describe('SkillSetting TypeTree source', () => {
   const resources = [
+    '\tfloat comboSkillPendingInterval = 6',
     '\tfloat atbRecoverInterval = 0.5',
     '\tfloat atbGainEfficiency = 1',
     '\tfloat atbConsumedDefaultUspGainSelf = 0.065',
@@ -52,6 +54,7 @@ describe('SkillSetting TypeTree source', () => {
 
   it('reads native resource scalars without replacing them with constructor defaults', () => {
     expect(parseSkillSettingResourceSource(resources, 'resources')).toEqual({
+      comboSkillPendingInterval: 6,
       atbRecoverInterval: 0.5,
       atbGainEfficiency: 1,
       atbConsumedDefaultUspGainSelf: 0.065,
@@ -78,7 +81,9 @@ describe('SkillSetting TypeTree source', () => {
   });
 
   it('rejects missing, nested-only or duplicate resource fields', () => {
-    expect(() => parseSkillSettingResourceSource('', 'missing')).toThrow('atbRecoverInterval');
+    expect(() => parseSkillSettingResourceSource('', 'missing')).toThrow(
+      'comboSkillPendingInterval',
+    );
     expect(() =>
       parseSkillSettingResourceSource(
         resources.replace('\tfloat atbRecoverInterval', '\t\tfloat atbRecoverInterval'),

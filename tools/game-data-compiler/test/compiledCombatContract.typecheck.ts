@@ -221,8 +221,3 @@ expectTypeOf<
 expectTypeOf<{ target: 'caster'; tagIds: readonly [] }>().not.toExtend<
   ProjectedParameters<'heal'>
 >();
-
-// Buff 生命周期只接入已支持的阶段
-expectTypeOf<keyof NonNullable<CompiledBuffDefinitionSource['lifecycleSequences']>>().toEqualTypeOf<
-  'start' | 'enable' | 'trigger' | 'enhanceChanged' | 'afterEnhance' | 'finish'
->();

@@ -22,7 +22,9 @@ import type {
   ActionGraphStep,
 } from '../../../packages/game-data-contract/src/actionGraph';
 const graph: ActionGraphDefinition = {
-  nodes: { target: { action: { kind: 'finishTimeline', parameters: {} }, next: null } },
+  nodes: {
+    target: { action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} }, next: null },
+  },
 };
 const fixtures = [
   {

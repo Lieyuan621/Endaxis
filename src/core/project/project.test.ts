@@ -444,7 +444,10 @@ describe('current project document', () => {
               buff: {
                 action: {
                   kind: 'applyBuff',
-                  parameters: { buffId: 'electric-infliction', target: 'party' },
+                  parameters: {
+                    buffs: [{ buffId: 'electric-infliction' }],
+                    targets: { kind: 'characterTeam', excludeOwner: false },
+                  },
                 },
                 next: 'damage',
               },
@@ -493,8 +496,12 @@ describe('current project document', () => {
                 nodes: {
                   flag: {
                     action: {
-                      kind: 'setContextFlag',
-                      parameters: { flag: 'operatorForm', value: 'intellect', target: 'caster' },
+                      kind: 'triggerCustomAbilityEvent',
+                      parameters: {
+                        eventName: 'operatorForm',
+                        eventParam: 0,
+                        target: 'caster' as const,
+                      },
                     },
                     next: null,
                   },
@@ -518,8 +525,8 @@ describe('current project document', () => {
     expect(
       validateProjectDocument(
         changeAction('damage', {
-          kind: 'dealFixedDamage',
-          parameters: { damageType: 'physical', value: 0.01, tags: ['ultimateSkill'] },
+          kind: 'dealDamage',
+          parameters: { damageType: 'physical', attackScale: 0.01, tags: ['ultimateSkill'] },
         }),
       ).ok,
     ).toBe(true);

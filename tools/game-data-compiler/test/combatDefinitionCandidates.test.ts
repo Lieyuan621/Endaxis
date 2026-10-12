@@ -20,6 +20,8 @@ import type { GraphSharedEntityValueUsage } from '../src/compiler/optimization/g
 import type { OperatorDefinitionBatchArguments } from '../scripts/generateOperatorDefinitionCandidates.ts';
 
 const mocks = vi.hoisted(() => ({
+  compileConsumables: vi.fn(),
+  renderConsumables: vi.fn(),
   compileWeapons: vi.fn(),
   renderWeapons: vi.fn(),
   compileGears: vi.fn(),
@@ -29,6 +31,10 @@ const mocks = vi.hoisted(() => ({
   compileMechanics: vi.fn(),
   renderMechanics: vi.fn(),
   renderOperators: vi.fn(),
+}));
+vi.mock('../scripts/generateConsumableDefinitions.ts', () => ({
+  compileConsumableDefinitionsFromFiles: mocks.compileConsumables,
+  renderConsumableDefinitionsFromCompiled: mocks.renderConsumables,
 }));
 vi.mock('../scripts/generateWeaponDefinitions.ts', () => ({
   compileWeaponDefinitionsFromFiles: mocks.compileWeapons,
@@ -73,6 +79,7 @@ const queryEntityValue = (
           action: {
             kind: 'findOwnerSpawnedAbilityEntities',
             parameters: {
+              owner: { kind: 'source' },
               saveToContextKey: 'found',
               circularOrder: { indexBlackboardKey: key, desiredCount: 1, reverseFlag: 1 },
             },
@@ -143,13 +150,27 @@ const files = (domain: string) => [
     content: `export default {"name":"${readKey(domain)}","values":[1,2,3]}`,
   },
 ];
+const observedKeys = (usage: GraphSharedEntityValueUsage) =>
+  [...new Set([...usage.fallbackKeys, ...usage.externalReads.map(read => read.key)])].sort();
 const expectedReads = () =>
-  ['weapons', 'gearSets', 'mechanics', 'mechanicQuery'].map(readKey).sort();
+  ['weapons', 'gearSets', 'mechanics', 'mechanicQuery', 'consumables'].map(readKey).sort();
 
 beforeEach(() => {
   vi.resetAllMocks();
   calls.length = 0;
   sourceRevision = 1;
+  mocks.compileConsumables.mockImplementation(() => {
+    calls.push('compile:consumables');
+    return { definitions: [], buffDefinitions: { fixture: buff('consumables') } };
+  });
+  mocks.renderConsumables.mockImplementation(() => {
+    calls.push('render:consumables');
+    return {
+      definitionFile: files('consumables')[0],
+      buffFile: { ...files('consumableBuffs')[0], relativePath: 'consumableBuffs.ts' },
+      summary: { definitionCount: 0, buffDefinitionCount: 1 },
+    };
+  });
   mocks.compileWeapons.mockImplementation(() => {
     calls.push('compile:weapons');
     return weaponBatch();
@@ -197,10 +218,14 @@ beforeEach(() => {
       calls.push('render:operators');
       return {
         files: [
-          { relativePath: 'fixture.ts', content: `${JSON.stringify([...usage.reads].sort())}\n` },
+          { relativePath: 'fixture.ts', content: `${JSON.stringify(observedKeys(usage))}\n` },
         ],
         auditFiles: files('operatorAudit'),
         commonBuffs: { files: files('commonBuffs') },
+        sharedEntityUsage: {
+          ...usage,
+          fallbackKeys: new Set([...usage.fallbackKeys, 'operator-consumer']),
+        },
         summary: { operatorCount: 1 },
       };
     },
@@ -242,10 +267,11 @@ function outputDirectories(args: CombatDefinitionCandidateArguments) {
     path.join(args.auditRoot, 'weapons'),
     path.join(args.candidateRoot, 'src/data/equipment/generated'),
     path.join(args.candidateRoot, 'src/data/equipment/generated-gear-sets'),
-    path.join(args.candidateRoot, 'src/data/mechanics/generated'),
+    path.join(args.candidateRoot, 'src/data/contingencyContract/generated'),
     path.join(args.candidateRoot, 'src/data/operators'),
     path.join(args.auditRoot, 'operators'),
     path.join(args.candidateRoot, 'src/data/buffs/generated'),
+    path.join(args.candidateRoot, 'src/data/consumables/generated'),
   ];
 }
 
@@ -265,6 +291,7 @@ async function snapshot(directory: string): Promise<Record<string, string>> {
 }
 
 const domainMocks = [
+  { domain: 'consumables', compile: mocks.compileConsumables, render: mocks.renderConsumables },
   { domain: 'weapons', compile: mocks.compileWeapons, render: mocks.renderWeapons },
   { domain: 'gears', compile: mocks.compileGears, render: mocks.renderGears },
   { domain: 'gearSets', compile: mocks.compileGearSets, render: mocks.renderGearSets },
@@ -272,22 +299,29 @@ const domainMocks = [
 ];
 
 describe('整轮战斗候选生成', () => {
-  it('每域只编译一次，同一对象先收集再渲染，干员只接收完整摘要', async () => {
+  it('每域只编译一次，所有带图资源渲染均接收包含干员消费者的完整摘要', async () => {
     const args = await setup();
     const result = await generateCombatDefinitionCandidates(args);
-    for (const { compile, render } of domainMocks) {
+    for (const { domain, compile, render } of domainMocks) {
       expect(render.mock.calls[0]![0]).toBe(compile.mock.results[0]!.value);
+      if (domain !== 'gears') {
+        expect(observedKeys(render.mock.calls[0]![2])).toEqual(
+          [...expectedReads(), 'operator-consumer'].sort(),
+        );
+      }
     }
     expect(calls).toEqual([
       'compile:weapons',
-      'render:weapons',
       'compile:gears',
-      'render:gears',
       'compile:gearSets',
-      'render:gearSets',
       'compile:mechanics',
-      'render:mechanics',
+      'compile:consumables',
       'render:operators',
+      'render:weapons',
+      'render:gears',
+      'render:gearSets',
+      'render:mechanics',
+      'render:consumables',
     ]);
     expect(mocks.renderOperators).toHaveBeenCalledTimes(1);
     const [operatorArgs, usage] = mocks.renderOperators.mock.calls[0]!;
@@ -297,19 +331,24 @@ describe('整轮战斗候选生成', () => {
       includeCommonBuffs: true,
       optimization: 'apply',
     });
-    expect([...usage.reads].sort()).toEqual(expectedReads());
+    expect(observedKeys(usage)).toEqual(expectedReads());
     expect(usage.unknownAccess).toBe(false);
     expect(usage.commonAbilityEntityDefinitions).toEqual({});
     expect(mocks.renderWeapons.mock.calls[0]![1]).toBe('apply');
     expect(mocks.renderGearSets.mock.calls[0]![1]).toBe('apply');
-    expect(result.equipment.map(report => report.domain)).toEqual([
+    expect(result.resources.map(report => report.domain)).toEqual([
       'weapons',
       'gears',
       'gear-sets',
       'mechanics',
+      'consumables',
     ]);
     for (const directory of outputDirectories(args))
-      expect(await fs.readdir(directory)).toEqual(['fixture.ts']);
+      expect(await fs.readdir(directory)).toEqual(
+        directory.endsWith(path.join('buffs', 'generated'))
+          ? ['consumableBuffs.ts', 'fixture.ts']
+          : ['fixture.ts'],
+      );
     const content = await fs.readFile(
       path.join(args.candidateRoot, 'src/data/equipment/generated-weapons/fixture.ts'),
       'utf8',
@@ -335,7 +374,7 @@ describe('整轮战斗候选生成', () => {
       expect(compile.mock.results[1]!.value).not.toBe(compile.mock.results[2]!.value);
     }
     expect(mocks.renderOperators).toHaveBeenCalledTimes(3);
-    expect([...mocks.renderOperators.mock.calls[2]![1].reads].sort()).toEqual(expectedReads());
+    expect(observedKeys(mocks.renderOperators.mock.calls[2]![1])).toEqual(expectedReads());
   });
 
   it.each([

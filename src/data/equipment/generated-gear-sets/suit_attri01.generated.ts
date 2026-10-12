@@ -3,30 +3,8 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 
 const definition = {
   slug: 'suit_attri01',
-  iconPath: '/equipment/attri01/item_equip_t4_suit_attri01_edc_04.webp',
+  icon: 'endaxis:equipment/attri01/item_equip_t4_suit_attri01_edc_04',
   modifiers: [{ kind: 'panelStat', stat: 'attackPercent', value: 0.15 }],
-  actionGraph: {
-    main: {
-      nodes: {
-        applyBuff_1: {
-          action: {
-            kind: 'applyBuff',
-            parameters: {
-              buffId: 'buff_equipsuit_attrisuit_01',
-              target: 'caster',
-              blackboardAssignments: {
-                atk_up: { kind: 'constant', value: 0.15 },
-                dmg_up: { kind: 'constant', value: 0.3 },
-                max_stack: { kind: 'constant', value: 2 },
-              },
-            },
-          },
-          next: null,
-        },
-      },
-    },
-    macros: {},
-  },
   skillId: 'passive_equipsuit_attrisuit_01',
   buffDefinitions: {
     buff_equipsuit_attrisuit_01: {
@@ -38,10 +16,10 @@ const definition = {
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: { atk_up: 0.05, dmg_up: 0.3, max_stack: 2 },
+      blackboard: { dmg_up: 0.3, max_stack: 2 },
       attributeModifiers: [],
       abilityEventResponses: [
-        { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'conditional_2' } },
+        { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'checkCondition_2' } },
       ],
       actionGraph: {
         main: {
@@ -50,23 +28,26 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_equipsuit_attrisuitup_01',
-                  target: 'buffOwner',
-                  source: 'buffOwner',
+                  buffs: [
+                    {
+                      buffId: 'buff_equipsuit_attrisuitup_01',
+                      copiedBlackboardAssignments: { dmg_up: 'dmg_up', max_stack: 'max_stack' },
+                    },
+                  ],
+                  targets: { kind: 'owner' },
+                  source: { kind: 'owner' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: { dmg_up: 'dmg_up', max_stack: 'max_stack' },
                 },
               },
               next: null,
             },
-            conditional_2: {
+            checkCondition_2: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
               },
-              next: null,
+              next: 'applyBuff_1',
             },
           },
           dataNodes: {
@@ -88,8 +69,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_buff_atk_up',
-        iconPath: '/icons/icon_battle_buff_atk_up.webp',
+        icon: 'endaxis:icons/icon_battle_buff_atk_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -113,7 +93,7 @@ const definition = {
       blackboard: { dmg_up: 0.05, max_stack: 2, stack: 0 },
       attributeModifiers: [],
       abilityEventResponses: [
-        { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'conditional_5' } },
+        { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'checkCondition_5' } },
       ],
       actionGraph: {
         main: {
@@ -122,7 +102,8 @@ const definition = {
               action: {
                 kind: 'finishBuffsById',
                 parameters: {
-                  target: 'buffOwner',
+                  targets: { kind: 'owner' },
+                  finishSource: { kind: 'source' },
                   buffIds: ['buff_equipsuit_attrisuitup_01'],
                   reason: 'other',
                 },
@@ -133,11 +114,15 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_equipsuit_attrisuitup_02',
-                  target: 'buffOwner',
-                  source: 'buffOwner',
+                  buffs: [
+                    {
+                      buffId: 'buff_equipsuit_attrisuitup_02',
+                      copiedBlackboardAssignments: { dmg_up: 'dmg_up' },
+                    },
+                  ],
+                  targets: { kind: 'owner' },
+                  source: { kind: 'owner' },
                   inheritSourceSkillCastInfo: true,
-                  copiedBlackboardAssignments: { dmg_up: 'dmg_up' },
                 },
               },
               next: 'finishBuffsById_1',
@@ -164,13 +149,12 @@ const definition = {
               },
               next: 'modifyActionValue_3',
             },
-            conditional_5: {
+            checkCondition_5: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                whenTrue: { $sequence: 'readBuffStackCount_4' },
               },
-              next: null,
+              next: 'readBuffStackCount_4',
             },
           },
           dataNodes: {
@@ -198,7 +182,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'attacker',
-          condition: { $sequence: 'conditional_3' },
+          condition: { $sequence: 'checkCondition_3' },
           processors: [
             {
               kind: 'damageScale',
@@ -209,26 +193,24 @@ const definition = {
           ],
         },
       ],
-      lifecycleSequences: { enable: { $sequence: 'skillAffix_1' } },
+      lifecycleSequences: { enable: [{ $sequence: 'skillAffix_1' }] },
       actionGraph: {
         main: {
           nodes: {
             skillAffix_1: { action: { kind: 'skillAffix', parameters: {} }, next: null },
-            conditional_2: {
+            checkCondition_2: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: null },
               },
               next: null,
             },
-            conditional_3: {
+            checkCondition_3: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                whenTrue: { $sequence: 'conditional_2' },
               },
-              next: null,
+              next: 'checkCondition_2',
             },
           },
           dataNodes: {
@@ -244,6 +226,31 @@ const definition = {
     },
   },
   enableSequence: { $sequence: 'applyBuff_1' },
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [
+                {
+                  buffId: 'buff_equipsuit_attrisuit_01',
+                  blackboardAssignments: {
+                    dmg_up: { kind: 'constant', value: 0.3 },
+                    max_stack: { kind: 'constant', value: 2 },
+                  },
+                },
+              ],
+              targets: { kind: 'fixed', target: 'caster' },
+            },
+          },
+          next: null,
+        },
+      },
+    },
+    macros: {},
+  },
 } as const satisfies GearSetDefinition;
 
 export default definition;

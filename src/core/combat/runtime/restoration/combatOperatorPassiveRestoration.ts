@@ -85,7 +85,7 @@ export function bindRestoredCombatOperatorPassives(
         state,
       );
       const enableContext = {
-        blackboard,
+        ...ownerContext,
         addAbilityChildBuff: (child: BuffApplicationHandle) => runtime.addChildBuff(child),
       };
       const enableSequence = new CombatActionSequenceRuntime(

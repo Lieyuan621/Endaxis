@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { resolveImage } from '../../imageResources';
 import { EaTooltip } from '@/design-system';
 /**
  * Next 时间轴的武器定义选择器。界面与旧时间轴保持一致，但只读取 Next 定义并返回稳定 slug；
@@ -199,7 +200,7 @@ function handleDialogVisibility(value: boolean): void {
                   "
                 >
                   <img
-                    :src="weapon.definition.iconPath || DEFAULT_WEAPON_ICON_PATH"
+                    :src="resolveImage(weapon.definition.icon) || DEFAULT_WEAPON_ICON_PATH"
                     alt=""
                     loading="lazy"
                   />

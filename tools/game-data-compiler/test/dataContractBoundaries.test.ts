@@ -182,8 +182,12 @@ describe('独立游戏数据契约边界', () => {
     const sharedDirectories = [join(productRoot, 'core/action-graph')];
     const sharedFiles = [
       join(productRoot, 'core/game-data/definitionGuards.ts'),
-      join(productRoot, 'core/mechanics/combatNumbers.ts'),
+      join(productRoot, 'core/math/combatNumbers.ts'),
+      join(productRoot, 'core/combat/infliction/forcedSpellStatus.ts'),
+      join(productRoot, 'core/combat/status/physicalInfliction.ts'),
       join(productRoot, 'core/combat/infliction/characterInfliction.ts'),
+      // 标签匹配只读取传入路径；生成裁剪与运行时查询必须使用同一层级规则。
+      join(productRoot, 'core/combat/tags/gameplayTags.ts'),
       // Graph input discovery shares finite, pure schema projection. Keep this an
       // explicit file allowlist; no UI, application state, or catalog imports.
       join(productRoot, 'core/editor/fieldSemantics.ts'),

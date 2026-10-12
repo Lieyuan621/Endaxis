@@ -18,6 +18,20 @@ function setup() {
 }
 
 describe('原生预定义标签的安装与退出', () => {
+  it('施法受限保留实际控制状态，不把交互门禁误认为沉默', () => {
+    const target = new CombatBuffContainer('operator', new CombatAttributeSet<string>());
+    const table = new GameplayTagPredefine(GAMEPLAY_TAG_PREDEFINE);
+    target.addEntityTags(['Status/Immobilized/Frozen', 'Status/Silence']);
+    const tags = table.getSkillCastBlockerTags(target, table.getCommonSkillCastBlocker(target)!);
+    expect(tags).toEqual(['Status/Immobilized/Frozen']);
+    target.removeEntityTags(['Status/Immobilized/Frozen', 'Status/Silence']);
+    expect(tags).toEqual(['Status/Immobilized/Frozen']);
+    target.addEntityTags(['GameplayState/Interacting/Bomb/Holding']);
+    expect(table.getSkillTypeCastBlocker(target, 'normalSkill', true)).toBe('InSilence');
+    expect(table.getSkillCastBlockerTags(target, 'InSilence')).toEqual([
+      'GameplayState/Interacting/Bomb/Holding',
+    ]);
+  });
   it('闪避输入分别报告定身、禁止闪避和霸体三项原生门禁', () => {
     const table = new GameplayTagPredefine(GAMEPLAY_TAG_PREDEFINE);
     const target = new CombatBuffContainer('operator', new CombatAttributeSet<string>());

@@ -37,7 +37,7 @@ export class RuntimeTargetContext {
     return targets;
   }
 
-  /** 可选目标只用于原生“忽略对象”集合；缺失表示当前释放没有生成该对象。 */
+  /** 用于原生允许缺失目标组的查询；由调用方决定空组或未命中的返回行为。 */
   getOptional(key: string): RuntimeTargetGroup | undefined {
     return this.runtimeState.groups.get(key);
   }
@@ -50,4 +50,21 @@ export class RuntimeTargetContext {
   remove(key: string): void {
     this.runtimeState.groups.delete(key);
   }
+}
+
+/** 比较稳定目标身份，不序列化或分配临时字符串。 */
+export function sameRuntimeTarget(left: RuntimeTargetRef, right: RuntimeTargetRef): boolean {
+  if (left.kind !== right.kind) return false;
+  if (left.kind === 'enemy' || left.kind === 'godEntity') return true;
+  if (left.kind === 'operator' && right.kind === 'operator') {
+    return left.operatorId === right.operatorId;
+  }
+  if (left.kind === 'spatialPoint' && right.kind === 'spatialPoint') {
+    return left.pointId === right.pointId;
+  }
+  return (
+    left.kind === 'abilityEntity' &&
+    right.kind === 'abilityEntity' &&
+    left.instanceId === right.instanceId
+  );
 }

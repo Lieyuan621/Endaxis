@@ -1,21 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import { createNativeEventFixture } from '../events/nativeEventTestFixture';
-import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
 import type {
+  ActionGraphDefinition,
   ActionGraphNode,
   ActionGraphStep,
 } from '../../../../packages/game-data-contract/src/actionGraph';
 import type { CompiledOperatorUpgradeEventProgram } from '../../compiler/combatProgram';
-import { OperatorUpgradeEventRuntime } from './operatorUpgradeEventRuntime';
-import type { CombatOperationExecutor } from '../skills/skillRuntime';
-import { CombatSemanticEventRuntime } from '../events/combatSemanticEventRuntime';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
 import { AbilityEventDispatcher } from '../events/abilityEventDispatcher';
+import { createEventBuff } from '../events/buffEventTestFixture';
 import type { AbilityEventPayloadMap } from '../events/combatAbilityEvent';
+import { CombatSemanticEventRuntime } from '../events/combatSemanticEventRuntime';
+import { createNativeEventFixture } from '../events/nativeEventTestFixture';
+import type { CombatOperationExecutor } from '../skills/skillRuntime';
+import { OperatorUpgradeEventRuntime } from './operatorUpgradeEventRuntime';
 
 const chainSequence = (
   revision: string,
   actions: readonly ActionGraphStep[],
-  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): CompiledOperatorUpgradeEventProgram['sequence'] => {
   const nodes: Record<string, ActionGraphNode> = {};
   actions.forEach((action, index) => {
@@ -39,8 +41,8 @@ const PROGRAM: CompiledOperatorUpgradeEventProgram = {
     {
       kind: 'applyBuff',
       parameters: {
-        buffId: 'attack-up',
-        target: 'caster',
+        buffs: [{ buffId: 'attack-up' }],
+        targets: { kind: 'fixed', target: 'caster' },
       },
     },
   ]),
@@ -72,7 +74,7 @@ describe('OperatorUpgradeEventRuntime', () => {
     const event = {
       event: 'skillSpGained' as const,
       payload: {
-        sourceOperatorId: 'operator:perlica',
+        sourceId: 'operator:perlica',
         source: 'skill' as const,
         gainKind: 'gain' as const,
         requestedAmount: 1,
@@ -113,7 +115,6 @@ describe('OperatorUpgradeEventRuntime', () => {
     );
     const copied = structuredClone({
       upgrade: original.runtimeState,
-      events: originalEvents.runtimeState,
       native: originalDispatcher.runtimeState,
     });
     const restoredDispatcher = new AbilityEventDispatcher<
@@ -121,7 +122,6 @@ describe('OperatorUpgradeEventRuntime', () => {
       AbilityEventPayloadMap
     >(copied.native);
     const restoredEvents = new CombatSemanticEventRuntime(undefined, {
-      state: copied.events,
       bindNative: (reference, receive) =>
         restoredDispatcher.bindSubscriptionFor('skillSpGained', reference, event =>
           receive({ event }),
@@ -145,7 +145,7 @@ describe('OperatorUpgradeEventRuntime', () => {
       {
         event: 'skillSpGained',
         payload: {
-          sourceOperatorId: 'operator:perlica',
+          sourceId: 'operator:perlica',
           source: 'skill',
           gainKind: 'gain',
           requestedAmount: 1,
@@ -220,8 +220,8 @@ describe('OperatorUpgradeEventRuntime', () => {
           {
             kind: 'applyBuff',
             parameters: {
-              buffId: 'physical-up',
-              target: 'caster',
+              buffs: [{ buffId: 'physical-up' }],
+              targets: { kind: 'fixed', target: 'caster' },
               count: { kind: 'valueNode', nodeId: 'input_1' },
             },
           },
@@ -249,4 +249,3 @@ describe('OperatorUpgradeEventRuntime', () => {
     expect(consumedLayers).toBe(4);
   });
 });
-import { createEventBuff } from '../events/buffEventTestFixture';

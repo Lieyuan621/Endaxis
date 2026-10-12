@@ -42,14 +42,19 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_claym_0014_pdi_up',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_claym_0014_pdi_up',
+                      copiedBlackboardAssignments: {
+                        phy_dmg_up_mult: 'phy_dmg_up',
+                        duration: 'duration',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'owner' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    phy_dmg_up_mult: 'phy_dmg_up',
-                    duration: 'duration',
-                  },
                 },
               },
               next: null,
@@ -66,21 +71,19 @@ const definition = {
               },
               next: 'applyBuff_1',
             },
-            conditional_3: {
+            checkCondition_3: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'calculateActionValue_2' },
               },
-              next: null,
+              next: 'calculateActionValue_2',
             },
-            conditional_4: {
+            checkCondition_4: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-                whenTrue: { $sequence: 'conditional_3' },
               },
-              next: null,
+              next: 'checkCondition_3',
             },
           },
           dataNodes: {
@@ -113,17 +116,19 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'buffConsumed',
           priority: 0,
-          sequence: { $sequence: 'conditional_4' },
+          sequence: { $sequence: 'checkCondition_4' },
         },
       ],
       blackboard: {
+        count: 0,
         duration: [20, 20, 20, 20, 20, 20, 20, 20, 20],
+        phy_dmg_up: 0,
         phy_dmg_up_mult: [0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.14],
       },
     },
   ],
   assetSlug: 'wpn_claym_0014',
-  iconPath: '/weapons/claym/wpn_claym_0014.webp',
+  icon: 'endaxis:weapons/claym/wpn_claym_0014',
   buffDefinitions: {
     buff_wpn_claym_0014_pdi_up: {
       stackingType: 'highPriority',
@@ -135,8 +140,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_physical_dmg_up',
-        iconPath: '/icons/icon_battle_physical_dmg_up.webp',
+        icon: 'endaxis:icons/icon_battle_physical_dmg_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

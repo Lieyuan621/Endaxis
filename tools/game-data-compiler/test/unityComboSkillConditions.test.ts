@@ -6,6 +6,9 @@ import { compilePendingComboConditionSource } from '../src/compiler/conditions/c
 import { parseObjectTypeMask } from '../src/source/objectType.ts';
 import { GameplayTagRegistry } from '../src/source/nativeGameplayTags.ts';
 import { readActionGraphChain } from '../src/compiler/actions/actionGraphBuilder.ts';
+import { compileGraphSequence } from './support/graphSequence.ts';
+import { CombatActionSequenceRuntime } from '../../../src/core/combat/actions/combatActionSequenceRuntime';
+import { ActionBlackboard } from '../../../src/core/combat/actions/actionBlackboard';
 
 /** 读取编译结果的入口同层动作；节点留在 result.actionGraph 内。 */
 const chainOf = (result: ReturnType<typeof compilePendingComboConditionSource>) =>
@@ -133,11 +136,18 @@ describe('Unity RID 条件适配', () => {
     expect(chainOf(compiled[2]!)[0]).toMatchObject({
       parameters: { condition: { kind: 'casterControlled' } },
     });
-    expect(chainOf(compiled[3]!)[0]).toMatchObject({
-      parameters: {
-        condition: { kind: 'not', condition: { kind: 'casterControlled' } },
-      },
-    });
+    for (const controlled of [false, true]) {
+      const result = compiled[3]!;
+      const runtime = new CombatActionSequenceRuntime(
+        { execute: () => true, evaluate: () => controlled },
+        { blackboard: new ActionBlackboard() },
+      );
+      expect(
+        runtime
+          .createSequence(compileGraphSequence(result.sequence, result.actionGraph))
+          .executeInstant({}),
+      ).toBe(!controlled);
+    }
   });
 
   it('Advanced 事件 Buff 条件只做 Unity 字段规范化，随后进入公共条件读取器', () => {
@@ -349,9 +359,14 @@ describe('Unity RID 条件适配', () => {
       parameters: {
         condition:
           targetSource === 0
-            ? { kind: 'eventSourceControlled' }
+            ? {
+                kind: 'actionInputTargetIdentityMatch',
+                other: 'controlledOperator',
+                operator: 'equal',
+              }
             : {
                 kind: 'contextTargetIdentityMatch',
+                selection: 'all',
                 contextKey: 'trigger',
                 other: 'controlledOperator',
                 operator: 'equal',
@@ -377,14 +392,28 @@ describe('Unity RID 条件适配', () => {
         },
       },
     });
-    expect(chainOf(compiled[4]!)).toHaveLength(1);
-    // 原生 DebugPrint 的 Target 不被读取；纯查询之前的 Debug no-op 不阻塞条件。
-    expect(chainOf(compiled[4]!)[0]).toMatchObject({
-      kind: 'conditional',
-      parameters: {
-        condition: { kind: 'actionValueCompare' },
-      },
-    });
+    // DebugPrint 不阻塞判断；数值比较失败时不能再检查或写入附着类型。
+    for (const passes of [false, true]) {
+      const result = compiled[4]!;
+      const evaluated: string[] = [];
+      const runtime = new CombatActionSequenceRuntime(
+        {
+          execute: () => true,
+          evaluate: condition => {
+            evaluated.push(condition.kind);
+            return passes;
+          },
+        },
+        { blackboard: new ActionBlackboard() },
+      );
+      expect(
+        runtime
+          .createSequence(compileGraphSequence(result.sequence, result.actionGraph))
+          .executeInstant({}),
+      ).toBe(passes);
+      expect(evaluated[0]).toBe('actionValueCompare');
+      expect(evaluated).toHaveLength(passes ? 2 : 1);
+    }
   });
   it.each([
     'missing',

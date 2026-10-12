@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import ImageReferenceField from '../field-editor/ImageReferenceField.vue';
+import { hasSemanticAlias } from '../../core/editor/fieldSemantics';
 import ConditionInputField from '../field-editor/ConditionInputField.vue';
 import OwnedSpawnResourceField from '../field-editor/OwnedSpawnResourceField.vue';
 import GraphRowBoundaryField from '../field-editor/GraphRowBoundaryField.vue';
@@ -608,6 +610,14 @@ function switchVariant(chosen: EaSelectValue | EaSelectValue[]): void {
       :label="label"
       :sequence="graphSequence"
       @open="emit('openGraph', path)"
+    />
+    <ImageReferenceField
+      v-else-if="hasSemanticAlias(shape.semantics, 'ImageRef')"
+      :value="value"
+      :label="label"
+      :optional="schema?.optional"
+      :readonly="readonlyField"
+      @change="update"
     />
     <ConditionInputField
       v-else-if="shape.kind === 'condition' && structuredContext?.graph"

@@ -1,3 +1,4 @@
+import type { ActionTargetQuery } from '../../../../packages/game-data-contract/src/conditions';
 import { stringInputExpression } from '../../compiler/compiledGraphData';
 import type { CompiledStringInput, CompiledCondition } from '../../compiler/compiledGraphData.ts';
 
@@ -16,6 +17,11 @@ type CastStep = ResolvedCombatStepForKind<'castSkillDuringAction'>;
 
 export interface SkillCastOperationExecutorDependencies {
   readonly casterId: string;
+  readonly queryTargets?: (
+    query: ActionTargetQuery,
+    context: CombatOperationContext,
+  ) => readonly RuntimeTargetRef[];
+  readonly interruptCurrentSkill?: (target: RuntimeTargetRef) => void;
   readonly request: (request: {
     readonly nativeSkillId: string;
     readonly inputTarget: RuntimeTargetRef | null;
@@ -32,6 +38,14 @@ export class SkillCastOperationExecutor implements CombatOperationExecutor {
   constructor(readonly dependencies: SkillCastOperationExecutorDependencies) {}
 
   execute(step: ResolvedCombatOperationStep, context?: CombatOperationContext): boolean {
+    if (step.kind === 'interruptCurrentSkill') {
+      const { queryTargets, interruptCurrentSkill } = this.dependencies;
+      if (!queryTargets || !interruptCurrentSkill || !context)
+        throw new Error('skill interruption requires target bindings');
+      const target = queryTargets(step.parameters.targets, context)[0];
+      if (target !== undefined) interruptCurrentSkill(target);
+      return true;
+    }
     if (step.kind !== 'castSkillDuringAction') {
       return this.dependencies.delegate.execute(step, context);
     }
@@ -40,7 +54,7 @@ export class SkillCastOperationExecutor implements CombatOperationExecutor {
   }
 
   end(step: ResolvedCombatOperationStep, context?: CombatOperationContext): void {
-    if (step.kind === 'castSkillDuringAction') return;
+    if (step.kind === 'castSkillDuringAction' || step.kind === 'interruptCurrentSkill') return;
     this.dependencies.delegate.end?.(step, context);
   }
 

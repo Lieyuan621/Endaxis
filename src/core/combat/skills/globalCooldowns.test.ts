@@ -75,6 +75,9 @@ describe('战斗级全局冷却', () => {
         globalCooldowns,
         resolveCooldownCharacter: value => ids[value],
         resolveTarget: () => ordinary,
+        resolveEventTarget: () => ordinary,
+        queryTargets: () => [],
+        globalScaledClock: localClock,
         delegate: {
           execute: () => {
             throw new Error('unexpected delegation');

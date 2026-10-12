@@ -63,6 +63,7 @@ describe('技力事件公共条件的转换与执行', () => {
             event: 'skillSpGained' as const,
             payload: {
               sourceOperatorId: 'operator',
+              sourceId: 'operator',
               source,
               gainKind,
               requestedAmount: 10,

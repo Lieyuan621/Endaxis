@@ -164,6 +164,8 @@ export function validateSkillDefinition(
       }
     }
   }
+  if (record.defaultTarget !== undefined)
+    requireEnum(record, 'defaultTarget', new Set(['enemy', 'owner']), path, out);
   if (record.smartTarget !== undefined)
     requireEnum(record, 'smartTarget', new Set(['enemy', 'input', 'trigger']), path, out);
 

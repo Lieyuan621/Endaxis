@@ -51,26 +51,30 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_sword_0018_atk_up',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_sword_0018_atk_up',
+                      copiedBlackboardAssignments: {
+                        atk_up: 'atk_up',
+                        duration: 'duration',
+                        max_stack: 'max_stack',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'owner' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    atk_up: 'atk_up',
-                    duration: 'duration',
-                    max_stack: 'max_stack',
-                  },
                 },
               },
               next: null,
             },
-            conditional_2: {
+            checkCondition_2: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
               },
-              next: null,
+              next: 'applyBuff_1',
             },
           },
           dataNodes: {
@@ -92,7 +96,7 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'buffConsumed',
           priority: 0,
-          sequence: { $sequence: 'conditional_2' },
+          sequence: { $sequence: 'checkCondition_2' },
         },
       ],
       blackboard: {
@@ -103,7 +107,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_sword_0018',
-  iconPath: '/weapons/sword/wpn_sword_0018.webp',
+  icon: 'endaxis:weapons/sword/wpn_sword_0018',
   buffDefinitions: {
     buff_wpn_sword_0018_atk_up: {
       stackingType: 'stack',
@@ -115,8 +119,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_buff_atk_up',
-        iconPath: '/icons/icon_battle_buff_atk_up.webp',
+        icon: 'endaxis:icons/icon_battle_buff_atk_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

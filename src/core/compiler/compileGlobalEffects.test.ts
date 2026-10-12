@@ -45,7 +45,7 @@ describe('compileGlobalEffects', () => {
   it('rejects tree programs, missing graph entries and invalid action parameters at the save boundary', () => {
     const buff = {
       stackingType: 'unlimited',
-      lifecycleSequences: { start: { $sequence: 'set' } },
+      lifecycleSequences: { start: [{ $sequence: 'set' }] },
       actionGraph: {
         main: {
           nodes: {
@@ -75,9 +75,9 @@ describe('compileGlobalEffects', () => {
       return issues;
     };
     expect(validate(buff)).toEqual([]);
-    expect(validate({ ...buff, lifecycleSequences: { start: { steps: [] } } })).not.toEqual([]);
+    expect(validate({ ...buff, lifecycleSequences: { start: [{ steps: [] }] } })).not.toEqual([]);
     expect(
-      validate({ ...buff, lifecycleSequences: { start: { $sequence: 'missing' } } }).some(issue =>
+      validate({ ...buff, lifecycleSequences: { start: [{ $sequence: 'missing' }] } }).some(issue =>
         issue.message.includes('missing'),
       ),
     ).toBe(true);
@@ -95,7 +95,7 @@ describe('compileGlobalEffects', () => {
     expect(
       validate({
         stackingType: 'unlimited',
-        lifecycleSequences: { enable: { $sequence: 'missing' } },
+        lifecycleSequences: { enable: [{ $sequence: 'missing' }] },
       }),
     ).not.toEqual([]);
   });

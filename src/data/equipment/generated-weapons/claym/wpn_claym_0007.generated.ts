@@ -44,14 +44,19 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_claym_0007_valid',
-                  target: 'controlledOperator',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_claym_0007_valid',
+                      copiedBlackboardAssignments: {
+                        shield_valid: 'shield_valid',
+                        duration: 'duration',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'mainCharacter' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    shield_valid: 'shield_valid',
-                    duration: 'duration',
-                  },
                 },
               },
               next: null,
@@ -82,21 +87,19 @@ const definition = {
               },
               next: 'setGlobalCooldown_2',
             },
-            conditional_4: {
+            checkCondition_4: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-                whenTrue: { $sequence: 'storeSourceAttributeValue_3' },
               },
-              next: null,
+              next: 'storeSourceAttributeValue_3',
             },
-            conditional_5: {
+            checkCondition_5: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-                whenTrue: { $sequence: 'conditional_4' },
               },
-              next: null,
+              next: 'checkCondition_4',
             },
           },
           dataNodes: {
@@ -132,18 +135,19 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'outputHeal',
           priority: 0,
-          sequence: { $sequence: 'conditional_5' },
+          sequence: { $sequence: 'checkCondition_5' },
         },
       ],
       blackboard: {
         cd: [15, 15, 15, 15, 15, 15, 15, 15, 15],
         duration: [15, 15, 15, 15, 15, 15, 15, 15, 15],
         hp_ratio: [0.07, 0.084, 0.098, 0.112, 0.126, 0.14, 0.154, 0.168, 0.196],
+        shield_valid: 0,
       },
     },
   ],
   assetSlug: 'wpn_claym_0007',
-  iconPath: '/weapons/claym/wpn_claym_0007.webp',
+  icon: 'endaxis:weapons/claym/wpn_claym_0007',
   buffDefinitions: {
     buff_wpn_claym_0007_valid: {
       stackingType: 'unlimited',
@@ -155,8 +159,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_shield',
-        iconPath: '/icons/icon_battle_shield.webp',
+        icon: 'endaxis:icons/icon_battle_shield',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

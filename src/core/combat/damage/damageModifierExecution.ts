@@ -4,13 +4,15 @@ import type {
   DamageModifierNumber,
   DamageProcessorDefinition,
 } from '../../../../packages/game-data-contract/src/modifiers.ts';
+import type { AttributeModifierSlot } from '../attributes/combatAttributes';
 import { attributeModifierValues } from '../attributes/combatAttributes';
+import type { DamageModifierConditionRuntime } from './damageModifiers';
+import type { DamageModifierResult, DamageScaleSide } from './damageScale';
 import type {
   DamageModifierSide,
   DamageProcessTiming,
   PlayerDamageContext,
 } from './playerDamageContext';
-import type { DamageModifierConditionRuntime } from './damageModifiers';
 
 export function applyDamageModifier(
   ownerId: string,
@@ -20,10 +22,7 @@ export function applyDamageModifier(
   timing: DamageProcessTiming,
   side: DamageModifierSide,
   context: PlayerDamageContext,
-  recordModifier?: (
-    side: import('./damageScale').DamageScaleSide,
-    result: import('./damageScale').DamageModifierResult,
-  ) => void,
+  recordModifier?: (side: DamageScaleSide, result: DamageModifierResult) => void,
 ): void {
   if (side !== definition.enabledSide || context.getEntityId(side) !== ownerId) {
     return;
@@ -52,10 +51,7 @@ function applyProcessor(
   timing: DamageProcessTiming,
   context: PlayerDamageContext,
   resolveNumber: (value: DamageModifierNumber) => number,
-  recordModifier?: (
-    side: import('./damageScale').DamageScaleSide,
-    result: import('./damageScale').DamageModifierResult,
-  ) => void,
+  recordModifier?: (side: DamageScaleSide, result: DamageModifierResult) => void,
   modifierSide: DamageModifierSide = 'attacker',
 ): void {
   if (context.damageType === 'lifeDrain') return;
@@ -93,7 +89,7 @@ function applyProcessor(
             recordModifier?.(processor.targetSide, {
               kind: 'attribute',
               attribute: processor.attribute,
-              slot: slot as import('../attributes/combatAttributes').AttributeModifierSlot,
+              slot: slot as AttributeModifierSlot,
               value,
             });
         }

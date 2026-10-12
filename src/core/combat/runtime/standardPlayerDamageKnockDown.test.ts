@@ -1,24 +1,25 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ResolvedActionSequence, CompiledSkillProgram } from '../../compiler/combatProgram';
-import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
 import type {
+  ActionGraphDefinition,
   ActionGraphNode,
   ActionGraphStep,
 } from '../../../../packages/game-data-contract/src/actionGraph';
-import { GameplayTagPredefine } from '../tags/gameplayTagPredefine';
-import { GAMEPLAY_TAG_PREDEFINE } from '../../../data/combat/gameplayTagPredefine.generated';
 import { gameplayTagRegistry } from '../../../data/combat/gameplayTagCatalog';
-import { CombatRuntimeAssembly, type CombatEnemyProgram } from './combatRuntimeAssembly';
-import { StandardPlayerDamageEnvironment } from './standardPlayerDamageEnvironment';
-import { createEnemyCombatVitals } from '../resources/combatVitalsFactory';
-import type { OrdinaryKnockDownRuntime } from '../status/ordinaryKnockDownRuntime';
+import { GAMEPLAY_TAG_PREDEFINE } from '../../../data/combat/gameplayTagPredefine.generated';
+import type { CompiledSkillProgram, ResolvedActionSequence } from '../../compiler/combatProgram';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
 import {
-  createCombatAttributeModifier,
   attributeModifierValues,
+  createCombatAttributeModifier,
 } from '../attributes/combatAttributes';
-import { ATTRIBUTE_MODIFIER_SOURCES } from '../state/foundationState';
 import type { BuffDefinitionOperationTarget } from '../buffs/buffDefinitionOperationTarget';
 import { knockDownAbilityEvent } from '../events/combatAbilityEvent';
+import { createEnemyCombatVitals } from '../resources/combatVitalsFactory';
+import { ATTRIBUTE_MODIFIER_SOURCES } from '../state/foundationState';
+import type { OrdinaryKnockDownRuntime } from '../status/ordinaryKnockDownRuntime';
+import { GameplayTagPredefine } from '../tags/gameplayTagPredefine';
+import { CombatRuntimeAssembly, type CombatEnemyProgram } from './combatRuntimeAssembly';
+import { StandardPlayerDamageEnvironment } from './standardPlayerDamageEnvironment';
 
 const DOWN_TAG = 'Status/Immobilized/KnockDown';
 
@@ -26,7 +27,7 @@ const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
-  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
   graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
   entry,
@@ -36,7 +37,7 @@ const compileGraphEntry = (
 const chainEntry = (
   revision: string,
   actions: readonly ActionGraphStep[],
-  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => {
   const nodes: Record<string, ActionGraphNode> = {};
   actions.forEach((action, index) => {
@@ -74,10 +75,7 @@ const enemy: CombatEnemyProgram = {
   },
 };
 
-function setup(
-  requests = 2,
-  listenerEvent: 'afterOutputKnockDown' | 'outputKnockDown' = 'afterOutputKnockDown',
-) {
+function setup(requests = 2, listenerEvent: 'afterOutputKnockDown' = 'afterOutputKnockDown') {
   const elapsed = vi.fn((control: OrdinaryKnockDownRuntime) => control.exit());
   const environment = new StandardPlayerDamageEnvironment({
     criticalSamples: { nextCriticalSample: () => 1 },
@@ -96,7 +94,11 @@ function setup(
   });
   const apply = (buffId: string) => ({
     kind: 'applyBuff' as const,
-    parameters: { buffId, target: 'caster' as const, inheritSourceSkillCastInfo: true },
+    parameters: {
+      buffs: [{ buffId }],
+      targets: { kind: 'fixed', target: 'caster' } as const,
+      inheritSourceSkillCastInfo: true,
+    },
   });
   // 使用契约编译和真实 Buff 生命周期；这是流程夹具，不冒充原生物理 Buff 的数值。
   const buffDefinitions = {
@@ -129,8 +131,9 @@ function setup(
         sequence: chainEntry(
           `knockdown-requests-${requests}`,
           Array.from({ length: requests }, () => ({
-            kind: 'applyKnockDown' as const,
+            kind: 'applyPhysicalInfliction' as const,
             parameters: {
+              type: 'knockDown' as const,
               target: 'enemy' as const,
               duration: { kind: 'constant' as const, value: 1.5 },
               force: false,
@@ -145,6 +148,7 @@ function setup(
   };
   let control!: OrdinaryKnockDownRuntime;
   const assembly = new CombatRuntimeAssembly({
+    comboSkillPendingInterval: 5,
     ...environment.runtimeOptions,
     enemy,
     bindBattleRuntime: context => {
@@ -211,7 +215,7 @@ function setup(
 }
 
 describe('标准战斗环境的普通倒地显式装配', () => {
-  it.each(['afterOutputKnockDown', 'outputKnockDown'] as const)(
+  it.each(['afterOutputKnockDown'] as const)(
     '%s Buff 在真实组件原始击倒通知上响应，旧筛选不二次发布',
     listenerEvent => {
       const s = setup(2, listenerEvent);
@@ -227,13 +231,11 @@ describe('标准战斗环境的普通倒地显式装配', () => {
         priority: 0,
         handle: context => filtered.push(context.event),
       });
-      const emit = vi.spyOn(s.assembly.semanticEvents, 'emit');
       s.start();
       expect(raw).toHaveLength(1);
       expect(filtered).toHaveLength(1);
       expect(filtered[0]).toBe(raw[0]);
       expect(s.operatorBuffs.getCountByIds(['talent-result'])).toBe(1);
-      expect(emit.mock.calls.some(([event]) => event.kind === 'knockDownOutput')).toBe(false);
     },
   );
 

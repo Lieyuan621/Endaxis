@@ -1,55 +1,23 @@
+import type { ActionEntitySelection, ActionTargetQuery } from './conditions.ts';
+import type { NativeSkillType } from './skills.ts';
 /**
  * 定义战斗模拟器能够执行的全部动作步骤、动作序列和战斗事件响应。
  *
  * 技能、Buff、装备与养成效果都用同一套步骤描述伤害、治疗、资源变化、状态、目标查询、
  * 时间控制和流程控制。模拟器按步骤顺序执行，并用动作黑板和上下文目标组传递中间结果。
  */
-import type { GameplayTag, GameplayTagQueryType } from './gameplayTags.ts';
 import type { AbilityEvent } from './abilityEvents.ts';
 import type { ActionGraphReference } from './actionGraph.ts';
+import type { GameplayTag, GameplayTagQueryType } from './gameplayTags.ts';
 
-import {
-  type BuffApplicationSource,
-  type BuffApplicationTarget,
-  type BuffSingleTarget,
-  type CombatResource,
-  type CombatTarget,
-  type DamageCalculation,
-  type DamageElement,
-  type DamageFeature,
-  type DamageTag,
-  type DamageType,
-  type ElementalReaction,
-  type HealCalculationAttribute,
-  type HealTarget,
-  type InflictionElement,
-  type LevelValues,
-  type OperatorAttribute,
-  type PhysicalInflictionType,
-  type ResourceRecipient,
-  type SkillType,
-  type SpGainKind,
-  type SpGainSource,
-  type ActionStringOperand,
-  type TimeDilationIgnoreTarget,
-  type TimeDilationEntityTarget,
-  type TimedMarkerTarget,
-  type GlobalCooldownTarget,
-} from './primitives.ts';
-import {
-  type ActionValueCalculationOperation,
-  type ActionValueOperand,
-  type ActionValueOperation,
-  type CombatCondition,
-  type TimeScaleCurveDefinition,
+import type { SkillGlobalBuffDefinition } from './buffs.ts';
+import type {
+  ActionValueCalculationOperation,
+  ActionValueOperand,
+  ActionValueOperation,
+  CombatCondition,
+  TimeScaleCurveDefinition,
 } from './conditions.ts';
-import {
-  type AbilityEntityChildSkillDefinition,
-  type AbilityEntityDefinition,
-  type AbilityEntityTargetQuery,
-  type SkillTriggerScope,
-} from './skills.ts';
-import { type SkillBuffDefinition, type SkillGlobalBuffDefinition } from './buffs.ts';
 import type {
   AttributeModifierSlot,
   AttributeModifierTiming,
@@ -57,6 +25,37 @@ import type {
   DamageScaleSide,
   DamageScaleZone,
 } from './modifiers.ts';
+import type {
+  ActionStringOperand,
+  BuffApplicationSource,
+  BuffApplicationTarget,
+  BuffSingleTarget,
+  CombatResource,
+  CombatTarget,
+  DamageCalculation,
+  DamageElement,
+  DamageFeature,
+  DamageTag,
+  DamageType,
+  GlobalCooldownTarget,
+  HealCalculationAttribute,
+  HealTarget,
+  InflictionElement,
+  LevelValues,
+  OperatorAttribute,
+  PhysicalInflictionType,
+  SkillType,
+  SpGainKind,
+  SpGainSource,
+  TimeDilationEntityTarget,
+  TimeDilationIgnoreTarget,
+} from './primitives.ts';
+import type {
+  AbilityEntityChildSkillDefinition,
+  AbilityEntityDefinition,
+  AbilityEntityTargetQuery,
+  SkillTriggerScope,
+} from './skills.ts';
 
 /** 治疗目标绑定；Context 使用查询阶段保存的实例，其他目标不得携带查询键。 */
 export type HealTargetBinding =
@@ -73,20 +72,35 @@ export type HealTargetBinding =
       contextKey?: never;
     };
 
-/** 标签结束使用单个已绑定对象；集合与主控选择器不在此动作的目标范围内。 */
-export const BUFF_TAG_FINISH_TARGETS = [
-  'party',
-  'caster',
-  'enemy',
-  'currentAbilityEntity',
-  'eventTarget',
-  'eventSource',
-  'buffOwner',
-  'buffSource',
-  'currentTarget',
-] as const satisfies readonly BuffApplicationTarget[];
-/** 按标签结束 Buff 的单体或队伍目标。 */
-export type BuffTagFinishTarget = (typeof BUFF_TAG_FINISH_TARGETS)[number];
+/** 一条 CreateBuffAction 输入；不持有独立目标或生命周期。 */
+export interface BuffApplicationEntry {
+  /** 动态身份在执行时从字符串黑板读取；不携带可被误用的字面回退 ID。 */
+  buffId: ActionStringOperand;
+  /**
+   * 在施加时覆盖 Buff 定义黑板的同名默认值。动作操作数从当前动作黑板求值；
+   * 等级值在技能或养成初始化程序编译时解析。
+   */
+  blackboardAssignments?: Readonly<Record<string, LevelValues | ActionValueOperand>>;
+  /** 原生字符串输入的字面覆盖；与数值赋值分开，避免把字符串伪装成计算操作数。 */
+  stringBlackboardAssignments?: Readonly<Record<string, string>>;
+  /**
+   * 原生 useDirectValue=false：从当前动作黑板按实际值类型复制到新 Buff。
+   * 键是目标 Buff 黑板键，值是当前动作黑板来源键。
+   */
+  copiedBlackboardAssignments?: Readonly<Record<string, string>>;
+  /**
+   * 原生 KeywordAction.enhancingList：只附着到本次创建的关键词载体实例，不能改写共享模板。
+   * value 在创建边沿从当前动作黑板求值，随后由载体自身监听普通 Buff 的加入边沿。
+   */
+  keywordEnhancements?: readonly {
+    /** 任一加入时触发强化的普通 Buff ID。 */
+    triggerBuffIds: readonly string[];
+    /** 对关键词值执行赋值、加算或乘算。 */
+    operation: 'assign' | 'add' | 'multiply';
+    /** 从当前动作黑板或常量读取的运算值。 */
+    value: ActionValueOperand;
+  }[];
+}
 
 /** 一次伤害步骤的完整声明；倍率使用小数，失衡与生命伤害同属该命中。 */
 export interface DealDamageParameters {
@@ -116,15 +130,6 @@ export interface DealDamageParameters {
   staggerMultiplier?: LevelValues | ActionValueOperand;
   /** 原生 Poise 单元 onlyEnableForMainChar；生命伤害仍正常结算。 */
   staggerOnlyWhenCasterControlled?: boolean;
-  /** 每层语义化战斗状态提供的额外攻击倍率。 */
-  attackScalePerStatusStack?: {
-    /** 要读取层数的状态键。 */
-    statusKey: string;
-    /** 状态所属对象。 */
-    target: CombatTarget;
-    /** 每层额外提供的攻击倍率。 */
-    coefficient: LevelValues;
-  };
   /** 原生 DamageUnit.damageProcessors 中只对当前伤害包生效的属性修正。 */
   instantAttributeModifiers?: readonly {
     /** 修改攻击方还是目标方。 */
@@ -147,27 +152,6 @@ export interface DealDamageParameters {
     /** 加入该区间的数值。 */
     addition: ActionValueOperand;
   }[];
-}
-
-/**
- * 不读取攻击力的固定基础值伤害。
- * 固定值只替代标准伤害的“攻击力乘倍率”阶段，后续伤害修正与防御、抗性公式保持不变。
- */
-export interface DealFixedDamageParameters {
-  /** 本次生命伤害的类型。 */
-  damageType: DamageType;
-  /** 不依赖攻击力的基础伤害值。 */
-  value: LevelValues | ActionValueOperand;
-  /** 本次伤害携带的技能和爆发分类标签。 */
-  tags: readonly DamageTag[];
-  /** 原生伤害位中与技能分类无关的行为特征。 */
-  features?: readonly DamageFeature[];
-  /** 同一次命中在生命伤害之后结算的失衡伤害。 */
-  stagger?: LevelValues | ActionValueOperand;
-  /** 失衡基础值结算后乘用的倍率。 */
-  staggerMultiplier?: LevelValues | ActionValueOperand;
-  /** 原生 Poise 单元 onlyEnableForMainChar；生命伤害仍正常结算。 */
-  staggerOnlyWhenCasterControlled?: boolean;
 }
 
 /**
@@ -251,6 +235,17 @@ export const STATUS_MODIFIER_KINDS = [
  * 增加步骤时必须同时提供编译、运行时执行和严格校验，不能只扩展此类型。
  */
 export interface CombatStepParameters {
+  /** 原生 ConvertToTargetContext(None)：复制目标句柄，保持顺序与重复项。 */
+  copyContextTargets: {
+    source: ActionTargetQuery;
+    saveToContextKey: string;
+  };
+  /** 查找目标并覆盖目标组；宿主不存在时失败且不改写旧组。 */
+  findTargets: {
+    owner: ActionEntitySelection;
+    query: ActionTargetQuery;
+    saveToContextKey: string;
+  };
   /** 合并稳定目标身份并覆盖写入 Context 目标组；空 sources 用于初始化空组。 */
   mergeContextTargets: {
     /** 保存合并结果的动作环境键。 */
@@ -278,11 +273,6 @@ export interface CombatStepParameters {
           readonly owner: 'actionSource' | 'actionOwner';
         }
     )[];
-  };
-  /** 查询未结束的投射物。生成器必须先证明空间范围在固定木桩模型中覆盖这些候选。 */
-  findUnfinishedProjectileTargets: {
-    /** 保存本次查询的实例身份；后续消费者不重新查询。 */
-    saveToContextKey: string;
   };
   /** 查询当前队伍并把当时的实例身份快照覆盖写入 Context；后续消费者不得重新选人。 */
   findCharacterTeamTargets: {
@@ -324,17 +314,15 @@ export interface CombatStepParameters {
     saveToContextKey: string;
     /** 只查找这些能力实体 ID；省略时不按 ID 筛选。 */
     abilityEntityIds?: readonly string[];
-    /** 省略时使用当前动作施法者；存在时从已写入 Context 的单个干员解析 owner。 */
-    ownerContextKey?: string;
+    /** 原生选择器的查询所有者，不等同于技能定义所属干员。 */
+    owner: ActionTargetQuery;
     /** 原生查询后处理保留的目标数量；零空间模型会消去距离排序，但不能消去截断。 */
     maxTargets?: number;
     /** 使用当前技能或 Buff 继承的施法序号执行 SkillCastIdValidator。 */
     sameSourceSkillCast?: boolean;
-    /** 可选地把同一查询结果数量写入动作黑板，后续复用 actionValueCompare。 */
-    saveCountToBlackboardKey?: string;
     /** 原生 CircularOrderSort 在项目零空间投影下以槽位 0 为起点执行的环排序。 */
     circularOrder?: {
-      /** 保存下一次环形查询起点的动作黑板键。 */
+      /** 从每个候选实体的变量中读取槽位索引所用的键。 */
       indexBlackboardKey: string;
       /** 排序后希望保留的目标数。 */
       desiredCount: number;
@@ -352,50 +340,28 @@ export interface CombatStepParameters {
     index: ActionValueOperand;
   };
   /**
-   * 对 Context 中的稳定目标句柄逐一同步执行；唯一木桩/施法者已被静态证明时，
-   * 也可直接保留原生 ForEach 的即时生命周期与“忽略子序列返回值”边界。
+   * 捕获目标列表后，用同一子序列逐目标即时执行；子序列失败不终止遍历。
    */
-  forEachContextTarget:
-    | {
-        /** 要遍历的动作目标组。 */
-        contextKey: string;
-        /** 使用目标组时禁止同时指定固定目标。 */
-        target?: never;
-      }
-    | {
-        /** 使用固定目标时不读取动作目标组。 */
-        contextKey?: never;
-        /** 作为唯一迭代项的固定目标。 */
-        target: 'enemy' | 'caster';
-      };
-  /** 读取当前 Context 迭代目标的能力实体剩余时长到动作黑板。 */
-  readAbilityEntityRemainingDuration: {
-    /** 保存剩余秒数的动作黑板键。 */
-    outputKey: string;
-  };
-  /** 将当前 Context 迭代目标的能力实体剩余时长赋为一个明确数值。 */
+  forEachContextTarget: { targets: ActionTargetQuery };
+  /** 将单个目标的能力实体剩余时长赋值；对应原生单目标模式，不遍历目标组。 */
   setAbilityEntityRemainingDuration: {
+    /** 读取目标组的首个实体；空目标或非能力实体不执行赋值。 */
+    target: ActionTargetQuery;
     /** 新的剩余秒数。 */
     value: ActionValueOperand;
   };
-  /** 结束当前 Context 迭代目标所指向的能力实体。 */
-  finishCurrentAbilityEntity: Record<string, never>;
-  /** 结束当前能力实体子技能的 ActionOwner，不受内层 forEach 当前目标覆盖。 */
-  finishActionOwnerAbilityEntity: Record<string, never>;
-  /** 仅在当前能力实体的来源已经死亡时结束该实体。 */
-  finishCurrentAbilityEntityWhenSourceDies: Record<string, never>;
-  /** 在当前 Context 迭代目标所指向的既有能力实体上启动一个无施法子技能。 */
-  startCurrentAbilityEntityChildSkill: {
-    /** 要启动的无施法子技能。 */
-    childSkill: AbilityEntityChildSkillDefinition;
-  };
+  /** 解析原生 Owner 目标：能力实体死亡，投射物停止飞行并等待回收。 */
+  finishOwner: { targets: ActionTargetQuery };
+  interruptCurrentSkill: { targets: ActionTargetQuery };
   /** 在当前 Context 能力实体自己的模板中按原生 Skill ID 启动具名子技能。 */
   startCurrentAbilityEntityChildSkillById: {
     /** 能力实体模板中登记的原生子技能 ID。 */
     childSkillId: string;
   };
-  /** 在零空间模型中生成一个有独立身份、生命周期和实体黑板的逻辑能力实体。 */
+  /** 按出生目标生成有独立身份、生命周期和实体变量的逻辑能力实体。 */
   spawnAbilityEntity: {
+    /** 每个出生目标各生成一个实体；空目标组不生成。 */
+    bornAt: ActionTargetQuery;
     /** 要生成的能力实体模板 ID。 */
     abilityEntityId: string;
     /** 手写定义可暂时内联；生成定义从干员或只读公共定义表按 ID 解析。 */
@@ -411,7 +377,7 @@ export interface CombatStepParameters {
      * ActionOwner 必须显式保留为当前能力实体，不能在生成期压平成施术者。
      */
     source?: 'caster' | 'currentAbilityEntity';
-    /** 生成位置锚点；Buff 局部时间线中的 Owner 是当前 Buff 宿主能力实体。 */
+    /** 传给生成实体及其子技能的输入目标，与出生位置查询分开。 */
     target?: CombatTarget | 'currentAbilityEntity';
     /** 用动作数值覆盖模板持续时间。 */
     overrideDurationSeconds?: ActionValueOperand;
@@ -433,10 +399,6 @@ export interface CombatStepParameters {
     element: InflictionElement;
   };
   /** 给干员施加元素附着；异常转化由附着 Buff 的动作图处理。 */
-  limitMovementGait: {
-    readonly min: 'walk' | 'run' | 'sprint';
-    readonly max: 'walk' | 'run' | 'sprint';
-  };
   applyCharacterInfliction: {
     element: InflictionElement;
     source: BuffApplicationSource | 'battle';
@@ -488,51 +450,32 @@ export interface CombatStepParameters {
     /** 目标技能不可施放时保留当前技能；省略表示旧版无条件消费延迟请求。 */
     interruptCurrentSkillOnlyWhenTargetCastable?: boolean;
   };
-  /** 普通根倒地动作；破防与状态 Buff 由公共目录解析，不等同于输出一次成功事件。 */
-  applyKnockDown: {
-    /** 当前只支持对固定敌人施加倒地。 */
-    target: 'enemy';
-    /** 倒地持续秒数。 */
-    duration: ActionValueOperand;
-    /** 是否强制覆盖目标当前控制状态。 */
-    force: boolean;
-    /** 是否作为额外物理异常传播到事件上下文。 */
-    isExtra: boolean;
-    /** 原生 AllValid/OnlyAlive 都只选存活目标；OnlyDead 实际跳过全部目标。 */
-    targetFilter: 'aliveOnly' | 'skipAll';
-    /** 动作根据成功和打断结果返回的时机。 */
-    returnWhen: 'always' | 'successAndInterrupted' | 'success' | 'interrupted';
-  };
   /**
-   * 对固定敌人执行物理异常入口。公共 Buff 蓝图随使用点内联，运行时按目标当前层数
-   * 选择首次破防或后续异常链，不把公共 Buff 变成可编辑的项目级钻石依赖。
+   * 对固定敌人执行物理异常入口，按当前层数选择首次破防或后续异常链。
+   * Buff 身份按异常类型固定选择；完整定义由公共 Buff 目录提供。
    */
   applyPhysicalInfliction: {
     /** 当前只支持对固定敌人施加物理异常。 */
     target: 'enemy';
     /** 是否作为额外物理异常传播到事件上下文。 */
     isExtra: boolean;
-    /** 目标首次进入破防时使用的 Buff ID。 */
-    noGuardBuffId: string;
-    /** 首次破防 Buff 的完整定义。 */
-    noGuardDefinition: SkillBuffDefinition;
   } & (
     | {
-        /** 破裂。 */
-        type: 'fracture';
-        /** 破裂 Buff ID。 */
-        fractureBuffId: string;
-        /** 破裂 Buff 定义。 */
-        fractureDefinition: SkillBuffDefinition;
+        /** 倒地；运行时保留独立的控制状态、免疫与返回结果处理。 */
+        type: 'knockDown';
+        duration: ActionValueOperand;
+        force: boolean;
+        targetFilter: 'aliveOnly' | 'skipAll';
+        returnWhen: 'always' | 'successAndInterrupted' | 'success' | 'interrupted';
       }
     | {
-        /** 粉碎。 */
+        /** 碎甲。 */
+        type: 'fracture';
+      }
+    | {
+        /** 猛击。 */
         type: 'crush';
-        /** 粉碎 Buff ID。 */
-        crushedBuffId: string;
-        /** 粉碎 Buff 定义。 */
-        crushedDefinition: SkillBuffDefinition;
-        /** 粉碎伤害倍率。 */
+        /** 猛击伤害倍率。 */
         damageMultiplier: ActionValueOperand;
         /** 是否跳过命中特效。 */
         ignoreHitEffect: boolean;
@@ -540,10 +483,6 @@ export interface CombatStepParameters {
     | {
         /** 击飞。 */
         type: 'airborne';
-        /** 击飞 Buff ID。 */
-        airborneBuffId: string;
-        /** 击飞 Buff 定义。 */
-        airborneDefinition: SkillBuffDefinition;
         /** 击飞持续秒数。 */
         duration: ActionValueOperand;
         /** 原生击飞高度。 */
@@ -558,40 +497,23 @@ export interface CombatStepParameters {
         returnWhen: 'always' | 'successAndInterrupted' | 'success' | 'interrupted';
       }
   );
-  /** 在目标身上创建一个有持续时间和效果系数的复合元素反应。 */
-  applyElementalReaction: {
-    /** 要创建的复合元素反应。 */
-    reaction: ElementalReaction;
-    /** 反应作用的对象。 */
-    target: CombatTarget;
-    /** 原生反应触发 Buff 可从当前动作黑板转交持续时间。 */
-    durationSeconds: number | ActionValueOperand;
-    /** 构筑期持续时间修正；与动作黑板基础时长分离。 */
-    durationMultiplier?: number;
-    /** 反应效果系数。 */
-    effectiveness: number;
-  };
-  /** 从目标身上移除一个复合元素反应。 */
-  consumeElementalReaction: {
-    /** 要移除的元素反应。 */
-    reaction: ElementalReaction;
-    /** 当前只支持从敌人身上移除。 */
+  /** 原生 ForceSpellStatusAction：检查并消费附着，再创建指定法术反应；整个过程是一次动作。 */
+  forceSpellStatus: {
+    /** 接收反应的目标。 */
     target: 'enemy';
-  };
-  /** 报告一次对固定目标成功输出浮空；木桩模型不保存位移、朝向或控制状态。 */
-  outputAirborne: {
-    /** 接收击飞的对象。 */
-    target: CombatTarget;
-  };
-  /** 报告一次对固定目标成功输出击倒；木桩模型不保存倒地控制状态。 */
-  outputKnockDown: {
-    /** 接收击倒的对象。 */
-    target: CombatTarget;
+    /** 指定反应的元素：燃烧、导电、冻结或腐蚀。 */
+    element: InflictionElement;
+    /** 被消费的附着元素；与反应元素独立。 */
+    consumedElement: InflictionElement;
+    /** 消费层数；不大于零时不检查或消费附着。 */
+    consumedLayers: ActionValueOperand;
+    /** 传入反应 Buff 的 count，不是消费层数。 */
+    count: ActionValueOperand;
+    /** 原生 AddBuffContext 的额外施加标记。 */
+    isExtra: boolean;
   };
   /** 造成一次按攻击力或属性计算的伤害。 */
   dealDamage: DealDamageParameters;
-  /** 造成一次使用固定基础值的伤害。 */
-  dealFixedDamage: DealFixedDamageParameters;
   /** 不伴随生命伤害的独立失衡单元；数值仍会经过来源与目标的失衡倍率。 */
   dealStagger: {
     /** 基础失衡伤害。 */
@@ -636,20 +558,33 @@ export interface CombatStepParameters {
         }
     );
   /** 按目标、来源和黑板赋值创建一个或多个 Buff 实例。 */
+  /** 原生 Aura：每个进入目标分别施加区域 Buff，并执行进入/退出回调。 */
+  aura: {
+    /** 零空间下的候选集合；排除的是动作 Owner。 */
+    targets: ActionTargetQuery;
+    /** 按原生顺序施加到每个进入目标。 */
+    buffs: readonly BuffApplicationEntry[];
+    /** 区域 Buff 的来源，不改写回调环境的 Owner/Source。 */
+    source?: ActionTargetQuery;
+    /** 将当前施法身份传给区域 Buff。 */
+    inheritSourceSkillCastInfo?: boolean;
+    /** 仅覆盖显示倒计时，不改变实例寿命。 */
+    iconDurationSource?:
+      | { readonly kind: 'actionOwnerAbilityEntity' }
+      | { readonly kind: 'actionOwnerTimedMarker'; readonly markerId: string };
+  };
   applyBuff: {
-    /** 动态身份在执行时从字符串黑板读取；不携带可被误用的字面回退 ID。 */
-    buffId: ActionStringOperand;
-    /** 接收 Buff 的单体或队伍目标。 */
-    target: BuffApplicationTarget;
+    /** 每次循环按顺序施加；ID 与赋值在轮到该项时求值。 */
+    buffs: readonly BuffApplicationEntry[];
+    /** 原生接收者查询；动作内部按查询顺序处理全部实体，跳过位置目标。 */
+    targets: ActionTargetQuery;
     /** 原生 CreateBuffAction 的循环次数；省略时执行一次，正小数按 `int < float` 语义向上取整。 */
     count?: ActionValueOperand;
     /**
-     * Buff 的来源实体；省略时沿用当前动作来源。
-     * 该字段与接收 Buff 的 `target` 相互独立，只应在原生动作显式改写来源时配置。
+     * 每个接收者处理前读取查询首项作为 Buff 来源；省略时读取动作 Source。
+     * 空结果或首项为位置目标时跳过该接收者，不读取 Buff ID 和赋值。
      */
-    source?: BuffApplicationSource;
-    /** 已确定为单一目标的 Context 来源，与 source 互斥；保留查询结果的实例身份。 */
-    sourceContextKey?: string;
+    source?: ActionTargetQuery;
     /**
      * 原生 Buff 图标的倒计时来源。它只改变可视倒计时，不改变 Buff 自身生命周期；
      * 来源在施加边沿解析成稳定实例身份，同名 TimedMarker 重建不会串线。
@@ -666,59 +601,12 @@ export interface CombatStepParameters {
           /** 定时标记 ID。 */
           readonly markerId: string;
         };
-    /**
-     * 在施加时覆盖 Buff 定义黑板的同名默认值。动作操作数从当前动作黑板求值；
-     * 等级值在技能或养成初始化程序编译时解析。
-     */
-    blackboardAssignments?: Readonly<Record<string, LevelValues | ActionValueOperand>>;
-    /** 原生字符串输入的字面覆盖；与数值赋值分开，避免把字符串伪装成计算操作数。 */
-    stringBlackboardAssignments?: Readonly<Record<string, string>>;
-    /**
-     * 原生 useDirectValue=false：从当前动作黑板按实际值类型复制到新 Buff。
-     * 键是目标 Buff 黑板键，值是当前动作黑板来源键。
-     */
-    copiedBlackboardAssignments?: Readonly<Record<string, string>>;
-    /**
-     * 原生 KeywordAction.enhancingList：只附着到本次创建的关键词载体实例，不能改写共享模板。
-     * value 在创建边沿从当前动作黑板求值，随后由载体自身监听普通 Buff 的加入边沿。
-     */
-    keywordEnhancements?: readonly {
-      /** 任一加入时触发强化的普通 Buff ID。 */
-      triggerBuffIds: readonly string[];
-      /** 对关键词值执行赋值、加算或乘算。 */
-      operation: 'assign' | 'add' | 'multiply';
-      /** 从当前动作黑板或常量读取的运算值。 */
-      value: ActionValueOperand;
-    }[];
     /** 原生动作要求把当前施法身份复制到新 Buff 时为 true。 */
     inheritSourceSkillCastInfo?: boolean;
     /** 原生 AddBuffContext.isExtra；仅作为 Buff 添加事件事实传播，不自行产生数值效果。 */
     isExtra?: boolean;
     /** 原生区域/动作生命周期结束时，只结束本步骤实际创建的 Buff 实例。 */
     finishByAction?: boolean;
-    /** 动作结束时，在回收自身创建的 Buff 后，按 ID 清理指定目标的全部匹配 Buff。 */
-    onActionEndFinishBuffs?: {
-      target: BuffApplicationTarget;
-      buffIds: readonly string[];
-    };
-    /**
-     * 原生 Aura 离开边沿：先结束本步骤创建的区域 Buff，再在同一批目标上创建有限余效。
-     * 只随 finishByAction=true 使用；余效是独立实例，不再归原 Aura 动作托管。
-     */
-    onActionEndBuffs?: readonly {
-      /** 余效 Buff ID。 */
-      buffId: string;
-      /** 接收余效 Buff 的目标。 */
-      target: BuffApplicationTarget;
-      /** 余效 Buff 的来源对象。 */
-      source?: BuffApplicationSource;
-      /** 从当前动作黑板计算并传给余效 Buff 的数值。 */
-      blackboardAssignments?: Readonly<Record<string, ActionValueOperand>>;
-      /** 直接传给余效 Buff 的字符串值。 */
-      stringBlackboardAssignments?: Readonly<Record<string, string>>;
-      /** 是否把当前施法身份传给余效 Buff。 */
-      inheritSourceSkillCastInfo?: boolean;
-    }[];
     /**
      * 当前技能由白名单中的下一原生技能打断时，把本步骤创建的同一 Buff 实例转交给下一技能；
      * 不刷新层数、持续时间、来源或黑板。当前只与 finishByAction=true 的原生组合一起使用。
@@ -728,10 +616,6 @@ export interface CombatStepParameters {
     asChildBuff?: boolean;
     /** CreateBuffAttachingSkill：绑定事件当前技能而非动作 owner 的寿命。 */
     lifetimeOwner?: 'currentCastSkill';
-    /** 覆盖本次 Buff 实例持续时间的秒数。 */
-    durationSeconds?: number;
-    /** 覆盖本次 Buff 实例效果系数。 */
-    effectiveness?: number;
   };
   /** 创建一个独立的战斗级 GlobalBuff 实例，并把其子 Buff 投影到当前固定队伍。 */
   createGlobalBuff: {
@@ -825,18 +709,10 @@ export interface CombatStepParameters {
     /** 保存到当前动作黑板的键。 */
     outputKey: string;
   };
-  /** 把当前生命周期环境中有限时长 Buff 的剩余秒数写入动作黑板；无限时长写入 0。 */
-  readCurrentBuffRemainingDuration: {
-    /** 保存剩余秒数的动作黑板键。 */
-    outputKey: string;
-  };
-  /** 按 ID 读取目标首个有效 Buff 的剩余秒数；无限时长写入 0。 */
+  /** 保存最后一个匹配的有限时长 Buff 的剩余秒数；无匹配时写入 0。 */
   readBuffRemainingDuration: {
-    /** 要查找 Buff 的对象。 */
-    target: BuffSingleTarget;
-    /** 任一匹配即可选中的 Buff ID。 */
-    buffIds: readonly string[];
-    /** 保存剩余秒数的动作黑板键。 */
+    target: ActionTargetQuery;
+    query: CombatStepParameters['readBuffStackCount']['query'];
     outputKey: string;
   };
   /** 修改目标上匹配的有限时长 Buff；无限寿命 Buff 不受影响。 */
@@ -890,28 +766,39 @@ export interface CombatStepParameters {
     /** 缺省保持历史的累计强化层数；原生 BuffCount 必须显式使用 instance。 */
     countType?: 'enhance' | 'instance';
   };
+  /** 驱散允许被驱散的 Buff；先执行驱散回调，再执行普通结束。 */
+  dispelBuffs: {
+    source: ActionTargetQuery;
+    targets: ActionTargetQuery;
+    level: number;
+    query?: { buffTags: readonly GameplayTag[]; tagQueryType: GameplayTagQueryType };
+  };
   /** 按原生标签查询结束目标身上的匹配 Buff；count 缺省时结束全部。 */
   finishBuffsByTag: {
-    /** 要结束 Buff 的对象。 */
-    target: BuffTagFinishTarget;
+    /** 按原生查询顺序逐个结束 Buff 的接收者；不另建遍历动作。 */
+    targets: ActionTargetQuery;
+    /** Early/Absorbed 读取此查询的第一个对象；Other 不求值。 */
+    finishSource: ActionTargetQuery;
     /** 标签集合匹配方式。 */
     tagQueryType: GameplayTagQueryType;
     /** 用于查找 Buff 的标签。 */
     buffTags: readonly GameplayTag[];
     /** 记录到结束事件中的原因。 */
     reason: 'early' | 'absorbed' | 'other';
-    /** 最多结束的实例数；省略时结束全部匹配项。 */
+    /** 原生结束层数，执行时向零取整；由 Buff 叠层类型决定扣增强层还是结束实例。省略时结束全部。 */
     count?: ActionValueOperand;
   };
   /** 按 Buff 定义身份结束目标身上的匹配实例；count 缺省时结束全部。 */
   finishBuffsById: {
-    /** 要结束 Buff 的单体或队伍目标。 */
-    target: BuffApplicationTarget;
-    /** 任一匹配即可选中的 Buff ID。 */
+    /** 按原生查询顺序逐个结束 Buff 的接收者；不另建遍历动作。 */
+    targets: ActionTargetQuery;
+    /** Early/Absorbed 读取此查询的第一个对象；Other 不求值。 */
+    finishSource: ActionTargetQuery;
+    /** 每个接收者按列表顺序处理，不排序或去重。 */
     buffIds: readonly string[];
     /** 记录到结束事件中的原因。 */
     reason: 'early' | 'absorbed' | 'other';
-    /** 最多结束的实例数；省略时结束全部匹配项。 */
+    /** 每个 ID 独立使用的原生结束层数，执行时向零取整；省略时结束全部。 */
     count?: ActionValueOperand;
   };
   /** 结束当前正在执行生命周期或事件响应的 Buff 实例。 */
@@ -1003,27 +890,16 @@ export interface CombatStepParameters {
   };
   /** 在目标能力系统上创建定时标记；同 ID 标记不会互相覆盖。 */
   createTimedMarker: {
-    /** 标记所属对象。 */
-    target: TimedMarkerTarget;
+    /** 逐目标创建标记；空目标组返回失败。 */
+    targets: ActionTargetQuery;
     /** 标记 ID。 */
     markerId: ActionStringOperand;
     /** 标记持续秒数。 */
     durationSeconds: ActionValueOperand;
     /** 是否随当前动作结束。 */
     autoFinishByAction: boolean;
-    /** 对应原生 useTimeDilationDt：设置后使用目标实体最终时间；缺省使用全局缩放时间。 */
-    timeDomain?: 'globalScaled';
-  };
-  /** 在当前能力实体上创建定时标记；每个标记显式选择共享战斗或实体自身时钟。 */
-  createAbilityEntityTimedMarker: {
-    /** 标记 ID。 */
-    markerId: ActionStringOperand;
-    /** 标记持续秒数。 */
-    durationSeconds: ActionValueOperand;
-    /** 是否随当前动作结束。 */
-    autoFinishByAction: boolean;
-    /** 使用全局时钟还是能力实体自身时钟。 */
-    timeDomain: 'global' | 'self';
+    /** 原生 useTimeDilationDt=true 使用目标实体时钟，false 使用全局缩放时钟。 */
+    timeDomain: 'globalScaled' | 'self';
   };
   /** 创建普通全局或实体时间膨胀实例；终结技专用时间动作另行建模。 */
   startTimeDilation:
@@ -1093,6 +969,11 @@ export interface CombatStepParameters {
     revertOnEnd: boolean;
   };
   /** 修改当前技能实例的动作黑板；不得用于跨技能持久状态。 */
+  storeCharacterTypeId: {
+    /** 读取首个角色目标的原生类型字符串。 */
+    target: 'caster' | 'buffOwner' | 'buffSource' | 'currentTarget' | 'enemy';
+    outputKey: string;
+  };
   storeCurrentTimelineFrame: {
     /** 把 Owner AbilitySystem 当前技能的局部整数执行帧写入动作黑板。 */
     outputKey: string;
@@ -1193,16 +1074,18 @@ export interface CombatStepParameters {
     /** 生命下限数值或比例。 */
     value: ActionValueOperand;
   };
-  /** 按技能或养成等级解析固定数值后增减战斗资源。 */
+  /** 原生 ObtainCostAction：在执行点读取数值并增减战斗资源。 */
   changeResource: {
     /** 要增减的资源。 */
     resource: CombatResource;
     /** 正数增加、负数减少的资源量。 */
-    amount: LevelValues;
+    amount: LevelValues | ActionValueOperand;
     /** 原生 ObtainCostAction 在资源效率链之前乘到 amount 上；省略时为 1。 */
-    coefficient?: LevelValues;
-    /** 资源作用于施法者还是全队。 */
-    recipient: ResourceRecipient;
+    coefficient?: LevelValues | ActionValueOperand;
+    /** 取首个对象作为资源获取来源。 */
+    source: ActionTargetQuery;
+    /** 每个接收对象分别执行一次资源获取。 */
+    targets: ActionTargetQuery;
     /** 仅对正向技力变化有效；省略时按普通获得处理。 */
     spGainKind?: SpGainKind;
     /** 正向技力变化来自普攻、重击、技能或默认来源。 */
@@ -1213,27 +1096,8 @@ export interface CombatStepParameters {
     ultimateRecoveryTag?: GameplayTag;
     /** 终结技能量专用：跳过目标自身的回能效率。 */
     ignoreUltimateEnergyGainMultiplier?: boolean;
-  };
-  /** 执行时从当前技能动作黑板读取数值，再交给同一资源账本处理。 */
-  changeResourceByActionValue: {
-    /** 要增减的资源。 */
-    resource: CombatResource;
-    /** 从动作黑板或常量读取的资源量。 */
-    amount: ActionValueOperand;
-    /** 原生 ObtainCostAction 在资源效率链之前乘到动态 amount 上；省略时为 1。 */
-    coefficient?: LevelValues | ActionValueOperand;
-    /** 资源作用于施法者还是全队。 */
-    recipient: ResourceRecipient;
-    /** 正向技力变化是正常获得还是返还。 */
-    spGainKind?: SpGainKind;
-    /** 正向技力变化的动作来源。 */
-    spGainSource?: SpGainSource;
-    /** 是否把终结技能量数值解释为最大能量比例。 */
-    isPercentValue?: boolean;
-    /** 正向终结技能量回复携带的许可标签。 */
-    ultimateRecoveryTag?: GameplayTag;
-    /** 是否跳过目标自身的终结技能量获取倍率。 */
-    ignoreUltimateEnergyGainMultiplier?: boolean;
+    /** 原生 atbOnlyMainChar；仅限制技力获取，终结技能量不受此开关影响。 */
+    onlyMainOperator?: boolean;
   };
   /** 返还 PlayerController 持有的全队共享闪避体力。 */
   recoverDashEnergy: {
@@ -1256,39 +1120,11 @@ export interface CombatStepParameters {
     /** 处决技力固定发给全队。 */
     recipient: 'team';
   };
-  /** 创建或增加一个兼容的语义战斗状态。 */
-  applyStatus: {
-    /** 状态 ID。 */
-    statusKey: string;
-    /** 状态所属对象。 */
-    target: CombatTarget;
-    /** 状态持续帧数；省略时不按时间结束。 */
-    durationFrames?: LevelValues;
-    /** 本次增加的层数；省略时为一层。 */
-    stacks?: number;
-    /** 状态允许达到的最大层数。 */
-    maxStacks?: number;
-    /** 每层状态提供的修正。 */
-    modifiers?: readonly StatusModifierDefinition[];
-  };
-  /** 从一个语义战斗状态中消费层数。 */
-  consumeStatus: {
-    /** 状态 ID。 */
-    statusKey: string;
-    /** 状态所属对象。 */
-    target: CombatTarget;
-    /** 消费层数；省略时结束整个状态。 */
-    stacks?: number;
-  };
   /** 在所在调度区间内持续检查条件，首次通过时把宿主局部时间轴推进到目的帧。 */
   jumpTimeline: {
     /** 条件成立时跳到的宿主局部帧。 */
     destinationFrame: number;
-    /** 跳转条件；省略时立即跳转。 */
-    condition?: CombatCondition;
   };
-  /** 立即结束当前宿主技能时间轴；只承接原生 InterruptCurSkillAction。 */
-  finishTimeline: Record<string, never>;
   /**
    * 原生 AllowNextSkillAction 到达当前有序连段的下一技能窗口。
    * 生成器保留此事实，使条件分支实际执行时决定技能块边界。
@@ -1301,6 +1137,14 @@ export interface CombatStepParameters {
   markCurrentSkillCanDash: Record<string, never>;
   /** 标记执行该动作的技能施放可中断，对应原生 MarkCanInterrupt。 */
   markCurrentSkillCanInterrupt: Record<string, never>;
+  /** 执行条件检查；失败时由所属序列停止后续动作。 */
+  checkCondition: { condition: CombatCondition };
+  /** 原生 NotNextCheckAction：反转下一个动作的返回值。 */
+  invertNextResult: Record<string, never>;
+  /** 原生 IfElseAction；条件是即时执行的动作序列。 */
+  ifElse: { alwaysNext: boolean };
+  /** 原生 OrConditionAction，依次即时执行条件序列，首个成功时停止。 */
+  anyCondition: Record<string, never>;
   /** 按条件选择真假分支。 */
   conditional: {
     /** 决定执行哪个分支的条件。 */
@@ -1315,37 +1159,16 @@ export interface CombatStepParameters {
     /** 只覆盖本步骤的返回值，不取消选中序列内部的短路；无匹配时直接返回此值。 */
     alwaysNext: boolean;
   };
-  /** 同一个技能释放实例内共享的只执行一次作用域。 */
-  once: {
-    /** 标识共享一次性状态的作用域键。 */
-    scopeKey: string;
-  };
-  /** 在一次原生子 SkillData 调用的 direct blackboard 中执行 body。 */
-  withActionBlackboardScope: {
-    /** 子动作黑板作用域名称。 */
-    scopeKey: string;
-    /** 默认在同一父黑板内复用；execution 用于每次发射等独立实例，不跨循环项共享。 */
-    lifetime?: 'parent' | 'execution';
-    /** 回调边界忽略局部序列的短路结果，不阻止后续独立回调。 */
-    alwaysNext?: boolean;
-    /**
-     * 原生同一 Buff 实例上的并列回调共享 Buff direct blackboard；仅隔离返回值控制流。
-     * 启用时 initialValues 必须为空、inheritParent 必须为 true，且不得声明实体黑板初值或赋值。
-     */
-    shareParentBlackboard?: boolean;
-    /** 子动作黑板的初始值。 */
-    initialValues: Readonly<Record<string, LevelValues>>;
-    /** 原生 assignBlackboard：调用时把父 direct blackboard 覆盖到子初值之上。 */
-    inheritParent: boolean;
-    /** 投射物等独立逻辑宿主在模板中声明的实体黑板；省略时继续共享父宿主实体层。 */
-    entityInitialValues?: Readonly<Record<string, LevelValues>>;
-    /** 创建独立宿主时从父动作黑板求值，并覆盖模板实体黑板初值。 */
-    entityAssignments?: Readonly<Record<string, ActionValueOperand>>;
-  };
-  /** 在承载调度区间内逐 Tick 驱动 body；可保留原生 Channeling 的扫描与单目标门槛。 */
+  /** DoOnceAction：每个动作实例只即时执行一次子序列，普通复位后可再次执行。 */
+  once: Record<never, never>;
+  /** 在承载调度区间内逐 Tick 驱动 body；保留原生周期动作的扫描与目标门槛。 */
   repeatEachTick: {
     /** 原生 Channeling 动作的逐帧和按目标重复设置。 */
     nativeChanneling?: {
+      /** ChannelingActionV2 补齐已到期的轮次；普通版本每 Tick 至多一轮。 */
+      catchUpMissedTicks: boolean;
+      /** 每轮重新解析的目标；Target 使用动作启动时捕获的输入。 */
+      target: ActionTargetQuery;
       /** 是否每个模拟帧执行。 */
       executeEachFrame: boolean;
       /** 整体触发间隔秒数。 */
@@ -1368,13 +1191,18 @@ export interface CombatStepParameters {
       intervalSeconds: number;
     };
   };
-  /** 按动作黑板或常量次数同步执行独立 body；每次都创建新的子步骤实例。 */
-  repeatByActionValue: {
-    /** 同步执行子序列的次数。 */
-    count: ActionValueOperand;
-  };
   /** 发射一个独立投射物；所有事件回调共享这一个对象的寿命和实体黑板。 */
   launchProjectile: {
+    /** 发射时解析的碰撞白名单；空间点不具备可命中的实体身份。 */
+    onlyHitTargets?: ActionTargetQuery;
+    /** 每个目标各发射一枚；count 用于已折算为数量的零空间目标。省略时发射一枚。 */
+    targets?: { kind: 'context'; contextKey: string };
+    /** 发射时复制动作黑板的 direct 值，供本投射物回调使用。 */
+    inheritActionBlackboard: boolean;
+    /** 每个投射物独立的实体黑板初值。 */
+    entityInitialValues?: Readonly<Record<string, number>>;
+    /** 发射时求值一次，再写入投射物实体黑板。 */
+    entityAssignments?: Readonly<Record<string, ActionValueOperand>>;
     /** 投射物归属动作来源（默认）或动作宿主；Buff 的二者可能不同。 */
     source?: 'actionSource' | 'actionOwner';
     /** 订阅发射来源的时间倍率和忽略全局缩放开关，直到投射物回收。 */
@@ -1404,15 +1232,6 @@ export interface CombatStepParameters {
       retryRejectedHit?: boolean;
     };
   };
-  /** 在动作环境中设置一个标志。 */
-  setContextFlag: {
-    /** 标志名称。 */
-    flag: string;
-    /** 标志值。 */
-    value: boolean | number | string;
-    /** 当前只在施法者动作环境中设置。 */
-    target: 'caster';
-  };
   /** 为当前干员开启固定五秒的连携候选；下一段技能身份随候选进入场景级队列。 */
   openComboWindow:
     | {
@@ -1426,6 +1245,15 @@ export interface CombatStepParameters {
         /** 原生 owner 为 Context 时取该组首个角色；省略时为当前执行干员。 */
         ownerContextKey?: string;
       };
+  /** 原生 PlayAnimationAction：保留计时与结束回调，动画播放不参与模拟。 */
+  playAnimation: {
+    /** 原生动画持续秒数；仅用于结束回调计时。 */
+    durationSeconds: number;
+    /** 原生提前混出秒数。 */
+    blendOutSeconds: number;
+    /** 提前结束时是否跳过回调。 */
+    executeOnNormalEndOnly: boolean;
+  };
   /** 原生 ShowComboRingQte：在当前连携剩余时间上登记提示段与有效输入段。 */
   showComboRingQte: {
     /** 提示出现但尚不可输入的秒数。 */
@@ -1448,8 +1276,8 @@ export interface CombatStepParameters {
   };
   /** Buff 动作有效期间覆盖普攻命令；结束时只移除本次注册。 */
   overrideBasicAttackMapping: {
-    /** Buff 有效期内普通攻击操作请求的原生技能 ID。 */
-    skillId: string;
+    /** 按原生配置顺序登记的普攻技能；全部映射随本动作一起结束。 */
+    skillIds: readonly string[];
   };
   /** 动作有效期间覆盖当前干员可连续执行的 Dash 次数；负数表示无限。 */
   overrideMultiDashLimit: {
@@ -1468,7 +1296,7 @@ export interface CombatStepParameters {
     /** 要修改的技能键。 */
     targetSkillKey: string;
     /** 新的原生技能类型。 */
-    nativeSkillType: import('./skills.ts').NativeSkillType;
+    nativeSkillType: NativeSkillType;
   };
   /** 原生 NotifyCharPassiveUIAction：更新角色专属 HUD 数值，不修改伤害状态。 */
   setCharacterPassiveUiValue: {
@@ -1491,38 +1319,31 @@ export interface CombatStepParameters {
 
 /** `CombatStepParameters` 中全部动作种类，供编译、校验和运行时分派使用。 */
 export const COMBAT_STEP_KINDS = [
+  'copyContextTargets',
+  'findTargets',
   'mergeContextTargets',
   'findCharacterTeamTargets',
-  'findUnfinishedProjectileTargets',
   'createSpatialPointTargets',
   'findOwnerSpawnedAbilityEntities',
   'pickContextTarget',
   'forEachContextTarget',
-  'readAbilityEntityRemainingDuration',
   'setAbilityEntityRemainingDuration',
-  'finishCurrentAbilityEntity',
-  'finishActionOwnerAbilityEntity',
-  'finishCurrentAbilityEntityWhenSourceDies',
-  'startCurrentAbilityEntityChildSkill',
+  'finishOwner',
+  'interruptCurrentSkill',
   'startCurrentAbilityEntityChildSkillById',
   'spawnAbilityEntity',
   'triggerCharacterInflictionEvent',
-  'limitMovementGait',
   'applyCharacterInfliction',
   'applyElementalInfliction',
+  'forceSpellStatus',
   'triggerSpellBurst',
   'triggerCustomAbilityEvent',
   'castSkillDuringAction',
   'applyPhysicalInfliction',
-  'applyKnockDown',
-  'applyElementalReaction',
-  'consumeElementalReaction',
-  'outputAirborne',
-  'outputKnockDown',
   'dealDamage',
-  'dealFixedDamage',
   'dealStagger',
   'heal',
+  'aura',
   'applyBuff',
   'createGlobalBuff',
   'finishParentGlobalBuff',
@@ -1530,13 +1351,13 @@ export const COMBAT_STEP_KINDS = [
   'readSkillSettingData',
   'readBuffBlackboard',
   'readEventBuffBlackboard',
-  'readCurrentBuffRemainingDuration',
   'readBuffRemainingDuration',
   'setBuffRemainingDuration',
   'setCurrentBuffRemainingDuration',
   'refreshCurrentBuffAttributeModifiers',
   'skillAffix',
   'readBuffStackCount',
+  'dispelBuffs',
   'finishBuffsByTag',
   'finishBuffsById',
   'finishCurrentBuff',
@@ -1548,11 +1369,11 @@ export const COMBAT_STEP_KINDS = [
   'restrictUltimateEnergyRecovery',
   'createTimedMarker',
   'setGlobalCooldown',
-  'createAbilityEntityTimedMarker',
   'startTimeDilation',
   'startUltimateTimeDilation',
   'hideUi',
   'setIgnoreGlobalTimeScale',
+  'storeCharacterTypeId',
   'storeCurrentTimelineFrame',
   'storeEventSpGainAmount',
   'storeEventHealValues',
@@ -1563,27 +1384,25 @@ export const COMBAT_STEP_KINDS = [
   'storeEntityPropertyValue',
   'setHealthFloor',
   'changeResource',
-  'changeResourceByActionValue',
   'recoverDashEnergy',
   'recordPerfectDodge',
   'gainSquadUltimateEnergyFromSkillCost',
   'gainFinisherSp',
-  'applyStatus',
-  'consumeStatus',
   'jumpTimeline',
-  'finishTimeline',
   'reachSkillOperableBoundary',
   'markCurrentSkillCanDash',
   'markCurrentSkillCanInterrupt',
   'conditional',
+  'checkCondition',
+  'invertNextResult',
+  'ifElse',
+  'anyCondition',
   'switch',
   'once',
-  'withActionBlackboardScope',
   'repeatEachTick',
-  'repeatByActionValue',
   'launchProjectile',
-  'setContextFlag',
   'openComboWindow',
+  'playAnimation',
   'showComboRingQte',
   'changeSkillSlot',
   'overrideBasicAttackMapping',
@@ -1606,52 +1425,63 @@ type CombatStepNode<K extends CombatStepKind> = {
   kind: K;
   /** 此动作种类对应的参数。 */
   parameters: Readonly<CombatStepParameters[K]>;
-} & (K extends 'conditional'
-  ? {
-      /** 条件成立时执行。 */
-      whenTrue: ActionGraphReference;
-      /** 条件不成立时执行；省略时不执行额外步骤。 */
-      whenFalse?: ActionGraphReference;
-    }
-  : K extends 'switch'
-    ? {
-        /** 按顺序尝试匹配的候选分支。 */
-        options: readonly ActionSwitchOptionDefinition[];
-      }
-    : K extends 'once'
-      ? {
-          /** 在此一次性作用域中执行的子序列。 */
-          body: ActionGraphReference;
-        }
-      : K extends 'withActionBlackboardScope'
-        ? {
-            /** 在子动作黑板中执行的序列。 */
-            body: ActionGraphReference;
-          }
-        : K extends 'repeatEachTick'
+} & (K extends 'playAnimation'
+  ? { onEnd: ActionGraphReference }
+  : K extends 'showComboRingQte'
+    ? { triggeredAction: ActionGraphReference }
+    : K extends 'jumpTimeline'
+      ? { condition: ActionGraphReference }
+      : K extends 'anyCondition'
+        ? { conditions: readonly ActionGraphReference[] }
+        : K extends 'ifElse'
           ? {
-              /** 每次触发时执行的序列。 */
-              body: ActionGraphReference;
+              condition: ActionGraphReference;
+              whenTrue: ActionGraphReference;
+              whenFalse: ActionGraphReference;
             }
-          : K extends 'repeatByActionValue'
+          : K extends 'conditional'
             ? {
-                /** 每次循环执行的序列。 */
-                body: ActionGraphReference;
+                /** 条件成立时执行。 */
+                whenTrue: ActionGraphReference;
+                /** 条件不成立时执行；省略时不执行额外步骤。 */
+                whenFalse?: ActionGraphReference;
               }
-            : K extends 'launchProjectile'
+            : K extends 'switch'
               ? {
-                  /** 每项都是完整的原生回调技能，不并入发射技能的时间轴。 */
-                  callbacks: readonly {
-                    event: 'hit' | 'block' | 'reach' | 'finish';
-                    skill: AbilityEntityChildSkillDefinition;
-                  }[];
+                  /** 按顺序尝试匹配的候选分支。 */
+                  options: readonly ActionSwitchOptionDefinition[];
                 }
-              : K extends 'forEachContextTarget'
+              : K extends 'once'
                 ? {
-                    /** 对每个目标执行的序列。 */
+                    /** 在此一次性作用域中执行的子序列。 */
                     body: ActionGraphReference;
                   }
-                : {});
+                : K extends 'repeatEachTick'
+                  ? {
+                      /** 每次触发时执行的序列。 */
+                      body: ActionGraphReference;
+                    }
+                  : K extends 'launchProjectile'
+                    ? {
+                        /** 每项都是完整的原生回调技能，不并入发射技能的时间轴。 */
+                        callbacks: readonly {
+                          event: 'hit' | 'block' | 'reach' | 'finish';
+                          skill: AbilityEntityChildSkillDefinition;
+                        }[];
+                      }
+                    : K extends 'aura'
+                      ? {
+                          /** 区域 Buff 安装后的原生进入回调。 */
+                          onEnter: ActionGraphReference;
+                          /** 区域 Buff 回收后的原生退出回调；Target 为离开对象。 */
+                          onExit: ActionGraphReference;
+                        }
+                      : K extends 'forEachContextTarget'
+                        ? {
+                            /** 对每个目标执行的序列。 */
+                            body: ActionGraphReference;
+                          }
+                        : {});
 
 /** 干员定义中可执行、按 `kind` 精确区分的一项步骤。 */
 export type CombatStepDefinition = CombatStepForKind<CombatStepKind>;
@@ -1743,12 +1573,7 @@ export type CombatEventTrigger =
       /** 任一匹配即可触发的 Buff ID。 */
       buffIds?: readonly string[];
     }
-  /** 成功输出击飞。 */
-  | {
-      /** 触发器种类判别值。 */
-      kind: 'airborneOutput';
-    }
-  /** 成功输出击倒。 */
+  /** 成功输出倒地。 */
   | {
       /** 触发器种类判别值。 */
       kind: 'knockDownOutput';
@@ -1812,7 +1637,6 @@ export const COMBAT_EVENT_TRIGGER_KINDS = [
   'buffApplied',
   'buffOutput',
   'buffConsumed',
-  'airborneOutput',
   'knockDownOutput',
   'spGained',
   'damageTagHit',

@@ -8,7 +8,7 @@ import { compileComboSkillConditionDefinitionSource } from '../../../tools/game-
 import { perlica } from '../../data/operators/perlica.generated';
 import { arcane } from '../../data/operators/arcane.generated';
 import { parseSkillTargetSelectionHeaderSource } from '../../../tools/game-data-compiler/src/source/skillTargetSelection.ts';
-import { compileSkillSmartTargetSource } from '../../../tools/game-data-compiler/src/compiler/conditions/comboSmartTarget.ts';
+import { compileSkillTargetSelection } from '../../../tools/game-data-compiler/src/compiler/skills/skillTargetSelection.ts';
 import { createGameDataRepository } from '../../data/gameDataRepository';
 import { elementalAttachments } from '../../data/buffs/elementalAttachments';
 import { skillSettings } from '../../data/combat/skillSettings';
@@ -154,7 +154,7 @@ function template(
                 // 诀真实 CastData.startCdFrame=0；补旧产物遗漏的静态元数据，不改它的动作。
                 costFrame: 0,
                 ...(actualCombo
-                  ? compileSkillSmartTargetSource(
+                  ? compileSkillTargetSelection(
                       parseSkillTargetSelectionHeaderSource(
                         {
                           selectStrategy: 4,
@@ -299,6 +299,7 @@ describe('原生条件经正式项目定义进入实际附着', () => {
             normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
           },
           environment: {
+            comboSkillPendingInterval: 5,
             ...environment.runtimeOptions,
             timeDilation: {
               config: timeDilationRuntimeConfig,

@@ -138,37 +138,6 @@ it('a shared expression must be numeric in every consumer board, including missi
     ).state,
   ).toBe('typeMismatch');
 });
-it('each enclosing call environment gets a distinct GlobalBuff board without inherited entity state', () => {
-  const base = fixture();
-  const graph: ActionGraphDefinition = {
-    ...base,
-    nodes: {
-      ...base.nodes,
-      scope: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            initialValues: { inherited: 9 },
-            entityInitialValues: { EntityBB_extra: 2 },
-            inheritParent: true,
-          },
-          body: { $sequence: 'global' },
-        },
-        next: 'global',
-      },
-    },
-  };
-  const analysis = analyzeGraphBlackboard(graph, ['scope'], [], initial);
-  expect(analysis.contexts.get('global')?.size).toBe(2);
-  expect(analysis.fieldContexts.get('global')?.size).toBe(2);
-  expect(analysis.dataContexts.get('shared')?.size).toBe(4);
-  for (const id of analysis.globalBuffScopes)
-    expect(analysis.scopes.get(id)).toMatchObject({
-      copiesParent: false,
-      sharesEntity: false,
-      entityInitial: {},
-    });
-});
 it('variable-node creation uses the exact inner target path and rejects creator/local cross-board same names', () => {
   const graph = fixture();
   const variables = useGraphVariables({

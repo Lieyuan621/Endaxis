@@ -36,12 +36,16 @@ const graph: ActionGraphDefinition = {
       action: {
         kind: 'applyBuff',
         parameters: {
-          buffId: 'shared',
-          target: 'caster',
-          blackboardAssignments: {
-            constant: [10, 20],
-            dynamic: { kind: 'valueNode', nodeId: 'test_data_1' },
-          },
+          buffs: [
+            {
+              buffId: 'shared',
+              blackboardAssignments: {
+                constant: [10, 20],
+                dynamic: { kind: 'valueNode', nodeId: 'test_data_1' },
+              },
+            },
+          ],
+          targets: { kind: 'fixed', target: 'caster' },
         },
       },
       next: null,
@@ -49,7 +53,11 @@ const graph: ActionGraphDefinition = {
     spawn: {
       action: {
         kind: 'spawnAbilityEntity',
-        parameters: { abilityEntityId: 'entity', dieWhenSourceDies: false },
+        parameters: {
+          bornAt: { kind: 'owner' as const },
+          abilityEntityId: 'entity',
+          dieWhenSourceDies: false,
+        },
       },
       next: null,
     },
@@ -245,21 +253,21 @@ describe('嵌套宿主直接图编译', () => {
       {
         stackingType: 'refresh',
         actionGraph: buffResource,
-        lifecycleSequences: { start: hit, finish: hit },
+        lifecycleSequences: { start: [hit], finish: [hit] },
         scheduledSequences: [{ startFrame: 3, endFrame: 10, sequence: hit }],
         abilityEventResponses: [{ event: 'addedBuff', priority: 3, sequence: hit }],
-        igniteEventResponses: [{ igniteType: 'test', finishAfterIgnited: true, sequence: hit }],
+        igniteEventResponses: [{ igniteType: 'test', finishAfterIgnited: true, sequences: [hit] }],
       },
       'buff.shared',
     );
     const buffGraph = compilation.program;
-    expectEntry(buff.lifecycleSequences?.start, buffGraph, 'hit');
-    expectEntry(buff.lifecycleSequences?.finish, buffGraph, 'hit');
+    expectEntry(buff.lifecycleSequences?.start?.[0], buffGraph, 'hit');
+    expectEntry(buff.lifecycleSequences?.finish?.[0], buffGraph, 'hit');
     expect(buff.scheduledSequences?.[0]).toMatchObject({ startFrame: 3, endFrame: 10 });
     expectEntry(buff.scheduledSequences?.[0]?.sequence, buffGraph, 'hit');
     expectEntry(buff.abilityEventResponses?.[0]?.sequence, buffGraph, 'hit');
-    expectEntry(buff.igniteEventResponses?.[0]?.sequence, buffGraph, 'hit');
-    expect(action.parameters.blackboardAssignments).toMatchObject({
+    expectEntry(buff.igniteEventResponses?.[0]?.sequences[0], buffGraph, 'hit');
+    expect(action.parameters.buffs[0]?.blackboardAssignments).toMatchObject({
       constant: { kind: 'constant', value: 20 },
       dynamic: { kind: 'valueNode', node: { expression: { kind: 'blackboard', key: 'power' } } },
     });
@@ -274,7 +282,11 @@ describe('嵌套宿主直接图编译', () => {
           spawn: {
             action: {
               kind: 'spawnAbilityEntity',
-              parameters: { abilityEntityId: 'entity', dieWhenSourceDies: false },
+              parameters: {
+                bornAt: { kind: 'owner' as const },
+                abilityEntityId: 'entity',
+                dieWhenSourceDies: false,
+              },
             },
             next: null,
           },

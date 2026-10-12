@@ -256,7 +256,7 @@ it('技力响应保留原对象与来源，没有目标也不继承外层施法�
   const published = {
     event: 'skillSpGained' as const,
     payload: {
-      sourceOperatorId: 'operator',
+      sourceId: 'operator',
       source: 'normalAttack' as const,
       gainKind: 'refund' as const,
       requestedAmount: 10,

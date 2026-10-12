@@ -1,42 +1,48 @@
-import { projectGameplayTags } from '../combatProjectionCommon.ts';
-import { projectGlobalCooldownTarget } from './globalCooldownProjection.ts';
-import {
-  compileEventTargetSimpleDamageOperationSource,
-  compileEventTargetSimplePoiseOperationSource,
-} from './simpleDamageOperation.ts';
-import { type CompiledActionValueOperandSource } from './combatActionProjectionTypes.ts';
-import { COMPILED_BUFF_CAPTURED_TARGET_GROUPS } from '../buffs/compiledBuffMetadata.ts';
-import type { BuffApplicationActionSource } from '../../source/buffActions.ts';
-import type { NativeActionNodeSource } from '../../source/controlFlow.ts';
-import type { KnownNativeActionLeafSource } from '../../source/actionLeaf.ts';
-import type { TargetReferenceSource } from '../../source/target.ts';
-import type { CompiledBuffStepSource } from './combatActionProjectionTypes.ts';
-import type { BlackboardAssignmentSource } from '../../source/assignments.ts';
-import { projectElementalInflictionAction } from './elementalInflictionProjection.ts';
-import { projectKnockDownAction } from './knockDownProjection.ts';
-import { projectPhysicalInflictionAction } from './physicalInflictionProjection.ts';
-import { projectBuffIgniteAction } from '../buffs/buffIgniteProjection.ts';
-import { projectKeywordBuffAction } from '../buffs/keywordBuffProjection.ts';
-import {
-  type ProjectedTargetGroup,
-  type CombatActionProjectionContextSource,
-  type CombatActionProjectionExtensionsSource,
-  requireActionOwnerProjection,
-  isPartyExceptOwnerInstantSearch,
-  isControlledOperatorInstantSearch,
-  isPartyInstantSearch,
-  isUniqueEnemyMainTargetInstantSearch,
-  isUniqueEnemyHitBoxInstantSearch,
-  actionValueOperand,
-} from '../combatProjectionCommon.ts';
-import { gameplayTagIdFromPath } from '../../source/nativeGameplayTags.ts';
 import type {
   BuffApplicationSource,
   BuffApplicationTarget,
 } from '../../../../../packages/game-data-contract/src/primitives.ts';
+import type { KnownNativeActionLeafSource } from '../../source/actionLeaf.ts';
+import type { BlackboardAssignmentSource } from '../../source/assignments.ts';
+import type { BuffApplicationActionSource } from '../../source/buffActions.ts';
+import type { NativeActionNodeSource } from '../../source/controlFlow.ts';
+import type { SkillTypeMutationActionSource } from '../../source/presentationActions.ts';
+import type { TargetReferenceSource } from '../../source/target.ts';
+import { projectBuffIgniteAction } from '../buffs/buffIgniteProjection.ts';
+import {
+  COMPILED_BUFF_CAPTURED_TARGET_GROUPS,
+  COMPILED_BUFF_TARGET_KINDS,
+} from '../buffs/compiledBuffMetadata.ts';
+import { projectKeywordBuffAction } from '../buffs/keywordBuffProjection.ts';
 import { projectCombatRuntimeAttributeKey } from '../build/attributeModifier.ts';
+import {
+  actionValueOperand,
+  type CombatActionProjectionContextSource,
+  type CombatActionProjectionExtensionsSource,
+  isControlledOperatorInstantSearch,
+  isPartyExceptOwnerInstantSearch,
+  isPartyInstantSearch,
+  isUniqueEnemyHitBoxInstantSearch,
+  isUniqueEnemyMainTargetInstantSearch,
+  type ProjectedTargetGroup,
+  projectGameplayTags,
+  requireActionOwnerProjection,
+} from '../combatProjectionCommon.ts';
+import { projectActionTargetQuery } from '../conditions/combatConditionProjection.ts';
 import { standardStumpBuffAbilityEventOmissionReason } from '../scenario/standardStumpScenarioPolicy.ts';
 import { isPresentationOnlyActionSequence } from '../skills/skillPresentationTargets.ts';
+import type {
+  CompiledActionValueOperandSource,
+  CompiledBuffStepSource,
+} from './combatActionProjectionTypes.ts';
+import { projectElementalInflictionAction } from './elementalInflictionProjection.ts';
+import { projectGlobalCooldownTarget } from './globalCooldownProjection.ts';
+import { projectKnockDownAction } from './knockDownProjection.ts';
+import { projectPhysicalInflictionAction } from './physicalInflictionProjection.ts';
+import {
+  compileEventTargetSimpleDamageOperationSource,
+  compileEventTargetSimplePoiseOperationSource,
+} from './simpleDamageOperation.ts';
 
 /** 不改变命名目标组状态的普通动作叶子投影。
  * 保留各动作的来源/目标和场景约束；不递归调用序列编排器。 */
@@ -108,6 +114,39 @@ export function compileActionNode(
   if (node.body.kind !== 'leaf') {
     throw new Error(`${node.sourcePath}: unsupported Buff runtime action`);
   }
+  if (node.body.value.family === 'skillAffix') {
+    return [{ kind: 'skillAffix', parameters: {} }];
+  }
+  if (node.body.value.family === 'characterIdentity') {
+    const action = node.body.value.action;
+    if (!isPlainTargetReference(action.target, action.target.targetSource, ''))
+      throw new Error(`${node.sourcePath}: unsupported character type target selector`);
+    const target =
+      action.target.targetSource === 'Owner'
+        ? context.actionOwnerTarget
+        : action.target.targetSource === 'Source'
+          ? context.actionSourceTarget
+          : action.target.targetSource === 'Target'
+            ? context.actionTargetTarget
+            : undefined;
+    if (
+      target !== 'caster' &&
+      target !== 'buffOwner' &&
+      target !== 'buffSource' &&
+      target !== 'currentOperator' &&
+      target !== 'enemy'
+    )
+      throw new Error(`${node.sourcePath}: unsupported character type target ${target}`);
+    return [
+      {
+        kind: 'storeCharacterTypeId',
+        parameters: {
+          target: target === 'currentOperator' ? 'currentTarget' : target,
+          outputKey: action.outputKey,
+        },
+      },
+    ];
+  }
   if (node.body.value.family === 'uiVisibility') {
     return [
       { kind: 'hideUi', parameters: { onlyBlockInput: node.body.value.action.onlyBlockInput } },
@@ -157,6 +196,7 @@ export function compileActionNode(
       'finisherSpGain',
       'presentation',
       'presentationCalculation',
+      'directionAngle',
       'spatial',
       'spatialMeasurement',
       'selfDefense',
@@ -333,17 +373,6 @@ export function compileActionNode(
     // 该动作只发布 GameLevelEvent/BattleRecorder 事实；被动木桩没有其消费者，
     // 状态本身由承载 Buff 生命周期表示，故不重复建立另一套状态。
     return [];
-  }
-  if (node.body.value.family === 'comboQte') {
-    return [
-      {
-        kind: 'showComboRingQte',
-        parameters: {
-          earlyDurationSeconds: actionValueOperand(node.body.value.action.earlyDuration),
-          activeDurationSeconds: actionValueOperand(node.body.value.action.activeDuration),
-        },
-      },
-    ];
   }
   if (node.body.value.family === 'buffIgnite') {
     return [projectBuffIgniteAction(node.body.value.action, node.sourcePath, context)];
@@ -631,235 +660,28 @@ export function compileActionNode(
     }
     throw new Error(`${node.sourcePath}: unsupported combat-visible EventListenerAction`);
   }
-  if (node.body.value.family === 'aura') {
-    const aura = node.body.value.action;
-    if (aura.kind !== 'globalPartyAura') {
-      throw new Error(`${node.sourcePath}: Aura reference slice cannot enter runtime projection`);
-    }
-    // 原生排除当前动作 Owner；能力实体不是队员，不能沿 Source 排除其来源干员。
-    const ownerTarget =
-      context.actionOwnerTarget === 'buffOwner'
-        ? context.fixedBuffOwnerTarget
-        : context.actionOwnerTarget;
-    const auraTarget: 'party' | 'partyExceptCaster' | 'enemy' =
-      aura.target !== 'partyExceptOwner'
-        ? aura.target
-        : ownerTarget === 'caster'
-          ? 'partyExceptCaster'
-          : ownerTarget === 'currentAbilityEntity' || ownerTarget === 'enemy'
-            ? 'party'
-            : (() => {
-                throw new Error(`${node.sourcePath}: Aura exclusion requires a known action owner`);
-              })();
-    const auraBuffSource =
-      aura.buffSource === 'ActionOwner'
-        ? context.actionOwnerTarget === 'currentAbilityEntity'
-          ? ('currentAbilityEntity' as const)
-          : context.actionOwnerTarget === 'buffOwner'
-            ? ('buffOwner' as const)
-            : context.actionOwnerTarget === 'caster'
-              ? undefined
-              : null
-        : context.actionSourceTarget === 'buffSource'
-          ? ('buffSource' as const)
-          : undefined;
-    if (auraBuffSource === null) {
-      throw new Error(`${node.sourcePath}: Aura Buff source is unavailable`);
-    }
-    const iconDurationSource =
-      aura.iconDurationOverride === undefined
-        ? undefined
-        : context.actionOwnerTarget !== 'currentAbilityEntity'
-          ? (() => {
-              throw new Error(
-                `${node.sourcePath}: Aura icon duration source requires an AbilityEntity action owner`,
-              );
-            })()
-          : aura.iconDurationOverride.durationSourceType === 'AbilityEntity'
-            ? ({ kind: 'actionOwnerAbilityEntity' } as const)
-            : ({
-                kind: 'actionOwnerTimedMarker',
-                markerId: aura.iconDurationOverride.timedMarkerId,
-              } as const);
-    const exitBuffs = aura.exitBuffs.flatMap((entry, index) => {
-      if (visualOnlyIds.has(entry.buffId)) return [];
-      const assignments = entry.assignBlackboard
-        ? projectBuffAssignments(
-            entry.assignments,
-            `${node.sourcePath}.actionWhenExitAura[${index}]`,
-          )
-        : {};
-      const stringAssignments = entry.assignBlackboard
-        ? projectStringBuffAssignments(entry.assignments)
-        : {};
-      if (!entry.assignBlackboard && entry.assignments.length > 0) {
-        throw new Error(
-          `${node.sourcePath}.actionWhenExitAura[${index}]: disabled assignment is nonempty`,
-        );
-      }
-      return [
-        {
-          buffId: entry.buffId,
-          target: auraTarget,
-          ...(auraBuffSource === undefined ? {} : { source: auraBuffSource }),
-          inheritSourceSkillCastInfo: true,
-          ...(Object.keys(assignments).length === 0 ? {} : { blackboardAssignments: assignments }),
-          ...(Object.keys(stringAssignments).length === 0
-            ? {}
-            : { stringBlackboardAssignments: stringAssignments }),
-        },
-      ];
-    });
-    const activeBuffs = aura.buffs.filter(entry => !visualOnlyIds.has(entry.buffId));
-    const ownerCleanupIds = (aura.exitOwnerCleanupBuffIds ?? []).filter(
-      id => !visualOnlyIds.has(id),
-    );
-    const cleanupTarget = context.actionOwnerTarget;
-    if (
-      ownerCleanupIds.length > 0 &&
-      cleanupTarget !== 'caster' &&
-      cleanupTarget !== 'buffOwner' &&
-      cleanupTarget !== 'currentAbilityEntity'
-    ) {
-      throw new Error(`${node.sourcePath}: Aura exit cleanup requires a supported action owner`);
-    }
-    const enterCleanupSteps =
-      (aura.enterCleanupBuffIds ?? []).length === 0
-        ? []
-        : [
-            {
-              kind: 'finishBuffsById' as const,
-              parameters: {
-                target: auraTarget,
-                buffIds: aura.enterCleanupBuffIds!,
-                reason: 'other' as const,
-              },
-            },
-          ];
-    const applicationSteps = activeBuffs.flatMap((entry, index) => {
-      const assignments = entry.assignBlackboard
-        ? projectBuffAssignments(entry.assignments, `${node.sourcePath}.buffInput[${index}]`)
-        : {};
-      const stringAssignments = entry.assignBlackboard
-        ? projectStringBuffAssignments(entry.assignments)
-        : {};
-      if (!entry.assignBlackboard && entry.assignments.length > 0) {
-        throw new Error(
-          `${node.sourcePath}.buffInput[${index}]: disabled Aura assignment is nonempty`,
-        );
-      }
-      return [
-        {
-          kind: 'applyBuff' as const,
-          parameters: {
-            buffId: entry.buffId,
-            target: auraTarget,
-            ...(auraBuffSource === undefined ? {} : { source: auraBuffSource }),
-            finishByAction: true,
-            ...(index === 0 && ownerCleanupIds.length > 0
-              ? {
-                  onActionEndFinishBuffs: {
-                    target: cleanupTarget as 'caster' | 'buffOwner' | 'currentAbilityEntity',
-                    buffIds: ownerCleanupIds,
-                  },
-                }
-              : {}),
-            ...(iconDurationSource === undefined ? {} : { iconDurationSource }),
-            ...(index === 0 && exitBuffs.length > 0 ? { onActionEndBuffs: exitBuffs } : {}),
-            ...(aura.inheritSourceSkillCastInfo ? { inheritSourceSkillCastInfo: true } : {}),
-            ...(Object.keys(assignments).length === 0
-              ? {}
-              : { blackboardAssignments: assignments }),
-            ...(Object.keys(stringAssignments).length === 0
-              ? {}
-              : { stringBlackboardAssignments: stringAssignments }),
-          },
-        },
-      ];
-    });
-    // fixedWhenStart 和 RangedAura 的空间黑板只决定 Aura 中心/覆盖范围；固定零空间中
-    // 唯一敌人或既定友方集合从动作开始即在范围内。Good+All 额外覆盖的友方非角色
-    // 没有可编辑轨道实例；其移动/表现状态不进入木桩账本，但来源事实已由 Aura IR 保留。
-    // 图标倒计时覆盖只把稳定实例身份传给展示回执，不改变这里由动作寿命控制的
-    // Buff 安装与离场清理。
-    return [...enterCleanupSteps, ...applicationSteps];
-  }
   if (node.body.value.family === 'buffFinish') {
     const action = node.body.value.action;
-    const ownerIsPartyInstantSearch = isPartyInstantSearch(action.owner);
-    const finishSourceIsCasterOwner =
-      action.finishSource.targetSource === 'Owner' &&
-      action.finishSource.targetGroupKey === '' &&
-      (context.actionOwnerTarget === 'caster' ||
-        (context.actionOwnerTarget === 'buffOwner' && context.fixedBuffOwnerTarget === 'caster'));
-    const ownerContextTarget =
-      action.owner.targetSource === 'Context' &&
-      action.owner.targetGroupKey !== '' &&
-      (partyTargetGroups.get(action.owner.targetGroupKey) ??
-        (context.staticEnemyTargetGroupKeys?.has(action.owner.targetGroupKey) === true
-          ? 'enemy'
-          : undefined));
-    if (
-      (!ownerIsPartyInstantSearch &&
-        ownerContextTarget === undefined &&
-        ((action.owner.targetSource !== 'Owner' &&
-          action.owner.targetSource !== 'Source' &&
-          action.owner.targetSource !== 'Target' &&
-          action.owner.targetSource !== 'MainCharacter') ||
-          action.owner.targetGroupKey !== '')) ||
-      action.limitSource ||
-      action.buffSource.targetSource !== 'Source' ||
-      action.buffSource.targetGroupKey !== '' ||
-      ((action.finishSource.targetSource !== 'Source' ||
-        action.finishSource.targetGroupKey !== '') &&
-        !finishSourceIsCasterOwner)
-    ) {
-      throw new Error(`${node.sourcePath}: unsupported Buff finish target/source`);
+    if (action.limitSource) {
+      throw new Error(`${node.sourcePath}: limited-source Buff finish is not supported`);
     }
-    const wrapOwnerContext = (steps: CompiledBuffStepSource[]): CompiledBuffStepSource[] =>
-      ownerContextTarget === 'sourceFinderResult'
-        ? [
-            {
-              kind: 'forEachContextTarget',
-              parameters: { contextKey: action.owner.targetGroupKey },
-              body: context.graph.sequence(steps),
-            },
-          ]
-        : steps;
-    const target = ownerIsPartyInstantSearch
-      ? ('party' as const)
-      : ownerContextTarget === 'party'
-        ? ('party' as const)
-        : ownerContextTarget === 'sourceFinderResult'
-          ? ('currentTarget' as const)
-          : ownerContextTarget === 'enemy'
-            ? ('enemy' as const)
-            : action.owner.targetSource === 'Owner'
-              ? requireActionOwnerProjection(context, node.sourcePath)
-              : action.owner.targetSource === 'MainCharacter'
-                ? ('caster' as const)
-                : action.owner.targetSource === 'Source'
-                  ? 'caster'
-                  : context.actionTargetTarget === 'enemy' ||
-                      context.actionTargetTarget === 'buffOwner' ||
-                      context.actionTargetTarget === 'caster' ||
-                      context.actionTargetTarget === 'currentAbilityEntity'
-                    ? context.actionTargetTarget
-                    : (() => {
-                        throw new Error(
-                          `${node.sourcePath}: Buff finish Target projection is unavailable`,
-                        );
-                      })();
+    const targets = projectActionTargetQuery(action.owner, context, `${node.sourcePath}.buffOwner`);
+    const finishSource = projectActionTargetQuery(
+      action.finishSource,
+      context,
+      `${node.sourcePath}.finishSource`,
+    );
     if (
       action.kind === 'buffFinishByQuery' &&
       action.settings.checkType === 'Tag' &&
       action.settings.tagQuery.tagIds.length > 0
     ) {
-      return wrapOwnerContext([
+      return [
         {
           kind: 'finishBuffsByTag',
           parameters: {
-            target,
+            targets,
+            finishSource,
             tagQueryType: action.settings.tagQuery.queryType,
             buffTags: projectGameplayTags(
               action.settings.tagQuery.tagIds,
@@ -870,7 +692,7 @@ export function compileActionNode(
             ...(action.finishAll ? {} : { count: actionValueOperand(action.finishLayerCount) }),
           },
         },
-      ]);
+      ];
     }
     if (
       action.kind === 'buffFinishByQuery' &&
@@ -885,7 +707,10 @@ export function compileActionNode(
       action.settings.checkType === 'Environment' &&
       action.owner.targetSource === 'Owner' &&
       context.actionOwnerTarget === 'buffOwner' &&
-      action.finishAll
+      action.finishAll &&
+      (action.finishSource.targetSource === 'Owner' ||
+        action.finishSource.targetSource === 'Source') &&
+      action.finishSource.targetGroupKey === ''
     ) {
       // Environment 精确指向当前 Buff；Id/Tag 分支的残留配置不参与此查询。
       return [
@@ -910,13 +735,14 @@ export function compileActionNode(
     if (buffIds === null || buffIds.length === 0 || buffIds.some(id => id.length === 0)) {
       throw new Error(`${node.sourcePath}: unsupported Buff finish query`);
     }
-    return wrapOwnerContext([
+    return [
       {
         kind: 'finishBuffsById',
         parameters: {
           // TargetSettings：Buff 环境 Owner 是 Buff 接收者，
           // Source 是 Buff 来源。这里保持二者身份，不因多数样本使用 Owner 而合并。
-          target,
+          targets,
+          finishSource,
           buffIds,
           reason: action.isFinishedEarly
             ? 'early'
@@ -926,7 +752,7 @@ export function compileActionNode(
           ...(action.finishAll ? {} : { count: actionValueOperand(action.finishLayerCount) }),
         },
       },
-    ]);
+    ];
   }
   if (node.body.value.family === 'buffHold') {
     const action = node.body.value.action;
@@ -959,27 +785,32 @@ export function compileActionNode(
   }
   if (node.body.value.family === 'dispel') {
     const action = node.body.value.action;
-    const expectedTags = [
-      gameplayTagIdFromPath('Skill/Enemy/Common/SpellInflictOnChar/CrystInflictOnChar'),
-      gameplayTagIdFromPath('Skill/Enemy/Common/SpellStatusOnChar/FrozenOnChar'),
-    ].sort((left, right) => left - right);
-    const actualTags = [...action.tagQuery.tagIds].sort((left, right) => left - right);
-    if (
-      action.dispelSource.targetSource === 'Source' &&
-      action.dispelSource.targetGroupKey === '' &&
-      action.dispelTargets.targetSource === 'Context' &&
-      action.dispelTargets.targetGroupKey !== '' &&
-      partyTargetGroups.get(action.dispelTargets.targetGroupKey) === 'party' &&
-      action.dispelLevel === 'Default' &&
-      action.checkTag &&
-      action.tagQuery.queryType === 'hasAny' &&
-      actualTags.length === expectedTags.length &&
-      actualTags.every((tag, index) => tag === expectedTags[index])
-    ) {
-      // 萤石天赋 2 只清除全队由敌方主动行为施加的寒冷附着/冻结；固定木桩模型不产生二者。
-      return [];
-    }
-    throw new Error(`${node.sourcePath}: unsupported DispelAction projection`);
+    return [
+      {
+        kind: 'dispelBuffs',
+        parameters: {
+          source: projectActionTargetQuery(
+            action.dispelSource,
+            context,
+            `${node.sourcePath}.dispelSource`,
+          ),
+          targets: projectActionTargetQuery(
+            action.dispelTargets,
+            context,
+            `${node.sourcePath}.dispelTargets`,
+          ),
+          level: action.dispelLevel,
+          ...(action.checkTag
+            ? {
+                query: {
+                  buffTags: projectGameplayTags(action.tagQuery.tagIds, context, node.sourcePath),
+                  tagQueryType: action.tagQuery.queryType,
+                },
+              }
+            : {}),
+        },
+      },
+    ];
   }
   if (node.body.value.family === 'normalSkillUltimateEnergy') {
     const action = node.body.value.action;
@@ -1096,18 +927,6 @@ export function compileActionNode(
       },
     ];
   }
-  if (node.body.value.family === 'movementGait') {
-    const gait = { Walk: 'walk', Run: 'run', Sprint: 'sprint' } as const;
-    return [
-      {
-        kind: 'limitMovementGait',
-        parameters: {
-          min: gait[node.body.value.action.min],
-          max: gait[node.body.value.action.max],
-        },
-      },
-    ];
-  }
   if (node.body.value.family === 'characterSpellInfliction') {
     const action = node.body.value.action;
     const sourceIsGod =
@@ -1199,58 +1018,23 @@ export function compileActionNode(
     if (consumedElement === undefined) {
       throw new Error(`${node.sourcePath}.consumedType: unknown element index`);
     }
-    const tags = {
-      Fire: 'Skill/Character/Common/SpellInflict/FireInflict',
-      Pulse: 'Skill/Character/Common/SpellInflict/PulseInflict',
-      Cryst: 'Skill/Character/Common/SpellInflict/CrystInflict',
-      Natural: 'Skill/Character/Common/SpellInflict/NaturalInflict',
+    const elementsByNative = {
+      Fire: 'heat',
+      Pulse: 'electric',
+      Cryst: 'cryo',
+      Natural: 'nature',
     } as const;
-    const forcedBuffIds = {
-      Fire: 'buff_common_fire_fire_burning_triggered',
-      Pulse: 'buff_common_pulse_pulse_conduct_triggered',
-      Cryst: 'buff_common_cryst_cryst_frozen_triggered',
-      Natural: 'buff_common_natural_natural_corrupt_triggered',
-    } as const;
-    const consumedLayers = actionValueOperand(action.consumedLayers);
-    const body: CompiledBuffStepSource[] = [
-      {
-        kind: 'finishBuffsByTag',
-        parameters: {
-          target: 'enemy',
-          tagQueryType: 'hasAny',
-          buffTags: [tags[consumedElement]],
-          reason: 'early',
-          count: consumedLayers,
-        },
-      },
-      {
-        kind: 'applyBuff' as const,
-        parameters: {
-          buffId: forcedBuffIds[action.statusElement],
-          target: 'enemy',
-          inheritSourceSkillCastInfo: true,
-          blackboardAssignments: {
-            consumed_type: { kind: 'constant', value: action.consumedElement.value },
-            consumed_layer: consumedLayers,
-            count: actionValueOperand(action.statusCount),
-          },
-        },
-      },
-    ];
     return [
       {
-        kind: 'conditional',
+        kind: 'forceSpellStatus',
         parameters: {
-          condition: {
-            kind: 'buffStackCompare',
-            target: 'enemy',
-            tagQueryType: 'hasAny',
-            buffTags: [tags[consumedElement]],
-            operator: 'greaterOrEqual',
-            value: consumedLayers,
-          },
+          target: 'enemy',
+          element: elementsByNative[action.statusElement],
+          consumedElement: elementsByNative[consumedElement],
+          consumedLayers: actionValueOperand(action.consumedLayers),
+          count: actionValueOperand(action.statusCount),
+          isExtra: action.isExtra,
         },
-        whenTrue: context.graph.sequence(body),
       },
     ];
   }
@@ -1276,12 +1060,8 @@ export function compileActionNode(
                 (context.actionOwnerTarget === 'caster' ||
                   context.actionOwnerTarget === 'buffOwner')
               ? context.actionOwnerTarget
-              : action.target.targetSource === 'Target' &&
-                  (context.actionTargetTarget === 'currentOperator' ||
-                    context.actionTargetTarget === 'actionInputTarget')
-                ? context.actionTargetTarget === 'actionInputTarget'
-                  ? ('actionInputTarget' as const)
-                  : ('currentTarget' as const)
+              : action.target.targetSource === 'Target'
+                ? ('actionInputTarget' as const)
                 : action.target.targetSource === 'MainCharacter' &&
                     action.target.finderType === null &&
                     action.target.validatorTypes.length === 0 &&
@@ -1307,13 +1087,6 @@ export function compileActionNode(
       action.healType !== 'Normal' ||
       (action.healer !== 'ActionSource' && action.healer !== 'ActionOwner') ||
       (action.healer === 'ActionOwner' && context.actionOwnerTarget !== 'buffOwner') ||
-      (action.contextKey !== '' &&
-        partyTargetGroups.get(action.contextKey) !== 'sourceFinderResult' &&
-        !(
-          action.contextKey === 'seraph' &&
-          action.target.targetSource === 'Owner' &&
-          context.fixedBuffOwnerTarget === 'caster'
-        )) ||
       target === null ||
       (action.calculation.kind === 'definite' && action.calculation.applyScale) ||
       (action.calculation.kind !== 'definite' &&
@@ -1528,38 +1301,30 @@ export function compileActionNode(
   }
   if (node.body.value.family === 'buffLifeTimeRead') {
     const action = node.body.value.action;
-    if (
-      action.owner.targetSource === 'Owner' &&
-      action.owner.targetGroupKey === '' &&
-      action.settings.checkType === 'Id' &&
-      action.settings.buffIds.length > 0 &&
-      action.settings.tagQuery.tagIds.length === 0
-    ) {
-      return [
-        {
-          kind: 'readBuffRemainingDuration',
-          parameters: {
-            target: requireActionOwnerProjection(context, node.sourcePath),
-            buffIds: action.settings.buffIds,
-            outputKey: action.outputKey,
-          },
-        },
-      ];
-    }
-    if (
-      action.owner.targetSource !== 'Owner' ||
-      action.owner.targetGroupKey !== '' ||
-      action.settings.checkType !== 'Environment' ||
-      action.settings.buffIds.length !== 0 ||
-      action.settings.tagQuery.queryType !== 'hasAny' ||
-      action.settings.tagQuery.tagIds.length !== 0
-    ) {
-      throw new Error(`${node.sourcePath}: unsupported Buff lifetime query`);
-    }
+    const settings = action.settings;
+    if (settings.checkType === 'Context')
+      throw new Error(`${node.sourcePath}: unsupported Context Buff lifetime query`);
     return [
       {
-        kind: 'readCurrentBuffRemainingDuration',
-        parameters: { outputKey: action.outputKey },
+        kind: 'readBuffRemainingDuration',
+        parameters: {
+          target: projectActionTargetQuery(action.owner, context, `${node.sourcePath}.buffOwner`),
+          query:
+            settings.checkType === 'Id'
+              ? { kind: 'id', buffIds: settings.buffIds }
+              : settings.checkType === 'Tag'
+                ? {
+                    kind: 'tag',
+                    buffTags: projectGameplayTags(
+                      settings.tagQuery.tagIds,
+                      context,
+                      node.sourcePath,
+                    ),
+                    tagQueryType: settings.tagQuery.queryType,
+                  }
+                : { kind: 'environment' },
+          outputKey: action.outputKey,
+        },
       },
     ];
   }
@@ -1835,36 +1600,15 @@ export function compileActionNode(
   }
   if (node.body.value.family === 'resource') {
     const action = node.body.value.action;
-    // ObtainCostAction 先解析 source，再逐 target 计算资源。投射物回调的 Source/Source
-    // 可沿已证明的 ActionSource=caster 投影；不能把任意 Source（如接收侧 buffSource）放行。
-    const usesCasterSource =
-      action.source.targetSource === 'Source' &&
-      action.target.targetSource === 'Source' &&
-      (context.actionSourceTarget === 'caster' || context.fixedBuffSourceTarget === 'caster');
-    const usesOwner =
-      action.source.targetSource === 'Owner' &&
-      action.target.targetSource === 'Owner' &&
-      context.actionOwnerTarget !== 'unavailable' &&
-      context.actionOwnerTarget !== 'currentAbilityEntity';
-    const usesCasterSourceAndOwner =
-      action.source.targetSource === 'Source' &&
-      action.target.targetSource === 'Owner' &&
-      context.actionSourceTarget === 'caster' &&
-      (context.actionOwnerTarget === 'caster' || context.fixedBuffOwnerTarget === 'caster');
-    if (
-      (!usesOwner && !usesCasterSource && !usesCasterSourceAndOwner) ||
-      action.source.targetGroupKey !== '' ||
-      action.target.targetGroupKey !== ''
-    ) {
-      throw new Error(`${node.sourcePath}: unsupported resource gain source/target`);
-    }
     const operation: CompiledBuffStepSource = {
-      kind: 'changeResourceByActionValue',
+      kind: 'changeResource',
       parameters: {
         resource: action.resource,
         amount: actionValueOperand(action.amount),
         coefficient: actionValueOperand(action.coefficient),
-        recipient: action.resource === 'sp' ? 'team' : 'caster',
+        source: projectActionTargetQuery(action.source, context, `${node.sourcePath}.source`),
+        targets: projectActionTargetQuery(action.target, context, `${node.sourcePath}.target`),
+        ...(action.onlyMainOperator ? { onlyMainOperator: true } : {}),
         ...(action.spGainKind === null ? {} : { spGainKind: action.spGainKind }),
         ...(action.spGainSource === null ? {} : { spGainSource: action.spGainSource }),
         ...(action.isPercentValue ? { isPercentValue: true } : {}),
@@ -1880,16 +1624,7 @@ export function compileActionNode(
         ...(action.ignoreUltimateGainScalar ? { ignoreUltimateEnergyGainMultiplier: true } : {}),
       },
     };
-    // ObtainCostAction checks atbOnlyMainChar inside ObtainAtb, not its UltimateSp branch.
-    return action.resource === 'sp' && action.onlyMainOperator
-      ? [
-          {
-            kind: 'conditional',
-            parameters: { condition: { kind: 'casterControlled' } },
-            whenTrue: context.graph.sequence([operation]),
-          },
-        ]
-      : [operation];
+    return [operation];
   }
   if (node.body.value.family === 'dashEnergyRecovery') {
     return [
@@ -1956,103 +1691,20 @@ export function compileActionNode(
       action.target.targetSource === 'Target'
     )
       throw new Error(`${node.sourcePath}: unaudited receiving Buff event marker target`);
-    if (
-      action.target.targetSource === 'Owner' &&
-      action.target.targetGroupKey === '' &&
-      context.actionOwnerTarget === 'currentAbilityEntity' &&
-      (action.marker.blackboardKey !== null || action.marker.value.length > 0)
-    ) {
-      return [
-        {
-          kind: 'createAbilityEntityTimedMarker',
-          parameters: {
-            markerId:
-              action.marker.blackboardKey === null
-                ? action.marker.value
-                : { blackboardKey: action.marker.blackboardKey },
-            durationSeconds: actionValueOperand(action.duration),
-            autoFinishByAction: action.autoFinishByAction,
-            timeDomain: action.useTimeDilationDeltaTime ? 'self' : 'global',
-          },
-        },
-      ];
-    }
-    if (
-      action.target.targetSource === 'Context' &&
-      action.target.targetGroupKey !== '' &&
-      partyTargetGroups.get(action.target.targetGroupKey) === 'abilityEntity' &&
-      (action.marker.blackboardKey !== null || action.marker.value.length > 0)
-    ) {
-      return [
-        {
-          kind: 'forEachContextTarget',
-          parameters: { contextKey: action.target.targetGroupKey },
-          body: context.graph.sequence([
-            {
-              kind: 'createAbilityEntityTimedMarker',
-              parameters: {
-                markerId:
-                  action.marker.blackboardKey === null
-                    ? action.marker.value
-                    : { blackboardKey: action.marker.blackboardKey },
-                durationSeconds: actionValueOperand(action.duration),
-                autoFinishByAction: action.autoFinishByAction,
-                // 原生 false 使用全局缩放时间，不乘实体自身倍率。
-                timeDomain: action.useTimeDilationDeltaTime ? 'self' : 'global',
-              },
-            },
-          ]),
-        },
-      ];
-    }
-    const target =
-      action.target.targetSource === 'Target'
-        ? context.actionTargetTarget === 'enemy'
-          ? ('enemy' as const)
-          : ('eventTarget' as const)
-        : action.target.targetSource === 'Owner'
-          ? requireActionOwnerProjection(context, node.sourcePath)
-          : action.target.targetSource === 'Source'
-            ? context.actionSourceTarget
-            : action.target.targetSource === 'Context' &&
-                action.target.targetGroupKey !== '' &&
-                (partyTargetGroups.get(action.target.targetGroupKey) === 'enemy' ||
-                  context.staticEnemyTargetGroupKeys?.has(action.target.targetGroupKey) === true)
-              ? ('enemy' as const)
-              : null;
-    if (
-      (target !== 'caster' &&
-        target !== 'enemy' &&
-        target !== 'eventTarget' &&
-        target !== 'buffOwner' &&
-        target !== 'buffSource') ||
-      (action.marker.blackboardKey === null && action.marker.value.length === 0)
-    ) {
-      throw new Error(
-        `${node.sourcePath}: unsupported timed marker application ` +
-          JSON.stringify({
-            target,
-            targetSource: action.target.targetSource,
-            targetGroupKey: action.target.targetGroupKey,
-            projectedTargetGroup: partyTargetGroups.get(action.target.targetGroupKey),
-            staticEnemyTargetGroupKeys: [...(context.staticEnemyTargetGroupKeys ?? [])],
-            markerBlackboardKey: action.marker.blackboardKey,
-            markerValue: action.marker.value,
-          }),
-      );
-    }
+    if (action.marker.blackboardKey === null && action.marker.value.length === 0)
+      throw new Error(`${node.sourcePath}: empty timed marker ID`);
     return [
       {
         kind: 'createTimedMarker',
         parameters: {
-          target,
+          targets: projectActionTargetQuery(action.target, context, node.sourcePath),
           markerId:
             action.marker.blackboardKey === null
               ? action.marker.value
               : { blackboardKey: action.marker.blackboardKey },
           durationSeconds: actionValueOperand(action.duration),
           autoFinishByAction: action.autoFinishByAction,
-          ...(action.useTimeDilationDeltaTime ? { timeDomain: 'globalScaled' as const } : {}),
+          timeDomain: action.useTimeDilationDeltaTime ? 'self' : 'globalScaled',
         },
       },
     ];
@@ -2091,32 +1743,44 @@ export function compileActionNode(
     if (action.kind === 'skillTypeMutation') {
       const compile = extensions.compileSkillTypeMutation;
       if (compile === undefined) throw new Error(`${node.sourcePath}: missing SkillType compiler`);
-      return [
-        ...compile(
-          action as import('../../source/presentationActions.ts').SkillTypeMutationActionSource,
-          node.sourcePath,
-          context,
-        ),
-      ];
-    }
-    if (action.kind === 'playAnimation' && action.onEnd !== undefined) {
-      const conditionsArePureGuards = action.onEnd.conditions.every(
-        condition => condition.kind === 'buffStack',
-      );
-      const createsOnlyInvisibleBuffs =
-        action.onEnd.buffApplications.length > 0 &&
-        action.onEnd.buffApplications.every(application =>
-          application.buffs.every(
-            entry => !entry.readIdFromBlackboard && visualOnlyIds.has(entry.buffId),
-          ),
-        );
-      if (!conditionsArePureGuards || !createsOnlyInvisibleBuffs) {
-        throw new Error(`${node.sourcePath}.onEndAction: combat-visible animation end actions`);
-      }
+      return [...compile(action as SkillTypeMutationActionSource, node.sourcePath, context)];
     }
     return [];
   }
   if (node.body.value.family === 'presentationCalculation') return [];
+  if (node.body.value.family === 'directionAngle') {
+    const action = node.body.value.action;
+    return [
+      {
+        kind: 'saveTwoDirectionAngle',
+        parameters: {
+          direction1Source: projectActionTargetQuery(
+            action.direction1Source,
+            context,
+            `${node.sourcePath}.dir1Source`,
+          ),
+          direction1Target: projectActionTargetQuery(
+            action.direction1Target,
+            context,
+            `${node.sourcePath}.dir1Target`,
+          ),
+          direction1Type: action.direction1Type,
+          direction2Source: projectActionTargetQuery(
+            action.direction2Source,
+            context,
+            `${node.sourcePath}.dir2Source`,
+          ),
+          direction2Target: projectActionTargetQuery(
+            action.direction2Target,
+            context,
+            `${node.sourcePath}.dir2Target`,
+          ),
+          direction2Type: action.direction2Type,
+          outputKey: action.outputKey,
+        },
+      },
+    ];
+  }
   if (node.body.value.family === 'randomBlackboard') {
     if (context.combatInvisibleRandomBlackboardKeys?.has(node.body.value.action.targetKey))
       return [];
@@ -2252,10 +1916,12 @@ export function compileActionNode(
         `${node.sourcePath}: unsupported Buff command mapping lifetime or empty target`,
       );
     }
-    return mappings.map(mapping => ({
-      kind: 'overrideBasicAttackMapping',
-      parameters: { skillId: mapping.skillId },
-    }));
+    return [
+      {
+        kind: 'overrideBasicAttackMapping',
+        parameters: { skillIds: mappings.map(mapping => mapping.skillId) },
+      },
+    ];
   }
   if (node.body.value.family === 'comboPending') {
     const action = node.body.value.action;
@@ -2425,13 +2091,13 @@ function projectBuffApplicationTargetGroup(
     case 'sourceFinderResult':
       return 'currentTarget';
     case 'dynamicEnemy':
-      // compileBuffApplication 在外面保留 Context 循环。进入循环后成员只能是 enemy，
-      // 因而下游 Buff 闭包可以推断宿主身份；这不代表该集合在运行时非空。
+      // 仅用于 Buff 闭包推断宿主种类，不代表集合非空，也不替代运行时 Context 查询。
       return 'enemy';
     case 'contextOperator':
     case 'lowestHealthRatioOperatorExceptCaster':
     case 'empty':
     case 'spatialPoint':
+    case 'godEntity':
       return null;
     default: {
       const exhaustive: never = group;
@@ -2451,12 +2117,8 @@ function compileBuffApplication(
   const contextTargetGroup = partyTargetGroups.get(contextTargetGroupKey);
   const projectedContextTarget =
     contextTargetGroup === undefined ? null : projectBuffApplicationTargetGroup(contextTargetGroup);
-  const targetsAbilityEntityGroup =
-    action.target.targetSource === 'Context' && contextTargetGroup === 'abilityEntity';
   const targetsQueriedSource =
     action.target.targetSource === 'Context' && contextTargetGroup === 'sourceFinderResult';
-  const targetsDynamicEnemyGroup =
-    action.target.targetSource === 'Context' && contextTargetGroup === 'dynamicEnemy';
   for (const entry of action.buffs) {
     if (entry.readIdFromBlackboard ? entry.buffIdKey.length === 0 : entry.buffId.length === 0)
       throw new Error(`${sourcePath}: Buff identity or blackboard key is empty`);
@@ -2467,35 +2129,6 @@ function compileBuffApplication(
       ? context.combatInvisibleDynamicBuffBlackboardKeys?.has(entry.buffIdKey) === true
       : visualOnlyIds.has(entry.buffId);
   if (action.buffs.every(isPresentationOnlyEntry)) return [];
-  if (
-    action.buffs.length === 1 &&
-    !action.buffs[0]!.readIdFromBlackboard &&
-    action.buffs[0]!.buffId === 'buff_common_obtain_ultimate_sp' &&
-    !action.buffs[0]!.assignBlackboard &&
-    action.buffs[0]!.assignments.length === 0 &&
-    action.count.blackboardKey === null &&
-    action.count.value === 1 &&
-    (action.target.targetSource === 'Source' || action.target.targetSource === 'Owner') &&
-    action.target.targetGroupKey === '' &&
-    context.actionSourceTarget === 'caster' &&
-    action.buffSource === 'ActionSource' &&
-    action.contextKey === '' &&
-    !action.autoFinishByAction &&
-    action.inheritSkillIds.length === 0 &&
-    action.finishWithNextSkillIfNotInherited &&
-    !action.asChildBuff &&
-    action.inheritSourceSkillCastId &&
-    action.inheritSourceSkillCastInfo &&
-    !action.isExtra &&
-    !action.passTargetGroupsToBuff &&
-    !action.overrideBuffIconDuration
-  ) {
-    // 1.4.4 公共 Buff 的 OnBuffStart 仅执行 ObtainUspInNormalSkill，ratio 初值为 1。
-    // 投射物回调由投射物 AbilitySystem 持有，因此其中的 Owner 不是角色；但该 Buff
-    // 的可见效果只读取 ActionSource 与继承的 SkillCastInfo，不读取 Buff owner。
-    // 精确形状下可直接保留全队回能，不把通用投射物 Owner 冒充 caster。
-    return [{ kind: 'gainSquadUltimateEnergyFromSkillCost', parameters: { coefficient: 1 } }];
-  }
   if (
     context.restrictEventSourceTargetProjection === true &&
     !['Source', 'Owner', 'Target'].includes(action.target.targetSource) &&
@@ -2580,8 +2213,7 @@ function compileBuffApplication(
             ? 'buffSource'
             : undefined
         : action.buffSource === 'ContextTarget' &&
-            context.actionTargetTarget === 'enemy' &&
-            action.contextKey === 'smart_target'
+            context.staticEnemyTargetGroupKeys?.has(action.contextKey) === true
           ? 'enemy'
           : action.buffSource === 'ContextTarget' &&
               action.contextKey !== '' &&
@@ -2592,7 +2224,7 @@ function compileBuffApplication(
               : null;
   if (target === null || source === null)
     throw new Error(`${sourcePath}: unsupported Buff target/source`);
-  const steps = action.buffs.flatMap((entry, index) => {
+  const buffs = action.buffs.flatMap((entry, index) => {
     if (isPresentationOnlyEntry(entry)) return [];
     const assignments = entry.assignBlackboard
       ? projectDirectNumericBuffAssignments(entry.assignments, `${sourcePath}.buffs[${index}]`)
@@ -2603,97 +2235,69 @@ function compileBuffApplication(
     const copiedAssignments = entry.assignBlackboard
       ? projectCopiedBuffAssignments(entry.assignments)
       : {};
-    const reactionDuration =
-      assignments.duration ??
-      (copiedAssignments.duration === undefined
-        ? undefined
-        : ({ kind: 'blackboard', key: copiedAssignments.duration } as const));
-    const reactionSteps: CompiledBuffStepSource[] = [];
-    if (
-      !entry.readIdFromBlackboard &&
-      entry.buffId === 'buff_common_pulse_pulse_conduct_triggered_do'
-    ) {
-      const reactionTargetIsEnemy =
-        target === 'enemy' || (target === 'buffOwner' && context.fixedBuffOwnerTarget === 'enemy');
-      if (
-        !reactionTargetIsEnemy ||
-        action.count.blackboardKey !== null ||
-        action.count.value !== 1 ||
-        reactionDuration === undefined
-      ) {
-        throw new Error(`${sourcePath}: unsupported electrification trigger Buff shape`);
-      }
-      // 外层 trigger Buff 会先按直接 duration 或 count/SkillSetting 得出 real_duration，
-      // 再创建这个真实导电状态 Buff。反应状态必须在此处使用最终时长，不能在外层
-      // 只有 count 时猜测列值；同时保留完整 Buff 生命周期供图标和标签查询消费。
-      reactionSteps.push({
-        kind: 'applyElementalReaction',
-        parameters: {
-          reaction: 'electrification',
-          target: 'enemy',
-          durationSeconds: reactionDuration,
-          effectiveness: 1,
-        },
-      });
-    }
     return [
-      ...reactionSteps,
       {
-        kind: 'applyBuff' as const,
-        parameters: {
-          buffId: entry.readIdFromBlackboard ? { blackboardKey: entry.buffIdKey } : entry.buffId,
-          target,
-          ...(source === undefined ? {} : { source }),
-          ...(action.buffSource === 'ContextTarget' &&
-          partyTargetGroups.get(action.contextKey) === 'sourceFinderResult'
-            ? { sourceContextKey: action.contextKey }
-            : {}),
-          ...(action.count.blackboardKey === null && action.count.value === 1
-            ? {}
-            : { count: actionValueOperand(action.count) }),
-          ...(action.inheritSourceSkillCastInfo ? { inheritSourceSkillCastInfo: true } : {}),
-          ...(action.isExtra ? { isExtra: true } : {}),
-          ...(action.overrideBuffIconDuration
-            ? { iconDurationSource: { kind: 'actionOwnerAbilityEntity' as const } }
-            : {}),
-          ...(action.autoFinishByAction ? { finishByAction: true } : {}),
-          ...(action.inheritSkillIds.length === 0
-            ? {}
-            : { inheritToNextSkillIds: action.inheritSkillIds }),
-          ...(action.asChildBuff ? { asChildBuff: true } : {}),
-          ...(action.passTargetGroupsToBuff
-            ? {
-                [COMPILED_BUFF_CAPTURED_TARGET_GROUPS]: {
-                  enemyKeys: [...(context.staticEnemyTargetGroupKeys ?? [])].sort(),
-                  zeroSpaceKeys: [...(context.staticZeroSpaceTargetGroupKeys ?? [])]
-                    .filter(key => context.staticEnemyTargetGroupKeys?.has(key) !== true)
-                    .sort(),
-                },
-              }
-            : {}),
-          ...(action.lifetimeOwner === 'currentCastSkill'
-            ? { lifetimeOwner: action.lifetimeOwner }
-            : {}),
-          ...(Object.keys(assignments).length === 0 ? {} : { blackboardAssignments: assignments }),
-          ...(Object.keys(stringAssignments).length === 0
-            ? {}
-            : { stringBlackboardAssignments: stringAssignments }),
-          ...(Object.keys(copiedAssignments).length === 0
-            ? {}
-            : { copiedBlackboardAssignments: copiedAssignments }),
-        },
+        buffId: entry.readIdFromBlackboard ? { blackboardKey: entry.buffIdKey } : entry.buffId,
+        ...(Object.keys(assignments).length === 0 ? {} : { blackboardAssignments: assignments }),
+        ...(Object.keys(stringAssignments).length === 0
+          ? {}
+          : { stringBlackboardAssignments: stringAssignments }),
+        ...(Object.keys(copiedAssignments).length === 0
+          ? {}
+          : { copiedBlackboardAssignments: copiedAssignments }),
       },
     ];
   });
-  if (!targetsAbilityEntityGroup && !targetsQueriedSource && !targetsDynamicEnemyGroup)
-    return steps;
-  return [
+  if (buffs.length === 0) return [];
+  const steps: CompiledBuffStepSource[] = [
     {
-      kind: 'forEachContextTarget',
-      parameters: { contextKey: contextTargetGroupKey },
-      body: context.graph.sequence(steps),
+      kind: 'applyBuff',
+      parameters: {
+        buffs,
+        targets: projectActionTargetQuery(action.target, context, `${sourcePath}.target`),
+        source:
+          action.buffSource === 'ActionOwner'
+            ? { kind: 'owner' }
+            : action.buffSource === 'ActionSource'
+              ? { kind: 'source' }
+              : action.buffSource === 'ContextTarget'
+                ? context.staticEnemyTargetGroupKeys?.has(action.contextKey)
+                  ? { kind: 'fixed', target: 'enemy' }
+                  : { kind: 'context', key: action.contextKey }
+                : context.actionTargetTarget === 'enemy' || context.actionTargetTarget === 'caster'
+                  ? { kind: 'fixed', target: context.actionTargetTarget }
+                  : { kind: 'inputTarget' },
+        [COMPILED_BUFF_TARGET_KINDS]: { target, source },
+        ...(action.count.blackboardKey === null && action.count.value === 1
+          ? {}
+          : { count: actionValueOperand(action.count) }),
+        ...(action.inheritSourceSkillCastInfo ? { inheritSourceSkillCastInfo: true } : {}),
+        ...(action.isExtra ? { isExtra: true } : {}),
+        ...(action.overrideBuffIconDuration
+          ? { iconDurationSource: { kind: 'actionOwnerAbilityEntity' as const } }
+          : {}),
+        ...(action.autoFinishByAction ? { finishByAction: true } : {}),
+        ...(action.inheritSkillIds.length === 0
+          ? {}
+          : { inheritToNextSkillIds: action.inheritSkillIds }),
+        ...(action.asChildBuff ? { asChildBuff: true } : {}),
+        ...(action.passTargetGroupsToBuff
+          ? {
+              [COMPILED_BUFF_CAPTURED_TARGET_GROUPS]: {
+                enemyKeys: [...(context.staticEnemyTargetGroupKeys ?? [])].sort(),
+                zeroSpaceKeys: [...(context.staticZeroSpaceTargetGroupKeys ?? [])]
+                  .filter(key => context.staticEnemyTargetGroupKeys?.has(key) !== true)
+                  .sort(),
+              },
+            }
+          : {}),
+        ...(action.lifetimeOwner === 'currentCastSkill'
+          ? { lifetimeOwner: action.lifetimeOwner }
+          : {}),
+      },
     },
   ];
+  return steps;
 }
 
 const ACTION_VALUE_OPERATIONS: Readonly<
@@ -2707,3 +2311,66 @@ const ACTION_VALUE_OPERATIONS: Readonly<
   Ceil: 'ceil',
   RoundToInt: 'roundToInt',
 };
+/** 光环参数与原生回调分开投影；回调由序列编译器保留为入口。 */
+export function projectAuraParameters(
+  node: NativeActionNodeSource<KnownNativeActionLeafSource>,
+  visualOnlyIds: ReadonlySet<string>,
+  context: CombatActionProjectionContextSource,
+): Extract<CompiledBuffStepSource, { kind: 'aura' }>['parameters'] {
+  if (node.body.kind !== 'leaf' || node.body.value.family !== 'aura')
+    throw new Error('expected Aura');
+  const aura = node.body.value.action;
+  if (aura.kind !== 'globalPartyAura') {
+    throw new Error(`${node.sourcePath}: Aura reference slice cannot enter runtime projection`);
+  }
+  // 原生排除当前动作 Owner；能力实体不是队员，不能沿 Source 排除其来源干员。
+  const ownerTarget =
+    context.actionOwnerTarget === 'buffOwner'
+      ? (context.fixedBuffOwnerTarget ?? 'buffOwner')
+      : context.actionOwnerTarget;
+  const sourceKind = aura.buffSource === 'ActionOwner' ? 'owner' : 'source';
+  const sourceTarget = sourceKind === 'owner' ? ownerTarget : context.actionSourceTarget;
+  const iconDurationSource =
+    aura.iconDurationOverride === undefined
+      ? undefined
+      : context.actionOwnerTarget !== 'currentAbilityEntity'
+        ? (() => {
+            throw new Error(
+              `${node.sourcePath}: Aura icon duration source requires an AbilityEntity action owner`,
+            );
+          })()
+        : aura.iconDurationOverride.durationSourceType === 'AbilityEntity'
+          ? ({ kind: 'actionOwnerAbilityEntity' } as const)
+          : ({
+              kind: 'actionOwnerTimedMarker',
+              markerId: aura.iconDurationOverride.timedMarkerId,
+            } as const);
+
+  return {
+    targets:
+      aura.target === 'enemy'
+        ? { kind: 'fixed', target: 'enemy' }
+        : { kind: 'characterTeam', excludeOwner: aura.target === 'partyExceptOwner' },
+    source: { kind: sourceKind },
+    [COMPILED_BUFF_TARGET_KINDS]: {
+      target: aura.target === 'enemy' ? 'enemy' : 'caster',
+      source: sourceTarget === 'caster' ? undefined : sourceTarget,
+    },
+    ...(iconDurationSource === undefined ? {} : { iconDurationSource }),
+    inheritSourceSkillCastInfo: aura.inheritSourceSkillCastInfo,
+    buffs: aura.buffs
+      .filter(entry => !visualOnlyIds.has(entry.buffId))
+      .map((entry, index) => ({
+        buffId: entry.buffId,
+        ...(entry.assignBlackboard
+          ? {
+              blackboardAssignments: projectBuffAssignments(
+                entry.assignments,
+                `${node.sourcePath}.buffInput[${index}]`,
+              ),
+              stringBlackboardAssignments: projectStringBuffAssignments(entry.assignments),
+            }
+          : {}),
+      })),
+  };
+}

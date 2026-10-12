@@ -3,7 +3,7 @@ import type { ConsumableDefinition } from '../../../../packages/game-data-contra
 export const consumableDefinitions = Object.freeze([
   {
     id: 'item_agmelee_1_sp_2_slimeml_1_1',
-    iconPath: '/consumables/item_agmelee_1_sp_2_slimeml_1_1.webp',
+    icon: 'endaxis:consumables/item_agmelee_1_sp_2_slimeml_1_1',
     rarity: 3,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -20,7 +20,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_agrange_1_erhound_1_sp_1_1',
-    iconPath: '/consumables/item_agrange_1_erhound_1_sp_1_1.webp',
+    icon: 'endaxis:consumables/item_agrange_1_erhound_1_sp_1_1',
     rarity: 4,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -37,7 +37,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_agrange_1_lbshamman_bottled_1',
-    iconPath: '/consumables/item_agrange_1_lbshamman_bottled_1.webp',
+    icon: 'endaxis:consumables/item_agrange_1_lbshamman_bottled_1',
     rarity: 3,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -54,7 +54,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_agrange_1_moss_2_lbmob_1_1',
-    iconPath: '/consumables/item_agrange_1_moss_2_lbmob_1_1.webp',
+    icon: 'endaxis:consumables/item_agrange_1_moss_2_lbmob_1_1',
     rarity: 2,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -71,7 +71,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_bottled_insec2_1',
-    iconPath: '/consumables/item_bottled_insec2_1.webp',
+    icon: 'endaxis:consumables/item_bottled_insec2_1',
     rarity: 3,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -88,7 +88,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_bottled_insec2_2',
-    iconPath: '/consumables/item_bottled_insec2_2.webp',
+    icon: 'endaxis:consumables/item_bottled_insec2_2',
     rarity: 4,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -105,7 +105,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_bottled_moss_1_2_1',
-    iconPath: '/consumables/item_bottled_moss_1_2_1.webp',
+    icon: 'endaxis:consumables/item_bottled_moss_1_2_1',
     rarity: 4,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -122,7 +122,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_corp3_animal_1',
-    iconPath: '/consumables/item_corp3_animal_1.webp',
+    icon: 'endaxis:consumables/item_corp3_animal_1',
     rarity: 5,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -146,7 +146,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_corp3_grass1_1',
-    iconPath: '/consumables/item_corp3_grass1_1.webp',
+    icon: 'endaxis:consumables/item_corp3_grass1_1',
     rarity: 4,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -170,7 +170,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_corp4_animal_1',
-    iconPath: '/consumables/item_corp4_animal_1.webp',
+    icon: 'endaxis:consumables/item_corp4_animal_1',
     rarity: 5,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -187,7 +187,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_erhound_1_agmelee_1_moss_1_1',
-    iconPath: '/consumables/item_erhound_1_agmelee_1_moss_1_1.webp',
+    icon: 'endaxis:consumables/item_erhound_1_agmelee_1_moss_1_1',
     rarity: 3,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -204,7 +204,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_ethillu_1_wgslime_1_wgthorns_1_1',
-    iconPath: '/consumables/item_ethillu_1_wgslime_1_wgthorns_1_1.webp',
+    icon: 'endaxis:consumables/item_ethillu_1_wgslime_1_wgthorns_1_1',
     rarity: 3,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -221,7 +221,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_firebat_1_agrange_1_1',
-    iconPath: '/consumables/item_firebat_1_agrange_1_1.webp',
+    icon: 'endaxis:consumables/item_firebat_1_agrange_1_1',
     rarity: 3,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -252,7 +252,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_hsfly_1_slimeml_1_hsmob_1_1',
-    iconPath: '/consumables/item_hsfly_1_slimeml_1_hsmob_1_1.webp',
+    icon: 'endaxis:consumables/item_hsfly_1_slimeml_1_hsmob_1_1',
     rarity: 4,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -269,7 +269,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_hshog_1_hsmob_1_slimeml_1_1',
-    iconPath: '/consumables/item_hshog_1_hsmob_1_slimeml_1_1.webp',
+    icon: 'endaxis:consumables/item_hshog_1_hsmob_1_slimeml_1_1',
     rarity: 4,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -293,7 +293,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_hsmob_1_dog_1_1',
-    iconPath: '/consumables/item_hsmob_1_dog_1_1.webp',
+    icon: 'endaxis:consumables/item_hsmob_1_dog_1_1',
     rarity: 3,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -317,7 +317,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_jzmonk_1_hsmob_1_1',
-    iconPath: '/consumables/item_jzmonk_1_hsmob_1_1.webp',
+    icon: 'endaxis:consumables/item_jzmonk_1_hsmob_1_1',
     rarity: 4,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -341,7 +341,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_klbuds_1_hsfly_1_1',
-    iconPath: '/consumables/item_klbuds_1_hsfly_1_1.webp',
+    icon: 'endaxis:consumables/item_klbuds_1_hsfly_1_1',
     rarity: 4,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -365,7 +365,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_klcreatures_1_wgthorns_1_1',
-    iconPath: '/consumables/item_klcreatures_1_wgthorns_1_1.webp',
+    icon: 'endaxis:consumables/item_klcreatures_1_wgthorns_1_1',
     rarity: 4,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -382,7 +382,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_lbmob_1_dog_1_moss_1_1',
-    iconPath: '/consumables/item_lbmob_1_dog_1_moss_1_1.webp',
+    icon: 'endaxis:consumables/item_lbmob_1_dog_1_moss_1_1',
     rarity: 2,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -399,7 +399,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_lbshield_1_slimeml_1_dog_1_1',
-    iconPath: '/consumables/item_lbshield_1_slimeml_1_dog_1_1.webp',
+    icon: 'endaxis:consumables/item_lbshield_1_slimeml_1_dog_1_1',
     rarity: 3,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -416,7 +416,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_mimicw_1_moss_1_moss_2_1',
-    iconPath: '/consumables/item_mimicw_1_moss_1_moss_2_1.webp',
+    icon: 'endaxis:consumables/item_mimicw_1_moss_1_moss_2_1',
     rarity: 3,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -433,7 +433,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_wgshoal_1_grass_1_grass_2_1',
-    iconPath: '/consumables/item_wgshoal_1_grass_1_grass_2_1.webp',
+    icon: 'endaxis:consumables/item_wgshoal_1_grass_1_grass_2_1',
     rarity: 3,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -457,7 +457,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_wgslime_1_wgthorns_1_1',
-    iconPath: '/consumables/item_wgslime_1_wgthorns_1_1.webp',
+    icon: 'endaxis:consumables/item_wgslime_1_wgthorns_1_1',
     rarity: 3,
     kind: 'operatorBuff',
     durationSeconds: 300,
@@ -488,7 +488,7 @@ export const consumableDefinitions = Object.freeze([
   },
   {
     id: 'item_wgthorns_1_hshog_1_hsmob_1_1',
-    iconPath: '/consumables/item_wgthorns_1_hshog_1_hsmob_1_1.webp',
+    icon: 'endaxis:consumables/item_wgthorns_1_hshog_1_hsmob_1_1',
     rarity: 4,
     kind: 'operatorBuff',
     durationSeconds: 300,

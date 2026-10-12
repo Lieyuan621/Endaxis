@@ -44,78 +44,104 @@ const definition = {
           value: [0.16, 0.192, 0.224, 0.256, 0.288, 0.32, 0.352, 0.384, 0.448],
         },
       ],
+      skillId: 'sk_wpn_sword_0016',
+      eventHandlers: [
+        {
+          key: 'skill3:event:0:sequence:0',
+          abilityEvent: 'skillSpGained',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_6' },
+        },
+      ],
+      enableSequence: { $sequence: 'applyBuff_7' },
       actionGraph: {
         main: {
           nodes: {
-            createTimedMarker_1: {
+            applyBuff_1: {
+              action: {
+                kind: 'applyBuff',
+                parameters: {
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_sword_0016_valid',
+                      copiedBlackboardAssignments: {
+                        pd_up: 'phy_dmg_up3',
+                        duration: 'duration',
+                        max_stack: 'max_stack',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'inputTarget' },
+                  source: { kind: 'source' },
+                  inheritSourceSkillCastInfo: true,
+                  asChildBuff: true,
+                },
+              },
+              next: null,
+            },
+            createTimedMarker_2: {
               action: {
                 kind: 'createTimedMarker',
                 parameters: {
-                  target: 'caster',
+                  targets: { kind: 'owner' },
                   markerId: 'wpn_sword_0016',
                   durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
                   autoFinishByAction: false,
+                  timeDomain: 'globalScaled',
                 },
               },
               next: null,
             },
-            applyBuff_2: {
+            forEachContextTarget_3: {
+              action: {
+                kind: 'forEachContextTarget',
+                parameters: { targets: { kind: 'characterTeam', excludeOwner: true } },
+                body: { $sequence: 'applyBuff_1' },
+              },
+              next: 'createTimedMarker_2',
+            },
+            applyBuff_4: {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_sword_0016_valid',
-                  target: 'partyExceptCaster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_sword_0016_valid',
+                      copiedBlackboardAssignments: {
+                        pd_up: 'phy_dmg_up2',
+                        duration: 'duration',
+                        max_stack: 'max_stack',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    pd_up: 'phy_dmg_up3',
-                    duration: 'duration',
-                    max_stack: 'max_stack',
-                  },
                 },
               },
-              next: 'createTimedMarker_1',
+              next: 'forEachContextTarget_3',
             },
-            applyBuff_3: {
+            checkCondition_5: {
               action: {
-                kind: 'applyBuff',
-                parameters: {
-                  buffId: 'buff_wpn_sword_0016_valid',
-                  target: 'caster',
-                  inheritSourceSkillCastInfo: true,
-                  asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    pd_up: 'phy_dmg_up2',
-                    duration: 'duration',
-                    max_stack: 'max_stack',
-                  },
-                },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
               },
-              next: 'applyBuff_2',
+              next: 'applyBuff_4',
             },
-            conditional_4: {
+            checkCondition_6: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'applyBuff_3' },
               },
-              next: null,
+              next: 'checkCondition_5',
             },
-            conditional_5: {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-                whenTrue: { $sequence: 'conditional_4' },
-              },
-              next: null,
-            },
-            applyBuff_6: {
+            applyBuff_7: {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_sword_0016',
-                  target: 'caster',
-                  blackboardAssignments: { phy_dmg_up: { kind: 'valueNode', nodeId: 'data_5' } },
+                  buffs: [{ buffId: 'buff_wpn_sword_0016' }],
+                  targets: { kind: 'fixed', target: 'caster' },
                 },
               },
               next: null,
@@ -127,48 +153,30 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                returnTrueIfNotExists: true,
                 target: 'caster',
                 markerId: 'wpn_sword_0016',
               },
             },
             data_3: {
               type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-            },
-            data_4: {
-              type: 'boolean',
               expression: { kind: 'eventSpGainMatch', sources: ['skill'], gainKinds: ['gain'] },
-            },
-            data_5: {
-              type: 'number',
-              expression: { kind: 'blackboard', key: 'install_0_phy_dmg_up' },
             },
           },
         },
         macros: {},
       },
-      skillId: 'sk_wpn_sword_0016',
-      eventHandlers: [
-        {
-          key: 'skill3:event:0:sequence:0',
-          abilityEvent: 'skillSpGained',
-          priority: 0,
-          sequence: { $sequence: 'conditional_5' },
-        },
-      ],
-      enableSequence: { $sequence: 'applyBuff_6' },
       blackboard: {
         cd: 0.1,
         duration: [30, 30, 30, 30, 30, 30, 30, 30, 30],
         max_stack: [5, 5, 5, 5, 5, 5, 5, 5, 5],
         phy_dmg_up2: [0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.14],
         phy_dmg_up3: [0.025, 0.03, 0.035, 0.04, 0.045, 0.05, 0.055, 0.06, 0.07],
-        install_0_phy_dmg_up: [0.16, 0.192, 0.224, 0.256, 0.288, 0.32, 0.352, 0.384, 0.448],
       },
     },
   ],
   assetSlug: 'wpn_sword_0016',
-  iconPath: '/weapons/sword/wpn_sword_0016.webp',
+  icon: 'endaxis:weapons/sword/wpn_sword_0016',
   buffDefinitions: {
     buff_wpn_sword_0016: {
       stackingType: 'unique',
@@ -179,9 +187,9 @@ const definition = {
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: { phy_dmg_up: 0.1 },
+      blackboard: {},
       attributeModifiers: [],
-      lifecycleSequences: { start: { $sequence: 'finishBuffsById_1' } },
+      lifecycleSequences: { start: [{ $sequence: 'finishBuffsById_1' }] },
       actionGraph: {
         main: {
           nodes: {
@@ -189,7 +197,8 @@ const definition = {
               action: {
                 kind: 'finishBuffsById',
                 parameters: {
-                  target: 'buffOwner',
+                  targets: { kind: 'owner' },
+                  finishSource: { kind: 'source' },
                   buffIds: ['buff_wpn_sword_0016_team'],
                   reason: 'other',
                 },
@@ -211,8 +220,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_physical_dmg_up',
-        iconPath: '/icons/icon_battle_physical_dmg_up.webp',
+        icon: 'endaxis:icons/icon_battle_physical_dmg_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

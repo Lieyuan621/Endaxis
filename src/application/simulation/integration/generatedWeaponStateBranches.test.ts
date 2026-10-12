@@ -57,10 +57,7 @@ describe('生成武器的目标状态与层数伤害分支', () => {
           startFrame: 1,
           steps: Array.from({ length: layers }, () => ({
             kind: 'applyBuff' as const,
-            parameters: {
-              buffId: crush.parameters.noGuardBuffId,
-              target: 'enemy' as const,
-            },
+            parameters: { buffs: [{ buffId: 'buff_physical_no_guard' }], targets: { kind: 'fixed', target: 'enemy' } as const },
           })),
         },
         { startFrame: 60, steps: [crush] },
@@ -92,10 +89,7 @@ describe('生成武器的目标状态与层数伤害分支', () => {
         steps: [
           {
             kind: 'applyBuff',
-            parameters: {
-              buffId: crush.parameters.noGuardBuffId,
-              target: 'caster',
-            },
+            parameters: { buffs: [{ buffId: 'buff_physical_no_guard' }], targets: { kind: 'fixed', target: 'caster' } },
           },
         ],
       },
@@ -146,24 +140,13 @@ function createCrushProbe(): CombatStepForKind<'applyPhysicalInfliction'> {
   const nodes = daPanComboSkill.actionGraph.main.nodes;
   for (const node of Object.values(nodes)) {
     if (node.action.kind === 'applyPhysicalInfliction' && node.action.parameters.type === 'crush') {
-      const { noGuardBuffId, crushedBuffId, damageMultiplier, ignoreHitEffect } =
-        node.action.parameters;
-      // 层数由夹具手动施加；内联 Buff 定义不带程序字段，避免复制大潘自己的图节点引用。
+      const { damageMultiplier, ignoreHitEffect } = node.action.parameters;
       return {
         kind: 'applyPhysicalInfliction',
         parameters: {
           target: 'enemy',
           isExtra: false,
-          noGuardBuffId,
-          noGuardDefinition: {
-            stackingType: 'enhanceAndRefresh',
-            priority: 100,
-            maxStackCount: 4,
-            durationSeconds: 2,
-          },
           type: 'crush',
-          crushedBuffId,
-          crushedDefinition: { stackingType: 'refresh', durationSeconds: 2 },
           damageMultiplier,
           ignoreHitEffect,
         },

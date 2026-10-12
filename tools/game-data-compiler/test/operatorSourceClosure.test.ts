@@ -133,6 +133,7 @@ describe('Operator 来源闭包', () => {
       rarity: 6,
       weaponType: 'funnel',
       element: 'electric',
+      characterTypeId: 'Pulse',
       role: 'caster',
       mainAttribute: 'intellect',
       secondaryAttribute: 'will',

@@ -18,7 +18,8 @@ import {
 import { compileEntityValueConsumers } from './compileEntityValueConsumers.ts';
 import {
   createCommonBuffCollector,
-  renderCollectedCommonBuffDefinitions,
+  collectSystemBuffDefinitions,
+  renderCommonBuffDefinitions,
 } from './generateCommonBuffDefinitions.ts';
 
 type PlanArguments = Parameters<typeof projectOperatorDefinition>[0];
@@ -146,11 +147,18 @@ export async function renderOperatorDefinitionBatch(
   }
 
   // 系统根先补入原始公共定义。缺少完整公共目录时不宣称已经覆盖跨干员消费者。
-  const renderedCommonBuffs = commonBuffs
-    ? await renderCollectedCommonBuffDefinitions(args, commonBuffs, sources)
-    : undefined;
-  if (commonBuffs) usage?.addBuffDefinitions(commonBuffs.definitions);
+  if (commonBuffs) {
+    collectSystemBuffDefinitions(args, commonBuffs, sources);
+    usage?.addBuffDefinitions(commonBuffs.definitions);
+  }
   const sharedEntityUsage = usage?.finish();
+  const renderedCommonBuffs = commonBuffs
+    ? await renderCommonBuffDefinitions(
+        commonBuffs.definitions,
+        args.optimization,
+        sharedEntityUsage,
+      )
+    : undefined;
   // 保存来源编译结束时的统计；紧接着释放缓存，统计中的容量不代表渲染阶段仍持有这些对象。
   const sourceReads = sources.statistics();
   sources.clear();
@@ -176,6 +184,7 @@ export async function renderOperatorDefinitionBatch(
     files,
     auditFiles,
     commonBuffs: renderedCommonBuffs,
+    sharedEntityUsage,
     summary: {
       operatorCount: summaries.length,
       skillCount: summaries.reduce((sum, item) => sum + item.skillCount, 0),
@@ -184,7 +193,8 @@ export async function renderOperatorDefinitionBatch(
       ...(sharedEntityUsage
         ? {
             entityValueConsumers: {
-              reads: [...sharedEntityUsage.reads].sort(),
+              fallbackKeys: [...sharedEntityUsage.fallbackKeys].sort(),
+              externalReads: sharedEntityUsage.externalReads,
               unknownAccess: sharedEntityUsage.unknownAccess,
             },
           }

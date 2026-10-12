@@ -58,6 +58,18 @@ describe('projectSkillAvailabilityDiagnostics', () => {
   it('projects common tag blockers alongside other availability diagnostics', () => {
     expect(
       projectSkillAvailabilityDiagnostics([
+        receipt(0, 'SkillInputBlockedByCommonTag', {
+          data: {
+            skillId: 'battleSkill',
+            blocker: 'CantCastAnySkill',
+            blockingTags: 'Status/Immobilized/Frozen',
+          },
+        }),
+        receipt(1, 'SkillStarted'),
+      ])[0]?.tagBlockers,
+    ).toEqual({ skillCommonTagUnavailable: ['Status/Immobilized/Frozen'] });
+    expect(
+      projectSkillAvailabilityDiagnostics([
         receipt(0, 'SkillInputBlockedByCommonTag'),
         receipt(1, 'SkillCostUnavailableAtStart'),
         receipt(2, 'SkillStarted'),

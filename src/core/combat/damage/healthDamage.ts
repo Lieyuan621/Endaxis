@@ -3,11 +3,12 @@
  * 只能在承伤事件完成后的正确阶段调用，避免提前改变后续监听器看到的生命值。
  */
 import type { DamageFeature, DamageTag, DamageType } from '../../game-data/operatorDefinition';
-import type { CombatReceiptSink } from '../receipt/combatReceipt';
+import type { CombatObjectRef, CombatReceiptSink } from '../receipt/combatReceipt';
 import type { CombatVitals, HealthDamageResult } from '../resources/combatVitals';
-import type { CombatSkillCastInfo } from '../state/foundationState';
+import type { ActionValueCalculation, CombatSkillCastInfo } from '../state/foundationState';
 import type { GameplayTag } from '../tags/gameplayTags';
 import type { CombatClock } from '../time/combatClock';
+import type { AppliedDamageModifier } from './damageScale';
 import type { PlayerActiveDamageResult } from './playerActiveDamage';
 
 export const HEALTH_DAMAGE_EVENTS = [
@@ -130,7 +131,7 @@ export interface HealthDamageReceiptDetail {
 export interface ExecuteHealthDamageInput {
   /** 原生 HP/Minus 的 PowerAttack 清理先于 BeforeTakeDamage。 */
   readonly consumeFinisherEligibility?: () => void;
-  readonly producedBy?: import('../receipt/combatReceipt').CombatObjectRef;
+  readonly producedBy?: CombatObjectRef;
   readonly executingSkillId?: HealthDamageEventPayload['executingSkillId'];
   readonly skillCastInfo?: CombatSkillCastInfo | null;
   readonly sourceId: string;
@@ -144,8 +145,8 @@ export interface ExecuteHealthDamageInput {
   readonly triggersCriticalEffects?: boolean;
   /** 伤害详情使用的公式冻结值；只记录已参与本次结算的标量，不在投影层重算规则。 */
   readonly detail?: HealthDamageReceiptDetail;
-  readonly skillMultiplierCalculation?: import('../state/foundationState').ActionValueCalculation;
-  readonly appliedDamageModifiers?: readonly import('./damageScale').AppliedDamageModifier[];
+  readonly skillMultiplierCalculation?: ActionValueCalculation;
+  readonly appliedDamageModifiers?: readonly AppliedDamageModifier[];
   readonly target: CombatVitals;
   readonly clock: CombatClock;
   readonly receipt: CombatReceiptSink;

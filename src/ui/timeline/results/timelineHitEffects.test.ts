@@ -433,7 +433,6 @@ describe('projectHitEffectsByCast', () => {
     expect(effects.get(hitId)).toEqual({
       damage: [{ value: 100, damageType: 'physical', isCritical: false }],
       infliction: [],
-      reactions: [],
     });
     expect(effects.size).toBe(1);
   });
@@ -465,38 +464,6 @@ describe('projectHitEffectsByCast', () => {
 
     expect(effects.get(deriveHitId('cast:1', 'step:damage'))?.infliction).toEqual([
       { element: 'electric', outcomeKind: 'attachmentOnly', currentLayers: 1 },
-    ]);
-  });
-
-  it('把同帧反应事实归因到命中标记', () => {
-    const scenario = scenarioWithCast();
-    const effects = projectHitEffectsByCast(
-      scenario,
-      [
-        damageEntry(1, 60),
-        {
-          sequence: 2,
-          frame: 60,
-          time: 2,
-          event: 'ElementalReactionApplied',
-          sourceId: 'track:0',
-          targetId: 'enemy',
-          data: {
-            reaction: 'electrification',
-            castId: 'cast:1',
-            previousLevel: 0,
-            level: 1,
-            durationSeconds: 5,
-            effectiveness: 1,
-          },
-        },
-      ],
-      'cast:1',
-      markersForCast(scenario, 'cast:1'),
-    );
-
-    expect(effects.get(deriveHitId('cast:1', 'step:damage'))?.reactions).toEqual([
-      { reaction: 'electrification', applied: true, level: 1, previousLevel: 0 },
     ]);
   });
 

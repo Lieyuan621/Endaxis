@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import { operationName } from './operationNames';
-import { ActionExecutionTrace } from '../../core/combat/actions/actionExecutionTrace';
-import { projectDodgeMarkerDiagnostics } from '../../core/projection/dodgeMarkerDiagnostics';
-import { projectDodgeMarkerEffects } from '../../core/projection/dodgeMarkerEffects';
+import { EaButton, EaNumberInput, EaSelect, type EaSelectValue } from '@/design-system';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import {
   computed,
   defineAsyncComponent,
@@ -13,39 +11,47 @@ import {
   provide,
   ref,
   shallowRef,
-  watch,
   toRaw,
+  watch,
   type Component,
 } from 'vue';
-import { durationBarColorKey } from './results/durationBarColorContext';
-import TimelineAsyncDialogLoading from './components/TimelineAsyncDialogLoading.vue';
-import {
-  provideInteractionSession,
-  useInteractionBarrier,
-} from '../interaction/interactionSessionContext';
-import type { InteractionLease } from '../interaction/interactionSession';
-import { useAsyncModalBoundary } from '../interaction/useAsyncModalBoundary';
-import { isInsideTimelineDropRegion } from './interaction/timelineDropRegion';
-import {
-  createTimelineScrollSync,
-  createTimelineVerticalScrollSync,
-} from './interaction/timelineScrollSync';
-import { normalizeDurationBarColorPrefs } from './results/durationBarColor';
 import { useI18n } from 'vue-i18n';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
-import { ScenarioEditConstraintError } from '../../application/editor/scenarioEditConstraints';
-import { replaceSkillCastDefinition } from '../../application/editor/skillGraphCommands';
-import { createInheritedScenario } from '../../application/editor/scenarioInheritance';
-import { getSkillCastPlacementAnchor } from '../../core/project/skillCastPlacement';
-import { EaButton, EaNumberInput, EaSelect, type EaSelectValue } from '@/design-system';
-import { useAppearance } from '../appearance/useAppearance';
-import { formatTimeWithFrames } from './timeFormatting';
-import { ELEMENT_COLORS } from '../gameColors';
-import { ALL_GAME_TEXT_FAMILIES, setLocale } from '../../i18n';
 import {
-  getEnemyGameName,
+  ActiveScenarioEditorSession,
+  ProjectEditorSession,
+} from '../../application/editor/projectEditorSession';
+import { ScenarioEditConstraintError } from '../../application/editor/scenarioEditConstraints';
+import { createInheritedScenario } from '../../application/editor/scenarioInheritance';
+import { replaceSkillCastDefinition } from '../../application/editor/skillGraphCommands';
+import {
+  AdaptiveTimelineSimulationService,
+  INTERACTIVE_SIMULATION_BUDGET_MS,
+} from '../../application/simulation/adaptiveTimelineSimulationService';
+import { createEditorSimulationService } from '../../application/simulation/editorSimulationService';
+import type { StandardPlayerDamageScenarioResult } from '../../application/simulation/runStandardPlayerDamageScenarioSimulation';
+import { WorkerScenarioSimulationService } from '../../application/simulation/workerScenarioSimulationService';
+import { ActionExecutionTrace } from '../../core/combat/actions/actionExecutionTrace';
+import type { OperatorPanelContributionReceipt } from '../../core/compiler/resolveOperatorPanel';
+import type { SkillGraphPresentation } from '../../core/project/graphPresentation';
+import { getSkillCastPlacementAnchor } from '../../core/project/skillCastPlacement';
+import { projectCombatHudSnapshot } from '../../core/projection/combatHudSnapshot';
+import { projectDodgeMarkerDiagnostics } from '../../core/projection/dodgeMarkerDiagnostics';
+import { projectDodgeMarkerEffects } from '../../core/projection/dodgeMarkerEffects';
+import { projectEnemyEffectViz } from '../../core/projection/enemyEffectViz';
+import { elementalAttachments } from '../../data/buffs/elementalAttachments';
+import { CONTINGENCY_CONTRACT_MECHANIC_PREFIX } from '../../data/contingencyContract/contingencyContractAdapter';
+import {
+  contingencyContractMechanicId,
+  contingencyContractTags,
+} from '../../data/contingencyContract/contingencyContractCatalog';
+import { ALL_GAME_TEXT_FAMILIES, setLocale } from '../../i18n';
+import { useAppearance } from '../appearance/useAppearance';
+import OperatorAvatar from '../components/OperatorAvatar.vue';
+import { ELEMENT_COLORS } from '../gameColors';
+import {
   getConsumableGameDescription,
   getConsumableGameName,
+  getEnemyGameName,
   getGearPieceGameName,
   getGearSetGameName,
   getOperatorCombatSkillName,
@@ -56,48 +62,74 @@ import {
   getWeaponGameName,
   getWeaponSkillName,
 } from '../gameText';
-import SkillLibraryCard from './library/SkillLibraryCard.vue';
+import { resolveImage } from '../imageResources';
+import type { InteractionLease } from '../interaction/interactionSession';
 import {
-  createLibraryDragGhost,
+  provideInteractionSession,
+  useInteractionBarrier,
+} from '../interaction/interactionSessionContext';
+import {
   attachLibraryDragGhostHint,
+  createLibraryDragGhost,
+  getDefaultLibraryDragOffsets,
   LIBRARY_PLACE_CANCEL_HINT_DELAY_MS,
   positionLibraryDragGhost,
-  getDefaultLibraryDragOffsets,
   removeLibraryDragGhost,
 } from '../interaction/libraryDragGhost';
-import TimelineActionBlock from './interaction/TimelineActionBlock.vue';
-import TimelineSkillCastGroupMarker from './interaction/TimelineSkillCastGroupMarker.vue';
-import TimelineActionContextMenu from './interaction/TimelineActionContextMenu.vue';
-import TimelineGroupInsertPrompt from './interaction/TimelineGroupInsertPrompt.vue';
-import TimelineActionInspector from './interaction/TimelineActionInspector.vue';
-import TimelineLibrarySkillInspector from './library/TimelineLibrarySkillInspector.vue';
-import TimelineExternalEventInspector from './interaction/TimelineExternalEventInspector.vue';
+import { useAsyncModalBoundary } from '../interaction/useAsyncModalBoundary';
+import { projectOperatorSkillOutcomes } from '../operators/skillOutcomeRegistry';
+import { useRuntimeEnvironment } from '../useRuntimeEnvironment';
+import ContingencyContractPanel from './components/ContingencyContractPanel.vue';
+import EnemySettingsPanel from './components/EnemySettingsPanel.vue';
+import GlobalResourcePanel from './components/GlobalResourcePanel.vue';
+import TimelineAsyncDialogLoading from './components/TimelineAsyncDialogLoading.vue';
 import TimelineCornerToolbar from './components/TimelineCornerToolbar.vue';
-import TimelineConnectionLayer from './interaction/TimelineConnectionLayer.vue';
-import TimelineConnectionContextMenu from './interaction/TimelineConnectionContextMenu.vue';
 import TimelineCursorGuide, {
   type TimelineCursorGaugeRow,
 } from './components/TimelineCursorGuide.vue';
 import TimelineHeaderToolbar from './components/TimelineHeaderToolbar.vue';
-import type { TimelineShareTrack } from './components/TimelineShareCard.vue';
 import TimelineRuler from './components/TimelineRuler.vue';
+import type { TimelineShareTrack } from './components/TimelineShareCard.vue';
 import TimelineTrackHeader from './components/TimelineTrackHeader.vue';
-import OperatorAvatar from '../components/OperatorAvatar.vue';
 import TimelineWorkbenchShell from './components/TimelineWorkbenchShell.vue';
+import {
+  formatContingencyContractBuffSourceName,
+  localizedContingencyContractTagName,
+  resolveContingencyContractBuffPresentation,
+} from './contingencyContractBuffPresentation';
+import TimelineActionBlock from './interaction/TimelineActionBlock.vue';
+import TimelineActionContextMenu from './interaction/TimelineActionContextMenu.vue';
+import TimelineActionInspector from './interaction/TimelineActionInspector.vue';
+import TimelineConnectionContextMenu from './interaction/TimelineConnectionContextMenu.vue';
+import TimelineConnectionLayer from './interaction/TimelineConnectionLayer.vue';
+import { isInsideTimelineDropRegion } from './interaction/timelineDropRegion';
+import TimelineExternalEventInspector from './interaction/TimelineExternalEventInspector.vue';
+import TimelineGroupInsertPrompt from './interaction/TimelineGroupInsertPrompt.vue';
+import { resolveTimelineMarkerPointerFrame } from './interaction/timelineMarkerMoveGeometry';
+import {
+  createTimelineScrollSync,
+  createTimelineVerticalScrollSync,
+} from './interaction/timelineScrollSync';
+import TimelineSkillCastGroupMarker from './interaction/TimelineSkillCastGroupMarker.vue';
+import { projectActiveGearSetLabels } from './library/activeGearSetHint';
+import { resolveOperatorPanelContributionSourceLabel } from './library/operatorPanelContributionPresentation';
+import SkillLibraryCard from './library/SkillLibraryCard.vue';
+import TimelineLibrarySkillInspector from './library/TimelineLibrarySkillInspector.vue';
 import type { MobileLibraryEntry, MobileTrack } from './mobile/MobileTimelineWorkbench.vue';
-import { useRuntimeEnvironment } from '../useRuntimeEnvironment';
-import { resolveTimelineLayout } from './timelineLayoutPolicy';
-import TimelineResourceCurves from './results/TimelineResourceCurves.vue';
-import TimelineSimulationErrorNotice from './results/TimelineSimulationErrorNotice.vue';
-import TimelineTrackGauge from './results/TimelineTrackGauge.vue';
-import TimelineTimeDilationBands from './results/TimelineTimeDilationBands.vue';
+import { operationName } from './operationNames';
+import type { BuffDetailTarget } from './results/buffDetail';
+import { normalizeDurationBarColorPrefs } from './results/durationBarColor';
+import { durationBarColorKey } from './results/durationBarColorContext';
+import SimulationPerformanceAudit from './results/SimulationPerformanceAudit.vue';
+import TimelineBuffBands from './results/TimelineBuffBands.vue';
+import TimelineComboWindowBands from './results/TimelineComboWindowBands.vue';
 import TimelineEnemyEffects from './results/TimelineEnemyEffects.vue';
 import TimelineEnemyStatusSections from './results/TimelineEnemyStatusSections.vue';
-import TimelineBuffBands from './results/TimelineBuffBands.vue';
-import type { BuffDetailTarget } from './results/buffDetail';
 import TimelineOperatorPassiveUiBands from './results/TimelineOperatorPassiveUiBands.vue';
 import TimelineOperatorSkillOutcomes from './results/TimelineOperatorSkillOutcomes.vue';
-import { projectOperatorSkillOutcomes } from '../operators/skillOutcomeRegistry';
+import TimelineResourceCurves from './results/TimelineResourceCurves.vue';
+import TimelineSimulationErrorNotice from './results/TimelineSimulationErrorNotice.vue';
+import TimelineTimeDilationBands from './results/TimelineTimeDilationBands.vue';
 import {
   projectTimelineTrackEffectLayout,
   resizeTimelineTrackPair,
@@ -105,51 +137,47 @@ import {
   TIMELINE_TRACK_BASE_HEIGHT,
   TIMELINE_TRACK_MIN_HEIGHT,
 } from './results/timelineTrackEffectLayout';
-import TimelineComboWindowBands from './results/TimelineComboWindowBands.vue';
-import SimulationPerformanceAudit from './results/SimulationPerformanceAudit.vue';
-import EnemySettingsPanel from './components/EnemySettingsPanel.vue';
-import GlobalResourcePanel from './components/GlobalResourcePanel.vue';
-import ContingencyContractPanel from './components/ContingencyContractPanel.vue';
-import { CONTINGENCY_CONTRACT_MECHANIC_PREFIX } from '../../data/mechanics/contingencyContractAdapter';
-import {
-  contingencyContractMechanicId,
-  contingencyContractTags,
-} from '../../data/mechanics/contingencyContractCatalog';
-import {
-  formatContingencyContractBuffSourceName,
-  localizedContingencyContractTagName,
-  resolveContingencyContractBuffPresentation,
-} from './contingencyContractBuffPresentation';
-import {
-  ActiveScenarioEditorSession,
-  ProjectEditorSession,
-} from '../../application/editor/projectEditorSession';
-import {
-  AdaptiveTimelineSimulationService,
-  INTERACTIVE_SIMULATION_BUDGET_MS,
-} from '../../application/simulation/adaptiveTimelineSimulationService';
-import { createEditorSimulationService } from '../../application/simulation/editorSimulationService';
-import { WorkerScenarioSimulationService } from '../../application/simulation/workerScenarioSimulationService';
-import { useScenarioSimulation } from './useScenarioSimulation';
+import TimelineTrackGauge from './results/TimelineTrackGauge.vue';
 import { formatSkillBlockWarnings, indexSkillResourceWarnings } from './skillBlockWarnings';
-import { projectCombatHudSnapshot } from '../../core/projection/combatHudSnapshot';
-import { projectActiveGearSetLabels } from './library/activeGearSetHint';
-import { resolveTimelineMarkerPointerFrame } from './interaction/timelineMarkerMoveGeometry';
-import { resolveOperatorPanelContributionSourceLabel } from './library/operatorPanelContributionPresentation';
-import type { OperatorPanelContributionReceipt } from '../../core/compiler/resolveOperatorPanel';
-import { projectEnemyEffectViz } from '../../core/projection/enemyEffectViz';
-import { elementalAttachments } from '../../data/buffs/elementalAttachments';
+import { formatTimeWithFrames } from './timeFormatting';
+import { resolveTimelineLayout } from './timelineLayoutPolicy';
+import { useScenarioSimulation } from './useScenarioSimulation';
 
-import { SINGLE_ENEMY_TARGET_ID } from '../../core/projection/enemyHealthChangePoints';
+import { operatorReferenceChoices } from '../../application/editor/operatorReferenceChoices';
+import { saveProjectTemplateDefinition } from '../../application/editor/projectTemplateCommands';
+import type { ReferenceNavigationTarget } from '../../application/editor/referenceResolver';
 import {
-  projectPoiseBrokenSegments,
-  projectPoiseKnotSegments,
-} from '../../core/projection/poiseCurves';
-import { projectComboWindowTimelineViz } from '../../core/projection/comboWindowTimelineViz';
-import { projectSkillCooldownTimelineViz } from '../../core/projection/skillCooldownTimelineViz';
-import { projectTimelineComboCooldowns } from '../../core/projection/timelineComboCooldowns';
-import { projectSkillEnhancementTimelineViz } from '../../core/projection/skillEnhancementTimelineViz';
+  layoutSkillGroupPlacement,
+  resolveSkillGroupPlacementSkills,
+  skillPlacementDisplayFrames,
+} from '../../application/editor/skillGroupPlacement';
+import { openProject } from '../../application/openProject';
+import { captureScenarioSimulationGameData } from '../../application/simulation/scenarioSimulationGameData';
+import type { CombatReceiptEntry } from '../../core/combat/receipt/combatReceipt';
+import {
+  resolveEffectiveSkillDefinition,
+  resolveSkillExecutionDefinition,
+  resolveSkillTemplateDefinition,
+} from '../../core/compiler/resolveSkillDefinition';
+import { runtimeTargetFromEntityId } from '../../core/game-data/logicalAbilityEntity';
+import type { OperationType, SkillDefinition } from '../../core/game-data/operatorDefinition';
+import { listOperatorSkillDefinitionBindings } from '../../core/game-data/operatorSkillDefinitions';
+import { createEmptyProject } from '../../core/project/createProject';
+import { getProjectDefinitionLibrary } from '../../core/project/projectDefinitionLibrary';
 import { resolveControlTimeline } from '../../core/project/resolveControlTimeline';
+import {
+  PROJECT_FPS,
+  type EndaxisProjectDocument,
+  type ExternalCombatEventDocument,
+  type ProjectDefinitionLibraryDocument,
+  type ScenarioDocument,
+  type TrackIndex,
+} from '../../core/project/schema';
+import {
+  inspectProjectInput,
+  parseProjectDocument,
+  serializeProjectDocument,
+} from '../../core/project/serialization';
 import {
   getSkillCastPlacementChains,
   resolveSkillCastStartFrames,
@@ -161,86 +189,27 @@ import {
   type BuffTimelineSegment,
   type PositionedDisplayBuffTimelineSegment,
 } from '../../core/projection/buffTimelineViz';
+import { CombatObjectOrigins } from '../../core/projection/combatObjectOrigins';
+import { projectComboWindowTimelineViz } from '../../core/projection/comboWindowTimelineViz';
+import { SINGLE_ENEMY_TARGET_ID } from '../../core/projection/enemyHealthChangePoints';
+import {
+  projectHitDamageReceipts,
+  type HitDamageReceipt,
+} from '../../core/projection/hitEffectProjection';
 import {
   layoutOperatorPassiveUiTimelineSegments,
   projectOperatorPassiveUiTimelineViz,
   type OperatorPassiveUiTimelineSegment,
   type PositionedOperatorPassiveUiTimelineSegment,
 } from '../../core/projection/operatorPassiveUiTimelineViz';
+import {
+  projectPoiseBrokenSegments,
+  projectPoiseKnotSegments,
+} from '../../core/projection/poiseCurves';
 import type { OperatorUltimateEnergyCurve } from '../../core/projection/resourceCurves';
-import {
-  PROJECT_FPS,
-  type EndaxisProjectDocument,
-  type ExternalCombatEventDocument,
-  type ProjectDefinitionLibraryDocument,
-  type ScenarioDocument,
-  type TrackIndex,
-} from '../../core/project/schema';
-import { getProjectDefinitionLibrary } from '../../core/project/projectDefinitionLibrary';
-import { saveProjectTemplateDefinition } from '../../application/editor/projectTemplateCommands';
-import type { WorkspaceAssetSave, WorkspaceAssetSource } from '../asset-workspace/workspaceSession';
-import { createEmptyProject } from '../../core/project/createProject';
-import {
-  inspectProjectInput,
-  parseProjectDocument,
-  serializeProjectDocument,
-} from '../../core/project/serialization';
-import { openProject } from '../../application/openProject';
-import { selectProjectExportScope, useProjectFileSession } from './projectFileSession';
-import type { ExportScenarioScope } from './components/TimelineExportDialog.vue';
-import {
-  captureTimelineLongImage,
-  compressProjectCode,
-  decompressProjectCode,
-  downloadBlob,
-  imageFilename,
-} from './timelineExport';
-import { embedProjectCodeInPng } from './pngProjectData';
-import { projectOpenFailureMessage } from './projectOpenFailureMessage';
-import { formatLegacyConversionReport } from './legacyConversionReport';
-import type { ProjectGameDataRepository } from '../../data/projectGameDataRepository';
-import { captureScenarioSimulationGameData } from '../../application/simulation/scenarioSimulationGameData';
-import { sharedBuffAssetId } from '../asset-workspace/workspaceReferenceChoices';
-import { referenceNavigationKey } from '../field-editor/referenceNavigation';
-import type { ReferenceNavigationTarget } from '../../application/editor/referenceResolver';
-import { operatorReferenceChoices } from '../../application/editor/operatorReferenceChoices';
-import type { ReferenceChoices } from '../definition-editor/fieldInputConfig';
-import {
-  resolveSkillTemplateDefinition,
-  resolveEffectiveSkillDefinition,
-  resolveSkillExecutionDefinition,
-} from '../../core/compiler/resolveSkillDefinition';
-import type { SkillDefinition, OperationType } from '../../core/game-data/operatorDefinition';
-import {
-  getIconAssetPath,
-  getOperatorAvatarPath,
-  getOperatorSkillIconPath,
-  getWeaponActionIconPath,
-} from '../gameAssetPaths';
-import { groupPlacedSkillSequence, placeLibrarySkillGroup } from './interaction/placeSkillGroup';
-import { resolveOperatorPresentationFormKey } from './library/operatorFormPresentation';
-import { SkillPlacementTransaction } from './interaction/skillPlacementTransaction';
-import {
-  resolveCompactSkillSelection,
-  compactSkillSelectionByWidths,
-} from './library/compactSkillSelection';
-import {
-  layoutSkillGroupPlacement,
-  resolveSkillGroupPlacementSkills,
-  skillPlacementDisplayFrames,
-} from '../../application/editor/skillGroupPlacement';
-import { createProjectDocumentIdAllocator } from './projectDocumentIdAllocator';
-import {
-  projectTimelineEditor,
-  type TimelineSkillLibraryEntryViewModel,
-} from './timelineEditorViewModel';
-import {
-  frameToTimelinePx,
-  resolveTimelineCursorGuidePosition,
-  timelinePxToFrame,
-  timelinePxToExactFrame,
-  timelineTotalWidth,
-} from './timelineGeometry';
+import { projectSkillCooldownTimelineViz } from '../../core/projection/skillCooldownTimelineViz';
+import { projectSkillEnhancementTimelineViz } from '../../core/projection/skillEnhancementTimelineViz';
+import { projectTimelineComboCooldowns } from '../../core/projection/timelineComboCooldowns';
 import {
   projectCastTimeDilationSegments,
   projectSkillCastActualDurationFrames,
@@ -248,109 +217,110 @@ import {
   projectSkillCastInterruptionFrames,
   projectTimelineTimeDilationBands,
 } from '../../core/projection/timelineDisplayTime';
+import type { ProjectGameDataRepository } from '../../data/projectGameDataRepository';
+import { sharedBuffAssetId } from '../asset-workspace/workspaceReferenceChoices';
+import type { WorkspaceAssetSave, WorkspaceAssetSource } from '../asset-workspace/workspaceSession';
+import type { ReferenceChoices } from '../definition-editor/fieldInputConfig';
+import { referenceNavigationKey } from '../field-editor/referenceNavigation';
+import { getOperatorAvatarPath, getWeaponActionIconPath } from '../gameAssetPaths';
+import {
+  isKeyboardShortcutIsolationTarget,
+  useKeyboardInputRegion,
+  useKeyboardShortcutScope,
+} from '../keyboard/keyboardShortcutRouter';
+import { projectRossiComboSuccessCastIds } from '../operators/rossi/comboSuccessEvidence';
+import type { ExportScenarioScope } from './components/TimelineExportDialog.vue';
+import { groupPlacedSkillSequence, placeLibrarySkillGroup } from './interaction/placeSkillGroup';
+import {
+  findSkillCastGroupInsertion,
+  matchingPublishedSkillCastIds,
+  projectCompatibleHitFrames,
+  projectMovingSkillCastStartFrames,
+  projectSkillCastInputFacts,
+  resolveSkillCastGroupSelection,
+} from './interaction/skillCastGroupInteraction';
+import { SkillPlacementTransaction } from './interaction/skillPlacementTransaction';
 import {
   prepareTimeDilationDragPreview,
   projectTimeDilationDragPreview,
 } from './interaction/timeDilationDragPreview';
-import { useTimelineLoadoutEditor } from './library/useTimelineLoadoutEditor';
-import { timelineVisibleSkillEnds } from './timelineVisibleSkillEnds';
-import {
-  matchingPublishedSkillCastIds,
-  projectMovingSkillCastStartFrames,
-  projectCompatibleHitFrames,
-  projectSkillCastInputFacts,
-  resolveSkillCastGroupSelection,
-  findSkillCastGroupInsertion,
-} from './interaction/skillCastGroupInteraction';
-import { useTimelineEnemyEditor } from './useTimelineEnemyEditor';
 import {
   createEmptyTimelineActionSelection,
   selectTimelineAction,
   type TimelineActionSelection,
 } from './interaction/timelineActionSelection';
 import {
-  collectTimelineItems,
-  timelineItemKey,
-  planTimelineItemMove,
-  moveTimelineItems,
-  removeTimelineItems,
-  type TimelineItemKind,
-} from './interaction/timelineItems';
-import {
-  selectedTimelineSkills,
-  selectTimelineItem,
-  reconcileTimelineItems,
-  clearTimelineEditorSelection,
-  createTimelineEditorSelection,
-  selectTimelineActionsIdentity,
-  selectTimelineMarkerIdentity,
-  selectTimelineTrackIdentity,
-  type TimelineMarkerKind,
-} from './interaction/timelineEditorSelection';
+  resolveTimelineCastAlignmentFrame,
+  resolveTimelineCastAlignmentSpan,
+  type TimelineCastAlignmentMode,
+} from './interaction/timelineCastAlignment';
 import {
   copyTimelineItems,
   pasteTimelineActions,
   type TimelineActionClipboard,
 } from './interaction/timelineClipboard';
 import {
+  canCreateSkillCastConnection,
+  createSkillCastConnection,
+  removeTimelineConnection,
+  retargetSkillCastConnection,
+  updateTimelineConnection,
+  type TimelineConnectionPort,
+  type UpdateTimelineConnectionInput,
+} from './interaction/timelineConnections';
+import {
+  addControlSwitch,
+  addCycleBoundary,
+  addDodgeMarker,
+  addExternalEventMarker,
+  applyInitialUltimateEnergyPreset,
+  clearSimulationRangeBoundary,
   createSkillCastGroup,
-  insertSkillCastIntoGroup,
   dissolveSkillCastGroups,
-  swapTimelineTracks,
-  setSkillCastLocked,
-  setSkillCastDisabled,
-  setSkillCastColor,
-  setSkillCastRandomSeed,
-  setSkillCastForcedCritical,
-  setReactionDamageForcedCritical,
-  updateBattleResourceRule,
+  insertSkillCastIntoGroup,
+  resolveInitialUltimateEnergyPresetMode,
   setBattleDurationFrames,
   setBattlePrepFrames,
-  setTimelinePrepExpanded,
-  setScenarioBuffAttributes,
-  setGlobalConfig,
-  type EditableBattleResourceRule,
-  updateTrackInitialUltimateEnergy,
-  applyInitialUltimateEnergyPreset,
-  resolveInitialUltimateEnergyPresetMode,
-  setUnifiedInitialUltimateEnergy,
-  type TrackGearSlot,
-  addCycleBoundary,
-  addControlSwitch,
   setControlSwitchTrack,
-  addDodgeMarker,
-  updateDodgeMarker,
-  addExternalEventMarker,
+  setGlobalConfig,
+  setReactionDamageForcedCritical,
+  setScenarioBuffAttributes,
   setSimulationRangeBoundary,
-  clearSimulationRangeBoundary,
+  setSkillCastColor,
+  setSkillCastDisabled,
+  setSkillCastForcedCritical,
+  setSkillCastLocked,
+  setSkillCastRandomSeed,
+  setTimelinePrepExpanded,
+  setUnifiedInitialUltimateEnergy,
+  swapTimelineTracks,
+  updateBattleResourceRule,
+  updateDodgeMarker,
+  updateTrackInitialUltimateEnergy,
+  type EditableBattleResourceRule,
+  type TrackGearSlot,
 } from './interaction/timelineDocumentCommands';
 import {
-  isKeyboardShortcutIsolationTarget,
-  useKeyboardShortcutScope,
-  useKeyboardInputRegion,
-} from '../keyboard/keyboardShortcutRouter';
+  clearTimelineEditorSelection,
+  createTimelineEditorSelection,
+  reconcileTimelineItems,
+  selectedTimelineSkills,
+  selectTimelineActionsIdentity,
+  selectTimelineItem,
+  selectTimelineMarkerIdentity,
+  selectTimelineTrackIdentity,
+  type TimelineMarkerKind,
+} from './interaction/timelineEditorSelection';
 import {
-  skillLibrarySegmentLabel,
-  skillLibraryNameEntry,
-  timelineSkillBlockLabel,
-  indexSkillLibrarySegments,
-  timelineSkillSegmentLabel,
-  type TimelineSkillSegmentLabels,
-} from './timelineSkillLabels';
-import {
-  MAX_PROJECT_SCENARIOS,
-  allocateScenarioId,
-  resetProjectScenarios,
-  type TimelineResetMode,
-  addProjectScenario,
-  deleteActiveScenario,
-  duplicateActiveScenario,
-  renameActiveScenario,
-  switchProjectScenario,
-} from './scenarioProjectCommands';
-import { useTimelineMarqueeGesture } from './interaction/useTimelineMarqueeGesture';
-import { useTimelineViewportPan } from './interaction/useTimelineViewportPan';
+  collectTimelineItems,
+  moveTimelineItems,
+  planTimelineItemMove,
+  removeTimelineItems,
+  timelineItemKey,
+  type TimelineItemKind,
+} from './interaction/timelineItems';
 import { handleTimelineEditorShortcut } from './interaction/timelineKeyboardShortcuts';
+import { resolveTimelineLibraryDropFrame } from './interaction/timelineLibraryDropGeometry';
 import {
   COARSE_TIMELINE_SNAP_FRAMES,
   PRECISE_TIMELINE_SNAP_FRAMES,
@@ -358,82 +328,114 @@ import {
 } from './interaction/timelineSnap';
 import { findAdjacentOccupiedTrack } from './interaction/timelineTrackSelection';
 import { useTimelineItemMove } from './interaction/useTimelineItemMove';
-import { resolveTimelineLibraryDropFrame } from './interaction/timelineLibraryDropGeometry';
-import {
-  resolveTimelineCastAlignmentFrame,
-  resolveTimelineCastAlignmentSpan,
-  type TimelineCastAlignmentMode,
-} from './interaction/timelineCastAlignment';
+import { useTimelineMarqueeGesture } from './interaction/useTimelineMarqueeGesture';
+import { useTimelineViewportPan } from './interaction/useTimelineViewportPan';
 import { useTimelineZoom } from './interaction/useTimelineZoom';
+import { formatLegacyConversionReport } from './legacyConversionReport';
 import {
-  timelineOperationKeycapLabel,
-  type TimelineOperationMarkerInput,
-} from './timelineOperationMarkers';
-import { projectRossiComboSuccessCastIds } from '../operators/rossi/comboSuccessEvidence';
+  compactSkillSelectionByWidths,
+  resolveCompactSkillSelection,
+} from './library/compactSkillSelection';
 import {
-  canCreateSkillCastConnection,
-  createSkillCastConnection,
-  retargetSkillCastConnection,
-  removeTimelineConnection,
-  updateTimelineConnection,
-  type TimelineConnectionPort,
-  type UpdateTimelineConnectionInput,
-} from './interaction/timelineConnections';
-import {
-  shouldDisplayTimelineHitMarker,
-  type TimelineHitMarkerView,
-} from './results/timelineHitProjection';
-import {
-  projectTimelineHitReceipts,
-  projectTimelineHitOccurrences,
-  type TimelineHitEffectLabel,
-} from './results/timelineHitEffects';
-import {
-  projectHitDamageReceipts,
-  type HitDamageReceipt,
-} from '../../core/projection/hitEffectProjection';
-import { projectPublishedHitDetail } from './results/publishedHitDetail';
-import { layoutEnemyDamageHits } from './results/enemyDamageHitLayout';
-import { useSimulationReceiptSelection } from './results/useSimulationReceiptSelection';
+  resolveOperatorPresentationFormKey,
+  resolveOperatorSkillIcon,
+} from './library/operatorFormPresentation';
+import { useTimelineLoadoutEditor } from './library/useTimelineLoadoutEditor';
+import { embedProjectCodeInPng } from './pngProjectData';
+import { createProjectDocumentIdAllocator } from './projectDocumentIdAllocator';
+import { selectProjectExportScope, useProjectFileSession } from './projectFileSession';
+import { projectOpenFailureMessage } from './projectOpenFailureMessage';
+import BattleLogPanel from './results/BattleLogPanel.vue';
 import {
   collectBuffDisplayNameKeys,
-  type BuffDisplayName,
   resolveBuffDisplayName,
+  type BuffDisplayName,
 } from './results/buffDisplayName';
-import type { CombatReceiptEntry } from '../../core/combat/receipt/combatReceipt';
-import BattleLogPanel from './results/BattleLogPanel.vue';
-import { usePublishedSimulationDisplay } from './results/usePublishedSimulationDisplay';
-import {
-  resolvePublishedBuffSource,
-  capturePublishedEquipmentSources,
-  resolvePublishedEquipmentTrait,
-} from './results/publishedBuffSource';
 import { createCombatObjectIconResolver } from './results/combatObjectIcons';
 import {
   createCombatObjectNameResolver,
   type CombatObjectOwnName,
 } from './results/combatObjectNames';
-import { runtimeTargetFromEntityId } from '../../core/game-data/logicalAbilityEntity';
-import { CombatObjectOrigins } from '../../core/projection/combatObjectOrigins';
+import { layoutEnemyDamageHits } from './results/enemyDamageHitLayout';
 import { isEnemyTimelineBuffVisible, layoutEnemyStatusRows } from './results/enemyStatusRows';
 import {
   isPhysicalStatusRowBuff,
   projectPhysicalStatusDisplay,
 } from './results/physicalStatusDisplay';
-
-import TimelineMarkerContextMenu from './interaction/TimelineMarkerContextMenu.vue';
-import ConsumableSelectionDialog from './components/ConsumableSelectionDialog.vue';
-import { projectPublishedTimelineDamageAnalysis } from './results/timelineDamageAnalysis';
 import {
-  TIMELINE_VIEW_LAYER_IDS,
-  normalizeTimelineViewLayers,
-  toggleTimelineViewLayerState,
-  type TimelineViewLayerId,
-} from './results/timelineViewLayers';
+  capturePublishedEquipmentSources,
+  resolvePublishedBuffSource,
+  resolvePublishedEquipmentTrait,
+} from './results/publishedBuffSource';
+import { projectPublishedHitDetail } from './results/publishedHitDetail';
+import {
+  projectTimelineHitOccurrences,
+  projectTimelineHitReceipts,
+  type TimelineHitEffectLabel,
+} from './results/timelineHitEffects';
+import {
+  shouldDisplayTimelineHitMarker,
+  type TimelineHitMarkerView,
+} from './results/timelineHitProjection';
+import { usePublishedSimulationDisplay } from './results/usePublishedSimulationDisplay';
+import { useSimulationReceiptSelection } from './results/useSimulationReceiptSelection';
+import {
+  addProjectScenario,
+  allocateScenarioId,
+  deleteActiveScenario,
+  duplicateActiveScenario,
+  MAX_PROJECT_SCENARIOS,
+  renameActiveScenario,
+  resetProjectScenarios,
+  switchProjectScenario,
+  type TimelineResetMode,
+} from './scenarioProjectCommands';
+import {
+  projectTimelineEditor,
+  type TimelineSkillLibraryEntryViewModel,
+} from './timelineEditorViewModel';
+import {
+  captureTimelineLongImage,
+  compressProjectCode,
+  decompressProjectCode,
+  downloadBlob,
+  imageFilename,
+} from './timelineExport';
+import {
+  frameToTimelinePx,
+  resolveTimelineCursorGuidePosition,
+  timelinePxToExactFrame,
+  timelinePxToFrame,
+  timelineTotalWidth,
+} from './timelineGeometry';
+import {
+  timelineOperationKeycapLabel,
+  type TimelineOperationMarkerInput,
+} from './timelineOperationMarkers';
+import {
+  indexSkillLibrarySegments,
+  skillLibraryNameEntry,
+  skillLibrarySegmentLabel,
+  timelineSkillBlockLabel,
+  timelineSkillSegmentLabel,
+  type TimelineSkillSegmentLabels,
+} from './timelineSkillLabels';
+import { timelineVisibleSkillEnds } from './timelineVisibleSkillEnds';
+import { useTimelineEnemyEditor } from './useTimelineEnemyEditor';
+
+import ConsumableSelectionDialog from './components/ConsumableSelectionDialog.vue';
+import TimelineMarkerContextMenu from './interaction/TimelineMarkerContextMenu.vue';
+import { projectPublishedTimelineDamageAnalysis } from './results/timelineDamageAnalysis';
 import {
   normalizeTimelineOperatorEffectsVisibility,
   toggleTimelineOperatorEffectsVisibility,
 } from './results/timelineOperatorEffectsVisibility';
+import {
+  normalizeTimelineViewLayers,
+  TIMELINE_VIEW_LAYER_IDS,
+  toggleTimelineViewLayerState,
+  type TimelineViewLayerId,
+} from './results/timelineViewLayers';
 import {
   ABILITY_ENTITY_SAMPLE_CAST_ID,
   ABILITY_ENTITY_SAMPLE_TRACK_INDEX,
@@ -459,10 +461,10 @@ const ExecutionTraceDialog = defineLazyDialog(
 const executionTraceRequest = shallowRef<{
   label: string;
   definition: SkillDefinition;
-  presentation?: import('../../core/project/graphPresentation').SkillGraphPresentation;
+  presentation?: SkillGraphPresentation;
   run: () => {
     trace: ActionExecutionTrace;
-    result?: import('../../application/simulation/runStandardPlayerDamageScenarioSimulation').StandardPlayerDamageScenarioResult;
+    result?: StandardPlayerDamageScenarioResult;
     error?: string;
   };
 } | null>(null);
@@ -1508,7 +1510,12 @@ const exportShareTracks = computed<readonly TimelineShareTrack[]>(() =>
         icon:
           track.operatorAssetSlug === null || cast.operationType === null
             ? null
-            : getOperatorSkillIconPath(track.operatorAssetSlug, cast.operationType),
+            : skillDisplayIcon(
+                cast.operationType,
+                track.operatorSlug,
+                track.trackIndex,
+                cast.source.kind === 'operatorSkill' ? cast.source.skillKey : undefined,
+              ),
       })),
     })),
 );
@@ -1564,7 +1571,7 @@ const mobileEnemyBuffsByCastId = computed(() => {
       (!attachmentBuffIds.has(segment.buffId) &&
         segment.iconStyleInSquad !== 'SpellAbnormal' &&
         !isPhysicalStatusRowBuff(segment)) ||
-      (buffIcon(segment) ?? segment.iconPath ?? getIconAssetPath(segment.iconId)) == null
+      (buffIcon(segment) ?? resolveImage(segment.icon)) == null
     )
       continue;
     const receipt = receiptsBySequence.get(segment.startSequence ?? -1);
@@ -1623,7 +1630,7 @@ const mobileTracks = computed<MobileTrack[]>(() =>
                   loadout.weapon.definition.assetSlug ?? loadout.weapon.weaponSlug,
                   locale.value,
                 ),
-              icon: loadout.weapon.definition.iconPath ?? null,
+              icon: resolveImage(loadout.weapon.definition.icon) ?? null,
               level: loadout.weapon.level,
             },
       gears: (['armor', 'gloves', 'accessory1', 'accessory2'] as const).map(slot => {
@@ -1635,14 +1642,14 @@ const mobileTracks = computed<MobileTrack[]>(() =>
               ? ''
               : (gear.definition.displayName ??
                 getGearPieceGameName(gear.definition.assetSlug ?? gear.gearSlug, locale.value)),
-          icon: gear?.definition.iconPath ?? null,
+          icon: resolveImage(gear?.definition.icon) ?? null,
         };
       }),
       casts: track.skillCasts.map(cast => {
         const visualStartFrame = castActualStartFrame(cast.id, cast.startFrame);
         const combatBuffs = mobileEnemyBuffsByCastId.value.get(cast.id) ?? [];
         const combatBadges = combatBuffs.flatMap(segment => {
-          const icon = buffIcon(segment) ?? segment.iconPath ?? getIconAssetPath(segment.iconId);
+          const icon = buffIcon(segment) ?? resolveImage(segment.icon);
           if (icon == null) return [];
           const sourceName = buffSourceName(segment);
           return [
@@ -1748,7 +1755,12 @@ const mobileLibrary = computed<MobileLibraryEntry[]>(() =>
       entry.operationType === 'battleSkill' ||
       entry.operationType === 'comboSkill' ||
       entry.operationType === 'ultimate'
-        ? skillDisplayIcon(entry.operationType, selectedTrackModel.value.operatorSlug)
+        ? skillDisplayIcon(
+            entry.operationType,
+            selectedTrackModel.value.operatorSlug,
+            selectedTrack.value,
+            entry.skills[0]?.skillKey,
+          )
         : '',
     durationFrames: entry.skills.reduce((total, skill) => total + skill.timelineBlockFrames, 0),
     skills: entry.skills.map(skill => ({
@@ -2082,7 +2094,7 @@ const selectedCastModel = computed(() => {
 const skillGraphEditorTarget = shallowRef<{
   readonly operatorSlug?: string;
   readonly custom: boolean;
-  readonly presentation?: import('../../core/project/graphPresentation').SkillGraphPresentation;
+  readonly presentation?: SkillGraphPresentation;
   readonly scenarioId: string;
   readonly castId: string;
   readonly label: string;
@@ -2145,7 +2157,7 @@ const workspaceAssets = computed<readonly WorkspaceAssetSource[]>(() => {
         definition.displayName ??
         getWeaponGameName(definition.assetSlug ?? definition.slug, locale.value),
       custom: !!library.weapons[definition.slug],
-      iconPath: definition.iconPath,
+      iconPath: resolveImage(definition.icon),
       edit: { kind: 'weapon' as const, definition },
       graphPresentations: library.weapons[definition.slug]?.graphPresentations,
     })),
@@ -2158,7 +2170,7 @@ const workspaceAssets = computed<readonly WorkspaceAssetSource[]>(() => {
         definition.displayName ??
         getGearPieceGameName(definition.slug, locale.value),
       custom: !!library.gears[definition.slug],
-      iconPath: definition.iconPath,
+      iconPath: resolveImage(definition.icon),
       edit: { kind: 'gear' as const, definition },
       graphPresentations: library.gears[definition.slug]?.graphPresentations,
     })),
@@ -2171,7 +2183,7 @@ const workspaceAssets = computed<readonly WorkspaceAssetSource[]>(() => {
         definition.displayName ??
         getGearSetGameName(definition.slug, locale.value),
       custom: !!library.gearSets[definition.slug],
-      iconPath: definition.iconPath,
+      iconPath: resolveImage(definition.icon),
       edit: { kind: 'gearSet' as const, definition },
       graphPresentations: library.gearSets[definition.slug]?.graphPresentations,
     })),
@@ -2181,7 +2193,7 @@ const workspaceAssets = computed<readonly WorkspaceAssetSource[]>(() => {
       kindName: t('assetWorkspace.types.consumable'),
       name: getConsumableGameName(definition.id, locale.value),
       custom: false,
-      iconPath: definition.iconPath,
+      iconPath: resolveImage(definition.icon),
       edit: { kind: 'consumable' as const, definition },
     })),
     ...editorGameDataRepository.getCommonDefinitionSources().flatMap(source =>
@@ -2191,12 +2203,7 @@ const workspaceAssets = computed<readonly WorkspaceAssetSource[]>(() => {
         kindName: t('assetWorkspace.types.commonBuff'),
         name: resolveBuffDisplayName(id, { t, te }),
         custom: false,
-        iconPath:
-          definition.presentation?.iconPath ??
-          (definition.presentation?.iconId
-            ? getIconAssetPath(definition.presentation.iconId)
-            : undefined) ??
-          undefined,
+        iconPath: resolveImage(definition.presentation?.icon),
         edit: { kind: 'buff' as const, id, definition },
       })),
     ),
@@ -2206,7 +2213,7 @@ const workspaceAssets = computed<readonly WorkspaceAssetSource[]>(() => {
       kindName: t('assetWorkspace.types.enemy'),
       name: getEnemyGameName(definition.id, locale.value),
       custom: false,
-      iconPath: definition.iconPath,
+      iconPath: resolveImage(definition.icon),
       edit: { kind: 'enemy' as const, definition },
     })),
     ...gameDataRepository.getGlobalEffects().map(definition => ({
@@ -2232,7 +2239,7 @@ const workspaceAssets = computed<readonly WorkspaceAssetSource[]>(() => {
       kindName: t('assetWorkspace.types.contract'),
       name: localizedContingencyContractTagName(definition, locale.value),
       custom: false,
-      iconPath: definition.iconPath,
+      iconPath: resolveImage(definition.icon),
       edit: { kind: 'contract' as const, definition },
     })),
   ];
@@ -2296,7 +2303,7 @@ function openSkillGraphEditor(): void {
 
 function saveSkillGraphDefinition(
   definition: SkillDefinition,
-  presentation: import('../../core/project/graphPresentation').SkillGraphPresentation,
+  presentation: SkillGraphPresentation,
   createCustom: boolean,
 ): void {
   const target = skillGraphEditorTarget.value;
@@ -3501,12 +3508,6 @@ function gaugeCurveFor(trackIndex: TrackIndex): OperatorUltimateEnergyCurve | nu
     ) ?? null
   );
 }
-function reactionName(reaction: string): string {
-  const key = `effects.name.${reaction}`;
-  const translated = t(key);
-  return translated === key ? reaction : translated;
-}
-
 function hitMarkerTitle(label: TimelineHitEffectLabel | undefined): string {
   if (label === undefined) return '';
   const parts: string[] = [];
@@ -3517,14 +3518,6 @@ function hitMarkerTitle(label: TimelineHitEffectLabel | undefined): string {
   }
   for (const infliction of label.infliction) {
     parts.push(`${damageElementLabel(infliction.element)}${t('timeline.hitInflictionSuffix')}`);
-  }
-  for (const reaction of label.reactions) {
-    const name = reactionName(reaction.reaction);
-    parts.push(
-      reaction.applied
-        ? `${name} Lv${reaction.level}`
-        : `${name}${t('timeline.hitReactionConsumed')}`,
-    );
   }
   return parts.join(' · ');
 }
@@ -3837,7 +3830,7 @@ const cursorEnemyEffects = computed(() => {
           undefined,
           operatorBuffDisplayNameKeys.value,
         ),
-      icon: buffIcon(segment) ?? segment.iconPath ?? getIconAssetPath(segment.iconId) ?? null,
+      icon: buffIcon(segment) ?? resolveImage(segment.icon) ?? null,
       layers: segment.layers,
     });
   }
@@ -4197,12 +4190,22 @@ function skillAccentColor(operationType: string | null, operatorSlug: string | n
       : '#8c8c8c';
 }
 
-function skillDisplayIcon(skillType: string, operatorSlug: string | null): string {
+function skillDisplayIcon(
+  skillType: string,
+  operatorSlug: string | null,
+  trackIndex = selectedTrack.value,
+  skillKey?: string,
+): string {
   if (operatorSlug === null) return '';
   const operator = editorGameDataRepository.getOperator(operatorSlug);
-  const assetSlug = operator?.assetSlug ?? operatorSlug;
-  if (skillType === 'battleSkill' || skillType === 'comboSkill' || skillType === 'ultimate') {
-    return getOperatorSkillIconPath(assetSlug, skillType) ?? '';
+  const attributes = panelResolution.value.panels.get(trackIndex)?.attributes;
+  if (operator) {
+    const formKey = attributes ? resolveOperatorPresentationFormKey(operator, attributes) : null;
+    const binding = listOperatorSkillDefinitionBindings(operator).find(({ skill, group }) =>
+      skillKey ? skill.key === skillKey : group.operationType === skillType,
+    );
+    const icon = binding && resolveOperatorSkillIcon(binding, formKey, operator);
+    if (icon) return icon;
   }
   const weaponType = operator?.weaponType ?? 'sword';
   return getWeaponActionIconPath(weaponType);
@@ -6467,7 +6470,14 @@ function setMobileGuideFrame(frame: number | null): void {
               :tooltip="skillLibraryTypeLabel(entry)"
               :type-label="skillLibraryTypeLabel(entry)"
               :duration="skillDurationSeconds(entry)"
-              :icon="skillDisplayIcon(entry.operationType, selectedTrackModel.operatorSlug)"
+              :icon="
+                skillDisplayIcon(
+                  entry.operationType,
+                  selectedTrackModel.operatorSlug,
+                  selectedTrack,
+                  entry.skills[0]?.skillKey,
+                )
+              "
               :accent-color="skillAccentColor(entry.operationType, selectedTrackModel.operatorSlug)"
               :selected="libraryEntrySelected(entry)"
               :segments="skillSegments(entry)"
@@ -7019,15 +7029,24 @@ function setMobileGuideFrame(frame: number | null): void {
                 :can-move-down="track.trackIndex < 3"
                 :stat-details-available="panelResolution.panels.has(track.trackIndex)"
                 :stat-details-error="panelResolution.error"
-                :weapon-icon="loadoutModels[track.trackIndex]?.weapon?.definition.iconPath ?? null"
+                :weapon-icon="
+                  resolveImage(loadoutModels[track.trackIndex]?.weapon?.definition.icon) ?? null
+                "
                 :gear-icons="{
-                  armor: loadoutModels[track.trackIndex]?.gears.armor?.definition.iconPath ?? null,
+                  armor:
+                    resolveImage(loadoutModels[track.trackIndex]?.gears.armor?.definition.icon) ??
+                    null,
                   gloves:
-                    loadoutModels[track.trackIndex]?.gears.gloves?.definition.iconPath ?? null,
+                    resolveImage(loadoutModels[track.trackIndex]?.gears.gloves?.definition.icon) ??
+                    null,
                   accessory1:
-                    loadoutModels[track.trackIndex]?.gears.accessory1?.definition.iconPath ?? null,
+                    resolveImage(
+                      loadoutModels[track.trackIndex]?.gears.accessory1?.definition.icon,
+                    ) ?? null,
                   accessory2:
-                    loadoutModels[track.trackIndex]?.gears.accessory2?.definition.iconPath ?? null,
+                    resolveImage(
+                      loadoutModels[track.trackIndex]?.gears.accessory2?.definition.icon,
+                    ) ?? null,
                 }"
                 :active-gear-set-label="activeGearSetLabelsByTrack[track.trackIndex] ?? ''"
                 :labels="{
@@ -7242,7 +7261,7 @@ function setMobileGuideFrame(frame: number | null): void {
                   "
                 >
                   <img
-                    :src="gameDataRepository.getConsumable(use.consumableId)?.iconPath"
+                    :src="resolveImage(gameDataRepository.getConsumable(use.consumableId)?.icon)"
                     alt=""
                     aria-hidden="true"
                   />
@@ -7618,8 +7637,6 @@ function setMobileGuideFrame(frame: number | null): void {
                 }"
                 :labels="{
                   burst: t('timeline.effect.burst'),
-                  reaction: t('timeline.effect.reaction'),
-                  reactionConsumed: t('timeline.effect.reactionConsumed'),
                 }"
                 @open-buff-detail="openBuffDetail"
               />

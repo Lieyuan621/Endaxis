@@ -1,14 +1,16 @@
 <script setup lang="ts">
 /** 循环线、切入标记与模拟区间端点的实例级 Inspector。 */
 import { useI18n } from 'vue-i18n';
+import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
+import type { TrackIndex } from '../../../core/project/schema';
 import {
   EaButton,
   EaNumberInput,
   EaSelect,
   type EaSelectValue,
 } from '../../../design-system/index';
-import type { TrackIndex } from '../../../core/project/schema';
-import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
+import type { CombatObjectIconResolver } from '../results/combatObjectIcons';
+import type { CombatObjectOwnName } from '../results/combatObjectNames';
 import CombatObjectOriginGraph from '../results/CombatObjectOriginGraph.vue';
 
 export type TimelineDocumentMarkerKind =
@@ -33,8 +35,8 @@ const props = defineProps<{
   dodgeEffects?: readonly CombatReceiptEntry[];
   receiptEntries?: readonly CombatReceiptEntry[];
   operatorLabel?: (operatorId: string) => string;
-  objectIcon?: import('../results/combatObjectIcons').CombatObjectIconResolver;
-  objectName?: import('../results/combatObjectNames').CombatObjectOwnName;
+  objectIcon?: CombatObjectIconResolver;
+  objectName?: CombatObjectOwnName;
   actionPresentation?: (
     ownerId: string,
     actionId: string,

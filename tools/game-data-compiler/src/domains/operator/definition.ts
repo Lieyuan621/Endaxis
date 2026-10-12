@@ -1,66 +1,69 @@
 import { abilityEntityPresentations } from '../../../config/abilityEntityPresentations.ts';
-import type {
-  ComboSkillConditionDefinition,
-  ComboSkillPriority,
-  OperatorDefinition,
-  SkillBuffSlotReplacement,
-  SkillDefinition as SkillDefinition,
-  SkillGroupDefinition,
-  SkillLevelSource,
-  SkillType,
-  OperationType,
-  OperatorSkillSlotDefinition,
-  OperatorPlayerActionRoutes,
-  OperatorPlayerActionModeDefinition,
-  NativeSkillType,
-  SkillPresentationVariantDefinition,
-} from '../../compiler/intermediateDefinitions.ts';
-import type { compileOperatorFoundationSource } from './sourceClosure.ts';
-import { readActionGraphChain } from '../../compiler/actions/actionGraphBuilder.ts';
-import { compileOperatorDefinitionHeaderSource } from './definitionHeader.ts';
-import {
-  compileOperatorTalentDefinition,
-  compileOperatorPotentialDefinition,
-} from './progressionDefinition.ts';
-import type { CompiledOperatorActiveSkillRuntimeDefinitionSource } from './activeSkillRuntimeDefinition.ts';
 import type { CompiledAbilityEntityTemplateCatalogSource } from '../../compiler/abilities/abilityEntityCatalog.ts';
 import { compileAbilityEntityTemplateCatalogSource } from '../../compiler/abilities/abilityEntityCatalog.ts';
 import { compileAbilityEntityDefinitionSource } from '../../compiler/abilities/abilityEntityDefinition.ts';
 import {
+  compileTargetGroupAbilityEntityQuerySource,
+  compileTargetReferenceAbilityEntityQuerySource,
+} from '../../compiler/abilities/abilityEntityQuery.ts';
+import { readActionGraphChain } from '../../compiler/actions/actionGraphBuilder.ts';
+import type { CompiledBuffDefinitionSource } from '../../compiler/buffs/buffProjectionTypes.ts';
+import { collectBuffRuntimeClosure } from '../../compiler/buffs/buffReferenceClosure.ts';
+import { collectCombatInvisibleBuffClosureIds } from '../../compiler/buffs/combatInvisibleBuffClosure.ts';
+import {
   compileStandardStumpBuffClosure,
   planStandardStumpBuffPruning,
 } from '../../compiler/buffs/standardStumpBuffClosure.ts';
-import type { CompiledBuffDefinitionSource } from '../../compiler/buffs/buffProjectionTypes.ts';
-import { assignGeneratedDamageStepKeys } from '../../compiler/publication/definitionStepKeys.ts';
-import type { PassiveSkillCompilationBatchSource } from '../../compiler/skills/passiveSkillBatch.ts';
-import type { PassiveSkillCompileRequestSource } from '../../compiler/skills/passiveSkillRequest.ts';
-import { compileOperatorUpgradePassiveSkills } from './passiveSkillDefinition.ts';
-import type { GameplayTagRegistry } from '../../source/nativeGameplayTags.ts';
-import { buffShowsTimelineActions, type BuffRuntimeSource } from '../../source/buffRuntime.ts';
 import type { CombatActionProjectionExtensionsSource } from '../../compiler/combatProjectionCommon.ts';
+import type {
+  ComboSkillConditionDefinition,
+  ComboSkillPriority,
+  NativeSkillType,
+  OperationType,
+  OperatorDefinition,
+  OperatorPlayerActionModeDefinition,
+  OperatorPlayerActionRoutes,
+  OperatorSkillSlotDefinition,
+  SkillBuffSlotReplacement,
+  SkillDefinition,
+  SkillGroupDefinition,
+  SkillLevelSource,
+  SkillPresentationVariantDefinition,
+  SkillType,
+} from '../../compiler/intermediateDefinitions.ts';
+import { assignGeneratedDamageStepKeys } from '../../compiler/publication/definitionStepKeys.ts';
+import { imageRefFromPath } from '../../compiler/publication/imageResources.ts';
 import {
   collectCompiledAbilityEntitySpawns,
   collectCompiledBuffApplications,
   collectCompiledBuffCapturedTargetGroups,
-  collectCompiledDefaultKeywordCarrierIds,
-  collectCompiledBuffIds,
   collectCompiledBuffIdentityReadIds,
+  collectCompiledBuffIds,
+  collectCompiledDefaultKeywordCarrierIds,
 } from '../../compiler/references/compiledReferences.ts';
-import { collectCombatInvisibleBuffClosureIds } from '../../compiler/buffs/combatInvisibleBuffClosure.ts';
-import { collectBuffRuntimeClosure } from '../../compiler/buffs/buffReferenceClosure.ts';
+import type { PassiveSkillCompilationBatchSource } from '../../compiler/skills/passiveSkillBatch.ts';
+import type { PassiveSkillCompileRequestSource } from '../../compiler/skills/passiveSkillRequest.ts';
+import { buffShowsTimelineActions, type BuffRuntimeSource } from '../../source/buffRuntime.ts';
 import { collectNativeActionNodes } from '../../source/controlFlow.ts';
 import { parseGlobalBuffTemplateCatalogSource } from '../../source/globalBuffTemplate.ts';
-import { createPhysicalInflictionDefinitionHydrator } from '../../compiler/actions/physicalInflictionHydration.ts';
-import {
-  compileTargetGroupAbilityEntityQuerySource,
-  compileTargetReferenceAbilityEntityQuerySource,
-} from '../../compiler/abilities/abilityEntityQuery.ts';
+import type { GameplayTagRegistry } from '../../source/nativeGameplayTags.ts';
+import type { TargetReferenceSource } from '../../source/target.ts';
+import type { CompiledOperatorActiveSkillRuntimeDefinitionSource } from './activeSkillRuntimeDefinition.ts';
+import { compileOperatorDefinitionHeaderSource } from './definitionHeader.ts';
+import { defaultOperatorSkillIconName, operatorSkillIconName } from './iconNames.ts';
+import { compileOperatorUpgradePassiveSkills } from './passiveSkillDefinition.ts';
 import {
   compileOperatorPassiveUiDefinition,
   compileOperatorProductPassiveUi,
 } from './passiveUi.ts';
+import {
+  compileOperatorPotentialDefinition,
+  compileOperatorTalentDefinition,
+} from './progressionDefinition.ts';
+import type { compileOperatorFoundationSource } from './sourceClosure.ts';
 
 export interface OperatorDefinitionAssemblyInput {
+  readonly externalBuffBlackboardReads?: ReadonlySet<string>;
   readonly productPassiveUi?: unknown;
   readonly foundation: ReturnType<typeof compileOperatorFoundationSource>;
   readonly activeSkills: readonly {
@@ -108,7 +111,9 @@ export interface OperatorDefinitionAssemblyInput {
   readonly playerActionRoutes?: OperatorPlayerActionRoutes;
   readonly playerActionModes?: readonly OperatorPlayerActionModeDefinition[];
   /** 所有技能组共用的、由最终构筑属性决定的说明文本形态。 */
-  readonly presentationVariants?: readonly SkillPresentationVariantDefinition[];
+  readonly presentationVariants?: readonly (SkillPresentationVariantDefinition & {
+    readonly conditionId: string;
+  })[];
   /** `_InitSkills` 从 CharacterData 注册出的原生类型初值，以 skillId 为键。 */
   readonly nativeSkillTypeBySkillId?: Readonly<Record<string, NativeSkillType>>;
   readonly nativePlayerActionRouting?: {
@@ -698,20 +703,20 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       input.comboSkillConditions ?? [],
     ]),
     new Map((input.dashBuffs ?? []).map(item => [item.buffId, item.blackboard] as const)),
+    input.externalBuffBlackboardReads,
   );
   const blocked = buffClosure.diagnostics.filter(item => item.status === 'blocked');
   if (blocked.length) throw new Error(`operator Buff closure blocked: ${JSON.stringify(blocked)}`);
-  const hydrate = createPhysicalInflictionDefinitionHydrator(buffClosure.definitions);
   const runtimeDefinitions = new Map(
     [...compiledDefinitions].map(([key, definition]) => [
       key,
-      hydrate(stripSkillGroupCompilationEvidence(definition)),
+      stripSkillGroupCompilationEvidence(definition),
     ]),
   );
   let dodgeSkill: OperatorDefinition['dodgeSkill'];
   if (input.dodgeSkill !== undefined) {
-    const { element, ...definition } = hydrate(
-      stripSkillGroupCompilationEvidence(input.dodgeSkill.definition),
+    const { element, ...definition } = stripSkillGroupCompilationEvidence(
+      input.dodgeSkill.definition,
     );
     if (element !== undefined) throw new Error('dodge skill must not declare an element');
     dodgeSkill = { ...definition, skillType: 'dodge', nativeSkillType: 'dodge' };
@@ -781,15 +786,23 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
     if (nativeSkillType === undefined) {
       throw new Error(`skill '${key}' has no native SkillType initialization evidence`);
     }
+    const { nativeIconId, ...skillDefinition } = definition;
+    const iconName = nativeIconId ? operatorSkillIconName(nativeIconId) : undefined;
+    const defaultIcon = defaultOperatorSkillIconName(identity.skillType);
     definitions.set(key, {
-      ...definition,
+      ...skillDefinition,
+      ...(iconName &&
+      iconName !== defaultIcon &&
+      !['basicAttack', 'plungingAttack', 'finisher'].includes(identity.skillType)
+        ? { icon: imageRefFromPath(`/operators/${foundation.identity.slug}/${iconName}.webp`) }
+        : {}),
       ...identity,
       skillType: identity.skillType,
       nativeSkillType,
     });
   }
   const abilityEntityDefinitions = Object.fromEntries(
-    Object.entries(hydrate(compiledAbilityEntityDefinitions)).map(([id, definition]) => [
+    Object.entries(compiledAbilityEntityDefinitions).map(([id, definition]) => [
       id,
       {
         ...definition,
@@ -889,7 +902,25 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
           }),
       ...(input.presentationVariants === undefined
         ? {}
-        : { presentationVariants: input.presentationVariants }),
+        : {
+            presentationVariants: input.presentationVariants.map(({ conditionId, ...variant }) => {
+              const nativeGroup = skillLibrary.nativeSkillGroups.find(native =>
+                native.skillIds.includes(visibleSkillKeys[0]!),
+              );
+              const nativeIcon = nativeGroup?.conditionIcons?.[conditionId];
+              const iconName = nativeIcon ? operatorSkillIconName(nativeIcon) : undefined;
+              return {
+                ...variant,
+                ...(iconName
+                  ? {
+                      icon: imageRefFromPath(
+                        `/operators/${foundation.identity.slug}/${iconName}.webp`,
+                      ),
+                    }
+                  : {}),
+              };
+            }),
+          }),
     } satisfies SkillGroupDefinition;
   });
   const unassignedRuntimeReplacementSkillKeys = [...runtimeReplacementSkillKeys].filter(
@@ -922,22 +953,20 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
   }
   for (const [id, definition] of Object.entries(buffClosure.definitions)) {
     const replacements = skillSlotReplacements.get(id);
-    const hydratedDefinition = assignGeneratedDamageStepKeys(
-      hydrate(
-        replacements === undefined
-          ? definition
-          : { ...definition, skillSlotReplacements: replacements },
-      ),
+    const keyedDefinition = assignGeneratedDamageStepKeys(
+      replacements === undefined
+        ? definition
+        : { ...definition, skillSlotReplacements: replacements },
       id,
     );
     if ([...privateBuffCharacterIds].some(characterId => id.startsWith(`buff_${characterId}_`)))
-      privateBuffs[id] = hydratedDefinition;
+      privateBuffs[id] = keyedDefinition;
     else if (id.startsWith('buff_chr_')) {
       throw new Error(`foreign operator Buff ownership is not established: ${id}`);
     } else {
       // 物理/元素反应等系统 Buff 不使用 buff_common_ 前缀，但与角色私有 Buff 一样
       // 由稳定身份决定归属；旧统一链接器也把所有非 buff_chr_* 定义放入共享目录。
-      commonBuffs[id] = hydratedDefinition;
+      commonBuffs[id] = keyedDefinition;
     }
   }
   const operator: OperatorDefinition = {
@@ -1090,8 +1119,7 @@ export function selectSingleSkillTimelineBlockFrames(
         ...definition.scheduledSequences
           .filter(scheduled =>
             readActionGraphChain(definition.actionGraph.main, scheduled.sequence).some(
-              step =>
-                step.kind === 'finishTimeline' || step.kind === 'markCurrentSkillCanInterrupt',
+              step => step.kind === 'markCurrentSkillCanInterrupt',
             ),
           )
           .map(scheduled => scheduled.startFrame),
@@ -1419,9 +1447,7 @@ function compileOperatorBuffSkillSlotReplacements(
   return result;
 }
 
-function isPlainBuffSkillSlotTarget(
-  target: import('../../source/target.ts').TargetReferenceSource,
-): boolean {
+function isPlainBuffSkillSlotTarget(target: TargetReferenceSource): boolean {
   return (
     // ChangeSkillAction resolves its first target.  Buff-owned replacements execute against the
     // Buff carrier in Endaxis; native data uses Owner for that carrier, while older self-applied

@@ -1,8 +1,10 @@
 import fs from 'node:fs/promises';
-import { OPERATOR_DEFINITION_OUTPUTS } from './operatorDefinitionOutputs.ts';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import type { GearSetDefinition } from '../../../packages/game-data-contract/src/equipment.ts';
+import { OPERATOR_DEFINITION_OUTPUTS } from './operatorDefinitionOutputs.ts';
 
+import { readActionGraphChain } from '../src/compiler/actions/actionGraphBuilder.ts';
 import { createCandidateRuntimeServer } from '../src/compiler/publication/candidateRuntimeServer.ts';
 
 const PROJECT_ROOT = path.resolve(import.meta.dirname, '../../..');
@@ -45,7 +47,7 @@ interface RuntimeGear {
 }
 
 type RuntimeGearSet = Pick<
-  import('../../../packages/game-data-contract/src/equipment.ts').GearSetDefinition,
+  GearSetDefinition,
   'slug' | 'enableSequence' | 'initializationSequence' | 'buffDefinitions' | 'actionGraph'
 >;
 
@@ -477,8 +479,10 @@ function observableEquipmentResult(result: any) {
 function observableGearSetRuntimeResult(result: any, gearSet: RuntimeGearSet) {
   const rootBuffIds = new Set(
     installationSteps(gearSet).flatMap(step =>
-      step.kind === 'applyBuff' && typeof step.parameters?.buffId === 'string'
-        ? [step.parameters.buffId]
+      step.kind === 'applyBuff'
+        ? step.parameters.buffs.flatMap(entry =>
+            typeof entry.buffId === 'string' ? [entry.buffId] : [],
+          )
         : [],
     ),
   );
@@ -641,4 +645,3 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const result = await auditCandidateEquipment(parseArguments(process.argv.slice(2)));
   console.log(JSON.stringify(result, null, 2));
 }
-import { readActionGraphChain } from '../src/compiler/actions/actionGraphBuilder.ts';

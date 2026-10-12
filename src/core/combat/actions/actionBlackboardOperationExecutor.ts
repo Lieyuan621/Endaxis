@@ -1,4 +1,4 @@
-import { valueInputBlackboardKey } from '../../compiler/compiledGraphData';
+import { stringInputExpression, valueInputBlackboardKey } from '../../compiler/compiledGraphData';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import { abilityEventTargetId } from '../events/combatAbilityEvent';
@@ -20,14 +20,14 @@ import {
   combineSkillSettingFactors,
   resolveSkillSettingFactor,
 } from './actionBlackboard';
-import { compareCombatNumbers } from '../../mechanics/combatNumbers.ts';
+import { compareCombatNumbers } from '../../math/combatNumbers.ts';
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
 import type { ProbabilitySampleSource } from '../random/probabilitySampleSource';
 import type { ResolvedCombatStepParameters } from '../../compiler/combatProgram';
 import { CombatOperationPrograms } from './combatOperationPrograms';
 import type { ActionBlackboardActionState } from '../state/actionState';
 
-const PROBABILITY_TOLERANCE = 0.00001;
+const PROBABILITY_TOLERANCE = Math.fround(0.00001);
 
 export class ActionBlackboardOperationExecutor implements CombatOperationExecutor {
   readonly runtimeState: ActionBlackboardActionState;
@@ -45,11 +45,17 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
     /** Buff 内的 StoreCurSkillExecuteFrame 从 Owner AbilitySystem 读取当前技能，而非 Buff 时间。 */
     readonly resolveOwnerCurrentSkillTimelineFrame?: (ownerId: string) => number | undefined,
     /** 原生 Deck 快照来自构筑完成时的静态四维，不随战斗内 Modifier 改变。 */
-    readonly sourceDeckAttributes?: Readonly<Record<OperatorAttribute, number>>,
+    readonly deckAttributes?: {
+      readonly sourceId: string;
+      readonly resolve: (
+        ownerId: string,
+      ) => Readonly<Record<OperatorAttribute, number>> | undefined;
+    },
     /** CharacterTable.charTypeId 的静态一一投影；只有身份条件实际执行时才读取。 */
     readonly characterTypes?: {
       readonly sourceId: string;
       readonly resolve: (entityId: string) => DamageElement | undefined;
+      readonly readTypeId?: (entityId: string) => string | undefined;
     },
     /** CharacterTable.profession 的静态投影；仅职业条件实际执行时读取。 */
     readonly operatorRoles?: {
@@ -78,6 +84,25 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
   }
 
   execute(step: ResolvedCombatOperationStep, context?: CombatOperationContext): boolean {
+    if (step.kind === 'storeCharacterTypeId') {
+      if (!context || !step.parameters.outputKey) return false;
+      const target = step.parameters.target;
+      const entityId =
+        target === 'caster'
+          ? this.characterTypes?.sourceId
+          : target === 'buffOwner'
+            ? context.buffOwnerId
+            : target === 'buffSource'
+              ? context.buffSourceId
+              : target === 'currentTarget' && context.currentTarget?.kind === 'operator'
+                ? context.currentTarget.operatorId
+                : undefined;
+      const value =
+        entityId === undefined ? undefined : this.characterTypes?.readTypeId?.(entityId);
+      if (value === undefined) return false;
+      context.blackboard.assignDynamicUnconditionally(step.parameters.outputKey, value);
+      return true;
+    }
     if (step.kind === 'storeCurrentTimelineFrame') {
       const hostFrame = context?.getCurrentTimelineFrame?.();
       const ownerFrame =
@@ -391,7 +416,20 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
   evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     if (condition.kind === 'conditionNode')
       return this.evaluate(condition.node.expression, context);
+    if (condition.kind === 'stringEquals') {
+      const read = (input: typeof condition.left): string => {
+        const expression = stringInputExpression(input);
+        if (typeof expression === 'string') return expression;
+        const value = context?.blackboard.getString(expression.blackboardKey);
+        if (value === undefined)
+          throw new Error(`missing string variable '${expression.blackboardKey}'`);
+        return value;
+      };
+      return read(condition.left) === read(condition.right);
+    }
     if (condition.kind === 'constant') return condition.value;
+    if (condition.kind === 'skillHasHit')
+      return context?.skillExecution?.hasOutputDamageBattle ?? false;
     if (condition.kind === 'combatActive') return true;
     if (condition.kind === 'singleEnemyPresent') return true;
     if (condition.kind === 'characterTypeIn') {
@@ -407,26 +445,20 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       return condition.characterTypes.includes(characterType);
     }
     if (condition.kind === 'operatorRoleIn') {
+      if (this.operatorRoles === undefined) {
+        throw new Error('operatorRoleIn requires an operator registry');
+      }
       const entityId =
         condition.target === 'caster'
-          ? this.operatorRoles?.sourceId
+          ? this.operatorRoles.sourceId
           : condition.target === 'buffOwner'
             ? context?.buffOwnerId
-            : context?.event !== undefined && 'payload' in context.event
+            : context?.event !== undefined
               ? abilityEventTargetId(context.event)
-              : context?.event !== undefined &&
-                  'targetId' in context.event &&
-                  typeof context.event.targetId === 'string'
-                ? context.event.targetId
-                : undefined;
-      if (entityId === undefined) {
-        throw new Error(`operatorRoleIn target '${condition.target}' requires an entity identity`);
-      }
-      const role = this.operatorRoles?.resolve(entityId);
-      if (role === undefined) {
-        throw new Error(`operatorRoleIn requires CharacterTable.profession for '${entityId}'`);
-      }
-      return condition.roles.includes(role);
+              : undefined;
+      if (entityId === undefined) return false;
+      const role = this.operatorRoles.resolve(entityId);
+      return role !== undefined && condition.roles.includes(role);
     }
     if (condition.kind === 'buffSourceMatchesOwner') {
       if (context?.buffSourceId === undefined || context.buffOwnerId === undefined) {
@@ -452,13 +484,18 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       );
     }
     if (condition.kind === 'deckAttributeCompare') {
-      if (this.sourceDeckAttributes === undefined) {
-        throw new Error('deckAttributeCompare requires source Deck attributes');
+      if (this.deckAttributes === undefined) {
+        throw new Error('deckAttributeCompare requires an operator registry');
       }
+      const ownerId =
+        context?.actionOwnerId ?? context?.buffOwnerId ?? this.deckAttributes.sourceId;
+      const attributes = this.deckAttributes.resolve(ownerId);
+      if (attributes === undefined) return false;
       return compareCombatNumbers(
-        Math.fround(this.sourceDeckAttributes[condition.left]),
-        Math.fround(this.sourceDeckAttributes[condition.right]),
+        attributes[condition.left],
+        attributes[condition.right],
         condition.operator,
+        'double',
       );
     }
     if (condition.kind === 'probability') {
@@ -483,7 +520,7 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       if (!Number.isFinite(sample) || sample < 0 || sample > 1) {
         throw new RangeError('probability sample must be a finite value in [0, 1]');
       }
-      return Math.fround(probability + PROBABILITY_TOLERANCE) >= sample;
+      return Math.fround(probability + PROBABILITY_TOLERANCE) >= Math.fround(sample);
     }
     return context === undefined
       ? this.delegate.evaluate(condition)

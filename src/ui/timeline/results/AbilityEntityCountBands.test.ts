@@ -3,8 +3,10 @@ import { renderToString } from 'vue/server-renderer';
 import { createI18n } from 'vue-i18n';
 import { expect, it } from 'vitest';
 import Bands from './TimelineOperatorPassiveUiBands.vue';
+import { imageCatalog } from '../../imageResources';
 
 it('renders the configured entity icon, translated name and count without a HUD skin', async () => {
+  const icon = imageCatalog[0]!;
   const app = createSSRApp({
     render: () =>
       h(Bands, {
@@ -18,7 +20,7 @@ it('renders the configured entity icon, translated name and count without a HUD 
             kind: 'abilityEntityCount',
             abilityEntityId: 'crystal',
             nameKey: 'entities.crystal',
-            icon: '/custom-entity.webp',
+            icon: icon.ref,
             operatorId: 'owner',
             startFrame: 10,
             endFrame: 50,
@@ -39,6 +41,6 @@ it('renders the configured entity icon, translated name and count without a HUD 
     }),
   );
   const html = await renderToString(app);
-  expect(html).toContain('/custom-entity.webp');
+  expect(html).toContain(icon.path);
   expect(html).toContain('Owner · Configured crystal × 2');
 });

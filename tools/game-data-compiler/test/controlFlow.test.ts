@@ -153,7 +153,7 @@ describe('原生控制流来源树', () => {
     });
   });
 
-  it('ChannelingActionV2 按 1.4.4 的同构 Data 保留同一控制流', () => {
+  it('ChannelingActionV2 保留补轮次模式与子序列', () => {
     const parsed = parseNativeSequenceSource(
       sequence([
         {
@@ -173,6 +173,7 @@ describe('原生控制流来源树', () => {
     );
     expect(parsed.actions[0]?.body).toMatchObject({
       kind: 'channeling',
+      catchUpMissedTicks: true,
       target: { targetSource: 'Target', targetContextKey: 'tar' },
       executeEachFrame: true,
       triggerIntervalSeconds: 0.033,

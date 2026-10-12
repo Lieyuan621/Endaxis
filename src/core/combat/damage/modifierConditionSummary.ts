@@ -27,6 +27,10 @@ export function summarizeModifierCondition(sequence: ResolvedActionSequence): Bu
   }
   function visit(entry: ResolvedActionSequence) {
     for (const step of rootActionSteps(entry)) {
+      if (step.kind === 'checkCondition') {
+        condition(step.parameters.condition);
+        continue;
+      }
       if (
         step.kind !== 'conditional' ||
         step.whenFalse !== undefined ||

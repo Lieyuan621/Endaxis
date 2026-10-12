@@ -3,30 +3,8 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 
 const definition = {
   slug: 'suit_crush_fracture',
-  iconPath: '/equipment/crush_fracture/item_equip_t4_suit_crush_fracture_edc_01.webp',
+  icon: 'endaxis:equipment/crush_fracture/item_equip_t4_suit_crush_fracture_edc_01',
   modifiers: [{ kind: 'panelStat', stat: 'attackPercent', value: 0.08 }],
-  actionGraph: {
-    main: {
-      nodes: {
-        applyBuff_1: {
-          action: {
-            kind: 'applyBuff',
-            parameters: {
-              buffId: 'buff_equipsuit_crush_fracture',
-              target: 'caster',
-              blackboardAssignments: {
-                phy_dmg_up_perstack: { kind: 'constant', value: 0.06 },
-                duration: { kind: 'constant', value: 20 },
-                special_multi: { kind: 'constant', value: 1.5 },
-              },
-            },
-          },
-          next: null,
-        },
-      },
-    },
-    macros: {},
-  },
   skillId: 'passive_equipsuit_crush_fracture',
   buffDefinitions: {
     buff_equipsuit_crush_fracture: {
@@ -50,64 +28,100 @@ const definition = {
         {
           event: 'beforeOutputPhysicalInfliction',
           priority: 0,
-          sequence: { $sequence: 'conditional_9' },
+          sequence: { $sequence: 'checkCondition_13' },
         },
       ],
       actionGraph: {
         main: {
           nodes: {
-            modifyActionValue_1: {
+            checkCondition_1: {
+              action: {
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+              },
+              next: null,
+            },
+            checkCondition_2: {
+              action: {
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+              },
+              next: null,
+            },
+            checkCondition_3: {
+              action: {
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+              },
+              next: null,
+            },
+            anyCondition_4: {
+              action: {
+                kind: 'anyCondition',
+                parameters: {},
+                conditions: [
+                  { $sequence: 'checkCondition_1' },
+                  { $sequence: 'checkCondition_2' },
+                  { $sequence: 'checkCondition_3' },
+                ],
+              },
+              next: null,
+            },
+            modifyActionValue_5: {
               action: {
                 kind: 'modifyActionValue',
                 parameters: {
                   key: 'phy_dmg_up_perstack_dynamic',
                   operation: 'multiply',
-                  value: { kind: 'valueNode', nodeId: 'data_1' },
+                  value: { kind: 'valueNode', nodeId: 'data_4' },
                 },
               },
               next: null,
             },
-            applyBuff_2: {
+            applyBuff_6: {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_equipsuit_crush_fracture_physicdamage',
-                  target: 'buffOwner',
-                  source: 'buffOwner',
+                  buffs: [
+                    {
+                      buffId: 'buff_equipsuit_crush_fracture_physicdamage',
+                      copiedBlackboardAssignments: {
+                        priority: 'phy_dmg_up_final',
+                        phy_dmg_up: 'phy_dmg_up_final',
+                        duration: 'duration',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'owner' },
+                  source: { kind: 'owner' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    priority: 'phy_dmg_up_final',
-                    phy_dmg_up: 'phy_dmg_up_final',
-                    duration: 'duration',
-                  },
                 },
               },
               next: null,
             },
-            modifyActionValue_3: {
+            modifyActionValue_7: {
               action: {
                 kind: 'modifyActionValue',
                 parameters: {
                   key: 'phy_dmg_up_final',
                   operation: 'multiply',
-                  value: { kind: 'valueNode', nodeId: 'data_2' },
+                  value: { kind: 'valueNode', nodeId: 'data_5' },
                 },
               },
-              next: 'applyBuff_2',
+              next: 'applyBuff_6',
             },
-            conditional_4: {
+            ifElse_8: {
               action: {
-                kind: 'conditional',
-                parameters: {
-                  condition: { kind: 'conditionNode', nodeId: 'data_6' },
-                  alwaysNext: true,
-                },
-                whenTrue: { $sequence: 'modifyActionValue_1' },
+                kind: 'ifElse',
+                parameters: { alwaysNext: true },
+                condition: { $sequence: 'anyCondition_4' },
+                whenTrue: { $sequence: 'modifyActionValue_5' },
+                whenFalse: { $sequence: null },
               },
-              next: 'modifyActionValue_3',
+              next: 'modifyActionValue_7',
             },
-            readBuffStackCount_5: {
+            readBuffStackCount_9: {
               action: {
                 kind: 'readBuffStackCount',
                 parameters: {
@@ -120,9 +134,9 @@ const definition = {
                   },
                 },
               },
-              next: 'conditional_4',
+              next: 'ifElse_8',
             },
-            modifyActionValue_6: {
+            modifyActionValue_10: {
               action: {
                 kind: 'modifyActionValue',
                 parameters: {
@@ -131,43 +145,36 @@ const definition = {
                   value: { kind: 'constant', value: 0 },
                 },
               },
-              next: 'readBuffStackCount_5',
+              next: 'readBuffStackCount_9',
             },
-            modifyActionValue_7: {
+            modifyActionValue_11: {
               action: {
                 kind: 'modifyActionValue',
                 parameters: {
                   key: 'phy_dmg_up_perstack_dynamic',
                   operation: 'assign',
-                  value: { kind: 'valueNode', nodeId: 'data_7' },
+                  value: { kind: 'valueNode', nodeId: 'data_6' },
                 },
               },
-              next: 'modifyActionValue_6',
+              next: 'modifyActionValue_10',
             },
-            conditional_8: {
+            checkCondition_12: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+              },
+              next: 'modifyActionValue_11',
+            },
+            checkCondition_13: {
+              action: {
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-                whenTrue: { $sequence: 'modifyActionValue_7' },
               },
-              next: null,
-            },
-            conditional_9: {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
-                whenTrue: { $sequence: 'conditional_8' },
-              },
-              next: null,
+              next: 'checkCondition_12',
             },
           },
           dataNodes: {
-            data_1: { type: 'number', expression: { kind: 'blackboard', key: 'special_multi' } },
-            data_2: {
-              type: 'number',
-              expression: { kind: 'blackboard', key: 'phy_dmg_up_perstack_dynamic' },
-            },
-            data_3: {
+            data_1: {
               type: 'boolean',
               expression: {
                 kind: 'buffStackCompare',
@@ -178,7 +185,7 @@ const definition = {
                 value: { kind: 'constant', value: 1 },
               },
             },
-            data_4: {
+            data_2: {
               type: 'boolean',
               expression: {
                 kind: 'buffIdStackCompare',
@@ -188,32 +195,26 @@ const definition = {
                 value: { kind: 'constant', value: 1 },
               },
             },
-            data_5: {
+            data_3: {
               type: 'boolean',
               expression: {
                 kind: 'poiseCompare',
-                target: 'enemy',
+                target: 'actionInputTarget',
                 returnValueIfMissing: false,
                 operator: 'equal',
                 value: { kind: 'constant', value: 0 },
               },
             },
-            data_6: {
-              type: 'boolean',
-              expression: {
-                kind: 'any',
-                conditions: [
-                  { kind: 'conditionNode', nodeId: 'data_3' },
-                  { kind: 'conditionNode', nodeId: 'data_4' },
-                  { kind: 'conditionNode', nodeId: 'data_5' },
-                ],
-              },
+            data_4: { type: 'number', expression: { kind: 'blackboard', key: 'special_multi' } },
+            data_5: {
+              type: 'number',
+              expression: { kind: 'blackboard', key: 'phy_dmg_up_perstack_dynamic' },
             },
-            data_7: {
+            data_6: {
               type: 'number',
               expression: { kind: 'blackboard', key: 'phy_dmg_up_perstack' },
             },
-            data_8: {
+            data_7: {
               type: 'boolean',
               expression: {
                 kind: 'buffStackCompare',
@@ -224,7 +225,7 @@ const definition = {
                 value: { kind: 'constant', value: 1 },
               },
             },
-            data_9: {
+            data_8: {
               type: 'boolean',
               expression: { kind: 'eventPhysicalInflictionTypeIn', types: ['fracture', 'crush'] },
             },
@@ -243,8 +244,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_physical_dmg_up',
-        iconPath: '/icons/icon_battle_physical_dmg_up.webp',
+        icon: 'endaxis:icons/icon_battle_physical_dmg_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -277,6 +277,32 @@ const definition = {
     },
   },
   enableSequence: { $sequence: 'applyBuff_1' },
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [
+                {
+                  buffId: 'buff_equipsuit_crush_fracture',
+                  blackboardAssignments: {
+                    phy_dmg_up_perstack: { kind: 'constant', value: 0.06 },
+                    duration: { kind: 'constant', value: 20 },
+                    special_multi: { kind: 'constant', value: 1.5 },
+                  },
+                },
+              ],
+              targets: { kind: 'fixed', target: 'caster' },
+            },
+          },
+          next: null,
+        },
+      },
+    },
+    macros: {},
+  },
 } as const satisfies GearSetDefinition;
 
 export default definition;

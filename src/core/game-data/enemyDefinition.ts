@@ -2,9 +2,10 @@
  * 敌人在版本化游戏数据中的只读定义。
  * 存档只保存定义身份、等级和用户手动覆盖的值；名称由本地化层按 `id` 解析。
  */
-import type { DamageElement } from './operatorDefinition';
-import type { EnemyRank } from './enemyRank';
 import { ENEMY_LEVELS, type EnemyLevelHp } from '../../../packages/game-data-contract/src/index';
+import type { ImageRef } from '../../../packages/game-data-contract/src/primitives';
+import type { EnemyRank } from './enemyRank';
+import type { DamageElement } from './operatorDefinition';
 export { ENEMY_LEVELS };
 
 export const ENEMY_TIERS = ['normal', 'advanced', 'elite', 'boss', 'leader'] as const;
@@ -28,7 +29,7 @@ export interface EnemyStaggerDefinition {
  */
 export interface EnemyDefinition {
   readonly id: string;
-  readonly iconPath?: string;
+  readonly icon?: ImageRef;
   readonly tier: EnemyTier;
   /** 原生战斗等级；独立于五档展示 tier，供 CheckEnemyRank 等战斗规则读取。 */
   readonly rank: EnemyRank;

@@ -44,12 +44,16 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_sword_0011',
-                  target: 'caster',
-                  blackboardAssignments: {
-                    dmg_up: { kind: 'valueNode', nodeId: 'data_1' },
-                    phy_dmg_up: { kind: 'valueNode', nodeId: 'data_2' },
-                  },
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_sword_0011',
+                      blackboardAssignments: {
+                        dmg_up: { kind: 'valueNode', nodeId: 'data_1' },
+                        phy_dmg_up: { kind: 'valueNode', nodeId: 'data_2' },
+                      },
+                    },
+                  ],
+                  targets: { kind: 'fixed', target: 'caster' },
                 },
               },
               next: null,
@@ -74,7 +78,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_sword_0011',
-  iconPath: '/weapons/sword/wpn_sword_0011.webp',
+  icon: 'endaxis:weapons/sword/wpn_sword_0011',
   buffDefinitions: {
     buff_wpn_sword_0011: {
       stackingType: 'unique',
@@ -85,8 +89,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_buff_atk_up',
-        iconPath: '/icons/icon_battle_buff_atk_up.webp',
+        icon: 'endaxis:icons/icon_battle_buff_atk_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: false,
@@ -112,7 +115,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'attacker',
-          condition: { $sequence: 'conditional_2' },
+          condition: { $sequence: 'checkCondition_2' },
           processors: [
             {
               kind: 'damageScale',
@@ -124,7 +127,7 @@ const definition = {
         },
         {
           enabledSide: 'attacker',
-          condition: { $sequence: 'conditional_3' },
+          condition: { $sequence: 'checkCondition_3' },
           processors: [
             {
               kind: 'damageScale',
@@ -138,27 +141,24 @@ const definition = {
       actionGraph: {
         main: {
           nodes: {
-            conditional_1: {
+            checkCondition_1: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: null },
               },
               next: null,
             },
-            conditional_2: {
+            checkCondition_2: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                whenTrue: { $sequence: 'conditional_1' },
               },
-              next: null,
+              next: 'checkCondition_1',
             },
-            conditional_3: {
+            checkCondition_3: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: null },
               },
               next: null,
             },

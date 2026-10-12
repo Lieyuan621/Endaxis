@@ -10,6 +10,7 @@ export function resolveCombatObjectType(
   resolveEntity?: (instanceId: number) => CombatObjectType,
 ): CombatObjectType | undefined {
   if (target.kind === 'spatialPoint') return undefined;
+  if (target.kind === 'godEntity') return 'godEntity';
   if (target.kind === 'enemy') return 'enemy';
   if (target.kind === 'operator') return 'character';
   if (resolveEntity === undefined)

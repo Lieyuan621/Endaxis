@@ -100,7 +100,7 @@ export class ActionExecutionTrace {
     const event = context.event;
     let response = event && this.#responses.get(event);
     if (event && !response) {
-      response = { id: this.#nextResponse++, name: 'event' in event ? event.event : event.kind };
+      response = { id: this.#nextResponse++, name: event.event };
       this.#responses.set(event, response);
     }
     const record: ExecutionTraceRecord = {

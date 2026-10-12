@@ -3,7 +3,7 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 
 const definition = {
   slug: 'suit_wisdwill01',
-  iconPath: '/equipment/wisdwill01/item_equip_t1_suit_wisdwill01_edc_01.webp',
+  icon: 'endaxis:equipment/wisdwill01/item_equip_t1_suit_wisdwill01_edc_01',
   modifiers: [{ kind: 'panelStat', stat: 'healthFlat', value: 500 }],
   skillId: 'passive_equipsuit_wisdwill_01',
 } as const satisfies GearSetDefinition;

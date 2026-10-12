@@ -301,10 +301,9 @@ describe('公共连携条件来源与 Pending 编译', () => {
       },
     ];
     const compiled = compilePendingComboConditionSource(parse([value])[0]!, context);
-    const conditional = chainOf(compiled)[0];
-    if (conditional?.kind !== 'conditional') throw new Error('expected conditional');
-    expect(conditional.parameters.condition).toEqual({ kind: 'constant', value: false });
-    expect(conditional.whenTrue).toEqual({ $sequence: null });
+    expect(chainOf(compiled)).toEqual([
+      { kind: 'checkCondition', parameters: { condition: { kind: 'constant', value: false } } },
+    ]);
   });
   it.each(['onlyExecuteWhenSourceIsMainChar', 'onlyExecuteWhenSourceIsGuard'] as const)(
     '尚未接通 %s 时严格失败',

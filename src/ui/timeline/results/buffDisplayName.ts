@@ -1,10 +1,10 @@
-import { commonBuffPresentationNameKeys } from '../../../data/buffs/generated/commonBuffPresentationNames.generated';
-import { compoundStatusFactories } from '../../../data/buffs/compoundStatusFactories';
-import { isCorrosionTimelineBuff } from '../../../core/projection/buffTimelineViz';
 import type {
   BuffAttributeEffect,
   BuffDamageEffect,
 } from '../../../core/combat/receipt/combatReceipt';
+import { isCorrosionTimelineBuff } from '../../../core/projection/buffTimelineViz';
+import { compoundStatusFactories } from '../../../data/buffs/compoundStatusFactories';
+import { commonBuffPresentationNameKeys } from '../../../data/buffs/generated/commonBuffPresentationNames.generated';
 
 const ARTS_TYPES = ['heat', 'electric', 'cryo', 'nature'] as const;
 
@@ -152,8 +152,8 @@ export function resolveBuffEffectSummary(
   segment: {
     readonly buffId?: string;
     readonly enabled: boolean;
-    readonly attributeEffects?: readonly import('../../../core/combat/receipt/combatReceipt').BuffAttributeEffect[];
-    readonly damageEffects?: readonly import('../../../core/combat/receipt/combatReceipt').BuffDamageEffect[];
+    readonly attributeEffects?: readonly BuffAttributeEffect[];
+    readonly damageEffects?: readonly BuffDamageEffect[];
   },
   i18n: BuffDisplayI18n,
 ): string | undefined {

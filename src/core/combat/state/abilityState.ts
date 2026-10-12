@@ -4,37 +4,40 @@
  * 本文件按“事件宿主 → 技能选择 → 单次技能执行 → 常驻来源”组织。它只保存恢复所需的数据；
  * 编译后的技能程序、事件处理函数和运行时端口仍由对应运行时模块持有。
  */
+import type { ActionBlackboardValue } from '../../../../packages/game-data-contract/src/primitives';
+import type { RuntimeTargetGroup, RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+import type { NativeSkillType, PlayerSkillInput } from '../../game-data/operatorDefinition';
 import {
-  type SkillCastEventData,
-  type AbilityEventSubscriptionReference,
-  type BuffReference,
-  type CombatSkillCastInfo,
-  type PostSkillCastRequest,
-  type SkillCastStartPreparation,
-  type ActionBlackboardState,
-  type AppliedDamageModifier,
-  type CombatObjectRef,
-} from './foundationState';
-import { type ActionBlackboardValue } from '../../../../packages/game-data-contract/src/primitives';
-import { type NativeSkillType, type PlayerSkillInput } from '../../game-data/operatorDefinition';
-import {
-  type ActionSequenceState,
-  type TimelineRuntimeState,
   createCombatOperationHostState,
-  type ActionScopeState,
+  type ActionSequenceHostState,
+  type ActionSequenceState,
   type CombatOperationHostState,
+  type TimelineRuntimeState,
 } from './actionState';
-import { type PeriodicTimerState } from './environmentState';
-import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+import type { PeriodicTimerState } from './environmentState';
+import type {
+  AbilityEventSubscriptionReference,
+  ActionBlackboardState,
+  ActionValueCalculation,
+  AppliedDamageModifier,
+  ArtsIntensityFactor,
+  AttackReceiptSnapshot,
+  BuffReference,
+  CombatObjectRef,
+  CombatSkillCastInfo,
+  PostSkillCastRequest,
+  SkillCastEventData,
+  SkillCastStartPreparation,
+} from './foundationState';
 
 export interface DamageCalculationSnapshot {
   readonly attackModifiers?: readonly AppliedDamageModifier[];
-  readonly attackDetail?: import('./foundationState').AttackReceiptSnapshot;
+  readonly attackDetail?: AttackReceiptSnapshot;
   readonly attack: number;
   readonly attackScale: number;
   readonly attackScaleSourceKey?: string;
-  readonly attackScaleCalculation?: import('./foundationState').ActionValueCalculation;
-  readonly skillSettingFactor?: import('./foundationState').ArtsIntensityFactor;
+  readonly attackScaleCalculation?: ActionValueCalculation;
+  readonly skillSettingFactor?: ArtsIntensityFactor;
   readonly baseValue: number;
 }
 
@@ -42,7 +45,7 @@ export type DamageCalculationSnapshotState = Map<number, DamageCalculationSnapsh
 
 /** 当前释放已经建立的命名目标组。 */
 export interface RuntimeTargetContextState {
-  readonly groups: Map<string, import('../../game-data/logicalAbilityEntity').RuntimeTargetGroup>;
+  readonly groups: Map<string, RuntimeTargetGroup>;
 }
 
 export function createRuntimeTargetContextState(): RuntimeTargetContextState {
@@ -237,6 +240,7 @@ export type RuntimeSkillState = 'ready' | 'casting' | 'ended';
 
 /** 一次技能宿主的施放进度、输入准备和扣费事实。 */
 export interface SkillExecutionState {
+  hasOutputDamageBattle: boolean;
   readonly targetContext: RuntimeTargetContextState;
   preparedCastStart: SkillCastStartPreparation | undefined;
   readonly attachedBuffs: Map<string, BuffReference>;
@@ -259,7 +263,6 @@ export interface SkillExecutionState {
   preparedForceTimelinePayment: boolean;
   forceTimelinePayment: boolean;
   preparationCast: boolean;
-  timelineFinishRequested: boolean;
   reachedOperableBoundaryFrame: number | undefined;
   /** 本帧实际执行的 AllowNextSkillAction 所公开的候选；AbilitySystem 在技能 Tick 后解释玩家路由。 */
   operableBoundaryCandidateFrame: number | undefined;
@@ -269,6 +272,7 @@ export interface SkillExecutionState {
 
 export function createSkillExecutionState(): SkillExecutionState {
   return {
+    hasOutputDamageBattle: false,
     targetContext: createRuntimeTargetContextState(),
     preparedCastStart: undefined,
     attachedBuffs: new Map(),
@@ -289,7 +293,6 @@ export function createSkillExecutionState(): SkillExecutionState {
     preparedForceTimelinePayment: false,
     forceTimelinePayment: false,
     preparationCast: false,
-    timelineFinishRequested: false,
     reachedOperableBoundaryFrame: undefined,
     operableBoundaryCandidateFrame: undefined,
     operableBoundaryCandidateSkillIds: [],
@@ -308,11 +311,9 @@ export interface SkillRuntimeState<Execution = ActionSequenceState> {
   readonly blackboard: ActionBlackboardState;
   readonly initialBlackboard: Readonly<Record<string, ActionBlackboardValue>>;
   /** 重置技能黑板时一同恢复的来源记录，不参与数值结算。 */
-  readonly initialBlackboardCalculations?: Readonly<
-    Record<string, import('./foundationState').ActionValueCalculation>
-  >;
+  readonly initialBlackboardCalculations?: Readonly<Record<string, ActionValueCalculation>>;
   readonly cooldown: SkillCooldownState;
-  readonly scopes: ActionScopeState;
+  readonly sequenceHost: ActionSequenceHostState;
   readonly damageSnapshots: DamageCalculationSnapshotState;
   readonly operations: CombatOperationHostState;
   timeline: TimelineRuntimeState<Execution> | null;

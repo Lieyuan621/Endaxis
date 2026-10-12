@@ -43,6 +43,16 @@ export function indexSkillResourceWarnings(
 
 type Translate = (key: string, values?: Record<string, string>) => string;
 
+/** 只解释回执中明确命中的状态；门禁查询可能包含交互状态，不能按查询名翻译。 */
+const blockingStateKeys: Readonly<Record<string, string>> = {
+  'Status/Immobilized/Frozen': 'frozen',
+  'Status/Immobilized/OriginumFrozen': 'originiumFrozen',
+  'Status/Immobilized/Stunned': 'stunned',
+  'Status/Immobilized/KnockDown': 'knockedDown',
+  'Status/Immobilized/Airborne': 'airborne',
+  'Status/Immobilized/Getup': 'gettingUp'
+};
+
 const warningKeys: Record<
   | SkillAvailabilityDiagnosticReason
   | SkillExecutionDiagnosticReason
@@ -96,6 +106,27 @@ export function formatSkillBlockWarnings(options: {
   if (options.definitionUnavailable) return text('definitionUnavailable');
 
   const lines = options.reasons.map(reason => {
+    if (
+      reason.startsWith('skillCommonTagUnavailable: ') ||
+      reason.startsWith('skillTypeTagUnavailable: ')
+    ) {
+      const common = reason.startsWith('skillCommonTagUnavailable: ');
+      const tags = reason.slice(reason.indexOf(': ') + 2).split('|');
+      const states = [
+        ...new Set(
+          tags.map(tag => blockingStateKeys[tag]).filter((key): key is string => key !== undefined),
+        ),
+      ];
+      const messages = states.map(state =>
+        text('blockedByState', {
+          state: text(`blockingStates.${state}`),
+          skill: common ? t('timeline.skillWarnings.skills') : skill,
+        }),
+      );
+      if (tags.some(tag => blockingStateKeys[tag] === undefined))
+        messages.push(text(common ? 'cannotUseSkills' : 'cannotUseSkillType'));
+      return messages.join('\n');
+    }
     if (reason === 'resourceUnavailable' || reason === 'costPaymentRejected') {
       const details = options.resourceWarnings?.[reason];
       if (details?.length)

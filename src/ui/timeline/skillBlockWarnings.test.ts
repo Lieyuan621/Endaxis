@@ -17,6 +17,17 @@ function format(reasons: TimelineSkillDiagnosticReason[], definitionUnavailable 
 }
 
 describe('技能块告警文案', () => {
+  it('显示受限时的具体状态，未知交互保留通用提示', () => {
+    expect(format(['skillCommonTagUnavailable: Status/Immobilized/Frozen'])).toBe(
+      '干员被冻结，尚不能释放技能。\n模拟程序将强制执行A4。',
+    );
+    expect(format(['skillTypeTagUnavailable: GameplayState/Interacting/Bomb/Holding'])).toBe(
+      '干员受当前状态限制，尚不能释放A4。\n模拟程序将强制执行A4。',
+    );
+    expect(
+      format(['skillCommonTagUnavailable: Status/Immobilized/Frozen|Status/Immobilized/KnockDown']),
+    ).toContain('干员处于倒地状态，尚不能释放技能。');
+  });
   it('按技能块读取不足当时的资源，沿用旧版文案与三位小数格式', () => {
     const index = indexSkillResourceWarnings([
       {

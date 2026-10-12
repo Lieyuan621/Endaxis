@@ -1,5 +1,5 @@
 /**
- * 把模拟日志里的伤害、附着、反应，对应到具体技能块的命中点上。
+ * 把模拟日志里的伤害、附着，对应到具体技能块的命中点上。
  *
  * 伤害步骤带步骤键时按键精确对应；没有键就按"第几帧、谁打的"对应；
  * 附着按"第几帧、谁打的、哪个技能"对应。本模块只做对应，不做任何计算。
@@ -8,7 +8,6 @@ import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatRece
 import {
   projectHitDamageReceipts,
   projectHitInflictionReceipts,
-  projectHitReactionReceipts,
 } from '../../../core/projection/hitEffectProjection';
 import type { ScenarioDocument } from '../../../core/project/schema';
 import {
@@ -37,19 +36,10 @@ export interface TimelineHitInflictionEffect {
   readonly currentLayers: number;
 }
 
-/** 一个命中点上发生的反应施加或消费。 */
-export interface TimelineHitReactionEffect {
-  readonly reaction: string;
-  readonly applied: boolean;
-  readonly level: number;
-  readonly previousLevel: number;
-}
-
 /** 一个命中点上的全部效果，键是命中点的 id。 */
 export interface TimelineHitEffectLabel {
   readonly damage: readonly TimelineHitDamageEffect[];
   readonly infliction: readonly TimelineHitInflictionEffect[];
-  readonly reactions: readonly TimelineHitReactionEffect[];
 }
 
 const COMBO_BUFF_DAMAGE_MODIFIER_ID = 'buff_common_affixes_skillimbue_atk';
@@ -145,14 +135,6 @@ export function projectTimelineHitOccurrences(
             outcomeKind,
             currentLayers,
           })),
-        reactions: receipts.reactions
-          .filter(item => item.castId === hit.castId && item.frame === hit.frame)
-          .map(({ reaction, applied, level, previousLevel }) => ({
-            reaction,
-            applied,
-            level,
-            previousLevel,
-          })),
       },
     });
     byCast.set(hit.castId, list);
@@ -177,7 +159,7 @@ export function projectTimelineHitOccurrences(
 
 /**
  * 取得指定执行帧的完整回执组；省略帧时兼容首次执行入口。伤害按 castId + hitId 精确匹配；
- * 同帧附着与反应按 castId 归组，和块上提示使用相同边界，不依赖能力实体的 sourceId。
+ * 同帧附着按 castId 归组，和块上提示使用相同边界，不依赖能力实体的 sourceId。
  */
 export function projectTimelineHitDetailEntries(
   entries: readonly CombatReceiptEntry[],
@@ -207,11 +189,7 @@ export function projectTimelineHitDetailEntries(
   return skillEntries.filter(entry => {
     if (entry.frame !== frame || entry.data?.castId !== castId) return false;
     if (entry.event === 'DamageApplied') return entry.data.hitId === hitId;
-    return (
-      entry.event === 'ElementalInflictionApplied' ||
-      entry.event === 'ElementalReactionApplied' ||
-      entry.event === 'ElementalReactionConsumed'
-    );
+    return entry.event === 'ElementalInflictionApplied';
   });
 }
 
@@ -234,7 +212,6 @@ export function projectTimelineHitReceipts(entries: readonly CombatReceiptEntry[
   return {
     damages: projectHitDamageReceipts(excludeStandaloneEffectDamage(entries)),
     inflictions: projectHitInflictionReceipts(entries),
-    reactions: projectHitReactionReceipts(entries),
   };
 }
 
@@ -262,7 +239,6 @@ export function projectHitEffectsByCast(
   // 不能额外要求 sourceId 是干员本人，也不能用同帧的其他释放补齐。
   const damages = receipts.damages.filter(receipt => receipt.castId === castId);
   const inflictions = receipts.inflictions.filter(receipt => receipt.castId === castId);
-  const reactions = receipts.reactions.filter(receipt => receipt.castId === castId);
 
   const byHitId = new Map<string, TimelineHitEffectLabel>();
   for (const marker of markers) {
@@ -283,19 +259,10 @@ export function projectHitEffectsByCast(
         outcomeKind: receipt.outcomeKind,
         currentLayers: receipt.currentLayers,
       }));
-    const reactionEffects = reactions
-      .filter(receipt => receipt.frame === absoluteFrame)
-      .map(receipt => ({
-        reaction: receipt.reaction,
-        applied: receipt.applied,
-        level: receipt.level,
-        previousLevel: receipt.previousLevel,
-      }));
-    if (damage.length === 0 && infliction.length === 0 && reactionEffects.length === 0) continue;
+    if (damage.length === 0 && infliction.length === 0) continue;
     byHitId.set(marker.hitId, {
       damage,
       infliction,
-      reactions: reactionEffects,
     });
   }
   return byHitId;

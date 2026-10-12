@@ -66,7 +66,7 @@ describe('图校验的宏与跨资源上下文', () => {
         start: {
           action: {
             kind: 'forEachContextTarget',
-            parameters: { contextKey: 'entities' },
+            parameters: { targets: { kind: 'context', key: 'entities' } },
             body: reference('inside'),
           },
           next: 'outside',
@@ -80,7 +80,10 @@ describe('图校验的宏与跨资源上下文', () => {
           graph: {
             nodes: {
               finish: {
-                action: { kind: 'finishCurrentAbilityEntity', parameters: {} },
+                action: {
+                  kind: 'startCurrentAbilityEntityChildSkillById',
+                  parameters: { childSkillId: 'child' },
+                },
                 next: null,
               },
             },
@@ -101,7 +104,13 @@ describe('图校验的宏与跨资源上下文', () => {
       resource: {
         id: 'finish',
         actionGraph: graph({
-          finish: { action: { kind: 'finishCurrentAbilityEntity', parameters: {} }, next: null },
+          finish: {
+            action: {
+              kind: 'startCurrentAbilityEntityChildSkillById',
+              parameters: { childSkillId: 'child' },
+            },
+            next: null,
+          },
         }),
         entry: reference('finish'),
       },
@@ -110,7 +119,7 @@ describe('图校验的宏与跨资源上下文', () => {
       start: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { contextKey: 'entities' },
+          parameters: { targets: { kind: 'context', key: 'entities' } },
           body: reference('call'),
         },
         next: null,

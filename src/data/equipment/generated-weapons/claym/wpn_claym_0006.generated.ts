@@ -49,7 +49,10 @@ const definition = {
             applyBuff_1: {
               action: {
                 kind: 'applyBuff',
-                parameters: { buffId: 'buff_wpn_claym_0006_icon', target: 'caster' },
+                parameters: {
+                  buffs: [{ buffId: 'buff_wpn_claym_0006_icon' }],
+                  targets: { kind: 'fixed', target: 'caster' },
+                },
               },
               next: null,
             },
@@ -62,7 +65,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_claym_0006',
-  iconPath: '/weapons/claym/wpn_claym_0006.webp',
+  icon: 'endaxis:weapons/claym/wpn_claym_0006',
   buffDefinitions: {
     buff_wpn_claym_0006_cd: {
       stackingType: 'unique',
@@ -76,7 +79,7 @@ const definition = {
       extendTags: [],
       blackboard: { cd: 0 },
       attributeModifiers: [],
-      lifecycleSequences: { finish: { $sequence: 'applyBuff_1' } },
+      lifecycleSequences: { finish: [{ $sequence: 'applyBuff_1' }] },
       actionGraph: {
         main: {
           nodes: {
@@ -84,8 +87,9 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_claym_0006_icon',
-                  target: 'caster',
+                  buffs: [{ buffId: 'buff_wpn_claym_0006_icon' }],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                 },
               },
@@ -105,8 +109,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_weapon_heal_skill_ready',
-        iconPath: '/icons/icon_battle_weapon_heal_skill_ready.webp',
+        icon: 'endaxis:icons/icon_battle_weapon_heal_skill_ready',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

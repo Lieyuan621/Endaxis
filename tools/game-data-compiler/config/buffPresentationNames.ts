@@ -1,7 +1,9 @@
 /** 产品展示命名；发布到各 Buff 的 presentation，不归属干员或技能。 */
+import type { ImageRef } from '../../../packages/game-data-contract/src/primitives.ts';
 export const buffPresentationNames: Readonly<Record<string, string>> = {
   buff_chr_0023_antal_tageffect: 'effects.name.focus',
   buff_chr_0018_dapan_talent_1_preparation: 'effects.name.prepIngredients',
+  buff_chr_0029_pograni_ultimate_skill_count: 'effects.name.steelOath',
   buff_common_affixes_combo_trigger: 'effects.name.link',
   buff_chr_0032_lizhiyan_combo_skill_seal2: 'effects.name.imprisonment',
   buff_common_affixes_slow_default_child: 'effects.name.slow',
@@ -13,6 +15,6 @@ export const buffPresentationNames: Readonly<Record<string, string>> = {
 };
 
 /** 原生无图标的效果在时间轴上的补充展示，不改变 Buff 行为。 */
-export const buffPresentationIcons: Readonly<Record<string, string>> = {
-  buff_common_affixes_combo_trigger: '/icons/icon_term_ba_combo.webp',
+export const buffPresentationIcons: Readonly<Record<string, ImageRef>> = {
+  buff_common_affixes_combo_trigger: 'endaxis:icons/icon_term_ba_combo',
 };

@@ -2,27 +2,15 @@ import type {
   AirborneActionSource,
   PhysicalInflictionActionSource,
 } from '../../source/physicalInflictionActions.ts';
-import type { SkillBuffDefinition } from '../intermediateDefinitions.ts';
 import type { CompiledBuffStepSource } from './combatActionProjectionTypes.ts';
 import {
   actionValueOperand,
   type CombatActionProjectionContextSource,
 } from '../combatProjectionCommon.ts';
 
-/** 公共动作 IR 必须保持正式协议子类型；Operator 闭包装配会按 ID 强制替换该标记蓝图。 */
-const DEFERRED_PHYSICAL_BUFF_DEFINITION: SkillBuffDefinition = {
-  stackingType: 'unlimited',
-  priority: 0,
-  maxStackCount: 0,
-  applyTags: [],
-  extendTags: [],
-  blackboard: { __compiler_deferred_physical_buff_definition: 1 },
-  attributeModifiers: [],
-};
-
 /**
  * 物理异常会改变后续伤害和事件，不能按表现动作裁剪。空间位移、朝向和硬直只影响
- * 敌人主动表现，在固定木桩模型中不进入正式协议；公共 Buff 蓝图由最终装配层内联。
+ * 敌人主动表现，在固定木桩模型中不进入正式协议；公共 Buff 由定义目录统一提供，Buff 身份由物理异常类型固定确定。
  */
 export function projectPhysicalInflictionAction(
   action: AirborneActionSource | PhysicalInflictionActionSource,
@@ -57,10 +45,6 @@ export function projectPhysicalInflictionAction(
         type: 'airborne',
         target: 'enemy',
         isExtra: action.isExtra,
-        noGuardBuffId: 'buff_physical_no_guard',
-        noGuardDefinition: DEFERRED_PHYSICAL_BUFF_DEFINITION,
-        airborneBuffId: 'buff_physical_airborne',
-        airborneDefinition: DEFERRED_PHYSICAL_BUFF_DEFINITION,
         duration: actionValueOperand(action.floatingDuration),
         height: actionValueOperand(action.floatingHeight),
         speedFactorMultiplier: action.speedFactorMultiplier,
@@ -82,10 +66,6 @@ export function projectPhysicalInflictionAction(
         type: 'fracture',
         target: 'enemy',
         isExtra: action.isExtra,
-        noGuardBuffId: 'buff_physical_no_guard',
-        noGuardDefinition: DEFERRED_PHYSICAL_BUFF_DEFINITION,
-        fractureBuffId: 'buff_physical_fracture',
-        fractureDefinition: DEFERRED_PHYSICAL_BUFF_DEFINITION,
       },
     };
   }
@@ -95,10 +75,6 @@ export function projectPhysicalInflictionAction(
       type: 'crush',
       target: 'enemy',
       isExtra: action.isExtra,
-      noGuardBuffId: 'buff_physical_no_guard',
-      noGuardDefinition: DEFERRED_PHYSICAL_BUFF_DEFINITION,
-      crushedBuffId: 'buff_physical_crushed',
-      crushedDefinition: DEFERRED_PHYSICAL_BUFF_DEFINITION,
       damageMultiplier: actionValueOperand(action.damageMultiplier),
       ignoreHitEffect: action.ignoreHitEffect,
     },

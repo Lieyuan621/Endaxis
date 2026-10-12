@@ -1,15 +1,17 @@
-import type { CompiledGlobalBuffDefinition } from '../../compiler/combatProgram.ts';
-import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import type {
   ResolvedCombatOperationStep,
   ResolvedCombatStepForKind,
   ResolvedSkillBuffDefinition,
 } from '../../compiler/combatProgram';
+import type { CompiledGlobalBuffDefinition } from '../../compiler/combatProgram.ts';
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import { logicalAbilityEntityRuntimeId } from '../../game-data/logicalAbilityEntity';
 import type { BuffApplicationSource } from '../../game-data/operatorDefinition';
 import { ActionBlackboard, resolveActionValueOperand } from '../actions/actionBlackboard';
 import { CombatOperationPrograms } from '../actions/combatOperationPrograms';
 import { abilityEventSourceId } from '../events/combatAbilityEvent';
+import { operationProducer } from '../receipt/combatObjectIdentity';
+import type { CombatObjectRef } from '../receipt/combatReceipt';
 import {
   createSharedSpGainModifier,
   createSharedSpRecoveryModifier,
@@ -18,17 +20,16 @@ import {
 } from '../resources/sharedSpGainModifiers';
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
 import { createGlobalBuffActionState, type GlobalBuffActionState } from '../state/actionState';
-import {
-  type BuffReference,
-  type GlobalBuffInstanceState,
-  type SharedSpGainModifier,
-  type SharedSpRecoveryModifier,
+import type {
+  BuffReference,
+  GlobalBuffInstanceState,
+  SharedSpGainModifier,
+  SharedSpRecoveryModifier,
 } from '../state/foundationState';
 import { createGlobalBuffState, type GlobalBuffState } from '../state/instanceState';
 import { COMBAT_FRAME_INTERVAL } from '../time/combatClock';
 import type { BuffApplicationHandle, BuffOperationTarget } from './buffOperationExecutor';
 import { buffReferenceKey } from './buffReference';
-import { operationProducer } from '../receipt/combatObjectIdentity';
 
 type CreateStep = ResolvedCombatStepForKind<'createGlobalBuff'>;
 
@@ -72,10 +73,7 @@ export class GlobalBuffRuntime {
     readonly sharedSpGainModifierSet: SharedSpGainModifierSet | null = null,
     readonly sharedSpRecoveryModifierSet: SharedSpRecoveryModifierSet | null = null,
     restoredState?: GlobalBuffState,
-    readonly onCreated?: (
-      state: GlobalBuffInstanceState,
-      producedBy?: import('../receipt/combatReceipt').CombatObjectRef,
-    ) => void,
+    readonly onCreated?: (state: GlobalBuffInstanceState, producedBy?: CombatObjectRef) => void,
   ) {
     this.runtimeState = restoredState ?? createGlobalBuffState();
   }
@@ -92,9 +90,7 @@ export class GlobalBuffRuntime {
       sourceActionId: string | undefined,
       definitionProgramId: number | null,
     ) => CompiledGlobalBuffDefinition | undefined;
-    readonly resolveChild: (
-      reference: import('../state/foundationState').BuffReference,
-    ) => BuffApplicationHandle | undefined;
+    readonly resolveChild: (reference: BuffReference) => BuffApplicationHandle | undefined;
   }): void {
     for (const group of this.runtimeState.groups.values()) {
       for (const state of group) {
@@ -128,7 +124,7 @@ export class GlobalBuffRuntime {
   }
 
   add(input: {
-    readonly producedBy?: import('../receipt/combatReceipt').CombatObjectRef;
+    readonly producedBy?: CombatObjectRef;
     readonly id: string;
     readonly definition: CompiledGlobalBuffDefinition;
     readonly definitionProgramId?: number;
@@ -260,7 +256,7 @@ export class GlobalBuffRuntime {
     }
     const gainSet = this.sharedSpGainModifierSet;
     const recoverySet = this.sharedSpRecoveryModifierSet;
-    const resolveChild = (reference: import('../state/foundationState').BuffReference) => {
+    const resolveChild = (reference: BuffReference) => {
       const child = childBindings.get(buffReferenceKey(reference));
       if (child === undefined) throw new Error('global Buff child binding is missing');
       return child;
@@ -497,14 +493,7 @@ function resolveGlobalBuffSource(
   if (source === 'eventSource') {
     if (context?.event === undefined)
       throw new Error('eventSource GlobalBuff source requires an event context');
-    if ('payload' in context.event) return abilityEventSourceId(context.event);
-    if ('sourceId' in context.event && typeof context.event.sourceId === 'string') {
-      return context.event.sourceId;
-    }
-    if ('sourceOperatorId' in context.event && typeof context.event.sourceOperatorId === 'string') {
-      return context.event.sourceOperatorId;
-    }
-    throw new Error('active event does not expose a GlobalBuff source identity');
+    return abilityEventSourceId(context.event);
   }
   if (source === 'currentAbilityEntity') {
     const target = context?.currentTarget;

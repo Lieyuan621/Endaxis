@@ -1,12 +1,13 @@
 /** 单次失衡计算包，以及 Buff 实例持有的失衡修正器。 */
+import type { PoiseProcessTiming } from '../../../../packages/game-data-contract/src/modifiers';
+import type {
+  PoiseModifierDefinition,
+  PoiseModifierSide,
+} from '../../../../packages/game-data-contract/src/modifiers.ts';
 import type { ModifierConditionRuntime } from '../actions/modifierConditionRuntime';
 import { resolveBuffModifierNumber } from '../buffs/buffModifierNumberSource';
+import type { PoiseModifier as PoiseModifierState } from '../state/foundationState';
 import { applyPoiseModifier } from './poiseModifierExecution';
-import {
-  type PoiseModifierDefinition,
-  type PoiseModifierSide,
-} from '../../../../packages/game-data-contract/src/modifiers.ts';
-import { type PoiseModifier as PoiseModifierState } from '../state/foundationState';
 
 import type { DamageFeature, DamageTag } from '../../game-data/operatorDefinition';
 import type { BuffModifierNumberSource } from '../state/foundationState';
@@ -54,7 +55,7 @@ export class PoiseModifier {
       throw new Error('restored poise modifier condition is not bound to its saved state');
   }
   apply(
-    timing: import('../../../../packages/game-data-contract/src/modifiers').PoiseProcessTiming,
+    timing: PoiseProcessTiming,
     side: PoiseModifierSide,
     context: PoiseCalculationContext,
   ): void {

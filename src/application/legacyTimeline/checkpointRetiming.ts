@@ -1,10 +1,11 @@
+import type { CombatReceiptEntry } from '../../core/combat/receipt/combatReceipt';
+import type { CombatReceiptCursor } from '../../core/combat/receipt/combatReceiptHistory';
 import {
   CombatInputSchedule,
   type CombatInputScheduleCheckpoint,
   type ScheduledCombatFrameInput,
 } from '../simulation/combatInputSchedule';
 import type { StandardPlayerDamageCombatSession } from '../simulation/standardPlayerDamageCombatSession';
-import type { CombatReceiptEntry } from '../../core/combat/receipt/combatReceipt';
 import type { LegacyRetimingCheckpointSession, LegacyRetimingTrial } from './heuristicRetiming';
 
 const RETIMING_EVENTS = new Set([
@@ -57,8 +58,7 @@ export class CheckpointRetimingSession implements LegacyRetimingCheckpointSessio
     );
     let branch: StandardPlayerDamageCombatSession | null = driver.session;
     const entries: CombatReceiptEntry[] = [];
-    let cursor:
-      import('../../core/combat/receipt/combatReceiptHistory').CombatReceiptCursor | undefined;
+    let cursor: CombatReceiptCursor | undefined;
     return {
       advanceToFrame(endFrame, stopWhen) {
         const activeBranch = branch;

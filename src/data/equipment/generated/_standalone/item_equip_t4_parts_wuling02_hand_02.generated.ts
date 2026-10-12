@@ -4,7 +4,7 @@ import type { GearDefinition } from '../../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'item_equip_t4_parts_wuling02_hand_02',
   assetSlug: 'item_equip_t4_parts_wuling02_hand_02',
-  iconPath: '/equipment/wuling02/item_equip_t4_parts_wuling02_hand_02.webp',
+  icon: 'endaxis:equipment/wuling02/item_equip_t4_parts_wuling02_hand_02',
   slotType: 'gloves',
   levelRequirement: 70,
   baseDefense: 42,

@@ -1,18 +1,20 @@
-import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import { describe, expect, it, vi } from 'vitest';
+import type { AbilityEvent } from '../../../../packages/game-data-contract/src/abilityEvents';
 import type {
   ActionGraphNode,
   ActionGraphStep,
 } from '../../../../packages/game-data-contract/src/actionGraph';
-import { createTestBuffReference } from '../buffs/buffTestFixtures';
-import { createNativeEventFixture } from '../events/nativeEventTestFixture';
-import { AbilityEventDispatcher } from '../events/abilityEventDispatcher';
-import type { AbilityEvent } from '../../../../packages/game-data-contract/src/abilityEvents';
-import type { AbilityEventPayloadMap } from '../events/combatAbilityEvent';
-import { describe, expect, it, vi } from 'vitest';
-import type { CompiledEquipmentContribution } from '../../compiler/compileEquipment';
 import type { ResolvedActionSequence } from '../../compiler/combatProgram';
-import type { CombatOperationExecutor } from '../skills/skillRuntime';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import type { CompiledEquipmentContribution } from '../../compiler/compileEquipment';
+import { createTestBuffReference } from '../buffs/buffTestFixtures';
+import { AbilityEventDispatcher } from '../events/abilityEventDispatcher';
+import { createEventBuff } from '../events/buffEventTestFixture';
+import type { AbilityEventPayloadMap, CombatAbilityEvent } from '../events/combatAbilityEvent';
 import { CombatSemanticEventRuntime } from '../events/combatSemanticEventRuntime';
+import { createNativeEventFixture } from '../events/nativeEventTestFixture';
+import type { CombatOperationExecutor } from '../skills/skillRuntime';
+import type { RegisterEquipmentAbilityEventAction } from './equipmentEventRuntime';
 import { EquipmentEventRuntime } from './equipmentEventRuntime';
 
 const chainSequence = (
@@ -47,7 +49,12 @@ function createEnabledEquipmentRuntime(
 
 const gainSpStep = {
   kind: 'changeResource',
-  parameters: { resource: 'sp', amount: 10, recipient: 'team' },
+  parameters: {
+    resource: 'sp',
+    amount: 10,
+    source: { kind: 'fixed' as const, target: 'caster' as const },
+    targets: { kind: 'fixed' as const, target: 'caster' as const },
+  },
 } as const satisfies ActionGraphStep;
 
 const contribution: CompiledEquipmentContribution = {
@@ -162,7 +169,7 @@ describe('EquipmentEventRuntime', () => {
           {
             event: 'skillSpGained',
             payload: {
-              sourceOperatorId: 'operator:a',
+              sourceId: 'operator:a',
               source: 'skill',
               gainKind: 'gain',
               requestedAmount: 1,
@@ -268,7 +275,7 @@ describe('EquipmentEventRuntime', () => {
             {
               event: 'skillSpGained',
               payload: {
-                sourceOperatorId: 'operator:a',
+                sourceId: 'operator:a',
                 source: 'skill',
                 gainKind: 'gain',
                 requestedAmount: 1,
@@ -300,9 +307,7 @@ describe('EquipmentEventRuntime', () => {
   it('注册中途失败会注销已安装的监听，残留回调不能再执行', () => {
     const disposed = vi.fn();
     const execute = vi.fn(() => true);
-    let callback:
-      | Parameters<import('./equipmentEventRuntime').RegisterEquipmentAbilityEventAction>[3]
-      | undefined;
+    let callback: Parameters<RegisterEquipmentAbilityEventAction>[3] | undefined;
     expect(() =>
       createEnabledEquipmentRuntime(
         new CombatSemanticEventRuntime(),
@@ -329,7 +334,7 @@ describe('EquipmentEventRuntime', () => {
     callback?.({
       event: 'skillSpGained',
       payload: {
-        sourceOperatorId: 'operator:a',
+        sourceId: 'operator:a',
         source: 'skill',
         gainKind: 'gain',
         requestedAmount: 1,
@@ -340,9 +345,7 @@ describe('EquipmentEventRuntime', () => {
   });
 
   it('初始化写入和不同事件响应共用能力黑板，重复事件累计且不同能力隔离', () => {
-    const handles: Parameters<
-      import('./equipmentEventRuntime').RegisterEquipmentAbilityEventAction
-    >[3][] = [];
+    const handles: Parameters<RegisterEquipmentAbilityEventAction>[3][] = [];
     const shared = {
       ...contribution,
       blackboard: { counter: 1 },
@@ -380,7 +383,7 @@ describe('EquipmentEventRuntime', () => {
     const gain = {
       event: 'skillSpGained' as const,
       payload: {
-        sourceOperatorId: 'operator:a',
+        sourceId: 'operator:a',
         source: 'skill' as const,
         gainKind: 'gain' as const,
         requestedAmount: 1,
@@ -475,7 +478,7 @@ describe('EquipmentEventRuntime', () => {
       {
         event: 'skillSpGained',
         payload: {
-          sourceOperatorId: 'operator:a',
+          sourceId: 'operator:a',
           source: 'skill',
           gainKind: 'gain',
           requestedAmount: 1,
@@ -497,15 +500,13 @@ describe('EquipmentEventRuntime', () => {
   });
 
   it.each([true, false])('配装复用序列状态但不加全局重入锁：已执行前缀=%s', prefix => {
-    let registered:
-      | Parameters<import('./equipmentEventRuntime').RegisterEquipmentAbilityEventAction>[3]
-      | undefined;
+    let registered: Parameters<RegisterEquipmentAbilityEventAction>[3] | undefined;
     const calls: string[] = [];
     const emit = (amount: number) =>
       registered?.({
         event: 'skillSpGained',
         payload: {
-          sourceOperatorId: 'operator:a',
+          sourceId: 'operator:a',
           source: 'skill',
           gainKind: 'gain',
           requestedAmount: amount,
@@ -525,8 +526,8 @@ describe('EquipmentEventRuntime', () => {
               sequence: chainSequence(
                 'equipment-reentry',
                 (prefix ? ['prefix', 'emit', 'tail'] : ['emit', 'tail']).map(flag => ({
-                  kind: 'setContextFlag',
-                  parameters: { flag, value: true, target: 'caster' },
+                  kind: 'triggerCustomAbilityEvent',
+                  parameters: { eventName: flag, eventParam: 0, target: 'caster' as const },
                 })),
               ),
             },
@@ -536,13 +537,13 @@ describe('EquipmentEventRuntime', () => {
       ({ event }) => ({
         evaluate: () => true,
         execute: (step, context) => {
-          if (step.kind !== 'setContextFlag') throw new Error('unexpected step');
+          if (step.kind !== 'triggerCustomAbilityEvent') throw new Error('unexpected step');
           if (!('event' in event) || event.event !== 'skillSpGained')
             throw new Error('unexpected event');
-          calls.push(`${step.parameters.flag}:${event.payload.amount}`);
+          calls.push(`${step.parameters.eventName}:${event.payload.amount}`);
           if (calls.length > 12) throw new Error('equipment response recursively restarted');
           expect(context?.event).toBe(event);
-          if (step.parameters.flag === 'emit' && event.payload.amount !== 99) emit(99);
+          if (step.parameters.eventName === 'emit' && event.payload.amount !== 99) emit(99);
           return true;
         },
       }),
@@ -780,9 +781,7 @@ describe('EquipmentEventRuntime', () => {
   });
 
   it('配装技力响应保留原始载荷，不要求战技来源或正的实增量', () => {
-    let registered:
-      | Parameters<import('./equipmentEventRuntime').RegisterEquipmentAbilityEventAction>[3]
-      | undefined;
+    let registered: Parameters<RegisterEquipmentAbilityEventAction>[3] | undefined;
     const execute = vi.fn<CombatOperationExecutor['execute']>(() => true);
     const createExecutor = vi.fn<ConstructorParameters<typeof EquipmentEventRuntime>[3]>(() => ({
       execute,
@@ -808,7 +807,7 @@ describe('EquipmentEventRuntime', () => {
       },
     );
     const payload = {
-      sourceOperatorId: 'operator:a',
+      sourceId: 'operator:a',
       source: 'powerAttack' as const,
       gainKind: 'refund' as const,
       requestedAmount: 30,
@@ -825,9 +824,7 @@ describe('EquipmentEventRuntime', () => {
 
   it('配装原样消费技能事件，不从当前技能字段补造遗漏的来源', () => {
     const events = new CombatSemanticEventRuntime();
-    let registered:
-      | Parameters<import('./equipmentEventRuntime').RegisterEquipmentAbilityEventAction>[3]
-      | undefined;
+    let registered: Parameters<RegisterEquipmentAbilityEventAction>[3] | undefined;
     let observed: unknown;
     const execute = vi.fn<CombatOperationExecutor['execute']>((_step, context) => {
       observed = context?.eventSkillCastInfo;
@@ -895,7 +892,7 @@ describe('EquipmentEventRuntime', () => {
     const events = new CombatSemanticEventRuntime();
     let registered:
       | ((
-          published: import('../events/combatAbilityEvent').CombatAbilityEvent<'outputBuff'>,
+          published: CombatAbilityEvent<'outputBuff'>,
           actionContext?: {
             readonly inputTarget: { readonly kind: 'enemy' };
             readonly triggerTarget: { readonly kind: 'operator'; readonly operatorId: string };
@@ -964,4 +961,3 @@ describe('EquipmentEventRuntime', () => {
     ]);
   });
 });
-import { createEventBuff } from '../events/buffEventTestFixture';

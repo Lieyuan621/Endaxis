@@ -3,30 +3,8 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 
 const definition = {
   slug: 'suit_heal01',
-  iconPath: '/equipment/heal01/item_equip_t4_suit_heal01_edc_03.webp',
+  icon: 'endaxis:equipment/heal01/item_equip_t4_suit_heal01_edc_03',
   modifiers: [{ kind: 'staticHealingIncrease', target: 'output', value: 0.2 }],
-  actionGraph: {
-    main: {
-      nodes: {
-        applyBuff_1: {
-          action: {
-            kind: 'applyBuff',
-            parameters: {
-              buffId: 'buff_equipsuit_healup_01',
-              target: 'caster',
-              blackboardAssignments: {
-                dmg_taken_down: { kind: 'constant', value: 0.85 },
-                dmg_taken_down2: { kind: 'constant', value: 0.7 },
-                duration: { kind: 'constant', value: 10 },
-              },
-            },
-          },
-          next: null,
-        },
-      },
-    },
-    macros: {},
-  },
   skillId: 'passive_equipsuit_healup_01',
   buffDefinitions: {
     buff_common_dmgtk_down_equip_1: {
@@ -39,8 +17,7 @@ const definition = {
       maxTriggerCount: 0,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_buff_def_up',
-        iconPath: '/icons/icon_battle_buff_def_up.webp',
+        icon: 'endaxis:icons/icon_battle_buff_def_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -108,8 +85,8 @@ const definition = {
       blackboard: { dmg_taken_down: -0.2, dmg_taken_down2: -0.4, duration: 0 },
       attributeModifiers: [],
       abilityEventResponses: [
-        { event: 'outputHeal', priority: 0, sequence: { $sequence: 'conditional_2' } },
-        { event: 'outputHeal', priority: 0, sequence: { $sequence: 'conditional_4' } },
+        { event: 'outputHeal', priority: 0, sequence: { $sequence: 'checkCondition_2' } },
+        { event: 'outputHeal', priority: 0, sequence: { $sequence: 'invertNextResult_5' } },
       ],
       actionGraph: {
         main: {
@@ -118,55 +95,67 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_common_dmgtk_down_equip_1',
-                  target: 'eventTarget',
-                  source: 'buffOwner',
+                  buffs: [
+                    {
+                      buffId: 'buff_common_dmgtk_down_equip_1',
+                      blackboardAssignments: { priority: { kind: 'constant', value: 1 } },
+                      copiedBlackboardAssignments: {
+                        value: 'dmg_taken_down2',
+                        duration: 'duration',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'inputTarget' },
+                  source: { kind: 'owner' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  blackboardAssignments: { priority: { kind: 'constant', value: 1 } },
-                  copiedBlackboardAssignments: { value: 'dmg_taken_down2', duration: 'duration' },
                 },
               },
               next: null,
             },
-            conditional_2: {
+            checkCondition_2: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
               },
-              next: null,
+              next: 'applyBuff_1',
             },
             applyBuff_3: {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_common_dmgtk_down_equip_1',
-                  target: 'eventTarget',
-                  source: 'buffOwner',
+                  buffs: [
+                    {
+                      buffId: 'buff_common_dmgtk_down_equip_1',
+                      blackboardAssignments: { priority: { kind: 'constant', value: 0 } },
+                      copiedBlackboardAssignments: {
+                        value: 'dmg_taken_down',
+                        duration: 'duration',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'inputTarget' },
+                  source: { kind: 'owner' },
                   inheritSourceSkillCastInfo: true,
-                  blackboardAssignments: { priority: { kind: 'constant', value: 0 } },
-                  copiedBlackboardAssignments: { value: 'dmg_taken_down', duration: 'duration' },
                 },
               },
               next: null,
             },
-            conditional_4: {
+            checkCondition_4: {
               action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'applyBuff_3' },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
               },
-              next: null,
+              next: 'applyBuff_3',
+            },
+            invertNextResult_5: {
+              action: { kind: 'invertNextResult', parameters: {} },
+              next: 'checkCondition_4',
             },
           },
           dataNodes: {
             data_1: { type: 'boolean', expression: { kind: 'eventOverheal' } },
             data_2: { type: 'boolean', expression: { kind: 'eventOverheal' } },
-            data_3: {
-              type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-            },
           },
         },
         macros: {},
@@ -174,6 +163,32 @@ const definition = {
     },
   },
   enableSequence: { $sequence: 'applyBuff_1' },
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [
+                {
+                  buffId: 'buff_equipsuit_healup_01',
+                  blackboardAssignments: {
+                    dmg_taken_down: { kind: 'constant', value: 0.85 },
+                    dmg_taken_down2: { kind: 'constant', value: 0.7 },
+                    duration: { kind: 'constant', value: 10 },
+                  },
+                },
+              ],
+              targets: { kind: 'fixed', target: 'caster' },
+            },
+          },
+          next: null,
+        },
+      },
+    },
+    macros: {},
+  },
 } as const satisfies GearSetDefinition;
 
 export default definition;

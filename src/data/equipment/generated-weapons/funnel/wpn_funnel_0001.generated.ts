@@ -79,9 +79,13 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_funnel_0001',
-                  target: 'caster',
-                  blackboardAssignments: { atk_up: { kind: 'valueNode', nodeId: 'data_1' } },
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_funnel_0001',
+                      blackboardAssignments: { atk_up: { kind: 'valueNode', nodeId: 'data_1' } },
+                    },
+                  ],
+                  targets: { kind: 'fixed', target: 'caster' },
                 },
               },
               next: null,
@@ -99,7 +103,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_funnel_0001',
-  iconPath: '/weapons/funnel/wpn_funnel_0001.webp',
+  icon: 'endaxis:weapons/funnel/wpn_funnel_0001',
   buffDefinitions: {
     buff_wpn_funnel_0001: {
       stackingType: 'unique',
@@ -110,7 +114,7 @@ const definition = {
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: { atk_up: 0, hp_ratio_c: 0 },
+      blackboard: { atk_up: 0 },
       attributeModifiers: [
         { attribute: 'Atk', slot: 'baseMultiplier', value: { blackboardKey: 'atk_up' } },
       ],

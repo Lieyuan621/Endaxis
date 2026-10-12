@@ -4,10 +4,7 @@ import { parseConditionLeafSource } from '../../../tools/game-data-compiler/src/
 import { parseKnownNativeActionSequenceSource } from '../../../tools/game-data-compiler/src/source/actionLeaf.ts';
 import { compileCombatActionSequenceSource } from '../../../tools/game-data-compiler/src/compiler/buffs/buffRuntimeProjection.ts';
 import { validateSkillDefinition } from '../game-data/validateSkillDefinition';
-import {
-  createActionGraphBuilder,
-  readActionGraphChain,
-} from '../../../tools/game-data-compiler/src/compiler/actions/actionGraphBuilder.ts';
+import { createActionGraphBuilder } from '../../../tools/game-data-compiler/src/compiler/actions/actionGraphBuilder.ts';
 import type { CompiledBuffStepSource } from '../../../tools/game-data-compiler/src/compiler/actions/combatActionProjectionTypes.ts';
 import { ActionGraphDefinitionRepository } from './actionGraphDefinitionRepository';
 import type { ResolvedActionSequence } from './combatProgram';
@@ -344,7 +341,6 @@ describe('原生元素条件从公共编译到运行写回', () => {
     // 诀 raw 33934515...58dca0bc：第五条的 CompareFloat -> CheckSpellInflictionType。
     const entity = new ActionBlackboard({ [key]: 8, EntityBB_wisd_greater_will: 0 });
     const r = runtime([guard(), check()], entity);
-    expect(readActionGraphChain(r.projected.graph, r.projected.sequence)).toHaveLength(1);
     expect(r.run(element)).toBe(true);
     expect(entity.getNumber(key)).toBe(expected);
     expect(r.direct.snapshot()).toEqual({});
@@ -417,23 +413,10 @@ describe('原生元素条件从公共编译到运行写回', () => {
     expect(direct.getNumber(key)).toBe(1);
   });
 
-  it('纯尾条件仍可省略，但写入空串已规范为纯条件；空 mask 的正式定义合法', () => {
-    const empty = compile([check(15, '')]);
-    expect(readActionGraphChain(empty.graph, empty.sequence)).toEqual([]);
-    const projected = compile([check(0)]);
-    expect(readActionGraphChain(projected.graph, projected.sequence)).toHaveLength(1);
-    expect(
-      validateSkillDefinition({
-        skillType: 'basicAttack',
-        levelSource: 'basicAttack',
-        nativeSkillType: 'attack',
-        naturalDurationFrames: 30,
-        exclusiveFrame: 0,
-        offsetRecordFrame: 0,
-        key: 'test',
-        timelineBlockFrames: 1,
-        scheduledSequences: [{ startFrame: 0, sequence: projected.sequence }],
-      }),
-    ).toEqual([]);
+  it('纯条件保留返回值，空 mask 不写入保存变量', () => {
+    const entity = new ActionBlackboard({ [key]: 8 });
+    expect(runtime([check(15, '')], entity).run('nature')).toBe(true);
+    expect(runtime([check(0)], entity).run('nature')).toBe(false);
+    expect(entity.getNumber(key)).toBe(8);
   });
 });

@@ -120,16 +120,14 @@ it('keeps hidden airborne damage and its icon without requiring a headbar row', 
     ...applied,
     data: {
       ...applied.data,
-      iconPath: '/icons/airborne.webp',
+      icon: 'endaxis:icons/airborne',
       showInHeadBarCommon: false,
       showInHeadBarAttached: false,
     },
   };
   const result = projectEnemyEffectViz([start, hit()], 30);
   expect(result.damageHits).toEqual([hit()]);
-  expect(findBuffDamageSegment(hit(), result.damageBuffs ?? [])?.iconPath).toBe(
-    '/icons/airborne.webp',
-  );
+  expect(findBuffDamageSegment(hit(), result.damageBuffs ?? [])?.icon).toBe('endaxis:icons/airborne');
   expect(projectEnemyEffectViz([hit()], 30).damageHits).toEqual([hit()]);
 });
 

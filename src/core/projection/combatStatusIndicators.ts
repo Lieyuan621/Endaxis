@@ -43,8 +43,7 @@ export interface CombatStatusIndicator {
   readonly simpleModifierAttribute?: string;
   readonly simpleModifierSlot?: string;
   readonly simpleModifierValue?: number;
-  readonly iconId?: string;
-  readonly iconPath?: string;
+  readonly icon?: string;
   readonly iconStyle?: string;
   readonly abnormalColorType?: string;
   readonly showWarningBackground: boolean;
@@ -148,8 +147,7 @@ export function projectCombatStatusIndicators(
           ...(segment.simpleModifierValue === undefined
             ? {}
             : { simpleModifierValue: segment.simpleModifierValue }),
-          ...(segment.iconId === undefined ? {} : { iconId: segment.iconId }),
-          ...(segment.iconPath === undefined ? {} : { iconPath: segment.iconPath }),
+          ...(segment.icon === undefined ? {} : { icon: segment.icon }),
           ...(segment.iconStyleInSquad === undefined
             ? {}
             : { iconStyle: segment.iconStyleInSquad }),

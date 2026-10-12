@@ -12,6 +12,8 @@ export const ardeliaChr_0025_ardelia_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 5,
             recycleDelaySeconds: 0.0333333350718021,
             hit: { finishOnHit: true },
@@ -31,45 +33,52 @@ export const ardeliaChr_0025_ardelia_attack1ActionGraph = {
                 },
                 blackboard: { atb: 0, atk_scale: 0 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_opt2' } },
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
                 ],
                 actionGraph: {
                   main: {
                     nodes: {
-                      changeResourceByActionValue_1: {
+                      changeResource_3: {
                         action: {
-                          kind: 'changeResourceByActionValue',
+                          kind: 'changeResource',
                           parameters: {
                             resource: 'sp',
                             amount: { kind: 'valueNode', nodeId: 'data_1' },
                             coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'team',
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
+                            onlyMainOperator: true,
                             spGainKind: 'gain',
                             spGainSource: 'normalAttack',
                           },
                         },
                         next: null,
                       },
-                      conditional_2: {
+                      checkCondition_1: {
                         action: {
-                          kind: 'conditional',
+                          kind: 'checkCondition',
                           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
                         },
                         next: null,
                       },
-                      conditional_opt1: {
+                      checkCondition_2: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_3' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_2' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+                        },
+                        next: 'checkCondition_1',
+                      },
+                      ifElse_4: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_2' },
+                          whenTrue: { $sequence: 'changeResource_3' },
+                          whenFalse: { $sequence: null },
                         },
                         next: null,
                       },
-                      dealDamage_opt2: {
+                      dealDamage_5: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
@@ -78,12 +87,22 @@ export const ardeliaChr_0025_ardelia_attack1ActionGraph = {
                             tags: ['normalAttack'],
                           },
                         },
-                        next: 'conditional_opt1',
+                        next: 'ifElse_4',
                       },
                     },
                     dataNodes: {
                       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-                      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_2: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityCountCompare',
+                          target: { kind: 'fixed', target: 'enemy' },
+                          containsHittableTarget: false,
+                          excludeDeadEntity: false,
+                          operator: 'greaterOrEqual',
+                          value: 1,
+                        },
+                      },
                       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
                       data_4: {
                         type: 'number',
@@ -99,20 +118,7 @@ export const ardeliaChr_0025_ardelia_attack1ActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_2: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_1' },
-        },
-        next: null,
-      },
-      reachSkillOperableBoundary_3: {
+      reachSkillOperableBoundary_2: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0025_ardelia_attack2'] },
@@ -148,9 +154,10 @@ export const ardeliaChr_0025_ardelia_attack1: SkillDefinition = {
   },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'withActionBlackboardScope_2' } },
-    { startFrame: 11, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
+    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'launchProjectile_1' } },
+    { startFrame: 11, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_2' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0025_ardelia_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
@@ -165,6 +172,8 @@ export const ardeliaChr_0025_ardelia_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.0333333350718021,
             hit: { finishOnHit: true },
@@ -184,45 +193,52 @@ export const ardeliaChr_0025_ardelia_attack2ActionGraph = {
                 },
                 blackboard: { atb: 0, atk_scale: 0 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_opt2' } },
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
                 ],
                 actionGraph: {
                   main: {
                     nodes: {
-                      changeResourceByActionValue_1: {
+                      changeResource_3: {
                         action: {
-                          kind: 'changeResourceByActionValue',
+                          kind: 'changeResource',
                           parameters: {
                             resource: 'sp',
                             amount: { kind: 'valueNode', nodeId: 'data_1' },
                             coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'team',
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
+                            onlyMainOperator: true,
                             spGainKind: 'gain',
                             spGainSource: 'normalAttack',
                           },
                         },
                         next: null,
                       },
-                      conditional_2: {
+                      checkCondition_1: {
                         action: {
-                          kind: 'conditional',
+                          kind: 'checkCondition',
                           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
                         },
                         next: null,
                       },
-                      conditional_opt1: {
+                      checkCondition_2: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_3' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_2' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+                        },
+                        next: 'checkCondition_1',
+                      },
+                      ifElse_4: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_2' },
+                          whenTrue: { $sequence: 'changeResource_3' },
+                          whenFalse: { $sequence: null },
                         },
                         next: null,
                       },
-                      dealDamage_opt2: {
+                      dealDamage_5: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
@@ -231,12 +247,22 @@ export const ardeliaChr_0025_ardelia_attack2ActionGraph = {
                             tags: ['normalAttack'],
                           },
                         },
-                        next: 'conditional_opt1',
+                        next: 'ifElse_4',
                       },
                     },
                     dataNodes: {
                       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-                      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_2: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityCountCompare',
+                          target: { kind: 'fixed', target: 'enemy' },
+                          containsHittableTarget: false,
+                          excludeDeadEntity: false,
+                          operator: 'greaterOrEqual',
+                          value: 1,
+                        },
+                      },
                       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
                       data_4: {
                         type: 'number',
@@ -252,20 +278,7 @@ export const ardeliaChr_0025_ardelia_attack2ActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_2: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_1' },
-        },
-        next: null,
-      },
-      reachSkillOperableBoundary_5: {
+      reachSkillOperableBoundary_3: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0025_ardelia_attack3'] },
@@ -283,7 +296,6 @@ export const ardeliaChr_0025_ardelia_attack2: SkillDefinition = {
   blackboard: {
     atb: 0,
     atk_scale: [0.2, 0.22, 0.24, 0.26, 0.28, 0.3, 0.32, 0.34, 0.36, 0.39, 0.42, 0.45],
-    atk_scale_display: [0.4, 0.44, 0.48, 0.52, 0.56, 0.6, 0.64, 0.68, 0.72, 0.77, 0.83, 0.9],
   },
   timelineBlockFrames: 20,
   naturalDurationFrames: 118,
@@ -302,10 +314,11 @@ export const ardeliaChr_0025_ardelia_attack2: SkillDefinition = {
   },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'withActionBlackboardScope_2' } },
-    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'withActionBlackboardScope_2' } },
-    { startFrame: 20, endFrame: 36, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
+    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'launchProjectile_1' } },
+    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'launchProjectile_1' } },
+    { startFrame: 20, endFrame: 36, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0025_ardelia_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
@@ -320,6 +333,8 @@ export const ardeliaChr_0025_ardelia_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.0333333350718021,
             hit: { finishOnHit: true },
@@ -339,56 +354,69 @@ export const ardeliaChr_0025_ardelia_attack3ActionGraph = {
                 },
                 blackboard: { atb: 0, atk_scale: 0 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_opt3' } },
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_7' } },
                 ],
                 actionGraph: {
                   main: {
                     nodes: {
-                      changeResourceByActionValue_1: {
+                      checkCondition_1: {
                         action: {
-                          kind: 'changeResourceByActionValue',
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+                        },
+                        next: null,
+                      },
+                      changeResource_4: {
+                        action: {
+                          kind: 'changeResource',
                           parameters: {
                             resource: 'sp',
-                            amount: { kind: 'valueNode', nodeId: 'data_1' },
+                            amount: { kind: 'valueNode', nodeId: 'data_2' },
                             coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'team',
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
+                            onlyMainOperator: true,
                             spGainKind: 'gain',
                             spGainSource: 'normalAttack',
                           },
                         },
                         next: null,
                       },
-                      conditional_2: {
+                      checkCondition_2: {
                         action: {
-                          kind: 'conditional',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                         },
                         next: null,
                       },
-                      conditional_opt1: {
+                      checkCondition_3: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_3' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_2' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+                        },
+                        next: 'checkCondition_2',
+                      },
+                      ifElse_5: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_3' },
+                          whenTrue: { $sequence: 'changeResource_4' },
+                          whenFalse: { $sequence: null },
                         },
                         next: null,
                       },
-                      conditional_opt2: {
+                      ifElse_6: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_4' },
-                            alwaysNext: true,
-                          },
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_1' },
                           whenTrue: { $sequence: null },
+                          whenFalse: { $sequence: null },
                         },
-                        next: 'conditional_opt1',
+                        next: 'ifElse_5',
                       },
-                      dealDamage_opt3: {
+                      dealDamage_7: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
@@ -397,20 +425,30 @@ export const ardeliaChr_0025_ardelia_attack3ActionGraph = {
                             tags: ['normalAttack'],
                           },
                         },
-                        next: 'conditional_opt2',
+                        next: 'ifElse_6',
                       },
                     },
                     dataNodes: {
-                      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-                      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
-                      data_4: {
+                      data_1: {
                         type: 'boolean',
                         expression: {
                           kind: 'probability',
                           probability: { kind: 'constant', value: 0.3 },
                         },
                       },
+                      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+                      data_3: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityCountCompare',
+                          target: { kind: 'fixed', target: 'enemy' },
+                          containsHittableTarget: false,
+                          excludeDeadEntity: false,
+                          operator: 'greaterOrEqual',
+                          value: 1,
+                        },
+                      },
+                      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
                       data_5: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
@@ -425,25 +463,19 @@ export const ardeliaChr_0025_ardelia_attack3ActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_2: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_1' },
-        },
-        next: null,
-      },
-      createSpatialPointTargets_3: {
+      createSpatialPointTargets_2: {
         action: {
           kind: 'createSpatialPointTargets',
           parameters: { saveToContextKey: 'firePoint', count: { kind: 'constant', value: 1 } },
         },
-        next: 'withActionBlackboardScope_2',
+        next: 'launchProjectile_1',
+      },
+      createSpatialPointTargets_3: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'sectorCenter', count: { kind: 'constant', value: 1 } },
+        },
+        next: 'createSpatialPointTargets_2',
       },
       reachSkillOperableBoundary_46: {
         action: {
@@ -463,7 +495,6 @@ export const ardeliaChr_0025_ardelia_attack3: SkillDefinition = {
   blackboard: {
     atb: 0,
     atk_scale: [0.04, 0.04, 0.04, 0.05, 0.05, 0.05, 0.06, 0.06, 0.06, 0.07, 0.07, 0.08],
-    atk_scale_display: [0.53, 0.58, 0.63, 0.68, 0.74, 0.79, 0.84, 0.89, 0.95, 1.01, 1.09, 1.18],
   },
   timelineBlockFrames: 45,
   naturalDurationFrames: 164,
@@ -499,6 +530,7 @@ export const ardeliaChr_0025_ardelia_attack3: SkillDefinition = {
     { startFrame: 39, endFrame: 40, sequence: { $sequence: 'createSpatialPointTargets_3' } },
     { startFrame: 45, endFrame: 58, sequence: { $sequence: 'reachSkillOperableBoundary_46' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0025_ardelia_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
@@ -509,10 +541,48 @@ export const ardeliaChr_0025_ardelia_attack3: SkillDefinition = {
 export const ardeliaChr_0025_ardelia_attack4ActionGraph = {
   main: {
     nodes: {
-      spawnAbilityEntity_2: {
+      spawnAbilityEntity_6: {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
+            bornAt: { kind: 'context', key: 'sheepPos' },
+            abilityEntityId: 'abilityentity_chr_0025_ardelia_attack4',
+            childSkillId: 'chr_0025_ardelia_attack4_sheep',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+          },
+        },
+        next: null,
+      },
+      checkCondition_4: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+      ifElse_10: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_4' },
+          whenTrue: { $sequence: 'spawnAbilityEntity_6' },
+          whenFalse: { $sequence: 'spawnAbilityEntity_6' },
+        },
+        next: null,
+      },
+      createSpatialPointTargets_11: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'sheepPos', count: { kind: 'constant', value: 1 } },
+        },
+        next: 'ifElse_10',
+      },
+      spawnAbilityEntity_3: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'context', key: 'sheepPos' },
             abilityEntityId: 'abilityentity_chr_0025_ardelia_attack4',
             childSkillId: 'chr_0025_ardelia_attack4_sheep',
             inheritActionBlackboard: true,
@@ -522,27 +592,67 @@ export const ardeliaChr_0025_ardelia_attack4ActionGraph = {
         },
         next: null,
       },
-      conditional_3: {
+      ifElse_8: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' }, alwaysNext: true },
-          whenTrue: { $sequence: 'spawnAbilityEntity_2' },
-          whenFalse: { $sequence: 'spawnAbilityEntity_2' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_4' },
+          whenTrue: { $sequence: 'spawnAbilityEntity_3' },
+          whenFalse: { $sequence: 'spawnAbilityEntity_3' },
         },
         next: null,
       },
-      conditional_4: {
+      createSpatialPointTargets_9: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
-          whenTrue: { $sequence: 'conditional_3' },
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'sheepPos', count: { kind: 'constant', value: 1 } },
+        },
+        next: 'ifElse_8',
+      },
+      checkCondition_7: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: null,
       },
-      spawnAbilityEntity_5: {
+      ifElse_13: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_7' },
+          whenTrue: { $sequence: 'createSpatialPointTargets_9' },
+          whenFalse: { $sequence: 'createSpatialPointTargets_11' },
+        },
+        next: null,
+      },
+      checkCondition_12: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+        },
+        next: null,
+      },
+      ifElse_14: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_12' },
+          whenTrue: { $sequence: 'ifElse_13' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      spawnAbilityEntity_15: {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
+            bornAt: {
+              kind: 'fixedPoint',
+              owner: { kind: 'owner' },
+              directionTarget: { kind: 'source' },
+              center: { kind: 'owner' },
+            },
             abilityEntityId: 'abilityentity_chr_0025_ardelia_attack4_end',
             childSkillId: 'chr_0025_ardelia_attack4_end_sheep',
             inheritActionBlackboard: true,
@@ -552,10 +662,41 @@ export const ardeliaChr_0025_ardelia_attack4ActionGraph = {
         },
         next: null,
       },
-      spawnAbilityEntity_7: {
+      spawnAbilityEntity_21: {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
+            bornAt: { kind: 'context', key: 'sheepPos' },
+            abilityEntityId: 'abilityentity_chr_0025_ardelia_attack4_low',
+            childSkillId: 'chr_0025_ardelia_attack4_sheep',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+          },
+        },
+        next: null,
+      },
+      ifElse_25: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_4' },
+          whenTrue: { $sequence: 'spawnAbilityEntity_21' },
+          whenFalse: { $sequence: 'spawnAbilityEntity_21' },
+        },
+        next: null,
+      },
+      createSpatialPointTargets_26: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'sheepPos', count: { kind: 'constant', value: 1 } },
+        },
+        next: 'ifElse_25',
+      },
+      spawnAbilityEntity_18: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'context', key: 'sheepPos' },
             abilityEntityId: 'abilityentity_chr_0025_ardelia_attack4_low',
             childSkillId: 'chr_0025_ardelia_attack4_sheep',
             inheritActionBlackboard: true,
@@ -565,37 +706,57 @@ export const ardeliaChr_0025_ardelia_attack4ActionGraph = {
         },
         next: null,
       },
-      conditional_8: {
+      ifElse_23: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' }, alwaysNext: true },
-          whenTrue: { $sequence: 'spawnAbilityEntity_7' },
-          whenFalse: { $sequence: 'spawnAbilityEntity_7' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_4' },
+          whenTrue: { $sequence: 'spawnAbilityEntity_18' },
+          whenFalse: { $sequence: 'spawnAbilityEntity_18' },
         },
         next: null,
       },
-      conditional_9: {
+      createSpatialPointTargets_24: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' }, alwaysNext: true },
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'sheepPos', count: { kind: 'constant', value: 1 } },
+        },
+        next: 'ifElse_23',
+      },
+      ifElse_28: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_7' },
+          whenTrue: { $sequence: 'createSpatialPointTargets_24' },
+          whenFalse: { $sequence: 'createSpatialPointTargets_26' },
+        },
+        next: null,
+      },
+      ifElse_29: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_12' },
           whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'conditional_8' },
+          whenFalse: { $sequence: 'ifElse_28' },
         },
         next: null,
       },
-      applyBuff_10: {
+      applyBuff_30: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0025_ardelia_attack4_kill_sheep',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_chr_0025_ardelia_attack4_kill_sheep' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
         },
         next: null,
       },
-      reachSkillOperableBoundary_11: {
+      reachSkillOperableBoundary_31: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0025_ardelia_attack1'] },
@@ -608,12 +769,19 @@ export const ardeliaChr_0025_ardelia_attack4ActionGraph = {
         type: 'boolean',
         expression: { kind: 'probability', probability: { kind: 'constant', value: 0.5 } },
       },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_3: {
+      data_2: {
         type: 'boolean',
-        expression: { kind: 'probability', probability: { kind: 'constant', value: 0.5 } },
+        expression: {
+          kind: 'targetDistance',
+          source: { kind: 'owner' },
+          target: { kind: 'fixed', target: 'enemy' },
+          distance: 10,
+          lessThan: true,
+          includeTargetRadius: false,
+          containsHittableObject: false,
+        },
       },
-      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
     },
   },
   macros: {},
@@ -644,12 +812,13 @@ export const ardeliaChr_0025_ardelia_attack4: SkillDefinition = {
   },
   costFrame: 8,
   scheduledSequences: [
-    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'conditional_4' } },
-    { startFrame: 65, endFrame: 66, sequence: { $sequence: 'spawnAbilityEntity_5' } },
-    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'conditional_9' } },
-    { startFrame: 0, endFrame: 198, sequence: { $sequence: 'applyBuff_10' } },
-    { startFrame: 50, endFrame: 58, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
+    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_14' } },
+    { startFrame: 65, endFrame: 66, sequence: { $sequence: 'spawnAbilityEntity_15' } },
+    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_29' } },
+    { startFrame: 0, endFrame: 198, sequence: { $sequence: 'applyBuff_30' } },
+    { startFrame: 50, endFrame: 58, sequence: { $sequence: 'reachSkillOperableBoundary_31' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0025_ardelia_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
@@ -663,7 +832,7 @@ export const ardeliaChr_0025_ardelia_power_attackActionGraph = {
       launchProjectile_1: {
         action: {
           kind: 'launchProjectile',
-          parameters: { finish: 'firstTickReach' },
+          parameters: { inheritActionBlackboard: true, finish: 'firstTickReach' },
           callbacks: [],
         },
         next: null,
@@ -686,7 +855,7 @@ export const ardeliaChr_0025_ardelia_power_attackActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'nature',
-            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.05,
             tags: ['normalAttack', 'powerAttack'],
@@ -711,7 +880,7 @@ export const ardeliaChr_0025_ardelia_power_attackActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'nature',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.4,
             tags: ['normalAttack', 'powerAttack'],
@@ -722,7 +891,7 @@ export const ardeliaChr_0025_ardelia_power_attackActionGraph = {
       launchProjectile_8: {
         action: {
           kind: 'launchProjectile',
-          parameters: { finish: 'firstTickReach' },
+          parameters: { inheritActionBlackboard: true, finish: 'firstTickReach' },
           callbacks: [],
         },
         next: 'launchProjectile_1',
@@ -730,7 +899,7 @@ export const ardeliaChr_0025_ardelia_power_attackActionGraph = {
       launchProjectile_9: {
         action: {
           kind: 'launchProjectile',
-          parameters: { finish: 'firstTickReach' },
+          parameters: { inheritActionBlackboard: true, finish: 'firstTickReach' },
           callbacks: [],
         },
         next: 'launchProjectile_8',
@@ -740,6 +909,8 @@ export const ardeliaChr_0025_ardelia_power_attackActionGraph = {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'inputTarget' },
               executeEachFrame: false,
               triggerIntervalSeconds: 0.1,
               maxCountPerTarget: -1,
@@ -755,6 +926,8 @@ export const ardeliaChr_0025_ardelia_power_attackActionGraph = {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'inputTarget' },
               executeEachFrame: false,
               triggerIntervalSeconds: 0.1,
               maxCountPerTarget: -1,
@@ -770,6 +943,8 @@ export const ardeliaChr_0025_ardelia_power_attackActionGraph = {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'inputTarget' },
               executeEachFrame: false,
               triggerIntervalSeconds: 0.1,
               maxCountPerTarget: -1,
@@ -830,8 +1005,9 @@ export const ardeliaChr_0025_ardelia_power_attackActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_full_immune_medium',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_common_full_immune_medium' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
@@ -842,8 +1018,9 @@ export const ardeliaChr_0025_ardelia_power_attackActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_power_attack_disable_cast_skill',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_common_power_attack_disable_cast_skill' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
@@ -851,11 +1028,7 @@ export const ardeliaChr_0025_ardelia_power_attackActionGraph = {
         next: null,
       },
     },
-    dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-    },
+    dataNodes: { data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } } },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
@@ -890,6 +1063,7 @@ export const ardeliaChr_0025_ardelia_power_attack: SkillDefinition = {
     { startFrame: 0, endFrame: 65, sequence: { $sequence: 'applyBuff_17' } },
     { startFrame: 0, endFrame: 57, sequence: { $sequence: 'applyBuff_18' } },
   ],
+  defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
@@ -899,29 +1073,39 @@ export const ardeliaChr_0025_ardelia_power_attack: SkillDefinition = {
 export const ardeliaChr_0025_ardelia_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      changeResourceByActionValue_1: {
+      checkCondition_2: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+      changeResource_3: {
+        action: {
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            amount: { kind: 'valueNode', nodeId: 'data_2' },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'team',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
             spGainKind: 'gain',
             spGainSource: 'normalAttack',
           },
         },
         next: null,
       },
-      conditional_2: {
+      ifElse_4: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
-          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_2' },
+          whenTrue: { $sequence: 'changeResource_3' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_3: {
+      dealDamage_5: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -930,31 +1114,24 @@ export const ardeliaChr_0025_ardelia_plunging_attack_endActionGraph = {
             tags: ['normalAttack', 'plungingAttack'],
           },
         },
-        next: 'conditional_2',
+        next: 'ifElse_4',
       },
-      findOwnerSpawnedAbilityEntities_4: {
+      findOwnerSpawnedAbilityEntities_6: {
         action: {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'Sheep',
             abilityEntityIds: ['abilityentity_chr_0025_ardelia_air_attack'],
+            owner: { kind: 'owner' },
           },
         },
         next: null,
       },
-      finishCurrentAbilityEntity_5: {
-        action: { kind: 'finishCurrentAbilityEntity', parameters: {} },
+      finishOwner_7: {
+        action: { kind: 'finishOwner', parameters: { targets: { kind: 'context', key: 'Sheep' } } },
         next: null,
       },
-      forEachContextTarget_6: {
-        action: {
-          kind: 'forEachContextTarget',
-          parameters: { contextKey: 'Sheep' },
-          body: { $sequence: 'finishCurrentAbilityEntity_5' },
-        },
-        next: null,
-      },
-      inheritBuffById_7: {
+      inheritBuffById_8: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -969,8 +1146,8 @@ export const ardeliaChr_0025_ardelia_plunging_attack_endActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -978,7 +1155,6 @@ export const ardeliaChr_0025_ardelia_plunging_attack_endActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const ardeliaChr_0025_ardelia_plunging_attack_end: SkillDefinition = {
-  actionGraph: ardeliaChr_0025_ardelia_plunging_attack_endActionGraph,
   key: 'chr_0025_ardelia_plunging_attack_end',
   element: 'physical',
   blackboard: {
@@ -991,14 +1167,16 @@ export const ardeliaChr_0025_ardelia_plunging_attack_end: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_3' } },
-    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_4' } },
-    { startFrame: 5, endFrame: 8, sequence: { $sequence: 'forEachContextTarget_6' } },
-    { startFrame: 0, endFrame: 5, sequence: { $sequence: 'inheritBuffById_7' } },
+    { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } },
+    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_6' } },
+    { startFrame: 5, endFrame: 8, sequence: { $sequence: 'finishOwner_7' } },
+    { startFrame: 0, endFrame: 5, sequence: { $sequence: 'inheritBuffById_8' } },
   ],
+  defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
+  actionGraph: ardeliaChr_0025_ardelia_plunging_attack_endActionGraph,
 };
 
 export const ardeliaChr_0025_ardelia_normal_skillActionGraph = {
@@ -1008,28 +1186,57 @@ export const ardeliaChr_0025_ardelia_normal_skillActionGraph = {
         action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} },
         next: null,
       },
-      finishTimeline_2: { action: { kind: 'finishTimeline', parameters: {} }, next: null },
-      jumpTimeline_opt1: {
+      interruptCurrentSkill_2: {
+        action: { kind: 'interruptCurrentSkill', parameters: { targets: { kind: 'owner' } } },
+        next: null,
+      },
+      checkCondition_3: {
         action: {
-          kind: 'jumpTimeline',
-          parameters: { destinationFrame: 32, condition: { kind: 'constant', value: true } },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
         },
         next: null,
       },
-      jumpTimeline_opt2: {
+      jumpTimeline_4: {
         action: {
           kind: 'jumpTimeline',
-          parameters: {
-            destinationFrame: 221,
-            condition: { kind: 'conditionNode', nodeId: 'data_1' },
-          },
+          parameters: { destinationFrame: 32 },
+          condition: { $sequence: 'checkCondition_3' },
         },
         next: null,
       },
-      launchProjectile_5: {
+      mergeContextTargets_5: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+        },
+        next: null,
+      },
+      checkCondition_6: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: null,
+      },
+      jumpTimeline_7: {
+        action: {
+          kind: 'jumpTimeline',
+          parameters: { destinationFrame: 221 },
+          condition: { $sequence: 'checkCondition_6' },
+        },
+        next: null,
+      },
+      launchProjectile_9: {
         action: {
           kind: 'launchProjectile',
-          parameters: { finish: 'firstTickBlock', recycleDelaySeconds: 0.0333333350718021 },
+          parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
+            finish: 'firstTickBlock',
+            recycleDelaySeconds: 0.0333333350718021,
+            targets: { kind: 'context', contextKey: 'SheepPoint' },
+          },
           callbacks: [
             {
               event: 'block',
@@ -1043,11 +1250,9 @@ export const ardeliaChr_0025_ardelia_normal_skillActionGraph = {
                   maxChargeTime: 1,
                   cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                 },
-                blackboard: { atb: 0, atk_scale: 0, heal_scale: 0, heal_value: 0, potential2: 0 },
+                blackboard: { atb: 0, heal_scale: 0, heal_value: 0, potential2: 0 },
                 scheduledSequences: [
                   { startFrame: 0, endFrame: 3, sequence: { $sequence: 'spawnAbilityEntity_1' } },
-                  { startFrame: 0, endFrame: 10, sequence: { $sequence: null } },
-                  { startFrame: 0, endFrame: 2, sequence: { $sequence: null } },
                 ],
                 actionGraph: {
                   main: {
@@ -1056,6 +1261,7 @@ export const ardeliaChr_0025_ardelia_normal_skillActionGraph = {
                         action: {
                           kind: 'spawnAbilityEntity',
                           parameters: {
+                            bornAt: { kind: 'fixed', target: 'enemy' },
                             abilityEntityId: 'abilityentity_chr_0025_ardelia_remain_loop',
                             childSkillId: 'chr_0025_ardelia_remain_loop_sheep',
                             inheritActionBlackboard: true,
@@ -1074,28 +1280,7 @@ export const ardeliaChr_0025_ardelia_normal_skillActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_6: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_5' },
-        },
-        next: null,
-      },
-      repeatByActionValue_7: {
-        action: {
-          kind: 'repeatByActionValue',
-          parameters: { count: { kind: 'valueNode', nodeId: 'data_2' } },
-          body: { $sequence: 'withActionBlackboardScope_6' },
-        },
-        next: null,
-      },
-      createSpatialPointTargets_8: {
+      createSpatialPointTargets_10: {
         action: {
           kind: 'createSpatialPointTargets',
           parameters: {
@@ -1103,16 +1288,24 @@ export const ardeliaChr_0025_ardelia_normal_skillActionGraph = {
             count: { kind: 'valueNode', nodeId: 'data_3' },
           },
         },
-        next: 'repeatByActionValue_7',
+        next: 'launchProjectile_9',
+      },
+      checkCondition_11: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+        },
+        next: 'createSpatialPointTargets_10',
       },
       createTimedMarker_15: {
         action: {
           kind: 'createTimedMarker',
           parameters: {
-            target: 'caster',
+            targets: { kind: 'owner' },
             markerId: 'talent1_mark',
             durationSeconds: { kind: 'constant', value: 1 },
             autoFinishByAction: false,
+            timeDomain: 'globalScaled',
           },
         },
         next: null,
@@ -1121,7 +1314,8 @@ export const ardeliaChr_0025_ardelia_normal_skillActionGraph = {
         action: {
           kind: 'finishBuffsByTag',
           parameters: {
-            target: 'enemy',
+            targets: { kind: 'fixed', target: 'enemy' },
+            finishSource: { kind: 'source' },
             tagQueryType: 'hasAny',
             buffTags: ['Skill/Character/Common/SpellStatus/Corrupt'],
             reason: 'early',
@@ -1133,116 +1327,147 @@ export const ardeliaChr_0025_ardelia_normal_skillActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0025_ardelia_normal_skill_vulnerable',
-            target: 'enemy',
+            buffs: [
+              {
+                buffId: 'buff_chr_0025_ardelia_normal_skill_vulnerable',
+                copiedBlackboardAssignments: { duration: 'duration_vul', rate: 'rate_vul_base' },
+              },
+            ],
+            targets: { kind: 'fixed', target: 'enemy' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
-            copiedBlackboardAssignments: { duration: 'duration_vul', rate: 'rate_vul_base' },
           },
         },
         next: 'finishBuffsByTag_16',
       },
-      conditional_18: {
+      checkCondition_18: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-          whenTrue: { $sequence: 'applyBuff_17' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+        },
+        next: 'applyBuff_17',
+      },
+      checkCondition_19: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
         next: null,
       },
-      gainSquadUltimateEnergyFromSkillCost_19: {
-        action: { kind: 'gainSquadUltimateEnergyFromSkillCost', parameters: { coefficient: 1 } },
+      applyBuff_20: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_common_obtain_ultimate_sp' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
         next: null,
       },
-      dealDamage_20: {
+      dealDamage_21: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'nature',
-            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_7' },
             tags: ['normalSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_6' },
+            stagger: { kind: 'valueNode', nodeId: 'data_8' },
           },
         },
-        next: 'gainSquadUltimateEnergyFromSkillCost_19',
+        next: 'applyBuff_20',
       },
-      forEachContextTarget_21: {
+      ifElse_22: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_19' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: null },
+        },
+        next: 'dealDamage_21',
+      },
+      forEachContextTarget_23: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { target: 'enemy' },
-          body: { $sequence: 'conditional_18' },
+          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          body: { $sequence: 'checkCondition_18' },
         },
-        next: 'dealDamage_20',
+        next: 'ifElse_22',
       },
-      finishBuffsById_22: {
+      ifElse_24: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: null },
+          whenTrue: { $sequence: 'forEachContextTarget_23' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      finishBuffsById_25: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
-            target: 'caster',
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
             buffIds: ['buff_chr_0025_ardelia_normal_skill_kill_sheep'],
             reason: 'other',
           },
         },
-        next: 'forEachContextTarget_21',
+        next: 'ifElse_24',
       },
-      mergeContextTargets_32: {
+      jumpTimeline_42: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'other_cor_tar', sources: [] },
+          kind: 'jumpTimeline',
+          parameters: { destinationFrame: 189 },
+          condition: { $sequence: null },
         },
         next: null,
       },
-      mergeContextTargets_31: {
+      checkCondition_43: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
+        },
+        next: 'jumpTimeline_42',
+      },
+      findTargets_44: {
+        action: {
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: {
+              kind: 'enemyByTags',
+              tagQueryType: 'hasAny',
+              tags: ['Skill/Character/Common/SpellStatus/Corrupt'],
+            },
             saveToContextKey: 'other_cor_tar',
-            sources: [{ kind: 'target', target: 'enemy' }],
           },
         },
-        next: null,
+        next: 'checkCondition_43',
       },
-      jumpTimeline_33: {
-        action: { kind: 'jumpTimeline', parameters: { destinationFrame: 189 } },
-        next: null,
-      },
-      conditional_34: {
+      checkCondition_45: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-          whenTrue: { $sequence: 'jumpTimeline_33' },
-        },
-        next: null,
-      },
-      conditional_35: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-          whenTrue: { $sequence: 'mergeContextTargets_31' },
-          whenFalse: { $sequence: 'mergeContextTargets_32' },
-        },
-        next: 'conditional_34',
-      },
-      conditional_36: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
-          whenTrue: { $sequence: 'conditional_35' },
-        },
-        next: null,
-      },
-      conditional_37: {
-        action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
-          whenTrue: { $sequence: 'conditional_36' },
         },
-        next: null,
+        next: 'findTargets_44',
       },
-      spawnAbilityEntity_38: {
+      checkCondition_46: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
+        },
+        next: 'checkCondition_45',
+      },
+      spawnAbilityEntity_47: {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
+            bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0025_ardelia_normal_skill',
             childSkillId: 'chr_0025_ardelia_normal_skill_sheep',
             inheritActionBlackboard: true,
@@ -1251,12 +1476,13 @@ export const ardeliaChr_0025_ardelia_normal_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_40: {
+      applyBuff_49: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0025_ardelia_normal_skill_kill_sheep',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_chr_0025_ardelia_normal_skill_kill_sheep' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
@@ -1268,15 +1494,40 @@ export const ardeliaChr_0025_ardelia_normal_skillActionGraph = {
       data_1: {
         type: 'boolean',
         expression: {
-          kind: 'contextTargetCountCompare',
-          contextKey: 'other_cor_tar',
-          operator: 'greater',
-          value: 0,
+          kind: 'targetDistance',
+          source: { kind: 'owner' },
+          target: { kind: 'fixed', target: 'enemy' },
+          distance: 1,
+          lessThan: true,
+          includeTargetRadius: true,
+          containsHittableObject: false,
         },
       },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'sheep_num' } },
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'targetDistance',
+          source: { kind: 'owner' },
+          target: { kind: 'context', key: 'other_cor_tar' },
+          distance: 1.5,
+          lessThan: true,
+          includeTargetRadius: true,
+          containsHittableObject: false,
+        },
+      },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'sheep_num' } },
       data_4: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_5: {
         type: 'boolean',
         expression: {
           kind: 'buffTagIdCountCompare',
@@ -1287,39 +1538,46 @@ export const ardeliaChr_0025_ardelia_normal_skillActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_7: {
+      data_6: {
         type: 'boolean',
         expression: {
-          kind: 'contextTargetCountCompare',
-          contextKey: 'other_cor_tar',
+          kind: 'timedMarkerPresent',
+          returnTrueIfNotExists: false,
+          target: 'caster',
+          markerId: 'talent1_mark',
+        },
+      },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_9: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'other_cor_tar' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
           operator: 'greaterOrEqual',
           value: 1,
         },
       },
-      data_8: {
-        type: 'boolean',
-        expression: {
-          kind: 'entityTagMatch',
-          target: 'enemy',
-          tagQueryType: 'hasAny',
-          tags: ['Skill/Character/Common/SpellStatus/Corrupt'],
-        },
-      },
-      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'talent1', fallback: 0 } },
-      data_10: {
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'talent1', fallback: 0 } },
+      data_11: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_9' },
+          left: { kind: 'valueNode', nodeId: 'data_10' },
           operator: 'greaterOrEqual',
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_11: {
+      data_12: {
         type: 'boolean',
-        expression: { kind: 'timedMarkerPresent', target: 'caster', markerId: 'talent1_mark' },
+        expression: {
+          kind: 'timedMarkerPresent',
+          returnTrueIfNotExists: false,
+          target: 'caster',
+          markerId: 'talent1_mark',
+        },
       },
     },
   },
@@ -1330,21 +1588,16 @@ export const ardeliaChr_0025_ardelia_normal_skill: SkillDefinition = {
   key: 'chr_0025_ardelia_normal_skill',
   element: 'nature',
   blackboard: {
-    additional_def_decrease: 0,
     atk_scale: [1.42, 1.56, 1.71, 1.85, 1.99, 2.13, 2.28, 2.42, 2.56, 2.74, 2.95, 3.2],
-    cam_angle: 0,
     def_decrease: 0,
     duration_vul: 30,
     heal_scale: 0,
     heal_value: 0,
-    input_angle: 0,
     poise: 10,
     potential2: 0,
-    rate_vul: 0,
     rate_vul_base: [0.12, 0.12, 0.12, 0.13, 0.13, 0.13, 0.14, 0.14, 0.16, 0.17, 0.18, 0.2],
     sheep_num: 0,
     talent1: 0,
-    rate_vul_max: [0.36, 0.36, 0.36, 0.37, 0.37, 0.37, 0.38, 0.38, 0.4, 0.41, 0.42, 0.4],
   },
   timelineBlockFrames: 47,
   naturalDurationFrames: 378,
@@ -1359,18 +1612,20 @@ export const ardeliaChr_0025_ardelia_normal_skill: SkillDefinition = {
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 52, endFrame: 55, sequence: { $sequence: 'markCurrentSkillCanInterrupt_1' } },
-    { startFrame: 188, endFrame: 189, sequence: { $sequence: 'finishTimeline_2' } },
-    { startFrame: 25, endFrame: 31, sequence: { $sequence: 'jumpTimeline_opt1' } },
-    { startFrame: 214, endFrame: 220, sequence: { $sequence: 'jumpTimeline_opt2' } },
-    { startFrame: 32, endFrame: 35, sequence: { $sequence: 'createSpatialPointTargets_8' } },
-    { startFrame: 221, endFrame: 224, sequence: { $sequence: 'createSpatialPointTargets_8' } },
-    { startFrame: 32, endFrame: 33, sequence: { $sequence: 'finishBuffsById_22' } },
-    { startFrame: 221, endFrame: 222, sequence: { $sequence: 'finishBuffsById_22' } },
-    { startFrame: 33, endFrame: 36, sequence: { $sequence: 'conditional_37' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'spawnAbilityEntity_38' } },
-    { startFrame: 189, endFrame: 192, sequence: { $sequence: 'spawnAbilityEntity_38' } },
-    { startFrame: 0, endFrame: 189, sequence: { $sequence: 'applyBuff_40' } },
-    { startFrame: 189, endFrame: 378, sequence: { $sequence: 'applyBuff_40' } },
+    { startFrame: 188, endFrame: 189, sequence: { $sequence: 'interruptCurrentSkill_2' } },
+    { startFrame: 25, endFrame: 31, sequence: { $sequence: 'jumpTimeline_4' } },
+    { startFrame: 32, endFrame: 33, sequence: { $sequence: 'mergeContextTargets_5' } },
+    { startFrame: 214, endFrame: 220, sequence: { $sequence: 'jumpTimeline_7' } },
+    { startFrame: 221, endFrame: 222, sequence: { $sequence: 'mergeContextTargets_5' } },
+    { startFrame: 32, endFrame: 35, sequence: { $sequence: 'checkCondition_11' } },
+    { startFrame: 221, endFrame: 224, sequence: { $sequence: 'checkCondition_11' } },
+    { startFrame: 32, endFrame: 33, sequence: { $sequence: 'finishBuffsById_25' } },
+    { startFrame: 221, endFrame: 222, sequence: { $sequence: 'finishBuffsById_25' } },
+    { startFrame: 33, endFrame: 36, sequence: { $sequence: 'checkCondition_46' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'spawnAbilityEntity_47' } },
+    { startFrame: 189, endFrame: 192, sequence: { $sequence: 'spawnAbilityEntity_47' } },
+    { startFrame: 0, endFrame: 189, sequence: { $sequence: 'applyBuff_49' } },
+    { startFrame: 189, endFrame: 378, sequence: { $sequence: 'applyBuff_49' } },
   ],
   smartTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
@@ -1387,6 +1642,7 @@ export const ardeliaChr_0025_ardelia_combo_skillActionGraph = {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
+            bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0025_ardelia_combo_skill',
             childSkillId: 'chr_0025_ardelia_combo_skill_sheep',
             inheritActionBlackboard: true,
@@ -1395,10 +1651,12 @@ export const ardeliaChr_0025_ardelia_combo_skillActionGraph = {
         },
         next: null,
       },
-      launchProjectile_2: {
+      launchProjectile_8: {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.0333333350718021,
             hit: { onReach: true, finishOnHit: true },
@@ -1420,54 +1678,72 @@ export const ardeliaChr_0025_ardelia_combo_skillActionGraph = {
                   atk_scale: 0,
                   atk_scale_boom: 0,
                   duration_corrupt: 0,
-                  potential3: 0,
                   potential5_dmg_rate: 0,
                   potential5_duration: 0,
                   usp: 0,
                 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'conditional_7' } },
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'spawnAbilityEntity_8' } },
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_12' } },
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'spawnAbilityEntity_13' } },
                 ],
                 actionGraph: {
                   main: {
                     nodes: {
-                      changeResourceByActionValue_5: {
+                      changeResource_4: {
                         action: {
-                          kind: 'changeResourceByActionValue',
+                          kind: 'changeResource',
                           parameters: {
                             resource: 'ultimateEnergy',
                             amount: { kind: 'valueNode', nodeId: 'data_1' },
                             coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'caster',
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
+                            onlyMainOperator: true,
                           },
                         },
                         next: null,
                       },
-                      dealDamage_6: {
+                      checkCondition_3: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+                        },
+                        next: null,
+                      },
+                      ifElse_10: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_3' },
+                          whenTrue: { $sequence: 'changeResource_4' },
+                          whenFalse: { $sequence: null },
+                        },
+                        next: null,
+                      },
+                      dealDamage_11: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'nature',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
                             tags: ['comboSkill'],
                             features: ['canBreakWeakness'],
                           },
                         },
-                        next: 'changeResourceByActionValue_5',
+                        next: 'ifElse_10',
                       },
-                      modifyActionValue_3: {
+                      modifyActionValue_8: {
                         action: {
                           kind: 'modifyActionValue',
                           parameters: {
                             key: 'atk_scale_boom',
                             operation: 'multiply',
-                            value: { kind: 'valueNode', nodeId: 'data_3' },
+                            value: { kind: 'valueNode', nodeId: 'data_4' },
                           },
                         },
-                        next: 'dealDamage_6',
+                        next: 'dealDamage_11',
                       },
-                      modifyActionValue_4: {
+                      modifyActionValue_9: {
                         action: {
                           kind: 'modifyActionValue',
                           parameters: {
@@ -1476,24 +1752,35 @@ export const ardeliaChr_0025_ardelia_combo_skillActionGraph = {
                             value: { kind: 'valueNode', nodeId: 'data_4' },
                           },
                         },
-                        next: 'modifyActionValue_3',
+                        next: 'modifyActionValue_8',
                       },
-                      conditional_7: {
+                      checkCondition_5: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_6' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'modifyActionValue_4' },
-                          whenFalse: { $sequence: 'dealDamage_6' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
                         },
                         next: null,
                       },
-                      spawnAbilityEntity_8: {
+                      ifElse_12: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_5' },
+                          whenTrue: { $sequence: 'modifyActionValue_9' },
+                          whenFalse: { $sequence: 'dealDamage_11' },
+                        },
+                        next: null,
+                      },
+                      spawnAbilityEntity_13: {
                         action: {
                           kind: 'spawnAbilityEntity',
                           parameters: {
+                            bornAt: {
+                              kind: 'fixedPoint',
+                              owner: { kind: 'source' },
+                              directionTarget: { kind: 'source' },
+                              center: { kind: 'inputTarget' },
+                            },
                             abilityEntityId: 'abilityentity_chr_0025_ardelia_combo_skill_bomb',
                             childSkillId: 'chr_0025_ardelia_combo_skill_bomb',
                             inheritActionBlackboard: true,
@@ -1507,12 +1794,19 @@ export const ardeliaChr_0025_ardelia_combo_skillActionGraph = {
                     dataNodes: {
                       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
                       data_2: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale' },
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityCountCompare',
+                          target: { kind: 'fixed', target: 'enemy' },
+                          containsHittableTarget: false,
+                          excludeDeadEntity: false,
+                          operator: 'greaterOrEqual',
+                          value: 1,
+                        },
                       },
                       data_3: {
                         type: 'number',
-                        expression: { kind: 'blackboard', key: 'potential5_dmg_rate' },
+                        expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
                       data_4: {
                         type: 'number',
@@ -1541,20 +1835,45 @@ export const ardeliaChr_0025_ardelia_combo_skillActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_3: {
+      mergeContextTargets_9: {
         action: {
-          kind: 'withActionBlackboardScope',
+          kind: 'mergeContextTargets',
           parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
+            saveToContextKey: 'smart_target',
+            sources: [{ kind: 'target', target: 'enemy' }],
           },
-          body: { $sequence: 'launchProjectile_2' },
+        },
+        next: 'launchProjectile_8',
+      },
+      checkCondition_6: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
         },
         next: null,
       },
-      startTimeDilation_4: {
+      ifElse_10: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_6' },
+          whenTrue: { $sequence: 'launchProjectile_8' },
+          whenFalse: { $sequence: 'mergeContextTargets_9' },
+        },
+        next: null,
+      },
+      findTargets_11: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'MainTar',
+          },
+        },
+        next: 'ifElse_10',
+      },
+      startTimeDilation_12: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1570,18 +1889,57 @@ export const ardeliaChr_0025_ardelia_combo_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_5: {
+      findCharacterTeamTargets_15: {
+        action: {
+          kind: 'findCharacterTeamTargets',
+          parameters: { saveToContextKey: 'mainchar', selection: { kind: 'controlledOperator' } },
+        },
+        next: null,
+      },
+      checkCondition_13: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: null,
+      },
+      ifElse_16: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_13' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: 'findCharacterTeamTargets_15' },
+        },
+        next: null,
+      },
+      applyBuff_17: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0025_ardelia_combo_skill_kill_sheep',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_chr_0025_ardelia_combo_skill_kill_sheep' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
         },
         next: null,
       },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
     },
   },
   macros: {},
@@ -1593,15 +1951,8 @@ export const ardeliaChr_0025_ardelia_combo_skill: SkillDefinition = {
   blackboard: {
     atk_scale: [0.45, 0.49, 0.54, 0.58, 0.62, 0.67, 0.71, 0.76, 0.8, 0.86, 0.93, 1],
     atk_scale_boom: [1.11, 1.22, 1.33, 1.44, 1.55, 1.67, 1.78, 1.89, 2, 2.14, 2.3, 2.5],
-    cam_angle: 0,
-    cam_duration: 0,
     count: 0,
     duration_corrupt: 7,
-    input_angle: 0,
-    owner_mainchar_alpha: 0,
-    owner_mainchar_distance: 0,
-    posie: 0,
-    potential3: 0,
     potential5_dmg_rate: 0,
     potential5_duration: 0,
     usp: 10,
@@ -1619,9 +1970,10 @@ export const ardeliaChr_0025_ardelia_combo_skill: SkillDefinition = {
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'spawnAbilityEntity_1' } },
-    { startFrame: 20, endFrame: 23, sequence: { $sequence: 'withActionBlackboardScope_3' } },
-    { startFrame: 0, endFrame: 21, sequence: { $sequence: 'startTimeDilation_4' } },
-    { startFrame: 0, endFrame: 160, sequence: { $sequence: 'applyBuff_5' } },
+    { startFrame: 20, endFrame: 23, sequence: { $sequence: 'findTargets_11' } },
+    { startFrame: 0, endFrame: 21, sequence: { $sequence: 'startTimeDilation_12' } },
+    { startFrame: 0, endFrame: 21, sequence: { $sequence: 'ifElse_16' } },
+    { startFrame: 0, endFrame: 160, sequence: { $sequence: 'applyBuff_17' } },
   ],
   smartTarget: 'input',
   cooldownFrames: [540, 540, 540, 540, 540, 540, 540, 540, 540, 540, 540, 510],
@@ -1649,27 +2001,31 @@ export const ardeliaChr_0025_ardelia_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      findCharacterTeamTargets_2: {
+      checkCondition_2: {
         action: {
-          kind: 'findCharacterTeamTargets',
-          parameters: { saveToContextKey: 'mainchar', selection: { kind: 'controlledOperator' } },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: null,
       },
       jumpTimeline_3: {
         action: {
           kind: 'jumpTimeline',
-          parameters: {
-            destinationFrame: 201,
-            condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          },
+          parameters: { destinationFrame: 201 },
+          condition: { $sequence: 'checkCondition_2' },
         },
         next: null,
       },
       launchProjectile_4: {
         action: {
           kind: 'launchProjectile',
-          parameters: { finish: 'firstTickBlock', recycleDelaySeconds: 0.0333333350718021 },
+          parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
+            finish: 'firstTickBlock',
+            recycleDelaySeconds: 0.0333333350718021,
+            targets: { kind: 'context', contextKey: 'ranPos' },
+          },
           callbacks: [
             {
               event: 'block',
@@ -1690,24 +2046,19 @@ export const ardeliaChr_0025_ardelia_ultimate_skillActionGraph = {
                   heal_value: 0,
                   interval: 0,
                   poise: 0,
-                  potential3_rate: 0,
-                  random_phy: 0,
-                  random_spe: 0,
                 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: null } },
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'conditional_2' } },
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'forEachContextTarget_6' } },
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: null } },
-                  { startFrame: 0, endFrame: 10, sequence: { $sequence: null } },
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'checkCondition_3' } },
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'forEachContextTarget_7' } },
                 ],
                 actionGraph: {
                   main: {
                     nodes: {
-                      spawnAbilityEntity_1: {
+                      spawnAbilityEntity_2: {
                         action: {
                           kind: 'spawnAbilityEntity',
                           parameters: {
+                            bornAt: { kind: 'fixed', target: 'enemy' },
                             abilityEntityId: 'abilityentity_chr_0025_ardelia_remain_loop',
                             childSkillId: 'chr_0025_ardelia_remain_loop_sheep',
                             inheritActionBlackboard: true,
@@ -1716,27 +2067,27 @@ export const ardeliaChr_0025_ardelia_ultimate_skillActionGraph = {
                         },
                         next: null,
                       },
-                      conditional_2: {
+                      checkCondition_3: {
                         action: {
-                          kind: 'conditional',
+                          kind: 'checkCondition',
                           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                          whenTrue: { $sequence: 'spawnAbilityEntity_1' },
                         },
-                        next: null,
+                        next: 'spawnAbilityEntity_2',
                       },
-                      createTimedMarker_3: {
+                      createTimedMarker_4: {
                         action: {
                           kind: 'createTimedMarker',
                           parameters: {
-                            target: 'enemy',
+                            targets: { kind: 'fixed', target: 'enemy' },
                             markerId: 'ArdeliaUltMark',
                             durationSeconds: { kind: 'valueNode', nodeId: 'data_3' },
                             autoFinishByAction: false,
+                            timeDomain: 'globalScaled',
                           },
                         },
                         next: null,
                       },
-                      dealDamage_4: {
+                      dealDamage_5: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
@@ -1747,21 +2098,20 @@ export const ardeliaChr_0025_ardelia_ultimate_skillActionGraph = {
                             stagger: { kind: 'valueNode', nodeId: 'data_5' },
                           },
                         },
-                        next: 'createTimedMarker_3',
+                        next: 'createTimedMarker_4',
                       },
-                      conditional_5: {
+                      checkCondition_6: {
                         action: {
-                          kind: 'conditional',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-                          whenTrue: { $sequence: 'dealDamage_4' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
                         },
-                        next: null,
+                        next: 'dealDamage_5',
                       },
-                      forEachContextTarget_6: {
+                      forEachContextTarget_7: {
                         action: {
                           kind: 'forEachContextTarget',
-                          parameters: { target: 'enemy' },
-                          body: { $sequence: 'conditional_5' },
+                          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+                          body: { $sequence: 'checkCondition_6' },
                         },
                         next: null,
                       },
@@ -1791,15 +2141,9 @@ export const ardeliaChr_0025_ardelia_ultimate_skillActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'timedMarkerPresent',
+                          returnTrueIfNotExists: true,
                           target: 'enemy',
                           markerId: 'ArdeliaUltMark',
-                        },
-                      },
-                      data_7: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'not',
-                          condition: { kind: 'conditionNode', nodeId: 'data_6' },
                         },
                       },
                     },
@@ -1812,50 +2156,31 @@ export const ardeliaChr_0025_ardelia_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_5: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_4' },
-        },
-        next: null,
-      },
-      repeatByActionValue_6: {
-        action: {
-          kind: 'repeatByActionValue',
-          parameters: { count: { kind: 'constant', value: 1 } },
-          body: { $sequence: 'withActionBlackboardScope_5' },
-        },
-        next: null,
-      },
-      createSpatialPointTargets_7: {
+      createSpatialPointTargets_5: {
         action: {
           kind: 'createSpatialPointTargets',
           parameters: { saveToContextKey: 'ranPos', count: { kind: 'constant', value: 1 } },
         },
-        next: 'repeatByActionValue_6',
+        next: 'launchProjectile_4',
       },
-      repeatEachTick_8: {
+      repeatEachTick_6: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'owner' },
               executeEachFrame: false,
               triggerIntervalSeconds: 0.1,
               maxCountPerTarget: -1,
               targetTriggerIntervalSeconds: 0.03,
             },
           },
-          body: { $sequence: 'createSpatialPointTargets_7' },
+          body: { $sequence: 'createSpatialPointTargets_5' },
         },
         next: null,
       },
-      startUltimateTimeDilation_14: {
+      startUltimateTimeDilation_10: {
         action: {
           kind: 'startUltimateTimeDilation',
           parameters: {
@@ -1866,13 +2191,14 @@ export const ardeliaChr_0025_ardelia_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      hideUi_15: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      applyBuff_16: {
+      hideUi_11: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      applyBuff_12: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_damage_immune_ult_skill',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_common_damage_immune_ult_skill' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
@@ -1904,7 +2230,6 @@ export const ardeliaChr_0025_ardelia_ultimate_skill: SkillDefinition = {
   element: 'nature',
   blackboard: {
     atk_scale: [0.73, 0.81, 0.88, 0.95, 1.03, 1.1, 1.17, 1.25, 1.32, 1.41, 1.52, 1.65],
-    atk_scale_2: 0,
     effect_prob: 0.1,
     heal_scale: 0,
     heal_value: 0,
@@ -1912,11 +2237,6 @@ export const ardeliaChr_0025_ardelia_ultimate_skill: SkillDefinition = {
     poise: [2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3],
     potential2: 0,
     potential3_duration: 0,
-    potential3_rate: 0,
-    radius: 4,
-    ranCount: 0,
-    select_radius: 10,
-    tarDisMax: 0,
     duration: 3,
   },
   timelineBlockFrames: 224,
@@ -1935,14 +2255,14 @@ export const ardeliaChr_0025_ardelia_ultimate_skill: SkillDefinition = {
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'startTimeDilation_1' } },
-    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findCharacterTeamTargets_2' } },
     { startFrame: 171, endFrame: 174, sequence: { $sequence: 'jumpTimeline_3' } },
-    { startFrame: 81, endFrame: 201, sequence: { $sequence: 'repeatEachTick_8' } },
-    { startFrame: 81, endFrame: 201, sequence: { $sequence: 'repeatEachTick_8' } },
-    { startFrame: 0, endFrame: 80, sequence: { $sequence: 'startUltimateTimeDilation_14' } },
-    { startFrame: 0, endFrame: 80, sequence: { $sequence: 'hideUi_15' } },
-    { startFrame: 0, endFrame: 81, sequence: { $sequence: 'applyBuff_16' } },
+    { startFrame: 81, endFrame: 201, sequence: { $sequence: 'repeatEachTick_6' } },
+    { startFrame: 81, endFrame: 201, sequence: { $sequence: 'repeatEachTick_6' } },
+    { startFrame: 0, endFrame: 80, sequence: { $sequence: 'startUltimateTimeDilation_10' } },
+    { startFrame: 0, endFrame: 80, sequence: { $sequence: 'hideUi_11' } },
+    { startFrame: 0, endFrame: 81, sequence: { $sequence: 'applyBuff_12' } },
   ],
+  defaultTarget: 'enemy',
   cooldownFrames: 450,
   costs: [{ resource: 'ultimateEnergy', value: 90 }],
   skillType: 'ultimate',
@@ -1966,6 +2286,7 @@ export const ardeliaCommon_character_perfect_dodge: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [],
+  defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
 };
@@ -1973,29 +2294,26 @@ export const ardeliaCommon_character_perfect_dodge: SkillDefinition = {
 const ardeliaComboCondition1ActionGraph = {
   main: {
     nodes: {
-      conditional_1: {
+      checkCondition_1: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-          whenTrue: { $sequence: null },
         },
         next: null,
       },
-      conditional_2: {
+      checkCondition_2: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'conditional_1' },
         },
-        next: null,
+        next: 'checkCondition_1',
       },
-      conditional_3: {
+      checkCondition_3: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-          whenTrue: { $sequence: 'conditional_2' },
         },
-        next: null,
+        next: 'checkCondition_2',
       },
     },
     dataNodes: {
@@ -2022,6 +2340,7 @@ const ardeliaComboCondition1ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'contextTargetIdentityMatch',
+          selection: 'first',
           contextKey: 'trigger',
           other: 'controlledOperator',
           operator: 'equal',
@@ -2038,7 +2357,7 @@ const ardeliaComboCondition1: ComboSkillConditionDefinition = {
   event: 'beforeOutputDamage',
   immediately: false,
   initialValues: null,
-  sequence: { $sequence: 'conditional_3' },
+  sequence: { $sequence: 'checkCondition_3' },
   actionGraph: ardeliaComboCondition1ActionGraph,
 };
 
@@ -2071,8 +2390,7 @@ const ardeliaBuff2: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration' },
   presentation: {
     visible: true,
-    iconId: 'icon_battle_affix_vulnerable',
-    iconPath: '/icons/icon_battle_affix_vulnerable.webp',
+    icon: 'endaxis:icons/icon_battle_affix_vulnerable',
     showInHeadBarCommon: true,
     showInHeadBarAttached: false,
     showInSquadIcon: true,
@@ -2101,19 +2419,14 @@ const ardeliaBuff2: SkillBuffDefinition = {
 const ardeliaBuff3ActionGraph = {
   main: {
     nodes: {
-      finishCurrentAbilityEntity_1: {
-        action: { kind: 'finishCurrentAbilityEntity', parameters: {} },
-        next: null,
-      },
-      forEachContextTarget_2: {
+      finishOwner_1: {
         action: {
-          kind: 'forEachContextTarget',
-          parameters: { contextKey: 'attack4_sheep' },
-          body: { $sequence: 'finishCurrentAbilityEntity_1' },
+          kind: 'finishOwner',
+          parameters: { targets: { kind: 'context', key: 'attack4_sheep' } },
         },
         next: null,
       },
-      findOwnerSpawnedAbilityEntities_3: {
+      findOwnerSpawnedAbilityEntities_2: {
         action: {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
@@ -2123,9 +2436,10 @@ const ardeliaBuff3ActionGraph = {
               'abilityentity_chr_0025_ardelia_attack4_end',
               'abilityentity_chr_0025_ardelia_attack4_low',
             ],
+            owner: { kind: 'owner' },
           },
         },
-        next: 'forEachContextTarget_2',
+        next: 'finishOwner_1',
       },
     },
   },
@@ -2140,34 +2454,30 @@ const ardeliaBuff3: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  lifecycleSequences: { finish: { $sequence: 'findOwnerSpawnedAbilityEntities_3' } },
+  lifecycleSequences: { finish: [{ $sequence: 'findOwnerSpawnedAbilityEntities_2' }] },
   actionGraph: ardeliaBuff3ActionGraph,
 };
 
 const ardeliaBuff4ActionGraph = {
   main: {
     nodes: {
-      finishCurrentAbilityEntity_1: {
-        action: { kind: 'finishCurrentAbilityEntity', parameters: {} },
-        next: null,
-      },
-      forEachContextTarget_2: {
+      finishOwner_1: {
         action: {
-          kind: 'forEachContextTarget',
-          parameters: { contextKey: 'combo_skill_sheep' },
-          body: { $sequence: 'finishCurrentAbilityEntity_1' },
+          kind: 'finishOwner',
+          parameters: { targets: { kind: 'context', key: 'combo_skill_sheep' } },
         },
         next: null,
       },
-      findOwnerSpawnedAbilityEntities_3: {
+      findOwnerSpawnedAbilityEntities_2: {
         action: {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'combo_skill_sheep',
             abilityEntityIds: ['abilityentity_chr_0025_ardelia_combo_skill'],
+            owner: { kind: 'owner' },
           },
         },
-        next: 'forEachContextTarget_2',
+        next: 'finishOwner_1',
       },
     },
   },
@@ -2182,34 +2492,30 @@ const ardeliaBuff4: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  lifecycleSequences: { finish: { $sequence: 'findOwnerSpawnedAbilityEntities_3' } },
+  lifecycleSequences: { finish: [{ $sequence: 'findOwnerSpawnedAbilityEntities_2' }] },
   actionGraph: ardeliaBuff4ActionGraph,
 };
 
 const ardeliaBuff5ActionGraph = {
   main: {
     nodes: {
-      finishCurrentAbilityEntity_1: {
-        action: { kind: 'finishCurrentAbilityEntity', parameters: {} },
-        next: null,
-      },
-      forEachContextTarget_2: {
+      finishOwner_1: {
         action: {
-          kind: 'forEachContextTarget',
-          parameters: { contextKey: 'normal_skill_sheep' },
-          body: { $sequence: 'finishCurrentAbilityEntity_1' },
+          kind: 'finishOwner',
+          parameters: { targets: { kind: 'context', key: 'normal_skill_sheep' } },
         },
         next: null,
       },
-      findOwnerSpawnedAbilityEntities_3: {
+      findOwnerSpawnedAbilityEntities_2: {
         action: {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'normal_skill_sheep',
             abilityEntityIds: ['abilityentity_chr_0025_ardelia_normal_skill'],
+            owner: { kind: 'owner' },
           },
         },
-        next: 'forEachContextTarget_2',
+        next: 'finishOwner_1',
       },
     },
   },
@@ -2224,7 +2530,7 @@ const ardeliaBuff5: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  lifecycleSequences: { finish: { $sequence: 'findOwnerSpawnedAbilityEntities_3' } },
+  lifecycleSequences: { finish: [{ $sequence: 'findOwnerSpawnedAbilityEntities_2' }] },
   actionGraph: ardeliaBuff5ActionGraph,
 };
 
@@ -2235,17 +2541,22 @@ const ardeliaBuff6ActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_affixes_vulnerable_physical',
-            target: 'enemy',
+            buffs: [
+              {
+                buffId: 'buff_common_affixes_vulnerable_physical',
+                blackboardAssignments: {
+                  duration: { kind: 'valueNode', nodeId: 'data_1' },
+                  rate: { kind: 'valueNode', nodeId: 'data_2' },
+                },
+                stringBlackboardAssignments: {
+                  child_buff_id: 'buff_chr_0025_ardelia_affixes_vulnerable_physic_child',
+                },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             asChildBuff: true,
-            blackboardAssignments: {
-              duration: { kind: 'valueNode', nodeId: 'data_1' },
-              rate: { kind: 'valueNode', nodeId: 'data_2' },
-            },
-            stringBlackboardAssignments: {
-              child_buff_id: 'buff_chr_0025_ardelia_affixes_vulnerable_physic_child',
-            },
           },
         },
         next: null,
@@ -2254,17 +2565,22 @@ const ardeliaBuff6ActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_affixes_vulnerable_spell',
-            target: 'enemy',
+            buffs: [
+              {
+                buffId: 'buff_common_affixes_vulnerable_spell',
+                blackboardAssignments: {
+                  duration: { kind: 'valueNode', nodeId: 'data_1' },
+                  rate: { kind: 'valueNode', nodeId: 'data_2' },
+                },
+                stringBlackboardAssignments: {
+                  child_buff_id: 'buff_chr_0025_ardelia_affixes_vulnerable_spell_child',
+                },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             asChildBuff: true,
-            blackboardAssignments: {
-              duration: { kind: 'valueNode', nodeId: 'data_3' },
-              rate: { kind: 'valueNode', nodeId: 'data_4' },
-            },
-            stringBlackboardAssignments: {
-              child_buff_id: 'buff_chr_0025_ardelia_affixes_vulnerable_spell_child',
-            },
           },
         },
         next: 'applyBuff_1',
@@ -2273,8 +2589,6 @@ const ardeliaBuff6ActionGraph = {
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'rate' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'rate' } },
     },
   },
   macros: {},
@@ -2289,7 +2603,7 @@ const ardeliaBuff6: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 7, rate: 0 },
   attributeModifiers: [],
-  lifecycleSequences: { enable: { $sequence: 'applyBuff_2' } },
+  lifecycleSequences: { enable: [{ $sequence: 'applyBuff_2' }] },
   actionGraph: ardeliaBuff6ActionGraph,
 };
 
@@ -2299,6 +2613,7 @@ export const ardelia: OperatorDefinition = {
   rarity: 6,
   weaponType: 'funnel',
   element: 'nature',
+  characterTypeId: 'Natural',
   role: 'supporter',
   mainAttribute: 'intellect',
   secondaryAttribute: 'will',
@@ -2544,54 +2859,53 @@ export const ardelia: OperatorDefinition = {
         },
         blackboard: { atb: 0, atk_scale: 0, poise: 0 },
         scheduledSequences: [
-          { startFrame: 24, endFrame: 27, sequence: { $sequence: 'dealDamage_opt2' } },
-          {
-            startFrame: 27,
-            endFrame: 30,
-            sequence: { $sequence: 'finishActionOwnerAbilityEntity_5' },
-          },
+          { startFrame: 24, endFrame: 27, sequence: { $sequence: 'dealDamage_6' } },
+          { startFrame: 27, endFrame: 30, sequence: { $sequence: 'finishOwner_7' } },
         ],
         actionGraph: {
           main: {
             nodes: {
-              changeResourceByActionValue_1: {
+              checkCondition_2: {
                 action: {
-                  kind: 'changeResourceByActionValue',
+                  kind: 'checkCondition',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+                },
+                next: null,
+              },
+              checkCondition_3: {
+                action: {
+                  kind: 'checkCondition',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+                },
+                next: 'checkCondition_2',
+              },
+              changeResource_4: {
+                action: {
+                  kind: 'changeResource',
                   parameters: {
                     resource: 'sp',
-                    amount: { kind: 'valueNode', nodeId: 'data_1' },
+                    amount: { kind: 'valueNode', nodeId: 'data_3' },
                     coefficient: { kind: 'constant', value: 1 },
-                    recipient: 'team',
+                    source: { kind: 'source' },
+                    targets: { kind: 'source' },
+                    onlyMainOperator: true,
                     spGainKind: 'gain',
                     spGainSource: 'normalAttack',
                   },
                 },
                 next: null,
               },
-              conditional_2: {
+              ifElse_5: {
                 action: {
-                  kind: 'conditional',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                  whenTrue: { $sequence: 'changeResourceByActionValue_1' },
+                  kind: 'ifElse',
+                  parameters: { alwaysNext: true },
+                  condition: { $sequence: 'checkCondition_3' },
+                  whenTrue: { $sequence: 'changeResource_4' },
+                  whenFalse: { $sequence: null },
                 },
                 next: null,
               },
-              finishActionOwnerAbilityEntity_5: {
-                action: { kind: 'finishActionOwnerAbilityEntity', parameters: {} },
-                next: null,
-              },
-              conditional_opt1: {
-                action: {
-                  kind: 'conditional',
-                  parameters: {
-                    condition: { kind: 'conditionNode', nodeId: 'data_3' },
-                    alwaysNext: true,
-                  },
-                  whenTrue: { $sequence: 'conditional_2' },
-                },
-                next: null,
-              },
-              dealDamage_opt2: {
+              dealDamage_6: {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
@@ -2601,15 +2915,29 @@ export const ardelia: OperatorDefinition = {
                     stagger: { kind: 'valueNode', nodeId: 'data_5' },
                     staggerOnlyWhenCasterControlled: true,
                   },
-                  key: 'abilityentity_chr_0025_ardelia_attack4:chr_0025_ardelia_attack4_sheep:/childSkill/actionGraph/main/nodes/dealDamage_4/action',
+                  key: 'abilityentity_chr_0025_ardelia_attack4:chr_0025_ardelia_attack4_sheep:/childSkill/actionGraph/main/nodes/dealDamage_6/action',
                 },
-                next: 'conditional_opt1',
+                next: 'ifElse_5',
+              },
+              finishOwner_7: {
+                action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
+                next: null,
               },
             },
             dataNodes: {
-              data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+              data_1: {
+                type: 'boolean',
+                expression: {
+                  kind: 'entityCountCompare',
+                  target: { kind: 'fixed', target: 'enemy' },
+                  containsHittableTarget: false,
+                  excludeDeadEntity: false,
+                  operator: 'greaterOrEqual',
+                  value: 1,
+                },
+              },
               data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-              data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+              data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
               data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
               data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
             },
@@ -2631,8 +2959,8 @@ export const ardelia: OperatorDefinition = {
         actionGraph: {
           main: {
             nodes: {
-              finishActionOwnerAbilityEntity_1: {
-                action: { kind: 'finishActionOwnerAbilityEntity', parameters: {} },
+              finishOwner_1: {
+                action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
                 next: null,
               },
             },
@@ -2648,13 +2976,9 @@ export const ardelia: OperatorDefinition = {
           maxChargeTime: 1,
           cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
         },
-        blackboard: { atb: 0, atk_scale: 0 },
+        blackboard: {},
         scheduledSequences: [
-          {
-            startFrame: 109,
-            endFrame: 112,
-            sequence: { $sequence: 'finishActionOwnerAbilityEntity_1' },
-          },
+          { startFrame: 109, endFrame: 112, sequence: { $sequence: 'finishOwner_1' } },
         ],
       },
     },
@@ -2679,54 +3003,53 @@ export const ardelia: OperatorDefinition = {
         },
         blackboard: { atb: 0, atk_scale: 0, poise: 0 },
         scheduledSequences: [
-          { startFrame: 24, endFrame: 27, sequence: { $sequence: 'dealDamage_opt2' } },
-          {
-            startFrame: 27,
-            endFrame: 30,
-            sequence: { $sequence: 'finishActionOwnerAbilityEntity_5' },
-          },
+          { startFrame: 24, endFrame: 27, sequence: { $sequence: 'dealDamage_6' } },
+          { startFrame: 27, endFrame: 30, sequence: { $sequence: 'finishOwner_7' } },
         ],
         actionGraph: {
           main: {
             nodes: {
-              changeResourceByActionValue_1: {
+              checkCondition_2: {
                 action: {
-                  kind: 'changeResourceByActionValue',
+                  kind: 'checkCondition',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+                },
+                next: null,
+              },
+              checkCondition_3: {
+                action: {
+                  kind: 'checkCondition',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+                },
+                next: 'checkCondition_2',
+              },
+              changeResource_4: {
+                action: {
+                  kind: 'changeResource',
                   parameters: {
                     resource: 'sp',
-                    amount: { kind: 'valueNode', nodeId: 'data_1' },
+                    amount: { kind: 'valueNode', nodeId: 'data_3' },
                     coefficient: { kind: 'constant', value: 1 },
-                    recipient: 'team',
+                    source: { kind: 'source' },
+                    targets: { kind: 'source' },
+                    onlyMainOperator: true,
                     spGainKind: 'gain',
                     spGainSource: 'normalAttack',
                   },
                 },
                 next: null,
               },
-              conditional_2: {
+              ifElse_5: {
                 action: {
-                  kind: 'conditional',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                  whenTrue: { $sequence: 'changeResourceByActionValue_1' },
+                  kind: 'ifElse',
+                  parameters: { alwaysNext: true },
+                  condition: { $sequence: 'checkCondition_3' },
+                  whenTrue: { $sequence: 'changeResource_4' },
+                  whenFalse: { $sequence: null },
                 },
                 next: null,
               },
-              finishActionOwnerAbilityEntity_5: {
-                action: { kind: 'finishActionOwnerAbilityEntity', parameters: {} },
-                next: null,
-              },
-              conditional_opt1: {
-                action: {
-                  kind: 'conditional',
-                  parameters: {
-                    condition: { kind: 'conditionNode', nodeId: 'data_3' },
-                    alwaysNext: true,
-                  },
-                  whenTrue: { $sequence: 'conditional_2' },
-                },
-                next: null,
-              },
-              dealDamage_opt2: {
+              dealDamage_6: {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
@@ -2736,15 +3059,29 @@ export const ardelia: OperatorDefinition = {
                     stagger: { kind: 'valueNode', nodeId: 'data_5' },
                     staggerOnlyWhenCasterControlled: true,
                   },
-                  key: 'abilityentity_chr_0025_ardelia_attack4_low:chr_0025_ardelia_attack4_sheep:/childSkill/actionGraph/main/nodes/dealDamage_4/action',
+                  key: 'abilityentity_chr_0025_ardelia_attack4_low:chr_0025_ardelia_attack4_sheep:/childSkill/actionGraph/main/nodes/dealDamage_6/action',
                 },
-                next: 'conditional_opt1',
+                next: 'ifElse_5',
+              },
+              finishOwner_7: {
+                action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
+                next: null,
               },
             },
             dataNodes: {
-              data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+              data_1: {
+                type: 'boolean',
+                expression: {
+                  kind: 'entityCountCompare',
+                  target: { kind: 'fixed', target: 'enemy' },
+                  containsHittableTarget: false,
+                  excludeDeadEntity: false,
+                  operator: 'greaterOrEqual',
+                  value: 1,
+                },
+              },
               data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-              data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+              data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
               data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
               data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
             },
@@ -2766,8 +3103,8 @@ export const ardelia: OperatorDefinition = {
         actionGraph: {
           main: {
             nodes: {
-              finishActionOwnerAbilityEntity_1: {
-                action: { kind: 'finishActionOwnerAbilityEntity', parameters: {} },
+              finishOwner_1: {
+                action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
                 next: null,
               },
             },
@@ -2783,13 +3120,9 @@ export const ardelia: OperatorDefinition = {
           maxChargeTime: 1,
           cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
         },
-        blackboard: { atb: 0, atk_scale: 0 },
+        blackboard: {},
         scheduledSequences: [
-          {
-            startFrame: 31,
-            endFrame: 34,
-            sequence: { $sequence: 'finishActionOwnerAbilityEntity_1' },
-          },
+          { startFrame: 31, endFrame: 34, sequence: { $sequence: 'finishOwner_1' } },
         ],
       },
     },
@@ -2813,26 +3146,20 @@ export const ardelia: OperatorDefinition = {
           cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
         },
         blackboard: {
-          atb: 0,
           heal_scale: 1,
           heal_scale_half: 0,
           heal_value: 0,
           heal_value_half: 0,
           potential2: 0,
-          RandomSheep: 0,
         },
         scheduledSequences: [
-          { startFrame: 9, endFrame: 300, sequence: { $sequence: 'findCharacterTeamTargets_37' } },
-          {
-            startFrame: 299,
-            endFrame: 300,
-            sequence: { $sequence: 'finishActionOwnerAbilityEntity_31' },
-          },
+          { startFrame: 9, endFrame: 300, sequence: { $sequence: 'aura_44' } },
+          { startFrame: 299, endFrame: 300, sequence: { $sequence: 'finishOwner_38' } },
         ],
         actionGraph: {
           main: {
             nodes: {
-              heal_25: {
+              heal_31: {
                 action: {
                   kind: 'heal',
                   parameters: {
@@ -2847,7 +3174,7 @@ export const ardelia: OperatorDefinition = {
                 },
                 next: null,
               },
-              calculateActionValue_26: {
+              calculateActionValue_32: {
                 action: {
                   kind: 'calculateActionValue',
                   parameters: {
@@ -2857,9 +3184,9 @@ export const ardelia: OperatorDefinition = {
                     right: { kind: 'constant', value: 0.5 },
                   },
                 },
-                next: 'heal_25',
+                next: 'heal_31',
               },
-              calculateActionValue_27: {
+              calculateActionValue_33: {
                 action: {
                   kind: 'calculateActionValue',
                   parameters: {
@@ -2869,9 +3196,9 @@ export const ardelia: OperatorDefinition = {
                     right: { kind: 'constant', value: 0.5 },
                   },
                 },
-                next: 'calculateActionValue_26',
+                next: 'calculateActionValue_32',
               },
-              findCharacterTeamTargets_28: {
+              findCharacterTeamTargets_34: {
                 action: {
                   kind: 'findCharacterTeamTargets',
                   parameters: {
@@ -2879,13 +3206,20 @@ export const ardelia: OperatorDefinition = {
                     selection: { kind: 'lowestHealthRatioOperator', excludedContextKey: 'healTar' },
                   },
                 },
-                next: 'calculateActionValue_27',
+                next: 'calculateActionValue_33',
               },
-              finishActionOwnerAbilityEntity_31: {
-                action: { kind: 'finishActionOwnerAbilityEntity', parameters: {} },
+              checkCondition_30: {
+                action: {
+                  kind: 'checkCondition',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+                },
                 next: null,
               },
-              heal_32: {
+              finishOwner_38: {
+                action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
+                next: null,
+              },
+              heal_39: {
                 action: {
                   kind: 'heal',
                   parameters: {
@@ -2894,24 +3228,23 @@ export const ardelia: OperatorDefinition = {
                     alwaysNext: true,
                     tags: [],
                     attribute: 'will',
-                    multiplier: { kind: 'valueNode', nodeId: 'data_5' },
-                    addition: { kind: 'valueNode', nodeId: 'data_6' },
+                    multiplier: { kind: 'valueNode', nodeId: 'data_4' },
+                    addition: { kind: 'valueNode', nodeId: 'data_3' },
                   },
                 },
-                next: 'finishActionOwnerAbilityEntity_31',
+                next: 'finishOwner_38',
               },
-              conditional_33: {
+              ifElse_40: {
                 action: {
-                  kind: 'conditional',
-                  parameters: {
-                    condition: { kind: 'conditionNode', nodeId: 'data_8' },
-                    alwaysNext: true,
-                  },
-                  whenTrue: { $sequence: 'findCharacterTeamTargets_28' },
+                  kind: 'ifElse',
+                  parameters: { alwaysNext: true },
+                  condition: { $sequence: 'checkCondition_30' },
+                  whenTrue: { $sequence: 'findCharacterTeamTargets_34' },
+                  whenFalse: { $sequence: null },
                 },
-                next: 'heal_32',
+                next: 'heal_39',
               },
-              mergeContextTargets_34: {
+              mergeContextTargets_41: {
                 action: {
                   kind: 'mergeContextTargets',
                   parameters: {
@@ -2919,62 +3252,39 @@ export const ardelia: OperatorDefinition = {
                     sources: [{ kind: 'target', target: 'currentTarget' }],
                   },
                 },
-                next: 'conditional_33',
+                next: 'ifElse_40',
               },
-              conditional_20: {
+              checkCondition_11: {
                 action: {
-                  kind: 'conditional',
-                  parameters: {
-                    condition: { kind: 'conditionNode', nodeId: 'data_9' },
-                    alwaysNext: true,
-                  },
-                  whenTrue: { $sequence: 'mergeContextTargets_34' },
-                  whenFalse: { $sequence: 'conditional_33' },
+                  kind: 'checkCondition',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
                 },
                 next: null,
               },
-              conditional_29: {
+              ifElse_25: {
                 action: {
-                  kind: 'conditional',
-                  parameters: {
-                    condition: { kind: 'conditionNode', nodeId: 'data_10' },
-                    alwaysNext: true,
-                  },
-                  whenTrue: { $sequence: 'conditional_20' },
-                  whenFalse: { $sequence: 'mergeContextTargets_34' },
+                  kind: 'ifElse',
+                  parameters: { alwaysNext: true },
+                  condition: { $sequence: 'checkCondition_11' },
+                  whenTrue: { $sequence: 'mergeContextTargets_41' },
+                  whenFalse: { $sequence: 'ifElse_40' },
                 },
                 next: null,
               },
-              findCharacterTeamTargets_30: {
+              checkCondition_24: {
                 action: {
-                  kind: 'findCharacterTeamTargets',
-                  parameters: {
-                    saveToContextKey: 'healTar',
-                    selection: { kind: 'lowestHealthRatioOperator', excludeCurrentTarget: true },
-                  },
-                },
-                next: 'conditional_29',
-              },
-              conditional_35: {
-                action: {
-                  kind: 'conditional',
-                  parameters: {
-                    condition: { kind: 'conditionNode', nodeId: 'data_11' },
-                    alwaysNext: true,
-                  },
-                  whenTrue: { $sequence: 'findCharacterTeamTargets_30' },
-                  whenFalse: { $sequence: 'mergeContextTargets_34' },
+                  kind: 'checkCondition',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
                 },
                 next: null,
               },
-              forEachContextTarget_36: {
+              ifElse_36: {
                 action: {
-                  kind: 'forEachContextTarget',
-                  parameters: {
-                    contextKey:
-                      '__auraParty:SkillData.chr_0025_ardelia_remain_loop_sheep.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]',
-                  },
-                  body: { $sequence: 'conditional_35' },
+                  kind: 'ifElse',
+                  parameters: { alwaysNext: true },
+                  condition: { $sequence: 'checkCondition_24' },
+                  whenTrue: { $sequence: 'ifElse_25' },
+                  whenFalse: { $sequence: 'mergeContextTargets_41' },
                 },
                 next: null,
               },
@@ -2982,12 +3292,47 @@ export const ardelia: OperatorDefinition = {
                 action: {
                   kind: 'findCharacterTeamTargets',
                   parameters: {
-                    saveToContextKey:
-                      '__auraParty:SkillData.chr_0025_ardelia_remain_loop_sheep.actionGroupData.timelineActions[5]._sequenceActionData.actionData[0]',
-                    selection: { kind: 'controlledOperator' },
+                    saveToContextKey: 'healTar',
+                    selection: { kind: 'lowestHealthRatioOperator', excludeCurrentTarget: true },
                   },
                 },
-                next: 'forEachContextTarget_36',
+                next: 'ifElse_36',
+              },
+              checkCondition_35: {
+                action: {
+                  kind: 'checkCondition',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
+                },
+                next: null,
+              },
+              ifElse_42: {
+                action: {
+                  kind: 'ifElse',
+                  parameters: { alwaysNext: true },
+                  condition: { $sequence: 'checkCondition_35' },
+                  whenTrue: { $sequence: 'findCharacterTeamTargets_37' },
+                  whenFalse: { $sequence: 'mergeContextTargets_41' },
+                },
+                next: null,
+              },
+              checkCondition_43: {
+                action: {
+                  kind: 'checkCondition',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
+                },
+                next: 'ifElse_42',
+              },
+              aura_44: {
+                action: {
+                  kind: 'aura',
+                  parameters: {
+                    targets: { kind: 'characterTeam', excludeOwner: false },
+                    buffs: [],
+                  },
+                  onEnter: { $sequence: 'checkCondition_43' },
+                  onExit: { $sequence: null },
+                },
+                next: null,
               },
             },
             dataNodes: {
@@ -3001,22 +3346,20 @@ export const ardelia: OperatorDefinition = {
               },
               data_3: { type: 'number', expression: { kind: 'blackboard', key: 'heal_value' } },
               data_4: { type: 'number', expression: { kind: 'blackboard', key: 'heal_scale' } },
-              data_5: { type: 'number', expression: { kind: 'blackboard', key: 'heal_scale' } },
-              data_6: { type: 'number', expression: { kind: 'blackboard', key: 'heal_value' } },
-              data_7: {
+              data_5: {
                 type: 'number',
                 expression: { kind: 'blackboard', key: 'potential2', fallback: 0 },
               },
-              data_8: {
+              data_6: {
                 type: 'boolean',
                 expression: {
                   kind: 'actionValueCompare',
-                  left: { kind: 'valueNode', nodeId: 'data_7' },
+                  left: { kind: 'valueNode', nodeId: 'data_5' },
                   operator: 'greaterOrEqual',
                   right: { kind: 'constant', value: 1 },
                 },
               },
-              data_9: {
+              data_7: {
                 type: 'boolean',
                 expression: {
                   kind: 'healthCompare',
@@ -3027,16 +3370,18 @@ export const ardelia: OperatorDefinition = {
                   value: { kind: 'constant', value: 0.99 },
                 },
               },
-              data_10: {
+              data_8: {
                 type: 'boolean',
                 expression: {
-                  kind: 'contextTargetCountCompare',
-                  contextKey: 'healTar',
+                  kind: 'entityCountCompare',
+                  target: { kind: 'context', key: 'healTar' },
+                  containsHittableTarget: false,
+                  excludeDeadEntity: false,
                   operator: 'greaterOrEqual',
                   value: 1,
                 },
               },
-              data_11: {
+              data_9: {
                 type: 'boolean',
                 expression: {
                   kind: 'healthCompare',
@@ -3044,6 +3389,14 @@ export const ardelia: OperatorDefinition = {
                   valueType: 'ratio',
                   operator: 'greaterOrEqual',
                   value: { kind: 'constant', value: 0.99 },
+                },
+              },
+              data_10: {
+                type: 'boolean',
+                expression: {
+                  kind: 'actionInputTargetIdentityMatch',
+                  other: 'controlledOperator',
+                  operator: 'equal',
                 },
               },
             },
@@ -3065,8 +3418,8 @@ export const ardelia: OperatorDefinition = {
         actionGraph: {
           main: {
             nodes: {
-              finishActionOwnerAbilityEntity_1: {
-                action: { kind: 'finishActionOwnerAbilityEntity', parameters: {} },
+              finishOwner_1: {
+                action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
                 next: null,
               },
             },
@@ -3082,13 +3435,9 @@ export const ardelia: OperatorDefinition = {
           maxChargeTime: 1,
           cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
         },
-        blackboard: { atb: 0, atk_scale: 0 },
+        blackboard: {},
         scheduledSequences: [
-          {
-            startFrame: 66,
-            endFrame: 69,
-            sequence: { $sequence: 'finishActionOwnerAbilityEntity_1' },
-          },
+          { startFrame: 66, endFrame: 69, sequence: { $sequence: 'finishOwner_1' } },
         ],
       },
     },
@@ -3102,88 +3451,6 @@ export const ardelia: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 3 },
       childSkills: {
         chr_0025_ardelia_combo_skill_bomb: {
-          actionGraph: {
-            main: {
-              nodes: {
-                modifyActionValue_1: {
-                  action: {
-                    kind: 'modifyActionValue',
-                    parameters: {
-                      key: 'atk_scale_boom',
-                      operation: 'multiply',
-                      value: { kind: 'constant', value: 0.5 },
-                    },
-                  },
-                  next: null,
-                },
-                mergeContextTargets_2: {
-                  action: {
-                    kind: 'mergeContextTargets',
-                    parameters: { saveToContextKey: 'tar', sources: [] },
-                  },
-                  next: 'modifyActionValue_1',
-                },
-                dealDamage_3: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      damageType: 'nature',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      tags: ['comboSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                    },
-                    key: 'abilityentity_chr_0025_ardelia_combo_skill_bomb:chr_0025_ardelia_combo_skill_bomb|chr_0025_ardelia_combo_skill_bomb_potential3:/childSkills/chr_0025_ardelia_combo_skill_bomb/actionGraph/main/nodes/dealDamage_3/action',
-                  },
-                  next: 'mergeContextTargets_2',
-                },
-                applyBuff_4: {
-                  action: {
-                    kind: 'applyBuff',
-                    parameters: {
-                      buffId: 'buff_common_natural_natural_corrupt_triggered',
-                      target: 'enemy',
-                      inheritSourceSkillCastInfo: true,
-                      copiedBlackboardAssignments: { duration: 'duration_corrupt_final' },
-                    },
-                  },
-                  next: 'dealDamage_3',
-                },
-                calculateActionValue_5: {
-                  action: {
-                    kind: 'calculateActionValue',
-                    parameters: {
-                      key: 'duration_corrupt_final',
-                      operation: 'add',
-                      left: { kind: 'valueNode', nodeId: 'data_3' },
-                      right: { kind: 'valueNode', nodeId: 'data_4' },
-                    },
-                  },
-                  next: 'applyBuff_4',
-                },
-                finishActionOwnerAbilityEntity_6: {
-                  action: { kind: 'finishActionOwnerAbilityEntity', parameters: {} },
-                  next: null,
-                },
-              },
-              dataNodes: {
-                data_1: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'atk_scale_boom' },
-                },
-                data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-                data_3: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'duration_corrupt' },
-                },
-                data_4: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'potential5_duration' },
-                },
-              },
-            },
-            macros: {},
-          },
           skillId: 'chr_0025_ardelia_combo_skill_bomb',
           nativeSkillType: 'normalSkill',
           naturalDurationFrames: 120,
@@ -3194,28 +3461,24 @@ export const ardelia: OperatorDefinition = {
             cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
           },
           blackboard: {
-            atb: 0,
             atk_scale_boom: 0,
             duration_corrupt: 0,
             duration_corrupt_final: 0,
             poise: 0,
-            potential5_dmg_rate: 0,
             potential5_duration: 0,
           },
           scheduledSequences: [
-            { startFrame: 52, endFrame: 55, sequence: { $sequence: 'calculateActionValue_5' } },
-            {
-              startFrame: 119,
-              endFrame: 120,
-              sequence: { $sequence: 'finishActionOwnerAbilityEntity_6' },
-            },
+            { startFrame: 52, endFrame: 55, sequence: { $sequence: 'calculateActionValue_opt3' } },
+            { startFrame: 119, endFrame: 120, sequence: { $sequence: 'finishOwner_7' } },
           ],
-        },
-        chr_0025_ardelia_combo_skill_bomb_potential3: {
           actionGraph: {
             main: {
               nodes: {
-                dealDamage_1: {
+                finishOwner_7: {
+                  action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
+                  next: null,
+                },
+                dealDamage_opt1: {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
@@ -3225,23 +3488,28 @@ export const ardelia: OperatorDefinition = {
                       features: ['canBreakWeakness'],
                       stagger: { kind: 'valueNode', nodeId: 'data_2' },
                     },
-                    key: 'abilityentity_chr_0025_ardelia_combo_skill_bomb:chr_0025_ardelia_combo_skill_bomb|chr_0025_ardelia_combo_skill_bomb_potential3:/childSkills/chr_0025_ardelia_combo_skill_bomb_potential3/actionGraph/main/nodes/dealDamage_1/action',
+                    key: 'abilityentity_chr_0025_ardelia_combo_skill_bomb:chr_0025_ardelia_combo_skill_bomb|chr_0025_ardelia_combo_skill_bomb_potential3:/childSkills/chr_0025_ardelia_combo_skill_bomb/actionGraph/main/nodes/dealDamage_4/action',
                   },
                   next: null,
                 },
-                applyBuff_2: {
+                applyBuff_opt2: {
                   action: {
                     kind: 'applyBuff',
                     parameters: {
-                      buffId: 'buff_common_natural_natural_corrupt_triggered',
-                      target: 'enemy',
+                      buffs: [
+                        {
+                          buffId: 'buff_common_natural_natural_corrupt_triggered',
+                          copiedBlackboardAssignments: { duration: 'duration_corrupt_final' },
+                        },
+                      ],
+                      targets: { kind: 'fixed', target: 'enemy' },
+                      source: { kind: 'source' },
                       inheritSourceSkillCastInfo: true,
-                      copiedBlackboardAssignments: { duration: 'duration_corrupt_final' },
                     },
                   },
-                  next: 'dealDamage_1',
+                  next: 'dealDamage_opt1',
                 },
-                calculateActionValue_3: {
+                calculateActionValue_opt3: {
                   action: {
                     kind: 'calculateActionValue',
                     parameters: {
@@ -3251,10 +3519,97 @@ export const ardelia: OperatorDefinition = {
                       right: { kind: 'valueNode', nodeId: 'data_4' },
                     },
                   },
-                  next: 'applyBuff_2',
+                  next: 'applyBuff_opt2',
                 },
-                finishActionOwnerAbilityEntity_4: {
-                  action: { kind: 'finishActionOwnerAbilityEntity', parameters: {} },
+              },
+              dataNodes: {
+                data_1: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'atk_scale_boom' },
+                },
+                data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+                data_3: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'duration_corrupt' },
+                },
+                data_4: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'potential5_duration' },
+                },
+              },
+            },
+            macros: {},
+          },
+        },
+        chr_0025_ardelia_combo_skill_bomb_potential3: {
+          skillId: 'chr_0025_ardelia_combo_skill_bomb_potential3',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 120,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
+          blackboard: {
+            atk_scale_boom: 0,
+            duration_corrupt: 0,
+            duration_corrupt_final: 0,
+            poise: 0,
+            potential5_duration: 0,
+          },
+          scheduledSequences: [
+            { startFrame: 52, endFrame: 55, sequence: { $sequence: 'calculateActionValue_4' } },
+            { startFrame: 119, endFrame: 120, sequence: { $sequence: 'finishOwner_5' } },
+          ],
+          actionGraph: {
+            main: {
+              nodes: {
+                dealDamage_2: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      damageType: 'nature',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                      tags: ['comboSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
+                    },
+                    key: 'abilityentity_chr_0025_ardelia_combo_skill_bomb:chr_0025_ardelia_combo_skill_bomb|chr_0025_ardelia_combo_skill_bomb_potential3:/childSkills/chr_0025_ardelia_combo_skill_bomb_potential3/actionGraph/main/nodes/dealDamage_2/action',
+                  },
+                  next: null,
+                },
+                applyBuff_3: {
+                  action: {
+                    kind: 'applyBuff',
+                    parameters: {
+                      buffs: [
+                        {
+                          buffId: 'buff_common_natural_natural_corrupt_triggered',
+                          copiedBlackboardAssignments: { duration: 'duration_corrupt_final' },
+                        },
+                      ],
+                      targets: { kind: 'fixed', target: 'enemy' },
+                      source: { kind: 'source' },
+                      inheritSourceSkillCastInfo: true,
+                    },
+                  },
+                  next: 'dealDamage_2',
+                },
+                calculateActionValue_4: {
+                  action: {
+                    kind: 'calculateActionValue',
+                    parameters: {
+                      key: 'duration_corrupt_final',
+                      operation: 'add',
+                      left: { kind: 'valueNode', nodeId: 'data_3' },
+                      right: { kind: 'valueNode', nodeId: 'data_4' },
+                    },
+                  },
+                  next: 'applyBuff_3',
+                },
+                finishOwner_5: {
+                  action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
                   next: null,
                 },
               },
@@ -3276,31 +3631,6 @@ export const ardelia: OperatorDefinition = {
             },
             macros: {},
           },
-          skillId: 'chr_0025_ardelia_combo_skill_bomb_potential3',
-          nativeSkillType: 'normalSkill',
-          naturalDurationFrames: 120,
-          castResource: {
-            costFrame: 0,
-            cooldownSeconds: 0,
-            maxChargeTime: 1,
-            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-          },
-          blackboard: {
-            atb: 0,
-            atk_scale_boom: 0,
-            duration_corrupt: 0,
-            duration_corrupt_final: 0,
-            poise: 0,
-            potential5_duration: 0,
-          },
-          scheduledSequences: [
-            { startFrame: 52, endFrame: 55, sequence: { $sequence: 'calculateActionValue_3' } },
-            {
-              startFrame: 119,
-              endFrame: 120,
-              sequence: { $sequence: 'finishActionOwnerAbilityEntity_4' },
-            },
-          ],
         },
       },
     },

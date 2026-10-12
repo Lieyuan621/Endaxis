@@ -1,29 +1,194 @@
-import { createEventBuff } from '../events/buffEventTestFixture';
-import { numberInput } from '../../../test/compiledGraphInputs';
-import { rootActionSteps } from '../../compiler/actionProgramInspection';
-import { createTestBuffReference } from './buffTestFixtures';
-import type { GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags';
 import { describe, expect, it, vi } from 'vitest';
-import { CombatAttributeSet } from '../attributes/combatAttributes';
-import { CombatBuffContainer } from './combatBuffs';
-import { GameplayTagRegistry } from '../tags/gameplayTags';
+import type { ActionGraphStep } from '../../../../packages/game-data-contract/src/actionGraph';
+import type { GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags';
+import { chainEntry } from '../../../test/compiledGraphEntry';
+import { numberInput, stringInput } from '../../../test/compiledGraphInputs';
+import { rootActionSteps } from '../../compiler/actionProgramInspection';
+import type { ResolvedSkillBuffDefinition } from '../../compiler/combatProgram';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import { validateSkillDefinition } from '../../game-data/validateSkillDefinition';
+import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
+import { TargetContextOperationExecutor } from '../abilities/targetContextOperationExecutor';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
-import { BuffOperationExecutor, type BuffApplicationRequest } from './buffOperationExecutor';
-import type { ResolvedSkillBuffDefinition } from '../../compiler/combatProgram';
-import { BuffDefinitionOperationTarget } from './buffDefinitionOperationTarget';
-import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
+import { CombatAttributeSet } from '../attributes/combatAttributes';
+import { createEventBuff } from '../events/buffEventTestFixture';
+import type { AbilityPhysicalInflictionPayload } from '../events/combatAbilityEvent';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
-import { validateSkillDefinition } from '../../game-data/validateSkillDefinition';
-import { chainEntry } from '../../../test/compiledGraphEntry';
-import type { ActionGraphStep } from '../../../../packages/game-data-contract/src/actionGraph';
+import { GameplayTagRegistry } from '../tags/gameplayTags';
+import { BuffDefinitionOperationTarget } from './buffDefinitionOperationTarget';
+import {
+  BuffOperationExecutor,
+  type BuffApplicationRequest,
+  type BuffOperationDependencies,
+} from './buffOperationExecutor';
+import { createTestBuffReference } from './buffTestFixtures';
+import { CombatBuffContainer } from './combatBuffs';
 
 const delegate: CombatOperationExecutor = {
   execute: () => false,
   evaluate: () => false,
 };
 
+/** 单容器测试使用同一容器接收查询结果；涉及多个对象的测试显式提供实例解析器。 */
+function createExecutor(dependencies: BuffOperationDependencies): BuffOperationExecutor {
+  const queries = new TargetContextOperationExecutor(dependencies.sourceId, delegate);
+  return new BuffOperationExecutor({
+    queryTargets: queries.queryTargets.bind(queries),
+    resolveEventTarget: id => dependencies.resolveTarget(id === 'enemy' ? 'enemy' : 'caster'),
+    ...dependencies,
+  });
+}
+
 describe('BuffOperationExecutor', () => {
+  it.each(['finishBuffsById', 'finishBuffsByTag'] as const)(
+    '%s snapshots the truncated count before synchronous finish callbacks',
+    kind => {
+      for (const reason of ['other', 'early', 'absorbed'] as const) {
+        const blackboard = new ActionBlackboard();
+        blackboard.assignDynamic('layers', 2.8);
+        const counts: number[] = [];
+        const sources: (string | undefined)[] = [];
+        const sourceGroup = [{ kind: 'operator' as const, operatorId: 'finish-source' }];
+        const targets = ['first', 'second'].map(ownerId => {
+          const target = new BuffDefinitionOperationTarget(
+            new CombatBuffContainer(ownerId, new CombatAttributeSet()),
+            {
+              get: id => ({ id, stackingType: 'unlimited' as const }),
+              compile: entry => ({ id: entry.id, stackingType: 'unlimited' }),
+            },
+          );
+          const finish = (count: number, sourceId?: string) => {
+            counts.push(count);
+            sources.push(sourceId);
+            blackboard.assignDynamic('layers', 9);
+            sourceGroup[0] = { kind: 'operator', operatorId: 'changed-source' };
+            return count;
+          };
+          vi.spyOn(target, 'finishCountByIds').mockImplementation(
+            (_ids, count, _reason, sourceId) => finish(count, sourceId),
+          );
+          vi.spyOn(target, 'finishCountByTags').mockImplementation(
+            (_tags, _query, count, _reason, _requireAll, sourceId) => finish(count, sourceId),
+          );
+          return target;
+        });
+        const executor = createExecutor({
+          sourceId: 'operator',
+          resolveTarget: () => targets[0]!,
+          queryTargets: query => {
+            if (query.kind === 'source') {
+              if (reason === 'other') throw new Error('Other must not query finishSource');
+              blackboard.assignDynamic('layers', 3.8);
+              return sourceGroup;
+            }
+            return targets.map(target => ({ kind: 'operator', operatorId: target.ownerId }));
+          },
+          resolveEventTarget: id => targets.find(target => target.ownerId === id)!,
+          delegate,
+        });
+        const parameters = {
+          targets: { kind: 'characterTeam' as const, excludeOwner: false },
+          finishSource: { kind: 'source' as const },
+          reason,
+          count: numberInput({ kind: 'blackboard', key: 'layers' }),
+        };
+        executor.execute(
+          kind === 'finishBuffsById'
+            ? { kind, parameters: { ...parameters, buffIds: ['effect', 'effect'] } }
+            : {
+                kind,
+                parameters: {
+                  ...parameters,
+                  tagQueryType: 'hasAny',
+                  buffTags: ['buff/status/fire'],
+                },
+              },
+          { blackboard },
+        );
+        const calls = kind === 'finishBuffsById' ? 4 : 2;
+        expect(counts).toEqual(Array(calls).fill(reason === 'other' ? 2 : 3));
+        expect(sources).toEqual(
+          Array(calls).fill(reason === 'other' ? undefined : 'finish-source'),
+        );
+      }
+    },
+  );
+
+  it('强制反应先快照参数再消费，零消费直接施加，层数不足不截断后续动作', () => {
+    const attachment = 'test-cryo';
+    const status = 'buff_common_fire_fire_burning_triggered';
+    const tag = 'Skill/Character/Common/SpellInflict/CrystInflict';
+    const container = new CombatBuffContainer('enemy', new CombatAttributeSet());
+    const target = new BuffDefinitionOperationTarget(container, {
+      get: id => ({
+        id,
+        stackingType: 'unlimited' as const,
+        applyTags: id === attachment ? [tag] : [],
+      }),
+      compile: entry => ({ id: entry.id, stackingType: 'unlimited', applyTags: entry.applyTags }),
+    });
+    target.apply({ buffId: attachment, sourceId: 'caster', blackboardValues: {} });
+    const blackboard = new ActionBlackboard();
+    blackboard.assignDynamic('count', 2);
+    const countCalculation = {
+      operation: 'assign' as const,
+      left: 0,
+      right: 2,
+      result: 2,
+      sourceKind: 'buffTagStackCount' as const,
+      rightKey: tag,
+    };
+    blackboard.setValueCalculation('count', countCalculation);
+    const finish = target.finishCountByTags.bind(target);
+    const consume = vi.spyOn(target, 'finishCountByTags');
+    consume.mockImplementation((...args) => {
+      const result = finish(...args);
+      blackboard.assignDynamic('count', 99);
+      return result;
+    });
+    const apply = vi.spyOn(target, 'apply');
+    const executor = new BuffOperationExecutor({
+      sourceId: 'caster',
+      resolveTarget: () => target,
+      resolveBuffDefinition: () => ({ stackingType: 'unlimited' }),
+      delegate,
+    });
+    const parameters = {
+      target: 'enemy' as const,
+      element: 'heat' as const,
+      consumedElement: 'cryo' as const,
+      consumedLayers: numberInput({ kind: 'constant', value: 1 }),
+      count: numberInput({ kind: 'blackboard', key: 'count' }),
+      isExtra: true,
+    };
+    expect(executor.execute({ kind: 'forceSpellStatus', parameters }, { blackboard })).toBe(true);
+    expect(container.getCountByIds([attachment])).toBe(0);
+    expect(apply).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        buffId: status,
+        isExtra: true,
+        blackboardValues: { consumed_type: 2, consumed_layer: 1, count: 2 },
+        blackboardValueCalculations: { count: countCalculation },
+      }),
+    );
+    apply.mockClear();
+    expect(executor.execute({ kind: 'forceSpellStatus', parameters }, { blackboard })).toBe(true);
+    expect(apply).not.toHaveBeenCalled();
+    executor.execute(
+      {
+        kind: 'forceSpellStatus',
+        parameters: {
+          ...parameters,
+          consumedLayers: numberInput({ kind: 'constant', value: 0 }),
+        },
+      },
+      { blackboard },
+    );
+    expect(consume).toHaveBeenCalledTimes(1);
+    expect(apply).toHaveBeenCalledTimes(1);
+  });
+
   it('干员附着在多层循环外检查冷却，直接异常消费附着而不派发普通 Before 事件', () => {
     const attached = 'buff_common_enemy_spell_cryst_attached';
     const triggered = 'buff_common_enemy_spell_cryst_triggered_frozen';
@@ -73,8 +238,8 @@ describe('BuffOperationExecutor', () => {
 
   it('拒绝旧内嵌蓝图，不忽略它或改用目录中的同名定义', () => {
     const parameters = {
-      buffId: 'owned',
-      target: 'caster' as const,
+      buffs: [{ buffId: 'owned' }],
+      targets: { kind: 'fixed', target: 'caster' } as const,
       definition: { stackingType: 'unlimited' as const },
     };
     const step = { kind: 'applyBuff' as const, parameters };
@@ -114,7 +279,7 @@ describe('BuffOperationExecutor', () => {
       { id: 'input-value', stackingType: 'unique', blackboard: { value: 8 } },
       'creator',
     );
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'creator',
       resolveTarget: () => {
         throw new Error('不得回退固定施法者');
@@ -137,13 +302,14 @@ describe('BuffOperationExecutor', () => {
       },
       {
         kind: 'applyBuff',
-        parameters: { target: 'actionInputTarget', buffId: 'bonus' },
+        parameters: { buffs: [{ buffId: 'bonus' }], targets: { kind: 'inputTarget' } },
       },
     ];
     const blackboard = new ActionBlackboard();
     const context = {
       blackboard,
       buffSourceId: 'creator',
+      actionSourceId: 'creator',
       buffOwnerId: 'holder',
       currentTarget: { kind: 'operator' as const, operatorId: 'other' },
       actionInputTarget: { kind: 'enemy' as const },
@@ -191,10 +357,11 @@ describe('BuffOperationExecutor', () => {
         getAttributeValue: vi.fn(() => 400),
       },
     );
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'operator',
       resolveTarget: () => target,
-      resolveEventTarget: () => {
+      resolveEventTarget: id => {
+        if (id === 'operator') return target;
         if (!shield) throw new Error('来源已经回收，不能索取活动 Buff 容器');
         return source;
       },
@@ -205,12 +372,12 @@ describe('BuffOperationExecutor', () => {
       {
         kind: 'applyBuff',
         parameters: {
-          buffId: 'counter-or-shield',
-          target: 'caster',
-          source: 'buffSource',
+          buffs: [{ buffId: 'counter-or-shield' }],
+          targets: { kind: 'fixed', target: 'caster' },
+          source: { kind: 'source' },
         },
       },
-      { blackboard: new ActionBlackboard(), buffSourceId: source.ownerId },
+      { blackboard: new ActionBlackboard(), actionSourceId: source.ownerId },
     );
     const request = apply.mock.calls[0]![0];
     expect(request.sourceId).toBe(source.ownerId);
@@ -223,7 +390,7 @@ describe('BuffOperationExecutor', () => {
       expect(source.getAttributeValue).not.toHaveBeenCalled();
     }
   });
-  it.each(['buffOwner', 'buffSource', 'currentTarget'] as const)(
+  it.each(['owner', 'source', 'inputTarget'] as const)(
     '标签结束目标 %s 通过定义校验、编译并结束绑定对象的 Buff',
     target => {
       const container = new CombatBuffContainer('recipient', new CombatAttributeSet());
@@ -237,7 +404,13 @@ describe('BuffOperationExecutor', () => {
       );
       const step: ActionGraphStep = {
         kind: 'finishBuffsByTag',
-        parameters: { target, buffTags: ['Test/Tag'], tagQueryType: 'hasAny', reason: 'early' },
+        parameters: {
+          targets: { kind: target },
+          finishSource: { kind: 'source' },
+          buffTags: ['Test/Tag'],
+          tagQueryType: 'hasAny',
+          reason: 'early',
+        },
       };
       expect(
         validateSkillDefinition({
@@ -255,7 +428,7 @@ describe('BuffOperationExecutor', () => {
       ).toEqual([]);
       const compiledStep = rootActionSteps(chainEntry('finish-by-tag', [step]))[0]!;
       if (compiledStep.kind !== 'finishBuffsByTag') throw new Error('unexpected compiled step');
-      const executor = new BuffOperationExecutor({
+      const executor = createExecutor({
         sourceId: 'caster',
         delegate,
         resolveTarget: () => {
@@ -269,9 +442,9 @@ describe('BuffOperationExecutor', () => {
       expect(
         executor.execute(compiledStep, {
           blackboard: new ActionBlackboard(),
-          buffOwnerId: 'recipient',
-          buffSourceId: 'recipient',
-          currentTarget: { kind: 'operator', operatorId: 'recipient' },
+          actionOwnerId: 'recipient',
+          actionSourceId: 'recipient',
+          actionInputTarget: { kind: 'operator', operatorId: 'recipient' },
         }),
       ).toBe(true);
       expect(applied?.finishReason).toBe('early');
@@ -326,7 +499,7 @@ describe('BuffOperationExecutor', () => {
   it.each([false, true])('结束动作传递自身施法而非事件施法，存在来源=%s', hasSource => {
     const target = new CombatBuffContainer<string>('caster', new CombatAttributeSet());
     const finish = vi.spyOn(target, 'finishByIds');
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'caster',
       resolveTarget: () => target,
       delegate,
@@ -340,7 +513,12 @@ describe('BuffOperationExecutor', () => {
     executor.execute(
       {
         kind: 'finishBuffsById',
-        parameters: { target: 'caster', buffIds: ['buff'], reason: 'other' },
+        parameters: {
+          targets: { kind: 'fixed', target: 'caster' },
+          finishSource: { kind: 'source' },
+          buffIds: ['buff'],
+          reason: 'other',
+        },
       },
       {
         blackboard: new ActionBlackboard(),
@@ -348,14 +526,14 @@ describe('BuffOperationExecutor', () => {
         eventSkillCastInfo: { ...source, skillCastId: 2, originSkillId: 'event' },
       },
     );
-    expect(finish).toHaveBeenCalledWith(['buff'], 'other', 'caster', hasSource ? source : null);
+    expect(finish).toHaveBeenCalledWith(['buff'], 'other', undefined, hasSource ? source : null);
   });
   it.each([false, true])('CreateBuff继承动作环境而非触发事件，宿主来源存在=%s', hasHost => {
     const apply = vi.fn((_request: unknown) => true);
     const target = Object.assign(new CombatBuffContainer('caster', new CombatAttributeSet()), {
       apply,
     });
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'caster',
       resolveTarget: () => target,
       delegate,
@@ -378,10 +556,15 @@ describe('BuffOperationExecutor', () => {
         executor.execute(
           {
             kind: 'applyBuff',
-            parameters: { buffId: 'phantom', target: 'caster', inheritSourceSkillCastInfo },
+            parameters: {
+              buffs: [{ buffId: 'phantom' }],
+              targets: { kind: 'fixed', target: 'caster' },
+              inheritSourceSkillCastInfo,
+            },
           },
           {
             blackboard: new ActionBlackboard(),
+            actionSourceId: 'caster',
             ...(hasHost ? { skillCastInfo: host } : {}),
             ...(eventSkillCastInfo === undefined ? {} : { eventSkillCastInfo }),
           },
@@ -397,16 +580,24 @@ describe('BuffOperationExecutor', () => {
   it('按 ID 结束未存在的实例不要求装载该 Buff 定义', () => {
     const target = new CombatBuffContainer('caster', new CombatAttributeSet());
     const finish = vi.spyOn(target, 'finishByIds');
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'caster',
       resolveTarget: () => target,
       delegate,
     });
     expect(
-      executor.execute({
-        kind: 'finishBuffsById',
-        parameters: { target: 'caster', buffIds: ['missing'], reason: 'other' },
-      }),
+      executor.execute(
+        {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'fixed', target: 'caster' },
+            finishSource: { kind: 'source' },
+            buffIds: ['missing'],
+            reason: 'other',
+          },
+        },
+        { blackboard: new ActionBlackboard() },
+      ),
     ).toBe(true);
     expect(finish).toHaveReturnedWith(0);
   });
@@ -422,7 +613,7 @@ describe('BuffOperationExecutor', () => {
     const source = new CombatBuffContainer('source', new CombatAttributeSet());
     const targetContext = new RuntimeTargetContext();
     targetContext.set('source', [{ kind: 'operator', operatorId: 'source' }]);
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'definition-owner',
       resolveTarget: () => {
         throw new Error('must not substitute caster or enemy');
@@ -440,12 +631,17 @@ describe('BuffOperationExecutor', () => {
     executor.execute(
       {
         kind: 'applyBuff',
-        parameters: { buffId: 'child', target: 'currentTarget', sourceContextKey: 'source' },
+        parameters: {
+          buffs: [{ buffId: 'child' }],
+          targets: { kind: 'inputTarget' },
+          source: { kind: 'context', key: 'source' },
+        },
       },
       {
         blackboard: new ActionBlackboard(),
         targetContext,
         currentTarget,
+        actionInputTarget: currentTarget,
         buffSourceId: 'original-source',
       },
     );
@@ -462,7 +658,7 @@ describe('BuffOperationExecutor', () => {
     const target = new CombatBuffContainer(expectedId, new CombatAttributeSet());
     const finish = vi.spyOn(target, 'finishByIds');
     const resolve = vi.fn(() => target);
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'original',
       resolveTarget: () => {
         throw new Error('must not resolve original source');
@@ -473,33 +669,45 @@ describe('BuffOperationExecutor', () => {
     executor.execute(
       {
         kind: 'finishBuffsById',
-        parameters: { target: 'currentTarget', buffIds: ['buff.fixture'], reason: 'other' },
+        parameters: {
+          targets: { kind: 'inputTarget' },
+          finishSource: { kind: 'source' },
+          buffIds: ['buff.fixture'],
+          reason: 'other',
+        },
       },
-      { blackboard: new ActionBlackboard(), currentTarget, buffSourceId: 'original' },
+      {
+        blackboard: new ActionBlackboard(),
+        actionInputTarget: currentTarget,
+        buffSourceId: 'original',
+      },
     );
     expect(resolve).toHaveBeenCalledWith(expectedId);
-    expect(finish).toHaveBeenCalledWith(['buff.fixture'], 'other', 'original', null);
+    expect(finish).toHaveBeenCalledWith(['buff.fixture'], 'other', undefined, null);
   });
   it('Context 来源使用已查询身份，不取原 Buff 来源或受益干员', () => {
     const apply = vi.fn(() => true);
     const receiver = Object.assign(new CombatBuffContainer('receiver', new CombatAttributeSet()), {
       apply,
     });
-    const caster = new CombatBuffContainer('xaihi', new CombatAttributeSet());
     const targetContext = new RuntimeTargetContext();
     targetContext.set('seraph', [{ kind: 'operator', operatorId: 'xaihi' }]);
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'receiver',
       resolveTarget: () => receiver,
       resolveEventTarget: id => {
-        expect(id).toBe('xaihi');
-        return caster;
+        expect(id).toBe('receiver');
+        return receiver;
       },
       delegate,
     });
     const step = {
       kind: 'applyBuff' as const,
-      parameters: { buffId: 'child', target: 'caster' as const, sourceContextKey: 'seraph' },
+      parameters: {
+        buffs: [{ buffId: 'child' }],
+        targets: { kind: 'fixed', target: 'caster' } as const,
+        source: { kind: 'context' as const, key: 'seraph' },
+      },
     };
     const context = {
       blackboard: new ActionBlackboard(),
@@ -508,12 +716,37 @@ describe('BuffOperationExecutor', () => {
     };
     executor.execute(step, context);
     expect(apply).toHaveBeenCalledWith(expect.objectContaining({ sourceId: 'xaihi' }));
-    targetContext.set('seraph', []);
-    expect(() => executor.execute(step, context)).toThrow('exactly one target');
+    targetContext.set('seraph', [{ kind: 'operator', operatorId: 'xaihi' }, { kind: 'enemy' }]);
+    expect(executor.execute(step, context)).toBe(true);
+    expect(apply).toHaveBeenLastCalledWith(expect.objectContaining({ sourceId: 'xaihi' }));
+    const skipped = {
+      ...step,
+      parameters: {
+        ...step.parameters,
+        buffs: [{ buffId: stringInput('unread') }],
+      },
+    };
+    for (const group of [
+      [],
+      [{ kind: 'spatialPoint' as const, pointId: 1 }, { kind: 'enemy' as const }],
+    ]) {
+      targetContext.set('seraph', group);
+      expect(executor.execute(skipped, context)).toBe(true);
+    }
+    expect(
+      executor.execute(
+        {
+          ...skipped,
+          parameters: { ...skipped.parameters, source: { kind: 'context', key: 'missing' } },
+        },
+        context,
+      ),
+    ).toBe(true);
+    expect(apply).toHaveBeenCalledTimes(2);
   });
   it.each([
-    [undefined, undefined, 'receiver'],
-    ['ability-entity:3', undefined, 'ability-entity:3'],
+    [undefined, undefined, undefined],
+    ['ability-entity:3', undefined, undefined],
     ['ability-entity:3', 'enhancer', 'enhancer'],
   ] as const)(
     '默认来源使用动作上下文而非宿主：%s / %s',
@@ -523,13 +756,19 @@ describe('BuffOperationExecutor', () => {
         new CombatBuffContainer('receiver', new CombatAttributeSet()),
         { apply },
       );
-      const executor = new BuffOperationExecutor({
+      const executor = createExecutor({
         sourceId: 'receiver',
         resolveTarget: () => receiver,
         delegate,
       });
       executor.execute(
-        { kind: 'applyBuff', parameters: { buffId: 'child', target: 'caster' } },
+        {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'child' }],
+            targets: { kind: 'fixed', target: 'caster' },
+          },
+        },
         {
           blackboard: new ActionBlackboard(),
           buffOwnerId: 'receiver',
@@ -537,7 +776,8 @@ describe('BuffOperationExecutor', () => {
           actionSourceId,
         },
       );
-      expect(apply).toHaveBeenCalledWith(expect.objectContaining({ sourceId: expected }));
+      if (expected === undefined) expect(apply).not.toHaveBeenCalled();
+      else expect(apply).toHaveBeenCalledWith(expect.objectContaining({ sourceId: expected }));
     },
   );
 
@@ -546,7 +786,7 @@ describe('BuffOperationExecutor', () => {
     const receiver = Object.assign(new CombatBuffContainer('enemy', new CombatAttributeSet()), {
       apply,
     });
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'operator',
       resolveTarget: () => receiver,
       delegate,
@@ -554,17 +794,18 @@ describe('BuffOperationExecutor', () => {
     const step = {
       kind: 'applyBuff' as const,
       parameters: {
-        buffId: 'weakness',
-        target: 'enemy' as const,
+        buffs: [{ buffId: 'weakness' }],
+        targets: { kind: 'fixed', target: 'enemy' } as const,
         iconDurationSource: { kind: 'actionOwnerAbilityEntity' as const },
       },
     };
 
-    expect(() => executor.execute(step, { blackboard: new ActionBlackboard() })).toThrow(
-      'requires an AbilityEntity action owner',
-    );
+    expect(() =>
+      executor.execute(step, { blackboard: new ActionBlackboard(), actionSourceId: 'operator' }),
+    ).toThrow('requires an AbilityEntity action owner');
     executor.execute(step, {
       blackboard: new ActionBlackboard(),
+      actionSourceId: 'operator',
       actionOwnerAbilityEntity: { kind: 'abilityEntity', instanceId: 7 },
     });
     expect(apply).toHaveBeenCalledWith(
@@ -578,7 +819,7 @@ describe('BuffOperationExecutor', () => {
       apply,
     });
     const resolveAbilityEntityTimedMarkerSource = vi.fn(() => 'abilityEntity:7:timed-marker:3');
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'operator',
       resolveTarget: () => receiver,
       resolveAbilityEntityTimedMarkerSource,
@@ -587,8 +828,8 @@ describe('BuffOperationExecutor', () => {
     const step = {
       kind: 'applyBuff' as const,
       parameters: {
-        buffId: 'weakness',
-        target: 'enemy' as const,
+        buffs: [{ buffId: 'weakness' }],
+        targets: { kind: 'fixed', target: 'enemy' } as const,
         iconDurationSource: {
           kind: 'actionOwnerTimedMarker' as const,
           markerId: 'ultimate-window',
@@ -599,6 +840,7 @@ describe('BuffOperationExecutor', () => {
 
     executor.execute(step, {
       blackboard: new ActionBlackboard(),
+      actionSourceId: 'operator',
       actionOwnerAbilityEntity,
     });
 
@@ -617,7 +859,7 @@ describe('BuffOperationExecutor', () => {
     const receiver = Object.assign(new CombatBuffContainer('enemy', new CombatAttributeSet()), {
       apply: vi.fn(() => true),
     });
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'operator',
       resolveTarget: () => receiver,
       resolveAbilityEntityTimedMarkerSource: () => undefined,
@@ -629,8 +871,8 @@ describe('BuffOperationExecutor', () => {
         {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'weakness',
-            target: 'enemy',
+            buffs: [{ buffId: 'weakness' }],
+            targets: { kind: 'fixed', target: 'enemy' },
             iconDurationSource: {
               kind: 'actionOwnerTimedMarker',
               markerId: 'missing',
@@ -639,6 +881,7 @@ describe('BuffOperationExecutor', () => {
         },
         {
           blackboard: new ActionBlackboard(),
+          actionSourceId: 'operator',
           actionOwnerAbilityEntity: { kind: 'abilityEntity', instanceId: 7 },
         },
       ),
@@ -651,7 +894,7 @@ describe('BuffOperationExecutor', () => {
       apply,
     });
     const baseDefinition = { stackingType: 'unlimited' as const };
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'operator',
       resolveTarget: () => receiver,
       resolveBuffDefinition: id => (id === 'carrier' ? baseDefinition : undefined),
@@ -661,21 +904,28 @@ describe('BuffOperationExecutor', () => {
       {
         kind: 'applyBuff',
         parameters: {
-          buffId: 'carrier',
-          target: 'caster',
-          blackboardAssignments: {
-            rate: numberInput({ kind: 'blackboard', key: 'base_rate' }),
-          },
-          keywordEnhancements: [
+          buffs: [
             {
-              triggerBuffIds: ['trigger'],
-              operation: 'add',
-              value: numberInput({ kind: 'blackboard', key: 'bonus' }),
+              buffId: 'carrier',
+              blackboardAssignments: {
+                rate: numberInput({ kind: 'blackboard', key: 'base_rate' }),
+              },
+              keywordEnhancements: [
+                {
+                  triggerBuffIds: ['trigger'],
+                  operation: 'add',
+                  value: numberInput({ kind: 'blackboard', key: 'bonus' }),
+                },
+              ],
             },
           ],
+          targets: { kind: 'fixed', target: 'caster' },
         },
       },
-      { blackboard: new ActionBlackboard({ base_rate: 0.2, bonus: 0.05 }) },
+      {
+        blackboard: new ActionBlackboard({ base_rate: 0.2, bonus: 0.05 }),
+        actionSourceId: 'operator',
+      },
     );
     expect(apply).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -741,8 +991,8 @@ describe('BuffOperationExecutor', () => {
     },
   );
 
-  it.each(['buffSource', 'buffOwner'] as const)(
-    '显式 %s 来源不被当前事件施加者覆盖，缺上下文拒绝执行',
+  it.each(['source', 'owner'] as const)(
+    '显式 %s 来源不被当前事件施加者覆盖，缺身份跳过创建',
     sourceKind => {
       const owner = new CombatBuffContainer('enemy', new CombatAttributeSet());
       const source = new CombatBuffContainer('weapon-holder', new CombatAttributeSet());
@@ -751,10 +1001,11 @@ describe('BuffOperationExecutor', () => {
         new CombatBuffContainer('receiver', new CombatAttributeSet()),
         { apply },
       );
-      const executor = new BuffOperationExecutor({
+      const executor = createExecutor({
         sourceId: 'wrong-default',
         resolveTarget: () => receiver,
         resolveEventTarget: id => {
+          if (id === 'wrong-default') return receiver;
           if (id === owner.ownerId) return owner;
           if (id === source.ownerId) return source;
           throw new Error(`unexpected entity ${id}`);
@@ -763,12 +1014,18 @@ describe('BuffOperationExecutor', () => {
       });
       const step = {
         kind: 'applyBuff' as const,
-        parameters: { buffId: 'child', target: 'caster' as const, source: sourceKind },
+        parameters: {
+          buffs: [{ buffId: 'child' }],
+          targets: { kind: 'fixed', target: 'caster' } as const,
+          source: { kind: sourceKind },
+        },
       };
       const context = {
         blackboard: new ActionBlackboard(),
         buffOwnerId: owner.ownerId,
         buffSourceId: source.ownerId,
+        actionOwnerId: owner.ownerId,
+        actionSourceId: source.ownerId,
         event: {
           event: 'addedBuff' as const,
           payload: {
@@ -782,38 +1039,37 @@ describe('BuffOperationExecutor', () => {
       expect(executor.execute(step, context)).toBe(true);
       expect(apply).toHaveBeenCalledWith(
         expect.objectContaining({
-          sourceId: sourceKind === 'buffSource' ? 'weapon-holder' : 'enemy',
+          sourceId: sourceKind === 'source' ? 'weapon-holder' : 'enemy',
         }),
       );
-      expect(() =>
-        executor.execute(step, { blackboard: context.blackboard, event: context.event }),
-      ).toThrow('Buff lifecycle context');
+      apply.mockClear();
+      executor.execute(step, { blackboard: context.blackboard, event: context.event });
+      expect(apply).not.toHaveBeenCalled();
     },
   );
 
-  it.each([false, true])(
-    'never drops cast attachment when falling back to legacy application (%s)',
-    legacy => {
-      const execute = vi.fn(() => true);
-      const executor = new BuffOperationExecutor({
-        sourceId: 'operator',
-        resolveTarget: () => new CombatBuffContainer('operator', new CombatAttributeSet()),
-        delegate: { ...delegate, execute },
-      });
-      expect(() =>
-        executor.execute({
+  it('rejects a target without a scoped application port for cast attachment', () => {
+    const execute = vi.fn(() => true);
+    const executor = createExecutor({
+      sourceId: 'operator',
+      resolveTarget: () => new CombatBuffContainer('operator', new CombatAttributeSet()),
+      delegate: { ...delegate, execute },
+    });
+    expect(() =>
+      executor.execute(
+        {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'attached',
-            target: 'caster',
+            buffs: [{ buffId: 'attached' }],
+            targets: { kind: 'fixed', target: 'caster' },
             lifetimeOwner: 'currentCastSkill',
-            ...(legacy ? { durationSeconds: 10 } : {}),
           },
-        }),
-      ).toThrow(legacy ? 'definition-backed Buff handle' : 'scoped Buff application port');
-      expect(execute).not.toHaveBeenCalled();
-    },
-  );
+        },
+        { blackboard: new ActionBlackboard(), actionSourceId: 'operator' },
+      ),
+    ).toThrow('scoped Buff application port');
+    expect(execute).not.toHaveBeenCalled();
+  });
   it('compares matching Buff instances on the real event target without counting enhance layers', () => {
     const path = 'buff/status/poise';
     const tag = path;
@@ -877,9 +1133,7 @@ describe('BuffOperationExecutor', () => {
   it('applies the first no-guard layer before executing the fracture Buff chain', () => {
     let noGuardCount = 0;
     const applied: string[] = [];
-    const beforeOutput: Array<
-      import('../events/combatAbilityEvent').AbilityPhysicalInflictionPayload
-    > = [];
+    const beforeOutput: Array<AbilityPhysicalInflictionPayload> = [];
     const target = {
       ownerId: 'enemy',
       apply: (request: { buffId: string }) => {
@@ -903,6 +1157,7 @@ describe('BuffOperationExecutor', () => {
       sourceActionId: 'comboSkill',
       resolveTarget: () => target,
       onBeforeOutputPhysicalInfliction: event => beforeOutput.push(event),
+      resolveBuffDefinition: () => ({ stackingType: 'refresh' }),
       delegate,
     });
     const step = {
@@ -911,10 +1166,6 @@ describe('BuffOperationExecutor', () => {
         type: 'fracture' as const,
         target: 'enemy' as const,
         isExtra: false,
-        noGuardBuffId: 'buff_physical_no_guard',
-        noGuardDefinition: { stackingType: 'unlimited' as const },
-        fractureBuffId: 'buff_physical_fracture',
-        fractureDefinition: { stackingType: 'refresh' as const },
       },
     };
     const attachBuffToCurrentSkill = vi.fn();
@@ -969,16 +1220,13 @@ describe('BuffOperationExecutor', () => {
       sourceId: 'antal',
       resolveTarget: () => target,
       onBeforeOutputPhysicalInfliction: event => beforeOutput.push(event.type),
+      resolveBuffDefinition: () => ({ stackingType: 'refresh' }),
       delegate,
     });
     const parameters = {
       type: 'airborne' as const,
       target: 'enemy' as const,
       isExtra: false,
-      noGuardBuffId: 'buff_physical_no_guard',
-      noGuardDefinition: { stackingType: 'enhanceAndRefresh' as const },
-      airborneBuffId: 'buff_physical_airborne',
-      airborneDefinition: { stackingType: 'refresh' as const },
       duration: { kind: 'constant' as const, value: 1.5 },
       height: { kind: 'constant' as const, value: 2 },
       speedFactorMultiplier: 3,
@@ -1016,10 +1264,10 @@ describe('BuffOperationExecutor', () => {
 
   it('resolves Crush assignments only when the existing no-guard layer is consumed', () => {
     let noGuardCount = 1;
-    const applied: import('./buffOperationExecutor').BuffApplicationRequest[] = [];
+    const applied: BuffApplicationRequest[] = [];
     const target = {
       ownerId: 'enemy',
-      apply: (request: import('./buffOperationExecutor').BuffApplicationRequest) => {
+      apply: (request: BuffApplicationRequest) => {
         applied.push(request);
         if (request.buffId === 'buff_physical_crushed') noGuardCount = 0;
         return true;
@@ -1037,6 +1285,7 @@ describe('BuffOperationExecutor', () => {
     const executor = new BuffOperationExecutor({
       sourceId: 'dapan',
       resolveTarget: () => target,
+      resolveBuffDefinition: () => ({ stackingType: 'refresh' }),
       delegate,
     });
 
@@ -1048,10 +1297,6 @@ describe('BuffOperationExecutor', () => {
             type: 'crush',
             target: 'enemy',
             isExtra: false,
-            noGuardBuffId: 'buff_physical_no_guard',
-            noGuardDefinition: { stackingType: 'enhanceAndRefresh' },
-            crushedBuffId: 'buff_physical_crushed',
-            crushedDefinition: { stackingType: 'stack', stackingKey: 'physical' },
             damageMultiplier: numberInput({ kind: 'blackboard', key: 'crush_multi' }),
             ignoreHitEffect: true,
           },
@@ -1096,7 +1341,7 @@ describe('BuffOperationExecutor', () => {
       findFirstByTags: () => undefined,
       finishByTags: () => 0,
     };
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'operator',
       resolveTarget: () => target,
       delegate,
@@ -1104,34 +1349,46 @@ describe('BuffOperationExecutor', () => {
     const step = {
       kind: 'applyBuff' as const,
       parameters: {
-        buffId: 'aura-buff',
-        target: 'enemy' as const,
+        buffs: [{ buffId: 'aura-buff' }],
+        targets: { kind: 'fixed', target: 'enemy' } as const,
         finishByAction: true,
       },
     };
     const actionBuffReferencesState = { active: false, references: [] };
 
     expect(
-      executor.execute(step, { blackboard: new ActionBlackboard(), actionBuffReferencesState }),
+      executor.execute(step, {
+        blackboard: new ActionBlackboard(),
+        actionSourceId: 'operator',
+        actionBuffReferencesState,
+      }),
     ).toBe(true);
     expect(finished).toEqual([]);
 
-    executor.end(step, { blackboard: new ActionBlackboard(), actionBuffReferencesState });
+    executor.end(step, {
+      blackboard: new ActionBlackboard(),
+      actionSourceId: 'operator',
+      actionBuffReferencesState,
+    });
     expect(finished).toEqual(['other']);
   });
 
   it('Aura 结束先回收创建的实例，再清理指定 Owner，而不是对离场目标查同名 Buff', () => {
     const calls: string[] = [];
+    const sources: string[] = [];
     const target = {
       ownerId: 'enemy',
-      applyScoped: () => ({
-        isRecycled: false,
-        reference: createTestBuffReference(),
-        finish: () => {
-          calls.push('instance');
-          return true;
-        },
-      }),
+      applyScoped: (request: BuffApplicationRequest) => {
+        sources.push(request.sourceId);
+        return {
+          isRecycled: false,
+          reference: createTestBuffReference(),
+          finish: () => {
+            calls.push('instance');
+            return true;
+          },
+        };
+      },
       finishByIds: () => {
         calls.push('target');
         return 0;
@@ -1152,27 +1409,54 @@ describe('BuffOperationExecutor', () => {
         return 0;
       },
     };
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'operator',
       resolveTarget: recipient => (recipient === 'caster' ? owner : target),
       delegate,
+      resolveEventTarget: id => (id === 'enemy' ? target : owner),
     });
-    const step = {
-      kind: 'applyBuff' as const,
-      parameters: {
-        buffId: 'aura',
-        target: 'enemy' as const,
-        finishByAction: true,
-        onActionEndFinishBuffs: { target: 'caster' as const, buffIds: ['aura'] },
+    const program = createActionGraphCompilation(
+      {
+        nodes: {
+          aura: {
+            action: {
+              kind: 'aura',
+              parameters: {
+                targets: { kind: 'fixed', target: 'enemy' },
+                source: { kind: 'owner' },
+                buffs: [{ buffId: 'aura' }],
+              },
+              onEnter: { $sequence: null },
+              onExit: { $sequence: 'cleanup' },
+            },
+            next: null,
+          },
+          cleanup: {
+            action: {
+              kind: 'finishBuffsById',
+              parameters: {
+                targets: { kind: 'fixed', target: 'caster' },
+                finishSource: { kind: 'source' },
+                buffIds: ['aura'],
+                reason: 'other',
+              },
+            },
+            next: null,
+          },
+        },
       },
-    };
-    const context = {
+      1,
+    ).compileAll();
+    const runtime = new CombatActionSequenceRuntime(executor, {
       blackboard: new ActionBlackboard(),
-      actionBuffReferencesState: { active: false, references: [] },
-    };
-    executor.execute(step, context);
+      actionOwnerId: 'operator',
+      actionSourceId: 'teammate',
+    });
+    const action = runtime.createGraphSequence(program, 'aura', 'root');
+    action.tryExecute({});
+    expect(sources).toEqual(['operator']);
     expect(calls).toEqual([]);
-    executor.end(step, context);
+    action.end({});
     expect(calls).toEqual(['instance', 'owner']);
   });
 
@@ -1191,7 +1475,7 @@ describe('BuffOperationExecutor', () => {
       findFirstByTags: () => undefined,
       finishByTags: () => 0,
     };
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'operator',
       resolveTarget: () => target,
       delegate,
@@ -1199,8 +1483,8 @@ describe('BuffOperationExecutor', () => {
     const step = {
       kind: 'applyBuff' as const,
       parameters: {
-        buffId: 'cancel-entity',
-        target: 'caster' as const,
+        buffs: [{ buffId: 'cancel-entity' }],
+        targets: { kind: 'fixed', target: 'caster' } as const,
         finishByAction: true,
         inheritToNextSkillIds: ['native.attack1'],
       },
@@ -1209,9 +1493,14 @@ describe('BuffOperationExecutor', () => {
     const attachBuffToNextSkill = vi.fn();
     const actionBuffReferencesState = { active: false, references: [] };
 
-    executor.execute(step, { blackboard: new ActionBlackboard(), actionBuffReferencesState });
+    executor.execute(step, {
+      blackboard: new ActionBlackboard(),
+      actionSourceId: 'operator',
+      actionBuffReferencesState,
+    });
     executor.end(step, {
       blackboard: new ActionBlackboard(),
+      actionSourceId: 'operator',
       actionBuffReferencesState,
       pendingNextSkillId: 'native.attack1',
       detachBuffFromCurrentSkill,
@@ -1232,13 +1521,13 @@ describe('BuffOperationExecutor', () => {
       const step = {
         kind: 'applyBuff' as const,
         parameters: {
-          buffId: 'branch-aura',
-          target: 'enemy' as const,
+          buffs: [{ buffId: 'branch-aura' }],
+          targets: { kind: 'fixed', target: 'enemy' } as const,
           finishByAction: true,
         },
       };
       const originalState = { active: false, references: [] };
-      const original = new BuffOperationExecutor({
+      const original = createExecutor({
         sourceId: 'operator',
         resolveBuffReference: saved => {
           expect(saved).toEqual(reference);
@@ -1260,6 +1549,7 @@ describe('BuffOperationExecutor', () => {
       });
       original.execute(step, {
         blackboard: new ActionBlackboard(),
+        actionSourceId: 'operator',
         actionBuffReferencesState: originalState,
       });
 
@@ -1268,7 +1558,7 @@ describe('BuffOperationExecutor', () => {
       oldHandle.isRecycled = recycled;
       const newFinish = vi.fn(() => true);
       const newHandle = { isRecycled: false, reference, finish: newFinish };
-      const restored = new BuffOperationExecutor({
+      const restored = createExecutor({
         sourceId: 'operator',
         resolveTarget: () => {
           throw new Error('restored End must resolve the saved owner identity');
@@ -1285,6 +1575,7 @@ describe('BuffOperationExecutor', () => {
 
       restored.end(step, {
         blackboard: new ActionBlackboard(),
+        actionSourceId: 'operator',
         actionBuffReferencesState: restoredState,
       });
 
@@ -1295,6 +1586,7 @@ describe('BuffOperationExecutor', () => {
       expect(originalState).toEqual({ active: true, references: [reference] });
       original.end(step, {
         blackboard: new ActionBlackboard(),
+        actionSourceId: 'operator',
         actionBuffReferencesState: originalState,
       });
       expect(originalState).toEqual(restoredState);
@@ -1317,7 +1609,7 @@ describe('BuffOperationExecutor', () => {
       findFirstByTags: () => undefined,
       finishByTags: () => 0,
     };
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'operator',
       resolveTarget: () => target,
       delegate,
@@ -1447,7 +1739,7 @@ describe('BuffOperationExecutor', () => {
       findFirstByTags: () => undefined,
       finishByTags: () => 0,
     };
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'operator',
       resolveTarget: () => target,
       delegate,
@@ -1458,8 +1750,8 @@ describe('BuffOperationExecutor', () => {
         {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'child',
-            target: 'caster',
+            buffs: [{ buffId: 'child' }],
+            targets: { kind: 'fixed', target: 'caster' },
             ...(usesAttachingSkillLifetime
               ? { lifetimeOwner: 'currentCastSkill' as const }
               : { asChildBuff: true }),
@@ -1467,6 +1759,7 @@ describe('BuffOperationExecutor', () => {
         },
         {
           blackboard: new ActionBlackboard(),
+          actionSourceId: 'operator',
           ...(owner === 'skillActionChild'
             ? { attachBuffToCurrentSkill: addCurrentBuffChild }
             : owner === 'castSkill'
@@ -1573,12 +1866,12 @@ describe('BuffOperationExecutor', () => {
       findFirstByTags: () => undefined,
       finishByTags: () => 0,
     };
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'operator',
       resolveTarget: () => {
         throw new Error('current ability entity must not resolve through CombatTarget');
       },
-      resolveCurrentAbilityEntityTarget: () => entityTarget,
+      resolveEventTarget: () => entityTarget,
       delegate,
     });
 
@@ -1587,23 +1880,24 @@ describe('BuffOperationExecutor', () => {
         {
           kind: 'finishBuffsById',
           parameters: {
-            target: 'currentAbilityEntity',
+            targets: { kind: 'inputTarget' },
+            finishSource: { kind: 'source' },
             buffIds: ['effect', 'effect-line'],
             reason: 'other',
           },
         },
         {
           blackboard: new ActionBlackboard(),
-          currentTarget: { kind: 'abilityEntity', instanceId: 7 },
+          actionInputTarget: { kind: 'abilityEntity', instanceId: 7 },
         },
       ),
     ).toBe(true);
-    expect(finished).toEqual([['effect', 'effect-line']]);
+    expect(finished).toEqual([['effect'], ['effect-line']]);
   });
 
   it('resolves a partial Buff finish count from the current action blackboard', () => {
     const calls: { ids: readonly string[]; count: number; reason: string }[] = [];
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'operator',
       resolveTarget: () => ({
         ownerId: 'operator',
@@ -1629,7 +1923,8 @@ describe('BuffOperationExecutor', () => {
         {
           kind: 'finishBuffsById',
           parameters: {
-            target: 'caster',
+            targets: { kind: 'fixed', target: 'caster' },
+            finishSource: { kind: 'source' },
             buffIds: ['preparation'],
             reason: 'other',
             count: numberInput({ kind: 'blackboard', key: 'layers' }),
@@ -1643,7 +1938,7 @@ describe('BuffOperationExecutor', () => {
 
   it('resolves a partial tag Buff finish count from the current action blackboard', () => {
     const calls: { tags: readonly GameplayTag[]; count: number; reason: string }[] = [];
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'operator',
       resolveTarget: () => ({
         ownerId: 'enemy',
@@ -1669,7 +1964,8 @@ describe('BuffOperationExecutor', () => {
         {
           kind: 'finishBuffsByTag',
           parameters: {
-            target: 'enemy',
+            targets: { kind: 'fixed', target: 'enemy' },
+            finishSource: { kind: 'source' },
             tagQueryType: 'hasAny',
             buffTags: [tag],
             reason: 'early',
@@ -1746,32 +2042,83 @@ describe('BuffOperationExecutor', () => {
     expect(blackboard.getNumber('count')).toBe(4);
   });
 
-  it('writes the executing finite Buff remaining duration and maps infinity to zero', () => {
+  it('uses container order for lifetime reads and preserves the native write tolerance', () => {
+    const container = new CombatBuffContainer('operator', new CombatAttributeSet());
+    const target = new BuffDefinitionOperationTarget(container, {
+      get: () => undefined,
+      compile: entry => ({ id: entry.id, stackingType: entry.stackingType }),
+    });
+    for (const [id, durationSeconds] of [
+      ['first', 9],
+      ['second', 3],
+      ['infinite', undefined],
+    ] as const)
+      container.add({ id, stackingType: 'unlimited', durationSeconds }, 'source');
     const blackboard = new ActionBlackboard();
     const executor = new BuffOperationExecutor({
       sourceId: 'operator',
+      delegate,
+      queryTargets: () => [{ kind: 'operator', operatorId: 'operator' }],
+      resolveEventTarget: () => target,
+      resolveTarget: () => target,
+    });
+    const step = {
+      kind: 'readBuffRemainingDuration' as const,
+      parameters: {
+        target: { kind: 'context' as const, key: 'src' },
+        query: { kind: 'id' as const, buffIds: ['second', 'first', 'infinite'] },
+        outputKey: 'remaining',
+      },
+    };
+    expect(executor.execute(step, { blackboard })).toBe(true);
+    expect(blackboard.getNumber('remaining')).toBe(3);
+    blackboard.assignDynamicUnconditionally('remaining', 3.000001);
+    executor.execute(step, { blackboard });
+    expect(blackboard.getNumber('remaining')).toBe(3.000001);
+    expect(
+      executor.execute(
+        {
+          ...step,
+          parameters: { ...step.parameters, query: { kind: 'id', buffIds: ['missing'] } },
+        },
+        { blackboard },
+      ),
+    ).toBe(true);
+    expect(blackboard.getNumber('remaining')).toBe(0);
+  });
+
+  it('reads the selected environment Buff and clears a previous finite result for infinity', () => {
+    const blackboard = new ActionBlackboard();
+    const target = new BuffDefinitionOperationTarget(
+      new CombatBuffContainer('operator', new CombatAttributeSet()),
+      {
+        get: () => undefined,
+        compile: entry => ({ id: entry.id, stackingType: entry.stackingType }),
+      },
+    );
+    const executor = new BuffOperationExecutor({
+      sourceId: 'operator',
+      queryTargets: () => [{ kind: 'operator', operatorId: 'operator' }],
+      resolveEventTarget: () => target,
       resolveTarget: () => {
-        throw new Error('current Buff lifetime must not resolve a target container');
+        throw new Error('unexpected fixed target');
       },
       delegate,
     });
     const step = {
-      kind: 'readCurrentBuffRemainingDuration' as const,
-      parameters: { outputKey: 'duration_dynamic' },
+      kind: 'readBuffRemainingDuration' as const,
+      parameters: {
+        target: { kind: 'owner' as const },
+        query: { kind: 'environment' as const },
+        outputKey: 'duration_dynamic',
+      },
     };
-
-    expect(
-      executor.execute(step, {
-        blackboard,
-        getCurrentBuffRemainingDuration: () => 7.5,
-      }),
-    ).toBe(true);
+    const context = { blackboard, buffOwnerId: 'operator' };
+    expect(executor.execute(step, { ...context, getCurrentBuffRemainingDuration: () => 7.5 })).toBe(
+      true,
+    );
     expect(blackboard.getNumber('duration_dynamic')).toBe(7.5);
-
-    executor.execute(step, {
-      blackboard,
-      getCurrentBuffRemainingDuration: () => null,
-    });
+    executor.execute(step, { ...context, getCurrentBuffRemainingDuration: () => null });
     expect(blackboard.getNumber('duration_dynamic')).toBe(0);
   });
 
@@ -1874,7 +2221,7 @@ describe('BuffOperationExecutor', () => {
       findFirstByTags: () => undefined,
       finishByTags: () => 0,
     };
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'operator',
       resolveTarget: () => target,
       delegate,
@@ -1887,18 +2234,22 @@ describe('BuffOperationExecutor', () => {
         {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'ultimate-base',
-            target: 'caster',
-            blackboardAssignments: {
-              duration: { kind: 'constant', value: 25 },
-              comboRate: numberInput({ kind: 'blackboard', key: 'rate' }),
-            },
-            stringBlackboardAssignments: {
-              child_buff_id: 'buff:icon',
-            },
+            buffs: [
+              {
+                buffId: 'ultimate-base',
+                blackboardAssignments: {
+                  duration: { kind: 'constant', value: 25 },
+                  comboRate: numberInput({ kind: 'blackboard', key: 'rate' }),
+                },
+                stringBlackboardAssignments: {
+                  child_buff_id: 'buff:icon',
+                },
+              },
+            ],
+            targets: { kind: 'fixed', target: 'caster' },
           },
         },
-        { blackboard },
+        { blackboard, actionSourceId: 'operator' },
       ),
     ).toBe(true);
     expect(applied).toEqual([
@@ -1916,12 +2267,12 @@ describe('BuffOperationExecutor', () => {
         {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'external-event-buff',
-            target: 'caster',
+            buffs: [{ buffId: 'external-event-buff' }],
+            targets: { kind: 'fixed', target: 'caster' },
             inheritSourceSkillCastInfo: true,
           },
         },
-        { blackboard: new ActionBlackboard() },
+        { blackboard: new ActionBlackboard(), actionSourceId: 'operator' },
       ),
     ).toBe(true);
     expect(applied[1]).toEqual({
@@ -1954,7 +2305,7 @@ describe('BuffOperationExecutor', () => {
       findFirstByTags: () => undefined,
       finishByTags: () => 0,
     };
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'operator',
       resolveTarget: () => target,
       resolveBuffDefinition: buffId => (buffId === 'operator-mark' ? definition : undefined),
@@ -1962,10 +2313,16 @@ describe('BuffOperationExecutor', () => {
     });
 
     expect(
-      executor.execute({
-        kind: 'applyBuff',
-        parameters: { buffId: 'operator-mark', target: 'caster' },
-      }),
+      executor.execute(
+        {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'operator-mark' }],
+            targets: { kind: 'fixed', target: 'caster' },
+          },
+        },
+        { blackboard: new ActionBlackboard(), actionSourceId: 'operator' },
+      ),
     ).toBe(true);
     expect(applied).toEqual([
       {
@@ -1976,76 +2333,6 @@ describe('BuffOperationExecutor', () => {
         blackboardValues: {},
       },
     ]);
-  });
-
-  it('applies a party Buff to every resolved operator target', () => {
-    const appliedTo: string[] = [];
-    const createTarget = (ownerId: string) => ({
-      ownerId,
-      apply: () => {
-        appliedTo.push(ownerId);
-        return true;
-      },
-      getCountByIds: () => 0,
-      finishByIds: () => 0,
-      holdByIds: () => ({ release: () => undefined }),
-      getCountByTags: () => 0,
-      matchesEntityTags: () => false,
-      findFirstByIds: () => undefined,
-      findFirstByTags: () => undefined,
-      finishByTags: () => 0,
-    });
-    const party = [createTarget('operator-a'), createTarget('operator-b')];
-    const executor = new BuffOperationExecutor({
-      sourceId: 'operator-a',
-      resolveTarget: () => party[0]!,
-      resolveApplicationTargets: target => (target === 'party' ? party : [party[0]!]),
-      delegate,
-    });
-
-    expect(
-      executor.execute({
-        kind: 'applyBuff',
-        parameters: { buffId: 'party-buff', target: 'party' },
-      }),
-    ).toBe(true);
-    expect(appliedTo).toEqual(['operator-a', 'operator-b']);
-  });
-
-  it('把主控干员作为施加目标交给集合目标解析器', () => {
-    const appliedTo: string[] = [];
-    const controlledTarget = {
-      ownerId: 'operator-controlled',
-      apply: () => {
-        appliedTo.push('operator-controlled');
-        return true;
-      },
-      getCountByIds: () => 0,
-      finishByIds: () => 0,
-      holdByIds: () => ({ release: () => undefined }),
-      getCountByTags: () => 0,
-      matchesEntityTags: () => false,
-      findFirstByIds: () => undefined,
-      findFirstByTags: () => undefined,
-      finishByTags: () => 0,
-    };
-    const executor = new BuffOperationExecutor({
-      sourceId: 'operator-source',
-      resolveTarget: () => controlledTarget,
-      resolveApplicationTargets: target => {
-        expect(target).toBe('controlledOperator');
-        return [controlledTarget];
-      },
-      delegate,
-    });
-
-    expect(
-      executor.execute({
-        kind: 'applyBuff',
-        parameters: { buffId: 'controlled-buff', target: 'controlledOperator' },
-      }),
-    ).toBe(true);
-    expect(appliedTo).toEqual(['operator-controlled']);
   });
 
   it('resolves a lifecycle child Buff and query against the current Buff owner', () => {
@@ -2065,7 +2352,7 @@ describe('BuffOperationExecutor', () => {
       findFirstByTags: () => undefined,
       finishByTags: () => 0,
     };
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'operator-a',
       resolveTarget: () => owner,
       resolveEventTarget: targetId => {
@@ -2077,13 +2364,15 @@ describe('BuffOperationExecutor', () => {
     const context = {
       blackboard: new ActionBlackboard({ count: 0 }),
       buffOwnerId: 'operator-b',
+      actionOwnerId: 'operator-b',
+      actionSourceId: 'operator-a',
     };
 
     expect(
       executor.execute(
         {
           kind: 'applyBuff',
-          parameters: { buffId: 'owner-child', target: 'buffOwner' },
+          parameters: { buffs: [{ buffId: 'owner-child' }], targets: { kind: 'owner' } },
         },
         context,
       ),
@@ -2124,7 +2413,7 @@ describe('BuffOperationExecutor', () => {
       findFirstByTags: () => undefined,
       finishByTags: () => 0,
     };
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'operator-a',
       resolveTarget: () => target,
       resolveEventTarget: targetId => {
@@ -2138,10 +2427,15 @@ describe('BuffOperationExecutor', () => {
       executor.execute(
         {
           kind: 'applyBuff',
-          parameters: { buffId: 'healing-trigger-buff', target: 'eventTarget' },
+          parameters: {
+            buffs: [{ buffId: 'healing-trigger-buff' }],
+            targets: { kind: 'inputTarget' },
+          },
         },
         {
           blackboard: new ActionBlackboard(),
+          actionSourceId: 'operator-a',
+          actionInputTarget: { kind: 'operator', operatorId: 'operator-b' },
           event: {
             event: 'receiveHeal' as const,
             payload: {
@@ -2162,7 +2456,7 @@ describe('BuffOperationExecutor', () => {
   });
 
   it.each([false, true])(
-    'uses the explicit ActionSource without an event and prioritizes a live event (%s)',
+    'uses explicit ActionSource independently of a live event (%s)',
     liveEvent => {
       const applied: unknown[] = [];
       const source = {
@@ -2180,7 +2474,7 @@ describe('BuffOperationExecutor', () => {
         findFirstByTags: () => undefined,
         finishByTags: () => 0,
       };
-      const executor = new BuffOperationExecutor({
+      const executor = createExecutor({
         sourceId: 'operator-a',
         resolveTarget: () => source,
         resolveEventTarget: id => {
@@ -2195,21 +2489,21 @@ describe('BuffOperationExecutor', () => {
           {
             kind: 'applyBuff',
             parameters: {
-              buffId: 'event-source-buff',
-              target: 'eventSource',
-              source: 'eventSource',
+              buffs: [{ buffId: 'event-source-buff' }],
+              targets: { kind: 'source' },
+              source: { kind: 'source' },
             },
           },
           {
             blackboard: new ActionBlackboard(),
-            actionSourceId: liveEvent ? 'must-not-override-event' : 'operator-b',
+            actionSourceId: 'operator-b',
             ...(liveEvent
               ? {
                   event: {
                     event: 'beforeCastSkill' as const,
                     payload: {
-                      sourceId: 'operator-b',
-                      targetId: 'operator-b',
+                      sourceId: 'event-source',
+                      targetId: 'event-target',
                       skillType: 'battleSkill' as const,
                       skillId: 'skill',
                       skillCastId: 7,
@@ -2244,7 +2538,7 @@ describe('BuffOperationExecutor', () => {
       finishByTags: () => 0,
     };
     const source = { ...owner, ownerId: 'operator-source' };
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'operator-owner',
       resolveTarget: () => owner,
       resolveEventTarget: id => (id === source.ownerId ? source : owner),
@@ -2256,15 +2550,17 @@ describe('BuffOperationExecutor', () => {
         {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'lifecycle-child',
-            target: 'buffOwner',
-            source: 'eventSource',
+            buffs: [{ buffId: 'lifecycle-child' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
           },
         },
         {
           blackboard: new ActionBlackboard(),
           buffOwnerId: owner.ownerId,
           buffSourceId: source.ownerId,
+          actionOwnerId: owner.ownerId,
+          actionSourceId: source.ownerId,
         },
       ),
     ).toBe(true);
@@ -2334,7 +2630,7 @@ describe('BuffOperationExecutor', () => {
         finishByTags: () => 0,
       },
       enemy: {
-        ownerId: 'enemy-1',
+        ownerId: 'enemy',
         apply: (request: unknown) => {
           applied.push(request);
           return true;
@@ -2349,27 +2645,30 @@ describe('BuffOperationExecutor', () => {
         finishByTags: () => 0,
       },
     };
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'operator',
       resolveTarget: target => targets[target],
       delegate,
     });
 
     expect(
-      executor.execute({
-        kind: 'applyBuff',
-        parameters: {
-          buffId: 'mark',
-          target: 'enemy',
-          source: 'enemy',
+      executor.execute(
+        {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'mark' }],
+            targets: { kind: 'fixed', target: 'enemy' },
+            source: { kind: 'fixed', target: 'enemy' },
+          },
         },
-      }),
+        { blackboard: new ActionBlackboard() },
+      ),
     ).toBe(true);
     expect(applied).toEqual([
       {
         buffId: 'mark',
         definitionOwnerId: 'operator',
-        sourceId: 'enemy-1',
+        sourceId: 'enemy',
         blackboardValues: {},
       },
     ]);
@@ -2392,10 +2691,9 @@ describe('BuffOperationExecutor', () => {
       findFirstByTags: () => undefined,
       finishByTags: () => 0,
     };
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'operator',
       resolveTarget: () => target,
-      resolveCurrentAbilityEntityTarget: () => ({ ...target, ownerId: 'abilityEntity:7' }),
       delegate,
     });
 
@@ -2404,153 +2702,93 @@ describe('BuffOperationExecutor', () => {
         {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'entity-sourced-mark',
-            target: 'enemy',
-            source: 'currentAbilityEntity',
+            buffs: [{ buffId: 'entity-sourced-mark' }],
+            targets: { kind: 'fixed', target: 'enemy' },
+            source: { kind: 'inputTarget' },
           },
         },
         {
           blackboard: new ActionBlackboard(),
-          currentTarget: { kind: 'abilityEntity', instanceId: 7 },
+          actionInputTarget: { kind: 'abilityEntity', instanceId: 7 },
         },
       ),
     ).toBe(true);
-    expect(applied).toEqual([expect.objectContaining({ sourceId: 'abilityEntity:7' })]);
+    expect(applied).toEqual([expect.objectContaining({ sourceId: 'ability-entity:7' })]);
   });
 
-  it('repeats a Buff using the runtime action-blackboard count', () => {
-    const applied: unknown[] = [];
-    const target = {
-      ownerId: 'enemy-1',
-      apply: (request: unknown) => {
-        applied.push(request);
-        return true;
-      },
-      getCountByIds: () => 0,
-      finishByIds: () => 0,
-      holdByIds: () => ({ release: () => undefined }),
-      getCountByTags: () => 0,
-      matchesEntityTags: () => false,
-      findFirstByIds: () => undefined,
-      findFirstByTags: () => undefined,
-      finishByTags: () => 0,
-    };
-    const executor = new BuffOperationExecutor({
+  it('按目标、次数、Buff 条目顺序施加，每项动态读取而次数只读取一次', () => {
+    const blackboard = new ActionBlackboard({ count: 1.5, value: 0 });
+    const targetContext = new RuntimeTargetContext();
+    targetContext.set('source', [{ kind: 'operator', operatorId: 'original' }]);
+    const sources: string[] = [];
+    const applied: { target: string; id: string; value: number }[] = [];
+    const makeTarget = (id: string) =>
+      Object.assign(new CombatBuffContainer(id, new CombatAttributeSet()), {
+        apply: (request: BuffApplicationRequest) => {
+          sources.push(request.sourceId);
+          applied.push({
+            target: id,
+            id: request.buffId,
+            value: request.blackboardValues.value as number,
+          });
+          blackboard.assignDynamic('value', applied.length);
+          blackboard.assignDynamic('count', 0);
+          targetContext.set('source', [{ kind: 'operator', operatorId: 'changed' }]);
+          return false; // 单项添加失败不截断其余条目或次数。
+        },
+      });
+    const first = makeTarget('first'),
+      second = makeTarget('second');
+    const executor = createExecutor({
       sourceId: 'operator',
-      resolveTarget: () => target,
+      resolveTarget: () => first,
+      queryTargets: (query, context) =>
+        query.kind === 'context'
+          ? (context.targetContext!.getOptional(query.key) ?? [])
+          : [
+              { kind: 'operator', operatorId: 'first' },
+              { kind: 'operator', operatorId: 'second' },
+            ],
+      resolveEventTarget: id => (id === 'first' ? first : second),
       delegate,
     });
-    const blackboard = new ActionBlackboard({ count: 2.5 });
-
     expect(
       executor.execute(
         {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'stack-marker',
-            target: 'enemy',
+            targets: { kind: 'characterTeam', excludeOwner: false },
+            source: { kind: 'context', key: 'source' },
             count: numberInput({ kind: 'blackboard', key: 'count' }),
+            buffs: ['a', 'b'].map(buffId => ({
+              buffId,
+              blackboardAssignments: { value: numberInput({ kind: 'blackboard', key: 'value' }) },
+            })),
           },
         },
-        { blackboard },
-      ),
-    ).toBe(true);
-    expect(applied).toHaveLength(3);
-  });
-
-  it('forwards the current skill-cast snapshot only when the action requests it', () => {
-    const applied: unknown[] = [];
-    const target = {
-      ownerId: 'caster',
-      apply: (request: unknown) => {
-        applied.push(request);
-        return true;
-      },
-      getCountByIds: () => 0,
-      finishByIds: () => 0,
-      holdByIds: () => ({ release: () => undefined }),
-      getCountByTags: () => 0,
-      matchesEntityTags: () => false,
-      findFirstByIds: () => undefined,
-      findFirstByTags: () => undefined,
-      finishByTags: () => 0,
-    };
-    const executor = new BuffOperationExecutor({
-      sourceId: 'operator',
-      resolveTarget: () => target,
-      delegate,
-    });
-    const skillCastInfo = {
-      skillCastId: 7,
-      originSkillId: 'ultimate',
-      originSkillType: 'ultimate' as const,
-      nonReturnedSpCost: 90,
-    };
-
-    expect(
-      executor.execute(
-        {
-          kind: 'applyBuff',
-          parameters: {
-            buffId: 'ultimate-base',
-            target: 'caster',
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        { blackboard: new ActionBlackboard(), skillCastInfo },
+        { blackboard, targetContext },
       ),
     ).toBe(true);
     expect(applied).toEqual([
-      {
-        buffId: 'ultimate-base',
-        definitionOwnerId: 'operator',
-        sourceId: 'operator',
-        blackboardValues: {},
-        skillCastInfo,
-      },
+      { target: 'first', id: 'a', value: 0 },
+      { target: 'first', id: 'b', value: 1 },
+      { target: 'first', id: 'a', value: 2 },
+      { target: 'first', id: 'b', value: 3 },
+      { target: 'second', id: 'a', value: 4 },
+      { target: 'second', id: 'b', value: 5 },
+      { target: 'second', id: 'a', value: 6 },
+      { target: 'second', id: 'b', value: 7 },
     ]);
-  });
-
-  it('keeps legacy applyBuff timing fields on the existing delegate path', () => {
-    const calls: string[] = [];
-    const executor = new BuffOperationExecutor({
-      sourceId: 'operator',
-      resolveTarget: () => ({
-        ownerId: 'enemy',
-        apply: () => {
-          calls.push('index');
-          return true;
-        },
-        getCountByIds: () => 0,
-        finishByIds: () => 0,
-        holdByIds: () => ({ release: () => undefined }),
-        getCountByTags: () => 0,
-        matchesEntityTags: () => false,
-        findFirstByIds: () => undefined,
-        findFirstByTags: () => undefined,
-        finishByTags: () => 0,
-      }),
-      delegate: {
-        execute: () => {
-          calls.push('delegate');
-          return true;
-        },
-        evaluate: () => false,
-      },
-    });
-
-    expect(
-      executor.execute({
-        kind: 'applyBuff',
-        parameters: {
-          buffId: 'legacy',
-          target: 'enemy',
-          durationSeconds: 10,
-          effectiveness: 1,
-        },
-      }),
-    ).toBe(true);
-    expect(calls).toEqual(['delegate']);
+    expect(sources).toEqual([
+      'original',
+      'original',
+      'original',
+      'original',
+      'changed',
+      'changed',
+      'changed',
+      'changed',
+    ]);
   });
 
   it('compares matching buff enhance stacks with the native tolerance', () => {
@@ -2670,6 +2908,7 @@ describe('BuffOperationExecutor', () => {
     const executor = new BuffOperationExecutor({
       sourceId: 'operator',
       resolveTarget: () => target,
+      resolveEventTarget: () => target,
       delegate,
     });
     const condition = {
@@ -2686,6 +2925,32 @@ describe('BuffOperationExecutor', () => {
         tags: [classificationPath],
       }),
     ).toBe(true);
+    const targetContext = new RuntimeTargetContext();
+    const groupCondition = {
+      kind: 'contextTargetEntityTagMatch' as const,
+      contextKey: 'group',
+      tagQueryType: 'hasAny' as const,
+      tags: [parentPath],
+    };
+    const context = { blackboard: new ActionBlackboard(), targetContext };
+    expect(executor.evaluate(groupCondition, context)).toBe(false);
+    targetContext.set('group', [{ kind: 'operator', operatorId: 'operator' }]);
+    expect(executor.evaluate(groupCondition, context)).toBe(true);
+    const untagged = new CombatBuffContainer(
+      'enemy',
+      new CombatAttributeSet(),
+      new GameplayTagRegistry([parentPath, childPath]),
+    );
+    const grouped = new BuffOperationExecutor({
+      sourceId: 'operator',
+      resolveTarget: () => target,
+      delegate,
+      resolveEventTarget: id => (id === 'enemy' ? untagged : target),
+    });
+    targetContext.set('group', [{ kind: 'operator', operatorId: 'operator' }, { kind: 'enemy' }]);
+    expect(grouped.evaluate(groupCondition, context)).toBe(false);
+    untagged.addEntityTags([childPath]);
+    expect(grouped.evaluate(groupCondition, context)).toBe(true);
     target.removeEntityTags([childPath]);
     expect(executor.evaluate(condition)).toBe(false);
   });
@@ -2864,22 +3129,26 @@ describe('BuffOperationExecutor', () => {
       },
       'operator',
     );
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'operator',
       resolveTarget: () => target,
       delegate,
     });
 
     expect(
-      executor.execute({
-        kind: 'finishBuffsByTag',
-        parameters: {
-          target: 'enemy',
-          tagQueryType: 'hasAny',
-          buffTags: [path],
-          reason: 'early',
+      executor.execute(
+        {
+          kind: 'finishBuffsByTag',
+          parameters: {
+            targets: { kind: 'fixed', target: 'enemy' },
+            finishSource: { kind: 'source' },
+            tagQueryType: 'hasAny',
+            buffTags: [path],
+            reason: 'early',
+          },
         },
-      }),
+        { blackboard: new ActionBlackboard() },
+      ),
     ).toBe(true);
     expect(first?.finishReason).toBe('early');
     expect(second?.finishReason).toBe('early');
@@ -2895,21 +3164,26 @@ describe('BuffOperationExecutor', () => {
       { id: 'other', stackingType: 'unlimited', applyTags: ['Other'] },
       'a',
     );
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'a',
       delegate,
       resolveTarget: () => members[0]!,
-      resolveApplicationTargets: () => members,
+      queryTargets: () => members.map(member => ({ kind: 'operator', operatorId: member.ownerId })),
+      resolveEventTarget: id => members.find(member => member.ownerId === id)!,
     });
-    executor.execute({
-      kind: 'finishBuffsByTag',
-      parameters: {
-        target: 'party',
-        tagQueryType: 'hasAny',
-        buffTags: ['Frozen'],
-        reason: 'other',
+    executor.execute(
+      {
+        kind: 'finishBuffsByTag',
+        parameters: {
+          targets: { kind: 'characterTeam', excludeOwner: false },
+          finishSource: { kind: 'source' },
+          tagQueryType: 'hasAny',
+          buffTags: ['Frozen'],
+          reason: 'other',
+        },
       },
-    });
+      { blackboard: new ActionBlackboard() },
+    );
     expect(frozen.map(buff => buff?.isFinished)).toEqual([true, true]);
     expect(other?.isFinished).toBe(false);
   });
@@ -2921,7 +3195,7 @@ describe('BuffOperationExecutor', () => {
       'operator',
     );
     caster.add({ id: 'sword-trigger', stackingType: 'stack', maxStackCount: 3 }, 'operator');
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'operator',
       resolveTarget: () => caster,
       delegate,
@@ -2949,14 +3223,18 @@ describe('BuffOperationExecutor', () => {
       ),
     ).toBe(true);
     expect(
-      executor.execute({
-        kind: 'finishBuffsById',
-        parameters: {
-          target: 'caster',
-          buffIds: ['sword-trigger'],
-          reason: 'other',
+      executor.execute(
+        {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'fixed', target: 'caster' },
+            finishSource: { kind: 'source' },
+            buffIds: ['sword-trigger'],
+            reason: 'other',
+          },
         },
-      }),
+        { blackboard: new ActionBlackboard() },
+      ),
     ).toBe(true);
     expect(active?.finishReason).toBe('other');
     expect(caster.getCountById('sword-trigger')).toBe(0);
@@ -3098,51 +3376,4 @@ describe('BuffOperationExecutor', () => {
     expect(restoredState).toEqual({ active: false, references: [] });
     expect(originalState).toEqual({ active: true, references: [reference] });
   });
-});
-
-it('步态动作作用于 owner，共享限制槽在切面恢复后仍由最后一个 End 清理', () => {
-  const original = new CombatBuffContainer('owner', new CombatAttributeSet<string>());
-  const bind = (container: CombatBuffContainer<string>) =>
-    new BuffOperationExecutor({
-      sourceId: 'different-source',
-      resolveTarget: () => {
-        throw new Error('不能改写 source 的步态');
-      },
-      resolveEventTarget: id => {
-        expect(id).toBe('owner');
-        return new BuffDefinitionOperationTarget(container, { get: () => undefined });
-      },
-      delegate,
-    });
-  const first = { kind: 'limitMovementGait', parameters: { min: 'run', max: 'sprint' } } as const;
-  const second = { kind: 'limitMovementGait', parameters: { min: 'walk', max: 'run' } } as const;
-  const context = { actionOwnerId: 'owner', blackboard: new ActionBlackboard() };
-  const executor = bind(original);
-  executor.execute(first, context);
-  executor.execute(second, context);
-  const saved = structuredClone(original.runtimeState);
-  const restored = new CombatBuffContainer(
-    'owner',
-    new CombatAttributeSet(saved.attributes),
-    undefined,
-    null,
-    ActionBlackboard.bindRuntimeState(saved.entityBlackboard),
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    saved,
-  );
-  for (const container of [original, restored]) {
-    const runtime = bind(container);
-    runtime.end(first, context);
-    expect(container.runtimeState.movementGaitLimit).toEqual(second.parameters);
-    expect(container.runtimeState.movementGaitActionCount).toBe(1);
-    runtime.end(second, context);
-    expect(container.runtimeState.movementGaitLimit).toBeNull();
-    expect(container.runtimeState.movementGaitActionCount).toBe(0);
-  }
-  expect(restored.runtimeState).toEqual(original.runtimeState);
 });

@@ -1,11 +1,58 @@
+import { collectEnabledNativeActionNodes } from '../../source/actionLeaf.ts';
 import {
-  collectNativeActionNodes,
+  collectCombatInvisibleRandomKeys,
+  isCombatInvisiblePresentationLeaf,
+} from '../optimization/nativePresentationUsage.ts';
+import { summarizeNativeBlackboardUsage } from '../optimization/nativeBlackboardUsage.ts';
+import {
+  canOmitUnusedNativeCondition,
+  isReadOnlyNativeTarget,
+} from '../optimization/nativeConditionUsage.ts';
+import {
+  collectMaterializedSequenceTargetGroups,
+  summarizeNativeTargetUsage,
+} from '../optimization/nativeTargetUsage.ts';
+import {
   type NativeActionNodeSource,
   type NativeSequenceSource,
 } from '../../source/controlFlow.ts';
 import type { SkillActionGraphSource } from '../../source/skillActionGraph.ts';
 import type { KnownNativeActionLeafSource } from '../../source/actionLeaf.ts';
 import type { TargetGroupActionSource } from '../../source/targetGroup.ts';
+
+/** 时间线和被动事件共享技能状态，数组位置不能证明运行时先后关系。 */
+function skillSequences(graph: SkillActionGraphSource<KnownNativeActionLeafSource>) {
+  return [
+    ...graph.actionGroup.timelineActions.map(timeline => timeline.sequence),
+    ...graph.actionGroup.passiveEvents.flatMap(event => event.actions),
+  ];
+}
+
+function blackboardKeys(
+  sequence: NativeSequenceSource<KnownNativeActionLeafSource>,
+): ReadonlySet<string> {
+  const keys = new Set<string>();
+  for (const node of collectEnabledNativeActionNodes(sequence)) {
+    const usage = summarizeNativeBlackboardUsage(node);
+    for (const key of [...usage.reads, ...usage.writes]) keys.add(key);
+  }
+  return keys;
+}
+
+/** 接收资源尚未装配时，整板继承意味着局部扫描无法证明其中的值无用。 */
+function inheritsSkillBlackboard(
+  graph: SkillActionGraphSource<KnownNativeActionLeafSource>,
+): boolean {
+  return skillSequences(graph)
+    .flatMap(collectEnabledNativeActionNodes)
+    .some(
+      node =>
+        node.metadata.enabled &&
+        node.body.kind === 'leaf' &&
+        (node.body.value.family === 'abilityEntity' || node.body.value.family === 'projectile') &&
+        node.body.value.action.assignBlackboard,
+    );
+}
 
 function isPresentationQuery(action: TargetGroupActionSource): boolean {
   return (
@@ -16,16 +63,6 @@ function isPresentationQuery(action: TargetGroupActionSource): boolean {
   );
 }
 
-const PRESENTATION_ONLY_CONDITION_KINDS = new Set([
-  'mainOperator',
-  'floatCompare',
-  'distance',
-  'objectTypeMatch',
-  'superArmor',
-  'skillCameraMotionFree',
-  'targetInScreen',
-]);
-
 function isPresentationConditionNode(
   node: NativeActionNodeSource<KnownNativeActionLeafSource>,
 ): boolean {
@@ -34,7 +71,7 @@ function isPresentationConditionNode(
   const leaf = node.body.value;
   return (
     leaf.family === 'presentationCalculation' ||
-    (leaf.family === 'condition' && PRESENTATION_ONLY_CONDITION_KINDS.has(leaf.action.kind))
+    (leaf.family === 'condition' && canOmitUnusedNativeCondition(node))
   );
 }
 
@@ -59,7 +96,7 @@ function isPresentationActionNode(
       );
     }
     return (
-      body.value.family === 'presentation' ||
+      isCombatInvisiblePresentationLeaf(node) ||
       body.value.family === 'presentationCalculation' ||
       body.value.family === 'spatial'
     );
@@ -96,15 +133,48 @@ function isPresentationSelectionNode(
   if (!node.metadata.enabled) return true;
   const body = node.body;
   if (body.kind === 'leaf') {
+    if (body.value.family === 'condition') {
+      const action = body.value.action;
+      // 计数写回也参与下方输出闭包；只有组外没有消费者时才能随整条时间线省略。
+      return action.kind === 'entityCount'
+        ? isReadOnlyNativeTarget(action.target)
+        : canOmitUnusedNativeCondition(node);
+    }
+    if (body.value.family === 'directionAngle') {
+      const action = body.value.action;
+      return [
+        action.direction1Source,
+        action.direction1Target,
+        action.direction2Source,
+        action.direction2Target,
+      ].every(isReadOnlyNativeTarget);
+    }
+    if (body.value.family === 'spatial') {
+      return ['selfRotate', 'teleport', 'teleportPositionSelection'].includes(
+        body.value.action.kind,
+      );
+    }
+    if (body.value.family === 'targetGroup') {
+      const query = body.value.action;
+      return (
+        query.shuffleTargets.length === 0 &&
+        query.circularOrderIndexKey === null &&
+        query.finderType !== 'RandomPointFinder'
+      );
+    }
+    if (body.value.family === 'presentation') return isCombatInvisiblePresentationLeaf(node);
     return [
-      'presentation',
       'presentationCalculation',
       'spatialMeasurement',
-      'targetGroup',
-      'condition',
       'blackboardMutation',
       'blackboardCalculation',
     ].includes(body.value.family);
+  }
+  if (body.kind === 'actionWithCallback') {
+    return (
+      isPresentationSelectionNode({ ...node, body: { kind: 'leaf', value: body.value } }) &&
+      body.callback.actions.every(isPresentationSelectionNode)
+    );
   }
   if (body.kind === 'ifElse') {
     return [body.condition, body.whenTrue, body.whenFalse].every(sequence =>
@@ -119,43 +189,18 @@ function isPresentationSelectionNode(
 
 function presentationSelectionOutputKeys(
   sequence: NativeSequenceSource<KnownNativeActionLeafSource>,
-): ReadonlySet<string> {
+): { readonly values: ReadonlySet<string>; readonly targets: ReadonlySet<string> } {
   const outputs = new Set<string>();
-  for (const node of collectNativeActionNodes(sequence)) {
-    if (!node.metadata.enabled || node.body.kind !== 'leaf') continue;
-    const leaf = node.body.value;
-    if (leaf.family === 'targetGroup') outputs.add(leaf.action.targetGroupKey);
-    if (leaf.family === 'blackboardMutation' || leaf.family === 'blackboardCalculation') {
-      outputs.add(leaf.action.key);
-    }
-    if (leaf.family === 'presentationCalculation') {
-      const action = leaf.action;
-      for (const key of 'outputKeys' in action ? action.outputKeys : [action.outputKey]) {
-        outputs.add(key);
-      }
-    }
-    if (leaf.family === 'spatialMeasurement') outputs.add(leaf.action.outputKey);
+  const targets = new Set<string>();
+  for (const node of collectEnabledNativeActionNodes(sequence)) {
+    for (const key of summarizeNativeTargetUsage(node).writes) targets.add(key);
+    for (const key of summarizeNativeBlackboardUsage(node).writes) outputs.add(key);
   }
-  return outputs;
-}
-
-function presentationSelectionBlackboardWriteKeys(
-  sequence: NativeSequenceSource<KnownNativeActionLeafSource>,
-): ReadonlySet<string> {
-  return new Set(
-    collectNativeActionNodes(sequence).flatMap(node =>
-      node.metadata.enabled &&
-      node.body.kind === 'leaf' &&
-      (node.body.value.family === 'blackboardMutation' ||
-        node.body.value.family === 'blackboardCalculation')
-        ? [node.body.value.action.key]
-        : [],
-    ),
-  );
+  return { values: outputs, targets };
 }
 
 /**
- * 收集“查询/条件/临时黑板只为最终表现动作服务”的完整调度时间线。
+ * 收集仅含表现动作或无消费者查询链的完整调度时间线。
  *
  * 镜头选敌并不总是简单的 CameraAction：原生会先查目标、ForEach 计算左右侧，再跨多个
  * 时间线复用 Context 与黑板值。这里先按动作族找出不含任何战斗副作用的候选子图，再反复
@@ -164,20 +209,34 @@ function presentationSelectionBlackboardWriteKeys(
  */
 export function collectPresentationSelectionTimelineIndexes(
   graph: SkillActionGraphSource<KnownNativeActionLeafSource>,
+  isUnusedByExternalResources?: (key: string) => boolean,
 ): ReadonlySet<number> {
   const timelines = graph.actionGroup.timelineActions;
+  if (
+    skillSequences(graph).some(sequence =>
+      collectEnabledNativeActionNodes(sequence).some(
+        node => summarizeNativeTargetUsage(node).passesAllTargets,
+      ),
+    )
+  )
+    return new Set();
   const candidates = new Set(
     timelines.flatMap((timeline, index) => {
-      const nodes = collectNativeActionNodes(timeline.sequence).filter(
+      const nodes = collectEnabledNativeActionNodes(timeline.sequence).filter(
         node => node.metadata.enabled,
       );
-      const containsPresentation = nodes.some(
+      const containsPresentationOrQuery = nodes.some(
         node =>
-          node.body.kind === 'leaf' &&
-          (node.body.value.family === 'presentation' ||
-            node.body.value.family === 'presentationCalculation'),
+          (node.body.kind === 'leaf' || node.body.kind === 'actionWithCallback') &&
+          (isCombatInvisiblePresentationLeaf(node) ||
+            node.body.value.family === 'presentationCalculation' ||
+            node.body.value.family === 'directionAngle' ||
+            node.body.value.family === 'spatial' ||
+            (node.body.value.family === 'targetGroup' &&
+              isPresentationQuery(node.body.value.action))),
       );
-      return containsPresentation && timeline.sequence.actions.every(isPresentationSelectionNode)
+      return containsPresentationOrQuery &&
+        timeline.sequence.actions.every(isPresentationSelectionNode)
         ? [index]
         : [];
     }),
@@ -185,51 +244,61 @@ export function collectPresentationSelectionTimelineIndexes(
   const outputsByTimeline = timelines.map(timeline =>
     presentationSelectionOutputKeys(timeline.sequence),
   );
-  const blackboardWritesByTimeline = timelines.map(timeline =>
-    presentationSelectionBlackboardWriteKeys(timeline.sequence),
-  );
-  const orderedLeafNodes = timelines.flatMap((timeline, timelineIndex) =>
-    collectNativeActionNodes(timeline.sequence).flatMap((node, nodeIndex) =>
-      node.metadata.enabled && node.body.kind === 'leaf'
-        ? [{ timelineIndex, nodeIndex, node }]
-        : [],
+  if (inheritsSkillBlackboard(graph)) {
+    for (const index of candidates) {
+      if (
+        [...outputsByTimeline[index]!.values].some(
+          key => isUnusedByExternalResources?.(key) !== true,
+        )
+      )
+        candidates.delete(index);
+    }
+  }
+  // 不用调度数组顺序推断末次写入：时间线可重叠，事件可重入。
+  // 候选写入是否保留，只由下方跨入口消费者与上方继承检查决定。
+  let changed: boolean;
+  const valueKeysByTimeline = timelines.map(timeline => blackboardKeys(timeline.sequence));
+  const passiveValueKeys = new Set(
+    graph.actionGroup.passiveEvents.flatMap(event =>
+      event.actions.flatMap(sequence => [...blackboardKeys(sequence)]),
     ),
   );
-
-  // 一个末端黑板写入即使当前 SkillData 内没人读取，仍是动作作用域的可观察状态，不能因为
-  // 同一时间线里恰好还有镜头动作而删除。只有该值后来确实进入本候选表现子图，写入才属于
-  // 可裁剪的中间量；这同时防止表现计算与同名正式动作槽位相互覆盖时被误判。
-  for (const index of [...candidates]) {
-    const hasTerminalBlackboardWrite = [...blackboardWritesByTimeline[index]!].some(key => {
-      const references = orderedLeafNodes.filter(
-        ({ node }) =>
-          node.body.kind === 'leaf' &&
-          JSON.stringify(node.body.value).includes(JSON.stringify(key)),
-      );
-      const last = references.at(-1)?.node;
-      return (
-        last?.body.kind === 'leaf' &&
-        (last.body.value.family === 'blackboardMutation' ||
-          last.body.value.family === 'blackboardCalculation') &&
-        last.body.value.action.key === key
-      );
-    });
-    if (hasTerminalBlackboardWrite) candidates.delete(index);
-  }
-
-  let changed: boolean;
+  const targetReadsByTimeline = timelines.map(
+    timeline =>
+      new Set(
+        collectEnabledNativeActionNodes(timeline.sequence).flatMap(node => [
+          ...summarizeNativeTargetUsage(node).reads,
+        ]),
+      ),
+  );
+  const passiveTargetReads = new Set(
+    graph.actionGroup.passiveEvents.flatMap(event =>
+      event.actions.flatMap(sequence =>
+        collectEnabledNativeActionNodes(sequence).flatMap(node => [
+          ...summarizeNativeTargetUsage(node).reads,
+        ]),
+      ),
+    ),
+  );
   do {
     changed = false;
     for (const index of [...candidates]) {
       const outputs = outputsByTimeline[index]!;
-      const outputEscapes = [...outputs].some(key =>
-        timelines.some(
-          (timeline, consumerIndex) =>
-            consumerIndex >= index &&
-            !candidates.has(consumerIndex) &&
-            countExactString(timeline.sequence, key) > 0,
-        ),
-      );
+      const outputEscapes =
+        [...outputs.targets].some(
+          key =>
+            passiveTargetReads.has(key) ||
+            targetReadsByTimeline.some(
+              (reads, consumerIndex) => !candidates.has(consumerIndex) && reads.has(key),
+            ),
+        ) ||
+        [...outputs.values].some(
+          key =>
+            timelines.some(
+              (_, consumerIndex) =>
+                !candidates.has(consumerIndex) && valueKeysByTimeline[consumerIndex]!.has(key),
+            ) || passiveValueKeys.has(key),
+        );
       if (outputEscapes) {
         candidates.delete(index);
         changed = true;
@@ -242,20 +311,26 @@ export function collectPresentationSelectionTimelineIndexes(
 /**
  * PhysicsCast 需要真实物理世界才能决定分支。这里只接受已取证的最窄不可见形状：
  * 不写距离、不 Tick；两个分支仅从命中点/动作实体派生固定位置组，且这些组与命中点在动作之后
- * 都没有消费者。较早时间线中的同名临时组不会被倒推成该动作的输出消费者。
+ * 都没有消费者。时间线可跳转，事件也可延迟触发；这里不按数组位置排除消费者。
  */
 export function collectCombatInvisiblePhysicsCastPaths(
   graph: SkillActionGraphSource<KnownNativeActionLeafSource>,
+  omittedTimelineIndexes: ReadonlySet<number> = new Set(),
 ): ReadonlySet<string> {
-  const nodes = graph.actionGroup.timelineActions.flatMap(timeline =>
-    collectNativeActionNodes(timeline.sequence),
-  );
+  const nodes = [
+    ...graph.actionGroup.timelineActions.flatMap((timeline, index) =>
+      omittedTimelineIndexes.has(index) ? [] : [timeline.sequence],
+    ),
+    ...graph.actionGroup.passiveEvents.flatMap(event => event.actions),
+  ].flatMap(collectEnabledNativeActionNodes);
   const result = new Set<string>();
-  for (const [index, node] of nodes.entries()) {
+  for (const node of nodes) {
     if (!node.metadata.enabled || node.body.kind !== 'physicsCast') continue;
     const action = node.body.value;
     if (action.hitDistanceBlackboardKey !== '' || action.needTick) continue;
-    const branchNodes = [node.body.whenHit, node.body.whenMiss].flatMap(collectNativeActionNodes);
+    const branchNodes = [node.body.whenHit, node.body.whenMiss].flatMap(
+      collectEnabledNativeActionNodes,
+    );
     const enabledBranchNodes = branchNodes.filter(child => child.metadata.enabled);
     if (
       enabledBranchNodes.length === 0 ||
@@ -284,10 +359,13 @@ export function collectCombatInvisiblePhysicsCastPaths(
       ),
     ]);
     const descendants = new Set(branchNodes);
-    const laterNodes = nodes.slice(index + 1).filter(candidate => !descendants.has(candidate));
+    const otherNodes = nodes.filter(candidate => candidate !== node && !descendants.has(candidate));
     if (
       [...outputKeys].some(key =>
-        laterNodes.some(candidate => JSON.stringify(candidate.body).includes(JSON.stringify(key))),
+        otherNodes.some(candidate => {
+          const usage = summarizeNativeTargetUsage(candidate);
+          return usage.passesAllTargets || usage.reads.has(key);
+        }),
       )
     ) {
       continue;
@@ -303,23 +381,13 @@ export function collectCombatInvisiblePhysicsCastPaths(
  */
 export function collectPresentationOnlyBlackboardKeys(
   graph: SkillActionGraphSource<KnownNativeActionLeafSource>,
+  isUnusedByExternalResources?: (key: string) => boolean,
 ): ReadonlySet<string> {
-  const timelines = graph.actionGroup.timelineActions.map(item => item.sequence);
-  // SpawnAbilityEntity 会把当前动作黑板的完整 direct 快照交给实体子技能。这里尚未装配实体
-  // 定义，无法证明哪些键会被子技能读取；因此只要存在实体生成，任一写入都可能跨作用域影响
-  // 战斗。表现裁剪必须保守退出，后续整名干员优化器会在实体定义可见时再做精确活性分析。
-  const actionBlackboardEscapes = timelines.some(sequence =>
-    collectNativeActionNodes(sequence).some(
-      node =>
-        node.metadata.enabled &&
-        node.body.kind === 'leaf' &&
-        node.body.value.family === 'abilityEntity',
-    ),
-  );
-  if (actionBlackboardEscapes) return new Set();
+  const timelines = skillSequences(graph);
+  const inherited = inheritsSkillBlackboard(graph);
   const candidates = new Set(
     timelines.flatMap(sequence =>
-      collectNativeActionNodes(sequence).flatMap(node =>
+      collectEnabledNativeActionNodes(sequence).flatMap(node =>
         node.body.kind === 'leaf' &&
         (node.body.value.family === 'blackboardMutation' ||
           node.body.value.family === 'blackboardCalculation')
@@ -328,15 +396,23 @@ export function collectPresentationOnlyBlackboardKeys(
       ),
     ),
   );
+  if (inherited) {
+    for (const key of candidates) {
+      if (isUnusedByExternalResources?.(key) !== true) candidates.delete(key);
+    }
+  }
+  const usages = timelines.map(blackboardKeys);
   let changed: boolean;
   do {
     changed = false;
     for (const key of candidates) {
-      const encodedKey = JSON.stringify(key);
-      const consumers = timelines.filter(sequence => JSON.stringify(sequence).includes(encodedKey));
+      const consumers = timelines.filter((_, index) => usages[index]!.has(key));
       if (
         consumers.length === 0 ||
-        consumers.some(sequence => !isPresentationOnlyActionSequence(sequence, candidates))
+        consumers.some(
+          sequence =>
+            !sequence.actions.every(node => isPresentationActionNode(node, candidates, true)),
+        )
       ) {
         candidates.delete(key);
         changed = true;
@@ -347,79 +423,21 @@ export function collectPresentationOnlyBlackboardKeys(
 }
 
 /**
- * 只接受 RandomAction 写入、且所有已投影读取都来自 PointFinder 坐标槽位的键。
- * 没有已投影读取的随机值同样不可影响战斗：严格来源 parser 已把所有数值/条件/Buff 输入保留，
- * 剩余引用只可能位于被明确裁掉的表现字段或本来就未使用。Next 的概率样本流只承载战斗概率条件，
- * 不复刻表现随机数对 Unity 随机流的推进。任一战斗或未知消费者都会使候选退出。
+ * 来源阶段只裁剪已确认局部使用的表现随机值。整板继承或显式外部赋值都必须保留，
+ * 等接收资源装配后再分析消费者；不能以当前技能里没有键名引用证明值不会传出。
+ * 表现随机数不推进模拟的战斗概率流，这不适用于进入有效战斗分支的随机值。
  */
 export function collectCombatInvisibleRandomBlackboardKeys(
   graph: SkillActionGraphSource<KnownNativeActionLeafSource>,
+  isUnusedByExternalResources?: (key: string) => boolean,
 ): ReadonlySet<string> {
-  const presentationOnlyCalculationKeys = collectPresentationOnlyBlackboardKeys(graph);
-  // collectNativeActionNodes 同时返回控制流容器与其后代；容器的 body 会再次内嵌所有叶子。
-  // 数据流消费者只存在于叶动作上，因此必须先去掉容器，避免同一黑板引用被重复计为未知读取。
-  const nodes = graph.actionGroup.timelineActions
-    .flatMap(timeline => collectNativeActionNodes(timeline.sequence))
-    .filter(node => node.body.kind === 'leaf');
-  const candidates = new Set(
-    nodes.flatMap(node =>
-      node.body.kind === 'leaf' && node.body.value.family === 'randomBlackboard'
-        ? [node.body.value.action.targetKey]
-        : [],
-    ),
+  const inherited = inheritsSkillBlackboard(graph);
+  return collectCombatInvisibleRandomKeys(
+    skillSequences(graph),
+    key => !inherited || isUnusedByExternalResources?.(key) === true,
+    collectPresentationOnlyBlackboardKeys(graph, isUnusedByExternalResources),
+    collectPresentationOnlyTargetGroups(graph),
   );
-  for (const key of candidates) {
-    const safe = nodes.every(node => {
-      const occurrences = countExactString(node.body, key);
-      if (occurrences === 0) return true;
-      if (
-        node.body.kind === 'leaf' &&
-        node.body.value.family === 'randomBlackboard' &&
-        node.body.value.action.targetKey === key
-      ) {
-        return occurrences === 1;
-      }
-      if (node.body.kind === 'leaf' && node.body.value.family === 'targetGroup') {
-        const action = node.body.value.action;
-        const pointOccurrences =
-          action.finderType === 'PointFinder'
-            ? (action.finderPointBlackboardKeys ?? []).filter(value => value === key).length
-            : 0;
-        if (pointOccurrences > 0 && pointOccurrences === occurrences) {
-          return true;
-        }
-      }
-      if (node.body.kind === 'leaf' && node.body.value.family === 'projectile') {
-        // 首帧零距离投影独立证明命中/阻挡/到达事件；未进入回调黑板的实体赋值只控制
-        // 原生投射物移动。回调若声明对应 EntityBB，作用域编译会保留赋值并使缺失随机值报错。
-        const assignmentOccurrences = node.body.value.action.assignments.filter(
-          assignment => assignment.inputValueKey === key,
-        ).length;
-        if (assignmentOccurrences > 0 && assignmentOccurrences === occurrences) return true;
-      }
-      if (node.body.kind === 'leaf' && node.body.value.family === 'blackboardCalculation') {
-        const outputKey = node.body.value.action.key;
-        const outputWriterOccurrences = nodes.filter(
-          candidate =>
-            candidate.body.kind === 'leaf' &&
-            (candidate.body.value.family === 'blackboardCalculation' ||
-              candidate.body.value.family === 'blackboardMutation') &&
-            candidate.body.value.action.key === outputKey,
-        ).length;
-        const outputHasNoOtherConsumer =
-          nodes.reduce(
-            (count, candidate) => count + countExactString(candidate.body, outputKey),
-            0,
-          ) === outputWriterOccurrences;
-        // 随机输入可以先参与一段只写入纯表现/无消费者槽位的计算；这不把输出槽位
-        // 反向提升为战斗数据。输出若被伤害、条件或 Buff 消费，会从上面的闭包集合中退出。
-        if (presentationOnlyCalculationKeys.has(outputKey) || outputHasNoOtherConsumer) return true;
-      }
-      return false;
-    });
-    if (!safe) candidates.delete(key);
-  }
-  return candidates;
 }
 
 function countExactString(value: unknown, expected: string): number {
@@ -433,22 +451,6 @@ function countExactString(value: unknown, expected: string): number {
   );
 }
 
-function collectNodesIncludingEventResponses(
-  sequence: NativeSequenceSource<KnownNativeActionLeafSource>,
-): readonly NativeActionNodeSource<KnownNativeActionLeafSource>[] {
-  const nodes = collectNativeActionNodes(sequence);
-  return [
-    ...nodes,
-    ...nodes.flatMap(node =>
-      node.body.kind === 'leaf' && node.body.value.family === 'eventListener'
-        ? node.body.value.action.events.flatMap(event =>
-            event.actions.flatMap(collectNodesIncludingEventResponses),
-          )
-        : [],
-    ),
-  ];
-}
-
 /**
  * 只删除没有读取、也不会随整块黑板传出的技能局部常量赋值。
  * Buff 黑板可被外部查询，不能使用这项证明；EntityBB_ 也不属于技能局部数据。
@@ -458,10 +460,7 @@ export function collectUnconsumedSkillLocalKeys(
   graph: SkillActionGraphSource<KnownNativeActionLeafSource>,
   skillRoot: Readonly<Record<string, unknown>>,
 ): ReadonlySet<string> {
-  const nodes = [
-    ...graph.actionGroup.timelineActions.map(timeline => timeline.sequence),
-    ...graph.actionGroup.passiveEvents.flatMap(event => event.actions),
-  ].flatMap(collectNodesIncludingEventResponses);
+  const nodes = skillSequences(graph).flatMap(collectEnabledNativeActionNodes);
   const closedFamilies = new Set<KnownNativeActionLeafSource['family']>([
     'presentation',
     'spatial',
@@ -519,16 +518,25 @@ export function collectUnconsumedSkillLocalKeys(
   );
 }
 
-/**
- * 在完整 SkillData 范围验证目标查询仅服务于表现，不局限于单个调度序列。
- * 只允许无过滤的来源/固定点查询；任一战斗消费者都会保留查询并交给严格投影报错。
- */
+/** 保留技能各入口仍需读取的目标组，主动技能和投射物回调使用相同规则。 */
+export function collectMaterializedTargetGroups(
+  graph: SkillActionGraphSource<KnownNativeActionLeafSource>,
+  presentationOnlyGroups = collectPresentationOnlyTargetGroups(graph),
+): ReadonlySet<string> {
+  return collectMaterializedSequenceTargetGroups(skillSequences(graph), presentationOnlyGroups);
+}
+
+/** 在完整 SkillData 范围证明纯表现目标链；战斗消费者阻止裁剪。 */
 export function collectPresentationOnlyTargetGroups(
   graph: SkillActionGraphSource<KnownNativeActionLeafSource>,
 ): ReadonlySet<string> {
-  const nodes = graph.actionGroup.timelineActions.flatMap(timeline =>
-    collectNodesIncludingEventResponses(timeline.sequence),
-  );
+  const nodes = skillSequences(graph).flatMap(collectEnabledNativeActionNodes);
+  const usages = new Map(nodes.map(node => [node, summarizeNativeTargetUsage(node)]));
+  if ([...usages.values()].some(usage => usage.passesAllTargets)) return new Set();
+  const references = (node: NativeActionNodeSource<KnownNativeActionLeafSource>, key: string) => {
+    const usage = usages.get(node)!;
+    return usage.reads.has(key) || usage.writes.has(key);
+  };
   const candidates = new Set(
     nodes.flatMap(node => {
       if (node.body.kind !== 'leaf' || node.body.value.family !== 'targetGroup') return [];
@@ -541,8 +549,8 @@ export function collectPresentationOnlyTargetGroups(
   do {
     changed = false;
     for (const key of candidates) {
-      const mixedSequence = graph.actionGroup.timelineActions.some(timeline => {
-        const actions = collectNativeActionNodes(timeline.sequence);
+      const mixedSequence = skillSequences(graph).some(sequence => {
+        const actions = collectEnabledNativeActionNodes(sequence);
         return (
           actions.some(
             node =>
@@ -565,10 +573,9 @@ export function collectPresentationOnlyTargetGroups(
         mixedSequence ||
         nodes.some(node => {
           // 控制流自身也可能读目标（例如 ForEach.target），不能只扫描叶子。
-          if (node.body.kind !== 'leaf')
-            return JSON.stringify(node.body).includes(JSON.stringify(key));
+          if (node.body.kind !== 'leaf') return references(node, key);
           const leaf = node.body.value;
-          if (!JSON.stringify(leaf).includes(JSON.stringify(key))) return false;
+          if (!references(node, key)) return false;
           return (
             leaf.family !== 'presentation' &&
             !(
@@ -585,8 +592,8 @@ export function collectPresentationOnlyTargetGroups(
     }
   } while (changed);
 
-  // SnapPointFinder 可能只为 MoveTo 等空间表现生成位置。按叶级引用证明，避免同一时间线
-  // 还包含伤害/资源动作时被粗粒度 mixedSequence 误伤；任何非空间叶或 ForEach 读取都会拒绝。
+  // 逐个检查位置组的生产者和消费者；同一时间线上的无关伤害不妨碍删除纯位置数据。
+  // 有效回调、循环和非空间读取仍阻止删除。
   const leafNodesForSpatialPoints = nodes.filter(node => node.body.kind === 'leaf');
   const forEachTargetReads = new Set(
     nodes.flatMap(node =>
@@ -595,26 +602,41 @@ export function collectPresentationOnlyTargetGroups(
         : [],
     ),
   );
+  const isSpatialPointQuery = (action: TargetGroupActionSource) =>
+    action.producerType === 'FindTargetAction' &&
+    (action.finderType === 'SnapPointFinder' || action.finderType === 'PointFinder') &&
+    action.validatorTypes.length === 0 &&
+    action.postProcessorTypes.length === 0 &&
+    action.priorityFilters.length === 0 &&
+    action.shuffleTargets.length === 0 &&
+    action.distanceValidators.length === 0;
   const spatialPointCandidates = new Set(
     leafNodesForSpatialPoints.flatMap(node => {
       if (node.body.kind !== 'leaf' || node.body.value.family !== 'targetGroup') return [];
       const action = node.body.value.action;
-      return action.producerType === 'FindTargetAction' &&
-        action.finderType === 'SnapPointFinder' &&
-        action.validatorTypes.length === 0 &&
-        action.postProcessorTypes.length === 0
-        ? [action.targetGroupKey]
-        : [];
+      return isSpatialPointQuery(action) ? [action.targetGroupKey] : [];
     }),
   );
   for (const key of spatialPointCandidates) {
     if (forEachTargetReads.has(key)) continue;
-    const safe = leafNodesForSpatialPoints.every(node => {
-      if (node.body.kind !== 'leaf') return true;
-      const occurrences = countExactString(node.body.value, key);
-      if (occurrences === 0) return true;
-      if (node.body.value.family === 'targetGroup' && node.body.value.action.targetGroupKey === key)
-        return occurrences === 1;
+    const safe = nodes.every(node => {
+      if (!references(node, key)) return true;
+      if (node.body.kind === 'actionWithCallback')
+        return node.body.value.family === 'spatial' && node.body.callback.actions.length === 0;
+      if (node.body.kind !== 'leaf') return false;
+      const usage = usages.get(node)!;
+      if (
+        node.body.value.family === 'targetGroup' &&
+        node.body.value.action.targetGroupKey === key
+      ) {
+        const action = node.body.value.action;
+        // 实体转位置只保存坐标；直接宿主引用不执行额外查询。
+        const directPosition =
+          action.producerType === 'ConvertToTargetContext' &&
+          action.conversionOperation === 'ConvertEntityToPosition' &&
+          action.conversionSource?.targetSource === 'Owner';
+        return (isSpatialPointQuery(action) || directPosition) && !usage.reads.has(key);
+      }
       return node.body.value.family === 'spatial' || node.body.value.family === 'stumpControl';
     });
     if (safe) candidates.add(key);
@@ -647,9 +669,9 @@ export function collectPresentationOnlyTargetGroups(
     if (controlTargetReads.has(outputKey)) continue;
     const consumersArePresentation = leafNodes.every(candidate => {
       if (candidate === node || candidate.body.kind !== 'leaf') return true;
-      if (!JSON.stringify(candidate.body.value).includes(JSON.stringify(outputKey))) return true;
+      if (!references(candidate, outputKey)) return true;
       return (
-        candidate.body.value.family === 'presentation' ||
+        isCombatInvisiblePresentationLeaf(candidate) ||
         (candidate.body.value.family === 'targetGroup' &&
           candidate.body.value.action.producerType === 'PickTargetAction' &&
           candidate.body.value.action.targetGroupKey === outputKey)
@@ -679,7 +701,7 @@ export function collectPresentationOnlyTargetGroups(
     }
     const consumersStayInPresentationChain = leafNodes.every(node => {
       if (node.body.kind !== 'leaf') return true;
-      if (!JSON.stringify(node.body.value).includes(JSON.stringify(inputKey))) return true;
+      if (!references(node, inputKey)) return true;
       if (
         node.body.value.family === 'targetGroup' &&
         node.body.value.action.targetGroupKey === inputKey
@@ -719,21 +741,20 @@ export function collectPresentationOnlyTargetGroups(
       const safe = leafNodes.every(node => {
         if (node.body.kind !== 'leaf') return true;
         const leaf = node.body.value;
-        const occurrences = countExactString(leaf, key);
-        if (occurrences === 0) return true;
+        const usage = usages.get(node)!;
+        if (!references(node, key)) return true;
         if (leaf.family === 'targetGroup') {
-          if (leaf.action.targetGroupKey === key && occurrences === 1) return true;
+          if (leaf.action.targetGroupKey === key && !usage.reads.has(key)) return true;
           return presentationConvertedContexts.has(leaf.action.targetGroupKey);
         }
         if (['presentation', 'spatial', 'stumpControl'].includes(leaf.family)) return true;
         return (
           leaf.family === 'condition' &&
-          (leaf.action.kind === 'targetAngle' ||
-            (leaf.action.kind === 'distance' &&
-              !leaf.action.lessThan &&
-              leaf.action.distance >= 0 &&
-              !leaf.action.includeTargetRadius &&
-              !leaf.action.containsHittableObject))
+          leaf.action.kind === 'distance' &&
+          !leaf.action.lessThan &&
+          leaf.action.distance >= 0 &&
+          !leaf.action.includeTargetRadius &&
+          !leaf.action.containsHittableObject
         );
       });
       if (!safe) {
@@ -754,14 +775,15 @@ export function collectPresentationOnlyTargetGroups(
 /**
  * 收集只被写入、从未被任何后续动作或控制流读取的 Context 组。
  * 这项事实本身不允许省略查询；调用方还必须证明 FindTargetAction 的 owner/center 可解析，
- * 从而保留原生“空结果也覆盖组并返回 true”的短路语义。
+ * 且查询没有随机取样、写入等副作用，保留“空结果也返回 true”的短路语义。
  */
 export function collectUnconsumedTargetGroups(
   graph: SkillActionGraphSource<KnownNativeActionLeafSource>,
 ): ReadonlySet<string> {
-  const nodes = graph.actionGroup.timelineActions.flatMap(timeline =>
-    collectNativeActionNodes(timeline.sequence),
-  );
+  const nodes = skillSequences(graph).flatMap(collectEnabledNativeActionNodes);
+  const usages = nodes.map(summarizeNativeTargetUsage);
+  if (usages.some(usage => usage.passesAllTargets)) return new Set();
+  const reads = new Set(usages.flatMap(usage => [...usage.reads]));
   const keys = new Set(
     nodes.flatMap(node =>
       node.body.kind === 'leaf' && node.body.value.family === 'targetGroup'
@@ -769,18 +791,5 @@ export function collectUnconsumedTargetGroups(
         : [],
     ),
   );
-  for (const key of keys) {
-    const onlyProducerWrites = nodes.every(node => {
-      const occurrences = countExactString(node.body, key);
-      if (occurrences === 0) return true;
-      if (node.body.kind !== 'leaf') return false;
-      return (
-        node.body.value.family === 'targetGroup' &&
-        node.body.value.action.targetGroupKey === key &&
-        occurrences === 1
-      );
-    });
-    if (!onlyProducerWrites) keys.delete(key);
-  }
-  return keys;
+  return new Set([...keys].filter(key => !reads.has(key)));
 }

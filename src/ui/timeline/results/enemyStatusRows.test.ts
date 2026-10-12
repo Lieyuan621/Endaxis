@@ -73,7 +73,7 @@ describe('enemy status presentation rows', () => {
   });
   it('uses explicit native head-bar routing, not a shared icon or buff name, to hide internal effects', () => {
     const hidden = buff('internal', {
-      iconId: 'shared',
+      icon: 'endaxis:icons/shared',
       showInHeadBarCommon: false,
       showInHeadBarAttached: false,
     });
@@ -85,7 +85,7 @@ describe('enemy status presentation rows', () => {
     expect(
       isEnemyTimelineBuffVisible(buff('attachment', { ...hidden, showInHeadBarAttached: true })),
     ).toBe(true);
-    expect(isEnemyTimelineBuffVisible(buff('custom', { iconId: 'shared' }))).toBe(true);
+    expect(isEnemyTimelineBuffVisible(buff('custom', { icon: 'endaxis:icons/shared' }))).toBe(true);
     expect(JSON.stringify(hidden)).toBe(before);
   });
   it('never spreads neighboring frames into same-time slots or changes their timing', () => {
@@ -115,7 +115,6 @@ describe('enemy status presentation rows', () => {
     const markers = [
       { kind: 'burst' as const, frame: 10 },
       { kind: 'attachmentTrigger' as const, frame: 10, element: 'heat' },
-      { kind: 'reactionConsumed' as const, frame: 10, level: 2 },
       { kind: 'burst' as const, frame: 11 },
     ];
     const before = JSON.stringify({ attachment, anomaly, markers });
@@ -123,7 +122,6 @@ describe('enemy status presentation rows', () => {
     expect(result.markerPositions).toEqual([
       { row: 1, slot: 1 },
       { row: 1, slot: 2 },
-      { row: 2, slot: 1 },
       { row: 1, slot: 0 },
     ]);
     expect(JSON.stringify({ attachment, anomaly, markers })).toBe(before);
@@ -136,16 +134,10 @@ describe('enemy status presentation rows', () => {
     const secondAnomaly = buff('burn', { startFrame: 10, iconStyleInSquad: 'SpellAbnormal' });
     const result = layoutEnemyStatusRows(
       [ended, firstAnomaly, secondAnomaly],
-      [
-        { kind: 'burst', frame: 10 },
-        { kind: 'reactionConsumed', frame: 10, level: 1 },
-      ],
+      [{ kind: 'burst', frame: 10 }],
       attachmentIds,
     );
-    expect(result.markerPositions).toEqual([
-      { row: 1, slot: 0 },
-      { row: 2, slot: 0 },
-    ]);
+    expect(result.markerPositions).toEqual([{ row: 1, slot: 0 }]);
   });
 
   it('grows for dense overlapping states instead of clipping them into fixed lanes', () => {
@@ -210,7 +202,7 @@ describe('enemy status presentation rows', () => {
     const attachment = buff('electric', { showInHeadBarAttached: true });
     const physical = buff('buff_physical_no_guard', { showInHeadBarAttached: true });
     const anomaly = buff('anomaly', { iconStyleInSquad: 'SpellAbnormal' });
-    const unknown = buff('unknown', { iconId: 'icon_battle_frozen' });
+    const unknown = buff('unknown', { icon: 'endaxis:icons/icon_battle_frozen' });
     const result = layoutEnemyStatusRows(
       [attachment, physical, anomaly, unknown],
       [],
@@ -250,7 +242,6 @@ describe('enemy status presentation rows', () => {
       [buff('ordinary')],
       [
         { kind: 'burst', frame: 10 },
-        { kind: 'reactionConsumed', frame: 10 },
         { kind: 'burst', frame: 10 },
         { kind: 'burst', frame: 20 },
       ],
@@ -258,7 +249,6 @@ describe('enemy status presentation rows', () => {
     );
     expect(result.markerPositions).toEqual([
       { row: 1, slot: 0 },
-      { row: 2, slot: 0 },
       { row: 1, slot: 1 },
       { row: 1, slot: 0 },
     ]);

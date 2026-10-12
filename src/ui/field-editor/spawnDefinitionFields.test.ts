@@ -18,12 +18,6 @@ import NodeInspectorFields from '../action-graph/NodeInspectorFields.vue';
 import OwnedSpawnResourceField from './OwnedSpawnResourceField.vue';
 import { arclight } from '../../data/operators/arclight.generated';
 import { replaceResourceNodeAction } from '../../application/editor/actionGraphResourceEditing';
-import { analyzeGraphBlackboard } from '../../application/editor/graphBlackboard';
-import {
-  createBlackboardFieldContext,
-  resolveBlackboardKey,
-} from '../../application/editor/blackboardFieldContext';
-import { spawnDefinitionBlackboardContext } from '../../application/editor/spawnDefinitionFieldContext';
 const field = actionNodeSchemas.spawnAbilityEntity.fields.find(
   field => field.path.at(-1) === 'definition',
 )!;
@@ -31,7 +25,12 @@ const schema = field.valueSchema!;
 const definition = Object.values(arclight.abilityEntityDefinitions!)[0]!;
 const a = (value: unknown): any => ({
   kind: 'spawnAbilityEntity',
-  parameters: { abilityEntityId: 'inline', dieWhenSourceDies: false, definition: value },
+  parameters: {
+    bornAt: { kind: 'owner' as const },
+    abilityEntityId: 'inline',
+    dieWhenSourceDies: false,
+    definition: value,
+  },
 });
 const options = { kind: 'spawnAbilityEntity', path: field.path };
 function mount(component: unknown, initial: Record<string, unknown>) {
@@ -96,44 +95,6 @@ it('preserves all three entire resource slots, even unconnected and empty collec
   expect(() =>
     validateStructuredValue(schema, { lifetime: { kind: 'infinite' } }, definition, options),
   ).toThrow();
-});
-it('uses direct snapshot evidence, excludes entity-only values, and gives explicit string overrides precedence', () => {
-  const graph: any = {
-    nodes: {
-      scope: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            scopeKey: 'local',
-            shareParentBlackboard: false,
-            inheritParent: false,
-            initialValues: { direct: 2 },
-            entityInitialValues: { entity: 9, direct: 'shadow' },
-          },
-          body: { $sequence: 'spawn' },
-        },
-        next: null,
-      },
-      spawn: { action: a({ lifetime: { kind: 'infinite' } }), next: null },
-    },
-  };
-  const analysis = analyzeGraphBlackboard(graph, ['scope']);
-  const context = createBlackboardFieldContext(analysis, analysis.contexts.get('spawn'));
-  const result = spawnDefinitionBlackboardContext(context, {
-    ...a(definition),
-    parameters: {
-      ...a(definition).parameters,
-      inheritActionBlackboard: true,
-      stringBlackboardAssignments: { direct: 'last' },
-    },
-  });
-  expect(result.candidates.map(candidate => candidate.key)).toEqual(['direct']);
-  expect(result.candidates[0]!.valueType).toBe('string');
-  expect(
-    resolveBlackboardKey(result, 'direct', { mode: 'read', valueType: 'number', fallback: 3 })
-      .state,
-  ).toBe('fallback');
-  expect(result.parameters).toEqual([]);
 });
 it('retains atomic outer drafts on error, supports repair/no-op/cancel and rejects forged resource edits', async () => {
   const changes: unknown[] = [];

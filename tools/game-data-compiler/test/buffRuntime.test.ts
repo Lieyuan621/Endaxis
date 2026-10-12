@@ -1,5 +1,8 @@
 import { fixtureGameplayTagRegistry } from './gameplayTagFixtures.ts';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { compileGraphSequence } from './support/graphSequence.ts';
+import { CombatActionSequenceRuntime } from '../../../src/core/combat/actions/combatActionSequenceRuntime';
+import { ActionBlackboard } from '../../../src/core/combat/actions/actionBlackboard';
 import { parseBuffRuntimeSource, compileBuffRuntimeDefinitionSource } from '../src/index.ts';
 import { scalarFixture, targetFixture, buffFixture, iconFixture } from './sourceFixtures.ts';
 
@@ -51,25 +54,29 @@ describe('Buff 运行时公共来源', () => {
         });
       const compiled = compile('caster');
       const response = compiled.abilityEventResponses?.[0];
-      const reference = response?.sequence.$sequence;
-      const guard =
-        reference && 'actionGraph' in compiled && compiled.actionGraph !== undefined
-          ? compiled.actionGraph.main.nodes[reference]?.action
-          : undefined;
-      if (guard?.kind !== 'conditional') throw new Error('expected conditional guard');
-      expect(guard.parameters.condition).toEqual({
-        kind: 'healthCompare',
-        target: 'enemy',
-        valueType: 'current',
-        operator: 'greater',
-        value: { kind: 'constant', value: 0 },
-      });
-      const whenTrue = guard.whenTrue.$sequence;
-      expect(
-        whenTrue !== null && 'actionGraph' in compiled && compiled.actionGraph !== undefined
-          ? compiled.actionGraph.main.nodes[whenTrue]?.action.kind
-          : undefined,
-      ).toBe('calculateActionValue');
+      if (!response || !compiled.actionGraph) throw new Error('missing event graph');
+      const evaluate = vi.fn(() => false);
+      const execute = vi.fn(() => true);
+      const runtime = new CombatActionSequenceRuntime(
+        { execute, evaluate },
+        { blackboard: new ActionBlackboard() },
+      );
+      const entry = compileGraphSequence(response.sequence, compiled.actionGraph);
+      expect(runtime.createSequence(entry).executeInstant({})).toBe(false);
+      expect(evaluate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kind: 'healthCompare',
+          target: 'enemy',
+          valueType: 'current',
+          operator: 'greater',
+          value: { kind: 'constant', value: 0 },
+        }),
+        expect.anything(),
+      );
+      expect(execute).not.toHaveBeenCalled();
+      evaluate.mockReturnValue(true);
+      expect(runtime.createSequence(entry).executeInstant({})).toBe(true);
+      expect(execute).toHaveBeenCalled();
       expect(() => compile('enemy')).toThrow('unsupported health condition target');
     },
   );

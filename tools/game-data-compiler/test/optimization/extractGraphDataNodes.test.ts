@@ -36,8 +36,12 @@ it.each(['off', 'report'] as const)(
         },
       },
     };
+    const repeatedSource = {
+      ...source,
+      nodes: { ...source.nodes, second: structuredClone(source.nodes.branch!) },
+    };
     const graph = finalizeDefinitionResources<{ actionGraph: ActionGraphResourceDefinition }>(
-      { actionGraph: { main: source, macros: {} } },
+      { actionGraph: { main: repeatedSource, macros: {} } },
       mode,
     ).value.actionGraph.main;
     const compilation = createActionGraphCompilation(graph, 1);
@@ -46,6 +50,13 @@ it.each(['off', 'report'] as const)(
     if (action.kind !== 'conditional' || action.parameters.condition.kind !== 'conditionNode')
       throw new Error('expected a compiled condition reference');
     const condition = action.parameters.condition;
+    const second = program.nodes.get('second')!.action;
+    if (second.kind !== 'conditional') throw new Error('expected second condition');
+    expect(
+      Object.values(graph.dataNodes!).filter(
+        node => node.type === 'number' && node.expression.kind === 'blackboard',
+      ),
+    ).toHaveLength(1);
     expect(condition.node).toBe(program.dataNodes[condition.nodeId]);
     expect(condition.node.expression.kind).toBe('all');
     if (condition.node.expression.kind !== 'all') throw new Error('expected all');
@@ -63,7 +74,7 @@ it.each(['off', 'report'] as const)(
     expect(executor.evaluate(condition, { blackboard })).toBe(false);
     expect(sample).not.toHaveBeenCalled();
     blackboard.assignDynamic('count', 1);
-    expect(executor.evaluate(condition, { blackboard })).toBe(true);
+    expect(executor.evaluate(second.parameters.condition, { blackboard })).toBe(true);
     expect(executor.evaluate(condition, { blackboard })).toBe(false);
     expect(sample).toHaveBeenCalledTimes(2);
     expect(source.nodes.branch!.action).not.toEqual(graph.nodes.branch!.action);
@@ -95,5 +106,41 @@ it('只把字符串输入中的变量读取提取成字符串节点，不改写�
     type: 'string',
     expression: { blackboardKey: 'skill' },
   });
+  expect(extractGraphDataNodes(graph)).toEqual(graph);
+});
+
+it('共享变量读取时保留缺省值差异，不把负零或无穷值误合并', () => {
+  const fallbacks = [undefined, 0, -0, Infinity, Infinity, undefined];
+  const source: ActionGraphDefinition = {
+    nodes: Object.fromEntries(
+      fallbacks.map((fallback, index) => [
+        String(index),
+        {
+          action: {
+            kind: 'modifyActionValue',
+            parameters: {
+              key: 'output',
+              operation: 'assign',
+              value: {
+                kind: 'blackboard',
+                key: 'input',
+                ...(fallback === undefined ? {} : { fallback }),
+              },
+            },
+          },
+          next: null,
+        },
+      ]),
+    ),
+  };
+  const graph = extractGraphDataNodes(source);
+  expect(Object.keys(graph.dataNodes!)).toHaveLength(4);
+  const inputs = Object.values(graph.nodes).map(node => {
+    if (node.action.kind !== 'modifyActionValue') throw new Error('expected assignment');
+    return node.action.parameters.value;
+  });
+  expect(inputs[0]).toEqual(inputs[5]);
+  expect(inputs[3]).toEqual(inputs[4]);
+  expect(inputs[1]).not.toEqual(inputs[2]);
   expect(extractGraphDataNodes(graph)).toEqual(graph);
 });

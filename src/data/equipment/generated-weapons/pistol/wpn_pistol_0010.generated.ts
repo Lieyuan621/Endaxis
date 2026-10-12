@@ -51,15 +51,20 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_pistol_0010_valid',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_pistol_0010_valid',
+                      copiedBlackboardAssignments: {
+                        cryst_dmg_up_valid: 'cryst_dmg_up2',
+                        duration: 'duration',
+                        max_stack: 'max_stack',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    cryst_dmg_up_valid: 'cryst_dmg_up2',
-                    duration: 'duration',
-                    max_stack: 'max_stack',
-                  },
                 },
               },
               next: null,
@@ -68,29 +73,28 @@ const definition = {
               action: {
                 kind: 'createTimedMarker',
                 parameters: {
-                  target: 'caster',
+                  targets: { kind: 'owner' },
                   markerId: 'wpn_pistol_0010',
                   durationSeconds: { kind: 'constant', value: 0.1 },
                   autoFinishByAction: false,
+                  timeDomain: 'globalScaled',
                 },
               },
               next: 'applyBuff_1',
             },
-            conditional_3: {
+            checkCondition_3: {
               action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                whenTrue: { $sequence: 'createTimedMarker_2' },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
               },
-              next: null,
+              next: 'createTimedMarker_2',
             },
-            conditional_4: {
+            checkCondition_4: {
               action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'conditional_3' },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
               },
-              next: null,
+              next: 'checkCondition_3',
             },
           },
           dataNodes: {
@@ -98,15 +102,12 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                returnTrueIfNotExists: true,
                 target: 'caster',
                 markerId: 'wpn_pistol_0010',
               },
             },
             data_2: {
-              type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-            },
-            data_3: {
               type: 'boolean',
               expression: {
                 kind: 'eventDamageTagsMatch',
@@ -124,7 +125,7 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'outputCriticalDamage',
           priority: 0,
-          sequence: { $sequence: 'conditional_4' },
+          sequence: { $sequence: 'checkCondition_4' },
         },
       ],
       blackboard: {
@@ -135,7 +136,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_pistol_0010',
-  iconPath: '/weapons/pistol/wpn_pistol_0010.webp',
+  icon: 'endaxis:weapons/pistol/wpn_pistol_0010',
   buffDefinitions: {
     buff_wpn_pistol_0010_valid: {
       stackingType: 'stack',
@@ -147,8 +148,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_cryst_dmg_up',
-        iconPath: '/icons/icon_battle_cryst_dmg_up.webp',
+        icon: 'endaxis:icons/icon_battle_cryst_dmg_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

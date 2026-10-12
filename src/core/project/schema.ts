@@ -1,5 +1,7 @@
-import type { GlobalEffectDefinition } from '../game-data/globalEffectDefinition';
 import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs';
+import type { SimulationRandomMode } from '../combat/random/simulationRandom';
+import type { GlobalEffectDefinition } from '../game-data/globalEffectDefinition';
+import type { PlayerSkillInput } from '../game-data/operatorDefinition';
 import type { SkillGraphPresentation } from './graphPresentation';
 /**
  * 项目存档的数据结构。
@@ -12,12 +14,12 @@ import type {
   SkillDefinition,
 } from '../game-data/operatorDefinition';
 
+import type { EnemyRank } from '../game-data/enemyRank';
 import type {
   GearDefinition,
   GearSetDefinition,
   WeaponDefinition,
 } from '../game-data/equipmentDefinition';
-import type { EnemyRank } from '../game-data/enemyRank';
 
 export const PROJECT_KIND = 'EndaxisProject' as const;
 export const PROJECT_SCHEMA_VERSION = 1 as const;
@@ -124,7 +126,7 @@ export type DefinitionActionSource = {
   /** 配置目标 SkillDefinition.key；输入不匹配时仍强制执行此技能并报告诊断。 */
   skillKey: string;
   /** 玩家尝试执行的四类语义动作；新放置块必须保存，旧项目可在路由唯一时恢复。 */
-  action?: import('../game-data/operatorDefinition').PlayerSkillInput;
+  action?: PlayerSkillInput;
 };
 
 /**
@@ -331,7 +333,7 @@ export interface BattleDocument {
   };
   /** 场景随机策略；旧项目省略时使用期望模式和种子 0。 */
   random?: {
-    mode: import('../combat/random/simulationRandom').SimulationRandomMode;
+    mode: SimulationRandomMode;
     globalSeed: number;
   };
   /** 方案级输入规则；省略时默认开启自动切换。自动切换回执不作为标记持久化。 */

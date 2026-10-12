@@ -53,31 +53,31 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'beforeOutputBuff',
           priority: 0,
-          sequence: { $sequence: 'conditional_4' },
+          sequence: { $sequence: 'checkCondition_5' },
         },
         {
           key: 'skill3:event:1:sequence:0',
           abilityEvent: 'beforeOutputBuff',
           priority: 0,
-          sequence: { $sequence: 'conditional_8' },
+          sequence: { $sequence: 'checkCondition_10' },
         },
         {
           key: 'skill3:event:2:sequence:0',
           abilityEvent: 'beforeOutputBuff',
           priority: 0,
-          sequence: { $sequence: 'conditional_12' },
+          sequence: { $sequence: 'checkCondition_15' },
         },
         {
           key: 'skill3:event:3:sequence:0',
           abilityEvent: 'beforeOutputBuff',
           priority: 0,
-          sequence: { $sequence: 'conditional_16' },
+          sequence: { $sequence: 'checkCondition_20' },
         },
         {
           key: 'skill3:event:4:sequence:0',
           abilityEvent: 'beforeOutputInfliction',
           priority: 0,
-          sequence: { $sequence: 'conditional_3' },
+          sequence: { $sequence: 'checkCondition_4' },
         },
       ],
       actionGraph: {
@@ -87,75 +87,91 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_funnel_0018_layer',
-                  target: 'partyExceptCaster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_funnel_0018_layer',
+                      copiedBlackboardAssignments: {
+                        atk_up: 'atk_up2',
+                        max_stack: 'max_stack',
+                        duration: 'duration',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'context', key: 'teammates' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    atk_up: 'atk_up2',
-                    max_stack: 'max_stack',
-                    duration: 'duration',
-                  },
                 },
               },
               next: null,
             },
-            applyBuff_2: {
+            findTargets_2: {
               action: {
-                kind: 'applyBuff',
+                kind: 'findTargets',
                 parameters: {
-                  buffId: 'buff_wpn_funnel_0018_layer',
-                  target: 'caster',
-                  inheritSourceSkillCastInfo: true,
-                  asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    atk_up: 'atk_up',
-                    max_stack: 'max_stack',
-                    duration: 'duration',
-                  },
+                  owner: { kind: 'owner' },
+                  query: { kind: 'characterTeam', excludeOwner: true, owner: { kind: 'owner' } },
+                  saveToContextKey: 'teammates',
                 },
               },
               next: 'applyBuff_1',
             },
-            conditional_3: {
+            applyBuff_3: {
               action: {
-                kind: 'conditional',
+                kind: 'applyBuff',
+                parameters: {
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_funnel_0018_layer',
+                      copiedBlackboardAssignments: {
+                        atk_up: 'atk_up',
+                        max_stack: 'max_stack',
+                        duration: 'duration',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
+                  inheritSourceSkillCastInfo: true,
+                  asChildBuff: true,
+                },
+              },
+              next: 'findTargets_2',
+            },
+            checkCondition_4: {
+              action: {
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: 'applyBuff_2' },
               },
-              next: null,
+              next: 'applyBuff_3',
             },
-            conditional_4: {
+            checkCondition_5: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                whenTrue: { $sequence: 'conditional_3' },
               },
-              next: null,
+              next: 'checkCondition_4',
             },
-            conditional_8: {
+            checkCondition_10: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'conditional_3' },
               },
-              next: null,
+              next: 'checkCondition_4',
             },
-            conditional_12: {
+            checkCondition_15: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-                whenTrue: { $sequence: 'conditional_3' },
               },
-              next: null,
+              next: 'checkCondition_4',
             },
-            conditional_16: {
+            checkCondition_20: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-                whenTrue: { $sequence: 'conditional_3' },
               },
-              next: null,
+              next: 'checkCondition_4',
             },
           },
           dataNodes: {
@@ -208,7 +224,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_funnel_0018',
-  iconPath: '/weapons/funnel/wpn_funnel_0018.webp',
+  icon: 'endaxis:weapons/funnel/wpn_funnel_0018',
   buffDefinitions: {
     buff_wpn_funnel_0018_layer: {
       stackingType: 'highPriorityWithMaxStack',
@@ -220,8 +236,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_buff_atk_up',
-        iconPath: '/icons/icon_battle_buff_atk_up.webp',
+        icon: 'endaxis:icons/icon_battle_buff_atk_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

@@ -15,7 +15,10 @@ describe('资产内部资源导航', () => {
         main: {
           nodes: {
             apply: {
-              action: { kind: 'applyBuff', parameters: { buffId: 'shared', target: 'caster' } },
+              action: {
+                kind: 'applyBuff',
+                parameters: { buffs: [{ buffId: 'shared' }], targets: { kind: 'fixed', target: 'caster' } },
+              },
             },
           },
         },
@@ -89,7 +92,7 @@ describe('资产内部资源导航', () => {
   });
   it('静态引用去重，动态身份和普通变量字符串不会被当成资源引用', () => {
     const apply = (buffId: unknown) => ({
-      action: { kind: 'applyBuff', parameters: { buffId, target: 'caster' } },
+      action: { kind: 'applyBuff', parameters: { buffs: [{ buffId }], targets: { kind: 'fixed', target: 'caster' } } },
     });
     const definition = {
       skill: {

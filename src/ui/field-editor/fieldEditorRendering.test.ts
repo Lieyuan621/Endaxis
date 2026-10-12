@@ -167,9 +167,10 @@ it('renders source, owner and read-only navigation without exposing a duplicate 
 });
 
 it('renders string literal/node-reference branches through the same control in node and definition surfaces', async () => {
-  const schema = actionNodeSchemas.applyBuff.fields.find(
-    f => f.path.at(-1) === 'buffId',
-  )!.valueSchema;
+  const root = actionNodeSchemas.applyBuff.fields.find(f => f.path.at(-1) === 'buffs')!.valueSchema;
+  if (root.kind !== 'array' || root.element.kind !== 'object')
+    throw new Error('expected buff entries');
+  const schema = root.element.fields.buffId!;
   for (const value of ['known', { kind: 'stringNode', nodeId: 'runtimeBuff' }]) {
     const html = await render(DefinitionField, {
       name: 'buffId',

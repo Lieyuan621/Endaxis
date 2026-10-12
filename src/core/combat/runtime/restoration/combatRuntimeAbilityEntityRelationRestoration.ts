@@ -26,7 +26,7 @@ import type {
   AbilityEntityChildSkillState,
   PassiveAbilityEventState,
 } from '../../state/abilityState';
-import { type BuffReference } from '../../state/foundationState';
+import type { BuffReference } from '../../state/foundationState';
 import type { LogicalAbilityEntityState } from '../../state/instanceState';
 import type { CombatOperatorProgram } from '../combatRuntimeAssembly';
 import {
@@ -36,6 +36,7 @@ import {
 import type { RestoredCombatAbilityEntityDirectory } from './combatRuntimeAbilityEntityRestoration';
 import type { RestoredCombatRuntimeOperators } from './combatRuntimeOperatorRestoration';
 import type { RestoredCombatRuntimeFoundation } from './combatRuntimeRestoreFoundation';
+import type { CombatRuntimeRestorePreparation } from './combatRuntimeRestorePreparation';
 
 export interface AbilityEntityChildSkillRestoreBindings {
   readonly operations: CombatOperationExecutor;
@@ -45,7 +46,7 @@ export interface AbilityEntityChildSkillRestoreBindings {
 
 export interface RestoreCombatRuntimeAbilityEntityRelationsOptions {
   readonly foundation: RestoredCombatRuntimeFoundation;
-  readonly preparation?: import('./combatRuntimeRestorePreparation').CombatRuntimeRestorePreparation;
+  readonly preparation?: CombatRuntimeRestorePreparation;
   readonly entities: RestoredCombatAbilityEntityDirectory;
   readonly operators: RestoredCombatRuntimeOperators;
   readonly childSkillPrograms: AbilityEntityChildSkillPrograms;
@@ -247,7 +248,7 @@ function definitionContainsChildSkill(
 
 function resolveEntityChildBuffs(
   entities: RestoredCombatAbilityEntityDirectory,
-  preparation?: import('./combatRuntimeRestorePreparation').CombatRuntimeRestorePreparation,
+  preparation?: CombatRuntimeRestorePreparation,
 ): ReadonlyMap<string, BuffApplicationHandle> {
   const unique = preparation?.buffs.abilityEntityChildren ?? collectEntityChildBuffs(entities);
   const children = new Map<string, BuffApplicationHandle>();

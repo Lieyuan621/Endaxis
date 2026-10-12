@@ -8,7 +8,7 @@ import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import { resolveActionValueOperand } from '../actions/actionBlackboard';
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
 import type { CombatVitals } from './combatVitals';
-import { compareCombatNumbers } from '../../mechanics/combatNumbers.ts';
+import { compareCombatNumbers } from '../../math/combatNumbers.ts';
 
 export interface CombatVitalsConditionDependencies {
   readonly resolveTarget: (
@@ -49,25 +49,32 @@ export class CombatVitalsConditionExecutor implements CombatOperationExecutor {
     }
     if (context === undefined)
       throw new Error(`${condition.kind} requires a combat operation context`);
-    const vitals =
-      condition.kind === 'healthCompare' && condition.target === 'contextTarget'
-        ? this.#resolveContextTarget(condition.contextKey, context)
-        : condition.target === 'currentTarget'
-          ? this.#resolveCurrentTarget(context)
-          : this.dependencies.resolveTarget(condition.target, context.buffSourceId);
-    if (condition.kind === 'targetStaggered') return vitals.hasPoiseBrokenTag;
-    if (condition.kind === 'poiseCompare') {
-      if (!vitals.hasPoise) return condition.returnValueIfMissing;
+    if (condition.kind === 'healthCompare') {
+      const vitals =
+        condition.target === 'contextTarget'
+          ? this.#resolveContextTarget(condition.contextKey, context)
+          : condition.target === 'currentTarget'
+            ? this.#resolveCurrentTarget(context)
+            : this.dependencies.resolveTarget(condition.target, context.buffSourceId);
+      // 原生取首个目标；没有目标时生命和最大生命均为零，比例保持 0/0。
+      const health = vitals?.health ?? 0;
+      const current = condition.valueType === 'ratio' ? health / (vitals?.maxHealth ?? 0) : health;
       return compareCombatNumbers(
-        vitals.poise,
+        current,
         resolveActionValueOperand(condition.value, context.blackboard),
         condition.operator,
       );
     }
-    const current =
-      condition.valueType === 'ratio' ? vitals.health / vitals.maxHealth : vitals.health;
+    const vitals =
+      condition.target === 'currentTarget'
+        ? this.#resolveCurrentTarget(context)
+        : condition.target === 'actionInputTarget'
+          ? this.#resolveInputTarget(context)
+          : this.dependencies.resolveTarget(condition.target, context.buffSourceId);
+    if (condition.kind === 'targetStaggered') return vitals?.hasPoiseBrokenTag ?? false;
+    if (vitals !== undefined && !vitals.hasPoise) return condition.returnValueIfMissing;
     return compareCombatNumbers(
-      current,
+      vitals?.poise ?? 0,
       resolveActionValueOperand(condition.value, context.blackboard),
       condition.operator,
     );
@@ -76,17 +83,13 @@ export class CombatVitalsConditionExecutor implements CombatOperationExecutor {
   #resolveContextTarget(
     contextKey: string | undefined,
     context: CombatOperationContext,
-  ): CombatVitals {
+  ): CombatVitals | undefined {
     if (context.targetContext === undefined || contextKey === undefined) {
       throw new Error("healthCompare target 'contextTarget' requires a combat target context key");
     }
     const targets = context.targetContext.get(contextKey);
     const target = targets[0];
-    if (targets.length !== 1 || target === undefined) {
-      throw new Error(
-        `healthCompare context target '${contextKey}' must contain exactly one target`,
-      );
-    }
+    if (target === undefined) return undefined;
     if (target.kind === 'enemy') {
       return this.dependencies.resolveTarget('enemy', context.buffSourceId);
     }
@@ -109,5 +112,16 @@ export class CombatVitalsConditionExecutor implements CombatOperationExecutor {
     const resolve = this.dependencies.resolveContextTarget;
     if (resolve === undefined) throw new Error('current health target resolver is not configured');
     return resolve(context.currentTarget.operatorId);
+  }
+
+  #resolveInputTarget(context: CombatOperationContext): CombatVitals | undefined {
+    const target = context.actionInputTarget;
+    if (target === undefined) return undefined;
+    if (target.kind === 'enemy')
+      return this.dependencies.resolveTarget('enemy', context.buffSourceId);
+    if (target.kind !== 'operator') throw new Error(`unsupported poise target '${target.kind}'`);
+    const resolve = this.dependencies.resolveContextTarget;
+    if (resolve === undefined) throw new Error('input target vitals resolver is not configured');
+    return resolve(target.operatorId);
   }
 }

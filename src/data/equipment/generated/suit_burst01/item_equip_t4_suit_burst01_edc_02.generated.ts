@@ -4,7 +4,7 @@ import type { GearDefinition } from '../../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'item_equip_t4_suit_burst01_edc_02',
   assetSlug: 'item_equip_t4_suit_burst01_edc_02',
-  iconPath: '/equipment/burst01/item_equip_t4_suit_burst01_edc_02.webp',
+  icon: 'endaxis:equipment/burst01/item_equip_t4_suit_burst01_edc_02',
   slotType: 'accessory',
   levelRequirement: 70,
   baseDefense: 21,

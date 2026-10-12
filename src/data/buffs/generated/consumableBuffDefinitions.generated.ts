@@ -18,8 +18,7 @@ const commonBuff1: SkillBuffDefinition = {
   maxTriggerCount: 0,
   presentation: {
     visible: true,
-    iconId: 'icon_battle_buff_atk_up',
-    iconPath: '/icons/icon_battle_buff_atk_up.webp',
+    icon: 'endaxis:icons/icon_battle_buff_atk_up',
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
     showInSquadIcon: true,
@@ -62,8 +61,7 @@ const commonBuff2: SkillBuffDefinition = {
   maxTriggerCount: 0,
   presentation: {
     visible: true,
-    iconId: 'icon_battle_buff_atk_up',
-    iconPath: '/icons/icon_battle_buff_atk_up.webp',
+    icon: 'endaxis:icons/icon_battle_buff_atk_up',
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
     showInSquadIcon: true,
@@ -106,8 +104,7 @@ const commonBuff3: SkillBuffDefinition = {
   maxTriggerCount: 0,
   presentation: {
     visible: true,
-    iconId: 'icon_battle_buff_atk_up',
-    iconPath: '/icons/icon_battle_buff_atk_up.webp',
+    icon: 'endaxis:icons/icon_battle_buff_atk_up',
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
     showInSquadIcon: true,
@@ -154,8 +151,7 @@ const commonBuff4: SkillBuffDefinition = {
   maxTriggerCount: 0,
   presentation: {
     visible: true,
-    iconId: 'icon_battle_buff_atk_up',
-    iconPath: '/icons/icon_battle_buff_atk_up.webp',
+    icon: 'endaxis:icons/icon_battle_buff_atk_up',
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
     showInSquadIcon: true,
@@ -198,8 +194,7 @@ const commonBuff5: SkillBuffDefinition = {
   maxTriggerCount: 0,
   presentation: {
     visible: true,
-    iconId: 'icon_battle_buff_def_up',
-    iconPath: '/icons/icon_battle_buff_def_up.webp',
+    icon: 'endaxis:icons/icon_battle_buff_def_up',
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
     showInSquadIcon: true,
@@ -240,8 +235,7 @@ const commonBuff6: SkillBuffDefinition = {
   maxTriggerCount: 0,
   presentation: {
     visible: true,
-    iconId: 'icon_battle_buff_def_up',
-    iconPath: '/icons/icon_battle_buff_def_up.webp',
+    icon: 'endaxis:icons/icon_battle_buff_def_up',
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
     showInSquadIcon: true,
@@ -282,8 +276,7 @@ const commonBuff7: SkillBuffDefinition = {
   maxTriggerCount: 0,
   presentation: {
     visible: true,
-    iconId: 'icon_battle_buff_def_down',
-    iconPath: '/icons/icon_battle_buff_def_down.webp',
+    icon: 'endaxis:icons/icon_battle_buff_def_down',
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
     showInSquadIcon: true,
@@ -324,8 +317,7 @@ const commonBuff8: SkillBuffDefinition = {
   maxTriggerCount: 0,
   presentation: {
     visible: true,
-    iconId: 'icon_battle_buff_atk_up',
-    iconPath: '/icons/icon_battle_buff_atk_up.webp',
+    icon: 'endaxis:icons/icon_battle_buff_atk_up',
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
     showInSquadIcon: true,
@@ -381,8 +373,7 @@ const commonBuff9: SkillBuffDefinition = {
   maxTriggerCount: 0,
   presentation: {
     visible: true,
-    iconId: 'icon_battle_buff_def_up',
-    iconPath: '/icons/icon_battle_buff_def_up.webp',
+    icon: 'endaxis:icons/icon_battle_buff_def_up',
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
     showInSquadIcon: true,
@@ -425,8 +416,7 @@ const commonBuff10: SkillBuffDefinition = {
   maxTriggerCount: 0,
   presentation: {
     visible: true,
-    iconId: 'icon_battle_buff_def_up',
-    iconPath: '/icons/icon_battle_buff_def_up.webp',
+    icon: 'endaxis:icons/icon_battle_buff_def_up',
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
     showInSquadIcon: true,
@@ -469,8 +459,7 @@ const commonBuff11: SkillBuffDefinition = {
   maxTriggerCount: 0,
   presentation: {
     visible: true,
-    iconId: 'icon_battle_buff_atk_up',
-    iconPath: '/icons/icon_battle_buff_atk_up.webp',
+    icon: 'endaxis:icons/icon_battle_buff_atk_up',
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
     showInSquadIcon: true,
@@ -516,8 +505,7 @@ const commonBuff12: SkillBuffDefinition = {
   maxTriggerCount: 0,
   presentation: {
     visible: true,
-    iconId: 'icon_battle_buff_atk_up',
-    iconPath: '/icons/icon_battle_buff_atk_up.webp',
+    icon: 'endaxis:icons/icon_battle_buff_atk_up',
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
     showInSquadIcon: true,
@@ -564,8 +552,7 @@ const commonBuff13: SkillBuffDefinition = {
   maxTriggerCount: 0,
   presentation: {
     visible: true,
-    iconId: 'icon_battle_buff_def_up',
-    iconPath: '/icons/icon_battle_buff_def_up.webp',
+    icon: 'endaxis:icons/icon_battle_buff_def_up',
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
     showInSquadIcon: true,
@@ -637,8 +624,7 @@ const commonBuff14: SkillBuffDefinition = {
   maxTriggerCount: 0,
   presentation: {
     visible: true,
-    iconId: 'icon_battle_buff_atk_up',
-    iconPath: '/icons/icon_battle_buff_atk_up.webp',
+    icon: 'endaxis:icons/icon_battle_buff_atk_up',
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
     showInSquadIcon: true,

@@ -1,3 +1,8 @@
+import { FORCED_SPELL_STATUS_BUFFS } from '../../../../../src/core/combat/infliction/forcedSpellStatus.ts';
+import {
+  PHYSICAL_NO_GUARD_BUFF,
+  PHYSICAL_INFLICTION_BUFFS,
+} from '../../../../../src/core/combat/status/physicalInfliction.ts';
 /** 从已编译动作树收集显式与隐式 Buff 依赖；动态 ID 在来源编译边界解决。 */
 export function collectCompiledBuffIds(value: unknown): ReadonlySet<string> {
   return new Set(collectCompiledBuffApplications(value).map(item => item.buffId));
@@ -60,26 +65,28 @@ export function collectCompiledDefaultKeywordCarrierIds(value: unknown): Readonl
     }
     if (item === null || typeof item !== 'object') return;
     const record = item as Record<string, unknown>;
-    if (record.kind === 'applyBuff') {
+    if (record.kind === 'applyBuff' || record.kind === 'aura') {
       const parameters = record.parameters;
       if (parameters !== null && typeof parameters === 'object') {
         const parameterRecord = parameters as Record<string, unknown>;
-        const buffId = parameterRecord.buffId;
-        const assignments = parameterRecord.blackboardAssignments;
-        const assignmentKeys =
-          assignments !== null && typeof assignments === 'object'
-            ? Object.keys(assignments as Record<string, unknown>).sort()
-            : [];
-        if (
-          typeof buffId === 'string' &&
-          isRecoveredKeywordCarrierBuffId(buffId) &&
-          parameterRecord.inheritSourceSkillCastInfo === true &&
-          assignmentKeys.length === 2 &&
-          assignmentKeys[0] === 'duration' &&
-          assignmentKeys[1] === 'rate' &&
-          parameterRecord.stringBlackboardAssignments === undefined
-        )
-          ids.add(buffId);
+        for (const entry of buffEntries(parameterRecord)) {
+          const buffId = entry.buffId;
+          const assignments = entry.blackboardAssignments;
+          const assignmentKeys =
+            assignments !== null && typeof assignments === 'object'
+              ? Object.keys(assignments as Record<string, unknown>).sort()
+              : [];
+          if (
+            typeof buffId === 'string' &&
+            isRecoveredKeywordCarrierBuffId(buffId) &&
+            parameterRecord.inheritSourceSkillCastInfo === true &&
+            assignmentKeys.length === 2 &&
+            assignmentKeys[0] === 'duration' &&
+            assignmentKeys[1] === 'rate' &&
+            entry.stringBlackboardAssignments === undefined
+          )
+            ids.add(buffId);
+        }
       }
     }
     Object.values(record).forEach(visit);
@@ -88,7 +95,7 @@ export function collectCompiledDefaultKeywordCarrierIds(value: unknown): Readonl
   return ids;
 }
 
-/** 只收集仍需最终内联水合的物理异常公共 Buff；普通 applyBuff 已携带自己的定义。 */
+/** 单技能阶段只补物理异常隐式依赖；普通 Buff 的目标上下文由干员闭包装配确定。 */
 export function collectCompiledPhysicalInflictionBuffIds(value: unknown): ReadonlySet<string> {
   const ids = new Set<string>();
   const visit = (item: unknown): void => {
@@ -98,12 +105,12 @@ export function collectCompiledPhysicalInflictionBuffIds(value: unknown): Readon
     }
     if (item === null || typeof item !== 'object') return;
     const record = item as Record<string, unknown>;
-    if (record.kind === 'applyPhysicalInfliction') {
-      const parameters = record.parameters as Record<string, unknown>;
-      for (const key of ['noGuardBuffId', 'fractureBuffId', 'crushedBuffId', 'airborneBuffId']) {
-        const id = parameters[key];
-        if (typeof id === 'string' && id.length > 0) ids.add(id);
-      }
+    if (
+      record.kind === 'applyPhysicalInfliction' &&
+      (record.parameters as Record<string, unknown>).type !== 'knockDown'
+    ) {
+      collectCompiledBuffApplications(record).forEach(application => ids.add(application.buffId));
+      return;
     }
     Object.values(record).forEach(visit);
   };
@@ -129,68 +136,80 @@ export function collectCompiledBuffApplications(
     }
     if (item === null || typeof item !== 'object') return;
     const record = item as Record<string, unknown>;
-    if (record.kind === 'applyKnockDown') {
+    if (
+      record.kind === 'applyPhysicalInfliction' &&
+      (record.parameters as Record<string, unknown>).type === 'knockDown'
+    ) {
       const parameters = record.parameters as Record<string, unknown>;
       if (parameters.targetFilter !== 'skipAll') {
         // 原生根动作的隐式安装仍是依赖，不能在从来源图转到正式程序时丢失。
-        applications.push({ buffId: 'buff_physical_knockdown', target: 'enemy' });
+        applications.push({ buffId: PHYSICAL_INFLICTION_BUFFS.knockDown, target: 'enemy' });
         if (!parameters.force)
-          applications.push({ buffId: 'buff_physical_no_guard', target: 'enemy' });
+          applications.push({ buffId: PHYSICAL_NO_GUARD_BUFF, target: 'enemy' });
       }
     }
-    if (record.kind === 'applyPhysicalInfliction') {
+    if (
+      record.kind === 'applyPhysicalInfliction' &&
+      (record.parameters as Record<string, unknown>).type !== 'knockDown'
+    ) {
       const parameters = record.parameters as Record<string, unknown>;
       const type = parameters.type;
-      const noGuardBuffId = parameters.noGuardBuffId;
-      const abnormalBuffId =
-        type === 'fracture'
-          ? parameters.fractureBuffId
-          : type === 'crush'
-            ? parameters.crushedBuffId
-            : parameters.airborneBuffId;
-      if (typeof noGuardBuffId !== 'string' || typeof abnormalBuffId !== 'string')
-        throw new Error('compiled physical infliction step has invalid Buff identities');
-      applications.push({ buffId: noGuardBuffId, target: 'enemy' });
-      applications.push({ buffId: abnormalBuffId, target: 'enemy' });
+      if (type !== 'fracture' && type !== 'crush' && type !== 'airborne')
+        throw new Error('compiled physical infliction step has invalid type');
+      applications.push({ buffId: PHYSICAL_NO_GUARD_BUFF, target: 'enemy' });
+      applications.push({ buffId: PHYSICAL_INFLICTION_BUFFS[type], target: 'enemy' });
     }
-    if (record.kind === 'applyBuff') {
+    if (record.kind === 'forceSpellStatus') {
+      const parameters = record.parameters as {
+        element: keyof typeof FORCED_SPELL_STATUS_BUFFS;
+        target: string;
+      };
+      const buffId = FORCED_SPELL_STATUS_BUFFS[parameters.element];
+      if (buffId === undefined) throw new Error('compiled forceSpellStatus has invalid element');
+      applications.push({ buffId, target: parameters.target });
+    }
+    if (record.kind === 'applyBuff' || record.kind === 'aura') {
       const parameters = record.parameters;
       if (parameters === null || typeof parameters !== 'object')
         throw new Error('compiled applyBuff step is missing parameters');
-      const buffId = (parameters as Record<string, unknown>).buffId;
-      if (typeof buffId !== 'string' || buffId.length === 0)
-        throw new Error('compiled applyBuff step has an invalid buffId');
-      const target = (parameters as Record<string, unknown>).target;
+      const kinds = (
+        parameters as {
+          readonly [COMPILED_BUFF_TARGET_KINDS]?: { target: string; source?: string };
+        }
+      )[COMPILED_BUFF_TARGET_KINDS];
+      const query = (parameters as { targets?: { kind?: string; target?: string } }).targets;
+      const target =
+        kinds?.target ??
+        (query?.kind === 'fixed'
+          ? query.target
+          : query?.kind === 'characterTeam' || query?.kind === 'mainCharacter'
+            ? 'caster'
+            : query?.kind
+              ? 'unknown'
+              : undefined);
       if (typeof target !== 'string' || target.length === 0)
         throw new Error('compiled applyBuff step has an invalid target');
-      const source = (parameters as Record<string, unknown>).source;
+      const source =
+        kinds !== undefined
+          ? kinds.source
+          : (parameters as Record<string, unknown>).source === undefined
+            ? undefined
+            : 'unknown';
       const capturedTargetGroups = (
         parameters as {
           readonly [COMPILED_BUFF_CAPTURED_TARGET_GROUPS]?: CompiledBuffCapturedTargetGroupsSource;
         }
       )[COMPILED_BUFF_CAPTURED_TARGET_GROUPS];
-      applications.push({
-        buffId,
-        target,
-        ...(typeof source === 'string' ? { source } : {}),
-        ...(capturedTargetGroups === undefined ? {} : { capturedTargetGroups }),
-      });
-      const onActionEndBuffs = (parameters as Record<string, unknown>).onActionEndBuffs;
-      if (Array.isArray(onActionEndBuffs)) {
-        for (const [index, raw] of onActionEndBuffs.entries()) {
-          if (raw === null || typeof raw !== 'object')
-            throw new Error(`compiled action-end Buff ${index} is invalid`);
-          const exit = raw as Record<string, unknown>;
-          if (typeof exit.buffId !== 'string' || exit.buffId.length === 0)
-            throw new Error(`compiled action-end Buff ${index} has an invalid buffId`);
-          if (typeof exit.target !== 'string' || exit.target.length === 0)
-            throw new Error(`compiled action-end Buff ${index} has an invalid target`);
-          applications.push({
-            buffId: exit.buffId,
-            target: exit.target,
-            ...(typeof exit.source === 'string' ? { source: exit.source } : {}),
-          });
-        }
+      for (const entry of buffEntries(parameters as Record<string, unknown>)) {
+        const buffId = entry.buffId;
+        if (typeof buffId !== 'string' || buffId.length === 0)
+          throw new Error('compiled applyBuff step has an invalid buffId');
+        applications.push({
+          buffId,
+          target,
+          ...(typeof source === 'string' ? { source } : {}),
+          ...(capturedTargetGroups === undefined ? {} : { capturedTargetGroups }),
+        });
       }
     }
     Object.values(record).forEach(visit);
@@ -256,7 +275,6 @@ export function collectCompiledBuffIdentityReadIds(value: unknown): ReadonlySet<
       const parameters = record.parameters;
       if (parameters !== null && typeof parameters === 'object') {
         const parameterRecord = parameters as Record<string, unknown>;
-        addIds(parameterRecord.buffIds);
         const query = parameterRecord.query;
         if (query !== null && typeof query === 'object') {
           const queryRecord = query as Record<string, unknown>;
@@ -264,23 +282,25 @@ export function collectCompiledBuffIdentityReadIds(value: unknown): ReadonlySet<
         }
       }
     }
-    if (record.kind === 'applyBuff') {
+    if (record.kind === 'applyBuff' || record.kind === 'aura') {
       const parameters = record.parameters;
       if (parameters !== null && typeof parameters === 'object') {
         const parameterRecord = parameters as Record<string, unknown>;
-        const assignments = parameterRecord.stringBlackboardAssignments;
-        if (assignments !== null && typeof assignments === 'object') {
-          const childId = (assignments as Record<string, unknown>).child_buff_id;
-          if (typeof childId === 'string' && childId.length > 0) ids.add(childId);
-        }
-        const enhancements = parameterRecord.keywordEnhancements;
-        if (Array.isArray(enhancements)) {
-          for (const enhancement of enhancements) {
-            if (enhancement === null || typeof enhancement !== 'object') continue;
-            const triggerBuffIds = (enhancement as Record<string, unknown>).triggerBuffIds;
-            if (!Array.isArray(triggerBuffIds)) continue;
-            for (const id of triggerBuffIds)
-              if (typeof id === 'string' && id.length > 0) ids.add(id);
+        for (const entry of buffEntries(parameterRecord)) {
+          const assignments = entry.stringBlackboardAssignments;
+          if (assignments !== null && typeof assignments === 'object') {
+            const childId = (assignments as Record<string, unknown>).child_buff_id;
+            if (typeof childId === 'string' && childId.length > 0) ids.add(childId);
+          }
+          const enhancements = entry.keywordEnhancements;
+          if (Array.isArray(enhancements)) {
+            for (const enhancement of enhancements) {
+              if (enhancement === null || typeof enhancement !== 'object') continue;
+              const triggerBuffIds = (enhancement as Record<string, unknown>).triggerBuffIds;
+              if (!Array.isArray(triggerBuffIds)) continue;
+              for (const id of triggerBuffIds)
+                if (typeof id === 'string' && id.length > 0) ids.add(id);
+            }
           }
         }
       }
@@ -293,5 +313,15 @@ export function collectCompiledBuffIdentityReadIds(value: unknown): ReadonlySet<
 import { isRecoveredKeywordCarrierBuffId } from '../../source/keywordActions.ts';
 import {
   COMPILED_BUFF_CAPTURED_TARGET_GROUPS,
+  COMPILED_BUFF_TARGET_KINDS,
   type CompiledBuffCapturedTargetGroupsSource,
 } from '../buffs/compiledBuffMetadata.ts';
+function buffEntries(parameters: Record<string, unknown>): readonly Record<string, unknown>[] {
+  if (!Array.isArray(parameters.buffs))
+    throw new Error('compiled applyBuff is missing its Buff list');
+  return parameters.buffs.map(entry => {
+    if (entry === null || typeof entry !== 'object')
+      throw new Error('compiled applyBuff has an invalid Buff entry');
+    return entry as Record<string, unknown>;
+  });
+}

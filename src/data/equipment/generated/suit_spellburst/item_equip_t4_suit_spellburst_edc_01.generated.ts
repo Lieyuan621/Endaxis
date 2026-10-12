@@ -4,7 +4,7 @@ import type { GearDefinition } from '../../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'item_equip_t4_suit_spellburst_edc_01',
   assetSlug: 'item_equip_t4_suit_spellburst_edc_01',
-  iconPath: '/equipment/spellburst/item_equip_t4_suit_spellburst_edc_01.webp',
+  icon: 'endaxis:equipment/spellburst/item_equip_t4_suit_spellburst_edc_01',
   slotType: 'accessory',
   levelRequirement: 70,
   baseDefense: 21,

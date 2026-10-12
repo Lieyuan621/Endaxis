@@ -4,7 +4,7 @@ import type { GearDefinition } from '../../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'item_equip_t4_suit_fire_natr01_hand_02',
   assetSlug: 'item_equip_t4_suit_fire_natr01_hand_02',
-  iconPath: '/equipment/fire_natr01/item_equip_t4_suit_fire_natr01_hand_02.webp',
+  icon: 'endaxis:equipment/fire_natr01/item_equip_t4_suit_fire_natr01_hand_02',
   slotType: 'gloves',
   levelRequirement: 70,
   baseDefense: 42,

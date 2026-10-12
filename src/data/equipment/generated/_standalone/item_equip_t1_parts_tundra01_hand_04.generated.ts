@@ -4,7 +4,7 @@ import type { GearDefinition } from '../../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'item_equip_t1_parts_tundra01_hand_04',
   assetSlug: 'item_equip_t1_parts_tundra01_hand_04',
-  iconPath: '/equipment/tundra01/item_equip_t1_parts_tundra01_hand_04.webp',
+  icon: 'endaxis:equipment/tundra01/item_equip_t1_parts_tundra01_hand_04',
   slotType: 'gloves',
   levelRequirement: 28,
   baseDefense: 16.8,

@@ -3,6 +3,7 @@
  * 只接受同一伤害包已经冻结的快照；调用过程中修改属性会破坏阶段语义。
  */
 import type { DamageFeature, DamageTag, DamageType } from '../../game-data/operatorDefinition';
+import type { DamageScaleSide, DamageScaleZone } from './damageScale';
 import { DamageScaleAccumulator } from './damageScale';
 
 export const DAMAGE_SCALE_CLASSIFICATIONS = [
@@ -138,14 +139,14 @@ export function injectDamageScaleAttributes(
   accumulator: DamageScaleAccumulator,
   input: InjectDamageScaleAttributesInput,
   record?: (
-    side: import('./damageScale').DamageScaleSide,
-    zone: import('./damageScale').DamageScaleZone,
+    side: DamageScaleSide,
+    zone: DamageScaleZone,
     attribute: DamageScaleAttributeKey,
   ) => void,
 ): void {
   const inject = (
-    side: import('./damageScale').DamageScaleSide,
-    zone: import('./damageScale').DamageScaleZone,
+    side: DamageScaleSide,
+    zone: DamageScaleZone,
     attribute: DamageScaleAttributeKey,
   ) => {
     accumulator.modify(side, zone, input[side][attribute]);

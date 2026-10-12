@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { resolveImage } from '../../imageResources';
 import { EaTooltip } from '@/design-system';
 import { EaButton, EaDeleteIcon } from '@/design-system';
 import { computed } from 'vue';
@@ -10,7 +11,7 @@ import {
   isContingencyContractTagLocked,
   toggleContingencyContractTag,
   type ContingencyContractTagPresentation,
-} from '../../../data/mechanics/contingencyContractCatalog';
+} from '../../../data/contingencyContract/contingencyContractCatalog';
 
 const props = defineProps<{
   selectedTagIds: readonly number[];
@@ -284,7 +285,7 @@ function description(tag: ContingencyContractTagPresentation): string {
                 :pressed="selected.has(cell.tag.tagId)"
               >
                 <span class="cc-tag-check">✓</span
-                ><img :src="cell.tag.iconPath" alt="" aria-hidden="true" />
+                ><img :src="resolveImage(cell.tag.icon)" alt="" aria-hidden="true" />
                 <span v-if="cell.tag.romanNumSuffix" class="cc-tag-roman">{{
                   cell.tag.romanNumSuffix
                 }}</span>
@@ -314,7 +315,7 @@ function description(tag: ContingencyContractTagPresentation): string {
         </div>
         <div v-if="selectedTags.length" class="cc-selected-list">
           <div v-for="tag in selectedTags" :key="tag.tagId" class="cc-selected-row">
-            <img :src="tag.iconPath" alt="" />
+            <img :src="resolveImage(tag.icon)" alt="" />
             <div class="cc-selected-content">
               <div class="cc-selected-title">
                 <span

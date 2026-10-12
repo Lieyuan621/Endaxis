@@ -50,10 +50,11 @@ const definition = {
               action: {
                 kind: 'createTimedMarker',
                 parameters: {
-                  target: 'caster',
+                  targets: { kind: 'owner' },
                   markerId: 'wpn_sword_0017',
                   durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
                   autoFinishByAction: false,
+                  timeDomain: 'globalScaled',
                 },
               },
               next: null,
@@ -62,48 +63,55 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_sword_0017_exist',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_sword_0017_exist',
+                      copiedBlackboardAssignments: { duration: 'duration', max_stack: 'max_stack' },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: { duration: 'duration', max_stack: 'max_stack' },
                 },
               },
               next: 'createTimedMarker_1',
             },
-            conditional_3: {
+            checkCondition_3: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+              },
+              next: 'applyBuff_2',
+            },
+            checkCondition_4: {
+              action: {
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'applyBuff_2' },
               },
-              next: null,
+              next: 'checkCondition_3',
             },
-            conditional_4: {
+            checkCondition_5: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-                whenTrue: { $sequence: 'conditional_3' },
               },
-              next: null,
-            },
-            conditional_5: {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-                whenTrue: { $sequence: 'conditional_4' },
-              },
-              next: null,
+              next: 'checkCondition_4',
             },
             applyBuff_6: {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_sword_0017_valid',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_sword_0017_valid',
+                      copiedBlackboardAssignments: { dmg_up: 'dmg_up_final' },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   lifetimeOwner: 'currentCastSkill',
-                  copiedBlackboardAssignments: { dmg_up: 'dmg_up_final' },
                 },
               },
               next: null,
@@ -114,8 +122,8 @@ const definition = {
                 parameters: {
                   key: 'dmg_up_final',
                   operation: 'multiply',
-                  left: { kind: 'valueNode', nodeId: 'data_6' },
-                  right: { kind: 'valueNode', nodeId: 'data_7' },
+                  left: { kind: 'valueNode', nodeId: 'data_5' },
+                  right: { kind: 'valueNode', nodeId: 'data_6' },
                 },
               },
               next: 'applyBuff_6',
@@ -131,21 +139,19 @@ const definition = {
               },
               next: 'calculateActionValue_7',
             },
-            conditional_9: {
+            checkCondition_9: {
               action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-                whenTrue: { $sequence: 'readBuffStackCount_8' },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
               },
-              next: null,
+              next: 'readBuffStackCount_8',
             },
-            conditional_10: {
+            checkCondition_10: {
               action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
-                whenTrue: { $sequence: 'conditional_9' },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
               },
-              next: null,
+              next: 'checkCondition_9',
             },
           },
           dataNodes: {
@@ -154,22 +160,19 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                returnTrueIfNotExists: true,
                 target: 'caster',
                 markerId: 'wpn_sword_0017',
               },
             },
             data_3: {
               type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-            },
-            data_4: {
-              type: 'boolean',
               expression: {
                 kind: 'originSkillTypeIn',
                 skillTypes: ['battleSkill', 'comboSkill', 'ultimate'],
               },
             },
-            data_5: {
+            data_4: {
               type: 'boolean',
               expression: {
                 kind: 'eventBuffTagsMatch',
@@ -177,9 +180,9 @@ const definition = {
                 buffTags: ['Skill/Character/Common/NoGuard'],
               },
             },
-            data_6: { type: 'number', expression: { kind: 'blackboard', key: 'dmg_up' } },
-            data_7: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
-            data_8: {
+            data_5: { type: 'number', expression: { kind: 'blackboard', key: 'dmg_up' } },
+            data_6: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
+            data_7: {
               type: 'boolean',
               expression: {
                 kind: 'buffIdStackCompare',
@@ -189,7 +192,7 @@ const definition = {
                 value: { kind: 'constant', value: 1 },
               },
             },
-            data_9: {
+            data_8: {
               type: 'boolean',
               expression: { kind: 'eventSkillTypeIn', skillTypes: ['ultimate'] },
             },
@@ -203,25 +206,27 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'beforeOutputBuff',
           priority: 0,
-          sequence: { $sequence: 'conditional_5' },
+          sequence: { $sequence: 'checkCondition_5' },
         },
         {
           key: 'skill3:event:1:sequence:0',
           abilityEvent: 'beforeCastSkill',
           priority: 0,
-          sequence: { $sequence: 'conditional_10' },
+          sequence: { $sequence: 'checkCondition_10' },
         },
       ],
       blackboard: {
         cd: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+        count: 0,
         dmg_up: [0.12, 0.144, 0.168, 0.192, 0.216, 0.24, 0.264, 0.288, 0.336],
+        dmg_up_final: 0,
         duration: [30, 30, 30, 30, 30, 30, 30, 30, 30],
         max_stack: [3, 3, 3, 3, 3, 3, 3, 3, 3],
       },
     },
   ],
   assetSlug: 'wpn_sword_0017',
-  iconPath: '/weapons/sword/wpn_sword_0017.webp',
+  icon: 'endaxis:weapons/sword/wpn_sword_0017',
   buffDefinitions: {
     buff_wpn_sword_0017_exist: {
       stackingType: 'stack',
@@ -233,8 +238,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_weapon_atk_skill_ready',
-        iconPath: '/icons/icon_battle_weapon_atk_skill_ready.webp',
+        icon: 'endaxis:icons/icon_battle_weapon_atk_skill_ready',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -296,7 +300,7 @@ const definition = {
           value: { blackboardKey: 'dmg_up' },
         },
       ],
-      lifecycleSequences: { finish: { $sequence: 'finishBuffsById_1' } },
+      lifecycleSequences: { finish: [{ $sequence: 'finishBuffsById_1' }] },
       actionGraph: {
         main: {
           nodes: {
@@ -304,7 +308,8 @@ const definition = {
               action: {
                 kind: 'finishBuffsById',
                 parameters: {
-                  target: 'caster',
+                  targets: { kind: 'source' },
+                  finishSource: { kind: 'source' },
                   buffIds: ['buff_wpn_sword_0017_exist'],
                   reason: 'other',
                 },

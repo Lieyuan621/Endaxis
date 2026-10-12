@@ -3,35 +3,13 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 
 const definition = {
   slug: 'suit_spellburst',
-  iconPath: '/equipment/spellburst/item_equip_t4_suit_spellburst_edc_01.webp',
+  icon: 'endaxis:equipment/spellburst/item_equip_t4_suit_spellburst_edc_01',
   modifiers: [
     { kind: 'damageScale', target: 'heat', slot: 'baseAddition', value: 0.16 },
     { kind: 'damageScale', target: 'electric', slot: 'baseAddition', value: 0.16 },
     { kind: 'damageScale', target: 'cryo', slot: 'baseAddition', value: 0.16 },
     { kind: 'damageScale', target: 'nature', slot: 'baseAddition', value: 0.16 },
   ],
-  actionGraph: {
-    main: {
-      nodes: {
-        applyBuff_1: {
-          action: {
-            kind: 'applyBuff',
-            parameters: {
-              buffId: 'buff_equipsuit_spellburst_01',
-              target: 'caster',
-              blackboardAssignments: {
-                phy_spell_up: { kind: 'constant', value: 16 },
-                max_stack: { kind: 'constant', value: 3 },
-                duration: { kind: 'constant', value: 20 },
-              },
-            },
-          },
-          next: null,
-        },
-      },
-    },
-    macros: {},
-  },
   skillId: 'passive_equipsuit_spellburst01',
   buffDefinitions: {
     buff_equipsuit_spellburst_01: {
@@ -46,7 +24,11 @@ const definition = {
       blackboard: { duration: 30, max_stack: 2, phy_spell_up: 0.1 },
       attributeModifiers: [],
       abilityEventResponses: [
-        { event: 'beforeOutputSpellBurst', priority: 0, sequence: { $sequence: 'conditional_4' } },
+        {
+          event: 'beforeOutputSpellBurst',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_4' },
+        },
       ],
       actionGraph: {
         main: {
@@ -66,35 +48,37 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_equipsuit_spellburst_01_physpellup',
-                  target: 'buffOwner',
-                  source: 'buffOwner',
+                  buffs: [
+                    {
+                      buffId: 'buff_equipsuit_spellburst_01_physpellup',
+                      copiedBlackboardAssignments: {
+                        phy_spell_up: 'phy_spell_up',
+                        duration: 'duration',
+                        max_stack: 'max_stack',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'owner' },
+                  source: { kind: 'owner' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    phy_spell_up: 'phy_spell_up',
-                    duration: 'duration',
-                    max_stack: 'max_stack',
-                  },
                 },
               },
               next: 'setGlobalCooldown_1',
             },
-            conditional_3: {
+            checkCondition_3: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: 'applyBuff_2' },
               },
-              next: null,
+              next: 'applyBuff_2',
             },
-            conditional_4: {
+            checkCondition_4: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'conditional_3' },
               },
-              next: null,
+              next: 'checkCondition_3',
             },
           },
           dataNodes: {
@@ -129,8 +113,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_physical_infliction_up',
-        iconPath: '/icons/icon_battle_physical_infliction_up.webp',
+        icon: 'endaxis:icons/icon_battle_physical_infliction_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -163,6 +146,32 @@ const definition = {
     },
   },
   enableSequence: { $sequence: 'applyBuff_1' },
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [
+                {
+                  buffId: 'buff_equipsuit_spellburst_01',
+                  blackboardAssignments: {
+                    phy_spell_up: { kind: 'constant', value: 16 },
+                    max_stack: { kind: 'constant', value: 3 },
+                    duration: { kind: 'constant', value: 20 },
+                  },
+                },
+              ],
+              targets: { kind: 'fixed', target: 'caster' },
+            },
+          },
+          next: null,
+        },
+      },
+    },
+    macros: {},
+  },
 } as const satisfies GearSetDefinition;
 
 export default definition;

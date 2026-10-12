@@ -19,6 +19,7 @@ export function parseSkillSettingResourceSource(
     return value;
   };
   return {
+    comboSkillPendingInterval: read('comboSkillPendingInterval'),
     atbRecoverInterval: read('atbRecoverInterval'),
     atbGainEfficiency: read('atbGainEfficiency'),
     atbConsumedDefaultUspGainSelf: read('atbConsumedDefaultUspGainSelf'),

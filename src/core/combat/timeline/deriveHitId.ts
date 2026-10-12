@@ -14,3 +14,8 @@ export function deriveHitId(castId: string, stepKey: string): string {
 export function deriveAnonymousDamageStepKey(callSite: string, nodeId: string): string {
   return JSON.stringify([callSite, nodeId]);
 }
+
+/** 子技能图的节点编号只在本资源内有效；同名调用位置不能混淆不同子技能。 */
+export function deriveChildSkillCallSite(path: string, skillId: string): string {
+  return JSON.stringify([path, skillId]);
+}

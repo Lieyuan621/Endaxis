@@ -1,4 +1,24 @@
 {
+  "imagePicker": {
+    "choose": "选择图标",
+    "clear": "使用默认",
+    "default": "默认图标",
+    "missing": "图片资源不存在",
+    "search": "搜索资源名称或 ID",
+    "category": "图片分类",
+    "all": "全部分类",
+    "empty": "没有匹配的图片",
+    "more": "显示更多",
+    "categories": {
+      "operators": "干员",
+      "icons": "公共图标",
+      "weapons": "武器",
+      "equipment": "装备",
+      "enemies": "敌人",
+      "consumables": "消耗品",
+      "contingency_contract": "危机合约"
+    }
+  },
   "executionTrace": {
     "comboCandidatePassed": "返回 true → 已登记连携候选",
     "comboCandidateRejected": "返回 false → 未登记连携候选",
@@ -166,7 +186,6 @@
       "clear": "清除筛选",
       "path": "资源路径",
       "back": "后退",
-      "forward": "前进",
       "locate": "定位当前编辑资源",
       "sources": "资源来源",
       "builtin": "内置资源",
@@ -363,7 +382,8 @@
     "nodes": {
       "prepare": "设置变量",
       "damage": "造成伤害",
-      "applyBuff": "添加 Buff"
+      "applyBuff": "添加 Buff",
+      "aura": "光环"
     },
     "descriptions": {
       "operator": "从技能分组进入独立技能图，也可以查看这个干员所属的 Buff 和能力实体。",
@@ -530,7 +550,7 @@
       "baseDefense": "基础防御力",
       "levelRequirement": "穿戴等级",
       "slotType": "装备部位",
-      "iconPath": "图标路径",
+      "icon": "图标",
       "lifetime": "持续时间",
       "kind": "类型",
       "durationSeconds": "持续秒数",
@@ -637,6 +657,8 @@
     "noMatchingNodes": "没有匹配的节点",
     "addNode": "添加节点…",
     "options": {
+      "first": "首个目标",
+      "all": "全部目标",
       "allOperators": "全队干员",
       "context": "动作环境目标组",
       "hit": "命中",
@@ -796,7 +818,14 @@
       "afterTakeSpellAbnormal": "异常生效后",
       "walk": "行走",
       "run": "跑步",
-      "sprint": "冲刺"
+      "sprint": "冲刺",
+      "enterFreeState": "进入自由状态",
+      "aiManual": "AI 主动打断",
+      "mud": "陷入泥地",
+      "detachSkill": "解除技能",
+      "interruptAction": "动作打断",
+      "dash": "闪避",
+      "castNextSkill": "施放下一技能"
     },
     "optional": "可选",
     "unset": "未设置",
@@ -816,12 +845,6 @@
     "scope": "变量作用域",
     "skillScope": "技能 · {name}",
     "macroScope": "宏调用 · {name}",
-    "localScope": "局部作用域 · {name}",
-    "currentScopeHelp": "读取时先查找本次调用的局部变量，再查找所属对象的变量。宏使用调用处提供的变量。",
-    "copyScopeHelp": "进入时复制外层变量。之后在这里修改变量，不会改写外层的同名局部变量。",
-    "independentScopeHelp": "使用这里配置的初值，不复制外层局部变量。",
-    "sharedEntityHelp": "所属对象的变量仍与外层共享，修改会影响其他使用者。",
-    "ownEntityHelp": "使用独立的所属对象变量。",
     "paramLayer": "宏参数 · 只读",
     "entityLayer": "所属对象变量",
     "localLayer": "局部变量",
@@ -854,10 +877,6 @@
       "targetContextKey": {
         "name": "读取目标组",
         "help": "读取此前保存的目标组名称。"
-      },
-      "onActionEndFinishBuffs": {
-        "name": "动作结束时结束 Buff",
-        "help": "动作结束时，按 ID 结束指定对象身上全部匹配的 Buff。"
       },
       "nativeExecuteInterval": {
         "name": "按间隔执行",
@@ -905,7 +924,7 @@
       },
       "selection": {
         "name": "选择方式",
-        "help": "选择全队、主控或生命比例最低的成员。"
+        "help": "选择哪些对象参与操作。"
       },
       "count": {
         "name": "数量"
@@ -923,10 +942,6 @@
       },
       "sameSourceSkillCast": {
         "name": "仅同一次施放"
-      },
-      "saveCountToBlackboardKey": {
-        "name": "数量保存到",
-        "help": "将查询到的数量写入这个变量。"
       },
       "circularOrder": {
         "name": "环形排序",
@@ -1047,28 +1062,8 @@
         "name": "完成条件",
         "help": "选择何时认为动作完成，以便继续后续动作。"
       },
-      "noGuardBuffId": {
-        "name": "破防 Buff",
-        "help": "首次破防时施加的 Buff。"
-      },
-      "noGuardDefinition": {
-        "name": "破防定义",
-        "help": "破防效果的独立资源定义。"
-      },
       "type": {
         "name": "类型"
-      },
-      "fractureBuffId": {
-        "name": "碎甲 Buff"
-      },
-      "fractureDefinition": {
-        "name": "碎甲定义"
-      },
-      "crushedBuffId": {
-        "name": "猛击 Buff"
-      },
-      "crushedDefinition": {
-        "name": "猛击定义"
       },
       "damageMultiplier": {
         "name": "伤害倍率",
@@ -1077,12 +1072,6 @@
       "ignoreHitEffect": {
         "name": "跳过命中特效",
         "help": "不播放命中特效，不代表取消伤害。"
-      },
-      "airborneBuffId": {
-        "name": "击飞 Buff"
-      },
-      "airborneDefinition": {
-        "name": "击飞定义"
       },
       "height": {
         "name": "击飞高度",
@@ -1155,10 +1144,6 @@
         "name": "仅主控造成失衡",
         "help": "施放者不是主控时，不结算这次命中的失衡；伤害照常结算。"
       },
-      "attackScalePerStatusStack": {
-        "name": "每层附加攻击倍率",
-        "help": "指定状态每一层提供的额外攻击倍率。"
-      },
       "instantAttributeModifiers": {
         "name": "本次属性修正",
         "help": "只对这一次伤害生效的属性加成。"
@@ -1206,10 +1191,6 @@
       "keywordEnhancements": {
         "name": "关键词强化",
         "help": "为这次创建的效果设置关键词强化值。"
-      },
-      "onActionEndBuffs": {
-        "name": "结束后的余效",
-        "help": "本动作结束时，对原目标施加的后续 Buff。"
       },
       "inheritToNextSkillIds": {
         "name": "允许继承的技能",
@@ -1469,6 +1450,9 @@
       "skillIds": {
         "name": "技能列表"
       },
+      "triggeredAction": {
+        "name": "精准输入成功"
+      },
       "whenTrue": {
         "name": "是"
       },
@@ -1482,6 +1466,10 @@
       "options": {
         "name": "候选分支",
         "help": "设置候选值及其对应执行出口。"
+      },
+      "catchUpMissedTicks": {
+        "name": "补齐遗漏轮次",
+        "help": "时间或逻辑帧跨过多个触发点时，逐轮执行。"
       },
       "nativeChanneling": {
         "name": "持续施放设置",
@@ -1660,9 +1648,13 @@
         "name": "技能类型列表",
         "help": "选择需要匹配的技能分类。"
       },
-      "parentContextKey": {
-        "name": "被检查的目标组",
-        "help": "检查这个目标组是否包含事件目标。"
+      "returnTrueIfNotExists": {
+        "name": "标记不存在时通过",
+        "help": "目标存在但没有有效标记时通过；没有目标时仍不通过。"
+      },
+      "parent": {
+        "name": "父目标组",
+        "help": "在此目标组中查找子目标。"
       },
       "child": {
         "name": "查找对象",
@@ -1727,6 +1719,72 @@
       },
       "ignoreAddingCooldown": {
         "name": "忽略附着冷却"
+      },
+      "onEnd": {
+        "name": "结束回调",
+        "help": ""
+      },
+      "blendOutSeconds": {
+        "name": "混出时间（秒）",
+        "help": "结束回调在持续时间减去混出时间后触发。"
+      },
+      "executeOnNormalEndOnly": {
+        "name": "仅正常结束时执行",
+        "help": "启用后，提前中断动画不执行结束回调。"
+      },
+      "owner": {
+        "name": "持有者"
+      },
+      "bornAt": {
+        "name": "出生位置"
+      },
+      "consumedElement": {
+        "name": "消耗的附着元素"
+      },
+      "consumedLayers": {
+        "name": "消耗层数"
+      },
+      "buffs": {
+        "name": "施加的状态"
+      },
+      "onEnter": {
+        "name": "进入时执行"
+      },
+      "onExit": {
+        "name": "离开时执行"
+      },
+      "onlyMainOperator": {
+        "name": "仅主控获取技力"
+      },
+      "onlyHitTargets": {
+        "name": "仅命中目标"
+      },
+      "containsHittableTarget": {
+        "name": "包含可受击目标"
+      },
+      "excludeDeadEntity": {
+        "name": "排除已死亡对象"
+      },
+      "compareZeroWhenTargetMissing": {
+        "name": "无目标时按零层比较"
+      },
+      "distance": {
+        "name": "距离"
+      },
+      "lessThan": {
+        "name": "小于指定距离"
+      },
+      "includeTargetRadius": {
+        "name": "计入目标半径"
+      },
+      "containsHittableObject": {
+        "name": "包含可受击对象"
+      },
+      "reasons": {
+        "name": "打断原因"
+      },
+      "level": {
+        "name": "驱散等级"
       }
     },
     "help": "查看说明",
@@ -1737,14 +1795,6 @@
       "number": "数值"
     },
     "nodes": {
-      "outputKnockDown": {
-        "name": "通知倒地成功",
-        "help": "触发倒地成功后的效果。本节点不施加倒地。"
-      },
-      "outputAirborne": {
-        "name": "通知击飞成功",
-        "help": "触发击飞成功后的效果。本节点不施加击飞。"
-      },
       "triggerSpellBurst": {
         "name": "触发法术爆发",
         "help": "触发指定元素的法术爆发。"
@@ -1773,29 +1823,9 @@
         "name": "遍历目标",
         "help": "对目标组中的每个对象依次执行循环体。循环体中的当前目标随之改变。"
       },
-      "readAbilityEntityRemainingDuration": {
-        "name": "读取召唤物剩余时间",
-        "help": "将当前召唤物的剩余时间存入变量，单位为秒。"
-      },
       "setAbilityEntityRemainingDuration": {
         "name": "设置召唤物剩余时间",
-        "help": "改变当前召唤物还能存在多久，单位为秒。"
-      },
-      "finishCurrentAbilityEntity": {
-        "name": "结束当前召唤物",
-        "help": "结束当前目标指向的投射物或召唤物。"
-      },
-      "finishActionOwnerAbilityEntity": {
-        "name": "结束所属召唤物",
-        "help": "结束正在执行这段动作的召唤物，不受遍历目标的选择影响。"
-      },
-      "finishCurrentAbilityEntityWhenSourceDies": {
-        "name": "来源消失时结束召唤物",
-        "help": "检查当前召唤物的来源；来源已消失时结束召唤物。"
-      },
-      "startCurrentAbilityEntityChildSkill": {
-        "name": "启动召唤物技能",
-        "help": "让当前召唤物执行指定技能。"
+        "help": "设置首个目标召唤物的剩余秒数，不超过出生时的持续时间。"
       },
       "startCurrentAbilityEntityChildSkillById": {
         "name": "启动召唤物指定技能",
@@ -1817,29 +1847,17 @@
         "name": "施放技能",
         "help": "请求施放指定技能，可选择是否消耗资源及是否中断当前技能。"
       },
-      "applyKnockDown": {
-        "name": "施加倒地",
-        "help": "对目标施加倒地，设置持续时间和生效条件。"
-      },
       "applyPhysicalInfliction": {
         "name": "施加物理异常",
-        "help": "施加击飞、猛击或碎甲，并按目标的破防状态触发对应效果。"
+        "help": "施加击飞、倒地、猛击或碎甲，并按目标的破防状态触发对应效果。"
       },
-      "applyElementalReaction": {
-        "name": "施加元素反应",
-        "help": "为目标添加指定的持续元素反应。"
-      },
-      "consumeElementalReaction": {
-        "name": "移除元素反应",
-        "help": "结束目标身上指定的元素反应。"
+      "forceSpellStatus": {
+        "name": "强制施加法术反应",
+        "help": "按指定层数消费附着并施加法术反应。层数不足时跳过；零消费时直接施加。"
       },
       "dealDamage": {
         "name": "造成伤害",
         "help": "造成一次伤害。通过输入数值设置伤害倍率，也可同时造成失衡。"
-      },
-      "dealFixedDamage": {
-        "name": "造成固定基础伤害",
-        "help": "以指定数值作为基础伤害，再结算适用的伤害修正。"
       },
       "dealStagger": {
         "name": "造成失衡",
@@ -1877,13 +1895,9 @@
         "name": "读取事件 Buff 变量",
         "help": "读取触发当前事件的 Buff 中的变量。用于 Buff 事件响应。"
       },
-      "readCurrentBuffRemainingDuration": {
-        "name": "读取当前 Buff 剩余时间",
-        "help": "将当前 Buff 剩余秒数存入变量；无限持续的 Buff 写入 0。"
-      },
       "readBuffRemainingDuration": {
         "name": "读取 Buff 剩余时间",
-        "help": "读取目标上首个符合条件的 Buff 的剩余秒数；无限持续时为 0。"
+        "help": "保存最后一个匹配的有限时长 Buff 的剩余秒数；没有匹配时写入 0。"
       },
       "setCurrentBuffRemainingDuration": {
         "name": "修改当前 Buff 剩余时间",
@@ -1900,6 +1914,10 @@
       "readBuffStackCount": {
         "name": "读取 Buff 层数或数量",
         "help": "统计符合条件的 Buff 层数或实例数量，并保存到变量。"
+      },
+      "dispelBuffs": {
+        "name": "驱散 Buff",
+        "help": "移除目标身上允许驱散且等级不高于本次驱散等级的 Buff，可按标签筛选。"
       },
       "finishBuffsByTag": {
         "name": "按标签结束 Buff",
@@ -1945,10 +1963,6 @@
         "name": "添加限时标记",
         "help": "在目标上添加有持续时间的标记，供条件节点检查。"
       },
-      "createAbilityEntityTimedMarker": {
-        "name": "给召唤物添加限时标记",
-        "help": "在当前召唤物上添加有持续时间的标记。"
-      },
       "startTimeDilation": {
         "name": "改变时间流速",
         "help": "在指定时间内改变全局或选定对象的时间流速。1 为正常，0 为暂停。"
@@ -1964,6 +1978,10 @@
       "setIgnoreGlobalTimeScale": {
         "name": "忽略全局时间流速",
         "help": "让选定召唤物不受全局时间膨胀影响，或恢复跟随全局时间。"
+      },
+      "storeCharacterTypeId": {
+        "name": "读取角色类型",
+        "help": "将目标角色的类型标识保存到变量；目标不是角色或没有角色表记录时不通过。"
       },
       "storeCurrentTimelineFrame": {
         "name": "读取当前技能帧",
@@ -2005,10 +2023,6 @@
         "name": "改变战斗资源",
         "help": "增加或消耗技力、终结技能量等资源。正数增加，负数消耗。"
       },
-      "changeResourceByActionValue": {
-        "name": "按变量改变战斗资源",
-        "help": "使用数值输入增加或消耗战斗资源。"
-      },
       "recoverDashEnergy": {
         "name": "恢复闪避体力",
         "help": "返还全队共享的闪避体力。体力不限制本工具中的闪避执行。"
@@ -2025,21 +2039,9 @@
         "name": "回复处决技力",
         "help": "按处决回复系数增加技力。"
       },
-      "applyStatus": {
-        "name": "添加状态",
-        "help": "添加指定状态，或增加其层数。"
-      },
-      "consumeStatus": {
-        "name": "消耗状态层数",
-        "help": "从指定状态中扣除层数。"
-      },
       "jumpTimeline": {
         "name": "跳转技能时间线",
         "help": "条件满足时，将当前技能推进到指定帧。未设置条件时立即跳转。"
-      },
-      "finishTimeline": {
-        "name": "结束当前技能",
-        "help": "立即结束当前正在执行的技能。"
       },
       "reachSkillOperableBoundary": {
         "name": "允许接续技能",
@@ -2053,6 +2055,22 @@
         "name": "允许中断技能",
         "help": "将当前技能标记为可中断。"
       },
+      "checkCondition": {
+        "name": "检查条件",
+        "help": "检查通过才继续执行当前序列的后续动作。"
+      },
+      "ifElse": {
+        "name": "条件分支",
+        "help": "先执行条件序列，再执行成立或不成立分支。条件中的动作可以读写变量。"
+      },
+      "anyCondition": {
+        "name": "任一条件成立",
+        "help": "依次执行各条件序列；一项通过即停止，全部失败则返回失败。"
+      },
+      "invertNextResult": {
+        "name": "反转下一动作结果",
+        "help": "反转下一个动作的成功或失败结果，不跳过该动作。"
+      },
       "conditional": {
         "name": "分支",
         "help": "条件成立走“是”，否则走“否”。用连线指定各分支的动作。"
@@ -2065,21 +2083,9 @@
         "name": "周期循环",
         "help": "在本动作的时间区间内，按设置的间隔重复执行循环体。"
       },
-      "repeatByActionValue": {
-        "name": "计次循环",
-        "help": "按输入次数执行循环体。"
-      },
       "launchProjectile": {
         "name": "发射投射物",
         "help": "发射一个投射物，并设置命中、阻挡、到达或结束时执行的技能。"
-      },
-      "findUnfinishedProjectileTargets": {
-        "name": "查询未结束投射物",
-        "help": "查询当前尚未结束的投射物，把结果保存为目标组。"
-      },
-      "setContextFlag": {
-        "name": "设置标记",
-        "help": "设置当前动作环境的标记，供条件节点检查。"
       },
       "openComboWindow": {
         "name": "开启连携窗口",
@@ -2133,10 +2139,6 @@
         "name": "执行一次",
         "help": "同一次技能施放中，相同标识的执行一次节点只允许首次通过。"
       },
-      "withActionBlackboardScope": {
-        "name": "局部作用域",
-        "help": "在内部动作中使用一组局部变量。可复制外层变量，或选择与外层共享。"
-      },
       "conditionNode": {
         "name": "引用条件",
         "help": "使用这张图中另一个条件节点的结果。"
@@ -2156,6 +2158,10 @@
       "parameter": {
         "name": "读取宏参数",
         "help": "使用调用这个宏时传入的参数，只能读取，不能赋值。"
+      },
+      "skillHasHit": {
+        "name": "技能已命中？",
+        "help": "检查当前技能在本次施放中是否已进入战斗伤害处理。"
       },
       "combatActive": {
         "name": "正在战斗？",
@@ -2185,14 +2191,6 @@
         "name": "比较敌人超级护甲",
         "help": "将敌人的超级护甲值与输入值比较。"
       },
-      "cameraToTargetAngleCompare": {
-        "name": "比较朝向夹角",
-        "help": "比较镜头方向与目标方向的夹角。当前模拟不还原空间朝向。"
-      },
-      "skillBranchEnabled": {
-        "name": "技能分支已启用？",
-        "help": "检查构筑中是否启用了指定技能分支。"
-      },
       "targetStaggered": {
         "name": "目标已失衡？",
         "help": "检查目标当前是否处于失衡状态。"
@@ -2205,9 +2203,9 @@
         "name": "比较失衡值",
         "help": "比较目标当前失衡值。"
       },
-      "contextFlagEquals": {
-        "name": "标记等于？",
-        "help": "检查指定标记是否等于设定值。"
+      "stringEquals": {
+        "name": "比较字符串",
+        "help": "区分大小写地比较两个文本是否相同。"
       },
       "actionValueCompare": {
         "name": "比较数值",
@@ -2229,9 +2227,9 @@
         "name": "比较投射物免疫穿透等级",
         "help": "比较当前事件投射物忽略免疫的等级。"
       },
-      "contextTargetCountCompare": {
-        "name": "比较目标数量",
-        "help": "统计目标组中的对象并比较数量，可保存统计结果。"
+      "entityCountCompare": {
+        "name": "检查实体数量",
+        "help": "统计查询结果中的实体。可排除死亡实体，并在比较成功时把数量写入变量。"
       },
       "contextTargetObjectTypeMatch": {
         "name": "目标组对象类型匹配？",
@@ -2246,12 +2244,12 @@
         "help": "比较输入目标与指定对象是否相同。"
       },
       "contextTargetIdentityMatch": {
-        "name": "首个目标是指定对象？",
-        "help": "比较目标组中的首个对象与指定对象。"
+        "name": "目标组身份匹配？",
+        "help": "选择比较首个目标或全部目标。首目标缺失时不匹配；全组比较要求两组互相包含。"
       },
       "contextTargetEntityTagMatch": {
-        "name": "首个目标标签匹配？",
-        "help": "检查目标组首个对象的标签。"
+        "name": "全部目标标签匹配？",
+        "help": "检查目标组中所有实体的标签。没有有效实体时不通过。"
       },
       "contextTargetBuffStackCompare": {
         "name": "比较首个目标的 Buff 层数",
@@ -2264,10 +2262,6 @@
       "abilityEntityRemainingDurationCompare": {
         "name": "比较召唤物剩余时间",
         "help": "比较当前召唤物剩余秒数，可保存读取结果。"
-      },
-      "statusActive": {
-        "name": "状态生效？",
-        "help": "检查指定状态是否存在，并达到要求的层数。"
       },
       "currentBuffStackCompare": {
         "name": "比较当前 Buff 层数",
@@ -2296,10 +2290,6 @@
       "casterComboPending": {
         "name": "存在连携候选？",
         "help": "检查施放者是否已有连携候选；不代表冷却等其他施放条件满足。"
-      },
-      "eventComboRingQteSucceeded": {
-        "name": "命中连携时机？",
-        "help": "检查本次连携输入是否落在有效输入时间内。"
       },
       "timedMarkerPresent": {
         "name": "存在限时标记？",
@@ -2345,13 +2335,17 @@
         "name": "当前技能类型匹配？",
         "help": "检查目标正在施放的技能类型。"
       },
+      "skillInterruptReasonIn": {
+        "name": "中断原因匹配？",
+        "help": "检查本次技能中断是否属于指定原因。"
+      },
       "originSkillTypeIn": {
         "name": "来源技能类型匹配？",
         "help": "检查引起本次事件的来源技能类型。"
       },
-      "contextTargetContains": {
-        "name": "目标组包含事件目标？",
-        "help": "检查事件目标是否在指定目标组中。"
+      "targetContains": {
+        "name": "包含全部目标？",
+        "help": "检查父目标组是否包含所有子目标。子目标组为空时通过。"
       },
       "eventSkillIdIn": {
         "name": "本次技能在列表中？",
@@ -2389,14 +2383,6 @@
         "name": "比较本次消耗层数",
         "help": "比较本次实际消耗的 Buff 层数，可保存结果。"
       },
-      "eventSourceTargetMatch": {
-        "name": "事件来源与目标相同？",
-        "help": "比较当前事件的来源和目标。"
-      },
-      "eventActionOwnerTargetMatch": {
-        "name": "所属对象是事件目标？",
-        "help": "比较执行此效果的对象与事件目标。"
-      },
       "eventOverheal": {
         "name": "本次治疗溢出？",
         "help": "检查治疗是否超过缺失生命，可保存溢出量、治疗量和实际恢复量。"
@@ -2409,10 +2395,6 @@
         "name": "事件来源是召唤者？",
         "help": "当前 Buff 来自召唤物时，检查事件来源是否为该召唤物的来源。"
       },
-      "eventSourceControlled": {
-        "name": "事件来源是主控？",
-        "help": "检查引起本次事件的对象是否为主控干员。"
-      },
       "buffSourceMatchesOwner": {
         "name": "Buff 来源是持有者？",
         "help": "检查当前 Buff 的来源和持有者是否为同一个对象。"
@@ -2420,14 +2402,6 @@
       "ownerSpawnedAbilityEntityPresent": {
         "name": "存在指定召唤物？",
         "help": "检查施放者是否仍有符合条件的召唤物。"
-      },
-      "elementalInflictionPresent": {
-        "name": "存在元素附着？",
-        "help": "检查敌人的指定元素附着是否达到要求层数。"
-      },
-      "elementalReactionActive": {
-        "name": "元素反应生效？",
-        "help": "检查指定元素反应是否生效并达到要求等级。"
       },
       "not": {
         "name": "非",
@@ -2453,10 +2427,6 @@
         "name": "通知干员附着事件",
         "help": "通知干员受到附着或发生异常，使监听这些事件的效果可以响应。"
       },
-      "limitMovementGait": {
-        "name": "限制移动步态",
-        "help": "限定动作生效期间允许的最低和最高移动步态。"
-      },
       "applyCharacterInfliction": {
         "name": "对干员施加附着",
         "help": "对选中的干员施加元素附着，也可直接触发对应异常。"
@@ -2468,6 +2438,34 @@
       "skillDamageTypeIn": {
         "name": "检查技能属性",
         "help": "检查触发事件的技能属性；无事件技能时检查当前执行技能。"
+      },
+      "aura": {
+        "name": "光环",
+        "help": "按目标维护区域 Buff，并执行进入和退出回调。"
+      },
+      "targetDistance": {
+        "name": "目标距离检查",
+        "help": "比较两个查询首项目标的距离，任一目标缺失时不通过。"
+      },
+      "copyContextTargets": {
+        "name": "复制目标组",
+        "help": "将来源目标按原顺序复制到指定变量，保留重复目标；空来源会清空输出。"
+      },
+      "findTargets": {
+        "name": "查找目标",
+        "help": "按查询规则查找并覆盖目标组。宿主不存在时保留旧组，查询结果为空时清空目标组。"
+      },
+      "finishOwner": {
+        "name": "结束目标实体",
+        "help": "结束所选召唤物或投射物；结束飞行不会触发投射物的超时技能。"
+      },
+      "playAnimation": {
+        "name": "动画",
+        "help": "动画结束时执行结束回调；可选择是否在提前中断时执行。"
+      },
+      "interruptCurrentSkill": {
+        "name": "打断当前技能",
+        "help": "结束所选目标正在执行的技能。"
       }
     },
     "open": "编辑技能图",
@@ -2571,6 +2569,7 @@
       "modifier": "直接修正",
       "operator": "干员",
       "enemy": "敌人",
+      "godEntity": "全局机制",
       "spatialPoint": "空间点"
     }
   },
@@ -2684,7 +2683,6 @@
       "SkillStarted": "技能开始",
       "SkillEnded": "技能结束",
       "SkillTimelineJumped": "技能时间线跳转",
-      "SkillTimelineFinished": "技能时间线完成",
       "SkillCostApplied": "技能费用结算",
       "SkillInputProcessed": "技能输入处理",
       "SkillCooldownReserved": "技能冷却占用",
@@ -2701,7 +2699,6 @@
       "HealingApplied": "治疗",
       "SpChanged": "技力变化",
       "UltimateEnergyChanged": "终结技能量变化",
-      "StatusChanged": "状态变化",
       "BuffModifierChanged": "Buff 效果数值变化",
       "BuffApplied": "Buff 施加",
       "BuffFinished": "Buff 结束",
@@ -2709,8 +2706,6 @@
       "BuffPresentationStarted": "Buff 显示开始",
       "BuffPresentationFinished": "Buff 显示结束",
       "ElementalInflictionApplied": "元素附着",
-      "ElementalReactionApplied": "元素反应施加",
-      "ElementalReactionConsumed": "元素反应消耗",
       "SpellBurstApplied": "法术爆发",
       "ComboWindowOpened": "连携窗口开启",
       "ComboWindowConsumed": "连携窗口消耗",
@@ -2972,6 +2967,16 @@
       "interruptUnknown": "模拟暂时无法判断{skill}能否中断正在执行的技能。",
       "duringUltimate": "终结技演出尚未结束，此时尚不能再次释放终结技。",
       "cannotUseSkills": "干员受当前状态限制，尚不能释放技能。",
+      "skills": "技能",
+      "blockedByState": "干员{state}，尚不能释放{skill}。",
+      "blockingStates": {
+        "frozen": "被冻结",
+        "originiumFrozen": "被源石结晶禁锢",
+        "stunned": "被眩晕",
+        "knockedDown": "处于倒地状态",
+        "airborne": "处于浮空状态",
+        "gettingUp": "正在起身"
+      },
       "cannotUseSkillType": "干员受当前状态限制，尚不能释放{skill}。",
       "afterDodge": "闪避尚未进行到可以接续{skill}的时刻。",
       "costRejected": "{skill}执行到扣费时，技力或终结技能量不足，未能完成扣费。",
@@ -3351,8 +3356,6 @@
       "markerId": "标记 ID",
       "targetTrack": "切入干员",
       "direction": "闪避方向",
-      "forward": "向前",
-      "backward": "向后",
       "dodgeResult": "声明结果",
       "successDelayFrames": "极限闪避成功延迟（帧）",
       "simulationResult": "实际模拟结果",
@@ -3559,8 +3562,7 @@
         "buffApplied": "施加 Buff",
         "buffOutput": "输出 Buff",
         "buffConsumed": "消耗 Buff",
-        "airborneOutput": "输出浮空",
-        "knockDownOutput": "输出击倒",
+        "knockDownOutput": "输出倒地",
         "spGained": "获得技力",
         "damageTagHit": "伤害标签命中",
         "elementalInflictionApplied": "施加元素附着",
@@ -3587,7 +3589,7 @@
       "physicalInflictionType": "物理附着类型",
       "physicalInflictionTypes": {
         "airborne": "浮空",
-        "knockDown": "击倒",
+        "knockDown": "倒地",
         "fracture": "破碎",
         "crush": "碾压"
       },
@@ -3883,7 +3885,7 @@
         "other": "其他"
       },
       "conditionKind": "条件类型",
-      "scopeKey": "单次作用域键",
+      "scopeKey": "变量作用域键",
       "whenTrue": "条件成立",
       "switchChoice": "选择值",
       "switchAlwaysNext": "无论是否匹配或分支是否成功，都继续外层序列",
@@ -3898,23 +3900,20 @@
         "singleEnemyPresent": "存在单个敌人",
         "casterControlled": "施法者为主控",
         "enemySuperArmorCompare": "敌人霸体值比较",
-        "cameraToTargetAngleCompare": "镜头到目标方向夹角比较",
-        "skillBranchEnabled": "技能分支已启用",
         "targetStaggered": "目标已失衡",
         "healthCompare": "生命值比较",
         "poiseCompare": "失衡值比较",
-        "contextFlagEquals": "上下文标记相等",
+        "stringEquals": "字符串相等",
         "actionValueCompare": "技能变量比较",
         "probability": "概率判定",
         "abilityEntityRemainingDurationCompare": "能力实体剩余时长比较",
-        "statusActive": "状态生效中",
         "buffStackCompare": "按标签比较 Buff 层数",
         "currentBuffStackCompare": "当前 Buff 实例增强层数比较",
         "contextTargetObjectTypeMatch": "目标组对象类型匹配",
         "actionInputTargetObjectTypeMatch": "事件输入目标对象类型匹配",
         "actionInputTargetIdentityMatch": "事件输入目标身份匹配",
-        "contextTargetIdentityMatch": "目标组首目标身份匹配",
-        "contextTargetEntityTagMatch": "目标组首目标实体标签匹配",
+        "contextTargetIdentityMatch": "目标组身份匹配",
+        "contextTargetEntityTagMatch": "目标组全体实体标签匹配",
         "contextTargetBuffStackCompare": "目标组首目标 Buff 层数比较",
         "eventTargetBuffCountCompare": "比较事件目标的 Buff 实例数",
         "entityTagMatch": "实体标签匹配",
@@ -3922,15 +3921,13 @@
         "timedMarkerPresent": "存在定时标记",
         "globalCooldownPresent": "全局冷却尚未结束",
         "casterComboPending": "施放者存在待释放连携候选（不检查能否释放）",
-        "eventComboRingQteSucceeded": "本次连携输入命中精准窗口",
         "eventDamageTagsMatch": "事件伤害标签匹配",
         "eventDamageFeaturesMatch": "事件伤害特征匹配",
-        "elementalInflictionPresent": "存在元素附着",
-        "elementalReactionActive": "元素反应生效中",
         "not": "条件取反",
         "all": "全部成立",
         "any": "任一成立",
-        "deckAttributeCompare": "干员属性比较"
+        "deckAttributeCompare": "干员属性比较",
+        "targetDistance": "目标距离检查"
       },
       "conditionNoParameters": "该条件不需要额外参数。",
       "conditionContextKey": "目标组键",
@@ -4174,7 +4171,7 @@
         "buffOutputKey": "把读取结果写入当前技能释放实例的技能变量，供后续步骤使用。",
         "finishReason": "传给 Buff 生命周期的结束语义，可能影响其结束监听器和清理行为。",
         "conditionKind": "决定运行时检查什么状态。切换类型会建立该类型的合法默认参数。",
-        "scopeKey": "同一次技能释放中共享的稳定作用域名；同名 once 节点只允许主体执行一次。",
+        "scopeKey": "用于标识共享的变量作用域。",
         "branchKey": "干员定义中稳定的技能分支身份，通常由形态、天赋或其他构筑条件启用。",
         "conditionTarget": "条件读取其战斗状态的实体。Endaxis 当前只建模施法者与单个敌人。",
         "healthValueType": "当前生命值使用实际数值；当前生命比例使用 0 到 1 的比例。",
@@ -4200,19 +4197,13 @@
       },
       "stepHelp": {
         "switch": "选择值只求值一次，候选按单精度容差顺序匹配。重置全部分支，仅推进和结束选中的分支。",
-        "repeatByActionValue": "执行时从技能变量或常量解析非负整数次数，并按原生循环顺序重复步骤体。",
         "mergeContextTargets": "合并本次动作中的稳定目标身份并写入命名目标组；不执行距离或范围计算。",
         "createSpatialPointTargets": "按已证明的零空间点来源创建命名 Context 目标组；空间点只承载目标位置，不伪装成战斗实体。",
         "findCharacterTeamTargets": "在执行帧查询队伍并把干员实例身份保存到 Context；后续读取不会重新选人。",
         "findOwnerSpawnedAbilityEntities": "按当前干员与原生 GameplayTag 查询场景中的逻辑能力实体，把完整结果组和可选数量保存到本次释放上下文。",
         "pickContextTarget": "按稳定索引从已有 Context 目标组中选取一个实例，并保存为新的 Context 目标组。",
         "forEachContextTarget": "对施法上下文中已经固定的目标句柄逐一同步执行同一个步骤序列。",
-        "readAbilityEntityRemainingDuration": "读取当前 Context 迭代目标的有限剩余时长，并写入本次释放的技能变量。",
-        "setAbilityEntityRemainingDuration": "按原生 Assign 子集设置当前 Context 迭代目标的能力实体剩余时长。",
-        "finishCurrentAbilityEntity": "显式结束当前子时间线或 Context 迭代目标所指向的能力实体。",
-        "finishActionOwnerAbilityEntity": "结束承载当前子技能动作的能力实体；不会被 ForEach 临时改写的 Context 目标影响。",
-        "finishCurrentAbilityEntityWhenSourceDies": "仅当来源实体已被记录为死亡时，结束当前能力实体。",
-        "startCurrentAbilityEntityChildSkill": "在当前 Context 迭代目标所指向的既有能力实体上启动一个实体局部隐藏子时间线，不创建玩家施法、费用或冷却。",
+        "setAbilityEntityRemainingDuration": "设置首个目标能力实体的剩余时长，限制在零到出生时实际周期之间。无限寿命不受影响。",
         "startCurrentAbilityEntityChildSkillById": "按稳定子技能 ID，在当前 Context 迭代目标所指向的能力实体上启动其已有子时间线。",
         "spawnAbilityEntity": "按当前步骤内联定义生成能力实体，保留原生身份、目标、生命周期、对象变量和可选的实体局部子时间线。",
         "applyElementalInfliction": "向敌人施加元素附着。附着本身不是伤害，但可参与后续元素反应。",
@@ -4220,15 +4211,9 @@
         "triggerCustomAbilityEvent": "在施放者 AbilitySystem 上同步发布一个精确命名的自定义事件；当前只开放已取证的施放者到自身目标子集。",
         "castSkillDuringAction": "由当前动作延迟启动一个已注册的原生技能，并继承本次释放上下文；不重复扣费。原生 ID 必须能唯一对应一个逻辑技能。",
         "inheritSkillCastInfoForBasicAttack": "为动作中启动的普攻继承当前施法信息，使派生伤害继续归属于原技能释放；不创建新的玩家操作或重复扣费。",
-        "applyPhysicalInfliction": "按原生 FractureAction 顺序执行物理异常：首次创建破防层，已有破防层时触发碎甲链；两份公共 Buff 定义均内联在使用点。",
-        "applyElementalReaction": "直接施加指定元素反应及其持续时间和效果强度。",
-        "consumeElementalReaction": "结束并消费敌人身上的指定元素反应，供后续步骤触发派生效果。",
+        "applyPhysicalInfliction": "根据目标当前破防状态施加破防或对应物理异常；Buff ID 引用公共定义目录。",
         "dealDamage": "以攻击力和倍率为基础造成一次伤害，可在同一步骤中结算失衡值。",
-        "dealFixedDamage": "以固定基础值造成伤害，不乘攻击力，但仍经过后续伤害修正与防御抗性。",
         "dealStagger": "只造成失衡，不造成生命伤害。数值仍会经过失衡倍率。",
-        "outputAirborne": "向目标输出一次浮空事实并同步触发监听器；不改变木桩的位置或控制状态。",
-        "outputKnockDown": "向目标输出一次击倒事实并同步触发监听器；不改变木桩的位置或控制状态。",
-        "applyKnockDown": "普通根倒地：保留破防、状态 Buff、免疫和事件；标准场景装配尚未完成，暂不支持模拟。",
         "heal": "按施法者四维属性计算治疗，即使目标满血也记录原始治疗量与溢出治疗。",
         "applyBuff": "按 Buff ID 引用所属对象的定义创建实例，并设置实例的初始变量。",
         "createGlobalBuff": "创建战斗级 GlobalBuff 父实例，并把其子 Buff 投影到固定队伍的每名成员。",
@@ -4236,10 +4221,9 @@
         "finishGlobalBuffsById": "按原生 GlobalBuff ID 结束当前战斗中全部同名父实例及其队伍镜像。",
         "readSkillSettingData": "按运行时列号从版本化 SkillSetting 读取数值，可应用已恢复的源石技艺强度增强公式。",
         "readBuffBlackboard": "查找目标身上的 Buff，把其中一个变量写入当前技能技能变量。",
-        "readBuffRemainingDuration": "查找目标身上首个匹配的有效 Buff，把剩余秒数写入当前技能技能变量；无限时长写入 0。",
+        "readBuffRemainingDuration": "保存最后一个匹配的有限时长 Buff 的剩余秒数；没有匹配时写入 0。",
         "readEventBuffBlackboard": "从当前 Buff 消费或结束事件携带的实例快照读取变量。",
         "readBuffStackCount": "统计匹配 Buff 的总层数并写入当前技能技能变量。",
-        "readCurrentBuffRemainingDuration": "读取当前生命周期环境中有限时长 Buff 的剩余秒数；无限时长写入 0。",
         "setCurrentBuffRemainingDuration": "按赋值、加法或乘法修改当前有限时长 Buff 的剩余秒数。",
         "refreshCurrentBuffAttributeModifiers": "用当前 Buff 变量重新计算并替换该实例已经注册的属性修正。",
         "finishBuffsByTag": "结束目标身上所有符合标签查询的 Buff。",
@@ -4252,9 +4236,8 @@
         "adjustSkillCooldown": "按技能类型或 ID 减少或设置当前冷却，可使用基础周期比例或绝对秒数。",
         "holdBuffsById": "在该调度序列持续期间阻止指定 Buff 自然结束。",
         "restrictUltimateEnergyRecovery": "在动作存续期间只允许指定标签的正向终结技能量回复，并可在结束时清空终结技能量。",
-        "createTimedMarker": "在目标能力系统上创建有期限的标记，同名标记可以并存。",
+        "createTimedMarker": "逐目标创建限时标记，同名标记可以并存；可选择目标自身时钟或全局缩放时钟。空目标组返回失败。",
         "setGlobalCooldown": "设置角色的战斗级冷却。同角色、同标识刷新剩余时间；与普通标记隔离，不受角色时间膨胀或动作结束影响。",
-        "createAbilityEntityTimedMarker": "在当前能力实体上创建有期限的标记；自身时钟随实体时间膨胀推进，共享战斗时钟使用全局流速。",
         "storeCurrentTimelineFrame": "把宿主技能或能力实体子技能的当前局部整数执行帧写入技能变量，不是现实时间轴帧。",
         "storeEventSpGainAmount": "至少启用一个写入键。Value 是效率结算后、共享技力上限截断前的值；RealDelta 是最终实际变化量。",
         "storeEventHealValues": "至少启用一个写入键。分别保存修正后治疗量与生命实际增加量；实际增加量受最大生命截断，满血时可以为 0。",
@@ -4265,7 +4248,6 @@
         "calculateActionValue": "用两个操作数计算结果并写入当前技能技能变量。",
         "storeSourceAttributeValue": "读取技能来源实体的当前战斗属性，按原生取整与倍率公式写入技能变量。",
         "changeResource": "按等级配置的数值改变技力或终结技能量。",
-        "changeResourceByActionValue": "从技能变量或常量读取数值，再改变技力或终结技能量。",
         "gainSquadUltimateEnergyFromSkillCost": "根据本次技能实际消耗的技力，为队伍成员换算终结技能量。",
         "gainFinisherSp": "按处决专用规则为全队回复共享技力。",
         "recoverDashEnergy": "按动作数值回复原生闪避体力。",
@@ -4273,16 +4255,11 @@
         "markCurrentSkillCanDash": "标记当前技能已进入允许闪避打断的阶段。",
         "markCurrentSkillCanInterrupt": "标记当前技能已进入允许后续技能打断的阶段。",
         "overrideMultiDashLimit": "临时覆盖连续闪避次数上限。",
-        "applyStatus": "施加 Endaxis 的语义状态，可设置持续时间、层数和战斗修正。",
-        "consumeStatus": "从目标身上消费指定语义状态的层数。",
         "jumpTimeline": "推进宿主局部时间轴到指定帧；可选条件会在动作区间内持续重试，且只跳转一次。",
-        "finishTimeline": "立即结束当前宿主技能时间轴，并丢弃所有尚未开始的调度动作。",
         "reachSkillOperableBoundary": "记录已到达允许下一技能的窗口；由实际执行的分支决定当前技能块的结束边界。",
         "conditional": "执行条件树，并根据结果进入真分支或假分支。",
-        "once": "保证其中的步骤在同一次技能释放实例内只执行一次。",
-        "withActionBlackboardScope": "在一次原生子技能调用独占的技能变量中执行内部步骤。",
+        "once": "该动作实例仅执行一次主体；正常重置后可再次执行。",
         "repeatEachTick": "在调度区间开始时以及之后每个宿主 Tick 重复执行内部动作。",
-        "setContextFlag": "设置施法者上下文标记，供其他机制读取。",
         "openComboWindow": "把下一段连携加入场景级窗口队列。窗口固定持续 5 秒，且必须按队列顺序释放。",
         "showComboRingQte": "按原生提示时长和有效时长登记精准连携输入窗口。",
         "changeSkillSlot": "切换该稳定技能组下一次释放使用的形态；已经开始的当前释放保持原形态。",
@@ -4294,7 +4271,11 @@
         "startTimeDilation": "启动普通时间膨胀。作用范围、持续时间、槽位、优先级和曲线共同决定最终时钟倍率。",
         "startUltimateTimeDilation": "启动终结技专用全局时间膨胀。施法者自动忽略该倍率，并在动作结束时停止。",
         "hideUi": "原生 HideUIAction 区间，普通分支控制终结技演出状态，独立于时间膨胀。仅阻断输入分支尚需 CommonMask 协议，不能视为统一禁止施法。",
-        "setIgnoreGlobalTimeScale": "在当前动作区间内设置能力实体是否忽略全局时间倍率；启用还原时会在动作结束后撤销。"
+        "setIgnoreGlobalTimeScale": "在当前动作区间内设置能力实体是否忽略全局时间倍率；启用还原时会在动作结束后撤销。",
+        "aura": "光环",
+        "copyContextTargets": "复制目标组",
+        "interruptCurrentSkill": "中断所选目标正在施放的技能；目标没有正在施放的技能时不产生效果。",
+        "finishOwner": "结束所选召唤物或投射物；结束飞行不会触发投射物的超时技能。"
       },
       "damageType": "伤害类型",
       "eventListenerWindowHint": "监听窗口由当前调度序列的开始帧和结束帧决定；事件响应在触发帧同步执行。",
@@ -4343,7 +4324,7 @@
         "canBreakWeakness": "可破弱",
         "crush": "碾压",
         "airborne": "击飞",
-        "knockDown": "击倒",
+        "knockDown": "倒地",
         "shatter": "碎冰",
         "dot": "持续伤害",
         "remainArea": "残留区域",
@@ -4358,18 +4339,11 @@
         "findOwnerSpawnedAbilityEntities": "查找自身生成的能力实体",
         "pickContextTarget": "选取 Context 目标",
         "forEachContextTarget": "遍历 Context 目标",
-        "readAbilityEntityRemainingDuration": "读取能力实体剩余时间",
         "setAbilityEntityRemainingDuration": "修改能力实体剩余时间",
-        "finishCurrentAbilityEntity": "结束当前能力实体",
-        "finishActionOwnerAbilityEntity": "结束动作宿主能力实体",
-        "finishCurrentAbilityEntityWhenSourceDies": "来源死亡时结束能力实体",
-        "startCurrentAbilityEntityChildSkill": "启动能力实体内联子技能",
         "startCurrentAbilityEntityChildSkillById": "按 ID 启动能力实体子技能",
         "castSkillDuringAction": "动作中施放技能",
         "readBuffRemainingDuration": "读取 Buff 剩余时间",
         "inheritBuffById": "按 ID 继承 Buff",
-        "withActionBlackboardScope": "使用独立技能变量",
-        "repeatByActionValue": "按动作值重复",
         "overrideBasicAttackMapping": "覆盖普攻输入映射",
         "changeSkillSlot": "切换技能槽形态",
         "spawnAbilityEntity": "生成能力实体",
@@ -4383,14 +4357,8 @@
         "refreshCurrentBuffAttributeModifiers": "刷新当前 Buff 属性修正",
         "restrictUltimateEnergyRecovery": "限制终结技能量回复",
         "applyPhysicalInfliction": "施加物理异常",
-        "applyElementalReaction": "施加元素反应",
-        "consumeElementalReaction": "消耗元素反应",
         "dealDamage": "造成伤害",
-        "dealFixedDamage": "造成固定伤害",
         "dealStagger": "造成失衡",
-        "outputAirborne": "输出浮空",
-        "outputKnockDown": "输出击倒",
-        "applyKnockDown": "普通倒地（尚未接入）",
         "heal": "治疗干员",
         "applyBuff": "施加 Buff",
         "createGlobalBuff": "创建全局 Buff",
@@ -4400,7 +4368,6 @@
         "readBuffBlackboard": "读取 Buff 变量",
         "readEventBuffBlackboard": "读取事件 Buff 变量",
         "readBuffStackCount": "读取 Buff 层数",
-        "readCurrentBuffRemainingDuration": "读取当前 Buff 剩余时间",
         "setCurrentBuffRemainingDuration": "修改当前 Buff 剩余时间",
         "finishBuffsByTag": "按标签结束 Buff",
         "finishBuffsById": "按 ID 结束 Buff",
@@ -4412,7 +4379,6 @@
         "holdBuffsById": "保持 Buff",
         "createTimedMarker": "创建定时标记",
         "setGlobalCooldown": "设置全局冷却",
-        "createAbilityEntityTimedMarker": "创建实体局部定时标记",
         "storeCurrentTimelineFrame": "保存当前时间轴帧",
         "storeEventSpGainAmount": "保存技力获得量",
         "storeEventHealValues": "保存事件治疗量",
@@ -4421,7 +4387,6 @@
         "calculateActionValue": "计算动作值",
         "storeSourceAttributeValue": "保存来源属性值",
         "changeResource": "改变资源",
-        "changeResourceByActionValue": "按动作值改变资源",
         "gainSquadUltimateEnergyFromSkillCost": "按技能消耗获得终结技能量",
         "gainFinisherSp": "处决回复技力",
         "recoverDashEnergy": "回复闪避体力",
@@ -4429,18 +4394,18 @@
         "markCurrentSkillCanDash": "允许当前技能被闪避打断",
         "markCurrentSkillCanInterrupt": "允许当前技能被后续技能打断",
         "overrideMultiDashLimit": "覆盖连续闪避上限",
-        "applyStatus": "施加状态",
-        "consumeStatus": "消耗状态",
         "jumpTimeline": "跳转时间轴",
-        "finishTimeline": "结束时间轴",
         "reachSkillOperableBoundary": "到达下一技能窗口",
         "conditional": "条件分支",
         "once": "仅执行一次",
         "repeatEachTick": "每 Tick 重复",
-        "setContextFlag": "设置上下文标记",
         "openComboWindow": "开启下一段连携窗口",
         "showComboRingQte": "显示精准连携窗口",
-        "listenForCombatEvents": "监听战斗事件"
+        "listenForCombatEvents": "监听战斗事件",
+        "aura": "光环",
+        "copyContextTargets": "复制目标组",
+        "interruptCurrentSkill": "中断当前技能",
+        "finishOwner": "结束目标实体"
       }
     },
     "inspector": {
@@ -4536,11 +4501,9 @@
       "noSamples": "等待模拟样本"
     },
     "hitInflictionSuffix": "附着",
-    "hitReactionConsumed": " 已消费",
     "effect": {
       "burst": "爆发",
       "reaction": "反应",
-      "reactionConsumed": "反应消费",
       "layers": "{stacks} 层"
     },
     "passiveUi": {
@@ -4658,7 +4621,6 @@
       "element": "元素",
       "outcome": "结果",
       "reaction": "反应",
-      "reactionConsumed": "反应消费",
       "level": "等级"
     },
     "simGuide": {
@@ -5627,8 +5589,6 @@
     "staleDraft": "映射已在其他位置变化，请取消后重新打开，避免覆盖新值",
     "incompatibleSource": "来源键不在当前作用域、类型不匹配，或不是已声明的宏参数",
     "destination": {
-      "childAction": "子动作黑板",
-      "childEntity": "子实体黑板",
       "buff": "目标 Buff 黑板",
       "abilityEntity": "新生成实体黑板",
       "globalBuff": "新全局 Buff 黑板",
@@ -5637,8 +5597,6 @@
       "globalBuffChild": "子 Buff 黑板"
     },
     "destinationUnknown": {
-      "childAction": "这里声明新的子作用域初值，当前读取作用域不是写入目标",
-      "childEntity": "这里声明新的实体作用域初值，当前读取作用域不是写入目标",
       "buff": "此表单尚无法证明目标 Buff 的键类型，目标上下文未知",
       "abilityEntity": "此表单尚无法证明新实体的键类型，目标上下文未知",
       "globalBuff": "此表单尚无法证明全局 Buff 的键类型，目标上下文未知",

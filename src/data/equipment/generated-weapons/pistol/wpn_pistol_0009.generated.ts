@@ -108,25 +108,25 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'buffConsumed',
           priority: 0,
-          sequence: { $sequence: 'conditional_5' },
+          sequence: { $sequence: 'checkCondition_5' },
         },
         {
           key: 'skill3:event:1:sequence:0',
           abilityEvent: 'buffConsumed',
           priority: 0,
-          sequence: { $sequence: 'conditional_10' },
+          sequence: { $sequence: 'checkCondition_10' },
         },
         {
           key: 'skill3:event:2:sequence:0',
           abilityEvent: 'buffConsumed',
           priority: 0,
-          sequence: { $sequence: 'conditional_15' },
+          sequence: { $sequence: 'checkCondition_15' },
         },
         {
           key: 'skill3:event:3:sequence:0',
           abilityEvent: 'buffConsumed',
           priority: 0,
-          sequence: { $sequence: 'conditional_20' },
+          sequence: { $sequence: 'checkCondition_20' },
         },
       ],
       actionGraph: {
@@ -147,14 +147,19 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_pistol_0009_dmg_taken_up_f',
-                  target: 'eventTarget',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_pistol_0009_dmg_taken_up_f',
+                      copiedBlackboardAssignments: {
+                        damage_taken_up_fire: 'dmg_taken_up',
+                        duration: 'duration',
+                        lv: 'lv',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'inputTarget' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
-                  copiedBlackboardAssignments: {
-                    damage_taken_up_fire: 'dmg_taken_up',
-                    duration: 'duration',
-                    lv: 'lv',
-                  },
                 },
               },
               next: 'setGlobalCooldown_1',
@@ -163,42 +168,50 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_pistol_0009_cd',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_pistol_0009_cd',
+                      copiedBlackboardAssignments: { cd: 'cd' },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
-                  copiedBlackboardAssignments: { cd: 'cd' },
                 },
               },
               next: 'applyBuff_2',
             },
-            conditional_4: {
+            checkCondition_4: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'applyBuff_3' },
               },
-              next: null,
+              next: 'applyBuff_3',
             },
-            conditional_5: {
+            checkCondition_5: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-                whenTrue: { $sequence: 'conditional_4' },
               },
-              next: null,
+              next: 'checkCondition_4',
             },
             applyBuff_7: {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_pistol_0009_dmg_taken_up_p',
-                  target: 'eventTarget',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_pistol_0009_dmg_taken_up_p',
+                      copiedBlackboardAssignments: {
+                        damage_taken_up_pulse: 'dmg_taken_up',
+                        duration: 'duration',
+                        lv: 'lv',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'inputTarget' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
-                  copiedBlackboardAssignments: {
-                    damage_taken_up_pulse: 'dmg_taken_up',
-                    duration: 'duration',
-                    lv: 'lv',
-                  },
                 },
               },
               next: 'setGlobalCooldown_1',
@@ -207,42 +220,50 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_pistol_0009_cd',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_pistol_0009_cd',
+                      copiedBlackboardAssignments: { cd: 'cd' },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
-                  copiedBlackboardAssignments: { cd: 'cd' },
                 },
               },
               next: 'applyBuff_7',
             },
-            conditional_9: {
+            checkCondition_9: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-                whenTrue: { $sequence: 'applyBuff_8' },
               },
-              next: null,
+              next: 'applyBuff_8',
             },
-            conditional_10: {
+            checkCondition_10: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-                whenTrue: { $sequence: 'conditional_9' },
               },
-              next: null,
+              next: 'checkCondition_9',
             },
             applyBuff_12: {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_pistol_0009_dmg_taken_up_c',
-                  target: 'eventTarget',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_pistol_0009_dmg_taken_up_c',
+                      copiedBlackboardAssignments: {
+                        damage_taken_up_cryst: 'dmg_taken_up',
+                        duration: 'duration',
+                        lv: 'lv',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'inputTarget' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
-                  copiedBlackboardAssignments: {
-                    damage_taken_up_cryst: 'dmg_taken_up',
-                    duration: 'duration',
-                    lv: 'lv',
-                  },
                 },
               },
               next: 'setGlobalCooldown_1',
@@ -251,42 +272,50 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_pistol_0009_cd',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_pistol_0009_cd',
+                      copiedBlackboardAssignments: { cd: 'cd' },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
-                  copiedBlackboardAssignments: { cd: 'cd' },
                 },
               },
               next: 'applyBuff_12',
             },
-            conditional_14: {
+            checkCondition_14: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
-                whenTrue: { $sequence: 'applyBuff_13' },
               },
-              next: null,
+              next: 'applyBuff_13',
             },
-            conditional_15: {
+            checkCondition_15: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
-                whenTrue: { $sequence: 'conditional_14' },
               },
-              next: null,
+              next: 'checkCondition_14',
             },
             applyBuff_17: {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_pistol_0009_dmg_taken_up_n',
-                  target: 'eventTarget',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_pistol_0009_dmg_taken_up_n',
+                      copiedBlackboardAssignments: {
+                        damage_taken_up_natural: 'dmg_taken_up',
+                        duration: 'duration',
+                        lv: 'lv',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'inputTarget' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
-                  copiedBlackboardAssignments: {
-                    damage_taken_up_natural: 'dmg_taken_up',
-                    duration: 'duration',
-                    lv: 'lv',
-                  },
                 },
               },
               next: 'setGlobalCooldown_1',
@@ -295,29 +324,32 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_pistol_0009_cd',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_pistol_0009_cd',
+                      copiedBlackboardAssignments: { cd: 'cd' },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
-                  copiedBlackboardAssignments: { cd: 'cd' },
                 },
               },
               next: 'applyBuff_17',
             },
-            conditional_19: {
+            checkCondition_19: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
-                whenTrue: { $sequence: 'applyBuff_18' },
               },
-              next: null,
+              next: 'applyBuff_18',
             },
-            conditional_20: {
+            checkCondition_20: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
-                whenTrue: { $sequence: 'conditional_19' },
               },
-              next: null,
+              next: 'checkCondition_19',
             },
           },
           dataNodes: {
@@ -415,7 +447,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_pistol_0009',
-  iconPath: '/weapons/pistol/wpn_pistol_0009.webp',
+  icon: 'endaxis:weapons/pistol/wpn_pistol_0009',
   buffDefinitions: {
     buff_wpn_pistol_0009_cd: {
       stackingType: 'unique',
@@ -441,8 +473,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_cryst_taken_up',
-        iconPath: '/icons/icon_battle_cryst_taken_up.webp',
+        icon: 'endaxis:icons/icon_battle_cryst_taken_up',
         showInHeadBarCommon: true,
         showInHeadBarAttached: false,
         showInSquadIcon: false,
@@ -468,7 +499,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'defender',
-          condition: { $sequence: 'conditional_1' },
+          condition: { $sequence: 'checkCondition_1' },
           processors: [
             {
               kind: 'damageScale',
@@ -482,11 +513,10 @@ const definition = {
       actionGraph: {
         main: {
           nodes: {
-            conditional_1: {
+            checkCondition_1: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: null },
               },
               next: null,
             },
@@ -511,8 +541,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_fire_taken_up',
-        iconPath: '/icons/icon_battle_fire_taken_up.webp',
+        icon: 'endaxis:icons/icon_battle_fire_taken_up',
         showInHeadBarCommon: true,
         showInHeadBarAttached: false,
         showInSquadIcon: false,
@@ -538,7 +567,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'defender',
-          condition: { $sequence: 'conditional_1' },
+          condition: { $sequence: 'checkCondition_1' },
           processors: [
             {
               kind: 'damageScale',
@@ -552,11 +581,10 @@ const definition = {
       actionGraph: {
         main: {
           nodes: {
-            conditional_1: {
+            checkCondition_1: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: null },
               },
               next: null,
             },
@@ -581,8 +609,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_nature_taken_up',
-        iconPath: '/icons/icon_battle_nature_taken_up.webp',
+        icon: 'endaxis:icons/icon_battle_nature_taken_up',
         showInHeadBarCommon: true,
         showInHeadBarAttached: false,
         showInSquadIcon: false,
@@ -608,7 +635,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'defender',
-          condition: { $sequence: 'conditional_1' },
+          condition: { $sequence: 'checkCondition_1' },
           processors: [
             {
               kind: 'damageScale',
@@ -622,11 +649,10 @@ const definition = {
       actionGraph: {
         main: {
           nodes: {
-            conditional_1: {
+            checkCondition_1: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: null },
               },
               next: null,
             },
@@ -651,8 +677,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_pulse_taken_up',
-        iconPath: '/icons/icon_battle_pulse_taken_up.webp',
+        icon: 'endaxis:icons/icon_battle_pulse_taken_up',
         showInHeadBarCommon: true,
         showInHeadBarAttached: false,
         showInSquadIcon: false,
@@ -678,7 +703,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'defender',
-          condition: { $sequence: 'conditional_1' },
+          condition: { $sequence: 'checkCondition_1' },
           processors: [
             {
               kind: 'damageScale',
@@ -692,11 +717,10 @@ const definition = {
       actionGraph: {
         main: {
           nodes: {
-            conditional_1: {
+            checkCondition_1: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: null },
               },
               next: null,
             },

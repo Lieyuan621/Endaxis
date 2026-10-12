@@ -16,6 +16,7 @@ export type CompiledOperatorDefinitionHeaderSource = Readonly<
     | 'rarity'
     | 'weaponType'
     | 'element'
+    | 'characterTypeId'
     | 'role'
     | 'mainAttribute'
     | 'secondaryAttribute'
@@ -42,6 +43,7 @@ export function compileOperatorDefinitionHeaderSource(
     rarity: character.projectedRarity,
     weaponType: character.weaponType,
     element: character.element,
+    characterTypeId: character.characterTypeId,
     role: character.role,
     mainAttribute: character.mainAttribute,
     secondaryAttribute: character.secondaryAttribute,

@@ -1,26 +1,26 @@
-import { describe, expect, it } from 'vitest';
-import {
-  compileActionSequenceProgram,
-  type CompileActionSequenceProgramOptions,
-} from '../../src/compiler/actions/actionSequenceProgram.ts';
+import { expect, it } from 'vitest';
+import { compileActionSequenceProgram } from '../../src/compiler/actions/actionSequenceProgram.ts';
+import { pruneKnownNativeBranches } from '../../src/compiler/optimization/nativeSequenceOptimization.ts';
 import type { NativeActionNodeSource, NativeSequenceSource } from '../../src/source/controlFlow.ts';
+import { parseNativeSequenceSource } from '../../src/source/controlFlow.ts';
 import {
   createActionGraphBuilder,
   readActionGraphChain,
 } from '../../src/compiler/actions/actionGraphBuilder.ts';
 import type { ActionGraphReference } from '../../../../packages/game-data-contract/src/actionGraph.ts';
 
-type Condition = { readonly kind: 'condition' | 'not' | 'all'; readonly value: string };
 type Step =
-  | { readonly kind: 'leaf'; readonly value: string }
+  | { kind: 'leaf'; value: string }
+  | { kind: 'checkCondition'; condition: string }
+  | { kind: 'invertNextResult' }
+  | { kind: 'anyCondition'; conditions: readonly ActionGraphReference[] }
   | {
-      readonly kind: 'conditional';
-      readonly condition: Condition;
-      readonly whenTrue: ActionGraphReference;
-      readonly whenFalse?: ActionGraphReference;
-      readonly alwaysNext: boolean;
+      kind: 'ifElse';
+      condition: ActionGraphReference;
+      whenTrue: ActionGraphReference;
+      whenFalse: ActionGraphReference;
+      alwaysNext: boolean;
     };
-
 const metadata = {
   nativeType: 'Game.TestAction',
   nativeName: 'TestAction',
@@ -29,336 +29,321 @@ const metadata = {
   priorityOffset: 0,
   serverActionIndex: 0,
 } as const;
-
-function leaf(value: string): NativeActionNodeSource<string> {
-  return { metadata, sourcePath: value, body: { kind: 'leaf', value } };
-}
-
-function sequence(
+const leaf = (value: string): NativeActionNodeSource<string> => ({
+  metadata,
+  sourcePath: value,
+  body: { kind: 'leaf', value },
+});
+const sequence = (
   actions: readonly NativeActionNodeSource<string>[],
-): NativeSequenceSource<string> {
-  return {
-    onlyExecuteWhenSourceIsMainCharacter: false,
-    onlyExecuteWhenSourceIsGuard: false,
-    actions,
-  };
-}
+): NativeSequenceSource<string> => ({
+  actions,
+  onlyExecuteWhenSourceIsMainCharacter: false,
+  onlyExecuteWhenSourceIsGuard: false,
+});
 
-function options(
-  builder: ReturnType<typeof createActionGraphBuilder<Step>>,
-): CompileActionSequenceProgramOptions<string, Condition, Step, readonly string[]> {
-  return {
-    sequence: builder.sequence,
-    initialState: () => [],
-    canOmitTerminalCondition: () => true,
-    compileCondition: node =>
-      node.body.kind === 'leaf' && node.body.value.startsWith('?')
-        ? { kind: 'condition', value: node.body.value }
-        : null,
-    combineConditions: conditions =>
-      conditions.length === 1
-        ? conditions[0]!
-        : { kind: 'all', value: conditions.map(item => item.value).join('&') },
-    negateCondition: condition => ({ kind: 'not', value: condition.value }),
-    compileLeaf: (node, state) => {
-      if (node.body.kind !== 'leaf') throw new Error('expected leaf');
-      if (node.body.value.startsWith('save:')) {
-        return { steps: [], state: [...state, node.body.value.slice(5)] };
-      }
-      return {
-        steps: [{ kind: 'leaf', value: `${node.body.value}[${state.join(',')}]` }],
-        state,
-      };
-    },
-    createConditionalStep: input => ({
-      kind: 'conditional',
-      condition: input.condition,
-      whenTrue: input.whenTrue,
-      ...(input.whenFalse === undefined ? {} : { whenFalse: input.whenFalse }),
-      alwaysNext: input.alwaysNext,
-    }),
-    rootFilterError: 'root filter unsupported',
-    unsupportedNodeError: node => `${node.sourcePath}: unsupported node`,
-  };
-}
+it('已证明失败的同层检查截断后继，存在返回值反转时保持保守', () => {
+  const source = sequence([leaf('?stop'), leaf('unsupported')]);
+  const evaluate = (candidate: NativeSequenceSource<string>) =>
+    candidate.actions[0]?.sourcePath === '?stop' ? false : undefined;
+  const result = run(pruneKnownNativeBranches(source, evaluate), true);
+  expect(result.read(result.entry)).toEqual([{ kind: 'checkCondition', condition: '?stop' }]);
+  expect(() =>
+    run(
+      pruneKnownNativeBranches(
+        sequence([
+          { metadata, sourcePath: 'not', body: { kind: 'negateNextResult' } },
+          ...source.actions,
+        ]),
+        evaluate,
+      ),
+    ),
+  ).toThrow('unsupported action');
+});
 
-/** 图编译执行：entry 是入口引用，read 按引用读取同层动作。 */
-function run(
-  source: NativeSequenceSource<string>,
-  customize: (
-    base: CompileActionSequenceProgramOptions<string, Condition, Step, readonly string[]>,
-  ) => Partial<
-    CompileActionSequenceProgramOptions<string, Condition, Step, readonly string[]>
-  > = () => ({}),
-) {
-  const builder = createActionGraphBuilder<Step>();
-  const base = options(builder);
-  const entry = compileActionSequenceProgram(source, { ...base, ...customize(base) });
-  return {
-    entry,
-    read: (reference: ActionGraphReference) =>
-      readActionGraphChain(builder.finish(), reference) as readonly Step[],
-  };
-}
-
-describe('公共 Action 序列控制流投影', () => {
-  it('根守卫在空子树投影后消去，但被外层消费的返回值不消去', () => {
-    const source = { ...sequence([]), onlyExecuteWhenSourceIsGuard: true };
-    const empty = run(source);
-    expect(empty.read(empty.entry)).toEqual([]);
-    expect(() => run(source, () => ({ resultIsConsumed: true }))).toThrow(
-      'root filter unsupported',
-    );
-    expect(() => run({ ...source, actions: [leaf('visible')] })).toThrow('root filter unsupported');
-  });
-
-  const branch = (
-    children: readonly NativeActionNodeSource<string>[],
-    alwaysNext = true,
-  ): NativeActionNodeSource<string> => ({
+it('外层消费 IfElse 返回值时，alwaysNext 仍隔离正文尾部的无用检查', () => {
+  const branch: NativeActionNodeSource<string> = {
     metadata,
-    sourcePath: 'unmodeled-branch',
+    sourcePath: 'branch',
     body: {
       kind: 'ifElse',
-      condition: sequence([leaf('?unmodeled')]),
-      whenTrue: sequence(children),
-      whenFalse: sequence([leaf('visual')]),
-      alwaysNext,
+      condition: sequence([leaf('?select')]),
+      whenTrue: sequence([leaf('hit'), leaf('unused-condition')]),
+      whenFalse: sequence([]),
+      alwaysNext: true,
     },
-  });
-  const bottomUp = (
-    base: CompileActionSequenceProgramOptions<string, Condition, Step, readonly string[]>,
-  ) => ({
-    canOmitUnusedCondition: (node: NativeActionNodeSource<string>) =>
-      node.body.kind === 'leaf' && node.body.value === '?unmodeled',
-    compileCondition: (node: NativeActionNodeSource<string>, state: readonly string[]) => {
-      if (node.body.kind === 'leaf' && node.body.value === '?unmodeled')
-        throw new Error('条件未建模');
-      return base.compileCondition(node, state);
-    },
-    compileLeaf: (node: NativeActionNodeSource<string>, state: readonly string[]) =>
-      node.body.kind === 'leaf' && node.body.value === 'visual'
-        ? { steps: [], state }
-        : base.compileLeaf(node, state),
-  });
-  it('嵌套分支自叶子向根清空后，不编译未建模的纯条件，保留后续伤害', () => {
-    const result = run(sequence([branch([branch([leaf('visual')])]), leaf('damage')]), bottomUp);
-    expect(result.read(result.entry)).toEqual([{ kind: 'leaf', value: 'damage[]' }]);
-  });
-  it('守卫末端已空时不编译纯条件；有末端行为时仍要求模型', () => {
-    const cleared = run(sequence([leaf('?unmodeled'), leaf('visual')]), bottomUp);
-    expect(cleared.read(cleared.entry)).toEqual([]);
-    expect(() => run(sequence([leaf('?unmodeled'), leaf('damage')]), bottomUp)).toThrow(
-      '条件未建模',
-    );
-    expect(() => run(sequence([branch([leaf('damage')])]), bottomUp)).toThrow('条件未建模');
-  });
-  it('未知副作用和影响外部返回值的分支不因末端空而省略', () => {
-    expect(() =>
-      run(sequence([branch([leaf('visual')])]), base => ({
-        ...bottomUp(base),
-        canOmitUnusedCondition: () => false,
-      })),
-    ).toThrow('条件未建模');
-    expect(() => run(sequence([branch([leaf('visual')], false)]), bottomUp)).toThrow(
-      'stopping IfElse',
-    );
-  });
-  it('没有纯条件证明时保留尾部求值；显式允许才可省略', () => {
-    const source = sequence([leaf('?last')]);
-    const proven = run(source);
-    expect(proven.read(proven.entry)).toEqual([]);
-    const unproven = run(source, () => ({ canOmitTerminalCondition: undefined }));
-    expect(unproven.read(unproven.entry)).toHaveLength(1);
-  });
-  it('已经建模的纯条件也不留下空壳分支；副作用条件仍保留', () => {
-    const value = branch([leaf('visual')]);
-    if (value.body.kind !== 'ifElse') throw new Error('invalid fixture');
-    const source = sequence([
-      { ...value, body: { ...value.body, condition: sequence([leaf('?modeled')]) } },
-    ]);
-    const cleared = run(source, bottomUp);
-    expect(cleared.read(cleared.entry)).toEqual([]);
-    const kept = run(source, base => ({
-      ...bottomUp(base),
-      canOmitTerminalCondition: () => false,
-    }));
-    expect(kept.read(kept.entry)[0]?.kind).toBe('conditional');
-  });
+  };
+  const result = run(sequence([branch]), true);
+  const action = result.read(result.entry)[0]!;
+  if (action.kind !== 'ifElse') throw new Error('missing branch');
+  expect(result.read(action.whenTrue)).toEqual([{ kind: 'leaf', value: 'hit[]' }]);
+  if (branch.body.kind !== 'ifElse') throw new Error('missing source branch');
+  const branchBody = branch.body;
+  expect(() =>
+    run(sequence([{ ...branch, body: { ...branchBody, alwaysNext: false } }]), true),
+  ).toThrow('unsupported action');
+});
 
-  it('纯读取条件的两分支投影等价时不要求建立条件模型', () => {
-    const value = branch([leaf('same')]);
-    if (value.body.kind !== 'ifElse') throw new Error('invalid fixture');
-    const source = sequence([
-      { ...value, body: { ...value.body, whenFalse: sequence([leaf('same')]) } },
-      leaf('after'),
-    ]);
-    const result = run(source, base => ({
-      ...bottomUp(base),
-      areEquivalentIfElseBranches: (whenTrue, whenFalse) =>
-        JSON.stringify(whenTrue) === JSON.stringify(whenFalse),
-    }));
-    expect(result.read(result.entry)).toEqual([
-      { kind: 'leaf', value: 'same[]' },
-      { kind: 'leaf', value: 'after[]' },
-    ]);
-  });
-
-  it('静态预选失败后先投影末端，只有纯读取空分支可消去', () => {
-    const failure = new Error('静态预选未支持');
-    const configured = (
-      base: CompileActionSequenceProgramOptions<string, Condition, Step, readonly string[]>,
-    ) => ({
-      ...bottomUp(base),
-      selectIfElseBranch: (): boolean | undefined => {
-        throw failure;
-      },
-    });
-    const cleared = run(sequence([branch([leaf('visual')])]), configured);
-    expect(cleared.read(cleared.entry)).toEqual([]);
-    expect(() => run(sequence([branch([leaf('damage')])]), configured)).toThrow(failure);
-    expect(() =>
-      run(sequence([branch([leaf('visual')])]), base => ({
-        ...configured(base),
-        canOmitUnusedCondition: () => false,
-      })),
-    ).toThrow(failure);
-    expect(() => run(sequence([branch([leaf('visual')], false)]), configured)).toThrow(
-      'stopping IfElse',
-    );
-  });
-
-  it('固定模型证明 IfElse 真值时只编译可达分支并继续后续兄弟', () => {
-    const result = run(sequence([branch([leaf('reachable')]), leaf('after')]), () => ({
-      selectIfElseBranch: () => true,
-    }));
-    expect(result.read(result.entry)).toEqual([
-      { kind: 'leaf', value: 'reachable[]' },
-      { kind: 'leaf', value: 'after[]' },
-    ]);
-    expect(() =>
-      run(sequence([branch([leaf('reachable')], false)]), () => ({
-        selectIfElseBranch: () => true,
-      })),
-    ).toThrow('statically selected stopping IfElse');
-  });
-
-  it('条件叶子守卫全部剩余兄弟步骤', () => {
-    const result = run(sequence([leaf('?ready'), leaf('a'), leaf('b')]));
-    const [guard] = result.read(result.entry);
-    if (guard?.kind !== 'conditional') throw new Error('expected conditional');
-    expect(guard.condition).toEqual({ kind: 'condition', value: '?ready' });
-    expect(guard.alwaysNext).toBe(false);
-    expect(result.read(guard.whenTrue)).toEqual([
-      { kind: 'leaf', value: 'a[]' },
-      { kind: 'leaf', value: 'b[]' },
-    ]);
-  });
-
-  it('NotNextCheckAction 只反转下一条件并保持后续短路体', () => {
-    const negate: NativeActionNodeSource<string> = {
-      metadata,
-      sourcePath: 'not',
-      body: { kind: 'negateNextResult' },
-    };
-    const result = run(sequence([negate, leaf('?ready'), leaf('a')]));
-    const [guard] = result.read(result.entry);
-    if (guard?.kind !== 'conditional') throw new Error('expected conditional');
-    expect(guard.condition).toEqual({ kind: 'not', value: '?ready' });
-    expect(result.read(guard.whenTrue)).toEqual([{ kind: 'leaf', value: 'a[]' }]);
-  });
-
-  it('IfElse 分支继承入口状态，分支写入彼此隔离且不污染后续兄弟', () => {
-    const branch: NativeActionNodeSource<string> = {
+it.each([true, false])('已证明条件为 %s 时不编译不可达动作，保留分支返回边界', known => {
+  const source = sequence([
+    {
       metadata,
       sourcePath: 'branch',
       body: {
         kind: 'ifElse',
-        condition: sequence([leaf('?branch')]),
-        whenTrue: sequence([leaf('save:true'), leaf('inside')]),
-        whenFalse: sequence([leaf('outside')]),
-        alwaysNext: true,
+        condition: sequence([leaf('?known')]),
+        whenTrue: sequence([leaf(known ? 'hit' : 'unsupported')]),
+        whenFalse: sequence([leaf(known ? 'unsupported' : 'hit')]),
+        alwaysNext: false,
       },
-    };
-    const result = run(sequence([leaf('save:outer'), branch, leaf('after')]));
-    const steps = result.read(result.entry);
-    const [guard, after] = steps;
-    if (guard?.kind !== 'conditional') throw new Error('expected conditional');
-    expect(guard.condition).toEqual({ kind: 'condition', value: '?branch' });
-    expect(guard.alwaysNext).toBe(true);
-    expect(result.read(guard.whenTrue)).toEqual([{ kind: 'leaf', value: 'inside[outer,true]' }]);
-    expect(result.read(guard.whenFalse!)).toEqual([{ kind: 'leaf', value: 'outside[outer]' }]);
-    expect(after).toEqual({ kind: 'leaf', value: 'after[outer]' });
+    },
+  ]);
+  const compiled = run(pruneKnownNativeBranches(source, () => known));
+  const branch = compiled.read(compiled.entry)[0]!;
+  expect(branch.kind).toBe('ifElse');
+  if (branch.kind !== 'ifElse') throw new Error('missing branch');
+  expect(branch.alwaysNext).toBe(false);
+  expect(compiled.read(branch.condition)).toEqual([]);
+  expect(compiled.read(branch.whenTrue)).toEqual([{ kind: 'leaf', value: 'hit[]' }]);
+  expect(() => run(pruneKnownNativeBranches(source, () => undefined))).toThrow(
+    'unsupported action',
+  );
+});
+function run(source: NativeSequenceSource<string>, resultIsConsumed = false) {
+  const builder = createActionGraphBuilder<Step>();
+  const entry = compileActionSequenceProgram<string, string, Step, readonly string[]>(source, {
+    sequence: builder.sequence,
+    resultIsConsumed,
+    canDiscardUnusedLeaf: node => node.body.kind === 'leaf' && node.body.value === 'unused-query',
+    canDiscardCondition: node =>
+      node.body.kind === 'leaf' && node.body.value === 'unused-condition',
+    initialState: () => [],
+    compileCondition: node =>
+      node.body.kind === 'leaf' && node.body.value.startsWith('?') ? node.body.value : null,
+    createConditionCheckStep: condition => ({ kind: 'checkCondition', condition }),
+    createInvertNextResultStep: () => ({ kind: 'invertNextResult' }),
+    createAnyConditionStep: conditions => ({ kind: 'anyCondition', conditions }),
+    createIfElseStep: input => ({ kind: 'ifElse', ...input }),
+    compileLeaf: (node, state) => {
+      if (node.body.kind !== 'leaf') throw new Error('unexpected control');
+      const value = node.body.value;
+      if (value === 'unsupported' || value === 'unused-condition')
+        throw new Error('unsupported action');
+      return {
+        steps: [{ kind: 'leaf', value: `${value}[${state.join(',')}]` }],
+        state: value.startsWith('save:') ? [...state, value.slice(5)] : state,
+      };
+    },
+    rootFilterError: 'root filter unsupported',
+    unsupportedNodeError: node => `${node.sourcePath}: unsupported control`,
   });
+  const graph = builder.finish();
+  return {
+    entry,
+    read: (reference: ActionGraphReference) => readActionGraphChain(graph, reference),
+  };
+}
 
-  it('IfElse 条件序列中的 NotNextCheckAction 只反转紧随条件', () => {
-    const negate: NativeActionNodeSource<string> = {
-      metadata,
-      sourcePath: 'not',
-      body: { kind: 'negateNextResult' },
-    };
-    const branch: NativeActionNodeSource<string> = {
-      metadata,
-      sourcePath: 'branch',
-      body: {
-        kind: 'ifElse',
-        condition: sequence([leaf('?has-target'), negate, leaf('?already-added')]),
-        whenTrue: sequence([leaf('gain')]),
-        whenFalse: sequence([]),
-        alwaysNext: true,
-      },
-    };
+it('检查、NotNext 和普通动作保留同层顺序；尾部检查不删除', () => {
+  const result = run(
+    sequence([
+      leaf('?ready'),
+      { metadata, sourcePath: 'not', body: { kind: 'negateNextResult' } },
+      leaf('a'),
+      leaf('?last'),
+    ]),
+  );
+  expect(result.read(result.entry)).toEqual([
+    { kind: 'checkCondition', condition: '?ready' },
+    { kind: 'invertNextResult' },
+    { kind: 'leaf', value: 'a[]' },
+    { kind: 'checkCondition', condition: '?last' },
+  ]);
+});
 
-    const result = run(sequence([branch]), () => ({
-      negateCondition: condition => ({ kind: 'not' as const, value: `!${condition.value}` }),
-    }));
-    const [guard] = result.read(result.entry);
-    if (guard?.kind !== 'conditional') throw new Error('expected conditional');
-    expect(guard.condition).toEqual({ kind: 'all', value: '?has-target&!?already-added' });
-    expect(result.read(guard.whenTrue)).toEqual([{ kind: 'leaf', value: 'gain[]' }]);
-  });
-
-  it('允许领域把已证明等价的 ForEach 折叠为集合步骤并继续编译兄弟节点', () => {
-    const loop: NativeActionNodeSource<string> = {
-      metadata,
-      sourcePath: 'loop',
-      body: {
-        kind: 'forEach',
-        target: {} as never,
-        action: sequence([leaf('inside')]),
-      },
-    };
-    const result = run(sequence([loop, leaf('after')]), () => ({
-      compileForEach: (node, state) => ({
-        steps: [{ kind: 'leaf' as const, value: `folded:${node.body.action.actions.length}` }],
-        state: [...state, 'loop'],
-      }),
-    }));
-
-    expect(result.read(result.entry)).toEqual([
-      { kind: 'leaf', value: 'folded:1' },
-      { kind: 'leaf', value: 'after[loop]' },
-    ]);
-  });
-
-  it('静态假守卫不会编译不可达的后继动作', () => {
-    const result = run(
-      sequence([leaf('?stationary-move-input'), leaf('unsupported-direction-write')]),
-      base => ({
-        canOmitUnusedCondition: node =>
-          node.body.kind === 'leaf' && node.body.value.startsWith('?'),
-        evaluateCondition: condition =>
-          condition.value === '?stationary-move-input' ? false : undefined,
-        compileLeaf: (node, state) => {
-          if (node.body.kind !== 'leaf') throw new Error('expected leaf');
-          if (node.body.value === 'unsupported-direction-write') {
-            throw new Error('unreachable direction write was compiled');
-          }
-          return base.compileLeaf(node, state);
+it.each([false, true])('IfElse 保留条件中的写入和三个独立入口，alwaysNext=%s', alwaysNext => {
+  const result = run(
+    sequence([
+      leaf('save:parent'),
+      {
+        metadata,
+        sourcePath: 'branch',
+        body: {
+          kind: 'ifElse',
+          alwaysNext,
+          condition: sequence([leaf('condition-write'), leaf('?condition')]),
+          whenTrue: sequence([leaf('save:true'), leaf('inside')]),
+          whenFalse: sequence([leaf('other')]),
         },
-      }),
-    );
+      },
+      leaf('after'),
+    ]),
+  );
+  const steps = result.read(result.entry);
+  const branch = steps[1];
+  if (branch?.kind !== 'ifElse') throw new Error('missing IfElse');
+  expect(branch.alwaysNext).toBe(alwaysNext);
+  expect(result.read(branch.condition)).toEqual([
+    { kind: 'leaf', value: 'condition-write[parent]' },
+    { kind: 'checkCondition', condition: '?condition' },
+  ]);
+  expect(result.read(branch.whenTrue)).toEqual([
+    { kind: 'leaf', value: 'save:true[parent]' },
+    { kind: 'leaf', value: 'inside[parent,true]' },
+  ]);
+  expect(result.read(branch.whenFalse)).toEqual([{ kind: 'leaf', value: 'other[parent]' }]);
+  expect(steps[2]).toEqual({ kind: 'leaf', value: 'after[parent]' });
+});
 
-    expect(result.read(result.entry)).toEqual([]);
+it('空条件和空分支保留原生 IfElse 调用，不能当成无行为删除', () => {
+  const result = run(
+    sequence([
+      {
+        metadata,
+        sourcePath: 'empty',
+        body: {
+          kind: 'ifElse',
+          alwaysNext: false,
+          condition: sequence([]),
+          whenTrue: sequence([]),
+          whenFalse: sequence([]),
+        },
+      },
+    ]),
+  );
+  expect(result.read(result.entry)).toEqual([
+    {
+      kind: 'ifElse',
+      alwaysNext: false,
+      condition: { $sequence: null },
+      whenTrue: { $sequence: null },
+      whenFalse: { $sequence: null },
+    },
+  ]);
+});
+
+it('条件不能掩盖未支持的后继动作，未接入的根守卫仍明确失败', () => {
+  expect(() => run(sequence([leaf('?false'), leaf('unsupported')]))).toThrow('unsupported action');
+  expect(() => run({ ...sequence([leaf('a')]), onlyExecuteWhenSourceIsGuard: true })).toThrow(
+    'root filter unsupported',
+  );
+});
+
+it('原生 OR 的空组不参与执行，非空组保留普通动作和 NotNext', () => {
+  const native = (name: string, fields = {}) => ({
+    $type: `Beyond.Gameplay.Core.${name}+Data, Gameplay.Beyond`,
+    isEnable: true,
+    priorityLevel: 'Default',
+    priorityOffset: 0,
+    serverActionIndex: 0,
+    ...fields,
   });
+  const group = (actionData: unknown[]) => ({
+    actionData,
+    onlyExecuteWhenSourceIsMainChar: false,
+    onlyExecuteWhenSourceIsGuard: false,
+  });
+  const source = parseNativeSequenceSource(
+    group([
+      native('OrConditionAction', {
+        conditionList: [
+          group([]),
+          group([native('NotNextCheckAction'), native('WriteVariable')]),
+          group([native('ReturnFalseAction')]),
+        ],
+      }),
+    ]),
+    'or',
+    {},
+    value => ((value as { $type: string }).$type.includes('ReturnFalse') ? '?false' : 'write'),
+  );
+  const result = run(source);
+  const action = result.read(result.entry)[0];
+  if (action?.kind !== 'anyCondition') throw new Error('missing OR action');
+  expect(action.conditions.map(result.read)).toEqual([
+    [{ kind: 'invertNextResult' }, { kind: 'leaf', value: 'write[]' }],
+    [{ kind: 'checkCondition', condition: '?false' }],
+  ]);
+});
+
+it('外层不消费返回值时，分支选择仍消费空条件序列的准入结果', () => {
+  const guarded = {
+    ...sequence([]),
+    onlyExecuteWhenSourceIsMainCharacter: true,
+  };
+  expect(() =>
+    run(
+      sequence([
+        {
+          metadata,
+          sourcePath: 'branch',
+          body: {
+            kind: 'ifElse',
+            condition: guarded,
+            whenTrue: sequence([leaf('hit')]),
+            whenFalse: sequence([]),
+            alwaysNext: true,
+          },
+        },
+      ]),
+    ),
+  ).toThrow('root filter unsupported');
+});
+
+it('两支裁空后不要求无副作用条件的运行支持，但反转其返回值时不能删除', () => {
+  const branch: NativeActionNodeSource<string> = {
+    metadata,
+    sourcePath: 'discarded',
+    body: {
+      kind: 'ifElse',
+      condition: sequence([leaf('unused-condition')]),
+      whenTrue: sequence([]),
+      whenFalse: sequence([]),
+      alwaysNext: true,
+    },
+  };
+  const result = run(sequence([branch, leaf('hit')]));
+  expect(result.read(result.entry)).toEqual([{ kind: 'leaf', value: 'hit[]' }]);
+  expect(() =>
+    run(
+      sequence([
+        { metadata, sourcePath: 'not', body: { kind: 'negateNextResult' } },
+        branch,
+        leaf('hit'),
+      ]),
+    ),
+  ).toThrow('unsupported action');
+  expect(() =>
+    run(
+      sequence([
+        {
+          ...branch,
+          body: {
+            ...(branch.body as Extract<typeof branch.body, { kind: 'ifElse' }>),
+            whenTrue: sequence([leaf('hit')]),
+          },
+        },
+      ]),
+    ),
+  ).toThrow('unsupported action');
+});
+
+it('无读取查询只在没有有效后继且返回值不被使用时删除', () => {
+  const source = sequence([leaf('unused-query'), leaf('unused-query')]);
+  const discarded = run(source);
+  expect(discarded.read(discarded.entry)).toEqual([]);
+  const consumed = run(source, true);
+  expect(consumed.read(consumed.entry)).toHaveLength(2);
+  const followed = run(sequence([leaf('unused-query'), leaf('damage')]));
+  expect(followed.read(followed.entry)).toEqual([
+    { kind: 'leaf', value: 'unused-query[]' },
+    { kind: 'leaf', value: 'damage[]' },
+  ]);
+  const inverted = run(
+    sequence([
+      { metadata, sourcePath: 'not', body: { kind: 'negateNextResult' } },
+      leaf('unused-query'),
+    ]),
+  );
+  expect(inverted.read(inverted.entry)).toHaveLength(2);
 });

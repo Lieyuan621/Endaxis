@@ -1,9 +1,14 @@
-import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import type { ActionGraphResourceDefinition } from '../../../packages/game-data-contract/src/actionGraph';
+import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
+import type {
+  PlayerActionRouteDefinition,
+  PlayerSkillInput,
+} from '../game-data/operatorDefinition';
 import type {
   ActionGraphDefinitionRepository,
   ImportedAbilityEntityDefinitions,
 } from './actionGraphDefinitionRepository';
+import type { CompileUpgradeEntry } from './compileOperatorUpgrades';
 /**
  * 把项目中的干员轨道和技能释放位置编译为战斗运行时可直接装配的程序与输入。
  *
@@ -51,13 +56,6 @@ import {
   resolveSkillExecutionDefinition,
   type ResolvedSkillDefinition,
 } from './resolveSkillDefinition';
-
-interface SkillCompilationBinding {
-  readonly skill: SkillDefinition;
-  readonly skillType: SkillType;
-  readonly level: number;
-  readonly executionSkillId?: string;
-}
 
 function graphSpawnsEntity(graph: ActionGraphResourceDefinition): boolean {
   const pending: object[] = [graph];
@@ -189,92 +187,47 @@ function requireDefinitionLevelSource(
   return skill.levelSource;
 }
 
-/** 编译一次技能释放，并把时间轴块身份与不含身份的技能程序显式绑定。 */
-function compileCastSkillPrograms(
+/** 路由包装器保留施放与支付身份，动作入口统一来自执行体；自定义图优先。 */
+function compileResolvedSkillProgram(
   trackId: string,
-  cast: SkillCastDocument,
   resolved: ResolvedSkillDefinition,
-  level: number,
+  build: OperatorInstanceDocument,
+  operator: OperatorDefinition,
   compileDefinition: ReturnType<typeof createOperatorSkillCompiler>,
-  operator?: OperatorDefinition,
-  build?: OperatorInstanceDocument,
-): readonly CombatSkillCastProgram[] {
+): CompiledSkillProgram {
   const definition = resolved.definition;
-  const routed = resolved.group.routedReplacementSkills?.find(
+  const route = resolved.group.routedReplacementSkills?.find(
     replacement => replacement.skill.key === definition.key,
   );
-  // 换入释放用执行体图编译动作程序（节点身份前缀为 executionSkillKey），
-  // 包装器只保留释放身份、费用与冷却；二者在生成数据中图内容一致。
-  // 技能块完整自定义优先；官方路由缺失执行体则拒绝编译，不能静默换用包装图。
-  const executionDefinition =
-    routed === undefined || operator === undefined || build === undefined
-      ? undefined
-      : resolveSkillExecutionDefinition(resolved, operator);
-  const definitions: SkillCompilationBinding[] = [
-    {
-      skill: definition,
-      skillType: requireDefinitionSkillType(
-        definition,
-        `operator '${resolved.group.key}' skill '${definition.key}'`,
-      ),
-      level,
-      ...(routed === undefined
-        ? {}
-        : {
-            executionSkillId: routed.executionSkillKey,
-          }),
-    },
-  ];
-  return definitions.map(({ skill, skillType, level: definitionLevel, executionSkillId }) => {
-    const wrapperProgram = compileDefinition({
+  const compile = (skill: SkillDefinition, level: number) =>
+    compileDefinition({
       operatorId: trackId,
       skillGroupKey: resolved.group.key,
-      skillType,
-      skillLevel: definitionLevel,
+      skillType: requireDefinitionSkillType(
+        skill,
+        `operator '${operator.slug}' skill '${skill.key}'`,
+      ),
+      skillLevel: level,
       skill,
     });
-    if (
-      executionSkillId === undefined ||
-      executionDefinition === undefined ||
-      executionDefinition === definition
-    ) {
-      return {
-        castId: cast.id,
-        program: {
-          ...wrapperProgram,
-          ...(executionSkillId === undefined ? {} : { executionSkillId }),
-        },
-      };
-    }
-    const bodyProgram = compileDefinition({
-      operatorId: trackId,
-      skillGroupKey: resolved.group.key,
-      skillType: requireDefinitionSkillType(
-        executionDefinition,
-        `operator '${operator!.slug}' skill '${executionDefinition.key}'`,
-      ),
-      skillLevel: requireSkillLevel(
-        build!,
-        requireDefinitionLevelSource(executionDefinition, operator!.slug),
-      ),
-      skill: executionDefinition,
-    });
-    return {
-      castId: cast.id,
-      program: {
-        ...bodyProgram,
-        skillId: wrapperProgram.skillId,
-        skillGroupKey: wrapperProgram.skillGroupKey,
-        skillType: wrapperProgram.skillType,
-        costs: wrapperProgram.costs,
-        ...(wrapperProgram.costFrame === undefined ? {} : { costFrame: wrapperProgram.costFrame }),
-        ...(wrapperProgram.cooldownFrames === undefined
-          ? {}
-          : { cooldownFrames: wrapperProgram.cooldownFrames }),
-        executionSkillId,
-      },
-    };
-  });
+  const wrapper = compile(definition, requireSkillLevel(build, resolved.levelSource));
+  if (route === undefined) return wrapper;
+  const execution = resolveSkillExecutionDefinition(resolved, operator);
+  if (execution === definition) return { ...wrapper, executionSkillId: route.executionSkillKey };
+  const body = compile(
+    execution,
+    requireSkillLevel(build, requireDefinitionLevelSource(execution, operator.slug)),
+  );
+  return {
+    ...body,
+    skillId: wrapper.skillId,
+    skillGroupKey: wrapper.skillGroupKey,
+    skillType: wrapper.skillType,
+    costs: wrapper.costs,
+    ...(wrapper.costFrame === undefined ? {} : { costFrame: wrapper.costFrame }),
+    ...(wrapper.cooldownFrames === undefined ? {} : { cooldownFrames: wrapper.cooldownFrames }),
+    executionSkillId: route.executionSkillKey,
+  };
 }
 
 function compileCastBindings(
@@ -302,15 +255,12 @@ function compileCastBindings(
       );
     }
     const resolved = resolveEffectiveSkillDefinition(cast, operator);
-    return compileCastSkillPrograms(
-      trackId,
-      cast,
-      resolved,
-      requireSkillLevel(build, resolved.levelSource),
-      compileDefinition,
-      operator,
-      build,
-    );
+    return [
+      {
+        castId: cast.id,
+        program: compileResolvedSkillProgram(trackId, resolved, build, operator, compileDefinition),
+      },
+    ];
   });
   const patched = applyOperatorUpgradeSkillPatches(
     bindings.map(binding => binding.program),
@@ -373,11 +323,8 @@ function compileSkillSlotGroups(
       (
         entry,
       ): entry is [
-        import('../game-data/operatorDefinition').PlayerSkillInput,
-        Extract<
-          import('../game-data/operatorDefinition').PlayerActionRouteDefinition,
-          { readonly kind: 'skillSlot' }
-        >,
+        PlayerSkillInput,
+        Extract<PlayerActionRouteDefinition, { readonly kind: 'skillSlot' }>,
       ] => entry[1]?.kind === 'skillSlot' && entry[1].skillSlotKey === slot.key,
     );
     if (matching.length !== 1)
@@ -412,23 +359,19 @@ export function compileOperatorDefinitionSkills(
     typeof imports === 'function' ? imports : imports === undefined ? undefined : () => imports,
   );
   const skills = operator.skillGroups.flatMap(group =>
-    listSkillGroupDefinitionBindings(group).map(({ skill, routedReplacement }) => ({
-      ...compile({
-        operatorId: trackId,
-        skillGroupKey: group.key,
-        skillType: requireDefinitionSkillType(
-          skill,
-          `operator '${operator.slug}' skill '${skill.key}'`,
-        ),
-        skillLevel: requireSkillLevel(build, requireDefinitionLevelSource(skill, operator.slug)),
-        skill,
-      }),
-      ...(routedReplacement === undefined
-        ? {}
-        : {
-            executionSkillId: routedReplacement.executionSkillKey,
-          }),
-    })),
+    listSkillGroupDefinitionBindings(group).map(({ skill }) =>
+      compileResolvedSkillProgram(
+        trackId,
+        {
+          definition: skill,
+          group,
+          levelSource: requireDefinitionLevelSource(skill, operator.slug),
+        },
+        build,
+        operator,
+        compile,
+      ),
+    ),
   );
   if (operator.dodgeSkill !== undefined)
     skills.push(
@@ -527,12 +470,7 @@ function compileResolvedTimelineTracks(
         `operator '${operator.slug}' duplicates shared Buff definitions: ${duplicateBuffs.join(', ')}`,
       );
     const active = resolveActiveOperatorUpgrades(operatorInstance, operator);
-    const compileUpgrade: import('./compileOperatorUpgrades').CompileUpgradeEntry = (
-      entry,
-      level,
-      path,
-      owner,
-    ) => {
+    const compileUpgrade: CompileUpgradeEntry = (entry, level, path, owner) => {
       if (owner.actionGraph === undefined)
         throw new Error(`${path}: upgrade program requires its owning action graph`);
       return context.programs

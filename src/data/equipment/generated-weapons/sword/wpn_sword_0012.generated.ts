@@ -49,13 +49,13 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'skillSpGained',
           priority: 0,
-          sequence: { $sequence: 'conditional_2' },
+          sequence: { $sequence: 'checkCondition_2' },
         },
         {
           key: 'skill3:event:1:sequence:0',
           abilityEvent: 'addedBuff',
           priority: 0,
-          sequence: { $sequence: 'conditional_5' },
+          sequence: { $sequence: 'checkCondition_5' },
         },
       ],
       actionGraph: {
@@ -65,43 +65,45 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_sword_0012_atk_up',
-                  target: 'party',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_sword_0012_atk_up',
+                      copiedBlackboardAssignments: {
+                        atk_up2: 'atk_up2',
+                        duration: 'duration',
+                        lv: 'lv',
+                        max_stack: 'max_stack',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'characterTeam', excludeOwner: false },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    atk_up2: 'atk_up2',
-                    duration: 'duration',
-                    lv: 'lv',
-                    max_stack: 'max_stack',
-                  },
                 },
               },
               next: null,
             },
-            conditional_2: {
+            checkCondition_2: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
               },
-              next: null,
+              next: 'applyBuff_1',
             },
-            conditional_4: {
+            checkCondition_4: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
               },
-              next: null,
+              next: 'applyBuff_1',
             },
-            conditional_5: {
+            checkCondition_5: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'conditional_4' },
               },
-              next: null,
+              next: 'checkCondition_4',
             },
           },
           dataNodes: {
@@ -137,7 +139,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_sword_0012',
-  iconPath: '/weapons/sword/wpn_sword_0012.webp',
+  icon: 'endaxis:weapons/sword/wpn_sword_0012',
   buffDefinitions: {
     buff_wpn_sword_0012_atk_up: {
       stackingType: 'highPriorityWithMaxStack',
@@ -149,8 +151,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_buff_atk_up',
-        iconPath: '/icons/icon_battle_buff_atk_up.webp',
+        icon: 'endaxis:icons/icon_battle_buff_atk_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

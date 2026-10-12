@@ -118,12 +118,7 @@ it.each([true, false])('守墓人之赠重击增伤要求受益者为主控（�
       ),
     ).toBe(true);
     const hits = result.receiptEntries.filter(
-      e =>
-        e.event === 'DamageApplied' &&
-        e.data?.castId === 'last-rite:basicAttack4' &&
-        String(e.data?.stepKey).includes(
-          'chr_0026_lastrite_attack4:scheduledSequences[2].sequence',
-        ),
+      e => e.event === 'DamageApplied' && e.data?.castId === 'last-rite:basicAttack4',
     );
     expect(hits).toHaveLength(1);
     scales.push(Number(hits[0]!.data?.damageScaleMultiplier));

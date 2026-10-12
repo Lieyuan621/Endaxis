@@ -1,15 +1,22 @@
-import { conditionInputExpression } from '../../compiler/compiledGraphData';
-import type { CompiledCondition } from '../../compiler/compiledGraphData';
-import { CombatActionEventListener } from './combatActionEventListener';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
+import type { CompiledCondition } from '../../compiler/compiledGraphData';
+import { conditionInputExpression } from '../../compiler/compiledGraphData';
+import type { RuntimeTargetGroup, RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+import { runtimeTargetFromEntityId } from '../../game-data/logicalAbilityEntity';
+import { resolveDirectActionTargets } from '../abilities/targetContextOperationExecutor';
 import type {
+  ActionBuffReferencesState,
+  ActionRegistrationState,
   ActionSequenceState,
   ActionStepData,
-  OperationStepData,
   GraphLeafStepData,
+  OperationStepData,
 } from '../state/actionState';
-import { createActionScopeState, createTimelineJumpState } from '../state/actionState';
-import { type ActionBlackboardState } from '../state/foundationState';
+import { createActionSequenceHostState } from '../state/actionState';
+import type { ProjectileCallbackState } from '../state/instanceState';
+import { COMBAT_FRAMES_PER_SECOND } from '../time/combatClock';
+import type { ExecutionTracePhase } from './actionExecutionTrace';
+import { CombatActionEventListener } from './combatActionEventListener';
 
 /**
  * 把编译后的同步动作序列绑定到操作执行器和动作黑板。
@@ -22,37 +29,27 @@ import type {
   ResolvedCombatStep,
 } from '../../compiler/combatProgram';
 import { isCombatOperationStep } from '../../compiler/combatProgram';
+import type {
+  CompiledActionGraph,
+  CompiledGraphOperation,
+} from '../../compiler/compileActionGraph';
 import type { AbilityEntityTargetRef } from '../../game-data/logicalAbilityEntity';
 import { ProjectileCallbackRuntime } from '../abilities/projectileCallbackRuntime';
 import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
 import { DamageCalculationSnapshots } from '../damage/damageCalculationSnapshots';
 import type { CombatSemanticEventRuntime } from '../events/combatSemanticEventRuntime';
-import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
 import { operationProducer } from '../receipt/combatObjectIdentity';
-import { type TimelineRuntimeState } from '../state/actionState';
+import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
+import type { ActionGraphExecutionState, TimelineRuntimeState } from '../state/actionState';
 import {
-  type TimelineActionProcessor,
   bindTimelineProgram,
   type TimelineActionLifecycleSink,
+  type TimelineActionProcessor,
 } from '../timeline/timelineActionProcessor';
 import { ActionBlackboard, resolveActionValueOperand } from './actionBlackboard';
 import type { CombatActionExecution } from './actionGraphExecution';
 import { ActionGraphExecution, type ActionGraphExecutionHost } from './actionGraphExecution';
-import type {
-  CompiledActionGraph,
-  CompiledGraphOperation,
-} from '../../compiler/compileActionGraph';
-import type { ActionGraphExecutionState } from '../state/actionState';
 import { CombatStep } from './combatStep';
-import {
-  executeActionOnce,
-  executeTimelineJump,
-  getActionScopeBlackboard,
-  resetActionScopes,
-  resetTimelineJump,
-  tickTimelineJump,
-  type TimelineJumpExecutionHost,
-} from './sequenceControl';
 
 /** 步骤自身没有可变数据；它调用的操作执行器仍须由所属宿主恢复。 */
 abstract class StatelessCombatStep extends CombatStep {
@@ -70,8 +67,8 @@ export interface CombatActionSequenceRuntimeHooks {
 }
 
 class OperationStep extends StatelessCombatStep {
-  #registrationState: import('../state/actionState').ActionRegistrationState | null = null;
-  #buffReferencesState: import('../state/actionState').ActionBuffReferencesState | null = null;
+  #registrationState: ActionRegistrationState | null = null;
+  #buffReferencesState: ActionBuffReferencesState | null = null;
 
   constructor(
     readonly step: ResolvedCombatOperationStep,
@@ -86,7 +83,7 @@ class OperationStep extends StatelessCombatStep {
       step.kind === 'skillAffix' ||
       (step.kind === 'changeSkillSlot' && step.parameters.lifetime !== undefined)
     )
-      this.#registrationState = { registrationId: null };
+      this.#registrationState = { registrationIds: [] };
     if (step.kind === 'applyBuff' && step.parameters.finishByAction === true)
       this.#buffReferencesState = { active: false, references: [] };
     if (step.kind === 'inheritBuffById')
@@ -215,6 +212,40 @@ class ProjectileLaunchStep extends StatelessCombatStep {
     const parent = this.operationContext;
     const launch = parent.launchProjectile;
     if (launch === undefined) throw new Error('projectile launch requires a runtime');
+    const prepared = parent.blackboard.createLocalScope(
+      {},
+      this.step.parameters.inheritActionBlackboard,
+      this.step.parameters.entityInitialValues ?? {},
+      this.step.parameters.entityAssignments,
+    );
+    const targets = this.step.parameters.targets;
+    const filter = this.step.parameters.onlyHitTargets;
+    if (filter && !this.runtime.operations.queryTargets)
+      throw new Error('projectile hit filter requires a target query');
+    const onlyHitTargets = filter
+      ? this.runtime.operations.queryTargets!(filter, parent).map(target => ({ ...target }))
+      : undefined;
+    if (targets?.kind === 'context') {
+      if (!parent.targetContext) throw new Error('projectile launch requires a target context');
+      const selected = parent.targetContext.get(targets.contextKey).map(target => ({ ...target }));
+      for (const target of selected)
+        this.launchSingle(
+          { ...parent, currentTarget: target, actionInputTarget: target },
+          prepared.forkEntityScope(),
+          onlyHitTargets,
+        );
+    } else {
+      this.launchSingle(parent, prepared.forkEntityScope(), onlyHitTargets);
+    }
+    return true;
+  }
+
+  private launchSingle(
+    parent: CombatOperationContext,
+    blackboard: ActionBlackboard,
+    onlyHitTargets?: readonly RuntimeTargetRef[],
+  ): void {
+    const launch = parent.launchProjectile!;
     const sourceId =
       this.step.parameters.source === 'actionOwner'
         ? (parent.actionOwnerId ?? parent.buffOwnerId ?? this.runtime.ownerOperatorId)
@@ -226,7 +257,7 @@ class ProjectileLaunchStep extends StatelessCombatStep {
       if (createHost === undefined || definitionOperatorId === undefined)
         throw new Error('projectile callback requires a skill host and definition operator');
       const context: CombatOperationContext = {
-        blackboard: parent.blackboard.detachedSnapshot(),
+        blackboard: blackboard.detachedSnapshot(),
         damageCalculationSnapshots: new DamageCalculationSnapshots(),
         targetContext: new RuntimeTargetContext(),
         skillCastInfo:
@@ -236,7 +267,7 @@ class ProjectileLaunchStep extends StatelessCombatStep {
         launchProjectile: launch,
         createCallbackSkillHost: createHost,
       };
-      const state: import('../state/instanceState').ProjectileCallbackState = {
+      const state: ProjectileCallbackState = {
         event,
         programId: null,
         definitionOperatorId,
@@ -276,6 +307,8 @@ class ProjectileLaunchStep extends StatelessCombatStep {
       };
     });
     entity = launch({
+      entityBlackboard: blackboard.runtimeState.entity!,
+      onlyHitTargets,
       syncTimeScale: this.step.parameters.syncTimeScale,
       finish: this.step.parameters.finish,
       recycleDelaySeconds: this.step.parameters.recycleDelaySeconds ?? 0,
@@ -287,74 +320,6 @@ class ProjectileLaunchStep extends StatelessCombatStep {
       hitTarget:
         this.step.parameters.hit?.target === 'currentTarget' ? parent.currentTarget : undefined,
     }).target;
-    return true;
-  }
-}
-
-/** 原生 Switch 的持久分支实例；选择、生命周期和浮点匹配不能复用普通 conditional。 */
-class TimelineJumpStep extends CombatStep {
-  #state = createTimelineJumpState();
-  override bindExecutionData(data: ActionStepData | null): void {
-    if (data?.kind !== 'jump') throw new Error('expected timeline jump data');
-    this.#state = data.jump;
-  }
-  override get executionData() {
-    return { kind: 'jump' as const, jump: this.#state };
-  }
-
-  constructor(
-    readonly step: ResolvedCombatStepForKind<'jumpTimeline'>,
-    readonly runtime: CombatActionSequenceRuntime,
-    readonly operationContext: CombatOperationContext,
-  ) {
-    super();
-  }
-
-  execute(): void {
-    this.runtime.hooks.stepReached?.(this.step);
-    executeTimelineJump(this.#state, this.#host());
-  }
-
-  override tick(): void {
-    tickTimelineJump(this.#state, this.#host());
-  }
-
-  override reset(): void {
-    resetTimelineJump(this.#state);
-  }
-
-  #host(): TimelineJumpExecutionHost {
-    return {
-      evaluate: () => {
-        const condition = this.step.parameters.condition;
-        if (condition === undefined) return true;
-        const passed = this.runtime.operations.evaluate(condition, this.operationContext);
-        this.runtime.hooks.conditionEvaluated?.(condition, passed);
-        return passed;
-      },
-      resolveRequest: () => {
-        const request = this.operationContext.requestTimelineJump;
-        if (request === undefined) throw new Error('jumpTimeline requires a timeline host');
-        return () => request(this.step.parameters.destinationFrame);
-      },
-    };
-  }
-}
-
-class TimelineFinishStep extends StatelessCombatStep {
-  constructor(
-    readonly step: ResolvedCombatStepForKind<'finishTimeline'>,
-    readonly runtime: CombatActionSequenceRuntime,
-    readonly operationContext: CombatOperationContext,
-  ) {
-    super();
-  }
-
-  execute(): void {
-    this.runtime.hooks.stepReached?.(this.step);
-    const request = this.operationContext.requestTimelineFinish;
-    if (request === undefined) throw new Error('finishTimeline requires a timeline host');
-    request();
   }
 }
 
@@ -393,14 +358,13 @@ class MarkCurrentSkillInputStep extends StatelessCombatStep {
 }
 
 export class CombatActionSequenceRuntime {
-  readonly #scopeState: ReturnType<typeof createActionScopeState>;
+  readonly #sequenceHostState: ReturnType<typeof createActionSequenceHostState>;
 
-  /** 宿主下所有动作共用的 once 标记和黑板作用域。 */
-  get scopeState(): ReturnType<typeof createActionScopeState> {
-    return this.#scopeState;
+  /** 宿主下动作共用的黑板作用域。 */
+  get sequenceHostState(): ReturnType<typeof createActionSequenceHostState> {
+    return this.#sequenceHostState;
   }
   // 相同子技能 ID/静态路径在不同投射物中不能复用同一块 direct/entity 板。
-  #blackboardBindings = new WeakMap<ActionBlackboardState, ActionBlackboard>();
 
   constructor(
     readonly operations: CombatOperationExecutor,
@@ -408,9 +372,9 @@ export class CombatActionSequenceRuntime {
     readonly hooks: CombatActionSequenceRuntimeHooks = {},
     readonly semanticEvents?: CombatSemanticEventRuntime,
     readonly ownerOperatorId?: string,
-    scopeState = createActionScopeState(),
+    sequenceHostState = createActionSequenceHostState(),
   ) {
-    this.#scopeState = scopeState;
+    this.#sequenceHostState = sequenceHostState;
   }
 
   /** 图入口直接绑定现有操作执行器；不经过序列树或展开器。 */
@@ -433,6 +397,26 @@ export class CombatActionSequenceRuntime {
   #graphHost(operationContext: CombatOperationContext): ActionGraphExecutionHost {
     const trace = this.operations.executionTrace;
     return {
+      frame: this.operations.frame,
+      get inputTarget() {
+        return operationContext.actionInputTarget;
+      },
+      selectTargets: (selection, input) => {
+        if (selection.kind === 'context')
+          return operationContext.targetContext?.getOptional(selection.key) ?? [];
+        if (selection.kind === 'inputTarget') return input === null ? [] : [input];
+        if (selection.kind !== 'owner' && selection.kind !== 'source') {
+          if (!this.operations.queryTargets) throw new Error('channeling requires a target query');
+          return this.operations.queryTargets(selection, operationContext);
+        }
+        const id =
+          selection.kind === 'owner'
+            ? operationContext.actionOwnerId
+            : operationContext.actionSourceId;
+        return id === undefined ? [] : [runtimeTargetFromEntityId(id)];
+      },
+      executionPolicy: this.#sequenceHostState.executionPolicy,
+      requestTimelineJump: operationContext.requestTimelineJump,
       ...(trace === undefined
         ? {}
         : {
@@ -440,7 +424,7 @@ export class CombatActionSequenceRuntime {
               program: CompiledActionGraph,
               nodeId: string,
               invocation: string,
-              phase: import('./actionExecutionTrace').ExecutionTracePhase,
+              phase: ExecutionTracePhase,
               execute: () => T,
             ) =>
               trace.recorder.run(
@@ -466,7 +450,47 @@ export class CombatActionSequenceRuntime {
           (reference, context, index, saved) =>
             create(reference, index, this.#graphHost(context), saved),
         ),
-      withTarget: target => this.#graphHost({ ...operationContext, currentTarget: target }),
+      withTarget: (target, asInput) =>
+        this.#graphHost({
+          ...operationContext,
+          currentTarget: target,
+          ...(asInput ? { actionInputTarget: target } : {}),
+        }),
+      withSavedInput: target =>
+        this.#graphHost({
+          ...operationContext,
+          actionInputTarget: target ?? undefined,
+          currentTarget: target ?? undefined,
+          event: undefined,
+          eventSkillCastInfo: undefined,
+        }),
+      comboQte: {
+        register: (early, active) => {
+          const windows = this.operations.comboWindows;
+          const owner = operationContext.actionSourceId ?? this.ownerOperatorId;
+          if (!windows || owner === undefined)
+            throw new Error('QTE requires a character source and combo runtime');
+          return windows.registerRingQte(
+            owner,
+            Math.fround(early) * COMBAT_FRAMES_PER_SECOND,
+            Math.fround(active) * COMBAT_FRAMES_PER_SECOND,
+          );
+        },
+        bind: (registration, triggered) => {
+          if (!this.operations.comboWindows) throw new Error('QTE runtime is not configured');
+          this.operations.comboWindows.bindRingQte(registration, triggered);
+        },
+        end: registration => this.operations.comboWindows?.unregisterRingQte(registration),
+      },
+      aura: parameters => {
+        const operations = this.operations.aura;
+        if (!operations) throw new Error('Aura Buff operations are not configured');
+        return {
+          targets: () => operations.targets(parameters, operationContext),
+          apply: target => operations.apply(parameters, target, operationContext),
+          finish: references => operations.finish(references),
+        };
+      },
       targets: parameters => this.resolveLoopTargets(parameters, operationContext),
       bindOperation: action => this.#createLeafStep(action, operationContext),
       canExecute: () => operationContext.canExecuteAction?.() !== false,
@@ -482,17 +506,6 @@ export class CombatActionSequenceRuntime {
         trace?.recorder.observe('value', operand, value);
         return value;
       },
-      once: (key, execute) => executeActionOnce(this.#scopeState, key, execute),
-      scope: (parameters, saved) => {
-        const blackboard =
-          saved === undefined
-            ? this.getActionBlackboardScope({ parameters }, operationContext.blackboard)
-            : ActionBlackboard.bindRuntimeState(saved);
-        return {
-          blackboard: blackboard.runtimeState,
-          host: this.#graphHost({ ...operationContext, blackboard }),
-        };
-      },
     };
   }
 
@@ -501,7 +514,8 @@ export class CombatActionSequenceRuntime {
     operationContext: CombatOperationContext = this.context,
     state?: ActionSequenceState,
   ): CombatActionExecution {
-    const invocation = state?.invocation ?? `call:${this.#scopeState.nextGraphInvocationId++}`;
+    const invocation =
+      state?.invocation ?? `call:${this.#sequenceHostState.nextGraphInvocationId++}`;
     return new ActionGraphExecution(
       sequence.graph,
       sequence.entry,
@@ -515,16 +529,11 @@ export class CombatActionSequenceRuntime {
   resolveLoopTargets(
     parameters: ResolvedCombatStepForKind<'forEachContextTarget'>['parameters'],
     context: CombatOperationContext,
-  ): import('../../game-data/logicalAbilityEntity').RuntimeTargetGroup {
-    if (parameters.target === 'enemy') return [{ kind: 'enemy' }];
-    if (parameters.target === 'caster') {
-      if (this.ownerOperatorId === undefined)
-        throw new Error('caster forEach target requires an owner operator');
-      return [{ kind: 'operator', operatorId: this.ownerOperatorId }];
-    }
-    if (!context.targetContext)
-      throw new Error('forEachContextTarget requires a combat target context');
-    return context.targetContext.get(parameters.contextKey!);
+  ): RuntimeTargetGroup {
+    const direct = resolveDirectActionTargets(parameters.targets, context, this.ownerOperatorId);
+    if (direct !== undefined) return direct;
+    if (!this.operations.queryTargets) throw new Error('forEach requires a target query');
+    return this.operations.queryTargets(parameters.targets, context);
   }
 
   /** Independent interval state, but one host context/blackboard across all intervals. */
@@ -548,12 +557,6 @@ export class CombatActionSequenceRuntime {
     if (isCombatOperationStep(step)) return new OperationStep(step, this, operationContext);
     if (step.kind === 'launchProjectile')
       return new ProjectileLaunchStep(step, this, operationContext);
-    if (step.kind === 'jumpTimeline') {
-      return new TimelineJumpStep(step, this, operationContext);
-    }
-    if (step.kind === 'finishTimeline') {
-      return new TimelineFinishStep(step, this, operationContext);
-    }
     if (step.kind === 'reachSkillOperableBoundary') {
       return new SkillOperableBoundaryStep(step, this, operationContext);
     }
@@ -563,38 +566,5 @@ export class CombatActionSequenceRuntime {
 
     const unhandled: never = step;
     throw new Error(`unhandled leaf step: ${JSON.stringify(unhandled)}`);
-  }
-
-  reset(): void {
-    resetActionScopes(this.#scopeState);
-    this.#blackboardBindings = new WeakMap();
-  }
-
-  getActionBlackboardScope(
-    step: Pick<ResolvedCombatStepForKind<'withActionBlackboardScope'>, 'parameters'>,
-    parent: ActionBlackboard,
-  ): ActionBlackboard {
-    this.#blackboardBindings.set(parent.runtimeState, parent);
-    const state = getActionScopeBlackboard(
-      this.#scopeState,
-      parent.runtimeState,
-      step.parameters,
-      () => {
-        const created = parent.createLocalScope(
-          step.parameters.initialValues,
-          step.parameters.inheritParent,
-          step.parameters.entityInitialValues,
-          step.parameters.entityAssignments,
-        );
-        this.#blackboardBindings.set(created.runtimeState, created);
-        return created.runtimeState;
-      },
-    );
-    let binding = this.#blackboardBindings.get(state);
-    if (binding === undefined) {
-      binding = ActionBlackboard.bindRuntimeState(state);
-      this.#blackboardBindings.set(state, binding);
-    }
-    return binding;
   }
 }

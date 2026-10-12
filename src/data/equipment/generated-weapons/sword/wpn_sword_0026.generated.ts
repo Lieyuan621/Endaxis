@@ -40,17 +40,22 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_sword_0026_celebration',
-                  target: 'party',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_sword_0026_celebration',
+                      copiedBlackboardAssignments: {
+                        dmg_up: 'dmg_up',
+                        phy_spell_up: 'phy_spell_up',
+                        def_up: 'def_up',
+                        duration: 'duration',
+                        hp_up: 'hp_up_c',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'characterTeam', excludeOwner: false },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    dmg_up: 'dmg_up',
-                    phy_spell_up: 'phy_spell_up',
-                    def_up: 'def_up',
-                    duration: 'duration',
-                    hp_up: 'hp_up_c',
-                  },
                 },
               },
               next: null,
@@ -78,7 +83,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_sword_0026',
-  iconPath: '/weapons/sword/wpn_sword_0026.webp',
+  icon: 'endaxis:weapons/sword/wpn_sword_0026',
   buffDefinitions: {
     buff_wpn_sword_0026_celebration: {
       stackingType: 'highPriority',
@@ -87,8 +92,7 @@ const definition = {
       durationSeconds: { blackboardKey: 'duration' },
       presentation: {
         visible: true,
-        iconId: 'icon_battle_buff_wpn_sword_0026',
-        iconPath: '/icons/icon_battle_buff_wpn_sword_0026.webp',
+        icon: 'endaxis:icons/icon_battle_buff_wpn_sword_0026',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -143,7 +147,7 @@ const definition = {
         },
         { attribute: 'Def', slot: 'baseMultiplier', value: { blackboardKey: 'def_up' } },
       ],
-      lifecycleSequences: { finish: { $sequence: 'conditional_3' } },
+      lifecycleSequences: { finish: [{ $sequence: 'checkCondition_3' }] },
       actionGraph: {
         main: {
           nodes: {
@@ -151,10 +155,11 @@ const definition = {
               action: {
                 kind: 'createTimedMarker',
                 parameters: {
-                  target: 'buffOwner',
+                  targets: { kind: 'owner' },
                   markerId: 'wpn_sword_0026_heal',
                   durationSeconds: { kind: 'constant', value: 0.1 },
                   autoFinishByAction: false,
+                  timeDomain: 'globalScaled',
                 },
               },
               next: null,
@@ -171,13 +176,12 @@ const definition = {
               },
               next: 'createTimedMarker_1',
             },
-            conditional_3: {
+            checkCondition_3: {
               action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'heal_2' },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
               },
-              next: null,
+              next: 'heal_2',
             },
           },
           dataNodes: {
@@ -186,13 +190,10 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                returnTrueIfNotExists: true,
                 target: 'buffOwner',
                 markerId: 'wpn_sword_0026_heal',
               },
-            },
-            data_3: {
-              type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
             },
           },
         },

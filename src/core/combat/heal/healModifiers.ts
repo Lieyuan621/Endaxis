@@ -1,15 +1,18 @@
 /** 单次治疗计算包，以及 Buff 实例持有的治疗修正器。 */
+import type { GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags';
+import type { HealProcessTiming } from '../../../../packages/game-data-contract/src/modifiers';
+import type {
+  HealModifierDefinition,
+  HealModifierSide,
+} from '../../../../packages/game-data-contract/src/modifiers.ts';
 import type { ModifierConditionRuntime } from '../actions/modifierConditionRuntime';
 import { resolveBuffModifierNumber } from '../buffs/buffModifierNumberSource';
-import { applyHealModifier } from './healModifierExecution';
-import type { GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags';
-import {
-  type HealModifierDefinition,
-  type HealModifierSide,
-} from '../../../../packages/game-data-contract/src/modifiers.ts';
 import type { CombatVitals } from '../resources/combatVitals';
-import type { BuffModifierNumberSource } from '../state/foundationState';
-import { type HealModifier as HealModifierState } from '../state/foundationState';
+import type {
+  BuffModifierNumberSource,
+  HealModifier as HealModifierState,
+} from '../state/foundationState';
+import { applyHealModifier } from './healModifierExecution';
 
 export class HealCalculationContext {
   constructor(
@@ -52,11 +55,7 @@ export class HealModifier {
     if (restoredState && restoredState.condition !== (condition?.runtimeState ?? null))
       throw new Error('restored heal modifier condition is not bound to its saved state');
   }
-  apply(
-    timing: import('../../../../packages/game-data-contract/src/modifiers').HealProcessTiming,
-    side: HealModifierSide,
-    context: HealCalculationContext,
-  ): void {
+  apply(timing: HealProcessTiming, side: HealModifierSide, context: HealCalculationContext): void {
     applyHealModifier(
       this.ownerId,
       this.definition,

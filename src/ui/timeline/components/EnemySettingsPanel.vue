@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { resolveImage } from '../../imageResources';
 import { ElIcon } from 'element-plus';
 /**
  * 敌人实例的选择与属性编辑界面。
@@ -237,7 +238,7 @@ function removeKnotThreshold(index: number): void {
     >
       <span class="module-deco-line"></span>
       <span class="enemy-avatar-box">
-        <img v-if="definition?.iconPath" :src="definition.iconPath" alt="" />
+        <img v-if="resolveImage(definition?.icon)" :src="resolveImage(definition?.icon)" alt="" />
         <span v-else class="custom-avatar-placeholder">?</span>
         <span class="scan-line"></span>
       </span>
@@ -403,7 +404,7 @@ function removeKnotThreshold(index: number): void {
                 :pressed="definition?.id === candidate.id"
               >
                 <span class="card-avatar">
-                  <img :src="candidate.iconPath" alt="" />
+                  <img :src="resolveImage(candidate.icon)" alt="" />
                   <span v-if="candidate.tier !== 'normal'" class="tier-strip">{{
                     labels.tier[candidate.tier]
                   }}</span>

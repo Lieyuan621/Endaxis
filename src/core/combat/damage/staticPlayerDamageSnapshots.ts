@@ -1,4 +1,6 @@
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
+import type { ResolvedOperatorCombatModifier } from '../../compiler/resolveOperatorPanel';
+import type { AppliedDamageModifier } from './damageScale';
 /**
  * 把场景编译得到的干员面板和敌人静态输入冻结为单次玩家伤害快照。
  *
@@ -9,21 +11,21 @@ import type {
   DamageType,
   UpgradeStaticDamageIncreaseTarget,
 } from '../../game-data/operatorDefinition';
-import type { PlayerDamageDefenderSnapshot } from './playerActiveDamageInput';
-import { ENEMY_RESISTANCE_ATTRIBUTES } from './playerActiveDamageInput';
-import { DAMAGE_SCALE_ATTRIBUTE_KEYS, type DamageScaleAttributeKey } from './damageScaleAttributes';
-import type { PlayerDamageAttributeSnapshots } from './playerDamageContext';
-import type { CombatDamageExecutorContext } from '../runtime/combatRuntimeAssembly';
 import { CombatAttributeSet, attributeModifierValues } from '../attributes/combatAttributes';
 import {
-  resolveOperatorAttack,
   EQUIPMENT_DAMAGE_SCALE_ATTRIBUTES,
+  resolveOperatorAttack,
 } from '../attributes/operatorAttackAttributes';
+import type { CombatDamageExecutorContext } from '../runtime/combatRuntimeAssembly';
 import { captureAttackReceiptSnapshot } from './attackReceiptDetail';
+import { DAMAGE_SCALE_ATTRIBUTE_KEYS, type DamageScaleAttributeKey } from './damageScaleAttributes';
+import type { PlayerDamageDefenderSnapshot } from './playerActiveDamageInput';
+import { ENEMY_RESISTANCE_ATTRIBUTES } from './playerActiveDamageInput';
+import type { PlayerDamageAttributeSnapshots } from './playerDamageContext';
 
-type DamageStep = ResolvedCombatStepForKind<'dealDamage' | 'dealFixedDamage'>;
+type DamageStep = ResolvedCombatStepForKind<'dealDamage'>;
 
-/** 安装敌人的抗性及伤害区间属性，Buff 修改与命中快照必须读取同一属性集。 */
+/** 安装敌人战斗属性，Buff 修改、伤害和治疗必须读取同一属性集。 */
 export function initializeEnemyCombatAttributes(
   attributes: CombatAttributeSet<string>,
   defender: PlayerDamageDefenderSnapshot,
@@ -44,6 +46,9 @@ export function initializeEnemyCombatAttributes(
   attributes.define('weaknessDamageMultiplier', 1, {});
   // Slow 载体只派生移动速度；零距离木桩仍需保存该原生属性。
   attributes.define('SlowActionSpeedScalar', 0, {});
+  // 木桩没有基础治疗加成；合约回血仍使用双方治疗属性及其 Buff 修正。
+  attributes.define('healOutputIncrease', 0, {});
+  attributes.define('healTakenIncrease', 0, {});
 }
 
 const DAMAGE_INCREASE_ATTRIBUTE: Partial<Record<DamageType, DamageScaleAttributeKey>> = {
@@ -90,7 +95,7 @@ function resolveStaticDamageScales(
   context: DamageSnapshotContext,
   step: DamageStep,
   record: (
-    modifier: import('../../compiler/resolveOperatorPanel').ResolvedOperatorCombatModifier,
+    modifier: ResolvedOperatorCombatModifier,
     attribute: string,
     slot: 'baseAddition' | 'addition',
   ) => void,
@@ -141,7 +146,7 @@ export function resolveStaticPlayerDamageSnapshots(
       `operator '${'program' in context ? context.program.operatorId : context.operatorId}' has no resolved panel`,
     );
   }
-  const modifierDetails: import('./damageScale').AppliedDamageModifier[] = [];
+  const modifierDetails: AppliedDamageModifier[] = [];
   // Deck 的 Atk 槽位已按构筑面板合并；仅补回来源明细，不再次施加数值。
   for (const contribution of panel.receipt) {
     if (
@@ -211,7 +216,7 @@ export function resolveStaticPlayerDamageSnapshots(
       ...attackerDamageScales,
       attack: attack.value,
       attackDetail: captureAttackReceiptSnapshot(panel, operatorAttributes, attack),
-      ...(step.kind === 'dealDamage' && step.parameters.calculation === 'attribute'
+      ...(step.parameters.calculation === 'attribute'
         ? (() => {
             const attribute = step.parameters.calculationAttribute;
             if (attribute === undefined || !operatorAttributes.has(attribute)) {

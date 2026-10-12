@@ -1,24 +1,28 @@
-import { createTestBuffReference } from '../buffs/buffTestFixtures';
 import { expect, it } from 'vitest';
+import { createTestBuffReference } from '../buffs/buffTestFixtures';
 import { AbilityEventDispatcher } from './abilityEventDispatcher';
-import type { AbilityEventPayloadMap, CombatAbilityEvent } from './combatAbilityEvent';
+import type {
+  AbilityEventPayloadMap,
+  CombatAbilityEvent,
+  ExternalOperatorHitPayload,
+} from './combatAbilityEvent';
 import {
-  spellBurstAbilityEvent,
+  buffEnhanceAbilityEvent,
   characterInflictionAbilityEvent,
-  skillAbilityEvent,
-  lifecycleAbilityEvent,
-  weaknessAbilityEvent,
   customAbilityEvent,
+  damageAbilityEvent,
+  healAbilityEvent,
+  inflictionAbilityEvent,
+  killAbilityEvent,
+  knockDownAbilityEvent,
+  lifecycleAbilityEvent,
+  physicalAbilityEvent,
   poiseAbilityEvent,
   shieldAbilityEvent,
-  killAbilityEvent,
-  inflictionAbilityEvent,
+  skillAbilityEvent,
+  spellBurstAbilityEvent,
   spGainAbilityEvent,
-  healAbilityEvent,
-  damageAbilityEvent,
-  physicalAbilityEvent,
-  knockDownAbilityEvent,
-  buffEnhanceAbilityEvent,
+  weaknessAbilityEvent,
 } from './combatAbilityEvent';
 
 it('分类器只收窄统一事件，不读取或重新解释载荷，手工标记不冒充原生事件', () => {
@@ -146,7 +150,7 @@ it('按订阅事件推导完整载荷，异类事件不能混配', () => {
 });
 
 // 类型边界：外部受击事实不能携带一次并未执行的伤害结果。
-const invalidExternalHit: import('./combatAbilityEvent').ExternalOperatorHitPayload = {
+const invalidExternalHit: ExternalOperatorHitPayload = {
   external: true,
   sourceId: 'enemy',
   targetId: 'operator',

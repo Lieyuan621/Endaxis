@@ -5,7 +5,6 @@
  * 由调用方显式注入。调用方可以把返回值直接交给 `CombatRuntimeAssembly`，但不得把这里当作
  * 缺失规则的默认值来源。
  */
-import { compareCombatNumbers } from '../mechanics/combatNumbers.ts';
 import type {
   CombatOperatorProgram,
   CombatRuntimeAssemblyOptions,
@@ -19,14 +18,17 @@ import type {
 } from '../combat/state/environmentState';
 import type { GameDataRepository } from '../game-data/gameDataRepository';
 import type { OperatorDefinition } from '../game-data/operatorDefinition';
+import { compareCombatNumbers } from '../math/combatNumbers.ts';
 import {
   compileMechanics,
   MechanicAdapterRegistry,
   type CompiledMechanics,
-} from '../mechanics/mechanicCompiler';
+} from '../scenarioMechanics/mechanicCompiler';
 import { resolveControlTimeline } from '../project/resolveControlTimeline';
 import type { ScenarioDocument } from '../project/schema';
 import { resolveScenarioInitialFrame } from '../project/skillCastPlacement';
+import type { CompiledEquipmentContribution } from './compileEquipment';
+import { compileGlobalEffects } from './compileGlobalEffects';
 import { applyMechanicsToScenarioEnemy, compileScenarioEnemy } from './compileScenarioEnemy';
 import { compileResolvedScenarioEquipment } from './compileScenarioEquipment';
 import {
@@ -40,7 +42,6 @@ import {
 } from './compileScenarioTimeline';
 import type { ResolvedOperatorPanel } from './resolveOperatorPanel';
 import { resolveScenarioOperatorPanels } from './resolveOperatorPanel';
-import { compileGlobalEffects } from './compileGlobalEffects';
 import { resolveScenarioBuilds } from './resolveScenarioBuilds';
 import { resolveScenarioOperatorResourceRules } from './resolveScenarioResourceRules';
 
@@ -66,7 +67,7 @@ export type ScenarioRuntimeBuildIndex = Pick<
  */
 export type CombatOperatorRuntimeBindings = Pick<
   CombatOperatorProgram,
-  'buffRuntime' | 'statusContainer' | 'actionRuntime'
+  'buffRuntime' | 'actionRuntime'
 >;
 
 export type { CombatRuntimeEnvironmentOptions } from '../combat/runtime/combatRuntimeAssembly';
@@ -482,7 +483,8 @@ export function compileScenarioRuntimeAssembly(
             : { cooldownFrames: program.cooldownFrames }),
           ...(program.costFrame === undefined ? {} : { costFrame: program.costFrame }),
         })),
-        characterTypeId: build.operator.element,
+        element: build.operator.element,
+        characterTypeId: build.operator.characterTypeId,
         operatorRole: build.operator.role,
         ...(Object.keys(equipmentBuffDefinitions).length === 0
           ? {}
@@ -571,7 +573,7 @@ export function compileScenarioRuntimeAssembly(
 function mergeEquipmentBuffDefinitions(
   operatorId: string,
   existing: NonNullable<CombatOperatorProgram['buffDefinitions']>,
-  contributions: readonly import('./compileEquipment').CompiledEquipmentContribution[],
+  contributions: readonly CompiledEquipmentContribution[],
   weaponBuffs: CombatOperatorProgram['buffDefinitions'],
 ): NonNullable<CombatOperatorProgram['buffDefinitions']> {
   const merged = { ...existing };
@@ -595,9 +597,7 @@ function mergeEquipmentBuffDefinitions(
   return merged;
 }
 
-function equipmentContributionKey(
-  contribution: import('./compileEquipment').CompiledEquipmentContribution,
-): string {
+function equipmentContributionKey(contribution: CompiledEquipmentContribution): string {
   const source = contribution.source;
   switch (source.kind) {
     case 'gearSet':

@@ -120,8 +120,5 @@ function createRestoreAssembly(
               programs: programs.timeDilation,
             },
           }),
-      ...(compiled.enemyStatusContainer === undefined
-        ? {}
-        : { enemyStatusContainer: compiled.enemyStatusContainer }),
     });
 }

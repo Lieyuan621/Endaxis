@@ -1,22 +1,22 @@
+import type { CompiledBuffDefinitionSource } from '../../compiler/buffs/buffProjectionTypes.ts';
 import type {
+  CombatActionProjectionContextSource,
+  CombatActionProjectionExtensionsSource,
+} from '../../compiler/combatProjectionCommon.ts';
+import type {
+  ActionGraphResourceDefinition,
   LevelValues,
-  SkillDefinition,
   SkillCostDefinition,
+  SkillDefinition,
 } from '../../compiler/intermediateDefinitions.ts';
-import type { OperatorActiveSkillTypeSource } from './activeSkills.ts';
-import { resolveSkillElement, type SkillPatchSource } from '../../source/skillPatch.ts';
-import { requireNonNegativeInteger, requireRecord } from '../../source/primitives.ts';
 import {
   compileActiveSkillRuntimeProjectionSource,
   type CompiledActiveSkillRuntimeProjectionSource,
   type CompiledActiveSkillTimelineSequenceSource,
 } from '../../compiler/skills/activeSkillRuntimeProjection.ts';
-import type {
-  CombatActionProjectionContextSource,
-  CombatActionProjectionExtensionsSource,
-} from '../../compiler/combatProjectionCommon.ts';
-import type { CompiledBuffDefinitionSource } from '../../compiler/buffs/buffProjectionTypes.ts';
-import { createPhysicalInflictionDefinitionHydrator } from '../../compiler/actions/physicalInflictionHydration.ts';
+import { requireNonNegativeInteger, requireRecord } from '../../source/primitives.ts';
+import { resolveSkillElement, type SkillPatchSource } from '../../source/skillPatch.ts';
+import type { OperatorActiveSkillTypeSource } from './activeSkills.ts';
 
 /** 已编译的正式技能子集；来源身份、黑板与消耗帧必填，不接受尚未接入的事件字段。 */
 export type CompiledOperatorActiveSkillRuntimeDefinitionSource = Readonly<
@@ -24,6 +24,7 @@ export type CompiledOperatorActiveSkillRuntimeDefinitionSource = Readonly<
     SkillDefinition,
     | 'key'
     | 'element'
+    | 'useSkillGroupIcon'
     | 'timelineBlockFrames'
     | 'timelineContinuationSkillId'
     | 'timelineBlockFollowUpSkillId'
@@ -42,10 +43,14 @@ export type CompiledOperatorActiveSkillRuntimeDefinitionSource = Readonly<
       >
     >
 > & {
-  readonly actionGraph: import('../../compiler/intermediateDefinitions.ts').ActionGraphResourceDefinition;
+  /** 原生图标身份，组装干员时转换成独立图片引用。 */
+  readonly nativeIconId?: string;
+  readonly actionGraph: ActionGraphResourceDefinition;
   /** 仅供整名技能组装配；生成最终 OperatorDefinition 前必须移除。 */
   readonly allowNextSkillTransitions: CompiledActiveSkillRuntimeProjectionSource['allowNextSkillTransitions'];
   readonly inputWindows?: SkillDefinition['inputWindows'];
+  /** 默认施放的目标；省略时由调用方提供，不能回退到敌人。 */
+  readonly defaultTarget?: 'enemy' | 'owner';
   readonly smartTarget?: 'enemy' | 'input' | 'trigger';
   readonly switchToBuffCast?: NonNullable<SkillDefinition['switchToBuffCast']>;
   readonly costs?: readonly Readonly<SkillCostDefinition>[];
@@ -81,6 +86,8 @@ export function compileOperatorActiveSkillRuntimeDefinitionSource(input: {
   const definition: CompiledOperatorActiveSkillRuntimeDefinitionSource = {
     actionGraph: runtime.actionGraph,
     key: input.key,
+    ...(input.patch?.iconId ? { nativeIconId: input.patch.iconId } : {}),
+    ...(input.patch?.useSkillGroupIcon ? { useSkillGroupIcon: true } : {}),
     ...(input.skillType === 'dodge'
       ? {}
       : { element: resolveSkillElement(root.iconBgType, input.patch, input.sourcePath) }),
@@ -100,6 +107,7 @@ export function compileOperatorActiveSkillRuntimeDefinitionSource(input: {
       endFrame: item.endFrame,
       sequence: item.sequence,
     })),
+    ...(runtime.defaultTarget === undefined ? {} : { defaultTarget: runtime.defaultTarget }),
     ...(runtime.smartTarget === undefined ? {} : { smartTarget: runtime.smartTarget }),
     ...(runtime.switchToBuffCast === undefined
       ? {}
@@ -142,13 +150,10 @@ export function renderOperatorActiveSkillRuntimeDefinitionSource(input: {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(input.operatorSlug))
     throw new Error('operatorSlug: expected stable kebab-case identity');
   const supplementalBuffDefinitions = input.supplementalBuffDefinitions ?? {};
-  const hydrate = createPhysicalInflictionDefinitionHydrator(supplementalBuffDefinitions);
   const { allowNextSkillTransitions: _allowNextSkillTransitions, ...runtimeDefinition } =
     input.definition;
-  const definition = hydrate(runtimeDefinition);
-  const hydratedSupplementalBuffDefinitions = hydrate(supplementalBuffDefinitions);
-  const renderedBuffs = renderTypeScriptData(hydratedSupplementalBuffDefinitions);
-  const renderedDefinition = renderTypeScriptData(definition);
+  const renderedBuffs = renderTypeScriptData(supplementalBuffDefinitions);
+  const renderedDefinition = renderTypeScriptData(runtimeDefinition);
   return {
     relativePath: `${input.operatorSlug}.${input.definition.key}.runtime.generated.ts`,
     content: `/** 由 tools/game-data-compiler 从完整主动 SkillData 动作图生成；不要手工编辑。 */\nimport type {\n  OperatorBuffDefinitions,\n  SkillDefinition,\n} from '../../../../core/game-data/operatorDefinition';\n\nexport const supplementalBuffDefinitions = ${renderedBuffs} as const satisfies OperatorBuffDefinitions;\n\nexport default ${renderedDefinition} as const satisfies SkillDefinition;\n`,

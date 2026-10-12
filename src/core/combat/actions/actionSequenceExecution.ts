@@ -2,14 +2,14 @@
  * 根据显式状态推进动作序列。执行端口只在调用期间使用，不进入保存的数据。
  * 状态赋值与同步回调的顺序沿用原有执行器，允许动作在执行中结束整个序列。
  */
-import { COMBAT_STEP_STATE, type ActionStepState } from '../state/actionState';
-import { STEP_RESULT_MODE, type CombatExecutionContext } from './combatStep';
+import { COMBAT_STEP_STATE, STEP_RESULT_MODE, type ActionStepState } from '../state/actionState';
+import type { CombatExecutionContext } from './combatStep';
 
 /** 下标对应程序中的步骤；宿主必须即时读取本次步进的数据。 */
 export interface ActionSequenceExecutionHost<Key = number> {
   canExecute(): boolean;
   execute(index: Key): boolean;
-  reset(index: Key): void;
+  reset(index: Key, reason?: 'normal' | 'afterInstant'): void;
   tick(index: Key, deltaTime: number): void;
   end(index: Key): void;
 }
@@ -25,13 +25,14 @@ export function executeActionSequence<Key>(
   host: ActionSequenceExecutionHost<Key>,
   resetAfterExecute = false,
 ): boolean {
+  context.sequence ??= { resultMode: STEP_RESULT_MODE.normal };
   for (const [index, entry] of state.entries.entries()) {
     if (entry.state === COMBAT_STEP_STATE.ended) continue;
     if (entry.state !== COMBAT_STEP_STATE.pending) return false;
 
     // 原生 AbilityAction.Execute 在进入动作前检查宿主 canExecuteAction。
     // 必须逐项读实时状态；不能只在事件订阅入口检查一次，也不能阻止已开始项 End。
-    const resultMode = context.sequence?.resultMode ?? STEP_RESULT_MODE.normal;
+    const resultMode = context.sequence.resultMode;
     entry.executionPermitted = host.canExecute() !== false;
     // 原生在进入 OnExecute 前写入状态 1；同步事件可在动作尚未返回时 End。
     entry.state = COMBAT_STEP_STATE.started;
@@ -54,7 +55,7 @@ export function executeActionSequence<Key>(
         )
           host.end(index);
         entry.state = COMBAT_STEP_STATE.ended;
-        host.reset(index);
+        host.reset(index, 'afterInstant');
         entry.state = COMBAT_STEP_STATE.pending;
         entry.executeResult = false;
         entry.executionPermitted = false;

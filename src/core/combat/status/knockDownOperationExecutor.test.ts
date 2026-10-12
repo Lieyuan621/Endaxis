@@ -22,9 +22,14 @@ const NO_GUARD = 'buff_physical_no_guard';
 const DOWN_BUFF = 'buff_physical_knockdown';
 const DOWN_TAG = 'Status/Immobilized/KnockDown';
 const INTERRUPTED_TAG = 'Status/SkillCast/WeaknessInterrupted';
-const step = (overrides: Partial<CompiledStepParameters['applyKnockDown']> = {}) => ({
-  kind: 'applyKnockDown' as const,
+const step = (
+  overrides: Partial<
+    Extract<CompiledStepParameters['applyPhysicalInfliction'], { type: 'knockDown' }>
+  > = {},
+) => ({
+  kind: 'applyPhysicalInfliction' as const,
   parameters: {
+    type: 'knockDown' as const,
     target: 'enemy' as const,
     duration: { kind: 'constant' as const, value: 1.5 },
     force: false,

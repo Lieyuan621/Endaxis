@@ -1,25 +1,35 @@
-import type { ActionGraphStep } from '../src/compiler/intermediateDefinitions.ts';
-import {
-  extractResourceDataNodes,
-  extractDefinitionDataNodes,
-} from '../src/compiler/extractGraphDataNodes.ts';
-import { renderCommonBuffDefinitionsSource } from '../src/domains/operator/definitionSourceRenderer.ts';
-import { createActionGraphBuilder } from '../src/compiler/actions/actionGraphBuilder.ts';
-import { validateActionGraphOwner } from '../../../src/core/action-graph/actionGraphValidation.ts';
-import { renderGraphValue } from '../src/compiler/optimization/actionGraphSourceRenderer.ts';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { format, resolveConfig } from 'prettier';
-import type {
-  ActionGraphReference,
-  ActionGraphResourceDefinition,
-} from '../../../packages/game-data-contract/src/actionGraph.ts';
+import type * as Contract from '../../../packages/game-data-contract/src/index.ts';
+import { validateActionGraphOwner } from '../../../src/core/action-graph/actionGraphValidation.ts';
+import { createActionGraphBuilder } from '../src/compiler/actions/actionGraphBuilder.ts';
 import type { CompiledBuffDefinitionSource } from '../src/compiler/buffs/buffProjectionTypes.ts';
 import { compileGlobalBuffTemplate } from '../src/compiler/buffs/globalBuffProjection.ts';
 import { compileStandardStumpBuffClosure } from '../src/compiler/buffs/standardStumpBuffClosure.ts';
+import { finalizeDefinitionResources } from '../src/compiler/finalizeDefinitions.ts';
+import type {
+  ActionGraphReference,
+  ActionGraphResourceDefinition,
+  ActionGraphStep,
+  OperatorBuffDefinitions,
+} from '../src/compiler/intermediateDefinitions.ts';
+import { renderGraphValue } from '../src/compiler/optimization/actionGraphSourceRenderer.ts';
+import type { DefinitionOptimizationMode } from '../src/compiler/optimization/definitionOptimization.ts';
+import type { GraphSharedEntityValueUsage } from '../src/compiler/optimization/graphValueOptimization.ts';
+import { createGraphEntityUsageContext } from '../src/compiler/optimization/graphValueOptimization.ts';
+import {
+  checkGeneratedDefinitionFiles,
+  writeGeneratedDefinitionFiles,
+} from '../src/compiler/publication/writeGeneratedDefinitionFiles.ts';
+import {
+  compileContingencyContractTagDefinitions,
+  parseContingencyContractCatalogSource,
+  type ContingencyContractCatalogSource,
+} from '../src/domains/contingencyContract/contingencyContractSource.ts';
+import { renderCommonBuffDefinitionsSource } from '../src/domains/operator/definitionSourceRenderer.ts';
 import { parseGlobalBuffTemplateCatalogSource } from '../src/source/globalBuffTemplate.ts';
 import { GameplayTagRegistry } from '../src/source/nativeGameplayTags.ts';
 import {
@@ -28,15 +38,6 @@ import {
   requireNonEmptyString,
   requireRecord,
 } from '../src/source/primitives.ts';
-import {
-  parseContingencyContractCatalogSource,
-  compileContingencyContractTagDefinitions,
-  type ContingencyContractCatalogSource,
-} from '../src/domains/mechanics/contingencyContractSource.ts';
-import {
-  writeGeneratedDefinitionFiles,
-  checkGeneratedDefinitionFiles,
-} from '../src/compiler/publication/writeGeneratedDefinitionFiles.ts';
 
 export interface ContingencyContractDefinitionSourceArguments {
   readonly tableRoot: string;
@@ -73,7 +74,7 @@ export interface ContingencyContractEnemyMaxHealthPlan {
 /** 来源校验和行为闭包完成后的结果；可先收集黑板用途，再直接渲染这一批内容。 */
 export interface CompiledContingencyContractDefinitions {
   readonly tags: ReturnType<typeof compileContingencyContractTagDefinitions>;
-  readonly buffDefinitions: import('../../../packages/game-data-contract/src/buffs.ts').OperatorBuffDefinitions;
+  readonly buffDefinitions: OperatorBuffDefinitions;
   readonly initializationPlans: readonly ContingencyContractInitializationPlan[];
   readonly enemyMaxHealthPlans: readonly ContingencyContractEnemyMaxHealthPlan[];
   readonly scope: ContingencyContractSimulationScope;
@@ -256,9 +257,8 @@ export function compileContingencyContractDefinitionsFromFiles(
           ? {
               kind: 'applyBuff',
               parameters: {
-                buffId: term.buffId,
-                target: 'enemy',
-                blackboardAssignments: assignments(term),
+                buffs: [{ buffId: term.buffId, blackboardAssignments: assignments(term) }],
+                targets: { kind: 'fixed', target: 'enemy' },
               },
             }
           : {
@@ -279,15 +279,12 @@ export function compileContingencyContractDefinitionsFromFiles(
     plans.push({
       tagId: tag.tagId,
       sequence,
-      actionGraph: extractResourceDataNodes({ main: graph.finish(), macros: {} }),
+      actionGraph: { main: graph.finish(), macros: {} },
     });
   }
 
   return {
-    buffDefinitions:
-      extractDefinitionDataNodes<
-        import('../../../packages/game-data-contract/src/buffs.ts').OperatorBuffDefinitions
-      >(definitions),
+    buffDefinitions: definitions,
     tags: compileContingencyContractTagDefinitions(catalog),
     initializationPlans: plans,
     enemyMaxHealthPlans,
@@ -307,26 +304,40 @@ export async function generateContingencyContractDefinitions(args: Arguments) {
 /** 保留已验证的范围和版本，只渲染文件内容，不重新读取或编译机制来源。 */
 export async function renderContingencyContractDefinitionsFromCompiled(
   compiled: CompiledContingencyContractDefinitions,
+  optimization: DefinitionOptimizationMode = 'apply',
+  sharedUsage?: GraphSharedEntityValueUsage,
 ) {
   const {
-    buffDefinitions: definitions,
+    buffDefinitions,
     initializationPlans: plans,
     enemyMaxHealthPlans,
     scope,
     revision,
   } = compiled;
-  const prettierConfig = (await resolveConfig(path.resolve('.prettierrc.json'))) ?? {};
-  const graphPlans = plans.map(plan => {
-    validateActionGraphOwner(plan, `contingencyContract.${plan.tagId}`);
-    return plan;
+  const { value: finalized, report } = finalizeDefinitionResources<{
+    readonly buffDefinitions: Contract.OperatorBuffDefinitions;
+    readonly initializationPlans: readonly {
+      readonly tagId: number;
+      readonly sequence: Contract.ActionGraphReference;
+      readonly actionGraph: Contract.ActionGraphResourceDefinition;
+    }[];
+  }>({ buffDefinitions, initializationPlans: plans }, optimization, undefined, {
+    sharedUsage,
+    usageContext: createGraphEntityUsageContext(undefined, sharedUsage),
   });
+  const definitions = finalized.buffDefinitions;
+  const prettierConfig = (await resolveConfig(path.resolve('.prettierrc.json'))) ?? {};
+  const graphPlans = finalized.initializationPlans;
+  for (const plan of graphPlans)
+    validateActionGraphOwner(plan, `contingencyContract.${plan.tagId}`);
   const content = await format(
     `/** 由危机合约原生词条、GlobalBuff 与 BuffData 闭包生成；不要手工编辑。 */
 import type { ContingencyContractTagDefinition } from '../../../../packages/game-data-contract/src/index.ts';
+import type { ActionGraphReference } from '../../../../packages/game-data-contract/src/actionGraph';
 
 ${renderCommonBuffDefinitionsSource(definitions, 'contingencyContractBuffDefinitions')}
 export const contingencyContractTagDefinitions = Object.freeze<readonly ContingencyContractTagDefinition[]>(${JSON.stringify(compiled.tags, null, 2)});
-export const contingencyContractInitializationPlans = Object.freeze<readonly { readonly tagId: number; readonly sequence: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphReference; readonly actionGraph: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphResourceDefinition }[]>(${renderGraphValue(graphPlans)});
+export const contingencyContractInitializationPlans = Object.freeze<readonly { readonly tagId: number; readonly sequence: ActionGraphReference; readonly actionGraph: ActionGraphResourceDefinition }[]>(${renderGraphValue(graphPlans)});
 export const contingencyContractEnemyMaxHealthPlans = Object.freeze(${JSON.stringify(enemyMaxHealthPlans, null, 2)}) as readonly { readonly tagId: number; readonly multiplier: number }[];
 export const contingencyContractBlockedTagReasons = Object.freeze(${JSON.stringify(Object.fromEntries(scope.blockedTagReasons), null, 2)}) as Readonly<Record<number, string>>;
 export const contingencyContractOmittedTagReasons = Object.freeze(${JSON.stringify(Object.fromEntries(scope.omittedTagReasons), null, 2)}) as Readonly<Record<number, string>>;
@@ -342,6 +353,7 @@ export const contingencyContractDefinitionRevision = ${JSON.stringify(revision)}
       blockedTagCount: scope.blockedTagReasons.size,
       omittedTagCount: scope.omittedTagReasons.size,
       buffDefinitionCount: Object.keys(definitions).length,
+      optimization: report,
     },
   };
 }

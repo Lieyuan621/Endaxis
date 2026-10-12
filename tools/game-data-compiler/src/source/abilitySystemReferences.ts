@@ -1,13 +1,17 @@
 /** 从原生技能包和能力系统配置提取外部技能、Buff 引用，供黑板读取检查使用。 */
 import { requireArray, requireRecord, requireString } from './primitives.ts';
 import type { DefinitionReferenceSource } from './referenceGraph.ts';
+import { parseSkillResourceId } from './activeSkillTypes.ts';
 
 function reference(
   kind: 'skill' | 'buff',
   value: unknown,
   sourcePath: string,
 ): DefinitionReferenceSource[] {
-  const id = requireString(value, sourcePath);
+  const id =
+    kind === 'skill'
+      ? parseSkillResourceId(value, sourcePath, true)
+      : requireString(value, sourcePath);
   return id
     ? [{ kind, id, sourcePath, usage: 'blackboardReceiver', state: 'active', blackboardKey: null }]
     : [];

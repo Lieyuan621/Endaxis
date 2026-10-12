@@ -57,6 +57,35 @@ export class GameplayTagPredefine {
     return undefined;
   }
 
+  /** 仅在门禁已命中时取诊断快照；记录实际持有的细分标签，不把查询名当成状态。 */
+  getSkillCastBlockerTags(
+    entity: Pick<EntityTags, 'matchesEntityTags'>,
+    blocker: string,
+  ): GameplayTag[] {
+    const query = this.#queries.get(blocker);
+    const roots = query?.tags ?? [this.getTag(blocker)];
+    // 否定查询不提供“持有某状态”的证据，保留通用诊断。
+    if (query && query.queryType !== 'hasAny' && query.queryType !== 'hasAll') return [];
+    const candidates = new Set([
+      ...this.#tags.values(),
+      ...[...this.#queries.values()].flatMap(value => value.tags),
+    ]);
+    const matched = [...candidates].filter(
+      tag =>
+        roots.some(root => tag === root || tag.startsWith(root + '/')) &&
+        entity.matchesEntityTags([tag], 'hasAny', true),
+    );
+    // 未登记的子标签只能定位到查询父级，不能据此猜测具体控制状态。
+    for (const root of roots) {
+      if (
+        entity.matchesEntityTags([root], 'hasAny') &&
+        !matched.some(tag => tag === root || tag.startsWith(root + '/'))
+      )
+        matched.push(root);
+    }
+    return matched;
+  }
+
   /** 未导入主战技身份时不猜测；终结技按钮状态不属于标签查询。 */
   getSkillTypeCastBlocker(
     entity: Pick<EntityTags, 'matchesEntityTags'>,

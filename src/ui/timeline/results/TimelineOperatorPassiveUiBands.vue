@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { resolveImage } from '../../imageResources';
 /** 干员专属 UI 的时间轴生命周期：几何与 Buff 条一致，但保留独立语义。 */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -177,7 +178,7 @@ const hitItems = computed(() => {
       <template #content>
         <img
           v-if="item.kind === 'abilityEntityCount'"
-          :src="item.icon"
+          :src="resolveImage(item.icon)"
           alt=""
           draggable="false"
           :style="{ width: `${ICON_HEIGHT}px`, height: `${ICON_HEIGHT}px`, objectFit: 'contain' }"

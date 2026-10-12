@@ -7,7 +7,7 @@ import {
   optimizationSimulationFacts,
   optimizationSimulationScenario,
   optimizationSimulationService,
-} from '../support/definitionOptimizationSimulation.ts';
+} from '../../../performance/definitionOptimizationSimulation.ts';
 
 describe('优化对照的事实摘要', () => {
   it('区分无限制、禁止全部、允许指定标签；同一集合的插入顺序不影响摘要', async () => {

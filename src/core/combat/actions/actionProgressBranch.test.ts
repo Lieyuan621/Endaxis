@@ -1,3 +1,5 @@
+import { tickChanneling } from './channelingActionExecution';
+import { createChannelingActionState } from '../state/actionState';
 /** 将重复计时与跳转进度一起恢复，检查边界、兄弟分支和同步重入。 */
 import { describe, expect, it } from 'vitest';
 import { StateStepper } from '../runtime/stateStepper';
@@ -73,22 +75,21 @@ describe('action progress branches', () => {
 
   it('keeps the strict target interval and maximum trigger count after restoration', () => {
     const parameters = {
-      nativeChanneling: {
-        executeEachFrame: true,
-        triggerIntervalSeconds: 0.25,
-        maxCountPerTarget: 2,
-        targetTriggerIntervalSeconds: 0.25,
-      },
+      catchUpMissedTicks: false,
+      target: { kind: 'inputTarget' as const },
+      executeEachFrame: true,
+      triggerIntervalSeconds: 0.25,
+      maxCountPerTarget: 2,
+      targetTriggerIntervalSeconds: 0.25,
     };
     const session = new StateStepper(
-      { progress: createRepeatedActionState(), hits: 0 },
+      { progress: createChannelingActionState(), hits: 0 },
       (step, delta: number | null) => {
         const state = step.state;
         const body = () => {
           state.hits += 1;
         };
-        if (delta === null) executeRepeatedAction(state.progress, parameters, body);
-        else tickRepeatedAction(state.progress, parameters, delta, body);
+        tickChanneling(state.progress, parameters, 0, delta ?? 0, () => [{ kind: 'enemy' }], body);
       },
     );
     session.step(null);

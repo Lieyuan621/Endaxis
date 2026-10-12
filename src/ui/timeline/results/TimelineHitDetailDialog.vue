@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ElIcon } from 'element-plus';
+import { CombatObjectOrigins } from '../../../core/projection/combatObjectOrigins';
 import {
   EaButton,
   EaCheckbox,
@@ -8,11 +9,19 @@ import {
   EaTooltip,
 } from '../../../design-system/index';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
+import type { CombatObjectIconResolver } from './combatObjectIcons';
+import type { CombatObjectOwnName } from './combatObjectNames';
 import CombatObjectOriginGraph from './CombatObjectOriginGraph.vue';
-import { CombatObjectOrigins } from '../../../core/projection/combatObjectOrigins';
 /** 结构与视觉以旧版 HitDamageDetailDialog 为规格；UI 只投影回执冻结值。 */
-import { computed, ref, watch } from 'vue';
 import { ArrowRight, Warning } from '@element-plus/icons-vue';
+import { computed, ref, watch } from 'vue';
+import {
+  ATTRIBUTE_MODIFIER_SLOTS,
+  type AttributeModifierSlot,
+  type DamageModifierSide,
+} from '../../../../packages/game-data-contract/src/modifiers';
+import { ATTACK_FACTOR_ATTRIBUTE_BY_OPERATOR_ATTRIBUTE } from '../../../core/combat/attributes/operatorAttackAttributes';
+import { POISE_BREAK_BUFF_ID } from '../../../core/combat/buffs/poiseBreakBuffRuntime';
 import {
   DAMAGE_SCALE_ZONES,
   type AppliedDamageModifier,
@@ -20,15 +29,8 @@ import {
 } from '../../../core/combat/damage/damageScale';
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
 import type { ActionValueCalculation } from '../../../core/combat/state/foundationState';
-import { ATTACK_FACTOR_ATTRIBUTE_BY_OPERATOR_ATTRIBUTE } from '../../../core/combat/attributes/operatorAttackAttributes';
-import type { OperatorAttribute } from '../../../core/game-data/operatorDefinition';
-import {
-  ATTRIBUTE_MODIFIER_SLOTS,
-  type AttributeModifierSlot,
-  type DamageModifierSide,
-} from '../../../../packages/game-data-contract/src/modifiers';
 import type { OperatorPanelContributionReceipt } from '../../../core/compiler/resolveOperatorPanel';
-import { POISE_BREAK_BUFF_ID } from '../../../core/combat/buffs/poiseBreakBuffRuntime';
+import type { OperatorAttribute } from '../../../core/game-data/operatorDefinition';
 
 const damageIndex = ref(0);
 const props = defineProps<{
@@ -41,14 +43,12 @@ const props = defineProps<{
   sourceDescription?: (entry: CombatReceiptEntry) => string | undefined;
   sourceLabel?: string;
   damageZoneLabel?: (zone: DamageScaleZone) => string;
-  buffLabel?: (
-    item: import('../../../core/combat/damage/damageScale').AppliedDamageModifier,
-  ) => string;
+  buffLabel?: (item: AppliedDamageModifier) => string;
   entries: readonly CombatReceiptEntry[];
   receiptEntries?: readonly CombatReceiptEntry[];
   operatorLabel?: (operatorId: string) => string;
-  objectName?: import('./combatObjectNames').CombatObjectOwnName;
-  objectIcon?: import('./combatObjectIcons').CombatObjectIconResolver;
+  objectName?: CombatObjectOwnName;
+  objectIcon?: CombatObjectIconResolver;
   actionPresentation?: (
     ownerId: string,
     actionId: string,

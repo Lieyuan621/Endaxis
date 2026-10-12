@@ -138,28 +138,6 @@ export function summarizeTimelineBattleLogEntry(
           : options.semanticLabel('inflictionOutcome', string(data, 'outcomeKind')!),
       ]);
     }
-    case 'ElementalReactionApplied':
-      return compact([
-        identity('reaction', 'reaction'),
-        number(data, 'level') === null ? null : `Lv.${formatNumber(number(data, 'level')!)}`,
-        number(data, 'durationSeconds') === null
-          ? null
-          : `${options.formatValue(number(data, 'durationSeconds')!)}s`,
-      ]);
-    case 'ElementalReactionConsumed':
-      return compact([
-        identity('reaction', 'reaction'),
-        number(data, 'level') === null ? null : `Lv.${formatNumber(number(data, 'level')!)}`,
-        data?.consumed === false ? options.semanticLabel('flag', 'notConsumed') : null,
-      ]);
-    case 'StatusChanged':
-      return compact([
-        identity('status', 'statusKey'),
-        transition(number(data, 'previousStacks'), number(data, 'currentStacks'), formatNumber),
-        string(data, 'reason') === null
-          ? null
-          : options.semanticLabel('reason', string(data, 'reason')!),
-      ]);
     case 'AbilityEntitySpawned':
       return compact([
         identity('skill', 'childSkillId'),

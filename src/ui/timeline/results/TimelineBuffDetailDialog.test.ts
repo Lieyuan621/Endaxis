@@ -1,7 +1,8 @@
-import { createSSRApp, h } from 'vue';
-import { renderToString } from 'vue/server-renderer';
-import { createI18n } from 'vue-i18n';
 import { expect, it, vi } from 'vitest';
+import { createSSRApp, h } from 'vue';
+import { createI18n } from 'vue-i18n';
+import { renderToString } from 'vue/server-renderer';
+import type * as DesignSystem from '../../../design-system/index';
 import enMessages from '../../../i18n/locales/en.json';
 import zhMessages from '../../../i18n/locales/zh-CN.json';
 import Dialog from './TimelineBuffDetailDialog.vue';
@@ -9,7 +10,7 @@ import { initialBuffDetailInstanceIndex, type BuffDetailTarget } from './buffDet
 
 // 只替换传送到 body 的弹窗外壳与页面输入区域；详情内容按真实组件模板渲染。
 vi.mock('../../../design-system/index', async importOriginal => {
-  const original = await importOriginal<typeof import('../../../design-system/index')>();
+  const original = await importOriginal<typeof DesignSystem>();
   const { defineComponent, h } = await import('vue');
   return {
     ...original,

@@ -1,4 +1,10 @@
-import type { SkillBuffDefinition } from '../intermediateDefinitions.ts';
+import { GameplayTagRegistry } from '../../../../../src/core/combat/tags/gameplayTags.ts';
+import type { DefinitionExternalValueRead } from '../optimization/definitionUsageAnalysis.ts';
+import type {
+  ActionGraphStep,
+  OperatorBuffDefinitions,
+  SkillBuffDefinition,
+} from '../intermediateDefinitions.ts';
 /**
  * 汇总 Buff 属性、修正器、护盾和生命周期读取的变量，供生成阶段裁剪无用初值。
  * 此时数据输入尚未提取为节点，动作入口沿 Buff 自己的主图遍历；没有图的静态 Buff 只汇总
@@ -33,16 +39,10 @@ const unknown = (_value: never): DefinitionValueUsage => ({
   observable: true,
 });
 
-export function analyzeGraphBuffDefinitionUsage(
+/** 动作图之外的参数读取；这些值可能在注册、叠层或计算伤害时使用。 */
+export function analyzeGraphBuffParameters(
   value: SkillBuffDefinition | StaticBuffDefinition,
-  context?: DefinitionUsageContext,
 ): DefinitionValueUsage {
-  const graph = value.actionGraph?.main;
-  const program = (reference: ActionGraphReference | undefined): DefinitionValueUsage => {
-    if (reference === undefined) return empty();
-    if (graph === undefined) return { ...empty(), unknownAccess: true, mayThrow: true };
-    return analyzeGraphSequenceUsage(graph, reference, context);
-  };
   const usages: DefinitionValueUsage[] = [
     keys(
       value.priority,
@@ -55,7 +55,6 @@ export function analyzeGraphBuffDefinitionUsage(
   ];
   for (const modifier of value.attributeModifiers ?? []) usages.push(keys(modifier.value));
   for (const modifier of value.damageModifiers ?? []) {
-    if (modifier.condition !== undefined) usages.push(program(modifier.condition));
     for (const processor of modifier.processors) {
       switch (processor.kind) {
         case 'damageScale':
@@ -70,7 +69,6 @@ export function analyzeGraphBuffDefinitionUsage(
     }
   }
   for (const modifier of value.healModifiers ?? []) {
-    if (modifier.condition !== undefined) usages.push(program(modifier.condition));
     for (const processor of modifier.processors) {
       switch (processor.kind) {
         case 'modifyCalculationResult':
@@ -85,7 +83,6 @@ export function analyzeGraphBuffDefinitionUsage(
     }
   }
   for (const modifier of value.poiseModifiers ?? []) {
-    if (modifier.condition !== undefined) usages.push(program(modifier.condition));
     for (const processor of modifier.processors) {
       switch (processor.kind) {
         case 'modifyPoiseScalar':
@@ -110,14 +107,25 @@ export function analyzeGraphBuffDefinitionUsage(
     );
   for (const enhancement of value.keywordEnhancements ?? [])
     usages.push(keys(enhancement.initialValue, enhancement.value));
-  for (const item of value.scheduledSequences ?? []) usages.push(program(item.sequence));
-  for (const entry of Object.values(value.lifecycleSequences ?? {})) usages.push(program(entry));
-  for (const response of value.abilityEventResponses ?? []) usages.push(program(response.sequence));
-  for (const response of value.igniteEventResponses ?? []) usages.push(program(response.sequence));
   return mergeDefinitionValueUsage(usages);
 }
 
-/** 收集器遍历 Buff 动作入口时与 program 使用同一图来源。 */
+export function analyzeGraphBuffDefinitionUsage(
+  value: SkillBuffDefinition | StaticBuffDefinition,
+  context?: DefinitionUsageContext,
+): DefinitionValueUsage {
+  const { graph, entries } = graphBuffPrograms(value);
+  return mergeDefinitionValueUsage([
+    analyzeGraphBuffParameters(value),
+    ...entries.map(reference =>
+      graph === undefined
+        ? { ...empty(), unknownAccess: true, mayThrow: true }
+        : analyzeGraphSequenceUsage(graph, reference, context),
+    ),
+  ]);
+}
+
+/** Buff 的动作入口只在这里枚举，供用途分析和跨资源收集共用。 */
 export function graphBuffPrograms(value: SkillBuffDefinition | StaticBuffDefinition): {
   readonly graph: ActionGraphResourceDefinition['main'] | undefined;
   readonly entries: ActionGraphReference[];
@@ -127,16 +135,109 @@ export function graphBuffPrograms(value: SkillBuffDefinition | StaticBuffDefinit
     graph,
     entries: [
       ...(value.scheduledSequences ?? []).map(item => item.sequence),
-      ...Object.values(value.lifecycleSequences ?? {}).flatMap(entry =>
-        entry === undefined ? [] : [entry],
-      ),
+      ...Object.values(value.lifecycleSequences ?? {}).flatMap(entry => entry ?? []),
       ...(value.abilityEventResponses ?? []).map(response => response.sequence),
-      ...(value.igniteEventResponses ?? []).map(response => response.sequence),
+      ...(value.igniteEventResponses ?? []).flatMap(response => response.sequences),
       ...[
         ...(value.damageModifiers ?? []),
         ...(value.healModifiers ?? []),
         ...(value.poiseModifiers ?? []),
       ].flatMap(modifier => (modifier.condition === undefined ? [] : [modifier.condition])),
     ],
+  };
+}
+
+/** 按原查询筛选可能读到本实例的键；宿主身份和事件实例未知时不排除。 */
+export function externalBuffValueKeys(
+  definition: SkillBuffDefinition | StaticBuffDefinition,
+  id: string | undefined,
+  reads: readonly DefinitionExternalValueRead[],
+): ReadonlySet<string> {
+  const tags = new GameplayTagRegistry();
+  return new Set(
+    reads.flatMap(read => {
+      if (read.kind === 'abilityEntity') return [];
+      if (read.kind === 'eventBuff') return [read.key];
+      const query = read.query;
+      const matches =
+        query.kind === 'id'
+          ? id === undefined || query.buffIds.includes(id)
+          : tags.query(definition.applyTags ?? [], query.buffTags, query.tagQueryType);
+      return matches ? [read.key] : [];
+    }),
+  );
+}
+
+/** 接收方和外部观察者都不使用的参数可以省略；未知接收方不作推断。 */
+export function createBuffAssignmentPruner(
+  definitions: OperatorBuffDefinitions,
+  externalReads: readonly DefinitionExternalValueRead[],
+  context?: DefinitionUsageContext,
+): (action: ActionGraphStep, initialValues: Readonly<Record<string, unknown>>) => ActionGraphStep {
+  const usages = new Map<string, ReadonlySet<string> | undefined>();
+  const needed = (id: string): ReadonlySet<string> | undefined => {
+    if (usages.has(id)) return usages.get(id);
+    const definition = definitions[id];
+    if (!definition) return undefined;
+    const usage = analyzeGraphBuffDefinitionUsage(definition, context);
+    const result = usage.unknownAccess
+      ? undefined
+      : new Set([
+          ...usage.reads,
+          ...usage.writes,
+          ...externalBuffValueKeys(definition, id, externalReads),
+        ]);
+    usages.set(id, result);
+    return result;
+  };
+  return (action, initialValues) => {
+    if (action.kind !== 'applyBuff' && action.kind !== 'aura') return action;
+    let changed = false;
+    const buffs = action.parameters.buffs.map(entry => {
+      if (typeof entry.buffId !== 'string' || entry.keywordEnhancements?.length) return entry;
+      const keys = needed(entry.buffId);
+      if (keys === undefined) return entry;
+      const numeric = Object.fromEntries(
+        Object.entries(entry.blackboardAssignments ?? {}).filter(([key, operand]) => {
+          // 不省略可能缺键或触发其他求值的输入。
+          const safe =
+            typeof operand === 'number' ||
+            Array.isArray(operand) ||
+            ('kind' in operand &&
+              (operand.kind === 'constant' ||
+                (operand.kind === 'blackboard' && Object.hasOwn(initialValues, operand.key))));
+          return keys.has(key) || !safe;
+        }),
+      );
+      const strings = Object.fromEntries(
+        Object.entries(entry.stringBlackboardAssignments ?? {}).filter(([key]) => keys.has(key)),
+      );
+      const copied = Object.fromEntries(
+        Object.entries(entry.copiedBlackboardAssignments ?? {}).filter(
+          ([key, source]) => keys.has(key) || !Object.hasOwn(initialValues, source),
+        ),
+      );
+      if (
+        Object.keys(numeric).length === Object.keys(entry.blackboardAssignments ?? {}).length &&
+        Object.keys(strings).length ===
+          Object.keys(entry.stringBlackboardAssignments ?? {}).length &&
+        Object.keys(copied).length === Object.keys(entry.copiedBlackboardAssignments ?? {}).length
+      )
+        return entry;
+      changed = true;
+      const {
+        blackboardAssignments,
+        stringBlackboardAssignments,
+        copiedBlackboardAssignments,
+        ...rest
+      } = entry;
+      return {
+        ...rest,
+        ...(Object.keys(numeric).length ? { blackboardAssignments: numeric } : {}),
+        ...(Object.keys(strings).length ? { stringBlackboardAssignments: strings } : {}),
+        ...(Object.keys(copied).length ? { copiedBlackboardAssignments: copied } : {}),
+      };
+    });
+    return changed ? { ...action, parameters: { ...action.parameters, buffs } } : action;
   };
 }

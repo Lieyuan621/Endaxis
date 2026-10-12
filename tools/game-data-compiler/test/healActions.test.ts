@@ -12,7 +12,7 @@ import {
 } from '../src/compiler/actions/actionGraphBuilder.ts';
 import type { CompiledBuffStepSource } from '../src/compiler/actions/combatActionProjectionTypes.ts';
 
-/** 图编译包装：返回入口同层动作数组，保持旧断言的扁平比较形状。 */
+/** 编译后读取入口动作，检查实际治疗参数。 */
 function projectSequence(
   source: Parameters<typeof compileCombatActionSequenceSource>[0],
   context: Omit<CombatActionProjectionContextSource, 'graph'>,
@@ -52,6 +52,7 @@ describe('治疗动作公共载荷', () => {
     const action = {
       ...BASE,
       healer: 'ActionSource',
+      contextKey: 'unused-healer-context',
       useHealTags: false,
       target: {
         ...target,
@@ -103,6 +104,23 @@ describe('治疗动作公共载荷', () => {
         },
       ],
     });
+    const inputTargetSource = parseNativeSequenceSource(
+      {
+        actionData: [{ ...action, target: targetFixture('Target') }],
+        onlyExecuteWhenSourceIsMainChar: false,
+        onlyExecuteWhenSourceIsGuard: false,
+      },
+      'input-target',
+      {},
+      (value, path) => parseKnownNativeActionLeafSource(value, path, {}),
+    );
+    expect(
+      projectSequence(inputTargetSource, {
+        actionOwnerTarget: 'caster',
+        actionSourceTarget: 'caster',
+        actionTargetTarget: 'enemy',
+      }).steps,
+    ).toMatchObject([{ kind: 'heal', parameters: { target: 'actionInputTarget' } }]);
   });
   it('属性计算不限制原生 valueSource 和 healer 枚举', () => {
     const source = parseHealActionSource(

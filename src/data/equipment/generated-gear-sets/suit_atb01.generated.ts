@@ -3,31 +3,8 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 
 const definition = {
   slug: 'suit_atb01',
-  iconPath: '/equipment/atb01/item_equip_t4_suit_atb01_edc_04.webp',
+  icon: 'endaxis:equipment/atb01/item_equip_t4_suit_atb01_edc_04',
   modifiers: [{ kind: 'skillCooldownMultiplier', skillTypes: 'comboSkill', value: 0.85 }],
-  actionGraph: {
-    main: {
-      nodes: {
-        applyBuff_1: {
-          action: {
-            kind: 'applyBuff',
-            parameters: {
-              buffId: 'buff_equipsuit_combosuit_01',
-              target: 'caster',
-              blackboardAssignments: {
-                dmg_up: { kind: 'constant', value: 0.16 },
-                duration: { kind: 'constant', value: 15 },
-                cd: { kind: 'constant', value: 0 },
-                comboskill_cooldown: { kind: 'constant', value: 0.85 },
-              },
-            },
-          },
-          next: null,
-        },
-      },
-    },
-    macros: {},
-  },
   skillId: 'passive_equipsuit_combosuit_01',
   buffDefinitions: {
     buff_equipsuit_combosuit_01: {
@@ -39,10 +16,10 @@ const definition = {
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: { cd: 30, comboskill_cooldown: 0.1, dmg_up: 0.2, duration: 12 },
+      blackboard: { dmg_up: 0.2, duration: 12 },
       attributeModifiers: [],
       abilityEventResponses: [
-        { event: 'skillSpGained', priority: 0, sequence: { $sequence: 'conditional_2' } },
+        { event: 'skillSpGained', priority: 0, sequence: { $sequence: 'checkCondition_3' } },
       ],
       actionGraph: {
         main: {
@@ -51,23 +28,37 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_equipsuit_combosuit_01_adddamage',
-                  target: 'party',
-                  source: 'buffOwner',
+                  buffs: [
+                    {
+                      buffId: 'buff_equipsuit_combosuit_01_adddamage',
+                      copiedBlackboardAssignments: { dmg_up: 'dmg_up', duration: 'duration' },
+                    },
+                  ],
+                  targets: { kind: 'context', key: 'teammate' },
+                  source: { kind: 'owner' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: { dmg_up: 'dmg_up', duration: 'duration' },
                 },
               },
               next: null,
             },
-            conditional_2: {
+            findTargets_2: {
               action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
+                kind: 'findTargets',
+                parameters: {
+                  owner: { kind: 'owner' },
+                  query: { kind: 'characterTeam', excludeOwner: false, owner: { kind: 'owner' } },
+                  saveToContextKey: 'teammate',
+                },
               },
-              next: null,
+              next: 'applyBuff_1',
+            },
+            checkCondition_3: {
+              action: {
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+              },
+              next: 'findTargets_2',
             },
           },
           dataNodes: {
@@ -90,8 +81,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_buff_atk_up',
-        iconPath: '/icons/icon_battle_buff_atk_up.webp',
+        icon: 'endaxis:icons/icon_battle_buff_atk_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -112,7 +102,7 @@ const definition = {
       },
       applyTags: [],
       extendTags: [],
-      blackboard: { cd: 30, dmg_up: 0.2, duration: 12 },
+      blackboard: { dmg_up: 0.2, duration: 12 },
       attributeModifiers: [],
       damageModifiers: [
         {
@@ -131,6 +121,31 @@ const definition = {
     },
   },
   enableSequence: { $sequence: 'applyBuff_1' },
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [
+                {
+                  buffId: 'buff_equipsuit_combosuit_01',
+                  blackboardAssignments: {
+                    dmg_up: { kind: 'constant', value: 0.16 },
+                    duration: { kind: 'constant', value: 15 },
+                  },
+                },
+              ],
+              targets: { kind: 'fixed', target: 'caster' },
+            },
+          },
+          next: null,
+        },
+      },
+    },
+    macros: {},
+  },
 } as const satisfies GearSetDefinition;
 
 export default definition;

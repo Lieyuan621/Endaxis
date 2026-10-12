@@ -39,7 +39,7 @@ export interface GlobalPartyAuraBuffInputSource {
 }
 
 /** 已取证的 GlobalAura + 存活友方 Character 分支。 */
-export interface GlobalPartyAuraActionSource {
+export interface GlobalPartyAuraActionSource<TLeaf> {
   readonly kind: 'globalPartyAura';
   readonly debugName: string;
   readonly fixedWhenStart: boolean;
@@ -47,12 +47,10 @@ export interface GlobalPartyAuraActionSource {
   readonly buffSource: 'ActionOwner' | 'ActionSource';
   readonly inheritSourceSkillCastInfo: boolean;
   readonly buffs: readonly GlobalPartyAuraBuffInputSource[];
-  /** 离开 Aura 时按同一批目标创建的有限余效 Buff。 */
-  readonly exitBuffs: readonly GlobalPartyAuraBuffInputSource[];
-  /** 原生退出动作另外清理 Owner 身上的同名 Buff，不等同于移除离场目标的实例。 */
-  readonly exitOwnerCleanupBuffIds?: readonly string[];
-  /** 进入范围时先清理的余效 Buff；用于避免范围内 Buff 与离场余效重叠。 */
-  readonly enterCleanupBuffIds?: readonly string[];
+  /** 原生进入序列；保留条件、顺序与目标绑定，不折算为清理 ID 列表。 */
+  readonly actionOnEnter: NativeSequenceSource<TLeaf>;
+  /** 原生退出序列，在该目标的区域 Buff 回收后执行。 */
+  readonly actionOnExit: NativeSequenceSource<TLeaf>;
   /** RangedAura 形状读取的黑板键；固定木桩中不参与成员判定，但来源事实不能丢。 */
   readonly spatialBlackboardKeys?: readonly string[];
   /** 只覆盖 Buff 图标倒计时来源，不改变 Buff 生命周期。 */
@@ -157,10 +155,11 @@ function parseAuraRecord(value: unknown, path: string): Record<string, unknown> 
   return action;
 }
 
-export function parseGlobalPartyAuraActionSource(
+export function parseGlobalPartyAuraActionSource<TLeaf>(
   value: unknown,
   path: string,
-): GlobalPartyAuraActionSource {
+  parseSequence: (value: unknown, path: string) => NativeSequenceSource<TLeaf>,
+): GlobalPartyAuraActionSource<TLeaf> {
   const action = parseAuraRecord(value, path);
   requireExpected(
     readAuraType(action.auraType, `${path}.auraType`),
@@ -209,15 +208,9 @@ export function parseGlobalPartyAuraActionSource(
     action.inheritSourceSkillCastId,
     `${path}.inheritSourceSkillCastId`,
   );
-  parseEmptySequence(action.actionInAura, `${path}.actionInAura`);
   const buffs = parseAuraBuffInputs(action.buffInput, `${path}.buffInput`);
-  const exitOwnerCleanupBuffIds: string[] = [];
-  const exitBuffs = parseAuraExitAction(
-    action.actionWhenExitAura,
-    `${path}.actionWhenExitAura`,
-    buffs.map(entry => entry.buffId),
-    exitOwnerCleanupBuffIds,
-  );
+  const actionOnEnter = parseSequence(action.actionInAura, `${path}.actionInAura`);
+  const actionOnExit = parseSequence(action.actionWhenExitAura, `${path}.actionWhenExitAura`);
   return {
     kind: 'globalPartyAura',
     debugName: requireString(action.auraDebugName, `${path}.auraDebugName`),
@@ -226,8 +219,8 @@ export function parseGlobalPartyAuraActionSource(
     buffSource,
     inheritSourceSkillCastInfo,
     buffs,
-    exitBuffs,
-    ...(exitOwnerCleanupBuffIds.length === 0 ? {} : { exitOwnerCleanupBuffIds }),
+    actionOnEnter,
+    actionOnExit,
     ...(spatialBlackboardKeys.length === 0 ? {} : { spatialBlackboardKeys }),
   };
 }
@@ -236,7 +229,7 @@ export function parseDirectRangedAuraActionSource<TLeaf>(
   value: unknown,
   path: string,
   parseSequence: (value: unknown, path: string) => NativeSequenceSource<TLeaf>,
-): DirectRangedAuraActionSource<TLeaf> | GlobalPartyAuraActionSource {
+): DirectRangedAuraActionSource<TLeaf> | GlobalPartyAuraActionSource<TLeaf> {
   const action = parseAuraRecord(value, path);
   requireExpected(action.auraType, 'RangedAura', `${path}.auraType`);
   const root = parseTargetReferenceSource(action.auraRoot, `${path}.auraRoot`);
@@ -295,15 +288,9 @@ export function parseDirectRangedAuraActionSource<TLeaf>(
       action.inheritSourceSkillCastId,
       `${path}.inheritSourceSkillCastId`,
     );
-    const enterCleanupBuffIds = parseAuraEnterCleanup(action.actionInAura, `${path}.actionInAura`);
     const buffs = rangedBuffs;
-    const exitOwnerCleanupBuffIds: string[] = [];
-    const exitBuffs = parseAuraExitAction(
-      action.actionWhenExitAura,
-      `${path}.actionWhenExitAura`,
-      buffs.map(entry => entry.buffId),
-      exitOwnerCleanupBuffIds,
-    );
+    const actionOnEnter = parseSequence(action.actionInAura, `${path}.actionInAura`);
+    const actionOnExit = parseSequence(action.actionWhenExitAura, `${path}.actionWhenExitAura`);
     return {
       kind: 'globalPartyAura',
       debugName: requireString(action.auraDebugName, `${path}.auraDebugName`),
@@ -312,9 +299,8 @@ export function parseDirectRangedAuraActionSource<TLeaf>(
       buffSource,
       inheritSourceSkillCastInfo,
       buffs,
-      exitBuffs,
-      ...(exitOwnerCleanupBuffIds.length === 0 ? {} : { exitOwnerCleanupBuffIds }),
-      ...(enterCleanupBuffIds.length === 0 ? {} : { enterCleanupBuffIds }),
+      actionOnEnter,
+      actionOnExit,
       ...(spatialBlackboardKeys.length === 0 ? {} : { spatialBlackboardKeys }),
       ...(overrideBuffIconDuration ? { iconDurationOverride: iconDuration } : {}),
       ...(includesAlliedNonCharacters ? { includesAlliedNonCharacters: true } : {}),
@@ -456,46 +442,6 @@ function parseFixedGoodAllFilter(filter: Record<string, unknown>, path: string):
   requireExpected(filter.filterGameplayTag, false, `${path}.filterGameplayTag`);
   const query = parseTagQuerySource(filter.tagQuery, `${path}.tagQuery`);
   if (query.tagIds.length > 0) throw new Error(`${path}.tagQuery: expected an empty query`);
-}
-
-function parseAuraEnterCleanup(value: unknown, path: string): string[] {
-  const sequence = requireRecord(value, path);
-  requireExactFields(
-    sequence,
-    new Set(['actionData', 'onlyExecuteWhenSourceIsMainChar', 'onlyExecuteWhenSourceIsGuard']),
-    path,
-  );
-  requireExpected(
-    sequence.onlyExecuteWhenSourceIsMainChar,
-    false,
-    `${path}.onlyExecuteWhenSourceIsMainChar`,
-  );
-  requireExpected(
-    sequence.onlyExecuteWhenSourceIsGuard,
-    false,
-    `${path}.onlyExecuteWhenSourceIsGuard`,
-  );
-  return requireArray(sequence.actionData, `${path}.actionData`).flatMap((raw, index) => {
-    const actionPath = `${path}.actionData[${index}]`;
-    const cleanup = parseAdvancedBuffFinishActionSource(raw, actionPath, {});
-    if (
-      cleanup.kind !== 'buffFinishByQuery' ||
-      cleanup.settings.checkType !== 'Id' ||
-      cleanup.settings.buffIds.length === 0 ||
-      cleanup.settings.tagQuery.tagIds.length !== 0 ||
-      !cleanup.finishAll ||
-      cleanup.finishLayerCount.blackboardKey !== null ||
-      cleanup.finishLayerCount.value !== 1 ||
-      cleanup.limitSource ||
-      cleanup.isFinishedEarly ||
-      cleanup.isAbsorbed
-    )
-      throw new Error(`${actionPath}: unsupported Aura enter cleanup`);
-    requirePlainAuraTarget(cleanup.owner, 'Target', `${actionPath}.buffOwner`);
-    requirePlainAuraTarget(cleanup.buffSource, 'Source', `${actionPath}.buffSource`);
-    requirePlainAuraTarget(cleanup.finishSource, 'Source', `${actionPath}.finishSource`);
-    return [...cleanup.settings.buffIds];
-  });
 }
 
 function parseAuraExitAction(

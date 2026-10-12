@@ -51,15 +51,20 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_claym_0004_phy_damage_up',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_claym_0004_phy_damage_up',
+                      copiedBlackboardAssignments: {
+                        phy_damage_up2: 'phy_damage_up2',
+                        duration: 'duration',
+                        max_stack: 'max_stack',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    phy_damage_up2: 'phy_damage_up2',
-                    duration: 'duration',
-                    max_stack: 'max_stack',
-                  },
                 },
               },
               next: null,
@@ -68,29 +73,32 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_claym_0004_cd',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_claym_0004_cd',
+                      copiedBlackboardAssignments: { cd_duration: 'cd_duraton' },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
-                  copiedBlackboardAssignments: { cd_duration: 'cd_duraton' },
                 },
               },
               next: 'applyBuff_1',
             },
-            conditional_3: {
+            checkCondition_3: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: 'applyBuff_2' },
               },
-              next: null,
+              next: 'applyBuff_2',
             },
-            conditional_4: {
+            checkCondition_4: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                whenTrue: { $sequence: 'conditional_3' },
               },
-              next: null,
+              next: 'checkCondition_3',
             },
           },
           dataNodes: {
@@ -122,7 +130,7 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'beforeOutputDamage',
           priority: 0,
-          sequence: { $sequence: 'conditional_4' },
+          sequence: { $sequence: 'checkCondition_4' },
         },
       ],
       blackboard: {
@@ -134,7 +142,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_claym_0004',
-  iconPath: '/weapons/claym/wpn_claym_0004.webp',
+  icon: 'endaxis:weapons/claym/wpn_claym_0004',
   buffDefinitions: {
     buff_wpn_claym_0004_cd: {
       stackingType: 'unique',
@@ -160,8 +168,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_physical_dmg_up',
-        iconPath: '/icons/icon_battle_physical_dmg_up.webp',
+        icon: 'endaxis:icons/icon_battle_physical_dmg_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

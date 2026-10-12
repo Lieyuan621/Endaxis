@@ -2,9 +2,13 @@
  * 战斗核心与曲线、诊断、日志等投影之间的事实协议。
  * 运行时只能追加已发生事实；本地化文本和面向 UI 的聚合结果不得写入回执。
  */
-import { CombatReceiptHistory, type CombatReceiptView } from './combatReceiptHistory';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
-import type { AppliedDamageModifier, CombatObjectRef } from '../state/foundationState';
+import type {
+  ActionValueCalculation,
+  AppliedDamageModifier,
+  CombatObjectRef,
+} from '../state/foundationState';
+import { CombatReceiptHistory, type CombatReceiptView } from './combatReceiptHistory';
 export type { CombatObjectRef } from '../state/foundationState';
 export type CombatReceiptValue = boolean | number | string | null;
 
@@ -50,7 +54,7 @@ export interface CombatReceiptEntry {
   readonly runtimeSource?: RuntimeTargetRef;
   readonly data?: Readonly<Record<string, CombatReceiptValue>>;
   /** 本次命中冻结的技能倍率运算链，不属于可重算的 UI 投影。 */
-  readonly skillMultiplierCalculation?: import('../state/foundationState').ActionValueCalculation;
+  readonly skillMultiplierCalculation?: ActionValueCalculation;
   readonly appliedDamageModifiers?: readonly AppliedDamageModifier[];
   readonly buffAttributeEffects?: readonly BuffAttributeEffect[];
   readonly buffDamageEffects?: readonly BuffDamageEffect[];

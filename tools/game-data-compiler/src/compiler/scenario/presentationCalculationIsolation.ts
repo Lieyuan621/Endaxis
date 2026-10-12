@@ -43,9 +43,10 @@ export function assertPresentationCalculationIsolation(
         : [node.body.value.action.outputKey];
     for (const key of keys) {
       // 完整字符串匹配是保守引用检查：未知嵌套载荷也不能绕过，不做跨作用域同名消歧。
-      if (retained.includes(JSON.stringify(key))) {
+      const reference = retained.indexOf(JSON.stringify(key));
+      if (reference >= 0) {
         throw new Error(
-          `${node.sourcePath}: presentation output ${key} reaches retained combat program`,
+          `${node.sourcePath}: presentation output ${key} reaches retained combat program: ${retained.slice(Math.max(0, reference - 120), reference + 160)}`,
         );
       }
     }

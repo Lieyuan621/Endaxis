@@ -50,43 +50,51 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_sword_0022_final',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_sword_0022_final',
+                      copiedBlackboardAssignments: { dmg_up: 'dmg_up2', duration: 'duration' },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: { dmg_up: 'dmg_up2', duration: 'duration' },
                 },
               },
               next: null,
             },
-            conditional_2: {
+            checkCondition_2: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
               },
-              next: null,
+              next: 'applyBuff_1',
             },
-            conditional_3: {
+            checkCondition_3: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'conditional_2' },
               },
-              next: null,
+              next: 'checkCondition_2',
             },
             applyBuff_4: {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_sword_0022_layer',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_sword_0022_layer',
+                      copiedBlackboardAssignments: { dmg_up: 'dmg_up', max_stack: 'max_stack' },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: { dmg_up: 'dmg_up', max_stack: 'max_stack' },
                 },
               },
-              next: 'conditional_3',
+              next: 'checkCondition_3',
             },
           },
           dataNodes: {
@@ -133,7 +141,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_sword_0022',
-  iconPath: '/weapons/sword/wpn_sword_0022.webp',
+  icon: 'endaxis:weapons/sword/wpn_sword_0022',
   buffDefinitions: {
     buff_wpn_sword_0022_final: {
       stackingType: 'unique',
@@ -142,8 +150,7 @@ const definition = {
       durationSeconds: { blackboardKey: 'duration' },
       presentation: {
         visible: true,
-        iconId: 'icon_battle_buff_wpn_sword_0022',
-        iconPath: '/icons/icon_battle_buff_wpn_sword_0022.webp',
+        icon: 'endaxis:icons/icon_battle_buff_wpn_sword_0022',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -177,7 +184,7 @@ const definition = {
           value: { blackboardKey: 'dmg_up' },
         },
       ],
-      lifecycleSequences: { finish: { $sequence: 'finishBuffsById_1' } },
+      lifecycleSequences: { finish: [{ $sequence: 'finishBuffsById_1' }] },
       actionGraph: {
         main: {
           nodes: {
@@ -185,7 +192,8 @@ const definition = {
               action: {
                 kind: 'finishBuffsById',
                 parameters: {
-                  target: 'buffOwner',
+                  targets: { kind: 'owner' },
+                  finishSource: { kind: 'source' },
                   buffIds: ['buff_wpn_sword_0022_layer'],
                   reason: 'other',
                 },
@@ -206,8 +214,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_buff_wpn_sword_0022',
-        iconPath: '/icons/icon_battle_buff_wpn_sword_0022.webp',
+        icon: 'endaxis:icons/icon_battle_buff_wpn_sword_0022',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

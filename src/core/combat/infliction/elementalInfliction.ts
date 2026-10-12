@@ -4,6 +4,14 @@
  */
 import type { InflictionElement } from '../../game-data/operatorDefinition';
 
+/** 各元素附着的原生标签，供附着查询与移除共用。 */
+export const ELEMENTAL_ATTACHMENT_TAGS = {
+  heat: 'Skill/Character/Common/SpellInflict/FireInflict',
+  electric: 'Skill/Character/Common/SpellInflict/PulseInflict',
+  cryo: 'Skill/Character/Common/SpellInflict/CrystInflict',
+  nature: 'Skill/Character/Common/SpellInflict/NaturalInflict',
+} as const satisfies Record<InflictionElement, string>;
+
 /** 原生 INFLICTION_TAG_QUERY 查询此父标签；按标签层级匹配，不从 Buff ID 猜测。 */
 export function hasElementalAttachmentTag(tags: readonly string[]): boolean {
   const parent = 'Skill/Character/Common/SpellInflict';

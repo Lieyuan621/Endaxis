@@ -184,7 +184,11 @@ it('imported entity entries retain their owning graph when local node IDs collid
       same: {
         action: {
           kind: 'spawnAbilityEntity',
-          parameters: { abilityEntityId: 'entity', dieWhenSourceDies: false },
+          parameters: {
+            bornAt: { kind: 'owner' as const },
+            abilityEntityId: 'entity',
+            dieWhenSourceDies: false,
+          },
         },
         next: null,
       },

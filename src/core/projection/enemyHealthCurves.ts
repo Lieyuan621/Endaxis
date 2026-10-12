@@ -1,5 +1,5 @@
 /**
- * 把敌人生命日志整理成曲线：初始生命 + 每次受伤 = 一条折线。
+ * 把敌人生命日志整理成曲线：初始生命 + 伤害与治疗 = 一条折线。
  * 只按日志记录来；日志和曲线对不上就报错，绝不自己补数。
  */
 import type { CombatReceiptEntry } from '../combat/receipt/combatReceipt';
@@ -27,9 +27,9 @@ function appendPoint(
   change: EnemyHealthChangePoint,
   currentValue: number,
 ): number {
-  if (change.remainingHealth !== currentValue - change.actualDamage) {
+  if (change.remainingHealth !== currentValue + change.healthChange) {
     throw new Error(
-      `enemy health curve is discontinuous at receipt ${change.sequence}: expected ${currentValue - change.actualDamage}, received ${change.remainingHealth}`,
+      `enemy health curve is discontinuous at receipt ${change.sequence}: expected ${currentValue + change.healthChange}, received ${change.remainingHealth}`,
     );
   }
   points.push({
@@ -52,7 +52,7 @@ export function projectEnemyHealthCurve(
   ];
   let currentValue = initial.health;
   for (const change of changes) {
-    if (change.remainingHealth > currentValue - change.actualDamage) {
+    if (change.remainingHealth > currentValue + change.healthChange) {
       throw new Error(
         `enemy health at receipt ${change.sequence} increased without a receipt fact`,
       );

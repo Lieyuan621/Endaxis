@@ -3,30 +3,8 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 
 const definition = {
   slug: 'suit_expend_spell01',
-  iconPath: '/equipment/expend_spell01/item_equip_t4_suit_expend_spell01_body_02.webp',
+  icon: 'endaxis:equipment/expend_spell01/item_equip_t4_suit_expend_spell01_body_02',
   modifiers: [{ kind: 'panelStat', stat: 'attackPercent', value: 0.1 }],
-  actionGraph: {
-    main: {
-      nodes: {
-        applyBuff_1: {
-          action: {
-            kind: 'applyBuff',
-            parameters: {
-              buffId: 'buff_equipsuit_expend_spell01',
-              target: 'caster',
-              blackboardAssignments: {
-                spell_dmg_up: { kind: 'constant', value: 0.15 },
-                max_stack: { kind: 'constant', value: 3 },
-                duration: { kind: 'constant', value: 25 },
-              },
-            },
-          },
-          next: null,
-        },
-      },
-    },
-    macros: {},
-  },
   skillId: 'passive_equipsuit_expend_spell01',
   buffDefinitions: {
     buff_equipsuit_expend_spell01: {
@@ -41,7 +19,7 @@ const definition = {
       blackboard: { addstack: 1, buffid: 0, duration: 10, max_stack: 4, spell_dmg_up: 0.2 },
       attributeModifiers: [],
       abilityEventResponses: [
-        { event: 'buffConsumed', priority: 0, sequence: { $sequence: 'conditional_3' } },
+        { event: 'buffConsumed', priority: 0, sequence: { $sequence: 'checkCondition_3' } },
       ],
       actionGraph: {
         main: {
@@ -50,17 +28,21 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_equipsuit_expend_spelldamage',
-                  target: 'buffOwner',
-                  source: 'buffOwner',
+                  buffs: [
+                    {
+                      buffId: 'buff_equipsuit_expend_spelldamage',
+                      copiedBlackboardAssignments: {
+                        spell_dmg_up: 'spell_dmg_up',
+                        duration: 'duration',
+                        max_stack: 'max_stack',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'owner' },
+                  source: { kind: 'owner' },
                   count: { kind: 'valueNode', nodeId: 'data_1' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    spell_dmg_up: 'spell_dmg_up',
-                    duration: 'duration',
-                    max_stack: 'max_stack',
-                  },
                 },
               },
               next: null,
@@ -72,13 +54,12 @@ const definition = {
               },
               next: 'applyBuff_1',
             },
-            conditional_3: {
+            checkCondition_3: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                whenTrue: { $sequence: 'readEventBuffBlackboard_2' },
               },
-              next: null,
+              next: 'readEventBuffBlackboard_2',
             },
           },
           dataNodes: {
@@ -110,8 +91,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_spell_up',
-        iconPath: '/icons/icon_battle_spell_up.webp',
+        icon: 'endaxis:icons/icon_battle_spell_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -149,6 +129,32 @@ const definition = {
     },
   },
   enableSequence: { $sequence: 'applyBuff_1' },
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [
+                {
+                  buffId: 'buff_equipsuit_expend_spell01',
+                  blackboardAssignments: {
+                    spell_dmg_up: { kind: 'constant', value: 0.15 },
+                    max_stack: { kind: 'constant', value: 3 },
+                    duration: { kind: 'constant', value: 25 },
+                  },
+                },
+              ],
+              targets: { kind: 'fixed', target: 'caster' },
+            },
+          },
+          next: null,
+        },
+      },
+    },
+    macros: {},
+  },
 } as const satisfies GearSetDefinition;
 
 export default definition;

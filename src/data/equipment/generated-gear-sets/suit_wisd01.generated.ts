@@ -3,26 +3,8 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 
 const definition = {
   slug: 'suit_wisd01',
-  iconPath: '/equipment/wisd01/item_equip_t2_suit_wisd01_edc_03.webp',
+  icon: 'endaxis:equipment/wisd01/item_equip_t2_suit_wisd01_edc_03',
   modifiers: [{ kind: 'attribute', attribute: 'intellect', operation: 'flat', value: 50 }],
-  actionGraph: {
-    main: {
-      nodes: {
-        applyBuff_1: {
-          action: {
-            kind: 'applyBuff',
-            parameters: {
-              buffId: 'buff_equipsuit_wisd_spdmg_01',
-              target: 'caster',
-              blackboardAssignments: { spell_dmg_up: { kind: 'constant', value: 0.2 } },
-            },
-          },
-          next: null,
-        },
-      },
-    },
-    macros: {},
-  },
   skillId: 'passive_equipsuit_wisd_01',
   buffDefinitions: {
     buff_equipsuit_wisd_spdmg_01: {
@@ -61,6 +43,28 @@ const definition = {
     },
   },
   initializationSequence: { $sequence: 'applyBuff_1' },
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [
+                {
+                  buffId: 'buff_equipsuit_wisd_spdmg_01',
+                  blackboardAssignments: { spell_dmg_up: { kind: 'constant', value: 0.2 } },
+                },
+              ],
+              targets: { kind: 'fixed', target: 'caster' },
+            },
+          },
+          next: null,
+        },
+      },
+    },
+    macros: {},
+  },
 } as const satisfies GearSetDefinition;
 
 export default definition;

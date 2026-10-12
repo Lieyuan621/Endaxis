@@ -1,339 +1,116 @@
-import { parseCharacterInflictionEventSource } from './elementalInflictionActions.ts';
+import { parseAiMarkerActionSource, type AiMarkerActionSource } from './aiMarkerActions.ts';
 import {
-  parseBlackboardCalculationActionSource,
-  parseBlackboardMutationActionSource,
-  parseAttributeSnapshotActionSource,
-  parseEntityPropertySnapshotActionSource,
-  parseRandomBlackboardActionSource,
-  type BlackboardCalculationActionSource,
-  type BlackboardMutationActionSource,
-  type AttributeSnapshotActionSource,
-  type EntityPropertySnapshotActionSource,
-  type RandomBlackboardActionSource,
-} from './blackboardActions.ts';
+  parseContinuousAnimationTimeScaleActionSource,
+  parseTargetAnimationTimeScaleActionSource,
+  type ContinuousAnimationTimeScaleActionSource,
+  type TargetAnimationTimeScaleActionSource,
+} from './animationTimingActions.ts';
 import {
-  parseAdvancedBuffFinishActionSource,
-  parseBuffApplicationActionSource,
-  parseBuffIgniteActionSource,
-  parseBuffHoldActionSource,
-  parsePhysicalNoGuardStartedEventSource,
-  type BuffIgniteActionSource,
-  type BuffHoldActionSource,
-  parseBuffInheritanceActionSource,
-  parseLegacyBuffFinishActionSource,
-  parseTaggedBuffFinishActionSource,
-  type BuffApplicationActionSource,
-  type BuffInheritanceActionSource,
-  type BuffFinishActionSource,
-} from './buffActions.ts';
-import {
-  parseBuffBlackboardReadActionSource,
-  parseBuffLifeTimeReadActionSource,
-  parseBuffDurationMutationActionSource,
-  parseSimpleBuffStackReadActionSource,
-  parseBuffStackReadActionSource,
-  parseTaggedBuffStackReadActionSource,
-  parseStoreBuffCountActionSource,
-  type BuffBlackboardReadActionSource,
-  type BuffLifeTimeReadActionSource,
-  type BuffDurationMutationActionSource,
-  type BuffStackReadActionSource,
-} from './buffQueryActions.ts';
-import {
-  parseBuffTimePauseActionSource,
-  type BuffTimePauseActionSource,
-} from './buffTimeActions.ts';
-import { parseConditionLeafSource, type NativeConditionSource } from './condition.ts';
-import {
-  parseCharacterTypeIdReadActionSource,
-  type CharacterTypeIdReadActionSource,
-} from './characterIdentityActions.ts';
-import {
-  collectNativeActionNodes,
-  parseNativeSequenceSource,
-  type NativeActionNodeSource,
-  type NativeSequenceSource,
-} from './controlFlow.ts';
-import {
-  parseChannelingCastingActionSource,
-  type ChannelingCastingActionSource,
-} from './castingControlActions.ts';
-import {
-  parseComboGlobalBuffActionSource,
-  parseCreateGlobalBuffActionSource,
-  parseFinishGlobalBuffActionSource,
-  type GlobalBuffActionSource,
-} from './globalBuffActions.ts';
-import {
-  parseSkillSettingReadActionSource,
-  type SkillSettingReadActionSource,
-} from './skillSettingActions.ts';
-import { parseDamageActionSource, type DamageActionSource } from './damageActions.ts';
-import {
-  parseAirborneActionSource,
-  parseKnockDownActionSource,
-  parsePhysicalInflictionActionSource,
-  type AirborneActionSource,
-  type KnockDownActionSource,
-  type PhysicalInflictionActionSource,
-} from './physicalInflictionActions.ts';
-import { parseHealActionSource, type HealActionSource } from './healActions.ts';
-import {
-  parseBreakInteractiveActionSource,
-  type BreakInteractiveActionSource,
-} from './environmentActions.ts';
-import {
-  parseElementalInflictionActionSource,
-  parseCharacterSpellInflictionActionSource,
-  parseForcedElementalStatusActionSource,
-  parseSpellAbnormalLifecycleEventSource,
-  parseSpellInflictionStartedEventSource,
-  parseTriggerSpellBurstEventSource,
-  parseForceTriggerWeaknessEventSource,
-  type ElementalInflictionActionSource,
-  type CharacterSpellInflictionActionSource,
-  type ForcedElementalStatusActionSource,
-  type SpellAbnormalLifecycleEventSource,
-  type SpellInflictionStartedEventSource,
-  type TriggerSpellBurstEventSource,
-  type ForceTriggerWeaknessEventSource,
-} from './elementalInflictionActions.ts';
-import { parseFinishOwnerActionSource, type FinishOwnerActionSource } from './lifecycleActions.ts';
-import {
-  nativeActionName,
-  requireArray,
-  requireBoolean,
-  requireExactFields,
-  requireInteger,
-  requireNonEmptyString,
-  requireRecord,
-  requireNativeEnum,
-} from './primitives.ts';
-import {
-  parseDebugPrintActionSource,
-  parseCameraPresentationActionSource,
-  parseInheritedCameraControlStateActionSource,
-  parseCameraRotateActionSource,
-  parseAnimatedCameraActionSource,
-  parseHideUiActionSource,
-  parseLockCameraAimActionSource,
-  parseUltimateShowActionSource,
-  parseWeaponVisibilityActionSource,
-  parseWeaponAnimationActionSource,
-  parseSetAnimatorParameterActionSource,
-  parseIgniteBuffTextActionSource,
-  parseImmuneTextActionSource,
-  parseModifyWeaponMountPointActionSource,
-  parseVoiceTriggerActionSource,
-  parseVoiceInterruptActionSource,
-  parseOverrideCameraFollowActionSource,
-  parseTemporaryUnlockActionSource,
-  parseIgnoreModelIntervalCheckActionSource,
-  parseEffectActionSource,
-  parseShowHideActorActionSource,
-  parsePlayAnimationActionSource,
-  parsePlayAnimationWithStepActionSource,
-  parsePlaySoundActionSource,
-  parseLiinoUiEventActionSource,
-  parseNoopSpecificLayerChangeActionSource,
-  parseForceTargetInFightActionSource,
-  parseInterruptHenshinTagListenerActionSource,
-  parseSetStrafeModeActionSource,
-  parseBombClearActionSource,
-  parseSkillTypeMutationSource,
-  parseNotifyCharacterPassiveUiActionSource,
-  parseAnimatorAimOffsetActionSource,
-  parseTryToTeleportSquadActionSource,
-  parsePlayPerfectDodgeAnimActionSource,
-  parseSetFirstDashParamActionSource,
-  parseTyphoeaHudHintActionSource,
-  type DebugPrintActionSource,
-  type CameraPresentationActionSource,
-  type HideUiActionSource,
-  type EffectActionSource,
-  type PlayAnimationActionSource,
-  type PlaySoundActionSource,
-} from './presentationActions.ts';
-import { parseInterruptActionSource, type InterruptActionSource } from './interruptAction.ts';
-import { parseDispelActionSource, type DispelActionSource } from './dispelActions.ts';
-import {
-  parseNormalSkillUltimateEnergyActionSource,
-  type NormalSkillUltimateEnergyActionSource,
-} from './normalSkillUltimateEnergy.ts';
-import {
-  parseEnhancedActionSource,
-  parseShelterActionSource,
-  parseWeakActionSource,
-  parseSlowActionSource,
-  parseSpeedupActionSource,
-  parseVulnerableActionSource,
-  type KeywordBuffActionSource,
-} from './keywordActions.ts';
-import {
-  parseEnemyHurtAnimationActionSource,
-  parseBlowOffEnemyActionSource,
-  parseBlowOffActionSource,
-  parsePullActionSource,
-  parsePushBackActionSource,
-  parseTargetHitStopActionSource,
-  parseTakeDownActionSource,
-  parseLaunchUpwardActionSource,
-  type StumpControlActionSource,
-} from './stumpControlActions.ts';
-import {
-  parseAbilityEntitySpawnActionSource,
-  parseAbilityEntityDurationMutationActionSource,
-  parseAbilityEntityTargetMutationActionSource,
-  parseProjectileLaunchActionSource,
-  parseSkillCastActionSource,
-  type AbilityEntitySpawnActionSource,
-  type AbilityEntityDurationMutationActionSource,
-  type AbilityEntityTargetMutationActionSource,
-  type ProjectileLaunchActionSource,
-  type SkillCastActionSource,
-} from './referenceActions.ts';
-import {
-  parseGlobalCooldownApplicationSource,
-  parseFinisherSpGainActionSource,
-  parseResourceGainActionSource,
-  parseDashEnergyRecoveryActionSource,
-  parseBattleDetailRecordActionSource,
-  parseTimedMarkerApplicationSource,
-  parseSkillCooldownMutationActionSource,
-  type GlobalCooldownApplicationSource,
-  type FinisherSpGainActionSource,
-  type ResourceGainActionSource,
-  type DashEnergyRecoveryActionSource,
-  type BattleDetailRecordActionSource,
-  type TimedMarkerApplicationSource,
-  type SkillCooldownMutationActionSource,
-} from './resourceActions.ts';
-import { parseScalarSource, type BlackboardLevelValues, type ScalarSource } from './scalar.ts';
-import { parseTargetReferenceSource, type TargetReferenceSource } from './target.ts';
-import { parseTagQuerySource, type TagQuerySource } from './tagQuery.ts';
-import {
-  parseDirectRangedAuraActionSource,
   parseAuraReferenceActionSource,
+  parseDirectRangedAuraActionSource,
   parseGlobalPartyAuraActionSource,
   type AuraReferenceActionSource,
   type DirectRangedAuraActionSource,
   type GlobalPartyAuraActionSource,
 } from './auraActions.ts';
 import {
-  parseTimeDilationActionSource,
-  parseUltimateTimeActionSource,
-  parseSetIgnoreGlobalTimeScaleActionSource,
-  parseSealTimeDilationActionSource,
-  type TimeDilationActionSource,
-  type UltimateTimeActionSource,
-  type SetIgnoreGlobalTimeScaleActionSource,
-  type SealTimeDilationActionSource,
-} from './timeDilationActions.ts';
-import { parseTargetGroupActionSource, type TargetGroupActionSource } from './targetGroup.ts';
+  parseAttributeSnapshotActionSource,
+  parseBlackboardCalculationActionSource,
+  parseBlackboardMutationActionSource,
+  parseEntityPropertySnapshotActionSource,
+  parseRandomBlackboardActionSource,
+  type AttributeSnapshotActionSource,
+  type BlackboardCalculationActionSource,
+  type BlackboardMutationActionSource,
+  type EntityPropertySnapshotActionSource,
+  type RandomBlackboardActionSource,
+} from './blackboardActions.ts';
 import {
-  parseAllowNextSkillActionSource,
-  parseAddEntityControlTagsActionSource,
-  parseBlockMoveInterruptSkillActionSource,
-  parseComboCacheActionSource,
-  parseMarkCanInterruptActionSource,
-  parseMarkCanDashActionSource,
-  parseOverrideMultiDashLimitActionSource,
-  parsePauseComboSkillTimeActionSource,
-  type AllowNextSkillActionSource,
-  type AddEntityControlTagsActionSource,
-  type BlockMoveInterruptSkillActionSource,
-  type ComboCacheActionSource,
-  type MarkCanInterruptActionSource,
-  type MarkCanDashActionSource,
-  type OverrideMultiDashLimitActionSource,
-  type PauseComboSkillTimeActionSource,
-} from './inputControlActions.ts';
+  parseAdvancedBuffFinishActionSource,
+  parseBuffApplicationActionSource,
+  parseBuffHoldActionSource,
+  parseBuffIgniteActionSource,
+  parseBuffInheritanceActionSource,
+  parseLegacyBuffFinishActionSource,
+  parsePhysicalNoGuardStartedEventSource,
+  parseTaggedBuffFinishActionSource,
+  type BuffApplicationActionSource,
+  type BuffFinishActionSource,
+  type BuffHoldActionSource,
+  type BuffIgniteActionSource,
+  type BuffInheritanceActionSource,
+} from './buffActions.ts';
 import {
-  parseComboPendingActionSource,
-  type ComboPendingActionSource,
-} from './comboPendingActions.ts';
+  parseBuffBlackboardReadActionSource,
+  parseBuffDurationMutationActionSource,
+  parseBuffLifeTimeReadActionSource,
+  parseBuffStackReadActionSource,
+  parseSimpleBuffStackReadActionSource,
+  parseStoreBuffCountActionSource,
+  parseTaggedBuffStackReadActionSource,
+  type BuffBlackboardReadActionSource,
+  type BuffDurationMutationActionSource,
+  type BuffLifeTimeReadActionSource,
+  type BuffStackReadActionSource,
+} from './buffQueryActions.ts';
 import {
-  parseSetSuperArmorActionSource,
-  type SetSuperArmorActionSource,
-} from './selfDefenseActions.ts';
-import {
-  parseClearProjectileActionSource,
-  type ClearProjectileActionSource,
-} from './projectileControlActions.ts';
-import {
-  parseContinuousAnimationTimeScaleActionSource,
-  parseTargetAnimationTimeScaleActionSource,
-  type TargetAnimationTimeScaleActionSource,
-  type ContinuousAnimationTimeScaleActionSource,
-} from './animationTimingActions.ts';
-import {
-  parseBattleLevelSignalActionSource,
-  parseTrainingLevelEventActionSource,
-  type BattleLevelSignalActionSource,
-  type TrainingLevelEventActionSource,
-} from './levelSignalActions.ts';
-import {
-  parseRayCastTargetGroupActionSource,
-  type RayCastTargetGroupActionSource,
-} from './rayCastActions.ts';
+  parseBuffTimePauseActionSource,
+  type BuffTimePauseActionSource,
+} from './buffTimeActions.ts';
+import type { SaveTwoDirectionAngleActionSource } from './calculationActions.ts';
 import {
   parseCurveEvaluateFloatActionSource,
   parseSaveCameraAngleActionSource,
   parseSaveMoveAxisAngleActionSource,
   parseSaveTwoDirectionAngleActionSource,
   type PresentationCalculationActionSource,
-} from './presentationCalculationActions.ts';
+} from './calculationActions.ts';
 import {
-  parseAdditionalBattleShapeActionSource,
-  parseDynamicBattleShapeActionSource,
-  parseSelfRotateActionSource,
-  parseTeleportActionSource,
-  parseDisableRootMotionActionSource,
-  parseTeleportPositionSelectionActionSource,
-  parseReceiveMoveInputActionSource,
-  parseMoveToActionSource,
-  parseCustomRootMotionActionSource,
-  parseBoneAttachActionSource,
-  parseSnapToTargetWithRangeActionSource,
-  parseSaveTargetDistanceActionSource,
-  parseSkillAiMoveActionSource,
-  type AdditionalBattleShapeActionSource,
-  type DynamicBattleShapeActionSource,
-  type CustomRootMotionActionSource,
-  type BoneAttachActionSource,
-  type DisableRootMotionActionSource,
-  type SnapToTargetWithRangeActionSource,
-  type TeleportPositionSelectionActionSource,
-  type SaveTargetDistanceActionSource,
-  type SkillAiMoveActionSource,
-  type MoveToActionSource,
-  type ReceiveMoveInputActionSource,
-  type SelfRotateActionSource,
-  type TeleportActionSource,
-  parseEnableMoveColliderActionSource,
-  type EnableMoveColliderActionSource,
-} from './spatialActions.ts';
+  parseChannelingCastingActionSource,
+  type ChannelingCastingActionSource,
+} from './castingControlActions.ts';
 import {
-  parseRefrainUltimateEnergyRecoveryActionSource,
-  parseSwitchModeActionSource,
-  type RefrainUltimateEnergyRecoveryActionSource,
-  type SwitchModeActionSource,
-} from './modeAndResourcePolicyActions.ts';
+  parseCharacterTypeIdReadActionSource,
+  type CharacterTypeIdReadActionSource,
+} from './characterIdentityActions.ts';
 import {
-  parseSkillSlotReplacementActionSource,
-  type SkillSlotReplacementActionSource,
-} from './skillSlotActions.ts';
+  parseComboPendingActionSource,
+  type ComboPendingActionSource,
+} from './comboPendingActions.ts';
+import { parseConditionLeafSource, type NativeConditionSource } from './condition.ts';
 import {
-  parseInterruptCurrentSkillActionSource,
-  parseStoreCurrentSkillExecuteFrameActionSource,
-  type InterruptCurrentSkillActionSource,
-  type StoreCurrentSkillExecuteFrameActionSource,
-} from './timelineControlActions.ts';
+  collectNativeActionNodesWithLeafSequences,
+  parseNativeSequenceSource,
+  type NativeActionNodeSource,
+  type NativeSequenceSource,
+} from './controlFlow.ts';
 import {
   parseTriggerCustomAbilityEventSource,
   type TriggerCustomAbilityEventSource,
 } from './customAbilityEventActions.ts';
-import { parseAiMarkerActionSource, type AiMarkerActionSource } from './aiMarkerActions.ts';
+import { parseDamageActionSource, type DamageActionSource } from './damageActions.ts';
+import { parseDispelActionSource, type DispelActionSource } from './dispelActions.ts';
+import {
+  parseCharacterInflictionEventSource,
+  parseCharacterSpellInflictionActionSource,
+  parseElementalInflictionActionSource,
+  parseForcedElementalStatusActionSource,
+  parseForceTriggerWeaknessEventSource,
+  parseSpellAbnormalLifecycleEventSource,
+  parseSpellInflictionStartedEventSource,
+  parseTriggerSpellBurstEventSource,
+  type CharacterSpellInflictionActionSource,
+  type ElementalInflictionActionSource,
+  type ForcedElementalStatusActionSource,
+  type ForceTriggerWeaknessEventSource,
+  type SpellAbnormalLifecycleEventSource,
+  type SpellInflictionStartedEventSource,
+  type TriggerSpellBurstEventSource,
+} from './elementalInflictionActions.ts';
+import {
+  parseBreakInteractiveActionSource,
+  type BreakInteractiveActionSource,
+} from './environmentActions.ts';
 import {
   parseSaveAtbObtainValueActionSource,
   parseSaveHealValueActionSource,
@@ -343,13 +120,236 @@ import {
   type SaveShieldValueActionSource,
 } from './eventPayloadActions.ts';
 import {
+  parseComboGlobalBuffActionSource,
+  parseCreateGlobalBuffActionSource,
+  parseFinishGlobalBuffActionSource,
+  type GlobalBuffActionSource,
+} from './globalBuffActions.ts';
+import { parseHealActionSource, type HealActionSource } from './healActions.ts';
+import {
+  parseAddEntityControlTagsActionSource,
+  parseAllowNextSkillActionSource,
+  parseBlockMoveInterruptSkillActionSource,
+  parseComboCacheActionSource,
+  parseMarkCanDashActionSource,
+  parseMarkCanInterruptActionSource,
+  parseOverrideMultiDashLimitActionSource,
+  parsePauseComboSkillTimeActionSource,
+  type AddEntityControlTagsActionSource,
+  type AllowNextSkillActionSource,
+  type BlockMoveInterruptSkillActionSource,
+  type ComboCacheActionSource,
+  type MarkCanDashActionSource,
+  type MarkCanInterruptActionSource,
+  type OverrideMultiDashLimitActionSource,
+  type PauseComboSkillTimeActionSource,
+} from './inputControlActions.ts';
+import { parseInterruptActionSource, type InterruptActionSource } from './interruptAction.ts';
+import {
+  parseEnhancedActionSource,
+  parseShelterActionSource,
+  parseSlowActionSource,
+  parseSpeedupActionSource,
+  parseVulnerableActionSource,
+  parseWeakActionSource,
+  type KeywordBuffActionSource,
+} from './keywordActions.ts';
+import {
+  parseBattleLevelSignalActionSource,
+  parseTrainingLevelEventActionSource,
+  type BattleLevelSignalActionSource,
+  type TrainingLevelEventActionSource,
+} from './levelSignalActions.ts';
+import { parseFinishOwnerActionSource, type FinishOwnerActionSource } from './lifecycleActions.ts';
+import {
+  parseRefrainUltimateEnergyRecoveryActionSource,
+  parseSwitchModeActionSource,
+  type RefrainUltimateEnergyRecoveryActionSource,
+  type SwitchModeActionSource,
+} from './modeAndResourcePolicyActions.ts';
+import {
+  parseNormalSkillUltimateEnergyActionSource,
+  type NormalSkillUltimateEnergyActionSource,
+} from './normalSkillUltimateEnergy.ts';
+import {
+  parseAirborneActionSource,
+  parseKnockDownActionSource,
+  parsePhysicalInflictionActionSource,
+  type AirborneActionSource,
+  type KnockDownActionSource,
+  type PhysicalInflictionActionSource,
+} from './physicalInflictionActions.ts';
+import {
+  parseAnimatedCameraActionSource,
+  parseAnimatorAimOffsetActionSource,
+  parseBombClearActionSource,
+  parseCameraPresentationActionSource,
+  parseCameraRotateActionSource,
+  parseDebugPrintActionSource,
+  parseEffectActionSource,
+  parseForceTargetInFightActionSource,
+  parseHideUiActionSource,
+  parseIgniteBuffTextActionSource,
+  parseIgnoreModelIntervalCheckActionSource,
+  parseImmuneTextActionSource,
+  parseInheritedCameraControlStateActionSource,
+  parseInterruptHenshinTagListenerActionSource,
+  parseLiinoUiEventActionSource,
+  parseLockCameraAimActionSource,
+  parseModifyWeaponMountPointActionSource,
+  parseNoopSpecificLayerChangeActionSource,
+  parseNotifyCharacterPassiveUiActionSource,
+  parseOverrideCameraFollowActionSource,
+  parsePlayAnimationActionSource,
+  parsePlayAnimationWithStepActionSource,
+  parsePlayPerfectDodgeAnimActionSource,
+  parsePlaySoundActionSource,
+  parseSetAnimatorParameterActionSource,
+  parseSetFirstDashParamActionSource,
+  parseSetStrafeModeActionSource,
+  parseShowHideActorActionSource,
+  parseSkillTypeMutationSource,
+  parseTemporaryUnlockActionSource,
+  parseTryToTeleportSquadActionSource,
+  parseTyphoeaHudHintActionSource,
+  parseUltimateShowActionSource,
+  parseVoiceInterruptActionSource,
+  parseVoiceTriggerActionSource,
+  parseWeaponAnimationActionSource,
+  parseWeaponVisibilityActionSource,
+  type CameraPresentationActionSource,
+  type DebugPrintActionSource,
+  type EffectActionSource,
+  type HideUiActionSource,
+  type PlayAnimationActionSource,
+  type PlaySoundActionSource,
+} from './presentationActions.ts';
+import {
+  nativeActionName,
+  requireArray,
+  requireBoolean,
+  requireExactFields,
+  requireInteger,
+  requireNativeEnum,
+  requireNonEmptyString,
+  requireRecord,
+} from './primitives.ts';
+import {
+  parseClearProjectileActionSource,
+  type ClearProjectileActionSource,
+} from './projectileControlActions.ts';
+import {
+  parseRayCastTargetGroupActionSource,
+  type RayCastTargetGroupActionSource,
+} from './rayCastActions.ts';
+import {
+  parseAbilityEntityDurationMutationActionSource,
+  parseAbilityEntitySpawnActionSource,
+  parseAbilityEntityTargetMutationActionSource,
+  parseProjectileLaunchActionSource,
+  parseSkillCastActionSource,
+  type AbilityEntityDurationMutationActionSource,
+  type AbilityEntitySpawnActionSource,
+  type AbilityEntityTargetMutationActionSource,
+  type ProjectileLaunchActionSource,
+  type SkillCastActionSource,
+} from './referenceActions.ts';
+import {
+  parseBattleDetailRecordActionSource,
+  parseDashEnergyRecoveryActionSource,
+  parseFinisherSpGainActionSource,
+  parseGlobalCooldownApplicationSource,
+  parseResourceGainActionSource,
+  parseSkillCooldownMutationActionSource,
+  parseTimedMarkerApplicationSource,
+  type BattleDetailRecordActionSource,
+  type DashEnergyRecoveryActionSource,
+  type FinisherSpGainActionSource,
+  type GlobalCooldownApplicationSource,
+  type ResourceGainActionSource,
+  type SkillCooldownMutationActionSource,
+  type TimedMarkerApplicationSource,
+} from './resourceActions.ts';
+import { parseScalarSource, type BlackboardLevelValues, type ScalarSource } from './scalar.ts';
+import {
+  parseSetSuperArmorActionSource,
+  type SetSuperArmorActionSource,
+} from './selfDefenseActions.ts';
+import {
+  parseSkillSettingReadActionSource,
+  type SkillSettingReadActionSource,
+} from './skillSettingActions.ts';
+import {
+  parseSkillSlotReplacementActionSource,
+  type SkillSlotReplacementActionSource,
+} from './skillSlotActions.ts';
+import {
+  parseAdditionalBattleShapeActionSource,
+  parseBoneAttachActionSource,
+  parseCustomRootMotionActionSource,
+  parseDisableRootMotionActionSource,
+  parseDynamicBattleShapeActionSource,
+  parseEnableMoveColliderActionSource,
+  parseMoveToActionSource,
+  parseReceiveMoveInputActionSource,
+  parseSaveTargetDistanceActionSource,
+  parseSelfRotateActionSource,
+  parseSkillAiMoveActionSource,
+  parseSnapToTargetWithRangeActionSource,
+  parseTeleportActionSource,
+  parseTeleportPositionSelectionActionSource,
+  type AdditionalBattleShapeActionSource,
+  type BoneAttachActionSource,
+  type CustomRootMotionActionSource,
+  type DisableRootMotionActionSource,
+  type DynamicBattleShapeActionSource,
+  type EnableMoveColliderActionSource,
+  type MoveToActionSource,
+  type ReceiveMoveInputActionSource,
+  type SaveTargetDistanceActionSource,
+  type SelfRotateActionSource,
+  type SkillAiMoveActionSource,
+  type SnapToTargetWithRangeActionSource,
+  type TeleportActionSource,
+  type TeleportPositionSelectionActionSource,
+} from './spatialActions.ts';
+import {
+  parseBlowOffActionSource,
+  parseBlowOffEnemyActionSource,
+  parseEnemyHurtAnimationActionSource,
+  parseLaunchUpwardActionSource,
+  parsePullActionSource,
+  parsePushBackActionSource,
+  parseTakeDownActionSource,
+  parseTargetHitStopActionSource,
+  type StumpControlActionSource,
+} from './stumpControlActions.ts';
+import { parseTagQuerySource, type TagQuerySource } from './tagQuery.ts';
+import { parseTargetReferenceSource, type TargetReferenceSource } from './target.ts';
+import { parseTargetGroupActionSource, type TargetGroupActionSource } from './targetGroup.ts';
+import {
+  parseSealTimeDilationActionSource,
+  parseSetIgnoreGlobalTimeScaleActionSource,
+  parseTimeDilationActionSource,
+  parseUltimateTimeActionSource,
+  type SealTimeDilationActionSource,
+  type SetIgnoreGlobalTimeScaleActionSource,
+  type TimeDilationActionSource,
+  type UltimateTimeActionSource,
+} from './timeDilationActions.ts';
+import {
+  parseInterruptCurrentSkillActionSource,
+  parseStoreCurrentSkillExecuteFrameActionSource,
+  type InterruptCurrentSkillActionSource,
+  type StoreCurrentSkillExecuteFrameActionSource,
+} from './timelineControlActions.ts';
+import {
   parseTyphoeaArcheryTargetSelectionActionSource,
   type TyphoeaArcheryTargetSelectionActionSource,
 } from './typhoeaArcheryActions.ts';
 
 const CONDITION_ACTION_NAMES = new Set([
   'ReturnFalseAction',
-  'OrConditionAction',
   'CompareFloat',
   'CompareString',
   'CheckMainCharacterCondition',
@@ -465,6 +465,10 @@ export type KnownNativeActionLeafSource =
   | { readonly family: 'targetGroup'; readonly action: TargetGroupActionSource }
   | { readonly family: 'rayCastTargetGroup'; readonly action: RayCastTargetGroupActionSource }
   | {
+      readonly family: 'directionAngle';
+      readonly action: SaveTwoDirectionAngleActionSource;
+    }
+  | {
       readonly family: 'presentationCalculation';
       readonly action: PresentationCalculationActionSource;
     }
@@ -561,7 +565,7 @@ export type KnownNativeActionLeafSource =
   | {
       readonly family: 'aura';
       readonly action:
-        | GlobalPartyAuraActionSource
+        | GlobalPartyAuraActionSource<KnownNativeActionLeafSource>
         | AuraReferenceActionSource
         | DirectRangedAuraActionSource<KnownNativeActionLeafSource>;
     }
@@ -795,25 +799,6 @@ export function tryParseKnownNativeActionLeafSource(
         inheritedBlackboard,
         (leaf, leafPath) => parseKnownNativeActionLeafSource(leaf, leafPath, inheritedBlackboard),
       );
-      const triggerMutations = collectNativeActionNodes(triggeredAction).filter(
-        node =>
-          node.metadata.enabled &&
-          node.body.kind === 'leaf' &&
-          node.body.value.family === 'blackboardMutation',
-      ) as NativeActionNodeSource<KnownNativeActionLeafSource>[];
-      if (triggerMutations.length !== 1) {
-        throw new Error(
-          `${path}.triggeredAction: expected exactly one enabled ModifyDynamicBlackboard`,
-        );
-      }
-      const triggerMutation = triggerMutations[0]!;
-      if (
-        triggerMutation.body.kind !== 'leaf' ||
-        triggerMutation.body.value.family !== 'blackboardMutation' ||
-        !isPlainTargetReference(triggerMutation.body.value.action.calculationTarget, 'Owner')
-      ) {
-        throw new Error(`${path}.triggeredAction: expected a plain Owner blackboard mutation`);
-      }
       return {
         family: 'comboQte',
         action: {
@@ -865,7 +850,9 @@ export function tryParseKnownNativeActionLeafSource(
     case 'PlayAnimationAction':
       return {
         family: 'presentation',
-        action: parsePlayAnimationActionSource(value, path, inheritedBlackboard),
+        action: parsePlayAnimationActionSource(value, path, inheritedBlackboard, (leaf, leafPath) =>
+          parseKnownNativeActionLeafSource(leaf, leafPath, inheritedBlackboard),
+        ),
       };
     case 'ShowHideActorAction':
       return {
@@ -1162,7 +1149,7 @@ export function tryParseKnownNativeActionLeafSource(
       };
     case 'SaveTwoDirectionAngle':
       return {
-        family: 'presentationCalculation',
+        family: 'directionAngle',
         action: parseSaveTwoDirectionAngleActionSource(value, path),
       };
     case 'SaveMoveAxisAngle':
@@ -1523,7 +1510,9 @@ export function tryParseKnownNativeActionLeafSource(
               ? parseDirectRangedAuraActionSource(value, path, (sequence, sequencePath) =>
                   parseKnownNativeActionSequenceSource(sequence, sequencePath, inheritedBlackboard),
                 )
-              : parseGlobalPartyAuraActionSource(value, path),
+              : parseGlobalPartyAuraActionSource(value, path, (sequence, sequencePath) =>
+                  parseKnownNativeActionSequenceSource(sequence, sequencePath, inheritedBlackboard),
+                ),
       };
     case 'SkillAffixAction':
       requireExactFields(
@@ -1837,4 +1826,33 @@ export function parseKnownNativeActionSequenceSource(
   return parseNativeSequenceSource(value, path, inheritedBlackboard, (leaf, leafPath) =>
     parseKnownNativeActionLeafSource(leaf, leafPath, inheritedBlackboard),
   );
+}
+
+/** 控制子序列和事件响应共用遍历；每个原生调用只枚举一次。 */
+export function collectKnownNativeActionNodes(
+  sequence: NativeSequenceSource<KnownNativeActionLeafSource>,
+): readonly NativeActionNodeSource<KnownNativeActionLeafSource>[] {
+  return collectNativeActionNodesWithLeafSequences(sequence, leafActionSequences);
+}
+
+/** 用途分析只遍历启用的调用；关闭的控制动作及其全部子序列都不可执行。 */
+export function collectEnabledNativeActionNodes(
+  sequence: NativeSequenceSource<KnownNativeActionLeafSource>,
+): readonly NativeActionNodeSource<KnownNativeActionLeafSource>[] {
+  return collectNativeActionNodesWithLeafSequences(sequence, leafActionSequences, true);
+}
+
+function leafActionSequences(leaf: KnownNativeActionLeafSource) {
+  switch (leaf.family) {
+    case 'eventListener':
+      return leaf.action.events.flatMap(event => event.actions);
+    case 'animationEventListener':
+      return [leaf.action.actionOnEvent];
+    case 'comboQte':
+      return [leaf.action.triggeredAction];
+    case 'presentation':
+      return leaf.action.kind === 'playAnimation' && leaf.action.onEnd ? [leaf.action.onEnd] : [];
+    default:
+      return [];
+  }
 }

@@ -1,63 +1,66 @@
+import type { ActionExecutionTrace } from '../../core/combat/actions/actionExecutionTrace';
+import type { CombatReceiptView } from '../../core/combat/receipt/combatReceiptHistory';
 import type { ResolvedCombatStepForKind } from '../../core/compiler/combatProgram';
+import { skillSettingResources } from '../../data/combat/skillSettings';
 
 /**
  * 一条现成的模拟入口：编译场景 → 跑标准战斗环境 → 返回结果。
  * 随机样本等输入由调用方给；环境不支持的东西在跑之前就报错。
  */
-import type { CompileScenarioRuntimeAssemblyOptions } from '../../core/compiler/compileScenarioRuntimeAssembly';
 import type { CombatBuffDefinitionsDocument } from '../../../packages/game-data-contract/src/buffs';
-import type { SkillSettingsDocument } from '../../core/combat/infliction/skillSettings';
-import type { CompoundStatusFactoriesDocument } from '../../core/combat/infliction/compoundStatusFactories';
+import type { BuffProgressCurve } from '../../core/combat/buffs/buffProgressRecorder';
+import { BuffProgressRecorder } from '../../core/combat/buffs/buffProgressRecorder';
 import type { PlayerDamageNonRandomRuntimeSnapshot } from '../../core/combat/damage/playerActiveDamageInput';
+import type { CompoundStatusFactoriesDocument } from '../../core/combat/infliction/compoundStatusFactories';
+import type { SkillSettingsDocument } from '../../core/combat/infliction/skillSettings';
 import type { CriticalSampleSource } from '../../core/combat/random/criticalSampleSource';
 import type { ProbabilitySampleSource } from '../../core/combat/random/probabilitySampleSource';
 import type {
   SimulationRandomMode,
   SimulationRandomSettings,
 } from '../../core/combat/random/simulationRandom';
-import {
-  StandardPlayerDamageEnvironment,
-  type StandardPlayerDamageEnvironmentOptions,
-} from '../../core/combat/runtime/standardPlayerDamageEnvironment';
+import { createEnemyCombatVitals } from '../../core/combat/resources/combatVitalsFactory';
 import type {
   CombatDamageExecutorContext,
   CombatRuntimeAssembly,
   CombatRuntimeAssemblyOptions,
 } from '../../core/combat/runtime/combatRuntimeAssembly';
+import type { RestoredCombatEnvironmentInput } from '../../core/combat/runtime/restoration/combatRuntimeRestoreFoundation';
+import { assertStandardPlayerDamageCompatibility } from '../../core/combat/runtime/standardPlayerDamageCompatibility';
+import {
+  StandardPlayerDamageEnvironment,
+  type StandardPlayerDamageEnvironmentOptions,
+} from '../../core/combat/runtime/standardPlayerDamageEnvironment';
+import { isOperatorControlledAt } from '../../core/combat/skills/operatorControlTimeline';
+import type { CombatStateGraph } from '../../core/combat/state/combatState';
+import type { OrdinaryKnockDownRuntime } from '../../core/combat/status/ordinaryKnockDownRuntime';
+import { GameplayTagPredefine } from '../../core/combat/tags/gameplayTagPredefine';
+import {
+  applyMechanicsToScenarioEnemy,
+  compileScenarioEnemy,
+} from '../../core/compiler/compileScenarioEnemy';
+import type { CompileScenarioRuntimeAssemblyOptions } from '../../core/compiler/compileScenarioRuntimeAssembly';
+import {
+  compileScenarioMechanics,
+  compileScenarioRuntimeAssembly,
+} from '../../core/compiler/compileScenarioRuntimeAssembly';
+import { resolveControlTimeline } from '../../core/project/resolveControlTimeline';
+import type { ScenarioDocument } from '../../core/project/schema';
+import { createNativeDashTimingProgram } from '../../data/combat/battleCommandMappingCatalog';
+import { gameplayTagRegistry } from '../../data/combat/gameplayTagCatalog';
+import { GAMEPLAY_TAG_PREDEFINE } from '../../data/combat/gameplayTagPredefine.generated';
+import { timeDilationRuntimeConfig } from '../../data/combat/timeDilationConfig';
 import {
   advanceCombatRuntimeToFrame,
   collectCombatStateGraphResult,
   createCompiledScenarioRuntime,
   type ScenarioSimulationResult,
 } from './runScenarioSimulation';
-import type { CombatStateGraph } from '../../core/combat/state/combatState';
-import type { RestoredCombatEnvironmentInput } from '../../core/combat/runtime/restoration/combatRuntimeRestoreFoundation';
-import type { OrdinaryKnockDownRuntime } from '../../core/combat/status/ordinaryKnockDownRuntime';
-import type { ScenarioDocument } from '../../core/project/schema';
-import {
-  compileScenarioMechanics,
-  compileScenarioRuntimeAssembly,
-} from '../../core/compiler/compileScenarioRuntimeAssembly';
-import {
-  applyMechanicsToScenarioEnemy,
-  compileScenarioEnemy,
-} from '../../core/compiler/compileScenarioEnemy';
-import { createEnemyCombatVitals } from '../../core/combat/resources/combatVitalsFactory';
-import { assertStandardPlayerDamageCompatibility } from '../../core/combat/runtime/standardPlayerDamageCompatibility';
-import { timeDilationRuntimeConfig } from '../../data/combat/timeDilationConfig';
-import { createNativeDashTimingProgram } from '../../data/combat/battleCommandMappingCatalog';
-import { gameplayTagRegistry } from '../../data/combat/gameplayTagCatalog';
-import { GAMEPLAY_TAG_PREDEFINE } from '../../data/combat/gameplayTagPredefine.generated';
-import { GameplayTagPredefine } from '../../core/combat/tags/gameplayTagPredefine';
-import { resolveControlTimeline } from '../../core/project/resolveControlTimeline';
-import { isOperatorControlledAt } from '../../core/combat/skills/operatorControlTimeline';
-import type { BuffProgressCurve } from '../../core/combat/buffs/buffProgressRecorder';
-import { BuffProgressRecorder } from '../../core/combat/buffs/buffProgressRecorder';
 
-type DamageStep = ResolvedCombatStepForKind<'dealDamage' | 'dealFixedDamage'>;
+type DamageStep = ResolvedCombatStepForKind<'dealDamage'>;
 
 export interface RunStandardPlayerDamageScenarioInput {
-  readonly executionTrace?: import('../../core/combat/actions/actionExecutionTrace').ActionExecutionTrace;
+  readonly executionTrace?: ActionExecutionTrace;
   readonly scenario: ScenarioDocument;
   readonly options: Omit<CompileScenarioRuntimeAssemblyOptions, 'environment'>;
   readonly endFrame: number;
@@ -192,6 +195,7 @@ export function prepareStandardPlayerDamageScenarioRuntime(
     ...input.options,
     environment: {
       ...environment.runtimeOptions,
+      comboSkillPendingInterval: skillSettingResources.comboSkillPendingInterval,
       skillAvailabilityTags: new GameplayTagPredefine(GAMEPLAY_TAG_PREDEFINE),
       dashTiming: createNativeDashTimingProgram(),
       timeDilation: {
@@ -264,7 +268,7 @@ export function collectStandardPlayerDamageScenarioResult(
 export function collectStandardPlayerDamageStateGraphResult(
   graph: CombatStateGraph,
   compiled: CombatRuntimeAssemblyOptions,
-  history: import('../../core/combat/receipt/combatReceiptHistory').CombatReceiptView,
+  history: CombatReceiptView,
 ): StandardPlayerDamageScenarioResult {
   const result = collectCombatStateGraphResult(graph, compiled, history);
   const environmentState = graph.environment;

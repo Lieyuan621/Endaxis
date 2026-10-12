@@ -1,17 +1,20 @@
-import type { ComboSkillConditionSource } from '../../source/comboSkillConditions.ts';
-import type { CompiledAbilitySystemBlackboardsSource } from '../abilities/abilitySystemBlackboards.ts';
-import { requireNonEmptyString } from '../../source/primitives.ts';
-import { compileCombatConditionSequenceSource } from '../buffs/buffRuntimeProjection.ts';
-import type { CombatActionProjectionContextSource } from '../combatProjectionCommon.ts';
-import type { CompiledBuffSequenceSource } from '../actions/combatActionProjectionTypes.ts';
 import {
   ABILITY_EVENT_ACTION_CONTEXT_BINDINGS,
   type AbilityEvent,
   type ActionContextBoundAbilityEvent,
 } from '../../../../../packages/game-data-contract/src/abilityEvents.ts';
+import type { ComboSkillConditionSource } from '../../source/comboSkillConditions.ts';
+import { requireNonEmptyString } from '../../source/primitives.ts';
 import { projectAbilityEvent } from '../abilities/abilityEventProjection.ts';
+import type { CompiledAbilitySystemBlackboardsSource } from '../abilities/abilitySystemBlackboards.ts';
 import { createActionGraphBuilder } from '../actions/actionGraphBuilder.ts';
-import type { CompiledBuffStepSource } from '../actions/combatActionProjectionTypes.ts';
+import type {
+  CompiledBuffSequenceSource,
+  CompiledBuffStepSource,
+} from '../actions/combatActionProjectionTypes.ts';
+import { compileCombatConditionSequenceSource } from '../buffs/buffRuntimeProjection.ts';
+import type { CombatActionProjectionContextSource } from '../combatProjectionCommon.ts';
+import type { ActionGraphResourceDefinition } from '../intermediateDefinitions.ts';
 
 export function createOperatorComboActionProjectionContext(
   gameplayTagRegistry: CombatActionProjectionContextSource['gameplayTagRegistry'],
@@ -26,7 +29,7 @@ export function createOperatorComboActionProjectionContext(
 }
 
 export interface CompiledComboConditionSource {
-  readonly actionGraph: import('../intermediateDefinitions.ts').ActionGraphResourceDefinition;
+  readonly actionGraph: ActionGraphResourceDefinition;
   readonly source: ComboSkillConditionSource;
   readonly event: AbilityEvent;
   readonly sequence: CompiledBuffSequenceSource;

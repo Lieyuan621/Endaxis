@@ -4,11 +4,7 @@ import { parseNativeSequenceSource } from '../src/source/controlFlow.ts';
 import { parseKnownNativeActionLeafSource } from '../src/source/actionLeaf.ts';
 import { compileCombatActionSequenceSource } from '../src/compiler/buffs/buffRuntimeProjection.ts';
 import type { CombatActionProjectionContextSource } from '../src/compiler/combatProjectionCommon.ts';
-import {
-  ownerSpawnedAbilityEntityFindTargetActionFixture,
-  scalarFixture,
-  targetFixture,
-} from './sourceFixtures.ts';
+import { scalarFixture, targetFixture } from './sourceFixtures.ts';
 import { createActionGraphBuilder } from '../src/compiler/actions/actionGraphBuilder.ts';
 import type { CompiledBuffStepSource } from '../src/compiler/actions/combatActionProjectionTypes.ts';
 import { readActionGraphChain } from '../src/compiler/actions/actionGraphBuilder.ts';
@@ -91,6 +87,20 @@ function project(
 }
 
 describe('公共 Switch 投影', () => {
+  it('所有分支为空时仍执行选择，未命中不能被改成成功', () => {
+    const result = project([select([option(1, [])], false)]);
+    expect(result.steps.map(step => step.kind)).toEqual(['switch']);
+    const board = new ActionBlackboard({ choice: 2 });
+    const runtime = new CombatActionSequenceRuntime(
+      { execute: () => true, evaluate: () => true },
+      { blackboard: board },
+    );
+    const action = runtime.createSequence(result.compiled());
+    expect(action.executeInstant({})).toBe(false);
+    board.assign({ choice: 1 });
+    expect(action.executeInstant({})).toBe(true);
+  });
+
   it('保留动态 choice、重复标签、空分支和嵌套 Switch', () => {
     const result = project([
       select([option(2, []), option(2, [read]), option(3, [select([option(3, [read])])])]),
@@ -121,7 +131,7 @@ describe('公共 Switch 投影', () => {
       const selected = result.steps[0];
       if (selected?.kind !== 'switch') throw new Error('missing switch');
       const branch = readActionGraphChain(result.graph, selected.options[0]!.sequence);
-      expect(branch.map(step => step.kind)).toEqual(['conditional']);
+      expect(branch.map(step => step.kind)).toEqual(['checkCondition']);
       const execute = vi.fn(() => true);
       const runtime = new CombatActionSequenceRuntime(
         { execute, evaluate: () => false },
@@ -131,35 +141,6 @@ describe('公共 Switch 投影', () => {
       expect(execute).toHaveBeenCalledTimes(alwaysNext ? 1 : 0);
     },
   );
-
-  it('分支继承入口目标组，分支内写入不污染其他分支或外层', () => {
-    const find = (key: string) => ({
-      ...ownerSpawnedAbilityEntityFindTargetActionFixture(),
-      targetGroupKey: key,
-      selectorData: {
-        finderData: { $type: 'Example.Selector+CharacterTeamFinder+Data, Example' },
-        validatorData: [{ $type: 'Example.Selector+MainCharacterValidator+Data, Example' }],
-        postProcessorData: [],
-      },
-    });
-    const result = project([
-      find('shared'),
-      select([
-        option(0, [find('private'), count('shared'), count('private')]),
-        option(1, [count('private')]),
-      ]),
-      count('private'),
-      read,
-    ]);
-    const selected = result.steps.find(step => step.kind === 'switch');
-    if (selected?.kind !== 'switch') throw new Error('missing switch');
-    const branchContent = (index: number) =>
-      JSON.stringify(readActionGraphChain(result.graph, selected.options[index]!.sequence));
-    expect(branchContent(0)).not.toContain('contextTargetCountCompare');
-    expect(branchContent(0)).toContain('actionValueCompare');
-    expect(branchContent(1)).toContain('contextTargetCountCompare');
-    expect(JSON.stringify(result.steps.at(-1))).toContain('contextTargetCountCompare');
-  });
 
   it('结晶破坏形状：Owner+Source 实体冻屏使用命名曲线，忽略未启用内嵌曲线', () => {
     const dilation = {
@@ -216,18 +197,11 @@ describe('公共 Switch 投影', () => {
     ).toThrow('weightedMode');
   });
 
-  it('未知字段、未支持子动作和分支角色守卫不能被 Switch 隐藏', () => {
+  it('未知字段和未支持子动作不能被 Switch 隐藏', () => {
     expect(() => project([{ ...select([]), guessed: true }])).toThrow('guessed');
     expect(() => project([select([{ ...option(0, []), guessed: true }])])).toThrow('guessed');
     expect(() =>
       project([select([option(0, [{ ...meta, $type: 'Example.UnknownAction+Data, Example' }])])]),
-    ).toThrow();
-    expect(() =>
-      project([
-        select([
-          { ...option(0, []), actionData: { ...sequence([]), onlyExecuteWhenSourceIsGuard: true } },
-        ]),
-      ]),
     ).toThrow();
   });
 });

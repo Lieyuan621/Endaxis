@@ -88,14 +88,26 @@ function collectRequiredActionSequenceReferences(
     } else if (data.kind === 'graphBranch') {
       for (const branch of data.branches.values())
         collectRequiredActionSequenceReferences(branch, references);
-    } else if (data.kind === 'graphGuard') {
+    } else if (data.kind === 'channeling') {
+      collectRequiredActionSequenceReferences(data.channeling.body, references);
+    } else if (data.kind === 'graphConditions') {
+      for (const sequence of data.sequences.values())
+        collectRequiredActionSequenceReferences(sequence, references);
+    } else if (
+      data.kind === 'graphGuard' ||
+      data.kind === 'graphComboQte' ||
+      data.kind === 'graphAnimation'
+    ) {
       collectRequiredActionSequenceReferences(data.body, references);
-    } else if (data.kind === 'graphScope') {
-      collectRequiredActionSequenceReferences(data.body?.execution ?? null, references);
-    } else if (data.kind === 'graphTargets') {
-      for (const body of data.loop.bodies.values()) {
-        collectRequiredActionSequenceReferences(body.sequence, references);
+    } else if (data.kind === 'graphAura') {
+      for (const influence of data.influences) {
+        collectRequiredActionSequenceReferences(influence.enter, references);
+        collectRequiredActionSequenceReferences(influence.exit, references);
       }
+    } else if (data.kind === 'graphJump') {
+      collectRequiredActionSequenceReferences(data.condition, references);
+    } else if (data.kind === 'graphTargets' || data.kind === 'graphOnce') {
+      collectRequiredActionSequenceReferences(data.body, references);
     } else if (data.kind === 'repeat') {
       collectRequiredActionSequenceReferences(data.repetition.body, references);
     } else if (data.kind === 'graphListener') {
@@ -127,6 +139,10 @@ export function prepareCombatBuffRestore(graph: CombatStateGraph): PreparedComba
     addContainer(containers, logicalAbilityEntityRuntimeId(instanceId), entity.buffs);
   }
 
+  for (const [instanceId, projectile] of graph.instances.projectiles.instances) {
+    if (projectile.buffs !== null)
+      addContainer(containers, logicalAbilityEntityRuntimeId(instanceId), projectile.buffs);
+  }
   const instanceKeys = new Set<string>();
   for (const [ownerId, container] of containers) {
     for (const [instanceId, instance] of container.instances) {
@@ -247,8 +263,12 @@ export function prepareCombatBuffRestore(graph: CombatStateGraph): PreparedComba
     for (const instance of container.instances.values()) {
       const host = instance.actionHost;
       if (host === null) continue;
-      collectRequiredActionSequenceReferences(host.enable, actionReferences);
-      collectRequiredActionSequenceReferences(host.trigger, actionReferences);
+      for (const sequence of [
+        ...(host.enable ?? []),
+        ...(host.trigger ?? []),
+        ...[...host.instantSequences.values()].flat(),
+      ])
+        collectRequiredActionSequenceReferences(sequence, actionReferences);
       collectTimelineReferences(host.scheduled?.timeline ?? null, actionReferences);
       for (const response of host.eventResponses) {
         collectRequiredActionSequenceReferences(response.sequence, actionReferences);

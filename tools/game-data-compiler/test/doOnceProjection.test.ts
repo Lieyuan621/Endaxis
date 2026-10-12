@@ -50,24 +50,6 @@ const positivePotential = {
   compare: 'GT',
   valueB: scalarFixture(0),
 };
-const presentation = {
-  ...meta,
-  $type: 'Beyond.Gameplay.Core.IgnoreModelIntervalCheck+Data, Gameplay.Beyond',
-};
-const emptyPresentationBranch = {
-  ...meta,
-  $type: 'Beyond.Gameplay.Core.IfElseAction+IfElseActionData, Gameplay.Beyond',
-  conditionAction: sequence([
-    {
-      ...meta,
-      $type: 'Beyond.Gameplay.Core.Conditions.CheckMainCharacterCondition+Data, Gameplay.Beyond',
-      checkTarget: targetFixture('Source'),
-    },
-  ]),
-  succeedActions: sequence([]),
-  failActions: sequence([]),
-  alwaysNext: true,
-};
 const applyBuff = {
   ...meta,
   $type: 'Beyond.Gameplay.Core.CreateBuffAction+Data, Gameplay.Beyond',
@@ -162,25 +144,19 @@ function compile(
   };
 }
 
-describe('DoOnce 技能资源回复的窄投影', () => {
-  it.each(['Atb', 'UltimateSp'])('主控限制只作用于技力而非终结技能量：%s', costType => {
-    const compiled = compile(
-      parse(sequence([{ ...gain, costType, atbOnlyMainChar: true }])),
-    ).compiled();
-    let calls = 0;
-    const runtime = new CombatActionSequenceRuntime(
-      {
-        execute: () => {
-          calls++;
-          return true;
-        },
-        evaluate: () => false,
-      },
-      { blackboard: new ActionBlackboard({ atb: 10 }) },
-    );
-    runtime.createSequence(compiled).executeInstant({});
-    expect(calls).toBe(costType === 'Atb' ? 0 : 1);
-  });
+describe('DoOnce 原生动作边界', () => {
+  it.each(['Atb', 'UltimateSp'])(
+    '主控限制保存在资源动作参数中，不额外生成条件节点：%s',
+    costType => {
+      const projected = compile(parse(sequence([{ ...gain, costType, atbOnlyMainChar: true }])));
+      expect(projected.steps).toHaveLength(1);
+      expect(projected.steps[0]).toMatchObject({
+        kind: 'changeResource',
+        parameters: { onlyMainOperator: true },
+      });
+      expect(Object.keys(projected.graph.nodes)).toHaveLength(1);
+    },
+  );
 
   it('转换结果经正式编译执行：重复命中不重复回复，新施法重新获得机会', () => {
     const compiled = compile(parse(sequence([once(), once()]))).compiled();
@@ -197,12 +173,12 @@ describe('DoOnce 技能资源回复的窄投影', () => {
         { blackboard: new ActionBlackboard({ atb: 5 }) },
       );
     const runtime = makeRuntime();
-    expect(runtime.createSequence(compiled).executeInstant({})).toBe(true);
-    expect(runtime.createSequence(compiled).executeInstant({})).toBe(true);
+    const instance = runtime.createSequence(compiled);
+    expect(instance.executeInstant({})).toBe(true);
+    expect(instance.executeInstant({})).toBe(true);
     expect(calls).toBe(2);
     makeRuntime().createSequence(compiled).executeInstant({});
     expect(calls).toBe(4);
-    runtime.reset();
     runtime.createSequence(compiled).executeInstant({});
     expect(calls).toBe(6);
   });
@@ -217,12 +193,11 @@ describe('DoOnce 技能资源回复的窄投影', () => {
     ]);
     const compiled = compile(source);
     expect(compiled.steps).toHaveLength(2);
-    compiled.steps.forEach((step, index) => {
+    compiled.steps.forEach(step => {
       if (step.kind !== 'once') throw new Error('expected once');
-      expect(step.parameters.scopeKey).toBe(`skill.sequence.actionData[${index}]`);
       expect(readActionGraphChain(compiled.graph, step.body)).toMatchObject([
         {
-          kind: 'changeResourceByActionValue',
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
             amount: { kind: 'blackboard', key: 'atb' },
@@ -233,16 +208,9 @@ describe('DoOnce 技能资源回复的窄投影', () => {
     });
   });
 
-  it('直接子树只有严格纯表现动作时省略 DoOnce 及其私有状态', () => {
-    const compiled = compile(parse(sequence([once([presentation])])));
-    expect(compiled.entry.$sequence).toBeNull();
-    expect(compiled.steps).toEqual([]);
-  });
-
-  it('递归投影为空的表现分支也省略 DoOnce 及其私有状态', () => {
-    const compiled = compile(parse(sequence([once([presentation, emptyPresentationBranch])])));
-    expect(compiled.entry.$sequence).toBeNull();
-    expect(compiled.steps).toEqual([]);
+  it('空子序列也保留 DoOnce 动作边界', () => {
+    const compiled = compile(parse(sequence([once([])])));
+    expect(compiled.steps).toMatchObject([{ kind: 'once', body: { $sequence: null } }]);
   });
 
   it('保留一次性回能 Buff，按静态木桩证据省略相邻 InterruptAction', () => {
@@ -251,8 +219,11 @@ describe('DoOnce 技能资源回复的窄投影', () => {
     if (step?.kind !== 'once') throw new Error('expected once');
     expect(readActionGraphChain(compiled.graph, step.body)).toMatchObject([
       {
-        kind: 'gainSquadUltimateEnergyFromSkillCost',
-        parameters: { coefficient: 1 },
+        kind: 'applyBuff',
+        parameters: {
+          buffs: [{ buffId: 'buff_common_obtain_ultimate_sp' }],
+          inheritSourceSkillCastInfo: true,
+        },
       },
     ]);
   });
@@ -263,25 +234,23 @@ describe('DoOnce 技能资源回复的窄投影', () => {
     if (step?.kind !== 'once') throw new Error('expected once');
     const body = readActionGraphChain(compiled.graph, step.body);
     const guard = body[0];
-    if (guard?.kind !== 'conditional') throw new Error('expected conditional');
+    if (guard?.kind !== 'checkCondition') throw new Error('expected checkCondition');
     expect(guard.parameters.condition).toMatchObject({
       kind: 'actionValueCompare',
       operator: 'greater',
       left: { kind: 'blackboard', key: 'potential' },
       right: { kind: 'constant', value: 0 },
     });
-    expect(readActionGraphChain(compiled.graph, guard.whenTrue).map(item => item.kind)).toEqual([
-      'changeResourceByActionValue',
-    ]);
+    expect(body.map(item => item.kind)).toEqual(['checkCondition', 'changeResource']);
   });
 
-  it('未知生命周期、子角色守卫及非资源子动作仍阻断', () => {
+  it('DoOnce 不限制子动作种类，未支持的角色守卫仍阻断', () => {
     expect(() =>
       compile(parse(sequence([once()])), {
         ...context,
         timelineRange: undefined,
       }),
-    ).toThrow();
+    ).not.toThrow();
     expect(() =>
       compile(
         parse(
@@ -294,7 +263,7 @@ describe('DoOnce 技能资源回复的窄投影', () => {
         ),
       ),
     ).toThrow();
-    expect(() => compile(parse(sequence([once([once()])])))).toThrow();
+    expect(() => compile(parse(sequence([once([once()])])))).not.toThrow();
   });
 
   it('未知字段不会被控制流读取器吞掉', () => {
@@ -335,7 +304,7 @@ describe('TickIntervalAction 调度投影', () => {
     });
     if (step?.kind !== 'repeatEachTick') throw new Error('expected repeatEachTick');
     expect(readActionGraphChain(compiled.graph, step.body).map(item => item.kind)).toEqual([
-      'changeResourceByActionValue',
+      'changeResource',
     ]);
   });
 
@@ -363,6 +332,32 @@ describe('TickIntervalAction 调度投影', () => {
 });
 
 describe('ChannelingAction 单目标身份投影', () => {
+  it('Context 多目标查询属于 Channeling 本身，不添加外层循环', () => {
+    const compiled = compile(
+      parse(
+        sequence([
+          {
+            ...casterChanneling,
+            targetSettings: targetFixture('Context', undefined, 'team'),
+            actionOnTick: sequence([]),
+          },
+        ]),
+      ),
+      { ...context, operatorTargetGroupKeys: new Set(['team']) },
+    );
+    expect(compiled.steps).toHaveLength(1);
+    expect(compiled.steps[0]).toMatchObject({
+      kind: 'repeatEachTick',
+      parameters: {
+        nativeChanneling: {
+          catchUpMissedTicks: false,
+          target: { kind: 'context', key: 'team' },
+        },
+      },
+      body: { $sequence: null },
+    });
+  });
+
   it('以主动技能 Owner 为目标时，子动作 Target 保留为施术者而非敌人', () => {
     const compiled = compile(parse(sequence([casterChanneling])));
     const step = compiled.steps[0];
@@ -370,6 +365,7 @@ describe('ChannelingAction 单目标身份投影', () => {
       kind: 'repeatEachTick',
       parameters: {
         nativeChanneling: {
+          catchUpMissedTicks: false,
           executeEachFrame: false,
           triggerIntervalSeconds: 0.1,
           maxCountPerTarget: -1,
@@ -381,7 +377,10 @@ describe('ChannelingAction 单目标身份投影', () => {
     expect(readActionGraphChain(compiled.graph, step.body)).toMatchObject([
       {
         kind: 'applyBuff',
-        parameters: { buffId: 'buff_common_obtain_ultimate_sp', target: 'caster' },
+        parameters: {
+          buffs: [{ buffId: 'buff_common_obtain_ultimate_sp' }],
+          targets: { kind: 'fixed', target: 'caster' },
+        },
       },
     ]);
   });
@@ -406,6 +405,7 @@ describe('ChannelingAction 单目标身份投影', () => {
       kind: 'repeatEachTick',
       parameters: {
         nativeChanneling: {
+          catchUpMissedTicks: true,
           executeEachFrame: true,
           triggerIntervalSeconds: 0.033,
           maxCountPerTarget: 3,
@@ -415,7 +415,7 @@ describe('ChannelingAction 单目标身份投影', () => {
     });
   });
 
-  it('Target 通过已证明的 Context 组扫描时，tick 子动作保留唯一敌人身份', () => {
+  it('Target 不读取残留 Context 键，保留真实输入目标选择', () => {
     const groupedEnemyChanneling = {
       ...casterChanneling,
       targetSettings: targetFixture('Target', undefined, 'myTar'),
@@ -431,7 +431,10 @@ describe('ChannelingAction 单目标身份投影', () => {
     expect(readActionGraphChain(compiled.graph, step.body)).toMatchObject([
       {
         kind: 'applyBuff',
-        parameters: { buffId: 'buff_common_obtain_ultimate_sp', target: 'enemy' },
+        parameters: {
+          buffs: [{ buffId: 'buff_common_obtain_ultimate_sp' }],
+          targets: { kind: 'fixed', target: 'enemy' },
+        },
       },
     ]);
   });

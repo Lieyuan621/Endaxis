@@ -23,6 +23,7 @@ const resources = {
 
 it('全局定时标记在终结技全局暂停期间保留，恢复时间推进后才到期', () => {
   const shared = new CombatSharedRuntime({
+    comboSkillPendingInterval: 5,
     resources,
     operatorOrder: ['operator'],
     timeDilation: { config: {} },
@@ -41,6 +42,7 @@ it('全局定时标记在终结技全局暂停期间保留，恢复时间推进�
 
 it('binds every shared runtime to one copied graph without replaying business events', () => {
   const original = new CombatSharedRuntime({
+    comboSkillPendingInterval: 5,
     resources,
     operatorOrder: ['operator'],
     initialFrame: -10,
@@ -51,6 +53,7 @@ it('binds every shared runtime to one copied graph without replaying business ev
   original.globalCooldowns.set('operator', 'marker', 3);
   original.abilityEntityInstanceIds.allocate();
   original.skillCastIds.allocate();
+  original.runtimeState.identities.spatialPoints.nextSpatialPointId++;
   original.basicAttackInheritance.register('operator', {
     skillCastId: 1,
     originSkillId: 'skill',
@@ -63,6 +66,7 @@ it('binds every shared runtime to one copied graph without replaying business ev
 
   const restored = new CombatSharedRuntime(
     {
+      comboSkillPendingInterval: 5,
       resources,
       operatorOrder: ['operator'],
       timeDilation: { config: {}, observer },
@@ -88,4 +92,6 @@ it('binds every shared runtime to one copied graph without replaying business ev
   expect(observer.ended).not.toHaveBeenCalled();
   expect(restored.abilityEntityInstanceIds.allocate()).toBe(2);
   expect(restored.skillCastIds.allocate()).toBe(2);
+  expect(restored.runtimeState.identities.spatialPoints.nextSpatialPointId++).toBe(2);
+  expect(original.runtimeState.identities.spatialPoints.nextSpatialPointId).toBe(2);
 });

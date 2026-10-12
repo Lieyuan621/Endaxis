@@ -68,7 +68,7 @@ function graph(f: (typeof fixtures)[number]): ActionGraphDefinition {
         action: { kind: 'once', parameters: {}, body: { $sequence: 'target' } },
         next: null,
       },
-      target: { action: { kind: 'finishTimeline', parameters: {} }, next: null },
+      target: { action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} }, next: null },
     },
     dataNodes: {
       shared:
@@ -341,8 +341,8 @@ it('edited switch rows execute the first float32 match and preserve an empty mat
           ...initial.nodes,
           target: {
             action: {
-              kind: 'setContextFlag' as const,
-              parameters: { target: 'caster' as const, flag: 'chosen', value: true },
+              kind: 'triggerCustomAbilityEvent' as const,
+              parameters: { eventName: 'chosen', eventParam: 0, target: 'caster' as const },
             },
             next: null,
           },
@@ -391,7 +391,7 @@ it('edited switch rows execute the first float32 match and preserve an empty mat
     sequence.tryExecute({});
     return calls;
   }
-  expect(run(first.actionGraph.main)).toEqual(['setContextFlag']);
+  expect(run(first.actionGraph.main)).toEqual(['triggerCustomAbilityEvent']);
   expect(run(reordered.actionGraph.main)).toEqual([]);
 });
 it('listener authoring keeps the original event and end-frame validation contract', () => {

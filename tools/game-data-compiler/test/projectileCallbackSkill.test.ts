@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { SkillCastResourceDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import {
   compileProjectileCallbackSkillSource,
   createZeroDistanceProjectileProjectionExtensionSource,
@@ -8,24 +9,27 @@ import {
   readActionGraphChain,
 } from '../src/compiler/actions/actionGraphBuilder.ts';
 import type { CompiledBuffStepSource } from '../src/compiler/actions/combatActionProjectionTypes.ts';
-import type { SkillActionGraphSource } from '../src/source/skillActionGraph.ts';
+import type { CombatActionProjectionContextSource } from '../src/compiler/combatProjectionCommon.ts';
 import type { KnownNativeActionLeafSource } from '../src/source/actionLeaf.ts';
-import { returnProjectionContext } from './support/avywennaReturnProjection.ts';
 import type { NativeActionNodeSource } from '../src/source/controlFlow.ts';
+import { gameplayTagIdFromPath } from '../src/source/nativeGameplayTags.ts';
+import type { ProjectileRuntimeSource } from '../src/source/projectileRuntime.ts';
+import type { ProjectileLaunchActionSource } from '../src/source/referenceActions.ts';
+import type { SkillActionGraphSource } from '../src/source/skillActionGraph.ts';
 import { parseTargetReferenceSource } from '../src/source/target.ts';
 import { targetFixture } from './sourceFixtures.ts';
-import { gameplayTagIdFromPath } from '../src/source/nativeGameplayTags.ts';
+import { returnProjectionContext } from './support/avywennaReturnProjection.ts';
 
 type ProjectileFixture = {
   sourcePath: string;
   recycleDelaySeconds: number;
-  castResource: import('../../../packages/game-data-contract/src/skills.ts').SkillCastResourceDefinition;
+  castResource: SkillCastResourceDefinition;
   callbackContext: typeof returnProjectionContext;
-  projectionContext: typeof returnProjectionContext;
+  projectionContext: Omit<CombatActionProjectionContextSource, 'graph'>;
   reachGraph: SkillActionGraphSource<KnownNativeActionLeafSource>;
   template: { projectileId: string; entityBlackboard: [] };
-  launch: import('../src/source/referenceActions.ts').ProjectileLaunchActionSource;
-  runtime: import('../src/source/projectileRuntime.ts').ProjectileRuntimeSource;
+  launch: ProjectileLaunchActionSource;
+  runtime: ProjectileRuntimeSource;
 };
 
 function projectFixture(
@@ -55,13 +59,9 @@ function projectFixture(
     ...input.projectionContext,
     graph: hostGraph,
   });
-  if (result.length !== 1 || result[0]?.kind !== 'withActionBlackboardScope')
-    throw new Error('expected launch scope');
-  return {
-    scope: result[0],
-    /** 图引用沿宿主图 next 链展开后的动作列表。 */
-    steps: readActionGraphChain(hostGraph.finish(), result[0].body),
-  };
+  if (result.length !== 1 || result[0]?.kind !== 'launchProjectile')
+    throw new Error('expected one projectile launch');
+  return { steps: result };
 }
 
 function reachInput(): ProjectileFixture {
@@ -185,6 +185,29 @@ it('Source 来源不读取未启用的目标组名', () => {
 });
 
 describe('独立到达回调的编译', () => {
+  it('零空间输入只证明可到达，OnlyHit 仍按实际输入身份筛选', () => {
+    const input = reachInput();
+    const result = projectFixture({
+      ...input,
+      projectionContext: {
+        ...input.projectionContext,
+        actionTargetTarget: 'actionInputTarget',
+        actionInputIsZeroSpace: true,
+      },
+      launch: {
+        ...input.launch,
+        targetFilterMode: 'OnlyHit',
+        targetFilterSettings: input.launch.target,
+      },
+    });
+    const launch = result.steps[0];
+    if (launch?.kind !== 'launchProjectile') throw new Error('expected projectile');
+    expect(launch.parameters).toMatchObject({
+      onlyHitTargets: { kind: 'inputTarget' },
+      finish: 'firstTickReach',
+    });
+  });
+
   it('独立落地回调编译成统一投射物程序，不展开进发射者技能', () => {
     const input = reachInput();
     input.launch = {
@@ -337,11 +360,11 @@ it.each([
     graph: hostGraph,
   })!;
   expect(steps).toHaveLength(1);
-  const scope = steps[0]!;
-  if (scope.kind !== 'withActionBlackboardScope') throw new Error('expected projectile scope');
-  const action = readActionGraphChain(hostGraph.finish(), scope.body)[0]!;
+  const action = steps[0]!;
   if (action.kind !== 'launchProjectile') throw new Error('expected independent hit');
   expect(action.parameters).toEqual({
+    inheritActionBlackboard: launch.assignBlackboard,
+    entityInitialValues: {},
     finish: 10,
     recycleDelaySeconds: 1,
     hit: {
@@ -428,7 +451,7 @@ it.each([false, true])(
       });
     if (useHitBlockReachOrder)
       expect(project).toThrow('outside the proven zero-distance first-tick shape');
-    else expect(project().scope.kind).toBe('withActionBlackboardScope');
+    else expect(project().steps[0]!.kind).toBe('launchProjectile');
   },
 );
 

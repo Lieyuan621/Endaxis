@@ -3,8 +3,6 @@ import type { DefinitionFieldSchema } from '../definition-editor/fieldSchema';
 import type { NodeFieldSchema } from '../action-graph/nodeSchema';
 import { resolveFieldEditor } from './fieldEditorDispatch';
 import { actionNodeSchemas, dataNodeSchemas } from '../action-graph/actionNodeSchemas.generated';
-import { definitionSchemas } from '../definition-editor/definitionSchemas.generated';
-import { fieldSchemaForValue } from '../definition-editor/definitionFieldRuntime';
 
 const reference = { referenceKind: 'buff' as const };
 function node(control: NodeFieldSchema['control'], name = 'buffId'): NodeFieldSchema {
@@ -20,37 +18,6 @@ function node(control: NodeFieldSchema['control'], name = 'buffId'): NodeFieldSc
 }
 
 describe('shared field editor dispatch', () => {
-  it('consumes representative generated schemas without changing their controls or values', () => {
-    const buff = definitionSchemas.consumable.fields.applications.element.fields.buffId;
-    expect(resolveFieldEditor(buff, { name: 'buffId' })).toMatchObject({
-      control: 'reference',
-      referenceKind: 'buff',
-    });
-    const dynamicBuff = actionNodeSchemas.applyBuff.fields.find(
-      field => field.path.at(-1) === 'buffId',
-    )!;
-    expect(resolveFieldEditor(dynamicBuff)).toMatchObject({
-      control: 'stringOperand',
-      referenceKind: 'buff',
-      edit: 'field',
-    });
-    expect(
-      resolveFieldEditor(definitionSchemas.enemy.fields.levelHp, { name: 'levelHp' }),
-    ).toMatchObject({
-      semantic: 'tuple',
-      readonly: true,
-    });
-    const levelValues = definitionSchemas.skill.variants[0].fields.cooldownFrames;
-    const branch = fieldSchemaForValue(levelValues, 10);
-    // The adapter carries the declaration's semantic metadata into dispatch only;
-    // the branch's identity is still available to the existing union selector.
-    expect(resolveFieldEditor({ ...branch, semantics: levelValues.semantics })).toMatchObject({
-      control: 'levelValues',
-      semantic: 'levelValues',
-    });
-    expect(fieldSchemaForValue(levelValues, 10)).toBe(branch);
-  });
-
   it('keeps plain human text and unverified similarly named fields as text', () => {
     for (const name of ['name', 'description', 'buffId', 'skillId', 'customCode']) {
       expect(resolveFieldEditor({ kind: 'string' }, { name })).toMatchObject({

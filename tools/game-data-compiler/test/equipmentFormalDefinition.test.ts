@@ -30,7 +30,7 @@ describe('单件装备正式定义组装', () => {
     expect(result.definition).toEqual({
       slug: fixture.equipmentId,
       assetSlug: fixture.equipmentId,
-      iconPath: `/equipment/tundra01/${fixture.equipmentId}.webp`,
+      icon: `endaxis:equipment/tundra01/${fixture.equipmentId}`,
       slotType: 'armor',
       levelRequirement: 10,
       baseDefense: 8,

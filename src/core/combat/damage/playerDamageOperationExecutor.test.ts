@@ -1,19 +1,22 @@
+import { describe, expect, it, vi } from 'vitest';
+import type { DamageModifierSide } from '../../../../packages/game-data-contract/src/modifiers';
+import { compileGraphEntry } from '../../../test/compiledGraphEntry';
 import { numberInput } from '../../../test/compiledGraphInputs';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
-import { describe, expect, it, vi } from 'vitest';
+import type { DamageFeature, DamageTag } from '../../game-data/operatorDefinition';
+import { ActionBlackboard } from '../actions/actionBlackboard';
+import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
+import { CombatReceiptCollector } from '../receipt/combatReceipt';
+import { CombatVitals } from '../resources/combatVitals';
+import { CombatClock } from '../time/combatClock';
+import { deriveHitId } from '../timeline/deriveHitId';
+import { DamageCalculationSnapshots } from './damageCalculationSnapshots';
+import type { AppliedDamageModifier } from './damageScale';
 import {
   DAMAGE_SCALE_ATTRIBUTE_KEYS,
   type DamageScaleAttributeSnapshot,
 } from './damageScaleAttributes';
-import { CombatReceiptCollector } from '../receipt/combatReceipt';
-import { CombatClock } from '../time/combatClock';
-import { CombatVitals } from '../resources/combatVitals';
-import { ActionBlackboard } from '../actions/actionBlackboard';
 import { PlayerDamageOperationExecutor } from './playerDamageOperationExecutor';
-import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
-import { deriveHitId } from '../timeline/deriveHitId';
-import { NATIVE_SKILL_HAS_HIT_BLACKBOARD_KEY } from '../../../../packages/game-data-contract/src/conditions';
-import type { DamageModifierSide } from '../../../../packages/game-data-contract/src/modifiers';
 
 const DAMAGE_STEP: ResolvedCombatStepForKind<'dealDamage'> = {
   kind: 'dealDamage',
@@ -62,7 +65,6 @@ describe('PlayerDamageOperationExecutor', () => {
     ['electric', 'standard'],
     ['nature', 'standard'],
     ['true', 'standard'],
-    ['electric', 'fixed'],
     ['electric', 'attribute'],
   ] as const)(
     'records attributes used by %s / %s at their calculation stage',
@@ -74,7 +76,7 @@ describe('PlayerDamageOperationExecutor', () => {
         name: string,
         side: DamageModifierSide,
         value: number,
-      ): import('./damageScale').AppliedDamageModifier => ({
+      ): AppliedDamageModifier => ({
         kind: 'attribute',
         buffId: `${side}:${name}`,
         sourceId: 'support',
@@ -175,34 +177,23 @@ describe('PlayerDamageOperationExecutor', () => {
         emitPoiseTargetEvent: () => undefined,
         delegate: { execute: () => false, evaluate: () => false },
       });
-      executor.execute(
-        calculation === 'fixed'
-          ? {
-              kind: 'dealFixedDamage',
-              parameters: { damageType, value: 400, tags: ['normalSkill'] },
-            }
-          : {
-              ...DAMAGE_STEP,
-              parameters: {
-                ...DAMAGE_STEP.parameters,
-                damageType,
-                stagger: undefined,
-                calculation,
-                ...(calculation === 'attribute' ? { calculationAttribute: 'Def' } : {}),
-              },
-            },
-      );
+      executor.execute({
+        ...DAMAGE_STEP,
+        parameters: {
+          ...DAMAGE_STEP.parameters,
+          damageType,
+          stagger: undefined,
+          calculation,
+          ...(calculation === 'attribute' ? { calculationAttribute: 'Def' } : {}),
+        },
+      });
       const hit = receipt.entries.find(entry => entry.event === 'DamageApplied')!;
       expect(hit.appliedDamageModifiers).toEqual([
-        ...(calculation === 'fixed'
-          ? []
-          : [
-              attribute(
-                calculation === 'attribute' ? 'Def' : 'Atk',
-                'attacker',
-                calculation === 'attribute' ? 12 : 10,
-              ),
-            ]),
+        attribute(
+          calculation === 'attribute' ? 'Def' : 'Atk',
+          'attacker',
+          calculation === 'attribute' ? 12 : 10,
+        ),
         ...(calculation === 'standard'
           ? [
               attribute('strength', 'attacker', 5),
@@ -475,7 +466,7 @@ describe('PlayerDamageOperationExecutor', () => {
     });
   });
 
-  it('在实际执行生命伤害后置位本次技能的原生命中状态', () => {
+  it('伤害前事件已经能读取本次技能的命中状态', () => {
     const targetVitals = new CombatVitals({
       health: 1000,
       maxHealth: 1000,
@@ -486,6 +477,8 @@ describe('PlayerDamageOperationExecutor', () => {
       poiseBrokenEndTime: 0,
       poiseImmune: false,
     });
+    const skillExecution = { hasOutputDamageBattle: false };
+    let checkedBeforeDamage = false;
     const executor = new PlayerDamageOperationExecutor({
       sourceOperatorId: 'mifu',
       targetId: 'enemy',
@@ -502,7 +495,13 @@ describe('PlayerDamageOperationExecutor', () => {
       applyDamageModifiers: () => undefined,
       addInstantAttributeModifier: () => undefined,
       clearInstantAttributeModifiers: () => undefined,
-      emitPreparationEvent: () => undefined,
+      emitPreparationEvent: event => {
+        if (event === 'beforeDamageAction') {
+          expect(skillExecution.hasOutputDamageBattle).toBe(true);
+          expect(targetVitals.health).toBe(1000);
+          checkedBeforeDamage = true;
+        }
+      },
       resolvePoiseMultipliers: () => ({ output: 1, taken: 1 }),
       emitHealthSourceEvent: () => undefined,
       emitHealthTargetEvent: () => undefined,
@@ -510,16 +509,17 @@ describe('PlayerDamageOperationExecutor', () => {
       emitPoiseTargetEvent: () => undefined,
       delegate: { execute: () => true, evaluate: () => false },
     });
-    const blackboard = new ActionBlackboard({ [NATIVE_SKILL_HAS_HIT_BLACKBOARD_KEY]: 0 });
+    const blackboard = new ActionBlackboard();
 
-    expect(executor.execute(DAMAGE_STEP, { blackboard })).toBe(true);
-    expect(blackboard.getNumber(NATIVE_SKILL_HAS_HIT_BLACKBOARD_KEY)).toBe(1);
+    expect(executor.execute(DAMAGE_STEP, { blackboard, skillExecution })).toBe(true);
+    expect(skillExecution.hasOutputDamageBattle).toBe(true);
+    expect(checkedBeforeDamage).toBe(true);
   });
 
   it('applies standard health damage before the hit poise unit', () => {
     let sourceControlled = false;
     let runtimeAttack = 100;
-    let attackModifiers: import('./damageScale').AppliedDamageModifier[] = [];
+    let attackModifiers: AppliedDamageModifier[] = [];
     const healthEvents: string[] = [];
     const targetVitals = new CombatVitals({
       health: 1000,
@@ -989,8 +989,8 @@ describe('PlayerDamageOperationExecutor', () => {
         parameters: {
           damageType: 'physical',
           attackScale: 1,
-          tags: tags as import('../../game-data/operatorDefinition').DamageTag[],
-          features: features as import('../../game-data/operatorDefinition').DamageFeature[],
+          tags: tags as DamageTag[],
+          features: features as DamageFeature[],
         },
       });
 
@@ -1007,54 +1007,6 @@ describe('PlayerDamageOperationExecutor', () => {
       else expect(receipt.entries[0]?.data?.levelCoefficient).toBeUndefined();
     },
   );
-
-  it('uses fixed damage as the calculation result while preserving the damage formula', () => {
-    const targetVitals = new CombatVitals({
-      health: 1000,
-      maxHealth: 1000,
-      maxPoise: 0,
-      poise: 0,
-      poiseRecoveryTime: 0,
-      poiseRecoveryTimeMultiplier: 1,
-      poiseBrokenEndTime: 0,
-      poiseImmune: false,
-    });
-    const executor = new PlayerDamageOperationExecutor({
-      sourceOperatorId: 'rossi',
-      targetId: 'enemy',
-      targetVitals,
-      clock: new CombatClock(),
-      receipt: new CombatReceiptCollector(),
-      captureAttributeSnapshots: () => createAttributeSnapshots(9999, 100),
-      criticalSamples: { nextCriticalSample: () => 1 },
-      resolveNonRandomRuntimeSnapshot: () => ({
-        runtimeExtensionMultiplier: 1,
-        appliesIgniteDamageMultiplier: false,
-        appliesPhysicalInflictionDamageMultiplier: false,
-      }),
-      applyDamageModifiers: (timing, side, context) => {
-        if (timing === 'afterCalculation' && side === 'attacker') {
-          context.multiplyCalculationValue(2);
-        }
-      },
-      addInstantAttributeModifier: () => undefined,
-      clearInstantAttributeModifiers: () => undefined,
-      emitPreparationEvent: () => undefined,
-      resolvePoiseMultipliers: () => ({ output: 1, taken: 1 }),
-      emitHealthSourceEvent: () => undefined,
-      emitHealthTargetEvent: () => undefined,
-      emitPoiseSourceEvent: () => undefined,
-      emitPoiseTargetEvent: () => undefined,
-      delegate: { execute: vi.fn(() => true), evaluate: vi.fn(() => false) },
-    });
-
-    executor.execute({
-      kind: 'dealFixedDamage',
-      parameters: { damageType: 'physical', value: 100, tags: ['ultimateSkill'] },
-    });
-
-    expect(targetVitals.health).toBe(900);
-  });
 
   it('executes a standalone stagger step without entering the health damage path', () => {
     const targetVitals = new CombatVitals({
@@ -1431,5 +1383,3 @@ describe('PlayerDamageOperationExecutor', () => {
     expect(delegate.execute).toHaveBeenCalledWith(step);
   });
 });
-import { DamageCalculationSnapshots } from './damageCalculationSnapshots';
-import { compileGraphEntry } from '../../../test/compiledGraphEntry';

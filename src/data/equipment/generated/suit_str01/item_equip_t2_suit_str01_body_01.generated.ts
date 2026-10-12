@@ -4,7 +4,7 @@ import type { GearDefinition } from '../../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'item_equip_t2_suit_str01_body_01',
   assetSlug: 'item_equip_t2_suit_str01_body_01',
-  iconPath: '/equipment/str01/item_equip_t2_suit_str01_body_01.webp',
+  icon: 'endaxis:equipment/str01/item_equip_t2_suit_str01_body_01',
   slotType: 'armor',
   levelRequirement: 36,
   baseDefense: 28.8,

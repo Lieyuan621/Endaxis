@@ -1,9 +1,10 @@
 /**
- * 恢复整场候选的能力实体目录，并收齐敌人、干员和能力实体的全部 Buff 目标外壳。
+ * 恢复能力实体目录，并收齐敌人、干员、能力实体和投射物的 Buff 容器。
  *
  * 本阶段只绑定实体身份、寿命、黑板、定时标记和可选 Buff 容器，不启动子技能、不发布生成事件，
  * 也不恢复 Buff 实例。返回的完整目标表供后续整场 Buff 协调器统一建立实例与关系。
  */
+import { ActionBlackboard } from '../../actions/actionBlackboard';
 import { collectRestoredCombatBuffTargets } from './combatBuffRestoration';
 import type { CombatRuntimeRestorePreparation } from './combatRuntimeRestorePreparation';
 import type { RestoredCombatRuntimeFoundation } from './combatRuntimeRestoreFoundation';
@@ -45,7 +46,6 @@ export function bindRestoredCombatAbilityEntityDirectory(
       COMBAT_FRAME_INTERVAL *
       (shared.timeDilation?.getEntityScale(logicalAbilityEntityRuntimeId(entity.instanceId)) ?? 1),
     timedMarkerClocks: {
-      global: shared.timeDilation ?? shared.clock,
       globalScaled: shared.timeDilation ?? shared.clock,
     },
     hooks: {
@@ -95,6 +95,21 @@ export function bindRestoredCombatAbilityEntityDirectory(
     createAbilityEntityTarget,
   })) {
     targets.set(ownerId, target);
+  }
+  for (const [instanceId, state] of options.preparation.graph.instances.projectiles.instances) {
+    if (state.buffs === null) continue;
+    const target = { kind: 'abilityEntity' as const, instanceId };
+    const ownerId = logicalAbilityEntityRuntimeId(instanceId);
+    const buffs = createAbilityEntityTarget(
+      ownerId,
+      ActionBlackboard.bindRuntimeState(state.entityBlackboard),
+      target,
+      [],
+      state.buffs,
+    );
+    if (buffs.ownerId !== ownerId || buffs.runtimeState !== state.buffs)
+      throw new Error(`projectile '${instanceId}' Buff target does not bind its saved state`);
+    targets.set(ownerId, buffs);
   }
   return { runtime, targets };
 }

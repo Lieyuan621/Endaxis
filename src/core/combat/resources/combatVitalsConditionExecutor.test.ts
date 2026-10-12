@@ -99,7 +99,7 @@ describe('CombatVitalsConditionExecutor', () => {
       delegate: { execute: vi.fn(() => false), evaluate: vi.fn(() => false) },
     });
     const targetContext = new RuntimeTargetContext();
-    targetContext.setSingle('CureTarget', { kind: 'operator', operatorId: 'ally' });
+    targetContext.set('CureTarget', [{ kind: 'operator', operatorId: 'ally' }, { kind: 'enemy' }]);
 
     expect(
       executor.evaluate(
@@ -115,6 +115,27 @@ describe('CombatVitalsConditionExecutor', () => {
       ),
     ).toBe(true);
     expect(resolveContextTarget).toHaveBeenCalledWith('ally');
+    targetContext.set('CureTarget', []);
+    const emptyTargetCondition = {
+      kind: 'healthCompare' as const,
+      target: 'contextTarget' as const,
+      contextKey: 'CureTarget',
+      valueType: 'current' as const,
+      operator: 'equal' as const,
+      value: { kind: 'constant' as const, value: 0 },
+    };
+    const context = { blackboard: new ActionBlackboard(), targetContext };
+    expect(executor.evaluate(emptyTargetCondition, context)).toBe(true);
+    expect(executor.evaluate({ ...emptyTargetCondition, valueType: 'ratio' }, context)).toBe(false);
+    expect(() =>
+      executor.evaluate(
+        {
+          ...emptyTargetCondition,
+          value: numberInput({ kind: 'blackboard', key: 'missing' }),
+        },
+        context,
+      ),
+    ).toThrow();
   });
 
   it('resolves a saved enemy through the shared enemy vitals ledger', () => {
@@ -241,6 +262,23 @@ describe('CombatVitalsConditionExecutor', () => {
         {
           blackboard: new ActionBlackboard(),
           currentTarget: { kind: 'enemy' },
+        },
+      ),
+    ).toBe(true);
+    expect(
+      executor.evaluate(
+        { ...condition, target: 'actionInputTarget' },
+        {
+          blackboard: new ActionBlackboard(),
+          actionInputTarget: { kind: 'operator', operatorId: 'attacker' },
+        },
+      ),
+    ).toBe(false);
+    expect(
+      executor.evaluate(
+        { ...condition, target: 'actionInputTarget' },
+        {
+          blackboard: new ActionBlackboard(),
         },
       ),
     ).toBe(true);

@@ -82,10 +82,10 @@ export function bindRestoredCombatOperatorInitializations(
     const context = {
       blackboard,
       actionOwnerId: options.operatorId,
+      actionSourceId: options.operatorId,
       ...(contributionIndex === undefined
         ? {}
         : {
-            actionSourceId: options.operatorId,
             addAbilityChildBuff: (child: BuffApplicationHandle) =>
               options.equipment!.addChildBuff(contributionIndex, child),
           }),

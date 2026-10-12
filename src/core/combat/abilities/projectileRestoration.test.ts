@@ -14,6 +14,63 @@ import type { ProjectileCallbackState } from '../state/instanceState';
 import type { CompiledAbilityEntityChildSkillProgram } from '../../compiler/combatProgram';
 import { chainEntry } from '../../../test/compiledGraphEntry';
 
+it('命中回调中的动作结束不会再触发超时结束技能', () => {
+  const runtime = new ProjectileLifecycleRuntime();
+  const finish = vi.fn();
+  const ref = runtime.launch({
+    finishDelaySeconds: 10,
+    recycleDelaySeconds: 1,
+    firstTickHit: { finishOnHit: true },
+    hit: () => {
+      runtime.finishByAction(ref.target);
+      return true;
+    },
+    finish,
+    beforeReset: () => {},
+    resolveTickDeltaSeconds: () => COMBAT_FRAME_INTERVAL,
+  });
+  runtime.advanceFrame();
+  expect(runtime.getUnfinishedTargets()).toEqual([]);
+  expect(finish).not.toHaveBeenCalled();
+});
+
+it('动作结束投射物不施放结束技能，恢复后仍按同一延迟回收', () => {
+  const finish = vi.fn();
+  const reset = vi.fn();
+  const ports = {
+    finish,
+    block: finish,
+    beforeReset: reset,
+    resolveTickDeltaSeconds: () => COMBAT_FRAME_INTERVAL,
+  };
+  const original = new ProjectileLifecycleRuntime(() => 1);
+  const ref = original.launch({
+    ...ports,
+    finishDelaySeconds: 'firstTickBlock',
+    recycleDelaySeconds: 0.05,
+  });
+  expect(original.finishByAction(ref.target)).toBe(true);
+  original.advanceFrame();
+  const saved = structuredClone(original.runtimeState);
+  const remaining = saved.instances.get(1)!.remainingSeconds;
+  expect(original.finishByAction(ref.target)).toBe(true);
+  expect(original.runtimeState.instances.get(1)!.remainingSeconds).toBe(remaining);
+  const restoredReset = vi.fn();
+  const restored = new ProjectileLifecycleRuntime(() => 2, {
+    state: structuredClone(saved),
+    resolveHost: () => ({ ...ports, beforeReset: restoredReset }),
+  });
+  for (let index = 0; index < 4; index++) {
+    original.advanceFrame();
+    restored.advanceFrame();
+    expect(restored.runtimeState).toEqual(original.runtimeState);
+  }
+  expect(finish).not.toHaveBeenCalled();
+  expect(reset).toHaveBeenCalledOnce();
+  expect(restoredReset).toHaveBeenCalledOnce();
+  expect(original.activeCount).toBe(0);
+});
+
 it.each(
   [0, 1, 3, 5].flatMap(saveFrame =>
     (['finish', 'block'] as const).flatMap(event =>
@@ -40,8 +97,8 @@ it.each(
           endFrame: 3,
           sequence: chainEntry('projectile-restoration', [
             {
-              kind: 'setContextFlag',
-              parameters: { flag: 'hit', value: true, target: 'caster' },
+              kind: 'triggerCustomAbilityEvent',
+              parameters: { eventName: 'hit', eventParam: 0, target: 'caster' as const },
             },
           ]),
         },

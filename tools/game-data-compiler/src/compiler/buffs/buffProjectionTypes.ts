@@ -1,29 +1,30 @@
 import type {
-  BuffPriority,
-  BuffShieldDefinition,
-  CombatBuffDefinitionNumberOperand,
-  CombatBuffPresentation,
-  CombatBuffDefinitionAttributeModifier,
-  CombatBuffDefinitionDamageModifier,
-  SkillBuffAbilityEventResponse,
-  SkillBuffIgniteEventResponse,
-  SkillBuffDefinition,
-  SkillBuffLifecycleSequences,
-} from '../intermediateDefinitions.ts';
-import type {
   HealModifierDefinition,
   PoiseModifierDefinition,
 } from '../../../../../packages/game-data-contract/src/modifiers.ts';
 import type { CompiledBuffSequenceSource } from '../actions/combatActionProjectionTypes.ts';
+import type {
+  ActionGraphResourceDefinition,
+  BuffPriority,
+  BuffShieldDefinition,
+  CombatBuffDefinitionAttributeModifier,
+  CombatBuffDefinitionDamageModifier,
+  CombatBuffDefinitionNumberOperand,
+  CombatBuffPresentation,
+  SkillBuffAbilityEventResponse,
+  SkillBuffDefinition,
+  SkillBuffIgniteEventResponse,
+  SkillBuffLifecycleSequences,
+} from '../intermediateDefinitions.ts';
 
 /** Buff 蓝图的公共输出子集。安装参数、来源身份和运行状态不进入本模块。 */
 export type CompiledBuffNumberSource = CombatBuffDefinitionNumberOperand;
 
 /** 输出字段来自独立契约；此处只声明当前投影保证写出的字段与支持子集。 */
 export type CompiledBuffPresentationSource = Required<
-  Omit<CombatBuffPresentation, 'iconId' | 'iconPath' | 'nameKey'>
+  Omit<CombatBuffPresentation, 'icon' | 'nameKey'>
 > &
-  Pick<CombatBuffPresentation, 'iconId' | 'iconPath' | 'nameKey'>;
+  Pick<CombatBuffPresentation, 'icon' | 'nameKey'>;
 
 export type CompiledBuffAttributeModifierSource = Pick<
   CombatBuffDefinitionAttributeModifier,
@@ -61,7 +62,7 @@ export type CompiledBuffDefinitionSource = Pick<
   | 'affixSkillCastIdentity'
 > &
   Required<Pick<SkillBuffDefinition, 'maxStackCount' | 'applyTags' | 'extendTags'>> & {
-    readonly actionGraph: import('../intermediateDefinitions.ts').ActionGraphResourceDefinition;
+    readonly actionGraph: ActionGraphResourceDefinition;
     readonly priority: BuffPriority;
     /** 默认时钟由省略字段表达；开启时间膨胀时才输出 global/self。 */
     readonly timeClock?: Extract<SkillBuffDefinition['timeClock'], 'global' | 'self'>;
@@ -91,9 +92,15 @@ export type CompiledBuffDefinitionSource = Pick<
         Record<
           Extract<
             keyof SkillBuffLifecycleSequences,
-            'start' | 'enable' | 'trigger' | 'enhanceChanged' | 'afterEnhance' | 'finish'
+            | 'start'
+            | 'enable'
+            | 'trigger'
+            | 'enhanceChanged'
+            | 'afterEnhance'
+            | 'beforeEnhance'
+            | 'finish'
           >,
-          CompiledBuffSequenceSource
+          readonly CompiledBuffSequenceSource[]
         >
       >
     >;
@@ -107,6 +114,6 @@ export type CompiledBuffDefinitionSource = Pick<
       SkillBuffIgniteEventResponse,
       'igniteType' | 'finishAfterIgnited'
     > & {
-      readonly sequence: CompiledBuffSequenceSource;
+      readonly sequences: readonly CompiledBuffSequenceSource[];
     })[];
   };

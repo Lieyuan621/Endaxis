@@ -7,7 +7,7 @@
 import type { PlayerDamageDefenderSnapshot } from '../combat/damage/playerActiveDamageInput';
 import type { CombatEnemyProgram } from '../combat/runtime/combatRuntimeAssembly';
 import type { EnemyDocument } from '../project/schema';
-import type { CompiledMechanics } from '../mechanics/mechanicCompiler';
+import type { CompiledMechanics } from '../scenarioMechanics/mechanicCompiler';
 
 const RESISTIBLE_DAMAGE_TYPES = [
   'physical',

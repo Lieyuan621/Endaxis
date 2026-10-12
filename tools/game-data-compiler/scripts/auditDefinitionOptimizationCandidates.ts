@@ -34,6 +34,7 @@ export async function auditDefinitionOptimizationCandidates(args: {
       ? []
       : [
           'src/data/buffs/generated',
+          'src/data/equipment/generated',
           'src/data/equipment/generated-weapons',
           'src/data/equipment/generated-gear-sets',
         ]),
@@ -48,7 +49,7 @@ export async function auditDefinitionOptimizationCandidates(args: {
     });
     try {
       const module = await server.ssrLoadModule(
-        '/tools/game-data-compiler/test/support/definitionOptimizationSimulation.ts',
+        '/tools/performance/definitionOptimizationSimulation.ts',
       );
       const execute: unknown = module.auditOptimizationSimulationCases;
       if (typeof execute !== 'function') throw new Error('候选模拟夹具没有导出审计入口');
@@ -78,7 +79,7 @@ export async function auditDefinitionOptimizationCandidates(args: {
     );
   return {
     equivalent: true,
-    scope: args.operatorsOnly ? 'operators' : 'operators-common-buffs-weapons-gear-sets',
+    scope: args.operatorsOnly ? 'operators' : 'operators-common-buffs-weapons-gears-gear-sets',
     caseCount: before.length,
     damageCount: before.reduce((sum, entry) => sum + entry.damageCount, 0),
   };

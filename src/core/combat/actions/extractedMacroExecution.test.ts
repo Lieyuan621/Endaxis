@@ -6,7 +6,8 @@ import type {
 import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
 import { CombatOperationPrograms } from './combatOperationPrograms';
 import { ActionGraphExecution, type ActionGraphExecutionHost } from './actionGraphExecution';
-import { CombatStep, STEP_RESULT_MODE } from './combatStep';
+import { CombatStep } from './combatStep';
+import { STEP_RESULT_MODE } from '../state/actionState';
 import type { ActionStepData, ActionGraphExecutionState } from '../state/actionState';
 
 const hit: ActionGraphNode['action'] = {
@@ -14,8 +15,8 @@ const hit: ActionGraphNode['action'] = {
   parameters: { damageType: 'physical', attackScale: 1, tags: [] },
 };
 const flag = (name: string): ActionGraphNode['action'] => ({
-  kind: 'setContextFlag',
-  parameters: { flag: name, value: true, target: 'caster' },
+  kind: 'triggerCustomAbilityEvent',
+  parameters: { eventName: name, eventParam: 0, target: 'caster' as const },
 });
 
 function definition(extracted: boolean): ActionGraphResourceDefinition {
@@ -76,6 +77,8 @@ function fixture(extracted: boolean, behavior: 'normal' | 'fail' | 'end' | 'gate
     throw new Error('unexpected nested action');
   };
   const host: ActionGraphExecutionHost = {
+    requestTimelineJump: unsupported,
+    executionPolicy: { resultMode: 'normal' },
     canExecute: () => {
       gateCount++;
       return behavior !== 'gate' || executionCount < 1;
@@ -83,10 +86,9 @@ function fixture(extracted: boolean, behavior: 'normal' | 'fail' | 'end' | 'gate
     listener: unsupported,
     targets: unsupported,
     withTarget: unsupported,
+    withSavedInput: unsupported,
     evaluate: unsupported,
     value: unsupported,
-    once: unsupported,
-    scope: unsupported,
     bindOperation: action => {
       const identity = [slots.slot(action), action.key ?? action.kind, action.parameters];
       const record = (phase: string) => trace.push([phase, ...identity]);
@@ -129,7 +131,7 @@ function fixture(extracted: boolean, behavior: 'normal' | 'fail' | 'end' | 'gate
     );
     return current;
   };
-  return { make, trace, gates: () => gateCount };
+  return { make, trace, policy: host.executionPolicy, gates: () => gateCount };
 }
 
 describe('提取宏保留原动作身份与顺序', () => {
@@ -182,9 +184,8 @@ describe('提取宏保留原动作身份与顺序', () => {
   it('反转下一动作结果由原首个动作消费，不被宏调用包装提前消费', () => {
     const run = (extracted: boolean) => {
       const test = fixture(extracted);
-      const result = test
-        .make()
-        .tryExecute({ sequence: { resultMode: STEP_RESULT_MODE.invertNextResult } });
+      test.policy.resultMode = STEP_RESULT_MODE.invertNextResult;
+      const result = test.make().tryExecute({});
       return { result, trace: test.trace, gates: test.gates() };
     };
     expect(run(true)).toEqual(run(false));

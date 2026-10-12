@@ -1,5 +1,5 @@
 /**
- * 把模拟日志里的伤害、附着、反应事件整理成固定格式，供命中点提示和详情使用。
+ * 把模拟日志里的伤害、附着事件整理成固定格式，供命中点提示和详情使用。
  * 只搬运日志里的字段，不计算任何伤害。
  */
 import type { CombatReceiptEntry, CombatReceiptValue } from '../combat/receipt/combatReceipt';
@@ -34,22 +34,6 @@ export interface HitInflictionReceipt {
   readonly element: string;
   readonly outcomeKind: string;
   readonly currentLayers: number;
-}
-
-/** 一次反应施加或消费事实。 */
-export interface HitReactionReceipt {
-  readonly frame: number;
-  readonly time: number;
-  readonly sequence: number;
-  readonly sourceId: string;
-  readonly targetId: string;
-  readonly reaction: string;
-  readonly castId?: string;
-  readonly applied: boolean;
-  /** 消费回执中表示是否真的消费成功；施加回执恒为 true。 */
-  readonly consumed: boolean;
-  readonly level: number;
-  readonly previousLevel: number;
 }
 
 function requireIdentity(entry: CombatReceiptEntry, key: 'sourceId' | 'targetId'): string {
@@ -88,18 +72,6 @@ function readOptionalString(
   if (value === undefined) return undefined;
   if (typeof value !== 'string' || value.length === 0) {
     throw new Error(`receipt ${entry.sequence} '${entry.event}' has invalid ${key}`);
-  }
-  return value;
-}
-
-function requireBoolean(
-  entry: CombatReceiptEntry,
-  data: Readonly<Record<string, CombatReceiptValue>>,
-  key: string,
-): boolean {
-  const value = data[key];
-  if (typeof value !== 'boolean') {
-    throw new Error(`receipt ${entry.sequence} '${entry.event}' has no boolean ${key}`);
   }
   return value;
 }
@@ -157,30 +129,6 @@ function readInflictionPoint(entry: CombatReceiptEntry): HitInflictionReceipt {
   };
 }
 
-function readReactionPoint(entry: CombatReceiptEntry): HitReactionReceipt {
-  const data = requireData(entry);
-  const reaction = data.reaction;
-  if (typeof reaction !== 'string' || reaction.length === 0) {
-    throw new Error(`receipt ${entry.sequence} '${entry.event}' has no reaction`);
-  }
-  const applied = entry.event === 'ElementalReactionApplied';
-  const consumed = applied ? true : requireBoolean(entry, data, 'consumed');
-  const castId = readOptionalString(entry, data, 'castId');
-  return {
-    frame: entry.frame,
-    time: entry.time,
-    sequence: entry.sequence,
-    sourceId: requireIdentity(entry, 'sourceId'),
-    targetId: requireIdentity(entry, 'targetId'),
-    reaction,
-    ...(castId === undefined ? {} : { castId }),
-    applied,
-    consumed,
-    level: requireNumber(entry, data, 'level'),
-    previousLevel: applied ? requireNumber(entry, data, 'previousLevel') : 0,
-  };
-}
-
 /** 按回执原始顺序输出全部生命伤害事实。 */
 export function projectHitDamageReceipts(
   entries: readonly CombatReceiptEntry[],
@@ -199,22 +147,6 @@ export function projectHitInflictionReceipts(
   const points: HitInflictionReceipt[] = [];
   for (const entry of entries) {
     if (entry.event === 'ElementalInflictionApplied') points.push(readInflictionPoint(entry));
-  }
-  return points;
-}
-
-/** 按回执原始顺序输出全部反应施加与消费事实；未消费成功的消费回执不输出。 */
-export function projectHitReactionReceipts(
-  entries: readonly CombatReceiptEntry[],
-): readonly HitReactionReceipt[] {
-  const points: HitReactionReceipt[] = [];
-  for (const entry of entries) {
-    if (entry.event !== 'ElementalReactionApplied' && entry.event !== 'ElementalReactionConsumed') {
-      continue;
-    }
-    const point = readReactionPoint(entry);
-    if (!point.applied && !point.consumed) continue;
-    points.push(point);
   }
   return points;
 }

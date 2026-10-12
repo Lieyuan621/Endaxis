@@ -1,9 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  ComboSkillConditionRuntime,
-  type ComboConditionRegistration,
-  type PendingComboCondition,
-} from './comboSkillConditionRuntime';
+import type { ActionGraphDefinition } from '../../../../packages/game-data-contract/src/actionGraph';
+import type { ResolvedActionSequence } from '../../compiler/combatProgram';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import { TargetContextOperationExecutor } from '../abilities/targetContextOperationExecutor';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { ActionBlackboardOperationExecutor } from '../actions/actionBlackboardOperationExecutor';
 import { EventContextConditionExecutor } from '../events/eventContextConditionExecutor';
@@ -11,17 +10,18 @@ import {
   ELEMENTAL_INFLICTION_EVENTS,
   type ElementalInflictionEvent,
 } from '../infliction/elementalInflictionOperationExecutor';
+import {
+  ComboSkillConditionRuntime,
+  type ComboConditionRegistration,
+  type PendingComboCondition,
+} from './comboSkillConditionRuntime';
 import type { CombatOperationContext } from './skillRuntime';
-import type { ResolvedActionSequence } from '../../compiler/combatProgram';
-import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
-import type { ActionGraphDefinition } from '../../../../packages/game-data-contract/src/actionGraph';
-import { TargetContextOperationExecutor } from '../abilities/targetContextOperationExecutor';
 
 const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: ActionGraphDefinition['nodes'],
-  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
   graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
   entry,
@@ -264,6 +264,7 @@ describe('原生连携条件注册环境', () => {
               type: 'boolean',
               expression: {
                 kind: 'contextTargetIdentityMatch',
+                selection: 'all',
                 contextKey: 'trigger',
                 other: 'controlledOperator',
                 operator: 'equal',

@@ -4,7 +4,7 @@ import type { GearDefinition } from '../../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'item_equip_t1_suit_stragi01_hand_01',
   assetSlug: 'item_equip_t1_suit_stragi01_hand_01',
-  iconPath: '/equipment/stragi01/item_equip_t1_suit_stragi01_hand_01.webp',
+  icon: 'endaxis:equipment/stragi01/item_equip_t1_suit_stragi01_hand_01',
   slotType: 'gloves',
   levelRequirement: 28,
   baseDefense: 16.8,

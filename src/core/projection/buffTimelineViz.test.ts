@@ -32,7 +32,7 @@ function applied(
       visible,
       showInSquadIcon: true,
       sourceActionId,
-      iconPath: '/icons/icon_battle_buff_atk_up.webp',
+      icon: 'endaxis:icons/icon_battle_buff_atk_up',
     },
   };
 }
@@ -42,7 +42,7 @@ it('仅无自身加成的图标借用无图标直接父实例的历史加成', (
   const parent = applied(0, 0, 'operator', 1, 1, false);
   const child = applied(1, 0, 'operator', 2, 1);
   const entries: CombatReceiptEntry[] = [
-    { ...parent, data: { ...parent.data, iconPath: '' }, buffAttributeEffects: [effect] },
+    { ...parent, data: { ...parent.data, icon: '' }, buffAttributeEffects: [effect] },
     {
       ...child,
       producedBy: { kind: 'buff', ownerId: 'operator', instanceId: 1 },
@@ -172,7 +172,7 @@ describe('projectBuffTimelineViz', () => {
         startReason: 'applied',
         endReason: 'reapplied',
         placement: 'upper',
-        iconPath: '/icons/icon_battle_buff_atk_up.webp',
+        icon: 'endaxis:icons/icon_battle_buff_atk_up',
       },
       {
         sourceId: 'source',
@@ -191,7 +191,7 @@ describe('projectBuffTimelineViz', () => {
         startReason: 'reapplied',
         endReason: 'lifetime',
         placement: 'upper',
-        iconPath: '/icons/icon_battle_buff_atk_up.webp',
+        icon: 'endaxis:icons/icon_battle_buff_atk_up',
       },
     ]);
   });
@@ -265,7 +265,7 @@ describe('projectBuffTimelineViz', () => {
           instanceId: 2,
           layers: 1,
           enabled: true,
-          iconPath: '/icons/child.webp',
+          icon: 'endaxis:icons/child',
         },
       },
       {
@@ -297,7 +297,7 @@ describe('projectBuffTimelineViz', () => {
         endReason: 'lifetime',
         parentBuffId: 'buff:test',
         placement: 'upper',
-        iconPath: '/icons/child.webp',
+        icon: 'endaxis:icons/child',
       },
     ]);
   });

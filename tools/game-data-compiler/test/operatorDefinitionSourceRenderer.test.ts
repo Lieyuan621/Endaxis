@@ -48,6 +48,54 @@ const singleNodeGraph = (
 const entryOf = (id: string): graph.ActionGraphReference => ({ $sequence: id });
 
 describe('independent operator resource renderer', () => {
+  it('shares identical callback definitions within a host without merging launch sites or differing blackboards', () => {
+    const callback = {
+      skillId: 'projectileHit',
+      blackboard: { scale: 1 },
+      scheduledSequences: [{ startFrame: 0, sequence: entryOf('hit') }],
+      actionGraph: singleNodeGraph('hit', {
+        kind: 'dealDamage',
+        parameters: { damageType: 'physical', attackScale: 1, tags: [] },
+      }),
+    };
+    const launch = (skill: typeof callback, next: string | null) => ({
+      action: {
+        kind: 'launchProjectile',
+        parameters: { finish: 'firstTickReach' },
+        callbacks: [{ event: 'hit', skill }],
+      },
+      next,
+    });
+    const skill = {
+      key: 'battleSkill',
+      blackboard: {},
+      timelineBlockFrames: 10,
+      scheduledSequences: [{ startFrame: 0, sequence: entryOf('first') }],
+      actionGraph: {
+        main: {
+          nodes: {
+            first: launch(callback, 'second'),
+            second: launch(structuredClone(callback), 'third'),
+            third: launch({ ...callback, blackboard: { scale: 2 } }, null),
+          },
+        },
+        macros: {},
+      },
+    };
+    const source = renderOperatorDefinitionSource({
+      operator: {
+        slug: 'sample',
+        skillGroups: [{ key: 'battleSkill', operationType: 'battleSkill', skills: skill }],
+      },
+    });
+    const generated = evaluate(source).sampleBattleSkill as typeof skill;
+    expect(generated).toEqual(skill);
+    const nodes = generated.actionGraph.main.nodes;
+    expect(nodes.first.action.callbacks[0]!.skill).toBe(nodes.second.action.callbacks[0]!.skill);
+    expect(nodes.first.action.callbacks[0]!.skill).not.toBe(nodes.third.action.callbacks[0]!.skill);
+    expect(Object.keys(nodes)).toHaveLength(3);
+  });
+
   it('preserves skill exports, blackboard, numbers, callbacks and shared source identities', () => {
     const skill = {
       key: 'battleSkill',
@@ -118,12 +166,12 @@ it('同名作用域只在各自技能内判断共享，不跨干员目录合并'
           scope: {
             action: {
               kind: 'once',
-              parameters: { scopeKey: 'SkillData.sharedScope' },
+              parameters: {},
               body: entryOf('end'),
             },
             next: null,
           },
-          end: { action: { kind: 'finishTimeline', parameters: {} }, next: null },
+          end: { action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} }, next: null },
         },
       },
       macros: {},
@@ -184,7 +232,7 @@ it('公共 Buff 生成的生命周期保留共享图引用，可直接进入正�
   const source = renderCommonBuffDefinitionsSource({
     shared: {
       stackingType: 'refresh',
-      lifecycleSequences: { start: body, finish: body },
+      lifecycleSequences: { start: [body], finish: [body] },
       actionGraph: singleNodeGraph(
         'hit',
         {
@@ -206,10 +254,10 @@ it('公共 Buff 生成的生命周期保留共享图引用，可直接进入正�
     new ActionGraphDefinitionRepository(),
   );
   const lifecycle = result.lifecycleSequences!;
-  expect(lifecycle.start!.graph).toBe(lifecycle.finish!.graph);
-  expect(lifecycle.start!.entry).toBe(lifecycle.finish!.entry);
-  expect(lifecycle.start!.callSite).not.toBe(lifecycle.finish!.callSite);
-  expect(rootActionSteps(lifecycle.start!)[0]!.parameters).toMatchObject({
+  expect(lifecycle.start![0]!.graph).toBe(lifecycle.finish![0]!.graph);
+  expect(lifecycle.start![0]!.entry).toBe(lifecycle.finish![0]!.entry);
+  expect(lifecycle.start![0]!.callSite).not.toBe(lifecycle.finish![0]!.callSite);
+  expect(rootActionSteps(lifecycle.start![0]!)[0]!.parameters).toMatchObject({
     value: { kind: 'valueNode', node: { expression: { kind: 'blackboard', key: 'poise' } } },
   });
 });
@@ -232,7 +280,7 @@ it('干员私有 Buff 也保存自己的图，不进入干员过渡图', () => {
       buffDefinitions: {
         owned: {
           stackingType: 'unlimited',
-          lifecycleSequences: { start: entryOf('hit') },
+          lifecycleSequences: { start: [entryOf('hit')] },
           actionGraph: singleNodeGraph('hit', {
             kind: 'dealStagger',
             parameters: { value: 4 },
@@ -252,7 +300,7 @@ it('干员私有 Buff 也保存自己的图，不进入干员过渡图', () => {
     'owned',
     new ActionGraphDefinitionRepository(),
   );
-  const start = compiled.lifecycleSequences!.start!;
+  const start = compiled.lifecycleSequences!.start![0]!;
   const startNode = start.graph.nodes.get(start.entry!)!;
   if (startNode.action.kind !== 'dealStagger') throw new Error('expected a dealStagger node');
   expect(startNode.action.parameters).toEqual({ value: 4 });

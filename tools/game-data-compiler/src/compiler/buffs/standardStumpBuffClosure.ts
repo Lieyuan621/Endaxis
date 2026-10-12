@@ -1,25 +1,21 @@
 import { CHARACTER_INFLICTION_BUFFS } from '../../../../../src/core/combat/infliction/characterInfliction.ts';
-import type { GameplayTagRegistry } from '../../source/nativeGameplayTags.ts';
-import { requireRecord } from '../../source/primitives.ts';
-import { buffShowsTimelineActions, type BuffRuntimeSource } from '../../source/buffRuntime.ts';
 import {
-  collectBuffRuntimePresentationActionPaths,
-  collectBuffRuntimeLevelEventActionPaths,
-  compileBuffRuntimeDefinitionSource,
-  isAfterEnemyDefeatedOnlyBuffRuntime,
-  isPresentationOnlyBuffStackEffect,
-} from './buffRuntimeProjection.ts';
-import { collectBuffRuntimeClosure } from './buffReferenceClosure.ts';
-import type { CompiledBuffDefinitionSource } from './buffProjectionTypes.ts';
-import { standardStumpBuffAbilityEventOmissionReason } from '../scenario/standardStumpScenarioPolicy.ts';
+  collectBuffActionReferences,
+  parseReferenceAwareBuffActionGraphSource,
+} from '../../source/buffActionGraph.ts';
+import { buffShowsTimelineActions, type BuffRuntimeSource } from '../../source/buffRuntime.ts';
+import { collectNativeActionNodes } from '../../source/controlFlow.ts';
 import {
   parseGlobalBuffTemplateCatalogSource,
   type GlobalBuffTemplateCatalogSource,
 } from '../../source/globalBuffTemplate.ts';
-import { createGlobalBuffProjectionExtensions } from './globalBuffProjection.ts';
+import type { GameplayTagRegistry } from '../../source/nativeGameplayTags.ts';
+import { requireRecord } from '../../source/primitives.ts';
 import { parseSkillSettingCatalogSource } from '../../source/skillSettingCatalog.ts';
-import { createSkillSettingProjectionExtensions } from '../skills/skillSettingProjection.ts';
-import type { CombatActionProjectionContextSource } from '../combatProjectionCommon.ts';
+import type {
+  CombatActionProjectionContextSource,
+  CombatActionProjectionExtensionsSource,
+} from '../combatProjectionCommon.ts';
 import {
   isControlledOperatorInstantSearch,
   isPartyExceptOwnerInstantSearch,
@@ -30,10 +26,24 @@ import {
   isUniqueEnemyMainTargetInstantSearch,
   isZeroSpaceSingleEnemySmartTargetGroup,
 } from '../combatProjectionCommon.ts';
-import { collectNativeActionNodes } from '../../source/controlFlow.ts';
+import { inspectExternalBlackboardUsage } from '../references/externalBlackboardUsage.ts';
+import { standardStumpBuffAbilityEventOmissionReason } from '../scenario/standardStumpScenarioPolicy.ts';
+import { createSkillSettingProjectionExtensions } from '../skills/skillSettingProjection.ts';
+import type { CompiledBuffDefinitionSource } from './buffProjectionTypes.ts';
+import {
+  collectBuffRuntimeClosure,
+  resolveProvenStringBlackboardCandidates,
+} from './buffReferenceClosure.ts';
+import {
+  collectBuffRuntimeLevelEventActionPaths,
+  collectBuffRuntimePresentationActionPaths,
+  compileBuffRuntimeDefinitionSource,
+  isAfterEnemyDefeatedOnlyBuffRuntime,
+  isPresentationOnlyBuffStackEffect,
+} from './buffRuntimeProjection.ts';
 import { collectCombatInvisibleBuffClosureIds } from './combatInvisibleBuffClosure.ts';
-import { resolveProvenStringBlackboardCandidates } from './buffReferenceClosure.ts';
 import type { CompiledBuffCapturedTargetGroupsSource } from './compiledBuffMetadata.ts';
+import { createGlobalBuffProjectionExtensions } from './globalBuffProjection.ts';
 
 export interface StandardStumpBuffClosureDiagnostic {
   readonly status: 'blocked' | 'scenario-omitted';
@@ -58,7 +68,7 @@ export function compileStandardStumpBuffClosure(
   createAdditionalExtensions?: (
     sources: ReadonlyMap<string, BuffRuntimeSource>,
     visualOnlyIds: ReadonlySet<string>,
-  ) => import('../combatProjectionCommon.ts').CombatActionProjectionExtensionsSource,
+  ) => CombatActionProjectionExtensionsSource,
   rootBuffOwnerTargets: ReadonlyMap<
     string,
     'caster' | 'enemy' | 'currentAbilityEntity'
@@ -75,6 +85,7 @@ export function compileStandardStumpBuffClosure(
     CompiledBuffCapturedTargetGroupsSource
   > = new Map(),
   rootBuffBlackboards: ReadonlyMap<string, Readonly<Record<string, number | string>>> = new Map(),
+  externalBuffBlackboardReads?: ReadonlySet<string>,
 ): CompiledStandardStumpBuffClosure {
   const buffData =
     typeof buffDataValue === 'function'
@@ -201,6 +212,22 @@ export function compileStandardStumpBuffClosure(
             : [];
         }),
       );
+      const externalUsage = inspectExternalBlackboardUsage(
+        collectBuffActionReferences(source.graph),
+        reference => {
+          if (reference.kind !== 'buff' || reference.id === null) return undefined;
+          if (!sources.has(reference.id)) return undefined;
+          const value =
+            typeof buffData === 'function' ? buffData(reference.id) : buffData[reference.id];
+          if (value === undefined) return undefined;
+          return {
+            value,
+            references: collectBuffActionReferences(
+              parseReferenceAwareBuffActionGraphSource(value, `BuffData.${reference.id}`, {}),
+            ),
+          };
+        },
+      );
       definitions[buffId] = compileBuffRuntimeDefinitionSource(
         source,
         omittedBuffIds,
@@ -208,6 +235,11 @@ export function compileStandardStumpBuffClosure(
         extensions,
         abilityEntityQueries,
         {
+          isBlackboardKeyUnusedByExternalResources: key =>
+            externalBuffBlackboardReads !== undefined &&
+            !externalBuffBlackboardReads.has(key) &&
+            externalUsage.unresolved.length === 0 &&
+            !externalUsage.mentionedKeys.has(key),
           gameplayTagRegistry: gameplayTagRegistry ?? abilityEntityQueries?.gameplayTagRegistry,
           ...(combatInvisibleDynamicBuffBlackboardKeys.size === 0
             ? {}
@@ -546,7 +578,11 @@ function propagateBuffTargets(
           targetGroupChanged = true;
         }
       }
-      for (const node of nodes) {
+      const pendingNodes = nodes.map(node => ({
+        node,
+        inputTarget: undefined as Target | undefined,
+      }));
+      for (const { node, inputTarget } of pendingNodes) {
         if (!node.metadata.enabled || node.body.kind !== 'leaf') continue;
         if (
           node.body.value.family === 'aura' &&
@@ -555,7 +591,14 @@ function propagateBuffTargets(
           const action = node.body.value.action;
           const childOwner: Target = action.target === 'enemy' ? 'enemy' : 'caster';
           const childSource = action.buffSource === 'ActionOwner' ? owner : sourceTarget;
-          for (const entry of [...action.buffs, ...action.exitBuffs]) {
+          for (const sequence of [action.actionOnEnter, action.actionOnExit])
+            pendingNodes.push(
+              ...collectNativeActionNodes(sequence).map(node => ({
+                node,
+                inputTarget: childOwner,
+              })),
+            );
+          for (const entry of action.buffs) {
             changed = register(owners, ownerConflicts, entry.buffId, childOwner) || changed;
             changed =
               register(sourceTargets, sourceConflicts, entry.buffId, childSource) || changed;
@@ -616,9 +659,11 @@ function propagateBuffTargets(
                 : target.targetSource === 'MainCharacter' ||
                     isControlledOperatorInstantSearch(target)
                   ? 'caster'
-                  : target.targetSource === 'Target' && lifecycleNodes.has(node)
-                    ? owner
-                    : undefined;
+                  : target.targetSource === 'Target' && inputTarget !== undefined
+                    ? inputTarget
+                    : target.targetSource === 'Target' && lifecycleNodes.has(node)
+                      ? owner
+                      : undefined;
           const childOwner = resolve(action.target);
           const childSource = resolve(action.source);
           const childId =

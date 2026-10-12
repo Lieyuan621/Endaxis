@@ -1,3 +1,5 @@
+import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
+import type { TargetContextOperationExecutor } from './targetContextOperationExecutor';
 import {
   valueInputBlackboardKey,
   type CompiledCondition,
@@ -10,7 +12,7 @@ import type {
 } from '../../compiler/combatProgram';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import { ActionBlackboard, resolveActionValueOperand } from '../actions/actionBlackboard';
-import { compareCombatNumbers } from '../../mechanics/combatNumbers.ts';
+import { compareCombatNumbers } from '../../math/combatNumbers.ts';
 import type { LogicalAbilityEntityRuntime } from './logicalAbilityEntityRuntime';
 import type {
   CombatOperationContext,
@@ -37,11 +39,13 @@ type RuntimeOperation = ResolvedCombatOperationStep;
 export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
   readonly #operatorId: string;
   readonly #entities: LogicalAbilityEntityRuntime;
-  readonly #delegate: CombatOperationExecutor;
+  readonly #delegate: CombatOperationExecutor &
+    Pick<TargetContextOperationExecutor, 'queryTargets'>;
   readonly #childRuntimeDependencies?: {
     readonly resolveOperations: (state: CombatOperationHostState) => CombatOperationExecutor;
     readonly semanticEvents?: CombatSemanticEventRuntime;
     readonly launchProjectile?: LaunchProjectile;
+    readonly finishProjectile?: (target: RuntimeTargetRef) => boolean;
     readonly createCallbackSkillHost?: CallbackSkillHostFactory;
     readonly installPassiveSkills?: (
       entity: RuntimeTargetRef,
@@ -58,11 +62,12 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
   constructor(
     operatorId: string,
     entities: LogicalAbilityEntityRuntime,
-    delegate: CombatOperationExecutor,
+    delegate: CombatOperationExecutor & Pick<TargetContextOperationExecutor, 'queryTargets'>,
     childRuntimeDependencies?: {
       readonly resolveOperations: (state: CombatOperationHostState) => CombatOperationExecutor;
       readonly semanticEvents?: CombatSemanticEventRuntime;
       readonly launchProjectile?: LaunchProjectile;
+      readonly finishProjectile?: (target: RuntimeTargetRef) => boolean;
       readonly createCallbackSkillHost?: CallbackSkillHostFactory;
       readonly installPassiveSkills?: (
         entity: RuntimeTargetRef,
@@ -129,29 +134,19 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
       if (context?.targetContext === undefined) {
         throw new Error('AbilityEntity query requires a combat target context');
       }
-      const ownerId =
-        step.parameters.ownerContextKey === undefined
-          ? this.#operatorId
-          : this.#requireSingleOperatorTarget(
-              context.targetContext.get(step.parameters.ownerContextKey),
-              step.parameters.ownerContextKey,
-            );
+      const owner = this.#delegate.queryTargets(step.parameters.owner, context)[0];
+      if (owner === undefined || owner.kind === 'spatialPoint') return false;
+      const sourceSkillCastId = step.parameters.sameSourceSkillCast
+        ? context.skillCastInfo?.skillCastId
+        : undefined;
+      if (step.parameters.sameSourceSkillCast && sourceSkillCastId === undefined)
+        throw new Error('AbilityEntity same-cast query requires inherited skill-cast info');
       let targets = this.#entities.findOwnerSpawned({
-        ownerId,
+        ownerId: runtimeTargetEntityId(owner)!,
         ...(step.parameters.abilityEntityIds === undefined
           ? {}
           : { abilityEntityIds: step.parameters.abilityEntityIds }),
-        ...(step.parameters.sameSourceSkillCast
-          ? {
-              sourceSkillCastId:
-                context.skillCastInfo?.skillCastId ??
-                (() => {
-                  throw new Error(
-                    'AbilityEntity same-cast query requires inherited skill-cast info',
-                  );
-                })(),
-            }
-          : {}),
+        ...(sourceSkillCastId === undefined ? {} : { sourceSkillCastId }),
       });
       const circularOrder = step.parameters.circularOrder;
       if (circularOrder !== undefined) {
@@ -190,9 +185,6 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
         targets = targets.slice(0, step.parameters.maxTargets);
       }
       context.targetContext.set(step.parameters.saveToContextKey, targets);
-      if (step.parameters.saveCountToBlackboardKey !== undefined) {
-        context.blackboard.assignDynamic(step.parameters.saveCountToBlackboardKey, targets.length);
-      }
       return true;
     }
     if (step.kind === 'pickContextTarget') {
@@ -203,73 +195,32 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
       if (!Number.isInteger(index) || index < 0) {
         throw new RangeError('Context target index must be a non-negative integer');
       }
-      const target = context.targetContext.get(step.parameters.sourceContextKey)[index];
+      const target = context.targetContext.getOptional(step.parameters.sourceContextKey)?.[index];
       if (target === undefined) return false;
       context.targetContext.setSingle(step.parameters.saveToContextKey, target);
       return true;
     }
-    if (step.kind === 'readAbilityEntityRemainingDuration') {
-      if (context?.currentTarget === undefined) {
-        throw new Error('AbilityEntity duration read requires a current Context target');
-      }
-      const remaining = this.#entities.snapshot(context.currentTarget).remainingDurationSeconds;
-      if (remaining === null) {
-        throw new Error('infinite AbilityEntity does not have a finite remaining duration');
-      }
-      context.blackboard.assignDynamic(step.parameters.outputKey, remaining);
-      return true;
-    }
     if (step.kind === 'setAbilityEntityRemainingDuration') {
-      if (context?.currentTarget === undefined) {
-        throw new Error('AbilityEntity duration assignment requires a current Context target');
-      }
+      if (!context) throw new Error('AbilityEntity duration assignment requires an action context');
+      const target = this.#delegate.queryTargets(step.parameters.target, context)[0];
+      // 原生 _ApplyDurationToTarget 先检查目标及实体控制器，之后才读取数值。
+      // 单目标模式不能越过首个非能力实体，继续寻找其他可赋值目标。
+      if (target?.kind !== 'abilityEntity') return true;
       this.#entities.setRemainingDuration(
-        context.currentTarget,
+        target,
         resolveActionValueOperand(step.parameters.value, context.blackboard),
       );
       return true;
     }
-    if (step.kind === 'finishCurrentAbilityEntity') {
-      if (context?.currentTarget === undefined) {
-        throw new Error('AbilityEntity finish requires a current Context target');
+    if (step.kind === 'finishOwner') {
+      if (!context) throw new Error('FinishOwner requires an action context');
+      const targets = [...this.#delegate.queryTargets(step.parameters.targets, context)];
+      for (const target of targets) {
+        if (this.#childRuntimeDependencies?.finishProjectile?.(target)) continue;
+        if (target.kind !== 'abilityEntity')
+          throw new Error('FinishOwner currently requires an ability entity target');
+        if (this.#entities.isActive(target)) this.#entities.kill(target, 'explicit');
       }
-      if (this.#entities.isActive(context.currentTarget)) {
-        this.#entities.kill(context.currentTarget, 'explicit');
-      }
-      return true;
-    }
-    if (step.kind === 'finishActionOwnerAbilityEntity') {
-      if (context?.actionOwnerAbilityEntity === undefined) {
-        throw new Error('AbilityEntity ActionOwner finish requires an entity child-skill context');
-      }
-      if (this.#entities.isActive(context.actionOwnerAbilityEntity)) {
-        this.#entities.kill(context.actionOwnerAbilityEntity, 'explicit');
-      }
-      return true;
-    }
-    if (step.kind === 'finishCurrentAbilityEntityWhenSourceDies') {
-      if (context?.currentTarget === undefined) {
-        throw new Error('AbilityEntity source-death finish requires a current Context target');
-      }
-      if (this.#entities.isSourceDead(context.currentTarget)) {
-        this.#entities.kill(context.currentTarget, 'sourceDied');
-      }
-      return true;
-    }
-    if (step.kind === 'startCurrentAbilityEntityChildSkill') {
-      if (context?.currentTarget === undefined) {
-        throw new Error('AbilityEntity child skill start requires a current Context target');
-      }
-      if (this.#childRuntimeDependencies === undefined) {
-        throw new Error('AbilityEntity child skill runtime is not configured');
-      }
-      const childSkill = step.parameters.childSkill;
-      this.#entities.startChildSkill(
-        context.currentTarget,
-        childSkill.skillId,
-        (entity, entityBlackboard) =>
-          this.#createChildRuntime(childSkill, entity, entityBlackboard, context),
-      );
       return true;
     }
     if (step.kind === 'startCurrentAbilityEntityChildSkillById') {
@@ -311,6 +262,7 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
     if (definition === undefined) {
       throw new Error(`AbilityEntity definition '${parameters.abilityEntityId}' does not exist`);
     }
+    const bornTargets = [...this.#delegate.queryTargets(parameters.bornAt, context)];
     const explicitAssignments = Object.fromEntries(
       Object.entries(parameters.blackboardAssignments ?? {}).map(([key, operand]) => [
         key,
@@ -352,23 +304,12 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
     const currentAbilityEntitySource =
       context.actionOwnerAbilityEntity ??
       (context.currentTarget?.kind === 'abilityEntity' ? context.currentTarget : undefined);
-    if (
-      parameters.source === 'currentAbilityEntity' &&
-      currentAbilityEntitySource === undefined &&
-      parameters.dieWhenSourceDies
-    ) {
-      throw new Error(
-        'spawnAbilityEntity source-death tracking requires a materialized current AbilityEntity source',
-      );
+    if (parameters.source === 'currentAbilityEntity' && currentAbilityEntitySource === undefined) {
+      throw new Error('spawnAbilityEntity requires its current AbilityEntity source');
     }
-    // 投射物回调只保留独立动作/实体黑板，尚未把投射物物化进逻辑能力实体目录。
-    // 当原生 dieWhenSourceDie=false 时，Source 身份不参与存活判定；此时以所属干员作为
-    // 运行时代表，但契约中的 source 仍保留真实 ActionOwner 身份。需要跟随来源死亡的动作
-    // 必须命中上面的严格门禁，不能套用这个简化。
+    // 来源身份同时决定直接父子查询和死亡联动，不能用归属干员替代。
     const source =
-      parameters.source === 'currentAbilityEntity'
-        ? (currentAbilityEntitySource ?? casterSource)
-        : casterSource;
+      parameters.source === 'currentAbilityEntity' ? currentAbilityEntitySource! : casterSource;
     const childSkill = this.#resolveSpawnChildSkill(definition, parameters.childSkillId);
     if (childSkill !== undefined && this.#childRuntimeDependencies === undefined) {
       throw new Error('spawnAbilityEntity child skill runtime is not configured');
@@ -384,90 +325,91 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
     if (parameters.target === 'currentAbilityEntity' && target === undefined) {
       throw new Error('spawnAbilityEntity currentAbilityEntity target requires a current target');
     }
-    const entity = this.#entities.spawn({
-      definitionProgramId: this.programs.slot(definition),
-      producedBy: operationProducer(context),
-      ...(!inheritSourceSkillCastInfo
-        ? { skillCastInfo: null }
-        : context.skillCastInfo === undefined
+    const overrideDurationSeconds =
+      parameters.overrideDurationSeconds === undefined
+        ? undefined
+        : resolveActionValueOperand(parameters.overrideDurationSeconds, context.blackboard);
+    const spawnedTargets: RuntimeTargetRef[] = [];
+    // 出生目标在执行开始时确定；子技能修改同名目标组不改变本次遍历。
+    for (let bornIndex = 0; bornIndex < bornTargets.length; bornIndex++) {
+      const entity = this.#entities.spawn({
+        definitionProgramId: this.programs.slot(definition),
+        producedBy: operationProducer(context),
+        ...(!inheritSourceSkillCastInfo
+          ? { skillCastInfo: null }
+          : context.skillCastInfo === undefined
+            ? {}
+            : { skillCastInfo: context.skillCastInfo }),
+        abilityEntityId: parameters.abilityEntityId,
+        definition: {
+          ...(definition.bornTags === undefined ? {} : { bornTags: definition.bornTags }),
+          ...(definition.blackboard === undefined ? {} : { blackboard: definition.blackboard }),
+          lifetime:
+            definition.lifetime.kind === 'infinite'
+              ? definition.lifetime
+              : {
+                  kind: 'limited',
+                  durationSeconds: resolveDefinitionNumber(definition.lifetime.durationSeconds),
+                },
+          ...(definition.deathReleaseDelaySeconds === undefined
+            ? {}
+            : { deathReleaseDelaySeconds: definition.deathReleaseDelaySeconds }),
+          ...(definition.maxStackingCount === undefined
+            ? {}
+            : { maxStackingCount: resolveDefinitionNumber(definition.maxStackingCount) }),
+          ...(childSkill === undefined ? {} : { childSkill: { skillId: childSkill.skillId } }),
+        },
+        ownerId: this.#operatorId,
+        source,
+        ...(!inheritSourceSkillCastInfo || context.skillCastInfo === undefined
           ? {}
-          : { skillCastInfo: context.skillCastInfo }),
-      abilityEntityId: parameters.abilityEntityId,
-      definition: {
-        ...(definition.bornTags === undefined ? {} : { bornTags: definition.bornTags }),
-        ...(definition.blackboard === undefined ? {} : { blackboard: definition.blackboard }),
-        lifetime:
-          definition.lifetime.kind === 'infinite'
-            ? definition.lifetime
-            : {
-                kind: 'limited',
-                durationSeconds: resolveDefinitionNumber(definition.lifetime.durationSeconds),
-              },
-        ...(definition.deathReleaseDelaySeconds === undefined
+          : { sourceSkillCastId: context.skillCastInfo.skillCastId }),
+        ...(target === undefined ? {} : { target }),
+        ...(overrideDurationSeconds === undefined ? {} : { overrideDurationSeconds }),
+        dieWhenSourceDies: parameters.dieWhenSourceDies,
+        ...(Object.keys(assignments).length === 0 ? {} : { blackboardAssignments: assignments }),
+        ...(Object.keys(valueCalculations).length === 0
           ? {}
-          : { deathReleaseDelaySeconds: definition.deathReleaseDelaySeconds }),
-        ...(definition.maxStackingCount === undefined
+          : { blackboardValueCalculations: valueCalculations }),
+        ...(childSkill === undefined
           ? {}
-          : { maxStackingCount: resolveDefinitionNumber(definition.maxStackingCount) }),
-        ...(childSkill === undefined ? {} : { childSkill: { skillId: childSkill.skillId } }),
-      },
-      ownerId: this.#operatorId,
-      source,
-      ...(!inheritSourceSkillCastInfo || context.skillCastInfo === undefined
-        ? {}
-        : { sourceSkillCastId: context.skillCastInfo.skillCastId }),
-      ...(target === undefined ? {} : { target }),
-      ...(parameters.overrideDurationSeconds === undefined
-        ? {}
-        : {
-            overrideDurationSeconds: resolveActionValueOperand(
-              parameters.overrideDurationSeconds,
-              context.blackboard,
-            ),
-          }),
-      dieWhenSourceDies: parameters.dieWhenSourceDies,
-      ...(Object.keys(assignments).length === 0 ? {} : { blackboardAssignments: assignments }),
-      ...(Object.keys(valueCalculations).length === 0
-        ? {}
-        : { blackboardValueCalculations: valueCalculations }),
-      ...(childSkill === undefined
-        ? {}
-        : {
-            createChildRuntime: (entity, entityBlackboard) =>
-              this.#createChildRuntime(
-                childSkill,
-                entity,
-                entityBlackboard,
-                context,
-                inheritSourceSkillCastInfo,
-              ),
-          }),
-    });
-    try {
-      this.#childRuntimeDependencies?.installPassiveSkills?.(entity, definition);
-    } catch (error) {
+          : {
+              createChildRuntime: (entity, entityBlackboard) =>
+                this.#createChildRuntime(
+                  childSkill,
+                  entity,
+                  entityBlackboard,
+                  context,
+                  inheritSourceSkillCastInfo,
+                ),
+            }),
+      });
       try {
-        if (this.#entities.isActive(entity)) this.#entities.finish(entity, 'explicit');
-      } catch (cleanupError) {
-        throw new AggregateError(
-          [error, cleanupError],
-          `AbilityEntity '${parameters.abilityEntityId}' passive installation and cleanup failed`,
-        );
+        this.#childRuntimeDependencies?.installPassiveSkills?.(entity, definition);
+      } catch (error) {
+        try {
+          if (this.#entities.isActive(entity)) this.#entities.finish(entity, 'explicit');
+        } catch (cleanupError) {
+          throw new AggregateError(
+            [error, cleanupError],
+            `AbilityEntity '${parameters.abilityEntityId}' passive installation and cleanup failed`,
+          );
+        }
+        throw error;
       }
-      throw error;
+      if (parameters.saveToContextKey !== undefined) spawnedTargets.push(entity);
+      if (parameters.finishByAction) {
+        const slot = this.programs.slot(step);
+        this.runtimeState.actionDurationEntities.set(slot, [
+          ...(this.runtimeState.actionDurationEntities.get(slot) ?? []),
+          entity,
+        ]);
+      }
     }
     if (parameters.saveToContextKey !== undefined) {
-      if (context.targetContext === undefined) {
+      if (context.targetContext === undefined)
         throw new Error('spawnAbilityEntity context output requires a target context');
-      }
-      context.targetContext.setSingle(parameters.saveToContextKey, entity);
-    }
-    if (parameters.finishByAction) {
-      const slot = this.programs.slot(step);
-      this.runtimeState.actionDurationEntities.set(slot, [
-        ...(this.runtimeState.actionDurationEntities.get(slot) ?? []),
-        entity,
-      ]);
+      context.targetContext.set(parameters.saveToContextKey, spawnedTargets);
     }
     return true;
   }
@@ -486,15 +428,6 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
     const children = Object.values(definition.childSkills ?? {});
     if (children.length <= 1) return children[0];
     throw new Error('AbilityEntity definition has multiple child skills but Spawn selected none');
-  }
-
-  #requireSingleOperatorTarget(targets: readonly RuntimeTargetRef[], contextKey: string): string {
-    if (targets.length !== 1 || targets[0]?.kind !== 'operator') {
-      throw new Error(
-        `AbilityEntity query owner Context '${contextKey}' requires exactly one operator`,
-      );
-    }
-    return targets[0].operatorId;
   }
 
   end(step: RuntimeOperation, context?: CombatOperationContext): void {
@@ -527,31 +460,17 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
         }).length > 0
       );
     }
-    if (condition.kind === 'contextTargetCountCompare') {
-      if (context?.targetContext === undefined) {
-        throw new Error('Context target count comparison requires a combat target context');
-      }
-      const count = context.targetContext.get(condition.contextKey).length;
-      if (condition.outputKey !== undefined) {
-        context.blackboard.assignDynamic(condition.outputKey, count);
-      }
-      return compareCombatNumbers(count, condition.value, condition.operator);
-    }
     if (condition.kind === 'abilityEntityRemainingDurationCompare') {
       if (context?.currentTarget === undefined) {
         throw new Error('AbilityEntity duration comparison requires a current Context target');
       }
       const remaining = this.#entities.snapshot(context.currentTarget).remainingDurationSeconds;
-      if (remaining === null) {
-        throw new Error('infinite AbilityEntity does not have a finite remaining duration');
-      }
-      if (condition.outputKey !== undefined) {
-        context.blackboard.assignDynamic(condition.outputKey, remaining);
-      }
       return compareCombatNumbers(
-        remaining,
-        resolveActionValueOperand(condition.value, context.blackboard),
+        // 原生无限期实体调用 PeriodicTimer.MarkInvalid，remainingTime 为 -1。
+        Math.fround(remaining ?? -1),
+        Math.fround(resolveActionValueOperand(condition.value, context.blackboard)),
         condition.operator,
+        'double',
       );
     }
     return this.#delegate.evaluate(condition, context);

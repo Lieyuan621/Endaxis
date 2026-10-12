@@ -1,13 +1,14 @@
-import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
+import type { CombatObjectRef } from '../receipt/combatReceipt';
 
 /**
  * 元素附着步骤与目标 Buff 容器、关卡事件之间的装配点。
  * 必须在操作序列给定的位置同步执行，不能由投影层根据伤害结果事后补算。
  */
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
-import type { CombatReceiptSink } from '../receipt/combatReceipt';
 import { operationProducer } from '../receipt/combatObjectIdentity';
+import type { CombatReceiptSink } from '../receipt/combatReceipt';
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
 import type { CombatSkillCastInfo } from '../state/foundationState';
 import type { CombatClock } from '../time/combatClock';
@@ -55,7 +56,7 @@ export interface ElementalInflictionOperationDependencies {
   readonly applyOperation: (
     operation: ElementalInflictionOperation,
     skillCastInfo: CombatSkillCastInfo | undefined,
-    producedBy?: import('../receipt/combatReceipt').CombatObjectRef,
+    producedBy?: CombatObjectRef,
   ) => ElementalInflictionBuffIdentity | void;
   readonly triggerSpellBurst?: (payload: {
     readonly burstType: 'Fire' | 'Pulse' | 'Cryst' | 'Natural';

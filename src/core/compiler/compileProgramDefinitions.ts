@@ -12,6 +12,7 @@ import type {
   CompiledTimelineAction,
 } from './combatProgram';
 import { resolveLevelValue } from './compileActionValues';
+import { deriveChildSkillCallSite } from '../combat/timeline/deriveHitId';
 import type {
   ActionGraphReference,
   ActionGraphResourceDefinition,
@@ -89,9 +90,11 @@ export function createProgramDefinitionCompiler(
         ? {}
         : {
             lifecycleSequences: Object.fromEntries(
-              Object.entries(lifecycleSequences).map(([key, sequence]) => [
+              Object.entries({ ...lifecycleSequences }).map(([key, sequences]) => [
                 key,
-                compileBuffEntry(sequence, `${path}.lifecycleSequences.${key}`),
+                sequences.map((sequence, index) =>
+                  compileBuffEntry(sequence, `${path}.lifecycleSequences.${key}[${index}]`),
+                ),
               ]),
             ),
           }),
@@ -113,9 +116,11 @@ export function createProgramDefinitionCompiler(
             igniteEventResponses: igniteEventResponses.map((response, index) => ({
               igniteType: response.igniteType,
               finishAfterIgnited: response.finishAfterIgnited,
-              sequence: compileBuffEntry(
-                response.sequence,
-                `${path}.igniteEventResponses[${index}].sequence`,
+              sequences: response.sequences.map((sequence, sequenceIndex) =>
+                compileBuffEntry(
+                  sequence,
+                  `${path}.igniteEventResponses[${index}].sequences[${sequenceIndex}]`,
+                ),
               ),
             })),
           }),
@@ -249,7 +254,7 @@ export function createProgramDefinitionCompiler(
       initialBlackboard: compileSkillBlackboard(childSkill.blackboard, `${path}.blackboard`),
       timelineActions: compiler.timeline(
         childSkill.scheduledSequences,
-        `${path}.scheduledSequences`,
+        `${deriveChildSkillCallSite(path, childSkill.skillId)}.scheduledSequences`,
       ),
     };
   }

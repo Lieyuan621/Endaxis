@@ -1,3 +1,4 @@
+import type { GraphSharedEntityValueUsage } from '../src/compiler/optimization/graphValueOptimization.ts';
 import { readFile, readdir } from 'node:fs/promises';
 import { basename, isAbsolute, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -6,7 +7,7 @@ import { GameplayTagRegistry } from '../src/source/nativeGameplayTags.ts';
 import { readGameplayTagPaths } from './readGameplayTagPaths.ts';
 import { requireRecord, requireString } from '../src/source/primitives.ts';
 import { parseItemIdentitySource } from '../src/source/itemIdentity.ts';
-import { projectEquipmentIconPath } from '../src/domains/equipment/formalDefinition.ts';
+import { projectEquipmentIcon } from '../src/domains/equipment/formalDefinition.ts';
 import type { CompiledEquipmentSuitRuntimeBatchSource } from '../src/domains/equipment/suitRuntimeDefinition.ts';
 import type { DefinitionOptimizationMode } from '../src/compiler/optimization/definitionOptimization.ts';
 import { finalizeGearSetDefinition } from '../src/compiler/finalizeDefinitions.ts';
@@ -74,7 +75,7 @@ export async function compileGearSetDefinitionsFromFiles(input: GearSetDefinitio
       );
     const identity = parseItemIdentitySource(itemTable![equipmentId], equipmentId);
     const { slug, ...contribution } = definition;
-    return { slug, iconPath: projectEquipmentIconPath(identity.iconId), ...contribution };
+    return { slug, icon: projectEquipmentIcon(identity.iconId), ...contribution };
   });
   return { ...batch, definitions };
 }
@@ -92,11 +93,12 @@ export async function generateGearSetDefinitions(input: GearSetGenerationArgumen
 export async function renderGearSetDefinitionsFromCompiled(
   batch: CompiledEquipmentSuitRuntimeBatchSource,
   optimization: DefinitionOptimizationMode = 'apply',
+  sharedUsage?: GraphSharedEntityValueUsage,
 ) {
   assertNoBlockedDiagnostics(batch);
   const prettierConfig = (await resolveConfig(resolve('.prettierrc.json'))) ?? {};
   const optimized = batch.definitions.map(definition =>
-    finalizeGearSetDefinition(definition, optimization),
+    finalizeGearSetDefinition(definition, optimization, sharedUsage),
   );
   const files = await Promise.all(
     renderEquipmentSuitDefinitionFiles({

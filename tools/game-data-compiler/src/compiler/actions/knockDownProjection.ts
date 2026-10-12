@@ -11,8 +11,11 @@ export function projectKnockDownAction(
   path: string,
   context: CombatActionProjectionContextSource,
 ): {
-  readonly kind: 'applyKnockDown';
-  readonly parameters: CombatStepParameters['applyKnockDown'];
+  readonly kind: 'applyPhysicalInfliction';
+  readonly parameters: Extract<
+    CombatStepParameters['applyPhysicalInfliction'],
+    { type: 'knockDown' }
+  >;
 } {
   const fixedEnemy =
     (action.target.targetSource === 'Target' && context.actionTargetTarget === 'enemy') ||
@@ -36,13 +39,14 @@ export function projectKnockDownAction(
     OnlyInterrupted: 'interrupted',
   } as const satisfies Record<
     KnockDownActionSource['returnTrueWhen'],
-    CombatStepParameters['applyKnockDown']['returnWhen']
+    Extract<CombatStepParameters['applyPhysicalInfliction'], { type: 'knockDown' }>['returnWhen']
   >;
   // 朝向只影响空间/动画；immobilizedTime 只传给敌人动作中断，木桩不安装该主动行为。
   // duration 仍在执行点求值，不写入隐式状态 Buff；两条隐式引用由公共引用收集器维护。
   return {
-    kind: 'applyKnockDown',
+    kind: 'applyPhysicalInfliction',
     parameters: {
+      type: 'knockDown',
       target: 'enemy',
       duration: actionValueOperand(action.duration),
       force: action.forceKnockDown,

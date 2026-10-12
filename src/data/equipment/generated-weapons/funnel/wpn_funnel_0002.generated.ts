@@ -35,6 +35,6 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_funnel_0002',
-  iconPath: '/weapons/funnel/wpn_funnel_0002.webp',
+  icon: 'endaxis:weapons/funnel/wpn_funnel_0002',
 } as const satisfies WeaponDefinition;
 export default definition;

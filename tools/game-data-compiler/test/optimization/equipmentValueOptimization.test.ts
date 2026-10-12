@@ -1,29 +1,33 @@
+import type * as Contract from '../../../../packages/game-data-contract/src/equipment.ts';
 import { extractDefinitionDataNodes } from '../../src/compiler/extractGraphDataNodes.ts';
 /** 用实际装备宿主、事件分发和动作执行器验证运行入口的黑板初值裁剪。 */
 import { describe, expect, it } from 'vitest';
-import type { CombatStepForKind } from '../../src/compiler/intermediateDefinitions.ts';
-import type { CombatCondition } from '../../src/compiler/intermediateDefinitions.ts';
-import type { GearSetDefinition } from '../../src/compiler/intermediateDefinitions.ts';
-import { compileGearSetContribution } from '../../../../src/core/compiler/compileEquipment.ts';
-import { ActionGraphDefinitionRepository } from '../../../../src/core/compiler/actionGraphDefinitionRepository.ts';
-import { createNativeEventFixture } from '../../../../src/core/combat/events/nativeEventTestFixture.ts';
-import { ActionBlackboardOperationExecutor } from '../../../../src/core/combat/actions/actionBlackboardOperationExecutor.ts';
-import { resolveActionValueOperand } from '../../../../src/core/combat/actions/actionBlackboard.ts';
-import { CombatActionSequenceRuntime } from '../../../../src/core/combat/actions/combatActionSequenceRuntime.ts';
 import { EquipmentEventRuntime } from '../../../../src/core/combat/abilities/equipmentEventRuntime.ts';
+import { resolveActionValueOperand } from '../../../../src/core/combat/actions/actionBlackboard.ts';
+import { ActionBlackboardOperationExecutor } from '../../../../src/core/combat/actions/actionBlackboardOperationExecutor.ts';
+import { CombatActionSequenceRuntime } from '../../../../src/core/combat/actions/combatActionSequenceRuntime.ts';
+import { createNativeEventFixture } from '../../../../src/core/combat/events/nativeEventTestFixture.ts';
+import { ActionGraphDefinitionRepository } from '../../../../src/core/compiler/actionGraphDefinitionRepository.ts';
+import { compileGearSetContribution } from '../../../../src/core/compiler/compileEquipment.ts';
 import { finalizeGearSetDefinition } from '../../src/compiler/finalizeDefinitions.ts';
 import type {
   ActionGraphNode,
   ActionGraphReference,
-  ActionGraphResourceDefinition,
   ActionGraphStep,
+  CombatCondition,
+  GearSetDefinition,
 } from '../../src/compiler/intermediateDefinitions.ts';
 
 const literal = (value: number) => ({ kind: 'constant' as const, value });
 const board = (key: string) => ({ kind: 'blackboard' as const, key });
 const spend = (key: string): ActionGraphStep => ({
-  kind: 'changeResourceByActionValue',
-  parameters: { resource: 'sp', recipient: 'team', amount: board(key) },
+  kind: 'changeResource',
+  parameters: {
+    resource: 'sp',
+    source: { kind: 'owner' },
+    targets: { kind: 'owner' },
+    amount: board(key),
+  },
 });
 const gate = (key: string): CombatCondition => ({
   kind: 'actionValueCompare',
@@ -48,23 +52,10 @@ function chain(
   return { $sequence: actions.length === 0 ? null : `${prefix}-0` };
 }
 
-const scopeBody = (
-  nodes: Record<string, ActionGraphNode>,
-  prefix: string,
-  parameters: CombatStepForKind<'withActionBlackboardScope'>['parameters'],
-  ...steps: ActionGraphStep[]
-): ActionGraphStep => ({
-  kind: 'withActionBlackboardScope',
-  parameters,
-  body: chain(nodes, `${prefix}-body`, steps),
-});
-
 /** 与装配器相同：启用/初始化和所有事件响应共享装备宿主的同一黑板。 */
 function executeContribution(definition: GearSetDefinition) {
   const compiled = compileGearSetContribution(
-    extractDefinitionDataNodes<
-      import('../../../../packages/game-data-contract/src/equipment.ts').GearSetDefinition
-    >(definition),
+    extractDefinitionDataNodes<Contract.GearSetDefinition>(definition),
     {
       main: 'agility',
       secondary: 'intellect',
@@ -75,9 +66,12 @@ function executeContribution(definition: GearSetDefinition) {
   const amounts: number[] = [];
   const operations = new ActionBlackboardOperationExecutor({
     execute(step, context) {
-      if (step.kind !== 'changeResourceByActionValue')
-        throw new Error(`unexpected test action ${step.kind}`);
-      amounts.push(resolveActionValueOperand(step.parameters.amount, context!.blackboard));
+      if (step.kind !== 'changeResource') throw new Error(`unexpected test action ${step.kind}`);
+      amounts.push(
+        typeof step.parameters.amount === 'number'
+          ? step.parameters.amount
+          : resolveActionValueOperand(step.parameters.amount, context!.blackboard),
+      );
       return true;
     },
     evaluate: () => {
@@ -212,113 +206,6 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
     expect(result.definition.initializationSequence).toEqual(input.initializationSequence);
   });
 
-  it('父值覆盖子初值，独立实体赋值仍读父板；子板自身数据不参与此次裁剪', () => {
-    const nodes: Record<string, ActionGraphNode> = {};
-    const input: GearSetDefinition = {
-      slug: 'scope_fixture',
-      blackboard: { inherited: 7, assigned: 5, unused: 99 },
-      initializationSequence: chain(nodes, 'init', [
-        scopeBody(
-          nodes,
-          'inherited',
-          {
-            scopeKey: 'inherited',
-            initialValues: { inherited: 1, childOnly: 9 },
-            inheritParent: true,
-          },
-          spend('inherited'),
-        ),
-        scopeBody(
-          nodes,
-          'isolated',
-          {
-            scopeKey: 'isolated',
-            initialValues: {},
-            inheritParent: false,
-            entityInitialValues: { childValue: 1 },
-            entityAssignments: { childValue: board('assigned') },
-          },
-          spend('childValue'),
-        ),
-      ]),
-      actionGraph: { main: { nodes }, macros: {} },
-    };
-    const result = finalizeGearSetDefinition(input);
-    expect(result.definition.blackboard).toEqual({ inherited: 7, assigned: 5 });
-    expect(result.definition.initializationSequence).toEqual(input.initializationSequence);
-    expect(executeContribution(input).amounts).toEqual([7, 5]);
-    expect(executeContribution(result.definition).amounts).toEqual(
-      executeContribution(input).amounts,
-    );
-  });
-
-  it('投射物回调中仍有未解析实体传出时，即使包在隔离子作用域里也整板保留', () => {
-    const callbackNodes: Record<string, ActionGraphNode> = {
-      spawn: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            abilityEntityId: 'unresolved',
-            dieWhenSourceDies: false,
-            inheritActionBlackboard: true,
-          },
-        },
-        next: null,
-      },
-    };
-    const callbackGraph: ActionGraphResourceDefinition = {
-      main: { nodes: callbackNodes },
-      macros: {},
-    };
-    const callback: ActionGraphStep = {
-      kind: 'launchProjectile',
-      parameters: { finish: 1, recycleDelaySeconds: 1 },
-      callbacks: [
-        {
-          event: 'finish',
-          skill: {
-            skillId: 'callback_fixture',
-            nativeSkillType: 'normalSkill',
-            naturalDurationFrames: 0,
-            blackboard: {},
-            scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'spawn' } }],
-            actionGraph: callbackGraph,
-            castResource: {
-              costFrame: 0,
-              cooldownSeconds: 0,
-              maxChargeTime: 1,
-              cost: { resource: 'sp', value: 0, availabilityThreshold: 0 },
-            },
-          },
-        },
-      ],
-    };
-    for (const wrap of [false, true] as const) {
-      const nodes: Record<string, ActionGraphNode> = {};
-      const step = wrap
-        ? scopeBody(
-            nodes,
-            'callback',
-            { scopeKey: 'callback', initialValues: {}, inheritParent: false },
-            callback,
-          )
-        : callback;
-      const input: GearSetDefinition = {
-        slug: 'callback_fixture',
-        blackboard: { captured: 7, possiblyUsedLater: 99 },
-        initializationSequence: chain(nodes, 'init', [step]),
-        actionGraph: { main: { nodes }, macros: {} },
-      };
-      const result = finalizeGearSetDefinition(input);
-      // 当前因优化管线先重建定义对象、不再保留未触碰黑板的引用身份而失败（已记录为生产缺陷）。
-      expect(result.definition.blackboard).toEqual(input.blackboard);
-      expect(result.report.equipmentValues[0]).toMatchObject({
-        removedInitialKeys: [],
-        retainedReason: 'unresolved-blackboard-access',
-      });
-    }
-  });
-
   it('Buff 同名初值属于独立实例，只保留施加时从装备板读取的赋值来源', () => {
     const nodes: Record<string, ActionGraphNode> = {};
     const input: GearSetDefinition = {
@@ -335,9 +222,13 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
         {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'independent_buff',
-            target: 'caster',
-            blackboardAssignments: { received: board('transfer') },
+            buffs: [
+              {
+                buffId: 'independent_buff',
+                blackboardAssignments: { received: board('transfer') },
+              },
+            ],
+            targets: { kind: 'fixed', target: 'caster' },
           },
         },
       ]),

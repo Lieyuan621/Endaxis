@@ -20,23 +20,27 @@ Endaxis 把用户安排的技能转换成战斗输入，逐帧执行，再从执
 
 ## 目录与职责
 
-| 目录                          | 负责什么                                       |
-| ----------------------------- | ---------------------------------------------- |
-| `packages/game-data-contract` | 干员、技能、Buff、动作和装备的公共数据类型     |
-| `tools/game-data-compiler`    | 读取原始数据，生成和验证正式定义及资源         |
-| `src/data`                    | 正式游戏定义、数据目录与按需加载入口           |
-| `src/core/project`            | 用户项目格式和校验                             |
-| `src/core/game-data`          | 定义访问与领域校验，不重复声明公共类型         |
-| `src/core/action-graph`       | 图处理、表达式引用绑定与结构校验               |
-| `src/core/compiler`           | 根据构筑和方案生成战斗程序                     |
-| `src/core/combat`             | 时间、技能、事件、状态、伤害、资源及可恢复数据 |
-| `src/core/projection`         | 从执行记录生成显示数据和诊断                   |
-| `src/application`             | 编辑事务、模拟服务、输入排程及旧轴转换         |
-| `src/platform`                | 浏览器环境、原生壳身份及桥接                   |
-| `src/ui`                      | 页面、手势、定义编辑与结果展示                 |
-| `src/design-system`           | 公共控件、主题变量及浮层行为                   |
+| 目录                          | 负责什么                                         |
+| ----------------------------- | ------------------------------------------------ |
+| `packages/game-data-contract` | 干员、技能、Buff、动作和装备的公共数据类型       |
+| `tools/game-data-compiler`    | 读取原始数据，生成和验证正式定义及资源           |
+| `src/data`                    | 正式游戏定义、数据目录与按需加载入口             |
+| `src/core/project`            | 用户项目格式和校验                               |
+| `src/core/game-data`          | 定义访问与领域校验，不重复声明公共类型           |
+| `src/core/action-graph`       | 图处理、表达式引用绑定与结构校验                 |
+| `src/core/compiler`           | 根据构筑和方案生成战斗程序                       |
+| `src/core/scenarioMechanics`  | 编译与安装危机合约、自定义全局效果等场景附加规则 |
+| `src/core/math`               | 生成器和运行时共用的纯数值计算规则               |
+| `src/core/combat`             | 时间、技能、事件、状态、伤害、资源及可恢复数据   |
+| `src/core/projection`         | 从执行记录生成显示数据和诊断                     |
+| `src/application`             | 编辑事务、模拟服务、输入排程及旧轴转换           |
+| `src/platform`                | 浏览器环境、原生壳身份及桥接                     |
+| `src/ui`                      | 页面、手势、定义编辑与结果展示                   |
+| `src/design-system`           | 公共控件、主题变量及浮层行为                     |
 
 底层不读取 Vue 组件或 Store。游戏数据契约只保留类型和枚举，不依赖应用和生成器。生成器可以引用主包中明确的纯逻辑模块，但不能加载应用状态、UI 或正式数据仓库；应用生产代码不反向引用生成器。具体归属见[游戏数据](game-data.md#共享实现的归属)。
+
+物理异常规则归 `src/core/combat/status`，元素附着与法术状态规则归 `src/core/combat/infliction`；它们不属于场景附加机制。危机合约的正式数据与适配器归 `src/data/contingencyContract`，来源解析归转换器的 `domains/contingencyContract`。
 
 ## 数据归属
 

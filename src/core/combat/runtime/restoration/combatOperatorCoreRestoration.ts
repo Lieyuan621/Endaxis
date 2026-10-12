@@ -7,7 +7,6 @@ import type { BuffApplicationHandle } from '../../buffs/buffOperationExecutor';
 import type { CombatReceiptSink } from '../../receipt/combatReceipt';
 import type { CombatOperatorState } from '../../state/combatState';
 import type { BuffReference } from '../../state/foundationState';
-import { CombatStatusRuntime } from '../../status/combatStatusRuntime';
 import {
   TimedMarkerContainer,
   type TimedMarkerContainerHooks,
@@ -28,8 +27,6 @@ export interface RestoreCombatOperatorCoreOptions {
   readonly skills: readonly PreparedCombatSkillRestoreBinding[];
   readonly clock: CombatClock;
   readonly receipt: CombatReceiptSink;
-  /** 完整装配在 Buff 生命周期操作链创建前建立的当前分支状态运行时。 */
-  readonly preboundStatusRuntime?: CombatStatusRuntime;
   readonly timedMarkerHooks?: TimedMarkerContainerHooks;
   /** 恢复标记创建时使用的全局缩放时钟，不能临时改用未缩放时间。 */
   readonly globalScaledClock?: TimedMarkerClock;
@@ -39,7 +36,6 @@ export interface RestoreCombatOperatorCoreOptions {
     binding: PreparedCombatSkillRestoreBinding,
     context: {
       readonly blackboard: ActionBlackboard;
-      readonly statuses?: CombatStatusRuntime;
       readonly timedMarkers: TimedMarkerContainer;
     },
   ) => ReturnType<RestoreCombatOperatorSkillsOptions['createDependencies']>;
@@ -50,7 +46,6 @@ export interface RestoreCombatOperatorCoreOptions {
 
 export interface RestoredCombatOperatorCore {
   readonly blackboard: ActionBlackboard;
-  readonly statuses?: CombatStatusRuntime;
   readonly timedMarkers: TimedMarkerContainer;
   readonly cooldowns: ReturnType<typeof bindRestoredCombatSkillCooldowns>;
   readonly skills: ReturnType<typeof bindRestoredCombatOperatorSkills>;
@@ -72,55 +67,17 @@ export function bindRestoredCombatOperatorCore(
   ) {
     throw new Error(`restored operator '${ownerId}' Buff target uses another blackboard`);
   }
-  let statuses: CombatStatusRuntime | undefined;
-  if (options.operator.statusContainer === undefined) {
-    if (options.preboundStatusRuntime !== undefined) {
-      throw new Error(
-        `restored operator '${ownerId}' has a prebound status runtime without definitions`,
-      );
-    }
-    if (options.state.statuses !== null) {
-      throw new Error(`restored operator '${ownerId}' has status data without definitions`);
-    }
-  } else {
-    if (options.operator.statusContainer.ownerId !== ownerId) {
-      throw new Error(
-        `status owner '${options.operator.statusContainer.ownerId}' does not match operator '${ownerId}'`,
-      );
-    }
-    if (options.state.statuses === null) {
-      throw new Error(`restored operator '${ownerId}' has status definitions without data`);
-    }
-    statuses =
-      options.preboundStatusRuntime ??
-      new CombatStatusRuntime(
-        options.operator.statusContainer.bindRuntimeState(options.state.statuses),
-        options.clock,
-        options.receipt,
-      );
-    if (statuses.container.runtimeState !== options.state.statuses) {
-      throw new Error(`restored operator '${ownerId}' prebound status uses another state`);
-    }
-    if (
-      statuses.targetId !== ownerId ||
-      statuses.clock !== options.clock ||
-      statuses.receipt !== options.receipt
-    ) {
-      throw new Error(`restored operator '${ownerId}' prebound status uses another runtime`);
-    }
-  }
   const timedMarkers = new TimedMarkerContainer(
     ownerId,
     options.entityClock ?? options.clock,
     options.timedMarkerHooks,
     options.state.timedMarkers,
     {
-      global: options.globalScaledClock ?? options.clock,
       globalScaled: options.globalScaledClock ?? options.clock,
     },
   );
   const cooldowns = bindRestoredCombatSkillCooldowns(options.operator, options.state.cooldowns);
-  const context = { blackboard, statuses, timedMarkers };
+  const context = { blackboard, timedMarkers };
   const skills = bindRestoredCombatOperatorSkills({
     operatorId: ownerId,
     skills: options.skills,
@@ -136,5 +93,5 @@ export function bindRestoredCombatOperatorCore(
     runtime: options.abilityRuntime,
     onCooldownReady: options.onCooldownReady,
   });
-  return { blackboard, statuses, timedMarkers, cooldowns, skills, ability };
+  return { blackboard, timedMarkers, cooldowns, skills, ability };
 }

@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import EditorHelp from '../editor/EditorHelp.vue';
 import EditorInspector from '../editor/EditorInspector.vue';
 import type { BlackboardScope } from '../../application/editor/graphBlackboard';
-import { scopeName, scopeHelp } from './editorNodeText';
 import { useI18n } from 'vue-i18n';
 
 defineProps<{
@@ -21,9 +19,7 @@ const { t } = useI18n();
       <div v-if="scopes" class="node-context">
         <span class="context-label">{{ t('actionGraphEditor.scope') }}</span>
         <div class="context-values">
-          <span v-for="scope in scopes" :key="scope.id"
-            >{{ scopeName(scope) }}<EditorHelp :text="scopeHelp(scope)"
-          /></span>
+          <span v-for="scope in scopes" :key="scope.id">{{ scope.label }}</span>
           <span v-if="!scopes.length">{{ t('actionGraphEditor.scopeUnknown') }}</span>
         </div>
         <p v-for="message in scopeWarnings" :key="message" class="context-warning">{{ message }}</p>

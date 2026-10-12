@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { EaButton, EaDialog } from '../../../design-system/index';
-import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
+import { CombatObjectOrigins } from '../../../core/projection/combatObjectOrigins';
+import { EaButton, EaDialog } from '../../../design-system/index';
+import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import {
   initialBuffDetailInstanceIndex,
   type BuffDetailInstance,
   type BuffDetailTarget,
 } from './buffDetail';
+import type { CombatObjectIconResolver } from './combatObjectIcons';
+import type { CombatObjectOwnName } from './combatObjectNames';
 import CombatObjectOriginGraph from './CombatObjectOriginGraph.vue';
-import { CombatObjectOrigins } from '../../../core/projection/combatObjectOrigins';
-import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -20,8 +22,8 @@ const props = defineProps<{
   fps: number;
   receiptEntries?: readonly CombatReceiptEntry[];
   operatorLabel?: (operatorId: string) => string;
-  objectName?: import('./combatObjectNames').CombatObjectOwnName;
-  objectIcon?: import('./combatObjectIcons').CombatObjectIconResolver;
+  objectName?: CombatObjectOwnName;
+  objectIcon?: CombatObjectIconResolver;
   actionPresentation?: (
     ownerId: string,
     actionId: string,

@@ -30,6 +30,38 @@ import { StateStepper } from '../runtime/stateStepper';
 
 type Attribute = 'attack';
 
+it('驱散按配置、等级和实例标签筛选，先执行驱散回调再结束', () => {
+  const events: string[] = [];
+  const container = new CombatBuffContainer('owner', new CombatAttributeSet<Attribute>());
+  const base: CombatBuffDefinition<Attribute> = {
+    id: 'cold',
+    stackingType: 'unlimited',
+    dispelLevel: 0,
+    applyTags: ['cold'],
+    actions: {
+      dispelled: (buff, source) =>
+        events.push(`dispel:${buff.definition.id}:${source}:${buff.isEnabled}:${buff.isFinished}`),
+      finish: buff => events.push(`finish:${buff.definition.id}`),
+    },
+  };
+  const cold = container.add(base, 'enemy');
+  const frozen = container.add({ ...base, id: 'frozen', dispelLevel: undefined }, 'enemy');
+  const stronger = container.add({ ...base, id: 'stronger', dispelLevel: 1 }, 'enemy');
+  const other = container.add({ ...base, id: 'other', applyTags: ['other'] }, 'enemy');
+  container.dispel('healer', 0, { buffTags: ['cold'], tagQueryType: 'hasAny' });
+  expect(events).toEqual(['dispel:cold:healer:true:false', 'finish:cold']);
+  expect(cold?.isFinished).toBe(true);
+  expect([frozen, stronger, other].map(buff => buff?.isFinished)).toEqual([false, false, false]);
+  container.dispel('healer', 1);
+  expect(events.slice(2)).toEqual([
+    'dispel:stronger:healer:true:false',
+    'finish:stronger',
+    'dispel:other:healer:true:false',
+    'finish:other',
+  ]);
+  expect(frozen?.isFinished).toBe(false);
+});
+
 it('拒绝非法刷新寿命时不执行增强动作，也不改变组、实例或属性', () => {
   const container = new CombatBuffContainer('owner', new CombatAttributeSet<Attribute>());
   const events: string[] = [];

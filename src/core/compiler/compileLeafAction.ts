@@ -3,46 +3,37 @@ import type { CompiledStepForKind } from './compiledGraphData.ts';
 
 import type { ActionGraphStep } from '../../../packages/game-data-contract/src/actionGraph';
 import type { ResolvedCombatStepForKind } from './combatProgram';
-import {
-  resolveLevelValue,
-  resolveLevelValueOrActionOperand,
-  resolveStatusModifier,
-} from './compileActionValues';
+import { resolveLevelValue, resolveLevelValueOrActionOperand } from './compileActionValues';
 
 const LEAF_ACTION_KINDS = [
+  'copyContextTargets',
+  'findTargets',
   'mergeContextTargets',
   'findCharacterTeamTargets',
-  'findUnfinishedProjectileTargets',
   'createSpatialPointTargets',
   'findOwnerSpawnedAbilityEntities',
   'pickContextTarget',
-  'readAbilityEntityRemainingDuration',
   'setAbilityEntityRemainingDuration',
-  'finishCurrentAbilityEntity',
-  'finishActionOwnerAbilityEntity',
-  'finishCurrentAbilityEntityWhenSourceDies',
+  'finishOwner',
+  'interruptCurrentSkill',
   'startCurrentAbilityEntityChildSkillById',
-  'jumpTimeline',
-  'finishTimeline',
   'reachSkillOperableBoundary',
   'markCurrentSkillCanDash',
   'markCurrentSkillCanInterrupt',
   'dealDamage',
-  'dealFixedDamage',
   'dealStagger',
   'heal',
   'changeResource',
   'restrictUltimateEnergyRecovery',
-  'applyStatus',
   'readBuffBlackboard',
   'readEventBuffBlackboard',
-  'readCurrentBuffRemainingDuration',
   'readBuffRemainingDuration',
   'setBuffRemainingDuration',
   'setCurrentBuffRemainingDuration',
   'refreshCurrentBuffAttributeModifiers',
   'skillAffix',
   'readBuffStackCount',
+  'dispelBuffs',
   'finishBuffsByTag',
   'finishBuffsById',
   'finishCurrentBuff',
@@ -52,11 +43,11 @@ const LEAF_ACTION_KINDS = [
   'inheritBuffById',
   'createTimedMarker',
   'setGlobalCooldown',
-  'createAbilityEntityTimedMarker',
   'startTimeDilation',
   'startUltimateTimeDilation',
   'hideUi',
   'setIgnoreGlobalTimeScale',
+  'storeCharacterTypeId',
   'storeCurrentTimelineFrame',
   'storeEventSpGainAmount',
   'storeEventHealValues',
@@ -66,7 +57,6 @@ const LEAF_ACTION_KINDS = [
   'storeSourceAttributeValue',
   'storeEntityPropertyValue',
   'setHealthFloor',
-  'changeResourceByActionValue',
   'recoverDashEnergy',
   'recordPerfectDodge',
   'gainSquadUltimateEnergyFromSkillCost',
@@ -75,21 +65,15 @@ const LEAF_ACTION_KINDS = [
   'finishGlobalBuffsById',
   'readSkillSettingData',
   'triggerCharacterInflictionEvent',
-  'limitMovementGait',
   'applyCharacterInfliction',
   'applyElementalInfliction',
-  'applyKnockDown',
+  'forceSpellStatus',
+  'applyPhysicalInfliction',
   'triggerSpellBurst',
   'triggerCustomAbilityEvent',
   'castSkillDuringAction',
-  'consumeElementalReaction',
-  'outputAirborne',
-  'outputKnockDown',
   'gainFinisherSp',
-  'consumeStatus',
-  'setContextFlag',
   'openComboWindow',
-  'showComboRingQte',
   'changeSkillSlot',
   'overrideBasicAttackMapping',
   'overrideMultiDashLimit',
@@ -98,7 +82,6 @@ const LEAF_ACTION_KINDS = [
   'setCharacterPassiveUiValue',
   'inheritSkillCastInfoForBasicAttack',
   'adjustSkillCooldown',
-  'applyElementalReaction',
 ] as const;
 type LeafAction = CompiledStepForKind<(typeof LEAF_ACTION_KINDS)[number]>;
 export type ResolvedLeafAction = ResolvedCombatStepForKind<(typeof LEAF_ACTION_KINDS)[number]>;
@@ -113,11 +96,13 @@ export function compileLeafAction(
 ): ResolvedLeafAction {
   const keyed = step.key === undefined ? {} : { key: step.key };
   switch (step.kind) {
+    case 'copyContextTargets':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'findTargets':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'mergeContextTargets':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'findCharacterTeamTargets':
-      return { ...keyed, kind: step.kind, parameters: step.parameters };
-    case 'findUnfinishedProjectileTargets':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'createSpatialPointTargets':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
@@ -125,19 +110,12 @@ export function compileLeafAction(
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'pickContextTarget':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
-    case 'readAbilityEntityRemainingDuration':
-      return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'setAbilityEntityRemainingDuration':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
-    case 'finishCurrentAbilityEntity':
-    case 'finishActionOwnerAbilityEntity':
-    case 'finishCurrentAbilityEntityWhenSourceDies':
+    case 'interruptCurrentSkill':
+    case 'finishOwner':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'startCurrentAbilityEntityChildSkillById':
-      return { ...keyed, kind: step.kind, parameters: step.parameters };
-    case 'jumpTimeline':
-      return { ...keyed, kind: step.kind, parameters: step.parameters };
-    case 'finishTimeline':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'reachSkillOperableBoundary':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
@@ -191,54 +169,6 @@ export function compileLeafAction(
           ...(step.parameters.instantDamageScaleModifiers === undefined
             ? {}
             : { instantDamageScaleModifiers: step.parameters.instantDamageScaleModifiers }),
-          ...(step.parameters.stagger === undefined
-            ? {}
-            : {
-                stagger: resolveLevelValueOrActionOperand(
-                  step.parameters.stagger,
-                  skillLevel,
-                  `${path}.parameters.stagger`,
-                ),
-              }),
-          ...(step.parameters.staggerMultiplier === undefined
-            ? {}
-            : {
-                staggerMultiplier: resolveLevelValueOrActionOperand(
-                  step.parameters.staggerMultiplier,
-                  skillLevel,
-                  `${path}.parameters.staggerMultiplier`,
-                ),
-              }),
-          ...(step.parameters.staggerOnlyWhenCasterControlled
-            ? { staggerOnlyWhenCasterControlled: true }
-            : {}),
-          ...(step.parameters.attackScalePerStatusStack === undefined
-            ? {}
-            : {
-                attackScalePerStatusStack: {
-                  ...step.parameters.attackScalePerStatusStack,
-                  coefficient: resolveLevelValue(
-                    step.parameters.attackScalePerStatusStack.coefficient,
-                    skillLevel,
-                    `${path}.parameters.attackScalePerStatusStack.coefficient`,
-                  ),
-                },
-              }),
-        },
-      };
-    case 'dealFixedDamage':
-      return {
-        ...keyed,
-        kind: step.kind,
-        parameters: {
-          damageType: step.parameters.damageType,
-          value: resolveLevelValueOrActionOperand(
-            step.parameters.value,
-            skillLevel,
-            `${path}.parameters.value`,
-          ),
-          tags: step.parameters.tags,
-          ...(step.parameters.features === undefined ? {} : { features: step.parameters.features }),
           ...(step.parameters.stagger === undefined
             ? {}
             : {
@@ -334,49 +264,26 @@ export function compileLeafAction(
               },
       };
     }
-    case 'changeResource':
+    case 'changeResource': {
+      const { amount, coefficient, ...parameters } = step.parameters;
       return {
         ...keyed,
         kind: step.kind,
         parameters: {
-          resource: step.parameters.resource,
-          amount: resolveLevelValue(
-            step.parameters.amount,
-            skillLevel,
-            `${path}.parameters.amount`,
-          ),
-          ...(step.parameters.coefficient === undefined
+          ...parameters,
+          amount: resolveLevelValueOrActionOperand(amount, skillLevel, `${path}.parameters.amount`),
+          ...(coefficient === undefined
             ? {}
             : {
-                coefficient: resolveLevelValue(
-                  step.parameters.coefficient,
+                coefficient: resolveLevelValueOrActionOperand(
+                  coefficient,
                   skillLevel,
                   `${path}.parameters.coefficient`,
                 ),
               }),
-          recipient: step.parameters.recipient,
-          ...(step.parameters.spGainKind === undefined
-            ? {}
-            : { spGainKind: step.parameters.spGainKind }),
-          ...(step.parameters.spGainSource === undefined
-            ? {}
-            : { spGainSource: step.parameters.spGainSource }),
-          ...(step.parameters.isPercentValue === undefined
-            ? {}
-            : { isPercentValue: step.parameters.isPercentValue }),
-          ...(step.parameters.ultimateRecoveryTag === undefined
-            ? {}
-            : {
-                ultimateRecoveryTag: step.parameters.ultimateRecoveryTag,
-              }),
-          ...(step.parameters.ignoreUltimateEnergyGainMultiplier === undefined
-            ? {}
-            : {
-                ignoreUltimateEnergyGainMultiplier:
-                  step.parameters.ignoreUltimateEnergyGainMultiplier,
-              }),
         },
       };
+    }
     case 'restrictUltimateEnergyRecovery':
       return {
         ...keyed,
@@ -384,39 +291,6 @@ export function compileLeafAction(
         parameters: {
           ...step.parameters,
           allowedRecoveryTags: step.parameters.allowedRecoveryTags,
-        },
-      };
-    case 'applyStatus':
-      return {
-        ...keyed,
-        kind: step.kind,
-        parameters: {
-          statusKey: step.parameters.statusKey,
-          target: step.parameters.target,
-          ...(step.parameters.stacks === undefined ? {} : { stacks: step.parameters.stacks }),
-          ...(step.parameters.maxStacks === undefined
-            ? {}
-            : { maxStacks: step.parameters.maxStacks }),
-          ...(step.parameters.durationFrames === undefined
-            ? {}
-            : {
-                durationFrames: resolveLevelValue(
-                  step.parameters.durationFrames,
-                  skillLevel,
-                  `${path}.parameters.durationFrames`,
-                ),
-              }),
-          ...(step.parameters.modifiers === undefined
-            ? {}
-            : {
-                modifiers: step.parameters.modifiers.map((modifier, index) =>
-                  resolveStatusModifier(
-                    modifier,
-                    skillLevel,
-                    `${path}.parameters.modifiers[${index}]`,
-                  ),
-                ),
-              }),
         },
       };
     case 'readBuffBlackboard':
@@ -435,8 +309,6 @@ export function compileLeafAction(
         },
       };
     case 'readEventBuffBlackboard':
-      return { ...keyed, kind: step.kind, parameters: step.parameters };
-    case 'readCurrentBuffRemainingDuration':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'readBuffRemainingDuration':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
@@ -471,6 +343,8 @@ export function compileLeafAction(
           buffTags: step.parameters.buffTags,
         },
       };
+    case 'dispelBuffs':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'finishBuffsById':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'finishCurrentBuff':
@@ -487,8 +361,6 @@ export function compileLeafAction(
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'setGlobalCooldown':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
-    case 'createAbilityEntityTimedMarker':
-      return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'startTimeDilation':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'startUltimateTimeDilation':
@@ -496,6 +368,8 @@ export function compileLeafAction(
     case 'hideUi':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'setIgnoreGlobalTimeScale':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'storeCharacterTypeId':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'storeCurrentTimelineFrame':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
@@ -515,28 +389,6 @@ export function compileLeafAction(
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'setHealthFloor':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
-    case 'changeResourceByActionValue': {
-      const { coefficient, ultimateRecoveryTag, ...parameters } = step.parameters;
-      return {
-        ...keyed,
-        kind: step.kind,
-        parameters: {
-          ...parameters,
-          ...(ultimateRecoveryTag === undefined
-            ? {}
-            : { ultimateRecoveryTag: ultimateRecoveryTag }),
-          ...(coefficient === undefined
-            ? {}
-            : {
-                coefficient: resolveLevelValueOrActionOperand(
-                  coefficient,
-                  skillLevel,
-                  `${path}.parameters.coefficient`,
-                ),
-              }),
-        },
-      };
-    }
     case 'recoverDashEnergy':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'recordPerfectDodge':
@@ -561,24 +413,17 @@ export function compileLeafAction(
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'readSkillSettingData':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
-    case 'limitMovementGait':
-      return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'triggerCharacterInflictionEvent':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'applyCharacterInfliction':
+    case 'forceSpellStatus':
     case 'applyElementalInfliction':
-    case 'applyKnockDown':
+    case 'applyPhysicalInfliction':
     case 'triggerSpellBurst':
     case 'triggerCustomAbilityEvent':
     case 'castSkillDuringAction':
-    case 'consumeElementalReaction':
-    case 'outputAirborne':
-    case 'outputKnockDown':
     case 'gainFinisherSp':
-    case 'consumeStatus':
-    case 'setContextFlag':
     case 'openComboWindow':
-    case 'showComboRingQte':
     case 'changeSkillSlot':
     case 'overrideBasicAttackMapping':
     case 'overrideMultiDashLimit':
@@ -588,18 +433,5 @@ export function compileLeafAction(
     case 'inheritSkillCastInfoForBasicAttack':
     case 'adjustSkillCooldown':
       return { ...keyed, kind: step.kind, parameters: step.parameters } as ResolvedLeafAction;
-    case 'applyElementalReaction':
-      return {
-        ...keyed,
-        kind: step.kind,
-        parameters: {
-          ...step.parameters,
-          durationSeconds: resolveLevelValueOrActionOperand(
-            step.parameters.durationSeconds,
-            skillLevel,
-            `${path}.parameters.durationSeconds`,
-          ),
-        },
-      };
   }
 }

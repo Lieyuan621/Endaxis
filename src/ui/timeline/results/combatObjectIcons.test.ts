@@ -19,7 +19,7 @@ it.each([
     time: 0,
     event: 'BuffApplied',
     targetId: 'enemy',
-    data: { instanceId: 1, buffId, iconPath: '/native-buff.webp' },
+    data: { instanceId: 1, buffId, icon: 'endaxis:icons/icon_attack_funnel' },
   });
   const q = new CombatObjectOrigins(c.entries);
   const icon = createCombatObjectIconResolver(c.entries, undefined, new Map(), new Map());
@@ -34,14 +34,14 @@ it('uses exact Buff instance icons at the hit boundary and reuses them for consu
     time: 0,
     event: 'BuffApplied',
     targetId: 'a',
-    data: { instanceId: 1, buffId: 'same', iconPath: '/old.webp' },
+    data: { instanceId: 1, buffId: 'same', icon: 'endaxis:icons/icon_attack_sword' },
   });
   c.record({
     frame: 0,
     time: 0,
     event: 'BuffApplied',
     targetId: 'b',
-    data: { instanceId: 1, buffId: 'same', iconPath: '/other.webp' },
+    data: { instanceId: 1, buffId: 'same', icon: 'endaxis:icons/icon_attack_claym' },
   });
   c.record({ frame: 0, time: 0, event: 'BuffConsumed', targetId: 'a', data: { instanceId: 1 } });
   c.record({
@@ -49,13 +49,17 @@ it('uses exact Buff instance icons at the hit boundary and reuses them for consu
     time: 0,
     event: 'BuffApplied',
     targetId: 'a',
-    data: { instanceId: 1, iconPath: '/future.webp' },
+    data: { instanceId: 1, icon: 'endaxis:icons/icon_attack_funnel' },
   });
   const q = new CombatObjectOrigins(c.entries);
   const icon = createCombatObjectIconResolver(c.entries, undefined, new Map(), new Map());
-  expect(icon(q.get({ kind: 'buff', ownerId: 'a', instanceId: 1 }), 2)).toBe('/old.webp');
-  expect(icon(q.get({ kind: 'buff', ownerId: 'b', instanceId: 1 }), 2)).toBe('/other.webp');
-  expect(icon(q.get({ kind: 'receipt', sequence: 2 }), 2)).toBe('/old.webp');
+  expect(icon(q.get({ kind: 'buff', ownerId: 'a', instanceId: 1 }), 2)).toBe(
+    '/icons/icon_attack_sword.webp',
+  );
+  expect(icon(q.get({ kind: 'buff', ownerId: 'b', instanceId: 1 }), 2)).toBe(
+    '/icons/icon_attack_claym.webp',
+  );
+  expect(icon(q.get({ kind: 'receipt', sequence: 2 }), 2)).toBe('/icons/icon_attack_sword.webp');
   expect(icon(q.get({ kind: 'abilityEntity', instanceId: 1 }), 2)).toBeUndefined();
 });
 
@@ -87,7 +91,26 @@ it('uses published operator, skill and weapon identities, including the timeline
       },
     ],
   };
-  const operators = capturePublishedOperatorMetadata(scenario, { getOperator: () => arcane });
+  const operators = capturePublishedOperatorMetadata(scenario, { getOperator: () => arcane }, [
+    { operatorId: 'track', attributes: { strength: 0, agility: 0, intellect: 10, will: 20 } },
+  ]);
+  expect(operators.get('arcane')?.skillIcons?.chr_0032_lizhiyan_ultimate_skill).toBe(
+    '/operators/arcane/ultimate 02.webp',
+  );
+  const equalAttributes = capturePublishedOperatorMetadata(
+    scenario,
+    { getOperator: () => arcane },
+    [{ operatorId: 'track', attributes: { strength: 0, agility: 0, intellect: 20, will: 20 } }],
+  );
+  expect(equalAttributes.get('arcane')?.skillIcons?.chr_0032_lizhiyan_ultimate_skill).toBe(
+    '/operators/arcane/ultimate 01.webp',
+  );
+  // 第二段不接受技能组图标覆盖，两种构筑都应保留独立图标。
+  for (const metadata of [operators, equalAttributes]) {
+    expect(metadata.get('arcane')?.skillIcons?.chr_0032_lizhiyan_ultimate_skill2).toBe(
+      '/operators/arcane/ultimate 03.webp',
+    );
+  }
   const c = new CombatReceiptCollector();
   c.record({
     event: 'BuffApplied',
@@ -98,7 +121,7 @@ it('uses published operator, skill and weapon identities, including the timeline
     data: {
       instanceId: 1,
       sourceActionId: 'upgrade-initialization:weapon-trait:item:skill3',
-      iconPath: '/buff.webp',
+      icon: 'endaxis:icons/icon_attack_funnel',
     },
   });
   c.record({
@@ -110,7 +133,7 @@ it('uses published operator, skill and weapon identities, including the timeline
     data: {
       instanceId: 2,
       sourceActionId: 'upgrade-initialization:gear-set:suit_fixture',
-      iconPath: '/native-buff.webp',
+      icon: 'endaxis:icons/icon_attack_funnel',
     },
   });
   const q = new CombatObjectOrigins(c.entries);
@@ -118,7 +141,7 @@ it('uses published operator, skill and weapon identities, including the timeline
     c.entries,
     scenario,
     operators,
-    capturePublishedEquipmentSources([{ slug: 'item', iconPath: '/weapon.webp' }]),
+    capturePublishedEquipmentSources([{ slug: 'item', icon: 'endaxis:weapons/default' }]),
     new Map(),
     new Map([['suit_fixture', '/set.webp']]),
   );
@@ -126,9 +149,11 @@ it('uses published operator, skill and weapon identities, including the timeline
     '/operators/arcane/avatar.webp',
   );
   expect(icon(q.get({ kind: 'action', ownerId: 'track', actionId: 'cast' }), 0)).toBe(
-    '/operators/arcane/ultimate.webp',
+    '/operators/arcane/ultimate 02.webp',
   );
-  expect(icon(q.get({ kind: 'buff', ownerId: 'track', instanceId: 1 }), 0)).toBe('/weapon.webp');
+  expect(icon(q.get({ kind: 'buff', ownerId: 'track', instanceId: 1 }), 0)).toBe(
+    '/weapons/default.webp',
+  );
   expect(icon(q.get({ kind: 'buff', ownerId: 'track', instanceId: 2 }), 1)).toBe('/set.webp');
   expect(
     icon(

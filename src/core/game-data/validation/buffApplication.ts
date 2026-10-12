@@ -1,4 +1,5 @@
 import { parseCombatBuffDefinitionEntry } from '../../combat/buffs/combatBuffDefinitions';
+import { validateTargetQuery } from './combatConditions';
 import type { ActionGraphContextEntry } from './actionPrograms';
 import { validateActionGraphResource } from '../../action-graph/actionGraphValidation';
 import type { ActionGraphResourceDefinition } from '../../../../packages/game-data-contract/src/actionGraph';
@@ -13,8 +14,6 @@ import {
   validateLevelValues,
   validateActionValueOperand,
   validateActionStringOperand,
-  BUFF_APPLICATION_TARGETS_SET,
-  BUFF_APPLICATION_SOURCES_SET,
   requireInteger,
 } from './definitionValues';
 interface BuffSequenceValidators {
@@ -35,24 +34,73 @@ export function validateBuffApplication(
   parameters: Record<string, unknown>,
   path: string,
   out: SkillDefinitionValidationIssue[],
-  currentTargetAvailable: boolean,
+  host: 'applyBuff' | 'aura' = 'applyBuff',
 ): void {
-  if (parameters.sourceContextKey !== undefined) {
-    requireString(parameters, 'sourceContextKey', `${path}.parameters`, out);
-    if (parameters.source !== undefined)
-      push(out, `${path}.parameters.source`, 'source and sourceContextKey are mutually exclusive');
-  }
-  const dynamicId = typeof parameters.buffId === 'object' && parameters.buffId !== null;
-  validateActionStringOperand(parameters.buffId, `${path}.parameters.buffId`, out);
-  if (dynamicId) {
-    for (const field of ['durationSeconds', 'effectiveness']) {
-      if (parameters[field] !== undefined)
-        push(
+  if (!Array.isArray(parameters.buffs) || (host === 'applyBuff' && parameters.buffs.length === 0)) {
+    push(out, `${path}.parameters.buffs`, 'expected a non-empty Buff list');
+  } else {
+    parameters.buffs.forEach((value, index) => {
+      const itemPath = `${path}.parameters.buffs[${index}]`;
+      const entry = asRecord(value, itemPath, out);
+      if (entry === null) return;
+      validateActionStringOperand(entry.buffId, `${itemPath}.buffId`, out);
+
+      if (entry.blackboardAssignments !== undefined) {
+        const assignments = asRecord(
+          entry.blackboardAssignments,
+          `${itemPath}.blackboardAssignments`,
           out,
-          `${path}.parameters.${field}`,
-          '动态 Buff ID 只能通过定义目录查表，不能使用内联或旧式覆盖',
         );
-    }
+        if (assignments !== null) {
+          for (const [key, operand] of Object.entries(assignments)) {
+            const assignmentPath = `${itemPath}.blackboardAssignments.${key}`;
+            if (typeof operand === 'number' || Array.isArray(operand))
+              validateLevelValues(operand, assignmentPath, out);
+            else validateActionValueOperand(operand, assignmentPath, out);
+          }
+        }
+      }
+      if (entry.stringBlackboardAssignments !== undefined) {
+        const assignments = asRecord(
+          entry.stringBlackboardAssignments,
+          `${itemPath}.stringBlackboardAssignments`,
+          out,
+        );
+        if (assignments !== null) {
+          for (const [key, value] of Object.entries(assignments)) {
+            if (key.trim().length === 0)
+              push(out, `${itemPath}.stringBlackboardAssignments`, 'contains an empty key');
+            if (typeof value !== 'string' || value.trim().length === 0) {
+              push(
+                out,
+                `${itemPath}.stringBlackboardAssignments.${key}`,
+                'expected a non-empty string',
+              );
+            }
+          }
+        }
+      }
+      if (entry.copiedBlackboardAssignments !== undefined) {
+        const assignments = asRecord(
+          entry.copiedBlackboardAssignments,
+          `${itemPath}.copiedBlackboardAssignments`,
+          out,
+        );
+        if (assignments !== null) {
+          for (const [key, value] of Object.entries(assignments)) {
+            if (key.trim().length === 0)
+              push(out, `${itemPath}.copiedBlackboardAssignments`, 'contains an empty key');
+            if (typeof value !== 'string' || value.trim().length === 0) {
+              push(
+                out,
+                `${itemPath}.copiedBlackboardAssignments.${key}`,
+                'expected a non-empty source key',
+              );
+            }
+          }
+        }
+      }
+    });
   }
   if (parameters.iconDurationSource !== undefined) {
     const sourcePath = `${path}.parameters.iconDurationSource`;
@@ -77,79 +125,15 @@ export function validateBuffApplication(
   }
   if ('definition' in parameters)
     push(out, `${path}.parameters.definition`, 'applyBuff must reference an owner Buff definition');
-  requireEnum(parameters, 'target', BUFF_APPLICATION_TARGETS_SET, `${path}.parameters`, out);
-  if (parameters.target === 'currentAbilityEntity' && !currentTargetAvailable) {
-    push(out, path, 'currentAbilityEntity target requires a forEachContextTarget body');
+  validateTargetQuery(parameters.targets, `${path}.parameters.targets`, out);
+  if (parameters.source !== undefined)
+    validateTargetQuery(parameters.source, `${path}.parameters.source`, out);
+  for (const removed of ['target', 'sourceContextKey']) {
+    if (removed in parameters)
+      push(out, `${path}.parameters.${removed}`, 'use action target queries');
   }
   if (parameters.count !== undefined) {
     validateActionValueOperand(parameters.count, `${path}.parameters.count`, out);
-  }
-  if (parameters.source !== undefined) {
-    requireEnum(
-      parameters,
-      'source',
-      new Set([...BUFF_APPLICATION_SOURCES_SET, 'battle']),
-      `${path}.parameters`,
-      out,
-    );
-    if (parameters.source === 'currentAbilityEntity' && !currentTargetAvailable) {
-      push(out, path, 'currentAbilityEntity source requires a forEachContextTarget body');
-    }
-  }
-  if (parameters.blackboardAssignments !== undefined) {
-    const assignments = asRecord(
-      parameters.blackboardAssignments,
-      `${path}.parameters.blackboardAssignments`,
-      out,
-    );
-    if (assignments !== null) {
-      for (const [key, operand] of Object.entries(assignments)) {
-        const assignmentPath = `${path}.parameters.blackboardAssignments.${key}`;
-        if (typeof operand === 'number' || Array.isArray(operand))
-          validateLevelValues(operand, assignmentPath, out);
-        else validateActionValueOperand(operand, assignmentPath, out);
-      }
-    }
-  }
-  if (parameters.stringBlackboardAssignments !== undefined) {
-    const assignments = asRecord(
-      parameters.stringBlackboardAssignments,
-      `${path}.parameters.stringBlackboardAssignments`,
-      out,
-    );
-    if (assignments !== null) {
-      for (const [key, value] of Object.entries(assignments)) {
-        if (key.trim().length === 0)
-          push(out, `${path}.parameters.stringBlackboardAssignments`, 'contains an empty key');
-        if (typeof value !== 'string' || value.trim().length === 0) {
-          push(
-            out,
-            `${path}.parameters.stringBlackboardAssignments.${key}`,
-            'expected a non-empty string',
-          );
-        }
-      }
-    }
-  }
-  if (parameters.copiedBlackboardAssignments !== undefined) {
-    const assignments = asRecord(
-      parameters.copiedBlackboardAssignments,
-      `${path}.parameters.copiedBlackboardAssignments`,
-      out,
-    );
-    if (assignments !== null) {
-      for (const [key, value] of Object.entries(assignments)) {
-        if (key.trim().length === 0)
-          push(out, `${path}.parameters.copiedBlackboardAssignments`, 'contains an empty key');
-        if (typeof value !== 'string' || value.trim().length === 0) {
-          push(
-            out,
-            `${path}.parameters.copiedBlackboardAssignments.${key}`,
-            'expected a non-empty source key',
-          );
-        }
-      }
-    }
   }
   if (parameters.inheritSourceSkillCastInfo !== undefined) {
     requireBoolean(parameters, 'inheritSourceSkillCastInfo', `${path}.parameters`, out);
@@ -159,74 +143,6 @@ export function validateBuffApplication(
   }
   if (parameters.finishByAction !== undefined) {
     requireBoolean(parameters, 'finishByAction', `${path}.parameters`, out);
-  }
-  if (parameters.onActionEndFinishBuffs !== undefined) {
-    const cleanupPath = `${path}.parameters.onActionEndFinishBuffs`;
-    const cleanup = asRecord(parameters.onActionEndFinishBuffs, cleanupPath, out);
-    if (parameters.finishByAction !== true) push(out, cleanupPath, 'requires finishByAction');
-    if (cleanup !== null) {
-      requireEnum(cleanup, 'target', BUFF_APPLICATION_TARGETS_SET, cleanupPath, out);
-      if (
-        !Array.isArray(cleanup.buffIds) ||
-        cleanup.buffIds.length === 0 ||
-        cleanup.buffIds.some(id => typeof id !== 'string' || id.length === 0)
-      ) {
-        push(out, `${cleanupPath}.buffIds`, 'expected non-empty Buff IDs');
-      }
-    }
-  }
-  if (parameters.onActionEndBuffs !== undefined) {
-    const exitPath = `${path}.parameters.onActionEndBuffs`;
-    if (!Array.isArray(parameters.onActionEndBuffs)) {
-      push(out, exitPath, 'expected an array');
-    } else {
-      if (parameters.onActionEndBuffs.length === 0)
-        push(out, exitPath, 'expected at least one Buff');
-      parameters.onActionEndBuffs.forEach((value, index) => {
-        const itemPath = `${exitPath}[${index}]`;
-        const item = asRecord(value, itemPath, out);
-        if (item === null) return;
-        requireString(item, 'buffId', itemPath, out);
-        requireEnum(item, 'target', BUFF_APPLICATION_TARGETS_SET, itemPath, out);
-        if (item.source !== undefined)
-          requireEnum(item, 'source', BUFF_APPLICATION_SOURCES_SET, itemPath, out);
-        if (item.blackboardAssignments !== undefined) {
-          const assignments = asRecord(
-            item.blackboardAssignments,
-            `${itemPath}.blackboardAssignments`,
-            out,
-          );
-          if (assignments !== null) {
-            for (const [key, operand] of Object.entries(assignments)) {
-              const assignmentPath = `${itemPath}.blackboardAssignments.${key}`;
-              if (typeof operand === 'number' || Array.isArray(operand))
-                validateLevelValues(operand, assignmentPath, out);
-              else validateActionValueOperand(operand, assignmentPath, out);
-            }
-          }
-        }
-        if (item.stringBlackboardAssignments !== undefined) {
-          const assignments = asRecord(
-            item.stringBlackboardAssignments,
-            `${itemPath}.stringBlackboardAssignments`,
-            out,
-          );
-          if (assignments !== null) {
-            for (const [key, assignment] of Object.entries(assignments)) {
-              if (typeof assignment !== 'string' || assignment.length === 0)
-                push(
-                  out,
-                  `${itemPath}.stringBlackboardAssignments.${key}`,
-                  'expected a non-empty string',
-                );
-            }
-          }
-        }
-        if (item.inheritSourceSkillCastInfo !== undefined)
-          requireBoolean(item, 'inheritSourceSkillCastInfo', itemPath, out);
-      });
-    }
-    if (parameters.finishByAction !== true) push(out, exitPath, 'requires finishByAction=true');
   }
   if (parameters.inheritToNextSkillIds !== undefined) {
     const inheritPath = `${path}.parameters.inheritToNextSkillIds`;
@@ -256,11 +172,13 @@ export function validateBuffApplication(
       out,
     );
   }
-  if (parameters.durationSeconds !== undefined) {
-    requireFiniteNumber(parameters, 'durationSeconds', `${path}.parameters`, out);
-  }
-  if (parameters.effectiveness !== undefined) {
-    requireFiniteNumber(parameters, 'effectiveness', `${path}.parameters`, out);
+  for (const field of ['durationSeconds', 'effectiveness']) {
+    if (parameters[field] !== undefined)
+      push(
+        out,
+        `${path}.parameters.${field}`,
+        'use the Buff definition and blackboard assignments',
+      );
   }
 }
 
@@ -331,12 +249,15 @@ export function validateBuffDefinition(
             : null;
         const lifecycle = recordOf(lifecycleSequences);
         if (lifecycle !== null)
-          for (const [key, sequence] of Object.entries(lifecycle))
-            entries.push({
-              reference: sequence,
-              path: `${path}.lifecycleSequences.${key}`,
-              currentTargetAvailable: false,
-            });
+          for (const [key, list] of Object.entries(lifecycle))
+            if (Array.isArray(list))
+              list.forEach((sequence, index) =>
+                entries.push({
+                  reference: sequence,
+                  path: `${path}.lifecycleSequences.${key}[${index}]`,
+                  currentTargetAvailable: false,
+                }),
+              );
         if (Array.isArray(scheduledSequences))
           scheduledSequences.forEach((sequence, index) => {
             const sequencePath = `${path}.scheduledSequences[${index}]`;
@@ -358,11 +279,16 @@ export function validateBuffDefinition(
           responses.forEach((value, index) => {
             const response = recordOf(value);
             if (response === null) return;
-            entries.push({
-              reference: response.sequence,
-              path: `${path}.${field}[${index}].sequence`,
-              currentTargetAvailable: false,
-            });
+            const references =
+              field === 'abilityEventResponses'
+                ? [{ reference: response.sequence, path: `${path}.${field}[${index}].sequence` }]
+                : Array.isArray(response.sequences)
+                  ? response.sequences.map((reference, sequenceIndex) => ({
+                      reference,
+                      path: `${path}.${field}[${index}].sequences[${sequenceIndex}]`,
+                    }))
+                  : [];
+            entries.push(...references.map(entry => ({ ...entry, currentTargetAvailable: false })));
           });
         }
         sequences.contexts(actionGraph, `${path}.actionGraph`, entries, out);
@@ -385,6 +311,7 @@ export function validateBuffDefinition(
             'start',
             'enable',
             'disable',
+            'dispelled',
             'beforeEnhance',
             'trigger',
             'enhanceChanged',
@@ -396,7 +323,11 @@ export function validateBuffDefinition(
               push(out, `${lifecyclePath}.${key}`, 'unknown Buff lifecycle sequence');
               continue;
             }
-            sequences.action(sequence, `${lifecyclePath}.${key}`, out);
+            if (!Array.isArray(sequence)) push(out, `${lifecyclePath}.${key}`, 'expected an array');
+            else
+              sequence.forEach((entry, index) =>
+                sequences.action(entry, `${lifecyclePath}.${key}[${index}]`, out),
+              );
           }
         }
       }
@@ -437,7 +368,6 @@ export function validateBuffDefinition(
               response.event !== 'takeCriticalDamage' &&
               response.event !== 'outputDamage' &&
               response.event !== 'outputCriticalDamage' &&
-              response.event !== 'outputKnockDown' &&
               response.event !== 'outputHeal' &&
               response.event !== 'receiveHeal' &&
               response.event !== 'poiseZero' &&
@@ -470,7 +400,7 @@ export function validateBuffDefinition(
             const response = asRecord(value, responsePath, out);
             if (response === null) continue;
             for (const key of Object.keys(response)) {
-              if (!['igniteType', 'finishAfterIgnited', 'sequence'].includes(key)) {
+              if (!['igniteType', 'finishAfterIgnited', 'sequences'].includes(key)) {
                 push(out, `${responsePath}.${key}`, 'unknown Buff ignite event field');
               }
             }
@@ -478,7 +408,12 @@ export function validateBuffDefinition(
             if (typeof response.finishAfterIgnited !== 'boolean') {
               push(out, `${responsePath}.finishAfterIgnited`, 'expected boolean');
             }
-            sequences.action(response.sequence, `${responsePath}.sequence`, out);
+            if (!Array.isArray(response.sequences))
+              push(out, `${responsePath}.sequences`, 'expected an array');
+            else
+              response.sequences.forEach((entry, sequenceIndex) =>
+                sequences.action(entry, `${responsePath}.sequences[${sequenceIndex}]`, out),
+              );
           }
         }
       }
@@ -522,8 +457,7 @@ export function validateBuffDefinition(
           for (const key of Object.keys(presentationRecord)) {
             if (
               ![
-                'iconId',
-                'iconPath',
+                'icon',
                 'visible',
                 'showInHeadBarCommon',
                 'showInHeadBarAttached',
@@ -547,15 +481,10 @@ export function validateBuffDefinition(
               push(out, `${path}.presentation.${key}`, 'unknown Buff presentation field');
             }
           }
-          if (presentationRecord.iconPath !== undefined) {
-            requireString(presentationRecord, 'iconPath', `${path}.presentation`, out);
+          if (presentationRecord.icon !== undefined) {
+            requireString(presentationRecord, 'icon', `${path}.presentation`, out);
           }
-          for (const key of [
-            'iconId',
-            'iconStyleInSquad',
-            'abnormalColorType',
-            'charHpBarVfxType',
-          ]) {
+          for (const key of ['iconStyleInSquad', 'abnormalColorType', 'charHpBarVfxType']) {
             if (presentationRecord[key] !== undefined) {
               requireString(presentationRecord, key, `${path}.presentation`, out);
             }

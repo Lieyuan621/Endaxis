@@ -63,7 +63,7 @@ export interface PlayerDamageRuntimeSnapshot extends PlayerDamageNonRandomRuntim
 
 /** 从伤害步骤、双方快照和运行时状态解析公式输入的完整参数。 */
 export interface ResolvePlayerActiveDamageInput {
-  readonly step: ResolvedCombatStepForKind<'dealDamage' | 'dealFixedDamage'>;
+  readonly step: ResolvedCombatStepForKind<'dealDamage'>;
   readonly finalAttackValue: number;
   readonly attacker: PlayerDamageAttackerSnapshot;
   readonly defender: PlayerDamageDefenderSnapshot;
@@ -75,9 +75,6 @@ export function resolvePlayerActiveDamageInput(
   { step, finalAttackValue, attacker, defender, runtime }: ResolvePlayerActiveDamageInput,
   recordAttribute?: (side: DamageModifierSide, attribute: string) => void,
 ): PlayerActiveDamageInput {
-  if (step.kind === 'dealDamage' && step.parameters.attackScalePerStatusStack !== undefined) {
-    throw new Error('status-stack attack scale must be resolved before damage input construction');
-  }
   if (step.parameters.damageType === 'lifeDrain') {
     throw new Error('life-drain damage uses a separate native calculation branch');
   }

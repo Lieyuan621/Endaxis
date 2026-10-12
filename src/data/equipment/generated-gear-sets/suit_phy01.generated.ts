@@ -3,30 +3,8 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 
 const definition = {
   slug: 'suit_phy01',
-  iconPath: '/equipment/phy01/item_equip_t4_suit_phy01_edc_04.webp',
+  icon: 'endaxis:equipment/phy01/item_equip_t4_suit_phy01_edc_04',
   modifiers: [{ kind: 'panelStat', stat: 'staggerDamagePercent', value: 0.2 }],
-  actionGraph: {
-    main: {
-      nodes: {
-        applyBuff_1: {
-          action: {
-            kind: 'applyBuff',
-            parameters: {
-              buffId: 'buff_equipsuit_physuit_01',
-              target: 'caster',
-              blackboardAssignments: {
-                atk_scale: { kind: 'constant', value: 2.5 },
-                poise: { kind: 'constant', value: 10 },
-                duration: { kind: 'constant', value: 15 },
-              },
-            },
-          },
-          next: null,
-        },
-      },
-    },
-    macros: {},
-  },
   skillId: 'passive_equipsuit_physuit_01',
   buffDefinitions: {
     buff_equipsuit_physuit_01: {
@@ -38,10 +16,10 @@ const definition = {
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: { atk_scale: 1, duration: 0, poise: 0, poise_up: 0.1 },
+      blackboard: { atk_scale: 1, duration: 0, poise: 0 },
       attributeModifiers: [],
       abilityEventResponses: [
-        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'conditional_4' } },
+        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'checkCondition_4' } },
       ],
       actionGraph: {
         main: {
@@ -69,21 +47,19 @@ const definition = {
               },
               next: 'setGlobalCooldown_1',
             },
-            conditional_3: {
+            checkCondition_3: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-                whenTrue: { $sequence: 'dealDamage_2' },
               },
-              next: null,
+              next: 'dealDamage_2',
             },
-            conditional_4: {
+            checkCondition_4: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-                whenTrue: { $sequence: 'conditional_3' },
               },
-              next: null,
+              next: 'checkCondition_3',
             },
           },
           dataNodes: {
@@ -117,6 +93,32 @@ const definition = {
     },
   },
   enableSequence: { $sequence: 'applyBuff_1' },
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [
+                {
+                  buffId: 'buff_equipsuit_physuit_01',
+                  blackboardAssignments: {
+                    atk_scale: { kind: 'constant', value: 2.5 },
+                    poise: { kind: 'constant', value: 10 },
+                    duration: { kind: 'constant', value: 15 },
+                  },
+                },
+              ],
+              targets: { kind: 'fixed', target: 'caster' },
+            },
+          },
+          next: null,
+        },
+      },
+    },
+    macros: {},
+  },
 } as const satisfies GearSetDefinition;
 
 export default definition;

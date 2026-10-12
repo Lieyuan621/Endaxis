@@ -8,29 +8,30 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const estellaChr_0021_whiten_attack1ActionGraph = {
   main: {
     nodes: {
-      changeResourceByActionValue_1: {
+      checkCondition_2: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+      changeResource_3: {
+        action: {
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            amount: { kind: 'valueNode', nodeId: 'data_2' },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'team',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+            onlyMainOperator: true,
             spGainKind: 'gain',
             spGainSource: 'normalAttack',
           },
         },
         next: null,
       },
-      conditional_2: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
-        },
-        next: null,
-      },
-      startTimeDilation_3: {
+      startTimeDilation_4: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -43,28 +44,30 @@ export const estellaChr_0021_whiten_attack1ActionGraph = {
             targets: ['enemy', 'caster'],
           },
         },
-        next: 'conditional_2',
+        next: 'changeResource_3',
       },
-      conditional_4: {
+      ifElse_5: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_3' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_2' },
+          whenTrue: { $sequence: 'startTimeDilation_4' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_5: {
+      dealDamage_6: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
           },
         },
-        next: 'conditional_4',
+        next: 'ifElse_5',
       },
-      reachSkillOperableBoundary_6: {
+      reachSkillOperableBoundary_7: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0021_whiten_attack2'] },
@@ -73,17 +76,15 @@ export const estellaChr_0021_whiten_attack1ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const estellaChr_0021_whiten_attack1: SkillDefinition = {
-  actionGraph: estellaChr_0021_whiten_attack1ActionGraph,
   key: 'chr_0021_whiten_attack1',
   element: 'physical',
   blackboard: {
@@ -107,41 +108,44 @@ export const estellaChr_0021_whiten_attack1: SkillDefinition = {
   },
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 13, endFrame: 28, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
+    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'dealDamage_6' } },
+    { startFrame: 13, endFrame: 28, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0021_whiten_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
+  actionGraph: estellaChr_0021_whiten_attack1ActionGraph,
 };
 
 export const estellaChr_0021_whiten_attack2ActionGraph = {
   main: {
     nodes: {
-      changeResourceByActionValue_1: {
+      checkCondition_2: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+      changeResource_3: {
+        action: {
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            amount: { kind: 'valueNode', nodeId: 'data_2' },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'team',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+            onlyMainOperator: true,
             spGainKind: 'gain',
             spGainSource: 'normalAttack',
           },
         },
         next: null,
       },
-      conditional_2: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
-        },
-        next: null,
-      },
-      startTimeDilation_3: {
+      startTimeDilation_4: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -154,28 +158,30 @@ export const estellaChr_0021_whiten_attack2ActionGraph = {
             targets: ['enemy', 'caster'],
           },
         },
-        next: 'conditional_2',
+        next: 'changeResource_3',
       },
-      conditional_4: {
+      ifElse_5: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_3' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_2' },
+          whenTrue: { $sequence: 'startTimeDilation_4' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_5: {
+      dealDamage_6: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
           },
         },
-        next: 'conditional_4',
+        next: 'ifElse_5',
       },
-      reachSkillOperableBoundary_6: {
+      reachSkillOperableBoundary_7: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0021_whiten_attack3'] },
@@ -184,17 +190,15 @@ export const estellaChr_0021_whiten_attack2ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const estellaChr_0021_whiten_attack2: SkillDefinition = {
-  actionGraph: estellaChr_0021_whiten_attack2ActionGraph,
   key: 'chr_0021_whiten_attack2',
   element: 'physical',
   blackboard: {
@@ -218,41 +222,37 @@ export const estellaChr_0021_whiten_attack2: SkillDefinition = {
   },
   costFrame: 8,
   scheduledSequences: [
-    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 16, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
+    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'dealDamage_6' } },
+    { startFrame: 16, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0021_whiten_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
+  actionGraph: estellaChr_0021_whiten_attack2ActionGraph,
 };
 
 export const estellaChr_0021_whiten_attack3ActionGraph = {
   main: {
     nodes: {
-      changeResourceByActionValue_1: {
+      changeResource_4: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
             amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'team',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+            onlyMainOperator: true,
             spGainKind: 'gain',
             spGainSource: 'normalAttack',
           },
         },
         next: null,
       },
-      conditional_2: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
-        },
-        next: null,
-      },
-      startTimeDilation_3: {
+      startTimeDilation_5: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -265,28 +265,37 @@ export const estellaChr_0021_whiten_attack3ActionGraph = {
             targets: ['enemy', 'caster'],
           },
         },
-        next: 'conditional_2',
+        next: 'changeResource_4',
       },
-      conditional_4: {
+      checkCondition_3: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_3' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: null,
       },
-      dealDamage_5: {
+      ifElse_6: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_3' },
+          whenTrue: { $sequence: 'startTimeDilation_5' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_7: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
           },
         },
-        next: 'conditional_4',
+        next: 'ifElse_6',
       },
-      startTimeDilation_8: {
+      startTimeDilation_10: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -299,28 +308,30 @@ export const estellaChr_0021_whiten_attack3ActionGraph = {
             targets: ['enemy', 'caster'],
           },
         },
-        next: 'conditional_2',
+        next: 'changeResource_4',
       },
-      conditional_9: {
+      ifElse_11: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_8' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_3' },
+          whenTrue: { $sequence: 'startTimeDilation_10' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_10: {
+      dealDamage_12: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_6' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack'],
           },
         },
-        next: 'conditional_9',
+        next: 'ifElse_11',
       },
-      reachSkillOperableBoundary_11: {
+      reachSkillOperableBoundary_13: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0021_whiten_attack4'] },
@@ -331,10 +342,8 @@ export const estellaChr_0021_whiten_attack3ActionGraph = {
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_5: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
     },
   },
   macros: {},
@@ -347,7 +356,6 @@ export const estellaChr_0021_whiten_attack3: SkillDefinition = {
     atb: 0,
     atk_scale: [0.15, 0.17, 0.18, 0.2, 0.21, 0.23, 0.24, 0.26, 0.27, 0.29, 0.31, 0.34],
     atk_scale2: [0.2, 0.22, 0.24, 0.26, 0.28, 0.3, 0.32, 0.34, 0.36, 0.39, 0.42, 0.45],
-    display_atk_scale: [0.35, 0.39, 0.42, 0.46, 0.49, 0.53, 0.56, 0.6, 0.63, 0.67, 0.73, 0.79],
   },
   timelineBlockFrames: 28,
   naturalDurationFrames: 153,
@@ -366,10 +374,11 @@ export const estellaChr_0021_whiten_attack3: SkillDefinition = {
   },
   costFrame: 20,
   scheduledSequences: [
-    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'dealDamage_10' } },
-    { startFrame: 28, endFrame: 43, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'dealDamage_7' } },
+    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'dealDamage_12' } },
+    { startFrame: 28, endFrame: 43, sequence: { $sequence: 'reachSkillOperableBoundary_13' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0021_whiten_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
@@ -380,29 +389,30 @@ export const estellaChr_0021_whiten_attack3: SkillDefinition = {
 export const estellaChr_0021_whiten_attack4ActionGraph = {
   main: {
     nodes: {
-      changeResourceByActionValue_1: {
+      checkCondition_2: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+      changeResource_3: {
+        action: {
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            amount: { kind: 'valueNode', nodeId: 'data_2' },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'team',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+            onlyMainOperator: true,
             spGainKind: 'gain',
             spGainSource: 'normalAttack',
           },
         },
         next: null,
       },
-      conditional_2: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
-        },
-        next: null,
-      },
-      startTimeDilation_3: {
+      startTimeDilation_4: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -415,30 +425,32 @@ export const estellaChr_0021_whiten_attack4ActionGraph = {
             targets: ['enemy', 'caster'],
           },
         },
-        next: 'conditional_2',
+        next: 'changeResource_3',
       },
-      conditional_4: {
+      ifElse_5: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_3' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_2' },
+          whenTrue: { $sequence: 'startTimeDilation_4' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_5: {
+      dealDamage_6: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
-            stagger: { kind: 'valueNode', nodeId: 'data_5' },
+            stagger: { kind: 'valueNode', nodeId: 'data_4' },
             staggerOnlyWhenCasterControlled: true,
           },
         },
-        next: 'conditional_4',
+        next: 'ifElse_5',
       },
-      reachSkillOperableBoundary_6: {
+      reachSkillOperableBoundary_7: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0021_whiten_attack1'] },
@@ -447,24 +459,21 @@ export const estellaChr_0021_whiten_attack4ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const estellaChr_0021_whiten_attack4: SkillDefinition = {
-  actionGraph: estellaChr_0021_whiten_attack4ActionGraph,
   key: 'chr_0021_whiten_attack4',
   element: 'physical',
   blackboard: {
     atb: 19,
     atk_scale: [0.4, 0.44, 0.48, 0.52, 0.56, 0.6, 0.64, 0.68, 0.72, 0.77, 0.83, 0.9],
-    atk_scale_2: 0,
     poise: 17,
   },
   timelineBlockFrames: 46,
@@ -484,19 +493,21 @@ export const estellaChr_0021_whiten_attack4: SkillDefinition = {
   },
   costFrame: 8,
   scheduledSequences: [
-    { startFrame: 21, endFrame: 22, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 46, endFrame: 59, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
+    { startFrame: 21, endFrame: 22, sequence: { $sequence: 'dealDamage_6' } },
+    { startFrame: 46, endFrame: 59, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0021_whiten_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
+  actionGraph: estellaChr_0021_whiten_attack4ActionGraph,
 };
 
 export const estellaChr_0021_whiten_power_attackActionGraph = {
   main: {
     nodes: {
-      startTimeDilation_1: {
+      startTimeDilation_2: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -511,57 +522,70 @@ export const estellaChr_0021_whiten_power_attackActionGraph = {
         },
         next: null,
       },
-      conditional_2: {
+      checkCondition_1: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_1' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
         },
         next: null,
       },
-      gainFinisherSp_3: {
+      ifElse_3: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_1' },
+          whenTrue: { $sequence: 'startTimeDilation_2' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      gainFinisherSp_5: {
         action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
         next: null,
       },
-      conditional_4: {
+      ifElse_6: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
-          whenTrue: { $sequence: 'gainFinisherSp_3' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_1' },
+          whenTrue: { $sequence: 'gainFinisherSp_5' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_5: {
+      dealDamage_7: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             calculation: 'breakingAttack',
             calculationMultiplier: 1,
             tags: ['normalAttack', 'powerAttack'],
           },
         },
-        next: 'conditional_4',
+        next: 'ifElse_6',
       },
-      applyBuff_6: {
+      applyBuff_8: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_full_immune_medium',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_common_full_immune_medium' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
         },
         next: null,
       },
-      applyBuff_7: {
+      applyBuff_9: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_power_attack_disable_cast_skill',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_common_power_attack_disable_cast_skill' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
@@ -571,15 +595,13 @@ export const estellaChr_0021_whiten_power_attackActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const estellaChr_0021_whiten_power_attack: SkillDefinition = {
-  actionGraph: estellaChr_0021_whiten_power_attackActionGraph,
   key: 'chr_0021_whiten_power_attack',
   element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -598,73 +620,76 @@ export const estellaChr_0021_whiten_power_attack: SkillDefinition = {
   },
   costFrame: 4,
   scheduledSequences: [
-    { startFrame: 30, endFrame: 33, sequence: { $sequence: 'conditional_2' } },
-    { startFrame: 30, endFrame: 39, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 0, endFrame: 50, sequence: { $sequence: 'applyBuff_6' } },
-    { startFrame: 0, endFrame: 30, sequence: { $sequence: 'applyBuff_7' } },
+    { startFrame: 30, endFrame: 33, sequence: { $sequence: 'ifElse_3' } },
+    { startFrame: 30, endFrame: 39, sequence: { $sequence: 'dealDamage_7' } },
+    { startFrame: 0, endFrame: 50, sequence: { $sequence: 'applyBuff_8' } },
+    { startFrame: 0, endFrame: 30, sequence: { $sequence: 'applyBuff_9' } },
   ],
+  defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
+  actionGraph: estellaChr_0021_whiten_power_attackActionGraph,
 };
 
 export const estellaChr_0021_whiten_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      changeResourceByActionValue_1: {
+      checkCondition_2: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+      changeResource_3: {
+        action: {
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            amount: { kind: 'valueNode', nodeId: 'data_2' },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'team',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+            onlyMainOperator: true,
             spGainKind: 'gain',
             spGainSource: 'normalAttack',
           },
         },
         next: null,
       },
-      conditional_2: {
+      ifElse_4: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_2' },
+          whenTrue: { $sequence: 'changeResource_3' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      conditional_3: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' }, alwaysNext: true },
-          whenTrue: { $sequence: 'conditional_2' },
-        },
-        next: null,
-      },
-      dealDamage_4: {
+      dealDamage_5: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'plungingAttack'],
           },
         },
-        next: 'conditional_3',
+        next: 'ifElse_4',
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const estellaChr_0021_whiten_plunging_attack_end: SkillDefinition = {
-  actionGraph: estellaChr_0021_whiten_plunging_attack_endActionGraph,
   key: 'chr_0021_whiten_plunging_attack_end',
   element: 'physical',
   blackboard: {
@@ -676,26 +701,100 @@ export const estellaChr_0021_whiten_plunging_attack_end: SkillDefinition = {
   exclusiveFrame: 15,
   offsetRecordFrame: 0,
   costFrame: 0,
-  scheduledSequences: [{ startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_4' } }],
+  scheduledSequences: [{ startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } }],
+  defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
+  actionGraph: estellaChr_0021_whiten_plunging_attack_endActionGraph,
 };
 
 export const estellaChr_0021_whiten_normal_skillActionGraph = {
   main: {
     nodes: {
-      findCharacterTeamTargets_1: {
+      createSpatialPointTargets_2: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'front', count: { kind: 'constant', value: 1 } },
+        },
+        next: null,
+      },
+      checkCondition_1: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+      ifElse_3: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_1' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: 'createSpatialPointTargets_2' },
+        },
+        next: null,
+      },
+      findCharacterTeamTargets_4: {
         action: {
           kind: 'findCharacterTeamTargets',
           parameters: { saveToContextKey: 'mainchar', selection: { kind: 'controlledOperator' } },
         },
+        next: 'ifElse_3',
+      },
+      findTargets_5: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'maintar',
+          },
+        },
+        next: 'findCharacterTeamTargets_4',
+      },
+      createSpatialPointTargets_6: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'pos', count: { kind: 'constant', value: 1 } },
+        },
         next: null,
       },
-      launchProjectile_3: {
+      ifElse_7: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: null },
+          whenTrue: { $sequence: 'createSpatialPointTargets_6' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      findCharacterTeamTargets_8: {
+        action: {
+          kind: 'findCharacterTeamTargets',
+          parameters: { saveToContextKey: 'mainchar', selection: { kind: 'controlledOperator' } },
+        },
+        next: 'ifElse_7',
+      },
+      findTargets_9: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'mainTar',
+          },
+        },
+        next: null,
+      },
+      launchProjectile_28: {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: { EntityBB_first_hit: 0 },
             finish: 'firstTickReach',
             recycleDelaySeconds: 5,
             hit: { finishOnHit: false },
@@ -715,17 +814,16 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
                 },
                 blackboard: { atk_scale: 0, dmg_up: 0, poise: 30, up_atk_scale: 0 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: null } },
                   {
                     startFrame: 0,
                     endFrame: 0,
-                    sequence: { $sequence: 'applyElementalInfliction_9' },
+                    sequence: { $sequence: 'applyElementalInfliction_10' },
                   },
                 ],
                 actionGraph: {
                   main: {
                     nodes: {
-                      dealDamage_6: {
+                      dealDamage_7: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
@@ -738,7 +836,7 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
                         },
                         next: null,
                       },
-                      startTimeDilation_1: {
+                      startTimeDilation_2: {
                         action: {
                           kind: 'startTimeDilation',
                           parameters: {
@@ -753,14 +851,19 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
                         },
                         next: null,
                       },
-                      gainSquadUltimateEnergyFromSkillCost_2: {
+                      applyBuff_3: {
                         action: {
-                          kind: 'gainSquadUltimateEnergyFromSkillCost',
-                          parameters: { coefficient: 1 },
+                          kind: 'applyBuff',
+                          parameters: {
+                            buffs: [{ buffId: 'buff_common_obtain_ultimate_sp' }],
+                            targets: { kind: 'source' },
+                            source: { kind: 'source' },
+                            inheritSourceSkillCastInfo: true,
+                          },
                         },
-                        next: 'startTimeDilation_1',
+                        next: 'startTimeDilation_2',
                       },
-                      dealDamage_3: {
+                      dealDamage_4: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
@@ -775,23 +878,23 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
                                 addition: { kind: 'valueNode', nodeId: 'data_4' },
                               },
                             ],
-                            stagger: { kind: 'valueNode', nodeId: 'data_5' },
+                            stagger: { kind: 'valueNode', nodeId: 'data_2' },
                           },
                         },
-                        next: 'gainSquadUltimateEnergyFromSkillCost_2',
+                        next: 'applyBuff_3',
                       },
-                      modifyActionValue_4: {
+                      modifyActionValue_5: {
                         action: {
                           kind: 'modifyActionValue',
                           parameters: {
                             key: 'up_atk_scale',
                             operation: 'assign',
-                            value: { kind: 'valueNode', nodeId: 'data_6' },
+                            value: { kind: 'valueNode', nodeId: 'data_1' },
                           },
                         },
-                        next: 'dealDamage_3',
+                        next: 'dealDamage_4',
                       },
-                      modifyActionValue_5: {
+                      modifyActionValue_6: {
                         action: {
                           kind: 'modifyActionValue',
                           parameters: {
@@ -800,34 +903,39 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
                             value: { kind: 'constant', value: 1 },
                           },
                         },
-                        next: 'modifyActionValue_4',
+                        next: 'modifyActionValue_5',
                       },
-                      conditional_7: {
+                      checkCondition_1: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_8' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'modifyActionValue_5' },
-                          whenFalse: { $sequence: 'dealDamage_6' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
                         },
                         next: null,
                       },
-                      forEachContextTarget_8: {
+                      ifElse_8: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_1' },
+                          whenTrue: { $sequence: 'modifyActionValue_6' },
+                          whenFalse: { $sequence: 'dealDamage_7' },
+                        },
+                        next: null,
+                      },
+                      forEachContextTarget_9: {
                         action: {
                           kind: 'forEachContextTarget',
-                          parameters: { target: 'enemy' },
-                          body: { $sequence: 'conditional_7' },
+                          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+                          body: { $sequence: 'ifElse_8' },
                         },
                         next: null,
                       },
-                      applyElementalInfliction_9: {
+                      applyElementalInfliction_10: {
                         action: {
                           kind: 'applyElementalInfliction',
                           parameters: { element: 'cryo', isExtra: false },
                         },
-                        next: 'forEachContextTarget_8',
+                        next: 'forEachContextTarget_9',
                       },
                     },
                     dataNodes: {
@@ -841,20 +949,15 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
                         expression: { kind: 'blackboard', key: 'up_atk_scale' },
                       },
                       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'dmg_up' } },
-                      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-                      data_6: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale' },
-                      },
-                      data_7: {
+                      data_5: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'EntityBB_first_hit', fallback: 0 },
                       },
-                      data_8: {
+                      data_6: {
                         type: 'boolean',
                         expression: {
                           kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_7' },
+                          left: { kind: 'valueNode', nodeId: 'data_5' },
                           operator: 'equal',
                           right: { kind: 'constant', value: 0 },
                         },
@@ -869,45 +972,55 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_4: {
+      ifElse_29: {
         action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: { EntityBB_first_hit: 0 },
-          },
-          body: { $sequence: 'launchProjectile_3' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: null },
+          whenTrue: { $sequence: 'launchProjectile_28' },
+          whenFalse: { $sequence: 'launchProjectile_28' },
         },
         next: null,
       },
-      finishBuffsById_5: {
+      findTargets_30: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'maintar',
+          },
+        },
+        next: 'ifElse_29',
+      },
+      finishBuffsById_31: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
-            target: 'caster',
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
             buffIds: ['buff_chr_0021_whiten_talent_0_active'],
             reason: 'other',
           },
         },
         next: null,
       },
-      changeResourceByActionValue_6: {
+      changeResource_32: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            amount: { kind: 'valueNode', nodeId: 'data_2' },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'team',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
             spGainKind: 'refund',
             spGainSource: 'default',
           },
         },
-        next: 'finishBuffsById_5',
+        next: 'finishBuffsById_31',
       },
-      readBuffBlackboard_7: {
+      readBuffBlackboard_33: {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
@@ -917,20 +1030,30 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
             outputKey: 'atb',
           },
         },
-        next: 'changeResourceByActionValue_6',
+        next: 'changeResource_32',
       },
-      conditional_8: {
+      checkCondition_34: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'readBuffBlackboard_7' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
-        next: null,
+        next: 'readBuffBlackboard_33',
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_3: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -961,11 +1084,13 @@ export const estellaChr_0021_whiten_normal_skill: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findCharacterTeamTargets_1' } },
-    { startFrame: 0, endFrame: 7, sequence: { $sequence: 'findCharacterTeamTargets_1' } },
-    { startFrame: 21, endFrame: 24, sequence: { $sequence: 'withActionBlackboardScope_4' } },
-    { startFrame: 21, endFrame: 24, sequence: { $sequence: 'conditional_8' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_5' } },
+    { startFrame: 0, endFrame: 7, sequence: { $sequence: 'findCharacterTeamTargets_8' } },
+    { startFrame: 0, endFrame: 90, sequence: { $sequence: 'findTargets_9' } },
+    { startFrame: 21, endFrame: 24, sequence: { $sequence: 'findTargets_30' } },
+    { startFrame: 21, endFrame: 24, sequence: { $sequence: 'checkCondition_34' } },
   ],
+  defaultTarget: 'owner',
   costs: [{ resource: 'sp', value: 100 }],
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
@@ -991,24 +1116,8 @@ export const estellaChr_0021_whiten_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      findCharacterTeamTargets_2: {
-        action: {
-          kind: 'findCharacterTeamTargets',
-          parameters: { saveToContextKey: 'MainChar', selection: { kind: 'controlledOperator' } },
-        },
-        next: null,
-      },
-      conditional_3: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' }, alwaysNext: true },
-          whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'findCharacterTeamTargets_2' },
-        },
-        next: null,
-      },
-      hideUi_4: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      startUltimateTimeDilation_5: {
+      hideUi_2: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      startUltimateTimeDilation_3: {
         action: {
           kind: 'startUltimateTimeDilation',
           parameters: {
@@ -1019,357 +1128,13 @@ export const estellaChr_0021_whiten_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      applyPhysicalInfliction_6: {
+      applyPhysicalInfliction_5: {
         action: {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'airborne',
             target: 'enemy',
             isExtra: false,
-            noGuardBuffId: 'buff_physical_no_guard',
-            noGuardDefinition: {
-              stackingType: 'enhanceAndRefresh',
-              priority: 100,
-              maxStackCount: 4,
-              durationSeconds: { blackboardKey: 'duration' },
-              presentation: {
-                visible: true,
-                iconId: 'icon_shadow_attribute_penetrate',
-                iconPath: '/icons/icon_shadow_attribute_penetrate.webp',
-                showInHeadBarCommon: false,
-                showInHeadBarAttached: true,
-                showInSquadIcon: false,
-                onlyShowForMainCharacter: false,
-                blinkInMainCharHpBar: false,
-                showProgressInHpBar: false,
-                showProgressInNormalSkillButton: false,
-                useWeakProgressInNormalSkillButton: false,
-                showProgressInUltimateSkillButton: false,
-                forceRaiseIconEvent: false,
-                showWarningBackground: false,
-                playStrongInAnimation: false,
-                hasCharHpBarVfxType: false,
-                charHpBarVfxType: 'Fire',
-                iconStyleInSquad: 'Default',
-                abnormalColorType: 'Physical',
-                orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
-              },
-              applyTags: ['Skill/Character/Common/NoGuard'],
-              extendTags: [],
-              blackboard: { atk_scale: 0, count: 0, duration: 20, skip_handle_cryst_break: 0 },
-              attributeModifiers: [],
-              lifecycleSequences: {
-                start: { $sequence: 'conditional_2' },
-                finish: { $sequence: 'applyBuff_3' },
-                afterEnhance: { $sequence: 'withActionBlackboardScope_9' },
-              },
-              actionGraph: {
-                main: {
-                  nodes: {
-                    applyBuff_1: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_handle_cryst_break',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                        },
-                      },
-                      next: null,
-                    },
-                    conditional_2: {
-                      action: {
-                        kind: 'conditional',
-                        parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                        whenTrue: { $sequence: 'applyBuff_1' },
-                      },
-                      next: null,
-                    },
-                    applyBuff_3: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_no_guard_fake',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                        },
-                      },
-                      next: null,
-                    },
-                    igniteBuffs_4: {
-                      action: {
-                        kind: 'igniteBuffs',
-                        parameters: {
-                          target: 'buffOwner',
-                          source: 'buffOwner',
-                          igniteType: 'NoGuard',
-                        },
-                      },
-                      next: null,
-                    },
-                    conditional_7: {
-                      action: {
-                        kind: 'conditional',
-                        parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                        whenTrue: { $sequence: 'conditional_2' },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_8: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:1',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'conditional_7' },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_9: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:0',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'igniteBuffs_4' },
-                      },
-                      next: 'withActionBlackboardScope_8',
-                    },
-                  },
-                  dataNodes: {
-                    data_1: {
-                      type: 'number',
-                      expression: {
-                        kind: 'blackboard',
-                        key: 'skip_handle_cryst_break',
-                        fallback: 0,
-                      },
-                    },
-                    data_2: {
-                      type: 'boolean',
-                      expression: {
-                        kind: 'actionValueCompare',
-                        left: { kind: 'valueNode', nodeId: 'data_1' },
-                        operator: 'equal',
-                        right: { kind: 'constant', value: 0 },
-                      },
-                    },
-                    data_3: {
-                      type: 'boolean',
-                      expression: {
-                        kind: 'currentBuffStackCompare',
-                        operator: 'greaterOrEqual',
-                        value: { kind: 'constant', value: 2 },
-                      },
-                    },
-                  },
-                },
-                macros: {},
-              },
-            },
-            airborneBuffId: 'buff_physical_airborne',
-            airborneDefinition: {
-              stackingType: 'stack',
-              stackingKey: 'physical',
-              priority: 0,
-              maxStackCount: 1,
-              durationSeconds: { blackboardKey: 'duration' },
-              triggerIntervalSeconds: 0.1,
-              waitFirstTriggerInterval: true,
-              maxTriggerCount: 1,
-              presentation: {
-                visible: true,
-                iconId: 'airborne',
-                iconPath: '/icons/airborne.webp',
-                showInHeadBarCommon: false,
-                showInHeadBarAttached: false,
-                showInSquadIcon: false,
-                onlyShowForMainCharacter: false,
-                blinkInMainCharHpBar: false,
-                showProgressInHpBar: false,
-                showProgressInNormalSkillButton: false,
-                useWeakProgressInNormalSkillButton: false,
-                showProgressInUltimateSkillButton: false,
-                forceRaiseIconEvent: false,
-                showWarningBackground: false,
-                playStrongInAnimation: false,
-                hasCharHpBarVfxType: false,
-                charHpBarVfxType: 'Fire',
-                iconStyleInSquad: 'Default',
-                abnormalColorType: 'Physical',
-                orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
-              },
-              applyTags: ['Skill/Character/Common/PhysicalStatus/AirborneStatus'],
-              extendTags: [],
-              blackboard: { atk_scale: 0, duration: 3, poise: 10 },
-              attributeModifiers: [],
-              lifecycleSequences: { start: { $sequence: 'withActionBlackboardScope_9' } },
-              actionGraph: {
-                main: {
-                  nodes: {
-                    applyBuff_1: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_no_guard',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                          blackboardAssignments: {
-                            skip_handle_cryst_break: { kind: 'constant', value: 1 },
-                          },
-                        },
-                      },
-                      next: null,
-                    },
-                    dealDamage_2: {
-                      action: {
-                        kind: 'dealDamage',
-                        parameters: {
-                          damageType: 'physical',
-                          attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                          tags: [],
-                          features: ['physicalInfliction'],
-                          stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                        },
-                      },
-                      next: null,
-                    },
-                    readSkillSettingData_3: {
-                      action: {
-                        kind: 'readSkillSettingData',
-                        parameters: {
-                          items: [
-                            {
-                              values: [1.2, 1.2, 1.2, 1.2],
-                              column: { kind: 'constant', value: 1 },
-                              storeKey: 'atk_scale',
-                              enhance: {
-                                target: 'caster',
-                                formula: { kind: 'linear', paramA: 0.01 },
-                              },
-                            },
-                            {
-                              values: [10, 10, 10, 10],
-                              column: { kind: 'constant', value: 1 },
-                              storeKey: 'poise',
-                              enhance: {
-                                target: 'caster',
-                                formula: { kind: 'linear', paramA: 0.005 },
-                              },
-                            },
-                          ],
-                        },
-                      },
-                      next: 'dealDamage_2',
-                    },
-                    applyBuff_4: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_handle_cryst_break',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                        },
-                      },
-                      next: null,
-                    },
-                    igniteBuffs_5: {
-                      action: {
-                        kind: 'igniteBuffs',
-                        parameters: {
-                          target: 'buffOwner',
-                          source: 'caster',
-                          igniteType: 'PhysicalStatus',
-                        },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_6: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:3',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'igniteBuffs_5' },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_7: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:2',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'applyBuff_4' },
-                      },
-                      next: 'withActionBlackboardScope_6',
-                    },
-                    withActionBlackboardScope_8: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:1',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'readSkillSettingData_3' },
-                      },
-                      next: 'withActionBlackboardScope_7',
-                    },
-                    withActionBlackboardScope_9: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:0',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'applyBuff_1' },
-                      },
-                      next: 'withActionBlackboardScope_8',
-                    },
-                  },
-                  dataNodes: {
-                    data_1: {
-                      type: 'number',
-                      expression: { kind: 'blackboard', key: 'atk_scale' },
-                    },
-                    data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-                  },
-                },
-                macros: {},
-              },
-            },
             duration: { kind: 'constant', value: 0 },
             height: { kind: 'constant', value: 0 },
             speedFactorMultiplier: 1,
@@ -1380,26 +1145,36 @@ export const estellaChr_0021_whiten_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      conditional_7: {
+      checkCondition_6: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'applyPhysicalInfliction_6' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
         },
-        next: null,
+        next: 'applyPhysicalInfliction_5',
       },
-      dealDamage_8: {
+      dealDamage_7: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['ultimateSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_4' },
+            stagger: { kind: 'valueNode', nodeId: 'data_3' },
           },
         },
         next: null,
+      },
+      modifyActionValue_8: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'atk_scale_total',
+            operation: 'add',
+            value: { kind: 'valueNode', nodeId: 'data_4' },
+          },
+        },
+        next: 'dealDamage_7',
       },
       modifyActionValue_9: {
         action: {
@@ -1410,33 +1185,23 @@ export const estellaChr_0021_whiten_ultimate_skillActionGraph = {
             value: { kind: 'valueNode', nodeId: 'data_5' },
           },
         },
-        next: 'dealDamage_8',
+        next: 'modifyActionValue_8',
       },
-      modifyActionValue_10: {
+      forEachContextTarget_10: {
         action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'atk_scale_total',
-            operation: 'add',
-            value: { kind: 'valueNode', nodeId: 'data_6' },
-          },
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          body: { $sequence: 'checkCondition_6' },
         },
         next: 'modifyActionValue_9',
       },
-      forEachContextTarget_11: {
-        action: {
-          kind: 'forEachContextTarget',
-          parameters: { target: 'enemy' },
-          body: { $sequence: 'conditional_7' },
-        },
-        next: 'modifyActionValue_10',
-      },
-      applyBuff_12: {
+      applyBuff_11: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_damage_immune_ult_skill',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_common_damage_immune_ult_skill' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
@@ -1445,8 +1210,7 @@ export const estellaChr_0021_whiten_ultimate_skillActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: {
+      data_1: {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
@@ -1455,10 +1219,10 @@ export const estellaChr_0021_whiten_ultimate_skillActionGraph = {
           tags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerablePhysic'],
         },
       },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_total' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'dmg_up_total' } },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_total' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'dmg_up_total' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
   macros: {},
@@ -1470,7 +1234,6 @@ export const estellaChr_0021_whiten_ultimate_skill: SkillDefinition = {
   blackboard: {
     atk_scale: [4.89, 5.38, 5.86, 6.35, 6.84, 7.33, 7.82, 8.31, 8.8, 9.41, 10.14, 11],
     atk_scale_total: 0,
-    dmg_up: 0.5,
     dmg_up_total: 0,
     poise: [15, 15, 15, 15, 15, 15, 15, 15, 15, 20, 20, 20],
   },
@@ -1502,12 +1265,12 @@ export const estellaChr_0021_whiten_ultimate_skill: SkillDefinition = {
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 30, sequence: { $sequence: 'startTimeDilation_1' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'conditional_3' } },
-    { startFrame: 0, endFrame: 54, sequence: { $sequence: 'hideUi_4' } },
-    { startFrame: 0, endFrame: 54, sequence: { $sequence: 'startUltimateTimeDilation_5' } },
-    { startFrame: 54, endFrame: 57, sequence: { $sequence: 'forEachContextTarget_11' } },
-    { startFrame: 0, endFrame: 77, sequence: { $sequence: 'applyBuff_12' } },
+    { startFrame: 0, endFrame: 54, sequence: { $sequence: 'hideUi_2' } },
+    { startFrame: 0, endFrame: 54, sequence: { $sequence: 'startUltimateTimeDilation_3' } },
+    { startFrame: 54, endFrame: 57, sequence: { $sequence: 'forEachContextTarget_10' } },
+    { startFrame: 0, endFrame: 77, sequence: { $sequence: 'applyBuff_11' } },
   ],
+  defaultTarget: 'enemy',
   cooldownFrames: 300,
   costs: [{ resource: 'ultimateEnergy', value: 70 }],
   skillType: 'ultimate',
@@ -1519,7 +1282,7 @@ export const estellaChr_0021_whiten_ultimate_skill: SkillDefinition = {
 export const estellaChr_0021_whiten_combo_skillActionGraph = {
   main: {
     nodes: {
-      dealDamage_9: {
+      dealDamage_12: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1532,357 +1295,13 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
         },
         next: null,
       },
-      applyPhysicalInfliction_10: {
+      applyPhysicalInfliction_13: {
         action: {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'airborne',
             target: 'enemy',
             isExtra: false,
-            noGuardBuffId: 'buff_physical_no_guard',
-            noGuardDefinition: {
-              stackingType: 'enhanceAndRefresh',
-              priority: 100,
-              maxStackCount: 4,
-              durationSeconds: { blackboardKey: 'duration' },
-              presentation: {
-                visible: true,
-                iconId: 'icon_shadow_attribute_penetrate',
-                iconPath: '/icons/icon_shadow_attribute_penetrate.webp',
-                showInHeadBarCommon: false,
-                showInHeadBarAttached: true,
-                showInSquadIcon: false,
-                onlyShowForMainCharacter: false,
-                blinkInMainCharHpBar: false,
-                showProgressInHpBar: false,
-                showProgressInNormalSkillButton: false,
-                useWeakProgressInNormalSkillButton: false,
-                showProgressInUltimateSkillButton: false,
-                forceRaiseIconEvent: false,
-                showWarningBackground: false,
-                playStrongInAnimation: false,
-                hasCharHpBarVfxType: false,
-                charHpBarVfxType: 'Fire',
-                iconStyleInSquad: 'Default',
-                abnormalColorType: 'Physical',
-                orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
-              },
-              applyTags: ['Skill/Character/Common/NoGuard'],
-              extendTags: [],
-              blackboard: { atk_scale: 0, count: 0, duration: 20, skip_handle_cryst_break: 0 },
-              attributeModifiers: [],
-              lifecycleSequences: {
-                start: { $sequence: 'conditional_2' },
-                finish: { $sequence: 'applyBuff_3' },
-                afterEnhance: { $sequence: 'withActionBlackboardScope_9' },
-              },
-              actionGraph: {
-                main: {
-                  nodes: {
-                    applyBuff_1: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_handle_cryst_break',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                        },
-                      },
-                      next: null,
-                    },
-                    conditional_2: {
-                      action: {
-                        kind: 'conditional',
-                        parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                        whenTrue: { $sequence: 'applyBuff_1' },
-                      },
-                      next: null,
-                    },
-                    applyBuff_3: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_no_guard_fake',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                        },
-                      },
-                      next: null,
-                    },
-                    igniteBuffs_4: {
-                      action: {
-                        kind: 'igniteBuffs',
-                        parameters: {
-                          target: 'buffOwner',
-                          source: 'buffOwner',
-                          igniteType: 'NoGuard',
-                        },
-                      },
-                      next: null,
-                    },
-                    conditional_7: {
-                      action: {
-                        kind: 'conditional',
-                        parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                        whenTrue: { $sequence: 'conditional_2' },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_8: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:1',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'conditional_7' },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_9: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:0',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'igniteBuffs_4' },
-                      },
-                      next: 'withActionBlackboardScope_8',
-                    },
-                  },
-                  dataNodes: {
-                    data_1: {
-                      type: 'number',
-                      expression: {
-                        kind: 'blackboard',
-                        key: 'skip_handle_cryst_break',
-                        fallback: 0,
-                      },
-                    },
-                    data_2: {
-                      type: 'boolean',
-                      expression: {
-                        kind: 'actionValueCompare',
-                        left: { kind: 'valueNode', nodeId: 'data_1' },
-                        operator: 'equal',
-                        right: { kind: 'constant', value: 0 },
-                      },
-                    },
-                    data_3: {
-                      type: 'boolean',
-                      expression: {
-                        kind: 'currentBuffStackCompare',
-                        operator: 'greaterOrEqual',
-                        value: { kind: 'constant', value: 2 },
-                      },
-                    },
-                  },
-                },
-                macros: {},
-              },
-            },
-            airborneBuffId: 'buff_physical_airborne',
-            airborneDefinition: {
-              stackingType: 'stack',
-              stackingKey: 'physical',
-              priority: 0,
-              maxStackCount: 1,
-              durationSeconds: { blackboardKey: 'duration' },
-              triggerIntervalSeconds: 0.1,
-              waitFirstTriggerInterval: true,
-              maxTriggerCount: 1,
-              presentation: {
-                visible: true,
-                iconId: 'airborne',
-                iconPath: '/icons/airborne.webp',
-                showInHeadBarCommon: false,
-                showInHeadBarAttached: false,
-                showInSquadIcon: false,
-                onlyShowForMainCharacter: false,
-                blinkInMainCharHpBar: false,
-                showProgressInHpBar: false,
-                showProgressInNormalSkillButton: false,
-                useWeakProgressInNormalSkillButton: false,
-                showProgressInUltimateSkillButton: false,
-                forceRaiseIconEvent: false,
-                showWarningBackground: false,
-                playStrongInAnimation: false,
-                hasCharHpBarVfxType: false,
-                charHpBarVfxType: 'Fire',
-                iconStyleInSquad: 'Default',
-                abnormalColorType: 'Physical',
-                orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
-              },
-              applyTags: ['Skill/Character/Common/PhysicalStatus/AirborneStatus'],
-              extendTags: [],
-              blackboard: { atk_scale: 0, duration: 3, poise: 10 },
-              attributeModifiers: [],
-              lifecycleSequences: { start: { $sequence: 'withActionBlackboardScope_9' } },
-              actionGraph: {
-                main: {
-                  nodes: {
-                    applyBuff_1: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_no_guard',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                          blackboardAssignments: {
-                            skip_handle_cryst_break: { kind: 'constant', value: 1 },
-                          },
-                        },
-                      },
-                      next: null,
-                    },
-                    dealDamage_2: {
-                      action: {
-                        kind: 'dealDamage',
-                        parameters: {
-                          damageType: 'physical',
-                          attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                          tags: [],
-                          features: ['physicalInfliction'],
-                          stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                        },
-                      },
-                      next: null,
-                    },
-                    readSkillSettingData_3: {
-                      action: {
-                        kind: 'readSkillSettingData',
-                        parameters: {
-                          items: [
-                            {
-                              values: [1.2, 1.2, 1.2, 1.2],
-                              column: { kind: 'constant', value: 1 },
-                              storeKey: 'atk_scale',
-                              enhance: {
-                                target: 'caster',
-                                formula: { kind: 'linear', paramA: 0.01 },
-                              },
-                            },
-                            {
-                              values: [10, 10, 10, 10],
-                              column: { kind: 'constant', value: 1 },
-                              storeKey: 'poise',
-                              enhance: {
-                                target: 'caster',
-                                formula: { kind: 'linear', paramA: 0.005 },
-                              },
-                            },
-                          ],
-                        },
-                      },
-                      next: 'dealDamage_2',
-                    },
-                    applyBuff_4: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_handle_cryst_break',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                        },
-                      },
-                      next: null,
-                    },
-                    igniteBuffs_5: {
-                      action: {
-                        kind: 'igniteBuffs',
-                        parameters: {
-                          target: 'buffOwner',
-                          source: 'caster',
-                          igniteType: 'PhysicalStatus',
-                        },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_6: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:3',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'igniteBuffs_5' },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_7: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:2',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'applyBuff_4' },
-                      },
-                      next: 'withActionBlackboardScope_6',
-                    },
-                    withActionBlackboardScope_8: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:1',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'readSkillSettingData_3' },
-                      },
-                      next: 'withActionBlackboardScope_7',
-                    },
-                    withActionBlackboardScope_9: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:0',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'applyBuff_1' },
-                      },
-                      next: 'withActionBlackboardScope_8',
-                    },
-                  },
-                  dataNodes: {
-                    data_1: {
-                      type: 'number',
-                      expression: { kind: 'blackboard', key: 'atk_scale' },
-                    },
-                    data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-                  },
-                },
-                macros: {},
-              },
-            },
             duration: { kind: 'constant', value: 0 },
             height: { kind: 'constant', value: 0 },
             speedFactorMultiplier: 1,
@@ -1891,9 +1310,9 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
             returnWhen: 'always',
           },
         },
-        next: 'dealDamage_9',
+        next: 'dealDamage_12',
       },
-      dealDamage_5: {
+      dealDamage_7: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1901,362 +1320,18 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_4' },
+            stagger: { kind: 'valueNode', nodeId: 'data_2' },
           },
         },
         next: null,
       },
-      applyPhysicalInfliction_6: {
+      applyPhysicalInfliction_8: {
         action: {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'airborne',
             target: 'enemy',
             isExtra: false,
-            noGuardBuffId: 'buff_physical_no_guard',
-            noGuardDefinition: {
-              stackingType: 'enhanceAndRefresh',
-              priority: 100,
-              maxStackCount: 4,
-              durationSeconds: { blackboardKey: 'duration' },
-              presentation: {
-                visible: true,
-                iconId: 'icon_shadow_attribute_penetrate',
-                iconPath: '/icons/icon_shadow_attribute_penetrate.webp',
-                showInHeadBarCommon: false,
-                showInHeadBarAttached: true,
-                showInSquadIcon: false,
-                onlyShowForMainCharacter: false,
-                blinkInMainCharHpBar: false,
-                showProgressInHpBar: false,
-                showProgressInNormalSkillButton: false,
-                useWeakProgressInNormalSkillButton: false,
-                showProgressInUltimateSkillButton: false,
-                forceRaiseIconEvent: false,
-                showWarningBackground: false,
-                playStrongInAnimation: false,
-                hasCharHpBarVfxType: false,
-                charHpBarVfxType: 'Fire',
-                iconStyleInSquad: 'Default',
-                abnormalColorType: 'Physical',
-                orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
-              },
-              applyTags: ['Skill/Character/Common/NoGuard'],
-              extendTags: [],
-              blackboard: { atk_scale: 0, count: 0, duration: 20, skip_handle_cryst_break: 0 },
-              attributeModifiers: [],
-              lifecycleSequences: {
-                start: { $sequence: 'conditional_2' },
-                finish: { $sequence: 'applyBuff_3' },
-                afterEnhance: { $sequence: 'withActionBlackboardScope_9' },
-              },
-              actionGraph: {
-                main: {
-                  nodes: {
-                    applyBuff_1: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_handle_cryst_break',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                        },
-                      },
-                      next: null,
-                    },
-                    conditional_2: {
-                      action: {
-                        kind: 'conditional',
-                        parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                        whenTrue: { $sequence: 'applyBuff_1' },
-                      },
-                      next: null,
-                    },
-                    applyBuff_3: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_no_guard_fake',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                        },
-                      },
-                      next: null,
-                    },
-                    igniteBuffs_4: {
-                      action: {
-                        kind: 'igniteBuffs',
-                        parameters: {
-                          target: 'buffOwner',
-                          source: 'buffOwner',
-                          igniteType: 'NoGuard',
-                        },
-                      },
-                      next: null,
-                    },
-                    conditional_7: {
-                      action: {
-                        kind: 'conditional',
-                        parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                        whenTrue: { $sequence: 'conditional_2' },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_8: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:1',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'conditional_7' },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_9: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:0',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'igniteBuffs_4' },
-                      },
-                      next: 'withActionBlackboardScope_8',
-                    },
-                  },
-                  dataNodes: {
-                    data_1: {
-                      type: 'number',
-                      expression: {
-                        kind: 'blackboard',
-                        key: 'skip_handle_cryst_break',
-                        fallback: 0,
-                      },
-                    },
-                    data_2: {
-                      type: 'boolean',
-                      expression: {
-                        kind: 'actionValueCompare',
-                        left: { kind: 'valueNode', nodeId: 'data_1' },
-                        operator: 'equal',
-                        right: { kind: 'constant', value: 0 },
-                      },
-                    },
-                    data_3: {
-                      type: 'boolean',
-                      expression: {
-                        kind: 'currentBuffStackCompare',
-                        operator: 'greaterOrEqual',
-                        value: { kind: 'constant', value: 2 },
-                      },
-                    },
-                  },
-                },
-                macros: {},
-              },
-            },
-            airborneBuffId: 'buff_physical_airborne',
-            airborneDefinition: {
-              stackingType: 'stack',
-              stackingKey: 'physical',
-              priority: 0,
-              maxStackCount: 1,
-              durationSeconds: { blackboardKey: 'duration' },
-              triggerIntervalSeconds: 0.1,
-              waitFirstTriggerInterval: true,
-              maxTriggerCount: 1,
-              presentation: {
-                visible: true,
-                iconId: 'airborne',
-                iconPath: '/icons/airborne.webp',
-                showInHeadBarCommon: false,
-                showInHeadBarAttached: false,
-                showInSquadIcon: false,
-                onlyShowForMainCharacter: false,
-                blinkInMainCharHpBar: false,
-                showProgressInHpBar: false,
-                showProgressInNormalSkillButton: false,
-                useWeakProgressInNormalSkillButton: false,
-                showProgressInUltimateSkillButton: false,
-                forceRaiseIconEvent: false,
-                showWarningBackground: false,
-                playStrongInAnimation: false,
-                hasCharHpBarVfxType: false,
-                charHpBarVfxType: 'Fire',
-                iconStyleInSquad: 'Default',
-                abnormalColorType: 'Physical',
-                orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
-              },
-              applyTags: ['Skill/Character/Common/PhysicalStatus/AirborneStatus'],
-              extendTags: [],
-              blackboard: { atk_scale: 0, duration: 3, poise: 10 },
-              attributeModifiers: [],
-              lifecycleSequences: { start: { $sequence: 'withActionBlackboardScope_9' } },
-              actionGraph: {
-                main: {
-                  nodes: {
-                    applyBuff_1: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_no_guard',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                          blackboardAssignments: {
-                            skip_handle_cryst_break: { kind: 'constant', value: 1 },
-                          },
-                        },
-                      },
-                      next: null,
-                    },
-                    dealDamage_2: {
-                      action: {
-                        kind: 'dealDamage',
-                        parameters: {
-                          damageType: 'physical',
-                          attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                          tags: [],
-                          features: ['physicalInfliction'],
-                          stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                        },
-                      },
-                      next: null,
-                    },
-                    readSkillSettingData_3: {
-                      action: {
-                        kind: 'readSkillSettingData',
-                        parameters: {
-                          items: [
-                            {
-                              values: [1.2, 1.2, 1.2, 1.2],
-                              column: { kind: 'constant', value: 1 },
-                              storeKey: 'atk_scale',
-                              enhance: {
-                                target: 'caster',
-                                formula: { kind: 'linear', paramA: 0.01 },
-                              },
-                            },
-                            {
-                              values: [10, 10, 10, 10],
-                              column: { kind: 'constant', value: 1 },
-                              storeKey: 'poise',
-                              enhance: {
-                                target: 'caster',
-                                formula: { kind: 'linear', paramA: 0.005 },
-                              },
-                            },
-                          ],
-                        },
-                      },
-                      next: 'dealDamage_2',
-                    },
-                    applyBuff_4: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_handle_cryst_break',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                        },
-                      },
-                      next: null,
-                    },
-                    igniteBuffs_5: {
-                      action: {
-                        kind: 'igniteBuffs',
-                        parameters: {
-                          target: 'buffOwner',
-                          source: 'caster',
-                          igniteType: 'PhysicalStatus',
-                        },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_6: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:3',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'igniteBuffs_5' },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_7: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:2',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'applyBuff_4' },
-                      },
-                      next: 'withActionBlackboardScope_6',
-                    },
-                    withActionBlackboardScope_8: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:1',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'readSkillSettingData_3' },
-                      },
-                      next: 'withActionBlackboardScope_7',
-                    },
-                    withActionBlackboardScope_9: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:0',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'applyBuff_1' },
-                      },
-                      next: 'withActionBlackboardScope_8',
-                    },
-                  },
-                  dataNodes: {
-                    data_1: {
-                      type: 'number',
-                      expression: { kind: 'blackboard', key: 'atk_scale' },
-                    },
-                    data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-                  },
-                },
-                macros: {},
-              },
-            },
             duration: { kind: 'constant', value: 0 },
             height: { kind: 'constant', value: 0 },
             speedFactorMultiplier: 1,
@@ -2265,70 +1340,102 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
             returnWhen: 'always',
           },
         },
-        next: 'dealDamage_5',
+        next: 'dealDamage_7',
       },
-      applyBuff_7: {
+      applyBuff_9: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0021_whiten_combo_skill_physical_vulnerable',
-            target: 'enemy',
+            buffs: [
+              {
+                buffId: 'buff_chr_0021_whiten_combo_skill_physical_vulnerable',
+                copiedBlackboardAssignments: { duration: 'duration', rate: 'rate' },
+              },
+            ],
+            targets: { kind: 'fixed', target: 'enemy' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
-            copiedBlackboardAssignments: { duration: 'duration', rate: 'rate' },
           },
         },
-        next: 'applyPhysicalInfliction_6',
+        next: 'applyPhysicalInfliction_8',
       },
-      modifyActionValue_4: {
+      modifyActionValue_6: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
             key: 'duration',
             operation: 'add',
-            value: { kind: 'valueNode', nodeId: 'data_5' },
+            value: { kind: 'valueNode', nodeId: 'data_4' },
           },
         },
-        next: 'applyBuff_7',
+        next: 'applyBuff_9',
       },
-      conditional_8: {
+      checkCondition_2: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' }, alwaysNext: true },
-          whenTrue: { $sequence: 'modifyActionValue_4' },
-          whenFalse: { $sequence: 'applyBuff_7' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
         next: null,
       },
-      conditional_11: {
+      ifElse_11: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' }, alwaysNext: true },
-          whenTrue: { $sequence: 'conditional_8' },
-          whenFalse: { $sequence: 'applyPhysicalInfliction_10' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_2' },
+          whenTrue: { $sequence: 'modifyActionValue_6' },
+          whenFalse: { $sequence: 'applyBuff_9' },
         },
         next: null,
       },
-      changeResourceByActionValue_12: {
+      checkCondition_10: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+        },
+        next: null,
+      },
+      ifElse_14: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_10' },
+          whenTrue: { $sequence: 'ifElse_11' },
+          whenFalse: { $sequence: 'applyPhysicalInfliction_13' },
+        },
+        next: null,
+      },
+      changeResource_15: {
+        action: {
+          kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_9' },
+            amount: { kind: 'valueNode', nodeId: 'data_8' },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'caster',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
           },
         },
         next: null,
       },
-      forEachContextTarget_13: {
+      ifElse_16: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: null },
+          whenTrue: { $sequence: 'changeResource_15' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      forEachContextTarget_17: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { target: 'enemy' },
-          body: { $sequence: 'conditional_11' },
+          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          body: { $sequence: 'ifElse_14' },
         },
-        next: 'changeResourceByActionValue_12',
+        next: 'ifElse_16',
       },
-      startTimeDilation_15: {
+      startTimeDilation_20: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -2343,7 +1450,7 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_14: {
+      startTimeDilation_19: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -2358,16 +1465,31 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
         },
         next: null,
       },
-      conditional_16: {
+      checkCondition_18: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_14' },
-          whenFalse: { $sequence: 'startTimeDilation_15' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
         },
         next: null,
       },
-      startTimeDilation_18: {
+      ifElse_21: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_18' },
+          whenTrue: { $sequence: 'startTimeDilation_19' },
+          whenFalse: { $sequence: 'startTimeDilation_20' },
+        },
+        next: null,
+      },
+      checkCondition_22: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
+        },
+        next: 'ifElse_21',
+      },
+      startTimeDilation_23: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -2388,22 +1510,21 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'rate_plus' } },
-      data_6: {
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'rate_plus' } },
+      data_5: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'has_potential1', fallback: 0 },
       },
-      data_7: {
+      data_6: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_6' },
+          left: { kind: 'valueNode', nodeId: 'data_5' },
           operator: 'greaterOrEqual',
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_8: {
+      data_7: {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
@@ -2412,8 +1533,19 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
           tags: ['Skill/Character/Common/SpellStatus/Frozen'],
         },
       },
-      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_10: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_9: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_10: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
     },
   },
   macros: {},
@@ -2443,9 +1575,9 @@ export const estellaChr_0021_whiten_combo_skill: SkillDefinition = {
   },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 19, endFrame: 34, sequence: { $sequence: 'forEachContextTarget_13' } },
-    { startFrame: 19, endFrame: 22, sequence: { $sequence: 'conditional_16' } },
-    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_18' } },
+    { startFrame: 19, endFrame: 34, sequence: { $sequence: 'forEachContextTarget_17' } },
+    { startFrame: 19, endFrame: 22, sequence: { $sequence: 'checkCondition_22' } },
+    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_23' } },
   ],
   smartTarget: 'trigger',
   cooldownFrames: [540, 540, 540, 540, 540, 540, 540, 540, 540, 540, 540, 510],
@@ -2470,6 +1602,7 @@ export const estellaCommon_character_perfect_dodge: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [],
+  defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
 };
@@ -2477,21 +1610,19 @@ export const estellaCommon_character_perfect_dodge: SkillDefinition = {
 const estellaComboCondition1ActionGraph = {
   main: {
     nodes: {
-      conditional_1: {
+      checkCondition_1: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-          whenTrue: { $sequence: null },
         },
         next: null,
       },
-      conditional_2: {
+      checkCondition_2: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'conditional_1' },
         },
-        next: null,
+        next: 'checkCondition_1',
       },
     },
     dataNodes: {
@@ -2522,7 +1653,7 @@ const estellaComboCondition1: ComboSkillConditionDefinition = {
   event: 'addedBuff',
   immediately: false,
   initialValues: null,
-  sequence: { $sequence: 'conditional_2' },
+  sequence: { $sequence: 'checkCondition_2' },
   actionGraph: estellaComboCondition1ActionGraph,
 };
 
@@ -2533,14 +1664,19 @@ const estellaBuff1ActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_affixes_vulnerable_physical',
-            target: 'enemy',
+            buffs: [
+              {
+                buffId: 'buff_common_affixes_vulnerable_physical',
+                blackboardAssignments: {
+                  duration: { kind: 'valueNode', nodeId: 'data_1' },
+                  rate: { kind: 'valueNode', nodeId: 'data_2' },
+                },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             asChildBuff: true,
-            blackboardAssignments: {
-              duration: { kind: 'valueNode', nodeId: 'data_1' },
-              rate: { kind: 'valueNode', nodeId: 'data_2' },
-            },
           },
         },
         next: null,
@@ -2563,27 +1699,33 @@ const estellaBuff1: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 3, rate: -0.3 },
   attributeModifiers: [],
-  lifecycleSequences: { enable: { $sequence: 'applyBuff_1' } },
+  lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
   actionGraph: estellaBuff1ActionGraph,
 };
 
 const estellaBuff2ActionGraph = {
   main: {
     nodes: {
-      applyBuff_1: {
+      aura_1: {
         action: {
-          kind: 'applyBuff',
+          kind: 'aura',
           parameters: {
-            buffId: 'buff_chr_0021_whiten_potential_5_inaura',
-            target: 'enemy',
-            source: 'buffOwner',
-            finishByAction: true,
+            targets: { kind: 'fixed', target: 'enemy' },
+            source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
-            blackboardAssignments: {
-              usp: { kind: 'valueNode', nodeId: 'data_1' },
-              cd: { kind: 'valueNode', nodeId: 'data_2' },
-            },
+            buffs: [
+              {
+                buffId: 'buff_chr_0021_whiten_potential_5_inaura',
+                blackboardAssignments: {
+                  usp: { kind: 'valueNode', nodeId: 'data_1' },
+                  cd: { kind: 'valueNode', nodeId: 'data_2' },
+                },
+                stringBlackboardAssignments: {},
+              },
+            ],
           },
+          onEnter: { $sequence: null },
+          onExit: { $sequence: null },
         },
         next: null,
       },
@@ -2604,21 +1746,22 @@ const estellaBuff2: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { cd: 1, usp: 5 },
   attributeModifiers: [],
-  lifecycleSequences: { enable: { $sequence: 'applyBuff_1' } },
+  lifecycleSequences: { enable: [{ $sequence: 'aura_1' }] },
   actionGraph: estellaBuff2ActionGraph,
 };
 
 const estellaBuff3ActionGraph = {
   main: {
     nodes: {
-      changeResourceByActionValue_1: {
+      changeResource_1: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
             amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'caster',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
           },
         },
         next: null,
@@ -2627,29 +1770,28 @@ const estellaBuff3ActionGraph = {
         action: {
           kind: 'createTimedMarker',
           parameters: {
-            target: 'caster',
+            targets: { kind: 'source' },
             markerId: 'buff_chr_0021_whiten_potential_5_cd',
             durationSeconds: { kind: 'valueNode', nodeId: 'data_2' },
             autoFinishByAction: false,
+            timeDomain: 'globalScaled',
           },
         },
-        next: 'changeResourceByActionValue_1',
+        next: 'changeResource_1',
       },
-      conditional_3: {
+      checkCondition_3: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+        },
+        next: 'createTimedMarker_2',
+      },
+      checkCondition_4: {
+        action: {
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-          whenTrue: { $sequence: 'createTimedMarker_2' },
         },
-        next: null,
-      },
-      conditional_4: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-          whenTrue: { $sequence: 'conditional_3' },
-        },
-        next: null,
+        next: 'checkCondition_3',
       },
     },
     dataNodes: {
@@ -2659,15 +1801,12 @@ const estellaBuff3ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'timedMarkerPresent',
+          returnTrueIfNotExists: true,
           target: 'caster',
           markerId: 'buff_chr_0021_whiten_potential_5_cd',
         },
       },
       data_4: {
-        type: 'boolean',
-        expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-      },
-      data_5: {
         type: 'boolean',
         expression: {
           kind: 'eventBuffTagsMatch',
@@ -2689,7 +1828,7 @@ const estellaBuff3: SkillBuffDefinition = {
   blackboard: { cd: 1, usp: 5 },
   attributeModifiers: [],
   abilityEventResponses: [
-    { event: 'addedBuff', priority: 0, sequence: { $sequence: 'conditional_4' } },
+    { event: 'addedBuff', priority: 0, sequence: { $sequence: 'checkCondition_4' } },
   ],
   actionGraph: estellaBuff3ActionGraph,
 };
@@ -2701,22 +1840,25 @@ const estellaBuff4ActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0021_whiten_talent_0_active',
-            target: 'buffSource',
-            source: 'buffSource',
+            buffs: [
+              {
+                buffId: 'buff_chr_0021_whiten_talent_0_active',
+                copiedBlackboardAssignments: { atb: 'atb' },
+              },
+            ],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
-            copiedBlackboardAssignments: { atb: 'atb' },
           },
         },
         next: null,
       },
-      conditional_2: {
+      checkCondition_2: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-          whenTrue: { $sequence: 'applyBuff_1' },
         },
-        next: null,
+        next: 'applyBuff_1',
       },
     },
     dataNodes: {
@@ -2742,7 +1884,7 @@ const estellaBuff4: SkillBuffDefinition = {
   blackboard: { atb: 5 },
   attributeModifiers: [],
   abilityEventResponses: [
-    { event: 'outputBuff', priority: 0, sequence: { $sequence: 'conditional_2' } },
+    { event: 'outputBuff', priority: 0, sequence: { $sequence: 'checkCondition_2' } },
   ],
   actionGraph: estellaBuff4ActionGraph,
 };
@@ -2766,11 +1908,10 @@ const estellaBuff5: SkillBuffDefinition = {
 const estellaBuff6ActionGraph = {
   main: {
     nodes: {
-      conditional_1: {
+      checkCondition_1: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-          whenTrue: { $sequence: null },
         },
         next: null,
       },
@@ -2793,7 +1934,7 @@ const estellaBuff6: SkillBuffDefinition = {
   damageModifiers: [
     {
       enabledSide: 'defender',
-      condition: { $sequence: 'conditional_1' },
+      condition: { $sequence: 'checkCondition_1' },
       processors: [
         {
           kind: 'damageScale',
@@ -2813,6 +1954,7 @@ export const estella: OperatorDefinition = {
   rarity: 4,
   weaponType: 'lance',
   element: 'cryo',
+  characterTypeId: 'Cryst',
   role: 'guard',
   mainAttribute: 'will',
   secondaryAttribute: 'strength',

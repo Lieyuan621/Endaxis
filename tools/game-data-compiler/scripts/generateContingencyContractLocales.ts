@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import {
   collectContingencyContractGlobalBuffIds,
   parseContingencyContractCatalogSource,
-} from '../src/domains/mechanics/contingencyContractSource.ts';
+} from '../src/domains/contingencyContract/contingencyContractSource.ts';
 import { writeAtomicBytes } from './downloadGameDataSources.ts';
 
 /** 语言文件与行为定义分别生成；返回原生依赖供同批 GlobalBuff 闭包使用。 */

@@ -11,11 +11,8 @@ function change(overrides: Partial<EnemyHealthChangePoint> = {}): EnemyHealthCha
     sequence: 3,
     sourceId: 'perlica',
     targetId: 'enemy',
-    damageType: 'physical',
-    value: 500,
-    actualDamage: 500,
+    healthChange: -500,
     remainingHealth: 9500,
-    isCritical: false,
     ...overrides,
   };
 }
@@ -28,8 +25,7 @@ describe('projectEnemyHealthCurve', () => {
         frame: 20,
         time: 2 / 3,
         sequence: 4,
-        value: 300,
-        actualDamage: 300,
+        healthChange: -300,
         remainingHealth: 9200,
       }),
     ];
@@ -48,7 +44,7 @@ describe('projectEnemyHealthCurve', () => {
       'increased without a receipt fact',
     );
     expect(() =>
-      projectEnemyHealthCurve(INITIAL, [change({ actualDamage: 600, remainingHealth: 9300 })]),
+      projectEnemyHealthCurve(INITIAL, [change({ healthChange: -600, remainingHealth: 9300 })]),
     ).toThrow('discontinuous');
   });
 });

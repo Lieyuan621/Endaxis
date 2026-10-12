@@ -4,7 +4,7 @@ import type { GearDefinition } from '../../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'item_equip_t3_suit_will01_edc_02',
   assetSlug: 'item_equip_t3_suit_will01_edc_02',
-  iconPath: '/equipment/will01/item_equip_t3_suit_will01_edc_02.webp',
+  icon: 'endaxis:equipment/will01/item_equip_t3_suit_will01_edc_02',
   slotType: 'accessory',
   levelRequirement: 50,
   baseDefense: 15,

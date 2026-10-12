@@ -1,12 +1,14 @@
-import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
-import { validateActionGraphResource } from '../../action-graph/actionGraphValidation';
 import type {
   ActionGraphReference,
   ActionGraphResourceDefinition,
 } from '../../../../packages/game-data-contract/src/actionGraph';
+import { validateActionGraphResource } from '../../action-graph/actionGraphValidation';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import type { CombatOperationExecutor } from '../skills/skillRuntime';
+import type { CombatSkillCastInfo } from '../state/foundationState';
 import { attachBuffModifierSequences } from './buffLifecycleSequenceRuntime';
 import type { BuffLifecycleOperationSource } from './buffOperationExecutor';
-import type { CombatOperationExecutor } from '../skills/skillRuntime';
+import type { BuffKeywordEnhancementDefinition } from './combatBuffs';
 
 import {
   COMBAT_BUFF_DEFINITIONS_SCHEMA_VERSION,
@@ -27,6 +29,10 @@ import {
  * 外部 Buff 数据进入通用 Buff 运行时前的语义化定义边界。
  * 数据源必须先转换为这里支持的原语；未知原生行为不能以回调或静默缺省方式穿透。
  */
+import type {
+  HealModifierDefinition,
+  PoiseModifierDefinition,
+} from '../../../../packages/game-data-contract/src/modifiers';
 import {
   DAMAGE_FEATURES,
   DAMAGE_TAGS,
@@ -39,16 +45,14 @@ import {
 } from '../../game-data/operatorDefinition';
 import type { ActionBlackboardValue } from '../actions/actionBlackboard';
 import { ATTRIBUTE_MODIFIER_SLOTS, attributeModifierValues } from '../attributes/combatAttributes';
-import { ATTRIBUTE_MODIFIER_SOURCES } from '../state/foundationState';
 import { DAMAGE_SCALE_SIDES, DAMAGE_SCALE_ZONES } from '../damage/damageScale';
 import { DAMAGE_MODIFIER_SIDES } from '../damage/playerDamageContext';
-import type { PoiseModifierDefinition } from '../../../../packages/game-data-contract/src/modifiers';
-import type { HealModifierDefinition } from '../../../../packages/game-data-contract/src/modifiers';
 import type {
   ElementalInflictionBuffIndex,
   ElementalInflictionStartedPayload,
 } from '../infliction/elementalInflictionBuffAdapter';
 import { createElementalAttachmentLifecycleActions } from '../infliction/elementalInflictionBuffAdapter';
+import { ATTRIBUTE_MODIFIER_SOURCES } from '../state/foundationState';
 import { assertGameplayTag } from '../tags/gameplayTags';
 import type {
   BuffLifecycleActions,
@@ -91,7 +95,7 @@ export interface CombatBuffDefinitionCompilerPorts<Key extends string> {
   readonly onSpellBurstTriggered?: (payload: {
     readonly burstType: string;
     readonly sourceId: string;
-    readonly skillCastInfo?: import('../state/foundationState').CombatSkillCastInfo;
+    readonly skillCastInfo?: CombatSkillCastInfo;
   }) => void;
   /** 伤害动作携带执行实例身份，供实际伤害回执关联生命周期；不是按元素推测的来源。 */
   readonly onAttackScaledDamageTriggered?: (payload: {
@@ -101,7 +105,7 @@ export interface CombatBuffDefinitionCompilerPorts<Key extends string> {
     readonly features: readonly DamageFeature[];
     readonly canCritical: boolean;
     readonly sourceId: string;
-    readonly skillCastInfo?: import('../state/foundationState').CombatSkillCastInfo;
+    readonly skillCastInfo?: CombatSkillCastInfo;
     readonly buffId: string;
     readonly buffInstanceId: number;
     readonly buffOwnerId: string;
@@ -209,6 +213,7 @@ export class CompiledCombatBuffDefinitions<
       addingCooldownSeconds: entry.addingCooldownSeconds,
       ignoreAddingCooldown: entry.ignoreAddingCooldown,
       ignoreTagImmune: entry.ignoreTagImmune,
+      dispelLevel: entry.dispelLevel,
       triggerIntervalSeconds: entry.triggerIntervalSeconds,
       waitFirstTriggerInterval: entry.waitFirstTriggerInterval,
       maxTriggerCount: entry.maxTriggerCount,
@@ -336,6 +341,7 @@ export function parseCombatBuffDefinitionEntry(
     'addingCooldownSeconds',
     'ignoreAddingCooldown',
     'ignoreTagImmune',
+    'dispelLevel',
     'triggerIntervalSeconds',
     'waitFirstTriggerInterval',
     'maxTriggerCount',
@@ -383,6 +389,7 @@ export function parseCombatBuffDefinitionEntry(
     ...parseOptionalString(entry, 'stackingKey', path),
     ...parseOptionalPriority(entry, path),
     ...parseOptionalNonNegativeInteger(entry, 'maxStackCount', path),
+    ...parseOptionalNonNegativeInteger(entry, 'dispelLevel', path),
     ...parseOptionalScalar(entry, 'durationSeconds', path),
     ...parseOptionalScalar(entry, 'addingCooldownSeconds', path),
     ...parseOptionalBoolean(entry, 'ignoreAddingCooldown', path),
@@ -437,8 +444,7 @@ function parseOptionalPresentation(
   const presentationPath = `${path}.presentation`;
   const input = requireObject(entry.presentation, presentationPath);
   requireOnlyKeys(input, presentationPath, [
-    'iconId',
-    'iconPath',
+    'icon',
     'visible',
     'showInHeadBarCommon',
     'showInHeadBarAttached',
@@ -459,7 +465,7 @@ function parseOptionalPresentation(
     'orderPriority',
   ]);
   const optionalString = (
-    key: 'iconId' | 'iconPath' | 'charHpBarVfxType' | 'iconStyleInSquad' | 'abnormalColorType',
+    key: 'icon' | 'charHpBarVfxType' | 'iconStyleInSquad' | 'abnormalColorType',
   ) =>
     input[key] === undefined
       ? {}
@@ -497,8 +503,7 @@ function parseOptionalPresentation(
   }
   return {
     presentation: {
-      ...optionalString('iconId'),
-      ...optionalString('iconPath'),
+      ...optionalString('icon'),
       ...optionalBoolean('visible'),
       ...optionalBoolean('showInHeadBarCommon'),
       ...optionalBoolean('showInHeadBarAttached'),
@@ -668,7 +673,7 @@ function parseOptionalDamageModifiers(
 function parseOptionalKeywordEnhancements(
   entry: Readonly<Record<string, unknown>>,
   path: string,
-): { keywordEnhancements?: readonly import('./combatBuffs').BuffKeywordEnhancementDefinition[] } {
+): { keywordEnhancements?: readonly BuffKeywordEnhancementDefinition[] } {
   if (entry.keywordEnhancements === undefined) return {};
   if (!Array.isArray(entry.keywordEnhancements)) {
     throw new Error(`${path}.keywordEnhancements: expected array`);
@@ -839,10 +844,7 @@ function parseOptionalPoiseModifiers(
 }
 
 /** 三种修正条件都使用所属 Buff 图中的动作入口。 */
-function parseModifierCondition(
-  input: unknown,
-  path: string,
-): import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphReference {
+function parseModifierCondition(input: unknown, path: string): ActionGraphReference {
   const reference = requireObject(input, path);
   requireOnlyKeys(reference, path, ['$sequence']);
   return {
@@ -1361,7 +1363,7 @@ function parseOptionalBoolean(
 
 function parseOptionalNonNegativeInteger(
   entry: Readonly<Record<string, unknown>>,
-  key: 'maxStackCount',
+  key: 'maxStackCount' | 'dispelLevel',
   path: string,
 ): Partial<Pick<CombatBuffDefinitionEntry, typeof key>> {
   if (entry[key] === undefined) return {};

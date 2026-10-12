@@ -5,7 +5,8 @@ import type {
   PoiseModifierSide,
   PoiseProcessTiming,
 } from '../../../../packages/game-data-contract/src/modifiers.ts';
-import type { PoiseCalculationContext } from './poiseModifiers';
+import type { ModifierConditionRuntime } from '../actions/modifierConditionRuntime';
+import type { PoiseCalculationContext, PoiseModifierConditionInput } from './poiseModifiers';
 
 export function applyPoiseModifier(
   ownerId: string,
@@ -14,9 +15,7 @@ export function applyPoiseModifier(
   timing: PoiseProcessTiming,
   side: PoiseModifierSide,
   context: PoiseCalculationContext,
-  condition?: import('../actions/modifierConditionRuntime').ModifierConditionRuntime<
-    import('./poiseModifiers').PoiseModifierConditionInput
-  >,
+  condition?: ModifierConditionRuntime<PoiseModifierConditionInput>,
 ): void {
   if (side !== definition.enabledSide || context.getEntityId(side) !== ownerId) return;
   if (

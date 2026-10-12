@@ -42,11 +42,13 @@ export interface FieldEditorResolution {
     | 'gameplayTag'
     | 'structuredValue'
     | 'graphOperand'
-    | 'skillSettingValues';
+    | 'skillSettingValues'
+    | 'image';
   readonly semantic:
     | 'timeScaleCurve'
     | 'nativeId'
     | 'plain'
+    | 'image'
     | 'reference'
     | 'identity'
     | 'levelValues'
@@ -93,33 +95,35 @@ export function resolveFieldEditor(
       (node && baseControl === 'json' && schema.kind === 'timeScaleCurve'));
   const collection = stringCollectionDescriptor(input, name, referenceKind);
   const conditionList = isConditionListField(input);
-  const semantic: FieldEditorResolution['semantic'] = context.protectedIdentity
-    ? 'identity'
-    : collection?.kind === 'nativeId'
-      ? 'nativeId'
-      : curve
-        ? 'timeScaleCurve'
-        : conditionList
-          ? 'combatConditionList'
-          : tuple
-            ? 'tuple'
-            : has('ActionGraphReference') || baseControl === 'graph' || baseControl === 'sequence'
-              ? 'graph'
-              : has('ActionStringOperand')
-                ? 'stringOperand'
-                : has('ActionValueOperand') || baseControl === 'operand'
-                  ? 'valueOperand'
-                  : has('CombatCondition')
-                    ? 'combatCondition'
-                    : has('BuildCondition')
-                      ? 'buildCondition'
-                      : has('LevelValues') || baseControl === 'levelValues'
-                        ? 'levelValues'
-                        : has('GameplayTag')
-                          ? 'gameplayTag'
-                          : referenceKind
-                            ? 'reference'
-                            : 'plain';
+  const semantic: FieldEditorResolution['semantic'] = has('ImageRef')
+    ? 'image'
+    : context.protectedIdentity
+      ? 'identity'
+      : collection?.kind === 'nativeId'
+        ? 'nativeId'
+        : curve
+          ? 'timeScaleCurve'
+          : conditionList
+            ? 'combatConditionList'
+            : tuple
+              ? 'tuple'
+              : has('ActionGraphReference') || baseControl === 'graph' || baseControl === 'sequence'
+                ? 'graph'
+                : has('ActionStringOperand')
+                  ? 'stringOperand'
+                  : has('ActionValueOperand') || baseControl === 'operand'
+                    ? 'valueOperand'
+                    : has('CombatCondition')
+                      ? 'combatCondition'
+                      : has('BuildCondition')
+                        ? 'buildCondition'
+                        : has('LevelValues') || baseControl === 'levelValues'
+                          ? 'levelValues'
+                          : has('GameplayTag')
+                            ? 'gameplayTag'
+                            : referenceKind
+                              ? 'reference'
+                              : 'plain';
   const mapping = resolveBlackboardMapping(input, name);
   const structured =
     node &&
@@ -135,33 +139,35 @@ export function resolveFieldEditor(
   const graphCondition = !node && context.resourceGraph && baseControl === 'condition';
   const contextlessOperand = !node && semantic === 'valueOperand' && !graphOperand;
   const skillSettingValues = !node && isSkillSettingValuesSchema(schema);
-  const control = skillSettingValues
-    ? 'skillSettingValues'
-    : graphOperand
-      ? 'graphOperand'
-      : contextlessOperand
-        ? 'operand'
-        : curve
-          ? 'timeScaleCurve'
-          : collection && !boundary
-            ? 'stringCollection'
-            : semantic === 'gameplayTag' && baseControl === 'string'
-              ? 'gameplayTag'
-              : conditionList && !boundary
-                ? 'conditionList'
-                : mapping && !boundary
-                  ? 'blackboardMapping'
-                  : semantic === 'stringOperand' && !boundary && baseControl !== 'opaque'
-                    ? 'stringOperand'
-                    : baseControl === 'string' && referenceKind && !context.protectedIdentity
-                      ? 'reference'
-                      : structured
-                        ? 'structuredValue'
-                        : semantic === 'levelValues' &&
-                            !node &&
-                            supportsStructuredValue(schema, references)
-                          ? 'levelValues'
-                          : baseControl;
+  const control = has('ImageRef')
+    ? 'image'
+    : skillSettingValues
+      ? 'skillSettingValues'
+      : graphOperand
+        ? 'graphOperand'
+        : contextlessOperand
+          ? 'operand'
+          : curve
+            ? 'timeScaleCurve'
+            : collection && !boundary
+              ? 'stringCollection'
+              : semantic === 'gameplayTag' && baseControl === 'string'
+                ? 'gameplayTag'
+                : conditionList && !boundary
+                  ? 'conditionList'
+                  : mapping && !boundary
+                    ? 'blackboardMapping'
+                    : semantic === 'stringOperand' && !boundary && baseControl !== 'opaque'
+                      ? 'stringOperand'
+                      : baseControl === 'string' && referenceKind && !context.protectedIdentity
+                        ? 'reference'
+                        : structured
+                          ? 'structuredValue'
+                          : semantic === 'levelValues' &&
+                              !node &&
+                              supportsStructuredValue(schema, references)
+                            ? 'levelValues'
+                            : baseControl;
   const container =
     curve ||
     control === 'structuredValue' ||
@@ -177,6 +183,7 @@ export function resolveFieldEditor(
     (!node && isReadonlyDefinitionSlot(schema)) ||
     intrinsicallyReadonly;
   const specialized = [
+    'image',
     'graphOperand',
     'skillSettingValues',
     'timeScaleCurve',

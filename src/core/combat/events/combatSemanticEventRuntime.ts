@@ -1,3 +1,4 @@
+import type { AbilityEvent } from '../../../../packages/game-data-contract/src/abilityEvents';
 import { conditionInputExpression } from '../../compiler/compiledGraphData';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 /**
@@ -14,23 +15,14 @@ import type {
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { hasElementalAttachmentTag } from '../infliction/elementalInfliction';
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
-import type {
-  AbilityEventState,
-  AbilityEventSubscriptionReference,
-} from '../state/foundationState';
+import type { AbilityEventSubscriptionReference } from '../state/foundationState';
 import type { AbilityEventRuntimeActionContext } from './abilityEventActionContext';
-import {
-  AbilityEventDispatcher,
-  type AbilityEventFromMap,
-  type TrackedAbilityEventRegistration,
-} from './abilityEventDispatcher';
+import type { TrackedAbilityEventRegistration } from './abilityEventDispatcher';
 import { withCombatEventResponseContext } from './abilityEventResponseContext';
 import type { AbilityResponseEvent, CombatAbilityEvent } from './combatAbilityEvent';
 
 /** 订阅安装到发布实体原有的分发器，不通过另一次 emit 转发。 */
-export type RegisterCombatAbilityEvent = <
-  Name extends import('../../../../packages/game-data-contract/src/abilityEvents').AbilityEvent,
->(
+export type RegisterCombatAbilityEvent = <Name extends AbilityEvent>(
   ownerId: string,
   scope: SkillTriggerScope,
   event: Name,
@@ -42,32 +34,7 @@ export type RegisterCombatAbilityEvent = <
   ) => void,
 ) => TrackedAbilityEventRegistration;
 
-/** 手工动作的兼容标记，不是原生组件通知，不携带 fromAirborne 或施法来源。 */
-export interface ManualAirborneOutputEvent {
-  readonly kind: 'airborneOutput';
-  readonly sourceOperatorId: string;
-  readonly targetId: string;
-}
-
-export interface ManualKnockDownOutputEvent {
-  readonly kind: 'knockDownOutput';
-  readonly sourceOperatorId: string;
-  readonly targetId: string;
-}
-
-export type CombatSemanticEvent =
-  ManualAirborneOutputEvent | ManualKnockDownOutputEvent | AbilityResponseEvent;
-
-/** 旧倒地触发器接收后置通知或手工标记；前置通知不在此端口内。 */
-export type KnockDownOutputEvent =
-  | (CombatAbilityEvent<'afterOutputKnockDown'> & { readonly kind?: never })
-  | ManualKnockDownOutputEvent;
-
-export function isKnockDownOutputEvent(event: CombatSemanticEvent): event is KnockDownOutputEvent {
-  return (
-    event.kind === 'knockDownOutput' || ('event' in event && event.event === 'afterOutputKnockDown')
-  );
-}
+export type CombatSemanticEvent = AbilityResponseEvent;
 
 export interface CombatSemanticEventContext {
   readonly event: CombatSemanticEvent;
@@ -204,7 +171,7 @@ function matches(
     return (
       'payload' in event &&
       event.event === 'skillSpGained' &&
-      event.payload.sourceOperatorId === ownerOperatorId &&
+      event.payload.sourceId === ownerOperatorId &&
       (trigger.source === undefined || trigger.source === event.payload.source) &&
       (trigger.gainKind === undefined || trigger.gainKind === event.payload.gainKind)
     );
@@ -225,43 +192,23 @@ function matches(
       hasElementalAttachmentTag(event.payload.buffTags)
     );
   }
-  if (trigger.kind !== event.kind) return false;
-  switch (trigger.kind) {
-    case 'airborneOutput':
-      return event.kind === 'airborneOutput' && event.sourceOperatorId === ownerOperatorId;
-    case 'knockDownOutput':
-      return event.kind === 'knockDownOutput' && event.sourceOperatorId === ownerOperatorId;
-  }
+  return false;
 }
 
 /**
  * 定义侧触发器的订阅层。阶段、优先级、注册顺序与释放统一由 AbilityEventDispatcher 管理。
- * 语义事件名与原生事件名的迁移尚未完成；本层不再自行实现第二套阶段循环。
+ * 只筛选原生事件；订阅状态由实体的事件分发器持有。
  */
 export class CombatSemanticEventRuntime {
   constructor(
     private readonly registerAbilityEvent?: RegisterCombatAbilityEvent,
     private readonly restored?: {
-      readonly state: AbilityEventState<NonNullable<CombatSemanticEvent['kind']>>;
-      /** 环境解析原生事件目录，并补回当前事件的目标上下文。 */
       readonly bindNative: (
         reference: AbilityEventSubscriptionReference,
         receive: (context: CombatSemanticEventContext) => void,
       ) => TrackedAbilityEventRegistration;
     },
-  ) {
-    this.#dispatcher = new AbilityEventDispatcher(restored?.state);
-  }
-
-  readonly #dispatcher: AbilityEventDispatcher<
-    NonNullable<CombatSemanticEvent['kind']>,
-    Record<NonNullable<CombatSemanticEvent['kind']>, CombatSemanticEventContext>
-  >;
-
-  /** 仅包含手工语义事件；实体原生事件由战斗环境的事件目录持有。 */
-  get runtimeState() {
-    return this.#dispatcher.runtimeState;
-  }
+  ) {}
 
   register(registration: CombatEventHandlerRegistration): TrackedAbilityEventRegistration {
     return this.#install(registration);
@@ -325,28 +272,12 @@ export class CombatSemanticEventRuntime {
       const bindings: TrackedAbilityEventRegistration[] = [];
       try {
         for (const reference of subscriptions) {
-          const manual = reference.state === this.#dispatcher.runtimeState;
-          const expectedEvent = manual
-            ? native.kind === 'entity'
-              ? native.legacyEvent
-              : native.event
-            : native.kind === 'entity'
-              ? native.event
-              : undefined;
-          if (
-            expectedEvent === undefined ||
-            reference.event !== expectedEvent ||
-            reference.phase !== phase
-          )
+          if (reference.event !== native.event || reference.phase !== phase)
             throw new Error('saved event subscription does not match response');
-          if (manual) bindings.push(this.#dispatcher.bindSubscription(reference, execute));
-          else {
-            if (this.restored === undefined)
-              throw new Error('native event restore port is missing');
-            bindings.push(
-              this.restored.bindNative(reference, context => execute({ payload: context })),
-            );
-          }
+          if (this.restored === undefined) throw new Error('native event restore port is missing');
+          bindings.push(
+            this.restored.bindNative(reference, context => execute({ payload: context })),
+          );
         }
         return {
           subscriptions,
@@ -358,125 +289,69 @@ export class CombatSemanticEventRuntime {
         throw error;
       }
     }
-    if (native.kind === 'entity') {
-      if (this.registerAbilityEvent === undefined)
-        throw new Error(`${event} requires the native ability event subscription port`);
-      const registration = this.registerAbilityEvent(
-        stored.ownerOperatorId,
-        native.scope,
-        native.event,
-        stored.phase,
-        stored.priority ?? 0,
-        (event, actionContext) => execute({ payload: { event, actionContext } }),
-      );
-      if (native.legacyEvent === undefined) return registration;
-      // 旧定义还接收手工输出标记；订阅两种身份，不把组件事件复制成标记。
-      try {
-        const legacy = this.#registerLegacy(native.legacyEvent, stored, execute);
-        return {
-          subscriptions: [...registration.subscriptions, ...legacy.subscriptions],
-          dispose: () => {
-            registration.dispose();
-            legacy.dispose();
-          },
-        };
-      } catch (error) {
-        registration.dispose();
-        throw error;
-      }
-    }
-    return this.#registerLegacy(native.event, stored, execute);
-  }
-
-  #registerLegacy(
-    event: NonNullable<CombatSemanticEvent['kind']>,
-    stored: CombatEventHandlerRegistration,
-    execute: (event: { readonly payload: CombatSemanticEventContext }) => void,
-  ): TrackedAbilityEventRegistration {
-    switch (stored.phase) {
-      case 'callback':
-        return this.#dispatcher.registerCallback(event, execute);
-      case 'dataAction':
-        return this.#dispatcher.registerAction(event, stored.priority ?? 0, execute);
-      case 'skill':
-      case 'combo':
-        return this.#dispatcher.registerListener(event, stored.phase, execute);
-    }
-  }
-
-  emit(event: CombatSemanticEvent): void {
-    if ('event' in event)
-      throw new Error('entity events must be published by their entity dispatcher');
-    // 当前仍有旧语义生产者；迁移为原生事件后删除此发布端，订阅层不能重建原生载荷。
-    this.#dispatcher.dispatch(
-      { event: event.kind, payload: { event } } as AbilityEventFromMap<
-        NonNullable<CombatSemanticEvent['kind']>,
-        Record<NonNullable<CombatSemanticEvent['kind']>, CombatSemanticEventContext>
-      >,
-      [],
+    if (this.registerAbilityEvent === undefined)
+      throw new Error(`${event} requires the native ability event subscription port`);
+    return this.registerAbilityEvent(
+      stored.ownerOperatorId,
+      native.scope,
+      native.event,
+      stored.phase,
+      stored.priority ?? 0,
+      (event, actionContext) => execute({ payload: { event, actionContext } }),
     );
   }
 }
 
 /** 定义筛选只决定订阅哪个原始事件，不在这里构造另一份通知。 */
-function eventSubscription(trigger: CombatEventTrigger | UpgradeEvent):
-  | {
-      readonly kind: 'entity';
-      readonly event:
-        | 'afterOutputInfliction'
-        | 'skillSpGained'
-        | 'afterKillEntity'
-        | 'afterOutputKnockDown'
-        | 'takeDamage'
-        | 'afterOutputPhysicalInfliction'
-        | 'outputDamage'
-        | 'outputBuff'
-        | 'beforeAddedBuff'
-        | 'addedBuff'
-        | 'buffConsumed'
-        | 'outputHeal'
-        | 'receiveHeal';
-      readonly scope: SkillTriggerScope;
-      readonly legacyEvent?: 'knockDownOutput';
-    }
-  | { readonly kind: 'legacy'; readonly event: NonNullable<CombatSemanticEvent['kind']> } {
+function eventSubscription(trigger: CombatEventTrigger | UpgradeEvent): {
+  readonly event:
+    | 'afterOutputInfliction'
+    | 'skillSpGained'
+    | 'afterKillEntity'
+    | 'afterOutputKnockDown'
+    | 'takeDamage'
+    | 'afterOutputPhysicalInfliction'
+    | 'outputDamage'
+    | 'outputBuff'
+    | 'beforeAddedBuff'
+    | 'addedBuff'
+    | 'buffConsumed'
+    | 'outputHeal'
+    | 'receiveHeal';
+  readonly scope: SkillTriggerScope;
+} {
   switch (trigger.kind) {
     case 'abilityEvent':
-      return { kind: 'entity', event: trigger.event, scope: 'operator' };
+      return { event: trigger.event, scope: 'operator' };
     case 'elementalInflictionApplied':
-      return { kind: 'entity', event: 'afterOutputInfliction', scope: trigger.scope };
+      return { event: 'afterOutputInfliction', scope: trigger.scope };
     case 'spGained':
-      return { kind: 'entity', event: 'skillSpGained', scope: 'operator' };
+      return { event: 'skillSpGained', scope: 'operator' };
     case 'knockDownOutput':
       return {
-        kind: 'entity',
         event: 'afterOutputKnockDown',
         scope: 'operator',
-        legacyEvent: 'knockDownOutput',
       };
     case 'physicalInflictionApplied':
-      return { kind: 'entity', event: 'afterOutputPhysicalInfliction', scope: trigger.scope };
+      return { event: 'afterOutputPhysicalInfliction', scope: trigger.scope };
     case 'operatorHit':
-      return { kind: 'entity', event: 'takeDamage', scope: 'operator' };
+      return { event: 'takeDamage', scope: 'operator' };
     case 'enemyDefeated':
-      return { kind: 'entity', event: 'afterKillEntity', scope: trigger.scope };
+      return { event: 'afterKillEntity', scope: trigger.scope };
     case 'skillHit':
     case 'damageTagHit':
-      return { kind: 'entity', event: 'outputDamage', scope: trigger.scope };
+      return { event: 'outputDamage', scope: trigger.scope };
     case 'buffOutput':
-      return { kind: 'entity', event: 'outputBuff', scope: 'operator' };
+      return { event: 'outputBuff', scope: 'operator' };
     case 'buffApplied':
-      return { kind: 'entity', event: 'addedBuff', scope: 'operator' };
+      return { event: 'addedBuff', scope: 'operator' };
     case 'elementalAttachmentConsumed':
     case 'buffConsumed':
-      return { kind: 'entity', event: 'buffConsumed', scope: 'operator' };
+      return { event: 'buffConsumed', scope: 'operator' };
     case 'operatorHealed':
       return {
-        kind: 'entity',
         event: trigger.role === 'source' ? 'outputHeal' : 'receiveHeal',
         scope: 'operator',
       };
-    default:
-      return { kind: 'legacy', event: trigger.kind };
   }
 }

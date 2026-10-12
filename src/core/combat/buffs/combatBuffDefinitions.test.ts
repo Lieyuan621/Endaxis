@@ -26,8 +26,7 @@ function createDocument(): CombatBuffDefinitionsDocument {
       {
         id: 'attachment.heat',
         presentation: {
-          iconId: 'icon_attachment_heat',
-          iconPath: '/icons/icon_attachment_heat.webp',
+          icon: 'endaxis:icons/icon_attachment_heat',
           visible: true,
         },
         stackingType: 'enhanceAndRefresh',
@@ -71,8 +70,7 @@ describe('compileCombatBuffDefinitions', () => {
     );
     expect(first.remainingDuration).toBe(12);
     expect(first.definition.presentation).toEqual({
-      iconId: 'icon_attachment_heat',
-      iconPath: '/icons/icon_attachment_heat.webp',
+      icon: 'endaxis:icons/icon_attachment_heat',
       visible: true,
     });
     expect(index.getAttachmentElement(definition)).toBe('heat');
@@ -143,7 +141,7 @@ describe('compileCombatBuffDefinitions', () => {
           id: 'buff.visible',
           stackingType: 'refresh',
           presentation: {
-            iconId: 'icon_buff_visible',
+            icon: 'endaxis:icons/icon_buff_visible',
             visible: true,
             showInSquadIcon: true,
             orderPriority: {
@@ -160,7 +158,7 @@ describe('compileCombatBuffDefinitions', () => {
     }).get('buff.visible');
 
     expect(definition?.presentation).toEqual({
-      iconId: 'icon_buff_visible',
+      icon: 'endaxis:icons/icon_buff_visible',
       visible: true,
       showInSquadIcon: true,
       orderPriority: {

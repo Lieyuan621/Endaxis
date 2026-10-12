@@ -2,7 +2,11 @@
  * 把只读 Buff 定义与单场战斗的 Buff 容器组合成技能操作端口。
  * 定义负责稳定身份解析，容器只持有实例；未知身份必须在施加点明确失败。
  */
-import type { ResolvedSkillBuffDefinition } from '../../compiler/combatProgram';
+import type { CombatBuffDefinitionEntry } from '../../../../packages/game-data-contract/src/buffs';
+import type {
+  ResolvedCombatStepParameters,
+  ResolvedSkillBuffDefinition,
+} from '../../compiler/combatProgram';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import type { AbilityOutputBuffPayload } from '../events/combatAbilityEvent';
 import type { FrameRuntime } from '../runtime/combatSimulation';
@@ -10,8 +14,11 @@ import type {
   CombatOperationExecutor,
   ProjectileRuntimeDependencies,
 } from '../skills/skillRuntime';
-import type { BuffReference, CombatSkillCastInfo } from '../state/foundationState';
-import { type BuffFinishReason } from '../state/foundationState';
+import type {
+  BuffFinishReason,
+  BuffReference,
+  CombatSkillCastInfo,
+} from '../state/foundationState';
 import type { BuffInstanceState } from '../state/instanceState';
 import type { GameplayTag, GameplayTagQueryType } from '../tags/gameplayTags';
 import { COMBAT_FRAME_INTERVAL } from '../time/combatClock';
@@ -21,7 +28,6 @@ import {
   type BindRestoredSkillAffixObjectReference,
   type RegisterBuffAbilityEventAction,
   type RegisterBuffAbilityEventCallback,
-  type RegisterBuffSemanticEventAction,
   type RegisterPostSkillCastRequest,
 } from './buffLifecycleSequenceRuntime';
 import type {
@@ -33,7 +39,6 @@ import type {
   BuffOperationTarget,
   BuffQueryResult,
 } from './buffOperationExecutor';
-import type { CombatBuffDefinitionEntry } from '../../../../packages/game-data-contract/src/buffs';
 import {
   CombatBuffContainer,
   type CombatBuff,
@@ -56,7 +61,6 @@ export class BuffDefinitionOperationTarget<Key extends string>
   #resolveLifecycleOperations:
     ((source: BuffLifecycleOperationSource) => CombatOperationExecutor) | null = null;
   #advancedObserver: (() => void) | null = null;
-  #registerSemanticEventAction: RegisterBuffSemanticEventAction | null = null;
   #bindRestoredSkillAffixObjectReference: BindRestoredSkillAffixObjectReference | undefined;
   constructor(
     readonly container: CombatBuffContainer<Key>,
@@ -226,16 +230,6 @@ export class BuffDefinitionOperationTarget<Key extends string>
     }
   }
 
-  setMovementGaitLimit(
-    limit: Parameters<CombatBuffContainer<Key>['setMovementGaitLimit']>[0],
-  ): void {
-    this.container.setMovementGaitLimit(limit);
-  }
-
-  endMovementGaitLimit(): void {
-    this.container.endMovementGaitLimit();
-  }
-
   configureEntityTagAdded(observer: (tag: GameplayTag) => void): void {
     this.container.configureEntityTagAdded(observer);
   }
@@ -268,13 +262,6 @@ export class BuffDefinitionOperationTarget<Key extends string>
         blackboardValues: buff.blackboard.snapshot(),
       }),
     );
-  }
-
-  configureSemanticEventAction(register: RegisterBuffSemanticEventAction): void {
-    if (this.#registerSemanticEventAction !== null) {
-      throw new Error(`combat Buff runtime '${this.ownerId}' semantic events are configured`);
-    }
-    this.#registerSemanticEventAction = register;
   }
 
   /**
@@ -410,7 +397,6 @@ export class BuffDefinitionOperationTarget<Key extends string>
             scheduledSequences,
             igniteEventResponses,
             skillSlotReplacements,
-            this.#registerSemanticEventAction ?? undefined,
             modifierConditions,
             this.registerAbilityEventCallback,
             this.registerPostSkillCastRequest,
@@ -449,22 +435,29 @@ export class BuffDefinitionOperationTarget<Key extends string>
     this.container.recycleFinishedBuffs();
   }
 
-  setRemainingDuration(
-    query: import('../../compiler/combatProgram').ResolvedCombatStepParameters['setBuffRemainingDuration']['query'],
-    operation: 'assign' | 'add' | 'multiply',
-    value: number,
-  ): void {
+  *findMatching(query: ResolvedCombatStepParameters['setBuffRemainingDuration']['query']) {
     for (const buff of this.container.buffs) {
-      if (buff.isFinished || buff.remainingDuration === null) continue;
-      const matches =
+      if (buff.isFinished) continue;
+      if (
         query.kind === 'id'
           ? query.buffIds.includes(buff.definition.id)
           : this.container.matchesTags(
               buff.definition.applyTags ?? [],
               query.buffTags,
               query.tagQueryType,
-            );
-      if (!matches) continue;
+            )
+      )
+        yield buff;
+    }
+  }
+
+  setRemainingDuration(
+    query: ResolvedCombatStepParameters['setBuffRemainingDuration']['query'],
+    operation: 'assign' | 'add' | 'multiply',
+    value: number,
+  ): void {
+    for (const buff of this.findMatching(query)) {
+      if (buff.remainingDuration === null) continue;
       const current = buff.remainingDuration;
       buff.rawSetRemainingDuration(
         Math.max(
@@ -584,6 +577,14 @@ export class BuffDefinitionOperationTarget<Key extends string>
     exact?: boolean,
   ): BuffQueryResult | undefined {
     return this.container.findFirstByTags(tags, type, exact);
+  }
+
+  dispel(
+    sourceId: string,
+    level: number,
+    query?: { buffTags: readonly GameplayTag[]; tagQueryType: GameplayTagQueryType },
+  ): void {
+    this.container.dispel(sourceId, level, query);
   }
 
   finishByTags(

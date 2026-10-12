@@ -1,4 +1,5 @@
 /** 一次原生 UseItem action 对目标干员施加的公共 Buff。 */
+import type { ImageRef } from './primitives.ts';
 export interface ConsumableBuffApplicationDefinition {
   readonly buffId: string;
   readonly blackboardValues: Readonly<Record<string, number>>;
@@ -7,7 +8,7 @@ export interface ConsumableBuffApplicationDefinition {
 /** 当前固定木桩产品支持的主动增益消耗品。 */
 export interface ConsumableDefinition {
   readonly id: string;
-  readonly iconPath: string;
+  readonly icon: ImageRef;
   readonly rarity: number;
   readonly kind: 'operatorBuff';
   readonly durationSeconds: number;

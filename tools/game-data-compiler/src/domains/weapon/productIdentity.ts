@@ -1,10 +1,11 @@
+import { imageRefFromPath } from '../../compiler/publication/imageResources.ts';
 import { parseItemIdentitySource } from '../../source/itemIdentity.ts';
 import { requireRecord } from '../../source/primitives.ts';
 import type { CompiledWeaponStaticDefinitionSource } from './staticDefinition.ts';
 
 export type IdentifiedWeaponStaticDefinitionSource = CompiledWeaponStaticDefinitionSource & {
   readonly assetSlug: string;
-  readonly iconPath: string;
+  readonly icon: string;
 };
 
 /**
@@ -30,7 +31,7 @@ export function attachWeaponProductIdentities(
     return {
       ...definition,
       assetSlug,
-      iconPath: `/weapons/${definition.weaponType}/${assetSlug}.webp`,
+      icon: imageRefFromPath(`/weapons/${definition.weaponType}/${assetSlug}.webp`),
     };
   });
 }

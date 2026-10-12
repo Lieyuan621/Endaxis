@@ -18,7 +18,6 @@ export const STANDARD_PLAYER_DAMAGE_COMPATIBILITY_CODES = [
   'unsupported-condition',
   'unsupported-damage-calculation',
   'unsupported-damage-field',
-  'unsupported-resource-change',
 ] as const;
 
 /** 标准伤害预检问题的稳定分类；UI 可以凭它自行翻译。 */
@@ -86,12 +85,14 @@ function inspectCondition(
       inspectCondition(condition.node.expression, path, collect, flags);
       return;
     case 'constant':
+    case 'skillHasHit':
     case 'combatActive':
     case 'singleEnemyPresent':
+    case 'stringEquals':
     case 'actionValueCompare':
     case 'deckAttributeCompare':
     case 'probability':
-    case 'contextTargetCountCompare':
+    case 'entityCountCompare':
     case 'contextTargetObjectTypeMatch':
     case 'actionInputTargetObjectTypeMatch':
     case 'actionInputTargetIdentityMatch':
@@ -104,34 +105,31 @@ function inspectCondition(
     case 'timedMarkerPresent':
     case 'globalCooldownPresent':
     case 'casterComboPending':
-    case 'eventComboRingQteSucceeded':
     case 'abilityEntityTimedMarkerPresent':
-    case 'elementalReactionActive':
     case 'casterControlled':
     case 'characterTypeIn':
     case 'operatorRoleIn':
     case 'enemyRankIn':
     case 'enemySuperArmorCompare':
-    case 'cameraToTargetAngleCompare':
+    case 'targetDistance':
     case 'poiseCompare':
     case 'targetStaggered':
     case 'eventSourceMatchesBuffSource':
     case 'eventSourceMatchesBuffSourceEntitySource':
-    case 'eventSourceControlled':
     case 'buffSourceMatchesOwner':
     case 'eventDamageTagsMatch':
     case 'eventDamageGameplayTagsMatch':
     case 'eventDamageFeaturesMatch':
     case 'eventDamageTypeIn':
     case 'eventHealTagsMatch':
-    case 'eventSourceTargetMatch':
     case 'eventInflictionElementIn':
     case 'eventPhysicalInflictionTypeIn':
     case 'eventCustomAbilityNameMatch':
     case 'skillDamageTypeIn':
     case 'eventSkillTypeIn':
     case 'originSkillTypeIn':
-    case 'contextTargetContains':
+    case 'skillInterruptReasonIn':
+    case 'targetContains':
     case 'eventSkillIdIn':
     case 'eventSkillCastMatchesBuffSource':
     case 'eventBuffIdMatch':
@@ -139,7 +137,6 @@ function inspectCondition(
     case 'eventTargetBuffCountCompare':
     case 'eventSpGainMatch':
     case 'eventConsumedBuffLayerCompare':
-    case 'eventActionOwnerTargetMatch':
     case 'eventOverheal':
     case 'eventBuffEndedEarly':
     case 'buffStackCompare':
@@ -183,16 +180,14 @@ function inspectSequence(
   rootActionSteps(sequence).forEach((step, index) => {
     const stepPath = `${path}.steps[${index}]`;
     switch (step.kind) {
+      case 'copyContextTargets':
       case 'mergeContextTargets':
       case 'findCharacterTeamTargets':
-      case 'findUnfinishedProjectileTargets':
+      case 'findTargets':
       case 'createSpatialPointTargets':
       case 'findOwnerSpawnedAbilityEntities':
-      case 'readAbilityEntityRemainingDuration':
       case 'setAbilityEntityRemainingDuration':
-      case 'finishCurrentAbilityEntity':
-      case 'finishCurrentAbilityEntityWhenSourceDies':
-      case 'startCurrentAbilityEntityChildSkill':
+      case 'finishOwner':
       case 'startCurrentAbilityEntityChildSkillById':
         return;
       case 'dealDamage': {
@@ -205,26 +200,8 @@ function inspectSequence(
             "damage type 'lifeDrain' uses a separate native calculation",
           );
         }
-        if (parameters.attackScalePerStatusStack !== undefined) {
-          report(
-            collect,
-            'unsupported-damage-field',
-            `${stepPath}.parameters.attackScalePerStatusStack`,
-            'status-scaled attack requires a status-aware damage resolver',
-          );
-        }
         return;
       }
-      case 'dealFixedDamage':
-        if (step.parameters.damageType === 'lifeDrain') {
-          report(
-            collect,
-            'unsupported-damage-calculation',
-            `${stepPath}.parameters.damageType`,
-            "damage type 'lifeDrain' uses a separate native calculation",
-          );
-        }
-        return;
       case 'heal':
         if (!flags.operatorVitals) {
           report(
@@ -277,41 +254,9 @@ function inspectSequence(
           );
           return;
         }
-        inspectBuffDefinition(
-          step.parameters.noGuardDefinition,
-          `${stepPath}.parameters.noGuardDefinition`,
-          collect,
-          flags,
-          source,
-        );
-        if (step.parameters.type === 'crush') {
-          inspectBuffDefinition(
-            step.parameters.crushedDefinition,
-            `${stepPath}.parameters.crushedDefinition`,
-            collect,
-            flags,
-            source,
-          );
-        } else if (step.parameters.type === 'fracture') {
-          inspectBuffDefinition(
-            step.parameters.fractureDefinition,
-            `${stepPath}.parameters.fractureDefinition`,
-            collect,
-            flags,
-            source,
-          );
-        } else {
-          inspectBuffDefinition(
-            step.parameters.airborneDefinition,
-            `${stepPath}.parameters.airborneDefinition`,
-            collect,
-            flags,
-            source,
-          );
-        }
-        return;
-      case 'applyKnockDown':
-        if (!flags.knockDown || source === 'equipment') {
+        // Other physical Buffs are checked with the shared definition collection.
+        if (step.parameters.type !== 'knockDown') return;
+        if (!flags.knockDown) {
           report(
             collect,
             'unsupported-step',
@@ -362,10 +307,7 @@ function inspectSequence(
           }
         }
         return;
-      case 'applyElementalReaction':
-      case 'consumeElementalReaction':
-      case 'outputAirborne':
-      case 'outputKnockDown':
+      case 'forceSpellStatus':
         return;
       case 'applyBuff':
         return;
@@ -373,9 +315,10 @@ function inspectSequence(
       case 'inheritBuffById':
       case 'readBuffBlackboard':
       case 'readEventBuffBlackboard':
-      case 'readCurrentBuffRemainingDuration':
+      case 'readBuffRemainingDuration':
       case 'setCurrentBuffRemainingDuration':
       case 'readBuffStackCount':
+      case 'dispelBuffs':
       case 'finishBuffsByTag':
       case 'finishBuffsById':
       case 'finishCurrentBuff':
@@ -392,12 +335,10 @@ function inspectSequence(
       case 'calculateActionValue':
       case 'createTimedMarker':
       case 'setGlobalCooldown':
-      case 'createAbilityEntityTimedMarker':
       case 'gainSquadUltimateEnergyFromSkillCost':
       case 'gainFinisherSp':
       case 'restrictUltimateEnergyRecovery':
       case 'openComboWindow':
-      case 'showComboRingQte':
       case 'changeSkillSlot':
       case 'overrideBasicAttackMapping':
       case 'overrideMultiDashLimit':
@@ -461,18 +402,11 @@ function inspectSequence(
         }
         return;
       case 'jumpTimeline':
-        if (step.parameters.condition !== undefined) {
-          inspectCondition(
-            step.parameters.condition,
-            `${stepPath}.parameters.condition`,
-            collect,
-            flags,
-          );
-        }
+        inspectSequence(step.condition, `${stepPath}.condition`, collect, flags);
         return;
-      case 'finishTimeline':
       case 'reachSkillOperableBoundary':
       case 'markCurrentSkillCanDash':
+      case 'interruptCurrentSkill':
       case 'markCurrentSkillCanInterrupt':
         return;
       case 'launchProjectile':
@@ -488,22 +422,25 @@ function inspectSequence(
             ),
           );
         return;
-      case 'changeResource':
-      case 'changeResourceByActionValue': {
-        const { resource, recipient } = step.parameters;
-        const supported =
-          (resource === 'sp' && recipient === 'team') ||
-          (resource === 'ultimateEnergy' && recipient === 'caster');
-        if (!supported) {
-          report(
-            collect,
-            'unsupported-resource-change',
-            `${stepPath}.parameters`,
-            `resource '${resource}' for recipient '${recipient}'`,
-          );
-        }
+      case 'playAnimation':
+        inspectSequence(step.onEnd, `${stepPath}.onEnd`, collect, flags, source);
         return;
-      }
+      case 'showComboRingQte':
+        inspectSequence(
+          step.triggeredAction,
+          `${stepPath}.triggeredAction`,
+          collect,
+          flags,
+          source,
+        );
+        return;
+      case 'aura':
+        inspectSequence(step.onEnter, `${stepPath}.onEnter`, collect, flags, source);
+        inspectSequence(step.onExit, `${stepPath}.onExit`, collect, flags, source);
+        return;
+      case 'storeCharacterTypeId':
+      case 'changeResource':
+        return;
       case 'switch':
         step.options.forEach((option, index) =>
           inspectSequence(
@@ -513,6 +450,26 @@ function inspectSequence(
             flags,
             source,
           ),
+        );
+        return;
+      case 'invertNextResult':
+        return;
+      case 'anyCondition':
+        step.conditions.forEach((condition, index) =>
+          inspectSequence(condition, `${stepPath}.conditions[${index}]`, collect, flags, source),
+        );
+        return;
+      case 'ifElse':
+        inspectSequence(step.condition, `${stepPath}.condition`, collect, flags, source);
+        inspectSequence(step.whenTrue, `${stepPath}.whenTrue`, collect, flags, source);
+        inspectSequence(step.whenFalse, `${stepPath}.whenFalse`, collect, flags, source);
+        return;
+      case 'checkCondition':
+        inspectCondition(
+          step.parameters.condition,
+          `${stepPath}.parameters.condition`,
+          collect,
+          flags,
         );
         return;
       case 'conditional':
@@ -528,9 +485,7 @@ function inspectSequence(
         }
         return;
       case 'once':
-      case 'withActionBlackboardScope':
       case 'repeatEachTick':
-      case 'repeatByActionValue':
         inspectSequence(step.body, `${stepPath}.body`, collect, flags, source);
         return;
       case 'forEachContextTarget':
@@ -564,10 +519,16 @@ function inspectBuffDefinition(
       source,
     ),
   );
-  Object.entries(definition.lifecycleSequences ?? {}).forEach(([key, sequence]) => {
-    if (sequence !== undefined) {
-      inspectSequence(sequence, `${path}.lifecycleSequences.${key}`, collect, flags, source);
-    }
+  Object.entries(definition.lifecycleSequences ?? {}).forEach(([key, sequences]) => {
+    sequences.forEach((sequence, index) =>
+      inspectSequence(
+        sequence,
+        `${path}.lifecycleSequences.${key}[${index}]`,
+        collect,
+        flags,
+        source,
+      ),
+    );
   });
   definition.abilityEventResponses?.forEach((response, index) =>
     inspectSequence(
@@ -579,12 +540,14 @@ function inspectBuffDefinition(
     ),
   );
   definition.igniteEventResponses?.forEach((response, index) =>
-    inspectSequence(
-      response.sequence,
-      `${path}.igniteEventResponses[${index}].sequence`,
-      collect,
-      flags,
-      source,
+    response.sequences.forEach((sequence, sequenceIndex) =>
+      inspectSequence(
+        sequence,
+        `${path}.igniteEventResponses[${index}].sequences[${sequenceIndex}]`,
+        collect,
+        flags,
+        source,
+      ),
     ),
   );
   for (const kind of ['damageModifiers', 'healModifiers', 'poiseModifiers'] as const) {

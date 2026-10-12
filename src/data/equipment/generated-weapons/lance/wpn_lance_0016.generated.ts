@@ -54,54 +54,65 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_lance_0016_heal',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_lance_0016_heal',
+                      copiedBlackboardAssignments: { heal_up: 'heal_up', duration: 'duration' },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: { heal_up: 'heal_up', duration: 'duration' },
                 },
               },
               next: null,
             },
-            conditional_2: {
+            checkCondition_2: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
               },
-              next: null,
+              next: 'applyBuff_1',
             },
             applyBuff_3: {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_lance_0016_dmgup',
-                  target: 'party',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_lance_0016_dmgup',
+                      copiedBlackboardAssignments: {
+                        spell_dmg_up: 'spell_dmg_up',
+                        duration2: 'duration2',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'characterTeam', excludeOwner: false },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    spell_dmg_up: 'spell_dmg_up',
-                    duration2: 'duration2',
-                  },
                 },
               },
               next: null,
             },
-            conditional_4: {
+            checkCondition_4: {
               action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'applyBuff_3' },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
               },
-              next: null,
+              next: 'applyBuff_3',
             },
-            conditional_5: {
+            invertNextResult_5: {
+              action: { kind: 'invertNextResult', parameters: {} },
+              next: 'checkCondition_4',
+            },
+            checkCondition_6: {
               action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-                whenTrue: { $sequence: 'conditional_4' },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
               },
-              next: null,
+              next: 'invertNextResult_5',
             },
           },
           dataNodes: {
@@ -119,10 +130,6 @@ const definition = {
             },
             data_3: {
               type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-            },
-            data_4: {
-              type: 'boolean',
               expression: {
                 kind: 'eventHealTagsMatch',
                 match: 'hasAny',
@@ -139,13 +146,13 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'beforeOutputDamage',
           priority: 0,
-          sequence: { $sequence: 'conditional_2' },
+          sequence: { $sequence: 'checkCondition_2' },
         },
         {
           key: 'skill3:event:1:sequence:0',
           abilityEvent: 'outputHeal',
           priority: 0,
-          sequence: { $sequence: 'conditional_5' },
+          sequence: { $sequence: 'checkCondition_6' },
         },
       ],
       blackboard: {
@@ -157,7 +164,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_lance_0016',
-  iconPath: '/weapons/lance/wpn_lance_0016.webp',
+  icon: 'endaxis:weapons/lance/wpn_lance_0016',
   buffDefinitions: {
     buff_wpn_lance_0016_dmgup: {
       stackingType: 'highPriority',
@@ -169,8 +176,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_spell_up',
-        iconPath: '/icons/icon_battle_spell_up.webp',
+        icon: 'endaxis:icons/icon_battle_spell_up',
         showInHeadBarCommon: true,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -226,8 +232,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_buff_heal',
-        iconPath: '/icons/icon_battle_buff_heal.webp',
+        icon: 'endaxis:icons/icon_battle_buff_heal',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

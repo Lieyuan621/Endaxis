@@ -16,26 +16,24 @@ import { blackboardFieldContextKey } from './blackboardFieldContext';
 import { structuredFieldContextKey } from './structuredFieldContext';
 import StructuredValueField from './StructuredValueField.vue';
 import DefinitionValueCreator from '../definition-editor/DefinitionValueCreator.vue';
-import NodeInspectorFields from '../action-graph/NodeInspectorFields.vue';
 import ActionNodeInspector from '../action-graph/ActionNodeInspector.vue';
 import BlackboardMappingField from './BlackboardMappingField.vue';
 import SkillSettingValuesField from './SkillSettingValuesField.vue';
 import { resolveBlackboardMapping } from './blackboardMapping';
-import { replaceResourceNodeAction } from '../../application/editor/actionGraphResourceEditing';
 const fixtures = [
   {
     kind: 'applyBuff',
-    name: 'keywordEnhancements',
-    path: ['value'],
-    row: { triggerBuffIds: ['buff'], operation: 'add' },
-    patch: { operation: 'multiply' },
+    name: 'buffs',
+    path: ['keywordEnhancements', 0, 'value'],
+    row: { buffId: 'buff', keywordEnhancements: [{ triggerBuffIds: ['buff'], operation: 'add' }] },
+    patch: { stringBlackboardAssignments: { caption: 'changed' } },
   },
   {
-    kind: 'applyBuff',
-    name: 'onActionEndBuffs',
+    kind: 'aura',
+    name: 'buffs',
     path: ['blackboardAssignments', 'amount'],
-    row: { buffId: 'buff', target: 'caster', stringBlackboardAssignments: { caption: 'raw text' } },
-    patch: { inheritSourceSkillCastInfo: true },
+    row: { buffId: 'buff', stringBlackboardAssignments: { caption: 'raw text' } },
+    patch: { stringBlackboardAssignments: { caption: 'changed' } },
   },
   {
     kind: 'readSkillSettingData',
@@ -51,6 +49,8 @@ const fixtures = [
   )!,
 }));
 function row(f: (typeof fixtures)[number], value: unknown): any {
+  if (f.path[0] === 'keywordEnhancements')
+    return { ...f.row, keywordEnhancements: [{ ...f.row.keywordEnhancements![0], value }] };
   return {
     ...f.row,
     ...(f.path.length === 2
@@ -151,7 +151,10 @@ it.each(fixtures)(
   async f => {
     const schema = f.field.valueSchema!;
     const options = { kind: f.kind, path: f.field.path, blackboard: context(['arg']), choices };
-    for (const operand of [{ kind: 'constant', value: 2 }])
+    for (const operand of [
+      { kind: 'constant', value: 2 },
+      ...(f.path[0] === 'blackboardAssignments' ? [3, [1, 2]] : []),
+    ])
       expect(() =>
         validateStructuredValue(schema, undefined, [row(f, operand)], options),
       ).not.toThrow();
@@ -160,8 +163,7 @@ it.each(fixtures)(
       { kind: 'parameter', parameter: 'absent' },
       { kind: 'blackboard', key: 'text' },
       { kind: 'valueNode', nodeId: 'raw' },
-      [1, 2],
-      3,
+      ...(f.path[0] === 'blackboardAssignments' ? [[], [Infinity]] : [[1, 2], 3]),
     ])
       expect(() =>
         validateStructuredValue(schema, undefined, [row(f, operand)], options),
@@ -242,7 +244,7 @@ it.each(fixtures)(
 it('trigger Buff lists require the current real catalog while retaining raw order and duplicate IDs', () => {
   const f = fixtures[0]!;
   const value = [row(f, { kind: 'constant', value: 1 })];
-  value[0].triggerBuffIds = ['buff', 'buff'];
+  value[0].keywordEnhancements[0].triggerBuffIds = ['buff', 'buff'];
   const options = { kind: f.kind, path: f.field.path, choices };
   expect(() =>
     validateStructuredValue(f.field.valueSchema!, undefined, value, options),
@@ -257,19 +259,26 @@ it('trigger Buff lists require the current real catalog while retaining raw orde
     validateStructuredValue(
       f.field.valueSchema!,
       undefined,
-      [{ ...value[0], triggerBuffIds: ['missing'] }],
+      [
+        {
+          ...value[0],
+          keywordEnhancements: [
+            { ...value[0].keywordEnhancements[0], triggerBuffIds: ['missing'] },
+          ],
+        },
+      ],
       options,
     ),
   ).toThrow(/Reference/);
 });
-it('exit mappings keep connected identity across sibling edits and lock connected keys, removal, values and readonly retries', async () => {
+it('Buff mappings keep connected identity across sibling edits and lock connected keys, removal, values and readonly retries', async () => {
   const f = fixtures[1]!;
   const schema = f.field.valueSchema!;
   if (schema.kind !== 'array' || schema.element.kind !== 'object') throw new Error('row');
   const mapping = schema.element.fields.blackboardAssignments!;
   if (mapping.kind !== 'record') throw new Error('record');
   const descriptor = resolveBlackboardMapping(mapping, 'blackboardAssignments')!;
-  expect(descriptor).toEqual({ value: 'operand', destination: 'exitBuff' });
+  expect(descriptor).toEqual({ value: 'levelsOrOperand', destination: 'buff' });
   const pin = { kind: 'valueNode', nodeId: 'shared' };
   const extension = { keep: 1 };
   const original = { linked: pin, amount: { kind: 'constant', value: 1, extension } };
@@ -321,49 +330,6 @@ it('exit mappings keep connected identity across sibling edits and lock connecte
   host.state.changeValue(1, 8);
   await host.state.apply();
   expect(changes).toHaveLength(1);
-  host.stop();
-});
-it('exit Buff list and finishByAction are applied as one validated sibling transaction and remain staged after rejection', async () => {
-  const f = fixtures[1]!;
-  const finish = actionNodeSchemas.applyBuff.fields.find(
-    field => field.path.at(-1) === 'finishByAction',
-  )!;
-  const value: any = { kind: 'applyBuff', parameters: { buffId: 'buff', target: 'caster' } };
-  let owner: any = {
-    actionGraph: { main: { nodes: { node: { action: value, next: null } } }, macros: {} },
-  };
-  let commits = 0;
-  const host = await mount(
-    NodeInspectorFields,
-    {
-      kind: f.kind,
-      value,
-      fields: [f.field, finish],
-      referenceChoices: choices,
-      blackboardContext: context(),
-      applyValue: (next: any) => {
-        try {
-          owner = replaceResourceNodeAction(owner, { kind: 'main' }, 'node', next);
-          commits++;
-          return true;
-        } catch {
-          return false;
-        }
-      },
-    },
-    f.field,
-  );
-  host.state.stageStructured(f.field, [row(f, { kind: 'constant', value: 2 })]);
-  expect(host.state.apply()).toBe(false);
-  expect(host.state.hasTypedDrafts.value).toBe(true);
-  expect(commits).toBe(0);
-  host.state.inputs.value['parameters.finishByAction'] = 'true';
-  expect(host.state.apply()).toBe(true);
-  expect(commits).toBe(1);
-  expect(owner.actionGraph.main.nodes.node.action.parameters).toMatchObject({
-    finishByAction: true,
-    onActionEndBuffs: [{ buffId: 'buff' }],
-  });
   host.stop();
 });
 it('four-column controls expose malformed imports and support same-field repair without list resizing', async () => {

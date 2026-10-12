@@ -1,9 +1,10 @@
 /** 生成器和应用共用的数据读取校验。只检查传入值，不加载游戏资料或战斗运行状态。 */
+import type { GameplayTag } from '../../../packages/game-data-contract/src/gameplayTags.ts';
 import {
   OPERATOR_PASSIVE_ABILITY_EVENTS,
   type OperatorPassiveAbilityEvent,
 } from '../../../packages/game-data-contract/src/operators.ts';
-import type { GameplayTag } from '../../../packages/game-data-contract/src/gameplayTags.ts';
+import type { ImageRef } from '../../../packages/game-data-contract/src/primitives';
 import type { SkillSettingResources } from '../../../packages/game-data-contract/src/skillSettingResources.ts';
 
 /** 判断外部值是否是受支持的干员被动事件名。 */
@@ -34,6 +35,7 @@ export function parseSkillSettingResources(value: unknown): SkillSettingResource
     throw new Error('SkillSetting.resources: expected object');
   const row = value as Record<string, unknown>;
   const keys = [
+    'comboSkillPendingInterval',
     'atbRecoverInterval',
     'atbGainEfficiency',
     'atbConsumedDefaultUspGainSelf',
@@ -48,9 +50,17 @@ export function parseSkillSettingResources(value: unknown): SkillSettingResource
     return n;
   };
   return {
+    comboSkillPendingInterval: read('comboSkillPendingInterval'),
     atbRecoverInterval: read('atbRecoverInterval'),
     atbGainEfficiency: read('atbGainEfficiency'),
     atbConsumedDefaultUspGainSelf: read('atbConsumedDefaultUspGainSelf'),
     atbConsumedDefaultUspGainOther: read('atbConsumedDefaultUspGainOther'),
   };
+}
+/** 图片身份的语法校验；是否存在由应用资源目录或候选发布校验负责。 */
+export function isImageRef(value: unknown): value is ImageRef {
+  return (
+    typeof value === 'string' &&
+    /^[a-z][a-z0-9_-]*:[a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_-]+)*$/.test(value)
+  );
 }

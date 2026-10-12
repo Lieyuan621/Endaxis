@@ -394,41 +394,14 @@ it('字符串常量草稿支持取消，并在提交时复查目录与只读状�
   }
 });
 
-it('node string operand commit revalidates catalogs and keeps refused drafts', async () => {
-  const field = actionNodeSchemas.applyBuff.fields.find(f => f.path.at(-1) === 'buffId')!;
-  const accepted: unknown[] = [];
-  const f = await mountSetup(NodeInspectorFields, {
-    value: { kind: 'applyBuff', parameters: { buffId: 'old' } },
-    kind: 'applyBuff',
-    fields: [field],
-    referenceChoices: candidates,
-    applyValue: (v: unknown) => {
-      accepted.push(v);
-      return false;
-    },
-  });
-  try {
-    f.state.changeStructured(field, 'known');
-    expect(accepted).toHaveLength(1);
-    expect(f.state.pending.value).toBe(true);
-    expect(f.state.inputs.value['parameters.buffId']).toBe('"known"');
-    await f.update({ referenceChoices: { buff: referenceCatalog('buff', []) } });
-    expect(f.state.apply()).toBe(false);
-    expect(accepted).toHaveLength(1);
-    await f.update({ referenceChoices: candidates });
-    f.state.changeStructured(field, 'known');
-    expect(accepted).toHaveLength(2);
-    expect(accepted[1]).toEqual({ kind: 'applyBuff', parameters: { buffId: 'known' } });
-  } finally {
-    f.stop();
-  }
-});
-
 it('creates typed string operands without a separate untyped union branch chooser', async () => {
   const created: unknown[] = [];
-  const schema = actionNodeSchemas.applyBuff.fields.find(
-    f => f.path.at(-1) === 'buffId',
+  const buffs = actionNodeSchemas.applyBuff.fields.find(
+    f => f.path.at(-1) === 'buffs',
   )!.valueSchema;
+  if (buffs.kind !== 'array' || buffs.element.kind !== 'object')
+    throw new Error('expected Buff entries');
+  const schema = buffs.element.fields.buffId;
   const f = await mountSetup(DefinitionValueCreator, {
     schema,
     editable: true,
@@ -447,39 +420,36 @@ it('creates typed string operands without a separate untyped union branch choose
   }
 });
 
-it.each(['buffId', 'blackboardAssignments'])(
-  '%s child discard removes a rejected structured proposal before a later parent apply',
-  async name => {
-    const field = actionNodeSchemas.applyBuff.fields.find(f => f.path.at(-1) === name)!;
-    const value = {
-      kind: 'applyBuff',
-      parameters: { buffId: 'known', blackboardAssignments: { old: 1 } },
-    };
-    let accepts = false;
-    const attempts: unknown[] = [];
-    const f = await mountSetup(NodeInspectorFields, {
-      value,
-      kind: 'applyBuff',
-      fields: [field],
-      referenceChoices: candidates,
-      applyValue: (v: unknown) => {
-        attempts.push(v);
-        return accepts;
-      },
-    });
-    try {
-      f.state.changeStructured(field, name === 'buffId' ? 'known' : { new: 2 });
-      expect(f.state.pending.value).toBe(true);
-      f.state.discardStructured(field);
-      expect(f.state.pending.value).toBe(false);
-      accepts = true;
-      expect(f.state.apply()).toBe(true);
-      expect(attempts).toHaveLength(1);
-    } finally {
-      f.stop();
-    }
-  },
-);
+it('Buff entry discard removes a rejected structured proposal before a later parent apply', async () => {
+  const field = actionNodeSchemas.applyBuff.fields.find(f => f.path.at(-1) === 'buffs')!;
+  const value = {
+    kind: 'applyBuff',
+    parameters: { buffs: [{ buffId: 'known', blackboardAssignments: { old: 1 } }] },
+  };
+  let accepts = false;
+  const attempts: unknown[] = [];
+  const f = await mountSetup(NodeInspectorFields, {
+    value,
+    kind: 'applyBuff',
+    fields: [field],
+    referenceChoices: candidates,
+    applyValue: (v: unknown) => {
+      attempts.push(v);
+      return accepts;
+    },
+  });
+  try {
+    f.state.changeStructured(field, [{ buffId: 'known', blackboardAssignments: { new: 2 } }]);
+    expect(f.state.pending.value).toBe(true);
+    f.state.discardStructured(field);
+    expect(f.state.pending.value).toBe(false);
+    accepts = true;
+    expect(f.state.apply()).toBe(true);
+    expect(attempts).toHaveLength(1);
+  } finally {
+    f.stop();
+  }
+});
 
 it('the string child sends discard only for user cancellation, never a parent refresh', async () => {
   let discards = 0;
@@ -540,7 +510,8 @@ it('typed collections apply through real history once, preserving siblings and d
         action: {
           kind: 'finishBuffsById' as const,
           parameters: {
-            target: 'caster' as const,
+            targets: { kind: 'fixed', target: 'caster' } as const,
+            finishSource: { kind: 'source' } as const,
             reason: 'other' as const,
             buffIds: ['known', 'stale', 'known'],
           },
@@ -568,7 +539,8 @@ it('typed collections apply through real history once, preserving siblings and d
   try {
     f.state.changeStructured(field, ['stale', 'known', 'known', 'known']);
     expect(history.current.actionGraph.main.nodes.finish!.action.parameters).toEqual({
-      target: 'caster',
+      targets: { kind: 'fixed', target: 'caster' },
+      finishSource: { kind: 'source' },
       reason: 'other',
       buffIds: ['stale', 'known', 'known', 'known'],
     });
@@ -591,13 +563,16 @@ it('typed collections apply through real history once, preserving siblings and d
     f.stop();
   }
 });
-it('cannot use an enclosing entity catalog when an owner override is persisted or pending', async () => {
+it('cannot use an enclosing entity catalog when the query owner comes from another context', async () => {
   const attempts: unknown[] = [];
   const fields = actionNodeSchemas.findOwnerSpawnedAbilityEntities.fields;
   const ids = fields.find(f => f.path.at(-1) === 'abilityEntityIds')!;
   const f = await mountSetup(NodeInspectorFields, {
     kind: 'findOwnerSpawnedAbilityEntities',
-    value: { kind: 'findOwnerSpawnedAbilityEntities', parameters: { saveToContextKey: 'targets' } },
+    value: {
+      kind: 'findOwnerSpawnedAbilityEntities',
+      parameters: { owner: { kind: 'source' }, saveToContextKey: 'targets' },
+    },
     fields,
     referenceChoices: { abilityEntity: referenceCatalog('abilityEntity') },
     applyValue: (value: unknown) => {
@@ -606,17 +581,15 @@ it('cannot use an enclosing entity catalog when an owner override is persisted o
     },
   });
   try {
-    f.state.change('parameters.ownerContextKey', 'another-owner');
-    expect(f.state.collectionChoices(ids)).toBeUndefined();
-    f.state.changeStructured(ids, ['known']);
-    expect(attempts).toEqual([]);
     await f.update({
       value: {
         kind: 'findOwnerSpawnedAbilityEntities',
-        parameters: { saveToContextKey: 'targets', ownerContextKey: 'other' },
+        parameters: { owner: { kind: 'context', key: 'other' }, saveToContextKey: 'targets' },
       },
     });
     expect(f.state.collectionChoices(ids)).toBeUndefined();
+    f.state.changeStructured(ids, ['known']);
+    expect(attempts).toEqual([]);
   } finally {
     f.stop();
   }
@@ -708,8 +681,8 @@ it('stages native timing sibling switches as one validated node transaction with
       loop: { action, next: 'after' },
       after: {
         action: {
-          kind: 'setContextFlag' as const,
-          parameters: { flag: 'keep', value: true, target: 'caster' as const },
+          kind: 'triggerCustomAbilityEvent' as const,
+          parameters: { eventName: 'keep', eventParam: 0, target: 'caster' as const },
         },
         next: null,
       },
@@ -796,7 +769,11 @@ it('acknowledges existing list controls coherently during a staged structural tr
     kind: 'findOwnerSpawnedAbilityEntities',
     value: {
       kind: 'findOwnerSpawnedAbilityEntities',
-      parameters: { saveToContextKey: 'targets', abilityEntityIds: ['known'] },
+      parameters: {
+        owner: { kind: 'source' },
+        saveToContextKey: 'targets',
+        abilityEntityIds: ['known'],
+      },
     },
     fields,
     referenceChoices: { abilityEntity: referenceCatalog('abilityEntity', ['known', 'new']) },
@@ -828,7 +805,7 @@ it('acknowledges existing list controls coherently during a staged structural tr
     await f.update({
       value: {
         kind: 'findOwnerSpawnedAbilityEntities',
-        parameters: { saveToContextKey: 'different-node' },
+        parameters: { owner: { kind: 'source' }, saveToContextKey: 'different-node' },
       },
     });
     expect(f.state.pending.value).toBe(false);
@@ -840,11 +817,11 @@ it('acknowledges existing list controls coherently during a staged structural tr
 
 it('structured leaf edits keep immutable drafts, reject incomplete values, recheck catalogs and discard rejected revisions', async () => {
   const { default: StructuredValueField } = await import('./StructuredValueField.vue');
-  const field = actionNodeSchemas.applyBuff.fields.find(
-    field => field.path.at(-1) === 'onActionEndFinishBuffs',
+  const field = actionNodeSchemas.setBuffRemainingDuration.fields.find(
+    field => field.path.at(-1) === 'query',
   )!;
   const original = Object.freeze({
-    target: 'caster',
+    kind: 'id',
     buffIds: ['known'],
     extension: Object.freeze({ weight: Infinity }),
   });
@@ -855,7 +832,7 @@ it('structured leaf edits keep immutable drafts, reject incomplete values, reche
     value: original,
     editable: true,
     label: 'Finish buffs',
-    kind: 'applyBuff',
+    kind: 'setBuffRemainingDuration',
     path: field.path,
     referenceChoices: { buff: referenceCatalog('buff', ['known', 'new']) },
     onChange: (next: unknown) => changes.push(next),
@@ -863,9 +840,9 @@ it('structured leaf edits keep immutable drafts, reject incomplete values, reche
   });
   try {
     f.state.begin();
-    f.state.change(['target'], 'party');
+    f.state.change(['buffIds'], ['known', 'known']);
     expect(changes).toEqual([]);
-    expect(original.target).toBe('caster');
+    expect(original.buffIds).toEqual(['known']);
     expect(f.state.draft.value.extension).toBe(original.extension);
     f.state.change(['buffIds'], ['new']);
     await f.update({ referenceChoices: candidates });
@@ -873,11 +850,11 @@ it('structured leaf edits keep immutable drafts, reject incomplete values, reche
     expect(changes).toEqual([]);
     expect(f.state.editing.value).toBe(true);
     expect(f.state.error.value).toBe('fieldReference.invalid');
-    f.state.change(['buffIds'], ['known']);
+    f.state.change(['buffIds'], ['known', 'known']);
     await f.state.stage();
     expect(changes).toHaveLength(1);
     expect(f.state.error.value).toBe('structuredValue.rejected');
-    f.state.change(['target'], 'caster');
+    f.state.change(['buffIds'], ['known', 'known', 'known']);
     expect(discards).toBe(1);
     expect(f.state.editing.value).toBe(true);
     f.state.discard();
@@ -885,7 +862,7 @@ it('structured leaf edits keep immutable drafts, reject incomplete values, reche
     f.state.begin();
     expect(f.state.draft.value).toBe(original);
     await f.update({ editable: false });
-    f.state.change(['target'], 'party');
+    f.state.change(['buffIds'], ['new']);
     await f.state.stage();
     expect(changes).toHaveLength(1);
   } finally {
@@ -1290,11 +1267,14 @@ it('string graph references are navigable read-only boundaries, even with synthe
 });
 
 it('cannot replace a connected string operand through a stale or synthetic inline field event', async () => {
-  const field = actionNodeSchemas.applyBuff.fields.find(f => f.path.at(-1) === 'buffId')!;
+  const field = actionNodeSchemas.createTimedMarker.fields.find(f => f.path.at(-1) === 'markerId')!;
   const accepted: unknown[] = [];
   const f = await mountSetup(NodeInspectorFields, {
-    value: { kind: 'applyBuff', parameters: { buffId: { kind: 'stringNode', nodeId: 'shared' } } },
-    kind: 'applyBuff',
+    value: {
+      kind: 'createTimedMarker',
+      parameters: { markerId: { kind: 'stringNode', nodeId: 'shared' } },
+    },
+    kind: 'createTimedMarker',
     fields: [field],
     referenceChoices: candidates,
     applyValue: (value: unknown) => {

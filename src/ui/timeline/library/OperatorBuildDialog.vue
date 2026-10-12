@@ -50,13 +50,15 @@ import {
   DEFAULT_GAME_ICON_PATH,
   getAttributeIconPath,
   getOperatorAvatarPath,
-  getOperatorSkillIconPath,
   getOperatorTalentIconPath,
   getWeaponActionIconPath,
 } from '../../gameAssetPaths';
 import { elementColors } from '../../gameColors';
 import type { OperatorPanelAttributes } from '../../../core/compiler/resolveOperatorPanel';
-import { resolveOperatorPresentationFormKey } from './operatorFormPresentation';
+import {
+  resolveOperatorPresentationFormKey,
+  resolveOperatorSkillIcon,
+} from './operatorFormPresentation';
 
 const LEVELS = [1, 20, 40, 60, 80, 90] as const satisfies readonly OperatorLevel[];
 const SKILL_ORDER = PLAYER_SKILL_INPUTS;
@@ -168,12 +170,14 @@ function skillTypeName(source: SkillLevelSource): string {
 function skillIcon(source: SkillLevelSource): string {
   const operator = props.operator;
   if (!operator) return DEFAULT_GAME_ICON_PATH;
-  if (source === 'basicAttack') {
-    return getWeaponActionIconPath(operator.definition.weaponType);
-  }
+  const binding =
+    definition.value &&
+    listOperatorSkillDefinitionBindings(definition.value).find(
+      ({ group }) => group.operationType === source,
+    );
   return (
-    getOperatorSkillIconPath(operator.definition.assetSlug ?? operator.operatorSlug, source) ??
-    DEFAULT_GAME_ICON_PATH
+    (binding && resolveOperatorSkillIcon(binding, activeFormKey.value, definition.value!)) ??
+    getWeaponActionIconPath(operator.definition.weaponType)
   );
 }
 

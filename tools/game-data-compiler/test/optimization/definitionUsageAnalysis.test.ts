@@ -2,7 +2,10 @@ import { numberInput } from '../../../../src/test/compiledGraphInputs';
 import { skillFixture } from '../../../../src/test/skillFixture';
 /** 对照执行器验证黑板用途摘要，防止把条件的旧值读取或外部对象读取漏掉。 */
 import { describe, expect, it } from 'vitest';
-import type { CombatCondition } from '../../src/compiler/intermediateDefinitions.ts';
+import type {
+  ActionGraphStep,
+  CombatCondition,
+} from '../../src/compiler/intermediateDefinitions.ts';
 import type { CombatStepForKind } from '../../src/compiler/intermediateDefinitions.ts';
 import type { SkillDefinition } from '../../src/compiler/intermediateDefinitions.ts';
 import type { CombatOperationContext } from '../../../../src/core/combat/skills/skillRuntime.ts';
@@ -12,14 +15,92 @@ import { EventContextConditionExecutor } from '../../../../src/core/combat/event
 import { AbilityEntityOperationExecutor } from '../../../../src/core/combat/abilities/abilityEntityOperationExecutor.ts';
 import { LogicalAbilityEntityRuntime } from '../../../../src/core/combat/abilities/logicalAbilityEntityRuntime.ts';
 import { RuntimeTargetContext } from '../../../../src/core/combat/abilities/runtimeTargetContext.ts';
+import { TargetContextOperationExecutor } from '../../../../src/core/combat/abilities/targetContextOperationExecutor.ts';
 import {
   analyzeConditionUsage,
   analyzeStepUsage,
 } from '../../src/compiler/optimization/definitionUsageAnalysis.ts';
-import { analyzeGraphSequenceUsage } from '../../src/compiler/optimization/graphSequenceOptimization.ts';
+import {
+  analyzeGraphSequenceUsage,
+  optimizeActionGraphDefinition,
+} from '../../src/compiler/optimization/graphSequenceOptimization.ts';
 import { pruneUnusedGraphSkillValues } from '../../src/compiler/optimization/graphValueOptimization.ts';
+import { extractGraphDataNodes } from '../../src/compiler/extractGraphDataNodes.ts';
 
 describe('黑板用途的读取对象', () => {
+  it('距离与方向检查的目标查询可分配位置身份，不能当成纯比较删除', () => {
+    const executor = new TargetContextOperationExecutor('ally', {
+      execute: () => false,
+      evaluate: () => false,
+    });
+    const owner = { kind: 'owner' } as const;
+    for (const query of [
+      owner,
+      { kind: 'fixedPoint', owner, center: owner, directionTarget: owner } as const,
+    ]) {
+      const distance = {
+        kind: 'targetDistance',
+        source: owner,
+        target: query,
+        distance: 1,
+        lessThan: true,
+        includeTargetRadius: false,
+        containsHittableObject: false,
+      } satisfies CombatCondition;
+      const angle = {
+        kind: 'twoDirectionAngleCompare',
+        direction1Source: owner,
+        direction1Target: query,
+        direction1Type: 'SourceToTarget',
+        direction2Source: owner,
+        direction2Target: owner,
+        direction2Type: 'SourceToTarget',
+        operator: 'lessOrEqual',
+        value: { kind: 'constant', value: 1 },
+      } satisfies CombatCondition;
+      const before = executor.runtimeState.nextSpatialPointId;
+      expect(
+        executor.evaluate(distance, {
+          blackboard: new ActionBlackboard(),
+          actionOwnerId: 'ally',
+        }),
+      ).toBe(true);
+      const allocated = executor.runtimeState.nextSpatialPointId - before;
+      expect(allocated).toBe(query.kind === 'fixedPoint' ? 1 : 0);
+      for (const condition of [distance, angle]) {
+        expect(analyzeConditionUsage(condition).observable).toBe(allocated > 0);
+        const optimized = optimizeActionGraphDefinition(
+          {
+            nodes: {
+              branch: {
+                action: {
+                  kind: 'ifElse',
+                  parameters: { alwaysNext: true },
+                  condition: { $sequence: 'check' },
+                  whenTrue: { $sequence: null },
+                  whenFalse: { $sequence: null },
+                },
+                next: null,
+              },
+              check: {
+                action: { kind: 'checkCondition', parameters: { condition } },
+                next: null,
+              },
+            },
+          },
+          { $sequence: 'branch' },
+          { mode: 'apply', definitionId: 'query' },
+        );
+        expect(
+          Object.values(optimized.graph.nodes).some(node => node.action.kind === 'checkCondition'),
+        ).toBe(allocated > 0);
+        if (condition.kind === 'twoDirectionAngleCompare' && allocated > 0)
+          expect(() => extractGraphDataNodes(optimized.graph)).toThrow('cannot be published');
+        else expect(() => extractGraphDataNodes(optimized.graph)).not.toThrow();
+      }
+    }
+  });
+
   it('可中断标记有运行时作用，但不读写黑板，也不阻止无用值裁剪', () => {
     const usage = analyzeStepUsage({ kind: 'markCurrentSkillCanInterrupt', parameters: {} });
     expect(usage.observable).toBe(true);
@@ -235,13 +316,14 @@ describe('黑板用途的读取对象', () => {
         finalHealKey: 'requested',
         realHealKey: 'actual',
       }).reads,
-    ).toEqual(new Set(['excess', 'requested', 'actual']));
+    ).toEqual(new Set());
   });
 
   it('环排序读取查询到的实体板，技能上同名初值可以删除', () => {
     const query: CombatStepForKind<'findOwnerSpawnedAbilityEntities'> = {
       kind: 'findOwnerSpawnedAbilityEntities',
       parameters: {
+        owner: { kind: 'source' },
         saveToContextKey: 'places',
         abilityEntityIds: ['place'],
         circularOrder: { indexBlackboardKey: 'slot', desiredCount: 3, reverseFlag: 1 },
@@ -262,7 +344,12 @@ describe('黑板用途的读取对象', () => {
     const usage = analyzeStepUsage(query);
     expect(usage.reads.size).toBe(0);
     expect(usage.externalReads).toEqual([
-      { kind: 'abilityEntity', abilityEntityIds: ['place'], key: 'slot' },
+      {
+        kind: 'abilityEntity',
+        abilityEntityIds: ['place'],
+        owner: { kind: 'source' },
+        key: 'slot',
+      },
     ]);
     expect(usage.unknownAccess).toBe(false);
 
@@ -276,13 +363,16 @@ describe('黑板用途的读取对象', () => {
         blackboardAssignments: { slot },
       });
     }
-    const executor = new AbilityEntityOperationExecutor('caster', entities, {
+    const operations = new TargetContextOperationExecutor('caster', {
       execute: () => false,
       evaluate: () => false,
     });
+    const executor = new AbilityEntityOperationExecutor('caster', entities, operations);
     const run = (blackboard: ActionBlackboard) => {
       const targetContext = new RuntimeTargetContext();
-      expect(executor.execute(query, { blackboard, targetContext })).toBe(true);
+      expect(executor.execute(query, { blackboard, targetContext, actionSourceId: 'caster' })).toBe(
+        true,
+      );
       return targetContext
         .get('places')
         .map(target => entities.entityBlackboard(target).getNumber('slot'));
@@ -292,13 +382,17 @@ describe('黑板用途的读取对象', () => {
     expect(
       analyzeStepUsage({
         ...query,
-        parameters: { ...query.parameters, ownerContextKey: 'owners', sameSourceSkillCast: true },
+        parameters: {
+          ...query.parameters,
+          owner: { kind: 'context', key: 'owners' },
+          sameSourceSkillCast: true,
+        },
       }).externalReads,
     ).toEqual([
       {
         kind: 'abilityEntity',
         abilityEntityIds: ['place'],
-        ownerContextKey: 'owners',
+        owner: { kind: 'context', key: 'owners' },
         sameSourceSkillCast: true,
         key: 'slot',
       },
@@ -358,13 +452,46 @@ describe('黑板用途的读取对象', () => {
       },
       { kind: 'eventBuff', key: 'eventValue' },
     ]);
+    // 同一读取链作为延迟回调时，外层资源仍必须看见它的本地与跨实例依赖。
+    const entry = { $sequence: 'read' };
+    for (const action of [
+      {
+        kind: 'playAnimation',
+        parameters: { durationSeconds: 1, blendOutSeconds: 0, executeOnNormalEndOnly: false },
+        onEnd: entry,
+      },
+      {
+        kind: 'showComboRingQte',
+        parameters: {
+          earlyDurationSeconds: { kind: 'constant', value: 0 },
+          activeDurationSeconds: { kind: 'constant', value: 1 },
+        },
+        triggeredAction: entry,
+      },
+      {
+        kind: 'aura',
+        parameters: { targets: { kind: 'owner' }, buffs: [] },
+        onEnter: entry,
+        onExit: entry,
+      },
+    ] satisfies ActionGraphStep[]) {
+      expect(
+        analyzeGraphSequenceUsage(
+          { nodes: { ...nodes, callback: { action, next: null } } },
+          { $sequence: 'callback' },
+        ),
+      ).toEqual(usage);
+    }
   });
 });
 
 it('keeps unresolved string graphs as conservative usage barriers without inventing a blackboard key', () => {
   const stringNode = { kind: 'stringNode' as const, nodeId: 'shared' };
   const usages = [
-    analyzeStepUsage({ kind: 'applyBuff', parameters: { target: 'caster', buffId: stringNode } }),
+    analyzeStepUsage({
+      kind: 'applyBuff',
+      parameters: { buffs: [{ buffId: stringNode }], targets: { kind: 'fixed', target: 'caster' } },
+    }),
     analyzeStepUsage({
       kind: 'castSkillDuringAction',
       parameters: {
@@ -378,22 +505,33 @@ it('keeps unresolved string graphs as conservative usage barriers without invent
       kind: 'createTimedMarker',
       parameters: {
         markerId: stringNode,
-        target: 'caster',
+        targets: { kind: 'fixed', target: 'caster' },
+        timeDomain: 'self',
         durationSeconds: { kind: 'blackboard', key: 'duration' },
         autoFinishByAction: false,
       },
     }),
     analyzeStepUsage({
-      kind: 'createAbilityEntityTimedMarker',
+      kind: 'createTimedMarker',
       parameters: {
         markerId: stringNode,
         durationSeconds: { kind: 'constant', value: 1 },
         autoFinishByAction: false,
-        timeDomain: 'global',
+        targets: { kind: 'owner' },
+        timeDomain: 'globalScaled',
       },
     }),
-    analyzeConditionUsage({ kind: 'timedMarkerPresent', target: 'caster', markerId: stringNode }),
-    analyzeConditionUsage({ kind: 'abilityEntityTimedMarkerPresent', markerId: stringNode }),
+    analyzeConditionUsage({
+      kind: 'timedMarkerPresent',
+      returnTrueIfNotExists: false,
+      target: 'caster',
+      markerId: stringNode,
+    }),
+    analyzeConditionUsage({
+      kind: 'abilityEntityTimedMarkerPresent',
+      returnTrueIfNotExists: false,
+      markerId: stringNode,
+    }),
   ];
   for (const usage of usages) {
     expect(usage.unknownAccess).toBe(true);
@@ -404,14 +542,18 @@ it('keeps unresolved string graphs as conservative usage barriers without invent
   expect(usages[2]!.reads).toEqual(new Set(['duration']));
   const dynamic = analyzeConditionUsage({
     kind: 'timedMarkerPresent',
+    returnTrueIfNotExists: false,
     target: 'caster',
     markerId: { blackboardKey: '  exact  ' },
   });
   expect(dynamic.reads).toEqual(new Set(['  exact  ']));
   expect(dynamic.unknownAccess).toBe(false);
   expect(
-    analyzeConditionUsage({ kind: 'abilityEntityTimedMarkerPresent', markerId: 'inline' }).reads
-      .size,
+    analyzeConditionUsage({
+      kind: 'abilityEntityTimedMarkerPresent',
+      returnTrueIfNotExists: false,
+      markerId: 'inline',
+    }).reads.size,
   ).toBe(0);
 });
 
@@ -440,7 +582,8 @@ it('does not prune prior writes or initial values through an unresolved string d
               kind: 'createTimedMarker',
               parameters: {
                 markerId: { kind: 'stringNode', nodeId: 'source' },
-                target: 'caster',
+                targets: { kind: 'fixed', target: 'caster' },
+                timeDomain: 'self',
                 durationSeconds: { kind: 'constant', value: 1 },
                 autoFinishByAction: false,
               },

@@ -59,7 +59,7 @@ function gear(slug: string, gearSetSlug?: string): CompiledGearDefinitionSource 
   return {
     slug,
     assetSlug: slug,
-    iconPath: `/equipment/test/${slug}.webp`,
+    icon: `endaxis:equipment/test/${slug}`,
     slotType: 'armor',
     levelRequirement: 70,
     baseDefense: 48,

@@ -4,6 +4,9 @@
  * 干员、技能、Buff、装备、条件和动作都会引用这里的类型。集中定义可以让生成器、编辑器
  * 和模拟器对元素、技能类型、战斗对象及动作目标采用同一种解释。
  */
+/** 图片资源 ID（例如 endaxis:operators/arcane/ultimate_02），不是文件路径。 */
+export type ImageRef = string;
+
 /** 干员的四项基础属性。 */
 export const OPERATOR_ATTRIBUTES = [
   /** 力量。 */
@@ -452,17 +455,6 @@ export const DAMAGE_CALCULATIONS = [
 
 /** 命中进入标准或破防专用公式前处理的计算路径。 */
 export type DamageCalculation = (typeof DAMAGE_CALCULATIONS)[number];
-
-/** 战斗资源变化可以作用的范围。 */
-export const RESOURCE_RECIPIENTS = [
-  /** 当前施法者。 */
-  'caster',
-  /** 整个队伍。 */
-  'team',
-] as const;
-
-/** 资源变化步骤当前允许作用的施法者或全队范围。 */
-export type ResourceRecipient = (typeof RESOURCE_RECIPIENTS)[number];
 
 /** 治疗动作支持的目标选择方式。 */
 export const HEAL_TARGETS = [

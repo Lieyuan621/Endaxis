@@ -203,7 +203,10 @@ async function mountCanvas(hostKind: 'resource' | 'skill', listener = false, con
       main: {
         nodes: {
           source: { action, next: null },
-          target: { action: { kind: 'finishTimeline' as const, parameters: {} }, next: null },
+          target: {
+            action: { kind: 'markCurrentSkillCanInterrupt' as const, parameters: {} },
+            next: null,
+          },
         },
         dataNodes: {
           shared: listener

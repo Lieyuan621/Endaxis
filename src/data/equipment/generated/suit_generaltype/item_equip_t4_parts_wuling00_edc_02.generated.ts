@@ -4,7 +4,7 @@ import type { GearDefinition } from '../../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'item_equip_t4_parts_wuling00_edc_02',
   assetSlug: 'item_equip_t4_parts_wuling00_edc_02',
-  iconPath: '/equipment/wuling00/item_equip_t4_parts_wuling00_edc_02.webp',
+  icon: 'endaxis:equipment/wuling00/item_equip_t4_parts_wuling00_edc_02',
   slotType: 'accessory',
   levelRequirement: 60,
   baseDefense: 18,

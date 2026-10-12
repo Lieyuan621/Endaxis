@@ -34,7 +34,11 @@ function fixture(overrides: Record<string, unknown> = {}) {
             action: {
               key: 'route',
               kind: 'applyBuff',
-              parameters: { buffId: 'routing', target: 'caster', inheritSourceSkillCastInfo: true },
+              parameters: {
+                buffs: [{ buffId: 'routing' }],
+                targets: { kind: 'fixed', target: 'caster' },
+                inheritSourceSkillCastInfo: true,
+              },
             },
             next: null,
           },

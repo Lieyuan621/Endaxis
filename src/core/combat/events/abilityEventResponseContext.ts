@@ -20,20 +20,13 @@ export function withAbilityEventResponseContext<T>(
   return withEventContext(context, published, targets, execute);
 }
 
-/** 旧定义仅保留触发器筛选；原生响应仍进入同一上下文边界，手工标记不补造目标绑定。 */
+/** 触发器筛选后的原生响应使用同一上下文边界。 */
 export function withCombatEventResponseContext<T>(
   context: { -readonly [Key in keyof CombatOperationContext]: CombatOperationContext[Key] },
   response: CombatSemanticEventContext,
   execute: () => T,
 ): T {
-  if ('event' in response.event)
-    return withAbilityEventResponseContext(
-      context,
-      response.event,
-      response.actionContext,
-      execute,
-    );
-  return withEventContext(context, response.event, undefined, execute);
+  return withAbilityEventResponseContext(context, response.event, response.actionContext, execute);
 }
 
 function withEventContext<T>(
@@ -42,7 +35,7 @@ function withEventContext<T>(
   targets: AbilityEventRuntimeActionContext | undefined,
   execute: () => T,
 ): T {
-  const skillCastInfo = 'payload' in event ? abilityEventSkillCastInfo(event) : undefined;
+  const skillCastInfo = abilityEventSkillCastInfo(event);
   const previous = {
     event: context.event,
     eventSkillCastInfo: context.eventSkillCastInfo,

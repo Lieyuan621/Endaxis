@@ -44,7 +44,6 @@ it('单干员来源协调器恢复被动并在统一关系阶段接回子 Buff',
     upgradeEvents: null,
     comboConditions: new Map(),
     cooldowns: new Map(),
-    statuses: null,
     timedMarkers: createTimedMarkerState(),
     buffs: null,
   };

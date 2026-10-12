@@ -6,6 +6,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type * as GeneratedSourceFormatter from '../scripts/formatGeneratedSource.ts';
 
 const mocks = vi.hoisted(() => ({
   combat: vi.fn(),
@@ -27,7 +28,7 @@ vi.mock('../scripts/generateCombatDefinitionCandidates.ts', () => ({
 }));
 // 本测试只验证重建阶段编排；格式化器对正式输出清单的遍历另行验证。
 vi.mock('../scripts/formatGeneratedSource.ts', async importOriginal => ({
-  ...(await importOriginal<typeof import('../scripts/formatGeneratedSource.ts')>()),
+  ...(await importOriginal<typeof GeneratedSourceFormatter>()),
   formatGeneratedCandidate: async () => ({ fileCount: 0 }),
 }));
 // 完整路径若绕回这些旧入口，会多编译一次并破坏本轮共用来源。
@@ -136,8 +137,8 @@ vi.mock('../src/domains/locales/gameLocaleCandidate.ts', () => ({
   generateGameLocaleCandidate: mocks.locales,
 }));
 
-import { parseRebuildArguments, rebuildGameData } from '../scripts/rebuildGameData.ts';
 import { OPERATOR_DEFINITION_OUTPUTS } from '../scripts/operatorDefinitionOutputs.ts';
+import { parseRebuildArguments, rebuildGameData } from '../scripts/rebuildGameData.ts';
 
 const roots: string[] = [];
 const localeFiles = [
@@ -161,7 +162,8 @@ const domainDirectories = [
   'src/data/equipment/generated',
   'src/data/equipment/generated-weapons',
   'src/data/equipment/generated-gear-sets',
-  'src/data/mechanics/generated',
+  'src/data/contingencyContract/generated',
+  'src/data/consumables/generated',
 ];
 
 async function json(file: string, value: unknown) {
@@ -317,7 +319,7 @@ describe('完整重建的统一战斗定义阶段', () => {
       ]),
     );
     expect(mocks.publish.mock.calls[0]![0].fileOutputs).not.toContain(
-      'src/data/mechanics/contingency-contract-catalog.generated.json',
+      'src/data/contingencyContract/contingency-contract-catalog.generated.json',
     );
     expect(mocks.publish.mock.calls[0]![0].fileOutputs).not.toContain(
       'src/data/global-buffs/global-buff-templates.generated.json',

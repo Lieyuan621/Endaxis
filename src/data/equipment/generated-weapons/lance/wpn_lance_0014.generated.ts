@@ -54,10 +54,11 @@ const definition = {
               action: {
                 kind: 'createTimedMarker',
                 parameters: {
-                  target: 'eventTarget',
+                  targets: { kind: 'inputTarget' },
                   markerId: 'sk_wpn_lance_0014',
                   durationSeconds: { kind: 'constant', value: 0.1 },
                   autoFinishByAction: false,
+                  timeDomain: 'globalScaled',
                 },
               },
               next: null,
@@ -66,42 +67,48 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_lance_0014_damageup',
-                  target: 'eventTarget',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_lance_0014_damageup',
+                      copiedBlackboardAssignments: {
+                        atk_up: 'atk_up',
+                        duration2: 'duration',
+                        max_stack: 'max_stack',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'inputTarget' },
+                  source: { kind: 'owner' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    atk_up: 'atk_up',
-                    duration2: 'duration',
-                    max_stack: 'max_stack',
-                  },
                 },
               },
               next: 'createTimedMarker_1',
             },
-            conditional_3: {
+            checkCondition_3: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+              },
+              next: 'applyBuff_2',
+            },
+            checkCondition_4: {
+              action: {
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                whenTrue: { $sequence: 'applyBuff_2' },
               },
-              next: null,
+              next: 'checkCondition_3',
             },
-            conditional_4: {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-                whenTrue: { $sequence: 'conditional_3' },
-              },
-              next: null,
+            invertNextResult_5: {
+              action: { kind: 'invertNextResult', parameters: {} },
+              next: 'checkCondition_4',
             },
-            conditional_5: {
+            checkCondition_6: {
               action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-                whenTrue: { $sequence: 'conditional_4' },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
               },
-              next: null,
+              next: 'invertNextResult_5',
             },
           },
           dataNodes: {
@@ -109,15 +116,12 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                returnTrueIfNotExists: true,
                 target: 'eventTarget',
                 markerId: 'sk_wpn_lance_0014',
               },
             },
             data_2: {
-              type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-            },
-            data_3: {
               type: 'boolean',
               expression: {
                 kind: 'actionInputTargetIdentityMatch',
@@ -125,11 +129,7 @@ const definition = {
                 operator: 'equal',
               },
             },
-            data_4: {
-              type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-            },
-            data_5: {
+            data_3: {
               type: 'boolean',
               expression: {
                 kind: 'eventHealTagsMatch',
@@ -151,7 +151,7 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'outputHeal',
           priority: 0,
-          sequence: { $sequence: 'conditional_5' },
+          sequence: { $sequence: 'checkCondition_6' },
         },
       ],
       blackboard: {
@@ -162,7 +162,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_lance_0014',
-  iconPath: '/weapons/lance/wpn_lance_0014.webp',
+  icon: 'endaxis:weapons/lance/wpn_lance_0014',
   buffDefinitions: {
     buff_wpn_lance_0014_damageup: {
       stackingType: 'highPriorityWithMaxStack',
@@ -174,8 +174,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_buff_atk_up',
-        iconPath: '/icons/icon_battle_buff_atk_up.webp',
+        icon: 'endaxis:icons/icon_battle_buff_atk_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

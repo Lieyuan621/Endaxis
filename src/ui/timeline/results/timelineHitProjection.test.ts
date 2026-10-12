@@ -93,6 +93,7 @@ describe('projectCastGraphHitMarkers', () => {
         {
           kind: 'spawnAbilityEntity',
           parameters: {
+            bornAt: { kind: 'owner' as const },
             abilityEntityId: 'preview:entity',
             dieWhenSourceDies: false,
             definition: {
@@ -291,6 +292,7 @@ describe('projectCastGraphHitMarkers', () => {
         {
           kind: 'spawnAbilityEntity',
           parameters: {
+            bornAt: { kind: 'owner' as const },
             abilityEntityId: 'ability:test',
             dieWhenSourceDies: false,
             inheritActionBlackboard: true,
@@ -348,7 +350,11 @@ describe('projectCastGraphHitMarkers', () => {
       chainNodes(nodes, 'root', [
         {
           kind: 'spawnAbilityEntity',
-          parameters: { abilityEntityId: 'ability:test', dieWhenSourceDies: false },
+          parameters: {
+            bornAt: { kind: 'owner' as const },
+            abilityEntityId: 'ability:test',
+            dieWhenSourceDies: false,
+          },
         },
       ]),
     );
@@ -398,6 +404,7 @@ describe('projectCastGraphHitMarkers', () => {
         {
           kind: 'spawnAbilityEntity',
           parameters: {
+            bornAt: { kind: 'owner' as const },
             abilityEntityId: 'ability:test',
             childSkillId: 'child:second',
             dieWhenSourceDies: false,
@@ -474,8 +481,8 @@ describe('projectCastGraphHitMarkers', () => {
         {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff:root',
-            target: 'caster',
+            buffs: [{ buffId: 'buff:root' }],
+            targets: { kind: 'fixed', target: 'caster' },
             inheritSourceSkillCastInfo: true,
           },
         },
@@ -493,8 +500,8 @@ describe('projectCastGraphHitMarkers', () => {
                   action: {
                     kind: 'applyBuff',
                     parameters: {
-                      buffId: 'buff:damage',
-                      target: 'caster',
+                      buffs: [{ buffId: 'buff:damage' }],
+                      targets: { kind: 'fixed', target: 'caster' },
                       inheritSourceSkillCastInfo: true,
                     },
                   },
@@ -504,7 +511,7 @@ describe('projectCastGraphHitMarkers', () => {
             },
             macros: {},
           },
-          lifecycleSequences: { start: { $sequence: 'root-start-0' } },
+          lifecycleSequences: { start: [{ $sequence: 'root-start-0' }] },
         },
         'buff:damage': {
           stackingType: 'unique',
@@ -519,7 +526,7 @@ describe('projectCastGraphHitMarkers', () => {
             },
             macros: {},
           },
-          lifecycleSequences: { trigger: { $sequence: 'damage-trigger-0' } },
+          lifecycleSequences: { trigger: [{ $sequence: 'damage-trigger-0' }] },
         },
       },
     };
@@ -539,8 +546,8 @@ describe('projectCastGraphHitMarkers', () => {
         {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff:sword',
-            target: 'currentAbilityEntity',
+            buffs: [{ buffId: 'buff:sword' }],
+            targets: { kind: 'inputTarget' },
             inheritSourceSkillCastInfo: true,
           },
         },
@@ -581,8 +588,8 @@ describe('projectCastGraphHitMarkers', () => {
         {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff:passive',
-            target: 'caster',
+            buffs: [{ buffId: 'buff:passive' }],
+            targets: { kind: 'fixed', target: 'caster' },
             inheritSourceSkillCastInfo: false,
           },
         },

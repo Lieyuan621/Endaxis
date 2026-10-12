@@ -1,16 +1,15 @@
 /** 按正式装配的原生阶段顺序驱动一个已经完成对象关系提交的恢复候选。 */
-import type { CombatStatusContainer } from '../../status/combatStatuses';
+import { CombatResourceRuntime } from '../../resources/combatResourceRuntime';
+import type { OperatorControlRuntime } from '../../skills/operatorControlRuntime';
+import { PlayerMultiDashRuntime } from '../../skills/playerMultiDashRuntime';
+import { bindCombatFramePipeline } from '../combatFramePipeline';
 import type { EnemyBuffRuntime } from '../combatRuntimeAssembly';
+import type { FrameRuntime } from '../combatSimulation';
+import { CombatSimulation } from '../combatSimulation';
 import type { RestoredCombatAbilityEntityDirectory } from './combatRuntimeAbilityEntityRestoration';
 import type { RestoredCombatRuntimeObjectGraph } from './combatRuntimeObjectGraphRestoration';
 import type { RestoredCombatRuntimeFoundation } from './combatRuntimeRestoreFoundation';
 import type { CombatRuntimeRestorePreparation } from './combatRuntimeRestorePreparation';
-import { bindCombatFramePipeline } from '../combatFramePipeline';
-import type { OperatorControlRuntime } from '../../skills/operatorControlRuntime';
-import { CombatResourceRuntime } from '../../resources/combatResourceRuntime';
-import { CombatSimulation } from '../combatSimulation';
-import { CombatStatusRuntime } from '../../status/combatStatusRuntime';
-import { PlayerMultiDashRuntime } from '../../skills/playerMultiDashRuntime';
 
 export interface RestoreCombatRuntimeFrameOptions {
   /** 已绑定当前切面身份的主控运行时；此层只负责安排推进顺序。 */
@@ -19,9 +18,8 @@ export interface RestoreCombatRuntimeFrameOptions {
   readonly foundation: RestoredCombatRuntimeFoundation;
   readonly entities: RestoredCombatAbilityEntityDirectory;
   readonly objects: RestoredCombatRuntimeObjectGraph;
-  readonly enemyStatusContainer?: CombatStatusContainer;
-  readonly operatorCenters?: readonly import('../combatSimulation').FrameRuntime[];
-  readonly playerMultiDash?: import('../combatSimulation').FrameRuntime;
+  readonly operatorCenters?: readonly FrameRuntime[];
+  readonly playerMultiDash?: FrameRuntime;
   /** 输入运行时已经绑定保存游标时，在与普通装配完全相同的位置安装两个输入阶段。 */
   readonly bindInputPhases?: boolean;
 }
@@ -29,7 +27,6 @@ export interface RestoreCombatRuntimeFrameOptions {
 export interface RestoredCombatRuntimeFrame {
   readonly control: OperatorControlRuntime;
   readonly simulation: CombatSimulation;
-  readonly enemyStatuses?: CombatStatusRuntime;
   advanceFrame(): void;
   advanceFrames(count: number): void;
 }
@@ -39,28 +36,6 @@ export function bindRestoredCombatRuntimeFrame(
 ): RestoredCombatRuntimeFrame {
   const { shared } = options.foundation;
   const enemyBuffs = options.foundation.enemyBuffTarget as EnemyBuffRuntime;
-  let enemyStatuses: CombatStatusRuntime | undefined;
-  const enemyStatusState = options.preparation.graph.enemy.statuses;
-  if (options.enemyStatusContainer === undefined) {
-    if (enemyStatusState !== null) {
-      throw new Error('restored enemy has status data without definitions');
-    }
-  } else {
-    if (options.enemyStatusContainer.ownerId !== 'enemy') {
-      throw new Error(
-        `status owner '${options.enemyStatusContainer.ownerId}' does not match enemy`,
-      );
-    }
-    if (enemyStatusState === null) {
-      throw new Error('restored enemy has status definitions without data');
-    }
-    enemyStatuses = new CombatStatusRuntime(
-      options.enemyStatusContainer.bindRuntimeState(enemyStatusState),
-      shared.clock,
-      shared.receipt,
-    );
-  }
-
   const simulation = new CombatSimulation(shared.clock);
   const control = options.control;
   const cores = [...options.objects.operators.cores.values()];
@@ -75,8 +50,6 @@ export function bindRestoredCombatRuntimeFrame(
     projectiles: options.objects.projectiles,
     enemyBuffs,
     enemyVitals: options.foundation.boundEnvironment.enemyVitalsRuntime,
-    enemyStatuses,
-    operatorStatuses: cores.flatMap(core => (core.statuses === undefined ? [] : [core.statuses])),
     comboWindows: shared.comboWindows,
     playerMultiDash: options.playerMultiDash ?? {
       advanceFrame: () =>
@@ -93,7 +66,6 @@ export function bindRestoredCombatRuntimeFrame(
   return {
     control,
     simulation,
-    enemyStatuses,
     advanceFrame: () => simulation.advanceFrame(),
     advanceFrames: count => simulation.advanceFrames(count),
   };

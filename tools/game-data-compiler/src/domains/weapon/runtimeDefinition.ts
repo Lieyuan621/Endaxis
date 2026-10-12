@@ -1,29 +1,33 @@
-import type { GameplayTagRegistry } from '../../source/nativeGameplayTags.ts';
+import { EQUIPMENT_ABILITY_EVENTS } from '../../../../../packages/game-data-contract/src/equipment.ts';
+import type { LevelValues } from '../../../../../packages/game-data-contract/src/index.ts';
+import { compileAbilityEventPrograms } from '../../compiler/abilities/abilityEventProgram.ts';
+import { projectAbilityEvent } from '../../compiler/abilities/abilityEventProjection.ts';
 import {
   createActionGraphBuilder,
   type ActionGraphBuilder,
 } from '../../compiler/actions/actionGraphBuilder.ts';
-import type { LevelValues } from '../../../../../packages/game-data-contract/src/index.ts';
 import type {
+  CompiledBuffSequenceSource,
+  CompiledBuffStepSource,
+} from '../../compiler/actions/combatActionProjectionTypes.ts';
+import type { CompiledBuffDefinitionSource } from '../../compiler/buffs/buffProjectionTypes.ts';
+import {
+  buffRuntimeReadsBlackboardKey,
+  compileCombatActionSequenceSource,
+} from '../../compiler/buffs/buffRuntimeProjection.ts';
+import { compileStandardStumpBuffClosure } from '../../compiler/buffs/standardStumpBuffClosure.ts';
+import type { BuildDefinitionDiagnosticSource } from '../../compiler/build/formalBuildDefinition.ts';
+import type {
+  ActionGraphResourceDefinition,
   EquipmentAbilityEvent,
   EquipmentEventHandlerDefinition,
   WeaponDefinition,
   WeaponTraitDefinition,
 } from '../../compiler/intermediateDefinitions.ts';
-import { EQUIPMENT_ABILITY_EVENTS } from '../../../../../packages/game-data-contract/src/equipment.ts';
-import { buffRuntimeReadsBlackboardKey } from '../../compiler/buffs/buffRuntimeProjection.ts';
-import type { CompiledBuffDefinitionSource } from '../../compiler/buffs/buffProjectionTypes.ts';
-import type {
-  CompiledBuffSequenceSource,
-  CompiledBuffStepSource,
-} from '../../compiler/actions/combatActionProjectionTypes.ts';
-import { compileCombatActionSequenceSource } from '../../compiler/buffs/buffRuntimeProjection.ts';
-import { compileAbilityEventPrograms } from '../../compiler/abilities/abilityEventProgram.ts';
-import { projectAbilityEvent } from '../../compiler/abilities/abilityEventProjection.ts';
-import { compileStandardStumpBuffClosure } from '../../compiler/buffs/standardStumpBuffClosure.ts';
 import { evaluateStandardStumpFullHealthComparison } from '../../compiler/scenario/standardStumpScenarioPolicy.ts';
-import type { BuildDefinitionDiagnosticSource } from '../../compiler/build/formalBuildDefinition.ts';
 import type { MaterializedPassiveBuffInstallationSource } from '../../compiler/skills/passiveSkillInstallation.ts';
+import { numericDeclaredBlackboard } from '../../source/blackboard.ts';
+import type { GameplayTagRegistry } from '../../source/nativeGameplayTags.ts';
 import type {
   CompiledWeaponStaticDefinitionSource,
   CompiledWeaponTraitRuntimeDependencySource,
@@ -39,11 +43,11 @@ export type CompiledWeaponRuntimeDefinitionSource = Omit<
   CompiledWeaponStaticDefinitionSource,
   'traits'
 > &
-  Readonly<Pick<WeaponDefinition, 'assetSlug' | 'iconPath'>> & {
+  Readonly<Pick<WeaponDefinition, 'assetSlug' | 'icon'>> & {
     readonly buffDefinitions?: Readonly<Record<string, CompiledBuffDefinitionSource>>;
     readonly traits: readonly (CompiledWeaponStaticDefinitionSource['traits'][number] &
       Readonly<Pick<WeaponTraitDefinition, 'blackboard' | 'skillId'>> & {
-        readonly actionGraph?: import('../../compiler/intermediateDefinitions.ts').ActionGraphResourceDefinition;
+        readonly actionGraph?: ActionGraphResourceDefinition;
         readonly enableSequence?: CompiledBuffSequenceSource;
         readonly initializationSequence?: CompiledBuffSequenceSource;
         readonly eventHandlers?: readonly CompiledWeaponEventHandlerSource[];
@@ -199,11 +203,15 @@ export function compileWeaponRuntimeDefinitionBatchSource(
           return {
             kind: 'applyBuff' as const,
             parameters: {
-              buffId: installation.buffId,
-              target: 'caster' as const,
-              ...(Object.keys(assignments).length === 0
-                ? {}
-                : { blackboardAssignments: assignments }),
+              buffs: [
+                {
+                  buffId: installation.buffId,
+                  ...(Object.keys(assignments).length === 0
+                    ? {}
+                    : { blackboardAssignments: assignments }),
+                },
+              ],
+              targets: { kind: 'fixed' as const, target: 'caster' as const },
             },
           };
         },
@@ -338,11 +346,16 @@ function projectWeaponAbilityEvent(
 function compileWeaponAbilityBlackboard(
   dependency: CompiledWeaponTraitRuntimeDependencySource,
 ): Record<string, LevelValues> {
+  // 动态声明也有运行初值；只在装配黑板时补入，不能拿它作编译期常量。
+  const initial = {
+    ...numericDeclaredBlackboard(dependency.actionGraph.declaredBlackboard, true),
+    ...dependency.blackboard,
+  };
   return Object.fromEntries(
-    Object.keys(dependency.blackboard)
+    Object.keys(initial)
       .sort()
       .map(key => {
-        const values = dependency.blackboard[key];
+        const values = initial[key];
         if (!isNumericLevelValues(values, dependency.levels.length)) {
           throw new Error(
             `weapon ability blackboard ${JSON.stringify(key)} is not numeric at every level`,

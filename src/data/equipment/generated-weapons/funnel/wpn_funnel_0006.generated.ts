@@ -54,27 +54,31 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_funnel_0006',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_funnel_0006',
+                      copiedBlackboardAssignments: {
+                        spell_dmg_up: 'spell_dmg_up',
+                        duration: 'duration',
+                        max_stack: 'max_stack',
+                        spell_dmg_up2: 'spell_dmg_up2',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    spell_dmg_up: 'spell_dmg_up',
-                    duration: 'duration',
-                    max_stack: 'max_stack',
-                    spell_dmg_up2: 'spell_dmg_up2',
-                  },
                 },
               },
               next: null,
             },
-            conditional_2: {
+            checkCondition_2: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
               },
-              next: null,
+              next: 'applyBuff_1',
             },
           },
           dataNodes: {
@@ -92,7 +96,7 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'beforeCastSkill',
           priority: 0,
-          sequence: { $sequence: 'conditional_2' },
+          sequence: { $sequence: 'checkCondition_2' },
         },
       ],
       blackboard: {
@@ -104,7 +108,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_funnel_0006',
-  iconPath: '/weapons/funnel/wpn_funnel_0006.webp',
+  icon: 'endaxis:weapons/funnel/wpn_funnel_0006',
   buffDefinitions: {
     buff_wpn_funnel_0006: {
       stackingType: 'unlimited',
@@ -118,7 +122,6 @@ const definition = {
       blackboard: {
         count: 0,
         duration: 15,
-        lv: 0,
         max_stack: 3,
         spell_dmg_up: 0.05,
         spell_dmg_up_final: 0,
@@ -126,11 +129,15 @@ const definition = {
       },
       attributeModifiers: [],
       lifecycleSequences: {
-        start: { $sequence: 'mergeContextTargets_1' },
-        enable: { $sequence: 'skillAffix_2' },
+        start: [{ $sequence: 'mergeContextTargets_1' }],
+        enable: [{ $sequence: 'skillAffix_2' }],
       },
       abilityEventResponses: [
-        { event: 'beforeOutputInfliction', priority: 0, sequence: { $sequence: 'conditional_12' } },
+        {
+          event: 'beforeOutputInfliction',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_13' },
+        },
       ],
       actionGraph: {
         main: {
@@ -147,13 +154,18 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_funnel_0006_valid',
-                  target: 'partyExceptCaster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_funnel_0006_valid',
+                      copiedBlackboardAssignments: {
+                        spell_dmg_up: 'spell_dmg_up_final',
+                        duration: 'duration',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'characterTeam', excludeOwner: true },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
-                  copiedBlackboardAssignments: {
-                    spell_dmg_up: 'spell_dmg_up_final',
-                    duration: 'duration',
-                  },
                 },
               },
               next: null,
@@ -181,21 +193,19 @@ const definition = {
               },
               next: 'modifyActionValue_4',
             },
-            conditional_6: {
+            checkCondition_6: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-                whenTrue: { $sequence: 'calculateActionValue_5' },
               },
-              next: null,
+              next: 'calculateActionValue_5',
             },
-            conditional_7: {
+            checkCondition_7: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-                whenTrue: { $sequence: 'conditional_6' },
               },
-              next: null,
+              next: 'checkCondition_6',
             },
             mergeContextTargets_8: {
               action: {
@@ -208,39 +218,39 @@ const definition = {
                   ],
                 },
               },
-              next: 'conditional_7',
+              next: 'checkCondition_7',
             },
-            conditional_9: {
+            checkCondition_9: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+              },
+              next: 'mergeContextTargets_8',
+            },
+            invertNextResult_10: {
+              action: { kind: 'invertNextResult', parameters: {} },
+              next: 'checkCondition_9',
+            },
+            checkCondition_11: {
+              action: {
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
-                whenTrue: { $sequence: 'mergeContextTargets_8' },
               },
-              next: null,
+              next: 'invertNextResult_10',
             },
-            conditional_10: {
+            checkCondition_12: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
-                whenTrue: { $sequence: 'conditional_9' },
               },
-              next: null,
+              next: 'checkCondition_11',
             },
-            conditional_11: {
+            checkCondition_13: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
-                whenTrue: { $sequence: 'conditional_10' },
               },
-              next: null,
-            },
-            conditional_12: {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
-                whenTrue: { $sequence: 'conditional_11' },
-              },
-              next: null,
+              next: 'checkCondition_12',
             },
           },
           dataNodes: {
@@ -267,8 +277,10 @@ const definition = {
             data_7: {
               type: 'boolean',
               expression: {
-                kind: 'contextTargetCountCompare',
-                contextKey: 'wpn_funnel_0006_total_tar',
+                kind: 'entityCountCompare',
+                target: { kind: 'context', key: 'wpn_funnel_0006_total_tar' },
+                containsHittableTarget: false,
+                excludeDeadEntity: false,
                 operator: 'greaterOrEqual',
                 value: 1,
                 outputKey: 'count',
@@ -277,21 +289,17 @@ const definition = {
             data_8: {
               type: 'boolean',
               expression: {
-                kind: 'contextTargetContains',
-                parentContextKey: 'wpn_funnel_0006_total_tar',
-                child: 'eventTarget',
+                kind: 'targetContains',
+                parent: { kind: 'context', key: 'wpn_funnel_0006_total_tar' },
+                child: { kind: 'inputTarget' },
               },
             },
             data_9: {
               type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-            },
-            data_10: {
-              type: 'boolean',
               expression: { kind: 'originSkillTypeIn', skillTypes: ['battleSkill'] },
             },
-            data_11: { type: 'boolean', expression: { kind: 'eventSkillCastMatchesBuffSource' } },
-            data_12: {
+            data_10: { type: 'boolean', expression: { kind: 'eventSkillCastMatchesBuffSource' } },
+            data_11: {
               type: 'boolean',
               expression: { kind: 'eventInflictionElementIn', elements: ['nature'] },
             },
@@ -310,8 +318,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_spell_up',
-        iconPath: '/icons/icon_battle_spell_up.webp',
+        icon: 'endaxis:icons/icon_battle_spell_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

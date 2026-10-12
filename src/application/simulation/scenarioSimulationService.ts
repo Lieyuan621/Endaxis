@@ -1,12 +1,13 @@
+import type { ActionExecutionTrace } from '../../core/combat/actions/actionExecutionTrace';
 import type { ResolvedCombatStepForKind } from '../../core/compiler/combatProgram';
 
 import {
   compileCombatInputSchedule,
   compileFixedCombatInputSchedule,
 } from './compileFixedCombatInputSchedule';
-import { planRecursiveSkillChain, type RecursiveSkillChain } from './recursiveSkillChain';
-import { InheritedScenarioSimulation } from './inheritedScenarioSimulation';
 import { IncrementalScenarioSimulation } from './incrementalScenarioSimulation';
+import { InheritedScenarioSimulation } from './inheritedScenarioSimulation';
+import { planRecursiveSkillChain, type RecursiveSkillChain } from './recursiveSkillChain';
 /**
  * 给页面提供"跑一次模拟"的入口。
  *
@@ -33,7 +34,7 @@ import {
   compileScenarioCustomSkillCastPrograms,
   type CompileScenarioRuntimeAssemblyOptions,
 } from '../../core/compiler/compileScenarioRuntimeAssembly';
-import { MechanicAdapterRegistry } from '../../core/mechanics/mechanicCompiler';
+import { MechanicAdapterRegistry } from '../../core/scenarioMechanics/mechanicCompiler';
 import type { ScenarioDocument } from '../../core/project/schema';
 import {
   projectComboWindowDiagnostics,
@@ -54,7 +55,7 @@ import {
 } from '../../core/projection/skillExecutionDiagnostics';
 import { compoundStatusFactories } from '../../data/buffs/compoundStatusFactories';
 import { elementalAttachments } from '../../data/buffs/elementalAttachments';
-import { contingencyContractMechanicAdapter } from '../../data/mechanics/contingencyContractAdapter';
+import { contingencyContractMechanicAdapter } from '../../data/contingencyContract/contingencyContractAdapter';
 import {
   prepareStandardPlayerDamageScenarioRuntime,
   runStandardPlayerDamageScenarioSimulation,
@@ -66,7 +67,7 @@ import {
   type StandardPlayerDamageCombatSession,
 } from './standardPlayerDamageCombatSession';
 
-type DamageStep = ResolvedCombatStepForKind<'dealDamage' | 'dealFixedDamage'>;
+type DamageStep = ResolvedCombatStepForKind<'dealDamage'>;
 
 /** 命中时需要的几个运行时数值的默认值；这些是中性基线，不假装是游戏原版规则。 */
 export function defaultNonRandomRuntimeSnapshot(): PlayerDamageNonRandomRuntimeSnapshot {
@@ -443,10 +444,7 @@ export class ScenarioSimulationService {
   }
 
   /** 执行一次标准玩家伤害模拟，并在同一份回执上完成全部投影。 */
-  diagnoseExecution(
-    scenario: ScenarioDocument,
-    trace: import('../../core/combat/actions/actionExecutionTrace').ActionExecutionTrace,
-  ) {
+  diagnoseExecution(scenario: ScenarioDocument, trace: ActionExecutionTrace) {
     // 诊断始终完整重跑，不读取或覆盖交互模拟的缓存与切面。
     return runStandardPlayerDamageScenarioSimulation({
       ...this.#createStandardSimulationInput(scenario, scenario.battle.durationFrames),

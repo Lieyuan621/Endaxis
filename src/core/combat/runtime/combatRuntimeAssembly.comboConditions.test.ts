@@ -1,25 +1,26 @@
 import { describe, expect, it, vi } from 'vitest';
 import type {
+  ActionGraphDefinition,
+  ActionGraphNode,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
+import type {
   CompiledComboSkillConditionProgram,
   CompiledSkillProgram,
   ResolvedActionSequence,
 } from '../../compiler/combatProgram';
 import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
-import type {
-  ActionGraphNode,
-  ActionGraphStep,
-} from '../../../../packages/game-data-contract/src/actionGraph';
-import { CombatRuntimeAssembly, type CombatRuntimeAssemblyOptions } from './combatRuntimeAssembly';
 import {
   ComboSkillConditionRuntime,
   type PendingComboCondition,
 } from '../skills/comboSkillConditionRuntime';
+import { CombatRuntimeAssembly, type CombatRuntimeAssemblyOptions } from './combatRuntimeAssembly';
 
 const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
-  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
   graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
   entry,
@@ -29,7 +30,7 @@ const compileGraphEntry = (
 const chainEntry = (
   revision: string,
   actions: readonly ActionGraphStep[],
-  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => {
   const nodes: Record<string, ActionGraphNode> = {};
   actions.forEach((action, index) => {
@@ -100,6 +101,7 @@ function setup() {
     comboConditionPrograms: [condition],
   };
   const options: CombatRuntimeAssemblyOptions = {
+    comboSkillPendingInterval: 5,
     enemy: {
       source: { kind: 'custom', level: 1 },
       rank: 'mob',
@@ -889,7 +891,9 @@ describe('assembly 原生常驻连携条件', () => {
         nextSkillKey: 'combo',
         nativeCondition: { skillSlotKey: 'combo', assignPairs: { local: 2 } },
       });
-      expect(assembly.comboWindows.consume('owner', readySkillKey, 'combo').consumed).toBe(true);
+      expect(
+        assembly.comboWindows.consume('owner', readySkillKey, result => result, 'combo').consumed,
+      ).toBe(true);
       expect(assembly.tryStartSkill('owner', `switch-${coolingSkillKey}`)).toBe(true);
       f.emit();
       expect(f.pending).toHaveLength(2);

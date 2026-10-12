@@ -1,3 +1,4 @@
+import type { GraphSharedEntityValueUsage } from '../src/compiler/optimization/graphValueOptimization.ts';
 import { GameplayTagRegistry } from '../src/source/nativeGameplayTags.ts';
 import { readGameplayTagPaths } from './readGameplayTagPaths.ts';
 import { formatGeneratedSource } from './formatGeneratedSource.ts';
@@ -146,10 +147,11 @@ export async function generateWeaponDefinitions(args: Arguments): Promise<{
 export function renderWeaponDefinitionsFromCompiled(
   compiled: CompiledWeaponRuntimeDefinitionBatchSource,
   optimization: DefinitionOptimizationMode = 'apply',
+  sharedUsage?: GraphSharedEntityValueUsage,
 ) {
   assertNoBlockedDiagnostics(compiled.diagnostics);
   const optimized = compiled.definitions.map(definition =>
-    finalizeWeaponDefinition(definition, optimization),
+    finalizeWeaponDefinition(definition, optimization, sharedUsage),
   );
   const batch = {
     definitions: optimized.map(result => result.definition),

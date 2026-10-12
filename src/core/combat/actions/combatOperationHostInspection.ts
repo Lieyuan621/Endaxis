@@ -6,7 +6,6 @@ export function hasActiveCombatOperationState(state: CombatOperationHostState): 
     state.abilityEntities.actionDurationEntities.size > 0 ||
     state.resources.ultimateRecoveryRestrictionHandles.size > 0 ||
     state.timedMarkers.markers.size > 0 ||
-    state.comboWindows.ringQteRegistrations.size > 0 ||
     state.actionBlackboard.healthFloors.size > 0 ||
     state.skillCastInheritance.registrations.size > 0 ||
     state.timeDilation.instanceIds.size > 0 ||

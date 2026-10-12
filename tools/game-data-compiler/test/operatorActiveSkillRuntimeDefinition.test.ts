@@ -125,6 +125,7 @@ describe('Operator 主动技能正式运行定义', () => {
       value: source,
       sourcePath: 'battle.json',
       patch: {
+        iconId: 'icon_skill_sample_01',
         levels: [1, 2],
         blackboard: { attack_scale: [1, 1.2] },
         cooldownSeconds: [1, 1.5],
@@ -135,6 +136,7 @@ describe('Operator 主动技能正式运行定义', () => {
     });
     expect(definition).toMatchObject({
       key: 'battle',
+      nativeIconId: 'icon_skill_sample_01',
       blackboard: { attack_scale: [1, 1.2] },
       timelineBlockFrames: 21,
       naturalDurationFrames: 30,

@@ -1,11 +1,11 @@
-import { createActionGraphCompilation } from '../core/compiler/compileActionGraph';
-import type { ResolvedActionSequence } from '../core/compiler/combatProgram';
 import type {
   ActionGraphDefinition,
   ActionGraphNode,
   ActionGraphResourceDefinition,
   ActionGraphStep,
 } from '../../packages/game-data-contract/src/actionGraph';
+import type { ResolvedActionSequence } from '../core/compiler/combatProgram';
+import { createActionGraphCompilation } from '../core/compiler/compileActionGraph';
 
 /** 无动作入口的定义使用的最小空图；每次调用返回新对象，避免跨资源共享图身份。 */
 export const emptyActionGraph = (): ActionGraphResourceDefinition => ({
@@ -18,7 +18,7 @@ export const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: ActionGraphDefinition['nodes'],
-  dataNodes: import('../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
   graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
   entry,
@@ -29,7 +29,7 @@ export const compileGraphEntry = (
 export const chainEntry = (
   revision: string,
   actions: readonly ActionGraphStep[],
-  dataNodes: import('../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => {
   const nodes: Record<string, ActionGraphNode> = {};
   actions.forEach((action, index) => {

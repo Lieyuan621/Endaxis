@@ -16,9 +16,10 @@ import type {
 import type { SkillCastDocument } from '../../../core/project/schema';
 import {
   deriveAnonymousDamageStepKey,
+  deriveChildSkillCallSite,
   deriveHitId,
 } from '../../../core/combat/timeline/deriveHitId';
-import { compareCombatNumbers } from '../../../core/mechanics/combatNumbers.ts';
+import { compareCombatNumbers } from '../../../core/math/combatNumbers.ts';
 import type {
   ActionGraphDefinition,
   ActionGraphDataNode,
@@ -125,12 +126,12 @@ const childCallSite = (
 const buffEntryCallSite = {
   scheduled: (buffId: string, index: number) =>
     `buffDefinitions.${JSON.stringify(buffId)}.scheduledSequences[${index}].sequence`,
-  lifecycle: (buffId: string, key: string) =>
-    `buffDefinitions.${JSON.stringify(buffId)}.lifecycleSequences.${key}`,
+  lifecycle: (buffId: string, key: string, index: number) =>
+    `buffDefinitions.${JSON.stringify(buffId)}.lifecycleSequences.${key}[${index}]`,
   abilityEventResponse: (buffId: string, index: number) =>
     `buffDefinitions.${JSON.stringify(buffId)}.abilityEventResponses[${index}].sequence`,
-  igniteEventResponse: (buffId: string, index: number) =>
-    `buffDefinitions.${JSON.stringify(buffId)}.igniteEventResponses[${index}].sequence`,
+  igniteEventResponse: (buffId: string, index: number, sequenceIndex: number) =>
+    `buffDefinitions.${JSON.stringify(buffId)}.igniteEventResponses[${index}].sequences[${sequenceIndex}]`,
 };
 
 /** 只读取图节点来生成模拟前预览；共享节点按每次入口访问，不展开或复制动作树。 */
@@ -247,7 +248,7 @@ export function projectCastGraphHitMarkers(
       identity,
       nodeIdentities,
     ) => {
-      if (step.kind === 'dealDamage' || step.kind === 'dealFixedDamage') {
+      if (step.kind === 'dealDamage') {
         const stepKey = step.key ?? deriveAnonymousDamageStepKey(nodeCallSite, identity);
         markers.push({
           stepKey,
@@ -300,9 +301,7 @@ export function projectCastGraphHitMarkers(
       }
       if (
         step.kind === 'once' ||
-        step.kind === 'withActionBlackboardScope' ||
         step.kind === 'repeatEachTick' ||
-        step.kind === 'repeatByActionValue' ||
         step.kind === 'forEachContextTarget'
       ) {
         collect(
@@ -332,108 +331,98 @@ export function projectCastGraphHitMarkers(
         );
         return;
       }
-      if (step.kind === 'applyBuff') {
+      if (step.kind === 'applyBuff' || step.kind === 'aura') {
         if (step.parameters.inheritSourceSkillCastInfo === false) return;
-        if (typeof step.parameters.buffId !== 'string') return;
-        const buffId = step.parameters.buffId;
-        const buff = operator.buffDefinitions?.[buffId];
-        if (buff === undefined || activeBuffIds.has(buffId)) return;
-        const nextBuffIds = new Set(activeBuffIds).add(buffId);
-        inOwner(buff, () => {
-          (buff.scheduledSequences ?? []).forEach((scheduled, index) =>
-            collect(
-              scheduled.sequence,
-              buffEntryCallSite.scheduled(buffId, index),
-              null,
-              frameOffset + scheduled.startFrame,
-              true,
-              nextBuffIds,
-              activeEntityIds,
-            ),
-          );
-          for (const [key, sequence] of Object.entries(buff.lifecycleSequences ?? {}))
-            if (sequence !== undefined)
+        for (const entry of step.parameters.buffs) {
+          if (typeof entry.buffId !== 'string') continue;
+          const buffId = entry.buffId;
+          const buff = operator.buffDefinitions?.[buffId];
+          if (buff === undefined || activeBuffIds.has(buffId)) continue;
+          const nextBuffIds = new Set(activeBuffIds).add(buffId);
+          inOwner(buff, () => {
+            (buff.scheduledSequences ?? []).forEach((scheduled, index) =>
               collect(
-                sequence,
-                buffEntryCallSite.lifecycle(buffId, key),
+                scheduled.sequence,
+                buffEntryCallSite.scheduled(buffId, index),
+                null,
+                frameOffset + scheduled.startFrame,
+                true,
+                nextBuffIds,
+                activeEntityIds,
+              ),
+            );
+            for (const [key, sequences] of Object.entries({ ...buff.lifecycleSequences }))
+              sequences.forEach((sequence, index) =>
+                collect(
+                  sequence,
+                  buffEntryCallSite.lifecycle(buffId, key, index),
+                  null,
+                  frameOffset,
+                  true,
+                  nextBuffIds,
+                  activeEntityIds,
+                ),
+              );
+            (buff.abilityEventResponses ?? []).forEach((response, index) =>
+              collect(
+                response.sequence,
+                buffEntryCallSite.abilityEventResponse(buffId, index),
                 null,
                 frameOffset,
                 true,
                 nextBuffIds,
                 activeEntityIds,
-              );
-          (buff.abilityEventResponses ?? []).forEach((response, index) =>
-            collect(
-              response.sequence,
-              buffEntryCallSite.abilityEventResponse(buffId, index),
-              null,
-              frameOffset,
-              true,
-              nextBuffIds,
-              activeEntityIds,
-            ),
-          );
-          (buff.igniteEventResponses ?? []).forEach((response, index) =>
-            collect(
-              response.sequence,
-              buffEntryCallSite.igniteEventResponse(buffId, index),
-              null,
-              frameOffset,
-              true,
-              nextBuffIds,
-              activeEntityIds,
-            ),
-          );
-        });
+              ),
+            );
+            (buff.igniteEventResponses ?? []).forEach((response, index) =>
+              response.sequences.forEach((sequence, sequenceIndex) =>
+                collect(
+                  sequence,
+                  buffEntryCallSite.igniteEventResponse(buffId, index, sequenceIndex),
+                  null,
+                  frameOffset,
+                  true,
+                  nextBuffIds,
+                  activeEntityIds,
+                ),
+              ),
+            );
+          });
+        }
         return;
       }
-      if (step.kind !== 'spawnAbilityEntity' && step.kind !== 'startCurrentAbilityEntityChildSkill')
-        return;
-      const entityId =
-        step.kind === 'spawnAbilityEntity' ? step.parameters.abilityEntityId : undefined;
-      if (entityId !== undefined && activeEntityIds.has(entityId)) return;
-      const entity =
-        step.kind === 'spawnAbilityEntity'
-          ? (step.parameters.definition ?? operator.abilityEntityDefinitions?.[entityId!])
-          : undefined;
-      const requestedSkillId =
-        step.kind === 'spawnAbilityEntity' ? step.parameters.childSkillId : undefined;
+      if (step.kind !== 'spawnAbilityEntity') return;
+      const entityId = step.parameters.abilityEntityId;
+      if (activeEntityIds.has(entityId)) return;
+      const entity = step.parameters.definition ?? operator.abilityEntityDefinitions?.[entityId];
+      const requestedSkillId = step.parameters.childSkillId;
       const childSkill =
-        step.kind === 'startCurrentAbilityEntityChildSkill'
-          ? step.parameters.childSkill
-          : requestedSkillId !== undefined
-            ? entity?.childSkill?.skillId === requestedSkillId
-              ? entity.childSkill
-              : entity?.childSkills?.[requestedSkillId]
-            : (entity?.childSkill ??
-              (Object.values(entity?.childSkills ?? {}).length === 1
-                ? Object.values(entity?.childSkills ?? {})[0]
-                : undefined));
+        requestedSkillId !== undefined
+          ? entity?.childSkill?.skillId === requestedSkillId
+            ? entity.childSkill
+            : entity?.childSkills?.[requestedSkillId]
+          : (entity?.childSkill ??
+            (Object.values(entity?.childSkills ?? {}).length === 1
+              ? Object.values(entity?.childSkills ?? {})[0]
+              : undefined));
       if (childSkill === undefined) return;
-      const nextEntityIds =
-        entityId === undefined ? activeEntityIds : new Set(activeEntityIds).add(entityId);
+      const nextEntityIds = new Set(activeEntityIds).add(entityId);
       const collectChild = () =>
         inOwner(childSkill, () => {
-          // 运行时按编译路径区分子技能来源：宿主目录实体以 abilityEntityDefinitions 为根，
-          // 内联定义/子技能参数挂在触发节点的 graph.<compiledNodeId>.parameters 路径下。
-          const inlineRoot = `graph.${compiledNodeId(nodeNs, nodeId)}`;
+          // 子技能来源路径与编译器保持一致，区分目录定义和内联实体定义。
           const entityRoot =
-            step.kind === 'spawnAbilityEntity' && step.parameters.definition !== undefined
-              ? `${inlineRoot}.parameters.definition`
-              : step.kind === 'startCurrentAbilityEntityChildSkill'
-                ? `${inlineRoot}.parameters.childSkill`
-                : entityId !== undefined
-                  ? `abilityEntityDefinitions.${JSON.stringify(entityId)}${
-                      entity?.childSkill?.skillId === undefined ||
-                      childSkill.skillId === entity.childSkill.skillId
-                        ? '.childSkill'
-                        : `.childSkills.${JSON.stringify(childSkill.skillId)}`
-                    }`
-                  : inlineRoot;
+            step.parameters.definition !== undefined
+              ? `graph.${compiledNodeId(nodeNs, nodeId)}.parameters.definition`
+              : `abilityEntityDefinitions.${JSON.stringify(entityId)}${
+                  entity?.childSkill?.skillId === undefined ||
+                  childSkill.skillId === entity.childSkill.skillId
+                    ? '.childSkill'
+                    : `.childSkills.${JSON.stringify(childSkill.skillId)}`
+                }`;
           childSkill.scheduledSequences.forEach((scheduled, index) =>
             collect(
               scheduled.sequence,
-              `${entityRoot}.scheduledSequences[${index}].sequence`,
+              `${deriveChildSkillCallSite(entityRoot, childSkill.skillId)}.scheduledSequences[${index}].sequence`,
               null,
               frameOffset + scheduled.startFrame,
               conditional,

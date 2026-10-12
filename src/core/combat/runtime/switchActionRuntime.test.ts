@@ -1,27 +1,28 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ResolvedActionSequence } from '../../compiler/combatProgram';
-import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
 import type {
+  ActionGraphDefinition,
   ActionGraphNode,
   ActionGraphStep,
 } from '../../../../packages/game-data-contract/src/actionGraph';
+import type { ResolvedActionSequence } from '../../compiler/combatProgram';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
 import type { ActionValueOperand } from '../../game-data/operatorDefinition';
-import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
 import { ActionBlackboard } from '../actions/actionBlackboard';
+import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
 
 const constant = (value: number): ActionValueOperand => ({ kind: 'constant', value });
 const effect = (key: string): ActionGraphStep => ({
-  kind: 'setContextFlag',
+  kind: 'triggerCustomAbilityEvent',
   key,
-  parameters: { flag: key, target: 'caster', value: true },
+  parameters: { eventName: key, eventParam: 0, target: 'caster' as const },
 });
 
 const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
-  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {
+  dataNodes: ActionGraphDefinition['dataNodes'] = {
     absent: { type: 'number', expression: { kind: 'blackboard', key: 'absent' } },
     choice: { type: 'number', expression: { kind: 'blackboard', key: 'choice' } },
     first: { type: 'number', expression: { kind: 'blackboard', key: 'first' } },
@@ -88,7 +89,7 @@ describe('Switch 原生选择和生命周期', () => {
     ).toBe(true);
     expect(f.execute).toHaveBeenCalledOnce();
     expect(f.execute).toHaveBeenCalledWith(
-      expect.objectContaining({ kind: 'setContextFlag', key: '1' }),
+      expect.objectContaining({ kind: 'triggerCustomAbilityEvent', key: '1' }),
       expect.anything(),
     );
   });

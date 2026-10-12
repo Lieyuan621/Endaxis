@@ -48,10 +48,11 @@ const definition = {
               action: {
                 kind: 'createTimedMarker',
                 parameters: {
-                  target: 'caster',
+                  targets: { kind: 'source' },
                   markerId: 'wpn_lance_0012_2',
                   durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
                   autoFinishByAction: false,
+                  timeDomain: 'globalScaled',
                 },
               },
               next: null,
@@ -60,50 +61,53 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_lance_0012_attribute2',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_lance_0012_attribute2',
+                      copiedBlackboardAssignments: {
+                        all_attr_up2: 'all_attr_up2',
+                        duration: 'duration',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    all_attr_up2: 'all_attr_up2',
-                    duration: 'duration',
-                  },
                 },
               },
               next: 'createTimedMarker_1',
             },
-            conditional_3: {
+            checkCondition_3: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+              },
+              next: 'applyBuff_2',
+            },
+            checkCondition_4: {
+              action: {
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'applyBuff_2' },
               },
-              next: null,
+              next: 'checkCondition_3',
             },
-            conditional_4: {
+            checkCondition_5: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-                whenTrue: { $sequence: 'conditional_3' },
               },
-              next: null,
-            },
-            conditional_5: {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-                whenTrue: { $sequence: 'conditional_4' },
-              },
-              next: null,
+              next: 'checkCondition_4',
             },
             createTimedMarker_6: {
               action: {
                 kind: 'createTimedMarker',
                 parameters: {
-                  target: 'caster',
+                  targets: { kind: 'source' },
                   markerId: 'wpn_lance_0012',
-                  durationSeconds: { kind: 'valueNode', nodeId: 'data_6' },
+                  durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
                   autoFinishByAction: false,
+                  timeDomain: 'globalScaled',
                 },
               },
               next: null,
@@ -112,46 +116,55 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_lance_0012_attribute',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_lance_0012_attribute',
+                      copiedBlackboardAssignments: {
+                        all_attr_up: 'all_attr_up',
+                        duration: 'duration',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: { all_attr_up: 'all_attr_up', duration: 'duration' },
                 },
               },
               next: 'createTimedMarker_6',
             },
-            conditional_8: {
+            checkCondition_8: {
               action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-                whenTrue: { $sequence: 'applyBuff_7' },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
               },
-              next: null,
+              next: 'applyBuff_7',
             },
-            conditional_9: {
+            checkCondition_9: {
               action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
-                whenTrue: { $sequence: 'conditional_8' },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
               },
-              next: null,
+              next: 'checkCondition_8',
             },
-            conditional_10: {
+            checkCondition_10: {
               action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
-                whenTrue: { $sequence: 'conditional_9' },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
               },
-              next: null,
+              next: 'checkCondition_9',
             },
             applyBuff_11: {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_lance_0012_noguard',
-                  target: 'caster',
-                  blackboardAssignments: { dmg_up: { kind: 'valueNode', nodeId: 'data_11' } },
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_lance_0012_noguard',
+                      blackboardAssignments: { dmg_up: { kind: 'valueNode', nodeId: 'data_8' } },
+                    },
+                  ],
+                  targets: { kind: 'fixed', target: 'caster' },
                 },
               },
               next: null,
@@ -163,19 +176,16 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                returnTrueIfNotExists: true,
                 target: 'caster',
                 markerId: 'wpn_lance_0012_2',
               },
             },
             data_3: {
               type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-            },
-            data_4: {
-              type: 'boolean',
               expression: { kind: 'originSkillTypeIn', skillTypes: ['battleSkill'] },
             },
-            data_5: {
+            data_4: {
               type: 'boolean',
               expression: {
                 kind: 'eventBuffTagsMatch',
@@ -183,24 +193,20 @@ const definition = {
                 buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerablePhysic'],
               },
             },
-            data_6: { type: 'number', expression: { kind: 'blackboard', key: 'cd' } },
-            data_7: {
+            data_5: {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                returnTrueIfNotExists: true,
                 target: 'caster',
                 markerId: 'wpn_lance_0012',
               },
             },
-            data_8: {
-              type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-            },
-            data_9: {
+            data_6: {
               type: 'boolean',
               expression: { kind: 'originSkillTypeIn', skillTypes: ['battleSkill'] },
             },
-            data_10: {
+            data_7: {
               type: 'boolean',
               expression: {
                 kind: 'eventBuffTagsMatch',
@@ -208,10 +214,7 @@ const definition = {
                 buffTags: ['Skill/Character/Common/NoGuard'],
               },
             },
-            data_11: {
-              type: 'number',
-              expression: { kind: 'blackboard', key: 'install_0_dmg_up' },
-            },
+            data_8: { type: 'number', expression: { kind: 'blackboard', key: 'install_0_dmg_up' } },
           },
         },
         macros: {},
@@ -222,13 +225,13 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'beforeOutputBuff',
           priority: 0,
-          sequence: { $sequence: 'conditional_5' },
+          sequence: { $sequence: 'checkCondition_5' },
         },
         {
           key: 'skill3:event:0:sequence:1',
           abilityEvent: 'beforeOutputBuff',
           priority: 0,
-          sequence: { $sequence: 'conditional_10' },
+          sequence: { $sequence: 'checkCondition_10' },
         },
       ],
       enableSequence: { $sequence: 'applyBuff_11' },
@@ -242,7 +245,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_lance_0012',
-  iconPath: '/weapons/lance/wpn_lance_0012.webp',
+  icon: 'endaxis:weapons/lance/wpn_lance_0012',
   buffDefinitions: {
     buff_wpn_lance_0012_attribute: {
       stackingType: 'refresh',
@@ -251,8 +254,7 @@ const definition = {
       durationSeconds: { blackboardKey: 'duration' },
       presentation: {
         visible: true,
-        iconId: 'icon_battle_primary_attribute_all_up',
-        iconPath: '/icons/icon_battle_primary_attribute_all_up.webp',
+        icon: 'endaxis:icons/icon_battle_primary_attribute_all_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -289,8 +291,7 @@ const definition = {
       durationSeconds: { blackboardKey: 'duration' },
       presentation: {
         visible: true,
-        iconId: 'icon_battle_primary_attribute_all_up',
-        iconPath: '/icons/icon_battle_primary_attribute_all_up.webp',
+        icon: 'endaxis:icons/icon_battle_primary_attribute_all_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -335,7 +336,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'attacker',
-          condition: { $sequence: 'conditional_1' },
+          condition: { $sequence: 'checkCondition_1' },
           processors: [
             {
               kind: 'damageScale',
@@ -349,11 +350,10 @@ const definition = {
       actionGraph: {
         main: {
           nodes: {
-            conditional_1: {
+            checkCondition_1: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: null },
               },
               next: null,
             },

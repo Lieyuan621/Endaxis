@@ -279,6 +279,10 @@ function collectLeafReferences(
       return;
     }
     case 'aura': {
+      if (leaf.action.kind === 'globalPartyAura') {
+        collectSequenceReferences(leaf.action.actionOnEnter, enabled, output);
+        collectSequenceReferences(leaf.action.actionOnExit, enabled, output);
+      }
       if (leaf.action.kind === 'directRangedAura') {
         collectSequenceReferences(leaf.action.actionOnEnter, enabled, output);
         return;
@@ -509,20 +513,7 @@ function collectLeafReferences(
     case 'presentation': {
       const action = leaf.action;
       if (action.kind !== 'playAnimation' || action.onEnd === undefined) return;
-      action.onEnd.buffApplications.forEach((application, applicationIndex) => {
-        application.buffs.forEach((buff, buffIndex) => {
-          output.push(
-            referenceFromIdentity(
-              'buff',
-              'animationEnd',
-              enabled,
-              buff.buffId,
-              buff.readIdFromBlackboard ? buff.buffIdKey : null,
-              `${sourcePath}.onEndAction.buffApplications[${applicationIndex}].buffs[${buffIndex}]`,
-            ),
-          );
-        });
-      });
+      collectSequenceReferences(action.onEnd, enabled, output);
       return;
     }
     default:

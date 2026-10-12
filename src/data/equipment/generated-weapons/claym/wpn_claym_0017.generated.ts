@@ -51,38 +51,47 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_claym_0017_dmgup',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_claym_0017_dmgup',
+                      copiedBlackboardAssignments: {
+                        duration: 'duration',
+                        phy_spell_up: 'phy_spell_up',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    duration: 'duration',
-                    phy_spell_up: 'phy_spell_up',
-                  },
                 },
               },
               next: null,
             },
-            conditional_2: {
+            checkCondition_2: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
               },
-              next: null,
+              next: 'applyBuff_1',
             },
             applyBuff_3: {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_claym_0017_dmgup2',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_claym_0017_dmgup2',
+                      copiedBlackboardAssignments: {
+                        duration2: 'duration2',
+                        phy_dmg_up_mult: 'phy_dmg_up_final',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    duration2: 'duration2',
-                    phy_dmg_up_mult: 'phy_dmg_up_final',
-                  },
                 },
               },
               next: null,
@@ -126,21 +135,19 @@ const definition = {
               },
               next: 'calculateActionValue_5',
             },
-            conditional_7: {
+            checkCondition_7: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-                whenTrue: { $sequence: 'readBuffStackCount_6' },
               },
-              next: null,
+              next: 'readBuffStackCount_6',
             },
-            conditional_8: {
+            checkCondition_8: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-                whenTrue: { $sequence: 'conditional_7' },
               },
-              next: null,
+              next: 'checkCondition_7',
             },
           },
           dataNodes: {
@@ -184,26 +191,29 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'beforeOutputBuff',
           priority: 0,
-          sequence: { $sequence: 'conditional_2' },
+          sequence: { $sequence: 'checkCondition_2' },
         },
         {
           key: 'skill3:event:1:sequence:0',
           abilityEvent: 'beforeOutputPhysicalInfliction',
           priority: 0,
-          sequence: { $sequence: 'conditional_8' },
+          sequence: { $sequence: 'checkCondition_8' },
         },
       ],
       blackboard: {
         atk_up_mult: [0.03, 0.036, 0.042, 0.048, 0.054, 0.06, 0.066, 0.072, 0.084],
+        count: 0,
         duration: [20, 20, 20, 20, 20, 20, 20, 20, 20],
         duration2: [30, 30, 30, 30, 30, 30, 30, 30, 30],
         phy_dmg_up2: [0.09, 0.108, 0.126, 0.144, 0.162, 0.18, 0.198, 0.216, 0.252],
+        phy_dmg_up_final: 0,
+        phy_dmg_up_middle: 0,
         phy_spell_up: [30, 36, 42, 48, 54, 60, 66, 72, 84],
       },
     },
   ],
   assetSlug: 'wpn_claym_0017',
-  iconPath: '/weapons/claym/wpn_claym_0017.webp',
+  icon: 'endaxis:weapons/claym/wpn_claym_0017',
   buffDefinitions: {
     buff_wpn_claym_0017_dmgup: {
       stackingType: 'refresh',
@@ -215,8 +225,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_physical_dmg_up',
-        iconPath: '/icons/icon_battle_physical_dmg_up.webp',
+        icon: 'endaxis:icons/icon_battle_physical_dmg_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -257,8 +266,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_physical_dmg_up',
-        iconPath: '/icons/icon_battle_physical_dmg_up.webp',
+        icon: 'endaxis:icons/icon_battle_physical_dmg_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

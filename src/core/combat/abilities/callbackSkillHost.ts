@@ -1,4 +1,5 @@
 import type { CompiledAbilityEntityChildSkillProgram } from '../../compiler/combatProgram';
+import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { hasActiveCombatOperationState } from '../actions/combatOperationHostInspection';
 import type { BuffApplicationHandle } from '../buffs/buffOperationExecutor';
@@ -76,7 +77,7 @@ export interface CallbackSkillHost {
   readonly runtimeState: CallbackSkillHostState;
   readonly skill: SkillRuntime;
   readonly ability: AbilitySystemRuntime;
-  start(inputTarget?: import('../../game-data/logicalAbilityEntity').RuntimeTargetRef): void;
+  start(inputTarget?: RuntimeTargetRef): void;
   end(): void;
   advance(deltaSeconds: number): void;
 }
@@ -108,7 +109,7 @@ export function createCallbackSkillHostFactory(dependencies: {
   readonly callbackPrograms?: ProjectileCallbackPrograms;
   readonly emitEvent?: (
     ownerId: string,
-    event: 'beforeCastSkill' | 'skillEnd' | 'afterSkillApplyCost',
+    event: 'beforeCastSkill' | 'skillEnd' | 'afterSkillApplyCost' | 'skillInterrupted',
     payload: AbilitySkillPayload,
   ) => void;
 }): CallbackSkillHostFactory {
@@ -187,6 +188,8 @@ export function createCallbackSkillHostFactory(dependencies: {
           semanticEventOwnerOperatorId: dependencies.definitionOperatorId,
         },
         emitSkillEnd: payload => dependencies.emitEvent?.(ownerId, 'skillEnd', payload),
+        emitSkillInterrupted: payload =>
+          dependencies.emitEvent?.(ownerId, 'skillInterrupted', payload),
         emitAfterSkillApplyCost: payload =>
           dependencies.emitEvent?.(ownerId, 'afterSkillApplyCost', payload),
       },

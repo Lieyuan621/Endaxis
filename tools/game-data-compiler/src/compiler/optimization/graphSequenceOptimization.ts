@@ -1,15 +1,9 @@
 /**
- * optimizeActionSequenceDefinition 的图侧对应：输入是投影后的单个定义主图（尚无宏），五条序列结构规则
- * 直接在节点表上执行，节点对象不可变，全部改写 copy-on-write 并产出新 nodes 表。
- *
- * 报告的 path 坐标系从树路径改为图节点 id 链：入口记为 path（默认 `entry`），链上节点追加 `→节点id`，
- * 嵌套子序列引用在节点后接字段名，例如 `entry→conditional_3.whenTrue→dealDamage_2`。
- *
- * 改写后重新做尾部 interning（与 actionGraphBuilder 的 stableSignature 同一思路）：内容不变的节点在
- * 原 id 对同一签名唯一时保留原 id，新节点按 `${kind}_optN` 确定性命名；最后从入口做可达性收集，
- * 剔除不再被任何入口或引用到达的节点。next 成环的链保守保留不改写。
+ * 简化独立资源图的控制流，保留原始节点对象不变。
+ * 改写后合并相同尾段并删除不可达节点；有环的 next 链保守保留。
+ * 报告路径由入口、节点 ID 和子序列字段组成，便于定位每次改写。
  */
-import type { CombatStepDefinition } from '../intermediateDefinitions.ts';
+import { visitActionGraphReferences } from './actionGraphReferences.ts';
 import type { CombatCondition } from '../intermediateDefinitions.ts';
 import type {
   ActionGraphDefinition,
@@ -41,6 +35,8 @@ const EMPTY_REFERENCE: ActionGraphReference = { $sequence: null };
 
 interface GraphOptimizationContext {
   readonly definitionId: string;
+  readonly unobservedTargetGroups: ReadonlySet<string>;
+  readonly initialBlackboardKeys: ReadonlySet<string>;
   readonly changes: DefinitionOptimizationChange[];
   readonly retained: DefinitionOptimizationRetention[];
   /** 工作节点表；节点对象本身不可变，替换内容即写入新对象。 */
@@ -83,17 +79,31 @@ export function optimizeActionGraphEntries(
     readonly mode: DefinitionOptimizationMode;
     readonly definitionId: string;
     readonly path?: string;
+    /** 每个入口的调用方是否使用返回值；未说明的入口保守保留。 */
+    readonly entryResultsUsed?: readonly boolean[];
+    readonly unobservedTargetGroups?: ReadonlySet<string>;
+    readonly initialBlackboardKeys?: ReadonlySet<string>;
   },
 ): {
   readonly entries: readonly ActionGraphReference[];
   readonly graph: ActionGraphDefinition;
   readonly report: DefinitionOptimizationReport;
 } {
-  const context = createContext(graph, options.definitionId);
+  const context = createContext(
+    graph,
+    options.definitionId,
+    options.unobservedTargetGroups,
+    options.initialBlackboardKeys,
+  );
   const optimizedEntries = entries.map((entry, index) =>
     options.mode === 'off'
       ? entry
-      : processChain(entry, `${options.path ?? 'entry'}[${index}]`, context),
+      : processChain(
+          entry,
+          `${options.path ?? 'entry'}[${index}]`,
+          context,
+          options.entryResultsUsed?.[index] ?? true,
+        ),
   );
   const optimizedGraph: ActionGraphDefinition =
     options.mode === 'off' || !context.dirty
@@ -130,6 +140,8 @@ export function optimizeActionGraphEntries(
 function createContext(
   graph: ActionGraphDefinition,
   definitionId: string,
+  unobservedTargetGroups: ReadonlySet<string> = new Set(),
+  initialBlackboardKeys: ReadonlySet<string> = new Set(),
 ): GraphOptimizationContext {
   const bySignature = new Map<string, string | null>();
   for (const [id, node] of Object.entries(graph.nodes)) {
@@ -141,6 +153,8 @@ function createContext(
   for (const [signature, id] of bySignature) if (id !== null) interned.set(signature, id);
   return {
     definitionId,
+    unobservedTargetGroups,
+    initialBlackboardKeys,
     changes: [],
     retained: [],
     nodes: new Map(Object.entries(graph.nodes)),
@@ -193,15 +207,16 @@ function processChain(
   reference: ActionGraphReference,
   path: string,
   context: GraphOptimizationContext,
+  resultUsed = true,
 ): ActionGraphReference {
   if (reference.$sequence === null) return reference;
-  const key = reference.$sequence;
+  const key = `${reference.$sequence}:${resultUsed}`;
   const memoized = context.chainMemo.get(key);
   if (memoized !== undefined) return memoized;
   // 嵌套引用成环时保守保留原引用，不向环内递归。
   if (context.chainInProgress.has(key)) return reference;
   context.chainInProgress.add(key);
-  const result = processChainInner(reference, path, context);
+  const result = processChainInner(reference, path, context, resultUsed);
   context.chainInProgress.delete(key);
   context.chainMemo.set(key, result);
   return result;
@@ -211,6 +226,7 @@ function processChainInner(
   reference: ActionGraphReference,
   path: string,
   context: GraphOptimizationContext,
+  resultUsed: boolean,
 ): ActionGraphReference {
   const chain = collectChain(context.nodes, reference.$sequence!);
   // next 成环的链不改写：扁平化会改变重复执行结构。
@@ -218,6 +234,60 @@ function processChainInner(
   const replacements = chain.ids.map(id =>
     processAction(context.nodes.get(id)!.action, `${path}→${id}`, context),
   );
+  if (!resultUsed && !replacements.flat().some(action => action.kind === 'invertNextResult')) {
+    for (let index = replacements.length - 1; index >= 0; index--) {
+      const steps = replacements[index]!;
+      if (steps.length === 0) continue;
+      if (steps.length !== 1) break;
+      const action = steps[0]!;
+      const unusedTargetWrite =
+        action.key === undefined &&
+        (action.kind === 'mergeContextTargets' ||
+          action.kind === 'createSpatialPointTargets' ||
+          action.kind === 'findCharacterTeamTargets') &&
+        context.unobservedTargetGroups.has(action.parameters.saveToContextKey) &&
+        (action.kind === 'mergeContextTargets'
+          ? action.parameters.sources.every(
+              source => source.kind === 'target' && source.target === 'enemy',
+            )
+          : action.kind === 'findCharacterTeamTargets'
+            ? action.parameters.selection.kind === 'controlledOperator' ||
+              action.parameters.selection.kind === 'allOperators'
+            : action.parameters.count.kind === 'constant' &&
+              Number.isSafeInteger(action.parameters.count.value) &&
+              action.parameters.count.value >= 0);
+      // 无人读取的逻辑点不逃逸。删掉分配会改变后续编号，但不改变存活目标的相等关系。
+      // 动态数量仍保留，避免省略变量读取或数量校验。
+      const emptyBranch =
+        action.key === undefined &&
+        ((action.kind === 'ifElse' &&
+          action.parameters.alwaysNext &&
+          action.condition.$sequence === null &&
+          action.whenTrue.$sequence === null &&
+          action.whenFalse.$sequence === null) ||
+          (action.kind === 'switch' &&
+            action.options.every(option => option.sequence.$sequence === null) &&
+            canDiscardUsage(
+              mergeDefinitionValueUsage([
+                actionValueUsage(action.parameters.choice),
+                ...action.options.map(option => actionValueUsage(option.value)),
+              ]),
+              context.initialBlackboardKeys,
+            )));
+      if (!unusedTargetWrite && !emptyBranch && !isDiscardableCheck(action)) break;
+      replacements[index] = [];
+      change(
+        context,
+        `${path}→${chain.ids[index]}`,
+        unusedTargetWrite ? 'unused-target-write' : 'equivalent-branches',
+        unusedTargetWrite
+          ? '末尾目标写入没有读取者，且调用方不使用其返回值'
+          : emptyBranch
+            ? '末尾分支没有有效子序列，求值可省略且调用方不使用其返回值'
+            : '末尾检查没有后续动作，且调用方不使用其返回值',
+      );
+    }
+  }
   const unchanged = replacements.every(
     (steps, index) =>
       steps.length === 1 && steps[0] === context.nodes.get(chain.ids[index]!)!.action,
@@ -280,17 +350,128 @@ function processAction(
   context: GraphOptimizationContext,
 ): readonly ActionGraphStep[] {
   switch (action.kind) {
+    case 'checkCondition': {
+      const condition = optimizeCondition(
+        action.parameters.condition,
+        `${path}.parameters.condition`,
+        context,
+      );
+      return [
+        condition === action.parameters.condition
+          ? action
+          : {
+              ...action,
+              parameters: { ...action.parameters, condition },
+            },
+      ];
+    }
+    case 'anyCondition':
+      return [
+        {
+          ...action,
+          conditions: action.conditions.map((condition, index) =>
+            processChain(condition, `${path}.conditions[${index}]`, context),
+          ),
+        },
+      ];
+    case 'ifElse': {
+      const whenTrue = processChain(
+        action.whenTrue,
+        `${path}.whenTrue`,
+        context,
+        !action.parameters.alwaysNext,
+      );
+      const whenFalse = processChain(
+        action.whenFalse,
+        `${path}.whenFalse`,
+        context,
+        !action.parameters.alwaysNext,
+      );
+      const condition = processChain(
+        action.condition,
+        `${path}.condition`,
+        context,
+        !(action.parameters.alwaysNext && whenTrue.$sequence === whenFalse.$sequence),
+      );
+      // 常量检查不代表条件序列的最终返回值：外层 NotNext 可通过共享执行上下文反转它。
+      // 在未证明入口返回值策略前，不能据此删除任一分支。
+      // 单次变量运算没有准备、Tick 或 End 行为，并保留外层一次返回值边界。
+      // 多动作分支不可直接展开：NotNext 可能让展开后的第一步提前停止整段。
+      const isSingleCalculation = (reference: ActionGraphReference) => {
+        if (reference.$sequence === null) return false;
+        const node = context.nodes.get(reference.$sequence);
+        return (
+          node?.next === null &&
+          node.action.key === undefined &&
+          (node.action.kind === 'modifyActionValue' || node.action.kind === 'calculateActionValue')
+        );
+      };
+      const checks =
+        condition.$sequence === null ? undefined : collectChain(context.nodes, condition.$sequence);
+      const discardable =
+        condition.$sequence === null ||
+        (checks !== undefined &&
+          !checks.cyclic &&
+          checks.ids.every(id => {
+            const check = context.nodes.get(id)!.action;
+            if (check.key === undefined && check.kind === 'invertNextResult') return true;
+            return isDiscardableCheck(check);
+          }));
+      if (
+        action.key === undefined &&
+        action.parameters.alwaysNext &&
+        discardable &&
+        whenTrue.$sequence === whenFalse.$sequence
+      ) {
+        // 保留原生 IfElse 调用的返回边界；只删除已不能影响结果的内部检查。
+        if (condition.$sequence !== null)
+          change(
+            context,
+            path,
+            'equivalent-branches',
+            '两支指向同一序列且始终继续，内部纯检查不影响执行结果',
+          );
+        return [{ ...action, condition: EMPTY_REFERENCE, whenTrue, whenFalse }];
+      }
+      if (
+        action.key === undefined &&
+        discardable &&
+        isSingleCalculation(whenTrue) &&
+        isSingleCalculation(whenFalse)
+      ) {
+        const merged = mergeGraphChains(whenTrue, whenFalse, context, new Set());
+        if (merged !== NOT_EQUIVALENT) {
+          change(context, path, 'equivalent-branches', '两支执行相同的单次变量运算，条件无副作用');
+          return chainActions(merged, context);
+        }
+      }
+      return [{ ...action, condition, whenTrue, whenFalse }];
+    }
     case 'conditional':
       return processConditional(action, path, context);
     case 'switch':
       return processSwitch(action, path, context);
     case 'once':
-    case 'withActionBlackboardScope':
     case 'repeatEachTick':
-    case 'repeatByActionValue':
     case 'forEachContextTarget': {
       const body = processChain(action.body, `${path}.body`, context);
       return [body === action.body ? action : { ...action, body }];
+    }
+    case 'playAnimation': {
+      const onEnd = processChain(action.onEnd, `${path}.onEnd`, context);
+      return onEnd.$sequence === null ? [] : [{ ...action, onEnd }];
+    }
+    case 'showComboRingQte':
+      return [
+        {
+          ...action,
+          triggeredAction: processChain(action.triggeredAction, `${path}.triggeredAction`, context),
+        },
+      ];
+    case 'aura': {
+      const onEnter = processChain(action.onEnter, `${path}.onEnter`, context);
+      const onExit = processChain(action.onExit, `${path}.onExit`, context);
+      return [{ ...action, onEnter, onExit }];
     }
     case 'listenForCombatEvents': {
       const responses = action.parameters.responses.map((response, index) => {
@@ -321,17 +502,10 @@ function processAction(
           : { ...action, parameters: { ...action.parameters, responses } },
       ];
     }
-    case 'jumpTimeline': {
-      const condition =
-        action.parameters.condition === undefined
-          ? undefined
-          : optimizeCondition(action.parameters.condition, `${path}.parameters.condition`, context);
+    case 'jumpTimeline':
       return [
-        condition === action.parameters.condition
-          ? action
-          : { ...action, parameters: { ...action.parameters, condition } },
+        { ...action, condition: processChain(action.condition, `${path}.condition`, context) },
       ];
-    }
     default:
       return [action];
   }
@@ -432,7 +606,12 @@ function processSwitch(
   context: GraphOptimizationContext,
 ): readonly ActionGraphStep[] {
   const options = action.options.map((option, index) => {
-    const sequence = processChain(option.sequence, `${path}.options[${index}].sequence`, context);
+    const sequence = processChain(
+      option.sequence,
+      `${path}.options[${index}].sequence`,
+      context,
+      !action.parameters.alwaysNext,
+    );
     return sequence === option.sequence ? option : { ...option, sequence };
   });
   if (action.key === undefined && options.length > 0) {
@@ -440,34 +619,13 @@ function processSwitch(
     for (let index = 1; index < options.length && common !== NOT_EQUIVALENT; index++)
       common = mergeGraphChains(common, options[index]!.sequence, context, new Set());
     if (common !== NOT_EQUIVALENT) {
-      const matchAnyOption = optimizeCondition(
-        {
-          kind: 'any',
-          conditions: options.map(option => ({
-            kind: 'actionValueCompare' as const,
-            left: action.parameters.choice,
-            operator: 'equal' as const,
-            right: option.value,
-          })),
-        },
-        `${path}.parameters.choiceMatch`,
-        context,
-      );
       change(
         context,
         path,
         'equivalent-branches',
-        `switch 的 ${options.length} 个候选效果相同，合并为一次候选匹配和一份公共序列`,
+        `switch 的 ${options.length} 个候选共享一份公共序列，保留选择与生命周期语义`,
       );
-      const synthetic: GraphConditional = {
-        kind: 'conditional',
-        parameters: {
-          condition: matchAnyOption,
-          ...(action.parameters.alwaysNext === true ? { alwaysNext: true } : {}),
-        },
-        whenTrue: common,
-      };
-      return processConditional(synthetic, path, context);
+      return [{ ...action, options: options.map(option => ({ ...option, sequence: common })) }];
     }
   }
   return [
@@ -568,8 +726,7 @@ function mergeGraphValue(
   )
     return NOT_EQUIVALENT;
   const generatedDamageStep =
-    leftRecord.kind === rightRecord.kind &&
-    (leftRecord.kind === 'dealDamage' || leftRecord.kind === 'dealFixedDamage');
+    leftRecord.kind === rightRecord.kind && leftRecord.kind === 'dealDamage';
   const result: Record<string, unknown> = {};
   for (const key of leftKeys) {
     const merged = mergeGraphValue(
@@ -585,13 +742,38 @@ function mergeGraphValue(
   return result;
 }
 
-/** 等价分支只可省略没有写入、随机取样或动作黑板读取的状态查询。 */
+/** 仅允许已确认没有写入、取样或目标创建的检查。 */
+function isDiscardableCheck(action: ActionGraphStep): boolean {
+  return (
+    action.key === undefined &&
+    action.kind === 'checkCondition' &&
+    [
+      'constant',
+      'actionValueCompare',
+      'comboCameraAlphaSetting',
+      'casterControlled',
+      'buffIdStackCompare',
+      'entityCountCompare',
+      'targetFacingAngle',
+      'targetDistance',
+      'twoDirectionAngleCompare',
+    ].includes(action.parameters.condition.kind) &&
+    canDiscardEquivalentBranchCondition(action.parameters.condition)
+  );
+}
+
+/** 等价分支可省略无副作用的检查；变量读取还须证明不会因缺键失败。 */
 function canDiscardEquivalentBranchCondition(condition: CombatCondition): boolean {
-  const usage = analyzeConditionUsage(condition);
+  return canDiscardUsage(analyzeConditionUsage(condition));
+}
+
+function canDiscardUsage(usage: DefinitionValueUsage, initialKeys?: ReadonlySet<string>): boolean {
   return (
     !usage.observable &&
     !usage.unknownAccess &&
-    usage.reads.size === 0 &&
+    (usage.reads.size === 0 ||
+      !usage.mayThrow ||
+      [...usage.reads].every(key => initialKeys?.has(key))) &&
     usage.writes.size === 0 &&
     usage.externalReads.length === 0
   );
@@ -606,7 +788,7 @@ function graphSequenceAlwaysContinues(
   const chain = collectChain(context.nodes, reference.$sequence);
   if (chain.cyclic) return false;
   return chain.ids.every(id =>
-    ['applyElementalInfliction', 'dealDamage', 'dealFixedDamage', 'modifyActionValue'].includes(
+    ['applyElementalInfliction', 'dealDamage', 'modifyActionValue'].includes(
       context.nodes.get(id)!.action.kind,
     ),
   );
@@ -664,7 +846,7 @@ function pruneUnreachable(
       reachable.add(cursor);
       const node = nodes.get(cursor);
       if (!node) return;
-      scanStepReferences(node.action, visitReference);
+      visitActionGraphReferences(node.action, visitReference);
       cursor = node.next;
     }
   };
@@ -672,24 +854,6 @@ function pruneUnreachable(
   const pruned: Record<string, ActionGraphNode> = {};
   for (const [id, node] of nodes) if (reachable.has(id)) pruned[id] = node;
   return pruned;
-}
-
-function scanStepReferences(
-  value: unknown,
-  visit: (reference: ActionGraphReference) => void,
-): void {
-  if (value && typeof value === 'object' && 'actionGraph' in value) return;
-  if (Array.isArray(value)) {
-    value.forEach(item => scanStepReferences(item, visit));
-    return;
-  }
-  if (!value || typeof value !== 'object') return;
-  for (const [key, item] of Object.entries(value)) {
-    if (key === 'nodeBindings') continue;
-    if (key === '$sequence' && (typeof item === 'string' || item === null))
-      visit({ $sequence: item });
-    else scanStepReferences(item, visit);
-  }
 }
 
 function countGraph(
@@ -705,7 +869,7 @@ function countGraph(
       reachable.add(cursor);
       const node = graph.nodes[cursor];
       if (!node) return;
-      scanStepReferences(node.action, visitReference);
+      visitActionGraphReferences(node.action, visitReference);
       cursor = node.next;
     }
   };
@@ -714,6 +878,7 @@ function countGraph(
     const action = graph.nodes[id]!.action;
     count.steps++;
     switch (action.kind) {
+      case 'checkCondition':
       case 'conditional':
         count.conditions += countCondition(action.parameters.condition);
         break;
@@ -721,10 +886,6 @@ function countGraph(
         for (const response of action.parameters.responses)
           if (response.condition !== undefined)
             count.conditions += countCondition(response.condition);
-        break;
-      case 'jumpTimeline':
-        if (action.parameters.condition !== undefined)
-          count.conditions += countCondition(action.parameters.condition);
         break;
     }
   }
@@ -749,9 +910,8 @@ const EMPTY_USAGE: DefinitionValueUsage = {
 };
 
 /**
- * analyzeSequenceUsage 的图遍历版本：从入口沿 next 与 $sequence 引用遍历，visited 按节点去重防环，
- * 共享子图只统计一次。携带子序列引用的种类在此沿引用递归；其余叶动作与树版结构相同，直接复用
- * analyzeStepUsage。输出结构与树版一致。
+ * 沿 next 和子序列引用汇总用途，共享节点只统计一次。
+ * 控制节点在此遍历子序列；叶动作复用统一的参数用途分析。
  */
 export function analyzeGraphSequenceUsage(
   graph: ActionGraphDefinition,
@@ -781,6 +941,22 @@ function graphStepUsage(
   context?: DefinitionUsageContext,
 ): DefinitionValueUsage {
   switch (action.kind) {
+    case 'jumpTimeline':
+      return { ...walkReference(action.condition), observable: true };
+    case 'anyCondition':
+      return {
+        ...mergeDefinitionValueUsage(action.conditions.map(walkReference)),
+        observable: true,
+      };
+    case 'ifElse':
+      return {
+        ...mergeDefinitionValueUsage([
+          walkReference(action.condition),
+          walkReference(action.whenTrue),
+          walkReference(action.whenFalse),
+        ]),
+        observable: true,
+      };
     case 'conditional':
       return mergeDefinitionValueUsage([
         analyzeConditionUsage(action.parameters.condition),
@@ -799,23 +975,6 @@ function graphStepUsage(
     case 'repeatEachTick':
     case 'forEachContextTarget':
       return { ...walkReference(action.body), observable: true };
-    case 'repeatByActionValue':
-      return {
-        ...mergeDefinitionValueUsage([
-          actionValueUsage(action.parameters.count),
-          walkReference(action.body),
-        ]),
-        observable: true,
-      };
-    case 'withActionBlackboardScope':
-      return {
-        ...mergeDefinitionValueUsage([
-          walkReference(action.body),
-          ...Object.values(action.parameters.entityAssignments ?? {}).map(actionValueUsage),
-        ]),
-        mayThrow: true,
-        observable: true,
-      };
     case 'listenForCombatEvents':
       return {
         ...mergeDefinitionValueUsage(
@@ -832,13 +991,14 @@ function graphStepUsage(
       // 回调是独立资源：沿自己的图分析延时入口。回调 direct 板继承创建时的父快照并覆盖
       // 自身初值，回调体的读取必须上传为父板读取；回调黑板默认值不是父板读取。
       return {
-        ...mergeDefinitionValueUsage(
-          action.callbacks.flatMap(callback =>
+        ...mergeDefinitionValueUsage([
+          ...Object.values(action.parameters.entityAssignments ?? {}).map(actionValueUsage),
+          ...action.callbacks.flatMap(callback =>
             callback.skill.scheduledSequences.map(item =>
               analyzeGraphSequenceUsage(callback.skill.actionGraph.main, item.sequence, context),
             ),
           ),
-        ),
+        ]),
         mayThrow: true,
         observable: true,
       };
@@ -846,9 +1006,12 @@ function graphStepUsage(
     case 'callMacro':
       // 宏内部节点不在本图；保守标成未知访问。
       return { ...EMPTY_USAGE, unknownAccess: true, mayThrow: true, observable: true };
-    default:
-      // 叶动作的图形态与树形态结构相同（ActionGraphValue 只改写子序列字段）。
-      return analyzeStepUsage(action as unknown as CombatStepDefinition, context);
+    default: {
+      // 动画、QTE、光环等动作也有资源内回调；统一枚举，不能只统计动作参数。
+      const usages = [analyzeStepUsage(action, context)];
+      visitActionGraphReferences(action, reference => usages.push(walkReference(reference)));
+      return mergeDefinitionValueUsage(usages);
+    }
   }
 }
 

@@ -1,22 +1,25 @@
 import { describe, expect, it, vi } from 'vitest';
-import { CombatAttributeSet } from '../attributes/combatAttributes';
-import { CombatBuffContainer, type CombatBuffDefinition } from './combatBuffs';
-import { ActionBlackboard } from '../actions/actionBlackboard';
-import type { CombatBuffDefinitionEntry } from '../../../../packages/game-data-contract/src/buffs';
-import { BuffDefinitionOperationTarget } from './buffDefinitionOperationTarget';
-import { TimeDilationRuntime } from '../time/timeDilationRuntime';
-import type { ResolvedActionSequence } from '../../compiler/combatProgram';
-import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
 import type {
+  ActionGraphDefinition,
   ActionGraphNode,
   ActionGraphStep,
 } from '../../../../packages/game-data-contract/src/actionGraph';
+import type { CombatBuffDefinitionEntry } from '../../../../packages/game-data-contract/src/buffs';
+import type { ResolvedActionSequence } from '../../compiler/combatProgram';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import { ActionBlackboard } from '../actions/actionBlackboard';
+import { CombatAttributeSet } from '../attributes/combatAttributes';
+import type { CombatOperationContext } from '../skills/skillRuntime';
+import { TimeDilationRuntime } from '../time/timeDilationRuntime';
+import { BuffDefinitionOperationTarget } from './buffDefinitionOperationTarget';
+import type { RegisterBuffAbilityEventAction } from './buffLifecycleSequenceRuntime';
+import { CombatBuffContainer, type CombatBuffDefinition } from './combatBuffs';
 
 const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
-  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
   graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
   entry,
@@ -26,7 +29,7 @@ const compileGraphEntry = (
 const chainEntry = (
   revision: string,
   actions: readonly ActionGraphStep[],
-  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => {
   const nodes: Record<string, ActionGraphNode> = {};
   actions.forEach((action, index) => {
@@ -235,7 +238,7 @@ describe('BuffDefinitionOperationTarget', () => {
     const sourceDefinition = {
       stackingType: 'unique',
       durationSeconds: 10,
-      lifecycleSequences: { trigger: emptySequence },
+      lifecycleSequences: { trigger: [emptySequence] },
     } as const;
     const originalContainer = new CombatBuffContainer<string>(
       'enemy',
@@ -376,7 +379,7 @@ describe('BuffDefinitionOperationTarget', () => {
     const firstDefinition = {
       stackingType: 'refresh',
       durationSeconds: 5,
-      presentation: { iconPath: '/icons/buffs/shared.webp' },
+      presentation: { icon: 'endaxis:icons/buffs/shared' },
     } as const;
     const secondDefinition = { stackingType: 'refresh', durationSeconds: 9 } as const;
     target.apply({
@@ -396,7 +399,7 @@ describe('BuffDefinitionOperationTarget', () => {
     expect(container.buffs).toHaveLength(1);
     expect(instance.definition.durationSeconds).toBe(5);
     expect(instance.definition.presentation).toEqual({
-      iconPath: '/icons/buffs/shared.webp',
+      icon: 'endaxis:icons/buffs/shared',
     });
     expect(instance.remainingDuration).toBe(9);
     // 展示元数据跟随最终运行时定义，但不会污染只负责战斗语义的外部定义编译器输入。
@@ -552,7 +555,7 @@ describe('BuffDefinitionOperationTarget', () => {
         blackboardValues: {},
         definition: {
           stackingType: 'unique',
-          lifecycleSequences: { start: emptySequence },
+          lifecycleSequences: { start: [emptySequence] },
         },
       }),
     ).toThrow('no Buff sequence runtime is configured');
@@ -569,9 +572,9 @@ describe('BuffDefinitionOperationTarget', () => {
       },
     );
     target.configureLifecycleOperations(source => {
-      lifecycleSources.push(source);
       return {
         execute: () => {
+          lifecycleSources.push(source);
           executed = true;
           return true;
         },
@@ -589,12 +592,14 @@ describe('BuffDefinitionOperationTarget', () => {
         definition: {
           stackingType: 'unique',
           lifecycleSequences: {
-            start: chainEntry('buff-lifecycle-start', [
-              {
-                kind: 'setContextFlag',
-                parameters: { flag: 'started', value: true, target: 'caster' },
-              },
-            ]),
+            start: [
+              chainEntry('buff-lifecycle-start', [
+                {
+                  kind: 'triggerCustomAbilityEvent',
+                  parameters: { eventName: 'started', eventParam: 0, target: 'caster' as const },
+                },
+              ]),
+            ],
           },
         },
       }),
@@ -737,9 +742,7 @@ describe('BuffDefinitionOperationTarget', () => {
   });
 
   it('registers an added-Buff response before publishing the successful application', () => {
-    let handleAdded:
-      | Parameters<import('./buffLifecycleSequenceRuntime').RegisterBuffAbilityEventAction>[2]
-      | undefined;
+    let handleAdded: Parameters<RegisterBuffAbilityEventAction>[2] | undefined;
     const execute = vi.fn(() => true);
     const target = new BuffDefinitionOperationTarget(
       new CombatBuffContainer('operator', new CombatAttributeSet()),
@@ -770,8 +773,8 @@ describe('BuffDefinitionOperationTarget', () => {
               priority: 0,
               sequence: chainEntry('buff-listens-for-add', [
                 {
-                  kind: 'setContextFlag',
-                  parameters: { flag: 'added', value: true, target: 'caster' },
+                  kind: 'triggerCustomAbilityEvent',
+                  parameters: { eventName: 'added', eventParam: 0, target: 'caster' as const },
                 },
               ]),
             },
@@ -783,17 +786,13 @@ describe('BuffDefinitionOperationTarget', () => {
   });
 
   it('preserves the dormant character-side spell-infliction response as its own event', () => {
-    let handleInfliction:
-      | Parameters<import('./buffLifecycleSequenceRuntime').RegisterBuffAbilityEventAction>[2]
-      | undefined;
+    let handleInfliction: Parameters<RegisterBuffAbilityEventAction>[2] | undefined;
     const observed: unknown[] = [];
     // 响应结束会恢复上下文，必须在执行期间观察事件，不能检查 spy 保存的可变上下文引用。
-    const execute = vi.fn(
-      (_step: unknown, context?: import('../skills/skillRuntime').CombatOperationContext) => {
-        observed.push(context?.event);
-        return true;
-      },
-    );
+    const execute = vi.fn((_step: unknown, context?: CombatOperationContext) => {
+      observed.push(context?.event);
+      return true;
+    });
     const target = new BuffDefinitionOperationTarget(
       new CombatBuffContainer('operator', new CombatAttributeSet()),
       {
@@ -822,8 +821,8 @@ describe('BuffDefinitionOperationTarget', () => {
               priority: 0,
               sequence: chainEntry('buff-spell-infliction-listener', [
                 {
-                  kind: 'setContextFlag',
-                  parameters: { flag: 'inflicted', value: true, target: 'caster' },
+                  kind: 'triggerCustomAbilityEvent',
+                  parameters: { eventName: 'inflicted', eventParam: 0, target: 'caster' as const },
                 },
               ]),
             },

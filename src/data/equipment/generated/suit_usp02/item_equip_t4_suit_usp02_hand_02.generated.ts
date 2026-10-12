@@ -4,7 +4,7 @@ import type { GearDefinition } from '../../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'item_equip_t4_suit_usp02_hand_02',
   assetSlug: 'item_equip_t4_suit_usp02_hand_01',
-  iconPath: '/equipment/usp02/item_equip_t4_suit_usp02_hand_01.webp',
+  icon: 'endaxis:equipment/usp02/item_equip_t4_suit_usp02_hand_01',
   slotType: 'gloves',
   levelRequirement: 70,
   baseDefense: 42,

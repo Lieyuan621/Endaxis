@@ -120,9 +120,9 @@ it.each([-1, 0])('原生寒冷附着打开汤汤窗口：到期前后 %i 帧的�
     e => e.event === 'ComboWindowExpired' && e.sourceId === 'tangtang',
   );
   expect(expired).toBeDefined();
-  // 原生窗口为5秒。投射物在Default阶段触发，后续Battle阶段可在同帧更新窗口。
-  expect(expired!.frame - opened!.frame).toBeGreaterThanOrEqual(150);
-  expect(expired!.frame - opened!.frame).toBeLessThanOrEqual(151);
+  // 当前原生配置的窗口为6秒。投射物在Default阶段触发，后续Battle阶段可在同帧更新窗口。
+  expect(expired!.frame - opened!.frame).toBeGreaterThanOrEqual(180);
+  expect(expired!.frame - opened!.frame).toBeLessThanOrEqual(181);
   const frame = expired!.frame + offset;
   scenario.tracks[1] = track('tangtang', 'chr_0027_tangtang_combo_skill', 'comboSkill', frame);
   const before = structuredClone(scenario);

@@ -1,10 +1,9 @@
 /**
- * 生成定义只保留被显式引用的步骤名称和必须共享的作用域关系。
- * 全定义扫描一次，避免逐序列删 key 时遗漏天赋/潜能引用或跨入口 once 共享。
+ * 生成定义只保留被显式引用的步骤名称。
+ * 全定义扫描一次，避免逐序列删 key 时遗漏天赋/潜能引用。
  */
 export function prepareActionGraphIdentities<T>(definition: T): T {
   const referenced = new Set<string>();
-  const scopeCounts = new Map<string, number>();
   const occupied = new Set<string>();
   function inspect(value: unknown): void {
     if (Array.isArray(value)) {
@@ -15,20 +14,6 @@ export function prepareActionGraphIdentities<T>(definition: T): T {
     const r = value as Record<string, unknown>;
     if (typeof r.stepKey === 'string') referenced.add(r.stepKey);
     if (typeof r.key === 'string') occupied.add(r.key);
-    if (typeof r.scopeKey === 'string') occupied.add(r.scopeKey);
-    if (
-      (r.kind === 'once' || r.kind === 'withActionBlackboardScope') &&
-      r.parameters &&
-      typeof r.parameters === 'object'
-    ) {
-      const p = r.parameters as Record<string, unknown>;
-      if (
-        typeof p.scopeKey === 'string' &&
-        p.lifetime !== 'execution' &&
-        p.shareParentBlackboard !== true
-      )
-        scopeCounts.set(p.scopeKey, (scopeCounts.get(p.scopeKey) ?? 0) + 1);
-    }
     Object.values(r).forEach(inspect);
   }
   inspect(definition);
@@ -65,26 +50,10 @@ export function prepareActionGraphIdentities<T>(definition: T): T {
       changed = true;
     }
     if (typeof r.kind === 'string' && r.parameters && typeof r.parameters === 'object') {
-      const p = r.parameters as Record<string, unknown>;
       if (typeof r.key === 'string' && generated(r.key)) {
         if (referenced.has(r.key)) r.key = name(r.key, 'step');
         else delete r.key;
         changed = true;
-      }
-      if (r.kind === 'once' || r.kind === 'withActionBlackboardScope') {
-        if (typeof p.scopeKey === 'string' && generated(p.scopeKey)) {
-          // parameters 由上层递归返回；只有真正改写时才需要新对象。
-          const nextParameters = { ...p };
-          if (
-            p.lifetime === 'execution' ||
-            p.shareParentBlackboard === true ||
-            scopeCounts.get(p.scopeKey) === 1
-          )
-            delete nextParameters.scopeKey;
-          else nextParameters.scopeKey = name(p.scopeKey, 'scope');
-          r.parameters = nextParameters;
-          changed = true;
-        }
       }
     }
     return changed ? r : value;
@@ -98,6 +67,6 @@ function generated(value: string): boolean {
     value.includes(':/scheduledSequences/') ||
     value.includes(':/eventListeners/') ||
     value.includes(':/lifecycleSequences/') ||
-    /\/call\d+\/(?:dealDamage|dealFixedDamage|once|withActionBlackboardScope)_\d+$/.test(value)
+    /\/call\d+\/(?:dealDamage|once)_\d+$/.test(value)
   );
 }

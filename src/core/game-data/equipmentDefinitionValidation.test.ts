@@ -21,7 +21,13 @@ describe('equipmentDefinitionValidation', () => {
             main: {
               nodes: {
                 apply: {
-                  action: { kind: 'applyBuff', parameters: { buffId: 'owned', target: 'caster' } },
+                  action: {
+                    kind: 'applyBuff',
+                    parameters: {
+                      buffs: [{ buffId: 'owned' }],
+                      targets: { kind: 'fixed', target: 'caster' },
+                    },
+                  },
                   next: null,
                 },
               },
@@ -33,10 +39,15 @@ describe('equipmentDefinitionValidation', () => {
       buffDefinitions: {
         owned: {
           stackingType: 'unique',
-          lifecycleSequences: { start: { $sequence: 'start' } },
+          lifecycleSequences: { start: [{ $sequence: 'start' }] },
           actionGraph: {
             main: {
-              nodes: { start: { action: { kind: 'finishTimeline', parameters: {} }, next: null } },
+              nodes: {
+                start: {
+                  action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} },
+                  next: null,
+                },
+              },
             },
             macros: {},
           },
@@ -44,7 +55,7 @@ describe('equipmentDefinitionValidation', () => {
       },
     };
     const broken = structuredClone(weapon);
-    broken.buffDefinitions.owned.lifecycleSequences.start.$sequence = 'missing';
+    broken.buffDefinitions.owned.lifecycleSequences.start[0]!.$sequence = 'missing';
     expect(
       validateWeaponDefinition(broken).some(issue =>
         issue.message.includes('missing action graph node'),
@@ -78,11 +89,14 @@ describe('equipmentDefinitionValidation', () => {
         buffDefinitions: {
           owned: {
             stackingType: 'unique',
-            lifecycleSequences: { start: { $sequence: 'start' } },
+            lifecycleSequences: { start: [{ $sequence: 'start' }] },
             actionGraph: {
               main: {
                 nodes: {
-                  start: { action: { kind: 'finishTimeline', parameters: {} }, next: null },
+                  start: {
+                    action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} },
+                    next: null,
+                  },
                 },
               },
               macros: {},
@@ -163,7 +177,12 @@ describe('equipmentDefinitionValidation', () => {
                   entry: {
                     action: {
                       kind: 'changeResource',
-                      parameters: { resource: 'sp', amount: 1, recipient: 'team' },
+                      parameters: {
+                        resource: 'sp',
+                        amount: 1,
+                        source: { kind: 'owner' },
+                        targets: { kind: 'owner' },
+                      },
                     },
                     next: null,
                   },
@@ -222,7 +241,10 @@ describe('equipmentDefinitionValidation', () => {
               entry: {
                 action: {
                   kind: 'applyBuff',
-                  parameters: { buffId: 'buff.fixture-set', target: 'caster' },
+                  parameters: {
+                    buffs: [{ buffId: 'buff.fixture-set' }],
+                    targets: { kind: 'fixed', target: 'caster' },
+                  },
                 },
                 next: null,
               },

@@ -3,10 +3,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { publishGameDataCandidate } from '../../src/compiler/publication/gameDataCandidatePublisher.ts';
+import type * as CompilerIo from '../../src/io.ts';
 
 const renameFailure = vi.hoisted(() => ({ call: 0, failAt: undefined as number | undefined }));
 vi.mock('../../src/io.ts', async importOriginal => {
-  const actual = await importOriginal<typeof import('../../src/io.ts')>();
+  const actual = await importOriginal<typeof CompilerIo>();
   return {
     ...actual,
     renameWithRetry: async (source: string, destination: string) => {

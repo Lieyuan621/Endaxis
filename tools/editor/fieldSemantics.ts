@@ -11,6 +11,7 @@ import type {
 } from '../../src/ui/field-editor/fieldSemantics.ts';
 
 const semanticDeclarations: Readonly<Record<FieldSemanticAlias, string>> = {
+  ImageRef: 'primitives.ts',
   TimeScaleCurveDefinition: 'conditions.ts',
   GameplayTag: 'gameplayTags.ts',
   ActionStringOperand: 'primitives.ts',

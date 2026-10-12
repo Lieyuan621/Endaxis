@@ -121,7 +121,12 @@ export function projectPhysicalStatusDisplay(
         ? entry
         : {
             ...entry,
-            data: { ...entry.data, visible: true, abnormalColorType: 'Physical', iconPath },
+            data: {
+              ...entry.data,
+              visible: true,
+              abnormalColorType: 'Physical',
+              icon: 'endaxis:' + iconPath.slice(1, -5),
+            },
           };
     }),
     endFrame,

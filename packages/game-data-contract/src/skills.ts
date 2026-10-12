@@ -4,16 +4,20 @@
  * 干员数据用这些结构说明一次操作会选择哪个技能、何时扣费与进入冷却、按什么时间线
  * 执行动作，以及技能之间如何接续或换槽。编辑器负责放置技能组，模拟器负责执行具体技能。
  */
-import {
-  type CombatResource,
-  type LevelValues,
-  type SkillLevelSource,
-  type SkillType,
-} from './primitives.ts';
-import { type CombatEventHandlerDefinition, type ScheduledSequenceDefinition } from './actions.ts';
-import { type AbilityEventResponse } from './abilityEvents.ts';
+import type { AbilityEventResponse } from './abilityEvents.ts';
 import type { ActionGraphReference, ActionGraphResourceDefinition } from './actionGraph.ts';
-import { type BuildCondition, type CombatCondition } from './conditions.ts';
+import type { CombatEventHandlerDefinition, ScheduledSequenceDefinition } from './actions.ts';
+import type { BuildCondition, CombatCondition } from './conditions.ts';
+import type { GameplayTag } from './gameplayTags.ts';
+import type {
+  CombatResource,
+  DamageElement,
+  ImageRef,
+  LevelValues,
+  OperationType,
+  SkillLevelSource,
+  SkillType,
+} from './primitives.ts';
 
 /** 生成期已从原生 born-tag 证据解析出的可执行能力实体查询。 */
 export type AbilityEntityTargetQuery =
@@ -101,14 +105,14 @@ export type AbilityEntityDefinitionNumber =
 export interface AbilityEntityDefinition {
   /** 实体存在期间的干员状态图标；直接由该实体造成的伤害显示在状态下方。 */
   readonly presentation?: {
-    readonly icon: string;
+    readonly icon: ImageRef;
     readonly nameKey: string;
     readonly placement?: 'operator' | 'enemy';
     /** 用本实体施加的 Buff 承载直接伤害展示，不另画实体状态条。 */
     readonly damageDisplayBuffId?: string;
   };
   /** AbilityEntityTemplateData.bornTags；实体创建时立即成为其 AbilitySystem 自身标签。 */
-  readonly bornTags?: readonly import('./gameplayTags.ts').GameplayTag[];
+  readonly bornTags?: readonly GameplayTag[];
   /** AbilitySystemData.entityBlackboard 的模板初值；生成动作的显式赋值可覆盖同名键。 */
   readonly blackboard?: Readonly<Record<string, number | string>>;
   /** 能力实体的寿命：限定秒数或无限持续。 */
@@ -301,6 +305,8 @@ export interface SkillDefinitionProperties extends SkillActionProgramDefinition 
    * 省略表示没有已取证的强化状态，不能把任意自身 Buff 猜成强化条。
    */
   enhancementStateBuffId?: string;
+  /** 默认施放的目标；省略时由调用方提供，不能回退到敌人。 */
+  defaultTarget?: 'enemy' | 'owner';
   /** 零距离木桩下 StoreSmartTarget 的归约结果；省略表示原技能不执行智能目标存储。 */
   smartTarget?: 'enemy' | 'input' | 'trigger';
   /** 时间轴技能块的显示宽度；由可操作边界推导，不对应原生 `durationFrame`。 */
@@ -356,7 +362,7 @@ export interface SkillDefinitionProperties extends SkillActionProgramDefinition 
     /** 是否要求当前技能仍处于不可中断阶段。 */
     readonly requiresCurrentSkillNotInterruptible?: boolean;
     /** 候选技能自身需要满足的条件。 */
-    readonly condition?: import('./conditions.ts').CombatCondition;
+    readonly condition?: CombatCondition;
     /** 是否仍发布完整的技能施放事件。 */
     readonly asSkillCast?: boolean;
     /** 命中旁路后直接执行的动作序列。 */
@@ -367,13 +373,17 @@ export interface SkillDefinitionProperties extends SkillActionProgramDefinition 
 }
 
 /** 闪避不参与技能养成；其他干员技能必须明确等级来源。 */
-export type SkillDefinition = SkillDefinitionProperties &
-  (
+export type SkillDefinition = SkillDefinitionProperties & {
+  /** 非默认图标的资源引用；普攻、下落攻击和处决始终使用武器类型图标。 */
+  icon?: ImageRef;
+  /** 允许生效的技能组条件图标覆盖自身图标；默认关闭。 */
+  useSkillGroupIcon?: boolean;
+} & (
     | {
         /** 技能的战斗分类，不由技能库分组推测。 */
         skillType: Exclude<SkillType, 'dodge'>;
         /** 技能属性，用于技能属性条件检查；省略默认为物理。 */
-        element?: import('./primitives.ts').DamageElement;
+        element?: DamageElement;
         /** 技能使用哪一项养成等级；由原生技能组成员关系确定。 */
         levelSource: SkillLevelSource;
       }
@@ -405,7 +415,7 @@ export interface SkillGroupDefinition {
   /** 技能组在干员定义中的唯一名称。 */
   key: string;
   /** 玩家操作类别；技能库与轴上技能块均据此展示，实际执行读取具体技能的 skillType。 */
-  operationType: import('./primitives.ts').OperationType;
+  operationType: OperationType;
   /** 单个可放置技能，或作为一个技能库条目放置的有序技能链。 */
   skills: SkillDefinition | readonly SkillDefinition[];
   /** 操作名称模板的 i18n 键，含 name/shortName；{baseName} 为操作名称（轴上含段号）。 */
@@ -463,6 +473,8 @@ export interface RoutedSkillReplacementDefinition {
 
 /** 同一技能组根据养成条件切换的展示形态，不产生新的释放身份。 */
 export interface SkillPresentationVariantDefinition {
+  /** 此形态的图片资源引用；省略沿用默认图标。 */
+  icon?: ImageRef;
   /** 展示形态在技能组中的唯一名称。 */
   key: string;
   /** 最终构筑满足此条件时选用该展示形态。 */

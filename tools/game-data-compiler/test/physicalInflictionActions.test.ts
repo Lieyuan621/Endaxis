@@ -38,7 +38,6 @@ import { scalarFixture, targetFixture } from './sourceFixtures.ts';
 import { projectKnockDownAction } from '../src/compiler/actions/knockDownProjection.ts';
 import { collectCompiledBuffApplications } from '../src/compiler/references/compiledReferences.ts';
 import { projectPhysicalInflictionAction } from '../src/compiler/actions/physicalInflictionProjection.ts';
-import { createPhysicalInflictionDefinitionHydrator } from '../src/compiler/actions/physicalInflictionHydration.ts';
 
 const sequence = (actionData: unknown[]) => ({
   actionData,
@@ -268,8 +267,9 @@ describe('击倒来源与隐式引用', () => {
     ).toMatchObject({
       steps: [
         {
-          kind: 'applyKnockDown',
+          kind: 'applyPhysicalInfliction',
           parameters: {
+            type: 'knockDown' as const,
             target: 'enemy',
             duration: { kind: 'constant', value: 1.5 },
             force: false,
@@ -386,12 +386,10 @@ describe('断裂与猛击公共物理异常链', () => {
         target: 'enemy',
       },
     ]);
-    expect(projected.parameters.noGuardDefinition.blackboard).toHaveProperty(
-      '__compiler_deferred_physical_buff_definition',
-    );
+    expect(projected.parameters).not.toHaveProperty('noGuardDefinition');
   });
 
-  it('猛击保留运行时倍率与 hit-effect 控制，最终装配按 ID 内联真实蓝图', () => {
+  it('猛击保留运行时倍率、hit-effect 控制和公共 Buff 引用', () => {
     const projected = projectPhysicalInflictionAction(
       parsePhysicalInflictionActionSource(
         physical('crush', {
@@ -410,25 +408,7 @@ describe('断裂与猛击公共物理异常链', () => {
       damageMultiplier: { kind: 'blackboard', key: 'crush_multiplier' },
       ignoreHitEffect: true,
     });
-    const definition = (marker: number) => ({
-      stackingType: 'unlimited' as const,
-      priority: marker,
-      maxStackCount: 1,
-      applyTags: [],
-      extendTags: [],
-      blackboard: {},
-      attributeModifiers: [],
-      /** 物理异常夹具 Buff 无动作，但仍是正式资源形状。 */
-      actionGraph: { main: { nodes: {} }, macros: {} },
-    });
-    const hydrate = createPhysicalInflictionDefinitionHydrator({
-      buff_physical_no_guard: definition(10),
-      buff_physical_crushed: definition(20),
-    });
-    expect(hydrate(projected).parameters).toMatchObject({
-      noGuardDefinition: { priority: 10 },
-      crushedDefinition: { priority: 20 },
-    });
+    expect(projected.parameters).not.toHaveProperty('noGuardBuffId');
   });
 
   it('拒绝死亡目标分支与未证明的敌人目标组', () => {

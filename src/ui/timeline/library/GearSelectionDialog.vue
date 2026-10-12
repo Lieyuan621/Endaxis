@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { resolveImage } from '../../imageResources';
 import { EaTooltip } from '@/design-system';
 /**
  * Next 时间轴的单槽装备选择器。父层决定正在编辑的轨道和槽位，并负责把选择、卸下及精锻档位写回项目；
@@ -434,7 +435,7 @@ function clearGear(): void {
                       </div>
                     </div>
                     <img
-                      :src="gear.definition.iconPath || DEFAULT_GAME_ICON_PATH"
+                      :src="resolveImage(gear.definition.icon) || DEFAULT_GAME_ICON_PATH"
                       :alt="gear.name"
                       loading="lazy"
                     />

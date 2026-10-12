@@ -4,25 +4,27 @@
  * 干员技能和装备按 ID 引用这些蓝图，模拟器据此创建独立实例、处理叠层与持续时间、
  * 注册事件响应和数值修正；界面则读取同一实例的名称、图标、层数和进度显示配置。
  */
-import { type ScheduledSequenceDefinition } from './actions.ts';
+import type { AbilityEvent, AbilityEventResponse } from './abilityEvents.ts';
 import type { ActionGraphReference, ActionGraphResourceDefinition } from './actionGraph.ts';
-import {
-  type ActionBlackboardValue,
-  type DamageFeature,
-  type DamageTag,
-  type DamageType,
-  type InflictionElement,
-} from './primitives.ts';
-import {
-  type AttributeModifierSlot,
-  type DamageModifierDefinition,
-  type DamageScaleProcessorDefinition,
-  type InstantAttributeProcessorDefinition,
-  type HealModifierDefinition,
-  type PoiseModifierDefinition,
+import type { ScheduledSequenceDefinition } from './actions.ts';
+import type { ActionValueOperand } from './conditions.ts';
+import type { GameplayTag } from './gameplayTags.ts';
+import type {
+  AttributeModifierSlot,
+  DamageModifierDefinition,
+  DamageScaleProcessorDefinition,
+  HealModifierDefinition,
+  InstantAttributeProcessorDefinition,
+  PoiseModifierDefinition,
 } from './modifiers.ts';
-import { type ActionValueOperand } from './conditions.ts';
-import { type AbilityEvent, type AbilityEventResponse } from './abilityEvents.ts';
+import type {
+  ActionBlackboardValue,
+  DamageFeature,
+  DamageTag,
+  DamageType,
+  ImageRef,
+  InflictionElement,
+} from './primitives.ts';
 
 /** 当前公共 Buff 生命周期已经能够注册和归一化的 AbilitySystem 事件。 */
 export const BUFF_ABILITY_EVENTS = [
@@ -57,7 +59,6 @@ export const BUFF_ABILITY_EVENTS = [
   'takeCriticalDamage',
   'outputDamage',
   'outputCriticalDamage',
-  'outputKnockDown',
   'outputHeal',
   'receiveHeal',
   'afterAddedShield',
@@ -65,6 +66,7 @@ export const BUFF_ABILITY_EVENTS = [
   'beforeCastSkill',
   'afterSkillApplyCost',
   'skillEnd',
+  'skillInterrupted',
   'beforeOutputBuff',
   'beforeAddedBuff',
   'outputBuff',
@@ -88,26 +90,28 @@ export type BuffAbilityEvent = (typeof BUFF_ABILITY_EVENTS)[number];
 export type SkillBuffPresentation = CombatBuffPresentation;
 
 /**
- * Buff 实例生命周期边界上的有序步骤。
- * 每个 Buff 实例独占步骤执行状态和动作黑板；同一时点仍严格按步骤数组顺序执行。
+ * Buff 生命周期事件的独立序列，按列表顺序执行；一个序列失败不阻断后续序列。
+ * 同一 Buff 内共享变量，每个序列单独保存执行状态。
  */
 export interface SkillBuffLifecycleSequences {
   /** Buff 第一次启用时执行一次，早于修正注册。 */
-  start?: ActionGraphReference;
+  start?: readonly ActionGraphReference[];
   /** Buff 每次由停用转为启用后执行，晚于修正注册。 */
-  enable?: ActionGraphReference;
+  enable?: readonly ActionGraphReference[];
   /** Buff 暂停生效、准备注销修正前执行。 */
-  disable?: ActionGraphReference;
+  disable?: readonly ActionGraphReference[];
   /** 同组 Buff 即将增加强化层数前执行。 */
-  beforeEnhance?: ActionGraphReference;
+  beforeEnhance?: readonly ActionGraphReference[];
   /** Buff 启用期间按触发间隔到点时执行。 */
-  trigger?: ActionGraphReference;
+  trigger?: readonly ActionGraphReference[];
   /** Buff 叠层数发生变化时执行。 */
-  enhanceChanged?: ActionGraphReference;
+  enhanceChanged?: readonly ActionGraphReference[];
   /** 一次叠层流程完成后执行。 */
-  afterEnhance?: ActionGraphReference;
+  afterEnhance?: readonly ActionGraphReference[];
   /** Buff 正式结束前执行，结束步骤仍能读取当前实例状态。 */
-  finish?: ActionGraphReference;
+  finish?: readonly ActionGraphReference[];
+  /** 被驱散时执行，早于普通结束；输入目标为驱散来源。 */
+  dispelled?: readonly ActionGraphReference[];
 }
 
 /** Buff 启用期间注册在其所有者 AbilitySystem 上的一条同步事件响应。 */
@@ -119,8 +123,8 @@ export interface SkillBuffIgniteEventResponse {
   igniteType: string;
   /** 响应执行后是否立即结束当前 Buff。 */
   finishAfterIgnited: boolean;
-  /** 点燃时执行的动作序列。 */
-  sequence: ActionGraphReference;
+  /** 点燃时依次执行的独立序列，组内失败不阻断后续序列。 */
+  sequences: readonly ActionGraphReference[];
 }
 
 /** 原生 ChangeSkillAction 随 DuringBuffEnable 动作结束而撤销的技能槽替换。 */
@@ -371,10 +375,8 @@ export type BuffTimeClock = 'default' | 'global' | 'self';
 export interface CombatBuffPresentation {
   /** 此 Buff 的显示名称翻译键；仅供界面使用。 */
   readonly nameKey?: string;
-  /** 游戏资源中的图标 ID。 */
-  readonly iconId?: string;
-  /** 已导出图标的资源路径。 */
-  readonly iconPath?: string;
+  /** 内置图片资源引用。 */
+  readonly icon?: ImageRef;
   /** 是否允许界面显示这个 Buff。 */
   readonly visible?: boolean;
   /** 是否显示在普通头顶状态栏。 */
@@ -688,6 +690,8 @@ export interface CombatBuffDefinitionsDocument {
  * Buff ID 由使用这个类型的外层对象提供；施加目标、来源和本次传入的黑板值由施加动作提供。
  */
 export type BuffDefinitionProperties = {
+  /** 允许驱散所需的最低等级；省略表示不可驱散。 */
+  readonly dispelLevel?: number;
   /** 启用时记录创建该 Buff 的技能施放编号，供 SkillAffix 条件匹配同一次施放。 */
   readonly affixSkillCastIdentity?: 'sourceSkillCast';
   /** Buff 自身的图标、颜色、排序位置和进度条等显示设置。 */
@@ -741,4 +745,3 @@ export type BuffDefinitionProperties = {
   /** 元素爆发 Buff 触发伤害时使用的爆发类型、伤害类型和倍率来源。 */
   readonly spellBurst?: CombatBuffSpellBurstDefinition;
 };
-import type { GameplayTag } from './gameplayTags.ts';

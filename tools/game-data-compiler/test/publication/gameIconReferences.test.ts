@@ -3,6 +3,21 @@ import { describe, expect, it } from 'vitest';
 import { readGameIconReferences } from '../../src/compiler/publication/gameIconReferences.ts';
 
 describe('game icon reference closure', () => {
+  it('includes implicit operator icons and named variants under the asset slug', () => {
+    expect(
+      readGameIconReferences(`
+      const operator = { slug: 'custom', weaponType: 'sword', assetSlug: 'arcane',
+        skillGroups: [], skills: [{ icon: 'endaxis:operators/arcane/ultimate_03' }], variants: [{ icon: 'endaxis:operators/arcane/battle_02' }] };
+    `),
+    ).toEqual([
+      '/icons/icon_attack_sword.webp',
+      '/operators/arcane/battle 01.webp',
+      '/operators/arcane/battle 02.webp',
+      '/operators/arcane/combo 01.webp',
+      '/operators/arcane/ultimate 01.webp',
+      '/operators/arcane/ultimate 03.webp',
+    ]);
+  });
   it('includes generated enemy icons without accepting unrelated webp strings', () => {
     expect(
       readGameIconReferences(`

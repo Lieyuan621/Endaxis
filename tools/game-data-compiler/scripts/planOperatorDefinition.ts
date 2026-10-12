@@ -1,19 +1,41 @@
-import { OperatorPlanningSources } from './operatorPlanningSources.ts';
 import path from 'node:path';
 import { format, resolveConfig } from 'prettier';
-import { compileOperatorFoundationSource } from '../src/domains/operator/sourceClosure.ts';
-import { parseOperatorProductIdentitySource } from '../src/domains/operator/productIdentity.ts';
-import { parseOperatorSkillGroupValidationOptions } from '../src/domains/operator/skillGroups.ts';
-import { resolveBasePassiveLevelSource } from '../src/domains/operator/skillLevels.ts';
+import { compileAbilityEntityTemplateCatalogSource } from '../src/compiler/abilities/abilityEntityCatalog.ts';
+import { compileAbilitySystemBlackboardsSource } from '../src/compiler/abilities/abilitySystemBlackboards.ts';
+import { readActionGraphChain } from '../src/compiler/actions/actionGraphBuilder.ts';
+import type { CombatActionProjectionContextSource } from '../src/compiler/combatProjectionCommon.ts';
+import {
+  compileComboSkillConditionDefinitionSource,
+  createOperatorComboActionProjectionContext,
+} from '../src/compiler/conditions/comboSkillConditions.ts';
+import { finalizeOperatorDefinition } from '../src/compiler/finalizeDefinitions.ts';
+import type {
+  OperatorDefinition,
+  OperatorPlayerActionRoutes,
+  OperatorSkillSlotDefinition,
+  PlayerActionRouteDefinition,
+  PlayerSkillInput,
+  SkillPresentationVariantDefinition,
+} from '../src/compiler/intermediateDefinitions.ts';
+import type { DefinitionOptimizationMode } from '../src/compiler/optimization/definitionOptimization.ts';
+import { compilePassiveSkillRequestBatch } from '../src/compiler/skills/passiveSkillBatch.ts';
+import { compilePassiveSkillSource } from '../src/compiler/skills/passiveSkillDefinition.ts';
+import { prepareSkillDefinitionInputSource } from '../src/compiler/skills/skillDefinitionInput.ts';
 import {
   parseOperatorActiveSkillEntries,
   type OperatorActiveSkillEntrySource,
 } from '../src/domains/operator/activeSkills.ts';
 import { assembleOperatorDefinition } from '../src/domains/operator/definition.ts';
 import { renderOperatorDefinitionSource } from '../src/domains/operator/definitionSourceRenderer.ts';
-import { finalizeOperatorDefinition } from '../src/compiler/finalizeDefinitions.ts';
-import type { DefinitionOptimizationMode } from '../src/compiler/optimization/definitionOptimization.ts';
-import { compileAbilityEntityTemplateCatalogSource } from '../src/compiler/abilities/abilityEntityCatalog.ts';
+import { parseOperatorProductIdentitySource } from '../src/domains/operator/productIdentity.ts';
+import { parseOperatorSkillGroupValidationOptions } from '../src/domains/operator/skillGroups.ts';
+import { resolveBasePassiveLevelSource } from '../src/domains/operator/skillLevels.ts';
+import { compileOperatorFoundationSource } from '../src/domains/operator/sourceClosure.ts';
+import type { NativeConditionSource } from '../src/source/condition.ts';
+import { collectNativeActionNodes } from '../src/source/controlFlow.ts';
+import { GameplayTagRegistry } from '../src/source/nativeGameplayTags.ts';
+import { parseOperatorRuntimeTemplateSource } from '../src/source/operatorRuntimeTemplate.ts';
+import type { SkillTypeMutationActionSource } from '../src/source/presentationActions.ts';
 import {
   requireArray,
   requireExactFields,
@@ -21,35 +43,15 @@ import {
   requireNonNegativeInteger,
   requireRecord,
 } from '../src/source/primitives.ts';
+import { parseKnownSkillActionGraphSource } from '../src/source/skillActionGraph.ts';
+import type { SkillSlotReplacementActionSource } from '../src/source/skillSlotActions.ts';
 import {
   planOperatorActiveSkillRuntime,
   prepareProjectileProjection,
   type OperatorActiveSkillRuntimeArguments,
   type PlannedOperatorActiveSkillRuntime,
 } from './generateOperatorActiveSkillRuntime.ts';
-import { compilePassiveSkillRequestBatch } from '../src/compiler/skills/passiveSkillBatch.ts';
-import { compilePassiveSkillSource } from '../src/compiler/skills/passiveSkillDefinition.ts';
-import { readActionGraphChain } from '../src/compiler/actions/actionGraphBuilder.ts';
-import { GameplayTagRegistry } from '../src/source/nativeGameplayTags.ts';
-import { collectNativeActionNodes } from '../src/source/controlFlow.ts';
-import { prepareSkillDefinitionInputSource } from '../src/compiler/skills/skillDefinitionInput.ts';
-import { parseKnownSkillActionGraphSource } from '../src/source/skillActionGraph.ts';
-import type { NativeConditionSource } from '../src/source/condition.ts';
-import type { SkillSlotReplacementActionSource } from '../src/source/skillSlotActions.ts';
-import { parseOperatorRuntimeTemplateSource } from '../src/source/operatorRuntimeTemplate.ts';
-import { compileAbilitySystemBlackboardsSource } from '../src/compiler/abilities/abilitySystemBlackboards.ts';
-import {
-  compileComboSkillConditionDefinitionSource,
-  createOperatorComboActionProjectionContext,
-} from '../src/compiler/conditions/comboSkillConditions.ts';
-import type {
-  OperatorPlayerActionRoutes,
-  OperatorSkillSlotDefinition,
-  PlayerActionRouteDefinition,
-  PlayerSkillInput,
-  OperatorDefinition,
-  SkillPresentationVariantDefinition,
-} from '../src/compiler/intermediateDefinitions.ts';
+import { OperatorPlanningSources } from './operatorPlanningSources.ts';
 
 /**
  * 整名候选规划：只读原始资源，不写正式目录、不载入旧生成 Operator。
@@ -258,6 +260,7 @@ export function projectOperatorDefinition(
           },
         ]);
   const candidate = assembleOperatorDefinition({
+    externalBuffBlackboardReads: args.sources.externalBuffReads(args.sourceRoot),
     foundation,
     productPassiveUi: row.passiveUi,
     activeSkills,
@@ -398,7 +401,7 @@ function parsePresentationVariants(
   value: unknown,
   conditions: ReadonlyMap<string, SkillPresentationVariantDefinition['condition']>,
   sourcePath: string,
-): SkillPresentationVariantDefinition[] {
+): (SkillPresentationVariantDefinition & { readonly conditionId: string })[] {
   if (value === undefined) return [];
   const keys = new Set<string>();
   return requireArray(value, sourcePath).map((raw, index) => {
@@ -411,7 +414,7 @@ function parsePresentationVariants(
     const conditionId = requireNonEmptyString(row.conditionId, `${path}.conditionId`);
     const compiled = conditions.get(conditionId);
     if (compiled === undefined) throw new Error(`${path}: unknown condition '${conditionId}'`);
-    return { key, condition: compiled };
+    return { key, condition: compiled, conditionId };
   });
 }
 
@@ -648,9 +651,9 @@ function createActiveSkillSlotReplacementProjection(skills: readonly { readonly 
 function createActiveSkillTypeMutationProjection(skills: readonly { readonly key: string }[]) {
   const availableSkillIds = new Set(skills.map(skill => skill.key));
   return (
-    action: import('../src/source/presentationActions.ts').SkillTypeMutationActionSource,
+    action: SkillTypeMutationActionSource,
     sourcePath: string,
-    context: import('../src/compiler/combatProjectionCommon.ts').CombatActionProjectionContextSource,
+    context: CombatActionProjectionContextSource,
   ) => {
     if (
       context.actionOwnerTarget !== 'caster' &&
@@ -833,9 +836,6 @@ function collectObservedBuffIdsFromPassiveSkill(
         id.kind === 'constant' && id.value.length > 0 ? [id.value] : [],
       );
     }
-    if (condition.kind === 'any') {
-      return condition.groups.flatMap(group => group.conditions.flatMap(collectCondition));
-    }
     return [];
   };
   return [
@@ -928,7 +928,7 @@ export function planRoutedSkills(
     const routingBuffId = requireNonEmptyString(
       config.routingBuffId === undefined
         ? routeStep?.kind === 'applyBuff'
-          ? routeStep.parameters.buffId
+          ? routeStep.parameters.buffs[0]?.buffId
           : undefined
         : config.routingBuffId,
       `${path}.routingBuffId`,
@@ -947,8 +947,10 @@ export function planRoutedSkills(
         ? condition.value !== 1
         : condition.value.kind !== 'constant' || condition.value.value !== 1) ||
       routeStep?.kind !== 'applyBuff' ||
-      routeStep.parameters.buffId !== routingBuffId ||
-      routeStep.parameters.target !== 'caster' ||
+      routeStep.parameters.buffs.length !== 1 ||
+      routeStep.parameters.buffs[0]?.buffId !== routingBuffId ||
+      routeStep.parameters.targets.kind !== 'fixed' ||
+      routeStep.parameters.targets.target !== 'caster' ||
       routeStep.parameters.inheritSourceSkillCastInfo !== true ||
       wrapper.scheduledSequences.length !== 0
     ) {

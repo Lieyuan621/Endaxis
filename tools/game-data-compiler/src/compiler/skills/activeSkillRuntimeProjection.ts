@@ -1,55 +1,64 @@
 import type { ScheduledSequenceDefinition } from '../../../../../packages/game-data-contract/src/actions.ts';
-import { createActionGraphBuilder } from '../actions/actionGraphBuilder.ts';
-import type { CompiledBuffStepSource } from '../actions/combatActionProjectionTypes.ts';
-import type { SkillDefinition } from '../intermediateDefinitions.ts';
-import { NATIVE_SKILL_HAS_HIT_BLACKBOARD_KEY } from '../../../../../packages/game-data-contract/src/conditions.ts';
-import { numericDeclaredBlackboard } from '../../source/blackboard.ts';
-import type { SkillPatchSource } from '../../source/skillPatch.ts';
-import { parseKnownSkillActionGraphSource } from '../../source/skillActionGraph.ts';
-import { collectNativeActionNodes, type NativeSequenceSource } from '../../source/controlFlow.ts';
+import type { SkillType } from '../../../../../packages/game-data-contract/src/primitives.ts';
 import type { KnownNativeActionLeafSource } from '../../source/actionLeaf.ts';
-import type { TargetGroupActionSource } from '../../source/targetGroup.ts';
+import { numericDeclaredBlackboard } from '../../source/blackboard.ts';
+import { collectNativeActionNodes, type NativeSequenceSource } from '../../source/controlFlow.ts';
+import { parseKnownSkillActionGraphSource } from '../../source/skillActionGraph.ts';
+import type { SkillPatchSource } from '../../source/skillPatch.ts';
+import { parseSkillTargetSelectionHeaderSource } from '../../source/skillTargetSelection.ts';
 import type { TargetReferenceSource } from '../../source/target.ts';
-import {
-  compileCombatActionSequenceSource,
-  collectCombatInvisiblePresentationAssignmentKeys,
-} from '../buffs/buffRuntimeProjection.ts';
+import type { TargetGroupActionSource } from '../../source/targetGroup.ts';
+import { createActionGraphBuilder } from '../actions/actionGraphBuilder.ts';
+import type {
+  CompiledBuffConditionSource,
+  CompiledBuffSequenceSource,
+  CompiledBuffStepSource,
+} from '../actions/combatActionProjectionTypes.ts';
+import { compileCombatActionSequenceSource } from '../buffs/buffRuntimeProjection.ts';
 import type {
   CombatActionProjectionContextSource,
   CombatActionProjectionExtensionsSource,
 } from '../combatProjectionCommon.ts';
 import {
-  isDynamicSingleEnemySmartTargetGroup,
-  isPartyHitBoxTargetGroup,
-  isDynamicSingleEnemyTagTargetGroup,
-  isStaticSingleEnemyTargetGroup,
   isCurrentTargetRestrictedSingleEnemyTargetGroup,
+  isDynamicSingleEnemyTagTargetGroup,
+  isPartyHitBoxTargetGroup,
+  isStaticSingleEnemyTargetGroup,
+  isUniqueEnemyMainTargetInstantSearch,
+  isZeroSpaceSingleEnemySmartTargetGroup,
 } from '../combatProjectionCommon.ts';
-import type { CompiledBuffSequenceSource } from '../actions/combatActionProjectionTypes.ts';
+import { evaluateFixedScenarioCondition } from '../conditions/combatConditionProjection.ts';
+import type { ActionGraphResourceDefinition, SkillDefinition } from '../intermediateDefinitions.ts';
+import { collectCombatInvisiblePresentationAssignmentKeys } from '../optimization/nativePresentationUsage.ts';
 import {
-  prepareSkillDefinitionInputSource,
-  assertNoUnprojectedSkillRootEffects,
-  compileStrictSwitchToBuffCastSource,
-} from './skillDefinitionInput.ts';
-import {
-  collectPresentationOnlyBlackboardKeys,
-  collectPresentationOnlyTargetGroups,
-  collectUnconsumedTargetGroups,
-  collectUnconsumedSkillLocalKeys,
-  collectCombatInvisibleRandomBlackboardKeys,
-  collectCombatInvisiblePhysicsCastPaths,
-  collectPresentationSelectionTimelineIndexes,
-  isPresentationOnlyActionSequence,
-} from './skillPresentationTargets.ts';
-import { parseSkillTargetSelectionHeaderSource } from '../../source/skillTargetSelection.ts';
-import { compileSkillSmartTargetSource } from '../conditions/comboSmartTarget.ts';
-import { assertPresentationCalculationIsolation } from '../scenario/presentationCalculationIsolation.ts';
+  pruneKnownNativeBranches,
+  simplifyNativeSequences,
+} from '../optimization/nativeSequenceOptimization.ts';
+import { collectUnobservedTargetQueryOutputs } from '../optimization/nativeTargetUsage.ts';
 import {
   compareKnownNumbers,
   isStaticControlledOperatorWrite,
   isStaticZeroSpacePointWrite,
   propagateGuaranteedSingletonZeroSpaceFacts,
 } from '../optimization/targetGroupCardinalityAnalysis.ts';
+import { assertPresentationCalculationIsolation } from '../scenario/presentationCalculationIsolation.ts';
+import {
+  assertNoUnprojectedSkillRootEffects,
+  compileStrictSwitchToBuffCastSource,
+  prepareSkillDefinitionInputSource,
+} from './skillDefinitionInput.ts';
+import {
+  collectCombatInvisiblePhysicsCastPaths,
+  collectCombatInvisibleRandomBlackboardKeys,
+  collectMaterializedTargetGroups,
+  collectPresentationOnlyBlackboardKeys,
+  collectPresentationOnlyTargetGroups,
+  collectPresentationSelectionTimelineIndexes,
+  collectUnconsumedSkillLocalKeys,
+  collectUnconsumedTargetGroups,
+  isPresentationOnlyActionSequence,
+} from './skillPresentationTargets.ts';
+import { compileSkillTargetSelection } from './skillTargetSelection.ts';
 
 /** 正式调度输出子集；原生时间轴结束帧必填，动作仍限于已支持的公共投影。 */
 export type CompiledActiveSkillTimelineSequenceSource = Readonly<
@@ -63,7 +72,7 @@ export type CompiledActiveSkillTimelineSequenceSource = Readonly<
  * 原生时长与技能块宽度仍分别保留；技能等级的具体取值由最终消费者选择。
  */
 export interface CompiledActiveSkillRuntimeProjectionSource {
-  readonly actionGraph: import('../intermediateDefinitions.ts').ActionGraphResourceDefinition;
+  readonly actionGraph: ActionGraphResourceDefinition;
   readonly skillId: string;
   readonly durationFrame: number;
   readonly timelineBlockFrames: number;
@@ -82,11 +91,13 @@ export interface CompiledActiveSkillRuntimeProjectionSource {
   readonly inputWindows?: SkillDefinition['inputWindows'];
   readonly blackboard: NonNullable<SkillDefinition['blackboard']>;
   readonly scheduledSequences: readonly CompiledActiveSkillTimelineSequenceSource[];
+  /** 默认施放的目标；省略时由调用方提供，不能回退到敌人。 */
+  readonly defaultTarget?: 'enemy' | 'owner';
   readonly smartTarget?: 'enemy' | 'input' | 'trigger';
   readonly switchToBuffCast?: {
-    readonly currentSkillTypes?: readonly import('../../../../../packages/game-data-contract/src/primitives.ts').SkillType[];
+    readonly currentSkillTypes?: readonly SkillType[];
     readonly requiresCurrentSkillNotInterruptible?: boolean;
-    readonly condition?: import('../actions/combatActionProjectionTypes.ts').CompiledBuffConditionSource;
+    readonly condition?: CompiledBuffConditionSource;
     readonly asSkillCast: boolean;
     readonly sequence: CompiledBuffSequenceSource;
   };
@@ -304,11 +315,12 @@ function collectGuardedProjectilePaths(
 
 /**
  * 只折叠标准木桩模型中可由来源事实直接证明的纯条件序列。未知条件保持 unknown，
- * 让调用方同时遍历两个分支；这里不参与正式运行时条件编译，也不读取技能名或 Context 键名。
+ * 让调用方保留两个分支；目标写入分析与正式分支裁剪共用此证明，不依赖技能名或组名。
  */
 function evaluateStaticStumpConditionSequence(
   sequence: NativeSequenceSource<KnownNativeActionLeafSource>,
   staticEnemyTargetGroupKeys: ReadonlySet<string>,
+  context?: CombatActionProjectionContextSource,
 ): boolean | undefined {
   if (sequence.onlyExecuteWhenSourceIsMainCharacter || sequence.onlyExecuteWhenSourceIsGuard)
     return undefined;
@@ -317,10 +329,16 @@ function evaluateStaticStumpConditionSequence(
   for (const node of enabled) {
     if (node.body.kind !== 'leaf' || node.body.value.family !== 'condition') return undefined;
     const condition = node.body.value.action;
+    const fixedResult = evaluateFixedScenarioCondition(condition);
+    if (fixedResult === false) return false;
+    if (fixedResult === true) continue;
     if (condition.kind === 'entityCount') {
+      const knownSingleton =
+        (condition.targetSource === 'Context' &&
+          staticEnemyTargetGroupKeys.has(condition.targetGroupKey)) ||
+        (condition.target !== undefined && isUniqueEnemyMainTargetInstantSearch(condition.target));
       if (
-        condition.targetSource !== 'Context' ||
-        !staticEnemyTargetGroupKeys.has(condition.targetGroupKey) ||
+        !knownSingleton ||
         condition.containsHittableTarget ||
         condition.excludeDeadEntity ||
         condition.storeKey !== ''
@@ -332,8 +350,12 @@ function evaluateStaticStumpConditionSequence(
       continue;
     }
     if (condition.kind === 'distance') {
-      const sourceIsMainCharacter = condition.source.targetSource === 'MainCharacter';
-      const targetIsMainCharacter = condition.target.targetSource === 'MainCharacter';
+      const isKnownOperator = (target: TargetReferenceSource) =>
+        target.targetSource === 'MainCharacter' ||
+        (target.targetSource === 'Owner' && context?.actionOwnerTarget === 'caster') ||
+        (target.targetSource === 'Source' && context?.actionSourceTarget === 'caster');
+      const sourceIsMainCharacter = isKnownOperator(condition.source);
+      const targetIsMainCharacter = isKnownOperator(condition.target);
       const sourceIsStaticEnemy =
         condition.source.targetSource === 'Context' &&
         staticEnemyTargetGroupKeys.has(condition.source.targetGroupKey);
@@ -713,7 +735,7 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
 }): CompiledActiveSkillRuntimeProjectionSource {
   const program = createActionGraphBuilder<CompiledBuffStepSource>();
   const prepared = prepareSkillDefinitionInputSource(input.value, input.sourcePath, input.patch);
-  const targeting = compileSkillSmartTargetSource(
+  const targeting = compileSkillTargetSelection(
     parseSkillTargetSelectionHeaderSource(input.value, input.sourcePath),
   );
   const switchToBuffCast = compileStrictSwitchToBuffCastSource(input.value, input.sourcePath, {
@@ -721,10 +743,9 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
     graph: program,
   });
   assertNoUnprojectedSkillRootEffects(input.value, input.sourcePath);
-  const graph = parseKnownSkillActionGraphSource(
-    input.value,
-    input.sourcePath,
-    prepared.blackboard.values,
+  const graph = simplifyNativeSequences(
+    parseKnownSkillActionGraphSource(input.value, input.sourcePath, prepared.blackboard.values),
+    input.context.isBlackboardKeyUnusedByExternalResources,
   );
   if (graph.actionGroup.passiveEvents.length > 0)
     throw new Error(
@@ -732,15 +753,27 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
     );
   const visualOnlyIds = input.visualOnlyIds ?? new Set<string>();
   const extensions = input.extensions ?? {};
-  const presentationOnlyBlackboardKeys = collectPresentationOnlyBlackboardKeys(graph);
-  const presentationSelectionTimelineIndexes = collectPresentationSelectionTimelineIndexes(graph);
+  const presentationOnlyBlackboardKeys = collectPresentationOnlyBlackboardKeys(
+    graph,
+    input.context.isBlackboardKeyUnusedByExternalResources,
+  );
+  const presentationSelectionTimelineIndexes = collectPresentationSelectionTimelineIndexes(
+    graph,
+    input.context.isBlackboardKeyUnusedByExternalResources,
+  );
   const combatInvisiblePresentationBlackboardKeys =
     collectCombatInvisiblePresentationAssignmentKeys(
       graph.actionGroup.timelineActions.map(timeline => timeline.sequence),
       input.context.isBlackboardKeyUnusedByExternalResources,
     );
-  const combatInvisibleRandomBlackboardKeys = collectCombatInvisibleRandomBlackboardKeys(graph);
-  const combatInvisiblePhysicsCastPaths = collectCombatInvisiblePhysicsCastPaths(graph);
+  const combatInvisibleRandomBlackboardKeys = collectCombatInvisibleRandomBlackboardKeys(
+    graph,
+    input.context.isBlackboardKeyUnusedByExternalResources,
+  );
+  const combatInvisiblePhysicsCastPaths = collectCombatInvisiblePhysicsCastPaths(
+    graph,
+    presentationSelectionTimelineIndexes,
+  );
   const timelineTargetGroupWrites = graph.actionGroup.timelineActions.map(timeline =>
     collectNativeActionNodes(timeline.sequence).flatMap(node =>
       node.body.kind === 'leaf' && node.body.value.family === 'targetGroup'
@@ -750,11 +783,7 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
   );
   const targetGroupWrites = timelineTargetGroupWrites.flat();
   const writesByKey = Map.groupBy(targetGroupWrites, write => write.targetGroupKey);
-  const dynamicSpatialPointCounts = new Map<
-    string,
-    | { readonly kind: 'constant'; readonly value: number }
-    | { readonly kind: 'blackboard'; readonly key: string }
-  >();
+  const randomPointTargetGroupKeys = new Set<string>();
   for (const [key, writes] of writesByKey) {
     const randomPointWrites = writes.filter(write => write.finderType === 'RandomPointFinder');
     if (randomPointWrites.length === 0) continue;
@@ -764,21 +793,7 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
     ) {
       throw new Error(`Context ${JSON.stringify(key)} mixes RandomPoint and incompatible writes`);
     }
-    const operands = randomPointWrites.map(write => {
-      const count = write.finderRandomPointCount!;
-      return count.blackboardKey === null
-        ? { kind: 'constant' as const, value: count.value }
-        : { kind: 'blackboard' as const, key: count.blackboardKey };
-    });
-    if (operands.some(operand => JSON.stringify(operand) !== JSON.stringify(operands[0]))) {
-      const runtimeCountKey = `__endaxis_target_group_count:${key}`;
-      if (Object.hasOwn(prepared.blackboard.values, runtimeCountKey)) {
-        throw new Error(`Context ${JSON.stringify(key)} count key collides with Skill blackboard`);
-      }
-      dynamicSpatialPointCounts.set(key, { kind: 'blackboard', key: runtimeCountKey });
-    } else {
-      dynamicSpatialPointCounts.set(key, operands[0]!);
-    }
+    randomPointTargetGroupKeys.add(key);
   }
   const allActionNodes = graph.actionGroup.timelineActions.flatMap(timeline =>
     collectNativeActionNodes(timeline.sequence),
@@ -790,13 +805,6 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
       ? [node.body.value.action]
       : [],
   );
-  const usesNativeSkillHasHit = allActionNodes.some(
-    node =>
-      node.metadata.enabled &&
-      node.body.kind === 'leaf' &&
-      node.body.value.family === 'condition' &&
-      node.body.value.action.kind === 'skillHasHit',
-  );
   const enabledAnimationEventListenerPresent = allActionNodes.some(
     node =>
       node.metadata.enabled &&
@@ -807,18 +815,6 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
         presentationOnlyBlackboardKeys,
       ),
   );
-  if (
-    usesNativeSkillHasHit &&
-    (Object.hasOwn(prepared.blackboard.values, NATIVE_SKILL_HAS_HIT_BLACKBOARD_KEY) ||
-      Object.hasOwn(
-        numericDeclaredBlackboard(graph.declaredBlackboard, true),
-        NATIVE_SKILL_HAS_HIT_BLACKBOARD_KEY,
-      ))
-  ) {
-    throw new Error(
-      `${input.sourcePath}: internal CheckSkillHasHit key collides with the Skill blackboard`,
-    );
-  }
   const abilityEntityContextKeys = new Set(
     allActionNodes.flatMap(node =>
       node.metadata.enabled &&
@@ -926,7 +922,7 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
           write =>
             isStaticActiveSkillEnemyTargetGroup(write) ||
             isDynamicSingleEnemyTagTargetGroup(write) ||
-            isDynamicSingleEnemySmartTargetGroup(write) ||
+            isZeroSpaceSingleEnemySmartTargetGroup(write) ||
             isAtMostSingleEnemyMerge(write, singleEnemyTargetGroupKeys) ||
             isAtMostSingleEnemyConversion(write, singleEnemyTargetGroupKeys) ||
             isAtMostSingleEnemyFilteredFind(write),
@@ -1169,26 +1165,11 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
           ...(hasConditionalInputActions ? { hasConditionalActions: true } : {}),
         };
   // 静态查询可证明单次写入的结果，却不一定支配另一时间段的读取（例如只在非主控分支写入）。
-  // 数量条件仍需在运行时读取的组必须保留写入，不能留下一个从未创建的 Context 名称。
-  const materializedTargetGroupKeys = new Set(
-    graph.actionGroup.timelineActions.flatMap(timeline =>
-      collectNativeActionNodes(timeline.sequence).flatMap(node => {
-        if (
-          !node.metadata.enabled ||
-          node.body.kind !== 'leaf' ||
-          node.body.value.family !== 'condition'
-        )
-          return [];
-        const condition = node.body.value.action;
-        return condition.kind === 'entityCount' &&
-          condition.targetSource === 'Context' &&
-          !condition.containsHittableTarget &&
-          !condition.excludeDeadEntity &&
-          !staticEnemyTargetGroupKeys.has(condition.targetGroupKey)
-          ? [condition.targetGroupKey]
-          : [];
-      }),
-    ),
+  // 出生位置、循环、过滤器等也读取 Context；统一使用目标用途分析，不能仅保护数量条件。
+  const presentationOnlyTargetGroupKeys = collectPresentationOnlyTargetGroups(graph);
+  const materializedTargetGroupKeys = collectMaterializedTargetGroups(
+    graph,
+    presentationOnlyTargetGroupKeys,
   );
   const context = {
     ...input.context,
@@ -1199,10 +1180,14 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
     atMostOneZeroSpaceTargetGroupKeys,
     provenOnlyHitProjectilePaths: guardedProjectilePaths.onlyHit,
     provenZeroSpaceProjectilePaths: guardedProjectilePaths.zeroSpace,
-    dynamicSpatialPointCounts,
+    randomPointTargetGroupKeys,
     materializedTargetGroupKeys,
     staticAbilityEntityTargetGroupKeys,
-    presentationOnlyTargetGroupKeys: collectPresentationOnlyTargetGroups(graph),
+    unobservedTargetQueryOutputs: collectUnobservedTargetQueryOutputs([
+      ...graph.actionGroup.timelineActions.map(timeline => timeline.sequence),
+      ...graph.actionGroup.passiveEvents.flatMap(event => event.actions),
+    ]),
+    presentationOnlyTargetGroupKeys,
     unconsumedTargetGroupKeys: collectUnconsumedTargetGroups(graph),
     unconsumedSkillLocalKeys: collectUnconsumedSkillLocalKeys(
       graph,
@@ -1223,9 +1208,20 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
     const activeMainCharacterSequence = timeline.sequence.onlyExecuteWhenSourceIsMainCharacter
       ? { ...timeline.sequence, onlyExecuteWhenSourceIsMainCharacter: false }
       : timeline.sequence;
-    const executableSequence = unwrapComboQtePrototypeGuard(
-      activeMainCharacterSequence,
-      input.context.comboQteTriggerBlackboardKeys,
+    // 入口存在性与全资源写入保持身份必须同时成立；“写入时是敌人”不证明组已创建。
+    const guaranteedEnemyGroups = new Set(
+      [...guaranteedSingletonZeroSpaceTargetGroupKeysByTimeline[timelineIndex]!].filter(
+        key =>
+          staticEnemyTargetGroupKeys.has(key) &&
+          (writesByKey.get(key) ?? []).every(isStaticActiveSkillEnemyTargetGroup),
+      ),
+    );
+    const executableSequence = pruneKnownNativeBranches(
+      unwrapComboQtePrototypeGuard(
+        activeMainCharacterSequence,
+        input.context.comboQteTriggerBlackboardKeys,
+      ),
+      condition => evaluateStaticStumpConditionSequence(condition, guaranteedEnemyGroups, context),
     );
     const writesRuntimeTargetGroup = collectNativeActionNodes(executableSequence).some(
       node =>
@@ -1340,7 +1336,7 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
         timelineRange: { startFrame: timeline.startFrame, endFrame: timeline.endFrame },
       },
       visualOnlyIds,
-      { ...extensions, allowRootTimelineFinish: true },
+      extensions,
     );
     if (sequence.$sequence !== null) {
       scheduledSequences.push({
@@ -1372,7 +1368,6 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
     blackboard: {
       ...numericDeclaredBlackboard(graph.declaredBlackboard, true),
       ...prepared.blackboard.values,
-      ...(usesNativeSkillHasHit ? { [NATIVE_SKILL_HAS_HIT_BLACKBOARD_KEY]: 0 } : {}),
     },
     ...targeting.definition,
     ...(switchToBuffCast === undefined ? {} : { switchToBuffCast }),

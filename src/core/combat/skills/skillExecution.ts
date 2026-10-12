@@ -12,6 +12,7 @@ export function beginSkillCast(
   allocateCastId: () => number,
 ): void {
   state.passedFrames = 0;
+  state.hasOutputDamageBattle = false;
   state.inputTarget = state.preparedInputTarget;
   state.preparedInputTarget = undefined;
   state.castStartFrame = frame;
@@ -19,7 +20,6 @@ export function beginSkillCast(
   state.attemptedCost = state.preparedSkipApplyCost;
   state.forceTimelinePayment = state.preparedForceTimelinePayment;
   state.preparationCast = frame < 0;
-  state.timelineFinishRequested = false;
   state.reachedOperableBoundaryFrame = undefined;
   state.operableBoundaryCandidateFrame = undefined;
   state.operableBoundaryCandidateSkillIds.length = 0;
@@ -107,10 +107,9 @@ export function advanceSkillExecution(
   host.tick(timelineDeltaSeconds);
   // 原生自然时长到期帧先完成 Timeline Tick，再 CastEnd。无自然时长时使用动作完成边界。
   if (
-    state.timelineFinishRequested ||
-    (naturalDurationFrames === undefined
+    naturalDurationFrames === undefined
       ? host.timelineComplete()
-      : state.passedFrames >= naturalDurationFrames)
+      : state.passedFrames >= naturalDurationFrames
   )
     host.end();
 }

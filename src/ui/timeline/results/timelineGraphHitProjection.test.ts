@@ -37,9 +37,9 @@ function resource(action: ActionGraphStep): ActionGraphResourceDefinition {
 
 function damage(key?: string): ActionGraphStep {
   return {
-    kind: 'dealFixedDamage',
+    kind: 'dealDamage',
     ...(key === undefined ? {} : { key }),
-    parameters: { damageType: 'physical', value: 1, tags: [] },
+    parameters: { damageType: 'physical', attackScale: 1, tags: [] },
   };
 }
 
@@ -53,7 +53,10 @@ function skill(action: ActionGraphStep): SkillDefinition {
 }
 
 it('Buff 的同名节点和宏属于自己的资源，返回后仍能继续技能入口', () => {
-  const definition = skill({ kind: 'applyBuff', parameters: { buffId: 'buff', target: 'enemy' } });
+  const definition = skill({
+    kind: 'applyBuff',
+    parameters: { buffs: [{ buffId: 'buff' }], targets: { kind: 'fixed', target: 'enemy' } },
+  });
   const operator = {
     ...perlica,
     buffDefinitions: {
@@ -85,6 +88,7 @@ it('能力实体子技能使用实体所属图，不在发射技能的图中查�
   const definition = skill({
     kind: 'spawnAbilityEntity',
     parameters: {
+      bornAt: { kind: 'owner' as const },
       abilityEntityId: 'entity',
       dieWhenSourceDies: false,
     },

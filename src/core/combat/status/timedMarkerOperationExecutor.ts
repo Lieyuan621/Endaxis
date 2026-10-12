@@ -9,23 +9,26 @@ import { healAbilityEvent } from '../events/combatAbilityEvent';
  */
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import type { CombatTarget, TimedMarkerTarget } from '../../game-data/operatorDefinition';
-import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+import { runtimeTargetEntityId, type RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+import type { ActionTargetQuery } from '../../../../packages/game-data-contract/src/conditions';
 import type { GlobalCooldownTarget } from '../../game-data/operatorDefinition';
 import type { GlobalCooldowns } from '../skills/globalCooldowns';
 import { resolveActionValueOperand } from '../actions/actionBlackboard';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
 import type { TimedMarkerClock, TimedMarkerContainer } from './timedMarkers';
 import { CombatOperationPrograms } from '../actions/combatOperationPrograms';
-import type { TimedMarkerActionState } from '../state/actionState';
+import type { TimedMarkerActionState, TimedMarkerActionReference } from '../state/actionState';
 
 type RuntimeOperation = ResolvedCombatOperationStep;
 
 export interface TimedMarkerOperationDependencies {
   readonly resolveTarget: (target: CombatTarget) => TimedMarkerContainer;
-  readonly resolveEventTarget?: (targetId: string) => TimedMarkerContainer;
-  readonly resolveAbilityEntityTarget?: (target: RuntimeTargetRef) => TimedMarkerContainer;
-  readonly globalClock?: TimedMarkerClock;
-  readonly globalScaledClock?: TimedMarkerClock;
+  readonly resolveEventTarget: (targetId: string) => TimedMarkerContainer;
+  readonly queryTargets: (
+    query: ActionTargetQuery,
+    context: CombatOperationContext,
+  ) => readonly RuntimeTargetRef[];
+  readonly globalScaledClock: TimedMarkerClock;
   readonly globalCooldowns?: GlobalCooldowns;
   readonly resolveCooldownCharacter?: (
     target: GlobalCooldownTarget,
@@ -63,7 +66,7 @@ export class TimedMarkerOperationExecutor implements CombatOperationExecutor {
       );
       return true;
     }
-    if (step.kind !== 'createTimedMarker' && step.kind !== 'createAbilityEntityTimedMarker') {
+    if (step.kind !== 'createTimedMarker') {
       return context === undefined
         ? this.dependencies.delegate.execute(step)
         : this.dependencies.delegate.execute(step, context);
@@ -71,45 +74,45 @@ export class TimedMarkerOperationExecutor implements CombatOperationExecutor {
     if (context === undefined) {
       throw new Error('createTimedMarker requires a combat operation context');
     }
-    const duration = resolveActionValueOperand(step.parameters.durationSeconds, context.blackboard);
-    const target =
-      step.kind === 'createTimedMarker'
-        ? this.#resolveTarget(step.parameters.target, context)
-        : this.#resolveCurrentAbilityEntity(context.currentTarget);
-    const markerClock =
-      step.kind === 'createAbilityEntityTimedMarker' && step.parameters.timeDomain === 'global'
-        ? this.#requireGlobalClock()
-        : step.kind === 'createTimedMarker' && step.parameters.timeDomain !== 'globalScaled'
-          ? (this.dependencies.globalScaledClock ?? target.clock)
-          : undefined;
-    const markerClockDomain =
-      step.kind === 'createAbilityEntityTimedMarker' && step.parameters.timeDomain === 'global'
-        ? 'global'
-        : step.kind === 'createTimedMarker' &&
-            step.parameters.timeDomain !== 'globalScaled' &&
-            this.dependencies.globalScaledClock !== undefined
-          ? 'globalScaled'
-          : 'default';
-    const handle = target.add(
-      resolveMarkerId(step.parameters.markerId, context),
-      duration,
-      markerClock,
-      markerClockDomain,
-    );
+    const targets = [...this.dependencies.queryTargets(step.parameters.targets, context)];
+    if (targets.length === 0) return false;
+    const created: TimedMarkerActionReference[] = [];
     if (step.parameters.autoFinishByAction) {
       const slot = this.programs.slot(step);
-      this.runtimeState.markers.set(slot, [
-        ...(this.runtimeState.markers.get(slot) ?? []),
-        { ownerId: target.ownerId, sourceTargetId: handle.sourceTargetId },
-      ]);
-      this.#ownerBindings.set(handle.sourceTargetId, target);
+      // 原生非空执行先清空句柄列表，但不移除上次创建的标记。
+      for (const previous of this.runtimeState.markers.get(slot) ?? [])
+        this.#ownerBindings.delete(previous.sourceTargetId);
+      this.runtimeState.markers.set(slot, created);
+    }
+    for (const entity of targets) {
+      const ownerId = runtimeTargetEntityId(entity);
+      if (ownerId === undefined) continue;
+      const target = this.#resolveOwner(ownerId);
+      // 原生逐个有效目标读取 ID 和时长，不能提升到目标查询或遍历之前。
+      const markerId = resolveMarkerId(step.parameters.markerId, context);
+      const duration = resolveActionValueOperand(
+        step.parameters.durationSeconds,
+        context.blackboard,
+      );
+      const global = step.parameters.timeDomain === 'globalScaled';
+      const handle = target.add(
+        markerId,
+        duration,
+        global ? this.dependencies.globalScaledClock : target.clock,
+        global ? 'globalScaled' : 'default',
+      );
+      if (step.parameters.autoFinishByAction) {
+        const reference = { ownerId: target.ownerId, sourceTargetId: handle.sourceTargetId };
+        created.push(reference);
+        this.#ownerBindings.set(handle.sourceTargetId, target);
+      }
     }
     return true;
   }
 
   end(step: RuntimeOperation, context?: CombatOperationContext): void {
     if (step.kind === 'setGlobalCooldown') return;
-    if (step.kind === 'createTimedMarker' || step.kind === 'createAbilityEntityTimedMarker') {
+    if (step.kind === 'createTimedMarker') {
       const slot = this.programs.slot(step);
       for (const marker of this.runtimeState.markers.get(slot) ?? []) {
         (
@@ -129,9 +132,10 @@ export class TimedMarkerOperationExecutor implements CombatOperationExecutor {
       return cooldowns.has(characterId, condition.markerId);
     }
     if (condition.kind === 'timedMarkerPresent') {
-      return this.#resolveTarget(condition.target, context).has(
+      const exists = this.#resolveTarget(condition.target, context).has(
         resolveMarkerId(condition.markerId, context),
       );
+      return condition.returnTrueIfNotExists ? !exists : exists;
     }
     if (condition.kind === 'abilityEntityTimedMarkerPresent') {
       if (context === undefined) {
@@ -141,17 +145,19 @@ export class TimedMarkerOperationExecutor implements CombatOperationExecutor {
         if (context.targetContext === undefined) {
           throw new Error('context ability entity timed marker requires a target context');
         }
-        return context.targetContext
-          .get(condition.contextKey)
-          .some(target =>
-            this.#resolveCurrentAbilityEntity(target).has(
-              resolveMarkerId(condition.markerId, context),
-            ),
-          );
+        // 原生条件使用 GetActionTarget 的首目标，不是组内任一对象匹配。
+        const target = context.targetContext.getOptional(condition.contextKey)?.[0];
+        if (target === undefined) return false;
+        const exists = this.#resolveCurrentAbilityEntity(target).has(
+          resolveMarkerId(condition.markerId, context),
+        );
+        return condition.returnTrueIfNotExists ? !exists : exists;
       }
-      return this.#resolveCurrentAbilityEntity(context.currentTarget).has(
+      if (context.currentTarget === undefined) return false;
+      const exists = this.#resolveCurrentAbilityEntity(context.currentTarget).has(
         resolveMarkerId(condition.markerId, context),
       );
+      return condition.returnTrueIfNotExists ? !exists : exists;
     }
     return context === undefined
       ? this.dependencies.delegate.evaluate(condition)
@@ -170,19 +176,11 @@ export class TimedMarkerOperationExecutor implements CombatOperationExecutor {
     if (target?.kind !== 'abilityEntity') {
       throw new Error('ability entity timed marker requires a current AbilityEntity target');
     }
-    const resolve = this.dependencies.resolveAbilityEntityTarget;
-    if (resolve === undefined) {
-      throw new Error('ability entity timed marker runtime is not configured');
-    }
-    return resolve(target);
+    return this.#resolveOwner(runtimeTargetEntityId(target)!);
   }
 
   #resolveOwner(ownerId: string): TimedMarkerContainer {
-    const resolve = this.dependencies.resolveEventTarget;
-    if (resolve === undefined) {
-      throw new Error(`timed marker owner '${ownerId}' requires an entity resolver`);
-    }
-    return resolve(ownerId);
+    return this.dependencies.resolveEventTarget(ownerId);
   }
 
   #resolveTarget(
@@ -191,7 +189,7 @@ export class TimedMarkerOperationExecutor implements CombatOperationExecutor {
   ): TimedMarkerContainer {
     if (target === 'buffOwner' || target === 'buffSource') {
       const id = target === 'buffOwner' ? context?.buffOwnerId : context?.buffSourceId;
-      if (id === undefined || this.dependencies.resolveEventTarget === undefined) {
+      if (id === undefined) {
         throw new Error(`${target} timed marker requires a Buff identity and entity resolver`);
       }
       return this.dependencies.resolveEventTarget(id);
@@ -205,18 +203,7 @@ export class TimedMarkerOperationExecutor implements CombatOperationExecutor {
     if (targetId === undefined) {
       throw new Error('eventTarget timed marker requires a healing event target');
     }
-    const resolve = this.dependencies.resolveEventTarget;
-    if (resolve === undefined) {
-      throw new Error('eventTarget timed marker runtime is not configured');
-    }
-    return resolve(targetId);
-  }
-
-  #requireGlobalClock(): TimedMarkerClock {
-    if (this.dependencies.globalClock === undefined) {
-      throw new Error('global-clock ability entity timed marker runtime is not configured');
-    }
-    return this.dependencies.globalClock;
+    return this.#resolveOwner(targetId);
   }
 }
 

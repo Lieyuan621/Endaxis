@@ -35,14 +35,17 @@ describe('候选游戏资源闭包', () => {
   });
 
   it('拒绝缺图而不过滤引用', async () => {
-    const root = await setup("export const icon = '/icons/missing.webp';", false);
+    const root = await setup(
+      "export const operator = { slug: 'arcane', icon: 'endaxis:operators/arcane/ultimate_03' };",
+      false,
+    );
     await expect(
       checkCandidateGameAssets({
         projectRoot: root,
         candidateRoot: path.join(root, 'candidate'),
         replacementPaths: ['src/data/generated'],
       }),
-    ).rejects.toThrow('/icons/missing.webp');
+    ).rejects.toThrow('/operators/arcane/ultimate 03.webp');
   });
 
   it('隔离 public 存在时不允许正式 public 偷偷补齐候选', async () => {

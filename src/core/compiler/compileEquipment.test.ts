@@ -71,18 +71,8 @@ const loneBarge: WeaponDefinition = {
           nodes: {
             'after-buff-consumed': {
               action: {
-                kind: 'applyStatus',
-                parameters: {
-                  statusKey: 'lone-barge-battle-skill-bonus',
-                  target: 'caster',
-                  durationFrames: 600,
-                  modifiers: [
-                    {
-                      kind: 'attackPercent',
-                      value: [0.2, 0.24, 0.28, 0.32, 0.36, 0.4, 0.44, 0.48, 0.56],
-                    },
-                  ],
-                },
+                kind: 'dealStagger',
+                parameters: { value: [0.2, 0.24, 0.28, 0.32, 0.36, 0.4, 0.44, 0.48, 0.56] },
               },
               next: null,
             },
@@ -121,7 +111,8 @@ describe('compile equipment contributions', () => {
       parameters: {
         resource: 'sp',
         amount: [2, 5],
-        recipient: 'team',
+        source: { kind: 'fixed' as const, target: 'caster' as const },
+        targets: { kind: 'fixed' as const, target: 'caster' as const },
       },
     } as const;
     const [result] = compileWeaponContributions(
@@ -169,8 +160,8 @@ describe('compile equipment contributions', () => {
       { kind: 'damageBonus', damageTypes: 'electric', value: 0.256 },
     ]);
     expect(rootActionSteps(compiled[2]!.eventHandlers[0]!.sequence)[0]).toMatchObject({
-      kind: 'applyStatus',
-      parameters: { modifiers: [{ kind: 'attackPercent', value: 0.32 }] },
+      kind: 'dealStagger',
+      parameters: { value: 0.32 },
     });
     expect(compiled[2]!.eventHandlers[0]!.priority).toBe(4);
   });
@@ -293,8 +284,8 @@ describe('compile equipment contributions', () => {
     expect(weaponEvent.sequence).toMatchObject({ graph: expect.any(Object) });
     expect(rootActionSteps(weaponEvent.sequence)).toMatchObject([
       {
-        kind: 'applyStatus',
-        parameters: { modifiers: [{ kind: 'attackPercent', value: 0.24 }] },
+        kind: 'dealStagger',
+        parameters: { value: 0.24 },
       },
     ]);
 
@@ -325,7 +316,13 @@ describe('compile equipment contributions', () => {
         main: {
           nodes: {
             init: {
-              action: { kind: 'applyBuff', parameters: { buffId: 'marker', target: 'caster' } },
+              action: {
+                kind: 'applyBuff',
+                parameters: {
+                  buffs: [{ buffId: 'marker' }],
+                  targets: { kind: 'fixed', target: 'caster' },
+                },
+              },
               next: null,
             },
           },

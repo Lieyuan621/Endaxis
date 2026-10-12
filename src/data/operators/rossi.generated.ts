@@ -8,7 +8,14 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const rossiChr_0028_wulfa_attack1ActionGraph = {
   main: {
     nodes: {
-      startTimeDilation_1: {
+      checkCondition_2: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+      startTimeDilation_3: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -23,29 +30,32 @@ export const rossiChr_0028_wulfa_attack1ActionGraph = {
         },
         next: null,
       },
-      changeResourceByActionValue_2: {
+      changeResource_4: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            amount: { kind: 'valueNode', nodeId: 'data_2' },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'team',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
             spGainKind: 'gain',
             spGainSource: 'normalAttack',
           },
         },
-        next: 'startTimeDilation_1',
+        next: 'startTimeDilation_3',
       },
-      conditional_3: {
+      ifElse_5: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
-          whenTrue: { $sequence: 'changeResourceByActionValue_2' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_2' },
+          whenTrue: { $sequence: 'changeResource_4' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_4: {
+      dealDamage_6: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -54,9 +64,9 @@ export const rossiChr_0028_wulfa_attack1ActionGraph = {
             tags: ['normalAttack'],
           },
         },
-        next: 'conditional_3',
+        next: 'ifElse_5',
       },
-      reachSkillOperableBoundary_5: {
+      reachSkillOperableBoundary_7: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0028_wulfa_attack2'] },
@@ -65,8 +75,8 @@ export const rossiChr_0028_wulfa_attack1ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -74,7 +84,6 @@ export const rossiChr_0028_wulfa_attack1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const rossiChr_0028_wulfa_attack1: SkillDefinition = {
-  actionGraph: rossiChr_0028_wulfa_attack1ActionGraph,
   key: 'chr_0028_wulfa_attack1',
   element: 'physical',
   blackboard: {
@@ -98,19 +107,21 @@ export const rossiChr_0028_wulfa_attack1: SkillDefinition = {
   },
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'dealDamage_4' } },
-    { startFrame: 9, endFrame: 34, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
+    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'dealDamage_6' } },
+    { startFrame: 9, endFrame: 34, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0028_wulfa_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
+  actionGraph: rossiChr_0028_wulfa_attack1ActionGraph,
 };
 
 export const rossiChr_0028_wulfa_attack2ActionGraph = {
   main: {
     nodes: {
-      startTimeDilation_1: {
+      startTimeDilation_4: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -125,15 +136,24 @@ export const rossiChr_0028_wulfa_attack2ActionGraph = {
         },
         next: null,
       },
-      conditional_2: {
+      checkCondition_3: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_1' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
         },
         next: null,
       },
-      dealDamage_3: {
+      ifElse_5: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_3' },
+          whenTrue: { $sequence: 'startTimeDilation_4' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_6: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -142,21 +162,21 @@ export const rossiChr_0028_wulfa_attack2ActionGraph = {
             tags: ['normalAttack'],
           },
         },
-        next: 'conditional_2',
+        next: 'ifElse_5',
       },
-      calculateActionValue_4: {
+      calculateActionValue_7: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atk_scale',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_3' },
+            left: { kind: 'valueNode', nodeId: 'data_2' },
             right: { kind: 'constant', value: 0.5 },
           },
         },
-        next: 'dealDamage_3',
+        next: 'dealDamage_6',
       },
-      startTimeDilation_5: {
+      startTimeDilation_9: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -171,26 +191,28 @@ export const rossiChr_0028_wulfa_attack2ActionGraph = {
         },
         next: null,
       },
-      conditional_6: {
+      ifElse_10: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_5' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_3' },
+          whenTrue: { $sequence: 'startTimeDilation_9' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_7: {
+      dealDamage_11: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['normalAttack'],
           },
         },
-        next: 'conditional_6',
+        next: 'ifElse_10',
       },
-      reachSkillOperableBoundary_8: {
+      reachSkillOperableBoundary_12: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0028_wulfa_attack3'] },
@@ -201,22 +223,16 @@ export const rossiChr_0028_wulfa_attack2ActionGraph = {
     dataNodes: {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const rossiChr_0028_wulfa_attack2: SkillDefinition = {
-  actionGraph: rossiChr_0028_wulfa_attack2ActionGraph,
   key: 'chr_0028_wulfa_attack2',
   element: 'physical',
   blackboard: {
-    atb: 0,
     atk_scale: [0.32, 0.35, 0.38, 0.41, 0.44, 0.47, 0.5, 0.54, 0.57, 0.61, 0.65, 0.71],
-    poise: 0,
   },
   timelineBlockFrames: 12,
   naturalDurationFrames: 151,
@@ -235,20 +251,22 @@ export const rossiChr_0028_wulfa_attack2: SkillDefinition = {
   },
   costFrame: 8,
   scheduledSequences: [
-    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'calculateActionValue_4' } },
-    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'dealDamage_7' } },
-    { startFrame: 12, endFrame: 34, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'calculateActionValue_7' } },
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'dealDamage_11' } },
+    { startFrame: 12, endFrame: 34, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0028_wulfa_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
+  actionGraph: rossiChr_0028_wulfa_attack2ActionGraph,
 };
 
 export const rossiChr_0028_wulfa_attack3ActionGraph = {
   main: {
     nodes: {
-      startTimeDilation_1: {
+      startTimeDilation_4: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -263,15 +281,24 @@ export const rossiChr_0028_wulfa_attack3ActionGraph = {
         },
         next: null,
       },
-      conditional_2: {
+      checkCondition_3: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_1' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
         },
         next: null,
       },
-      dealDamage_3: {
+      ifElse_5: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_3' },
+          whenTrue: { $sequence: 'startTimeDilation_4' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_6: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -282,21 +309,21 @@ export const rossiChr_0028_wulfa_attack3ActionGraph = {
             staggerOnlyWhenCasterControlled: true,
           },
         },
-        next: 'conditional_2',
+        next: 'ifElse_5',
       },
-      calculateActionValue_4: {
+      calculateActionValue_7: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atk_scale',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_4' },
+            left: { kind: 'valueNode', nodeId: 'data_2' },
             right: { kind: 'constant', value: 0.5 },
           },
         },
-        next: 'dealDamage_3',
+        next: 'dealDamage_6',
       },
-      startTimeDilation_5: {
+      startTimeDilation_9: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -311,42 +338,45 @@ export const rossiChr_0028_wulfa_attack3ActionGraph = {
         },
         next: null,
       },
-      changeResourceByActionValue_6: {
+      changeResource_10: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_5' },
+            amount: { kind: 'valueNode', nodeId: 'data_4' },
             coefficient: { kind: 'constant', value: 0.5 },
-            recipient: 'team',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
             spGainKind: 'gain',
             spGainSource: 'normalAttack',
           },
         },
-        next: 'startTimeDilation_5',
+        next: 'startTimeDilation_9',
       },
-      conditional_7: {
+      ifElse_11: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' }, alwaysNext: true },
-          whenTrue: { $sequence: 'changeResourceByActionValue_6' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_3' },
+          whenTrue: { $sequence: 'changeResource_10' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_8: {
+      dealDamage_12: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_7' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['normalAttack'],
-            stagger: { kind: 'valueNode', nodeId: 'data_8' },
+            stagger: { kind: 'valueNode', nodeId: 'data_3' },
             staggerOnlyWhenCasterControlled: true,
           },
         },
-        next: 'conditional_7',
+        next: 'ifElse_11',
       },
-      reachSkillOperableBoundary_9: {
+      reachSkillOperableBoundary_13: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0028_wulfa_attack4'] },
@@ -358,18 +388,13 @@ export const rossiChr_0028_wulfa_attack3ActionGraph = {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_6: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const rossiChr_0028_wulfa_attack3: SkillDefinition = {
-  actionGraph: rossiChr_0028_wulfa_attack3ActionGraph,
   key: 'chr_0028_wulfa_attack3',
   element: 'physical',
   blackboard: {
@@ -394,95 +419,115 @@ export const rossiChr_0028_wulfa_attack3: SkillDefinition = {
   },
   costFrame: 12,
   scheduledSequences: [
-    { startFrame: 4, endFrame: 5, sequence: { $sequence: 'calculateActionValue_4' } },
-    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'dealDamage_8' } },
-    { startFrame: 15, endFrame: 36, sequence: { $sequence: 'reachSkillOperableBoundary_9' } },
+    { startFrame: 4, endFrame: 5, sequence: { $sequence: 'calculateActionValue_7' } },
+    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'dealDamage_12' } },
+    { startFrame: 15, endFrame: 36, sequence: { $sequence: 'reachSkillOperableBoundary_13' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0028_wulfa_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
+  actionGraph: rossiChr_0028_wulfa_attack3ActionGraph,
 };
 
 export const rossiChr_0028_wulfa_attack4ActionGraph = {
   main: {
     nodes: {
-      jumpTimeline_1: {
-        action: { kind: 'jumpTimeline', parameters: { destinationFrame: 189 } },
-        next: null,
-      },
-      conditional_2: {
+      jumpTimeline_2: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' }, alwaysNext: true },
-          whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'jumpTimeline_1' },
+          kind: 'jumpTimeline',
+          parameters: { destinationFrame: 189 },
+          condition: { $sequence: null },
         },
         next: null,
       },
-      changeResourceByActionValue_3: {
+      checkCondition_1: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+      ifElse_3: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_1' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: 'jumpTimeline_2' },
+        },
+        next: null,
+      },
+      changeResource_24: {
+        action: {
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
             amount: { kind: 'valueNode', nodeId: 'data_2' },
             coefficient: { kind: 'constant', value: 0.25 },
-            recipient: 'team',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
             spGainKind: 'gain',
             spGainSource: 'normalAttack',
           },
         },
         next: null,
       },
-      conditional_4: {
+      ifElse_25: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' }, alwaysNext: true },
-          whenTrue: { $sequence: 'changeResourceByActionValue_3' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_1' },
+          whenTrue: { $sequence: 'changeResource_24' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_5: {
+      dealDamage_26: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
           },
         },
-        next: 'conditional_4',
+        next: 'ifElse_25',
       },
-      calculateActionValue_6: {
+      calculateActionValue_27: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atk_scale',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_5' },
+            left: { kind: 'valueNode', nodeId: 'data_3' },
             right: { kind: 'constant', value: 0.2 },
           },
         },
-        next: 'dealDamage_5',
+        next: 'dealDamage_26',
       },
-      calculateActionValue_22: {
+      calculateActionValue_48: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atk_scale',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_6' },
+            left: { kind: 'valueNode', nodeId: 'data_3' },
             right: { kind: 'constant', value: 0.5 },
           },
         },
-        next: 'dealDamage_5',
+        next: 'dealDamage_26',
       },
-      markCurrentSkillCanInterrupt_35: {
+      markCurrentSkillCanInterrupt_65: {
         action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} },
         next: null,
       },
-      finishTimeline_36: { action: { kind: 'finishTimeline', parameters: {} }, next: null },
-      reachSkillOperableBoundary_37: {
+      interruptCurrentSkill_66: {
+        action: { kind: 'interruptCurrentSkill', parameters: { targets: { kind: 'owner' } } },
+        next: null,
+      },
+      reachSkillOperableBoundary_67: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0028_wulfa_attack5'] },
@@ -493,10 +538,7 @@ export const rossiChr_0028_wulfa_attack4ActionGraph = {
     dataNodes: {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
   macros: {},
@@ -508,7 +550,6 @@ export const rossiChr_0028_wulfa_attack4: SkillDefinition = {
   blackboard: {
     atb: 0,
     atk_scale: [0.41, 0.45, 0.49, 0.53, 0.57, 0.61, 0.65, 0.69, 0.73, 0.78, 0.84, 0.91],
-    poise: 0,
   },
   timelineBlockFrames: 36,
   naturalDurationFrames: 329,
@@ -536,22 +577,23 @@ export const rossiChr_0028_wulfa_attack4: SkillDefinition = {
   },
   costFrame: 8,
   scheduledSequences: [
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'conditional_2' } },
-    { startFrame: 6, endFrame: 8, sequence: { $sequence: 'calculateActionValue_6' } },
-    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 13, endFrame: 15, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 15, endFrame: 17, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 23, endFrame: 25, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 195, endFrame: 197, sequence: { $sequence: 'calculateActionValue_22' } },
-    { startFrame: 198, endFrame: 199, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 203, endFrame: 205, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 205, endFrame: 207, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 213, endFrame: 215, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 50, endFrame: 188, sequence: { $sequence: 'markCurrentSkillCanInterrupt_35' } },
-    { startFrame: 188, endFrame: 189, sequence: { $sequence: 'finishTimeline_36' } },
-    { startFrame: 36, endFrame: 67, sequence: { $sequence: 'reachSkillOperableBoundary_37' } },
-    { startFrame: 225, endFrame: 250, sequence: { $sequence: 'reachSkillOperableBoundary_37' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_3' } },
+    { startFrame: 6, endFrame: 8, sequence: { $sequence: 'calculateActionValue_27' } },
+    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'dealDamage_26' } },
+    { startFrame: 13, endFrame: 15, sequence: { $sequence: 'dealDamage_26' } },
+    { startFrame: 15, endFrame: 17, sequence: { $sequence: 'dealDamage_26' } },
+    { startFrame: 23, endFrame: 25, sequence: { $sequence: 'dealDamage_26' } },
+    { startFrame: 195, endFrame: 197, sequence: { $sequence: 'calculateActionValue_48' } },
+    { startFrame: 198, endFrame: 199, sequence: { $sequence: 'dealDamage_26' } },
+    { startFrame: 203, endFrame: 205, sequence: { $sequence: 'dealDamage_26' } },
+    { startFrame: 205, endFrame: 207, sequence: { $sequence: 'dealDamage_26' } },
+    { startFrame: 213, endFrame: 215, sequence: { $sequence: 'dealDamage_26' } },
+    { startFrame: 50, endFrame: 188, sequence: { $sequence: 'markCurrentSkillCanInterrupt_65' } },
+    { startFrame: 188, endFrame: 189, sequence: { $sequence: 'interruptCurrentSkill_66' } },
+    { startFrame: 36, endFrame: 67, sequence: { $sequence: 'reachSkillOperableBoundary_67' } },
+    { startFrame: 225, endFrame: 250, sequence: { $sequence: 'reachSkillOperableBoundary_67' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0028_wulfa_attack5',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
@@ -562,21 +604,46 @@ export const rossiChr_0028_wulfa_attack4: SkillDefinition = {
 export const rossiChr_0028_wulfa_attack5ActionGraph = {
   main: {
     nodes: {
-      changeResourceByActionValue_1: {
+      checkCondition_2: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+      checkCondition_3: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: 'checkCondition_2',
+      },
+      changeResource_4: {
+        action: {
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            amount: { kind: 'valueNode', nodeId: 'data_3' },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'team',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
             spGainKind: 'gain',
             spGainSource: 'normalAttack',
           },
         },
         next: null,
       },
-      modifyActionValue_3: {
+      ifElse_5: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_3' },
+          whenTrue: { $sequence: 'changeResource_4' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      modifyActionValue_6: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -587,28 +654,54 @@ export const rossiChr_0028_wulfa_attack5ActionGraph = {
         },
         next: null,
       },
-      conditional_4: {
+      checkCondition_7: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
-          whenTrue: { $sequence: 'modifyActionValue_3' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
         },
         next: null,
       },
-      dealDamage_5: {
+      ifElse_8: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: null },
+          whenTrue: { $sequence: 'modifyActionValue_6' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      ifElse_9: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_7' },
+          whenTrue: { $sequence: 'ifElse_8' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_10: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
-            stagger: { kind: 'valueNode', nodeId: 'data_4' },
+            stagger: { kind: 'valueNode', nodeId: 'data_6' },
             staggerOnlyWhenCasterControlled: true,
           },
         },
-        next: 'conditional_4',
+        next: 'ifElse_9',
       },
-      startTimeDilation_6: {
+      checkCondition_11: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+        },
+        next: null,
+      },
+      startTimeDilation_12: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -663,49 +756,54 @@ export const rossiChr_0028_wulfa_attack5ActionGraph = {
         },
         next: null,
       },
-      conditional_7: {
+      ifElse_13: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_6' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_11' },
+          whenTrue: { $sequence: 'startTimeDilation_12' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      reachSkillOperableBoundary_8: {
+      reachSkillOperableBoundary_14: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0028_wulfa_attack1'] },
         },
         next: null,
       },
-      conditional_opt1: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' }, alwaysNext: true },
-          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
-        },
-        next: null,
-      },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
       data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_5: {
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_7: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'isHitbyMain', fallback: 0 },
       },
-      data_6: {
+      data_8: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_5' },
+          left: { kind: 'valueNode', nodeId: 'data_7' },
           operator: 'greaterOrEqual',
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_7: { type: 'boolean', expression: { kind: 'casterControlled' } },
     },
   },
   macros: {},
@@ -737,11 +835,12 @@ export const rossiChr_0028_wulfa_attack5: SkillDefinition = {
   },
   costFrame: 12,
   scheduledSequences: [
-    { startFrame: 15, endFrame: 17, sequence: { $sequence: 'conditional_opt1' } },
-    { startFrame: 15, endFrame: 17, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 16, endFrame: 18, sequence: { $sequence: 'conditional_7' } },
-    { startFrame: 45, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
+    { startFrame: 15, endFrame: 17, sequence: { $sequence: 'ifElse_5' } },
+    { startFrame: 15, endFrame: 17, sequence: { $sequence: 'dealDamage_10' } },
+    { startFrame: 16, endFrame: 18, sequence: { $sequence: 'ifElse_13' } },
+    { startFrame: 45, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_14' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0028_wulfa_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
@@ -752,21 +851,22 @@ export const rossiChr_0028_wulfa_attack5: SkillDefinition = {
 export const rossiChr_0028_wulfa_power_attackActionGraph = {
   main: {
     nodes: {
-      changeResourceByActionValue_1: {
+      changeResource_7: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
             amount: { kind: 'constant', value: 0 },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'team',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
             spGainKind: 'gain',
             spGainSource: 'default',
           },
         },
         next: null,
       },
-      startTimeDilation_2: {
+      startTimeDilation_8: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -779,17 +879,26 @@ export const rossiChr_0028_wulfa_power_attackActionGraph = {
             targets: ['caster'],
           },
         },
-        next: 'changeResourceByActionValue_1',
+        next: 'changeResource_7',
       },
-      conditional_3: {
+      checkCondition_6: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_2' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
         },
         next: null,
       },
-      dealDamage_4: {
+      ifElse_9: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_6' },
+          whenTrue: { $sequence: 'startTimeDilation_8' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_10: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -800,29 +909,14 @@ export const rossiChr_0028_wulfa_power_attackActionGraph = {
             tags: ['normalAttack', 'powerAttack'],
           },
         },
-        next: 'conditional_3',
+        next: 'ifElse_9',
       },
-      repeatEachTick_opt1: {
-        action: {
-          kind: 'repeatEachTick',
-          parameters: {
-            nativeChanneling: {
-              executeEachFrame: true,
-              triggerIntervalSeconds: 0.033,
-              maxCountPerTarget: 1,
-              targetTriggerIntervalSeconds: 0.033,
-            },
-          },
-          body: { $sequence: 'dealDamage_4' },
-        },
-        next: null,
-      },
-      dealDamage_13: {
+      dealDamage_22: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.8,
             tags: ['normalAttack', 'powerAttack'],
@@ -830,11 +924,11 @@ export const rossiChr_0028_wulfa_power_attackActionGraph = {
         },
         next: null,
       },
-      gainFinisherSp_14: {
+      gainFinisherSp_23: {
         action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
-        next: 'dealDamage_13',
+        next: 'dealDamage_22',
       },
-      startTimeDilation_15: {
+      startTimeDilation_24: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -889,47 +983,94 @@ export const rossiChr_0028_wulfa_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_16: {
+      ifElse_25: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: null },
+          whenTrue: { $sequence: 'startTimeDilation_24' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      applyBuff_26: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_powerattack_resumecombo',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_chr_0028_wulfa_powerattack_resumecombo' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
         },
         next: null,
       },
-      conditional_17: {
+      checkCondition_27: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-          whenTrue: { $sequence: 'applyBuff_16' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
-        next: null,
+        next: 'applyBuff_26',
       },
-      applyBuff_18: {
+      applyBuff_28: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_full_immune_medium',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_common_full_immune_medium' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
         },
         next: null,
       },
-      applyBuff_19: {
+      applyBuff_29: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_power_attack_disable_cast_skill',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_common_power_attack_disable_cast_skill' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
+        },
+        next: null,
+      },
+      checkCondition_opt1: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'constant', value: true } },
+        },
+        next: 'dealDamage_10',
+      },
+      findTargets_opt2: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'MainTar',
+          },
+        },
+        next: 'checkCondition_opt1',
+      },
+      repeatEachTick_opt3: {
+        action: {
+          kind: 'repeatEachTick',
+          parameters: {
+            nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'fixed', target: 'enemy' },
+              executeEachFrame: true,
+              triggerIntervalSeconds: 0.033,
+              maxCountPerTarget: 1,
+              targetTriggerIntervalSeconds: 0.033,
+            },
+          },
+          body: { $sequence: 'findTargets_opt2' },
         },
         next: null,
       },
@@ -937,8 +1078,7 @@ export const rossiChr_0028_wulfa_power_attackActionGraph = {
     dataNodes: {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_4: {
+      data_3: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -963,14 +1103,15 @@ export const rossiChr_0028_wulfa_power_attack: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 4,
   scheduledSequences: [
-    { startFrame: 6, endFrame: 8, sequence: { $sequence: 'repeatEachTick_opt1' } },
-    { startFrame: 15, endFrame: 17, sequence: { $sequence: 'repeatEachTick_opt1' } },
-    { startFrame: 36, endFrame: 39, sequence: { $sequence: 'gainFinisherSp_14' } },
-    { startFrame: 38, endFrame: 41, sequence: { $sequence: 'startTimeDilation_15' } },
-    { startFrame: 0, endFrame: 65, sequence: { $sequence: 'conditional_17' } },
-    { startFrame: 0, endFrame: 65, sequence: { $sequence: 'applyBuff_18' } },
-    { startFrame: 0, endFrame: 65, sequence: { $sequence: 'applyBuff_19' } },
+    { startFrame: 6, endFrame: 8, sequence: { $sequence: 'repeatEachTick_opt3' } },
+    { startFrame: 15, endFrame: 17, sequence: { $sequence: 'repeatEachTick_opt3' } },
+    { startFrame: 36, endFrame: 39, sequence: { $sequence: 'gainFinisherSp_23' } },
+    { startFrame: 38, endFrame: 41, sequence: { $sequence: 'ifElse_25' } },
+    { startFrame: 0, endFrame: 65, sequence: { $sequence: 'checkCondition_27' } },
+    { startFrame: 0, endFrame: 65, sequence: { $sequence: 'applyBuff_28' } },
+    { startFrame: 0, endFrame: 65, sequence: { $sequence: 'applyBuff_29' } },
   ],
+  defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
@@ -980,29 +1121,39 @@ export const rossiChr_0028_wulfa_power_attack: SkillDefinition = {
 export const rossiChr_0028_wulfa_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      changeResourceByActionValue_1: {
+      checkCondition_2: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+      changeResource_3: {
+        action: {
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            amount: { kind: 'valueNode', nodeId: 'data_2' },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'team',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
             spGainKind: 'gain',
             spGainSource: 'normalAttack',
           },
         },
         next: null,
       },
-      conditional_2: {
+      ifElse_4: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
-          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_2' },
+          whenTrue: { $sequence: 'changeResource_3' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_3: {
+      dealDamage_5: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1011,12 +1162,12 @@ export const rossiChr_0028_wulfa_plunging_attack_endActionGraph = {
             tags: ['normalAttack', 'plungingAttack'],
           },
         },
-        next: 'conditional_2',
+        next: 'ifElse_4',
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -1024,7 +1175,6 @@ export const rossiChr_0028_wulfa_plunging_attack_endActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const rossiChr_0028_wulfa_plunging_attack_end: SkillDefinition = {
-  actionGraph: rossiChr_0028_wulfa_plunging_attack_endActionGraph,
   key: 'chr_0028_wulfa_plunging_attack_end',
   element: 'physical',
   blackboard: {
@@ -1036,62 +1186,122 @@ export const rossiChr_0028_wulfa_plunging_attack_end: SkillDefinition = {
   exclusiveFrame: 20,
   offsetRecordFrame: 0,
   costFrame: 0,
-  scheduledSequences: [{ startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_3' } }],
+  scheduledSequences: [{ startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } }],
+  defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
+  actionGraph: rossiChr_0028_wulfa_plunging_attack_endActionGraph,
 };
 
 export const rossiChr_0028_wulfa_normal_skillActionGraph = {
   main: {
     nodes: {
-      modifyActionValue_1: {
+      mergeContextTargets_21: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar1', sources: [{ kind: 'target', target: 'enemy' }] },
+        },
+        next: null,
+      },
+      mergeContextTargets_22: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar2', sources: [{ kind: 'target', target: 'enemy' }] },
+        },
+        next: null,
+      },
+      mergeContextTargets_23: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar3', sources: [{ kind: 'target', target: 'enemy' }] },
+        },
+        next: null,
+      },
+      modifyActionValue_27: {
         action: {
           kind: 'modifyActionValue',
           parameters: { key: 'trigger', operation: 'add', value: { kind: 'constant', value: 1 } },
         },
         next: null,
       },
-      dealDamage_2: {
+      checkCondition_26: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+      ifElse_28: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_26' },
+          whenTrue: { $sequence: 'modifyActionValue_27' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_29: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['normalSkill'],
             features: ['canBreakWeakness'],
           },
         },
-        next: 'modifyActionValue_1',
+        next: 'ifElse_28',
       },
-      repeatEachTick_3: {
+      findTargets_30: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'MainTar',
+          },
+        },
+        next: 'dealDamage_29',
+      },
+      repeatEachTick_31: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'fixed', target: 'enemy' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
               targetTriggerIntervalSeconds: 0.033,
             },
           },
-          body: { $sequence: 'dealDamage_2' },
+          body: { $sequence: 'findTargets_30' },
         },
         next: null,
       },
-      calculateActionValue_4: {
+      calculateActionValue_32: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atk_scale_once',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_2' },
+            left: { kind: 'valueNode', nodeId: 'data_3' },
             right: { kind: 'constant', value: 0.3 },
           },
         },
-        next: 'repeatEachTick_3',
+        next: 'repeatEachTick_31',
       },
-      startTimeDilation_10: {
+      checkCondition_46: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+        },
+        next: null,
+      },
+      startTimeDilation_49: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1146,385 +1356,53 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
         },
         next: null,
       },
-      conditional_16: {
+      checkCondition_48: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_10' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
         next: null,
       },
-      modifyActionValue_17: {
+      ifElse_56: {
         action: {
-          kind: 'modifyActionValue',
-          parameters: { key: 'trigger', operation: 'add', value: { kind: 'constant', value: 1 } },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_48' },
+          whenTrue: { $sequence: 'startTimeDilation_49' },
+          whenFalse: { $sequence: null },
         },
-        next: 'conditional_16',
+        next: null,
       },
-      dealDamage_18: {
+      ifElse_57: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_46' },
+          whenTrue: { $sequence: 'modifyActionValue_27' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'ifElse_56',
+      },
+      dealDamage_58: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['normalSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_6' },
+            stagger: { kind: 'valueNode', nodeId: 'data_7' },
           },
         },
-        next: 'modifyActionValue_17',
+        next: 'ifElse_57',
       },
-      applyPhysicalInfliction_19: {
+      applyPhysicalInfliction_59: {
         action: {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'airborne',
             target: 'enemy',
             isExtra: false,
-            noGuardBuffId: 'buff_physical_no_guard',
-            noGuardDefinition: {
-              stackingType: 'enhanceAndRefresh',
-              priority: 100,
-              maxStackCount: 4,
-              durationSeconds: { blackboardKey: 'duration' },
-              presentation: {
-                visible: true,
-                iconId: 'icon_shadow_attribute_penetrate',
-                iconPath: '/icons/icon_shadow_attribute_penetrate.webp',
-                showInHeadBarCommon: false,
-                showInHeadBarAttached: true,
-                showInSquadIcon: false,
-                onlyShowForMainCharacter: false,
-                blinkInMainCharHpBar: false,
-                showProgressInHpBar: false,
-                showProgressInNormalSkillButton: false,
-                useWeakProgressInNormalSkillButton: false,
-                showProgressInUltimateSkillButton: false,
-                forceRaiseIconEvent: false,
-                showWarningBackground: false,
-                playStrongInAnimation: false,
-                hasCharHpBarVfxType: false,
-                charHpBarVfxType: 'Fire',
-                iconStyleInSquad: 'Default',
-                abnormalColorType: 'Physical',
-                orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
-              },
-              applyTags: ['Skill/Character/Common/NoGuard'],
-              extendTags: [],
-              blackboard: { atk_scale: 0, count: 0, duration: 20, skip_handle_cryst_break: 0 },
-              attributeModifiers: [],
-              lifecycleSequences: {
-                start: { $sequence: 'conditional_2' },
-                finish: { $sequence: 'applyBuff_3' },
-                afterEnhance: { $sequence: 'withActionBlackboardScope_9' },
-              },
-              actionGraph: {
-                main: {
-                  nodes: {
-                    applyBuff_1: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_handle_cryst_break',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                        },
-                      },
-                      next: null,
-                    },
-                    conditional_2: {
-                      action: {
-                        kind: 'conditional',
-                        parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                        whenTrue: { $sequence: 'applyBuff_1' },
-                      },
-                      next: null,
-                    },
-                    applyBuff_3: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_no_guard_fake',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                        },
-                      },
-                      next: null,
-                    },
-                    igniteBuffs_4: {
-                      action: {
-                        kind: 'igniteBuffs',
-                        parameters: {
-                          target: 'buffOwner',
-                          source: 'buffOwner',
-                          igniteType: 'NoGuard',
-                        },
-                      },
-                      next: null,
-                    },
-                    conditional_7: {
-                      action: {
-                        kind: 'conditional',
-                        parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                        whenTrue: { $sequence: 'conditional_2' },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_8: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:1',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'conditional_7' },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_9: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:0',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'igniteBuffs_4' },
-                      },
-                      next: 'withActionBlackboardScope_8',
-                    },
-                  },
-                  dataNodes: {
-                    data_1: {
-                      type: 'number',
-                      expression: {
-                        kind: 'blackboard',
-                        key: 'skip_handle_cryst_break',
-                        fallback: 0,
-                      },
-                    },
-                    data_2: {
-                      type: 'boolean',
-                      expression: {
-                        kind: 'actionValueCompare',
-                        left: { kind: 'valueNode', nodeId: 'data_1' },
-                        operator: 'equal',
-                        right: { kind: 'constant', value: 0 },
-                      },
-                    },
-                    data_3: {
-                      type: 'boolean',
-                      expression: {
-                        kind: 'currentBuffStackCompare',
-                        operator: 'greaterOrEqual',
-                        value: { kind: 'constant', value: 2 },
-                      },
-                    },
-                  },
-                },
-                macros: {},
-              },
-            },
-            airborneBuffId: 'buff_physical_airborne',
-            airborneDefinition: {
-              stackingType: 'stack',
-              stackingKey: 'physical',
-              priority: 0,
-              maxStackCount: 1,
-              durationSeconds: { blackboardKey: 'duration' },
-              triggerIntervalSeconds: 0.1,
-              waitFirstTriggerInterval: true,
-              maxTriggerCount: 1,
-              presentation: {
-                visible: true,
-                iconId: 'airborne',
-                iconPath: '/icons/airborne.webp',
-                showInHeadBarCommon: false,
-                showInHeadBarAttached: false,
-                showInSquadIcon: false,
-                onlyShowForMainCharacter: false,
-                blinkInMainCharHpBar: false,
-                showProgressInHpBar: false,
-                showProgressInNormalSkillButton: false,
-                useWeakProgressInNormalSkillButton: false,
-                showProgressInUltimateSkillButton: false,
-                forceRaiseIconEvent: false,
-                showWarningBackground: false,
-                playStrongInAnimation: false,
-                hasCharHpBarVfxType: false,
-                charHpBarVfxType: 'Fire',
-                iconStyleInSquad: 'Default',
-                abnormalColorType: 'Physical',
-                orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
-              },
-              applyTags: ['Skill/Character/Common/PhysicalStatus/AirborneStatus'],
-              extendTags: [],
-              blackboard: { atk_scale: 0, duration: 3, poise: 10 },
-              attributeModifiers: [],
-              lifecycleSequences: { start: { $sequence: 'withActionBlackboardScope_9' } },
-              actionGraph: {
-                main: {
-                  nodes: {
-                    applyBuff_1: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_no_guard',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                          blackboardAssignments: {
-                            skip_handle_cryst_break: { kind: 'constant', value: 1 },
-                          },
-                        },
-                      },
-                      next: null,
-                    },
-                    dealDamage_2: {
-                      action: {
-                        kind: 'dealDamage',
-                        parameters: {
-                          damageType: 'physical',
-                          attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                          tags: [],
-                          features: ['physicalInfliction'],
-                          stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                        },
-                      },
-                      next: null,
-                    },
-                    readSkillSettingData_3: {
-                      action: {
-                        kind: 'readSkillSettingData',
-                        parameters: {
-                          items: [
-                            {
-                              values: [1.2, 1.2, 1.2, 1.2],
-                              column: { kind: 'constant', value: 1 },
-                              storeKey: 'atk_scale',
-                              enhance: {
-                                target: 'caster',
-                                formula: { kind: 'linear', paramA: 0.01 },
-                              },
-                            },
-                            {
-                              values: [10, 10, 10, 10],
-                              column: { kind: 'constant', value: 1 },
-                              storeKey: 'poise',
-                              enhance: {
-                                target: 'caster',
-                                formula: { kind: 'linear', paramA: 0.005 },
-                              },
-                            },
-                          ],
-                        },
-                      },
-                      next: 'dealDamage_2',
-                    },
-                    applyBuff_4: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_handle_cryst_break',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                        },
-                      },
-                      next: null,
-                    },
-                    igniteBuffs_5: {
-                      action: {
-                        kind: 'igniteBuffs',
-                        parameters: {
-                          target: 'buffOwner',
-                          source: 'caster',
-                          igniteType: 'PhysicalStatus',
-                        },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_6: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:3',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'igniteBuffs_5' },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_7: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:2',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'applyBuff_4' },
-                      },
-                      next: 'withActionBlackboardScope_6',
-                    },
-                    withActionBlackboardScope_8: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:1',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'readSkillSettingData_3' },
-                      },
-                      next: 'withActionBlackboardScope_7',
-                    },
-                    withActionBlackboardScope_9: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:0',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'applyBuff_1' },
-                      },
-                      next: 'withActionBlackboardScope_8',
-                    },
-                  },
-                  dataNodes: {
-                    data_1: {
-                      type: 'number',
-                      expression: { kind: 'blackboard', key: 'atk_scale' },
-                    },
-                    data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-                  },
-                },
-                macros: {},
-              },
-            },
             duration: { kind: 'constant', value: 1.2 },
             height: { kind: 'constant', value: 1.5 },
             speedFactorMultiplier: 1,
@@ -1533,9 +1411,9 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
             returnWhen: 'always',
           },
         },
-        next: 'dealDamage_18',
+        next: 'dealDamage_58',
       },
-      modifyActionValue_15: {
+      modifyActionValue_55: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -1544,33 +1422,43 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
             value: { kind: 'constant', value: 1 },
           },
         },
-        next: 'applyPhysicalInfliction_19',
+        next: 'applyPhysicalInfliction_59',
       },
-      conditional_20: {
+      checkCondition_50: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' }, alwaysNext: true },
-          whenTrue: { $sequence: 'modifyActionValue_15' },
-          whenFalse: { $sequence: 'applyPhysicalInfliction_19' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
         },
         next: null,
       },
-      repeatEachTick_21: {
+      ifElse_60: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_50' },
+          whenTrue: { $sequence: 'modifyActionValue_55' },
+          whenFalse: { $sequence: 'applyPhysicalInfliction_59' },
+        },
+        next: null,
+      },
+      repeatEachTick_61: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'fixed', target: 'enemy' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
               targetTriggerIntervalSeconds: 0.033,
             },
           },
-          body: { $sequence: 'conditional_20' },
+          body: { $sequence: 'ifElse_60' },
         },
         next: null,
       },
-      modifyActionValue_22: {
+      modifyActionValue_62: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -1579,1352 +1467,38 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
             value: { kind: 'constant', value: 0 },
           },
         },
-        next: 'repeatEachTick_21',
+        next: 'repeatEachTick_61',
       },
-      calculateActionValue_23: {
+      calculateActionValue_63: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atk_scale_once',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_8' },
+            left: { kind: 'valueNode', nodeId: 'data_3' },
             right: { kind: 'constant', value: 0.4 },
           },
         },
-        next: 'modifyActionValue_22',
+        next: 'modifyActionValue_62',
       },
-      launchProjectile_24: {
+      applyBuff_64: {
         action: {
-          kind: 'launchProjectile',
+          kind: 'applyBuff',
           parameters: {
-            finish: 'firstTickReach',
-            source: 'actionOwner',
-            recycleDelaySeconds: 0.333333343267441,
-            hit: { onReach: true, finishOnHit: false },
+            buffs: [{ buffId: 'buff_chr_0028_wulfa_normal_wolf_timer' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
           },
-          callbacks: [
-            {
-              event: 'hit',
-              skill: {
-                skillId: 'chr_0028_wulfa_normal_skill_projhit2',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 10,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: {
-                  atb_return: 10,
-                  atk_scale_3: 3,
-                  atk_scale_bleed: 0,
-                  atk_scale_once: 0,
-                  bleed_critical_damage_interval: 2,
-                  bleed_critical_damage_scale: 1,
-                  damage_up: 0,
-                  duration: 0,
-                  duration_bleed: 0,
-                  fire_duration: 0,
-                  heal_scale: 0.005,
-                  hit_bleed_num: 0,
-                  poise_2: 0,
-                  potential_upgrade: 0,
-                  skillimbue: 0,
-                  talent_1_1: 0,
-                  talent_1_2: 0,
-                  talent_2_1: 0,
-                  talent_2_2: 0,
-                  talent2_burning_damage_scale: 1.5,
-                  usp: 0,
-                  usp_2: 0,
-                },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: null } },
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'repeatEachTick_44' } },
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: null } },
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'conditional_50' } },
-                ],
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      dealDamage_40: {
-                        action: {
-                          kind: 'dealDamage',
-                          parameters: {
-                            damageType: 'heat',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                            tags: ['normalSkill'],
-                            features: ['canBreakWeakness'],
-                            stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                          },
-                        },
-                        next: null,
-                      },
-                      applyBuff_29: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffId: 'buff_chr_0028_wulfa_normal_bleed',
-                            target: 'enemy',
-                            blackboardAssignments: { talent_2: { kind: 'constant', value: 0 } },
-                            copiedBlackboardAssignments: {
-                              duration: 'duration_bleed',
-                              atk_scale: 'atk_scale_bleed',
-                              extra_atk_scale: 'bleed_critical_damage_scale',
-                              damage_cd: 'bleed_critical_damage_interval',
-                              damage_up: 'damage_up',
-                              heal_scale: 'heal_scale',
-                              talent2_burning_damage_scale: 'talent2_burning_damage_scale',
-                            },
-                          },
-                        },
-                        next: 'dealDamage_40',
-                      },
-                      applyBuff_27: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffId: 'buff_chr_0028_wulfa_normal_bleed',
-                            target: 'enemy',
-                            blackboardAssignments: { talent_2: { kind: 'constant', value: 1 } },
-                            copiedBlackboardAssignments: {
-                              duration: 'duration_bleed',
-                              atk_scale: 'atk_scale_bleed',
-                              extra_atk_scale: 'bleed_critical_damage_scale',
-                              damage_cd: 'bleed_critical_damage_interval',
-                              damage_up: 'damage_up',
-                              heal_scale: 'heal_scale',
-                              talent2_burning_damage_scale: 'talent2_burning_damage_scale',
-                            },
-                          },
-                        },
-                        next: 'dealDamage_40',
-                      },
-                      conditional_32: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_4' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'applyBuff_27' },
-                          whenFalse: { $sequence: 'applyBuff_29' },
-                        },
-                        next: null,
-                      },
-                      conditional_33: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_6' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'applyBuff_27' },
-                          whenFalse: { $sequence: 'conditional_32' },
-                        },
-                        next: null,
-                      },
-                      conditional_36: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_8' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_33' },
-                          whenFalse: { $sequence: 'dealDamage_40' },
-                        },
-                        next: null,
-                      },
-                      conditional_38: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_10' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_33' },
-                          whenFalse: { $sequence: 'conditional_36' },
-                        },
-                        next: null,
-                      },
-                      conditional_39: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_12' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_38' },
-                          whenFalse: { $sequence: 'conditional_38' },
-                        },
-                        next: null,
-                      },
-                      conditional_41: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_15' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_39' },
-                          whenFalse: { $sequence: 'dealDamage_40' },
-                        },
-                        next: null,
-                      },
-                      calculateActionValue_42: {
-                        action: {
-                          kind: 'calculateActionValue',
-                          parameters: {
-                            key: 'poise_2',
-                            operation: 'multiply',
-                            left: { kind: 'valueNode', nodeId: 'data_16' },
-                            right: { kind: 'constant', value: 0.25 },
-                          },
-                        },
-                        next: 'conditional_41',
-                      },
-                      calculateActionValue_43: {
-                        action: {
-                          kind: 'calculateActionValue',
-                          parameters: {
-                            key: 'atk_scale_once',
-                            operation: 'multiply',
-                            left: { kind: 'valueNode', nodeId: 'data_17' },
-                            right: { kind: 'constant', value: 0.25 },
-                          },
-                        },
-                        next: 'calculateActionValue_42',
-                      },
-                      repeatEachTick_44: {
-                        action: {
-                          kind: 'repeatEachTick',
-                          parameters: {
-                            nativeChanneling: {
-                              executeEachFrame: true,
-                              triggerIntervalSeconds: 0.033,
-                              maxCountPerTarget: 1,
-                              targetTriggerIntervalSeconds: 0.033,
-                            },
-                          },
-                          body: { $sequence: 'calculateActionValue_43' },
-                        },
-                        next: null,
-                      },
-                      finishBuffsById_47: {
-                        action: {
-                          kind: 'finishBuffsById',
-                          parameters: {
-                            target: 'caster',
-                            buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
-                            reason: 'early',
-                          },
-                        },
-                        next: null,
-                      },
-                      changeResourceByActionValue_46: {
-                        action: {
-                          kind: 'changeResourceByActionValue',
-                          parameters: {
-                            resource: 'sp',
-                            amount: { kind: 'valueNode', nodeId: 'data_18' },
-                            coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'team',
-                            spGainKind: 'refund',
-                            spGainSource: 'skill',
-                          },
-                        },
-                        next: 'finishBuffsById_47',
-                      },
-                      conditional_48: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_20' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'changeResourceByActionValue_46' },
-                          whenFalse: { $sequence: 'finishBuffsById_47' },
-                        },
-                        next: null,
-                      },
-                      changeResourceByActionValue_49: {
-                        action: {
-                          kind: 'changeResourceByActionValue',
-                          parameters: {
-                            resource: 'ultimateEnergy',
-                            amount: { kind: 'valueNode', nodeId: 'data_21' },
-                            coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'caster',
-                          },
-                        },
-                        next: 'conditional_48',
-                      },
-                      conditional_50: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_22' } },
-                          whenTrue: { $sequence: 'changeResourceByActionValue_49' },
-                        },
-                        next: null,
-                      },
-                    },
-                    dataNodes: {
-                      data_1: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale_once' },
-                      },
-                      data_2: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'poise_2' },
-                      },
-                      data_3: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'talent_2_2', fallback: 0 },
-                      },
-                      data_4: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_3' },
-                          operator: 'greater',
-                          right: { kind: 'constant', value: 0.5 },
-                        },
-                      },
-                      data_5: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'talent_2_1', fallback: 0 },
-                      },
-                      data_6: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_5' },
-                          operator: 'greater',
-                          right: { kind: 'constant', value: 0.5 },
-                        },
-                      },
-                      data_7: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'talent_1_2', fallback: 0 },
-                      },
-                      data_8: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_7' },
-                          operator: 'greater',
-                          right: { kind: 'constant', value: 0.5 },
-                        },
-                      },
-                      data_9: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'talent_1_1', fallback: 0 },
-                      },
-                      data_10: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_9' },
-                          operator: 'greater',
-                          right: { kind: 'constant', value: 0.5 },
-                        },
-                      },
-                      data_11: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'skillimbue', fallback: 0 },
-                      },
-                      data_12: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_11' },
-                          operator: 'greater',
-                          right: { kind: 'constant', value: 0.5 },
-                        },
-                      },
-                      data_13: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'buffIdStackCompare',
-                          target: 'enemy',
-                          buffIds: ['buff_chr_0028_wulfa_normal_smarttarget'],
-                          operator: 'greater',
-                          value: { kind: 'constant', value: 0.5 },
-                        },
-                      },
-                      data_14: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'buffIdStackCompare',
-                          target: 'caster',
-                          buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
-                          operator: 'equal',
-                          value: { kind: 'constant', value: 1 },
-                        },
-                      },
-                      data_15: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'all',
-                          conditions: [
-                            { kind: 'conditionNode', nodeId: 'data_13' },
-                            { kind: 'conditionNode', nodeId: 'data_14' },
-                          ],
-                        },
-                      },
-                      data_16: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'poise_2' },
-                      },
-                      data_17: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale_3' },
-                      },
-                      data_18: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atb_return' },
-                      },
-                      data_19: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'potential_upgrade', fallback: 0 },
-                      },
-                      data_20: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_19' },
-                          operator: 'equal',
-                          right: { kind: 'constant', value: 1 },
-                        },
-                      },
-                      data_21: { type: 'number', expression: { kind: 'blackboard', key: 'usp_2' } },
-                      data_22: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'buffIdStackCompare',
-                          target: 'caster',
-                          buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
-                          operator: 'equal',
-                          value: { kind: 'constant', value: 1 },
-                        },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-              },
-            },
-          ],
         },
         next: null,
       },
-      launchProjectile_25: {
+      launchProjectile_65: {
         action: {
           kind: 'launchProjectile',
           parameters: {
-            finish: 'firstTickReach',
-            source: 'actionOwner',
-            recycleDelaySeconds: 1,
-            hit: { onReach: true, finishOnHit: false },
-          },
-          callbacks: [
-            {
-              event: 'hit',
-              skill: {
-                skillId: 'chr_0028_wulfa_normal_skill_projhit3',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 30,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: {
-                  atb_return: 10,
-                  atk_scale_3: 3,
-                  atk_scale_bleed: 0,
-                  atk_scale_once: 0,
-                  bleed_critical_damage_interval: 2,
-                  bleed_critical_damage_scale: 1,
-                  damage_up: 0,
-                  duration: 0,
-                  duration_bleed: 0,
-                  fire_duration: 0,
-                  heal_scale: 0.005,
-                  hit_bleed_num: 0,
-                  poise_2: 0,
-                  potential_upgrade: 0,
-                  skillimbue: 0,
-                  talent_1_1: 0,
-                  talent_1_2: 0,
-                  talent_2_1: 0,
-                  talent_2_2: 0,
-                  talent2_burning_damage_scale: 1.5,
-                  usp: 0,
-                  usp_2: 0,
-                },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: null } },
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'repeatEachTick_45' } },
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'conditional_47' } },
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'conditional_54' } },
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: null } },
-                ],
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      dealDamage_40: {
-                        action: {
-                          kind: 'dealDamage',
-                          parameters: {
-                            damageType: 'heat',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                            tags: ['normalSkill'],
-                            features: ['canBreakWeakness'],
-                            stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                          },
-                        },
-                        next: null,
-                      },
-                      applyBuff_29: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffId: 'buff_chr_0028_wulfa_normal_bleed',
-                            target: 'enemy',
-                            blackboardAssignments: { talent_2: { kind: 'constant', value: 0 } },
-                            copiedBlackboardAssignments: {
-                              duration: 'duration_bleed',
-                              atk_scale: 'atk_scale_bleed',
-                              extra_atk_scale: 'bleed_critical_damage_scale',
-                              damage_cd: 'bleed_critical_damage_interval',
-                              damage_up: 'damage_up',
-                              heal_scale: 'heal_scale',
-                              talent2_burning_damage_scale: 'talent2_burning_damage_scale',
-                            },
-                          },
-                        },
-                        next: 'dealDamage_40',
-                      },
-                      applyBuff_27: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffId: 'buff_chr_0028_wulfa_normal_bleed',
-                            target: 'enemy',
-                            blackboardAssignments: { talent_2: { kind: 'constant', value: 1 } },
-                            copiedBlackboardAssignments: {
-                              duration: 'duration_bleed',
-                              atk_scale: 'atk_scale_bleed',
-                              extra_atk_scale: 'bleed_critical_damage_scale',
-                              damage_cd: 'bleed_critical_damage_interval',
-                              damage_up: 'damage_up',
-                              heal_scale: 'heal_scale',
-                              talent2_burning_damage_scale: 'talent2_burning_damage_scale',
-                            },
-                          },
-                        },
-                        next: 'dealDamage_40',
-                      },
-                      conditional_32: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_4' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'applyBuff_27' },
-                          whenFalse: { $sequence: 'applyBuff_29' },
-                        },
-                        next: null,
-                      },
-                      conditional_33: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_6' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'applyBuff_27' },
-                          whenFalse: { $sequence: 'conditional_32' },
-                        },
-                        next: null,
-                      },
-                      conditional_36: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_8' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_33' },
-                          whenFalse: { $sequence: 'dealDamage_40' },
-                        },
-                        next: null,
-                      },
-                      conditional_38: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_10' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_33' },
-                          whenFalse: { $sequence: 'conditional_36' },
-                        },
-                        next: null,
-                      },
-                      conditional_39: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_12' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_38' },
-                          whenFalse: { $sequence: 'conditional_38' },
-                        },
-                        next: null,
-                      },
-                      conditional_41: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_15' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_39' },
-                          whenFalse: { $sequence: 'dealDamage_40' },
-                        },
-                        next: null,
-                      },
-                      applyBuff_42: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffId: 'buff_chr_0028_wulfa_tut_normalskill_success',
-                            target: 'caster',
-                            inheritSourceSkillCastInfo: true,
-                            finishByAction: true,
-                          },
-                        },
-                        next: 'conditional_41',
-                      },
-                      calculateActionValue_43: {
-                        action: {
-                          kind: 'calculateActionValue',
-                          parameters: {
-                            key: 'poise_2',
-                            operation: 'multiply',
-                            left: { kind: 'valueNode', nodeId: 'data_16' },
-                            right: { kind: 'constant', value: 0.25 },
-                          },
-                        },
-                        next: 'applyBuff_42',
-                      },
-                      calculateActionValue_44: {
-                        action: {
-                          kind: 'calculateActionValue',
-                          parameters: {
-                            key: 'atk_scale_once',
-                            operation: 'multiply',
-                            left: { kind: 'valueNode', nodeId: 'data_17' },
-                            right: { kind: 'constant', value: 0.25 },
-                          },
-                        },
-                        next: 'calculateActionValue_43',
-                      },
-                      repeatEachTick_45: {
-                        action: {
-                          kind: 'repeatEachTick',
-                          parameters: {
-                            nativeChanneling: {
-                              executeEachFrame: true,
-                              triggerIntervalSeconds: 0.033,
-                              maxCountPerTarget: 1,
-                              targetTriggerIntervalSeconds: 0.033,
-                            },
-                          },
-                          body: { $sequence: 'calculateActionValue_44' },
-                        },
-                        next: null,
-                      },
-                      calculateActionValue_46: {
-                        action: {
-                          kind: 'calculateActionValue',
-                          parameters: {
-                            key: 'hit_bleed_num',
-                            operation: 'add',
-                            left: { kind: 'valueNode', nodeId: 'data_18' },
-                            right: { kind: 'constant', value: 1 },
-                          },
-                        },
-                        next: null,
-                      },
-                      conditional_47: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_19' } },
-                          whenTrue: { $sequence: 'calculateActionValue_46' },
-                        },
-                        next: null,
-                      },
-                      finishBuffsById_51: {
-                        action: {
-                          kind: 'finishBuffsById',
-                          parameters: {
-                            target: 'caster',
-                            buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
-                            reason: 'early',
-                          },
-                        },
-                        next: null,
-                      },
-                      changeResourceByActionValue_50: {
-                        action: {
-                          kind: 'changeResourceByActionValue',
-                          parameters: {
-                            resource: 'sp',
-                            amount: { kind: 'valueNode', nodeId: 'data_20' },
-                            coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'team',
-                            spGainKind: 'refund',
-                            spGainSource: 'skill',
-                          },
-                        },
-                        next: 'finishBuffsById_51',
-                      },
-                      conditional_52: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_22' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'changeResourceByActionValue_50' },
-                          whenFalse: { $sequence: 'finishBuffsById_51' },
-                        },
-                        next: null,
-                      },
-                      changeResourceByActionValue_53: {
-                        action: {
-                          kind: 'changeResourceByActionValue',
-                          parameters: {
-                            resource: 'ultimateEnergy',
-                            amount: { kind: 'valueNode', nodeId: 'data_23' },
-                            coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'caster',
-                          },
-                        },
-                        next: 'conditional_52',
-                      },
-                      conditional_54: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_24' } },
-                          whenTrue: { $sequence: 'changeResourceByActionValue_53' },
-                        },
-                        next: null,
-                      },
-                    },
-                    dataNodes: {
-                      data_1: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale_once' },
-                      },
-                      data_2: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'poise_2' },
-                      },
-                      data_3: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'talent_2_2', fallback: 0 },
-                      },
-                      data_4: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_3' },
-                          operator: 'greater',
-                          right: { kind: 'constant', value: 0.5 },
-                        },
-                      },
-                      data_5: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'talent_2_1', fallback: 0 },
-                      },
-                      data_6: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_5' },
-                          operator: 'greater',
-                          right: { kind: 'constant', value: 0.5 },
-                        },
-                      },
-                      data_7: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'talent_1_2', fallback: 0 },
-                      },
-                      data_8: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_7' },
-                          operator: 'greater',
-                          right: { kind: 'constant', value: 0.5 },
-                        },
-                      },
-                      data_9: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'talent_1_1', fallback: 0 },
-                      },
-                      data_10: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_9' },
-                          operator: 'greater',
-                          right: { kind: 'constant', value: 0.5 },
-                        },
-                      },
-                      data_11: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'skillimbue', fallback: 0 },
-                      },
-                      data_12: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_11' },
-                          operator: 'greater',
-                          right: { kind: 'constant', value: 0.5 },
-                        },
-                      },
-                      data_13: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'buffIdStackCompare',
-                          target: 'enemy',
-                          buffIds: ['buff_chr_0028_wulfa_normal_smarttarget'],
-                          operator: 'greater',
-                          value: { kind: 'constant', value: 0.5 },
-                        },
-                      },
-                      data_14: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'buffIdStackCompare',
-                          target: 'caster',
-                          buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
-                          operator: 'equal',
-                          value: { kind: 'constant', value: 1 },
-                        },
-                      },
-                      data_15: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'all',
-                          conditions: [
-                            { kind: 'conditionNode', nodeId: 'data_13' },
-                            { kind: 'conditionNode', nodeId: 'data_14' },
-                          ],
-                        },
-                      },
-                      data_16: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'poise_2' },
-                      },
-                      data_17: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale_3' },
-                      },
-                      data_18: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'hit_bleed_num' },
-                      },
-                      data_19: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'buffIdStackCompare',
-                          target: 'enemy',
-                          buffIds: ['buff_chr_0028_wulfa_normal_bleed'],
-                          operator: 'greaterOrEqual',
-                          value: { kind: 'constant', value: 1 },
-                        },
-                      },
-                      data_20: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atb_return' },
-                      },
-                      data_21: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'potential_upgrade', fallback: 0 },
-                      },
-                      data_22: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_21' },
-                          operator: 'equal',
-                          right: { kind: 'constant', value: 1 },
-                        },
-                      },
-                      data_23: { type: 'number', expression: { kind: 'blackboard', key: 'usp_2' } },
-                      data_24: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'buffIdStackCompare',
-                          target: 'caster',
-                          buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
-                          operator: 'equal',
-                          value: { kind: 'constant', value: 1 },
-                        },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-              },
-            },
-          ],
-        },
-        next: null,
-      },
-      launchProjectile_26: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            finish: 'firstTickReach',
-            source: 'actionOwner',
-            recycleDelaySeconds: 1,
-            hit: { onReach: true, finishOnHit: false },
-          },
-          callbacks: [
-            {
-              event: 'hit',
-              skill: {
-                skillId: 'chr_0028_wulfa_normal_skill_projhit4',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 30,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: {
-                  atb_return: 10,
-                  atk_scale_3: 3,
-                  atk_scale_bleed: 0,
-                  atk_scale_once: 0,
-                  bleed_critical_damage_interval: 2,
-                  bleed_critical_damage_scale: 1,
-                  damage_up: 0,
-                  duration: 0,
-                  duration_bleed: 0,
-                  fire_duration: 0,
-                  heal_scale: 0.005,
-                  hit_bleed_num: 0,
-                  poise_2: 0,
-                  potential_upgrade: 0,
-                  skillimbue: 0,
-                  talent_1_1: 0,
-                  talent_1_2: 0,
-                  talent_2_1: 0,
-                  talent_2_2: 0,
-                  talent2_burning_damage_scale: 1.5,
-                  usp: 0,
-                  usp_2: 0,
-                },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: null } },
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'repeatEachTick_44' } },
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: null } },
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'conditional_50' } },
-                ],
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      dealDamage_40: {
-                        action: {
-                          kind: 'dealDamage',
-                          parameters: {
-                            damageType: 'heat',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                            tags: ['normalSkill'],
-                            features: ['canBreakWeakness'],
-                            stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                          },
-                        },
-                        next: null,
-                      },
-                      applyBuff_29: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffId: 'buff_chr_0028_wulfa_normal_bleed',
-                            target: 'enemy',
-                            blackboardAssignments: { talent_2: { kind: 'constant', value: 0 } },
-                            copiedBlackboardAssignments: {
-                              duration: 'duration_bleed',
-                              atk_scale: 'atk_scale_bleed',
-                              extra_atk_scale: 'bleed_critical_damage_scale',
-                              damage_cd: 'bleed_critical_damage_interval',
-                              damage_up: 'damage_up',
-                              heal_scale: 'heal_scale',
-                              talent2_burning_damage_scale: 'talent2_burning_damage_scale',
-                            },
-                          },
-                        },
-                        next: 'dealDamage_40',
-                      },
-                      applyBuff_27: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffId: 'buff_chr_0028_wulfa_normal_bleed',
-                            target: 'enemy',
-                            blackboardAssignments: { talent_2: { kind: 'constant', value: 1 } },
-                            copiedBlackboardAssignments: {
-                              duration: 'duration_bleed',
-                              atk_scale: 'atk_scale_bleed',
-                              extra_atk_scale: 'bleed_critical_damage_scale',
-                              damage_cd: 'bleed_critical_damage_interval',
-                              damage_up: 'damage_up',
-                              heal_scale: 'heal_scale',
-                              talent2_burning_damage_scale: 'talent2_burning_damage_scale',
-                            },
-                          },
-                        },
-                        next: 'dealDamage_40',
-                      },
-                      conditional_32: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_4' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'applyBuff_27' },
-                          whenFalse: { $sequence: 'applyBuff_29' },
-                        },
-                        next: null,
-                      },
-                      conditional_33: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_6' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'applyBuff_27' },
-                          whenFalse: { $sequence: 'conditional_32' },
-                        },
-                        next: null,
-                      },
-                      conditional_36: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_8' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_33' },
-                          whenFalse: { $sequence: 'dealDamage_40' },
-                        },
-                        next: null,
-                      },
-                      conditional_38: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_10' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_33' },
-                          whenFalse: { $sequence: 'conditional_36' },
-                        },
-                        next: null,
-                      },
-                      conditional_39: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_12' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_38' },
-                          whenFalse: { $sequence: 'conditional_38' },
-                        },
-                        next: null,
-                      },
-                      conditional_41: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_15' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_39' },
-                          whenFalse: { $sequence: 'dealDamage_40' },
-                        },
-                        next: null,
-                      },
-                      calculateActionValue_42: {
-                        action: {
-                          kind: 'calculateActionValue',
-                          parameters: {
-                            key: 'poise_2',
-                            operation: 'multiply',
-                            left: { kind: 'valueNode', nodeId: 'data_16' },
-                            right: { kind: 'constant', value: 0.25 },
-                          },
-                        },
-                        next: 'conditional_41',
-                      },
-                      calculateActionValue_43: {
-                        action: {
-                          kind: 'calculateActionValue',
-                          parameters: {
-                            key: 'atk_scale_once',
-                            operation: 'multiply',
-                            left: { kind: 'valueNode', nodeId: 'data_17' },
-                            right: { kind: 'constant', value: 0.25 },
-                          },
-                        },
-                        next: 'calculateActionValue_42',
-                      },
-                      repeatEachTick_44: {
-                        action: {
-                          kind: 'repeatEachTick',
-                          parameters: {
-                            nativeChanneling: {
-                              executeEachFrame: true,
-                              triggerIntervalSeconds: 0.033,
-                              maxCountPerTarget: 1,
-                              targetTriggerIntervalSeconds: 0.033,
-                            },
-                          },
-                          body: { $sequence: 'calculateActionValue_43' },
-                        },
-                        next: null,
-                      },
-                      finishBuffsById_47: {
-                        action: {
-                          kind: 'finishBuffsById',
-                          parameters: {
-                            target: 'caster',
-                            buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
-                            reason: 'early',
-                          },
-                        },
-                        next: null,
-                      },
-                      changeResourceByActionValue_46: {
-                        action: {
-                          kind: 'changeResourceByActionValue',
-                          parameters: {
-                            resource: 'sp',
-                            amount: { kind: 'valueNode', nodeId: 'data_18' },
-                            coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'team',
-                            spGainKind: 'refund',
-                            spGainSource: 'skill',
-                          },
-                        },
-                        next: 'finishBuffsById_47',
-                      },
-                      conditional_48: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_20' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'changeResourceByActionValue_46' },
-                          whenFalse: { $sequence: 'finishBuffsById_47' },
-                        },
-                        next: null,
-                      },
-                      changeResourceByActionValue_49: {
-                        action: {
-                          kind: 'changeResourceByActionValue',
-                          parameters: {
-                            resource: 'ultimateEnergy',
-                            amount: { kind: 'valueNode', nodeId: 'data_21' },
-                            coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'caster',
-                          },
-                        },
-                        next: 'conditional_48',
-                      },
-                      conditional_50: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_22' } },
-                          whenTrue: { $sequence: 'changeResourceByActionValue_49' },
-                        },
-                        next: null,
-                      },
-                    },
-                    dataNodes: {
-                      data_1: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale_once' },
-                      },
-                      data_2: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'poise_2' },
-                      },
-                      data_3: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'talent_2_2', fallback: 0 },
-                      },
-                      data_4: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_3' },
-                          operator: 'greater',
-                          right: { kind: 'constant', value: 0.5 },
-                        },
-                      },
-                      data_5: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'talent_2_1', fallback: 0 },
-                      },
-                      data_6: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_5' },
-                          operator: 'greater',
-                          right: { kind: 'constant', value: 0.5 },
-                        },
-                      },
-                      data_7: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'talent_1_2', fallback: 0 },
-                      },
-                      data_8: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_7' },
-                          operator: 'greater',
-                          right: { kind: 'constant', value: 0.5 },
-                        },
-                      },
-                      data_9: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'talent_1_1', fallback: 0 },
-                      },
-                      data_10: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_9' },
-                          operator: 'greater',
-                          right: { kind: 'constant', value: 0.5 },
-                        },
-                      },
-                      data_11: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'skillimbue', fallback: 0 },
-                      },
-                      data_12: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_11' },
-                          operator: 'greater',
-                          right: { kind: 'constant', value: 0.5 },
-                        },
-                      },
-                      data_13: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'buffIdStackCompare',
-                          target: 'enemy',
-                          buffIds: ['buff_chr_0028_wulfa_normal_smarttarget'],
-                          operator: 'greater',
-                          value: { kind: 'constant', value: 0.5 },
-                        },
-                      },
-                      data_14: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'buffIdStackCompare',
-                          target: 'caster',
-                          buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
-                          operator: 'equal',
-                          value: { kind: 'constant', value: 1 },
-                        },
-                      },
-                      data_15: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'all',
-                          conditions: [
-                            { kind: 'conditionNode', nodeId: 'data_13' },
-                            { kind: 'conditionNode', nodeId: 'data_14' },
-                          ],
-                        },
-                      },
-                      data_16: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'poise_2' },
-                      },
-                      data_17: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale_3' },
-                      },
-                      data_18: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atb_return' },
-                      },
-                      data_19: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'potential_upgrade', fallback: 0 },
-                      },
-                      data_20: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_19' },
-                          operator: 'equal',
-                          right: { kind: 'constant', value: 1 },
-                        },
-                      },
-                      data_21: { type: 'number', expression: { kind: 'blackboard', key: 'usp_2' } },
-                      data_22: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'buffIdStackCompare',
-                          target: 'caster',
-                          buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
-                          operator: 'equal',
-                          value: { kind: 'constant', value: 1 },
-                        },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-              },
-            },
-          ],
-        },
-        next: null,
-      },
-      launchProjectile_27: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 'firstTickReach',
             source: 'actionOwner',
             recycleDelaySeconds: 1,
@@ -2948,35 +1522,27 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
                   atk_scale_3: 3,
                   atk_scale_bleed: 0,
                   atk_scale_once: 0,
-                  bleed_critical_damage_interval: 2,
                   bleed_critical_damage_scale: 1,
                   damage_up: 0,
-                  duration: 0,
                   duration_bleed: 0,
-                  fire_duration: 0,
                   heal_scale: 0.005,
-                  hit_bleed_num: 0,
                   poise_2: 0,
                   potential_upgrade: 0,
-                  skillimbue: 0,
                   talent_1_1: 0,
                   talent_1_2: 0,
                   talent_2_1: 0,
                   talent_2_2: 0,
                   talent2_burning_damage_scale: 1.5,
-                  usp: 0,
                   usp_2: 0,
                 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: null } },
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'repeatEachTick_44' } },
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: null } },
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'conditional_50' } },
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'repeatEachTick_59' } },
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'checkCondition_67' } },
                 ],
                 actionGraph: {
                   main: {
                     nodes: {
-                      dealDamage_40: {
+                      dealDamage_55: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
@@ -2989,213 +1555,267 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
                         },
                         next: null,
                       },
-                      applyBuff_29: {
+                      applyBuff_39: {
                         action: {
                           kind: 'applyBuff',
                           parameters: {
-                            buffId: 'buff_chr_0028_wulfa_normal_bleed',
-                            target: 'enemy',
-                            blackboardAssignments: { talent_2: { kind: 'constant', value: 0 } },
-                            copiedBlackboardAssignments: {
-                              duration: 'duration_bleed',
-                              atk_scale: 'atk_scale_bleed',
-                              extra_atk_scale: 'bleed_critical_damage_scale',
-                              damage_cd: 'bleed_critical_damage_interval',
-                              damage_up: 'damage_up',
-                              heal_scale: 'heal_scale',
-                              talent2_burning_damage_scale: 'talent2_burning_damage_scale',
-                            },
+                            buffs: [
+                              {
+                                buffId: 'buff_chr_0028_wulfa_normal_bleed',
+                                blackboardAssignments: { talent_2: { kind: 'constant', value: 0 } },
+                                copiedBlackboardAssignments: {
+                                  duration: 'duration_bleed',
+                                  atk_scale: 'atk_scale_bleed',
+                                  extra_atk_scale: 'bleed_critical_damage_scale',
+                                  damage_up: 'damage_up',
+                                  heal_scale: 'heal_scale',
+                                  talent2_burning_damage_scale: 'talent2_burning_damage_scale',
+                                },
+                              },
+                            ],
+                            targets: { kind: 'fixed', target: 'enemy' },
+                            source: { kind: 'source' },
                           },
                         },
-                        next: 'dealDamage_40',
+                        next: 'dealDamage_55',
                       },
-                      applyBuff_27: {
+                      applyBuff_37: {
                         action: {
                           kind: 'applyBuff',
                           parameters: {
-                            buffId: 'buff_chr_0028_wulfa_normal_bleed',
-                            target: 'enemy',
-                            blackboardAssignments: { talent_2: { kind: 'constant', value: 1 } },
-                            copiedBlackboardAssignments: {
-                              duration: 'duration_bleed',
-                              atk_scale: 'atk_scale_bleed',
-                              extra_atk_scale: 'bleed_critical_damage_scale',
-                              damage_cd: 'bleed_critical_damage_interval',
-                              damage_up: 'damage_up',
-                              heal_scale: 'heal_scale',
-                              talent2_burning_damage_scale: 'talent2_burning_damage_scale',
-                            },
+                            buffs: [
+                              {
+                                buffId: 'buff_chr_0028_wulfa_normal_bleed',
+                                blackboardAssignments: { talent_2: { kind: 'constant', value: 1 } },
+                                copiedBlackboardAssignments: {
+                                  duration: 'duration_bleed',
+                                  atk_scale: 'atk_scale_bleed',
+                                  extra_atk_scale: 'bleed_critical_damage_scale',
+                                  damage_up: 'damage_up',
+                                  heal_scale: 'heal_scale',
+                                  talent2_burning_damage_scale: 'talent2_burning_damage_scale',
+                                },
+                              },
+                            ],
+                            targets: { kind: 'fixed', target: 'enemy' },
+                            source: { kind: 'source' },
                           },
                         },
-                        next: 'dealDamage_40',
+                        next: 'dealDamage_55',
                       },
-                      conditional_32: {
+                      checkCondition_35: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_4' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'applyBuff_27' },
-                          whenFalse: { $sequence: 'applyBuff_29' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
                         },
                         next: null,
                       },
-                      conditional_33: {
+                      ifElse_43: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_6' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'applyBuff_27' },
-                          whenFalse: { $sequence: 'conditional_32' },
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_35' },
+                          whenTrue: { $sequence: 'applyBuff_37' },
+                          whenFalse: { $sequence: 'applyBuff_39' },
                         },
                         next: null,
                       },
-                      conditional_36: {
+                      checkCondition_40: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_8' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_33' },
-                          whenFalse: { $sequence: 'dealDamage_40' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
                         },
                         next: null,
                       },
-                      conditional_38: {
+                      ifElse_45: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_10' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_33' },
-                          whenFalse: { $sequence: 'conditional_36' },
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_40' },
+                          whenTrue: { $sequence: 'applyBuff_37' },
+                          whenFalse: { $sequence: 'ifElse_43' },
                         },
                         next: null,
                       },
-                      conditional_39: {
+                      checkCondition_44: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_12' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_38' },
-                          whenFalse: { $sequence: 'conditional_38' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
                         },
                         next: null,
                       },
-                      conditional_41: {
+                      ifElse_49: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_15' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_39' },
-                          whenFalse: { $sequence: 'dealDamage_40' },
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_44' },
+                          whenTrue: { $sequence: 'ifElse_45' },
+                          whenFalse: { $sequence: 'dealDamage_55' },
                         },
                         next: null,
                       },
-                      calculateActionValue_42: {
+                      checkCondition_47: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
+                        },
+                        next: null,
+                      },
+                      ifElse_51: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_47' },
+                          whenTrue: { $sequence: 'ifElse_45' },
+                          whenFalse: { $sequence: 'ifElse_49' },
+                        },
+                        next: null,
+                      },
+                      ifElse_54: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: null },
+                          whenTrue: { $sequence: 'ifElse_51' },
+                          whenFalse: { $sequence: 'ifElse_51' },
+                        },
+                        next: null,
+                      },
+                      checkCondition_52: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
+                        },
+                        next: null,
+                      },
+                      checkCondition_53: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
+                        },
+                        next: 'checkCondition_52',
+                      },
+                      ifElse_56: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_53' },
+                          whenTrue: { $sequence: 'ifElse_54' },
+                          whenFalse: { $sequence: 'dealDamage_55' },
+                        },
+                        next: null,
+                      },
+                      calculateActionValue_57: {
                         action: {
                           kind: 'calculateActionValue',
                           parameters: {
                             key: 'poise_2',
                             operation: 'multiply',
-                            left: { kind: 'valueNode', nodeId: 'data_16' },
+                            left: { kind: 'valueNode', nodeId: 'data_2' },
                             right: { kind: 'constant', value: 0.25 },
                           },
                         },
-                        next: 'conditional_41',
+                        next: 'ifElse_56',
                       },
-                      calculateActionValue_43: {
+                      calculateActionValue_58: {
                         action: {
                           kind: 'calculateActionValue',
                           parameters: {
                             key: 'atk_scale_once',
                             operation: 'multiply',
-                            left: { kind: 'valueNode', nodeId: 'data_17' },
+                            left: { kind: 'valueNode', nodeId: 'data_13' },
                             right: { kind: 'constant', value: 0.25 },
                           },
                         },
-                        next: 'calculateActionValue_42',
+                        next: 'calculateActionValue_57',
                       },
-                      repeatEachTick_44: {
+                      repeatEachTick_59: {
                         action: {
                           kind: 'repeatEachTick',
                           parameters: {
                             nativeChanneling: {
+                              catchUpMissedTicks: false,
+                              target: { kind: 'fixed', target: 'enemy' },
                               executeEachFrame: true,
                               triggerIntervalSeconds: 0.033,
                               maxCountPerTarget: 1,
                               targetTriggerIntervalSeconds: 0.033,
                             },
                           },
-                          body: { $sequence: 'calculateActionValue_43' },
+                          body: { $sequence: 'calculateActionValue_58' },
                         },
                         next: null,
                       },
-                      finishBuffsById_47: {
+                      finishBuffsById_63: {
                         action: {
                           kind: 'finishBuffsById',
                           parameters: {
-                            target: 'caster',
+                            targets: { kind: 'source' },
+                            finishSource: { kind: 'source' },
                             buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
                             reason: 'early',
                           },
                         },
                         next: null,
                       },
-                      changeResourceByActionValue_46: {
+                      changeResource_62: {
                         action: {
-                          kind: 'changeResourceByActionValue',
+                          kind: 'changeResource',
                           parameters: {
                             resource: 'sp',
-                            amount: { kind: 'valueNode', nodeId: 'data_18' },
+                            amount: { kind: 'valueNode', nodeId: 'data_14' },
                             coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'team',
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
                             spGainKind: 'refund',
                             spGainSource: 'skill',
                           },
                         },
-                        next: 'finishBuffsById_47',
+                        next: 'finishBuffsById_63',
                       },
-                      conditional_48: {
+                      checkCondition_60: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_20' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'changeResourceByActionValue_46' },
-                          whenFalse: { $sequence: 'finishBuffsById_47' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_16' } },
                         },
                         next: null,
                       },
-                      changeResourceByActionValue_49: {
+                      ifElse_64: {
                         action: {
-                          kind: 'changeResourceByActionValue',
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_60' },
+                          whenTrue: { $sequence: 'changeResource_62' },
+                          whenFalse: { $sequence: 'finishBuffsById_63' },
+                        },
+                        next: null,
+                      },
+                      changeResource_65: {
+                        action: {
+                          kind: 'changeResource',
                           parameters: {
                             resource: 'ultimateEnergy',
-                            amount: { kind: 'valueNode', nodeId: 'data_21' },
+                            amount: { kind: 'valueNode', nodeId: 'data_17' },
                             coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'caster',
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
                           },
                         },
-                        next: 'conditional_48',
+                        next: 'ifElse_64',
                       },
-                      conditional_50: {
+                      checkCondition_66: {
                         action: {
-                          kind: 'conditional',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_22' } },
-                          whenTrue: { $sequence: 'changeResourceByActionValue_49' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_18' } },
                         },
-                        next: null,
+                        next: 'changeResource_65',
+                      },
+                      checkCondition_67: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_19' } },
+                        },
+                        next: 'checkCondition_66',
                       },
                     },
                     dataNodes: {
@@ -3260,19 +1880,16 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
                         },
                       },
                       data_11: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'skillimbue', fallback: 0 },
-                      },
-                      data_12: {
                         type: 'boolean',
                         expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_11' },
-                          operator: 'greater',
-                          right: { kind: 'constant', value: 0.5 },
+                          kind: 'buffIdStackCompare',
+                          target: 'caster',
+                          buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
+                          operator: 'equal',
+                          value: { kind: 'constant', value: 1 },
                         },
                       },
-                      data_13: {
+                      data_12: {
                         type: 'boolean',
                         expression: {
                           kind: 'buffIdStackCompare',
@@ -3282,53 +1899,29 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
                           value: { kind: 'constant', value: 0.5 },
                         },
                       },
-                      data_14: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'buffIdStackCompare',
-                          target: 'caster',
-                          buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
-                          operator: 'equal',
-                          value: { kind: 'constant', value: 1 },
-                        },
-                      },
-                      data_15: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'all',
-                          conditions: [
-                            { kind: 'conditionNode', nodeId: 'data_13' },
-                            { kind: 'conditionNode', nodeId: 'data_14' },
-                          ],
-                        },
-                      },
-                      data_16: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'poise_2' },
-                      },
-                      data_17: {
+                      data_13: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale_3' },
                       },
-                      data_18: {
+                      data_14: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atb_return' },
                       },
-                      data_19: {
+                      data_15: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'potential_upgrade', fallback: 0 },
                       },
-                      data_20: {
+                      data_16: {
                         type: 'boolean',
                         expression: {
                           kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_19' },
+                          left: { kind: 'valueNode', nodeId: 'data_15' },
                           operator: 'equal',
                           right: { kind: 'constant', value: 1 },
                         },
                       },
-                      data_21: { type: 'number', expression: { kind: 'blackboard', key: 'usp_2' } },
-                      data_22: {
+                      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'usp_2' } },
+                      data_18: {
                         type: 'boolean',
                         expression: {
                           kind: 'buffIdStackCompare',
@@ -3336,6 +1929,17 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
                           buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
                           operator: 'equal',
                           value: { kind: 'constant', value: 1 },
+                        },
+                      },
+                      data_19: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityCountCompare',
+                          target: { kind: 'fixed', target: 'enemy' },
+                          containsHittableTarget: false,
+                          excludeDeadEntity: false,
+                          operator: 'greaterOrEqual',
+                          value: 1,
                         },
                       },
                     },
@@ -3346,158 +1950,1510 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
             },
           ],
         },
-        next: null,
+        next: 'applyBuff_64',
       },
-      withActionBlackboardScope_28: {
+      launchProjectile_66: {
         action: {
-          kind: 'withActionBlackboardScope',
+          kind: 'launchProjectile',
           parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
+            inheritActionBlackboard: true,
             entityInitialValues: {},
+            finish: 'firstTickReach',
+            source: 'actionOwner',
+            recycleDelaySeconds: 1,
+            hit: { onReach: true, finishOnHit: false },
           },
-          body: { $sequence: 'launchProjectile_27' },
+          callbacks: [
+            {
+              event: 'hit',
+              skill: {
+                skillId: 'chr_0028_wulfa_normal_skill_projhit4',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 30,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: {
+                  atb_return: 10,
+                  atk_scale_3: 3,
+                  atk_scale_bleed: 0,
+                  atk_scale_once: 0,
+                  bleed_critical_damage_scale: 1,
+                  damage_up: 0,
+                  duration_bleed: 0,
+                  heal_scale: 0.005,
+                  poise_2: 0,
+                  potential_upgrade: 0,
+                  talent_1_1: 0,
+                  talent_1_2: 0,
+                  talent_2_1: 0,
+                  talent_2_2: 0,
+                  talent2_burning_damage_scale: 1.5,
+                  usp_2: 0,
+                },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'repeatEachTick_59' } },
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'checkCondition_67' } },
+                ],
+                actionGraph: {
+                  main: {
+                    nodes: {
+                      dealDamage_55: {
+                        action: {
+                          kind: 'dealDamage',
+                          parameters: {
+                            damageType: 'heat',
+                            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                            tags: ['normalSkill'],
+                            features: ['canBreakWeakness'],
+                            stagger: { kind: 'valueNode', nodeId: 'data_2' },
+                          },
+                        },
+                        next: null,
+                      },
+                      applyBuff_39: {
+                        action: {
+                          kind: 'applyBuff',
+                          parameters: {
+                            buffs: [
+                              {
+                                buffId: 'buff_chr_0028_wulfa_normal_bleed',
+                                blackboardAssignments: { talent_2: { kind: 'constant', value: 0 } },
+                                copiedBlackboardAssignments: {
+                                  duration: 'duration_bleed',
+                                  atk_scale: 'atk_scale_bleed',
+                                  extra_atk_scale: 'bleed_critical_damage_scale',
+                                  damage_up: 'damage_up',
+                                  heal_scale: 'heal_scale',
+                                  talent2_burning_damage_scale: 'talent2_burning_damage_scale',
+                                },
+                              },
+                            ],
+                            targets: { kind: 'fixed', target: 'enemy' },
+                            source: { kind: 'source' },
+                          },
+                        },
+                        next: 'dealDamage_55',
+                      },
+                      applyBuff_37: {
+                        action: {
+                          kind: 'applyBuff',
+                          parameters: {
+                            buffs: [
+                              {
+                                buffId: 'buff_chr_0028_wulfa_normal_bleed',
+                                blackboardAssignments: { talent_2: { kind: 'constant', value: 1 } },
+                                copiedBlackboardAssignments: {
+                                  duration: 'duration_bleed',
+                                  atk_scale: 'atk_scale_bleed',
+                                  extra_atk_scale: 'bleed_critical_damage_scale',
+                                  damage_up: 'damage_up',
+                                  heal_scale: 'heal_scale',
+                                  talent2_burning_damage_scale: 'talent2_burning_damage_scale',
+                                },
+                              },
+                            ],
+                            targets: { kind: 'fixed', target: 'enemy' },
+                            source: { kind: 'source' },
+                          },
+                        },
+                        next: 'dealDamage_55',
+                      },
+                      checkCondition_35: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+                        },
+                        next: null,
+                      },
+                      ifElse_43: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_35' },
+                          whenTrue: { $sequence: 'applyBuff_37' },
+                          whenFalse: { $sequence: 'applyBuff_39' },
+                        },
+                        next: null,
+                      },
+                      checkCondition_40: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+                        },
+                        next: null,
+                      },
+                      ifElse_45: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_40' },
+                          whenTrue: { $sequence: 'applyBuff_37' },
+                          whenFalse: { $sequence: 'ifElse_43' },
+                        },
+                        next: null,
+                      },
+                      checkCondition_44: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+                        },
+                        next: null,
+                      },
+                      ifElse_49: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_44' },
+                          whenTrue: { $sequence: 'ifElse_45' },
+                          whenFalse: { $sequence: 'dealDamage_55' },
+                        },
+                        next: null,
+                      },
+                      checkCondition_47: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
+                        },
+                        next: null,
+                      },
+                      ifElse_51: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_47' },
+                          whenTrue: { $sequence: 'ifElse_45' },
+                          whenFalse: { $sequence: 'ifElse_49' },
+                        },
+                        next: null,
+                      },
+                      ifElse_54: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: null },
+                          whenTrue: { $sequence: 'ifElse_51' },
+                          whenFalse: { $sequence: 'ifElse_51' },
+                        },
+                        next: null,
+                      },
+                      checkCondition_52: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
+                        },
+                        next: null,
+                      },
+                      checkCondition_53: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
+                        },
+                        next: 'checkCondition_52',
+                      },
+                      ifElse_56: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_53' },
+                          whenTrue: { $sequence: 'ifElse_54' },
+                          whenFalse: { $sequence: 'dealDamage_55' },
+                        },
+                        next: null,
+                      },
+                      calculateActionValue_57: {
+                        action: {
+                          kind: 'calculateActionValue',
+                          parameters: {
+                            key: 'poise_2',
+                            operation: 'multiply',
+                            left: { kind: 'valueNode', nodeId: 'data_2' },
+                            right: { kind: 'constant', value: 0.25 },
+                          },
+                        },
+                        next: 'ifElse_56',
+                      },
+                      calculateActionValue_58: {
+                        action: {
+                          kind: 'calculateActionValue',
+                          parameters: {
+                            key: 'atk_scale_once',
+                            operation: 'multiply',
+                            left: { kind: 'valueNode', nodeId: 'data_13' },
+                            right: { kind: 'constant', value: 0.25 },
+                          },
+                        },
+                        next: 'calculateActionValue_57',
+                      },
+                      repeatEachTick_59: {
+                        action: {
+                          kind: 'repeatEachTick',
+                          parameters: {
+                            nativeChanneling: {
+                              catchUpMissedTicks: false,
+                              target: { kind: 'fixed', target: 'enemy' },
+                              executeEachFrame: true,
+                              triggerIntervalSeconds: 0.033,
+                              maxCountPerTarget: 1,
+                              targetTriggerIntervalSeconds: 0.033,
+                            },
+                          },
+                          body: { $sequence: 'calculateActionValue_58' },
+                        },
+                        next: null,
+                      },
+                      finishBuffsById_63: {
+                        action: {
+                          kind: 'finishBuffsById',
+                          parameters: {
+                            targets: { kind: 'source' },
+                            finishSource: { kind: 'source' },
+                            buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
+                            reason: 'early',
+                          },
+                        },
+                        next: null,
+                      },
+                      changeResource_62: {
+                        action: {
+                          kind: 'changeResource',
+                          parameters: {
+                            resource: 'sp',
+                            amount: { kind: 'valueNode', nodeId: 'data_14' },
+                            coefficient: { kind: 'constant', value: 1 },
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
+                            spGainKind: 'refund',
+                            spGainSource: 'skill',
+                          },
+                        },
+                        next: 'finishBuffsById_63',
+                      },
+                      checkCondition_60: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_16' } },
+                        },
+                        next: null,
+                      },
+                      ifElse_64: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_60' },
+                          whenTrue: { $sequence: 'changeResource_62' },
+                          whenFalse: { $sequence: 'finishBuffsById_63' },
+                        },
+                        next: null,
+                      },
+                      changeResource_65: {
+                        action: {
+                          kind: 'changeResource',
+                          parameters: {
+                            resource: 'ultimateEnergy',
+                            amount: { kind: 'valueNode', nodeId: 'data_17' },
+                            coefficient: { kind: 'constant', value: 1 },
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
+                          },
+                        },
+                        next: 'ifElse_64',
+                      },
+                      checkCondition_66: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_18' } },
+                        },
+                        next: 'changeResource_65',
+                      },
+                      checkCondition_67: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_19' } },
+                        },
+                        next: 'checkCondition_66',
+                      },
+                    },
+                    dataNodes: {
+                      data_1: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'atk_scale_once' },
+                      },
+                      data_2: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'poise_2' },
+                      },
+                      data_3: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'talent_2_2', fallback: 0 },
+                      },
+                      data_4: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'actionValueCompare',
+                          left: { kind: 'valueNode', nodeId: 'data_3' },
+                          operator: 'greater',
+                          right: { kind: 'constant', value: 0.5 },
+                        },
+                      },
+                      data_5: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'talent_2_1', fallback: 0 },
+                      },
+                      data_6: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'actionValueCompare',
+                          left: { kind: 'valueNode', nodeId: 'data_5' },
+                          operator: 'greater',
+                          right: { kind: 'constant', value: 0.5 },
+                        },
+                      },
+                      data_7: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'talent_1_2', fallback: 0 },
+                      },
+                      data_8: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'actionValueCompare',
+                          left: { kind: 'valueNode', nodeId: 'data_7' },
+                          operator: 'greater',
+                          right: { kind: 'constant', value: 0.5 },
+                        },
+                      },
+                      data_9: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'talent_1_1', fallback: 0 },
+                      },
+                      data_10: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'actionValueCompare',
+                          left: { kind: 'valueNode', nodeId: 'data_9' },
+                          operator: 'greater',
+                          right: { kind: 'constant', value: 0.5 },
+                        },
+                      },
+                      data_11: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'buffIdStackCompare',
+                          target: 'caster',
+                          buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
+                          operator: 'equal',
+                          value: { kind: 'constant', value: 1 },
+                        },
+                      },
+                      data_12: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'buffIdStackCompare',
+                          target: 'enemy',
+                          buffIds: ['buff_chr_0028_wulfa_normal_smarttarget'],
+                          operator: 'greater',
+                          value: { kind: 'constant', value: 0.5 },
+                        },
+                      },
+                      data_13: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'atk_scale_3' },
+                      },
+                      data_14: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'atb_return' },
+                      },
+                      data_15: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'potential_upgrade', fallback: 0 },
+                      },
+                      data_16: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'actionValueCompare',
+                          left: { kind: 'valueNode', nodeId: 'data_15' },
+                          operator: 'equal',
+                          right: { kind: 'constant', value: 1 },
+                        },
+                      },
+                      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'usp_2' } },
+                      data_18: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'buffIdStackCompare',
+                          target: 'caster',
+                          buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
+                          operator: 'equal',
+                          value: { kind: 'constant', value: 1 },
+                        },
+                      },
+                      data_19: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityCountCompare',
+                          target: { kind: 'fixed', target: 'enemy' },
+                          containsHittableTarget: false,
+                          excludeDeadEntity: false,
+                          operator: 'greaterOrEqual',
+                          value: 1,
+                        },
+                      },
+                    },
+                  },
+                  macros: {},
+                },
+              },
+            },
+          ],
         },
-        next: null,
+        next: 'launchProjectile_65',
       },
-      withActionBlackboardScope_29: {
+      launchProjectile_67: {
         action: {
-          kind: 'withActionBlackboardScope',
+          kind: 'launchProjectile',
           parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
+            inheritActionBlackboard: true,
             entityInitialValues: {},
+            finish: 'firstTickReach',
+            source: 'actionOwner',
+            recycleDelaySeconds: 1,
+            hit: { onReach: true, finishOnHit: false },
           },
-          body: { $sequence: 'launchProjectile_26' },
+          callbacks: [
+            {
+              event: 'hit',
+              skill: {
+                skillId: 'chr_0028_wulfa_normal_skill_projhit3',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 30,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: {
+                  atb_return: 10,
+                  atk_scale_3: 3,
+                  atk_scale_bleed: 0,
+                  atk_scale_once: 0,
+                  bleed_critical_damage_scale: 1,
+                  damage_up: 0,
+                  duration_bleed: 0,
+                  heal_scale: 0.005,
+                  poise_2: 0,
+                  potential_upgrade: 0,
+                  talent_1_1: 0,
+                  talent_1_2: 0,
+                  talent_2_1: 0,
+                  talent_2_2: 0,
+                  talent2_burning_damage_scale: 1.5,
+                  usp_2: 0,
+                },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'repeatEachTick_60' } },
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'checkCondition_71' } },
+                ],
+                actionGraph: {
+                  main: {
+                    nodes: {
+                      dealDamage_55: {
+                        action: {
+                          kind: 'dealDamage',
+                          parameters: {
+                            damageType: 'heat',
+                            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                            tags: ['normalSkill'],
+                            features: ['canBreakWeakness'],
+                            stagger: { kind: 'valueNode', nodeId: 'data_2' },
+                          },
+                        },
+                        next: null,
+                      },
+                      applyBuff_39: {
+                        action: {
+                          kind: 'applyBuff',
+                          parameters: {
+                            buffs: [
+                              {
+                                buffId: 'buff_chr_0028_wulfa_normal_bleed',
+                                blackboardAssignments: { talent_2: { kind: 'constant', value: 0 } },
+                                copiedBlackboardAssignments: {
+                                  duration: 'duration_bleed',
+                                  atk_scale: 'atk_scale_bleed',
+                                  extra_atk_scale: 'bleed_critical_damage_scale',
+                                  damage_up: 'damage_up',
+                                  heal_scale: 'heal_scale',
+                                  talent2_burning_damage_scale: 'talent2_burning_damage_scale',
+                                },
+                              },
+                            ],
+                            targets: { kind: 'fixed', target: 'enemy' },
+                            source: { kind: 'source' },
+                          },
+                        },
+                        next: 'dealDamage_55',
+                      },
+                      applyBuff_37: {
+                        action: {
+                          kind: 'applyBuff',
+                          parameters: {
+                            buffs: [
+                              {
+                                buffId: 'buff_chr_0028_wulfa_normal_bleed',
+                                blackboardAssignments: { talent_2: { kind: 'constant', value: 1 } },
+                                copiedBlackboardAssignments: {
+                                  duration: 'duration_bleed',
+                                  atk_scale: 'atk_scale_bleed',
+                                  extra_atk_scale: 'bleed_critical_damage_scale',
+                                  damage_up: 'damage_up',
+                                  heal_scale: 'heal_scale',
+                                  talent2_burning_damage_scale: 'talent2_burning_damage_scale',
+                                },
+                              },
+                            ],
+                            targets: { kind: 'fixed', target: 'enemy' },
+                            source: { kind: 'source' },
+                          },
+                        },
+                        next: 'dealDamage_55',
+                      },
+                      checkCondition_35: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+                        },
+                        next: null,
+                      },
+                      ifElse_43: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_35' },
+                          whenTrue: { $sequence: 'applyBuff_37' },
+                          whenFalse: { $sequence: 'applyBuff_39' },
+                        },
+                        next: null,
+                      },
+                      checkCondition_40: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+                        },
+                        next: null,
+                      },
+                      ifElse_45: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_40' },
+                          whenTrue: { $sequence: 'applyBuff_37' },
+                          whenFalse: { $sequence: 'ifElse_43' },
+                        },
+                        next: null,
+                      },
+                      checkCondition_44: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+                        },
+                        next: null,
+                      },
+                      ifElse_49: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_44' },
+                          whenTrue: { $sequence: 'ifElse_45' },
+                          whenFalse: { $sequence: 'dealDamage_55' },
+                        },
+                        next: null,
+                      },
+                      checkCondition_47: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
+                        },
+                        next: null,
+                      },
+                      ifElse_51: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_47' },
+                          whenTrue: { $sequence: 'ifElse_45' },
+                          whenFalse: { $sequence: 'ifElse_49' },
+                        },
+                        next: null,
+                      },
+                      ifElse_54: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: null },
+                          whenTrue: { $sequence: 'ifElse_51' },
+                          whenFalse: { $sequence: 'ifElse_51' },
+                        },
+                        next: null,
+                      },
+                      checkCondition_52: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
+                        },
+                        next: null,
+                      },
+                      checkCondition_53: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
+                        },
+                        next: 'checkCondition_52',
+                      },
+                      ifElse_56: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_53' },
+                          whenTrue: { $sequence: 'ifElse_54' },
+                          whenFalse: { $sequence: 'dealDamage_55' },
+                        },
+                        next: null,
+                      },
+                      applyBuff_57: {
+                        action: {
+                          kind: 'applyBuff',
+                          parameters: {
+                            buffs: [{ buffId: 'buff_chr_0028_wulfa_tut_normalskill_success' }],
+                            targets: { kind: 'source' },
+                            source: { kind: 'source' },
+                            inheritSourceSkillCastInfo: true,
+                            finishByAction: true,
+                          },
+                        },
+                        next: 'ifElse_56',
+                      },
+                      calculateActionValue_58: {
+                        action: {
+                          kind: 'calculateActionValue',
+                          parameters: {
+                            key: 'poise_2',
+                            operation: 'multiply',
+                            left: { kind: 'valueNode', nodeId: 'data_2' },
+                            right: { kind: 'constant', value: 0.25 },
+                          },
+                        },
+                        next: 'applyBuff_57',
+                      },
+                      calculateActionValue_59: {
+                        action: {
+                          kind: 'calculateActionValue',
+                          parameters: {
+                            key: 'atk_scale_once',
+                            operation: 'multiply',
+                            left: { kind: 'valueNode', nodeId: 'data_13' },
+                            right: { kind: 'constant', value: 0.25 },
+                          },
+                        },
+                        next: 'calculateActionValue_58',
+                      },
+                      repeatEachTick_60: {
+                        action: {
+                          kind: 'repeatEachTick',
+                          parameters: {
+                            nativeChanneling: {
+                              catchUpMissedTicks: false,
+                              target: { kind: 'fixed', target: 'enemy' },
+                              executeEachFrame: true,
+                              triggerIntervalSeconds: 0.033,
+                              maxCountPerTarget: 1,
+                              targetTriggerIntervalSeconds: 0.033,
+                            },
+                          },
+                          body: { $sequence: 'calculateActionValue_59' },
+                        },
+                        next: null,
+                      },
+                      finishBuffsById_67: {
+                        action: {
+                          kind: 'finishBuffsById',
+                          parameters: {
+                            targets: { kind: 'source' },
+                            finishSource: { kind: 'source' },
+                            buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
+                            reason: 'early',
+                          },
+                        },
+                        next: null,
+                      },
+                      changeResource_66: {
+                        action: {
+                          kind: 'changeResource',
+                          parameters: {
+                            resource: 'sp',
+                            amount: { kind: 'valueNode', nodeId: 'data_14' },
+                            coefficient: { kind: 'constant', value: 1 },
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
+                            spGainKind: 'refund',
+                            spGainSource: 'skill',
+                          },
+                        },
+                        next: 'finishBuffsById_67',
+                      },
+                      checkCondition_64: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_16' } },
+                        },
+                        next: null,
+                      },
+                      ifElse_68: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_64' },
+                          whenTrue: { $sequence: 'changeResource_66' },
+                          whenFalse: { $sequence: 'finishBuffsById_67' },
+                        },
+                        next: null,
+                      },
+                      changeResource_69: {
+                        action: {
+                          kind: 'changeResource',
+                          parameters: {
+                            resource: 'ultimateEnergy',
+                            amount: { kind: 'valueNode', nodeId: 'data_17' },
+                            coefficient: { kind: 'constant', value: 1 },
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
+                          },
+                        },
+                        next: 'ifElse_68',
+                      },
+                      checkCondition_70: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_18' } },
+                        },
+                        next: 'changeResource_69',
+                      },
+                      checkCondition_71: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_19' } },
+                        },
+                        next: 'checkCondition_70',
+                      },
+                    },
+                    dataNodes: {
+                      data_1: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'atk_scale_once' },
+                      },
+                      data_2: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'poise_2' },
+                      },
+                      data_3: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'talent_2_2', fallback: 0 },
+                      },
+                      data_4: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'actionValueCompare',
+                          left: { kind: 'valueNode', nodeId: 'data_3' },
+                          operator: 'greater',
+                          right: { kind: 'constant', value: 0.5 },
+                        },
+                      },
+                      data_5: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'talent_2_1', fallback: 0 },
+                      },
+                      data_6: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'actionValueCompare',
+                          left: { kind: 'valueNode', nodeId: 'data_5' },
+                          operator: 'greater',
+                          right: { kind: 'constant', value: 0.5 },
+                        },
+                      },
+                      data_7: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'talent_1_2', fallback: 0 },
+                      },
+                      data_8: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'actionValueCompare',
+                          left: { kind: 'valueNode', nodeId: 'data_7' },
+                          operator: 'greater',
+                          right: { kind: 'constant', value: 0.5 },
+                        },
+                      },
+                      data_9: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'talent_1_1', fallback: 0 },
+                      },
+                      data_10: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'actionValueCompare',
+                          left: { kind: 'valueNode', nodeId: 'data_9' },
+                          operator: 'greater',
+                          right: { kind: 'constant', value: 0.5 },
+                        },
+                      },
+                      data_11: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'buffIdStackCompare',
+                          target: 'caster',
+                          buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
+                          operator: 'equal',
+                          value: { kind: 'constant', value: 1 },
+                        },
+                      },
+                      data_12: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'buffIdStackCompare',
+                          target: 'enemy',
+                          buffIds: ['buff_chr_0028_wulfa_normal_smarttarget'],
+                          operator: 'greater',
+                          value: { kind: 'constant', value: 0.5 },
+                        },
+                      },
+                      data_13: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'atk_scale_3' },
+                      },
+                      data_14: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'atb_return' },
+                      },
+                      data_15: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'potential_upgrade', fallback: 0 },
+                      },
+                      data_16: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'actionValueCompare',
+                          left: { kind: 'valueNode', nodeId: 'data_15' },
+                          operator: 'equal',
+                          right: { kind: 'constant', value: 1 },
+                        },
+                      },
+                      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'usp_2' } },
+                      data_18: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'buffIdStackCompare',
+                          target: 'caster',
+                          buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
+                          operator: 'equal',
+                          value: { kind: 'constant', value: 1 },
+                        },
+                      },
+                      data_19: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityCountCompare',
+                          target: { kind: 'fixed', target: 'enemy' },
+                          containsHittableTarget: false,
+                          excludeDeadEntity: false,
+                          operator: 'greaterOrEqual',
+                          value: 1,
+                        },
+                      },
+                    },
+                  },
+                  macros: {},
+                },
+              },
+            },
+          ],
         },
-        next: 'withActionBlackboardScope_28',
+        next: 'launchProjectile_66',
       },
-      withActionBlackboardScope_30: {
+      launchProjectile_68: {
         action: {
-          kind: 'withActionBlackboardScope',
+          kind: 'launchProjectile',
           parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
+            inheritActionBlackboard: true,
             entityInitialValues: {},
+            finish: 'firstTickReach',
+            source: 'actionOwner',
+            recycleDelaySeconds: 0.333333343267441,
+            hit: { onReach: true, finishOnHit: false },
           },
-          body: { $sequence: 'launchProjectile_25' },
+          callbacks: [
+            {
+              event: 'hit',
+              skill: {
+                skillId: 'chr_0028_wulfa_normal_skill_projhit2',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 10,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: {
+                  atb_return: 10,
+                  atk_scale_3: 3,
+                  atk_scale_bleed: 0,
+                  atk_scale_once: 0,
+                  bleed_critical_damage_scale: 1,
+                  damage_up: 0,
+                  duration_bleed: 0,
+                  heal_scale: 0.005,
+                  poise_2: 0,
+                  potential_upgrade: 0,
+                  talent_1_1: 0,
+                  talent_1_2: 0,
+                  talent_2_1: 0,
+                  talent_2_2: 0,
+                  talent2_burning_damage_scale: 1.5,
+                  usp_2: 0,
+                },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'repeatEachTick_59' } },
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'checkCondition_67' } },
+                ],
+                actionGraph: {
+                  main: {
+                    nodes: {
+                      dealDamage_55: {
+                        action: {
+                          kind: 'dealDamage',
+                          parameters: {
+                            damageType: 'heat',
+                            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                            tags: ['normalSkill'],
+                            features: ['canBreakWeakness'],
+                            stagger: { kind: 'valueNode', nodeId: 'data_2' },
+                          },
+                        },
+                        next: null,
+                      },
+                      applyBuff_39: {
+                        action: {
+                          kind: 'applyBuff',
+                          parameters: {
+                            buffs: [
+                              {
+                                buffId: 'buff_chr_0028_wulfa_normal_bleed',
+                                blackboardAssignments: { talent_2: { kind: 'constant', value: 0 } },
+                                copiedBlackboardAssignments: {
+                                  duration: 'duration_bleed',
+                                  atk_scale: 'atk_scale_bleed',
+                                  extra_atk_scale: 'bleed_critical_damage_scale',
+                                  damage_up: 'damage_up',
+                                  heal_scale: 'heal_scale',
+                                  talent2_burning_damage_scale: 'talent2_burning_damage_scale',
+                                },
+                              },
+                            ],
+                            targets: { kind: 'fixed', target: 'enemy' },
+                            source: { kind: 'source' },
+                          },
+                        },
+                        next: 'dealDamage_55',
+                      },
+                      applyBuff_37: {
+                        action: {
+                          kind: 'applyBuff',
+                          parameters: {
+                            buffs: [
+                              {
+                                buffId: 'buff_chr_0028_wulfa_normal_bleed',
+                                blackboardAssignments: { talent_2: { kind: 'constant', value: 1 } },
+                                copiedBlackboardAssignments: {
+                                  duration: 'duration_bleed',
+                                  atk_scale: 'atk_scale_bleed',
+                                  extra_atk_scale: 'bleed_critical_damage_scale',
+                                  damage_up: 'damage_up',
+                                  heal_scale: 'heal_scale',
+                                  talent2_burning_damage_scale: 'talent2_burning_damage_scale',
+                                },
+                              },
+                            ],
+                            targets: { kind: 'fixed', target: 'enemy' },
+                            source: { kind: 'source' },
+                          },
+                        },
+                        next: 'dealDamage_55',
+                      },
+                      checkCondition_35: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+                        },
+                        next: null,
+                      },
+                      ifElse_43: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_35' },
+                          whenTrue: { $sequence: 'applyBuff_37' },
+                          whenFalse: { $sequence: 'applyBuff_39' },
+                        },
+                        next: null,
+                      },
+                      checkCondition_40: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+                        },
+                        next: null,
+                      },
+                      ifElse_45: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_40' },
+                          whenTrue: { $sequence: 'applyBuff_37' },
+                          whenFalse: { $sequence: 'ifElse_43' },
+                        },
+                        next: null,
+                      },
+                      checkCondition_44: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+                        },
+                        next: null,
+                      },
+                      ifElse_49: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_44' },
+                          whenTrue: { $sequence: 'ifElse_45' },
+                          whenFalse: { $sequence: 'dealDamage_55' },
+                        },
+                        next: null,
+                      },
+                      checkCondition_47: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
+                        },
+                        next: null,
+                      },
+                      ifElse_51: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_47' },
+                          whenTrue: { $sequence: 'ifElse_45' },
+                          whenFalse: { $sequence: 'ifElse_49' },
+                        },
+                        next: null,
+                      },
+                      ifElse_54: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: null },
+                          whenTrue: { $sequence: 'ifElse_51' },
+                          whenFalse: { $sequence: 'ifElse_51' },
+                        },
+                        next: null,
+                      },
+                      checkCondition_52: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
+                        },
+                        next: null,
+                      },
+                      checkCondition_53: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
+                        },
+                        next: 'checkCondition_52',
+                      },
+                      ifElse_56: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_53' },
+                          whenTrue: { $sequence: 'ifElse_54' },
+                          whenFalse: { $sequence: 'dealDamage_55' },
+                        },
+                        next: null,
+                      },
+                      calculateActionValue_57: {
+                        action: {
+                          kind: 'calculateActionValue',
+                          parameters: {
+                            key: 'poise_2',
+                            operation: 'multiply',
+                            left: { kind: 'valueNode', nodeId: 'data_2' },
+                            right: { kind: 'constant', value: 0.25 },
+                          },
+                        },
+                        next: 'ifElse_56',
+                      },
+                      calculateActionValue_58: {
+                        action: {
+                          kind: 'calculateActionValue',
+                          parameters: {
+                            key: 'atk_scale_once',
+                            operation: 'multiply',
+                            left: { kind: 'valueNode', nodeId: 'data_13' },
+                            right: { kind: 'constant', value: 0.25 },
+                          },
+                        },
+                        next: 'calculateActionValue_57',
+                      },
+                      repeatEachTick_59: {
+                        action: {
+                          kind: 'repeatEachTick',
+                          parameters: {
+                            nativeChanneling: {
+                              catchUpMissedTicks: false,
+                              target: { kind: 'fixed', target: 'enemy' },
+                              executeEachFrame: true,
+                              triggerIntervalSeconds: 0.033,
+                              maxCountPerTarget: 1,
+                              targetTriggerIntervalSeconds: 0.033,
+                            },
+                          },
+                          body: { $sequence: 'calculateActionValue_58' },
+                        },
+                        next: null,
+                      },
+                      finishBuffsById_63: {
+                        action: {
+                          kind: 'finishBuffsById',
+                          parameters: {
+                            targets: { kind: 'source' },
+                            finishSource: { kind: 'source' },
+                            buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
+                            reason: 'early',
+                          },
+                        },
+                        next: null,
+                      },
+                      changeResource_62: {
+                        action: {
+                          kind: 'changeResource',
+                          parameters: {
+                            resource: 'sp',
+                            amount: { kind: 'valueNode', nodeId: 'data_14' },
+                            coefficient: { kind: 'constant', value: 1 },
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
+                            spGainKind: 'refund',
+                            spGainSource: 'skill',
+                          },
+                        },
+                        next: 'finishBuffsById_63',
+                      },
+                      checkCondition_60: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_16' } },
+                        },
+                        next: null,
+                      },
+                      ifElse_64: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_60' },
+                          whenTrue: { $sequence: 'changeResource_62' },
+                          whenFalse: { $sequence: 'finishBuffsById_63' },
+                        },
+                        next: null,
+                      },
+                      changeResource_65: {
+                        action: {
+                          kind: 'changeResource',
+                          parameters: {
+                            resource: 'ultimateEnergy',
+                            amount: { kind: 'valueNode', nodeId: 'data_17' },
+                            coefficient: { kind: 'constant', value: 1 },
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
+                          },
+                        },
+                        next: 'ifElse_64',
+                      },
+                      checkCondition_66: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_18' } },
+                        },
+                        next: 'changeResource_65',
+                      },
+                      checkCondition_67: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_19' } },
+                        },
+                        next: 'checkCondition_66',
+                      },
+                    },
+                    dataNodes: {
+                      data_1: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'atk_scale_once' },
+                      },
+                      data_2: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'poise_2' },
+                      },
+                      data_3: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'talent_2_2', fallback: 0 },
+                      },
+                      data_4: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'actionValueCompare',
+                          left: { kind: 'valueNode', nodeId: 'data_3' },
+                          operator: 'greater',
+                          right: { kind: 'constant', value: 0.5 },
+                        },
+                      },
+                      data_5: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'talent_2_1', fallback: 0 },
+                      },
+                      data_6: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'actionValueCompare',
+                          left: { kind: 'valueNode', nodeId: 'data_5' },
+                          operator: 'greater',
+                          right: { kind: 'constant', value: 0.5 },
+                        },
+                      },
+                      data_7: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'talent_1_2', fallback: 0 },
+                      },
+                      data_8: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'actionValueCompare',
+                          left: { kind: 'valueNode', nodeId: 'data_7' },
+                          operator: 'greater',
+                          right: { kind: 'constant', value: 0.5 },
+                        },
+                      },
+                      data_9: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'talent_1_1', fallback: 0 },
+                      },
+                      data_10: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'actionValueCompare',
+                          left: { kind: 'valueNode', nodeId: 'data_9' },
+                          operator: 'greater',
+                          right: { kind: 'constant', value: 0.5 },
+                        },
+                      },
+                      data_11: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'buffIdStackCompare',
+                          target: 'caster',
+                          buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
+                          operator: 'equal',
+                          value: { kind: 'constant', value: 1 },
+                        },
+                      },
+                      data_12: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'buffIdStackCompare',
+                          target: 'enemy',
+                          buffIds: ['buff_chr_0028_wulfa_normal_smarttarget'],
+                          operator: 'greater',
+                          value: { kind: 'constant', value: 0.5 },
+                        },
+                      },
+                      data_13: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'atk_scale_3' },
+                      },
+                      data_14: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'atb_return' },
+                      },
+                      data_15: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'potential_upgrade', fallback: 0 },
+                      },
+                      data_16: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'actionValueCompare',
+                          left: { kind: 'valueNode', nodeId: 'data_15' },
+                          operator: 'equal',
+                          right: { kind: 'constant', value: 1 },
+                        },
+                      },
+                      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'usp_2' } },
+                      data_18: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'buffIdStackCompare',
+                          target: 'caster',
+                          buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
+                          operator: 'equal',
+                          value: { kind: 'constant', value: 1 },
+                        },
+                      },
+                      data_19: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityCountCompare',
+                          target: { kind: 'fixed', target: 'enemy' },
+                          containsHittableTarget: false,
+                          excludeDeadEntity: false,
+                          operator: 'greaterOrEqual',
+                          value: 1,
+                        },
+                      },
+                    },
+                  },
+                  macros: {},
+                },
+              },
+            },
+          ],
         },
-        next: 'withActionBlackboardScope_29',
+        next: 'launchProjectile_67',
       },
-      withActionBlackboardScope_31: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_24' },
-        },
-        next: 'withActionBlackboardScope_30',
-      },
-      applyBuff_32: {
+      applyBuff_69: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_normal_wolf_timer',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_chr_0028_wulfa_normal_smarttarget' }],
+            targets: { kind: 'fixed', target: 'enemy' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'withActionBlackboardScope_31',
+        next: 'launchProjectile_68',
       },
-      applyBuff_33: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffId: 'buff_chr_0028_wulfa_normal_smarttarget',
-            target: 'enemy',
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: 'applyBuff_32',
-      },
-      gainSquadUltimateEnergyFromSkillCost_34: {
+      gainSquadUltimateEnergyFromSkillCost_70: {
         action: { kind: 'gainSquadUltimateEnergyFromSkillCost', parameters: { coefficient: 1 } },
         next: null,
       },
-      conditional_35: {
+      checkCondition_71: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
-          whenTrue: { $sequence: 'gainSquadUltimateEnergyFromSkillCost_34' },
         },
-        next: null,
+        next: 'gainSquadUltimateEnergyFromSkillCost_70',
       },
-      finishBuffsById_36: {
+      finishBuffsById_72: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
-            target: 'caster',
+            targets: { kind: 'source' },
+            finishSource: { kind: 'source' },
             buffIds: ['buff_chr_0028_wulfa_normal_wolf_timer'],
             reason: 'early',
           },
         },
         next: null,
       },
-      modifyActionValue_opt1: {
+      checkCondition_73: {
         action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'skillimbue',
-            operation: 'assign',
-            value: { kind: 'constant', value: 0 },
-          },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
         },
         next: null,
       },
-      jumpTimeline_40: {
+      ifElse_76: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_73' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      checkCondition_77: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
+        },
+        next: null,
+      },
+      jumpTimeline_78: {
         action: {
           kind: 'jumpTimeline',
-          parameters: {
-            destinationFrame: 215,
-            condition: { kind: 'conditionNode', nodeId: 'data_12' },
-          },
+          parameters: { destinationFrame: 215 },
+          condition: { $sequence: 'checkCondition_77' },
         },
         next: null,
       },
-      markCurrentSkillCanInterrupt_41: {
+      markCurrentSkillCanInterrupt_79: {
         action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} },
         next: null,
       },
-      finishTimeline_42: { action: { kind: 'finishTimeline', parameters: {} }, next: null },
-      applyBuff_43: {
+      interruptCurrentSkill_80: {
+        action: { kind: 'interruptCurrentSkill', parameters: { targets: { kind: 'owner' } } },
+        next: null,
+      },
+      applyBuff_82: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_tut_normalskill_failure',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_chr_0028_wulfa_tut_normalskill_failure' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
         },
         next: null,
       },
-      conditional_44: {
+      checkCondition_81: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_14' }, alwaysNext: true },
-          whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'applyBuff_43' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
         },
         next: null,
       },
-      applyBuff_45: {
+      ifElse_83: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_81' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: 'applyBuff_82' },
+        },
+        next: null,
+      },
+      applyBuff_84: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_normal_defup',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_chr_0028_wulfa_normal_defup' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
@@ -3506,24 +3462,38 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_once' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
-      data_3: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_once' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'actionInputTargetObjectTypeMatch', objectTypes: ['enemy'] },
+      },
+      data_5: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'FollowAttackTrigger', fallback: 0 },
       },
-      data_4: {
+      data_6: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_3' },
+          left: { kind: 'valueNode', nodeId: 'data_5' },
           operator: 'equal',
           right: { kind: 'constant', value: 0 },
         },
       },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_once' } },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise_1' } },
-      data_7: {
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'poise_1' } },
+      data_8: {
         type: 'boolean',
         expression: {
           kind: 'buffStackCompare',
@@ -3534,7 +3504,6 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
       data_9: { type: 'number', expression: { kind: 'blackboard', key: 'trigger', fallback: 0 } },
       data_10: {
         type: 'boolean',
@@ -3546,27 +3515,28 @@ export const rossiChr_0028_wulfa_normal_skillActionGraph = {
         },
       },
       data_11: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'FollowAttackTrigger', fallback: 0 },
+        type: 'boolean',
+        expression: {
+          kind: 'entityTagMatch',
+          target: 'caster',
+          tagQueryType: 'hasAny',
+          tags: ['Skill/Character/Common/Affixes/skillimbue'],
+        },
       },
       data_12: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_11' },
+          left: { kind: 'valueNode', nodeId: 'data_5' },
           operator: 'greaterOrEqual',
           right: { kind: 'constant', value: 0.9 },
         },
       },
       data_13: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'FollowAttackTrigger', fallback: 0 },
-      },
-      data_14: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_13' },
+          left: { kind: 'valueNode', nodeId: 'data_5' },
           operator: 'equal',
           right: { kind: 'constant', value: 1 },
         },
@@ -3594,7 +3564,6 @@ export const rossiChr_0028_wulfa_normal_skill: SkillDefinition = {
     poise_1: 5,
     poise_2: [10, 10, 10, 10, 10, 10, 10, 10, 12, 12, 12, 15],
     potential_upgrade: 0,
-    skillimbue: 0,
     talent_1_1: 0,
     talent_1_2: 0,
     talent_2_1: 0,
@@ -3631,18 +3600,21 @@ export const rossiChr_0028_wulfa_normal_skill: SkillDefinition = {
   },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 16, endFrame: 20, sequence: { $sequence: 'calculateActionValue_4' } },
-    { startFrame: 22, endFrame: 26, sequence: { $sequence: 'calculateActionValue_4' } },
-    { startFrame: 35, endFrame: 37, sequence: { $sequence: 'calculateActionValue_23' } },
-    { startFrame: 230, endFrame: 233, sequence: { $sequence: 'applyBuff_33' } },
-    { startFrame: 35, endFrame: 37, sequence: { $sequence: 'conditional_35' } },
-    { startFrame: 215, endFrame: 218, sequence: { $sequence: 'finishBuffsById_36' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'modifyActionValue_opt1' } },
-    { startFrame: 37, endFrame: 40, sequence: { $sequence: 'jumpTimeline_40' } },
-    { startFrame: 49, endFrame: 214, sequence: { $sequence: 'markCurrentSkillCanInterrupt_41' } },
-    { startFrame: 214, endFrame: 215, sequence: { $sequence: 'finishTimeline_42' } },
-    { startFrame: 37, endFrame: 72, sequence: { $sequence: 'conditional_44' } },
-    { startFrame: 215, endFrame: 272, sequence: { $sequence: 'applyBuff_45' } },
+    { startFrame: 16, endFrame: 20, sequence: { $sequence: 'mergeContextTargets_21' } },
+    { startFrame: 22, endFrame: 26, sequence: { $sequence: 'mergeContextTargets_22' } },
+    { startFrame: 35, endFrame: 37, sequence: { $sequence: 'mergeContextTargets_23' } },
+    { startFrame: 16, endFrame: 20, sequence: { $sequence: 'calculateActionValue_32' } },
+    { startFrame: 22, endFrame: 26, sequence: { $sequence: 'calculateActionValue_32' } },
+    { startFrame: 35, endFrame: 37, sequence: { $sequence: 'calculateActionValue_63' } },
+    { startFrame: 230, endFrame: 233, sequence: { $sequence: 'applyBuff_69' } },
+    { startFrame: 35, endFrame: 37, sequence: { $sequence: 'checkCondition_71' } },
+    { startFrame: 215, endFrame: 218, sequence: { $sequence: 'finishBuffsById_72' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_76' } },
+    { startFrame: 37, endFrame: 40, sequence: { $sequence: 'jumpTimeline_78' } },
+    { startFrame: 49, endFrame: 214, sequence: { $sequence: 'markCurrentSkillCanInterrupt_79' } },
+    { startFrame: 214, endFrame: 215, sequence: { $sequence: 'interruptCurrentSkill_80' } },
+    { startFrame: 37, endFrame: 72, sequence: { $sequence: 'ifElse_83' } },
+    { startFrame: 215, endFrame: 272, sequence: { $sequence: 'applyBuff_84' } },
   ],
   smartTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
@@ -3655,7 +3627,7 @@ export const rossiChr_0028_wulfa_normal_skill: SkillDefinition = {
 export const rossiChr_0028_wulfa_combo_2_skillActionGraph = {
   main: {
     nodes: {
-      startTimeDilation_1: {
+      startTimeDilation_14: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -3701,245 +3673,323 @@ export const rossiChr_0028_wulfa_combo_2_skillActionGraph = {
         },
         next: null,
       },
-      conditional_2: {
+      checkCondition_12: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_1' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
         },
         next: null,
       },
-      calculateActionValue_3: {
+      checkCondition_13: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+        },
+        next: 'checkCondition_12',
+      },
+      ifElse_15: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_13' },
+          whenTrue: { $sequence: 'startTimeDilation_14' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      calculateActionValue_16: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'can_trigger_combo',
             operation: 'add',
+            left: { kind: 'valueNode', nodeId: 'data_4' },
+            right: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'ifElse_15',
+      },
+      calculateActionValue_17: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'count',
+            operation: 'add',
             left: { kind: 'valueNode', nodeId: 'data_5' },
             right: { kind: 'constant', value: 1 },
           },
         },
-        next: 'conditional_2',
+        next: 'calculateActionValue_16',
       },
-      calculateActionValue_4: {
-        action: {
-          kind: 'calculateActionValue',
-          parameters: {
-            key: 'count',
-            operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_6' },
-            right: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'calculateActionValue_3',
-      },
-      dealDamage_5: {
+      dealDamage_18: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_7' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_6' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_8' },
+            stagger: { kind: 'valueNode', nodeId: 'data_7' },
             staggerOnlyWhenCasterControlled: true,
           },
         },
-        next: 'calculateActionValue_4',
+        next: 'calculateActionValue_17',
       },
-      calculateActionValue_6: {
+      calculateActionValue_19: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'poise_once',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_9' },
+            left: { kind: 'valueNode', nodeId: 'data_8' },
             right: { kind: 'constant', value: 0.5 },
           },
         },
-        next: 'dealDamage_5',
+        next: 'dealDamage_18',
       },
-      calculateActionValue_7: {
+      calculateActionValue_20: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atk_scale_once',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_10' },
+            left: { kind: 'valueNode', nodeId: 'data_9' },
             right: { kind: 'constant', value: 0.35 },
           },
         },
-        next: 'calculateActionValue_6',
+        next: 'calculateActionValue_19',
       },
-      repeatEachTick_8: {
+      repeatEachTick_21: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'fixed', target: 'enemy' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
               targetTriggerIntervalSeconds: 0.033,
             },
           },
-          body: { $sequence: 'calculateActionValue_7' },
+          body: { $sequence: 'calculateActionValue_20' },
         },
         next: null,
       },
-      calculateActionValue_9: {
+      findTargets_22: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'MainTar',
+          },
+        },
+        next: 'repeatEachTick_21',
+      },
+      calculateActionValue_29: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'count',
             operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_11' },
+            left: { kind: 'valueNode', nodeId: 'data_5' },
             right: { kind: 'constant', value: 1 },
           },
         },
         next: null,
       },
-      applyBuff_10: {
+      applyBuff_30: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_combo_2_damagewait',
-            target: 'enemy',
+            buffs: [
+              {
+                buffId: 'buff_chr_0028_wulfa_combo_2_damagewait',
+                blackboardAssignments: {
+                  trigger_times: { kind: 'constant', value: 3 },
+                  damage_interval: { kind: 'constant', value: 0.125 },
+                  duration: { kind: 'constant', value: 0.3 },
+                },
+                copiedBlackboardAssignments: { atk_scale: 'atk_scale_once' },
+              },
+            ],
+            targets: { kind: 'fixed', target: 'enemy' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
-            blackboardAssignments: {
-              trigger_times: { kind: 'constant', value: 3 },
-              damage_interval: { kind: 'constant', value: 0.125 },
-              duration: { kind: 'constant', value: 0.3 },
-            },
-            copiedBlackboardAssignments: { atk_scale: 'atk_scale_once' },
           },
         },
-        next: 'calculateActionValue_9',
+        next: 'calculateActionValue_29',
       },
-      calculateActionValue_11: {
+      calculateActionValue_31: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atk_scale_once',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_12' },
+            left: { kind: 'valueNode', nodeId: 'data_9' },
             right: { kind: 'constant', value: 0.1 },
           },
         },
-        next: 'applyBuff_10',
+        next: 'applyBuff_30',
       },
-      dealDamage_12: {
+      dealDamage_32: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_13' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_6' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_14' },
+            stagger: { kind: 'valueNode', nodeId: 'data_7' },
             staggerOnlyWhenCasterControlled: true,
           },
         },
-        next: 'calculateActionValue_11',
+        next: 'calculateActionValue_31',
       },
-      calculateActionValue_13: {
+      calculateActionValue_33: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'poise_once',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_15' },
+            left: { kind: 'valueNode', nodeId: 'data_8' },
             right: { kind: 'constant', value: 0.5 },
           },
         },
-        next: 'dealDamage_12',
+        next: 'dealDamage_32',
       },
-      calculateActionValue_14: {
+      calculateActionValue_34: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atk_scale_once',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_16' },
+            left: { kind: 'valueNode', nodeId: 'data_9' },
             right: { kind: 'constant', value: 0.35 },
           },
         },
-        next: 'calculateActionValue_13',
+        next: 'calculateActionValue_33',
       },
-      repeatEachTick_15: {
+      repeatEachTick_35: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'fixed', target: 'enemy' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
               targetTriggerIntervalSeconds: 0.033,
             },
           },
-          body: { $sequence: 'calculateActionValue_14' },
+          body: { $sequence: 'calculateActionValue_34' },
         },
         next: null,
       },
-      changeResourceByActionValue_16: {
+      findTargets_36: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'MainTar',
+          },
+        },
+        next: 'repeatEachTick_35',
+      },
+      changeResource_38: {
+        action: {
+          kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_17' },
+            amount: { kind: 'valueNode', nodeId: 'data_10' },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'caster',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
           },
         },
         next: null,
       },
-      conditional_17: {
+      checkCondition_37: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_19' }, alwaysNext: true },
-          whenTrue: { $sequence: 'changeResourceByActionValue_16' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
         },
         next: null,
       },
-      finishBuffsById_18: {
+      ifElse_39: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_37' },
+          whenTrue: { $sequence: 'changeResource_38' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      finishBuffsById_40: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
-            target: 'caster',
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
             buffIds: ['buff_chr_0028_wulfa_combo_2_qte_timerlistening'],
             reason: 'other',
           },
         },
         next: null,
       },
-      conditional_20: {
+      checkCondition_42: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_21' } },
-          whenTrue: { $sequence: 'finishBuffsById_18' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
         },
-        next: null,
+        next: 'finishBuffsById_40',
       },
-      applyBuff_21: {
+      applyBuff_45: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_combo_2_qte_timerlistening',
-            target: 'caster',
+            buffs: [
+              {
+                buffId: 'buff_chr_0028_wulfa_combo_2_qte_timerlistening',
+                copiedBlackboardAssignments: { time_succeed: 'time_succeed' },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
-            copiedBlackboardAssignments: { time_succeed: 'time_succeed' },
           },
         },
         next: null,
       },
-      conditional_22: {
+      checkCondition_43: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_26' }, alwaysNext: true },
-          whenTrue: { $sequence: 'applyBuff_21' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_15' } },
         },
         next: null,
       },
-      changeSkillSlot_23: {
+      checkCondition_44: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_16' } },
+        },
+        next: 'checkCondition_43',
+      },
+      ifElse_46: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_44' },
+          whenTrue: { $sequence: 'applyBuff_45' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      changeSkillSlot_47: {
         action: {
           kind: 'changeSkillSlot',
           parameters: {
@@ -3952,67 +4002,69 @@ export const rossiChr_0028_wulfa_combo_2_skillActionGraph = {
         },
         next: null,
       },
-      conditional_24: {
+      checkCondition_48: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_28' } },
-          whenTrue: { $sequence: 'changeSkillSlot_23' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_17' } },
         },
-        next: null,
+        next: 'changeSkillSlot_47',
       },
-      finishBuffsById_25: {
+      finishBuffsById_49: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
-            target: 'caster',
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
             buffIds: ['buff_chr_0028_wulfa_combo_usetimer'],
             reason: 'other',
           },
         },
         next: null,
       },
-      conditional_26: {
+      checkCondition_50: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_29' } },
-          whenTrue: { $sequence: 'finishBuffsById_25' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_18' } },
         },
-        next: null,
+        next: 'finishBuffsById_49',
       },
-      applyBuff_27: {
+      applyBuff_51: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_combo_usecount',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_chr_0028_wulfa_combo_usecount' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'conditional_26',
+        next: 'checkCondition_50',
       },
-      finishBuffsById_35: {
+      finishBuffsById_62: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
-            target: 'caster',
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
             buffIds: ['buff_chr_0028_wulfa_combo_usecount'],
             reason: 'other',
           },
         },
         next: null,
       },
-      applyBuff_31: {
+      applyBuff_56: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_combo_usetimer',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_chr_0028_wulfa_combo_usetimer' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
         },
         next: null,
       },
-      adjustSkillCooldown_32: {
+      adjustSkillCooldown_57: {
         action: {
           kind: 'adjustSkillCooldown',
           parameters: {
@@ -4023,31 +4075,57 @@ export const rossiChr_0028_wulfa_combo_2_skillActionGraph = {
             value: { kind: 'constant', value: 0 },
           },
         },
-        next: 'applyBuff_31',
+        next: 'applyBuff_56',
       },
-      openComboWindow_33: {
+      openComboWindow_58: {
         action: { kind: 'openComboWindow', parameters: { nextSkillKeyFromSlot: 'comboSkill' } },
-        next: 'adjustSkillCooldown_32',
+        next: 'adjustSkillCooldown_57',
       },
-      conditional_34: {
+      mergeContextTargets_59: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_30' }, alwaysNext: true },
-          whenTrue: { $sequence: 'openComboWindow_33' },
-          whenFalse: { $sequence: 'openComboWindow_33' },
+          kind: 'mergeContextTargets',
+          parameters: {
+            saveToContextKey: 'new_target',
+            sources: [{ kind: 'target', target: 'enemy' }],
+          },
+        },
+        next: 'openComboWindow_58',
+      },
+      checkCondition_52: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_19' } },
         },
         next: null,
       },
-      conditional_36: {
+      ifElse_61: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_32' }, alwaysNext: true },
-          whenTrue: { $sequence: 'conditional_34' },
-          whenFalse: { $sequence: 'finishBuffsById_35' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_52' },
+          whenTrue: { $sequence: 'openComboWindow_58' },
+          whenFalse: { $sequence: 'mergeContextTargets_59' },
         },
         next: null,
       },
-      startTimeDilation_37: {
+      checkCondition_60: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_20' } },
+        },
+        next: null,
+      },
+      ifElse_63: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_60' },
+          whenTrue: { $sequence: 'ifElse_61' },
+          whenFalse: { $sequence: 'finishBuffsById_62' },
+        },
+        next: null,
+      },
+      startTimeDilation_64: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -4063,12 +4141,13 @@ export const rossiChr_0028_wulfa_combo_2_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_38: {
+      applyBuff_65: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_normal_defup',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_chr_0028_wulfa_normal_defup' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
@@ -4077,110 +4156,78 @@ export const rossiChr_0028_wulfa_combo_2_skillActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'count', fallback: 0 } },
-      data_2: {
+      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'count', fallback: 0 } },
+      data_3: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_1' },
+          left: { kind: 'valueNode', nodeId: 'data_2' },
           operator: 'greater',
           right: { kind: 'constant', value: 0 },
         },
       },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_4: {
-        type: 'boolean',
-        expression: {
-          kind: 'all',
-          conditions: [
-            { kind: 'conditionNode', nodeId: 'data_2' },
-            { kind: 'conditionNode', nodeId: 'data_3' },
-          ],
-        },
-      },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'can_trigger_combo' } },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_once' } },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'poise_once' } },
-      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
-      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_once' } },
-      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'poise_once' } },
-      data_15: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'count', fallback: 0 } },
-      data_19: {
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'can_trigger_combo' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_once' } },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'poise_once' } },
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_11: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_18' },
+          left: { kind: 'valueNode', nodeId: 'data_2' },
           operator: 'greater',
           right: { kind: 'constant', value: 0 },
         },
       },
-      data_20: {
+      data_12: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'EntityBB_Combo_qte_proto_use', fallback: 0 },
       },
-      data_21: {
+      data_13: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_20' },
+          left: { kind: 'valueNode', nodeId: 'data_12' },
           operator: 'equal',
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_22: { type: 'number', expression: { kind: 'blackboard', key: 'count', fallback: 0 } },
-      data_23: {
+      data_14: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'can_trigger_combo', fallback: 0 },
+      },
+      data_15: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_22' },
+          left: { kind: 'valueNode', nodeId: 'data_14' },
           operator: 'greater',
           right: { kind: 'constant', value: 0 },
         },
       },
-      data_24: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'can_trigger_combo', fallback: 0 },
-      },
-      data_25: {
+      data_16: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_24' },
+          left: { kind: 'valueNode', nodeId: 'data_2' },
           operator: 'greater',
           right: { kind: 'constant', value: 0 },
         },
       },
-      data_26: {
-        type: 'boolean',
-        expression: {
-          kind: 'all',
-          conditions: [
-            { kind: 'conditionNode', nodeId: 'data_23' },
-            { kind: 'conditionNode', nodeId: 'data_25' },
-          ],
-        },
-      },
-      data_27: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'can_trigger_combo', fallback: 0 },
-      },
-      data_28: {
+      data_17: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_27' },
+          left: { kind: 'valueNode', nodeId: 'data_14' },
           operator: 'greaterOrEqual',
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_29: {
+      data_18: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -4190,7 +4237,7 @@ export const rossiChr_0028_wulfa_combo_2_skillActionGraph = {
           value: { kind: 'constant', value: 2 },
         },
       },
-      data_30: {
+      data_19: {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
@@ -4200,15 +4247,11 @@ export const rossiChr_0028_wulfa_combo_2_skillActionGraph = {
           value: { kind: 'constant', value: 0 },
         },
       },
-      data_31: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'can_trigger_combo', fallback: 0 },
-      },
-      data_32: {
+      data_20: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_31' },
+          left: { kind: 'valueNode', nodeId: 'data_14' },
           operator: 'greaterOrEqual',
           right: { kind: 'constant', value: 1 },
         },
@@ -4246,16 +4289,16 @@ export const rossiChr_0028_wulfa_combo_2_skill: SkillDefinition = {
   },
   costFrame: 12,
   scheduledSequences: [
-    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'repeatEachTick_8' } },
-    { startFrame: 24, endFrame: 25, sequence: { $sequence: 'repeatEachTick_15' } },
-    { startFrame: 24, endFrame: 25, sequence: { $sequence: 'conditional_17' } },
-    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'conditional_20' } },
-    { startFrame: 37, endFrame: 38, sequence: { $sequence: 'conditional_22' } },
-    { startFrame: 37, endFrame: 58, sequence: { $sequence: 'conditional_24' } },
-    { startFrame: 0, endFrame: 37, sequence: { $sequence: 'applyBuff_27' } },
-    { startFrame: 37, endFrame: 41, sequence: { $sequence: 'conditional_36' } },
-    { startFrame: 0, endFrame: 16, sequence: { $sequence: 'startTimeDilation_37' } },
-    { startFrame: 0, endFrame: 65, sequence: { $sequence: 'applyBuff_38' } },
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'findTargets_22' } },
+    { startFrame: 24, endFrame: 25, sequence: { $sequence: 'findTargets_36' } },
+    { startFrame: 24, endFrame: 25, sequence: { $sequence: 'ifElse_39' } },
+    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'checkCondition_42' } },
+    { startFrame: 37, endFrame: 38, sequence: { $sequence: 'ifElse_46' } },
+    { startFrame: 37, endFrame: 58, sequence: { $sequence: 'checkCondition_48' } },
+    { startFrame: 0, endFrame: 37, sequence: { $sequence: 'applyBuff_51' } },
+    { startFrame: 37, endFrame: 41, sequence: { $sequence: 'ifElse_63' } },
+    { startFrame: 0, endFrame: 16, sequence: { $sequence: 'startTimeDilation_64' } },
+    { startFrame: 0, endFrame: 65, sequence: { $sequence: 'applyBuff_65' } },
   ],
   smartTarget: 'trigger',
   cooldownFrames: [450, 450, 450, 450, 450, 450, 450, 450, 450, 450, 450, 420],
@@ -4268,7 +4311,7 @@ export const rossiChr_0028_wulfa_combo_2_skill: SkillDefinition = {
 export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
   main: {
     nodes: {
-      startTimeDilation_1: {
+      startTimeDilation_6: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -4323,30 +4366,52 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
         },
         next: null,
       },
-      conditional_2: {
+      checkCondition_5: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_1' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: null,
       },
-      repeatEachTick_3: {
+      ifElse_7: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_5' },
+          whenTrue: { $sequence: 'startTimeDilation_6' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      repeatEachTick_8: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'fixed', target: 'enemy' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
               targetTriggerIntervalSeconds: 0.033,
             },
           },
-          body: { $sequence: 'conditional_2' },
+          body: { $sequence: 'ifElse_7' },
         },
         next: null,
       },
-      modifyActionValue_9: {
+      findTargets_9: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'MainTar',
+          },
+        },
+        next: 'repeatEachTick_8',
+      },
+      modifyActionValue_16: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -4357,42 +4422,45 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_5: {
+      applyBuff_12: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_combo_hasinflict',
-            target: 'enemy',
+            buffs: [{ buffId: 'buff_chr_0028_wulfa_combo_hasinflict' }],
+            targets: { kind: 'fixed', target: 'enemy' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
         },
         next: null,
       },
-      applyBuff_6: {
+      applyBuff_13: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_combo_inflictnum',
-            target: 'enemy',
+            buffs: [{ buffId: 'buff_chr_0028_wulfa_combo_inflictnum' }],
+            targets: { kind: 'fixed', target: 'enemy' },
+            source: { kind: 'source' },
             count: { kind: 'valueNode', nodeId: 'data_3' },
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'applyBuff_5',
+        next: 'applyBuff_12',
       },
-      finishBuffsByTag_7: {
+      finishBuffsByTag_14: {
         action: {
           kind: 'finishBuffsByTag',
           parameters: {
-            target: 'enemy',
+            targets: { kind: 'fixed', target: 'enemy' },
+            finishSource: { kind: 'owner' },
             tagQueryType: 'hasAny',
             buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
             reason: 'early',
           },
         },
-        next: 'applyBuff_6',
+        next: 'applyBuff_13',
       },
-      readBuffStackCount_8: {
+      readBuffStackCount_15: {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
@@ -4405,30 +4473,39 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
             },
           },
         },
-        next: 'finishBuffsByTag_7',
+        next: 'finishBuffsByTag_14',
       },
-      conditional_16: {
+      checkCondition_10: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' }, alwaysNext: true },
-          whenTrue: { $sequence: 'readBuffStackCount_8' },
-          whenFalse: { $sequence: 'modifyActionValue_9' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
         },
         next: null,
       },
-      finishBuffsByTag_14: {
+      ifElse_24: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_10' },
+          whenTrue: { $sequence: 'readBuffStackCount_15' },
+          whenFalse: { $sequence: 'modifyActionValue_16' },
+        },
+        next: null,
+      },
+      finishBuffsByTag_22: {
         action: {
           kind: 'finishBuffsByTag',
           parameters: {
-            target: 'enemy',
+            targets: { kind: 'fixed', target: 'enemy' },
+            finishSource: { kind: 'owner' },
             tagQueryType: 'hasAny',
             buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
             reason: 'early',
           },
         },
-        next: 'applyBuff_6',
+        next: 'applyBuff_13',
       },
-      readBuffStackCount_15: {
+      readBuffStackCount_23: {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
@@ -4441,30 +4518,39 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
             },
           },
         },
-        next: 'finishBuffsByTag_14',
+        next: 'finishBuffsByTag_22',
       },
-      conditional_22: {
+      checkCondition_18: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' }, alwaysNext: true },
-          whenTrue: { $sequence: 'readBuffStackCount_15' },
-          whenFalse: { $sequence: 'conditional_16' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
         next: null,
       },
-      finishBuffsByTag_20: {
+      ifElse_31: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_18' },
+          whenTrue: { $sequence: 'readBuffStackCount_23' },
+          whenFalse: { $sequence: 'ifElse_24' },
+        },
+        next: null,
+      },
+      finishBuffsByTag_29: {
         action: {
           kind: 'finishBuffsByTag',
           parameters: {
-            target: 'enemy',
+            targets: { kind: 'fixed', target: 'enemy' },
+            finishSource: { kind: 'owner' },
             tagQueryType: 'hasAny',
             buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
             reason: 'early',
           },
         },
-        next: 'applyBuff_6',
+        next: 'applyBuff_13',
       },
-      readBuffStackCount_21: {
+      readBuffStackCount_30: {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
@@ -4477,30 +4563,39 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
             },
           },
         },
-        next: 'finishBuffsByTag_20',
+        next: 'finishBuffsByTag_29',
       },
-      conditional_28: {
+      checkCondition_25: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' }, alwaysNext: true },
-          whenTrue: { $sequence: 'readBuffStackCount_21' },
-          whenFalse: { $sequence: 'conditional_22' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
         next: null,
       },
-      finishBuffsByTag_26: {
+      ifElse_38: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_25' },
+          whenTrue: { $sequence: 'readBuffStackCount_30' },
+          whenFalse: { $sequence: 'ifElse_31' },
+        },
+        next: null,
+      },
+      finishBuffsByTag_36: {
         action: {
           kind: 'finishBuffsByTag',
           parameters: {
-            target: 'enemy',
+            targets: { kind: 'fixed', target: 'enemy' },
+            finishSource: { kind: 'owner' },
             tagQueryType: 'hasAny',
             buffTags: ['Skill/Character/Common/SpellInflict/FireInflict'],
             reason: 'early',
           },
         },
-        next: 'applyBuff_6',
+        next: 'applyBuff_13',
       },
-      readBuffStackCount_27: {
+      readBuffStackCount_37: {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
@@ -4513,394 +4608,61 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
             },
           },
         },
-        next: 'finishBuffsByTag_26',
+        next: 'finishBuffsByTag_36',
       },
-      conditional_29: {
+      checkCondition_32: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' }, alwaysNext: true },
-          whenTrue: { $sequence: 'readBuffStackCount_27' },
-          whenFalse: { $sequence: 'conditional_28' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
         next: null,
       },
-      repeatEachTick_30: {
+      ifElse_39: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_32' },
+          whenTrue: { $sequence: 'readBuffStackCount_37' },
+          whenFalse: { $sequence: 'ifElse_38' },
+        },
+        next: null,
+      },
+      repeatEachTick_40: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'fixed', target: 'enemy' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
               targetTriggerIntervalSeconds: 0.033,
             },
           },
-          body: { $sequence: 'conditional_29' },
+          body: { $sequence: 'ifElse_39' },
         },
         next: null,
       },
-      finishBuffsById_34: {
+      finishBuffsById_44: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
-            target: 'enemy',
+            targets: { kind: 'fixed', target: 'enemy' },
+            finishSource: { kind: 'source' },
             buffIds: ['buff_chr_0028_wulfa_combo_hasinflict'],
             reason: 'other',
           },
         },
         next: null,
       },
-      applyPhysicalInfliction_35: {
+      applyPhysicalInfliction_45: {
         action: {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'airborne',
             target: 'enemy',
             isExtra: false,
-            noGuardBuffId: 'buff_physical_no_guard',
-            noGuardDefinition: {
-              stackingType: 'enhanceAndRefresh',
-              priority: 100,
-              maxStackCount: 4,
-              durationSeconds: { blackboardKey: 'duration' },
-              presentation: {
-                visible: true,
-                iconId: 'icon_shadow_attribute_penetrate',
-                iconPath: '/icons/icon_shadow_attribute_penetrate.webp',
-                showInHeadBarCommon: false,
-                showInHeadBarAttached: true,
-                showInSquadIcon: false,
-                onlyShowForMainCharacter: false,
-                blinkInMainCharHpBar: false,
-                showProgressInHpBar: false,
-                showProgressInNormalSkillButton: false,
-                useWeakProgressInNormalSkillButton: false,
-                showProgressInUltimateSkillButton: false,
-                forceRaiseIconEvent: false,
-                showWarningBackground: false,
-                playStrongInAnimation: false,
-                hasCharHpBarVfxType: false,
-                charHpBarVfxType: 'Fire',
-                iconStyleInSquad: 'Default',
-                abnormalColorType: 'Physical',
-                orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
-              },
-              applyTags: ['Skill/Character/Common/NoGuard'],
-              extendTags: [],
-              blackboard: { atk_scale: 0, count: 0, duration: 20, skip_handle_cryst_break: 0 },
-              attributeModifiers: [],
-              lifecycleSequences: {
-                start: { $sequence: 'conditional_2' },
-                finish: { $sequence: 'applyBuff_3' },
-                afterEnhance: { $sequence: 'withActionBlackboardScope_9' },
-              },
-              actionGraph: {
-                main: {
-                  nodes: {
-                    applyBuff_1: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_handle_cryst_break',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                        },
-                      },
-                      next: null,
-                    },
-                    conditional_2: {
-                      action: {
-                        kind: 'conditional',
-                        parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                        whenTrue: { $sequence: 'applyBuff_1' },
-                      },
-                      next: null,
-                    },
-                    applyBuff_3: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_no_guard_fake',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                        },
-                      },
-                      next: null,
-                    },
-                    igniteBuffs_4: {
-                      action: {
-                        kind: 'igniteBuffs',
-                        parameters: {
-                          target: 'buffOwner',
-                          source: 'buffOwner',
-                          igniteType: 'NoGuard',
-                        },
-                      },
-                      next: null,
-                    },
-                    conditional_7: {
-                      action: {
-                        kind: 'conditional',
-                        parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                        whenTrue: { $sequence: 'conditional_2' },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_8: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:1',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'conditional_7' },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_9: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:0',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'igniteBuffs_4' },
-                      },
-                      next: 'withActionBlackboardScope_8',
-                    },
-                  },
-                  dataNodes: {
-                    data_1: {
-                      type: 'number',
-                      expression: {
-                        kind: 'blackboard',
-                        key: 'skip_handle_cryst_break',
-                        fallback: 0,
-                      },
-                    },
-                    data_2: {
-                      type: 'boolean',
-                      expression: {
-                        kind: 'actionValueCompare',
-                        left: { kind: 'valueNode', nodeId: 'data_1' },
-                        operator: 'equal',
-                        right: { kind: 'constant', value: 0 },
-                      },
-                    },
-                    data_3: {
-                      type: 'boolean',
-                      expression: {
-                        kind: 'currentBuffStackCompare',
-                        operator: 'greaterOrEqual',
-                        value: { kind: 'constant', value: 2 },
-                      },
-                    },
-                  },
-                },
-                macros: {},
-              },
-            },
-            airborneBuffId: 'buff_physical_airborne',
-            airborneDefinition: {
-              stackingType: 'stack',
-              stackingKey: 'physical',
-              priority: 0,
-              maxStackCount: 1,
-              durationSeconds: { blackboardKey: 'duration' },
-              triggerIntervalSeconds: 0.1,
-              waitFirstTriggerInterval: true,
-              maxTriggerCount: 1,
-              presentation: {
-                visible: true,
-                iconId: 'airborne',
-                iconPath: '/icons/airborne.webp',
-                showInHeadBarCommon: false,
-                showInHeadBarAttached: false,
-                showInSquadIcon: false,
-                onlyShowForMainCharacter: false,
-                blinkInMainCharHpBar: false,
-                showProgressInHpBar: false,
-                showProgressInNormalSkillButton: false,
-                useWeakProgressInNormalSkillButton: false,
-                showProgressInUltimateSkillButton: false,
-                forceRaiseIconEvent: false,
-                showWarningBackground: false,
-                playStrongInAnimation: false,
-                hasCharHpBarVfxType: false,
-                charHpBarVfxType: 'Fire',
-                iconStyleInSquad: 'Default',
-                abnormalColorType: 'Physical',
-                orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
-              },
-              applyTags: ['Skill/Character/Common/PhysicalStatus/AirborneStatus'],
-              extendTags: [],
-              blackboard: { atk_scale: 0, duration: 3, poise: 10 },
-              attributeModifiers: [],
-              lifecycleSequences: { start: { $sequence: 'withActionBlackboardScope_9' } },
-              actionGraph: {
-                main: {
-                  nodes: {
-                    applyBuff_1: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_no_guard',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                          blackboardAssignments: {
-                            skip_handle_cryst_break: { kind: 'constant', value: 1 },
-                          },
-                        },
-                      },
-                      next: null,
-                    },
-                    dealDamage_2: {
-                      action: {
-                        kind: 'dealDamage',
-                        parameters: {
-                          damageType: 'physical',
-                          attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                          tags: [],
-                          features: ['physicalInfliction'],
-                          stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                        },
-                      },
-                      next: null,
-                    },
-                    readSkillSettingData_3: {
-                      action: {
-                        kind: 'readSkillSettingData',
-                        parameters: {
-                          items: [
-                            {
-                              values: [1.2, 1.2, 1.2, 1.2],
-                              column: { kind: 'constant', value: 1 },
-                              storeKey: 'atk_scale',
-                              enhance: {
-                                target: 'caster',
-                                formula: { kind: 'linear', paramA: 0.01 },
-                              },
-                            },
-                            {
-                              values: [10, 10, 10, 10],
-                              column: { kind: 'constant', value: 1 },
-                              storeKey: 'poise',
-                              enhance: {
-                                target: 'caster',
-                                formula: { kind: 'linear', paramA: 0.005 },
-                              },
-                            },
-                          ],
-                        },
-                      },
-                      next: 'dealDamage_2',
-                    },
-                    applyBuff_4: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_handle_cryst_break',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                        },
-                      },
-                      next: null,
-                    },
-                    igniteBuffs_5: {
-                      action: {
-                        kind: 'igniteBuffs',
-                        parameters: {
-                          target: 'buffOwner',
-                          source: 'caster',
-                          igniteType: 'PhysicalStatus',
-                        },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_6: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:3',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'igniteBuffs_5' },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_7: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:2',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'applyBuff_4' },
-                      },
-                      next: 'withActionBlackboardScope_6',
-                    },
-                    withActionBlackboardScope_8: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:1',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'readSkillSettingData_3' },
-                      },
-                      next: 'withActionBlackboardScope_7',
-                    },
-                    withActionBlackboardScope_9: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:0',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'applyBuff_1' },
-                      },
-                      next: 'withActionBlackboardScope_8',
-                    },
-                  },
-                  dataNodes: {
-                    data_1: {
-                      type: 'number',
-                      expression: { kind: 'blackboard', key: 'atk_scale' },
-                    },
-                    data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-                  },
-                },
-                macros: {},
-              },
-            },
             duration: { kind: 'constant', value: 1 },
             height: { kind: 'constant', value: 20 },
             speedFactorMultiplier: 10,
@@ -4909,138 +4671,148 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
             returnWhen: 'always',
           },
         },
-        next: 'finishBuffsById_34',
+        next: 'finishBuffsById_44',
       },
-      conditional_36: {
+      checkCondition_46: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-          whenTrue: { $sequence: 'applyPhysicalInfliction_35' },
         },
-        next: null,
+        next: 'applyPhysicalInfliction_45',
       },
-      forEachContextTarget_38: {
+      forEachContextTarget_48: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { target: 'enemy' },
-          body: { $sequence: 'conditional_36' },
+          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          body: { $sequence: 'checkCondition_46' },
         },
         next: null,
       },
-      conditional_39: {
+      ifElse_50: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' }, alwaysNext: true },
-          whenTrue: { $sequence: 'forEachContextTarget_38' },
-          whenFalse: { $sequence: 'forEachContextTarget_38' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: null },
+          whenTrue: { $sequence: 'forEachContextTarget_48' },
+          whenFalse: { $sequence: 'forEachContextTarget_48' },
         },
         next: null,
       },
-      conditional_40: {
+      checkCondition_49: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' }, alwaysNext: true },
-          whenTrue: { $sequence: 'conditional_39' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
         },
         next: null,
       },
-      calculateActionValue_41: {
+      ifElse_51: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_49' },
+          whenTrue: { $sequence: 'ifElse_50' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      calculateActionValue_61: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'count',
             operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_12' },
+            left: { kind: 'valueNode', nodeId: 'data_10' },
             right: { kind: 'constant', value: 1 },
           },
         },
         next: null,
       },
-      dealDamage_42: {
+      dealDamage_62: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_13' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_11' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_14' },
+            stagger: { kind: 'valueNode', nodeId: 'data_12' },
           },
         },
-        next: 'calculateActionValue_41',
+        next: 'calculateActionValue_61',
       },
-      finishBuffsById_43: {
+      finishBuffsById_63: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
-            target: 'enemy',
+            targets: { kind: 'fixed', target: 'enemy' },
+            finishSource: { kind: 'source' },
             buffIds: ['buff_chr_0028_wulfa_combo_inflictnum'],
             reason: 'other',
           },
         },
-        next: 'dealDamage_42',
+        next: 'dealDamage_62',
       },
-      calculateActionValue_44: {
+      calculateActionValue_64: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'poise_once',
             operation: 'divide',
-            left: { kind: 'valueNode', nodeId: 'data_15' },
+            left: { kind: 'valueNode', nodeId: 'data_13' },
             right: { kind: 'constant', value: 1 },
           },
         },
-        next: 'finishBuffsById_43',
+        next: 'finishBuffsById_63',
       },
-      calculateActionValue_45: {
+      calculateActionValue_65: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atk_scale_once',
             operation: 'divide',
-            left: { kind: 'valueNode', nodeId: 'data_16' },
+            left: { kind: 'valueNode', nodeId: 'data_11' },
             right: { kind: 'constant', value: 1 },
           },
         },
-        next: 'calculateActionValue_44',
+        next: 'calculateActionValue_64',
       },
-      calculateActionValue_46: {
+      calculateActionValue_66: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atk_scale_once',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_17' },
-            right: { kind: 'valueNode', nodeId: 'data_18' },
+            left: { kind: 'valueNode', nodeId: 'data_11' },
+            right: { kind: 'valueNode', nodeId: 'data_14' },
           },
         },
-        next: 'calculateActionValue_45',
+        next: 'calculateActionValue_65',
       },
-      calculateActionValue_47: {
+      calculateActionValue_67: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atk_scale_once',
             operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_19' },
-            right: { kind: 'valueNode', nodeId: 'data_20' },
+            left: { kind: 'valueNode', nodeId: 'data_11' },
+            right: { kind: 'valueNode', nodeId: 'data_15' },
           },
         },
-        next: 'calculateActionValue_46',
+        next: 'calculateActionValue_66',
       },
-      calculateActionValue_48: {
+      calculateActionValue_68: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atk_scale_once',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_21' },
-            right: { kind: 'valueNode', nodeId: 'data_22' },
+            left: { kind: 'valueNode', nodeId: 'data_16' },
+            right: { kind: 'valueNode', nodeId: 'data_17' },
           },
         },
-        next: 'calculateActionValue_47',
+        next: 'calculateActionValue_67',
       },
-      readBuffStackCount_49: {
+      readBuffStackCount_69: {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
@@ -5049,43 +4821,56 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
             query: { kind: 'id', buffIds: ['buff_chr_0028_wulfa_combo_inflictnum'] },
           },
         },
-        next: 'calculateActionValue_48',
+        next: 'calculateActionValue_68',
       },
-      repeatEachTick_50: {
+      repeatEachTick_70: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'fixed', target: 'enemy' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
               targetTriggerIntervalSeconds: 0.033,
             },
           },
-          body: { $sequence: 'readBuffStackCount_49' },
+          body: { $sequence: 'readBuffStackCount_69' },
         },
         next: null,
       },
-      finishBuffsById_51: {
+      findTargets_71: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'MainTar',
+          },
+        },
+        next: 'repeatEachTick_70',
+      },
+      finishBuffsById_72: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
-            target: 'caster',
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
             buffIds: ['buff_chr_0028_wulfa_combo_usetimer', 'buff_chr_0028_wulfa_combo_usecount'],
             reason: 'other',
           },
         },
         next: null,
       },
-      conditional_52: {
+      checkCondition_73: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_23' } },
-          whenTrue: { $sequence: 'finishBuffsById_51' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_18' } },
         },
-        next: null,
+        next: 'finishBuffsById_72',
       },
-      changeSkillSlot_53: {
+      changeSkillSlot_74: {
         action: {
           kind: 'changeSkillSlot',
           parameters: {
@@ -5095,9 +4880,9 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
             lifetime: 'infinite',
           },
         },
-        next: 'conditional_52',
+        next: 'checkCondition_73',
       },
-      adjustSkillCooldown_54: {
+      adjustSkillCooldown_75: {
         action: {
           kind: 'adjustSkillCooldown',
           parameters: {
@@ -5108,40 +4893,41 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
             value: { kind: 'constant', value: 1 },
           },
         },
-        next: 'changeSkillSlot_53',
+        next: 'changeSkillSlot_74',
       },
-      applyBuff_55: {
+      applyBuff_76: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_combo_usecount',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_chr_0028_wulfa_combo_usecount' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'adjustSkillCooldown_54',
+        next: 'adjustSkillCooldown_75',
       },
-      changeResourceByActionValue_56: {
+      changeResource_77: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_24' },
+            amount: { kind: 'valueNode', nodeId: 'data_19' },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'caster',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
           },
         },
         next: null,
       },
-      conditional_57: {
+      checkCondition_78: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_26' } },
-          whenTrue: { $sequence: 'changeResourceByActionValue_56' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_21' } },
         },
-        next: null,
+        next: 'changeResource_77',
       },
-      modifyActionValue_64: {
+      modifyActionValue_87: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -5150,421 +4936,84 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
             value: { kind: 'constant', value: 0 },
           },
         },
-        next: 'modifyActionValue_9',
+        next: 'modifyActionValue_16',
       },
-      conditional_71: {
+      ifElse_95: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_27' }, alwaysNext: true },
-          whenTrue: { $sequence: 'readBuffStackCount_8' },
-          whenFalse: { $sequence: 'modifyActionValue_64' },
-        },
-        next: null,
-      },
-      conditional_77: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_28' }, alwaysNext: true },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_10' },
           whenTrue: { $sequence: 'readBuffStackCount_15' },
-          whenFalse: { $sequence: 'conditional_71' },
+          whenFalse: { $sequence: 'modifyActionValue_87' },
         },
         next: null,
       },
-      conditional_83: {
+      ifElse_102: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_29' }, alwaysNext: true },
-          whenTrue: { $sequence: 'readBuffStackCount_21' },
-          whenFalse: { $sequence: 'conditional_77' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_18' },
+          whenTrue: { $sequence: 'readBuffStackCount_23' },
+          whenFalse: { $sequence: 'ifElse_95' },
         },
         next: null,
       },
-      conditional_84: {
+      ifElse_109: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_30' }, alwaysNext: true },
-          whenTrue: { $sequence: 'readBuffStackCount_27' },
-          whenFalse: { $sequence: 'conditional_83' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_25' },
+          whenTrue: { $sequence: 'readBuffStackCount_30' },
+          whenFalse: { $sequence: 'ifElse_102' },
         },
         next: null,
       },
-      repeatEachTick_85: {
+      ifElse_110: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_32' },
+          whenTrue: { $sequence: 'readBuffStackCount_37' },
+          whenFalse: { $sequence: 'ifElse_109' },
+        },
+        next: null,
+      },
+      repeatEachTick_111: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'fixed', target: 'enemy' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
               targetTriggerIntervalSeconds: 0.033,
             },
           },
-          body: { $sequence: 'conditional_84' },
+          body: { $sequence: 'ifElse_110' },
         },
         next: null,
       },
-      applyBuff_91: {
+      applyBuff_117: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_physical_no_guard',
-            target: 'enemy',
+            buffs: [{ buffId: 'buff_physical_no_guard' }],
+            targets: { kind: 'fixed', target: 'enemy' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'finishBuffsById_34',
+        next: 'finishBuffsById_44',
       },
-      applyPhysicalInfliction_92: {
+      applyPhysicalInfliction_118: {
         action: {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'airborne',
             target: 'enemy',
             isExtra: false,
-            noGuardBuffId: 'buff_physical_no_guard',
-            noGuardDefinition: {
-              stackingType: 'enhanceAndRefresh',
-              priority: 100,
-              maxStackCount: 4,
-              durationSeconds: { blackboardKey: 'duration' },
-              presentation: {
-                visible: true,
-                iconId: 'icon_shadow_attribute_penetrate',
-                iconPath: '/icons/icon_shadow_attribute_penetrate.webp',
-                showInHeadBarCommon: false,
-                showInHeadBarAttached: true,
-                showInSquadIcon: false,
-                onlyShowForMainCharacter: false,
-                blinkInMainCharHpBar: false,
-                showProgressInHpBar: false,
-                showProgressInNormalSkillButton: false,
-                useWeakProgressInNormalSkillButton: false,
-                showProgressInUltimateSkillButton: false,
-                forceRaiseIconEvent: false,
-                showWarningBackground: false,
-                playStrongInAnimation: false,
-                hasCharHpBarVfxType: false,
-                charHpBarVfxType: 'Fire',
-                iconStyleInSquad: 'Default',
-                abnormalColorType: 'Physical',
-                orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
-              },
-              applyTags: ['Skill/Character/Common/NoGuard'],
-              extendTags: [],
-              blackboard: { atk_scale: 0, count: 0, duration: 20, skip_handle_cryst_break: 0 },
-              attributeModifiers: [],
-              lifecycleSequences: {
-                start: { $sequence: 'conditional_2' },
-                finish: { $sequence: 'applyBuff_3' },
-                afterEnhance: { $sequence: 'withActionBlackboardScope_9' },
-              },
-              actionGraph: {
-                main: {
-                  nodes: {
-                    applyBuff_1: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_handle_cryst_break',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                        },
-                      },
-                      next: null,
-                    },
-                    conditional_2: {
-                      action: {
-                        kind: 'conditional',
-                        parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                        whenTrue: { $sequence: 'applyBuff_1' },
-                      },
-                      next: null,
-                    },
-                    applyBuff_3: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_no_guard_fake',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                        },
-                      },
-                      next: null,
-                    },
-                    igniteBuffs_4: {
-                      action: {
-                        kind: 'igniteBuffs',
-                        parameters: {
-                          target: 'buffOwner',
-                          source: 'buffOwner',
-                          igniteType: 'NoGuard',
-                        },
-                      },
-                      next: null,
-                    },
-                    conditional_7: {
-                      action: {
-                        kind: 'conditional',
-                        parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                        whenTrue: { $sequence: 'conditional_2' },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_8: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:1',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'conditional_7' },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_9: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:0',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'igniteBuffs_4' },
-                      },
-                      next: 'withActionBlackboardScope_8',
-                    },
-                  },
-                  dataNodes: {
-                    data_1: {
-                      type: 'number',
-                      expression: {
-                        kind: 'blackboard',
-                        key: 'skip_handle_cryst_break',
-                        fallback: 0,
-                      },
-                    },
-                    data_2: {
-                      type: 'boolean',
-                      expression: {
-                        kind: 'actionValueCompare',
-                        left: { kind: 'valueNode', nodeId: 'data_1' },
-                        operator: 'equal',
-                        right: { kind: 'constant', value: 0 },
-                      },
-                    },
-                    data_3: {
-                      type: 'boolean',
-                      expression: {
-                        kind: 'currentBuffStackCompare',
-                        operator: 'greaterOrEqual',
-                        value: { kind: 'constant', value: 2 },
-                      },
-                    },
-                  },
-                },
-                macros: {},
-              },
-            },
-            airborneBuffId: 'buff_physical_airborne',
-            airborneDefinition: {
-              stackingType: 'stack',
-              stackingKey: 'physical',
-              priority: 0,
-              maxStackCount: 1,
-              durationSeconds: { blackboardKey: 'duration' },
-              triggerIntervalSeconds: 0.1,
-              waitFirstTriggerInterval: true,
-              maxTriggerCount: 1,
-              presentation: {
-                visible: true,
-                iconId: 'airborne',
-                iconPath: '/icons/airborne.webp',
-                showInHeadBarCommon: false,
-                showInHeadBarAttached: false,
-                showInSquadIcon: false,
-                onlyShowForMainCharacter: false,
-                blinkInMainCharHpBar: false,
-                showProgressInHpBar: false,
-                showProgressInNormalSkillButton: false,
-                useWeakProgressInNormalSkillButton: false,
-                showProgressInUltimateSkillButton: false,
-                forceRaiseIconEvent: false,
-                showWarningBackground: false,
-                playStrongInAnimation: false,
-                hasCharHpBarVfxType: false,
-                charHpBarVfxType: 'Fire',
-                iconStyleInSquad: 'Default',
-                abnormalColorType: 'Physical',
-                orderPriority: { useDirectoryValue: false, value: 0, category: 'CommonCharBuff' },
-              },
-              applyTags: ['Skill/Character/Common/PhysicalStatus/AirborneStatus'],
-              extendTags: [],
-              blackboard: { atk_scale: 0, duration: 3, poise: 10 },
-              attributeModifiers: [],
-              lifecycleSequences: { start: { $sequence: 'withActionBlackboardScope_9' } },
-              actionGraph: {
-                main: {
-                  nodes: {
-                    applyBuff_1: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_no_guard',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                          blackboardAssignments: {
-                            skip_handle_cryst_break: { kind: 'constant', value: 1 },
-                          },
-                        },
-                      },
-                      next: null,
-                    },
-                    dealDamage_2: {
-                      action: {
-                        kind: 'dealDamage',
-                        parameters: {
-                          damageType: 'physical',
-                          attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                          tags: [],
-                          features: ['physicalInfliction'],
-                          stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                        },
-                      },
-                      next: null,
-                    },
-                    readSkillSettingData_3: {
-                      action: {
-                        kind: 'readSkillSettingData',
-                        parameters: {
-                          items: [
-                            {
-                              values: [1.2, 1.2, 1.2, 1.2],
-                              column: { kind: 'constant', value: 1 },
-                              storeKey: 'atk_scale',
-                              enhance: {
-                                target: 'caster',
-                                formula: { kind: 'linear', paramA: 0.01 },
-                              },
-                            },
-                            {
-                              values: [10, 10, 10, 10],
-                              column: { kind: 'constant', value: 1 },
-                              storeKey: 'poise',
-                              enhance: {
-                                target: 'caster',
-                                formula: { kind: 'linear', paramA: 0.005 },
-                              },
-                            },
-                          ],
-                        },
-                      },
-                      next: 'dealDamage_2',
-                    },
-                    applyBuff_4: {
-                      action: {
-                        kind: 'applyBuff',
-                        parameters: {
-                          buffId: 'buff_physical_handle_cryst_break',
-                          target: 'buffOwner',
-                          source: 'buffSource',
-                          inheritSourceSkillCastInfo: true,
-                        },
-                      },
-                      next: null,
-                    },
-                    igniteBuffs_5: {
-                      action: {
-                        kind: 'igniteBuffs',
-                        parameters: {
-                          target: 'buffOwner',
-                          source: 'caster',
-                          igniteType: 'PhysicalStatus',
-                        },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_6: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:3',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'igniteBuffs_5' },
-                      },
-                      next: null,
-                    },
-                    withActionBlackboardScope_7: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:2',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'applyBuff_4' },
-                      },
-                      next: 'withActionBlackboardScope_6',
-                    },
-                    withActionBlackboardScope_8: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:1',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'readSkillSettingData_3' },
-                      },
-                      next: 'withActionBlackboardScope_7',
-                    },
-                    withActionBlackboardScope_9: {
-                      action: {
-                        kind: 'withActionBlackboardScope',
-                        parameters: {
-                          scopeKey: 'native-buff-callback:0',
-                          lifetime: 'execution',
-                          alwaysNext: true,
-                          shareParentBlackboard: true,
-                          initialValues: {},
-                          inheritParent: true,
-                        },
-                        body: { $sequence: 'applyBuff_1' },
-                      },
-                      next: 'withActionBlackboardScope_8',
-                    },
-                  },
-                  dataNodes: {
-                    data_1: {
-                      type: 'number',
-                      expression: { kind: 'blackboard', key: 'atk_scale' },
-                    },
-                    data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-                  },
-                },
-                macros: {},
-              },
-            },
             duration: { kind: 'constant', value: 1 },
             height: { kind: 'constant', value: 20 },
             speedFactorMultiplier: 10,
@@ -5573,102 +5022,111 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
             returnWhen: 'always',
           },
         },
-        next: 'applyBuff_91',
+        next: 'applyBuff_117',
       },
-      conditional_93: {
+      checkCondition_119: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_31' } },
-          whenTrue: { $sequence: 'applyPhysicalInfliction_92' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_22' } },
         },
-        next: null,
+        next: 'applyPhysicalInfliction_118',
       },
-      forEachContextTarget_95: {
+      forEachContextTarget_121: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { target: 'enemy' },
-          body: { $sequence: 'conditional_93' },
+          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          body: { $sequence: 'checkCondition_119' },
         },
         next: null,
       },
-      conditional_96: {
+      ifElse_123: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_32' }, alwaysNext: true },
-          whenTrue: { $sequence: 'forEachContextTarget_95' },
-          whenFalse: { $sequence: 'forEachContextTarget_95' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: null },
+          whenTrue: { $sequence: 'forEachContextTarget_121' },
+          whenFalse: { $sequence: 'forEachContextTarget_121' },
         },
         next: null,
       },
-      conditional_97: {
+      checkCondition_122: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_34' }, alwaysNext: true },
-          whenTrue: { $sequence: 'conditional_96' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_23' } },
         },
         next: null,
       },
-      calculateActionValue_104: {
+      ifElse_124: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_122' },
+          whenTrue: { $sequence: 'ifElse_123' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      calculateActionValue_145: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'poise_once',
             operation: 'divide',
-            left: { kind: 'valueNode', nodeId: 'data_35' },
+            left: { kind: 'valueNode', nodeId: 'data_24' },
             right: { kind: 'constant', value: 1 },
           },
         },
-        next: 'finishBuffsById_43',
+        next: 'finishBuffsById_63',
       },
-      calculateActionValue_105: {
+      calculateActionValue_146: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atk_scale_once',
             operation: 'divide',
-            left: { kind: 'valueNode', nodeId: 'data_36' },
+            left: { kind: 'valueNode', nodeId: 'data_11' },
             right: { kind: 'constant', value: 1 },
           },
         },
-        next: 'calculateActionValue_104',
+        next: 'calculateActionValue_145',
       },
-      calculateActionValue_106: {
+      calculateActionValue_147: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atk_scale_once',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_37' },
-            right: { kind: 'valueNode', nodeId: 'data_38' },
+            left: { kind: 'valueNode', nodeId: 'data_11' },
+            right: { kind: 'valueNode', nodeId: 'data_14' },
           },
         },
-        next: 'calculateActionValue_105',
+        next: 'calculateActionValue_146',
       },
-      calculateActionValue_107: {
+      calculateActionValue_148: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atk_scale_once',
             operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_39' },
-            right: { kind: 'valueNode', nodeId: 'data_40' },
+            left: { kind: 'valueNode', nodeId: 'data_11' },
+            right: { kind: 'valueNode', nodeId: 'data_15' },
           },
         },
-        next: 'calculateActionValue_106',
+        next: 'calculateActionValue_147',
       },
-      calculateActionValue_108: {
+      calculateActionValue_149: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atk_scale_once',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_41' },
-            right: { kind: 'valueNode', nodeId: 'data_42' },
+            left: { kind: 'valueNode', nodeId: 'data_16' },
+            right: { kind: 'valueNode', nodeId: 'data_17' },
           },
         },
-        next: 'calculateActionValue_107',
+        next: 'calculateActionValue_148',
       },
-      readBuffStackCount_109: {
+      readBuffStackCount_150: {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
@@ -5677,32 +5135,45 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
             query: { kind: 'id', buffIds: ['buff_chr_0028_wulfa_combo_inflictnum'] },
           },
         },
-        next: 'calculateActionValue_108',
+        next: 'calculateActionValue_149',
       },
-      repeatEachTick_110: {
+      repeatEachTick_151: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'fixed', target: 'enemy' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
               targetTriggerIntervalSeconds: 0.033,
             },
           },
-          body: { $sequence: 'readBuffStackCount_109' },
+          body: { $sequence: 'readBuffStackCount_150' },
         },
         next: null,
       },
-      finishCurrentAbilityEntity_114: {
-        action: { kind: 'finishCurrentAbilityEntity', parameters: {} },
+      findTargets_152: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'MainTar',
+          },
+        },
+        next: 'repeatEachTick_151',
+      },
+      jumpTimeline_162: {
+        action: {
+          kind: 'jumpTimeline',
+          parameters: { destinationFrame: 212 },
+          condition: { $sequence: null },
+        },
         next: null,
       },
-      jumpTimeline_123: {
-        action: { kind: 'jumpTimeline', parameters: { destinationFrame: 212 } },
-        next: null,
-      },
-      modifyActionValue_124: {
+      modifyActionValue_163: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -5711,34 +5182,28 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
             value: { kind: 'constant', value: 0 },
           },
         },
-        next: 'jumpTimeline_123',
+        next: 'jumpTimeline_162',
       },
-      forEachContextTarget_125: {
+      finishOwner_164: {
         action: {
-          kind: 'forEachContextTarget',
+          kind: 'finishOwner',
           parameters: {
-            contextKey:
-              '__finishOwnerAll:SkillData.chr_0028_wulfa_combo_3_skill.actionGroupData.timelineActions[22]._sequenceActionData.actionData[1].failActions.actionData[1]',
-          },
-          body: { $sequence: 'finishCurrentAbilityEntity_114' },
-        },
-        next: 'modifyActionValue_124',
-      },
-      findOwnerSpawnedAbilityEntities_126: {
-        action: {
-          kind: 'findOwnerSpawnedAbilityEntities',
-          parameters: {
-            saveToContextKey:
-              '__finishOwnerAll:SkillData.chr_0028_wulfa_combo_3_skill.actionGroupData.timelineActions[22]._sequenceActionData.actionData[1].failActions.actionData[1]',
+            targets: {
+              kind: 'ownerSpawned',
+              owner: { kind: 'owner' },
+              objectType: 'all',
+              sameSourceSkillCast: false,
+            },
           },
         },
-        next: 'forEachContextTarget_125',
+        next: 'modifyActionValue_163',
       },
-      finishBuffsById_127: {
+      finishBuffsById_165: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
-            target: 'caster',
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'owner' },
             buffIds: [
               'buff_chr_0028_wulfa_combo_2_qte_timer',
               'buff_chr_0028_wulfa_combo_2_qte_timerlistening',
@@ -5746,50 +5211,52 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
             reason: 'early',
           },
         },
-        next: 'findOwnerSpawnedAbilityEntities_126',
+        next: 'finishOwner_164',
       },
-      calculateActionValue_113: {
+      calculateActionValue_154: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atk_scale_s',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_43' },
-            right: { kind: 'valueNode', nodeId: 'data_44' },
+            left: { kind: 'valueNode', nodeId: 'data_15' },
+            right: { kind: 'valueNode', nodeId: 'data_14' },
           },
         },
         next: null,
       },
-      conditional_115: {
+      checkCondition_153: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_46' }, alwaysNext: true },
-          whenTrue: { $sequence: 'calculateActionValue_113' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_26' } },
         },
         next: null,
       },
-      forEachContextTarget_116: {
+      ifElse_156: {
         action: {
-          kind: 'forEachContextTarget',
-          parameters: {
-            contextKey:
-              '__finishOwnerAll:SkillData.chr_0028_wulfa_combo_3_skill.actionGroupData.timelineActions[22]._sequenceActionData.actionData[1].succeedActions.actionData[13]',
-          },
-          body: { $sequence: 'finishCurrentAbilityEntity_114' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_153' },
+          whenTrue: { $sequence: 'calculateActionValue_154' },
+          whenFalse: { $sequence: null },
         },
-        next: 'conditional_115',
+        next: null,
       },
-      findOwnerSpawnedAbilityEntities_117: {
+      finishOwner_157: {
         action: {
-          kind: 'findOwnerSpawnedAbilityEntities',
+          kind: 'finishOwner',
           parameters: {
-            saveToContextKey:
-              '__finishOwnerAll:SkillData.chr_0028_wulfa_combo_3_skill.actionGroupData.timelineActions[22]._sequenceActionData.actionData[1].succeedActions.actionData[13]',
+            targets: {
+              kind: 'ownerSpawned',
+              owner: { kind: 'owner' },
+              objectType: 'all',
+              sameSourceSkillCast: false,
+            },
           },
         },
-        next: 'forEachContextTarget_116',
+        next: 'ifElse_156',
       },
-      startTimeDilation_118: {
+      startTimeDilation_158: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -5842,30 +5309,23 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
             ignoredTargets: ['caster'],
           },
         },
-        next: 'findOwnerSpawnedAbilityEntities_117',
+        next: 'finishOwner_157',
       },
-      forEachContextTarget_119: {
+      finishOwner_159: {
         action: {
-          kind: 'forEachContextTarget',
+          kind: 'finishOwner',
           parameters: {
-            contextKey:
-              '__finishOwnerAll:SkillData.chr_0028_wulfa_combo_3_skill.actionGroupData.timelineActions[22]._sequenceActionData.actionData[1].succeedActions.actionData[2]',
-          },
-          body: { $sequence: 'finishCurrentAbilityEntity_114' },
-        },
-        next: 'startTimeDilation_118',
-      },
-      findOwnerSpawnedAbilityEntities_120: {
-        action: {
-          kind: 'findOwnerSpawnedAbilityEntities',
-          parameters: {
-            saveToContextKey:
-              '__finishOwnerAll:SkillData.chr_0028_wulfa_combo_3_skill.actionGroupData.timelineActions[22]._sequenceActionData.actionData[1].succeedActions.actionData[2]',
+            targets: {
+              kind: 'ownerSpawned',
+              owner: { kind: 'owner' },
+              objectType: 'all',
+              sameSourceSkillCast: false,
+            },
           },
         },
-        next: 'forEachContextTarget_119',
+        next: 'startTimeDilation_158',
       },
-      modifyActionValue_121: {
+      modifyActionValue_160: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -5874,13 +5334,14 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
             value: { kind: 'constant', value: 1 },
           },
         },
-        next: 'findOwnerSpawnedAbilityEntities_120',
+        next: 'finishOwner_159',
       },
-      finishBuffsById_122: {
+      finishBuffsById_161: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
-            target: 'caster',
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'owner' },
             buffIds: [
               'buff_chr_0028_wulfa_combo_2_qte_timer',
               'buff_chr_0028_wulfa_combo_2_qte_timerlistening',
@@ -5888,47 +5349,79 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
             reason: 'early',
           },
         },
-        next: 'modifyActionValue_121',
+        next: 'modifyActionValue_160',
       },
-      conditional_128: {
+      checkCondition_155: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_48' }, alwaysNext: true },
-          whenTrue: { $sequence: 'finishBuffsById_122' },
-          whenFalse: { $sequence: 'finishBuffsById_127' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_28' } },
         },
         next: null,
       },
-      conditional_130: {
+      ifElse_166: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_53' }, alwaysNext: true },
-          whenTrue: { $sequence: 'changeResourceByActionValue_56' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_155' },
+          whenTrue: { $sequence: 'finishBuffsById_161' },
+          whenFalse: { $sequence: 'finishBuffsById_165' },
         },
         next: null,
       },
-      applyBuff_131: {
+      checkCondition_167: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_29' } },
+        },
+        next: null,
+      },
+      checkCondition_168: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_30' } },
+        },
+        next: 'checkCondition_167',
+      },
+      ifElse_170: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_168' },
+          whenTrue: { $sequence: 'changeResource_77' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      applyBuff_171: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_combo_criticalrate',
-            target: 'caster',
+            buffs: [
+              {
+                buffId: 'buff_chr_0028_wulfa_combo_criticalrate',
+                copiedBlackboardAssignments: {
+                  duration: 'crit_increase_duration',
+                  critical_rate: 'crit_increase_rate',
+                  critical_damage_inc: 'crit_damage_increase_rate',
+                },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
-            copiedBlackboardAssignments: {
-              duration: 'crit_increase_duration',
-              critical_rate: 'crit_increase_rate',
-              critical_damage_inc: 'crit_damage_increase_rate',
-            },
           },
         },
         next: null,
       },
-      markCurrentSkillCanInterrupt_133: {
+      markCurrentSkillCanInterrupt_173: {
         action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} },
         next: null,
       },
-      finishTimeline_134: { action: { kind: 'finishTimeline', parameters: {} }, next: null },
-      startTimeDilation_135: {
+      interruptCurrentSkill_174: {
+        action: { kind: 'interruptCurrentSkill', parameters: { targets: { kind: 'owner' } } },
+        next: null,
+      },
+      startTimeDilation_175: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -5944,65 +5437,71 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_138: {
+      applyBuff_179: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_tut_comboskill_failure',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_chr_0028_wulfa_tut_comboskill_failure' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
         },
         next: null,
       },
-      applyBuff_137: {
+      applyBuff_178: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_tut_comboskill_success',
-            target: 'caster',
-            inheritSourceSkillCastInfo: true,
-            finishByAction: true,
-          },
-        },
-        next: null,
-      },
-      conditional_139: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_55' }, alwaysNext: true },
-          whenTrue: { $sequence: 'applyBuff_137' },
-          whenFalse: { $sequence: 'applyBuff_138' },
-        },
-        next: null,
-      },
-      applyBuff_141: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffId: 'buff_chr_0028_wulfa_tut_comboskill_finish',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_chr_0028_wulfa_tut_comboskill_success' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
         },
         next: null,
       },
-      conditional_142: {
+      ifElse_180: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_57' }, alwaysNext: true },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_122' },
+          whenTrue: { $sequence: 'applyBuff_178' },
+          whenFalse: { $sequence: 'applyBuff_179' },
+        },
+        next: null,
+      },
+      applyBuff_183: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0028_wulfa_tut_comboskill_finish' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          },
+        },
+        next: null,
+      },
+      ifElse_184: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_122' },
           whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'applyBuff_138' },
+          whenFalse: { $sequence: 'applyBuff_179' },
         },
-        next: 'applyBuff_141',
+        next: 'applyBuff_183',
       },
-      applyBuff_146: {
+      applyBuff_189: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_normal_defup',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_chr_0028_wulfa_normal_defup' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
@@ -6079,38 +5578,30 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_9: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_10: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'timing_success', fallback: 0 },
-      },
-      data_11: {
+      data_9: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_10' },
+          left: { kind: 'valueNode', nodeId: 'data_1' },
           operator: 'equal',
           right: { kind: 'constant', value: 0 },
         },
       },
-      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
-      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_once' } },
-      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'poise_once' } },
-      data_15: { type: 'number', expression: { kind: 'blackboard', key: 'poise_f' } },
-      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_once' } },
-      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_once' } },
-      data_18: {
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
+      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_once' } },
+      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'poise_once' } },
+      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'poise_f' } },
+      data_14: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'potential_atk_multiply' },
       },
-      data_19: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_once' } },
-      data_20: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_s' } },
-      data_21: {
+      data_15: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_s' } },
+      data_16: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'spellinflict_stack_max' },
       },
-      data_22: { type: 'number', expression: { kind: 'blackboard', key: 'damage_add' } },
-      data_23: {
+      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'damage_add' } },
+      data_18: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -6120,62 +5611,18 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
           value: { kind: 'constant', value: 2 },
         },
       },
-      data_24: { type: 'number', expression: { kind: 'blackboard', key: 'usp_s' } },
-      data_25: { type: 'number', expression: { kind: 'blackboard', key: 'count', fallback: 0 } },
-      data_26: {
+      data_19: { type: 'number', expression: { kind: 'blackboard', key: 'usp_s' } },
+      data_20: { type: 'number', expression: { kind: 'blackboard', key: 'count', fallback: 0 } },
+      data_21: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_25' },
+          left: { kind: 'valueNode', nodeId: 'data_20' },
           operator: 'greaterOrEqual',
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_27: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffStackCompare',
-          target: 'enemy',
-          tagQueryType: 'hasAny',
-          buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-        },
-      },
-      data_28: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffStackCompare',
-          target: 'enemy',
-          tagQueryType: 'hasAny',
-          buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-        },
-      },
-      data_29: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffStackCompare',
-          target: 'enemy',
-          tagQueryType: 'hasAny',
-          buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-        },
-      },
-      data_30: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffStackCompare',
-          target: 'enemy',
-          tagQueryType: 'hasAny',
-          buffTags: ['Skill/Character/Common/SpellInflict/FireInflict'],
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-        },
-      },
-      data_31: {
+      data_22: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -6185,120 +5632,56 @@ export const rossiChr_0028_wulfa_combo_3_skillActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_32: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_33: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'timing_success', fallback: 0 },
-      },
-      data_34: {
+      data_23: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_33' },
+          left: { kind: 'valueNode', nodeId: 'data_1' },
           operator: 'equal',
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_35: { type: 'number', expression: { kind: 'blackboard', key: 'poise_s' } },
-      data_36: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_once' } },
-      data_37: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_once' } },
-      data_38: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'potential_atk_multiply' },
-      },
-      data_39: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_once' } },
-      data_40: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_s' } },
-      data_41: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'spellinflict_stack_max' },
-      },
-      data_42: { type: 'number', expression: { kind: 'blackboard', key: 'damage_add' } },
-      data_43: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_s' } },
-      data_44: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'potential_atk_multiply' },
-      },
-      data_45: {
+      data_24: { type: 'number', expression: { kind: 'blackboard', key: 'poise_s' } },
+      data_25: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'potential_1', fallback: 0 },
       },
-      data_46: {
+      data_26: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_45' },
+          left: { kind: 'valueNode', nodeId: 'data_25' },
           operator: 'greater',
           right: { kind: 'constant', value: 0.5 },
         },
       },
-      data_47: {
+      data_27: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'EntityBB_Combo_QTE_Trigger', fallback: 0 },
       },
-      data_48: {
+      data_28: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_47' },
+          left: { kind: 'valueNode', nodeId: 'data_27' },
           operator: 'greater',
           right: { kind: 'constant', value: 0.5 },
         },
       },
-      data_49: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'timing_success', fallback: 0 },
-      },
-      data_50: {
+      data_29: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_49' },
-          operator: 'equal',
-          right: { kind: 'constant', value: 1 },
-        },
-      },
-      data_51: { type: 'number', expression: { kind: 'blackboard', key: 'count', fallback: 0 } },
-      data_52: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_51' },
+          left: { kind: 'valueNode', nodeId: 'data_20' },
           operator: 'greaterOrEqual',
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_53: {
-        type: 'boolean',
-        expression: {
-          kind: 'all',
-          conditions: [
-            { kind: 'conditionNode', nodeId: 'data_50' },
-            { kind: 'conditionNode', nodeId: 'data_52' },
-          ],
-        },
-      },
-      data_54: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'timing_success', fallback: 0 },
-      },
-      data_55: {
+      data_30: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_54' },
-          operator: 'equal',
-          right: { kind: 'constant', value: 1 },
-        },
-      },
-      data_56: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'timing_success', fallback: 0 },
-      },
-      data_57: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_56' },
+          left: { kind: 'valueNode', nodeId: 'data_1' },
           operator: 'equal',
           right: { kind: 'constant', value: 1 },
         },
@@ -6342,29 +5725,29 @@ export const rossiChr_0028_wulfa_combo_3_skill: SkillDefinition = {
   },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 225, endFrame: 226, sequence: { $sequence: 'repeatEachTick_3' } },
-    { startFrame: 227, endFrame: 227, sequence: { $sequence: 'repeatEachTick_30' } },
-    { startFrame: 227, endFrame: 228, sequence: { $sequence: 'conditional_40' } },
-    { startFrame: 227, endFrame: 228, sequence: { $sequence: 'repeatEachTick_50' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'applyBuff_55' } },
-    { startFrame: 227, endFrame: 228, sequence: { $sequence: 'conditional_57' } },
-    { startFrame: 29, endFrame: 29, sequence: { $sequence: 'repeatEachTick_85' } },
-    { startFrame: 29, endFrame: 30, sequence: { $sequence: 'conditional_97' } },
-    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'repeatEachTick_3' } },
-    { startFrame: 29, endFrame: 30, sequence: { $sequence: 'repeatEachTick_110' } },
-    { startFrame: 0, endFrame: 28, sequence: { $sequence: 'conditional_128' } },
-    { startFrame: 29, endFrame: 30, sequence: { $sequence: 'conditional_130' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'applyBuff_131' } },
-    { startFrame: 212, endFrame: 215, sequence: { $sequence: 'applyBuff_131' } },
-    { startFrame: 60, endFrame: 211, sequence: { $sequence: 'markCurrentSkillCanInterrupt_133' } },
-    { startFrame: 211, endFrame: 212, sequence: { $sequence: 'finishTimeline_134' } },
-    { startFrame: 0, endFrame: 16, sequence: { $sequence: 'startTimeDilation_135' } },
-    { startFrame: 212, endFrame: 222, sequence: { $sequence: 'startTimeDilation_135' } },
-    { startFrame: 29, endFrame: 58, sequence: { $sequence: 'conditional_139' } },
-    { startFrame: 29, endFrame: 59, sequence: { $sequence: 'conditional_142' } },
-    { startFrame: 227, endFrame: 257, sequence: { $sequence: 'conditional_142' } },
-    { startFrame: 0, endFrame: 60, sequence: { $sequence: 'applyBuff_146' } },
-    { startFrame: 212, endFrame: 259, sequence: { $sequence: 'applyBuff_146' } },
+    { startFrame: 225, endFrame: 226, sequence: { $sequence: 'findTargets_9' } },
+    { startFrame: 227, endFrame: 227, sequence: { $sequence: 'repeatEachTick_40' } },
+    { startFrame: 227, endFrame: 228, sequence: { $sequence: 'ifElse_51' } },
+    { startFrame: 227, endFrame: 228, sequence: { $sequence: 'findTargets_71' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'applyBuff_76' } },
+    { startFrame: 227, endFrame: 228, sequence: { $sequence: 'checkCondition_78' } },
+    { startFrame: 29, endFrame: 29, sequence: { $sequence: 'repeatEachTick_111' } },
+    { startFrame: 29, endFrame: 30, sequence: { $sequence: 'ifElse_124' } },
+    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'findTargets_9' } },
+    { startFrame: 29, endFrame: 30, sequence: { $sequence: 'findTargets_152' } },
+    { startFrame: 0, endFrame: 28, sequence: { $sequence: 'ifElse_166' } },
+    { startFrame: 29, endFrame: 30, sequence: { $sequence: 'ifElse_170' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'applyBuff_171' } },
+    { startFrame: 212, endFrame: 215, sequence: { $sequence: 'applyBuff_171' } },
+    { startFrame: 60, endFrame: 211, sequence: { $sequence: 'markCurrentSkillCanInterrupt_173' } },
+    { startFrame: 211, endFrame: 212, sequence: { $sequence: 'interruptCurrentSkill_174' } },
+    { startFrame: 0, endFrame: 16, sequence: { $sequence: 'startTimeDilation_175' } },
+    { startFrame: 212, endFrame: 222, sequence: { $sequence: 'startTimeDilation_175' } },
+    { startFrame: 29, endFrame: 58, sequence: { $sequence: 'ifElse_180' } },
+    { startFrame: 29, endFrame: 59, sequence: { $sequence: 'ifElse_184' } },
+    { startFrame: 227, endFrame: 257, sequence: { $sequence: 'ifElse_184' } },
+    { startFrame: 0, endFrame: 60, sequence: { $sequence: 'applyBuff_189' } },
+    { startFrame: 212, endFrame: 259, sequence: { $sequence: 'applyBuff_189' } },
   ],
   smartTarget: 'enemy',
   skillType: 'comboSkill',
@@ -6391,113 +5774,203 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_2: {
+      checkCondition_2: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+      checkCondition_6: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: null,
+      },
+      applyBuff_14: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_ult_stopenemy_elite',
-            target: 'enemy',
+            buffs: [
+              {
+                buffId: 'buff_chr_0028_wulfa_ult_stopenemy_elite',
+                blackboardAssignments: { duration: { kind: 'constant', value: 3.099969 } },
+              },
+            ],
+            targets: { kind: 'fixed', target: 'enemy' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
-            blackboardAssignments: { duration: { kind: 'constant', value: 3.099969 } },
           },
         },
         next: null,
       },
-      conditional_3: {
+      checkCondition_13: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' }, alwaysNext: true },
-          whenTrue: { $sequence: 'applyBuff_2' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
         next: null,
       },
-      conditional_4: {
+      ifElse_16: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_13' },
+          whenTrue: { $sequence: 'applyBuff_14' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      checkCondition_15: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+        },
+        next: null,
+      },
+      ifElse_17: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_15' },
           whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'conditional_3' },
+          whenFalse: { $sequence: 'ifElse_16' },
         },
         next: null,
       },
-      applyBuff_6: {
+      checkCondition_18: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+        },
+        next: 'ifElse_17',
+      },
+      findTargets_19: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'maintar',
+          },
+        },
+        next: 'checkCondition_18',
+      },
+      applyBuff_25: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_ult_stopenemy',
-            target: 'enemy',
+            buffs: [
+              {
+                buffId: 'buff_chr_0028_wulfa_ult_stopenemy',
+                blackboardAssignments: { duration: { kind: 'constant', value: 2.866664 } },
+              },
+            ],
+            targets: { kind: 'fixed', target: 'enemy' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
-            blackboardAssignments: { duration: { kind: 'constant', value: 2.866664 } },
           },
         },
         next: null,
       },
-      conditional_7: {
+      checkCondition_24: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' }, alwaysNext: true },
-          whenTrue: { $sequence: 'applyBuff_6' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
         next: null,
       },
-      conditional_8: {
+      ifElse_27: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' }, alwaysNext: true },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_24' },
+          whenTrue: { $sequence: 'applyBuff_25' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      ifElse_28: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_15' },
           whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'conditional_7' },
+          whenFalse: { $sequence: 'ifElse_27' },
         },
         next: null,
       },
-      applyBuff_10: {
+      checkCondition_29: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+        },
+        next: 'ifElse_28',
+      },
+      findTargets_30: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'maintar',
+          },
+        },
+        next: 'checkCondition_29',
+      },
+      applyBuff_34: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_ult_addtional_battleshape',
-            target: 'enemy',
+            buffs: [{ buffId: 'buff_chr_0028_wulfa_ult_addtional_battleshape' }],
+            targets: { kind: 'fixed', target: 'enemy' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
         },
         next: null,
       },
-      modifyActionValue_11: {
+      modifyActionValue_35: {
         action: {
           kind: 'modifyActionValue',
           parameters: { key: 'hit_num', operation: 'add', value: { kind: 'constant', value: 1 } },
         },
         next: null,
       },
-      dealDamage_12: {
+      dealDamage_36: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'heat',
-            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_8' },
             tags: ['ultimateSkill'],
             features: ['canBreakWeakness'],
           },
         },
-        next: 'modifyActionValue_11',
+        next: 'modifyActionValue_35',
       },
-      repeatEachTick_13: {
+      repeatEachTick_37: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'fixed', target: 'enemy' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 1,
               targetTriggerIntervalSeconds: 0.033,
             },
           },
-          body: { $sequence: 'dealDamage_12' },
+          body: { $sequence: 'dealDamage_36' },
         },
         next: null,
       },
-      modifyActionValue_14: {
+      modifyActionValue_38: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -6506,55 +5979,29 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
             value: { kind: 'constant', value: 0 },
           },
         },
-        next: 'repeatEachTick_13',
+        next: 'repeatEachTick_37',
       },
-      dealDamage_opt2: {
+      dealDamage_44: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'heat',
-            attackScale: { kind: 'valueNode', nodeId: 'data_6' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_9' },
             tags: ['ultimateSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_7' },
+            stagger: { kind: 'valueNode', nodeId: 'data_10' },
           },
         },
-        next: 'modifyActionValue_11',
+        next: 'modifyActionValue_35',
       },
-      applyElementalInfliction_opt3: {
+      applyElementalInfliction_45: {
         action: {
           kind: 'applyElementalInfliction',
           parameters: { element: 'heat', isExtra: false },
         },
-        next: 'dealDamage_opt2',
+        next: 'dealDamage_44',
       },
-      repeatEachTick_opt4: {
-        action: {
-          kind: 'repeatEachTick',
-          parameters: {
-            nativeChanneling: {
-              executeEachFrame: true,
-              triggerIntervalSeconds: 0.033,
-              maxCountPerTarget: 1,
-              targetTriggerIntervalSeconds: 0.033,
-            },
-          },
-          body: { $sequence: 'applyElementalInfliction_opt3' },
-        },
-        next: null,
-      },
-      modifyActionValue_opt5: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'hit_num',
-            operation: 'assign',
-            value: { kind: 'constant', value: 0 },
-          },
-        },
-        next: 'repeatEachTick_opt4',
-      },
-      startTimeDilation_24: {
+      startTimeDilation_50: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -6600,28 +6047,38 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      conditional_25: {
+      checkCondition_49: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_24' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
         },
         next: null,
       },
-      applyBuff_26: {
+      ifElse_51: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_49' },
+          whenTrue: { $sequence: 'startTimeDilation_50' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      applyBuff_52: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_damage_immune_ult_skill',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_common_damage_immune_ult_skill' }],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
         },
         next: null,
       },
-      hideUi_27: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      startUltimateTimeDilation_28: {
+      hideUi_53: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      startUltimateTimeDilation_54: {
         action: {
           kind: 'startUltimateTimeDilation',
           parameters: {
@@ -6632,122 +6089,242 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      calculateActionValue_29: {
+      calculateActionValue_55: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'crit_damage_up_to_bleed',
             operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_10' },
-            right: { kind: 'valueNode', nodeId: 'data_11' },
+            left: { kind: 'valueNode', nodeId: 'data_13' },
+            right: { kind: 'valueNode', nodeId: 'data_14' },
           },
         },
         next: null,
       },
-      calculateActionValue_30: {
+      calculateActionValue_56: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atk_scale_3',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_12' },
-            right: { kind: 'valueNode', nodeId: 'data_13' },
+            left: { kind: 'valueNode', nodeId: 'data_9' },
+            right: { kind: 'valueNode', nodeId: 'data_15' },
           },
         },
-        next: 'calculateActionValue_29',
+        next: 'calculateActionValue_55',
       },
-      calculateActionValue_31: {
+      calculateActionValue_57: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atk_scale_2',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_14' },
+            left: { kind: 'valueNode', nodeId: 'data_8' },
             right: { kind: 'valueNode', nodeId: 'data_15' },
           },
         },
-        next: 'calculateActionValue_30',
+        next: 'calculateActionValue_56',
       },
-      calculateActionValue_32: {
+      calculateActionValue_58: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atk_scale_1',
             operation: 'multiply',
             left: { kind: 'valueNode', nodeId: 'data_16' },
-            right: { kind: 'valueNode', nodeId: 'data_17' },
+            right: { kind: 'valueNode', nodeId: 'data_15' },
           },
         },
-        next: 'calculateActionValue_31',
+        next: 'calculateActionValue_57',
       },
-      conditional_33: {
+      checkCondition_59: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_19' } },
-          whenTrue: { $sequence: 'calculateActionValue_32' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_18' } },
         },
-        next: null,
+        next: 'calculateActionValue_58',
       },
-      applyBuff_34: {
+      applyBuff_60: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_ult_crit_damage_up_to_bleed',
-            target: 'caster',
+            buffs: [
+              {
+                buffId: 'buff_chr_0028_wulfa_ult_crit_damage_up_to_bleed',
+                copiedBlackboardAssignments: {
+                  critical_damage_up_to_bleed: 'crit_damage_up_to_bleed',
+                },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
-            copiedBlackboardAssignments: { critical_damage_up_to_bleed: 'crit_damage_up_to_bleed' },
           },
         },
         next: null,
       },
-      dealDamage_52: {
+      dealDamage_64: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'heat',
-            attackScale: { kind: 'valueNode', nodeId: 'data_20' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_16' },
             tags: ['ultimateSkill'],
             features: ['canBreakWeakness'],
           },
         },
         next: null,
       },
-      createSpatialPointTargets_53: {
+      ifElse_68: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: null },
+          whenTrue: { $sequence: 'dealDamage_64' },
+          whenFalse: { $sequence: 'dealDamage_64' },
+        },
+        next: null,
+      },
+      mergeContextTargets_69: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+        },
+        next: 'ifElse_68',
+      },
+      createSpatialPointTargets_70: {
         action: {
           kind: 'createSpatialPointTargets',
           parameters: { saveToContextKey: 'pos2', count: { kind: 'constant', value: 1 } },
         },
-        next: 'dealDamage_52',
+        next: 'mergeContextTargets_69',
       },
-      repeatEachTick_510: {
+      ifElse_71: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: null },
+          whenTrue: { $sequence: 'createSpatialPointTargets_70' },
+          whenFalse: { $sequence: 'createSpatialPointTargets_70' },
+        },
+        next: null,
+      },
+      createSpatialPointTargets_72: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'pos1', count: { kind: 'constant', value: 1 } },
+        },
+        next: 'ifElse_71',
+      },
+      checkCondition_361: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_19' } },
+        },
+        next: null,
+      },
+      repeatEachTick_362: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'fixed', target: 'enemy' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: -1,
               targetTriggerIntervalSeconds: 0.03333,
             },
           },
-          body: { $sequence: null },
+          body: { $sequence: 'checkCondition_361' },
         },
         next: null,
       },
+      findTargets_opt1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'maintar',
+          },
+        },
+        next: null,
+      },
+      ifElse_opt2: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_2' },
+          whenTrue: { $sequence: 'findTargets_opt1' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      ifElse_opt3: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_6' },
+          whenTrue: { $sequence: 'ifElse_opt2' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      ifElse_opt4: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: null },
+          whenTrue: { $sequence: 'applyElementalInfliction_45' },
+          whenFalse: { $sequence: 'applyElementalInfliction_45' },
+        },
+        next: null,
+      },
+      repeatEachTick_opt5: {
+        action: {
+          kind: 'repeatEachTick',
+          parameters: {
+            nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'fixed', target: 'enemy' },
+              executeEachFrame: true,
+              triggerIntervalSeconds: 0.033,
+              maxCountPerTarget: 1,
+              targetTriggerIntervalSeconds: 0.033,
+            },
+          },
+          body: { $sequence: 'ifElse_opt4' },
+        },
+        next: null,
+      },
+      modifyActionValue_opt6: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'hit_num',
+            operation: 'assign',
+            value: { kind: 'constant', value: 0 },
+          },
+        },
+        next: 'repeatEachTick_opt5',
+      },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'enemyRankIn', ranks: ['elite'] } },
-      data_2: {
+      data_1: {
         type: 'boolean',
         expression: {
-          kind: 'entityTagMatch',
-          target: 'enemy',
-          tagQueryType: 'hasAny',
-          tags: ['Immune/Damage', 'SelectCategory/Unmarkable'],
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: true,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
         },
       },
-      data_3: { type: 'boolean', expression: { kind: 'enemyRankIn', ranks: ['mob'] } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: { type: 'boolean', expression: { kind: 'enemyRankIn', ranks: ['elite'] } },
       data_4: {
         type: 'boolean',
         expression: {
@@ -6757,33 +6334,50 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
           tags: ['Immune/Damage', 'SelectCategory/Unmarkable'],
         },
       },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_3' } },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'hit_num', fallback: 0 } },
-      data_9: {
+      data_5: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_6: { type: 'boolean', expression: { kind: 'enemyRankIn', ranks: ['mob'] } },
+      data_7: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
+      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_3' } },
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'hit_num', fallback: 0 } },
+      data_12: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_8' },
+          left: { kind: 'valueNode', nodeId: 'data_11' },
           operator: 'greater',
           right: { kind: 'constant', value: 0 },
         },
       },
-      data_10: {
+      data_13: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'crit_damage_up_to_bleed' },
       },
-      data_11: {
+      data_14: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'potential_5_critical_damage' },
       },
-      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_3' } },
-      data_13: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'potential_5_damage_scale' },
-      },
-      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
       data_15: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'potential_5_damage_scale' },
@@ -6791,22 +6385,18 @@ export const rossiChr_0028_wulfa_ultimate_skillActionGraph = {
       data_16: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
       data_17: {
         type: 'number',
-        expression: { kind: 'blackboard', key: 'potential_5_damage_scale' },
-      },
-      data_18: {
-        type: 'number',
         expression: { kind: 'blackboard', key: 'potential_5', fallback: 0 },
       },
-      data_19: {
+      data_18: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_18' },
+          left: { kind: 'valueNode', nodeId: 'data_17' },
           operator: 'greater',
           right: { kind: 'constant', value: 0.5 },
         },
       },
-      data_20: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
+      data_19: { type: 'boolean', expression: { kind: 'enemyRankIn', ranks: ['elite', 'boss'] } },
     },
   },
   macros: {},
@@ -6833,43 +6423,44 @@ export const rossiChr_0028_wulfa_ultimate_skill: SkillDefinition = {
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
-    { startFrame: 57, endFrame: 150, sequence: { $sequence: 'conditional_4' } },
-    { startFrame: 64, endFrame: 150, sequence: { $sequence: 'conditional_8' } },
-    { startFrame: 64, endFrame: 111, sequence: { $sequence: 'applyBuff_10' } },
-    { startFrame: 122, endFrame: 125, sequence: { $sequence: 'modifyActionValue_14' } },
-    { startFrame: 131, endFrame: 134, sequence: { $sequence: 'modifyActionValue_opt5' } },
-    { startFrame: 134, endFrame: 135, sequence: { $sequence: 'conditional_25' } },
-    { startFrame: 0, endFrame: 155, sequence: { $sequence: 'applyBuff_26' } },
-    { startFrame: 0, endFrame: 57, sequence: { $sequence: 'hideUi_27' } },
-    { startFrame: 0, endFrame: 57, sequence: { $sequence: 'startUltimateTimeDilation_28' } },
-    { startFrame: 58, endFrame: 208, sequence: { $sequence: 'conditional_33' } },
-    { startFrame: 58, endFrame: 208, sequence: { $sequence: 'applyBuff_34' } },
-    { startFrame: 63, endFrame: 64, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 65, endFrame: 66, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 66, endFrame: 67, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 69, endFrame: 70, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 71, endFrame: 72, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 74, endFrame: 75, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 75, endFrame: 76, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 77, endFrame: 78, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 78, endFrame: 79, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 80, endFrame: 81, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 83, endFrame: 84, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 84, endFrame: 85, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 87, endFrame: 88, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 88, endFrame: 89, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 90, endFrame: 91, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 92, endFrame: 93, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 94, endFrame: 95, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 96, endFrame: 97, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 97, endFrame: 98, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 99, endFrame: 100, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 102, endFrame: 103, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 103, endFrame: 104, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 106, endFrame: 107, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 108, endFrame: 109, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 111, endFrame: 112, sequence: { $sequence: 'createSpatialPointTargets_53' } },
-    { startFrame: 63, endFrame: 131, sequence: { $sequence: 'repeatEachTick_510' } },
+    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_opt3' } },
+    { startFrame: 57, endFrame: 150, sequence: { $sequence: 'findTargets_19' } },
+    { startFrame: 64, endFrame: 150, sequence: { $sequence: 'findTargets_30' } },
+    { startFrame: 64, endFrame: 111, sequence: { $sequence: 'applyBuff_34' } },
+    { startFrame: 122, endFrame: 125, sequence: { $sequence: 'modifyActionValue_38' } },
+    { startFrame: 131, endFrame: 134, sequence: { $sequence: 'modifyActionValue_opt6' } },
+    { startFrame: 134, endFrame: 135, sequence: { $sequence: 'ifElse_51' } },
+    { startFrame: 0, endFrame: 155, sequence: { $sequence: 'applyBuff_52' } },
+    { startFrame: 0, endFrame: 57, sequence: { $sequence: 'hideUi_53' } },
+    { startFrame: 0, endFrame: 57, sequence: { $sequence: 'startUltimateTimeDilation_54' } },
+    { startFrame: 58, endFrame: 208, sequence: { $sequence: 'checkCondition_59' } },
+    { startFrame: 58, endFrame: 208, sequence: { $sequence: 'applyBuff_60' } },
+    { startFrame: 63, endFrame: 64, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 65, endFrame: 66, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 66, endFrame: 67, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 69, endFrame: 70, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 71, endFrame: 72, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 74, endFrame: 75, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 75, endFrame: 76, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 77, endFrame: 78, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 78, endFrame: 79, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 80, endFrame: 81, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 83, endFrame: 84, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 84, endFrame: 85, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 87, endFrame: 88, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 88, endFrame: 89, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 90, endFrame: 91, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 92, endFrame: 93, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 94, endFrame: 95, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 96, endFrame: 97, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 97, endFrame: 98, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 99, endFrame: 100, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 102, endFrame: 103, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 103, endFrame: 104, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 106, endFrame: 107, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 108, endFrame: 109, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 111, endFrame: 112, sequence: { $sequence: 'createSpatialPointTargets_72' } },
+    { startFrame: 63, endFrame: 131, sequence: { $sequence: 'repeatEachTick_362' } },
   ],
   smartTarget: 'enemy',
   cooldownFrames: 300,
@@ -6895,6 +6486,7 @@ export const rossiCommon_character_perfect_dodge: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [],
+  defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
 };
@@ -6902,21 +6494,19 @@ export const rossiCommon_character_perfect_dodge: SkillDefinition = {
 const rossiComboCondition1ActionGraph = {
   main: {
     nodes: {
-      conditional_1: {
+      checkCondition_1: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-          whenTrue: { $sequence: null },
         },
         next: null,
       },
-      conditional_2: {
+      checkCondition_2: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'conditional_1' },
         },
-        next: null,
+        next: 'checkCondition_1',
       },
     },
     dataNodes: {
@@ -6937,6 +6527,7 @@ const rossiComboCondition1ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'contextTargetBuffStackCompare',
+          compareZeroWhenTargetMissing: true,
           contextKey: 'trigger',
           tagQueryType: 'hasAny',
           buffTags: ['Skill/Character/Common/NoGuard'],
@@ -6955,44 +6546,40 @@ const rossiComboCondition1: ComboSkillConditionDefinition = {
   event: 'beforeTakeInfliction',
   immediately: false,
   initialValues: null,
-  sequence: { $sequence: 'conditional_2' },
+  sequence: { $sequence: 'checkCondition_2' },
   actionGraph: rossiComboCondition1ActionGraph,
 };
 
 const rossiComboCondition2ActionGraph = {
   main: {
     nodes: {
-      conditional_1: {
+      checkCondition_1: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-          whenTrue: { $sequence: null },
         },
         next: null,
       },
-      conditional_2: {
+      checkCondition_2: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'conditional_1' },
         },
-        next: null,
+        next: 'checkCondition_1',
       },
-      conditional_3: {
+      checkCondition_3: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-          whenTrue: { $sequence: 'conditional_2' },
         },
-        next: null,
+        next: 'checkCondition_2',
       },
-      conditional_4: {
+      checkCondition_4: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-          whenTrue: { $sequence: 'conditional_3' },
         },
-        next: null,
+        next: 'checkCondition_3',
       },
     },
     dataNodes: {
@@ -7013,6 +6600,7 @@ const rossiComboCondition2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'contextTargetBuffStackCompare',
+          compareZeroWhenTargetMissing: false,
           contextKey: 'trigger',
           tagQueryType: 'hasAny',
           buffTags: ['Skill/Character/Common/SpellInflict'],
@@ -7043,7 +6631,7 @@ const rossiComboCondition2: ComboSkillConditionDefinition = {
   event: 'addedBuff',
   immediately: false,
   initialValues: null,
-  sequence: { $sequence: 'conditional_4' },
+  sequence: { $sequence: 'checkCondition_4' },
   actionGraph: rossiComboCondition2ActionGraph,
 };
 
@@ -7078,16 +6666,9 @@ const rossiBuff1: SkillBuffDefinition = {
   maxTriggerCount: { blackboardKey: 'trigger_times' },
   applyTags: [],
   extendTags: [],
-  blackboard: {
-    atk_scale: 0.3,
-    damage_interval: 0.1,
-    duration: 1,
-    poise: 0,
-    posie: 0,
-    trigger_times: 3,
-  },
+  blackboard: { atk_scale: 0.3, damage_interval: 0.1, duration: 1, trigger_times: 3 },
   attributeModifiers: [],
-  lifecycleSequences: { trigger: { $sequence: 'dealDamage_1' } },
+  lifecycleSequences: { trigger: [{ $sequence: 'dealDamage_1' }] },
   actionGraph: rossiBuff1ActionGraph,
 };
 
@@ -7098,16 +6679,19 @@ const rossiBuff2ActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_combo_2_damage',
-            target: 'buffOwner',
-            source: 'buffSource',
+            buffs: [
+              {
+                buffId: 'buff_chr_0028_wulfa_combo_2_damage',
+                copiedBlackboardAssignments: {
+                  atk_scale: 'atk_scale',
+                  trigger_times: 'trigger_times',
+                  damage_interval: 'damage_interval',
+                },
+              },
+            ],
+            targets: { kind: 'inputTarget' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
-            copiedBlackboardAssignments: {
-              atk_scale: 'atk_scale',
-              poise: 'poise',
-              trigger_times: 'trigger_times',
-              damage_interval: 'damage_interval',
-            },
           },
         },
         next: null,
@@ -7124,16 +6708,9 @@ const rossiBuff2: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration' },
   applyTags: [],
   extendTags: [],
-  blackboard: {
-    atk_scale: 0.3,
-    damage_interval: 0.1,
-    duration: 3,
-    poise: 0,
-    posie: 0,
-    trigger_times: 3,
-  },
+  blackboard: { atk_scale: 0.3, damage_interval: 0.1, duration: 3, trigger_times: 3 },
   attributeModifiers: [],
-  lifecycleSequences: { finish: { $sequence: 'applyBuff_1' } },
+  lifecycleSequences: { finish: [{ $sequence: 'applyBuff_1' }] },
   actionGraph: rossiBuff2ActionGraph,
 };
 
@@ -7151,118 +6728,24 @@ const rossiBuff3ActionGraph = {
         },
         next: null,
       },
-      showComboRingQte_2: {
-        action: {
-          kind: 'showComboRingQte',
-          parameters: {
-            earlyDurationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
-            activeDurationSeconds: { kind: 'valueNode', nodeId: 'data_2' },
-          },
-        },
-        next: null,
-      },
-      spawnAbilityEntity_3: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            abilityEntityId: 'abilityentity_chr_0028_wulfa_combo_qte_timing',
-            childSkillId: 'chr_0028_wulfa_absorb_entity_effect_1',
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: false,
-          },
-        },
-        next: null,
-      },
-      conditional_4: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-          whenTrue: { $sequence: 'spawnAbilityEntity_3' },
-        },
-        next: null,
-      },
-      spawnAbilityEntity_5: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            abilityEntityId: 'abilityentity_chr_0028_wulfa_combo_qte_timing',
-            childSkillId: 'chr_0028_wulfa_absorb_entity_effect_2',
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: false,
-          },
-        },
-        next: null,
-      },
-      conditional_6: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-          whenTrue: { $sequence: 'spawnAbilityEntity_5' },
-        },
-        next: null,
-      },
-      finishBuffsById_7: {
-        action: {
-          kind: 'finishBuffsById',
-          parameters: {
-            target: 'buffOwner',
-            buffIds: ['buff_train_output_succbuff_or_failbuff_by_id'],
-            reason: 'early',
-          },
-        },
-        next: null,
-      },
-      applyBuff_8: {
+      applyBuff_2: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_tut_comboskill_failure',
-            target: 'buffOwner',
-            source: 'buffSource',
+            buffs: [
+              {
+                buffId: 'buff_chr_0028_wulfa_tut_comboskill_success',
+                blackboardAssignments: { duration: { kind: 'constant', value: 0.2 } },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
-            blackboardAssignments: { duration: { kind: 'constant', value: 0.2 } },
-          },
-        },
-        next: 'finishBuffsById_7',
-      },
-      setCurrentBuffTimePaused_9: {
-        action: { kind: 'setCurrentBuffTimePaused', parameters: { paused: false } },
-        next: null,
-      },
-      conditional_10: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-          whenTrue: { $sequence: 'setCurrentBuffTimePaused_9' },
-        },
-        next: null,
-      },
-      setCurrentBuffTimePaused_11: {
-        action: { kind: 'setCurrentBuffTimePaused', parameters: { paused: true } },
-        next: null,
-      },
-      conditional_12: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-          whenTrue: { $sequence: 'setCurrentBuffTimePaused_11' },
-        },
-        next: null,
-      },
-      applyBuff_13: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffId: 'buff_chr_0028_wulfa_tut_comboskill_success',
-            target: 'buffOwner',
-            source: 'buffSource',
-            inheritSourceSkillCastInfo: true,
-            blackboardAssignments: { duration: { kind: 'constant', value: 0.2 } },
           },
         },
         next: null,
       },
-      modifyActionValue_14: {
+      modifyActionValue_3: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -7271,15 +6754,116 @@ const rossiBuff3ActionGraph = {
             value: { kind: 'constant', value: 1 },
           },
         },
-        next: 'applyBuff_13',
+        next: 'applyBuff_2',
       },
-      conditional_15: {
+      showComboRingQte_4: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
-          whenTrue: { $sequence: 'modifyActionValue_14' },
+          kind: 'showComboRingQte',
+          parameters: {
+            earlyDurationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
+            activeDurationSeconds: { kind: 'valueNode', nodeId: 'data_2' },
+          },
+          triggeredAction: { $sequence: 'modifyActionValue_3' },
         },
         next: null,
+      },
+      spawnAbilityEntity_5: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'owner' },
+            abilityEntityId: 'abilityentity_chr_0028_wulfa_combo_qte_timing',
+            childSkillId: 'chr_0028_wulfa_absorb_entity_effect_1',
+            inheritActionBlackboard: false,
+            dieWhenSourceDies: false,
+          },
+        },
+        next: null,
+      },
+      checkCondition_6: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+        },
+        next: 'spawnAbilityEntity_5',
+      },
+      spawnAbilityEntity_7: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'owner' },
+            abilityEntityId: 'abilityentity_chr_0028_wulfa_combo_qte_timing',
+            childSkillId: 'chr_0028_wulfa_absorb_entity_effect_2',
+            inheritActionBlackboard: false,
+            dieWhenSourceDies: false,
+          },
+        },
+        next: null,
+      },
+      checkCondition_8: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+        },
+        next: 'spawnAbilityEntity_7',
+      },
+      finishBuffsById_9: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'owner' },
+            buffIds: ['buff_train_output_succbuff_or_failbuff_by_id'],
+            reason: 'early',
+          },
+        },
+        next: null,
+      },
+      applyBuff_10: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_chr_0028_wulfa_tut_comboskill_failure',
+                blackboardAssignments: { duration: { kind: 'constant', value: 0.2 } },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: 'finishBuffsById_9',
+      },
+      checkCondition_11: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+        },
+        next: null,
+      },
+      setCurrentBuffTimePaused_12: {
+        action: { kind: 'setCurrentBuffTimePaused', parameters: { paused: false } },
+        next: null,
+      },
+      checkCondition_13: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+        },
+        next: 'setCurrentBuffTimePaused_12',
+      },
+      setCurrentBuffTimePaused_14: {
+        action: { kind: 'setCurrentBuffTimePaused', parameters: { paused: true } },
+        next: null,
+      },
+      checkCondition_15: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+        },
+        next: 'setCurrentBuffTimePaused_14',
       },
     },
     dataNodes: {
@@ -7299,16 +6883,19 @@ const rossiBuff3ActionGraph = {
         },
       },
       data_5: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'EntityBB_Combo_qte_proto_use', fallback: 0 },
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_3' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
       },
       data_6: {
         type: 'boolean',
         expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_5' },
-          operator: 'equal',
-          right: { kind: 'constant', value: 1 },
+          kind: 'eventBuffIdMatch',
+          buffIds: ['buff_chr_0028_wulfa_combo_1_qte_timer'],
         },
       },
       data_7: {
@@ -7321,21 +6908,6 @@ const rossiBuff3ActionGraph = {
       data_8: {
         type: 'boolean',
         expression: { kind: 'eventSkillIdIn', skillIds: ['chr_0028_wulfa_power_attack'] },
-      },
-      data_9: {
-        type: 'boolean',
-        expression: { kind: 'eventSkillTypeIn', skillTypes: ['comboSkill'] },
-      },
-      data_10: { type: 'boolean', expression: { kind: 'eventComboRingQteSucceeded' } },
-      data_11: {
-        type: 'boolean',
-        expression: {
-          kind: 'all',
-          conditions: [
-            { kind: 'conditionNode', nodeId: 'data_9' },
-            { kind: 'conditionNode', nodeId: 'data_10' },
-          ],
-        },
       },
     },
   },
@@ -7353,15 +6925,15 @@ const rossiBuff3: SkillBuffDefinition = {
   attributeModifiers: [],
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'modifyActionValue_1' } },
-    { startFrame: 0, endFrame: 180, sequence: { $sequence: 'showComboRingQte_2' } },
-    { startFrame: 3, endFrame: 19, sequence: { $sequence: 'conditional_4' } },
-    { startFrame: 15, endFrame: 16, sequence: { $sequence: 'conditional_6' } },
-    { startFrame: 35, endFrame: 38, sequence: { $sequence: 'applyBuff_8' } },
+    { startFrame: 0, endFrame: 180, sequence: { $sequence: 'showComboRingQte_4' } },
+    { startFrame: 3, endFrame: 19, sequence: { $sequence: 'checkCondition_6' } },
+    { startFrame: 15, endFrame: 16, sequence: { $sequence: 'checkCondition_8' } },
+    { startFrame: 35, endFrame: 38, sequence: { $sequence: 'applyBuff_10' } },
   ],
   abilityEventResponses: [
-    { event: 'finishedBuff', priority: 0, sequence: { $sequence: 'conditional_10' } },
-    { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'conditional_12' } },
-    { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'conditional_15' } },
+    { event: 'buffEndsEarly', priority: 0, sequence: { $sequence: 'checkCondition_11' } },
+    { event: 'finishedBuff', priority: 0, sequence: { $sequence: 'checkCondition_13' } },
+    { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'checkCondition_15' } },
   ],
   actionGraph: rossiBuff3ActionGraph,
 };
@@ -7378,8 +6950,7 @@ const rossiBuff4: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration' },
   presentation: {
     visible: true,
-    iconId: 'icon_battle_crit_up',
-    iconPath: '/icons/icon_battle_crit_up.webp',
+    icon: 'endaxis:icons/icon_battle_crit_up',
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
     showInSquadIcon: true,
@@ -7400,14 +6971,7 @@ const rossiBuff4: SkillBuffDefinition = {
   },
   applyTags: [],
   extendTags: [],
-  blackboard: {
-    critical_damage_inc: 0.15,
-    critical_rate: 0.1,
-    duration: 10,
-    usp_stage_1: 0.35,
-    usp_stage_2: 0.7,
-    usp_stage_3: 1,
-  },
+  blackboard: { critical_damage_inc: 0.15, critical_rate: 0.1, duration: 10 },
   attributeModifiers: [
     { attribute: 'criticalRate', slot: 'baseAddition', value: { blackboardKey: 'critical_rate' } },
     {
@@ -7486,13 +7050,12 @@ const rossiBuff8ActionGraph = {
         },
         next: null,
       },
-      conditional_2: {
+      checkCondition_2: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'adjustSkillCooldown_1' },
         },
-        next: null,
+        next: 'adjustSkillCooldown_1',
       },
       changeSkillSlot_3: {
         action: {
@@ -7504,13 +7067,14 @@ const rossiBuff8ActionGraph = {
             lifetime: 'infinite',
           },
         },
-        next: 'conditional_2',
+        next: 'checkCondition_2',
       },
       finishBuffsById_4: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
-            target: 'buffOwner',
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
             buffIds: ['buff_chr_0028_wulfa_combo_usecount'],
             reason: 'other',
           },
@@ -7521,25 +7085,23 @@ const rossiBuff8ActionGraph = {
         action: { kind: 'setCurrentBuffTimePaused', parameters: { paused: false } },
         next: null,
       },
-      conditional_6: {
+      checkCondition_6: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-          whenTrue: { $sequence: 'setCurrentBuffTimePaused_5' },
         },
-        next: null,
+        next: 'setCurrentBuffTimePaused_5',
       },
       setCurrentBuffTimePaused_7: {
         action: { kind: 'setCurrentBuffTimePaused', parameters: { paused: true } },
         next: null,
       },
-      conditional_8: {
+      checkCondition_8: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-          whenTrue: { $sequence: 'setCurrentBuffTimePaused_7' },
         },
-        next: null,
+        next: 'setCurrentBuffTimePaused_7',
       },
     },
     dataNodes: {
@@ -7579,12 +7141,12 @@ const rossiBuff8: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration' },
   applyTags: [],
   extendTags: [],
-  blackboard: { duration: 6, End_Early: 0, need_set_cd: 1 },
+  blackboard: { duration: 6, need_set_cd: 1 },
   attributeModifiers: [],
-  lifecycleSequences: { finish: { $sequence: 'finishBuffsById_4' } },
+  lifecycleSequences: { finish: [{ $sequence: 'finishBuffsById_4' }] },
   abilityEventResponses: [
-    { event: 'finishedBuff', priority: 0, sequence: { $sequence: 'conditional_6' } },
-    { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'conditional_8' } },
+    { event: 'finishedBuff', priority: 0, sequence: { $sequence: 'checkCondition_6' } },
+    { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'checkCondition_8' } },
   ],
   actionGraph: rossiBuff8ActionGraph,
 };
@@ -7596,9 +7158,9 @@ const rossiBuff9ActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_normal_bleed_effect',
-            target: 'buffOwner',
-            source: 'buffSource',
+            buffs: [{ buffId: 'buff_chr_0028_wulfa_normal_bleed_effect' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
         },
@@ -7621,56 +7183,54 @@ const rossiBuff9ActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_normal_bleed_crit_extra_damage',
-            target: 'buffOwner',
-            source: 'buffSource',
-            copiedBlackboardAssignments: {
-              atk_scale: 'extra_atk_scale',
-              damage_cd: 'damage_cd',
-              heal_scale: 'heal_scale',
-              burning_damage_scale: 'talent2_burning_damage_scale',
-            },
+            buffs: [
+              {
+                buffId: 'buff_chr_0028_wulfa_normal_bleed_crit_extra_damage',
+                copiedBlackboardAssignments: {
+                  atk_scale: 'extra_atk_scale',
+                  heal_scale: 'heal_scale',
+                  burning_damage_scale: 'talent2_burning_damage_scale',
+                },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
           },
         },
         next: null,
       },
-      conditional_4: {
+      checkCondition_4: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'applyBuff_3' },
         },
-        next: null,
+        next: 'applyBuff_3',
       },
-      conditional_5: {
+      checkCondition_5: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-          whenTrue: { $sequence: 'conditional_4' },
         },
-        next: null,
+        next: 'checkCondition_4',
       },
-      conditional_6: {
+      checkCondition_6: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-          whenTrue: { $sequence: 'conditional_5' },
         },
-        next: null,
+        next: 'checkCondition_5',
       },
-      conditional_7: {
+      checkCondition_7: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-          whenTrue: { $sequence: null },
         },
         next: null,
       },
-      conditional_8: {
+      checkCondition_8: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-          whenTrue: { $sequence: null },
         },
         next: null,
       },
@@ -7723,8 +7283,7 @@ const rossiBuff9: SkillBuffDefinition = {
   maxTriggerCount: -1,
   presentation: {
     visible: true,
-    iconId: 'icon_battle_buff_wulfa_blood',
-    iconPath: '/icons/icon_battle_buff_wulfa_blood.webp',
+    icon: 'endaxis:icons/icon_battle_buff_wulfa_blood',
     showInHeadBarCommon: true,
     showInHeadBarAttached: false,
     showInSquadIcon: false,
@@ -7748,14 +7307,11 @@ const rossiBuff9: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {
     atk_scale: 0.3,
-    damage_cd: 1.5,
     damage_interval: 1,
     damage_up: 0.12,
     duration: 1,
     extra_atk_scale: 1.5,
     heal_scale: 0.2,
-    poise: 0,
-    posie: 0,
     talent_2: 0,
     talent2_burning_damage_scale: 1.5,
   },
@@ -7763,7 +7319,7 @@ const rossiBuff9: SkillBuffDefinition = {
   damageModifiers: [
     {
       enabledSide: 'defender',
-      condition: { $sequence: 'conditional_7' },
+      condition: { $sequence: 'checkCondition_7' },
       processors: [
         {
           kind: 'damageScale',
@@ -7775,7 +7331,7 @@ const rossiBuff9: SkillBuffDefinition = {
     },
     {
       enabledSide: 'defender',
-      condition: { $sequence: 'conditional_8' },
+      condition: { $sequence: 'checkCondition_8' },
       processors: [
         {
           kind: 'damageScale',
@@ -7786,9 +7342,9 @@ const rossiBuff9: SkillBuffDefinition = {
       ],
     },
   ],
-  lifecycleSequences: { trigger: { $sequence: 'dealDamage_2' } },
+  lifecycleSequences: { trigger: [{ $sequence: 'dealDamage_2' }] },
   abilityEventResponses: [
-    { event: 'takeCriticalDamage', priority: 0, sequence: { $sequence: 'conditional_6' } },
+    { event: 'takeCriticalDamage', priority: 0, sequence: { $sequence: 'checkCondition_6' } },
   ],
   actionGraph: rossiBuff9ActionGraph,
 };
@@ -7796,97 +7352,111 @@ const rossiBuff9: SkillBuffDefinition = {
 const rossiBuff10ActionGraph = {
   main: {
     nodes: {
-      applyBuff_2: {
+      applyBuff_6: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0028_wulfa_talent2_heal_effect',
-            target: 'buffSource',
-            source: 'buffSource',
+            buffs: [{ buffId: 'buff_chr_0028_wulfa_talent2_heal_effect' }],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
         },
         next: null,
       },
-      conditional_8: {
+      checkCondition_4: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' }, alwaysNext: true },
-          whenTrue: { $sequence: 'applyBuff_2' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
         },
         next: null,
       },
-      heal_9: {
+      checkCondition_5: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: 'checkCondition_4',
+      },
+      ifElse_13: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_5' },
+          whenTrue: { $sequence: 'applyBuff_6' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      heal_14: {
         action: {
           kind: 'heal',
           parameters: {
             target: 'caster',
             tags: [],
             attribute: 'intellect',
-            multiplier: { kind: 'valueNode', nodeId: 'data_4' },
+            multiplier: { kind: 'valueNode', nodeId: 'data_3' },
             addition: { kind: 'constant', value: 0 },
           },
         },
-        next: 'conditional_8',
+        next: 'ifElse_13',
       },
-      dealDamage_10: {
+      dealDamage_15: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'heat',
-            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: [],
             features: ['talentDamage'],
           },
         },
-        next: 'heal_9',
+        next: 'heal_14',
       },
-      calculateActionValue_6: {
+      calculateActionValue_11: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'heal_scale',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_6' },
-            right: { kind: 'valueNode', nodeId: 'data_7' },
+            left: { kind: 'valueNode', nodeId: 'data_3' },
+            right: { kind: 'valueNode', nodeId: 'data_5' },
           },
         },
-        next: 'dealDamage_10',
+        next: 'dealDamage_15',
       },
-      calculateActionValue_7: {
+      calculateActionValue_12: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'atk_scale',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_8' },
-            right: { kind: 'valueNode', nodeId: 'data_9' },
+            left: { kind: 'valueNode', nodeId: 'data_4' },
+            right: { kind: 'valueNode', nodeId: 'data_5' },
           },
         },
-        next: 'calculateActionValue_6',
+        next: 'calculateActionValue_11',
       },
-      conditional_11: {
+      checkCondition_7: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' }, alwaysNext: true },
-          whenTrue: { $sequence: 'calculateActionValue_7' },
-          whenFalse: { $sequence: 'dealDamage_10' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+        },
+        next: null,
+      },
+      ifElse_16: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_7' },
+          whenTrue: { $sequence: 'calculateActionValue_12' },
+          whenFalse: { $sequence: 'dealDamage_15' },
         },
         next: null,
       },
     },
     dataNodes: {
       data_1: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0028_wulfa_talent2_heal_effect'],
-          operator: 'equal',
-          value: { kind: 'constant', value: 0 },
-        },
-      },
-      data_2: {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
@@ -7896,23 +7466,20 @@ const rossiBuff10ActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_3: {
+      data_2: {
         type: 'boolean',
         expression: {
-          kind: 'all',
-          conditions: [
-            { kind: 'conditionNode', nodeId: 'data_1' },
-            { kind: 'conditionNode', nodeId: 'data_2' },
-          ],
+          kind: 'buffIdStackCompare',
+          target: 'caster',
+          buffIds: ['buff_chr_0028_wulfa_talent2_heal_effect'],
+          operator: 'equal',
+          value: { kind: 'constant', value: 0 },
         },
       },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'heal_scale' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'heal_scale' } },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'burning_damage_scale' } },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'burning_damage_scale' } },
-      data_10: {
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'heal_scale' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'burning_damage_scale' } },
+      data_6: {
         type: 'boolean',
         expression: {
           kind: 'buffStackCompare',
@@ -7935,18 +7502,9 @@ const rossiBuff10: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration' },
   applyTags: [],
   extendTags: [],
-  blackboard: {
-    atk_scale: 0.3,
-    burning_damage_scale: 1.5,
-    damage_cd: 1.5,
-    damage_interval: 1,
-    duration: 1.2,
-    heal_scale: 0.05,
-    poise: 0,
-    posie: 0,
-  },
+  blackboard: { atk_scale: 0.3, burning_damage_scale: 1.5, duration: 1.2, heal_scale: 0.05 },
   attributeModifiers: [],
-  scheduledSequences: [{ startFrame: 0, endFrame: 19, sequence: { $sequence: 'conditional_11' } }],
+  scheduledSequences: [{ startFrame: 0, endFrame: 19, sequence: { $sequence: 'ifElse_16' } }],
   actionGraph: rossiBuff10ActionGraph,
 };
 
@@ -7963,16 +7521,7 @@ const rossiBuff11: SkillBuffDefinition = {
   timeClock: 'global',
   applyTags: [],
   extendTags: [],
-  blackboard: {
-    atk_scale: 0.3,
-    damage_cd: 1.5,
-    damage_interval: 1,
-    duration: 0.9,
-    extra_atk_scale: 1.5,
-    poise: 0,
-    posie: 0,
-    talent_2: 0,
-  },
+  blackboard: { duration: 0.9 },
   attributeModifiers: [],
   actionGraph: rossiBuff11ActionGraph,
 };
@@ -7990,20 +7539,7 @@ const rossiBuff12: SkillBuffDefinition = {
   timeClock: 'global',
   applyTags: [],
   extendTags: [],
-  blackboard: {
-    atk_scale: 0.3,
-    damage_cd: 1.5,
-    damage_interval: 1,
-    damage_up: 0.12,
-    defup: -0.5,
-    duration: 5,
-    extra_atk_scale: 1.5,
-    heal_scale: 0.2,
-    poise: 0,
-    posie: 0,
-    talent_2: 0,
-    talent2_burning_damage_scale: 1.5,
-  },
+  blackboard: { defup: -0.5, duration: 5 },
   attributeModifiers: [],
   damageModifiers: [
     {
@@ -8034,16 +7570,7 @@ const rossiBuff13: SkillBuffDefinition = {
   timeClock: 'global',
   applyTags: [],
   extendTags: [],
-  blackboard: {
-    atk_scale: 0.3,
-    damage_cd: 1.5,
-    damage_interval: 1,
-    duration: 2,
-    extra_atk_scale: 1.5,
-    poise: 0,
-    posie: 0,
-    talent_2: 0,
-  },
+  blackboard: { duration: 2 },
   attributeModifiers: [],
   actionGraph: rossiBuff13ActionGraph,
 };
@@ -8077,7 +7604,7 @@ const rossiBuff15: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration' },
   applyTags: [],
   extendTags: [],
-  blackboard: { duration: 10, End_Early: 0 },
+  blackboard: { duration: 10 },
   attributeModifiers: [],
   actionGraph: rossiBuff15ActionGraph,
 };
@@ -8094,7 +7621,7 @@ const rossiBuff16: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration' },
   applyTags: [],
   extendTags: [],
-  blackboard: { duration: 0.5, interval: 0.3 },
+  blackboard: { duration: 0.5 },
   attributeModifiers: [],
   actionGraph: rossiBuff16ActionGraph,
 };
@@ -8111,7 +7638,7 @@ const rossiBuff17: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration' },
   applyTags: [],
   extendTags: [],
-  blackboard: { atk_scale: 0.3, damage_interval: 1, duration: 1, poise: 0, posie: 0 },
+  blackboard: { duration: 1 },
   attributeModifiers: [],
   actionGraph: rossiBuff17ActionGraph,
 };
@@ -8128,7 +7655,7 @@ const rossiBuff18: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration' },
   applyTags: [],
   extendTags: [],
-  blackboard: { atk_scale: 0.3, damage_interval: 1, duration: 1, poise: 0, posie: 0 },
+  blackboard: { duration: 1 },
   attributeModifiers: [],
   actionGraph: rossiBuff18ActionGraph,
 };
@@ -8145,7 +7672,7 @@ const rossiBuff19: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration' },
   applyTags: [],
   extendTags: [],
-  blackboard: { atk_scale: 0.3, damage_interval: 1, duration: 1, poise: 0, posie: 0 },
+  blackboard: { duration: 1 },
   attributeModifiers: [],
   actionGraph: rossiBuff19ActionGraph,
 };
@@ -8162,7 +7689,7 @@ const rossiBuff20: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration' },
   applyTags: [],
   extendTags: [],
-  blackboard: { atk_scale: 0.3, damage_interval: 1, duration: 1, poise: 0, posie: 0 },
+  blackboard: { duration: 1 },
   attributeModifiers: [],
   actionGraph: rossiBuff20ActionGraph,
 };
@@ -8179,7 +7706,7 @@ const rossiBuff21: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration' },
   applyTags: [],
   extendTags: [],
-  blackboard: { atk_scale: 0.3, damage_interval: 1, duration: 1, poise: 0, posie: 0 },
+  blackboard: { duration: 1 },
   attributeModifiers: [],
   actionGraph: rossiBuff21ActionGraph,
 };
@@ -8204,11 +7731,10 @@ const rossiBuff22: SkillBuffDefinition = {
 const rossiBuff23ActionGraph = {
   main: {
     nodes: {
-      conditional_1: {
+      checkCondition_1: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-          whenTrue: { $sequence: null },
         },
         next: null,
       },
@@ -8235,7 +7761,7 @@ const rossiBuff23: SkillBuffDefinition = {
   damageModifiers: [
     {
       enabledSide: 'attacker',
-      condition: { $sequence: 'conditional_1' },
+      condition: { $sequence: 'checkCondition_1' },
       processors: [
         {
           kind: 'instantAttribute',
@@ -8262,7 +7788,7 @@ const rossiBuff24: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration' },
   applyTags: ['Status/Immobilized'],
   extendTags: [],
-  blackboard: { duration: 1.5, usp_stage_1: 0.35, usp_stage_2: 0.7, usp_stage_3: 1 },
+  blackboard: { duration: 1.5 },
   attributeModifiers: [],
   actionGraph: rossiBuff24ActionGraph,
 };
@@ -8279,7 +7805,7 @@ const rossiBuff25: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration' },
   applyTags: [],
   extendTags: [],
-  blackboard: { duration: 1.5, usp_stage_1: 0.35, usp_stage_2: 0.7, usp_stage_3: 1 },
+  blackboard: { duration: 1.5 },
   attributeModifiers: [],
   actionGraph: rossiBuff25ActionGraph,
 };
@@ -8290,6 +7816,7 @@ export const rossi: OperatorDefinition = {
   rarity: 6,
   weaponType: 'sword',
   element: 'physical',
+  characterTypeId: 'Physical',
   role: 'guard',
   mainAttribute: 'agility',
   secondaryAttribute: 'intellect',
@@ -8649,7 +8176,7 @@ export const rossi: OperatorDefinition = {
             maxChargeTime: 1,
             cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
           },
-          blackboard: { atk_scale: 0, duration: 0 },
+          blackboard: {},
           scheduledSequences: [],
         },
         chr_0028_wulfa_absorb_entity_effect_2: {
@@ -8724,7 +8251,7 @@ export const rossi: OperatorDefinition = {
             maxChargeTime: 1,
             cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
           },
-          blackboard: { atk_scale: 0, duration: 0 },
+          blackboard: {},
           scheduledSequences: [
             { startFrame: 1, endFrame: 16, sequence: { $sequence: 'startTimeDilation_1' } },
           ],

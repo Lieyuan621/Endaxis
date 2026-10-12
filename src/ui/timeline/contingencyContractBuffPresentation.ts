@@ -4,8 +4,8 @@ import { normalizeLocale } from '../../i18n/elementPlusLocale';
 import {
   contingencyContractTags,
   type ContingencyContractTagPresentation,
-} from '../../data/mechanics/contingencyContractCatalog';
-import { CONTINGENCY_CONTRACT_MECHANIC_PREFIX } from '../../data/mechanics/contingencyContractAdapter';
+} from '../../data/contingencyContract/contingencyContractCatalog';
+import { CONTINGENCY_CONTRACT_MECHANIC_PREFIX } from '../../data/contingencyContract/contingencyContractAdapter';
 
 const MECHANIC_INITIALIZATION_SOURCE_PREFIX = 'upgrade-initialization:mechanic:';
 

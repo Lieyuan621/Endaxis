@@ -1,13 +1,17 @@
+import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import { valueInputBlackboardKey } from '../../compiler/compiledGraphData';
 import type { CompiledCondition, CompiledValueInput } from '../../compiler/compiledGraphData.ts';
-import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
+import type { ArtsIntensityFactor, CombatSkillCastInfo } from '../state/foundationState';
 
 import type { ActionValueCalculation } from '../state/foundationState';
 /**
  * 生命伤害与独立失衡步骤进入玩家主动伤害生命周期的装配点。
  * 调用方必须提供同一命中的属性快照和事件端口；此处顺序具有战斗语义，不能随意拆分或并行。
  */
-import { NATIVE_SKILL_HAS_HIT_BLACKBOARD_KEY } from '../../../../packages/game-data-contract/src/conditions';
+import type {
+  PoiseModifierSide,
+  PoiseProcessTiming,
+} from '../../../../packages/game-data-contract/src/modifiers';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import type { SkillType } from '../../game-data/operatorDefinition';
 import {
@@ -18,9 +22,8 @@ import {
 import { attributeModifierValues } from '../attributes/combatAttributes';
 import type { CriticalSampleSource } from '../random/criticalSampleSource';
 import type { SimulationRandomMode } from '../random/simulationRandom';
-import type { CombatReceiptSink } from '../receipt/combatReceipt';
 import { operationProducer } from '../receipt/combatObjectIdentity';
-import { reactionDamageKind, type ReactionDamageIdentity } from './reactionDamageCritical';
+import type { CombatReceiptSink } from '../receipt/combatReceipt';
 import type { CombatVitals } from '../resources/combatVitals';
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
 import type { CombatClock } from '../time/combatClock';
@@ -31,12 +34,12 @@ import {
   type AttackReceiptSnapshot,
 } from './attackReceiptDetail';
 import { calculateBreakingAttackValue } from './breakingAttackDamage';
-import { classifyDamageTags, injectDamageScaleAttributes } from './damageScaleAttributes';
 import {
   DAMAGE_SCALE_ZONES,
   type AppliedDamageModifier,
   type DamageScaleZone,
 } from './damageScale';
+import { classifyDamageTags, injectDamageScaleAttributes } from './damageScaleAttributes';
 import { executeHealthDamage } from './healthDamage';
 import { calculatePlayerActiveDamage } from './playerActiveDamage';
 import {
@@ -52,13 +55,10 @@ import {
 } from './playerDamageContext';
 import { executePoiseDamage, type PoiseDamageEvent, type PoiseDamageModifier } from './poiseDamage';
 import { PoiseCalculationContext } from './poiseModifiers';
-import {
-  type PoiseModifierSide,
-  type PoiseProcessTiming,
-} from '../../../../packages/game-data-contract/src/modifiers';
+import { reactionDamageKind, type ReactionDamageIdentity } from './reactionDamageCritical';
 
 type RuntimeOperation = ResolvedCombatOperationStep;
-type DamageStep = ResolvedCombatStepForKind<'dealDamage' | 'dealFixedDamage'>;
+type DamageStep = ResolvedCombatStepForKind<'dealDamage'>;
 type StaggerStep = ResolvedCombatStepForKind<'dealStagger'>;
 type PoiseStep = DamageStep | StaggerStep;
 
@@ -107,7 +107,7 @@ export interface PoiseDamageMultipliers {
 export interface PlayerDamageOperationDependencies {
   readonly sourceOperatorId: string;
   /** 独立 Buff 伤害保留创建时的技能身份，不伪造技能运行上下文或写入其黑板。 */
-  readonly skillCastInfo?: import('../state/foundationState').CombatSkillCastInfo;
+  readonly skillCastInfo?: CombatSkillCastInfo;
   /** 存档中的技能释放身份；伤害回执凭它与具体施放对应。单元测试程序可能缺失。 */
   readonly castId?: string;
   readonly skillId?: string;
@@ -236,25 +236,24 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       this.#executePoise(step, value * multiplier);
       return true;
     }
-    if (step.kind !== 'dealDamage' && step.kind !== 'dealFixedDamage') {
+    if (step.kind !== 'dealDamage') {
       return operationContext === undefined
         ? this.dependencies.delegate.execute(step)
         : this.dependencies.delegate.execute(step, operationContext);
     }
-
-    if (step.kind === 'dealDamage' && step.parameters.attackScalePerStatusStack !== undefined) {
-      throw new Error('status-stack attack scale must be resolved by its recovered branch');
-    }
     if (step.parameters.damageType === 'lifeDrain') {
       throw new Error('life-drain damage uses a separate native calculation branch');
     }
+    // 目标已由宿主解析；原生在伤害前事件及各伤害单元计算前记录技能命中。
+    if (operationContext?.skillExecution !== undefined)
+      operationContext.skillExecution.hasOutputDamageBattle = true;
     const context = new PlayerDamageContext({
       sourceId: this.dependencies.sourceOperatorId,
       targetId: this.dependencies.targetId,
       damageType: step.parameters.damageType,
       targetHealthType: 'normal',
       tags: step.parameters.tags,
-      gameplayTags: step.kind === 'dealDamage' ? (step.parameters.gameplayTags ?? []) : [],
+      gameplayTags: step.parameters.gameplayTags ?? [],
       features: step.parameters.features ?? [],
       ...(skillCastInfo === undefined ? {} : { skillCastId: skillCastInfo.skillCastId }),
       skillCastInfo: skillCastInfo ?? null,
@@ -287,8 +286,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
               },
             }),
       };
-      const instantAttributeModifiers =
-        step.kind === 'dealDamage' ? (step.parameters.instantAttributeModifiers ?? []) : [];
+      const instantAttributeModifiers = step.parameters.instantAttributeModifiers ?? [];
       for (const modifier of instantAttributeModifiers) {
         const value = this.#resolveActionValue(
           modifier.value,
@@ -315,7 +313,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       }
       context.applyModifiers('beforeCalculation');
       const calculationAttackAttributes = context.attackerAttributes;
-      const attributeDetails: import('./damageScale').AppliedDamageModifier[] = [];
+      const attributeDetails: AppliedDamageModifier[] = [];
       const recordAttribute = (side: DamageModifierSide, attribute: string) => {
         const snapshot =
           side === 'attacker' ? context.attackerAttributes : context.defenderAttributes;
@@ -329,7 +327,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         recordAttribute,
       );
       context.setCalculationResult(calculation.value);
-      const scaleAttributeDetails: import('./damageScale').AppliedDamageModifier[] = [];
+      const scaleAttributeDetails: AppliedDamageModifier[] = [];
       injectDamageScaleAttributes(
         context.damageScales,
         {
@@ -358,23 +356,21 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
           );
         },
       );
-      if (step.kind === 'dealDamage') {
-        for (const modifier of step.parameters.instantDamageScaleModifiers ?? []) {
-          const addition = this.#resolveActionValue(
-            modifier.addition,
-            operationContext,
-            `instant damage scale ${modifier.side}/${modifier.zone}`,
-          );
-          if (addition !== 0)
-            context.appliedDamageModifiers.push({
-              kind: 'damageScale',
-              ...directModifierSource,
-              side: modifier.side,
-              zone: modifier.zone,
-              addition,
-            });
-          context.damageScales.modify(modifier.side, modifier.zone, addition);
-        }
+      for (const modifier of step.parameters.instantDamageScaleModifiers ?? []) {
+        const addition = this.#resolveActionValue(
+          modifier.addition,
+          operationContext,
+          `instant damage scale ${modifier.side}/${modifier.zone}`,
+        );
+        if (addition !== 0)
+          context.appliedDamageModifiers.push({
+            kind: 'damageScale',
+            ...directModifierSource,
+            side: modifier.side,
+            zone: modifier.zone,
+            addition,
+          });
+        context.damageScales.modify(modifier.side, modifier.zone, addition);
       }
       const finalAttackValue = context.resolveFinalAttackValue();
       const runtimeSnapshot = this.dependencies.resolveNonRandomRuntimeSnapshot(step);
@@ -467,11 +463,10 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
           canCritical &&
           (this.dependencies.randomMode === 'expected' || damageResult.isCritical));
       const standardCalculation =
-        step.kind === 'dealDamage' &&
-        (step.parameters.calculation === undefined || step.parameters.calculation === 'standard');
+        step.parameters.calculation === undefined || step.parameters.calculation === 'standard';
       const damageScaleMultiplier = context.damageScales.getFinalValue();
       const attackSnapshot =
-        step.kind === 'dealDamage' && step.parameters.takeAttackSnapshot === true
+        step.parameters.takeAttackSnapshot === true
           ? operationContext?.damageCalculationSnapshots?.get(step)
           : undefined;
       const skillSettingFactor =
@@ -496,7 +491,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
               : undefined;
       const separateScale = skillSettingFactor?.baseValue !== undefined;
       const finisherMultiplier =
-        step.kind === 'dealDamage' && step.parameters.calculation === 'breakingAttack'
+        step.parameters.calculation === 'breakingAttack'
           ? context.defenderAttributes.breakingAttackDamageTakenMultiplier
           : 1;
       const receiptAttack = attackSnapshot?.attack ?? calculationAttackAttributes.attack;
@@ -551,7 +546,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         targetId: this.dependencies.targetId,
         damageType: step.parameters.damageType,
         tags: step.parameters.tags,
-        gameplayTags: step.kind === 'dealDamage' ? (step.parameters.gameplayTags ?? []) : [],
+        gameplayTags: step.parameters.gameplayTags ?? [],
         features: step.parameters.features ?? [],
         result: appliedDamageResult,
         triggersCriticalEffects,
@@ -656,7 +651,6 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
           ? {}
           : { absorbDamage: this.dependencies.absorbHealthDamage }),
       });
-      operationContext?.blackboard.assignDynamic(NATIVE_SKILL_HAS_HIT_BLACKBOARD_KEY, 1);
 
       if (
         step.parameters.stagger !== undefined &&
@@ -695,19 +689,10 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
   ): {
     readonly value: number;
     readonly attackScale?: number;
-    readonly skillSettingFactor?: import('../state/foundationState').ArtsIntensityFactor;
+    readonly skillSettingFactor?: ArtsIntensityFactor;
     readonly attackScaleSourceKey?: string;
-    readonly attackScaleCalculation?: import('../state/foundationState').ActionValueCalculation;
+    readonly attackScaleCalculation?: ActionValueCalculation;
   } {
-    if (step.kind === 'dealFixedDamage') {
-      return {
-        value: this.#resolveActionValue(
-          step.parameters.value,
-          operationContext,
-          'dynamic fixed damage value',
-        ),
-      };
-    }
     if (step.parameters.takeAttackSnapshot === true) {
       const snapshot = operationContext?.damageCalculationSnapshots?.get(step);
       if (snapshot === undefined) throw new Error('attack snapshot was not prepared');

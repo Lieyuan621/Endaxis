@@ -5,7 +5,6 @@ import { LogicalAbilityEntityRuntime } from '../../abilities/logicalAbilityEntit
 import { ProjectileCallbackPrograms } from '../../abilities/projectileCallbackPrograms';
 import { ProjectileLifecycleRuntime } from '../../abilities/projectileLifecycleRuntime';
 import { CombatOperationPrograms } from '../../actions/combatOperationPrograms';
-import { CombatSemanticEventRuntime } from '../../events/combatSemanticEventRuntime';
 import { SimulationRandomSource } from '../../random/simulationRandom';
 import { CombatVitals } from '../../resources/combatVitals';
 import { CombatSkillPrograms } from '../../skills/combatSkillPrograms';
@@ -86,7 +85,11 @@ const enemy = {
 };
 
 it('整场恢复基础阶段直接绑定共享账本、环境和全部基础 Buff 外壳', () => {
-  const originalShared = new CombatSharedRuntime({ resources, operatorOrder: ['operator'] });
+  const originalShared = new CombatSharedRuntime({
+    comboSkillPendingInterval: 5,
+    resources,
+    operatorOrder: ['operator'],
+  });
   const originalEnvironment = new StandardPlayerDamageEnvironment({
     ...environmentInput,
     enemyVitals: new CombatVitals({
@@ -107,7 +110,6 @@ it('整场恢复基础阶段直接绑定共享账本、环境和全部基础 Buf
     environment: originalEnvironment.runtimeState,
     enemyBuffs: originalEnvironment.runtimeOptions.enemyBuffRuntime.runtimeState!,
     operatorBuffs: originalOperatorBuffs.runtimeState!,
-    semanticEvents: new CombatSemanticEventRuntime().runtimeState,
   });
   const graph: CombatStateGraph = {
     shared: saved.shared,
@@ -130,7 +132,7 @@ it('整场恢复基础阶段直接绑定共享账本、环境和全部基础 Buf
       externalEvents: { nextEventIndex: 0, previousEvent: null },
     },
     environment: saved.environment,
-    events: { native: new Map(), semantic: saved.semanticEvents },
+    events: { native: new Map() },
     operators: new Map([
       [
         'operator',
@@ -145,14 +147,12 @@ it('整场恢复基础阶段直接绑定共享账本、环境和全部基础 Buf
           upgradeEvents: null,
           comboConditions: new Map(),
           cooldowns: new Map(),
-          statuses: null,
           timedMarkers: createTimedMarkerState(),
           buffs: saved.operatorBuffs,
         },
       ],
     ]),
     enemy: {
-      statuses: null,
       timedMarkers: createTimedMarkerState(),
       buffs: saved.enemyBuffs,
     },
@@ -180,7 +180,7 @@ it('整场恢复基础阶段直接绑定共享账本、环境和全部基础 Buf
   ] as const) {
     const markers = new TimedMarkerContainer(ownerId, originalShared.clock, {}, state);
     markers.add('scaled-marker', 3, originalShared.clock, 'globalScaled');
-    markers.add('global-marker', 3, originalShared.clock, 'global');
+    markers.add('local-marker', 3);
   }
   const assemblyGraph = structuredClone(graph);
   const program = {
@@ -199,7 +199,10 @@ it('整场恢复基础阶段直接绑定共享账本、环境和全部基础 Buf
     programs: [program],
     fixedSkillPrograms: new CombatSkillPrograms(),
     foundation: {
-      shared: { resources },
+      shared: {
+        comboSkillPendingInterval: 5,
+        resources,
+      },
       environment: environmentInput,
       enemy,
       resolveProjectileRuntimeDependencies: () => {
@@ -265,13 +268,12 @@ it('整场恢复基础阶段直接绑定共享账本、环境和全部基础 Buf
   const { foundation: restored, entities, objects, frame } = candidate;
   expect(candidate.enemyTimedMarkers.runtimeState).toBe(graph.enemy.timedMarkers);
   expect(candidate.enemyTimedMarkers.has('scaled-marker')).toBe(true);
-  expect(candidate.enemyTimedMarkers.has('global-marker')).toBe(true);
+  expect(candidate.enemyTimedMarkers.has('local-marker')).toBe(true);
   expect(objects.operators.cores.get('operator')!.timedMarkers.has('scaled-marker')).toBe(true);
 
   expect(restored.shared.runtimeState).toBe(saved.shared);
   expect(restored.shared.clock.runtimeState).toBe(saved.shared.clock);
   expect(restored.environment.runtimeState).toBe(saved.environment);
-  expect(restored.semanticEvents.runtimeState).toBe(saved.semanticEvents);
   expect(restored.environment.runtimeOptions.enemyBuffRuntime.runtimeState).toBe(saved.enemyBuffs);
   expect(restored.enemyBuffTarget).toBe(restored.environment.runtimeOptions.enemyBuffRuntime);
   expect(restored.operatorBuffTargets.get('operator')!.runtimeState).toBe(saved.operatorBuffs);
@@ -310,6 +312,7 @@ it('整场恢复基础阶段直接绑定共享账本、环境和全部基础 Buf
   objects.abilityEntityRelations.disposePassives();
 
   const restoredAssembly = CombatRuntimeAssembly.restore({
+    comboSkillPendingInterval: 5,
     receiptHistory: originalShared.receipt.history.snapshot(),
     graph: assemblyGraph,
     resources,
@@ -342,6 +345,7 @@ it('整场恢复基础阶段直接绑定共享账本、环境和全部基础 Buf
   (randomGraph.environment as { random: SimulationRandomState | null }).random = randomState;
   const restoreRandomGraph = (globalSeed: number) =>
     CombatRuntimeAssembly.restore({
+      comboSkillPendingInterval: 5,
       receiptHistory: originalShared.receipt.history.snapshot(),
       graph: structuredClone(randomGraph),
       resources,
@@ -381,7 +385,12 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
             'entity-child-sp': {
               action: {
                 kind: 'changeResource' as const,
-                parameters: { resource: 'sp' as const, amount: 3, recipient: 'team' as const },
+                parameters: {
+                  resource: 'sp' as const,
+                  amount: 3,
+                  source: { kind: 'fixed' as const, target: 'caster' as const },
+                  targets: { kind: 'fixed' as const, target: 'caster' as const },
+                },
               },
               next: null,
             },
@@ -410,7 +419,12 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
           sequence: chainEntry('entity-child-sp', [
             {
               kind: 'changeResource' as const,
-              parameters: { resource: 'sp' as const, amount: 3, recipient: 'team' as const },
+              parameters: {
+                resource: 'sp' as const,
+                amount: 3,
+                source: { kind: 'fixed' as const, target: 'caster' as const },
+                targets: { kind: 'fixed' as const, target: 'caster' as const },
+              },
             },
           ]),
         },
@@ -422,8 +436,8 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
       action: {
         kind: 'applyBuff' as const,
         parameters: {
-          buffId: 'persistent',
-          target: 'caster' as const,
+          buffs: [{ buffId: 'persistent' }],
+          targets: { kind: 'fixed', target: 'caster' } as const,
           inheritSourceSkillCastInfo: true,
         },
       },
@@ -432,7 +446,7 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
     'schedule-callback': {
       action: {
         kind: 'launchProjectile' as const,
-        parameters: { finish: 0.05, recycleDelaySeconds: 0.05 },
+        parameters: { inheritActionBlackboard: true, finish: 0.05, recycleDelaySeconds: 0.05 },
         callbacks: [
           {
             event: 'finish' as const,
@@ -453,12 +467,23 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
                   nodes: {
                     'callback-hit': {
                       action: {
-                        kind: 'dealFixedDamage' as const,
+                        kind: 'dealDamage' as const,
                         key: 'callback-hit',
                         parameters: {
                           damageType: 'physical' as const,
-                          value: 25,
+                          attackScale: 25,
                           tags: [],
+                        },
+                      },
+                      next: 'callback-buff',
+                    },
+                    'callback-buff': {
+                      action: {
+                        kind: 'applyBuff',
+                        parameters: {
+                          buffs: [{ buffId: 'projectilePersistent' }],
+                          targets: { kind: 'owner' },
+                          inheritSourceSkillCastInfo: true,
                         },
                       },
                       next: null,
@@ -477,6 +502,7 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
       action: {
         kind: 'spawnAbilityEntity' as const,
         parameters: {
+          bornAt: { kind: 'owner' as const },
           abilityEntityId: 'restored_entity',
           definition: spawnedEntityDefinition,
           dieWhenSourceDies: false,
@@ -506,19 +532,22 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
   };
   const buffDefinitions = {
     persistent: { stackingType: 'unique' as const },
+    projectilePersistent: { stackingType: 'unique' as const, durationSeconds: 1 },
     passivePersistent: {
       stackingType: 'unique' as const,
       lifecycleSequences: {
-        enable: chainEntry('passive-persistent-enable', [
-          {
-            kind: 'modifyActionValue' as const,
-            parameters: {
-              key: 'restoredValue',
-              operation: 'assign' as const,
-              value: { kind: 'constant' as const, value: 9 },
+        enable: [
+          chainEntry('passive-persistent-enable', [
+            {
+              kind: 'modifyActionValue' as const,
+              parameters: {
+                key: 'restoredValue',
+                operation: 'assign' as const,
+                value: { kind: 'constant' as const, value: 9 },
+              },
             },
-          },
-        ]),
+          ]),
+        ],
       },
     },
     potentialPersistent: { stackingType: 'unique' as const },
@@ -530,7 +559,10 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
       enableSequence: chainEntry('passive-enable', [
         {
           kind: 'applyBuff' as const,
-          parameters: { buffId: 'passivePersistent', target: 'caster' as const },
+          parameters: {
+            buffs: [{ buffId: 'passivePersistent' }],
+            targets: { kind: 'fixed', target: 'caster' } as const,
+          },
         },
       ]),
     },
@@ -647,7 +679,10 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
       sequence: chainEntry('potential-skill-hit-buff', [
         {
           kind: 'applyBuff' as const,
-          parameters: { buffId: 'potentialPersistent', target: 'caster' as const },
+          parameters: {
+            buffs: [{ buffId: 'potentialPersistent' }],
+            targets: { kind: 'fixed', target: 'caster' } as const,
+          },
         },
       ]),
     },
@@ -666,6 +701,7 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
     upgradeEventPrograms,
   };
   const original = new CombatRuntimeAssembly({
+    comboSkillPendingInterval: 5,
     ...environment.runtimeOptions,
     resources,
     enemy,
@@ -707,6 +743,7 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
     projectileCallbackPrograms = original.projectileLifetimes.callbackPrograms,
   ) =>
     CombatRuntimeAssembly.restore({
+      comboSkillPendingInterval: 5,
       receiptHistory: original.receipt.history.snapshot(),
       graph,
       resources,
@@ -749,6 +786,8 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
   expect(restored.stateGraph.operators.get('operator')!.buffs!.instances.size).toBe(3);
   expect(restored.stateGraph).toEqual(original.stateGraph);
   const activeHostSaved = structuredClone(original.stateGraph);
+  const projectileBuffs = activeHostSaved.instances.projectiles.instances.get(1)!.buffs!;
+  expect(projectileBuffs.instances.size).toBe(1);
   const activeHostRestored = restoreBranch(activeHostSaved);
   expect(activeHostRestored.stateGraph).toEqual(original.stateGraph);
   original.advanceFrames(12);
@@ -756,6 +795,20 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
   activeHostRestored.advanceFrames(12);
   expect(restored.stateGraph).toEqual(original.stateGraph);
   expect(activeHostRestored.stateGraph).toEqual(original.stateGraph);
-  expect(restored.stateGraph.instances.projectiles.instances.size).toBe(0);
-  expect(restored.projectileLifetimes.findSource(1)).toBeUndefined();
+  expect(restored.projectileLifetimes.activeCount).toBe(0);
+  expect(restored.projectileLifetimes.findOwnerSpawned('operator')).toEqual([]);
+  expect(restored.projectileLifetimes.findSource(1)).toEqual({
+    kind: 'abilityEntity',
+    instanceId: 1,
+  });
+  expect(projectileBuffs.instances.size).toBe(1);
+  const pooled = restored.stateGraph.instances.projectiles.instances.get(1)!;
+  expect(pooled.phase).toBe('reset');
+  expect(pooled.source).toBeUndefined();
+  const pooledBuffs = structuredClone(pooled.buffs);
+  const restoredAfterRecycle = restoreBranch(structuredClone(restored.stateGraph));
+  restored.advanceFrames(60);
+  restoredAfterRecycle.advanceFrames(60);
+  expect(restoredAfterRecycle.stateGraph).toEqual(restored.stateGraph);
+  expect(restored.stateGraph.instances.projectiles.instances.get(1)!.buffs).toEqual(pooledBuffs);
 });

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { resolveImage } from '../../imageResources';
 import type { BuffDisplayName } from './buffDisplayName';
 /** 旧版 TimelineBuffLayer 的 Next 只读版本：18px 图标、层数角标和条纹持续条。 */
 import { computed } from 'vue';
@@ -10,7 +11,6 @@ import { resolveBuffDisplayName } from './buffDisplayName';
 import { resolveBuffEffectSummary, showBuffLayerBadge } from './buffDisplayName';
 import type { BuffDetailTarget } from './buffDetail';
 import TimelineStatusSegment from './TimelineStatusSegment.vue';
-import { getIconAssetPath } from '../../gameAssetPaths';
 import { frameToTimelinePx } from '../timelineGeometry';
 import { timelineLowerBuffTop, timelineUpperBuffTop } from './timelineTrackEffectLayout';
 
@@ -74,7 +74,7 @@ const items = computed(() =>
         sourceName,
         props.operatorBuffNameKeys,
       );
-    const icon = props.icon?.(segment) ?? segment.iconPath ?? getIconAssetPath(segment.iconId);
+    const icon = props.icon?.(segment) ?? resolveImage(segment.icon);
     return {
       ...segment,
       title,
@@ -124,7 +124,7 @@ const items = computed(() =>
             ...(member.endReason === undefined ? {} : { endReason: member.endReason }),
             ...(member.stackingType === undefined ? {} : { stackingType: member.stackingType }),
             ...(member.parentBuffId === undefined ? {} : { parentBuffId: member.parentBuffId }),
-            icon: props.icon?.(member) ?? member.iconPath ?? getIconAssetPath(member.iconId),
+            icon: props.icon?.(member) ?? resolveImage(member.icon),
             ...(memberModifierSummary === undefined
               ? {}
               : { modifierSummary: memberModifierSummary }),

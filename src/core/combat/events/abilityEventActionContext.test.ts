@@ -17,6 +17,18 @@ describe('AbilityEvent action context binding', () => {
       inputTargetId: 'enemy',
       triggerTargetId: null,
     });
+    expect(
+      bind({
+        event: 'beforeCastSkill',
+        payload: {
+          sourceId: 'caster',
+          targetId: 'enemy',
+          skillId: 'attack',
+          skillType: 'basicAttack',
+          skillCastId: 1,
+        },
+      }),
+    ).toEqual({ inputTargetId: 'caster', triggerTargetId: null });
   });
   const pair = { sourceId: 'operator', targetId: 'enemy' };
   const buffPayload = { ...pair, buffId: 'buff', buffTags: [] };
@@ -26,6 +38,7 @@ describe('AbilityEvent action context binding', () => {
       { event: 'outputBuff', payload: { ...buffPayload, buff: createEventBuff() } },
       { event: 'outputCriticalDamage', payload: createDamagePayload(pair) },
       { event: 'beforeOutputPhysicalInfliction', payload: { ...pair, type: 'fracture' } },
+      { event: 'afterOutputPhysicalInfliction', payload: { ...pair, type: 'fracture' } },
       {
         event: 'outputHeal',
         payload: { ...pair, requestedHealing: 10, actualHealing: 0, overhealing: 10, tags: [] },

@@ -4,6 +4,8 @@
 
 /** `SkillSetting.resources` 中会影响行动技力和终结技能量的数值。 */
 export interface SkillSettingResources {
+  /** 连携候选等待释放的时长，单位为秒。 */
+  readonly comboSkillPendingInterval: number;
   /** 每次自然恢复行动技力之间的秒数。 */
   readonly atbRecoverInterval: number;
   /** 行动技力恢复量使用的全局效率系数。 */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CombatSemanticEventRuntime, isKnockDownOutputEvent } from './combatSemanticEventRuntime';
+import { CombatSemanticEventRuntime } from './combatSemanticEventRuntime';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
 import { AbilityEventDispatcher } from './abilityEventDispatcher';
 import type { AbilityEventPayloadMap } from './combatAbilityEvent';
@@ -10,45 +10,6 @@ import { createNativeEventFixture } from './nativeEventTestFixture';
 import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
 
 describe('CombatSemanticEventRuntime', () => {
-  it('手工事件恢复沿用原订阅，不在绑定阶段触发响应', () => {
-    const original = new CombatSemanticEventRuntime();
-    const definition = {
-      ownerOperatorId: 'operator',
-      trigger: { kind: 'airborneOutput' as const },
-      phase: 'dataAction' as const,
-      priority: 2,
-    };
-    const registration = original.register({ ...definition, handle: () => {} });
-    const saved = structuredClone({
-      state: original.runtimeState,
-      subscriptions: registration.subscriptions,
-    });
-    const restored = new CombatSemanticEventRuntime(undefined, {
-      state: saved.state,
-      bindNative: () => {
-        throw new Error('fixture has no native subscriptions');
-      },
-    });
-    let count = 0;
-    const bound = restored.bindRegistration(
-      {
-        ...definition,
-        handle: () => {
-          count++;
-        },
-      },
-      saved.subscriptions,
-    );
-    expect(count).toBe(0);
-    expect(saved.state.nextRegistrationId).toBe(1);
-    registration.dispose();
-    restored.emit({ kind: 'airborneOutput', sourceOperatorId: 'operator', targetId: 'enemy' });
-    expect(count).toBe(1);
-    bound.dispose();
-    restored.emit({ kind: 'airborneOutput', sourceOperatorId: 'operator', targetId: 'enemy' });
-    expect(count).toBe(1);
-  });
-
   it.each(['addedBuff', 'outputBuff'] as const)(
     '直接订阅 %s 保留载荷、条件和原生实体归属',
     event => {
@@ -97,32 +58,6 @@ describe('CombatSemanticEventRuntime', () => {
       expect(count).toBe(1);
     },
   );
-
-  it('倒地旧触发器端口仅接受后置通知或手工标记，不接受前置及通用物理异常', () => {
-    const payload = { sourceId: 'operator', targetId: 'enemy', fromAirborne: true };
-    expect(isKnockDownOutputEvent({ event: 'beforeOutputKnockDown', payload })).toBe(false);
-    expect(isKnockDownOutputEvent({ event: 'afterOutputKnockDown', payload })).toBe(true);
-    expect(
-      isKnockDownOutputEvent({
-        event: 'afterOutputPhysicalInfliction',
-        payload: { ...payload, type: 'knockDown' },
-      }),
-    ).toBe(false);
-    expect(
-      isKnockDownOutputEvent({
-        kind: 'airborneOutput',
-        sourceOperatorId: 'operator',
-        targetId: 'enemy',
-      }),
-    ).toBe(false);
-    expect(
-      isKnockDownOutputEvent({
-        kind: 'knockDownOutput',
-        sourceOperatorId: 'operator',
-        targetId: 'enemy',
-      }),
-    ).toBe(true);
-  });
 
   it('旧定义筛选的条件读取原事件目标与空来源，异常后恢复外层上下文', () => {
     const dispatcher = new AbilityEventDispatcher<
@@ -276,7 +211,7 @@ describe('CombatSemanticEventRuntime', () => {
     const published = {
       event: 'skillSpGained' as const,
       payload: {
-        sourceOperatorId: 'operator',
+        sourceId: 'operator',
         source: 'normalAttack' as const,
         gainKind: 'refund' as const,
         requestedAmount: 20,
@@ -292,7 +227,7 @@ describe('CombatSemanticEventRuntime', () => {
     expect(received).toHaveLength(1);
   });
 
-  it('击倒旧筛选直接订阅组件通知并兼容手工标记，保持身份、顺序与共同注销', () => {
+  it('击倒筛选直接订阅组件通知，保持身份、顺序与注销', () => {
     const { semanticEvents: runtime, dispatcher } = createNativeEventFixture();
     const order: string[] = [];
     const received: unknown[] = [];
@@ -307,30 +242,20 @@ describe('CombatSemanticEventRuntime', () => {
         received.push(context.event);
       },
     });
-    expect(registration.subscriptions).toHaveLength(2);
+    expect(registration.subscriptions).toHaveLength(1);
     expect(registration.subscriptions[0]!.state).toBe(dispatcher.runtimeState);
-    expect(registration.subscriptions[1]!.state).toBe(runtime.runtimeState);
     expect(registration.subscriptions.map(reference => reference.event)).toEqual([
       'afterOutputKnockDown',
-      'knockDownOutput',
     ]);
     dispatcher.registerAction('afterOutputKnockDown', 0, () => order.push('low'));
     const published = {
       event: 'afterOutputKnockDown' as const,
       payload: { sourceId: 'operator', targetId: 'enemy', fromAirborne: true },
     };
-    const authored = {
-      kind: 'knockDownOutput' as const,
-      sourceOperatorId: 'operator',
-      targetId: 'enemy',
-    };
     dispatcher.dispatch(published, []);
     expect(order).toEqual(['high', 'definition', 'low']);
-    runtime.emit(authored);
-    expect(received).toHaveLength(2);
+    expect(received).toHaveLength(1);
     expect(received[0]).toBe(published);
-    expect(received[1]).toBe(authored);
-    expect('fromAirborne' in authored).toBe(false);
     dispatcher.dispatch({ ...published, payload: { ...published.payload, sourceId: 'other' } }, []);
     dispatcher.dispatch({ event: 'beforeOutputKnockDown', payload: published.payload }, []);
     dispatcher.dispatch(
@@ -340,11 +265,10 @@ describe('CombatSemanticEventRuntime', () => {
       },
       [],
     );
-    expect(received).toHaveLength(2);
+    expect(received).toHaveLength(1);
     registration.dispose();
     dispatcher.dispatch(published, []);
-    runtime.emit(authored);
-    expect(received).toHaveLength(2);
+    expect(received).toHaveLength(1);
   });
 
   it('消费订阅直接接收原始通知一次，不把吸收当作消费，注销后不再响应', () => {
@@ -552,27 +476,6 @@ describe('CombatSemanticEventRuntime', () => {
     expect(received).toEqual(['source', 'target']);
   });
 
-  it('routes airborne output to the source operator regardless of its target', () => {
-    const runtime = new CombatSemanticEventRuntime();
-    const received: string[] = [];
-    for (const ownerOperatorId of ['operator:a', 'operator:b']) {
-      runtime.register({
-        ownerOperatorId,
-        trigger: { kind: 'airborneOutput' },
-        phase: 'skill',
-        handle: () => received.push(ownerOperatorId),
-      });
-    }
-
-    runtime.emit({
-      kind: 'airborneOutput',
-      sourceOperatorId: 'operator:a',
-      targetId: 'enemy',
-    });
-
-    expect(received).toEqual(['operator:a']);
-  });
-
   it('distinguishes operator and team scopes while preserving registration order', () => {
     const { semanticEvents: runtime, emitOutputDamage } = createNativeEventFixture();
     const received: string[] = [];
@@ -746,7 +649,6 @@ describe('CombatSemanticEventRuntime', () => {
     calls.length = 0;
     dispatcher.dispatch(event, []);
     expect(calls).toEqual(['native-action']);
-    expect(() => runtime.emit(event)).toThrow('entity events must be published');
   });
 
   it('Buff 输出筛选使用同一原生通知及完整 Buff 数据', () => {
@@ -949,7 +851,7 @@ describe('CombatSemanticEventRuntime', () => {
       {
         event: 'skillSpGained',
         payload: {
-          sourceOperatorId: 'operator:b',
+          sourceId: 'operator:b',
           source: 'normalAttack',
           gainKind: 'gain',
           requestedAmount: 10,
@@ -962,7 +864,7 @@ describe('CombatSemanticEventRuntime', () => {
       {
         event: 'skillSpGained',
         payload: {
-          sourceOperatorId: 'operator:b',
+          sourceId: 'operator:b',
           source: 'skill',
           gainKind: 'refund',
           requestedAmount: 10,
@@ -975,7 +877,7 @@ describe('CombatSemanticEventRuntime', () => {
       {
         event: 'skillSpGained',
         payload: {
-          sourceOperatorId: 'operator:b',
+          sourceId: 'operator:b',
           source: 'skill',
           gainKind: 'gain',
           requestedAmount: 10,

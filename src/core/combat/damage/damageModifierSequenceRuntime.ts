@@ -27,14 +27,15 @@ export function createDamageModifierCondition(
   const steps = rootActionSteps(sequence);
   const guard = steps.length === 1 ? steps[0] : undefined;
   const condition =
-    guard?.kind === 'conditional'
+    guard?.kind === 'conditional' || guard?.kind === 'checkCondition'
       ? conditionInputExpression(guard.parameters.condition)
       : undefined;
   const damageTypes =
-    guard?.kind === 'conditional' &&
-    guard.parameters.alwaysNext !== true &&
-    guard.whenFalse === undefined &&
-    guard.whenTrue.entry === null &&
+    (guard?.kind === 'checkCondition' ||
+      (guard?.kind === 'conditional' &&
+        guard.parameters.alwaysNext !== true &&
+        guard.whenFalse === undefined &&
+        guard.whenTrue.entry === null)) &&
     condition?.kind === 'eventDamageTypeIn'
       ? condition.damageTypes
       : undefined;

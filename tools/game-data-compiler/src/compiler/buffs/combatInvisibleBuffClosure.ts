@@ -5,6 +5,7 @@ import {
 } from '../../source/buffActionGraph.ts';
 import { parseBuffRuntimeSource } from '../../source/buffRuntime.ts';
 import { requireArray, requireRecord, requireString } from '../../source/primitives.ts';
+import { isCombatInvisiblePresentationLeaf } from '../optimization/nativePresentationUsage.ts';
 
 const PRESENTATION_PLUMBING_ACTIONS = new Set([
   'FindTargetAction',
@@ -44,8 +45,6 @@ export function collectCombatInvisibleBuffClosureIds(
     for (const reference of node.references) if (!nodes.has(reference)) queue.push(reference);
   }
 
-  // 身份被战斗条件读取的 Buff 从初始集合起就不是表现节点，可见性沿引用边向上传播；
-  // 不能事后从结果里 filter，否则创建它的父 Buff 仍会被误判为纯表现而整条丢失。
   // 身份被战斗条件读取的 Buff 从初始集合起就不是表现节点，可见性沿引用边向上传播；
   // 不能事后从结果里 filter，否则创建它的父 Buff 仍会被误判为纯表现而整条丢失。
   const invisible = new Set(
@@ -110,7 +109,10 @@ function inspectBuff(id: string, loadBuff: (id: string) => unknown): BuffPresent
       const leaf = node.body.value;
       if (leaf.family === 'buffApplication' || leaf.family === 'buffFinish') return true;
       if (leaf.family === 'presentation')
-        return leaf.action.kind !== 'playAnimation' || leaf.action.onEnd === undefined;
+        return (
+          leaf.action.kind !== 'playAnimation' ||
+          isCombatInvisiblePresentationLeaf({ ...node, body: { kind: 'leaf', value: leaf } })
+        );
       if (leaf.family === 'presentationCalculation') return true;
       // 私有 UI Buff 内的计数、随机数和分支只驱动已经严格解析的专属 UI 事件。
       // 引用的子 Buff 仍由闭包不动点逐个证明为纯表现；任一战斗子 Buff 会使父节点退出集合。

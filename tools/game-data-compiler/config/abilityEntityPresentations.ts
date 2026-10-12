@@ -1,7 +1,7 @@
 import type { AbilityEntityDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 
 const waterspoutPresentation = {
-  icon: '/operators/tangtang/talent 2.webp',
+  icon: 'endaxis:operators/tangtang/talent_2',
   nameKey: 'effects.name.waterspouts',
   placement: 'enemy',
 } as const satisfies NonNullable<AbilityEntityDefinition['presentation']>;
@@ -11,12 +11,12 @@ export const abilityEntityPresentations: Readonly<
   Record<string, NonNullable<AbilityEntityDefinition['presentation']>>
 > = {
   abilityentity_chr_0012_avywen_combo_skill_lance: {
-    icon: '/operators/avywenna/combo.webp',
+    icon: 'endaxis:operators/avywenna/combo_01',
     nameKey: 'effects.name.thunderlance',
     placement: 'operator',
   },
   abilityentity_chr_0012_avywen_ultimate_skill_lance: {
-    icon: '/operators/avywenna/ultimate.webp',
+    icon: 'endaxis:operators/avywenna/ultimate_01',
     nameKey: 'effects.name.thunderlanceEx',
     placement: 'operator',
   },
@@ -27,13 +27,13 @@ export const abilityEntityPresentations: Readonly<
   abilityentity_chr_0027_tangtang_normal_skill_03_02: waterspoutPresentation,
   abilityentity_chr_0027_tangtang_normal_skill_03_03: waterspoutPresentation,
   abilityentity_chr_0027_tangtang_ultskill: {
-    icon: '/operators/tangtang/ultimate.webp',
+    icon: 'endaxis:operators/tangtang/ultimate_01',
     nameKey: 'effects.name.oldenStare',
     placement: 'enemy',
     damageDisplayBuffId: 'buff_chr_0027_tangtang_ultskill_debuff',
   },
   abilityentity_chr_0034_typhoea_combo_presistdamage: {
-    icon: '/operators/typhoeus/combo.webp',
+    icon: 'endaxis:operators/typhoeus/combo_01',
     nameKey: 'effects.name.barrageArray',
     placement: 'enemy',
   },

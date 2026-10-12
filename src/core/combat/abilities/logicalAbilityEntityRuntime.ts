@@ -1,4 +1,5 @@
-import { type LogicalAbilityEntityFinishReason } from '../state/foundationState';
+import type { CombatObjectRef } from '../receipt/combatReceipt';
+import type { LogicalAbilityEntityFinishReason } from '../state/foundationState';
 /**
  * 零空间、单敌人模型中的逻辑能力实体目录。
  *
@@ -11,7 +12,10 @@ import type {
   OwnerSpawnedAbilityEntityQuery,
   RuntimeTargetRef,
 } from '../../game-data/logicalAbilityEntity';
-import { logicalAbilityEntityRuntimeId } from '../../game-data/logicalAbilityEntity';
+import {
+  logicalAbilityEntityRuntimeId,
+  runtimeTargetEntityId,
+} from '../../game-data/logicalAbilityEntity';
 import { ActionBlackboard, type ActionBlackboardValue } from '../actions/actionBlackboard';
 import type { BuffApplicationHandle } from '../buffs/combatBuffs';
 import type { FrameRuntime } from '../runtime/combatSimulation';
@@ -39,7 +43,7 @@ import {
 export interface LogicalAbilityEntitySpawnRequest {
   /** 固定程序目录中的实体定义；独立使用实体目录时可不提供。 */
   readonly definitionProgramId?: number;
-  readonly producedBy?: import('../receipt/combatReceipt').CombatObjectRef;
+  readonly producedBy?: CombatObjectRef;
   /** 出生时传入控制器的完整来源；null 为明确不继承，undefined 为未提供。 */
   readonly skillCastInfo?: CombatSkillCastInfo | null;
   readonly abilityEntityId: string;
@@ -94,10 +98,7 @@ export interface LogicalAbilityEntityRuntimeHooks {
   /** 宿主阶段：Buff → 子技能时间轴 → 普通Buff回收。不是公共能力事件。 */
   tickBuffs?(entity: LogicalAbilityEntityIdentity): void;
   recycleBuffs?(entity: LogicalAbilityEntityIdentity): void;
-  spawned?(
-    snapshot: LogicalAbilityEntitySnapshot,
-    producedBy?: import('../receipt/combatReceipt').CombatObjectRef,
-  ): void;
+  spawned?(snapshot: LogicalAbilityEntitySnapshot, producedBy?: CombatObjectRef): void;
   childSkillRequested?(snapshot: LogicalAbilityEntitySnapshot, skillId: string): void;
   killed?(snapshot: LogicalAbilityEntitySnapshot, reason: LogicalAbilityEntityFinishReason): void;
   finished?(snapshot: LogicalAbilityEntitySnapshot, reason: LogicalAbilityEntityFinishReason): void;
@@ -130,14 +131,14 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
   readonly #hooks: LogicalAbilityEntityRuntimeHooks;
   readonly #resolveDeltaSeconds: (entity: LogicalAbilityEntityIdentity) => number;
   readonly #allocateInstanceId: () => number;
-  readonly #timedMarkerClocks: Partial<Record<'global' | 'globalScaled', TimedMarkerClock>>;
+  readonly #timedMarkerClocks: Partial<Record<'globalScaled', TimedMarkerClock>>;
 
   constructor(options: {
     readonly hooks?: LogicalAbilityEntityRuntimeHooks;
     /** 后续时间膨胀接线点；省略时使用一帧的普通实体时间。 */
     readonly resolveDeltaSeconds?: (entity: LogicalAbilityEntityIdentity) => number;
     readonly allocateInstanceId?: () => number;
-    readonly timedMarkerClocks?: Partial<Record<'global' | 'globalScaled', TimedMarkerClock>>;
+    readonly timedMarkerClocks?: Partial<Record<'globalScaled', TimedMarkerClock>>;
     /** 已复制的目录数据；绑定过程不触发生成、子技能或公共事件。 */
     readonly restoredState?: LogicalAbilityEntityDirectoryState;
   }) {
@@ -216,6 +217,13 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
     return target.kind === 'abilityEntity' && this.#instances.has(target.instanceId);
   }
 
+  /** 未回收实体的原生存活标记；不存在与已标记死亡分开返回。 */
+  isAlive(target: RuntimeTargetRef): boolean | undefined {
+    return target.kind === 'abilityEntity'
+      ? this.#instances.get(target.instanceId)?.state.isAlive
+      : undefined;
+  }
+
   spawn(request: LogicalAbilityEntitySpawnRequest): AbilityEntityTargetRef {
     if (request.abilityEntityId.length === 0) throw new Error('AbilityEntity id must not be empty');
     if (
@@ -253,12 +261,13 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
         );
       }
     }
+    // 原生先检查 lifeType；无限寿命不使用出生时长覆盖，也不启动寿命计时器。
     const remainingDurationSeconds =
-      request.overrideDurationSeconds === undefined
-        ? request.definition.lifetime.kind === 'limited'
+      request.definition.lifetime.kind === 'infinite'
+        ? null
+        : request.overrideDurationSeconds === undefined
           ? request.definition.lifetime.durationSeconds
-          : null
-        : requireDuration(request.overrideDurationSeconds, 'override duration');
+          : requireDuration(Math.max(0, request.overrideDurationSeconds), 'override duration');
     const instanceId = this.#allocateInstanceId();
     if (!Number.isSafeInteger(instanceId) || instanceId <= 0) {
       throw new RangeError('AbilityEntity instance id must be a positive safe integer');
@@ -300,6 +309,7 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
         ...(request.target === undefined ? {} : { target: request.target }),
         dieWhenSourceDies: request.dieWhenSourceDies ?? false,
         blackboard: blackboard.runtimeState,
+        durationPeriodSeconds: remainingDurationSeconds,
         remainingDurationSeconds,
         elapsedDurationSeconds: 0,
         isAlive: true,
@@ -388,7 +398,8 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
     }
     const result: RuntimeTargetRef[] = [];
     for (const instance of this.#instances.values()) {
-      if (instance.state.ownerId !== query.ownerId) continue;
+      // children 属于直接来源；ownerId 只标识负责属性和资源结算的干员。
+      if (runtimeTargetEntityId(instance.state.source) !== query.ownerId) continue;
       if (
         query.abilityEntityIds !== undefined &&
         !query.abilityEntityIds.includes(instance.state.abilityEntityId)
@@ -424,17 +435,19 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
     this.#requireInstance(entity).state.target = target;
   }
 
-  isSourceDead(entity: RuntimeTargetRef): boolean {
-    const source = this.#requireInstance(entity).state.source;
-    return this.runtimeState.deadSources.some(dead => this.#sameTarget(dead, source));
+  isMarkedDead(target: RuntimeTargetRef): boolean {
+    return this.runtimeState.deadSources.some(dead => this.#sameTarget(dead, target));
   }
 
-  /** SetAbilityEntityDuration 的 Assign 路径设置当前剩余时长。 */
+  /** SetAbilityEntityDuration.Assign 限制到出生周期；不改变独立的实体局部时钟。 */
   setRemainingDuration(entity: RuntimeTargetRef, seconds: number): void {
-    this.#requireInstance(entity).state.remainingDurationSeconds = requireDuration(
-      seconds,
-      'remaining duration',
-    );
+    if (!Number.isFinite(seconds)) throw new RangeError('remaining duration must be finite');
+    const state = this.#requireInstance(entity).state;
+    if (state.durationPeriodSeconds === null) return;
+    const remaining = Math.min(state.durationPeriodSeconds, Math.max(0, seconds));
+    // 原生在差值不超过 1e-5 秒时跳过更新。
+    if (Math.abs(state.remainingDurationSeconds! - remaining) <= 0.00001) return;
+    state.remainingDurationSeconds = remaining;
   }
 
   finish(entity: RuntimeTargetRef, reason: LogicalAbilityEntityFinishReason = 'explicit'): void {
@@ -510,12 +523,6 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
     const instance = this.#requireInstance(entity);
     if (!killLogicalAbilityEntity(instance.state, reason)) return;
     this.#hooks.killed?.(this.#snapshot(instance), reason);
-  }
-
-  finishOwnerSpawned(ownerId: string): number {
-    const targets = this.findOwnerSpawned({ ownerId });
-    for (const target of targets) this.finish(target, 'ownerFinished');
-    return targets.length;
   }
 
   notifySourceDied(source: RuntimeTargetRef): number {

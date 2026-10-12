@@ -1,3 +1,6 @@
+import { compileActionNode } from '../src/compiler/actions/combatActionLeafProjection.ts';
+import { createActionGraphBuilder } from '../src/compiler/actions/actionGraphBuilder.ts';
+import { collectCompiledBuffIds } from '../src/compiler/references/compiledReferences.ts';
 import { describe, expect, it } from 'vitest';
 import { parseConditionLeafSource } from '../src/source/condition.ts';
 import { parseForcedElementalStatusActionSource } from '../src/source/elementalInflictionActions.ts';
@@ -55,6 +58,49 @@ describe('ForceSpellStatus 精确读取 EnergyShardType', () => {
     consumedType: scalarFixture(2),
     isExtra: false,
   };
+  it('强制反应保留单个原生动作边界及隐式Buff依赖', () => {
+    const source = parseForcedElementalStatusActionSource(
+      { ...action, spellStatusType: 'Fire', isExtra: true },
+      'force',
+      {},
+    );
+    const steps = compileActionNode(
+      {
+        sourcePath: 'force',
+        metadata: {
+          nativeType: action.$type,
+          nativeName: 'ForceSpellStatusAction',
+          enabled: true,
+          priorityLevel: 'Default',
+          priorityOffset: 0,
+          serverActionIndex: 1,
+        },
+        body: { kind: 'leaf', value: { family: 'forcedElementalStatus', action: source } },
+      },
+      new Set(),
+      new Map(),
+      {
+        graph: createActionGraphBuilder(),
+        actionOwnerTarget: 'caster',
+        actionSourceTarget: 'caster',
+        actionTargetTarget: 'enemy',
+      },
+    );
+    expect(steps).toEqual([
+      {
+        kind: 'forceSpellStatus',
+        parameters: {
+          target: 'enemy',
+          element: 'heat',
+          consumedElement: 'cryo',
+          consumedLayers: { kind: 'constant', value: 2 },
+          count: { kind: 'constant', value: 1 },
+          isExtra: true,
+        },
+      },
+    ]);
+    expect([...collectCompiledBuffIds(steps)]).toEqual(['buff_common_fire_fire_burning_triggered']);
+  });
   it.each([
     [0, 'Fire'],
     [3, 'Natural'],

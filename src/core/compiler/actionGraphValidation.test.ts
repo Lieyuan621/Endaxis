@@ -10,7 +10,7 @@ describe('公共图结构校验', () => {
           action: { kind: 'repeatEachTick', parameters: {}, body: { $sequence: 'end' } },
           next: 'end',
         },
-        end: { action: { kind: 'finishTimeline', parameters: {} }, next: null },
+        end: { action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} }, next: null },
       },
     };
     expect(() =>
@@ -20,8 +20,8 @@ describe('公共图结构校验', () => {
 
   it('拒绝动作内嵌 Buff 定义', () => {
     const parameters = {
-      buffId: 'test',
-      target: 'caster' as const,
+      buffs: [{ buffId: 'test' }],
+      targets: { kind: 'fixed', target: 'caster' } as const,
       definition: { stackingType: 'refresh' },
     };
     const graph: ActionGraphDefinition = {
@@ -36,7 +36,12 @@ describe('公共图结构校验', () => {
 
   it('验证未使用节点和外部入口，不只验证已知执行分支', () => {
     const graph: ActionGraphDefinition = {
-      nodes: { orphan: { action: { kind: 'finishTimeline', parameters: {} }, next: 'orphan' } },
+      nodes: {
+        orphan: {
+          action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} },
+          next: 'orphan',
+        },
+      },
     };
     expect(() => validateActionGraph(graph)).toThrow('recursive action graph: orphan');
     expect(() => validateActionGraph({ nodes: {} }, [{ $sequence: 'missing' }])).toThrow(
@@ -50,7 +55,7 @@ describe('公共图结构校验', () => {
         Array.from({ length: 20000 }, (_, index) => [
           String(index),
           {
-            action: { kind: 'finishTimeline', parameters: {} },
+            action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} },
             next: index === 19999 ? null : String(index + 1),
           },
         ]),

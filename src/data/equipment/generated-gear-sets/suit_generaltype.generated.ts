@@ -3,7 +3,7 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 
 const definition = {
   slug: 'suit_generaltype',
-  iconPath: '/equipment/wuling00/item_equip_t4_parts_wuling00_edc_01.webp',
+  icon: 'endaxis:equipment/wuling00/item_equip_t4_parts_wuling00_edc_01',
   modifiers: [
     { kind: 'panelStat', stat: 'ultimateEnergyGainEfficiency', value: 0.1 },
     { kind: 'damageScale', target: 'physical', slot: 'baseAddition', value: 0.2 },

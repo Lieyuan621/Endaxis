@@ -1,3 +1,5 @@
+import { collectCombatInvisibleRandomKeys } from '../src/compiler/optimization/nativePresentationUsage.ts';
+import { simplifyNativeSequences } from '../src/compiler/optimization/nativeSequenceOptimization.ts';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -1119,6 +1121,14 @@ describe('公共 Action 叶子分派', () => {
         targetGroupKey: 'trigger',
         finderType: 'MainTargetFinder',
         conversionOperation: 'None',
+        conversionSource: {
+          targetSource: 'InstantSearch',
+          targetGroupKey: 'trigger',
+          finderType: 'MainTargetFinder',
+          selectorOwner: convertFrom.selectorOwner,
+          centerType: convertFrom.centerType,
+          selectorDirection: convertFrom.selectorDirection,
+        },
         conversionTransform: {
           translateOperation: 'Rotate180DegAroundRef',
           translationRef: 'ActionSource',
@@ -1989,8 +1999,12 @@ describe('公共 Action 叶子分派', () => {
       'fixture.randomPresentationVariant',
       {},
     );
+    const simplified = simplifyNativeSequences(parsed);
+    // 此夹具代表完整资源，且没有外部读取；单序列投影只接收资源级证明。
+    const randomKeys = collectCombatInvisibleRandomKeys([simplified], () => true);
     expect(
-      projectSequence(parsed, {
+      projectSequence(simplified, {
+        combatInvisibleRandomBlackboardKeys: randomKeys,
         actionOwnerTarget: 'caster',
         actionSourceTarget: 'caster',
         actionTargetTarget: 'enemy',
@@ -2965,6 +2979,42 @@ describe('新版施法身份与移动轴动作', () => {
     expect(() =>
       parseKnownNativeActionLeafSource({ ...source, extra: true }, 'fixture.moveAxis', {}),
     ).toThrow('unexpected fields');
+  });
+
+  it('保存夹角保留两组方向类型和目标', () => {
+    const source = {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.SaveTwoDirectionAngle+Data, Gameplay.Beyond',
+      dir1Source: targetFixture('Source'),
+      dir1Target: targetFixture('Target'),
+      dir1DirectionType: 'CameraForward',
+      dir2Source: targetFixture('Owner'),
+      dir2Target: targetFixture('Target'),
+      dir2DirectionType: 'SourceToTarget',
+      key: 'angle',
+    };
+    expect(
+      parseKnownNativeActionLeafSource(
+        {
+          ...source,
+          dir1DirectionType: 4,
+          dir2DirectionType: 2,
+        },
+        'fixture.angle',
+        {},
+      ),
+    ).toEqual(parseKnownNativeActionLeafSource(source, 'fixture.angle', {}));
+    expect(parseKnownNativeActionLeafSource(source, 'fixture.angle', {})).toMatchObject({
+      family: 'directionAngle',
+      action: {
+        kind: 'saveTwoDirectionAngle',
+        outputKey: 'angle',
+        direction1Type: 'CameraForward',
+        direction2Type: 'SourceToTarget',
+        direction1Source: { targetSource: 'Source' },
+        direction2Source: { targetSource: 'Owner' },
+      },
+    });
   });
 
   it('严格读取普通攻击施法身份继承动作', () => {

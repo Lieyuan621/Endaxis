@@ -8,8 +8,8 @@ import { usePublishedSimulationDisplay } from './usePublishedSimulationDisplay';
 it('captures on publication, shares history and clears all display sources synchronously', () => {
   const published = shallowRef<PublishedScenarioSimulation | null>(null);
   const weapon = { slug: 'weapon', displayName: 'original' };
-  const gear = { slug: 'gear', iconPath: '/original.webp' };
-  const gearSet = { slug: 'set', iconPath: '/set-original.webp' };
+  const gear = { slug: 'gear', icon: 'endaxis:icons/icon_attack_sword' };
+  const gearSet = { slug: 'set', icon: 'endaxis:icons/icon_attack_claym' };
   const getWeapons = vi.fn(() => [weapon]);
   const scope = effectScope();
   const display = scope.run(() =>
@@ -34,10 +34,10 @@ it('captures on publication, shares history and clears all display sources synch
     expect(display.battleLogSnapshot.value?.history).toBe(receiptHistory);
     expect(display.publishedReceiptEntries.value).toBe(receiptHistory.toArray());
     weapon.displayName = 'edited';
-    gear.iconPath = '/edited.webp';
-    gearSet.iconPath = '/set-edited.webp';
-    expect(display.publishedGearIcons.value.get('gear')).toBe('/original.webp');
-    expect(display.publishedGearSetIcons.value.get('set')).toBe('/set-original.webp');
+    gear.icon = 'endaxis:icons/icon_attack_funnel';
+    gearSet.icon = 'endaxis:icons/icon_attack_pistol';
+    expect(display.publishedGearIcons.value.get('gear')).toBe('/icons/icon_attack_sword.webp');
+    expect(display.publishedGearSetIcons.value.get('set')).toBe('/icons/icon_attack_claym.webp');
     expect(display.publishedWeaponSources.value.get('weapon')).toMatchObject({ name: 'original' });
     expect(getWeapons).toHaveBeenCalledTimes(1);
     published.value = null;

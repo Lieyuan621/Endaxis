@@ -1,15 +1,16 @@
 import type { ComboSkillConditionDefinition } from '../../../packages/game-data-contract/src/operators.ts';
+import type { OperatorInstanceDocument } from '../project/schema';
 
+import { describe, expect, it } from 'vitest';
+import { perlica } from '../../data/operators/perlica.generated';
+import { withProjectOperatorTemplate } from '../../test/projectOperatorTemplateFixture';
 import { ActionGraphDefinitionRepository } from '../compiler/actionGraphDefinitionRepository';
 import { rootActionSteps } from '../compiler/actionProgramInspection';
-import { describe, expect, it } from 'vitest';
-import { validateComboSkillConditions } from './validateComboSkillConditions';
-import type { OperatorDefinition } from './operatorDefinition';
-import { perlica } from '../../data/operators/perlica.generated';
 import { compileOperatorComboSkillConditions } from '../compiler/compileOperatorComboSkillConditions';
 import { createEmptyProject } from '../project/createProject';
-import { withProjectOperatorTemplate } from '../../test/projectOperatorTemplateFixture';
 import { parseProjectDocument, serializeProjectDocument } from '../project/serialization';
+import type { OperatorDefinition } from './operatorDefinition';
+import { validateComboSkillConditions } from './validateComboSkillConditions';
 import { validateOperatorDefinition } from './validateOperatorDefinition';
 import { validateActionGraphReferenceDefinition } from './validation/actionPrograms';
 
@@ -89,7 +90,8 @@ describe('正式原生连携条件结构与绑定', () => {
                 parameters: {
                   resource: 'sp' as const,
                   amount: [4, 9],
-                  recipient: 'team' as const,
+                  source: { kind: 'fixed' as const, target: 'caster' as const },
+                  targets: { kind: 'fixed' as const, target: 'caster' as const },
                 },
               },
               next: null,
@@ -157,7 +159,7 @@ describe('正式原生连携条件结构与绑定', () => {
     ).toThrow('must resolve to exactly one combo skill');
   });
   it.each([undefined, 0, 1.5, -1])('空序列也不能绕过缺失/非法组等级 %s', level => {
-    const invalidBuild: import('../project/schema').OperatorInstanceDocument = {
+    const invalidBuild: OperatorInstanceDocument = {
       ...build,
       skillLevels: level === undefined ? {} : { comboSkill: level },
     };
@@ -211,7 +213,12 @@ it('binds graph combo conditions at the referenced skill level without expanding
           entry: {
             action: {
               kind: 'changeResource' as const,
-              parameters: { resource: 'sp' as const, amount: [3, 7], recipient: 'team' as const },
+              parameters: {
+                resource: 'sp' as const,
+                amount: [3, 7],
+                source: { kind: 'fixed' as const, target: 'caster' as const },
+                targets: { kind: 'fixed' as const, target: 'caster' as const },
+              },
             },
             next: null,
           },

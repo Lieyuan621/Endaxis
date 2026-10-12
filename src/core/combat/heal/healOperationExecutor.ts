@@ -1,7 +1,7 @@
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
+import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
-/** 把普通治疗步骤写入干员生命账本；目标选择和面板来源由场景环境提供。 */
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import type { HealCalculationAttribute, HealTarget } from '../../game-data/operatorDefinition';
 import type { CombatReceiptSink } from '../receipt/combatReceipt';
@@ -53,6 +53,7 @@ export interface HealOperationDependencies {
   readonly delegate: CombatOperationExecutor;
 }
 
+/** 按目标身份写入生命账本；目标选择和属性来源由场景环境提供。 */
 export class HealOperationExecutor implements CombatOperationExecutor {
   constructor(readonly dependencies: HealOperationDependencies) {}
 
@@ -64,10 +65,10 @@ export class HealOperationExecutor implements CombatOperationExecutor {
     if (step.kind !== 'heal') return this.dependencies.delegate.execute(step, context);
     const target =
       step.parameters.target === 'currentTarget' || step.parameters.target === 'actionInputTarget'
-        ? this.#resolveCurrentTarget(
-            step.parameters.target === 'actionInputTarget' && context !== undefined
-              ? { ...context, currentTarget: context.actionInputTarget }
-              : context,
+        ? this.#resolveRuntimeTarget(
+            step.parameters.target === 'actionInputTarget'
+              ? context?.actionInputTarget
+              : context?.currentTarget,
           )
         : step.parameters.target === 'contextTarget'
           ? this.#resolveContextTarget(step, context)
@@ -197,20 +198,19 @@ export class HealOperationExecutor implements CombatOperationExecutor {
     const targets = context.targetContext.get(step.parameters.contextKey);
     if (targets.length === 0) return null;
     const target = targets[0];
-    if (targets.length !== 1 || target?.kind !== 'operator') {
-      throw new Error(`heal context target '${step.parameters.contextKey}' must be one operator`);
+    if (targets.length !== 1) {
+      throw new Error(`heal context target '${step.parameters.contextKey}' must be one entity`);
     }
-    const resolve = this.dependencies.resolveContextTarget;
-    if (resolve === undefined) throw new Error('context heal target resolver is not configured');
-    return resolve(target.operatorId);
+    return this.#resolveRuntimeTarget(target);
   }
 
-  #resolveCurrentTarget(context: CombatOperationContext | undefined): ResolvedHealTarget {
-    if (context?.currentTarget?.kind !== 'operator') {
-      throw new Error("heal target 'currentTarget' requires a current operator target");
+  #resolveRuntimeTarget(target: RuntimeTargetRef | undefined): ResolvedHealTarget | null {
+    if (target === undefined) return null;
+    if (target.kind !== 'operator' && target.kind !== 'enemy') {
+      throw new Error('heal runtime target requires an entity with a health ledger');
     }
     const resolve = this.dependencies.resolveContextTarget;
     if (resolve === undefined) throw new Error('current heal target resolver is not configured');
-    return resolve(context.currentTarget.operatorId);
+    return resolve(target.kind === 'enemy' ? 'enemy' : target.operatorId);
   }
 }

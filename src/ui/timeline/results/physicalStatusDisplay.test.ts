@@ -74,7 +74,7 @@ function applied(
       enabled: true,
       visible: true,
       abnormalColorType: 'Physical',
-      ...(buffId === guardId ? { iconPath: '/icons/icon_shadow_attribute_penetrate.webp' } : {}),
+      ...(buffId === guardId ? { icon: 'endaxis:icons/icon_shadow_attribute_penetrate' } : {}),
       ...data,
     },
     options,
@@ -94,7 +94,7 @@ it.each(['airborne', 'knockDown', 'crush', 'fracture'])(
       layers: 1,
       startFrame: 10,
       durationEndFrame: 10,
-      iconPath: '/icons/icon_shadow_attribute_penetrate.webp',
+      icon: 'endaxis:icons/icon_shadow_attribute_penetrate',
     });
     expect(display!.windows).toHaveLength(1);
   },
@@ -121,7 +121,7 @@ it('shows the consumed guard count on a crush marker and does not draw a crush d
     layers: 2,
     startFrame: 40,
     durationEndFrame: 40,
-    iconPath: '/icons/icon_term_ba_crush.webp',
+    icon: 'endaxis:icons/icon_term_ba_crush',
   });
 });
 
@@ -150,7 +150,7 @@ it('shows the consumed guard count and real debuff duration for fracture', () =>
     layers: 2,
     startFrame: 40,
     durationEndFrame: 80,
-    iconPath: '/icons/icon_term_ba_fracture.webp',
+    icon: 'endaxis:icons/icon_term_ba_fracture',
   });
 });
 
@@ -180,7 +180,7 @@ it('uses the updated guard count and real control duration for airborne', () => 
     layers: 2,
     startFrame: 20,
     durationEndFrame: 50,
-    iconPath: '/icons/icon_term_ba_airborne.webp',
+    icon: 'endaxis:icons/icon_term_ba_airborne',
   });
   expect(display!.windows.map(buff => buff.buffId)).toContain('buff_physical_airborne');
 

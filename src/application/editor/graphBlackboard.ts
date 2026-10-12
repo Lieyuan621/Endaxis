@@ -8,10 +8,6 @@ export interface BlackboardScope {
   id: string;
   label: string;
   initial: Readonly<Record<string, unknown>>;
-  entityInitial: Readonly<Record<string, unknown>>;
-  parent?: string;
-  copiesParent: boolean;
-  sharesEntity?: boolean;
   /** Declaration node, for editor navigation only. */
   nodeId?: string;
 }
@@ -23,7 +19,7 @@ export interface BlackboardVariable {
   requiredReads: string[];
   writes: string[];
   initial?: unknown;
-  /** Numeric entity assignments have a known type but no statically known initial value. */
+  /** 数值赋值可确定类型，但不能静态确定初值。 */
   assignedType?: 'number';
   readSites?: { id: string; owner: 'action' | 'data' }[];
 }
@@ -41,8 +37,6 @@ export function analyzeGraphBlackboard(
         id: 'current',
         label: rootLabel,
         initial,
-        entityInitial: {},
-        copiesParent: false,
       },
     ],
   ]);
@@ -59,28 +53,7 @@ export function analyzeGraphBlackboard(
     contexts.set(id, seen);
     for (const port of listGraphPorts(node)) {
       if (port.target === null) continue;
-      let child = scope;
-      if (
-        node.action.kind === 'withActionBlackboardScope' &&
-        port.path[0] === 'action' &&
-        port.path[1] === 'body'
-      ) {
-        const p = node.action.parameters;
-        if (!p.shareParentBlackboard) {
-          child = `${scope}/${id}`;
-          scopes.set(child, {
-            id: child,
-            nodeId: id,
-            parent: scope,
-            label: p.scopeKey ?? id,
-            initial: p.initialValues,
-            entityInitial: { ...p.entityInitialValues, ...p.entityAssignments },
-            copiesParent: p.inheritParent,
-            sharesEntity: p.entityInitialValues === undefined && p.entityAssignments === undefined,
-          });
-        }
-      }
-      pending.push({ id: port.target, scope: child });
+      pending.push({ id: port.target, scope });
     }
   }
   const fieldContexts = new Map<string, Set<string>>();
@@ -102,9 +75,6 @@ export function analyzeGraphBlackboard(
         label: `GlobalBuff · ${id}`,
         nodeId: id,
         initial: evidence.initial,
-        entityInitial: {},
-        copiesParent: false,
-        sharesEntity: false,
       });
       globalBuffScopes.add(scope);
       globalOverrides.set(scope, evidence.overrideKeys);
@@ -125,11 +95,6 @@ export function analyzeGraphBlackboard(
   for (const scope of scopes.values()) {
     for (const [key, value] of Object.entries(scope.initial))
       variable(scope.id, key, 'direct').initial = value;
-    for (const [key, value] of Object.entries(scope.entityInitial)) {
-      const item = variable(scope.id, key, 'entity');
-      if (value && typeof value === 'object' && 'kind' in value) item.assignedType = 'number';
-      else item.initial = value;
-    }
   }
   for (const [scope, keys] of globalOverrides)
     for (const key of keys) variable(scope, key, 'direct').assignedType = 'number';
@@ -210,8 +175,10 @@ export function analyzeGraphBlackboard(
         for (const [key, child] of Object.entries(value)) visitInline(child, [...path, key]);
       }
       visitInline(action);
-      if (action.kind === 'applyBuff')
-        for (const key of Object.values(action.parameters.copiedBlackboardAssignments ?? {}))
+      if (action.kind === 'applyBuff' || action.kind === 'aura')
+        for (const key of action.parameters.buffs.flatMap(entry =>
+          Object.values(entry.copiedBlackboardAssignments ?? {}),
+        ))
           read(key);
       for (const input of listDataInputs(action))
         if (input.source !== null)
@@ -232,9 +199,7 @@ export function analyzeGraphBlackboard(
         case 'storeShieldValue':
         case 'readBuffStackCount':
         case 'readBuffBlackboard':
-        case 'readAbilityEntityRemainingDuration':
         case 'readEventBuffBlackboard':
-        case 'readCurrentBuffRemainingDuration':
         case 'readBuffRemainingDuration':
           write(action.parameters.outputKey);
           break;
@@ -277,32 +242,16 @@ export function blackboardScopeWarnings(
       Object.hasOwn(s.initial, variable.key),
     );
     if (!declarations.length) continue;
-    let scope = analysis.scopes.get(variable.scope);
-    let accessible = false;
-    while (scope) {
-      if (
-        Object.hasOwn(scope.initial, variable.key) ||
-        Object.hasOwn(scope.entityInitial, variable.key) ||
+    const scope = analysis.scopes.get(variable.scope);
+    const accessible =
+      scope !== undefined &&
+      (Object.hasOwn(scope.initial, variable.key) ||
         analysis.variables.some(
           v =>
-            v.scope === scope!.id &&
+            v.scope === scope.id &&
             v.key === variable.key &&
-            (v.writes.length || v.assignedType !== undefined),
-        )
-      ) {
-        accessible = true;
-        break;
-      }
-      scope = scope.copiesParent && scope.parent ? analysis.scopes.get(scope.parent) : undefined;
-    }
-    let entityScope = analysis.scopes.get(variable.scope);
-    while (!accessible && entityScope) {
-      if (Object.hasOwn(entityScope.entityInitial, variable.key)) accessible = true;
-      entityScope =
-        entityScope.sharesEntity && entityScope.parent
-          ? analysis.scopes.get(entityScope.parent)
-          : undefined;
-    }
+            (v.writes.length > 0 || v.assignedType !== undefined),
+        ));
     if (!accessible)
       result.push(
         `变量 ${variable.key} 只在作用域 ${declarations.map(s => s.label).join('、')} 中设置了初值；作用域 ${analysis.scopes.get(variable.scope)?.label} 无法读取它，需要单独提供该变量。`,

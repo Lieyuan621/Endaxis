@@ -1,19 +1,24 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, useId, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { EaButton, EaDialog, EaSelect, type EaSelectValue } from '../../../design-system/index';
-import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
-import { CombatObjectOrigins } from '../../../core/projection/combatObjectOrigins';
+import { combatObjectKey } from '../../../core/combat/receipt/combatObjectIdentity';
+import type {
+  CombatObjectRef,
+  CombatReceiptEntry,
+} from '../../../core/combat/receipt/combatReceipt';
+import { runtimeTargetFromEntityId } from '../../../core/game-data/logicalAbilityEntity';
 import type {
   CombatObjectNode,
   CombatObjectRelation,
 } from '../../../core/projection/combatObjectOrigins';
-import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
-import { combatObjectKey } from '../../../core/combat/receipt/combatObjectIdentity';
-import { layoutCombatOriginGraph, type OriginRelationFilter } from './combatOriginGraphLayout';
+import { CombatObjectOrigins } from '../../../core/projection/combatObjectOrigins';
 import { projectHitDamageContribution } from '../../../core/projection/damageContribution';
-import { runtimeTargetFromEntityId } from '../../../core/game-data/logicalAbilityEntity';
+import { EaButton, EaDialog, EaSelect, type EaSelectValue } from '../../../design-system/index';
+import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import TimelineConnectorStroke from '../components/TimelineConnectorStroke.vue';
+import type { CombatObjectIconResolver } from './combatObjectIcons';
+import type { CombatObjectOwnName } from './combatObjectNames';
+import { layoutCombatOriginGraph, type OriginRelationFilter } from './combatOriginGraphLayout';
 
 const props = defineProps<{
   kind?: 'damage' | 'status';
@@ -21,10 +26,10 @@ const props = defineProps<{
   /** 未提供现成索引时，首次打开图再为这份固定结果建立索引。 */
   receiptEntries?: readonly CombatReceiptEntry[];
   sequence: number;
-  root?: import('../../../core/combat/receipt/combatReceipt').CombatObjectRef;
+  root?: CombatObjectRef;
   operatorLabel?: (operatorId: string) => string;
-  objectName?: import('./combatObjectNames').CombatObjectOwnName;
-  objectIcon?: import('./combatObjectIcons').CombatObjectIconResolver;
+  objectName?: CombatObjectOwnName;
+  objectIcon?: CombatObjectIconResolver;
   actionPresentation?: (
     ownerId: string,
     actionId: string,
@@ -223,6 +228,7 @@ function description(node: CombatObjectNode): string {
       return `#${object.sequence}`;
     case 'spatialPoint':
       return String(object.pointId);
+    case 'godEntity':
     case 'enemy':
       return '—';
   }

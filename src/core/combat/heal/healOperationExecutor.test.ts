@@ -116,6 +116,28 @@ describe('HealOperationExecutor', () => {
     expect(resolved).toEqual(['operator:saved']);
     expect(savedTarget.health).toBe(800);
     expect(otherTarget.health).toBe(100);
+    const inputStep = {
+      kind: 'heal' as const,
+      parameters: { target: 'actionInputTarget' as const, amount: 50, tags: [] },
+    };
+    expect(
+      executor.execute(inputStep, {
+        blackboard: new ActionBlackboard(),
+        actionInputTarget: { kind: 'operator', operatorId: 'operator:saved' },
+        currentTarget: { kind: 'operator', operatorId: 'operator:other' },
+      }),
+    ).toBe(true);
+    expect(savedTarget.health).toBe(850);
+    expect(otherTarget.health).toBe(100);
+    expect(executor.execute(inputStep, { blackboard: new ActionBlackboard() })).toBe(false);
+    expect(
+      executor.execute(
+        { ...inputStep, parameters: { ...inputStep.parameters, alwaysNext: true } },
+        {
+          blackboard: new ActionBlackboard(),
+        },
+      ),
+    ).toBe(true);
   });
 
   it('preserves alwaysNext when a context query saved no target', () => {

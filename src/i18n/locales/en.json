@@ -1,4 +1,24 @@
 {
+  "imagePicker": {
+    "choose": "Choose image",
+    "clear": "Use default",
+    "default": "Default image",
+    "missing": "Image resource not found",
+    "search": "Search resource name or ID",
+    "category": "Image category",
+    "all": "All categories",
+    "empty": "No matching images",
+    "more": "Show more",
+    "categories": {
+      "operators": "Operators",
+      "icons": "Common icons",
+      "weapons": "Weapons",
+      "equipment": "Equipment",
+      "enemies": "Enemies",
+      "consumables": "Consumables",
+      "contingency_contract": "Contingency Contract"
+    }
+  },
   "executionTrace": {
     "comboCandidatePassed": "Returned true → Combo candidate registered",
     "comboCandidateRejected": "Returned false → No combo candidate registered",
@@ -166,7 +186,6 @@
       "clear": "Clear filters",
       "path": "Resource path",
       "back": "Back",
-      "forward": "Forward",
       "locate": "Locate active resource",
       "sources": "Sources",
       "builtin": "Built-in resources",
@@ -363,7 +382,8 @@
     "nodes": {
       "prepare": "Set variable",
       "damage": "Deal damage",
-      "applyBuff": "Apply Buff"
+      "applyBuff": "Apply Buff",
+      "aura": "Aura"
     },
     "descriptions": {
       "operator": "Open independent skills from their groups, or browse owned Buffs and entities.",
@@ -513,7 +533,7 @@
       "baseDefense": "Base defense",
       "levelRequirement": "Required level",
       "slotType": "Gear slot",
-      "iconPath": "Icon path",
+      "icon": "Icon",
       "lifetime": "Lifetime",
       "kind": "Type",
       "durationSeconds": "Duration in seconds",
@@ -620,6 +640,8 @@
     "noMatchingNodes": "No matching nodes",
     "addNode": "Add Node…",
     "options": {
+      "first": "First target",
+      "all": "All targets",
       "allOperators": "All operators",
       "context": "Action context group",
       "hit": "Hit",
@@ -779,7 +801,14 @@
       "afterTakeSpellAbnormal": "After elemental status",
       "walk": "Walk",
       "run": "Run",
-      "sprint": "Sprint"
+      "sprint": "Sprint",
+      "enterFreeState": "Enter free state",
+      "aiManual": "AI interruption",
+      "mud": "Mud",
+      "detachSkill": "Detach skill",
+      "interruptAction": "Action interruption",
+      "dash": "Dodge",
+      "castNextSkill": "Cast next skill"
     },
     "optional": "Optional",
     "unset": "Not set",
@@ -799,12 +828,6 @@
     "scope": "Variable Scope",
     "skillScope": "Skill · {name}",
     "macroScope": "Macro call · {name}",
-    "localScope": "Local Scope · {name}",
-    "currentScopeHelp": "Reads check this call's local variables first, then owner variables. Macros use variables provided by their caller.",
-    "copyScopeHelp": "Outer variables are copied on entry. Local changes here do not update outer local variables.",
-    "independentScopeHelp": "Use the configured initial values without copying outer local variables.",
-    "sharedEntityHelp": "Owner variables are still shared with the outer scope; changes affect other users.",
-    "ownEntityHelp": "Use separate owner variables.",
     "paramLayer": "Macro input · read-only",
     "entityLayer": "Owner variable",
     "localLayer": "Local variable",
@@ -837,10 +860,6 @@
       "targetContextKey": {
         "name": "Read target group",
         "help": "Name of the target group saved earlier to read."
-      },
-      "onActionEndFinishBuffs": {
-        "name": "Finish buffs on action end",
-        "help": "When the action ends, finishes every matching Buff on the selected object by ID."
       },
       "nativeExecuteInterval": {
         "name": "Execute on interval",
@@ -888,7 +907,7 @@
       },
       "selection": {
         "name": "Selection",
-        "help": "Choose the team, controlled operator or member with lowest health ratio."
+        "help": "Choose which objects participate in this operation."
       },
       "count": {
         "name": "Count"
@@ -906,10 +925,6 @@
       },
       "sameSourceSkillCast": {
         "name": "Same Cast Only"
-      },
-      "saveCountToBlackboardKey": {
-        "name": "Store Count In",
-        "help": "Variable that receives the result count."
       },
       "circularOrder": {
         "name": "Circular Order",
@@ -1030,28 +1045,8 @@
         "name": "Completion Condition",
         "help": "Choose when the action completes and allows continuation."
       },
-      "noGuardBuffId": {
-        "name": "Vulnerability Buff",
-        "help": "Buff applied when vulnerability starts."
-      },
-      "noGuardDefinition": {
-        "name": "Vulnerability Definition",
-        "help": "Independent resource defining vulnerability."
-      },
       "type": {
         "name": "Type"
-      },
-      "fractureBuffId": {
-        "name": "Breach Buff"
-      },
-      "fractureDefinition": {
-        "name": "Breach Definition"
-      },
-      "crushedBuffId": {
-        "name": "Crush Buff"
-      },
-      "crushedDefinition": {
-        "name": "Crush Definition"
       },
       "damageMultiplier": {
         "name": "Damage Multiplier",
@@ -1060,12 +1055,6 @@
       "ignoreHitEffect": {
         "name": "Skip Hit Visuals",
         "help": "Skip hit visuals without removing damage."
-      },
-      "airborneBuffId": {
-        "name": "Launch Buff"
-      },
-      "airborneDefinition": {
-        "name": "Launch Definition"
       },
       "height": {
         "name": "Launch Height",
@@ -1138,10 +1127,6 @@
         "name": "Stagger Only if Controlled",
         "help": "Skip this hit’s stagger when the caster is not controlled. Damage still applies."
       },
-      "attackScalePerStatusStack": {
-        "name": "Scaling per Stack",
-        "help": "Extra attack scaling granted by each status stack."
-      },
       "instantAttributeModifiers": {
         "name": "Hit Attribute Modifiers",
         "help": "Attribute modifiers applied only to this hit."
@@ -1189,10 +1174,6 @@
       "keywordEnhancements": {
         "name": "Keyword Enhancements",
         "help": "Set keyword enhancements on this effect."
-      },
-      "onActionEndBuffs": {
-        "name": "Buffs on End",
-        "help": "Follow-up Buffs applied to the same targets when this action ends."
       },
       "inheritToNextSkillIds": {
         "name": "Allowed Successor Skills",
@@ -1452,6 +1433,9 @@
       "skillIds": {
         "name": "Skills"
       },
+      "triggeredAction": {
+        "name": "Precise Input Succeeded"
+      },
       "whenTrue": {
         "name": "True"
       },
@@ -1465,6 +1449,10 @@
       "options": {
         "name": "Cases",
         "help": "Case values and their execution outputs."
+      },
+      "catchUpMissedTicks": {
+        "name": "Catch Up Missed Ticks",
+        "help": "Run each due pass when time or logical frames advance across multiple trigger points."
       },
       "nativeChanneling": {
         "name": "Channel Settings",
@@ -1643,9 +1631,13 @@
         "name": "Skill Types",
         "help": "Skill categories to match."
       },
-      "parentContextKey": {
-        "name": "Group to Check",
-        "help": "Group to check for the event target."
+      "returnTrueIfNotExists": {
+        "name": "Pass When Marker Is Absent",
+        "help": "Pass when the target has no valid marker. A missing target still fails."
+      },
+      "parent": {
+        "name": "Parent Targets",
+        "help": "Look for the child targets in this group."
       },
       "child": {
         "name": "Object to Find",
@@ -1710,6 +1702,72 @@
       },
       "ignoreAddingCooldown": {
         "name": "Ignore infliction cooldown"
+      },
+      "onEnd": {
+        "name": "On End",
+        "help": ""
+      },
+      "blendOutSeconds": {
+        "name": "Blend Out (seconds)",
+        "help": "The end callback runs after duration minus blend-out time."
+      },
+      "executeOnNormalEndOnly": {
+        "name": "Normal End Only",
+        "help": "Skip the end callback when the animation is interrupted."
+      },
+      "owner": {
+        "name": "Owner"
+      },
+      "bornAt": {
+        "name": "Spawn position"
+      },
+      "consumedElement": {
+        "name": "Consumed attachment element"
+      },
+      "consumedLayers": {
+        "name": "Layers consumed"
+      },
+      "buffs": {
+        "name": "Applied buffs"
+      },
+      "onEnter": {
+        "name": "On enter"
+      },
+      "onExit": {
+        "name": "On exit"
+      },
+      "onlyMainOperator": {
+        "name": "SP for controlled operator only"
+      },
+      "onlyHitTargets": {
+        "name": "Hit targets only"
+      },
+      "containsHittableTarget": {
+        "name": "Include hittable targets"
+      },
+      "excludeDeadEntity": {
+        "name": "Exclude dead entities"
+      },
+      "compareZeroWhenTargetMissing": {
+        "name": "Compare zero stacks when target is missing"
+      },
+      "distance": {
+        "name": "Distance"
+      },
+      "lessThan": {
+        "name": "Closer than the specified distance"
+      },
+      "includeTargetRadius": {
+        "name": "Include target radius"
+      },
+      "containsHittableObject": {
+        "name": "Include hittable objects"
+      },
+      "reasons": {
+        "name": "Interruption reasons"
+      },
+      "level": {
+        "name": "Dispel level"
       }
     },
     "help": "Help",
@@ -1720,14 +1778,6 @@
       "number": "Value"
     },
     "nodes": {
-      "outputKnockDown": {
-        "name": "Notify Knockdown",
-        "help": "Trigger responses to a successful knockdown. Does not apply knockdown."
-      },
-      "outputAirborne": {
-        "name": "Notify Launch",
-        "help": "Trigger responses to a successful launch. Does not apply launch."
-      },
       "triggerSpellBurst": {
         "name": "Trigger Arts Burst",
         "help": "Trigger an Arts Burst of the selected element."
@@ -1756,29 +1806,9 @@
         "name": "For Each Target",
         "help": "Run the body for each object in the group. Current target refers to that object."
       },
-      "readAbilityEntityRemainingDuration": {
-        "name": "Get Entity Time Remaining",
-        "help": "Store the current entity’s remaining lifetime in a variable, in seconds."
-      },
       "setAbilityEntityRemainingDuration": {
         "name": "Set Entity Time Remaining",
-        "help": "Set how many seconds the current entity has left."
-      },
-      "finishCurrentAbilityEntity": {
-        "name": "End Current Entity",
-        "help": "End the projectile or entity selected as the current target."
-      },
-      "finishActionOwnerAbilityEntity": {
-        "name": "End Owning Entity",
-        "help": "End the entity running this action, regardless of the selected loop target."
-      },
-      "finishCurrentAbilityEntityWhenSourceDies": {
-        "name": "End Entity if Source Is Gone",
-        "help": "End the current entity if its source is no longer alive."
-      },
-      "startCurrentAbilityEntityChildSkill": {
-        "name": "Start Entity Skill",
-        "help": "Run a skill on the current entity."
+        "help": "Set the first target entity's remaining seconds, capped at its spawn duration."
       },
       "startCurrentAbilityEntityChildSkillById": {
         "name": "Start Named Entity Skill",
@@ -1800,29 +1830,17 @@
         "name": "Cast Skill",
         "help": "Request a skill cast, with options for cost and interruption."
       },
-      "applyKnockDown": {
-        "name": "Apply Knockdown",
-        "help": "Apply knockdown with the selected duration and requirements."
-      },
       "applyPhysicalInfliction": {
         "name": "Apply Physical Status",
-        "help": "Apply launch, crush or breach and resolve its effect against the target’s vulnerability."
+        "help": "Apply launch, knockdown, crush or breach and resolve its effect against the target’s vulnerability."
       },
-      "applyElementalReaction": {
-        "name": "Apply Arts Reaction",
-        "help": "Apply a lasting Arts reaction to the target."
-      },
-      "consumeElementalReaction": {
-        "name": "Remove Arts Reaction",
-        "help": "End the selected Arts reaction on the target."
+      "forceSpellStatus": {
+        "name": "Force Arts reaction",
+        "help": "Consumes the specified attachment layers and applies an Arts reaction. Skips targets with insufficient layers; zero consumption applies directly."
       },
       "dealDamage": {
         "name": "Deal Damage",
         "help": "Deal one hit. Set its scaling through the inputs and optionally add stagger."
-      },
-      "dealFixedDamage": {
-        "name": "Deal Fixed Base Damage",
-        "help": "Use a fixed base damage value before applicable damage modifiers."
       },
       "dealStagger": {
         "name": "Deal Stagger",
@@ -1860,13 +1878,9 @@
         "name": "Get Event Buff Variable",
         "help": "Read a variable from the Buff that triggered this event. Use in a Buff event response."
       },
-      "readCurrentBuffRemainingDuration": {
-        "name": "Get Current Buff Time Remaining",
-        "help": "Store remaining seconds for the current Buff. An unlimited Buff returns 0."
-      },
       "readBuffRemainingDuration": {
         "name": "Get Buff Time Remaining",
-        "help": "Read remaining seconds from the first matching Buff. Unlimited duration returns 0."
+        "help": "Stores the remaining seconds of the last matching finite Buff, or 0 if none match."
       },
       "setCurrentBuffRemainingDuration": {
         "name": "Change Buff Time Remaining",
@@ -1883,6 +1897,10 @@
       "readBuffStackCount": {
         "name": "Count Buffs",
         "help": "Count matching Buff stacks or instances and store the result."
+      },
+      "dispelBuffs": {
+        "name": "Dispel Buffs",
+        "help": "Remove dispellable buffs up to the selected dispel level, optionally filtered by tags."
       },
       "finishBuffsByTag": {
         "name": "End Buffs by Tag",
@@ -1928,10 +1946,6 @@
         "name": "Add Timed Marker",
         "help": "Add a timed marker to the target for condition nodes to check."
       },
-      "createAbilityEntityTimedMarker": {
-        "name": "Add Entity Marker",
-        "help": "Add a timed marker to the current entity."
-      },
       "startTimeDilation": {
         "name": "Change Time Scale",
         "help": "Change time scale globally or for selected objects. 1 is normal; 0 pauses time."
@@ -1947,6 +1961,10 @@
       "setIgnoreGlobalTimeScale": {
         "name": "Ignore Global Time Scale",
         "help": "Exclude selected entities from global time dilation, or restore it."
+      },
+      "storeCharacterTypeId": {
+        "name": "Read character type",
+        "help": "Stores the target character type in a variable. Fails if the target has no character-table entry."
       },
       "storeCurrentTimelineFrame": {
         "name": "Get Skill Frame",
@@ -1988,10 +2006,6 @@
         "name": "Change Resource",
         "help": "Add or spend resources such as SP or Ultimate Energy. Positive adds; negative spends."
       },
-      "changeResourceByActionValue": {
-        "name": "Change Resource by Value",
-        "help": "Add or spend resources using a value input."
-      },
       "recoverDashEnergy": {
         "name": "Restore Dodge Stamina",
         "help": "Restore shared dodge stamina. Stamina does not prevent dodging in this tool."
@@ -2008,21 +2022,9 @@
         "name": "Recover Finisher SP",
         "help": "Recover SP using the finisher recovery factor."
       },
-      "applyStatus": {
-        "name": "Apply Status",
-        "help": "Add a status or increase its stacks."
-      },
-      "consumeStatus": {
-        "name": "Consume Status Stacks",
-        "help": "Remove stacks from the selected status."
-      },
       "jumpTimeline": {
         "name": "Jump on Skill Timeline",
         "help": "Advance to the selected frame when the condition is true. No condition means immediate."
-      },
-      "finishTimeline": {
-        "name": "End Current Skill",
-        "help": "End the skill currently running."
       },
       "reachSkillOperableBoundary": {
         "name": "Allow Next Skill",
@@ -2036,6 +2038,22 @@
         "name": "Allow Skill Interruption",
         "help": "Mark the current skill as interruptible."
       },
+      "checkCondition": {
+        "name": "Check Condition",
+        "help": "Continue this sequence only when the check succeeds."
+      },
+      "ifElse": {
+        "name": "If Else",
+        "help": "Execute the condition sequence, then the true or false branch. Condition actions may read and write variables."
+      },
+      "anyCondition": {
+        "name": "Any Condition",
+        "help": "Execute each condition sequence in order until one succeeds. Fail if none succeeds."
+      },
+      "invertNextResult": {
+        "name": "Invert Next Result",
+        "help": "Invert the next action's success or failure without skipping the action."
+      },
       "conditional": {
         "name": "Branch",
         "help": "Follow True when the condition passes, otherwise False. Wire each branch to its actions."
@@ -2048,21 +2066,9 @@
         "name": "Repeat over Time",
         "help": "Repeat the body at the configured interval while the action is active."
       },
-      "repeatByActionValue": {
-        "name": "Repeat by Count",
-        "help": "Run the body the specified number of times."
-      },
       "launchProjectile": {
         "name": "Launch projectile",
         "help": "Launch a projectile and choose the skills to run when it hits, is blocked, arrives or finishes."
-      },
-      "findUnfinishedProjectileTargets": {
-        "name": "Find unfinished projectiles",
-        "help": "Finds projectiles that have not finished yet and stores them as a target group."
-      },
-      "setContextFlag": {
-        "name": "Set Flag",
-        "help": "Set a flag for condition nodes in the current action context."
       },
       "openComboWindow": {
         "name": "Open Combo Window",
@@ -2116,10 +2122,6 @@
         "name": "Do Once",
         "help": "During one cast, only the first call with this shared identifier runs the body."
       },
-      "withActionBlackboardScope": {
-        "name": "Local Variable Scope",
-        "help": "Run actions with local variables. Copy outer values or choose to share them."
-      },
       "conditionNode": {
         "name": "Condition Reference",
         "help": "Use another condition node in this graph."
@@ -2139,6 +2141,10 @@
       "parameter": {
         "name": "Get Macro Input",
         "help": "Read an input supplied by the macro caller. Macro inputs cannot be assigned."
+      },
+      "skillHasHit": {
+        "name": "Skill has hit?",
+        "help": "Checks whether this cast has entered combat damage processing."
       },
       "combatActive": {
         "name": "In Combat?",
@@ -2168,14 +2174,6 @@
         "name": "Compare Enemy Super Armor",
         "help": "Compare the enemy’s super armor with the input."
       },
-      "cameraToTargetAngleCompare": {
-        "name": "Compare View Angle",
-        "help": "Compare view and target directions. Spatial orientation is not simulated."
-      },
-      "skillBranchEnabled": {
-        "name": "Skill Branch Enabled?",
-        "help": "Check whether the build enables this skill branch."
-      },
       "targetStaggered": {
         "name": "Target Staggered?",
         "help": "Check whether the target is currently staggered."
@@ -2188,9 +2186,9 @@
         "name": "Compare Stagger",
         "help": "Compare the target’s current stagger value."
       },
-      "contextFlagEquals": {
-        "name": "Flag Equals?",
-        "help": "Check whether a flag equals the selected value."
+      "stringEquals": {
+        "name": "Compare strings",
+        "help": "Checks whether two strings are equal, including letter case."
       },
       "actionValueCompare": {
         "name": "Compare Values",
@@ -2212,9 +2210,9 @@
         "name": "Compare Projectile Immunity Bypass",
         "help": "Compare the event projectile’s immunity bypass level."
       },
-      "contextTargetCountCompare": {
-        "name": "Compare Target Count",
-        "help": "Count objects in a target group and compare, optionally storing the count."
+      "entityCountCompare": {
+        "name": "Check Entity Count",
+        "help": "Count entities selected by the query. Optionally exclude dead entities and store the count when the comparison succeeds."
       },
       "contextTargetObjectTypeMatch": {
         "name": "Target Group Type Matches?",
@@ -2229,12 +2227,12 @@
         "help": "Compare the input target’s identity with the selected object."
       },
       "contextTargetIdentityMatch": {
-        "name": "First Target Matches?",
-        "help": "Compare the first object in the group with the selected object."
+        "name": "Target Group Matches?",
+        "help": "Compare the first target or all targets. A missing first target does not match; all-target comparison requires both groups to contain each other."
       },
       "contextTargetEntityTagMatch": {
-        "name": "First Target Tags Match?",
-        "help": "Check tags on the first object in the group."
+        "name": "All Target Tags Match?",
+        "help": "Check tags on every entity in the group. A group without valid entities fails."
       },
       "contextTargetBuffStackCompare": {
         "name": "Compare First Target Buff Stacks",
@@ -2247,10 +2245,6 @@
       "abilityEntityRemainingDurationCompare": {
         "name": "Compare Entity Time Remaining",
         "help": "Compare remaining seconds on the current entity and optionally store the value."
-      },
-      "statusActive": {
-        "name": "Status Active?",
-        "help": "Check that the status exists with enough stacks."
       },
       "currentBuffStackCompare": {
         "name": "Compare Current Buff Stacks",
@@ -2279,10 +2273,6 @@
       "casterComboPending": {
         "name": "Combo Pending?",
         "help": "Check for a pending combo. Other cast requirements may still fail."
-      },
-      "eventComboRingQteSucceeded": {
-        "name": "Combo Timing Succeeded?",
-        "help": "Check whether this combo input was within the valid timing window."
       },
       "timedMarkerPresent": {
         "name": "Timed Marker Present?",
@@ -2328,13 +2318,17 @@
         "name": "Current Skill Type Matches?",
         "help": "Check the type of the skill the target is currently casting."
       },
+      "skillInterruptReasonIn": {
+        "name": "Interrupt reason matches?",
+        "help": "Checks whether this skill interruption has one of the selected reasons."
+      },
       "originSkillTypeIn": {
         "name": "Source Skill Type Matches?",
         "help": "Check the type of the skill that caused this event."
       },
-      "contextTargetContains": {
-        "name": "Group Contains Event Target?",
-        "help": "Check whether the event target belongs to the selected group."
+      "targetContains": {
+        "name": "Contains All Targets?",
+        "help": "Check whether the parent group contains every child target. An empty child group passes."
       },
       "eventSkillIdIn": {
         "name": "Event Skill in List?",
@@ -2372,14 +2366,6 @@
         "name": "Compare Consumed Buff Stacks",
         "help": "Compare actual Buff stacks consumed by this event and optionally store them."
       },
-      "eventSourceTargetMatch": {
-        "name": "Event Source Matches Target?",
-        "help": "Compare the current event’s source and target."
-      },
-      "eventActionOwnerTargetMatch": {
-        "name": "Owner Matches Event Target?",
-        "help": "Compare the object running this effect with the event target."
-      },
       "eventOverheal": {
         "name": "Overhealing?",
         "help": "Check whether healing exceeds missing health. Optionally store requested, actual and excess healing."
@@ -2392,10 +2378,6 @@
         "name": "Event Source Is Summoner?",
         "help": "If the Buff came from an entity, compare the event source with that entity’s source."
       },
-      "eventSourceControlled": {
-        "name": "Event Source Controlled?",
-        "help": "Check whether the event source is the controlled operator."
-      },
       "buffSourceMatchesOwner": {
         "name": "Buff Source Is Owner?",
         "help": "Check whether this Buff’s source and owner are the same object."
@@ -2403,14 +2385,6 @@
       "ownerSpawnedAbilityEntityPresent": {
         "name": "Spawned Entity Present?",
         "help": "Check whether the caster has an active matching entity."
-      },
-      "elementalInflictionPresent": {
-        "name": "Arts Infliction Present?",
-        "help": "Check for enough stacks of the selected Arts infliction."
-      },
-      "elementalReactionActive": {
-        "name": "Arts Reaction Active?",
-        "help": "Check that the selected reaction is active at the required level."
       },
       "not": {
         "name": "NOT",
@@ -2436,10 +2410,6 @@
         "name": "Notify operator infliction",
         "help": "Notify effects listening for an operator receiving an infliction or an elemental status."
       },
-      "limitMovementGait": {
-        "name": "Limit movement gait",
-        "help": "Restrict the minimum and maximum movement gait while this action is active."
-      },
       "applyCharacterInfliction": {
         "name": "Inflict operator",
         "help": "Apply elemental infliction to the selected operators, or trigger its status directly."
@@ -2451,6 +2421,34 @@
       "skillDamageTypeIn": {
         "name": "Check skill element",
         "help": "Check the event skill’s element, or the executing skill when there is no event skill."
+      },
+      "aura": {
+        "name": "Aura",
+        "help": "Maintain aura Buff instances per target and execute entry and exit callbacks."
+      },
+      "targetDistance": {
+        "name": "Target distance check",
+        "help": "Compare the first targets of two queries. Missing targets fail the check."
+      },
+      "copyContextTargets": {
+        "name": "Copy target group",
+        "help": "Copies targets in order, preserving duplicates. An empty source clears the destination."
+      },
+      "findTargets": {
+        "name": "Find targets",
+        "help": "Find targets and replace the output group. A missing owner leaves the group unchanged; an empty result clears it."
+      },
+      "finishOwner": {
+        "name": "Finish target entities",
+        "help": "End the selected summoned entities or projectiles. Ending flight does not trigger a timeout skill."
+      },
+      "playAnimation": {
+        "name": "Animation",
+        "help": "Run the end callback when the animation finishes, optionally excluding interruptions."
+      },
+      "interruptCurrentSkill": {
+        "name": "Interrupt current skill",
+        "help": "End the skill currently being executed by the selected targets."
       }
     },
     "open": "Edit skill graph",
@@ -2554,6 +2552,7 @@
       "modifier": "Direct modifier",
       "operator": "Operator",
       "enemy": "Enemy",
+      "godEntity": "Battle mechanism",
       "spatialPoint": "Spatial point"
     }
   },
@@ -2667,7 +2666,6 @@
       "SkillStarted": "Skill start",
       "SkillEnded": "Skill end",
       "SkillTimelineJumped": "Skill timeline jump",
-      "SkillTimelineFinished": "Skill timeline complete",
       "SkillCostApplied": "Skill cost",
       "SkillInputProcessed": "Skill input",
       "SkillCooldownReserved": "Skill cooldown reserved",
@@ -2684,7 +2682,6 @@
       "HealingApplied": "Healing",
       "SpChanged": "SP change",
       "UltimateEnergyChanged": "Ultimate energy change",
-      "StatusChanged": "Status change",
       "BuffModifierChanged": "Buff effect value changed",
       "BuffApplied": "Buff apply",
       "BuffFinished": "Buff end",
@@ -2692,8 +2689,6 @@
       "BuffPresentationStarted": "Buff display start",
       "BuffPresentationFinished": "Buff display end",
       "ElementalInflictionApplied": "Elemental infliction",
-      "ElementalReactionApplied": "Elemental reaction apply",
-      "ElementalReactionConsumed": "Elemental reaction consume",
       "SpellBurstApplied": "Arts burst",
       "ComboWindowOpened": "Combo window open",
       "ComboWindowConsumed": "Combo window consume",
@@ -2955,6 +2950,16 @@
       "interruptUnknown": "The simulation cannot yet determine whether {skill} can interrupt the ongoing skill.",
       "duringUltimate": "The ultimate animation has not finished. Another ultimate cannot be used yet.",
       "cannotUseSkills": "The operator’s current status prevents skill use.",
+      "skills": "skills",
+      "blockedByState": "The operator {state} and cannot use {skill} yet.",
+      "blockingStates": {
+        "frozen": "is frozen",
+        "originiumFrozen": "is immobilized by Originium Crystals",
+        "stunned": "is stunned",
+        "knockedDown": "is knocked down",
+        "airborne": "is airborne",
+        "gettingUp": "is getting up"
+      },
       "cannotUseSkillType": "The operator’s current status prevents using {skill}.",
       "afterDodge": "The dodge has not yet reached the point where {skill} can follow.",
       "costRejected": "There was not enough SP or Ultimate Energy when {skill} attempted to pay its cost.",
@@ -3334,8 +3339,6 @@
       "markerId": "Marker ID",
       "targetTrack": "Operator to switch to",
       "direction": "Dodge direction",
-      "forward": "Forward",
-      "backward": "Backward",
       "dodgeResult": "Declared result",
       "successDelayFrames": "Perfect-dodge success delay (frames)",
       "simulationResult": "Actual simulation result",
@@ -3542,7 +3545,6 @@
         "buffApplied": "Buff applied",
         "buffOutput": "Buff output",
         "buffConsumed": "Buff consumed",
-        "airborneOutput": "Airborne output",
         "knockDownOutput": "Knockdown output",
         "spGained": "SP gained",
         "damageTagHit": "Damage tag hit",
@@ -3866,7 +3868,7 @@
         "other": "Other"
       },
       "conditionKind": "Condition type",
-      "scopeKey": "Once scope key",
+      "scopeKey": "Variable scope key",
       "whenTrue": "Condition true",
       "switchChoice": "Choice value",
       "switchAlwaysNext": "Continue the outer sequence even if no option matches or the selected branch fails",
@@ -3881,16 +3883,13 @@
         "singleEnemyPresent": "Single enemy present",
         "casterControlled": "Caster controlled",
         "enemySuperArmorCompare": "Enemy super armor comparison",
-        "cameraToTargetAngleCompare": "Camera-to-target angle comparison",
-        "skillBranchEnabled": "Skill branch enabled",
         "targetStaggered": "Target staggered",
         "healthCompare": "Health comparison",
         "poiseCompare": "Poise comparison",
-        "contextFlagEquals": "Context flag equals",
+        "stringEquals": "String equality",
         "actionValueCompare": "Action value comparison",
         "probability": "Probability roll",
         "abilityEntityRemainingDurationCompare": "Ability entity remaining duration",
-        "statusActive": "Status active",
         "buffStackCompare": "Buff tag stack comparison",
         "currentBuffStackCompare": "Current Buff enhancement count comparison",
         "contextTargetObjectTypeMatch": "Context target object type match",
@@ -3905,15 +3904,13 @@
         "timedMarkerPresent": "Timed marker present",
         "globalCooldownPresent": "Global cooldown active",
         "casterComboPending": "Caster has a pending combo candidate (not a castability check)",
-        "eventComboRingQteSucceeded": "This combo input hit the precise-link window",
         "eventDamageTagsMatch": "Event damage tags match",
         "eventDamageFeaturesMatch": "Event damage features match",
-        "elementalInflictionPresent": "Elemental infliction present",
-        "elementalReactionActive": "Elemental reaction active",
         "not": "Not",
         "all": "All",
         "any": "Any",
-        "deckAttributeCompare": "Operator attribute comparison"
+        "deckAttributeCompare": "Operator attribute comparison",
+        "targetDistance": "Target distance check"
       },
       "conditionNoParameters": "This condition has no additional parameters.",
       "conditionContextKey": "Target context key",
@@ -4157,7 +4154,7 @@
         "buffOutputKey": "Action blackboard key receiving the result for later steps in this cast.",
         "finishReason": "Lifecycle reason passed to the Buff, which may affect finish listeners and cleanup.",
         "conditionKind": "Selects the runtime state to inspect. Changing type creates valid default parameters for that condition.",
-        "scopeKey": "Stable scope shared within one skill cast. Once nodes with the same key allow their body to run only once.",
+        "scopeKey": "Identifies a shared variable scope.",
         "branchKey": "Stable skill branch identity enabled by forms, talents, or other build conditions.",
         "conditionTarget": "Combat entity whose state is inspected. Endaxis currently models the caster and one enemy.",
         "healthValueType": "Current health is an absolute value; current health ratio ranges from 0 to 1.",
@@ -4183,19 +4180,13 @@
       },
       "stepHelp": {
         "switch": "Evaluate the choice once and match options in order using float32 tolerance. Reset all branches; tick and end only the selected branch.",
-        "repeatByActionValue": "Resolves a non-negative integer count from an action value at execution and repeats the body in native loop order.",
         "mergeContextTargets": "Merges stable target identities into a named action context group without spatial queries.",
         "createSpatialPointTargets": "Creates a named Context target group from a proven zero-space point source. Spatial points carry positions and are not treated as combat entities.",
         "findCharacterTeamTargets": "Queries the team at the execution frame and saves operator identities in Context; later reads do not select again.",
         "findOwnerSpawnedAbilityEntities": "Finds logical ability entities by the current operator and native GameplayTags, saving the full group and optional count in this cast context.",
         "pickContextTarget": "Picks one instance from an existing Context target group by stable index and saves it as a new Context target group.",
         "forEachContextTarget": "Synchronously executes one step sequence for each stable target handle already stored in the cast context.",
-        "readAbilityEntityRemainingDuration": "Reads the finite remaining lifetime of the current iterated Context target into this cast's action blackboard.",
-        "setAbilityEntityRemainingDuration": "Assigns the remaining lifetime of the current iterated ability entity using the proven native Assign subset.",
-        "finishCurrentAbilityEntity": "Explicitly finishes the ability entity referenced by the current child timeline or iterated Context target.",
-        "finishActionOwnerAbilityEntity": "Finishes the ability entity that owns this child-skill action, unaffected by a temporary Context target inside ForEach.",
-        "finishCurrentAbilityEntityWhenSourceDies": "Finishes the current ability entity only after its source has been recorded as dead.",
-        "startCurrentAbilityEntityChildSkill": "Starts an entity-local hidden child timeline on the existing ability entity referenced by the current Context target, without creating a player cast, cost, or cooldown.",
+        "setAbilityEntityRemainingDuration": "Sets the first target ability entity's remaining lifetime between zero and its actual spawn period. Infinite lifetimes are unchanged.",
         "startCurrentAbilityEntityChildSkillById": "Starts an existing child timeline by stable child-skill ID on the ability entity referenced by the current Context target.",
         "spawnAbilityEntity": "Creates an ability entity from the definition embedded in this step, preserving its native identity, target, lifetime, blackboard, and optional entity-local child timeline.",
         "applyElementalInfliction": "Applies elemental infliction to the enemy for later elemental reactions.",
@@ -4203,15 +4194,9 @@
         "triggerCustomAbilityEvent": "Synchronously publishes an exactly named custom event on the caster AbilitySystem. The current subset only supports the evidenced caster-to-self target route.",
         "castSkillDuringAction": "Queues a registered native skill from the current action and inherits this cast context without charging its cost again. The native ID must resolve to one logical skill.",
         "inheritSkillCastInfoForBasicAttack": "Inherits the current cast information for a basic attack started during the action, preserving damage provenance without creating another player action or cost.",
-        "applyPhysicalInfliction": "Executes the native FractureAction chain: creates No Guard first, then triggers Fracture when No Guard already exists. Both public Buff definitions are embedded at the use site.",
-        "applyElementalReaction": "Directly applies an elemental reaction with duration and effectiveness.",
-        "consumeElementalReaction": "Consumes a specified reaction on the enemy for follow-up effects.",
+        "applyPhysicalInfliction": "Applies No Guard or the selected physical infliction according to the target state. Buff IDs reference the shared definition repository.",
         "dealDamage": "Deals one Attack-scaled hit and may resolve stagger in the same step.",
-        "dealFixedDamage": "Deals damage from a fixed base without multiplying Attack; later modifiers still apply.",
         "dealStagger": "Deals stagger only, with no health damage.",
-        "outputAirborne": "Outputs one airborne fact and synchronously triggers listeners without changing dummy position or control state.",
-        "outputKnockDown": "Outputs one knockdown fact and synchronously triggers listeners without changing dummy position or control state.",
-        "applyKnockDown": "Root knockdown preserves guard breaking, status buffs, immunity and events. Standard scenario integration is pending; simulation is not yet supported.",
         "heal": "Heals an operator from the caster's primary attribute and records raw, actual, and overhealing even at full health.",
         "applyBuff": "Creates a Buff instance by looking up its ID in the owning object’s definitions and sets its initial blackboard values.",
         "createGlobalBuff": "Creates a battle-level GlobalBuff parent and projects its child Buffs onto every member of the fixed party.",
@@ -4219,10 +4204,9 @@
         "finishGlobalBuffsById": "Finishes every active GlobalBuff parent with an explicitly named native ID and all of its party mirrors.",
         "readSkillSettingData": "Reads a runtime-selected column from versioned SkillSetting data and may apply a recovered infliction-enhance formula.",
         "readBuffBlackboard": "Reads one value from a matching Buff into this cast's action blackboard.",
-        "readBuffRemainingDuration": "Reads the remaining seconds of the first active matching Buff on the target into this cast's action blackboard; unlimited duration becomes 0.",
+        "readBuffRemainingDuration": "Stores the remaining seconds of the last matching finite Buff, or 0 if none match.",
         "readEventBuffBlackboard": "Reads a value from the Buff instance snapshot carried by the current event.",
         "readBuffStackCount": "Counts matching Buff stacks into this cast's action blackboard.",
-        "readCurrentBuffRemainingDuration": "Stores the current finite Buff's remaining seconds in the action blackboard; infinite duration becomes 0.",
         "setCurrentBuffRemainingDuration": "Assigns, adds to, or multiplies the current finite Buff's remaining seconds.",
         "refreshCurrentBuffAttributeModifiers": "Recalculates and replaces the current Buff instance's registered attribute modifiers from its current blackboard.",
         "finishBuffsByTag": "Finishes all Buffs matching a tag query.",
@@ -4235,9 +4219,8 @@
         "adjustSkillCooldown": "Reduces or sets current cooldowns selected by skill type or ID, using a base-duration ratio or absolute seconds.",
         "holdBuffsById": "Prevents specified Buffs from ending while this scheduled sequence remains active.",
         "restrictUltimateEnergyRecovery": "Allows only positive ultimate-energy recovery with specified tags while active and may clear ultimate energy when it ends.",
-        "createTimedMarker": "Creates a timed marker on a target; markers with the same ID may coexist.",
+        "createTimedMarker": "Creates markers per target using the target's clock or global scaled time. Identical IDs may coexist. An empty target group returns false.",
         "setGlobalCooldown": "Sets a battle-wide cooldown for a character. Reusing the same character and ID refreshes its remaining time. Independent of ordinary markers, character time dilation and action lifetime.",
-        "createAbilityEntityTimedMarker": "Creates a timed marker on the current ability entity's local clock.",
         "storeCurrentTimelineFrame": "Stores the host skill or ability entity child skill's current local execute frame in the action blackboard.",
         "storeEventSpGainAmount": "Stores the actual SP amount carried by the current SP-gained event in the action blackboard.",
         "storeEventHealValues": "Stores the raw, actual, and overheal values carried by the current healing event in the action blackboard.",
@@ -4248,7 +4231,6 @@
         "calculateActionValue": "Calculates from two operands and writes to the action blackboard.",
         "storeSourceAttributeValue": "Reads a current combat attribute from the skill source and stores the native rounded and scaled result in the action blackboard.",
         "changeResource": "Changes SP or ultimate energy using a per-level amount.",
-        "changeResourceByActionValue": "Changes SP or ultimate energy from a constant or action blackboard value.",
         "gainSquadUltimateEnergyFromSkillCost": "Converts the actual SP cost of this skill into squad ultimate energy.",
         "gainFinisherSp": "Restores shared SP using the finisher-specific rule.",
         "recoverDashEnergy": "Restores native dodge energy by the action value.",
@@ -4256,16 +4238,11 @@
         "markCurrentSkillCanDash": "Marks that the current skill can now be interrupted by a dodge.",
         "markCurrentSkillCanInterrupt": "Marks that the current skill can now be interrupted by a following skill.",
         "overrideMultiDashLimit": "Temporarily overrides the consecutive dodge limit.",
-        "applyStatus": "Applies an Endaxis semantic status with duration, stacks, and combat modifiers.",
-        "consumeStatus": "Consumes stacks of a semantic status on the target.",
         "jumpTimeline": "Advances the host-local timeline to a frame. An optional condition is retried during the action interval, and the jump occurs only once.",
-        "finishTimeline": "Ends the current host skill timeline immediately and discards every pending action.",
         "reachSkillOperableBoundary": "Marks when the next-skill window is reached. Only the executed branch determines the current skill block's end.",
         "conditional": "Evaluates a condition tree and runs the true or false branch.",
-        "once": "Runs its body at most once within the same skill cast.",
-        "withActionBlackboardScope": "Runs its body in the action blackboard owned by one native child-skill invocation.",
+        "once": "Runs its body once per action instance, until a normal reset.",
         "repeatEachTick": "Runs its body at interval start and on every subsequent host tick.",
-        "setContextFlag": "Sets a caster context flag for other mechanics to read.",
         "openComboWindow": "Queues the next combo stage in the scene-level window runtime. The window lasts 5 seconds and follows queue order.",
         "showComboRingQte": "Registers a precise-link input window using the native warning and active durations.",
         "changeSkillSlot": "Changes the variant used by the next release of this stable skill group; an ongoing release keeps its snapshotted variant.",
@@ -4277,7 +4254,11 @@
         "startTimeDilation": "Starts ordinary time dilation. Scope, duration, slot, priority, and curve determine the resulting clock scale.",
         "startUltimateTimeDilation": "Starts ultimate-specific global time dilation. The caster ignores it automatically and it stops when the action ends.",
         "hideUi": "Native HideUIAction interval. The normal branch controls ultimate presentation independently of time dilation. The input-only branch still requires the CommonMask protocol; this is not a universal skill lock.",
-        "setIgnoreGlobalTimeScale": "Controls whether ability entities ignore global time scale for this action interval, reverting it when configured."
+        "setIgnoreGlobalTimeScale": "Controls whether ability entities ignore global time scale for this action interval, reverting it when configured.",
+        "aura": "Maintain aura Buff instances per target and execute entry and exit callbacks.",
+        "copyContextTargets": "Copy target group",
+        "interruptCurrentSkill": "Interrupt the selected target’s current skill. A target without an active skill is unaffected.",
+        "finishOwner": "End the selected summoned entities or projectiles. Ending flight does not trigger a timeout skill."
       },
       "damageType": "Damage type",
       "eventListenerWindowHint": "The current scheduled sequence start and end frames define the listening window. Responses run synchronously on the triggering frame.",
@@ -4341,18 +4322,11 @@
         "findOwnerSpawnedAbilityEntities": "Find owner-spawned ability entities",
         "pickContextTarget": "Pick Context target",
         "forEachContextTarget": "For each Context target",
-        "readAbilityEntityRemainingDuration": "Read ability entity remaining duration",
         "setAbilityEntityRemainingDuration": "Set ability entity remaining duration",
-        "finishCurrentAbilityEntity": "Finish current ability entity",
-        "finishActionOwnerAbilityEntity": "Finish action-owner ability entity",
-        "finishCurrentAbilityEntityWhenSourceDies": "Finish entity when source dies",
-        "startCurrentAbilityEntityChildSkill": "Start inline entity child skill",
         "startCurrentAbilityEntityChildSkillById": "Start entity child skill by ID",
         "castSkillDuringAction": "Cast skill during action",
         "readBuffRemainingDuration": "Read Buff remaining duration",
         "inheritBuffById": "Inherit Buff by ID",
-        "withActionBlackboardScope": "Use isolated action blackboard",
-        "repeatByActionValue": "Repeat by action value",
         "overrideBasicAttackMapping": "Override basic attack mapping",
         "changeSkillSlot": "Change skill-slot variant",
         "spawnAbilityEntity": "Spawn ability entity",
@@ -4366,14 +4340,8 @@
         "refreshCurrentBuffAttributeModifiers": "Refresh current Buff modifiers",
         "restrictUltimateEnergyRecovery": "Restrict ultimate-energy recovery",
         "applyPhysicalInfliction": "Apply physical infliction",
-        "applyElementalReaction": "Apply reaction",
-        "consumeElementalReaction": "Consume reaction",
         "dealDamage": "Deal damage",
-        "dealFixedDamage": "Deal fixed damage",
         "dealStagger": "Deal stagger",
-        "outputAirborne": "Output airborne",
-        "outputKnockDown": "Output knockdown",
-        "applyKnockDown": "Root knockdown (not integrated)",
         "heal": "Heal operator",
         "applyBuff": "Apply buff",
         "createGlobalBuff": "Create global buff",
@@ -4383,7 +4351,6 @@
         "readBuffBlackboard": "Read buff blackboard",
         "readEventBuffBlackboard": "Read event buff blackboard",
         "readBuffStackCount": "Read buff stacks",
-        "readCurrentBuffRemainingDuration": "Read current buff lifetime",
         "setCurrentBuffRemainingDuration": "Set current buff lifetime",
         "finishBuffsByTag": "Finish buffs by tag",
         "finishBuffsById": "Finish buffs by ID",
@@ -4395,7 +4362,6 @@
         "holdBuffsById": "Hold buffs",
         "createTimedMarker": "Create timed marker",
         "setGlobalCooldown": "Set global cooldown",
-        "createAbilityEntityTimedMarker": "Create entity-local timed marker",
         "storeCurrentTimelineFrame": "Store current timeline frame",
         "storeEventSpGainAmount": "Store gained SP amount",
         "storeEventHealValues": "Store event healing values",
@@ -4404,7 +4370,6 @@
         "calculateActionValue": "Calculate action value",
         "storeSourceAttributeValue": "Store source attribute value",
         "changeResource": "Change resource",
-        "changeResourceByActionValue": "Change resource by action value",
         "gainSquadUltimateEnergyFromSkillCost": "Gain ultimate energy from skill cost",
         "gainFinisherSp": "Gain finisher SP",
         "recoverDashEnergy": "Restore dodge energy",
@@ -4412,18 +4377,18 @@
         "markCurrentSkillCanDash": "Allow dodge interruption",
         "markCurrentSkillCanInterrupt": "Allow following-skill interruption",
         "overrideMultiDashLimit": "Override consecutive dodge limit",
-        "applyStatus": "Apply status",
-        "consumeStatus": "Consume status",
         "jumpTimeline": "Jump timeline",
-        "finishTimeline": "Finish timeline",
         "reachSkillOperableBoundary": "Reach next-skill window",
         "conditional": "Conditional branch",
         "once": "Execute once",
         "repeatEachTick": "Repeat each tick",
-        "setContextFlag": "Set context flag",
         "openComboWindow": "Open next combo window",
         "showComboRingQte": "Show precise-link window",
-        "listenForCombatEvents": "Listen for combat events"
+        "listenForCombatEvents": "Listen for combat events",
+        "aura": "Aura",
+        "copyContextTargets": "Copy target group",
+        "interruptCurrentSkill": "Interrupt current skill",
+        "finishOwner": "Finish target entities"
       }
     },
     "inspector": {
@@ -4519,11 +4484,9 @@
       "noSamples": "Waiting for simulation samples"
     },
     "hitInflictionSuffix": " infliction",
-    "hitReactionConsumed": " consumed",
     "effect": {
       "burst": "Burst",
       "reaction": "Reaction",
-      "reactionConsumed": "Reaction consumed",
       "layers": "{stacks} layers"
     },
     "passiveUi": {
@@ -4641,7 +4604,6 @@
       "element": "Element",
       "outcome": "Outcome",
       "reaction": "Reaction",
-      "reactionConsumed": "Reaction consumed",
       "level": "Level"
     },
     "simGuide": {
@@ -5610,8 +5572,6 @@
     "staleDraft": "The mapping changed elsewhere. Cancel and reopen to avoid overwriting it",
     "incompatibleSource": "A source key is outside this scope, has the wrong type, or is not a declared macro parameter",
     "destination": {
-      "childAction": "Child action blackboard",
-      "childEntity": "Child entity blackboard",
       "buff": "Target Buff blackboard",
       "abilityEntity": "Spawned entity blackboard",
       "globalBuff": "New global Buff blackboard",
@@ -5620,8 +5580,6 @@
       "globalBuffChild": "Child Buff blackboard"
     },
     "destinationUnknown": {
-      "childAction": "These are new child-scope declarations. The current source scope is not the destination",
-      "childEntity": "These are new entity-scope declarations. The current source scope is not the destination",
       "buff": "Target Buff key types are not proven in this form; destination context is unknown",
       "abilityEntity": "Spawned entity key types are not proven in this form; destination context is unknown",
       "globalBuff": "Global Buff key types are not proven in this form; destination context is unknown",

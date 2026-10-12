@@ -158,7 +158,8 @@ describe('全量图片隔离导出', () => {
     expect(overrides.get('/operators/custom/avatar.webp')?.sourceNames).toEqual([
       'icon_round_chr_0001_portrait.png',
     ]);
-    expect(overrides.get('/operators/custom/battle.webp')?.sourceNames).toEqual([
+    expect(overrides.has('/operators/custom/battle.webp')).toBe(false);
+    expect(overrides.get('/operators/custom/battle 01.webp')?.sourceNames).toEqual([
       'icon_skill_sample_01.png',
     ]);
     expect(overrides.get('/operators/custom/charge.webp')?.sourceNames).toEqual([

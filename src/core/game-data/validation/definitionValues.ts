@@ -9,7 +9,6 @@ import {
   DAMAGE_ELEMENTS,
   DAMAGE_FEATURES,
   DAMAGE_TYPES,
-  ELEMENTAL_REACTIONS,
   INFLICTION_ELEMENTS,
   OPERATOR_ATTRIBUTES,
   PHYSICAL_INFLICTION_TYPES,
@@ -29,8 +28,6 @@ export const DAMAGE_TYPES_SET = new Set<string>(DAMAGE_TYPES);
 export const DAMAGE_TAGS_SET = new Set<string>(DAMAGE_TAGS);
 
 export const INFLICTION_ELEMENTS_SET = new Set<string>(INFLICTION_ELEMENTS);
-
-export const ELEMENTAL_REACTIONS_SET = new Set<string>(ELEMENTAL_REACTIONS);
 
 export const COMBAT_TARGETS_SET = new Set<string>(COMBAT_TARGETS);
 
@@ -270,17 +267,6 @@ export function validateDamageFeatures(
       push(out, `${path}[${index}]`, 'unknown damage feature');
     }
   });
-}
-
-/** 布尔/数字/字符串三选一。 */
-export function validateScalar(
-  value: unknown,
-  path: string,
-  out: SkillDefinitionValidationIssue[],
-): void {
-  if (typeof value !== 'boolean' && typeof value !== 'number' && typeof value !== 'string') {
-    push(out, path, 'expected a boolean, number, or string');
-  }
 }
 
 /** 元素或元素数组。 */

@@ -1,12 +1,12 @@
-import { equipmentFixture } from './sourceFixtures.ts';
 import { fixtureGameplayTagRegistry } from './gameplayTagFixtures.ts';
+import { equipmentFixture } from './sourceFixtures.ts';
 
-import { describe, expect, it } from 'vitest';
 import ts from 'typescript';
+import { describe, expect, it } from 'vitest';
 import type { WeaponDefinition } from '../../../packages/game-data-contract/src/equipment.ts';
 import { ActionGraphDefinitionRepository } from '../../../src/core/compiler/actionGraphDefinitionRepository.ts';
-import { compileWeaponContributions } from '../../../src/core/compiler/compileEquipment.ts';
 import { rootActionSteps } from '../../../src/core/compiler/actionProgramInspection.ts';
+import { compileWeaponContributions } from '../../../src/core/compiler/compileEquipment.ts';
 import {
   attachWeaponProductIdentities,
   compileWeaponRuntimeDefinitionBatchSource,
@@ -84,7 +84,7 @@ describe('weapon runtime definitions', () => {
 
     expect(attachWeaponProductIdentities([native], { [native.slug]: item })[0]).toMatchObject({
       assetSlug: 'wpn_claym_0003',
-      iconPath: '/weapons/claym/wpn_claym_0003.webp',
+      icon: 'endaxis:weapons/claym/wpn_claym_0003',
     });
   });
 
@@ -150,6 +150,10 @@ describe('weapon runtime definitions', () => {
         blackboard: { amount, constant: 7 },
         actionGraph: {
           ...dependency.actionGraph,
+          declaredBlackboard: [
+            { key: 'counter', value: 0, isDynamic: true },
+            { key: 'constant', value: 3, isDynamic: false },
+          ],
           actionGroup: {
             timelineActions: [],
             passiveEvents: [
@@ -204,6 +208,7 @@ describe('weapon runtime definitions', () => {
 
       expect(result.definitions[0]?.traits[0]?.blackboard?.amount).toBe(amount);
       expect(result.definitions[0]?.traits[0]?.blackboard?.constant).toBe(7);
+      expect(result.definitions[0]?.traits[0]?.blackboard?.counter).toBe(0);
       expect(result.definitions[0]?.traits[0]?.eventHandlers?.[0]).not.toHaveProperty('blackboard');
       expect(result.diagnostics).toEqual([]);
       const trait = result.definitions[0]?.traits[0];
@@ -386,7 +391,7 @@ describe('weapon runtime definitions', () => {
         : undefined;
     // 条件守卫保留为独立节点，不被拍平进响应入口。
     expect(guardedAction).toMatchObject({
-      kind: 'conditional',
+      kind: 'checkCondition',
       parameters: {
         condition: {
           kind: 'eventDamageTagsMatch',
@@ -443,9 +448,7 @@ describe('weapon runtime definitions', () => {
       }, exports);
       return exports.default;
     };
-    const weapon = loadDefinition(
-      weaponContent,
-    ) as import('../../../packages/game-data-contract/src/equipment.ts').WeaponDefinition;
+    const weapon = loadDefinition(weaponContent) as WeaponDefinition;
     expect(weapon.traits[0]!.eventHandlers![0]!.sequence).toHaveProperty('$sequence');
     expect(weapon.traits[0]).toHaveProperty('actionGraph');
     const compiled = compileWeaponContributions(

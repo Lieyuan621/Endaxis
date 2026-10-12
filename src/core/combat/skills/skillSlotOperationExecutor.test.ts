@@ -6,10 +6,10 @@ import { ActionBlackboard } from '../actions/actionBlackboard';
 describe('SkillSlotOperationExecutor', () => {
   it('结束普攻映射动作只撤销自己的句柄，重复结束无副作用', () => {
     const finish = vi.fn();
-    const register = vi.fn(() => 3);
+    const register = vi.fn().mockReturnValueOnce(3).mockReturnValueOnce(4);
     const context = {
       blackboard: new ActionBlackboard(),
-      actionRegistrationState: { registrationId: null as number | null },
+      actionRegistrationState: { registrationIds: [] as number[] },
     };
     const delegate = { execute: vi.fn(() => false), evaluate: vi.fn(() => false) };
     const executor = new SkillSlotOperationExecutor({
@@ -20,14 +20,13 @@ describe('SkillSlotOperationExecutor', () => {
     });
     const step: ResolvedCombatOperationStep = {
       kind: 'overrideBasicAttackMapping',
-      parameters: { skillId: 'native.heavy' },
+      parameters: { skillIds: ['native.heavy', 'native.heavy.next'] },
     };
     executor.execute(step, context);
-    expect(register).toHaveBeenCalledWith('native.heavy');
+    expect(register.mock.calls).toEqual([['native.heavy'], ['native.heavy.next']]);
     executor.end(step, context);
     executor.end(step, context);
-    expect(finish).toHaveBeenCalledWith(3);
-    expect(finish).toHaveBeenCalledOnce();
+    expect(finish.mock.calls).toEqual([[3], [4]]);
     expect(delegate.execute).not.toHaveBeenCalled();
   });
   it('changes future slot resolution without delegating the operation', () => {
@@ -71,7 +70,7 @@ describe('SkillSlotOperationExecutor', () => {
     const replaceSkillSlot = vi.fn(() => 2);
     const context = {
       blackboard: new ActionBlackboard(),
-      actionRegistrationState: { registrationId: null as number | null },
+      actionRegistrationState: { registrationIds: [] as number[] },
     };
     const executor = new SkillSlotOperationExecutor({
       changeSkillSlot: vi.fn(),
@@ -103,7 +102,7 @@ describe('SkillSlotOperationExecutor', () => {
     const finish = vi.fn();
     const context = {
       blackboard: new ActionBlackboard(),
-      actionRegistrationState: { registrationId: null as number | null },
+      actionRegistrationState: { registrationIds: [] as number[] },
     };
     const executor = new SkillSlotOperationExecutor({
       changeSkillSlot: vi.fn(),
@@ -135,7 +134,7 @@ describe('SkillSlotOperationExecutor', () => {
     const activatePlayerActionMode = vi.fn(() => 7);
     const context = {
       blackboard: new ActionBlackboard(),
-      actionRegistrationState: { registrationId: null as number | null },
+      actionRegistrationState: { registrationIds: [] as number[] },
     };
     const executor = new SkillSlotOperationExecutor({
       changeSkillSlot: vi.fn(),
@@ -180,7 +179,7 @@ describe('SkillSlotOperationExecutor', () => {
     const setMultiDashLimit = vi.fn();
     const context = {
       blackboard: new ActionBlackboard(),
-      actionRegistrationState: { registrationId: null as number | null },
+      actionRegistrationState: { registrationIds: [] as number[] },
     };
     const executor = new SkillSlotOperationExecutor({
       changeSkillSlot: vi.fn(),

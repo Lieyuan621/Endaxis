@@ -11,29 +11,23 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const lifengChr_0015_lifeng_attack1ActionGraph = {
   main: {
     nodes: {
-      changeResourceByActionValue_1: {
+      changeResource_4: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
             amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 0.5 },
-            recipient: 'team',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+            onlyMainOperator: true,
             spGainKind: 'gain',
             spGainSource: 'normalAttack',
           },
         },
         next: null,
       },
-      conditional_2: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
-        },
-        next: null,
-      },
-      startTimeDilation_3: {
+      startTimeDilation_5: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -77,28 +71,37 @@ export const lifengChr_0015_lifeng_attack1ActionGraph = {
             targets: ['enemy', 'caster'],
           },
         },
-        next: 'conditional_2',
+        next: 'changeResource_4',
       },
-      conditional_4: {
+      checkCondition_3: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_3' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: null,
       },
-      dealDamage_5: {
+      ifElse_6: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_3' },
+          whenTrue: { $sequence: 'startTimeDilation_5' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_7: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
           },
         },
-        next: 'conditional_4',
+        next: 'ifElse_6',
       },
-      reachSkillOperableBoundary_11: {
+      reachSkillOperableBoundary_13: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0015_lifeng_attack2'] },
@@ -109,8 +112,7 @@ export const lifengChr_0015_lifeng_attack1ActionGraph = {
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
   macros: {},
@@ -122,7 +124,6 @@ export const lifengChr_0015_lifeng_attack1: SkillDefinition = {
   blackboard: {
     atb: 0,
     atk_scale: [0.12, 0.13, 0.15, 0.16, 0.17, 0.18, 0.19, 0.21, 0.22, 0.23, 0.25, 0.27],
-    display_atk_scale: [0.24, 0.27, 0.29, 0.32, 0.34, 0.36, 0.39, 0.41, 0.44, 0.47, 0.5, 0.55],
   },
   timelineBlockFrames: 24,
   naturalDurationFrames: 187,
@@ -141,10 +142,11 @@ export const lifengChr_0015_lifeng_attack1: SkillDefinition = {
   },
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 17, endFrame: 18, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 24, endFrame: 32, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'dealDamage_7' } },
+    { startFrame: 17, endFrame: 18, sequence: { $sequence: 'dealDamage_7' } },
+    { startFrame: 24, endFrame: 32, sequence: { $sequence: 'reachSkillOperableBoundary_13' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0015_lifeng_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
@@ -155,29 +157,30 @@ export const lifengChr_0015_lifeng_attack1: SkillDefinition = {
 export const lifengChr_0015_lifeng_attack2ActionGraph = {
   main: {
     nodes: {
-      changeResourceByActionValue_1: {
+      checkCondition_2: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+      changeResource_3: {
+        action: {
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            amount: { kind: 'valueNode', nodeId: 'data_2' },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'team',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+            onlyMainOperator: true,
             spGainKind: 'gain',
             spGainSource: 'normalAttack',
           },
         },
         next: null,
       },
-      conditional_2: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
-        },
-        next: null,
-      },
-      startTimeDilation_3: {
+      startTimeDilation_4: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -221,28 +224,30 @@ export const lifengChr_0015_lifeng_attack2ActionGraph = {
             targets: ['caster'],
           },
         },
-        next: 'conditional_2',
+        next: 'changeResource_3',
       },
-      conditional_4: {
+      ifElse_5: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_3' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_2' },
+          whenTrue: { $sequence: 'startTimeDilation_4' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_5: {
+      dealDamage_6: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
           },
         },
-        next: 'conditional_4',
+        next: 'ifElse_5',
       },
-      reachSkillOperableBoundary_6: {
+      reachSkillOperableBoundary_7: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0015_lifeng_attack3'] },
@@ -251,17 +256,15 @@ export const lifengChr_0015_lifeng_attack2ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const lifengChr_0015_lifeng_attack2: SkillDefinition = {
-  actionGraph: lifengChr_0015_lifeng_attack2ActionGraph,
   key: 'chr_0015_lifeng_attack2',
   element: 'physical',
   blackboard: {
@@ -285,41 +288,44 @@ export const lifengChr_0015_lifeng_attack2: SkillDefinition = {
   },
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 4, endFrame: 5, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 18, endFrame: 24, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
+    { startFrame: 4, endFrame: 5, sequence: { $sequence: 'dealDamage_6' } },
+    { startFrame: 18, endFrame: 24, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0015_lifeng_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
+  actionGraph: lifengChr_0015_lifeng_attack2ActionGraph,
 };
 
 export const lifengChr_0015_lifeng_attack3ActionGraph = {
   main: {
     nodes: {
-      changeResourceByActionValue_1: {
+      checkCondition_2: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+      changeResource_3: {
+        action: {
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            amount: { kind: 'valueNode', nodeId: 'data_2' },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'team',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+            onlyMainOperator: true,
             spGainKind: 'gain',
             spGainSource: 'normalAttack',
           },
         },
         next: null,
       },
-      conditional_2: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
-        },
-        next: null,
-      },
-      startTimeDilation_3: {
+      startTimeDilation_4: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -332,28 +338,30 @@ export const lifengChr_0015_lifeng_attack3ActionGraph = {
             targets: ['enemy', 'caster'],
           },
         },
-        next: 'conditional_2',
+        next: 'changeResource_3',
       },
-      conditional_4: {
+      ifElse_5: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_3' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_2' },
+          whenTrue: { $sequence: 'startTimeDilation_4' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_5: {
+      dealDamage_6: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
           },
         },
-        next: 'conditional_4',
+        next: 'ifElse_5',
       },
-      reachSkillOperableBoundary_6: {
+      reachSkillOperableBoundary_7: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0015_lifeng_attack5'] },
@@ -362,23 +370,20 @@ export const lifengChr_0015_lifeng_attack3ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const lifengChr_0015_lifeng_attack3: SkillDefinition = {
-  actionGraph: lifengChr_0015_lifeng_attack3ActionGraph,
   key: 'chr_0015_lifeng_attack3',
   element: 'physical',
   blackboard: {
     atb: 0,
     atk_scale: [0.35, 0.39, 0.42, 0.46, 0.49, 0.53, 0.56, 0.6, 0.63, 0.67, 0.73, 0.79],
-    display_atk_scale: [0.34, 0.37, 0.4, 0.44, 0.47, 0.5, 0.54, 0.57, 0.6, 0.64, 0.7, 0.75],
   },
   timelineBlockFrames: 14,
   naturalDurationFrames: 115,
@@ -397,19 +402,21 @@ export const lifengChr_0015_lifeng_attack3: SkillDefinition = {
   },
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 14, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
+    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'dealDamage_6' } },
+    { startFrame: 14, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0015_lifeng_attack5',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
+  actionGraph: lifengChr_0015_lifeng_attack3ActionGraph,
 };
 
 export const lifengChr_0015_lifeng_attack5ActionGraph = {
   main: {
     nodes: {
-      dealDamage_1: {
+      dealDamage_3: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -420,7 +427,7 @@ export const lifengChr_0015_lifeng_attack5ActionGraph = {
         },
         next: null,
       },
-      dealDamage_2: {
+      dealDamage_6: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -433,21 +440,22 @@ export const lifengChr_0015_lifeng_attack5ActionGraph = {
         },
         next: null,
       },
-      changeResourceByActionValue_3: {
+      changeResource_10: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
             amount: { kind: 'valueNode', nodeId: 'data_4' },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'team',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
             spGainKind: 'gain',
             spGainSource: 'normalAttack',
           },
         },
         next: null,
       },
-      startTimeDilation_4: {
+      startTimeDilation_11: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -500,24 +508,33 @@ export const lifengChr_0015_lifeng_attack5ActionGraph = {
             targets: ['enemy', 'caster'],
           },
         },
-        next: 'changeResourceByActionValue_3',
+        next: 'changeResource_10',
       },
-      reachSkillOperableBoundary_8: {
+      checkCondition_8: {
         action: {
-          kind: 'reachSkillOperableBoundary',
-          parameters: { skillIds: ['chr_0015_lifeng_attack1'] },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
         next: null,
       },
-      conditional_opt1: {
+      checkCondition_9: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_4' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+        },
+        next: 'checkCondition_8',
+      },
+      ifElse_12: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_9' },
+          whenTrue: { $sequence: 'startTimeDilation_11' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      dealDamage_opt2: {
+      dealDamage_13: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -526,15 +543,32 @@ export const lifengChr_0015_lifeng_attack5ActionGraph = {
             tags: [],
           },
         },
-        next: 'conditional_opt1',
+        next: 'ifElse_12',
       },
-      forEachContextTarget_opt3: {
+      reachSkillOperableBoundary_15: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0015_lifeng_attack1'] },
+        },
+        next: null,
+      },
+      ifElse_opt1: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: null },
+          whenTrue: { $sequence: 'dealDamage_6' },
+          whenFalse: { $sequence: 'dealDamage_6' },
+        },
+        next: null,
+      },
+      forEachContextTarget_opt2: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { target: 'enemy' },
-          body: { $sequence: 'dealDamage_2' },
+          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          body: { $sequence: 'ifElse_opt1' },
         },
-        next: 'dealDamage_opt2',
+        next: 'dealDamage_13',
       },
     },
     dataNodes: {
@@ -542,7 +576,18 @@ export const lifengChr_0015_lifeng_attack5ActionGraph = {
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_5: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_5: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_6: { type: 'boolean', expression: { kind: 'casterControlled' } },
     },
   },
   macros: {},
@@ -556,7 +601,6 @@ export const lifengChr_0015_lifeng_attack5: SkillDefinition = {
     atk_scale: [0.18, 0.19, 0.21, 0.23, 0.25, 0.26, 0.28, 0.3, 0.32, 0.34, 0.36, 0.39],
     atk_scale2: [0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.96, 1.04, 1.13],
     poise: 19,
-    display_atk_scale: [0.68, 0.74, 0.81, 0.88, 0.95, 1.01, 1.08, 1.15, 1.22, 1.3, 1.4, 1.52],
   },
   timelineBlockFrames: 35,
   naturalDurationFrames: 192,
@@ -575,10 +619,11 @@ export const lifengChr_0015_lifeng_attack5: SkillDefinition = {
   },
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'dealDamage_1' } },
-    { startFrame: 24, endFrame: 24, sequence: { $sequence: 'forEachContextTarget_opt3' } },
-    { startFrame: 35, endFrame: 46, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'dealDamage_3' } },
+    { startFrame: 24, endFrame: 24, sequence: { $sequence: 'forEachContextTarget_opt2' } },
+    { startFrame: 35, endFrame: 46, sequence: { $sequence: 'reachSkillOperableBoundary_15' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0015_lifeng_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
@@ -611,7 +656,7 @@ export const lifengChr_0015_lifeng_power_attackActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.9,
             tags: ['normalAttack', 'powerAttack'],
@@ -619,7 +664,14 @@ export const lifengChr_0015_lifeng_power_attackActionGraph = {
         },
         next: 'gainFinisherSp_2',
       },
-      startTimeDilation_4: {
+      checkCondition_4: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: null,
+      },
+      startTimeDilation_5: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -674,24 +726,36 @@ export const lifengChr_0015_lifeng_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_5: {
+      ifElse_6: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_4' },
+          whenTrue: { $sequence: 'startTimeDilation_5' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      applyBuff_7: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_power_attack_disable_cast_skill',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_common_power_attack_disable_cast_skill' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
         },
         next: null,
       },
-      applyBuff_6: {
+      applyBuff_8: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_full_immune_medium',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_common_full_immune_medium' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
@@ -701,14 +765,23 @@ export const lifengChr_0015_lifeng_power_attackActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const lifengChr_0015_lifeng_power_attack: SkillDefinition = {
-  actionGraph: lifengChr_0015_lifeng_power_attackActionGraph,
   key: 'chr_0015_lifeng_power_attack',
   element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -729,72 +802,75 @@ export const lifengChr_0015_lifeng_power_attack: SkillDefinition = {
   scheduledSequences: [
     { startFrame: 6, endFrame: 6, sequence: { $sequence: 'dealDamage_1' } },
     { startFrame: 33, endFrame: 33, sequence: { $sequence: 'dealDamage_3' } },
-    { startFrame: 34, endFrame: 34, sequence: { $sequence: 'startTimeDilation_4' } },
-    { startFrame: 0, endFrame: 33, sequence: { $sequence: 'applyBuff_5' } },
-    { startFrame: 0, endFrame: 68, sequence: { $sequence: 'applyBuff_6' } },
+    { startFrame: 34, endFrame: 34, sequence: { $sequence: 'ifElse_6' } },
+    { startFrame: 0, endFrame: 33, sequence: { $sequence: 'applyBuff_7' } },
+    { startFrame: 0, endFrame: 68, sequence: { $sequence: 'applyBuff_8' } },
   ],
+  defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
+  actionGraph: lifengChr_0015_lifeng_power_attackActionGraph,
 };
 
 export const lifengChr_0015_lifeng_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      changeResourceByActionValue_1: {
+      checkCondition_2: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+      changeResource_3: {
+        action: {
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            amount: { kind: 'valueNode', nodeId: 'data_2' },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'team',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+            onlyMainOperator: true,
             spGainKind: 'gain',
             spGainSource: 'normalAttack',
           },
         },
         next: null,
       },
-      conditional_2: {
+      ifElse_4: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_2' },
+          whenTrue: { $sequence: 'changeResource_3' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      conditional_3: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' }, alwaysNext: true },
-          whenTrue: { $sequence: 'conditional_2' },
-        },
-        next: null,
-      },
-      dealDamage_4: {
+      dealDamage_5: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'plungingAttack'],
           },
         },
-        next: 'conditional_3',
+        next: 'ifElse_4',
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const lifengChr_0015_lifeng_plunging_attack_end: SkillDefinition = {
-  actionGraph: lifengChr_0015_lifeng_plunging_attack_endActionGraph,
   key: 'chr_0015_lifeng_plunging_attack_end',
   element: 'physical',
   blackboard: {
@@ -806,44 +882,60 @@ export const lifengChr_0015_lifeng_plunging_attack_end: SkillDefinition = {
   exclusiveFrame: 25,
   offsetRecordFrame: 0,
   costFrame: 0,
-  scheduledSequences: [{ startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_4' } }],
+  scheduledSequences: [{ startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } }],
+  defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
+  actionGraph: lifengChr_0015_lifeng_plunging_attack_endActionGraph,
 };
 
 export const lifengChr_0015_lifeng_normal_skillActionGraph = {
   main: {
     nodes: {
-      applyBuff_1: {
+      applyBuff_23: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0015_lifeng_purify',
-            target: 'enemy',
+            buffs: [
+              {
+                buffId: 'buff_chr_0015_lifeng_purify',
+                copiedBlackboardAssignments: { rate: 'phy_resist_down', duration: 'duration' },
+              },
+            ],
+            targets: { kind: 'fixed', target: 'enemy' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
-            copiedBlackboardAssignments: { rate: 'phy_resist_down', duration: 'duration' },
           },
         },
         next: null,
       },
-      conditional_2: {
+      checkCondition_22: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
-          whenTrue: { $sequence: 'applyBuff_1' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: null,
       },
-      forEachContextTarget_3: {
+      ifElse_24: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_22' },
+          whenTrue: { $sequence: 'applyBuff_23' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      forEachContextTarget_25: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { target: 'enemy' },
-          body: { $sequence: 'conditional_2' },
+          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          body: { $sequence: 'ifElse_24' },
         },
         next: null,
       },
-      startTimeDilation_4: {
+      startTimeDilation_26: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -858,7 +950,7 @@ export const lifengChr_0015_lifeng_normal_skillActionGraph = {
         },
         next: null,
       },
-      dealDamage_5: {
+      dealDamage_27: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -868,13 +960,21 @@ export const lifengChr_0015_lifeng_normal_skillActionGraph = {
             features: ['canBreakWeakness'],
           },
         },
-        next: 'startTimeDilation_4',
+        next: 'startTimeDilation_26',
       },
-      gainSquadUltimateEnergyFromSkillCost_8: {
-        action: { kind: 'gainSquadUltimateEnergyFromSkillCost', parameters: { coefficient: 1 } },
+      applyBuff_30: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_common_obtain_ultimate_sp' }],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
         next: null,
       },
-      dealDamage_9: {
+      dealDamage_31: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -885,12 +985,13 @@ export const lifengChr_0015_lifeng_normal_skillActionGraph = {
             stagger: { kind: 'valueNode', nodeId: 'data_5' },
           },
         },
-        next: 'gainSquadUltimateEnergyFromSkillCost_8',
+        next: 'applyBuff_30',
       },
-      applyKnockDown_10: {
+      applyPhysicalInfliction_32: {
         action: {
-          kind: 'applyKnockDown',
+          kind: 'applyPhysicalInfliction',
           parameters: {
+            type: 'knockDown',
             target: 'enemy',
             duration: { kind: 'constant', value: 1.5 },
             force: false,
@@ -899,7 +1000,7 @@ export const lifengChr_0015_lifeng_normal_skillActionGraph = {
             returnWhen: 'always',
           },
         },
-        next: 'dealDamage_9',
+        next: 'dealDamage_31',
       },
     },
     dataNodes: {
@@ -945,11 +1046,12 @@ export const lifengChr_0015_lifeng_normal_skill: SkillDefinition = {
   },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 54, endFrame: 56, sequence: { $sequence: 'forEachContextTarget_3' } },
-    { startFrame: 7, endFrame: 9, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 20, endFrame: 22, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 54, endFrame: 56, sequence: { $sequence: 'applyKnockDown_10' } },
+    { startFrame: 54, endFrame: 56, sequence: { $sequence: 'forEachContextTarget_25' } },
+    { startFrame: 7, endFrame: 9, sequence: { $sequence: 'dealDamage_27' } },
+    { startFrame: 20, endFrame: 22, sequence: { $sequence: 'dealDamage_27' } },
+    { startFrame: 54, endFrame: 56, sequence: { $sequence: 'applyPhysicalInfliction_32' } },
   ],
+  defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
@@ -991,25 +1093,16 @@ export const lifengChr_0015_lifeng_ultimate_skillActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_damage_immune_ult_skill',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_common_damage_immune_ult_skill' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
         },
         next: null,
       },
-      mergeContextTargets_5: {
-        action: {
-          kind: 'mergeContextTargets',
-          parameters: {
-            saveToContextKey: 'abepos',
-            sources: [{ kind: 'target', target: 'enemy' }],
-          },
-        },
-        next: null,
-      },
-      modifyActionValue_6: {
+      modifyActionValue_8: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -1020,18 +1113,28 @@ export const lifengChr_0015_lifeng_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      conditional_7: {
+      checkCondition_7: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
-          whenTrue: { $sequence: 'modifyActionValue_6' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: null,
       },
-      spawnAbilityEntity_8: {
+      ifElse_9: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_7' },
+          whenTrue: { $sequence: 'modifyActionValue_8' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      spawnAbilityEntity_13: {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
+            bornAt: { kind: 'fixed', target: 'enemy' },
             abilityEntityId: 'abilityentity_chr_0015_lifeng_ultimate_skill',
             childSkillId: 'chr_0015_lifeng_ultimate_skill_abentity',
             inheritActionBlackboard: true,
@@ -1040,7 +1143,7 @@ export const lifengChr_0015_lifeng_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_9: {
+      mergeContextTargets_12: {
         action: {
           kind: 'mergeContextTargets',
           parameters: {
@@ -1048,7 +1151,24 @@ export const lifengChr_0015_lifeng_ultimate_skillActionGraph = {
             sources: [{ kind: 'target', target: 'enemy' }],
           },
         },
-        next: 'spawnAbilityEntity_8',
+        next: 'spawnAbilityEntity_13',
+      },
+      checkCondition_10: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+        },
+        next: null,
+      },
+      ifElse_14: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_10' },
+          whenTrue: { $sequence: 'mergeContextTargets_12' },
+          whenFalse: { $sequence: 'spawnAbilityEntity_13' },
+        },
+        next: null,
       },
     },
     dataNodes: {
@@ -1065,20 +1185,29 @@ export const lifengChr_0015_lifeng_ultimate_skillActionGraph = {
           right: { kind: 'constant', value: 1 },
         },
       },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const lifengChr_0015_lifeng_ultimate_skill: SkillDefinition = {
-  actionGraph: lifengChr_0015_lifeng_ultimate_skillActionGraph,
   key: 'chr_0015_lifeng_ultimate_skill',
   element: 'physical',
   blackboard: {
     atk_scale1: [1.78, 1.96, 2.13, 2.31, 2.49, 2.67, 2.84, 3.02, 3.2, 3.42, 3.69, 4],
     atk_scale2: [1.78, 1.96, 2.13, 2.31, 2.49, 2.67, 2.84, 3.02, 3.2, 3.42, 3.69, 4],
     isCombo: 0,
-    poise1: 0,
     poise2: 5,
     atk_scale3: [2.67, 2.94, 3.2, 3.47, 3.74, 4, 4.27, 4.54, 4.8, 5.14, 5.54, 6],
     poise: 5,
@@ -1103,77 +1232,60 @@ export const lifengChr_0015_lifeng_ultimate_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 56, sequence: { $sequence: 'startUltimateTimeDilation_2' } },
     { startFrame: 0, endFrame: 56, sequence: { $sequence: 'hideUi_3' } },
     { startFrame: 0, endFrame: 75, sequence: { $sequence: 'applyBuff_4' } },
-    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'mergeContextTargets_5' } },
-    { startFrame: 1, endFrame: 3, sequence: { $sequence: 'conditional_7' } },
-    { startFrame: 58, endFrame: 59, sequence: { $sequence: 'mergeContextTargets_9' } },
+    { startFrame: 1, endFrame: 3, sequence: { $sequence: 'ifElse_9' } },
+    { startFrame: 58, endFrame: 59, sequence: { $sequence: 'ifElse_14' } },
   ],
+  defaultTarget: 'enemy',
   cooldownFrames: 450,
   costs: [{ resource: 'ultimateEnergy', value: 90 }],
   skillType: 'ultimate',
   levelSource: 'ultimate',
   nativeSkillType: 'ultimateSkill',
+  actionGraph: lifengChr_0015_lifeng_ultimate_skillActionGraph,
 };
 
 export const lifengChr_0015_lifeng_combo_skillActionGraph = {
   main: {
     nodes: {
-      modifyActionValue_1: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'main_near',
-            operation: 'assign',
-            value: { kind: 'constant', value: 1 },
-          },
-        },
-        next: null,
-      },
-      conditional_2: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' }, alwaysNext: true },
-          whenTrue: { $sequence: 'modifyActionValue_1' },
-        },
-        next: null,
-      },
-      dealDamage_3: {
+      dealDamage_11: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
           },
         },
         next: null,
       },
-      changeResourceByActionValue_4: {
+      changeResource_19: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_3' },
+            amount: { kind: 'valueNode', nodeId: 'data_2' },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'caster',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
           },
         },
         next: null,
       },
-      dealDamage_5: {
+      dealDamage_20: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_5' },
+            stagger: { kind: 'valueNode', nodeId: 'data_4' },
           },
         },
-        next: 'changeResourceByActionValue_4',
+        next: 'changeResource_19',
       },
-      createGlobalBuff_6: {
+      createGlobalBuff_22: {
         action: {
           kind: 'createGlobalBuff',
           parameters: {
@@ -1186,17 +1298,17 @@ export const lifengChr_0015_lifeng_combo_skillActionGraph = {
               children: [
                 {
                   buffId: 'buff_common_affixes_combo_trigger',
-                  blackboardAssignments: { imbue_scale: { kind: 'valueNode', nodeId: 'data_6' } },
+                  blackboardAssignments: { imbue_scale: { kind: 'valueNode', nodeId: 'data_5' } },
                 },
               ],
             },
             source: 'caster',
-            blackboardAssignments: { duration: { kind: 'valueNode', nodeId: 'data_7' } },
+            blackboardAssignments: { duration: { kind: 'valueNode', nodeId: 'data_6' } },
           },
         },
         next: null,
       },
-      startTimeDilation_7: {
+      startTimeDilation_23: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1212,29 +1324,46 @@ export const lifengChr_0015_lifeng_combo_skillActionGraph = {
         },
         next: null,
       },
+      ifElse_opt1: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: null },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: null },
+        },
+        next: 'dealDamage_11',
+      },
+      ifElse_opt2: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: null },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: null },
+        },
+        next: 'dealDamage_20',
+      },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'imbue_scale' } },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'imbue_scale' } },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const lifengChr_0015_lifeng_combo_skill: SkillDefinition = {
-  actionGraph: lifengChr_0015_lifeng_combo_skillActionGraph,
   key: 'chr_0015_lifeng_combo_skill',
   element: 'physical',
   blackboard: {
     atk_scale: [0.47, 0.51, 0.56, 0.61, 0.65, 0.7, 0.75, 0.79, 0.84, 0.9, 0.97, 1.05],
     atk_scale2: [1.67, 1.83, 2, 2.17, 2.33, 2.5, 2.67, 2.83, 3, 3.21, 3.46, 3.75],
     duration: 20,
-    main_near: 0,
     poise: 10,
     usp: 10,
   },
@@ -1249,17 +1378,17 @@ export const lifengChr_0015_lifeng_combo_skill: SkillDefinition = {
   },
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'conditional_2' } },
-    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'dealDamage_3' } },
-    { startFrame: 48, endFrame: 49, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'createGlobalBuff_6' } },
-    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'startTimeDilation_7' } },
+    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'ifElse_opt1' } },
+    { startFrame: 48, endFrame: 49, sequence: { $sequence: 'ifElse_opt2' } },
+    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'createGlobalBuff_22' } },
+    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'startTimeDilation_23' } },
   ],
   smartTarget: 'trigger',
   cooldownFrames: [480, 480, 480, 480, 480, 480, 480, 480, 480, 480, 480, 450],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
+  actionGraph: lifengChr_0015_lifeng_combo_skillActionGraph,
 };
 
 export const lifengCommon_character_perfect_dodgeActionGraph = {
@@ -1277,6 +1406,7 @@ export const lifengCommon_character_perfect_dodge: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [],
+  defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
 };
@@ -1288,8 +1418,8 @@ const lifengPassive1ActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0015_lifeng_passive',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_chr_0015_lifeng_passive' }],
+            targets: { kind: 'fixed', target: 'caster' },
             inheritSourceSkillCastInfo: false,
           },
         },
@@ -1313,10 +1443,14 @@ const lifengPassive2ActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0015_lifeng_talent_1',
-            target: 'caster',
+            buffs: [
+              {
+                buffId: 'buff_chr_0015_lifeng_talent_1',
+                blackboardAssignments: { atk_up: { kind: 'valueNode', nodeId: 'data_1' } },
+              },
+            ],
+            targets: { kind: 'fixed', target: 'caster' },
             inheritSourceSkillCastInfo: false,
-            blackboardAssignments: { atk_up: { kind: 'valueNode', nodeId: 'data_1' } },
           },
         },
         next: null,
@@ -1337,29 +1471,26 @@ const lifengPassive2: OperatorPassiveSkillDefinition = {
 const lifengComboCondition1ActionGraph = {
   main: {
     nodes: {
-      conditional_1: {
+      checkCondition_1: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-          whenTrue: { $sequence: null },
         },
         next: null,
       },
-      conditional_2: {
+      checkCondition_2: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'conditional_1' },
         },
-        next: null,
+        next: 'checkCondition_1',
       },
-      conditional_3: {
+      checkCondition_3: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-          whenTrue: { $sequence: 'conditional_2' },
         },
-        next: null,
+        next: 'checkCondition_2',
       },
     },
     dataNodes: {
@@ -1383,6 +1514,7 @@ const lifengComboCondition1ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'contextTargetBuffStackCompare',
+          compareZeroWhenTargetMissing: false,
           contextKey: 'trigger',
           tagQueryType: 'hasAny',
           buffTags: [
@@ -1404,7 +1536,7 @@ const lifengComboCondition1: ComboSkillConditionDefinition = {
   event: 'beforeTakeDamage',
   immediately: false,
   initialValues: null,
-  sequence: { $sequence: 'conditional_3' },
+  sequence: { $sequence: 'checkCondition_3' },
   actionGraph: lifengComboCondition1ActionGraph,
 };
 
@@ -1422,13 +1554,12 @@ const lifengBuff1ActionGraph = {
         },
         next: null,
       },
-      conditional_2: {
+      checkCondition_2: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-          whenTrue: { $sequence: 'modifyActionValue_1' },
         },
-        next: null,
+        next: 'modifyActionValue_1',
       },
       modifyActionValue_3: {
         action: {
@@ -1461,7 +1592,7 @@ const lifengBuff1: SkillBuffDefinition = {
   blackboard: {},
   attributeModifiers: [],
   abilityEventResponses: [
-    { event: 'addedBuff', priority: 0, sequence: { $sequence: 'conditional_2' } },
+    { event: 'addedBuff', priority: 0, sequence: { $sequence: 'checkCondition_2' } },
     { event: 'skillEnd', priority: 0, sequence: { $sequence: 'modifyActionValue_3' } },
   ],
   actionGraph: lifengBuff1ActionGraph,
@@ -1474,7 +1605,8 @@ const lifengBuff2ActionGraph = {
         action: {
           kind: 'finishBuffsById',
           parameters: {
-            target: 'buffOwner',
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
             buffIds: ['buff_chr_0015_lifeng_potential_5'],
             reason: 'other',
           },
@@ -1485,26 +1617,29 @@ const lifengBuff2ActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0015_lifeng_potential_5_1',
-            target: 'buffOwner',
-            source: 'buffSource',
+            buffs: [
+              {
+                buffId: 'buff_chr_0015_lifeng_potential_5_1',
+                copiedBlackboardAssignments: {
+                  atk_scale_potential5: 'atk_scale_potential5',
+                  poise_potential5: 'poise_potential5',
+                  interval: 'interval',
+                },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
-            copiedBlackboardAssignments: {
-              atk_scale_potential5: 'atk_scale_potential5',
-              poise_potential5: 'poise_potential5',
-              interval: 'interval',
-            },
           },
         },
         next: 'finishBuffsById_1',
       },
-      conditional_3: {
+      checkCondition_3: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-          whenTrue: { $sequence: 'applyBuff_2' },
         },
-        next: null,
+        next: 'applyBuff_2',
       },
     },
     dataNodes: {
@@ -1534,7 +1669,7 @@ const lifengBuff2: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { atk_scale_potential5: 0, interval: 0, poise_potential5: 0 },
   attributeModifiers: [],
-  lifecycleSequences: { trigger: { $sequence: 'conditional_3' } },
+  lifecycleSequences: { trigger: [{ $sequence: 'checkCondition_3' }] },
   actionGraph: lifengBuff2ActionGraph,
 };
 
@@ -1549,8 +1684,7 @@ const lifengBuff3: SkillBuffDefinition = {
   maxStackCount: 1,
   presentation: {
     visible: true,
-    iconId: 'icon_battle_lifeng_potential_5',
-    iconPath: '/icons/icon_battle_lifeng_potential_5.webp',
+    icon: 'endaxis:icons/icon_battle_lifeng_potential_5',
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
     showInSquadIcon: true,
@@ -1583,15 +1717,20 @@ const lifengBuff4ActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_affixes_vulnerable_physical',
-            target: 'enemy',
+            buffs: [
+              {
+                buffId: 'buff_common_affixes_vulnerable_physical',
+                blackboardAssignments: {
+                  duration: { kind: 'valueNode', nodeId: 'data_1' },
+                  rate: { kind: 'valueNode', nodeId: 'data_2' },
+                },
+                stringBlackboardAssignments: { child_buff_id: 'buff_chr_0015_lifeng_purify_icon' },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             asChildBuff: true,
-            blackboardAssignments: {
-              duration: { kind: 'valueNode', nodeId: 'data_1' },
-              rate: { kind: 'valueNode', nodeId: 'data_2' },
-            },
-            stringBlackboardAssignments: { child_buff_id: 'buff_chr_0015_lifeng_purify_icon' },
           },
         },
         next: null,
@@ -1614,7 +1753,7 @@ const lifengBuff4: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 12, rate: 0 },
   attributeModifiers: [],
-  lifecycleSequences: { start: { $sequence: 'applyBuff_1' } },
+  lifecycleSequences: { start: [{ $sequence: 'applyBuff_1' }] },
   actionGraph: lifengBuff4ActionGraph,
 };
 
@@ -1630,8 +1769,7 @@ const lifengBuff5: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration' },
   presentation: {
     visible: true,
-    iconId: 'icon_battle_affix_physical_vulnerable',
-    iconPath: '/icons/icon_battle_affix_physical_vulnerable.webp',
+    icon: 'endaxis:icons/icon_battle_affix_physical_vulnerable',
     showInHeadBarCommon: true,
     showInHeadBarAttached: false,
     showInSquadIcon: true,
@@ -1690,59 +1828,71 @@ const lifengBuff6: SkillBuffDefinition = {
 const lifengBuff7ActionGraph = {
   main: {
     nodes: {
-      applyBuff_1: {
+      checkCondition_1: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+      applyBuff_2: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0015_lifeng_potential_5',
-            target: 'buffOwner',
-            source: 'buffSource',
+            buffs: [
+              {
+                buffId: 'buff_chr_0015_lifeng_potential_5',
+                copiedBlackboardAssignments: {
+                  interval: 'interval',
+                  atk_scale_potential5: 'atk_scale_potential5',
+                  poise_potential5: 'poise_potential5',
+                },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
-            copiedBlackboardAssignments: {
-              interval: 'interval',
-              atk_scale_potential5: 'atk_scale_potential5',
-              poise_potential5: 'poise_potential5',
-            },
           },
         },
         next: null,
       },
-      finishBuffsById_2: {
+      finishBuffsById_3: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
-            target: 'buffOwner',
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
             buffIds: ['buff_chr_0015_lifeng_potential_5_1'],
             reason: 'other',
           },
         },
-        next: 'applyBuff_1',
+        next: 'applyBuff_2',
       },
-      dealDamage_3: {
+      dealDamage_4: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: [],
-            stagger: { kind: 'valueNode', nodeId: 'data_2' },
+            stagger: { kind: 'valueNode', nodeId: 'data_3' },
           },
         },
-        next: 'finishBuffsById_2',
+        next: 'finishBuffsById_3',
       },
-      calculateActionValue_4: {
+      calculateActionValue_5: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'final_atk_scale_talent2',
             operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_3' },
-            right: { kind: 'valueNode', nodeId: 'data_4' },
+            left: { kind: 'valueNode', nodeId: 'data_4' },
+            right: { kind: 'valueNode', nodeId: 'data_5' },
           },
         },
-        next: 'dealDamage_3',
+        next: 'dealDamage_4',
       },
-      readBuffBlackboard_5: {
+      readBuffBlackboard_6: {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
@@ -1752,9 +1902,9 @@ const lifengBuff7ActionGraph = {
             outputKey: 'poise_potential5',
           },
         },
-        next: 'calculateActionValue_4',
+        next: 'calculateActionValue_5',
       },
-      readBuffBlackboard_6: {
+      readBuffBlackboard_7: {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
@@ -1764,9 +1914,9 @@ const lifengBuff7ActionGraph = {
             outputKey: 'interval',
           },
         },
-        next: 'readBuffBlackboard_5',
+        next: 'readBuffBlackboard_6',
       },
-      readBuffBlackboard_7: {
+      readBuffBlackboard_8: {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
@@ -1776,39 +1926,32 @@ const lifengBuff7ActionGraph = {
             outputKey: 'atk_scale_potential5',
           },
         },
-        next: 'readBuffBlackboard_6',
+        next: 'readBuffBlackboard_7',
       },
-      dealDamage_8: {
+      dealDamage_9: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: [],
           },
         },
         next: null,
       },
-      conditional_9: {
+      ifElse_10: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' }, alwaysNext: true },
-          whenTrue: { $sequence: 'readBuffBlackboard_7' },
-          whenFalse: { $sequence: 'dealDamage_8' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_1' },
+          whenTrue: { $sequence: 'readBuffBlackboard_8' },
+          whenFalse: { $sequence: 'dealDamage_9' },
         },
         next: null,
       },
     },
     dataNodes: {
       data_1: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'final_atk_scale_talent2' },
-      },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise_potential5' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_talent2' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_potential5' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_talent2' } },
-      data_6: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -1818,6 +1961,13 @@ const lifengBuff7ActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
+      data_2: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'final_atk_scale_talent2' },
+      },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise_potential5' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_talent2' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_potential5' } },
     },
   },
   macros: {},
@@ -1841,7 +1991,7 @@ const lifengBuff7: SkillBuffDefinition = {
   },
   attributeModifiers: [],
   abilityEventResponses: [
-    { event: 'beforeOutputKnockDown', priority: 0, sequence: { $sequence: 'conditional_9' } },
+    { event: 'beforeOutputKnockDown', priority: 0, sequence: { $sequence: 'ifElse_10' } },
   ],
   actionGraph: lifengBuff7ActionGraph,
 };
@@ -1852,6 +2002,7 @@ export const lifeng: OperatorDefinition = {
   rarity: 6,
   weaponType: 'lance',
   element: 'physical',
+  characterTypeId: 'Physical',
   role: 'guard',
   mainAttribute: 'agility',
   secondaryAttribute: 'strength',
@@ -2019,10 +2170,34 @@ export const lifeng: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 5 },
       deathReleaseDelaySeconds: 0.100000001490116,
       childSkill: {
+        skillId: 'chr_0015_lifeng_ultimate_skill_abentity',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 150,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: {
+          atk_scale1: 1,
+          atk_scale2: 1.5,
+          atk_scale3: 0,
+          isCombo: 0,
+          poise: 0,
+          poise2: 0,
+          poise3: 0,
+        },
+        scheduledSequences: [
+          { startFrame: 6, endFrame: 7, sequence: { $sequence: 'applyPhysicalInfliction_5' } },
+          { startFrame: 66, endFrame: 67, sequence: { $sequence: 'applyPhysicalInfliction_7' } },
+          { startFrame: 121, endFrame: 122, sequence: { $sequence: 'dealDamage_8' } },
+          { startFrame: 67, endFrame: 68, sequence: { $sequence: 'ifElse_12' } },
+        ],
         actionGraph: {
           main: {
             nodes: {
-              dealDamage_1: {
+              dealDamage_4: {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
@@ -2032,14 +2207,15 @@ export const lifeng: OperatorDefinition = {
                     features: ['canBreakWeakness'],
                     stagger: { kind: 'valueNode', nodeId: 'data_2' },
                   },
-                  key: 'abilityentity_chr_0015_lifeng_ultimate_skill:chr_0015_lifeng_ultimate_skill_abentity:/childSkill/actionGraph/main/nodes/dealDamage_1/action',
+                  key: 'abilityentity_chr_0015_lifeng_ultimate_skill:chr_0015_lifeng_ultimate_skill_abentity:/childSkill/actionGraph/main/nodes/dealDamage_4/action',
                 },
                 next: null,
               },
-              applyKnockDown_2: {
+              applyPhysicalInfliction_5: {
                 action: {
-                  kind: 'applyKnockDown',
+                  kind: 'applyPhysicalInfliction',
                   parameters: {
+                    type: 'knockDown',
                     target: 'enemy',
                     duration: { kind: 'constant', value: 2.1 },
                     force: false,
@@ -2048,9 +2224,9 @@ export const lifeng: OperatorDefinition = {
                     returnWhen: 'always',
                   },
                 },
-                next: 'dealDamage_1',
+                next: 'dealDamage_4',
               },
-              dealDamage_3: {
+              dealDamage_6: {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
@@ -2060,14 +2236,15 @@ export const lifeng: OperatorDefinition = {
                     features: ['canBreakWeakness'],
                     stagger: { kind: 'valueNode', nodeId: 'data_4' },
                   },
-                  key: 'abilityentity_chr_0015_lifeng_ultimate_skill:chr_0015_lifeng_ultimate_skill_abentity:/childSkill/actionGraph/main/nodes/dealDamage_3/action',
+                  key: 'abilityentity_chr_0015_lifeng_ultimate_skill:chr_0015_lifeng_ultimate_skill_abentity:/childSkill/actionGraph/main/nodes/dealDamage_6/action',
                 },
                 next: null,
               },
-              applyKnockDown_4: {
+              applyPhysicalInfliction_7: {
                 action: {
-                  kind: 'applyKnockDown',
+                  kind: 'applyPhysicalInfliction',
                   parameters: {
+                    type: 'knockDown',
                     target: 'enemy',
                     duration: { kind: 'constant', value: 2.1 },
                     force: false,
@@ -2076,9 +2253,9 @@ export const lifeng: OperatorDefinition = {
                     returnWhen: 'always',
                   },
                 },
-                next: 'dealDamage_3',
+                next: 'dealDamage_6',
               },
-              dealDamage_5: {
+              dealDamage_8: {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
@@ -2088,15 +2265,11 @@ export const lifeng: OperatorDefinition = {
                     features: ['canBreakWeakness'],
                     stagger: { kind: 'valueNode', nodeId: 'data_6' },
                   },
-                  key: 'abilityentity_chr_0015_lifeng_ultimate_skill:chr_0015_lifeng_ultimate_skill_abentity:/childSkill/actionGraph/main/nodes/dealDamage_5/action',
+                  key: 'abilityentity_chr_0015_lifeng_ultimate_skill:chr_0015_lifeng_ultimate_skill_abentity:/childSkill/actionGraph/main/nodes/dealDamage_8/action',
                 },
                 next: null,
               },
-              jumpTimeline_6: {
-                action: { kind: 'jumpTimeline', parameters: { destinationFrame: 150 } },
-                next: null,
-              },
-              modifyActionValue_7: {
+              modifyActionValue_11: {
                 action: {
                   kind: 'modifyActionValue',
                   parameters: {
@@ -2107,15 +2280,28 @@ export const lifeng: OperatorDefinition = {
                 },
                 next: null,
               },
-              conditional_8: {
+              jumpTimeline_10: {
                 action: {
-                  kind: 'conditional',
-                  parameters: {
-                    condition: { kind: 'conditionNode', nodeId: 'data_8' },
-                    alwaysNext: true,
-                  },
-                  whenTrue: { $sequence: 'jumpTimeline_6' },
-                  whenFalse: { $sequence: 'modifyActionValue_7' },
+                  kind: 'jumpTimeline',
+                  parameters: { destinationFrame: 150 },
+                  condition: { $sequence: null },
+                },
+                next: null,
+              },
+              checkCondition_9: {
+                action: {
+                  kind: 'checkCondition',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+                },
+                next: null,
+              },
+              ifElse_12: {
+                action: {
+                  kind: 'ifElse',
+                  parameters: { alwaysNext: true },
+                  condition: { $sequence: 'checkCondition_9' },
+                  whenTrue: { $sequence: 'jumpTimeline_10' },
+                  whenFalse: { $sequence: 'modifyActionValue_11' },
                 },
                 next: null,
               },
@@ -2144,30 +2330,6 @@ export const lifeng: OperatorDefinition = {
           },
           macros: {},
         },
-        skillId: 'chr_0015_lifeng_ultimate_skill_abentity',
-        nativeSkillType: 'normalSkill',
-        naturalDurationFrames: 150,
-        castResource: {
-          costFrame: 0,
-          cooldownSeconds: 0,
-          maxChargeTime: 1,
-          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-        },
-        blackboard: {
-          atk_scale1: 1,
-          atk_scale2: 1.5,
-          atk_scale3: 0,
-          isCombo: 0,
-          poise: 0,
-          poise2: 0,
-          poise3: 0,
-        },
-        scheduledSequences: [
-          { startFrame: 6, endFrame: 7, sequence: { $sequence: 'applyKnockDown_2' } },
-          { startFrame: 66, endFrame: 67, sequence: { $sequence: 'applyKnockDown_4' } },
-          { startFrame: 121, endFrame: 122, sequence: { $sequence: 'dealDamage_5' } },
-          { startFrame: 67, endFrame: 68, sequence: { $sequence: 'conditional_8' } },
-        ],
       },
     },
   },

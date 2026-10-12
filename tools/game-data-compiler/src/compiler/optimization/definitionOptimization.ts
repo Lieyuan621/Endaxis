@@ -1,6 +1,6 @@
 /** 图优化的报告格式和条件常量折叠；不包含动作树优化。 */
 import type { CombatCondition } from '../intermediateDefinitions.ts';
-import { compareCombatNumbers } from '../../../../../src/core/mechanics/combatNumbers.ts';
+import { compareCombatNumbers } from '../../../../../src/core/math/combatNumbers.ts';
 import type { DefinitionValueUsage } from './definitionUsageAnalysis.ts';
 import type { ActionGraphMiddleSegmentCandidate } from './actionGraphMiddleSegments.ts';
 
@@ -17,7 +17,8 @@ export interface DefinitionOptimizationChange {
     | 'short-circuit-condition'
     | 'true-guard'
     | 'unreachable-branch'
-    | 'equivalent-branches';
+    | 'equivalent-branches'
+    | 'unused-target-write';
   readonly detail: string;
 }
 

@@ -47,10 +47,11 @@ const definition = {
               action: {
                 kind: 'createTimedMarker',
                 parameters: {
-                  target: 'caster',
+                  targets: { kind: 'owner' },
                   markerId: 'sk_wpn_claym_0016',
                   durationSeconds: { kind: 'constant', value: 0.1 },
                   autoFinishByAction: false,
+                  timeDomain: 'globalScaled',
                 },
               },
               next: null,
@@ -59,34 +60,37 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_claym_0016_dmgup',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_claym_0016_dmgup',
+                      copiedBlackboardAssignments: {
+                        max_stack: 'max_stack',
+                        phy_dmg_up: 'phy_dmg_up2',
+                        duration: 'duration',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    max_stack: 'max_stack',
-                    phy_dmg_up: 'phy_dmg_up2',
-                    duration: 'duration',
-                  },
                 },
               },
               next: 'createTimedMarker_1',
             },
-            conditional_3: {
+            checkCondition_3: {
               action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                whenTrue: { $sequence: 'applyBuff_2' },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
               },
-              next: null,
+              next: 'applyBuff_2',
             },
-            conditional_4: {
+            checkCondition_4: {
               action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'conditional_3' },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
               },
-              next: null,
+              next: 'checkCondition_3',
             },
           },
           dataNodes: {
@@ -94,15 +98,12 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                returnTrueIfNotExists: true,
                 target: 'caster',
                 markerId: 'sk_wpn_claym_0016',
               },
             },
             data_2: {
-              type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-            },
-            data_3: {
               type: 'boolean',
               expression: { kind: 'eventSkillTypeIn', skillTypes: ['battleSkill', 'comboSkill'] },
             },
@@ -116,7 +117,7 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'beforeCastSkill',
           priority: 0,
-          sequence: { $sequence: 'conditional_4' },
+          sequence: { $sequence: 'checkCondition_4' },
         },
       ],
       blackboard: {
@@ -127,7 +128,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_claym_0016',
-  iconPath: '/weapons/claym/wpn_claym_0016.webp',
+  icon: 'endaxis:weapons/claym/wpn_claym_0016',
   buffDefinitions: {
     buff_wpn_claym_0016_dmgup: {
       stackingType: 'stack',
@@ -139,8 +140,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_physical_dmg_up',
-        iconPath: '/icons/icon_battle_physical_dmg_up.webp',
+        icon: 'endaxis:icons/icon_battle_physical_dmg_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

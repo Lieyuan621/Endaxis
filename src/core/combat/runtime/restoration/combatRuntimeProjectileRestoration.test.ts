@@ -74,10 +74,10 @@ it('空投射物目录的关系阶段保持无操作', () => {
   expect(createCallbackBindings).not.toHaveBeenCalled();
 });
 
-it.each(['hit', 'reach', 'finish', 'filteredHit'] as const)(
+it.each(['hit', 'reach', 'finish', 'filteredHit', 'emptyHitTargets'] as const)(
   '整场投射物阶段按保存事件 %s 恢复回调',
   mode => {
-    const event = mode === 'filteredHit' ? 'hit' : mode;
+    const event = mode === 'filteredHit' || mode === 'emptyHitTargets' ? 'hit' : mode;
     let acceptsHit = mode !== 'filteredHit';
     const evaluate = vi.fn((..._args: unknown[]) => acceptsHit);
     const program: CompiledAbilityEntityChildSkillProgram = {
@@ -96,6 +96,7 @@ it.each(['hit', 'reach', 'finish', 'filteredHit'] as const)(
     const original = new ProjectileLifecycleRuntime(() => 4);
     const callback: ProjectileCallbackState = {
       event,
+      ...(mode === 'emptyHitTargets' ? { inputTargets: [] } : {}),
       ...(mode === 'filteredHit'
         ? { hitTagFilter: { tagQueryType: 'exceptAny' as const, tags: ['Immune/Physical'] } }
         : {}),
@@ -114,10 +115,14 @@ it.each(['hit', 'reach', 'finish', 'filteredHit'] as const)(
     original.launch({
       callbacks: [callback],
       callbackPrograms: [program],
-      finishDelaySeconds: mode === 'filteredHit' ? 10 : 'firstTickReach',
+      finishDelaySeconds:
+        mode === 'filteredHit' || mode === 'emptyHitTargets' ? 10 : 'firstTickReach',
       ...(event === 'hit'
         ? {
-            firstTickHit: { finishOnHit: false, retryRejectedHit: mode === 'filteredHit' },
+            firstTickHit: {
+              finishOnHit: mode === 'emptyHitTargets',
+              retryRejectedHit: mode === 'filteredHit',
+            },
             hit: () => true,
           }
         : {}),
@@ -202,6 +207,12 @@ it.each(['hit', 'reach', 'finish', 'filteredHit'] as const)(
       acceptsHit = true;
     }
     restored.advanceFrame();
+    if (mode === 'emptyHitTargets') {
+      expect(createHost).not.toHaveBeenCalled();
+      expect(restored.getUnfinishedTargets()).toEqual([{ kind: 'abilityEntity', instanceId: 4 }]);
+      expect(saved.instances.get(4)!.callbacks[0]!.host).toBeNull();
+      return;
+    }
     expect(createHost).toHaveBeenCalledOnce();
     expect(observedCandidates).toEqual([
       event !== 'finish' ? [{ kind: 'abilityEntity', instanceId: 4 }] : [],

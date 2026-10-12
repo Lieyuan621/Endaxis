@@ -3,7 +3,7 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 
 const definition = {
   slug: 'suit_burst01',
-  iconPath: '/equipment/burst01/item_equip_t4_suit_burst01_edc_01.webp',
+  icon: 'endaxis:equipment/burst01/item_equip_t4_suit_burst01_edc_01',
   modifiers: [
     { kind: 'damageScale', target: 'comboSkill', slot: 'baseAddition', value: 0.2 },
     { kind: 'damageScale', target: 'battleSkill', slot: 'baseAddition', value: 0.2 },
@@ -20,13 +20,13 @@ const definition = {
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: { buffid: '#', duration: 10, skill_dmg_up: 0.2, spell_dmg_up: 0, stack_cond: 2 },
+      blackboard: { duration: 10, spell_dmg_up: 0, stack_cond: 2 },
       attributeModifiers: [],
       abilityEventResponses: [
-        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'conditional_3' } },
-        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'conditional_6' } },
-        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'conditional_9' } },
-        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'conditional_12' } },
+        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'checkCondition_3' } },
+        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'checkCondition_6' } },
+        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'checkCondition_9' } },
+        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'checkCondition_12' } },
       ],
       actionGraph: {
         main: {
@@ -35,82 +35,78 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_equipsuit_burst_01_spelldmgup',
-                  target: 'buffOwner',
-                  source: 'buffOwner',
+                  buffs: [
+                    {
+                      buffId: 'buff_equipsuit_burst_01_spelldmgup',
+                      copiedBlackboardAssignments: {
+                        spell_dmg_up: 'spell_dmg_up',
+                        duration: 'duration',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'owner' },
+                  source: { kind: 'owner' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    spell_dmg_up: 'spell_dmg_up',
-                    duration: 'duration',
-                  },
                 },
               },
               next: null,
             },
-            conditional_2: {
+            checkCondition_2: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
               },
-              next: null,
+              next: 'applyBuff_1',
             },
-            conditional_3: {
+            checkCondition_3: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'conditional_2' },
               },
-              next: null,
+              next: 'checkCondition_2',
             },
-            conditional_5: {
+            checkCondition_5: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+              },
+              next: 'applyBuff_1',
+            },
+            checkCondition_6: {
+              action: {
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
               },
-              next: null,
+              next: 'checkCondition_5',
             },
-            conditional_6: {
+            checkCondition_8: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-                whenTrue: { $sequence: 'conditional_5' },
               },
-              next: null,
+              next: 'applyBuff_1',
             },
-            conditional_8: {
+            checkCondition_9: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+              },
+              next: 'checkCondition_8',
+            },
+            checkCondition_11: {
+              action: {
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
               },
-              next: null,
+              next: 'applyBuff_1',
             },
-            conditional_9: {
+            checkCondition_12: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
-                whenTrue: { $sequence: 'conditional_8' },
               },
-              next: null,
-            },
-            conditional_11: {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
-              },
-              next: null,
-            },
-            conditional_12: {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
-                whenTrue: { $sequence: 'conditional_11' },
-              },
-              next: null,
+              next: 'checkCondition_11',
             },
           },
           dataNodes: {
@@ -134,8 +130,7 @@ const definition = {
                 buffTags: ['Skill/Character/Common/SpellInflict/FireInflict'],
               },
             },
-            data_4: { type: 'number', expression: { kind: 'blackboard', key: 'stack_cond' } },
-            data_5: {
+            data_4: {
               type: 'boolean',
               expression: {
                 kind: 'buffStackCompare',
@@ -143,30 +138,29 @@ const definition = {
                 tagQueryType: 'hasAny',
                 buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
                 operator: 'greaterOrEqual',
-                value: { kind: 'valueNode', nodeId: 'data_4' },
+                value: { kind: 'valueNode', nodeId: 'data_1' },
+              },
+            },
+            data_5: {
+              type: 'boolean',
+              expression: {
+                kind: 'eventBuffTagsMatch',
+                match: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
               },
             },
             data_6: {
               type: 'boolean',
               expression: {
-                kind: 'eventBuffTagsMatch',
-                match: 'hasAny',
-                buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
-              },
-            },
-            data_7: { type: 'number', expression: { kind: 'blackboard', key: 'stack_cond' } },
-            data_8: {
-              type: 'boolean',
-              expression: {
                 kind: 'buffStackCompare',
                 target: 'actionInputTarget',
                 tagQueryType: 'hasAny',
                 buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
                 operator: 'greaterOrEqual',
-                value: { kind: 'valueNode', nodeId: 'data_7' },
+                value: { kind: 'valueNode', nodeId: 'data_1' },
               },
             },
-            data_9: {
+            data_7: {
               type: 'boolean',
               expression: {
                 kind: 'eventBuffTagsMatch',
@@ -174,8 +168,7 @@ const definition = {
                 buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
               },
             },
-            data_10: { type: 'number', expression: { kind: 'blackboard', key: 'stack_cond' } },
-            data_11: {
+            data_8: {
               type: 'boolean',
               expression: {
                 kind: 'buffStackCompare',
@@ -183,10 +176,10 @@ const definition = {
                 tagQueryType: 'hasAny',
                 buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
                 operator: 'greaterOrEqual',
-                value: { kind: 'valueNode', nodeId: 'data_10' },
+                value: { kind: 'valueNode', nodeId: 'data_1' },
               },
             },
-            data_12: {
+            data_9: {
               type: 'boolean',
               expression: {
                 kind: 'eventBuffTagsMatch',
@@ -209,8 +202,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_spell_up',
-        iconPath: '/icons/icon_battle_spell_up.webp',
+        icon: 'endaxis:icons/icon_battle_spell_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -231,7 +223,7 @@ const definition = {
       },
       applyTags: [],
       extendTags: [],
-      blackboard: { duration: 10, skill_dmg_up: 0.2, spell_dmg_up: 0, stack_cond: 2 },
+      blackboard: { duration: 10, spell_dmg_up: 0 },
       attributeModifiers: [
         {
           attribute: 'heatDamageIncrease',
@@ -265,13 +257,17 @@ const definition = {
           action: {
             kind: 'applyBuff',
             parameters: {
-              buffId: 'buff_equipsuit_burst_01',
-              target: 'caster',
-              blackboardAssignments: {
-                stack_cond: { kind: 'constant', value: 2 },
-                spell_dmg_up: { kind: 'constant', value: 0.35 },
-                duration: { kind: 'constant', value: 15 },
-              },
+              buffs: [
+                {
+                  buffId: 'buff_equipsuit_burst_01',
+                  blackboardAssignments: {
+                    stack_cond: { kind: 'constant', value: 2 },
+                    spell_dmg_up: { kind: 'constant', value: 0.35 },
+                    duration: { kind: 'constant', value: 15 },
+                  },
+                },
+              ],
+              targets: { kind: 'fixed', target: 'caster' },
             },
           },
           next: null,

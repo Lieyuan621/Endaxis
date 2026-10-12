@@ -13,14 +13,9 @@ export function hasUnmodeledIncomingAttackTrigger(
     let requiresControlledTarget = false;
     while (entry !== null) {
       const node = graph.nodes.get(entry);
-      if (node === undefined || node.next !== null) return false;
+      if (node === undefined) return false;
       const { action } = node;
-      if (
-        action.kind !== 'conditional' ||
-        action.whenFalse !== undefined ||
-        action.parameters.alwaysNext
-      )
-        return false;
+      if (action.kind !== 'checkCondition') return false;
       const condition = conditionInputExpression(action.parameters.condition);
       switch (condition.kind) {
         case 'contextTargetIdentityMatch':
@@ -49,7 +44,7 @@ export function hasUnmodeledIncomingAttackTrigger(
         default:
           return false;
       }
-      entry = action.whenTrue.$sequence;
+      entry = node.next;
     }
     return requiresControlledTarget;
   });

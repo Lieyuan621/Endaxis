@@ -1,11 +1,25 @@
+import type { ActionTargetQuery } from '../../../../packages/game-data-contract/src/conditions';
+import type { CompiledAbilityEntityChildSkillProgram } from '../../compiler/combatProgram';
 import type { CompiledCondition } from '../../compiler/compiledGraphData';
 import type { CompiledStepParameters } from '../../compiler/compiledGraphData.ts';
-import type { TimelineActionProcessor } from '../timeline/timelineActionProcessor';
+import type { RuntimeTargetGroup } from '../../game-data/logicalAbilityEntity';
+import type { DamageElement } from '../../game-data/operatorDefinition';
 import type { CallbackSkillHostFactory } from '../abilities/callbackSkillHost';
+import type { ProjectileCallbackRuntime } from '../abilities/projectileCallbackRuntime';
 import type {
   ProjectileFinishTiming,
   ProjectileLifetimeReference,
 } from '../abilities/projectileLifecycleRuntime';
+import type { ActionExecutionTrace } from '../actions/actionExecutionTrace';
+import type { AuraInfluenceOperations } from '../buffs/buffOperationExecutor';
+import type { DamageModifierConditionInput } from '../damage/damageModifiers';
+import type { PoiseModifierConditionInput } from '../damage/poiseModifiers';
+import type { HealModifierConditionInput } from '../heal/healModifiers';
+import type { CombatObjectRef } from '../receipt/combatReceipt';
+import type { ActionBuffReferencesState, ActionRegistrationState } from '../state/actionState';
+import type { ActionBlackboardState } from '../state/foundationState';
+import type { TimelineActionProcessor } from '../timeline/timelineActionProcessor';
+import type { ComboWindowRuntime } from './comboWindowRuntime';
 
 import {
   DamageCalculationSnapshots,
@@ -18,8 +32,11 @@ import {
   type SkillCooldownSnapshot,
   type SkillRuntimeState,
 } from '../state/abilityState';
-import type { ActionValueCalculation, BuffReference } from '../state/foundationState';
-import { type SkillCastStartPreparation } from '../state/foundationState';
+import type {
+  ActionValueCalculation,
+  BuffReference,
+  SkillCastStartPreparation,
+} from '../state/foundationState';
 import { applySkillCastStartPreparation } from './skillCastStartPreparation';
 import {
   advanceSkillExecution,
@@ -31,18 +48,20 @@ import {
 
 /** 发射动作只提交一次请求；回调技能及其宿主都归该投射物持有。 */
 export type LaunchProjectile = (request: {
+  readonly entityBlackboard: ActionBlackboardState;
   readonly syncTimeScale?: boolean;
   readonly finish: ProjectileFinishTiming;
   readonly recycleDelaySeconds: number;
   readonly callbacks: readonly {
-    readonly runtime: import('../abilities/projectileCallbackRuntime').ProjectileCallbackRuntime;
-    readonly program: import('../../compiler/combatProgram').CompiledAbilityEntityChildSkillProgram;
+    readonly runtime: ProjectileCallbackRuntime;
+    readonly program: CompiledAbilityEntityChildSkillProgram;
   }[];
   readonly skillCastInfo?: CombatSkillCastInfo;
   readonly sourceId?: string;
-  readonly producedBy?: import('../receipt/combatReceipt').CombatObjectRef;
+  readonly producedBy?: CombatObjectRef;
   readonly hit?: CompiledStepParameters['launchProjectile']['hit'];
-  readonly hitTarget?: import('../../game-data/logicalAbilityEntity').RuntimeTargetRef;
+  readonly hitTarget?: RuntimeTargetRef;
+  readonly onlyHitTargets?: readonly RuntimeTargetRef[];
 }) => ProjectileLifetimeReference;
 
 export interface ProjectileRuntimeDependencies {
@@ -97,29 +116,31 @@ export interface RuntimeSkillTransition {
 /** 技能运行时把普通操作和条件判断委托给战斗装配层的端口。 */
 export interface CombatOperationContext {
   /** 执行动作的技能配置属性，不代表当前命中的属性。 */
-  readonly executingSkillElement?: import('../../game-data/operatorDefinition').DamageElement;
+  readonly executingSkillElement?: DamageElement;
   /** 当前执行程序/放置块；不能用继承的 originCastId 代替实际宿主。 */
   readonly executionActionId?: string;
   /** 仅在执行持有登记的步骤时挂接，实际数据由动作树持有。 */
-  actionRegistrationState?: import('../state/actionState').ActionRegistrationState;
-  actionBuffReferencesState?: import('../state/actionState').ActionBuffReferencesState;
+  actionRegistrationState?: ActionRegistrationState;
+  actionBuffReferencesState?: ActionBuffReferencesState;
   /** 三类结算互斥的临时上下文；不冒充能力事件，也不覆盖 Buff 的来源身份。 */
   readonly modifierContext?:
     | {
         readonly kind: 'damage';
-        readonly input: import('../damage/damageModifiers').DamageModifierConditionInput;
+        readonly input: DamageModifierConditionInput;
         readonly getBuffAffixSkillCastId?: () => number | null;
       }
     | {
         readonly kind: 'heal';
-        readonly input: import('../heal/healModifiers').HealModifierConditionInput;
+        readonly input: HealModifierConditionInput;
       }
     | {
         readonly kind: 'poise';
-        readonly input: import('../damage/poiseModifiers').PoiseModifierConditionInput;
+        readonly input: PoiseModifierConditionInput;
       };
   /** 当前动作环境独占的 direct 黑板；生命周期由技能、Buff 或连携条件宿主管理。 */
   readonly blackboard: ActionBlackboard;
+  /** 仅当前技能宿主提供；随技能切面保存，不从Buff来源推断。 */
+  readonly skillExecution?: Pick<SkillRuntimeState['execution'], 'hasOutputDamageBattle'>;
   /** 由宿主 Reset 准备、按动作实例保存的原生攻击计算快照。 */
   readonly damageCalculationSnapshots?: DamageCalculationSnapshots;
   /** 只有读取或写入原生 Context 目标组的步骤才要求存在。 */
@@ -192,8 +213,6 @@ export interface CombatOperationContext {
   readonly requestTimelineJump?: (destinationFrame: number) => void;
   /** 宿主的实时动作执行许可；与序列有效性、Tick/End 的清理许可不同。 */
   readonly canExecuteAction?: () => boolean;
-  /** 仅由技能时间轴宿主提供；结束当前技能且不改写局部帧。 */
-  readonly requestTimelineFinish?: () => void;
   /** 原生 AllowNext 窗口实际进入活动分支时，通知技能宿主保存本帧候选。 */
   readonly reachSkillOperableBoundary?: (skillIds: readonly string[]) => void;
   /** 原生 MarkCanDash 只标记当前技能的本次施放。 */
@@ -207,8 +226,16 @@ export interface CombatOperationContext {
 }
 
 export interface CombatOperationExecutor {
+  readonly comboWindows?: ComboWindowRuntime;
+  readonly queryTargets?: (
+    query: ActionTargetQuery,
+    context: CombatOperationContext,
+  ) => RuntimeTargetGroup;
+  readonly frame?: () => number;
+  /** 图光环复用 Buff 实例管线；接口只处理影响，不创建子动作或生命周期。 */
+  readonly aura?: AuraInfluenceOperations;
   readonly executionTrace?: {
-    readonly recorder: import('../actions/actionExecutionTrace').ActionExecutionTrace;
+    readonly recorder: ActionExecutionTrace;
     readonly frame: () => number;
     readonly receiptCount: () => number;
   };
@@ -263,6 +290,9 @@ type SkillRuntimeDependencies = {
   readonly advancesCooldown?: boolean;
   /** 原生 CastEnd 清理完成后向所有者 AbilitySystem 同步发布 OnSkillEnd。 */
   readonly emitSkillEnd?: (payload: AbilitySkillPayload) => void;
+  readonly emitSkillInterrupted?: (
+    payload: AbilitySkillPayload & { reason: RuntimeSkillInterruptReason },
+  ) => void;
   /** 原生费用实际应用成功后、同帧时间轴动作前同步发布 OnAfterSkillApplyCost。 */
   readonly emitAfterSkillApplyCost?: (payload: AbilitySkillPayload) => void;
   readonly launchProjectile?: LaunchProjectile;
@@ -392,6 +422,7 @@ export class SkillRuntime {
     const runtime = this;
     this.#operationContext = {
       executingSkillElement: program.element,
+      skillExecution: this.#execution,
       currentTarget: dependencies.currentTarget,
       addAbilityChildBuff: dependencies.addAbilityChildBuff,
       blackboard: this.#blackboard,
@@ -413,7 +444,6 @@ export class SkillRuntime {
         ? {}
         : { createCallbackSkillHost: dependencies.createCallbackSkillHost }),
       requestTimelineJump: destinationFrame => this.#requestTimelineJump(destinationFrame),
-      requestTimelineFinish: () => this.#requestTimelineFinish(),
       reachSkillOperableBoundary: skillIds => this.#reachSkillOperableBoundary(skillIds),
       markCurrentSkillCanDash: () => {
         this.runtimeState.markedCanDash = true;
@@ -460,7 +490,7 @@ export class SkillRuntime {
       },
       dependencies.semanticEvents,
       this.#hostIdentity.semanticEventOwnerOperatorId,
-      restored?.state.scopes,
+      restored?.state.sequenceHost,
     );
     const operationState =
       restored?.state.operations ?? dependencies.operationState ?? createCombatOperationHostState();
@@ -480,7 +510,7 @@ export class SkillRuntime {
       initialBlackboard: this.#initialBlackboard,
       initialBlackboardCalculations: this.#initialBlackboardCalculations,
       cooldown: this.#cooldown.runtimeState,
-      scopes: this.#sequenceRuntime.scopeState,
+      sequenceHost: this.#sequenceRuntime.sequenceHostState,
       damageSnapshots: this.#operationContext.damageCalculationSnapshots!.runtimeState,
       operations: operationState,
       timeline: null,
@@ -686,7 +716,7 @@ export class SkillRuntime {
     readonly skipApplyCost: boolean;
     readonly inputTarget?: RuntimeTargetRef | null;
     readonly inheritedSkillCastInfo?: CombatSkillCastInfo;
-    readonly producedBy?: import('../receipt/combatReceipt').CombatObjectRef;
+    readonly producedBy?: CombatObjectRef;
   }): void {
     if (this.#execution.state === 'casting') {
       throw new Error(`skill '${this.#program.skillId}' is already casting`);
@@ -766,7 +796,6 @@ export class SkillRuntime {
     );
     this.#blackboard.assign(this.#execution.preparedStartBlackboard);
     this.#targetContext.clear();
-    this.#sequenceRuntime.reset();
     this.#operationContext.damageCalculationSnapshots!.clear();
     if (route.asSkillCast) {
       this.#execution.skillCastId =
@@ -782,9 +811,7 @@ export class SkillRuntime {
     // 旁路不启动候选技能；为这次同步执行固定快照施法身份，不能把一个事后会
     // 回落到候选技能的 getter 泄漏给操作执行器。
     const routeContext: CombatOperationContext = {
-      blackboard: this.#blackboard,
-      damageCalculationSnapshots: this.#operationContext.damageCalculationSnapshots,
-      targetContext: this.#targetContext,
+      ...this.#operationContext,
       skillCastInfo,
     };
     if (route.condition !== undefined) {
@@ -847,7 +874,6 @@ export class SkillRuntime {
     this.runtimeState.timeline = this.#timeline.runtimeState;
     // Reset 也可能读取动作输入；旧技能已结束，此处才切换到新请求的目标。
     this.#execution.inputTarget = this.#execution.preparedInputTarget;
-    this.#sequenceRuntime.reset();
     this.#operationContext.damageCalculationSnapshots!.clear();
     this.#timeline.reset(this.#context);
     beginSkillCast(this.#execution, this.#dependencies.clock.frame, () =>
@@ -923,7 +949,10 @@ export class SkillRuntime {
         finishCooldown: () => this.#cooldown.finishCast(),
         cooldownRefunded: () => this.record('SkillCooldownRefunded'),
         recordEnded: () => this.record('SkillInterrupted', { reason }),
-        emitEnded: () => this.#emitSkillEnd(),
+        emitEnded: () => {
+          this.#dependencies.emitSkillInterrupted?.({ ...this.#skillEventPayload(), reason });
+          this.#emitSkillEnd();
+        },
       });
     } finally {
       this.#pendingTransition = null;
@@ -934,7 +963,7 @@ export class SkillRuntime {
     event: string,
     data?: Readonly<Record<string, boolean | number | string | null>>,
     targetId?: string,
-    producedBy?: import('../receipt/combatReceipt').CombatObjectRef,
+    producedBy?: CombatObjectRef,
   ): void {
     this.#dependencies.receipt.record({
       frame: this.#dependencies.clock.frame,
@@ -1011,7 +1040,9 @@ export class SkillRuntime {
       return false;
     }
     this.#execution.appliedCost = true;
-    this.#execution.nonReturnedSpCost = payment.nonReturnedSpCost;
+    // 无新增消耗时保留继承的施法费用，供后续回能动作读取。
+    if (payment.nonReturnedSpCost > Math.fround(0.00001))
+      this.#execution.nonReturnedSpCost = payment.nonReturnedSpCost;
     for (const change of payment.changes) {
       if (change.resource === 'sp') {
         this.record('SpChanged', {
@@ -1075,16 +1106,6 @@ export class SkillRuntime {
       },
       () => this.end(),
     );
-  }
-
-  #requestTimelineFinish(): void {
-    const timeline = this.#timeline;
-    if (timeline === null || this.#execution.state !== 'casting') {
-      throw new Error(`skill '${this.#program.skillId}' cannot finish outside an active cast`);
-    }
-    timeline.finish(this.#execution.passedFrames, this.#context);
-    this.#execution.timelineFinishRequested = true;
-    this.record('SkillTimelineFinished');
   }
 
   #reachSkillOperableBoundary(skillIds: readonly string[]): void {

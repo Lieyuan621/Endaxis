@@ -541,6 +541,17 @@ describe('LogicalAbilityEntityRuntime', () => {
         abilityEntityIds: ['water'],
       }),
     ).toEqual([a]);
+    const child = runtime.spawn({
+      abilityEntityId: 'water',
+      definition: { lifetime: { kind: 'infinite' } },
+      ownerId: 'a',
+      source: a,
+    });
+    expect(runtime.findOwnerSpawned({ ownerId: 'a', abilityEntityIds: ['water'] })).toEqual([a]);
+    expect(runtime.findOwnerSpawned({ ownerId: `ability-entity:${a.instanceId}` })).toEqual([
+      child,
+    ]);
+    expect(runtime.snapshot(child).ownerId).toBe('a');
   });
 
   it('keeps per-instance duration, target and entity blackboard state', () => {
@@ -560,10 +571,21 @@ describe('LogicalAbilityEntityRuntime', () => {
 
     expect(runtime.snapshot(entity)).toMatchObject({
       target: { kind: 'operator', operatorId: 'b' },
-      remainingDurationSeconds: 0.5,
+      remainingDurationSeconds: 0.25,
       elapsedDurationSeconds: 0.25,
       blackboard: { EntityBB_power: 3 },
     });
+    const restored = new LogicalAbilityEntityRuntime({
+      restoredState: structuredClone(runtime.runtimeState),
+    });
+    restored.setRemainingDuration(entity, 10);
+    expect(restored.snapshot(entity)).toMatchObject({
+      remainingDurationSeconds: 0.5,
+      elapsedDurationSeconds: 0.25,
+    });
+    expect(runtime.snapshot(entity).remainingDurationSeconds).toBe(0.25);
+    restored.setRemainingDuration(entity, -1);
+    expect(restored.snapshot(entity).remainingDurationSeconds).toBe(0);
   });
 
   it('filters owner-spawned entities by their source skill-cast identity', () => {
@@ -604,12 +626,15 @@ describe('LogicalAbilityEntityRuntime', () => {
       ownerId: 'a',
       source: { kind: 'operator', operatorId: 'a' },
     });
-    runtime.spawn({
+    const infinite = runtime.spawn({
       abilityEntityId: 'forever',
       definition: { lifetime: { kind: 'infinite' } },
+      overrideDurationSeconds: 0.1,
       ownerId: 'a',
       source: { kind: 'operator', operatorId: 'a' },
     });
+    runtime.setRemainingDuration(infinite, 0);
+    expect(runtime.snapshot(infinite).remainingDurationSeconds).toBeNull();
 
     runtime.advanceFrame();
     runtime.advanceFrame();

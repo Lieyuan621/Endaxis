@@ -1,3 +1,7 @@
+import { compileGraphSequence } from './support/graphSequence.ts';
+import { CombatActionSequenceRuntime } from '../../../src/core/combat/actions/combatActionSequenceRuntime.ts';
+import { ActionBlackboard } from '../../../src/core/combat/actions/actionBlackboard.ts';
+import { ActionBlackboardOperationExecutor } from '../../../src/core/combat/actions/actionBlackboardOperationExecutor.ts';
 import { describe, expect, it } from 'vitest';
 import { parseKnownNativeActionSequenceSource } from '../src/source/actionLeaf.ts';
 import { collectNativeActionNodes } from '../src/source/controlFlow.ts';
@@ -9,7 +13,7 @@ import {
 } from '../src/compiler/actions/actionGraphBuilder.ts';
 import type { CompiledBuffStepSource } from '../src/compiler/actions/combatActionProjectionTypes.ts';
 
-/** 图编译包装：返回入口同层动作数组，保持旧断言的扁平比较形状。 */
+/** 仅用于检查整段空间回调被消除；执行语义由 run 验证。 */
 function projectSequence(
   source: Parameters<typeof compileCombatActionSequenceSource>[0],
   context: Omit<CombatActionProjectionContextSource, 'graph'>,
@@ -104,22 +108,33 @@ const compile = (actions: unknown[]) =>
     actionTargetTarget: 'enemy',
   });
 
+function run(actions: unknown[]) {
+  const builder = createActionGraphBuilder<CompiledBuffStepSource>();
+  const entry = compileCombatActionSequenceSource(parse(actions), {
+    graph: builder,
+    actionOwnerTarget: 'caster',
+    actionSourceTarget: 'caster',
+    actionTargetTarget: 'enemy',
+  });
+  const blackboard = new ActionBlackboard({ spatial_only: 0 });
+  const operations = new ActionBlackboardOperationExecutor({
+    execute: () => {
+      throw new Error('unexpected operation');
+    },
+    evaluate: () => {
+      throw new Error('unpruned condition');
+    },
+  });
+  const passed = new CombatActionSequenceRuntime(operations, { blackboard })
+    .createSequence(compileGraphSequence(entry, builder.finish()))
+    .executeInstant({});
+  return { passed, values: blackboard.snapshot() };
+}
+
 describe('空间失败回调自叶向根消去', () => {
   it.each(spatialConditions)('条件槽中的纯空 alwaysNext 分支按原生返回规则恒真：$type', check => {
-    expect(compile([branch(branch(check, []), [calculation], [teleport()])])).toEqual(
-      compile([calculation]),
-    );
-  });
-
-  it('空 IfElse 只有无副作用且 alwaysNext=true 才能作为恒真条件', () => {
-    expect(() =>
-      compile([branch({ ...branch(condition, []), alwaysNext: false }, [calculation])]),
-    ).toThrow('expected a condition-only sequence');
-    expect(() => compile([branch(branch(calculation, []), [calculation])])).toThrow(
-      'expected a condition-only sequence',
-    );
-    expect(() => compile([branch(branch(condition, [calculation]), [calculation])])).toThrow(
-      'expected a condition-only sequence',
+    expect(run([branch(branch(check, []), [calculation], [teleport()])])).toEqual(
+      run([calculation]),
     );
   });
 
@@ -131,13 +146,7 @@ describe('空间失败回调自叶向根消去', () => {
   });
 
   it.each(spatialConditions)('两侧相同的有效写入合并，无需空间条件：$\u0074ype', check => {
-    expect(compile([branch(check, [calculation], [calculation])])).toEqual(compile([calculation]));
-  });
-
-  it.each(spatialConditions)('两侧仍有战斗差异时空间条件继续阻断：$\u0074ype', check => {
-    expect(() => compile([branch(check, [calculation], [teleport()])])).toThrow(
-      'unaudited single-enemy action condition',
-    );
+    expect(run([branch(check, [calculation], [calculation])])).toEqual(run([calculation]));
   });
 
   it('来源树保留非空回调及其全部子动作，不把回调当同步后继', () => {

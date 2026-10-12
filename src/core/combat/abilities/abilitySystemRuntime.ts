@@ -1,4 +1,13 @@
-import { type PostSkillCastRequest } from '../state/foundationState';
+import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+import type {
+  OperatorPlayerActionModeDefinition,
+  OperatorPlayerActionRoutes,
+} from '../../game-data/operatorDefinition';
+import type { AbilitySkillPayload } from '../events/combatAbilityEvent';
+import type { CombatObjectRef } from '../receipt/combatReceipt';
+import type { RuntimeSkillTransition } from '../skills/skillRuntime';
+import type { BeforeSkillCastPreparation } from '../state/abilityState';
+import type { PostSkillCastRequest } from '../state/foundationState';
 /**
  * 单个参战实体的 Buff、技能、延迟施放和 Action 帧阶段编排。
  * 技能顺序必须由定义编译结果显式传入；该层不负责推断队伍顺序、输入许可或目标选择。
@@ -79,9 +88,9 @@ export interface AbilitySkillRuntime extends FrameRuntime {
   /** Prepare synchronous cast input only; queuing belongs to requestPostSkillCast. */
   prepareCastInput?(input: {
     readonly skipApplyCost: boolean;
-    readonly inputTarget?: import('../../game-data/logicalAbilityEntity').RuntimeTargetRef | null;
+    readonly inputTarget?: RuntimeTargetRef | null;
     readonly inheritedSkillCastInfo?: CombatSkillCastInfo;
-    readonly producedBy?: import('../receipt/combatReceipt').CombatObjectRef;
+    readonly producedBy?: CombatObjectRef;
   }): void;
   prepareForcedTimelineCast?(): void;
   attachBuffToCast?(skillCastId: number, buff: BuffApplicationHandle): void;
@@ -96,10 +105,7 @@ export interface AbilitySkillRuntime extends FrameRuntime {
     withProcessingSkill?: (execute: () => void) => void,
   ): boolean;
   tryStart(): boolean;
-  interrupt(
-    reason: RuntimeSkillInterruptReason,
-    transition?: import('../skills/skillRuntime').RuntimeSkillTransition,
-  ): void;
+  interrupt(reason: RuntimeSkillInterruptReason, transition?: RuntimeSkillTransition): void;
   /** 时间膨胀启用后分别推进技能时间线和冷却。 */
   advance?(timelineDeltaSeconds: number, cooldownDeltaSeconds: number): void;
   readonly startedInCurrentFrame?: boolean;
@@ -144,9 +150,7 @@ function nativeSkillInterruptPriority(skillType: NativeSkillType): number {
 
 export interface AbilitySystemRuntimeOptions {
   /** 真正进入施放时发布；待发布的数据保存在能力系统状态中。 */
-  readonly emitBeforeSkillCast?: (
-    payload: import('../events/combatAbilityEvent').AbilitySkillPayload,
-  ) => void;
+  readonly emitBeforeSkillCast?: (payload: AbilitySkillPayload) => void;
   /** 原生 onPostSkillTryCastRequest 对象委托：写入延迟槽之后通知，不是 AbilityEvent。 */
   readonly onPostSkillCastRequest?: (skillCastInfo: CombatSkillCastInfo | null) => void;
   readonly buffRuntime?: AbilityBuffRuntime;
@@ -172,8 +176,8 @@ export interface AbilitySystemRuntimeOptions {
     readonly replacementSkillKeys: readonly string[];
   }[];
   /** 四类语义动作的显式原生路由；禁止从技能库展示组推导。 */
-  readonly playerActionRoutes?: import('../../game-data/operatorDefinition').OperatorPlayerActionRoutes;
-  readonly playerActionModes?: readonly import('../../game-data/operatorDefinition').OperatorPlayerActionModeDefinition[];
+  readonly playerActionRoutes?: OperatorPlayerActionRoutes;
+  readonly playerActionModes?: readonly OperatorPlayerActionModeDefinition[];
   readonly actionRuntime?: FrameRuntime;
   readonly resolveTickDeltas?: () => AbilityTickDeltas;
   /** 帧末延迟施放在真正启动前回到装配根，复用施放前事件与运行时参数准备。 */
@@ -223,11 +227,8 @@ export class AbilitySystemRuntime implements FrameRuntime {
   readonly #slotGroupByStableInputSkill = new Map<string, string>();
   readonly #slotGroupByAllowedSkill = new Map<string, string>();
   readonly #defaultSlotGroupByInput = new Map<PlayerSkillInput, string>();
-  readonly #playerActionRoutes?: import('../../game-data/operatorDefinition').OperatorPlayerActionRoutes;
-  readonly #playerActionModes = new Map<
-    string,
-    import('../../game-data/operatorDefinition').OperatorPlayerActionModeDefinition
-  >();
+  readonly #playerActionRoutes?: OperatorPlayerActionRoutes;
+  readonly #playerActionModes = new Map<string, OperatorPlayerActionModeDefinition>();
   readonly #skillKeysByTransitionSkillId = new Map<string, Set<string>>();
   readonly #actionRuntime?: FrameRuntime;
   readonly #resolveTickDeltas: () => AbilityTickDeltas;
@@ -573,12 +574,15 @@ export class AbilitySystemRuntime implements FrameRuntime {
   }
 
   /** 控制标签新增时的原生中断；移除标签不会恢复此前技能。 */
+  /** 按原生默认原因中断当前施法；结束回调可能已切换到另一技能，不能清除新实例。 */
+  interruptCurrentSkill(): void {
+    const current = this.#currentSkill;
+    if (current?.state === 'casting') current.interrupt('default');
+    if (this.#currentSkill === current && current?.state !== 'casting') this.#currentSkill = null;
+  }
+
   applyControlTagChange(interrupt: boolean, clearCombo: boolean): void {
-    if (interrupt) {
-      const current = this.#currentSkill;
-      if (current?.state === 'casting') current.interrupt('default');
-      if (this.#currentSkill === current && current?.state !== 'casting') this.#currentSkill = null;
-    }
+    if (interrupt) this.interruptCurrentSkill();
     if (clearCombo) this.#clearComboOffset(true);
   }
 
@@ -993,9 +997,9 @@ export class AbilitySystemRuntime implements FrameRuntime {
     castId: string | undefined,
     input: {
       readonly skipApplyCost: boolean;
-      readonly inputTarget?: import('../../game-data/logicalAbilityEntity').RuntimeTargetRef | null;
+      readonly inputTarget?: RuntimeTargetRef | null;
       readonly inheritedSkillCastInfo?: CombatSkillCastInfo;
-      readonly producedBy?: import('../receipt/combatReceipt').CombatObjectRef;
+      readonly producedBy?: CombatObjectRef;
     },
     resolveSkillSlot = true,
   ): void {
@@ -1021,7 +1025,7 @@ export class AbilitySystemRuntime implements FrameRuntime {
   prepareBeforeSkillCastStart(
     skillId: string,
     castId: string | undefined,
-    payload: import('../state/abilityState').BeforeSkillCastPreparation['payload'],
+    payload: BeforeSkillCastPreparation['payload'],
     resolveSkillSlot = true,
   ): void {
     const skill = this.#requireSkill(skillId, castId, resolveSkillSlot);
@@ -1083,12 +1087,11 @@ export class AbilitySystemRuntime implements FrameRuntime {
   tryStartEntitySkill(
     skillId: string,
     inheritedSkillCastInfo: CombatSkillCastInfo | undefined,
-    inputTarget?: import('../../game-data/logicalAbilityEntity').RuntimeTargetRef,
+    inputTarget?: RuntimeTargetRef,
     interruptCurrentSkill = false,
     prepareStart?: () => CombatSkillCastInfo,
   ): boolean {
-    const current = this.#currentSkill?.state === 'casting' ? this.#currentSkill : null;
-    if (interruptCurrentSkill) current?.interrupt('default');
+    if (interruptCurrentSkill) this.interruptCurrentSkill();
     const skill = this.#skillsById.get(abilitySkillKey({ skillId }));
     if (skill === undefined || !skill.canStart() || skill.cooldown?.ready === false) return false;
     if (skill.prepareCastInput === undefined)
@@ -1525,9 +1528,7 @@ export class AbilitySystemRuntime implements FrameRuntime {
     );
     for (const [input, route] of Object.entries(this.#playerActionRoutes) as [
       PlayerSkillInput,
-      NonNullable<
-        import('../../game-data/operatorDefinition').OperatorPlayerActionRoutes
-      >[PlayerSkillInput],
+      NonNullable<OperatorPlayerActionRoutes>[PlayerSkillInput],
     ][]) {
       if (route === undefined) continue;
       if (basicAttackOnly && input !== 'basicAttack') continue;

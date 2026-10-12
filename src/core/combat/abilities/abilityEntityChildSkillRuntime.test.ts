@@ -16,8 +16,8 @@ const childSkillGraph = createActionGraphCompilation(
         flag,
         {
           action: {
-            kind: 'setContextFlag',
-            parameters: { flag, value: true, target: 'caster' },
+            kind: 'triggerCustomAbilityEvent',
+            parameters: { eventName: flag, eventParam: 0, target: 'caster' as const },
           },
           next: null,
         },

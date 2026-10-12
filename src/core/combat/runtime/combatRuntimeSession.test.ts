@@ -1,32 +1,34 @@
-import type { OperatorControlConfiguration } from '../skills/operatorControlRuntime';
 import { expect, it, vi } from 'vitest';
-import { CombatRuntimeAssembly, type CombatOperatorProgram } from './combatRuntimeAssembly';
+import type {
+  ActionGraphDefinition,
+  ActionGraphNode,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
 import type {
   CompiledSkillProgram,
   ResolvedActionSequence,
   ResolvedSkillBuffDefinition,
 } from '../../compiler/combatProgram';
 import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
-import type {
-  ActionGraphNode,
-  ActionGraphStep,
-} from '../../../../packages/game-data-contract/src/actionGraph';
+import { AbilityEntityChildSkillPrograms } from '../abilities/abilityEntityChildSkillPrograms';
+import { ProjectileCallbackPrograms } from '../abilities/projectileCallbackPrograms';
+import { CombatOperationPrograms } from '../actions/combatOperationPrograms';
+import type { CombatReceiptView } from '../receipt/combatReceiptHistory';
+import { CombatVitals } from '../resources/combatVitals';
+import { createEnemyCombatVitals } from '../resources/combatVitalsFactory';
+import { CombatSkillPrograms } from '../skills/combatSkillPrograms';
+import type { OperatorControlConfiguration } from '../skills/operatorControlRuntime';
 import type { CombatStateGraph } from '../state/combatState';
+import { deriveHitId } from '../timeline/deriveHitId';
+import { CombatRuntimeAssembly, type CombatOperatorProgram } from './combatRuntimeAssembly';
 import { CombatRuntimeSession } from './combatRuntimeSession';
 import { StandardPlayerDamageEnvironment } from './standardPlayerDamageEnvironment';
-import { CombatVitals } from '../resources/combatVitals';
-import { AbilityEntityChildSkillPrograms } from '../abilities/abilityEntityChildSkillPrograms';
-import { CombatOperationPrograms } from '../actions/combatOperationPrograms';
-import { CombatSkillPrograms } from '../skills/combatSkillPrograms';
-import { ProjectileCallbackPrograms } from '../abilities/projectileCallbackPrograms';
-import { createEnemyCombatVitals } from '../resources/combatVitalsFactory';
-import { deriveHitId } from '../timeline/deriveHitId';
 
 const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
-  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
   graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
   entry,
@@ -36,7 +38,7 @@ const compileGraphEntry = (
 const chainEntry = (
   revision: string,
   actions: readonly ActionGraphStep[],
-  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => {
   const nodes: Record<string, ActionGraphNode> = {};
   actions.forEach((action, index) => {
@@ -112,7 +114,7 @@ function createFixture(
   live = false,
   deferInitialInput = false,
   lazyCasts = false,
-  cameraSensitive = false,
+  withSelection = false,
   operatorControl?: OperatorControlConfiguration,
 ) {
   const environment = new StandardPlayerDamageEnvironment({
@@ -143,12 +145,12 @@ function createFixture(
       timelineBlockFrames: 0,
       costFrame: undefined,
       costs: [],
-      timelineActions: cameraSensitive
+      timelineActions: withSelection
         ? [
             {
               startFrame: 2,
               sequence: compileGraphEntry(
-                'camera-sensitive-selection',
+                'selection',
                 'branch',
                 {
                   branch: {
@@ -189,9 +191,10 @@ function createFixture(
                   input_1: {
                     type: 'boolean',
                     expression: {
-                      kind: 'cameraToTargetAngleCompare',
+                      kind: 'actionValueCompare',
+                      left: { kind: 'constant', value: 0 },
                       operator: 'greater',
-                      value: { kind: 'constant', value: 0 },
+                      right: { kind: 'constant', value: 0 },
                     },
                   },
                 },
@@ -245,8 +248,8 @@ function createFixture(
             {
               kind: 'applyBuff',
               parameters: {
-                buffId: 'switch-counter',
-                target: 'caster',
+                buffs: [{ buffId: 'switch-counter' }],
+                targets: { kind: 'fixed', target: 'caster' },
                 asChildBuff: true,
               },
             },
@@ -272,6 +275,7 @@ function createFixture(
     },
   ];
   const original = new CombatRuntimeAssembly({
+    comboSkillPendingInterval: 5,
     deferInitialInput,
     ...environment.runtimeOptions,
     ...(isOperatorControlled === undefined ? {} : { isOperatorControlled }),
@@ -294,9 +298,10 @@ function createFixture(
     (
       graph: typeof original.stateGraph,
       branchSkillPrograms: CombatSkillPrograms,
-      receiptHistory: import('../receipt/combatReceiptHistory').CombatReceiptView,
+      receiptHistory: CombatReceiptView,
     ) =>
       CombatRuntimeAssembly.restore({
+        comboSkillPendingInterval: 5,
         receiptHistory,
         graph,
         operatorControl,
@@ -339,7 +344,7 @@ it.each([0, 4, 6])('投射物在第 %i 帧分支恢复后保留伤害的技能�
         sequence: chainEntry('launch', [
           {
             kind: 'launchProjectile',
-            parameters: { finish: 0.1, recycleDelaySeconds: 0.5 },
+            parameters: { inheritActionBlackboard: true, finish: 0.1, recycleDelaySeconds: 0.5 },
             callbacks: [
               {
                 event: 'finish',
@@ -419,6 +424,7 @@ it.each([0, 4, 6])('投射物在第 %i 帧分支恢复后保留伤害的技能�
     enemyVitals: createEnemyCombatVitals(enemy),
   });
   const original = new CombatRuntimeAssembly({
+    comboSkillPendingInterval: 5,
     ...environment.runtimeOptions,
     resources,
     enemy,
@@ -427,6 +433,7 @@ it.each([0, 4, 6])('投射物在第 %i 帧分支恢复后保留伤害的技能�
   });
   original.advanceFrames(saveFrame);
   const restored = CombatRuntimeAssembly.restore({
+    comboSkillPendingInterval: 5,
     graph: structuredClone(original.stateGraph),
     receiptHistory: original.receipt.history.snapshot(),
     resources,
@@ -489,6 +496,7 @@ it('恢复后群体 GlobalBuff 仍按原生队伍逆序应用子 Buff', () => {
     });
   const environment = createEnvironment();
   const original = new CombatRuntimeAssembly({
+    comboSkillPendingInterval: 5,
     ...environment.runtimeOptions,
     resources: twoOperatorResources,
     enemy,
@@ -496,6 +504,7 @@ it('恢复后群体 GlobalBuff 仍按原生队伍逆序应用子 Buff', () => {
   });
   const saved = structuredClone(original.stateGraph);
   const restored = CombatRuntimeAssembly.restore({
+    comboSkillPendingInterval: 5,
     receiptHistory: original.receipt.history.snapshot(),
     graph: saved,
     resources: twoOperatorResources,
@@ -741,33 +750,6 @@ it('开场未提交时不能跨过输入边界，空输入提交后才开始正�
   expect(branch.frame).toBe(1);
   expect(branch.readState().shared.resources).not.toEqual(initial.shared.resources);
   expect(session.readState()).toEqual(initial);
-});
-
-it('镜头夹角条件在截面恢复后仍按零度计算', () => {
-  const { session } = createFixture(undefined, true, true, false, true);
-  const before = session.save();
-  session.applyInitialInput({
-    skills: [{ operatorId: 'operator', skillId: 'skill', castId: 'cast:a' }],
-  });
-  const submitted = session.save();
-  const selected = () =>
-    session
-      .readState()
-      .operators.get('operator')!
-      .skills.get('skill\u0000cast:a')!
-      .blackboard.values.get('selected');
-  session.advanceFrames(2);
-  expect(selected()).toBe(2);
-  const first = session.readState();
-  session.restore(submitted);
-  session.advanceFrames(2);
-  expect(session.readState()).toEqual(first);
-  session.restore(before);
-  session.applyInitialInput({
-    skills: [{ operatorId: 'operator', skillId: 'skill', castId: 'cast:a' }],
-  });
-  session.advanceFrames(2);
-  expect(selected()).toBe(2);
 });
 
 it('未预编译的施放身份复用定义，活动截面可恢复且试放不污染父分支', () => {

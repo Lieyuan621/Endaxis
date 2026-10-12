@@ -54,11 +54,16 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_sword_0013_atk_up',
-                  target: 'partyExceptCaster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_sword_0013_atk_up',
+                      copiedBlackboardAssignments: { atk_up_ex: 'atk_up_ex', duration: 'duration' },
+                    },
+                  ],
+                  targets: { kind: 'characterTeam', excludeOwner: true },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: { atk_up_ex: 'atk_up_ex', duration: 'duration' },
                 },
               },
               next: null,
@@ -78,11 +83,16 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_sword_0013_atk_up',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_sword_0013_atk_up',
+                      copiedBlackboardAssignments: { atk_up_ex: 'atk_up_ex', duration: 'duration' },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: { atk_up_ex: 'atk_up_ex', duration: 'duration' },
                 },
               },
               next: 'modifyActionValue_2',
@@ -110,21 +120,19 @@ const definition = {
               },
               next: 'modifyActionValue_4',
             },
-            conditional_6: {
+            checkCondition_6: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-                whenTrue: { $sequence: 'calculateActionValue_5' },
               },
-              next: null,
+              next: 'calculateActionValue_5',
             },
-            conditional_7: {
+            checkCondition_7: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-                whenTrue: { $sequence: 'conditional_6' },
               },
-              next: null,
+              next: 'checkCondition_6',
             },
           },
           dataNodes: {
@@ -158,18 +166,20 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'buffConsumed',
           priority: 0,
-          sequence: { $sequence: 'conditional_7' },
+          sequence: { $sequence: 'checkCondition_7' },
         },
       ],
       blackboard: {
         atk_up_add: [0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.14],
+        atk_up_ex: 0,
         atk_up_mult: [0.025, 0.03, 0.035, 0.04, 0.045, 0.05, 0.055, 0.06, 0.07],
+        consume_layer: 0,
         duration: [20, 20, 20, 20, 20, 20, 20, 20, 20],
       },
     },
   ],
   assetSlug: 'wpn_sword_0013',
-  iconPath: '/weapons/sword/wpn_sword_0013.webp',
+  icon: 'endaxis:weapons/sword/wpn_sword_0013',
   buffDefinitions: {
     buff_wpn_sword_0013_atk_up: {
       stackingType: 'highPriority',
@@ -181,8 +191,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_buff_atk_up',
-        iconPath: '/icons/icon_battle_buff_atk_up.webp',
+        icon: 'endaxis:icons/icon_battle_buff_atk_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

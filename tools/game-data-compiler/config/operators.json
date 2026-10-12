@@ -653,7 +653,7 @@
       "passiveUi": {
         "kind": "abilityEntityCount",
         "abilityEntityId": "abilityentity_chr_0011_seraph_normal_skill",
-        "icon": "/operators/xaihi/battle.webp",
+        "icon": "endaxis:operators/xaihi/battle_01",
         "nameKey": "effects.name.auxiliaryCrystal"
       },
       "exportName": "xaihiGeneratedSource",

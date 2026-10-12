@@ -1,27 +1,27 @@
-import { bindProjectileCallbackLifecycle } from './projectileCallbackRuntime';
-import { createTestBuffReference } from '../buffs/buffTestFixtures';
 import { describe, expect, it } from 'vitest';
-import type { ResolvedActionSequence } from '../../compiler/combatProgram';
-import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
 import type {
   ActionGraphDefinition,
   ActionGraphNode,
   ActionGraphStep,
 } from '../../../../packages/game-data-contract/src/actionGraph';
+import type { ResolvedActionSequence } from '../../compiler/combatProgram';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
-import { COMBAT_FRAME_INTERVAL } from '../time/combatClock';
-import { ProjectileLifecycleRuntime } from './projectileLifecycleRuntime';
-import type { CombatOperationExecutor } from '../skills/skillRuntime';
-import { createCallbackSkillHostFactory, type CallbackSkillHostFactory } from './callbackSkillHost';
-import { CombatClock } from '../time/combatClock';
+import { createTestBuffReference } from '../buffs/buffTestFixtures';
 import { CombatReceiptCollector } from '../receipt/combatReceipt';
+import type { CombatOperationExecutor } from '../skills/skillRuntime';
+import { COMBAT_FRAME_INTERVAL, CombatClock } from '../time/combatClock';
+import { createCallbackSkillHostFactory, type CallbackSkillHostFactory } from './callbackSkillHost';
+import { bindProjectileCallbackLifecycle } from './projectileCallbackRuntime';
+import { ProjectileLifecycleRuntime } from './projectileLifecycleRuntime';
+import { RuntimeTargetContext } from './runtimeTargetContext';
 
 const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: ActionGraphDefinition['nodes'],
-  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
   graph: createActionGraphCompilation(
     {
@@ -99,33 +99,24 @@ const zeroCastResource = {
 } as const;
 
 const probe = {
-  kind: 'setContextFlag',
-  parameters: { flag: 'probe', value: true, target: 'caster' },
+  kind: 'triggerCustomAbilityEvent',
+  parameters: { eventName: 'probe', eventParam: 0, target: 'caster' as const },
 } as const;
 
 const delayedProbeNodes = (): ActionGraphDefinition['nodes'] => ({
   launch: {
     action: {
-      kind: 'withActionBlackboardScope',
+      kind: 'launchProjectile',
       parameters: {
-        scopeKey: 'projectile',
-        lifetime: 'execution',
-        initialValues: {},
-        inheritParent: true,
+        inheritActionBlackboard: true,
+        finish: 3,
+        recycleDelaySeconds: 0,
         entityInitialValues: { EntityBB_seed: 4 },
         entityAssignments: {
           EntityBB_snapshot: { kind: 'valueNode', nodeId: 'launchValue' },
           EntityBB_sourceSnapshot: { kind: 'valueNode', nodeId: 'source' },
         },
       },
-      body: { $sequence: 'schedule' },
-    },
-    next: null,
-  },
-  schedule: {
-    action: {
-      kind: 'launchProjectile',
-      parameters: { finish: 3, recycleDelaySeconds: 0 },
       callbacks: [
         {
           event: 'finish',
@@ -134,30 +125,17 @@ const delayedProbeNodes = (): ActionGraphDefinition['nodes'] => ({
             nativeSkillType: 'normalSkill',
             naturalDurationFrames: 1,
             castResource: zeroCastResource,
-            blackboard: {},
+            blackboard: { local: 2 },
             scheduledSequences: [
               {
                 startFrame: 0,
                 endFrame: 0,
-                sequence: { $sequence: 'callback-scope' },
+                sequence: { $sequence: 'probe' },
               },
             ],
             actionGraph: {
               main: {
                 nodes: {
-                  'callback-scope': {
-                    action: {
-                      kind: 'withActionBlackboardScope',
-                      parameters: {
-                        scopeKey: 'callback',
-                        lifetime: 'execution',
-                        initialValues: { local: 2 },
-                        inheritParent: true,
-                      },
-                      body: { $sequence: 'probe' },
-                    },
-                    next: null,
-                  },
                   probe: {
                     action: probe,
                     next: null,
@@ -256,7 +234,11 @@ describe('projectile callback action lifecycle', () => {
             startFrame: 1,
             endFrame: 2,
             sequence: chainSequence('callback-jump', [
-              { kind: 'jumpTimeline', parameters: { destinationFrame: 6 } },
+              {
+                kind: 'jumpTimeline',
+                parameters: { destinationFrame: 6 },
+                condition: { $sequence: null },
+              },
               probe,
             ]),
           },
@@ -281,11 +263,13 @@ describe('projectile callback action lifecycle', () => {
       {
         evaluate: () => true,
         execute: step => {
-          if (step.kind === 'setContextFlag') trace.push(`start:${step.parameters.flag}`);
+          if (step.kind === 'triggerCustomAbilityEvent')
+            trace.push(`start:${step.parameters.eventName}`);
           return true;
         },
         end: step => {
-          if (step.kind === 'setContextFlag') trace.push(`end:${step.parameters.flag}`);
+          if (step.kind === 'triggerCustomAbilityEvent')
+            trace.push(`end:${step.parameters.eventName}`);
         },
       },
       context,
@@ -303,7 +287,7 @@ describe('projectile callback action lifecycle', () => {
             startFrame: 5,
             endFrame: 10,
             sequence: chainSequence('callback-late', [
-              { ...probe, parameters: { ...probe.parameters, flag: 'late' } },
+              { ...probe, parameters: { ...probe.parameters, eventName: 'late' } },
             ]),
           },
         ],
@@ -329,9 +313,9 @@ describe('projectile callback action lifecycle', () => {
       {
         evaluate: () => true,
         execute: (step, context) => {
-          if (step.kind !== 'setContextFlag') throw new Error('unexpected fixture step');
+          if (step.kind !== 'triggerCustomAbilityEvent') throw new Error('unexpected fixture step');
           trace.push(
-            `${frame}:start:${step.parameters.flag}:${context!.blackboard.getNumber('value')}`,
+            `${frame}:start:${step.parameters.eventName}:${context!.blackboard.getNumber('value')}`,
           );
           expect(context!.blackboard.getNumber('seed')).toBe(7);
           expect(context!.skillCastInfo?.skillCastId).toBe(42);
@@ -341,7 +325,7 @@ describe('projectile callback action lifecycle', () => {
             kind: 'abilityEntity',
             instanceId: 1,
           });
-          if (step.parameters.flag === 'write') {
+          if (step.parameters.eventName === 'write') {
             context!.blackboard.assignDynamic('value', 2);
             context!.attachBuffToCurrentSkill!({
               isRecycled: false,
@@ -356,7 +340,8 @@ describe('projectile callback action lifecycle', () => {
           return true;
         },
         end: step => {
-          if (step.kind === 'setContextFlag') trace.push(`${frame}:end:${step.parameters.flag}`);
+          if (step.kind === 'triggerCustomAbilityEvent')
+            trace.push(`${frame}:end:${step.parameters.eventName}`);
         },
       },
       {
@@ -393,7 +378,7 @@ describe('projectile callback action lifecycle', () => {
         launch: {
           action: {
             kind: 'launchProjectile',
-            parameters: { finish: 1, recycleDelaySeconds: 100 },
+            parameters: { inheritActionBlackboard: true, finish: 1, recycleDelaySeconds: 100 },
             callbacks: [
               {
                 event: 'finish',
@@ -429,15 +414,24 @@ describe('projectile callback action lifecycle', () => {
                     main: {
                       nodes: {
                         write: {
-                          action: { ...probe, parameters: { ...probe.parameters, flag: 'write' } },
+                          action: {
+                            ...probe,
+                            parameters: { ...probe.parameters, eventName: 'write' },
+                          },
                           next: null,
                         },
                         long: {
-                          action: { ...probe, parameters: { ...probe.parameters, flag: 'long' } },
+                          action: {
+                            ...probe,
+                            parameters: { ...probe.parameters, eventName: 'long' },
+                          },
                           next: null,
                         },
                         read: {
-                          action: { ...probe, parameters: { ...probe.parameters, flag: 'read' } },
+                          action: {
+                            ...probe,
+                            parameters: { ...probe.parameters, eventName: 'read' },
+                          },
                           next: null,
                         },
                       },
@@ -520,7 +514,7 @@ describe('projectile callback action lifecycle', () => {
         launch: {
           action: {
             kind: 'launchProjectile',
-            parameters: { finish: 1, recycleDelaySeconds: 1 },
+            parameters: { inheritActionBlackboard: true, finish: 1, recycleDelaySeconds: 1 },
             callbacks: [
               {
                 event: 'finish',
@@ -529,7 +523,7 @@ describe('projectile callback action lifecycle', () => {
                   nativeSkillType: 'normalSkill',
                   naturalDurationFrames: 1,
                   castResource: zeroCastResource,
-                  blackboard: {},
+                  blackboard: { local: 2 },
                   scheduledSequences: [
                     { startFrame: 0, endFrame: 0, sequence: { $sequence: 'probe' } },
                   ],
@@ -640,6 +634,84 @@ describe('projectile callback action lifecycle', () => {
     scheduler.advanceFrame();
     expect(scheduler.activeCount).toBe(0);
   });
+
+  it.each(['entity', 'spatialPoint'] as const)(
+    '一次 %s 发射只采样一次输入，各枚投射物的实体板独立',
+    kind => {
+      const scheduler = new ProjectileLifecycleRuntime();
+      const blackboard = new ActionBlackboard({ launchValue: 7 });
+      const targets = new RuntimeTargetContext();
+      targets.set(
+        'selected',
+        kind === 'entity'
+          ? [{ kind: 'enemy' }, { kind: 'operator', operatorId: 'ally' }]
+          : [
+              { kind: 'spatialPoint', pointId: 1 },
+              { kind: 'spatialPoint', pointId: 2 },
+            ],
+      );
+      const captured: number[][] = [];
+      const runtime = new CombatActionSequenceRuntime(
+        { execute: () => true, evaluate: () => true },
+        {
+          blackboard,
+          targetContext: targets,
+          createCallbackSkillHost: createTestHost,
+          launchProjectile: request => {
+            const board = ActionBlackboard.bindRuntimeState(
+              request.callbacks[0]!.runtime.runtimeState.blackboard,
+            );
+            captured.push([
+              board.getNumber('launchValue')!,
+              board.getNumber('EntityBB_snapshot')!,
+              board.getNumber('EntityBB_seed')!,
+            ]);
+            board.assignDynamic('EntityBB_seed', 99);
+            blackboard.assignDynamic('launchValue', 100);
+            targets.set('selected', []);
+            return scheduler.launch({
+              finishDelaySeconds: request.finish,
+              recycleDelaySeconds: 0,
+              callbacks: [],
+              callbackPrograms: [],
+              ...bindProjectileCallbackLifecycle([], () => COMBAT_FRAME_INTERVAL),
+            });
+          },
+        },
+        undefined,
+        undefined,
+        'source',
+      );
+      const nodes = delayedProbeNodes();
+      const launch = nodes.launch!.action;
+      if (launch.kind !== 'launchProjectile') throw new Error('expected launch');
+      const selectedNodes: ActionGraphDefinition['nodes'] = {
+        ...nodes,
+        launch: {
+          ...nodes.launch!,
+          action: {
+            ...launch,
+            parameters: {
+              ...launch.parameters,
+              targets: { kind: 'context', contextKey: 'selected' },
+            },
+          },
+        },
+      };
+      runtime
+        .createSequence(compileGraphEntry('multi-target', 'launch', selectedNodes))
+        .executeInstant({});
+      expect(captured).toEqual([
+        [7, 7, 4],
+        [7, 7, 4],
+      ]);
+      expect(scheduler.activeCount).toBe(2);
+      runtime
+        .createSequence(compileGraphEntry('empty-target', 'launch', selectedNodes))
+        .executeInstant({});
+      expect(scheduler.activeCount).toBe(2);
+    },
+  );
 
   it('samples direct and entity assignment inputs at launch and isolates repeated projectiles', () => {
     const scheduler = new ProjectileLifecycleRuntime();

@@ -3,7 +3,7 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 
 const definition = {
   slug: 'suit_stragi01',
-  iconPath: '/equipment/stragi01/item_equip_t1_suit_stragi01_edc_01.webp',
+  icon: 'endaxis:equipment/stragi01/item_equip_t1_suit_stragi01_edc_01',
   modifiers: [{ kind: 'panelStat', stat: 'healthFlat', value: 500 }],
   skillId: 'passive_equipsuit_stragi_01',
 } as const satisfies GearSetDefinition;

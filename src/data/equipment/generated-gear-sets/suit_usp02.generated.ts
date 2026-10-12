@@ -3,30 +3,8 @@ import type { GearSetDefinition } from '../../../core/game-data/equipmentDefinit
 
 const definition = {
   slug: 'suit_usp02',
-  iconPath: '/equipment/usp02/item_equip_t4_suit_usp02_edc_01.webp',
+  icon: 'endaxis:equipment/usp02/item_equip_t4_suit_usp02_edc_01',
   modifiers: [{ kind: 'panelStat', stat: 'healthFlat', value: 1000 }],
-  actionGraph: {
-    main: {
-      nodes: {
-        applyBuff_1: {
-          action: {
-            kind: 'applyBuff',
-            parameters: {
-              buffId: 'buff_equipsuit_usp_02',
-              target: 'caster',
-              blackboardAssignments: {
-                hp_up: { kind: 'constant', value: 1000 },
-                dmg_up: { kind: 'constant', value: 0.16 },
-                duration: { kind: 'constant', value: 15 },
-              },
-            },
-          },
-          next: null,
-        },
-      },
-    },
-    macros: {},
-  },
   skillId: 'passive_equipsuit_usp_02',
   buffDefinitions: {
     buff_equipsuit_usp_02: {
@@ -38,10 +16,10 @@ const definition = {
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: { dmg_up: 0.25, duration: 15, hp_up: 1000 },
+      blackboard: { dmg_up: 0.25, duration: 15 },
       attributeModifiers: [],
       abilityEventResponses: [
-        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'conditional_2' } },
+        { event: 'outputBuff', priority: 0, sequence: { $sequence: 'checkCondition_2' } },
       ],
       actionGraph: {
         main: {
@@ -50,22 +28,25 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_equipsuit_usp_02_AddAttack',
-                  target: 'partyExceptCaster',
-                  source: 'buffOwner',
+                  buffs: [
+                    {
+                      buffId: 'buff_equipsuit_usp_02_AddAttack',
+                      copiedBlackboardAssignments: { dmg_up: 'dmg_up', duration: 'duration' },
+                    },
+                  ],
+                  targets: { kind: 'characterTeam', excludeOwner: true },
+                  source: { kind: 'owner' },
                   inheritSourceSkillCastInfo: true,
-                  copiedBlackboardAssignments: { dmg_up: 'dmg_up', duration: 'duration' },
                 },
               },
               next: null,
             },
-            conditional_2: {
+            checkCondition_2: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
               },
-              next: null,
+              next: 'applyBuff_1',
             },
           },
           dataNodes: {
@@ -97,8 +78,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_buff_atk_up',
-        iconPath: '/icons/icon_battle_buff_atk_up.webp',
+        icon: 'endaxis:icons/icon_battle_buff_atk_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -119,7 +99,7 @@ const definition = {
       },
       applyTags: [],
       extendTags: [],
-      blackboard: { dmg_up: 0.25, duration: 15, hp_up: 1000 },
+      blackboard: { dmg_up: 0.25, duration: 15 },
       attributeModifiers: [],
       damageModifiers: [
         {
@@ -138,6 +118,31 @@ const definition = {
     },
   },
   enableSequence: { $sequence: 'applyBuff_1' },
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_1: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [
+                {
+                  buffId: 'buff_equipsuit_usp_02',
+                  blackboardAssignments: {
+                    dmg_up: { kind: 'constant', value: 0.16 },
+                    duration: { kind: 'constant', value: 15 },
+                  },
+                },
+              ],
+              targets: { kind: 'fixed', target: 'caster' },
+            },
+          },
+          next: null,
+        },
+      },
+    },
+    macros: {},
+  },
 } as const satisfies GearSetDefinition;
 
 export default definition;

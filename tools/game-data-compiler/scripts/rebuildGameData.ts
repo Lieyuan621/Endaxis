@@ -25,7 +25,6 @@ import { generateSkillSettingCatalog } from './generateSkillSettingCatalog.ts';
 import { formatGeneratedCandidate, formatGeneratedSource } from './formatGeneratedSource.ts';
 import { generateGlobalBuffCatalog } from './generateGlobalBuffCatalog.ts';
 import { generateContingencyContractLocales } from './generateContingencyContractLocales.ts';
-import { generateConsumableDefinitions } from './generateConsumableDefinitions.ts';
 import { generateCombatDefinitionCandidates } from './generateCombatDefinitionCandidates.ts';
 import { requireArray, requireNonEmptyString, requireRecord } from '../src/source/primitives.ts';
 import { typeCheckCandidateOverlay } from '../src/compiler/publication/candidateTypeCheck.ts';
@@ -78,12 +77,13 @@ const GAME_DATA_PUBLISH_DIRECTORY_OUTPUTS = [
   'src/data/equipment/generated-weapons',
   'src/data/equipment/generated-gear-sets',
   'src/data/enemies/generated',
-  'src/data/mechanics/generated',
+  'src/data/contingencyContract/generated',
   'src/data/consumables/generated',
   // These roots contain referenced game-derived WebP files plus the four explicitly audited
   // project defaults. Replacing the roots removes stale, no-longer-referenced game icons.
   'public/equipment',
   'public/consumables',
+  'public/contingency_contract',
   'public/enemies',
   'public/icons',
   'public/operators',
@@ -91,6 +91,7 @@ const GAME_DATA_PUBLISH_DIRECTORY_OUTPUTS = [
 ] as const;
 
 const GAME_DATA_PUBLISH_FILE_OUTPUTS = [
+  'src/imageCatalog.generated.ts',
   ...OPERATOR_DEFINITION_OUTPUTS,
   'src/data/combat/gameplayTagCatalog.generated.ts',
   'src/data/combat/gameplayTagPredefine.generated.ts',
@@ -152,7 +153,7 @@ export const GAME_DATA_REBUILD_BOUNDARIES = [
       'src/data/combat/movementSettingCatalog.generated.ts',
       'src/data/combat/dashEnergyConfig.generated.ts',
       'src/data/combat/skillSettings.generated.ts',
-      'src/data/mechanics/generated',
+      'src/data/contingencyContract/generated',
     ],
     blocker:
       '完整标签配置集、预定义表、TimeDilation、SkillSetting、危机合约表目录与其引用的 GlobalBuff 已可自动导出转换；其他全局配置/HUD prefab 仍待接入。VFS worker 需显式配置，且仍须闭合 AKEDB/VFS 版本身份。',
@@ -177,7 +178,7 @@ export const GAME_DATA_REBUILD_BOUNDARIES = [
   },
   {
     id: 'icons',
-    outputs: [],
+    outputs: ['src/imageCatalog.generated.ts'],
     blocker:
       '完整候选可在隔离 public 根按引用导出并发布 WebP，项目占位图明确复制为 kept-local；不能把混有自有 UI 的整个 public 目录登记为游戏派生目录。',
   },
@@ -603,7 +604,8 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
                     'src/data/equipment/generated',
                     'src/data/equipment/generated-weapons',
                     'src/data/equipment/generated-gear-sets',
-                    'src/data/mechanics/generated',
+                    'src/data/contingencyContract/generated',
+                    'src/data/consumables/generated',
                   ].map(async output => ({
                     output,
                     ...(await compareCandidateFiles(
@@ -621,45 +623,6 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
             status: 'blocked',
             detail:
               '同次任务的危机合约、TimeDilation、HitStop、SkillSetting 或 GlobalBuff 候选未通过。',
-          });
-        }
-        let consumablesOkay = false;
-        if (combatOkay) {
-          consumablesOkay = await stage('consumables', async () => {
-            const definitionOutput = path.join(
-              candidateRoot,
-              'src/data/consumables/generated/consumableDefinitions.generated.ts',
-            );
-            const buffOutput = path.join(
-              candidateRoot,
-              'src/data/buffs/generated/consumableBuffDefinitions.generated.ts',
-            );
-            const input = {
-              tableRoot: path.join(sourceRoot, 'TableCfg-current'),
-              buffDataRoot: path.join(sourceRoot, 'BuffData'),
-              definitionOutput,
-              buffOutput,
-            };
-            const generated = await generateConsumableDefinitions(input);
-            const first = await Promise.all([
-              fs.readFile(definitionOutput, 'utf8'),
-              fs.readFile(buffOutput, 'utf8'),
-            ]);
-            await generateConsumableDefinitions(input);
-            const second = await Promise.all([
-              fs.readFile(definitionOutput, 'utf8'),
-              fs.readFile(buffOutput, 'utf8'),
-            ]);
-            if (first[0] !== second[0] || first[1] !== second[1]) {
-              throw new Error('consumable candidate changed on identical second generation');
-            }
-            return { ...generated, deterministicCheck: 'passed' };
-          });
-        } else {
-          stages.push({
-            id: 'consumables',
-            status: 'blocked',
-            detail: '战斗定义未通过，不能把消耗品 Buff 写入不完整候选。',
           });
         }
         // GlobalBuff 模板只用于把本次来源编译进最终定义，不是运行时或发布产物。
@@ -698,7 +661,7 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
           await generateGameplayTagPredefine(...params, true);
           return { ...generated, deterministicCheck: 'passed' };
         });
-        if (combatOkay && consumablesOkay) {
+        if (combatOkay) {
           await stage('locales', async () => {
             const relative = 'src/i18n/game-locales';
             const output = path.join(candidateRoot, relative);
@@ -777,7 +740,6 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
         });
         const typeCheckDependencies = [
           'combat-definitions',
-          'consumables',
           'enemies',
           'gameplay-tags',
           'time-dilation',
@@ -882,7 +844,6 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
         for (const id of [
           'operator-refresh',
           'combat-definitions',
-          'consumables',
           'contingency-contract-locales',
           'gameplay-tag-predefine',
           'locales',

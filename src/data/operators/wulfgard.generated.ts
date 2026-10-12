@@ -12,6 +12,8 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.0333333350718021,
             hit: { finishOnHit: true },
@@ -29,39 +31,46 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
                   maxChargeTime: 1,
                   cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                 },
-                blackboard: { atb: 0, atk_scale: 0, duration: 0 },
+                blackboard: { atb: 0, atk_scale: 0 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_3' } },
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_4' } },
                 ],
                 actionGraph: {
                   main: {
                     nodes: {
-                      changeResourceByActionValue_1: {
+                      changeResource_2: {
                         action: {
-                          kind: 'changeResourceByActionValue',
+                          kind: 'changeResource',
                           parameters: {
                             resource: 'sp',
                             amount: { kind: 'valueNode', nodeId: 'data_1' },
                             coefficient: { kind: 'constant', value: 0.5 },
-                            recipient: 'team',
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
                             spGainKind: 'gain',
                             spGainSource: 'normalAttack',
                           },
                         },
                         next: null,
                       },
-                      conditional_2: {
+                      checkCondition_1: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_2' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                         },
                         next: null,
                       },
-                      dealDamage_3: {
+                      ifElse_3: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_1' },
+                          whenTrue: { $sequence: 'changeResource_2' },
+                          whenFalse: { $sequence: null },
+                        },
+                        next: null,
+                      },
+                      dealDamage_4: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
@@ -70,7 +79,7 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
                             tags: ['normalAttack'],
                           },
                         },
-                        next: 'conditional_2',
+                        next: 'ifElse_3',
                       },
                     },
                     dataNodes: {
@@ -90,23 +99,19 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_2: {
+      createSpatialPointTargets_2: {
         action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_1' },
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'tar', count: { kind: 'constant', value: 1 } },
         },
-        next: null,
+        next: 'launchProjectile_1',
       },
       launchProjectile_3: {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.0333333350718021,
             hit: { finishOnHit: true },
@@ -124,39 +129,46 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
                   maxChargeTime: 1,
                   cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                 },
-                blackboard: { atb: 0, atk_scale: 0, duration: 0 },
+                blackboard: { atb: 0, atk_scale: 0 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_3' } },
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_4' } },
                 ],
                 actionGraph: {
                   main: {
                     nodes: {
-                      changeResourceByActionValue_1: {
+                      changeResource_2: {
                         action: {
-                          kind: 'changeResourceByActionValue',
+                          kind: 'changeResource',
                           parameters: {
                             resource: 'sp',
                             amount: { kind: 'valueNode', nodeId: 'data_1' },
                             coefficient: { kind: 'constant', value: 0.5 },
-                            recipient: 'team',
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
                             spGainKind: 'gain',
                             spGainSource: 'normalAttack',
                           },
                         },
                         next: null,
                       },
-                      conditional_2: {
+                      checkCondition_1: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_2' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                         },
                         next: null,
                       },
-                      dealDamage_3: {
+                      ifElse_3: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_1' },
+                          whenTrue: { $sequence: 'changeResource_2' },
+                          whenFalse: { $sequence: null },
+                        },
+                        next: null,
+                      },
+                      dealDamage_4: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
@@ -165,7 +177,7 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
                             tags: ['normalAttack'],
                           },
                         },
-                        next: 'conditional_2',
+                        next: 'ifElse_3',
                       },
                     },
                     dataNodes: {
@@ -185,18 +197,12 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_4: {
+      createSpatialPointTargets_4: {
         action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_3' },
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'tar', count: { kind: 'constant', value: 1 } },
         },
-        next: null,
+        next: 'launchProjectile_3',
       },
       reachSkillOperableBoundary_5: {
         action: {
@@ -216,7 +222,6 @@ export const wulfgardChr_0006_wolfgd_attack1: SkillDefinition = {
   blackboard: {
     atb: 0,
     atk_scale: [0.15, 0.17, 0.18, 0.2, 0.21, 0.23, 0.24, 0.26, 0.27, 0.29, 0.31, 0.34],
-    display_atk_scale: [0.3, 0.33, 0.36, 0.39, 0.42, 0.45, 0.48, 0.51, 0.54, 0.58, 0.62, 0.68],
   },
   timelineBlockFrames: 24,
   naturalDurationFrames: 121,
@@ -235,10 +240,11 @@ export const wulfgardChr_0006_wolfgd_attack1: SkillDefinition = {
   },
   costFrame: 13,
   scheduledSequences: [
-    { startFrame: 7, endFrame: 7, sequence: { $sequence: 'withActionBlackboardScope_2' } },
-    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'withActionBlackboardScope_4' } },
+    { startFrame: 7, endFrame: 7, sequence: { $sequence: 'createSpatialPointTargets_2' } },
+    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'createSpatialPointTargets_4' } },
     { startFrame: 24, endFrame: 49, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0006_wolfgd_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
@@ -253,6 +259,8 @@ export const wulfgardChr_0006_wolfgd_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.0333333350718021,
             hit: { finishOnHit: true },
@@ -270,39 +278,46 @@ export const wulfgardChr_0006_wolfgd_attack2ActionGraph = {
                   maxChargeTime: 1,
                   cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                 },
-                blackboard: { atb: 0, atk_scale: 0, duration: 0 },
+                blackboard: { atb: 0, atk_scale: 0 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_3' } },
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_4' } },
                 ],
                 actionGraph: {
                   main: {
                     nodes: {
-                      changeResourceByActionValue_1: {
+                      changeResource_2: {
                         action: {
-                          kind: 'changeResourceByActionValue',
+                          kind: 'changeResource',
                           parameters: {
                             resource: 'sp',
                             amount: { kind: 'valueNode', nodeId: 'data_1' },
                             coefficient: { kind: 'constant', value: 0.5 },
-                            recipient: 'team',
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
                             spGainKind: 'gain',
                             spGainSource: 'normalAttack',
                           },
                         },
                         next: null,
                       },
-                      conditional_2: {
+                      checkCondition_1: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_2' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                         },
                         next: null,
                       },
-                      dealDamage_3: {
+                      ifElse_3: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_1' },
+                          whenTrue: { $sequence: 'changeResource_2' },
+                          whenFalse: { $sequence: null },
+                        },
+                        next: null,
+                      },
+                      dealDamage_4: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
@@ -311,7 +326,7 @@ export const wulfgardChr_0006_wolfgd_attack2ActionGraph = {
                             tags: ['normalAttack'],
                           },
                         },
-                        next: 'conditional_2',
+                        next: 'ifElse_3',
                       },
                     },
                     dataNodes: {
@@ -331,18 +346,12 @@ export const wulfgardChr_0006_wolfgd_attack2ActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_2: {
+      createSpatialPointTargets_2: {
         action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_1' },
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'tar', count: { kind: 'constant', value: 1 } },
         },
-        next: null,
+        next: 'launchProjectile_1',
       },
       reachSkillOperableBoundary_5: {
         action: {
@@ -362,7 +371,6 @@ export const wulfgardChr_0006_wolfgd_attack2: SkillDefinition = {
   blackboard: {
     atb: 0,
     atk_scale: [0.18, 0.19, 0.21, 0.23, 0.25, 0.26, 0.28, 0.3, 0.32, 0.34, 0.36, 0.39],
-    display_atk_scale: [0.35, 0.39, 0.42, 0.46, 0.49, 0.53, 0.56, 0.6, 0.63, 0.67, 0.73, 0.79],
   },
   timelineBlockFrames: 23,
   naturalDurationFrames: 129,
@@ -381,10 +389,11 @@ export const wulfgardChr_0006_wolfgd_attack2: SkillDefinition = {
   },
   costFrame: 11,
   scheduledSequences: [
-    { startFrame: 10, endFrame: 10, sequence: { $sequence: 'withActionBlackboardScope_2' } },
-    { startFrame: 16, endFrame: 16, sequence: { $sequence: 'withActionBlackboardScope_2' } },
+    { startFrame: 10, endFrame: 10, sequence: { $sequence: 'createSpatialPointTargets_2' } },
+    { startFrame: 16, endFrame: 16, sequence: { $sequence: 'createSpatialPointTargets_2' } },
     { startFrame: 23, endFrame: 38, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0006_wolfgd_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
@@ -399,6 +408,8 @@ export const wulfgardChr_0006_wolfgd_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.0333333350718021,
             hit: { finishOnHit: true },
@@ -416,39 +427,46 @@ export const wulfgardChr_0006_wolfgd_attack3ActionGraph = {
                   maxChargeTime: 1,
                   cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                 },
-                blackboard: { atb: 0, atk_scale: 0, duration: 0 },
+                blackboard: { atb: 0, atk_scale: 0 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_3' } },
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_4' } },
                 ],
                 actionGraph: {
                   main: {
                     nodes: {
-                      changeResourceByActionValue_1: {
+                      changeResource_2: {
                         action: {
-                          kind: 'changeResourceByActionValue',
+                          kind: 'changeResource',
                           parameters: {
                             resource: 'sp',
                             amount: { kind: 'valueNode', nodeId: 'data_1' },
                             coefficient: { kind: 'constant', value: 0.3333333 },
-                            recipient: 'team',
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
                             spGainKind: 'gain',
                             spGainSource: 'normalAttack',
                           },
                         },
                         next: null,
                       },
-                      conditional_2: {
+                      checkCondition_1: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_2' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                         },
                         next: null,
                       },
-                      dealDamage_3: {
+                      ifElse_3: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_1' },
+                          whenTrue: { $sequence: 'changeResource_2' },
+                          whenFalse: { $sequence: null },
+                        },
+                        next: null,
+                      },
+                      dealDamage_4: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
@@ -457,7 +475,7 @@ export const wulfgardChr_0006_wolfgd_attack3ActionGraph = {
                             tags: ['normalAttack'],
                           },
                         },
-                        next: 'conditional_2',
+                        next: 'ifElse_3',
                       },
                     },
                     dataNodes: {
@@ -477,18 +495,12 @@ export const wulfgardChr_0006_wolfgd_attack3ActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_2: {
+      createSpatialPointTargets_2: {
         action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_1' },
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'tar', count: { kind: 'constant', value: 1 } },
         },
-        next: null,
+        next: 'launchProjectile_1',
       },
       reachSkillOperableBoundary_7: {
         action: {
@@ -508,7 +520,6 @@ export const wulfgardChr_0006_wolfgd_attack3: SkillDefinition = {
   blackboard: {
     atb: 0,
     atk_scale: [0.19, 0.2, 0.22, 0.24, 0.26, 0.28, 0.3, 0.31, 0.33, 0.36, 0.38, 0.42],
-    display_atk_scale: [0.56, 0.61, 0.67, 0.72, 0.78, 0.83, 0.89, 0.94, 1, 1.07, 1.15, 1.25],
   },
   timelineBlockFrames: 32,
   naturalDurationFrames: 146,
@@ -527,11 +538,12 @@ export const wulfgardChr_0006_wolfgd_attack3: SkillDefinition = {
   },
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 12, endFrame: 12, sequence: { $sequence: 'withActionBlackboardScope_2' } },
-    { startFrame: 18, endFrame: 18, sequence: { $sequence: 'withActionBlackboardScope_2' } },
-    { startFrame: 24, endFrame: 24, sequence: { $sequence: 'withActionBlackboardScope_2' } },
+    { startFrame: 12, endFrame: 12, sequence: { $sequence: 'createSpatialPointTargets_2' } },
+    { startFrame: 18, endFrame: 18, sequence: { $sequence: 'createSpatialPointTargets_2' } },
+    { startFrame: 24, endFrame: 24, sequence: { $sequence: 'createSpatialPointTargets_2' } },
     { startFrame: 32, endFrame: 52, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0006_wolfgd_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
@@ -546,6 +558,8 @@ export const wulfgardChr_0006_wolfgd_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.0333333350718021,
             hit: { finishOnHit: true },
@@ -563,39 +577,46 @@ export const wulfgardChr_0006_wolfgd_attack4ActionGraph = {
                   maxChargeTime: 1,
                   cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                 },
-                blackboard: { atb: 0, atk_scale: 0, duration: 0, poise: 0 },
+                blackboard: { atb: 0, atk_scale: 0, poise: 0 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_3' } },
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_4' } },
                 ],
                 actionGraph: {
                   main: {
                     nodes: {
-                      changeResourceByActionValue_1: {
+                      changeResource_2: {
                         action: {
-                          kind: 'changeResourceByActionValue',
+                          kind: 'changeResource',
                           parameters: {
                             resource: 'sp',
                             amount: { kind: 'valueNode', nodeId: 'data_1' },
                             coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'team',
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
                             spGainKind: 'gain',
                             spGainSource: 'normalAttack',
                           },
                         },
                         next: null,
                       },
-                      conditional_2: {
+                      checkCondition_1: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_2' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                         },
                         next: null,
                       },
-                      dealDamage_3: {
+                      ifElse_3: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_1' },
+                          whenTrue: { $sequence: 'changeResource_2' },
+                          whenFalse: { $sequence: null },
+                        },
+                        next: null,
+                      },
+                      dealDamage_4: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
@@ -606,7 +627,7 @@ export const wulfgardChr_0006_wolfgd_attack4ActionGraph = {
                             staggerOnlyWhenCasterControlled: true,
                           },
                         },
-                        next: 'conditional_2',
+                        next: 'ifElse_3',
                       },
                     },
                     dataNodes: {
@@ -627,18 +648,12 @@ export const wulfgardChr_0006_wolfgd_attack4ActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_2: {
+      createSpatialPointTargets_2: {
         action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_1' },
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'tar', count: { kind: 'constant', value: 1 } },
         },
-        next: null,
+        next: 'launchProjectile_1',
       },
     },
   },
@@ -659,8 +674,9 @@ export const wulfgardChr_0006_wolfgd_attack4: SkillDefinition = {
   offsetRecordFrame: 23,
   costFrame: 23,
   scheduledSequences: [
-    { startFrame: 23, endFrame: 33, sequence: { $sequence: 'withActionBlackboardScope_2' } },
+    { startFrame: 23, endFrame: 33, sequence: { $sequence: 'createSpatialPointTargets_2' } },
   ],
+  defaultTarget: 'enemy',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
@@ -670,19 +686,28 @@ export const wulfgardChr_0006_wolfgd_attack4: SkillDefinition = {
 export const wulfgardChr_0006_wolfgd_power_attackActionGraph = {
   main: {
     nodes: {
-      gainFinisherSp_1: {
+      gainFinisherSp_4: {
         action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
         next: null,
       },
-      conditional_2: {
+      checkCondition_3: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' }, alwaysNext: true },
-          whenTrue: { $sequence: 'gainFinisherSp_1' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
         },
         next: null,
       },
-      dealDamage_3: {
+      ifElse_5: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_3' },
+          whenTrue: { $sequence: 'gainFinisherSp_4' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_6: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -693,9 +718,9 @@ export const wulfgardChr_0006_wolfgd_power_attackActionGraph = {
             tags: ['normalAttack', 'powerAttack'],
           },
         },
-        next: 'conditional_2',
+        next: 'ifElse_5',
       },
-      startTimeDilation_4: {
+      startTimeDilation_8: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -710,32 +735,36 @@ export const wulfgardChr_0006_wolfgd_power_attackActionGraph = {
         },
         next: null,
       },
-      conditional_5: {
+      ifElse_9: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_4' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_3' },
+          whenTrue: { $sequence: 'startTimeDilation_8' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      applyBuff_6: {
+      applyBuff_10: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_full_immune_medium',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_common_full_immune_medium' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
         },
         next: null,
       },
-      applyBuff_7: {
+      applyBuff_11: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_power_attack_disable_cast_skill',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_common_power_attack_disable_cast_skill' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
@@ -746,14 +775,12 @@ export const wulfgardChr_0006_wolfgd_power_attackActionGraph = {
     dataNodes: {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const wulfgardChr_0006_wolfgd_power_attack: SkillDefinition = {
-  actionGraph: wulfgardChr_0006_wolfgd_power_attackActionGraph,
   key: 'chr_0006_wolfgd_power_attack',
   element: 'heat',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -772,20 +799,22 @@ export const wulfgardChr_0006_wolfgd_power_attack: SkillDefinition = {
   },
   costFrame: 4,
   scheduledSequences: [
-    { startFrame: 34, endFrame: 44, sequence: { $sequence: 'dealDamage_3' } },
-    { startFrame: 34, endFrame: 43, sequence: { $sequence: 'conditional_5' } },
-    { startFrame: 0, endFrame: 60, sequence: { $sequence: 'applyBuff_6' } },
-    { startFrame: 0, endFrame: 34, sequence: { $sequence: 'applyBuff_7' } },
+    { startFrame: 34, endFrame: 44, sequence: { $sequence: 'dealDamage_6' } },
+    { startFrame: 34, endFrame: 43, sequence: { $sequence: 'ifElse_9' } },
+    { startFrame: 0, endFrame: 60, sequence: { $sequence: 'applyBuff_10' } },
+    { startFrame: 0, endFrame: 34, sequence: { $sequence: 'applyBuff_11' } },
   ],
+  defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
+  actionGraph: wulfgardChr_0006_wolfgd_power_attackActionGraph,
 };
 
 export const wulfgardChr_0006_wolfgd_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      dealDamage_1: {
+      dealDamage_2: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -803,7 +832,6 @@ export const wulfgardChr_0006_wolfgd_plunging_attack_endActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const wulfgardChr_0006_wolfgd_plunging_attack_end: SkillDefinition = {
-  actionGraph: wulfgardChr_0006_wolfgd_plunging_attack_endActionGraph,
   key: 'chr_0006_wolfgd_plunging_attack_end',
   element: 'heat',
   blackboard: { atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8] },
@@ -815,10 +843,12 @@ export const wulfgardChr_0006_wolfgd_plunging_attack_end: SkillDefinition = {
     allowedNextSkills: [{ startFrame: 8, endFrame: 20, skillIds: ['chr_0006_wolfgd_attack1'] }],
   },
   costFrame: 0,
-  scheduledSequences: [{ startFrame: 2, endFrame: 6, sequence: { $sequence: 'dealDamage_1' } }],
+  scheduledSequences: [{ startFrame: 2, endFrame: 6, sequence: { $sequence: 'dealDamage_2' } }],
+  defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
+  actionGraph: wulfgardChr_0006_wolfgd_plunging_attack_endActionGraph,
 };
 
 export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
@@ -828,6 +858,8 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.0333333350718021,
             hit: { onReach: true, finishOnHit: true },
@@ -845,10 +877,9 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                   maxChargeTime: 1,
                   cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                 },
-                blackboard: { atk_scale: 0, duration: 0, poise_first_bullet: 0 },
+                blackboard: { atk_scale: 0, poise_first_bullet: 0 },
                 scheduledSequences: [
                   { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_1' } },
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: null } },
                 ],
                 actionGraph: {
                   main: {
@@ -886,23 +917,12 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_2: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_1' },
-        },
-        next: null,
-      },
-      launchProjectile_6: {
+      launchProjectile_8: {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.0333333350718021,
             hit: { onReach: true, finishOnHit: true },
@@ -920,14 +940,13 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                   maxChargeTime: 1,
                   cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                 },
-                blackboard: { atk_scale: 0, duration: 0, poise_first_bullet: 0 },
+                blackboard: { atk_scale: 0, poise_first_bullet: 0 },
                 scheduledSequences: [
                   {
                     startFrame: 0,
                     endFrame: 0,
                     sequence: { $sequence: 'applyElementalInfliction_2' },
                   },
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: null } },
                 ],
                 actionGraph: {
                   main: {
@@ -972,23 +991,12 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_8: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_6' },
-        },
-        next: null,
-      },
-      launchProjectile_5: {
+      launchProjectile_7: {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.0333333350718021,
             hit: { onReach: true, finishOnHit: true },
@@ -1006,10 +1014,9 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                   maxChargeTime: 1,
                   cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                 },
-                blackboard: { atk_scale: 0, duration: 0, poise_first_bullet: 0 },
+                blackboard: { atk_scale: 0, poise_first_bullet: 0 },
                 scheduledSequences: [
                   { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_1' } },
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: null } },
                 ],
                 actionGraph: {
                   main: {
@@ -1047,36 +1054,152 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_7: {
+      checkCondition_6: {
         action: {
-          kind: 'withActionBlackboardScope',
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: null,
+      },
+      applyBuff_9: {
+        action: {
+          kind: 'applyBuff',
           parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
+            buffs: [{ buffId: 'buff_common_obtain_ultimate_sp' }],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
           },
-          body: { $sequence: 'launchProjectile_5' },
         },
         next: null,
       },
-      gainSquadUltimateEnergyFromSkillCost_9: {
-        action: { kind: 'gainSquadUltimateEnergyFromSkillCost', parameters: { coefficient: 1 } },
-        next: null,
-      },
-      conditional_10: {
+      checkCondition_10: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
-          whenTrue: { $sequence: 'withActionBlackboardScope_7' },
-          whenFalse: { $sequence: 'withActionBlackboardScope_8' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'constant', value: true } },
         },
-        next: 'gainSquadUltimateEnergyFromSkillCost_9',
+        next: 'applyBuff_9',
       },
-      launchProjectile_11: {
+      ifElse_11: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_6' },
+          whenTrue: { $sequence: 'launchProjectile_7' },
+          whenFalse: { $sequence: 'launchProjectile_8' },
+        },
+        next: 'checkCondition_10',
+      },
+      applyBuff_14: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_chr_0006_wolfgd_talent_0_effectbuff',
+                copiedBlackboardAssignments: { add: 'teammate_percent', duration: 'duration' },
+              },
+            ],
+            targets: { kind: 'context', key: 'Target' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      modifyActionValue_15: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'teammate_percent',
+            operation: 'multiply',
+            value: { kind: 'valueNode', nodeId: 'data_3' },
+          },
+        },
+        next: 'applyBuff_14',
+      },
+      findTargets_16: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'source' },
+            query: { kind: 'characterTeam', excludeOwner: false, owner: { kind: 'source' } },
+            saveToContextKey: 'Target',
+          },
+        },
+        next: 'modifyActionValue_15',
+      },
+      applyBuff_17: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_chr_0006_wolfgd_talent_0_effectbuff',
+                copiedBlackboardAssignments: { add: 'add', duration: 'duration' },
+              },
+            ],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: 'findTargets_16',
+      },
+      readBuffBlackboard_18: {
+        action: {
+          kind: 'readBuffBlackboard',
+          parameters: {
+            target: 'caster',
+            query: { kind: 'id', buffIds: ['buff_chr_0006_wolfgd_talent_0'] },
+            desiredKey: 'duration',
+            outputKey: 'duration',
+          },
+        },
+        next: 'applyBuff_17',
+      },
+      readBuffBlackboard_19: {
+        action: {
+          kind: 'readBuffBlackboard',
+          parameters: {
+            target: 'caster',
+            query: { kind: 'id', buffIds: ['buff_chr_0006_wolfgd_talent_0'] },
+            desiredKey: 'add',
+            outputKey: 'add',
+          },
+        },
+        next: 'readBuffBlackboard_18',
+      },
+      checkCondition_12: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+        },
+        next: null,
+      },
+      checkCondition_13: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+        },
+        next: 'checkCondition_12',
+      },
+      ifElse_20: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_13' },
+          whenTrue: { $sequence: 'readBuffBlackboard_19' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      launchProjectile_21: {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.0333333350718021,
             hit: { onReach: true, finishOnHit: true },
@@ -1097,7 +1220,6 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                 blackboard: {
                   atk_scale_plus: 0,
                   atk_scale_plus_fail: 0,
-                  duration: 0,
                   poise_extra_bullet: 0,
                   poise_extra_bullet_fail: 0,
                   potential_2: 0,
@@ -1106,13 +1228,12 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                   talent2: 0,
                 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'conditional_12' } },
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: null } },
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'ifElse_17' } },
                 ],
                 actionGraph: {
                   main: {
                     nodes: {
-                      dealDamage_6: {
+                      dealDamage_9: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
@@ -1125,14 +1246,14 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         },
                         next: null,
                       },
-                      applyElementalInfliction_7: {
+                      applyElementalInfliction_10: {
                         action: {
                           kind: 'applyElementalInfliction',
                           parameters: { element: 'heat', isExtra: false },
                         },
-                        next: 'dealDamage_6',
+                        next: 'dealDamage_9',
                       },
-                      modifyActionValue_1: {
+                      modifyActionValue_2: {
                         action: {
                           kind: 'modifyActionValue',
                           parameters: {
@@ -1143,60 +1264,81 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         },
                         next: null,
                       },
-                      changeResourceByActionValue_2: {
+                      checkCondition_1: {
                         action: {
-                          kind: 'changeResourceByActionValue',
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+                        },
+                        next: null,
+                      },
+                      changeResource_4: {
+                        action: {
+                          kind: 'changeResource',
                           parameters: {
                             resource: 'sp',
-                            amount: { kind: 'valueNode', nodeId: 'data_4' },
+                            amount: { kind: 'valueNode', nodeId: 'data_6' },
                             coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'team',
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
                             spGainKind: 'refund',
                             spGainSource: 'skill',
                           },
                         },
                         next: null,
                       },
-                      conditional_3: {
+                      ifElse_5: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_6' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'modifyActionValue_1' },
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_1' },
+                          whenTrue: { $sequence: 'modifyActionValue_2' },
+                          whenFalse: { $sequence: null },
                         },
-                        next: 'changeResourceByActionValue_2',
+                        next: 'changeResource_4',
                       },
-                      dealDamage_4: {
+                      checkCondition_3: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+                        },
+                        next: null,
+                      },
+                      dealDamage_7: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'heat',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_7' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_9' },
                             tags: ['normalSkill'],
                             features: ['canBreakWeakness'],
-                            stagger: { kind: 'valueNode', nodeId: 'data_8' },
+                            stagger: { kind: 'valueNode', nodeId: 'data_10' },
                           },
                         },
                         next: null,
                       },
-                      conditional_5: {
+                      ifElse_8: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_10' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_3' },
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_3' },
+                          whenTrue: { $sequence: 'ifElse_5' },
+                          whenFalse: { $sequence: null },
                         },
-                        next: 'dealDamage_4',
+                        next: 'dealDamage_7',
                       },
-                      finishBuffsByTag_8: {
+                      checkCondition_6: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
+                        },
+                        next: null,
+                      },
+                      finishBuffsByTag_12: {
                         action: {
                           kind: 'finishBuffsByTag',
                           parameters: {
-                            target: 'enemy',
+                            targets: { kind: 'fixed', target: 'enemy' },
+                            finishSource: { kind: 'source' },
                             tagQueryType: 'hasAny',
                             buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
                             reason: 'early',
@@ -1204,22 +1346,29 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         },
                         next: null,
                       },
-                      conditional_10: {
+                      checkCondition_11: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_11' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'finishBuffsByTag_8' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
                         },
                         next: null,
                       },
-                      finishBuffsByTag_9: {
+                      ifElse_15: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_11' },
+                          whenTrue: { $sequence: 'finishBuffsByTag_12' },
+                          whenFalse: { $sequence: null },
+                        },
+                        next: null,
+                      },
+                      finishBuffsByTag_14: {
                         action: {
                           kind: 'finishBuffsByTag',
                           parameters: {
-                            target: 'enemy',
+                            targets: { kind: 'fixed', target: 'enemy' },
+                            finishSource: { kind: 'source' },
                             tagQueryType: 'hasAny',
                             buffTags: ['Skill/Character/Common/SpellStatus/Burning'],
                             reason: 'early',
@@ -1227,29 +1376,32 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         },
                         next: null,
                       },
-                      conditional_11: {
+                      checkCondition_13: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_12' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'finishBuffsByTag_9' },
-                          whenFalse: { $sequence: 'conditional_10' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
                         },
                         next: null,
                       },
-                      conditional_12: {
+                      ifElse_16: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_13' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_5' },
-                          whenFalse: { $sequence: 'applyElementalInfliction_7' },
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_13' },
+                          whenTrue: { $sequence: 'finishBuffsByTag_14' },
+                          whenFalse: { $sequence: 'ifElse_15' },
                         },
-                        next: 'conditional_11',
+                        next: null,
+                      },
+                      ifElse_17: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_6' },
+                          whenTrue: { $sequence: 'ifElse_8' },
+                          whenFalse: { $sequence: 'applyElementalInfliction_10' },
+                        },
+                        next: 'ifElse_16',
                       },
                     },
                     dataNodes: {
@@ -1267,61 +1419,43 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                       },
                       data_4: {
                         type: 'number',
-                        expression: { kind: 'blackboard', key: 'returnskillpower' },
-                      },
-                      data_5: {
-                        type: 'number',
                         expression: { kind: 'blackboard', key: 'potential_2', fallback: 0 },
                       },
-                      data_6: {
+                      data_5: {
                         type: 'boolean',
                         expression: {
                           kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_5' },
+                          left: { kind: 'valueNode', nodeId: 'data_4' },
                           operator: 'greater',
                           right: { kind: 'constant', value: 0 },
                         },
+                      },
+                      data_6: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'returnskillpower' },
                       },
                       data_7: {
                         type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale_plus' },
-                      },
-                      data_8: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'poise_extra_bullet' },
-                      },
-                      data_9: {
-                        type: 'number',
                         expression: { kind: 'blackboard', key: 'talent2', fallback: 0 },
                       },
-                      data_10: {
+                      data_8: {
                         type: 'boolean',
                         expression: {
                           kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_9' },
+                          left: { kind: 'valueNode', nodeId: 'data_7' },
                           operator: 'greater',
                           right: { kind: 'constant', value: 0 },
                         },
                       },
+                      data_9: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'atk_scale_plus' },
+                      },
+                      data_10: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'poise_extra_bullet' },
+                      },
                       data_11: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'entityTagMatch',
-                          target: 'enemy',
-                          tagQueryType: 'hasAny',
-                          tags: ['Skill/Character/Common/SpellStatus/Conduct'],
-                        },
-                      },
-                      data_12: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'entityTagMatch',
-                          target: 'enemy',
-                          tagQueryType: 'hasAny',
-                          tags: ['Skill/Character/Common/SpellStatus/Burning'],
-                        },
-                      },
-                      data_13: {
                         type: 'boolean',
                         expression: {
                           kind: 'entityTagMatch',
@@ -1333,6 +1467,24 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                           ],
                         },
                       },
+                      data_12: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityTagMatch',
+                          target: 'enemy',
+                          tagQueryType: 'hasAny',
+                          tags: ['Skill/Character/Common/SpellStatus/Conduct'],
+                        },
+                      },
+                      data_13: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityTagMatch',
+                          target: 'enemy',
+                          tagQueryType: 'hasAny',
+                          tags: ['Skill/Character/Common/SpellStatus/Burning'],
+                        },
+                      },
                     },
                   },
                   macros: {},
@@ -1341,96 +1493,9 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
             },
           ],
         },
-        next: null,
+        next: 'ifElse_20',
       },
-      applyBuff_12: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffId: 'buff_chr_0006_wolfgd_talent_0_effectbuff',
-            target: 'party',
-            inheritSourceSkillCastInfo: true,
-            copiedBlackboardAssignments: { add: 'teammate_percent', duration: 'duration' },
-          },
-        },
-        next: null,
-      },
-      modifyActionValue_13: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'teammate_percent',
-            operation: 'multiply',
-            value: { kind: 'valueNode', nodeId: 'data_3' },
-          },
-        },
-        next: 'applyBuff_12',
-      },
-      applyBuff_14: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffId: 'buff_chr_0006_wolfgd_talent_0_effectbuff',
-            target: 'caster',
-            inheritSourceSkillCastInfo: true,
-            copiedBlackboardAssignments: { add: 'add', duration: 'duration' },
-          },
-        },
-        next: 'modifyActionValue_13',
-      },
-      readBuffBlackboard_15: {
-        action: {
-          kind: 'readBuffBlackboard',
-          parameters: {
-            target: 'caster',
-            query: { kind: 'id', buffIds: ['buff_chr_0006_wolfgd_talent_0'] },
-            desiredKey: 'duration',
-            outputKey: 'duration',
-          },
-        },
-        next: 'applyBuff_14',
-      },
-      readBuffBlackboard_16: {
-        action: {
-          kind: 'readBuffBlackboard',
-          parameters: {
-            target: 'caster',
-            query: { kind: 'id', buffIds: ['buff_chr_0006_wolfgd_talent_0'] },
-            desiredKey: 'add',
-            outputKey: 'add',
-          },
-        },
-        next: 'readBuffBlackboard_15',
-      },
-      conditional_17: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' }, alwaysNext: true },
-          whenTrue: { $sequence: 'readBuffBlackboard_16' },
-        },
-        next: null,
-      },
-      withActionBlackboardScope_18: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_11' },
-        },
-        next: 'conditional_17',
-      },
-      findCharacterTeamTargets_19: {
-        action: {
-          kind: 'findCharacterTeamTargets',
-          parameters: { saveToContextKey: 'mainchar', selection: { kind: 'controlledOperator' } },
-        },
-        next: null,
-      },
-      modifyActionValue_20: {
+      modifyActionValue_23: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -1441,32 +1506,51 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         },
         next: null,
       },
-      conditional_21: {
+      checkCondition_22: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' }, alwaysNext: true },
-          whenTrue: { $sequence: 'modifyActionValue_20' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
         next: null,
       },
-      jumpTimeline_22: {
-        action: { kind: 'jumpTimeline', parameters: { destinationFrame: 118 } },
-        next: null,
-      },
-      conditional_23: {
+      ifElse_24: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' }, alwaysNext: true },
-          whenTrue: { $sequence: 'jumpTimeline_22' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_22' },
+          whenTrue: { $sequence: 'modifyActionValue_23' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      markCurrentSkillCanInterrupt_24: {
+      jumpTimeline_26: {
+        action: {
+          kind: 'jumpTimeline',
+          parameters: { destinationFrame: 118 },
+          condition: { $sequence: null },
+        },
+        next: null,
+      },
+      ifElse_27: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_6' },
+          whenTrue: { $sequence: 'jumpTimeline_26' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      markCurrentSkillCanInterrupt_28: {
         action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} },
         next: null,
       },
-      jumpTimeline_25: {
-        action: { kind: 'jumpTimeline', parameters: { destinationFrame: 247 } },
+      jumpTimeline_29: {
+        action: {
+          kind: 'jumpTimeline',
+          parameters: { destinationFrame: 247 },
+          condition: { $sequence: null },
+        },
         next: null,
       },
     },
@@ -1486,19 +1570,6 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
       },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'add' } },
       data_4: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'potential_3', fallback: 0 },
-      },
-      data_5: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_4' },
-          operator: 'greater',
-          right: { kind: 'constant', value: 0 },
-        },
-      },
-      data_6: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -1508,17 +1579,20 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_7: {
+      data_5: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'potential_3', fallback: 0 },
+      },
+      data_6: {
         type: 'boolean',
         expression: {
-          kind: 'all',
-          conditions: [
-            { kind: 'conditionNode', nodeId: 'data_5' },
-            { kind: 'conditionNode', nodeId: 'data_6' },
-          ],
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_5' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 0 },
         },
       },
-      data_8: {
+      data_7: {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
@@ -1528,19 +1602,6 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
             'Skill/Character/Common/SpellStatus/Burning',
             'Skill/Character/Common/SpellStatus/Conduct',
           ],
-        },
-      },
-      data_9: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'SpellInflict', fallback: 0 },
-      },
-      data_10: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_9' },
-          operator: 'greaterOrEqual',
-          right: { kind: 'constant', value: 1 },
         },
       },
     },
@@ -1580,15 +1641,14 @@ export const wulfgardChr_0006_wolfgd_normal_skill: SkillDefinition = {
   },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 6, endFrame: 9, sequence: { $sequence: 'withActionBlackboardScope_2' } },
-    { startFrame: 16, endFrame: 20, sequence: { $sequence: 'withActionBlackboardScope_2' } },
-    { startFrame: 23, endFrame: 26, sequence: { $sequence: 'conditional_10' } },
-    { startFrame: 141, endFrame: 146, sequence: { $sequence: 'withActionBlackboardScope_18' } },
-    { startFrame: 0, endFrame: 2, sequence: { $sequence: 'findCharacterTeamTargets_19' } },
-    { startFrame: 0, endFrame: 2, sequence: { $sequence: 'conditional_21' } },
-    { startFrame: 31, endFrame: 32, sequence: { $sequence: 'conditional_23' } },
-    { startFrame: 48, endFrame: 51, sequence: { $sequence: 'markCurrentSkillCanInterrupt_24' } },
-    { startFrame: 117, endFrame: 117, sequence: { $sequence: 'jumpTimeline_25' } },
+    { startFrame: 6, endFrame: 9, sequence: { $sequence: 'launchProjectile_1' } },
+    { startFrame: 16, endFrame: 20, sequence: { $sequence: 'launchProjectile_1' } },
+    { startFrame: 23, endFrame: 26, sequence: { $sequence: 'ifElse_11' } },
+    { startFrame: 141, endFrame: 146, sequence: { $sequence: 'launchProjectile_21' } },
+    { startFrame: 0, endFrame: 2, sequence: { $sequence: 'ifElse_24' } },
+    { startFrame: 31, endFrame: 32, sequence: { $sequence: 'ifElse_27' } },
+    { startFrame: 48, endFrame: 51, sequence: { $sequence: 'markCurrentSkillCanInterrupt_28' } },
+    { startFrame: 117, endFrame: 117, sequence: { $sequence: 'jumpTimeline_29' } },
   ],
   smartTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
@@ -1605,6 +1665,8 @@ export const wulfgardChr_0006_wolfgd_combo_skillActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.0333333350718021,
             hit: { onReach: true, finishOnHit: true },
@@ -1625,8 +1687,6 @@ export const wulfgardChr_0006_wolfgd_combo_skillActionGraph = {
                 blackboard: { atk_scale: 0, duration: 0, poise: 0, usp: 0 },
                 scheduledSequences: [
                   { startFrame: 0, endFrame: 0, sequence: { $sequence: 'spawnAbilityEntity_1' } },
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: null } },
-                  { startFrame: 0, endFrame: 10, sequence: { $sequence: null } },
                 ],
                 actionGraph: {
                   main: {
@@ -1635,6 +1695,7 @@ export const wulfgardChr_0006_wolfgd_combo_skillActionGraph = {
                         action: {
                           kind: 'spawnAbilityEntity',
                           parameters: {
+                            bornAt: { kind: 'fixed', target: 'enemy' },
                             abilityEntityId: 'abilityentity_chr_0006_wolfgd_combo_skill',
                             childSkillId: 'chr_0006_wolfgd_combo_skill_abilityrange',
                             inheritActionBlackboard: true,
@@ -1653,18 +1714,12 @@ export const wulfgardChr_0006_wolfgd_combo_skillActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_2: {
+      createSpatialPointTargets_2: {
         action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_1' },
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'bomb', count: { kind: 'constant', value: 1 } },
         },
-        next: null,
+        next: 'launchProjectile_1',
       },
       startTimeDilation_3: {
         action: {
@@ -1682,7 +1737,32 @@ export const wulfgardChr_0006_wolfgd_combo_skillActionGraph = {
         },
         next: null,
       },
+      checkCondition_4: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+      findCharacterTeamTargets_6: {
+        action: {
+          kind: 'findCharacterTeamTargets',
+          parameters: { saveToContextKey: 'mainchar', selection: { kind: 'controlledOperator' } },
+        },
+        next: null,
+      },
+      ifElse_7: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_4' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: 'findCharacterTeamTargets_6' },
+        },
+        next: null,
+      },
     },
+    dataNodes: { data_1: { type: 'boolean', expression: { kind: 'casterControlled' } } },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
@@ -1692,14 +1772,8 @@ export const wulfgardChr_0006_wolfgd_combo_skill: SkillDefinition = {
   element: 'heat',
   blackboard: {
     atk_scale: [0.6, 0.66, 0.72, 0.78, 0.84, 0.9, 0.96, 1.02, 1.08, 1.16, 1.25, 1.35],
-    cam_angle: 0,
-    cam_duration: 0,
     count: 0,
-    input_angle: 0,
-    owner_mainchar_alpha: 0,
-    owner_mainchar_distance: 0,
     poise: 10,
-    select_radius: 4,
     usp: 10,
   },
   timelineBlockFrames: 31,
@@ -1713,8 +1787,9 @@ export const wulfgardChr_0006_wolfgd_combo_skill: SkillDefinition = {
   },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 12, endFrame: 16, sequence: { $sequence: 'withActionBlackboardScope_2' } },
+    { startFrame: 12, endFrame: 16, sequence: { $sequence: 'createSpatialPointTargets_2' } },
     { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_3' } },
+    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'ifElse_7' } },
   ],
   smartTarget: 'trigger',
   cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 570],
@@ -1727,7 +1802,7 @@ export const wulfgardChr_0006_wolfgd_combo_skill: SkillDefinition = {
 export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
   main: {
     nodes: {
-      adjustSkillCooldown_1: {
+      adjustSkillCooldown_2: {
         action: {
           kind: 'adjustSkillCooldown',
           parameters: {
@@ -1740,15 +1815,24 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      conditional_2: {
+      checkCondition_1: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
-          whenTrue: { $sequence: 'adjustSkillCooldown_1' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: null,
       },
-      startTimeDilation_3: {
+      ifElse_3: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_1' },
+          whenTrue: { $sequence: 'adjustSkillCooldown_2' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      startTimeDilation_4: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1763,15 +1847,22 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      launchProjectile_4: {
+      launchProjectile_5: {
         action: {
           kind: 'launchProjectile',
-          parameters: { finish: 'firstTickReach' },
+          parameters: { inheritActionBlackboard: true, finish: 'firstTickReach' },
           callbacks: [],
         },
         next: null,
       },
-      dealDamage_10: {
+      createSpatialPointTargets_6: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'targetpoint', count: { kind: 'constant', value: 1 } },
+        },
+        next: 'launchProjectile_5',
+      },
+      dealDamage_17: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1784,34 +1875,97 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_15: {
+      mergeContextTargets_18: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: {
+            saveToContextKey: 'target1',
+            sources: [{ kind: 'target', target: 'enemy' }],
+          },
+        },
+        next: 'dealDamage_17',
+      },
+      mergeContextTargets_20: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: {
+            saveToContextKey: 'target2',
+            sources: [{ kind: 'target', target: 'enemy' }],
+          },
+        },
+        next: 'dealDamage_17',
+      },
+      mergeContextTargets_22: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: {
+            saveToContextKey: 'target3',
+            sources: [{ kind: 'target', target: 'enemy' }],
+          },
+        },
+        next: 'dealDamage_17',
+      },
+      mergeContextTargets_24: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: {
+            saveToContextKey: 'target4',
+            sources: [{ kind: 'target', target: 'enemy' }],
+          },
+        },
+        next: 'dealDamage_17',
+      },
+      mergeContextTargets_26: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: {
+            saveToContextKey: 'target5',
+            sources: [{ kind: 'target', target: 'enemy' }],
+          },
+        },
+        next: 'dealDamage_17',
+      },
+      applyBuff_27: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_fire_fire_burning_triggered',
-            target: 'enemy',
+            buffs: [{ buffId: 'buff_common_fire_fire_burning_triggered' }],
+            targets: { kind: 'fixed', target: 'enemy' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
         },
         next: null,
       },
-      repeatEachTick_16: {
+      repeatEachTick_28: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'fixed', target: 'enemy' },
               executeEachFrame: false,
               triggerIntervalSeconds: 0.2,
               maxCountPerTarget: 1,
               targetTriggerIntervalSeconds: 0.2,
             },
           },
-          body: { $sequence: 'applyBuff_15' },
+          body: { $sequence: 'applyBuff_27' },
         },
         next: null,
       },
-      hideUi_17: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      startUltimateTimeDilation_18: {
+      mergeContextTargets_29: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: {
+            saveToContextKey: 'target',
+            sources: [{ kind: 'target', target: 'enemy' }],
+          },
+        },
+        next: 'repeatEachTick_28',
+      },
+      hideUi_30: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      startUltimateTimeDilation_31: {
         action: {
           kind: 'startUltimateTimeDilation',
           parameters: {
@@ -1822,12 +1976,13 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_19: {
+      applyBuff_32: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_damage_immune_ult_skill',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_common_damage_immune_ult_skill' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
@@ -1879,24 +2034,25 @@ export const wulfgardChr_0006_wolfgd_ultimate_skill: SkillDefinition = {
   },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 0, endFrame: 14, sequence: { $sequence: 'conditional_2' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_3' } },
-    { startFrame: 45, endFrame: 47, sequence: { $sequence: 'launchProjectile_4' } },
-    { startFrame: 50, endFrame: 52, sequence: { $sequence: 'launchProjectile_4' } },
-    { startFrame: 56, endFrame: 58, sequence: { $sequence: 'launchProjectile_4' } },
-    { startFrame: 61, endFrame: 63, sequence: { $sequence: 'launchProjectile_4' } },
-    { startFrame: 45, endFrame: 47, sequence: { $sequence: 'launchProjectile_4' } },
-    { startFrame: 63, endFrame: 65, sequence: { $sequence: 'launchProjectile_4' } },
-    { startFrame: 46, endFrame: 49, sequence: { $sequence: 'dealDamage_10' } },
-    { startFrame: 52, endFrame: 55, sequence: { $sequence: 'dealDamage_10' } },
-    { startFrame: 59, endFrame: 62, sequence: { $sequence: 'dealDamage_10' } },
-    { startFrame: 64, endFrame: 67, sequence: { $sequence: 'dealDamage_10' } },
-    { startFrame: 69, endFrame: 72, sequence: { $sequence: 'dealDamage_10' } },
-    { startFrame: 45, endFrame: 72, sequence: { $sequence: 'repeatEachTick_16' } },
-    { startFrame: 0, endFrame: 46, sequence: { $sequence: 'hideUi_17' } },
-    { startFrame: 0, endFrame: 46, sequence: { $sequence: 'startUltimateTimeDilation_18' } },
-    { startFrame: 0, endFrame: 80, sequence: { $sequence: 'applyBuff_19' } },
+    { startFrame: 0, endFrame: 14, sequence: { $sequence: 'ifElse_3' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_4' } },
+    { startFrame: 45, endFrame: 47, sequence: { $sequence: 'createSpatialPointTargets_6' } },
+    { startFrame: 50, endFrame: 52, sequence: { $sequence: 'createSpatialPointTargets_6' } },
+    { startFrame: 56, endFrame: 58, sequence: { $sequence: 'createSpatialPointTargets_6' } },
+    { startFrame: 61, endFrame: 63, sequence: { $sequence: 'createSpatialPointTargets_6' } },
+    { startFrame: 45, endFrame: 47, sequence: { $sequence: 'createSpatialPointTargets_6' } },
+    { startFrame: 63, endFrame: 65, sequence: { $sequence: 'createSpatialPointTargets_6' } },
+    { startFrame: 46, endFrame: 49, sequence: { $sequence: 'mergeContextTargets_18' } },
+    { startFrame: 52, endFrame: 55, sequence: { $sequence: 'mergeContextTargets_20' } },
+    { startFrame: 59, endFrame: 62, sequence: { $sequence: 'mergeContextTargets_22' } },
+    { startFrame: 64, endFrame: 67, sequence: { $sequence: 'mergeContextTargets_24' } },
+    { startFrame: 69, endFrame: 72, sequence: { $sequence: 'mergeContextTargets_26' } },
+    { startFrame: 45, endFrame: 72, sequence: { $sequence: 'mergeContextTargets_29' } },
+    { startFrame: 0, endFrame: 46, sequence: { $sequence: 'hideUi_30' } },
+    { startFrame: 0, endFrame: 46, sequence: { $sequence: 'startUltimateTimeDilation_31' } },
+    { startFrame: 0, endFrame: 80, sequence: { $sequence: 'applyBuff_32' } },
   ],
+  defaultTarget: 'enemy',
   cooldownFrames: 300,
   costs: [{ resource: 'ultimateEnergy', value: 90 }],
   skillType: 'ultimate',
@@ -1920,6 +2076,7 @@ export const wulfgardCommon_character_perfect_dodge: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [],
+  defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
 };
@@ -1927,11 +2084,10 @@ export const wulfgardCommon_character_perfect_dodge: SkillDefinition = {
 const wulfgardComboCondition1ActionGraph = {
   main: {
     nodes: {
-      conditional_1: {
+      checkCondition_1: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-          whenTrue: { $sequence: null },
         },
         next: null,
       },
@@ -1956,7 +2112,7 @@ const wulfgardComboCondition1: ComboSkillConditionDefinition = {
   event: 'beforeTakeInfliction',
   immediately: false,
   initialValues: null,
-  sequence: { $sequence: 'conditional_1' },
+  sequence: { $sequence: 'checkCondition_1' },
   actionGraph: wulfgardComboCondition1ActionGraph,
 };
 
@@ -1967,22 +2123,25 @@ const wulfgardBuff1ActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0006_wolfgd_talent_0_effectbuff',
-            target: 'buffSource',
-            source: 'buffSource',
+            buffs: [
+              {
+                buffId: 'buff_chr_0006_wolfgd_talent_0_effectbuff',
+                copiedBlackboardAssignments: { duration: 'duration', add: 'add' },
+              },
+            ],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
-            copiedBlackboardAssignments: { duration: 'duration', add: 'add' },
           },
         },
         next: null,
       },
-      conditional_2: {
+      checkCondition_2: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-          whenTrue: { $sequence: 'applyBuff_1' },
         },
-        next: null,
+        next: 'applyBuff_1',
       },
     },
     dataNodes: {
@@ -2011,7 +2170,7 @@ const wulfgardBuff1: SkillBuffDefinition = {
   blackboard: { add: 0, duration: 0 },
   attributeModifiers: [],
   abilityEventResponses: [
-    { event: 'outputBuff', priority: 0, sequence: { $sequence: 'conditional_2' } },
+    { event: 'outputBuff', priority: 0, sequence: { $sequence: 'checkCondition_2' } },
   ],
   actionGraph: wulfgardBuff1ActionGraph,
 };
@@ -2031,8 +2190,7 @@ const wulfgardBuff2: SkillBuffDefinition = {
   maxTriggerCount: -1,
   presentation: {
     visible: true,
-    iconId: 'icon_battle_wolfgd_talent_1',
-    iconPath: '/icons/icon_battle_wolfgd_talent_1.webp',
+    icon: 'endaxis:icons/icon_battle_wolfgd_talent_1',
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
     showInSquadIcon: true,
@@ -2066,6 +2224,7 @@ export const wulfgard: OperatorDefinition = {
   rarity: 5,
   weaponType: 'pistol',
   element: 'heat',
+  characterTypeId: 'Fire',
   role: 'caster',
   mainAttribute: 'strength',
   secondaryAttribute: 'agility',
@@ -2254,14 +2413,15 @@ export const wulfgard: OperatorDefinition = {
         actionGraph: {
           main: {
             nodes: {
-              changeResourceByActionValue_1: {
+              changeResource_1: {
                 action: {
-                  kind: 'changeResourceByActionValue',
+                  kind: 'changeResource',
                   parameters: {
                     resource: 'ultimateEnergy',
                     amount: { kind: 'valueNode', nodeId: 'data_1' },
                     coefficient: { kind: 'constant', value: 1 },
-                    recipient: 'caster',
+                    source: { kind: 'source' },
+                    targets: { kind: 'source' },
                   },
                 },
                 next: null,
@@ -2278,7 +2438,7 @@ export const wulfgard: OperatorDefinition = {
                   },
                   key: 'abilityentity_chr_0006_wolfgd_combo_skill:chr_0006_wolfgd_combo_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_2/action',
                 },
-                next: 'changeResourceByActionValue_1',
+                next: 'changeResource_1',
               },
               applyElementalInfliction_3: {
                 action: {
@@ -2286,6 +2446,16 @@ export const wulfgard: OperatorDefinition = {
                   parameters: { element: 'heat', isExtra: false },
                 },
                 next: 'dealDamage_2',
+              },
+              mergeContextTargets_4: {
+                action: {
+                  kind: 'mergeContextTargets',
+                  parameters: {
+                    saveToContextKey: 'tar',
+                    sources: [{ kind: 'target', target: 'enemy' }],
+                  },
+                },
+                next: 'applyElementalInfliction_3',
               },
             },
             dataNodes: {
@@ -2305,16 +2475,9 @@ export const wulfgard: OperatorDefinition = {
           maxChargeTime: 1,
           cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
         },
-        blackboard: {
-          atk_scale: 5,
-          duration: 0,
-          move_speed_scalar: 1,
-          poise: 0,
-          radius: 5,
-          usp: 0,
-        },
+        blackboard: { atk_scale: 5, poise: 0, usp: 0 },
         scheduledSequences: [
-          { startFrame: 0, endFrame: 0, sequence: { $sequence: 'applyElementalInfliction_3' } },
+          { startFrame: 0, endFrame: 0, sequence: { $sequence: 'mergeContextTargets_4' } },
         ],
       },
     },

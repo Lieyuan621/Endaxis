@@ -1,10 +1,10 @@
+import { resolveImage } from '../../imageResources';
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
 import type { CombatObjectNode } from '../../../core/projection/combatObjectOrigins';
 import { eventBuff } from '../../../core/projection/combatObjectOrigins';
 import type { ScenarioDocument } from '../../../core/project/schema';
 import { combatObjectKey } from '../../../core/combat/receipt/combatObjectIdentity';
 import {
-  getIconAssetPath,
   getOperatorAvatarPath,
   getOperatorTalentIconPath,
   getSpellBurstIconPath,
@@ -91,8 +91,7 @@ export function createCombatObjectIconResolver(
     return (
       (source?.kind === 'weapon' ? source.iconPath : undefined) ??
       (source?.kind === 'gearSet' ? gearSetIcons.get(source.slug) : undefined) ??
-      (typeof data?.iconPath === 'string' ? data.iconPath : undefined) ??
-      (typeof data?.iconId === 'string' ? (getIconAssetPath(data.iconId) ?? undefined) : undefined)
+      resolveImage(data?.icon)
     );
   };
   const buffIcon = (key: string, cutoff: number) => {

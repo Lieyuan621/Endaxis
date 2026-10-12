@@ -51,9 +51,13 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_claym_0012_up',
-                  target: 'caster',
-                  blackboardAssignments: { heal_up: { kind: 'valueNode', nodeId: 'data_1' } },
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_claym_0012_up',
+                      blackboardAssignments: { heal_up: { kind: 'valueNode', nodeId: 'data_1' } },
+                    },
+                  ],
+                  targets: { kind: 'fixed', target: 'caster' },
                 },
               },
               next: null,
@@ -74,7 +78,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_claym_0012',
-  iconPath: '/weapons/claym/wpn_claym_0012.webp',
+  icon: 'endaxis:weapons/claym/wpn_claym_0012',
   buffDefinitions: {
     buff_wpn_claym_0012_up: {
       stackingType: 'unique',
@@ -85,8 +89,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'buff_wpn_sword_0019',
-        iconPath: '/icons/buff_wpn_sword_0019.webp',
+        icon: 'endaxis:icons/buff_wpn_sword_0019',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: false,
@@ -112,7 +115,7 @@ const definition = {
       healModifiers: [
         {
           enabledSide: 'healer',
-          condition: { $sequence: 'conditional_1' },
+          condition: { $sequence: 'checkCondition_1' },
           processors: [
             {
               kind: 'modifyHealingIncrease',
@@ -126,11 +129,10 @@ const definition = {
       actionGraph: {
         main: {
           nodes: {
-            conditional_1: {
+            checkCondition_1: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: null },
               },
               next: null,
             },

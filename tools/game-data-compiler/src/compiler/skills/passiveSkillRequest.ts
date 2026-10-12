@@ -1,3 +1,4 @@
+import type { SkillLevelSource } from '../../../../../packages/game-data-contract/src/index.ts';
 export type PassiveSkillLevelSource =
   | {
       /** 原生未指定等级时先查 1 级补丁，缺失时才保留 SkillData 默认值。 */
@@ -6,7 +7,7 @@ export type PassiveSkillLevelSource =
   | {
       /** 角色基础被动跟随其所在原生技能组对应的项目等级轴。 */
       readonly kind: 'operatorSkillGroup';
-      readonly levelSource: import('../../../../../packages/game-data-contract/src/index.ts').SkillLevelSource;
+      readonly levelSource: SkillLevelSource;
     }
   | {
       readonly kind: 'weaponProgression';

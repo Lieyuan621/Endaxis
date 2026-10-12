@@ -76,6 +76,7 @@ export const generatedSkillSettings = {
     },
   ],
   resources: {
+    comboSkillPendingInterval: 6,
     atbRecoverInterval: 0.5,
     atbGainEfficiency: 1,
     atbConsumedDefaultUspGainSelf: 0.065,

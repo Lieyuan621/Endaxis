@@ -1,6 +1,7 @@
 import type { NativeSkillType } from '../../game-data/operatorDefinition';
 import type { CombatReceiptSink } from '../receipt/combatReceipt';
 import type { OperatorCenterState } from '../state/abilityState';
+import type { BuffReference } from '../state/foundationState';
 import { COMBAT_FRAMES_PER_SECOND, type CombatClock } from '../time/combatClock';
 import { recordDodgeReceipt } from './dodgeInputRuntime';
 
@@ -51,13 +52,8 @@ export interface OperatorCenterStateRuntimeOptions {
   readonly timing?: CenterDashTiming;
   readonly receipt: CombatReceiptSink;
   readonly interruptCurrentSkillForDash: () => DashInterruptionFact | null;
-  readonly addDashBuffs: (
-    dashId: string,
-  ) => readonly import('../state/foundationState').BuffReference[];
-  readonly clearDashBuffs: (
-    references: readonly import('../state/foundationState').BuffReference[],
-    dashId: string,
-  ) => void;
+  readonly addDashBuffs: (dashId: string) => readonly BuffReference[];
+  readonly clearDashBuffs: (references: readonly BuffReference[], dashId: string) => void;
 }
 
 function requireFrames(value: number, name: string): void {

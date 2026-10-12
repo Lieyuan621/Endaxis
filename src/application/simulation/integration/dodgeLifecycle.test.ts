@@ -315,6 +315,7 @@ describe('闪避输入、恢复与连续组集成', () => {
       dodges: [{ kind: 'dash', dodgeId: 'branch-slowed', operatorId: 'op', direction: 'forward' }],
     });
     const child = CombatRuntimeAssembly.restore({
+      comboSkillPendingInterval: 5,
       receiptHistory: parent.receipt.history.snapshot(),
       graph: structuredClone(parent.stateGraph),
       resources: prepared.compiled.resources,
@@ -473,6 +474,7 @@ describe('闪避输入、恢复与连续组集成', () => {
     const parent = new CombatRuntimeAssembly(p.compiled);
     parent.applyInitialInput({});
     const child = CombatRuntimeAssembly.restore({
+      comboSkillPendingInterval: 5,
       receiptHistory: parent.receipt.history.snapshot(),
       graph: structuredClone(parent.stateGraph),
       resources: p.compiled.resources,

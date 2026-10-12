@@ -1,13 +1,16 @@
 <script setup lang="ts">
+import { resolveImage } from '../../imageResources';
+import type { CombatObjectIconResolver } from './combatObjectIcons';
+import type { CombatObjectOwnName } from './combatObjectNames';
 /** 展示时间轴上某一段干员专属战斗界面状态；数据直接来自已经完成的模拟投影。 */
 import { EaDialog } from '@/design-system';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
 import type { PositionedOperatorPassiveUiTimelineSegment } from '../../../core/projection/operatorPassiveUiTimelineViz';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
-import OperatorPassiveUiWidget from './OperatorPassiveUiWidget.vue';
 import CombatObjectOriginGraph from './CombatObjectOriginGraph.vue';
-import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
+import OperatorPassiveUiWidget from './OperatorPassiveUiWidget.vue';
 
 const props = defineProps<{
   visible: boolean;
@@ -16,8 +19,8 @@ const props = defineProps<{
   fps: number;
   receiptEntries?: readonly CombatReceiptEntry[];
   operatorLabel?: (operatorId: string) => string;
-  objectName?: import('./combatObjectNames').CombatObjectOwnName;
-  objectIcon?: import('./combatObjectIcons').CombatObjectIconResolver;
+  objectName?: CombatObjectOwnName;
+  objectIcon?: CombatObjectIconResolver;
   actionPresentation?: (
     ownerId: string,
     actionId: string,
@@ -50,7 +53,7 @@ const sourceSequence = computed(() => {
   }
   return sequence;
 });
-const entityIcon: import('./combatObjectIcons').CombatObjectIconResolver = (node, sequence) => {
+const entityIcon: CombatObjectIconResolver = (node, sequence) => {
   const segment = props.segment;
   const ref = node.ref;
   if (
@@ -83,7 +86,7 @@ function seconds(frames: number): string {
           <span class="passive-detail__preview">
             <img
               v-if="segment.kind === 'abilityEntityCount'"
-              :src="segment.icon"
+              :src="resolveImage(segment.icon)"
               alt=""
               width="44"
               height="44"

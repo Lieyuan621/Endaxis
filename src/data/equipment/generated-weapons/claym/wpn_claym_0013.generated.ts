@@ -63,10 +63,11 @@ const definition = {
               action: {
                 kind: 'createTimedMarker',
                 parameters: {
-                  target: 'caster',
+                  targets: { kind: 'owner' },
                   markerId: 'wpn_claym_0013_1',
                   durationSeconds: { kind: 'constant', value: 0.1 },
                   autoFinishByAction: false,
+                  timeDomain: 'globalScaled',
                 },
               },
               next: null,
@@ -75,49 +76,52 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_claym_0013_normal_skill',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_claym_0013_normal_skill',
+                      copiedBlackboardAssignments: {
+                        cryst_dmg_up: 'cryst_dmg_up',
+                        duration: 'duration',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
-                  copiedBlackboardAssignments: {
-                    cryst_dmg_up: 'cryst_dmg_up',
-                    duration: 'duration',
-                  },
                 },
               },
               next: 'createTimedMarker_1',
             },
-            conditional_3: {
+            checkCondition_3: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+              },
+              next: 'applyBuff_2',
+            },
+            checkCondition_4: {
+              action: {
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                whenTrue: { $sequence: 'applyBuff_2' },
               },
-              next: null,
+              next: 'checkCondition_3',
             },
-            conditional_4: {
+            checkCondition_5: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'conditional_3' },
               },
-              next: null,
-            },
-            conditional_5: {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-                whenTrue: { $sequence: 'conditional_4' },
-              },
-              next: null,
+              next: 'checkCondition_4',
             },
             createTimedMarker_6: {
               action: {
                 kind: 'createTimedMarker',
                 parameters: {
-                  target: 'caster',
+                  targets: { kind: 'owner' },
                   markerId: 'wpn_claym_0013_2',
                   durationSeconds: { kind: 'constant', value: 0.1 },
                   autoFinishByAction: false,
+                  timeDomain: 'globalScaled',
                 },
               },
               next: null,
@@ -126,40 +130,42 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_claym_0013_combo_skill',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_claym_0013_combo_skill',
+                      copiedBlackboardAssignments: {
+                        cryst_dmg_up2: 'cryst_dmg_up2',
+                        duration2: 'duration2',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
-                  copiedBlackboardAssignments: {
-                    cryst_dmg_up2: 'cryst_dmg_up2',
-                    duration2: 'duration2',
-                  },
                 },
               },
               next: 'createTimedMarker_6',
             },
-            conditional_8: {
+            checkCondition_8: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+              },
+              next: 'applyBuff_7',
+            },
+            checkCondition_9: {
+              action: {
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+              },
+              next: 'checkCondition_8',
+            },
+            checkCondition_10: {
+              action: {
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-                whenTrue: { $sequence: 'applyBuff_7' },
               },
-              next: null,
-            },
-            conditional_9: {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-                whenTrue: { $sequence: 'conditional_8' },
-              },
-              next: null,
-            },
-            conditional_10: {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-                whenTrue: { $sequence: 'conditional_9' },
-              },
-              next: null,
+              next: 'checkCondition_9',
             },
           },
           dataNodes: {
@@ -167,35 +173,29 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                returnTrueIfNotExists: true,
                 target: 'caster',
                 markerId: 'wpn_claym_0013_1',
               },
             },
             data_2: {
               type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+              expression: { kind: 'eventInflictionElementIn', elements: ['cryo'] },
             },
             data_3: {
               type: 'boolean',
-              expression: { kind: 'eventInflictionElementIn', elements: ['cryo'] },
+              expression: { kind: 'originSkillTypeIn', skillTypes: ['battleSkill'] },
             },
             data_4: {
               type: 'boolean',
-              expression: { kind: 'originSkillTypeIn', skillTypes: ['battleSkill'] },
-            },
-            data_5: {
-              type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                returnTrueIfNotExists: true,
                 target: 'caster',
                 markerId: 'wpn_claym_0013_2',
               },
             },
-            data_6: {
-              type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-            },
-            data_7: {
+            data_5: {
               type: 'boolean',
               expression: {
                 kind: 'buffStackCompare',
@@ -206,7 +206,7 @@ const definition = {
                 value: { kind: 'constant', value: 1 },
               },
             },
-            data_8: {
+            data_6: {
               type: 'boolean',
               expression: { kind: 'eventDamageTagsMatch', match: 'hasAll', tags: ['comboSkill'] },
             },
@@ -220,13 +220,13 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'beforeOutputInfliction',
           priority: 0,
-          sequence: { $sequence: 'conditional_5' },
+          sequence: { $sequence: 'checkCondition_5' },
         },
         {
           key: 'skill3:event:1:sequence:0',
           abilityEvent: 'beforeOutputDamage',
           priority: 0,
-          sequence: { $sequence: 'conditional_10' },
+          sequence: { $sequence: 'checkCondition_10' },
         },
       ],
       blackboard: {
@@ -238,7 +238,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_claym_0013',
-  iconPath: '/weapons/claym/wpn_claym_0013.webp',
+  icon: 'endaxis:weapons/claym/wpn_claym_0013',
   buffDefinitions: {
     buff_wpn_claym_0013_combo_skill: {
       stackingType: 'refresh',
@@ -250,8 +250,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_cryst_dmg_up',
-        iconPath: '/icons/icon_battle_cryst_dmg_up.webp',
+        icon: 'endaxis:icons/icon_battle_cryst_dmg_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -292,8 +291,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_cryst_dmg_up',
-        iconPath: '/icons/icon_battle_cryst_dmg_up.webp',
+        icon: 'endaxis:icons/icon_battle_cryst_dmg_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

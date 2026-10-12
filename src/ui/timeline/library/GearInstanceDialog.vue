@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { resolveImage } from '../../imageResources';
 /** Current-definition gear instance editor. Template editing remains a separate project-library action. */
 import { EaButton, EaDialog, EaDialogActions } from '../../../design-system/index';
 import { computed } from 'vue';
@@ -91,7 +92,7 @@ function maxOut(): void {
           <div class="header">
             <div class="portrait-frame" :style="{ borderColor: qualityColor }">
               <img
-                :src="gear.definition.iconPath || DEFAULT_GAME_ICON_PATH"
+                :src="resolveImage(gear.definition.icon) || DEFAULT_GAME_ICON_PATH"
                 :alt="name"
                 class="portrait"
               />

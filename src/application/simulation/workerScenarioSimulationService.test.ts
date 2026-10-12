@@ -1,21 +1,22 @@
-import { skillFixture } from '../../test/skillFixture';
-import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import { expect, it, vi } from 'vitest';
+import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
+import { skillFixture } from '../../test/skillFixture';
+import type { SimulationWorkerRequest } from './scenarioSimulationWorkerProtocol';
 
 import type { ActionGraphNode } from '../../../packages/game-data-contract/src/actionGraph';
 import type { OperatorDefinition } from '../../core/game-data/operatorDefinition';
+import { createEmptyScenario } from '../../core/project/createProject';
 import { createGameDataRepository } from '../../data/createGameDataRepository';
 import { perlica } from '../../data/operators/perlica.generated';
 import { placeSkillGroup } from '../../ui/timeline/interaction/placeSkillGroup';
 import { createScenarioSimulationService } from './createScenarioSimulationService';
+import type { ScenarioSimulationGameData } from './scenarioSimulationGameData';
 import {
   captureScenarioSimulationGameData,
   restoreScenarioSimulationGameData,
 } from './scenarioSimulationGameData';
 import { toSimulationWorkerResult } from './scenarioSimulationWorkerProtocol';
 import { WorkerScenarioSimulationService } from './workerScenarioSimulationService';
-import { createEmptyScenario } from '../../core/project/createProject';
-import type { ScenarioSimulationGameData } from './scenarioSimulationGameData';
 
 function harness() {
   const worker = {
@@ -100,16 +101,14 @@ it('图场景通过 Worker 数据包往返后仍执行技能', async () => {
     commonDefinitionSources: [],
   });
   const worker = {
-    postMessage: vi.fn(
-      async (request: import('./scenarioSimulationWorkerProtocol').SimulationWorkerRequest) => {
-        const restored = restoreScenarioSimulationGameData(request.gameData!);
-        const service = createScenarioSimulationService(restored);
-        const result = await service.simulate(request.scenario, request.endFrame);
-        worker.onmessage?.({
-          data: { id: request.id, ok: true, result: toSimulationWorkerResult(result), samples: [] },
-        } as MessageEvent);
-      },
-    ),
+    postMessage: vi.fn(async (request: SimulationWorkerRequest) => {
+      const restored = restoreScenarioSimulationGameData(request.gameData!);
+      const service = createScenarioSimulationService(restored);
+      const result = await service.simulate(request.scenario, request.endFrame);
+      worker.onmessage?.({
+        data: { id: request.id, ok: true, result: toSimulationWorkerResult(result), samples: [] },
+      } as MessageEvent);
+    }),
     terminate: vi.fn(),
     onmessage: null as ((event: MessageEvent) => void) | null,
     onerror: null as ((event: ErrorEvent) => void) | null,

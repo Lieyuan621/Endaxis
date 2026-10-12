@@ -1,9 +1,10 @@
 /**
  * 从本次重建使用的来源编译装备和机制消费者，供实体黑板用途分析。
- * 每个领域编译后立即汇总用途，调用方可用同一结果渲染文件；返回前不保留完整领域定义。
+ * 每个领域编译后立即汇总用途，调用方可保留投影结果，待消费者收齐后渲染。
  * 不读正式生成库，不写候选文件；缺来源或未支持行为继续报错。
  */
 import path from 'node:path';
+import { compileConsumableDefinitionsFromFiles } from './generateConsumableDefinitions.ts';
 import { compileWeaponDefinitionsFromFiles } from './generateWeaponDefinitions.ts';
 import { compileGearSetDefinitionsFromFiles } from './generateGearSetDefinitions.ts';
 import { compileGearDefinitionsFromFiles } from './generateGearDefinitions.ts';
@@ -28,15 +29,18 @@ export interface EntityValueConsumerSourceArguments {
   readonly mechanicScope?: string;
 }
 
-/** 完整重建在用途收集后渲染同一对象；回调不得把整批编译对象长期保存在外部。 */
+/** 完整重建复用同一次编译的投影结果；单人入口只保留用途摘要。 */
 export interface EntityValueConsumerRendering {
+  readonly consumables: (
+    batch: ReturnType<typeof compileConsumableDefinitionsFromFiles>,
+  ) => void | Promise<void>;
   readonly weapons: (batch: CompiledWeaponRuntimeDefinitionBatchSource) => void | Promise<void>;
   readonly gears: (batch: CompiledEquipmentDefinitionBatchSource) => void | Promise<void>;
   readonly gearSets: (batch: CompiledEquipmentSuitRuntimeBatchSource) => void | Promise<void>;
   readonly mechanics: (batch: CompiledContingencyContractDefinitions) => void | Promise<void>;
 }
 
-/** 每次调用重新编译四个领域；无渲染回调时只收集用途，供正式单人生成使用。 */
+/** 每次调用重新编译外部领域；无渲染回调时只收集用途，供正式单人生成使用。 */
 export async function compileEntityValueConsumers(
   args: EntityValueConsumerSourceArguments,
   rendering?: EntityValueConsumerRendering,
@@ -47,6 +51,9 @@ export async function compileEntityValueConsumers(
   await gears(args, usage, rendering);
   await gearSets(args, usage, rendering);
   await mechanics(args, usage, rendering);
+  const consumables = compileConsumableDefinitionsFromFiles(args);
+  usage.addBuffDefinitions(consumables.buffDefinitions);
+  await rendering?.consumables(consumables);
   return usage.finish();
 }
 

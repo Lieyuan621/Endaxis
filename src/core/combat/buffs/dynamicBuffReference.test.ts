@@ -1,6 +1,7 @@
 import { numberInput, stringInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it, vi } from 'vitest';
 import { ActionBlackboard } from '../actions/actionBlackboard';
+import { resolveDirectActionTargets } from '../abilities/targetContextOperationExecutor';
 import { BuffOperationExecutor, type BuffApplicationRequest } from './buffOperationExecutor';
 import { CombatBuffContainer } from './combatBuffs';
 import { CombatAttributeSet } from '../attributes/combatAttributes';
@@ -9,8 +10,8 @@ import { validateActionGraphActions } from '../../game-data/validation/actionPro
 const step = {
   kind: 'applyBuff',
   parameters: {
-    buffId: stringInput('child'),
-    target: 'enemy',
+    buffs: [{ buffId: stringInput('child') }],
+    targets: { kind: 'fixed', target: 'enemy' },
   },
 } as const;
 
@@ -33,6 +34,8 @@ function fixture(blackboard: ActionBlackboard) {
     delegate,
     executor: new BuffOperationExecutor({
       sourceId: 'caster',
+      queryTargets: (query, context) => resolveDirectActionTargets(query, context, 'caster')!,
+      resolveEventTarget: () => target,
       resolveTarget: () => target,
       resolveBuffDefinition: lookup,
       delegate,
@@ -50,10 +53,15 @@ describe('动态 Buff 引用复用公共施加管线', () => {
         parameters: {
           ...step.parameters,
           count: { kind: 'constant', value: 2 },
-          blackboardAssignments: { rate: numberInput({ kind: 'blackboard', key: 'rate' }) },
+          buffs: [
+            {
+              ...step.parameters.buffs[0],
+              blackboardAssignments: { rate: numberInput({ kind: 'blackboard', key: 'rate' }) },
+            },
+          ],
         },
       },
-      { blackboard },
+      { blackboard, actionSourceId: 'caster' },
     );
     expect(requests.map(request => [request.buffId, request.blackboardValues.rate])).toEqual([
       ['first', 1],
@@ -67,7 +75,9 @@ describe('动态 Buff 引用复用公共施加管线', () => {
     value => {
       const blackboard = new ActionBlackboard(value === undefined ? {} : { child: value });
       const { executor, requests, delegate } = fixture(blackboard);
-      expect(() => executor.execute(step, { blackboard })).toThrow(/Buff ID/);
+      expect(() => executor.execute(step, { blackboard, actionSourceId: 'caster' })).toThrow(
+        /Buff ID/,
+      );
       expect(requests).toEqual([]);
       expect(delegate.execute).not.toHaveBeenCalled();
     },
@@ -76,11 +86,11 @@ describe('动态 Buff 引用复用公共施加管线', () => {
   it('读取已有实体层字符串，但不为零次施加提前读取缺失身份', () => {
     const blackboard = new ActionBlackboard({}, new ActionBlackboard({ child: 'first' }));
     const { executor, requests } = fixture(blackboard);
-    executor.execute(step, { blackboard });
+    executor.execute(step, { blackboard, actionSourceId: 'caster' });
     expect(requests[0]?.buffId).toBe('first');
     executor.execute(
       { ...step, parameters: { ...step.parameters, count: { kind: 'constant', value: 0 } } },
-      { blackboard: new ActionBlackboard() },
+      { blackboard: new ActionBlackboard(), actionSourceId: 'caster' },
     );
     expect(requests).toHaveLength(1);
   });
@@ -92,8 +102,8 @@ describe('动态 Buff 引用复用公共施加管线', () => {
     });
     expect(validateActionGraphActions(graphWith(step), '$')).toEqual([]);
     for (const parameters of [
-      { ...step.parameters, buffId: { blackboardKey: '' } },
-      { ...step.parameters, buffId: { blackboardKey: 'child', value: 'stale' } },
+      { ...step.parameters, buffs: [{ buffId: { blackboardKey: '' } }] },
+      { ...step.parameters, buffs: [{ buffId: { blackboardKey: 'child', value: 'stale' } }] },
       { ...step.parameters, definition: { stackingType: 'unlimited' } },
       { ...step.parameters, durationSeconds: 1 },
     ])
@@ -103,15 +113,18 @@ describe('动态 Buff 引用复用公共施加管线', () => {
   it('运行端同样拒绝内联定义、缺少上下文和未装配的施加端口', () => {
     const blackboard = new ActionBlackboard({ child: 'first' });
     const { executor, requests } = fixture(blackboard);
-    expect(() => executor.execute(step)).toThrow(/Buff ID/);
+    expect(() => executor.execute(step)).toThrow('action target query context');
     const inlineParameters = {
       ...step.parameters,
       definition: { stackingType: 'unlimited' as const },
     };
     const inlineStep = { ...step, parameters: inlineParameters };
-    expect(() => executor.execute(inlineStep, { blackboard })).toThrow(/内联定义/);
+    expect(() => executor.execute(inlineStep, { blackboard })).toThrow('owner Buff definition');
     const withoutPort = new BuffOperationExecutor({
       sourceId: 'caster',
+      queryTargets: (query, context) => resolveDirectActionTargets(query, context, 'caster')!,
+      resolveEventTarget: () =>
+        new CombatBuffContainer<string>('enemy', new CombatAttributeSet<string>()),
       resolveTarget: () =>
         new CombatBuffContainer<string>('enemy', new CombatAttributeSet<string>()),
       resolveBuffDefinition: () => ({ stackingType: 'unlimited' }),
@@ -122,7 +135,14 @@ describe('动态 Buff 引用复用公共施加管线', () => {
         evaluate: () => false,
       },
     });
-    expect(() => withoutPort.execute(step, { blackboard })).toThrow(/目标端口/);
+    for (const buffId of [step.parameters.buffs[0]!.buffId, 'first']) {
+      expect(() =>
+        withoutPort.execute(
+          { ...step, parameters: { ...step.parameters, buffs: [{ buffId }] } },
+          { blackboard, actionSourceId: 'caster' },
+        ),
+      ).toThrow('Buff application port');
+    }
     expect(requests).toEqual([]);
   });
 });

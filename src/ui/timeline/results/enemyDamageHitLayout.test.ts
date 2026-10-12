@@ -129,7 +129,7 @@ it('uses icon metadata to retain hidden Buff damage even when the input contains
       skillType: 'comboSkill',
     },
   };
-  const metadata = [{ ...buff(1, 0, 20), iconPath: '/icons/airborne.webp' }];
+  const metadata = [{ ...buff(1, 0, 20), icon: 'endaxis:icons/airborne' }];
   expect(layoutEnemyDamageHits([entry], [], [], new Set(), metadata)).toEqual([
     { group: [entry], row: 3, standalone: true },
   ]);

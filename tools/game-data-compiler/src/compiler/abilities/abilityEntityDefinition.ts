@@ -1,4 +1,5 @@
 import type { GameplayTagRegistry } from '../../source/nativeGameplayTags.ts';
+import { COMPILED_BUFF_TARGET_KINDS } from '../buffs/compiledBuffMetadata.ts';
 import type {
   AbilityEntityDefinition,
   AbilityEntityPassiveSkillDefinition,
@@ -177,11 +178,18 @@ function compileAbilityEntityPassiveSkill(
     return {
       kind: 'applyBuff' as const,
       parameters: {
-        buffId: materialized.buffId,
-        target: 'currentAbilityEntity' as const,
-        source: 'currentAbilityEntity' as const,
+        buffs: [
+          {
+            buffId: materialized.buffId,
+            ...(Object.keys(assignments).length === 0
+              ? {}
+              : { blackboardAssignments: assignments }),
+          },
+        ],
+        targets: { kind: 'owner' as const },
+        source: { kind: 'owner' as const },
+        [COMPILED_BUFF_TARGET_KINDS]: { target: 'currentAbilityEntity', source: 'currentAbilityEntity' },
         inheritSourceSkillCastInfo: false,
-        ...(Object.keys(assignments).length === 0 ? {} : { blackboardAssignments: assignments }),
       },
     };
   });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { projectHitDamageReceipts, projectHitReactionReceipts } from './hitEffectProjection';
+import { projectHitDamageReceipts } from './hitEffectProjection';
 
 const baseDamage: Record<string, number | boolean | string | null> = {
   damageType: 'physical',
@@ -86,80 +86,5 @@ describe('projectHitDamageReceipts', () => {
         },
       ]),
     ).toThrow('has no finite value');
-  });
-});
-
-describe('projectHitReactionReceipts', () => {
-  it('搬运反应施加与消费事实', () => {
-    const points = projectHitReactionReceipts([
-      {
-        sequence: 4,
-        frame: 24,
-        time: 0.8,
-        event: 'ElementalReactionApplied',
-        sourceId: 'perlica',
-        targetId: 'enemy',
-        data: {
-          reaction: 'electrification',
-          castId: 'cast:1',
-          previousLevel: 0,
-          level: 1,
-          durationSeconds: 5,
-          effectiveness: 1,
-        },
-      },
-      {
-        sequence: 7,
-        frame: 120,
-        time: 4,
-        event: 'ElementalReactionConsumed',
-        sourceId: 'perlica',
-        targetId: 'enemy',
-        data: { reaction: 'electrification', level: 2, consumed: true },
-      },
-    ]);
-    expect(points).toEqual([
-      {
-        frame: 24,
-        time: 0.8,
-        sequence: 4,
-        sourceId: 'perlica',
-        targetId: 'enemy',
-        reaction: 'electrification',
-        castId: 'cast:1',
-        applied: true,
-        consumed: true,
-        level: 1,
-        previousLevel: 0,
-      },
-      {
-        frame: 120,
-        time: 4,
-        sequence: 7,
-        sourceId: 'perlica',
-        targetId: 'enemy',
-        reaction: 'electrification',
-        applied: false,
-        consumed: true,
-        level: 2,
-        previousLevel: 0,
-      },
-    ]);
-  });
-
-  it('未消费成功的消费回执不输出', () => {
-    expect(
-      projectHitReactionReceipts([
-        {
-          sequence: 8,
-          frame: 130,
-          time: 13 / 3,
-          event: 'ElementalReactionConsumed',
-          sourceId: 'perlica',
-          targetId: 'enemy',
-          data: { reaction: 'electrification', level: 0, consumed: false },
-        },
-      ]),
-    ).toEqual([]);
   });
 });

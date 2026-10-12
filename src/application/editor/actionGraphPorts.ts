@@ -9,10 +9,7 @@ export interface GraphPort {
 
 /** 仅投影本图的控制出口；独立资源与宏身份映射不参与本图连线。 */
 export function listGraphPorts(node: ActionGraphNode): readonly GraphPort[] {
-  const ports: GraphPort[] =
-    node.action.kind === 'finishTimeline'
-      ? []
-      : [{ path: ['next'], label: 'next', target: node.next }];
+  const ports: GraphPort[] = [{ path: ['next'], label: 'next', target: node.next }];
   if (node.action.kind === 'callMacro') return ports;
   const visit = (value: unknown, path: readonly string[]): void => {
     if (value === null || typeof value !== 'object' || Object.hasOwn(value, 'actionGraph')) return;

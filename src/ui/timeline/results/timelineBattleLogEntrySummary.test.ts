@@ -102,17 +102,6 @@ describe('summarizeTimelineBattleLogEntry', () => {
         options,
       ),
     ).toBe('电磁 · 电磁 ×3 · 仅附着');
-    expect(
-      summarizeTimelineBattleLogEntry(
-        receipt('StatusChanged', {
-          statusKey: 'conductive',
-          previousStacks: 1,
-          currentStacks: 2,
-          reason: 'applied',
-        }),
-        options,
-      ),
-    ).toBe('导电 · 1 → 2 · 施加');
   });
 
   it('summarizes named skills while keeping unknown IDs out of the ordinary view', () => {

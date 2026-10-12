@@ -85,7 +85,6 @@ export function createBlackboardFieldContext(
   if (!scopes.length) return { ...unknownBlackboardContext(), parameters };
   type Evidence = { type: BlackboardValueType; variables: BlackboardVariable[] };
   function layer(scopeId: string, kind: 'direct' | 'entity'): Map<string, Evidence> {
-    const scope = analysis.scopes.get(scopeId)!;
     const own = analysis.variables.filter(
       variable =>
         variable.scope === scopeId &&
@@ -100,23 +99,6 @@ export function createBlackboardFieldContext(
         type: variableType(variable, analysis.globalBuffScopes.has(scopeId)),
         variables: [variable],
       });
-    const inherit = kind === 'direct' ? scope.copiesParent : scope.sharesEntity;
-    if (inherit && scope.parent) {
-      for (const [key, evidence] of layer(scope.parent, kind)) {
-        const local = result.get(key);
-        // Runtime copies the parent direct values over child defaults. Child writes may follow.
-        const ownWrite = local?.variables.some(variable => variable.writes.length);
-        result.set(
-          key,
-          ownWrite && kind === 'direct'
-            ? {
-                type: mergeType(evidence.type, 'number'),
-                variables: [...evidence.variables, ...local!.variables],
-              }
-            : evidence,
-        );
-      }
-    }
     return result;
   }
   const directByScope = scopes.map(scope => layer(scope.id, 'direct'));
@@ -318,19 +300,14 @@ export function blackboardRequestForField(
   if (kind === 'buffBlackboardValueCompare' && slot === 'desiredKey')
     return { mode: 'read', valueType: 'number' };
   const writes: Readonly<Record<string, readonly string[]>> = {
-    findOwnerSpawnedAbilityEntities: [
-      'parameters.circularOrder.indexBlackboardKey',
-      'parameters.saveCountToBlackboardKey',
-    ],
+    findOwnerSpawnedAbilityEntities: ['parameters.circularOrder.indexBlackboardKey'],
     modifyActionValue: ['parameters.key'],
     calculateActionValue: ['parameters.key'],
-    readAbilityEntityRemainingDuration: ['parameters.outputKey'],
     storeCurrentTimelineFrame: ['parameters.outputKey'],
     storeShieldValue: ['parameters.outputKey'],
     readBuffStackCount: ['parameters.outputKey'],
     readBuffBlackboard: ['parameters.outputKey'],
     readEventBuffBlackboard: ['parameters.outputKey'],
-    readCurrentBuffRemainingDuration: ['parameters.outputKey'],
     readBuffRemainingDuration: ['parameters.outputKey'],
     storeSourceAttributeValue: ['parameters.targetKey'],
     storeEntityPropertyValue: ['parameters.targetKey'],

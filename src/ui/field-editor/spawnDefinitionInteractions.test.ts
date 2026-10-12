@@ -84,7 +84,12 @@ const entity = Object.values(arclight.abilityEntityDefinitions!)[0]!;
 it('rendered field opens an existing independent child graph, shares editor history/layout and returns through workspace navigation', async () => {
   const spawn: any = {
     kind: 'spawnAbilityEntity',
-    parameters: { abilityEntityId: 'inline', dieWhenSourceDies: false, definition: entity },
+    parameters: {
+      bornAt: { kind: 'owner' as const },
+      abilityEntityId: 'inline',
+      dieWhenSourceDies: false,
+      definition: entity,
+    },
   };
   const session = new WorkspaceAssetSession(
     {
@@ -283,6 +288,7 @@ it('rendered ordinary fields repair invalid template keys in place, stage, cance
         actionValue: {
           kind: 'spawnAbilityEntity',
           parameters: {
+            bornAt: { kind: 'owner' as const },
             definition: value.value,
             stringBlackboardAssignments: { duration: 'text' },
           },

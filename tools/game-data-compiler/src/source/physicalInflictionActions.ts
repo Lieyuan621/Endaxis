@@ -1,9 +1,4 @@
-import {
-  requireBoolean,
-  requireExactFields,
-  requireNumber,
-  requireRecord,
-} from './primitives.ts';
+import { requireBoolean, requireExactFields, requireNumber, requireRecord } from './primitives.ts';
 import { parseScalarSource, type BlackboardLevelValues, type ScalarSource } from './scalar.ts';
 import { parseAdvancedDirectionSource, type AdvancedDirectionSource } from './spatial.ts';
 import { parseTargetReferenceSource, type TargetReferenceSource } from './target.ts';
@@ -14,9 +9,12 @@ import {
   type ControlledStateDeadOptionSource,
   type AbilityActionReturnTrueMethodSource,
 } from './controlEnums.ts';
-export type { ControlledStateDeadOptionSource, AbilityActionReturnTrueMethodSource } from './controlEnums.ts';
+export type {
+  ControlledStateDeadOptionSource,
+  AbilityActionReturnTrueMethodSource,
+} from './controlEnums.ts';
 
-/** 击倒不是纯敌人动作：入口有破防门、状态 Buff 和独立返回策略，不归木桩表现动作。 */
+/** 倒地不是纯敌人动作：入口有破防门、状态 Buff 和独立返回策略，不归木桩表现动作。 */
 export interface KnockDownActionSource {
   readonly kind: 'knockDown';
   readonly source: TargetReferenceSource;
@@ -30,7 +28,7 @@ export interface KnockDownActionSource {
   readonly returnTrueWhen: AbilityActionReturnTrueMethodSource;
 }
 
-/** 浮空与击倒共享破防/返回门，但控制参数和原生字段身份不同。 */
+/** 浮空与倒地共享破防/返回门，但控制参数和原生字段身份不同。 */
 export interface AirborneActionSource {
   readonly kind: 'airborne';
   readonly source: TargetReferenceSource;

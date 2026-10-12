@@ -1,13 +1,15 @@
 // 纯数据契约由独立包唯一声明；此路径保留兼容导出。
+import type {
+  DamageModifierSide,
+  DamageProcessTiming,
+  DamageTargetHealthType,
+} from '../../../../packages/game-data-contract/src/modifiers.ts';
+import type { AttackReceiptSnapshot } from '../state/foundationState';
+import type { AppliedDamageModifier } from './damageScale';
 export {
   DAMAGE_MODIFIER_SIDES,
   DAMAGE_PROCESS_TIMINGS,
   DAMAGE_TARGET_HEALTH_TYPES,
-  type DamageModifierSide,
-  type DamageProcessTiming,
-  type DamageTargetHealthType,
-} from '../../../../packages/game-data-contract/src/modifiers.ts';
-import {
   type DamageModifierSide,
   type DamageProcessTiming,
   type DamageTargetHealthType,
@@ -39,14 +41,14 @@ import type {
 export interface PlayerDamageAttributeSnapshots {
   readonly attacker: PlayerDamageAttackerSnapshot &
     DamageScaleAttributeSnapshot & {
-      readonly modifierDetails?: readonly import('./damageScale').AppliedDamageModifier[];
-      readonly attackDetail?: import('../state/foundationState').AttackReceiptSnapshot;
+      readonly modifierDetails?: readonly AppliedDamageModifier[];
+      readonly attackDetail?: AttackReceiptSnapshot;
       readonly level?: number;
     };
   readonly defender: PlayerDamageDefenderSnapshot &
     DamageScaleAttributeSnapshot & {
       readonly baseResistancePercent?: number;
-      readonly modifierDetails?: readonly import('./damageScale').AppliedDamageModifier[];
+      readonly modifierDetails?: readonly AppliedDamageModifier[];
     };
 }
 
@@ -101,7 +103,7 @@ export class PlayerDamageContext {
   readonly skillId?: string;
   readonly skillType?: SkillType;
   readonly damageScales = new DamageScaleAccumulator();
-  readonly appliedDamageModifiers: import('./damageScale').AppliedDamageModifier[] = [];
+  readonly appliedDamageModifiers: AppliedDamageModifier[] = [];
   readonly #ports: PlayerDamageContextPorts;
   #baseValue = 0;
   #value = 0;

@@ -4,16 +4,17 @@
  * 这些定义同时保存装备的基础资料、成长数值、面板展示词条和实际战斗贡献。构筑界面
  * 用它们展示并选择装备，构筑解析器和模拟器则读取修正、事件响应、Buff 与初始化动作。
  */
-import { type LevelValues, type OperatorWeaponType } from './primitives.ts';
-import { type CombatCondition } from './conditions.ts';
-import { type CombatEventTrigger } from './actions.ts';
-import { type OperatorBuffDefinitions } from './buffs.ts';
 import type { AbilityEvent } from './abilityEvents.ts';
 import type {
   ActionGraphDefinition,
   ActionGraphReference,
   ActionGraphResourceDefinition,
 } from './actionGraph.ts';
+import type { CombatEventTrigger } from './actions.ts';
+import type { OperatorBuffDefinitions } from './buffs.ts';
+import type { BuildModifierDefinition } from './buildModifiers.ts';
+import type { CombatCondition } from './conditions.ts';
+import type { ImageRef, LevelValues, OperatorWeaponType } from './primitives.ts';
 
 /** 数据中允许出现的武器星级。 */
 export const WEAPON_RARITIES = [3, 4, 5, 6] as const;
@@ -23,13 +24,12 @@ export type WeaponRarity = (typeof WEAPON_RARITIES)[number];
 
 /** 兼容既有配装入口；公共构筑结构只在 buildModifiers 中定义。 */
 export {
-  BUILD_PANEL_STATS as EQUIPMENT_PANEL_STATS,
   BUILD_DAMAGE_SCALE_TARGETS as EQUIPMENT_DAMAGE_SCALE_TARGETS,
-  type BuildPanelStat as EquipmentPanelStat,
+  BUILD_PANEL_STATS as EQUIPMENT_PANEL_STATS,
   type BuildAttribute as EquipmentAttribute,
   type BuildDamageScaleTarget as EquipmentDamageScaleTarget,
+  type BuildPanelStat as EquipmentPanelStat,
 } from './buildModifiers.ts';
-import type { BuildModifierDefinition } from './buildModifiers.ts';
 
 /** 武器、装备词条或套装可以提供的一项常驻构筑修正。 */
 export type EquipmentModifierDefinition = BuildModifierDefinition;
@@ -155,7 +155,7 @@ export interface WeaponDefinition {
   /** 仅用于定位图标/本地化等展示资源；资源复用不得改变 slug 身份。 */
   readonly assetSlug?: string;
   /** 与语言无关的展示资源；名称和描述仍由 locale family 按需解析。 */
-  readonly iconPath?: string;
+  readonly icon?: ImageRef;
   /** 武器星级。 */
   readonly rarity: WeaponRarity;
   /** 可装备这把武器的干员武器类型。 */
@@ -195,7 +195,7 @@ export interface GearDefinition {
   /** 仅用于定位图标/本地化等展示资源；共用 iconId 不得改变 slug 身份。 */
   readonly assetSlug?: string;
   /** 与语言无关的展示资源；名称和描述仍由 locale family 按需解析。 */
-  readonly iconPath?: string;
+  readonly icon?: ImageRef;
   /** 这件装备占用的槽位。 */
   readonly slotType: GearSlotType;
   /** 可以穿戴这件装备的最低干员等级。 */
@@ -222,5 +222,5 @@ export interface GearSetDefinition extends EquipmentContributionDefinition {
   /** 缺少本地化资源时可使用的套装名称。 */
   readonly displayName?: string;
   /** 套装效果在时间轴上的展示图标；独立于效果自身的原生图标。 */
-  readonly iconPath?: string;
+  readonly icon?: ImageRef;
 }

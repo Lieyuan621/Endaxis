@@ -10,7 +10,7 @@ describe('同一资源的分支去重', () => {
       builder.node({
         kind: 'conditional',
         parameters: { condition: { kind: 'combatActive' } },
-        whenTrue: builder.node({ kind: 'finishTimeline', parameters: {} }),
+        whenTrue: builder.node({ kind: 'markCurrentSkillCanInterrupt', parameters: {} }),
       });
     const first = make(),
       second = make();
@@ -55,7 +55,7 @@ describe('同一资源的分支去重', () => {
     const builder = createActionGraphBuilder();
     const make = (id: string) => {
       const child = createActionGraphBuilder();
-      const entry = child.node({ kind: 'finishTimeline', parameters: {} });
+      const entry = child.node({ kind: 'markCurrentSkillCanInterrupt', parameters: {} });
       return builder.node({
         kind: 'callResource',
         resource: { id, entry, actionGraph: { main: child.finish(), macros: {} } },
@@ -75,7 +75,7 @@ describe('同一资源的分支去重', () => {
     for (const prefix of ['a', 'b'])
       for (let i = 0; i < 10000; i++)
         nodes[`${prefix}${i}`] = {
-          action: { kind: 'finishTimeline', parameters: {} },
+          action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} },
           next: i === 9999 ? null : `${prefix}${i + 1}`,
         };
     const result = deduplicateActionGraph({ nodes }, [{ $sequence: 'a0' }, { $sequence: 'b0' }]);
@@ -85,7 +85,7 @@ describe('同一资源的分支去重', () => {
 
   it('缺失引用和环显式报错，不留下半成品引用', () => {
     const node: ActionGraphNode = {
-      action: { kind: 'finishTimeline', parameters: {} },
+      action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} },
       next: 'missing',
     };
     expect(() => deduplicateActionGraph({ nodes: { a: node } }, [{ $sequence: 'a' }])).toThrow(

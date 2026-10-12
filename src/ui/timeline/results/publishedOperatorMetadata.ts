@@ -1,7 +1,11 @@
+import type { ResolvedOperatorPanel } from '../../../core/compiler/resolveOperatorPanel';
+import {
+  resolveOperatorPresentationFormKey,
+  resolveOperatorSkillIcon,
+} from '../library/operatorFormPresentation';
 import type { OperatorDefinition } from '../../../core/game-data/operatorDefinition';
 import { listOperatorSkillDefinitionBindings } from '../../../core/game-data/operatorSkillDefinitions';
 import type { ScenarioDocument } from '../../../core/project/schema';
-import { getOperatorSkillIconPath, getWeaponActionIconPath } from '../../gameAssetPaths';
 
 /** 结果来源显示所需的最小事实，不复制技能树或模拟状态。 */
 export interface PublishedOperatorMetadata {
@@ -28,15 +32,19 @@ type PublishedUpgradeMetadata = Pick<OperatorDefinition['talents'][number], 'lev
 export function capturePublishedOperatorMetadata(
   scenario: ScenarioDocument,
   index: { getOperator(slug: string): OperatorDefinition | null },
+  panels: readonly Pick<ResolvedOperatorPanel, 'operatorId' | 'attributes'>[] = [],
 ): ReadonlyMap<string, PublishedOperatorMetadata> {
   const result = new Map<string, PublishedOperatorMetadata>();
   for (const track of scenario.tracks) {
-    const slug = track?.operator?.operatorSlug;
+    if (track === null) continue;
+    const slug = track.operator?.operatorSlug;
     if (slug === undefined || result.has(slug)) continue;
     const definition = index.getOperator(slug);
     if (definition === null) continue;
     const bindings = listOperatorSkillDefinitionBindings(definition);
     const skills = bindings.map(binding => binding.skill);
+    const panel = panels.find(panel => panel.operatorId === track.id);
+    const formKey = panel ? resolveOperatorPresentationFormKey(definition, panel.attributes) : null;
     result.set(slug, {
       slug: definition.slug,
 
@@ -70,10 +78,9 @@ export function capturePublishedOperatorMetadata(
         ),
       ),
       skillIcons: Object.fromEntries(
-        bindings.map(({ group, skill }) => [
-          skill.key,
-          getOperatorSkillIconPath(definition.assetSlug ?? slug, group.operationType) ??
-            getWeaponActionIconPath(definition.weaponType),
+        bindings.map(binding => [
+          binding.skill.key,
+          resolveOperatorSkillIcon(binding, formKey, definition),
         ]),
       ),
       skillLevelSources: Object.fromEntries(

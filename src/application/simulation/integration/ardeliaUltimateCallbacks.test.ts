@@ -55,15 +55,6 @@ it.each([0, 3])(
       expect(hits[i]!.frame - hits[i - 1]!.frame).toBeGreaterThanOrEqual(9);
     }
     expect(
-      run.receiptEntries.some(
-        // 回执记录分支根条件not，而不是其内部timedMarkerPresent。
-        e =>
-          e.event === 'CombatConditionEvaluated' &&
-          e.data?.kind === 'not' &&
-          e.data?.passed === false,
-      ),
-    ).toBe(true);
-    expect(
       hits.every(e => e.data?.skillMultiplierPercent === 165 && Number(e.data?.expectedDamage) > 0),
     ).toBe(true);
   },

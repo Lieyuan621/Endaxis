@@ -1,30 +1,127 @@
 import { numberInput } from '../../../test/compiledGraphInputs';
-import type { SkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
 import { describe, expect, it } from 'vitest';
-import { perlica } from '../../../data/operators/perlica.generated';
-import { compileSkill } from '../../compiler/compileSkill';
-import { ActionGraphDefinitionRepository } from '../../compiler/actionGraphDefinitionRepository';
 
 import { CombatReceiptCollector } from '../receipt/combatReceipt';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatClock } from '../time/combatClock';
 import { CombatResources } from './combatResources';
-import { CombatSimulation } from '../runtime/combatSimulation';
 import { SkillResourceOperationExecutor } from './skillResourceOperationExecutor';
-import { SkillRuntime, type CombatOperationExecutor } from '../skills/skillRuntime';
+import type { CombatOperationExecutor } from '../skills/skillRuntime';
 import { createSharedSpGainModifier } from './sharedSpGainModifiers';
 import { StateStepper } from '../runtime/stateStepper';
 
-function findSkill(key: string): SkillDefinition {
-  for (const group of perlica.skillGroups) {
-    const skills = Array.isArray(group.skills) ? group.skills : [group.skills];
-    const skill = skills.find(candidate => candidate.key === key);
-    if (skill !== undefined) return skill;
-  }
-  throw new Error(`missing Perlica skill '${key}'`);
-}
-
 describe('SkillResourceOperationExecutor', () => {
+  it('主控限制只跳过技力获取，切换主控后生效，且不限制终结技能量', () => {
+    const resources = new CombatResources({
+      sp: 0,
+      maxSp: 300,
+      returnedSp: 0,
+      sharedSpGain: { baseGainEfficiency: 1 },
+      spRecovery: { valuePerSecond: 0, pauseDuration: 0, pauseRemaining: 0 },
+      ultimateEnergySystemUnlocked: true,
+      normalSkillUltimateEnergy: { selfGainPerSp: 0, otherGainPerSp: 0 },
+      squad: [
+        {
+          operatorId: 'caster',
+          ultimateEnergy: 0,
+          maxUltimateEnergy: 100,
+          ultimateEnergyGainMultiplier: 1,
+          allowedUltimateEnergyRecoveryTags: null,
+        },
+      ],
+    });
+    const context = { blackboard: new ActionBlackboard() };
+    let controlled = false;
+    const gainedBy: string[] = [];
+    let targetCount = 2;
+    const receipt = new CombatReceiptCollector();
+    const executor = new SkillResourceOperationExecutor({
+      sourceOperatorId: 'caster',
+      sourceActionId: 'skill',
+      clock: new CombatClock(),
+      resources,
+      receipt,
+      getNonReturnedSpCost: () => 0,
+      finisherSpRecovery: 0,
+      onSpGained: event => gainedBy.push(event.sourceId),
+      delegate: {
+        execute: () => false,
+        evaluate: condition => condition.kind === 'actionInputTargetIdentityMatch' && controlled,
+        queryTargets: () =>
+          Array.from({ length: targetCount }, () => ({
+            kind: 'operator' as const,
+            operatorId: 'caster',
+          })),
+      },
+    });
+    const sp = {
+      kind: 'changeResource' as const,
+      parameters: {
+        resource: 'sp' as const,
+        source: { kind: 'fixed' as const, target: 'caster' as const },
+        targets: { kind: 'fixed' as const, target: 'caster' as const },
+        amount: 10,
+        onlyMainOperator: true,
+      },
+    };
+    expect(executor.execute(sp, context)).toBe(true);
+    expect(receipt.entries).toHaveLength(0);
+    executor.execute(
+      {
+        kind: 'changeResource',
+        parameters: {
+          resource: 'ultimateEnergy',
+          source: { kind: 'fixed', target: 'caster' },
+          targets: { kind: 'fixed', target: 'caster' },
+          amount: 10,
+          onlyMainOperator: true,
+        },
+      },
+      context,
+    );
+    expect(resources.getUltimateEnergy('caster')).toBe(10);
+    controlled = true;
+    executor.execute(sp, context);
+    expect(receipt.entries).toHaveLength(2);
+    const fromOther = {
+      ...sp,
+      parameters: {
+        ...sp.parameters,
+        onlyMainOperator: false,
+        source: { kind: 'inputTarget' as const },
+        targets: { kind: 'characterTeam' as const, excludeOwner: false },
+      },
+    };
+    expect(executor.execute(fromOther, context)).toBe(false);
+    const sourceContext = {
+      ...context,
+      actionInputTarget: { kind: 'operator' as const, operatorId: 'other' },
+    };
+    executor.execute(fromOther, sourceContext);
+    expect(resources.sp).toBe(30);
+    expect(gainedBy).toEqual(['caster', 'other', 'other']);
+    const mechanism = {
+      ...fromOther,
+      parameters: {
+        ...fromOther.parameters,
+        source: { kind: 'godEntity' as const },
+        targets: { kind: 'fixed' as const, target: 'caster' as const },
+      },
+    };
+    executor.execute(mechanism, context);
+    expect(resources.sp).toBe(40);
+    expect(gainedBy.at(-1)).toBe('god-entity');
+    executor.execute(
+      { ...mechanism, parameters: { ...mechanism.parameters, onlyMainOperator: true } },
+      context,
+    );
+    expect(resources.sp).toBe(40);
+
+    targetCount = 0;
+    expect(executor.execute(fromOther, sourceContext)).toBe(true);
+    expect(resources.sp).toBe(40);
+  });
+
   it('installs and ends an action-owned ultimate recovery restriction', () => {
     const resources = new CombatResources({
       sp: 0,
@@ -194,7 +291,7 @@ describe('SkillResourceOperationExecutor', () => {
     });
     expect(gains).toEqual([
       {
-        sourceOperatorId: 'perlica',
+        sourceId: 'perlica',
         source: 'powerAttack',
         gainKind: 'gain',
         requestedAmount: 60,
@@ -240,14 +337,18 @@ describe('SkillResourceOperationExecutor', () => {
     });
 
     expect(
-      operations.execute({
-        kind: 'changeResource',
-        parameters: {
-          resource: 'ultimateEnergy',
-          amount: 10,
-          recipient: 'caster',
+      operations.execute(
+        {
+          kind: 'changeResource',
+          parameters: {
+            resource: 'ultimateEnergy',
+            amount: 10,
+            source: { kind: 'fixed', target: 'caster' },
+            targets: { kind: 'fixed', target: 'caster' },
+          },
         },
-      }),
+        { blackboard: new ActionBlackboard() },
+      ),
     ).toBe(true);
 
     expect(resources.getUltimateEnergy('perlica')).toBe(100);
@@ -303,14 +404,18 @@ describe('SkillResourceOperationExecutor', () => {
       delegate: { execute: () => false, evaluate: () => false },
     });
 
-    operations.execute({
-      kind: 'changeResource',
-      parameters: {
-        resource: 'ultimateEnergy',
-        amount: 10,
-        recipient: 'caster',
+    operations.execute(
+      {
+        kind: 'changeResource',
+        parameters: {
+          resource: 'ultimateEnergy',
+          amount: 10,
+          source: { kind: 'fixed', target: 'caster' },
+          targets: { kind: 'fixed', target: 'caster' },
+        },
       },
-    });
+      { blackboard: new ActionBlackboard() },
+    );
 
     expect(resources.getUltimateEnergy('arcane')).toBe(40);
     expect(receipt.entries[0]).toMatchObject({
@@ -326,15 +431,19 @@ describe('SkillResourceOperationExecutor', () => {
       },
     });
 
-    operations.execute({
-      kind: 'changeResource',
-      parameters: {
-        resource: 'ultimateEnergy',
-        amount: 10,
-        recipient: 'caster',
-        ultimateRecoveryTag: allowedTag,
+    operations.execute(
+      {
+        kind: 'changeResource',
+        parameters: {
+          resource: 'ultimateEnergy',
+          amount: 10,
+          source: { kind: 'fixed', target: 'caster' },
+          targets: { kind: 'fixed', target: 'caster' },
+          ultimateRecoveryTag: allowedTag,
+        },
       },
-    });
+      { blackboard: new ActionBlackboard() },
+    );
 
     expect(resources.getUltimateEnergy('arcane')).toBe(60);
     expect(receipt.entries[1]).toMatchObject({
@@ -383,15 +492,19 @@ describe('SkillResourceOperationExecutor', () => {
     });
 
     expect(
-      operations.execute({
-        kind: 'changeResource',
-        parameters: {
-          resource: 'sp',
-          amount: 30,
-          recipient: 'team',
-          spGainKind: 'refund',
+      operations.execute(
+        {
+          kind: 'changeResource',
+          parameters: {
+            resource: 'sp',
+            amount: 30,
+            source: { kind: 'fixed', target: 'caster' },
+            targets: { kind: 'fixed', target: 'caster' },
+            spGainKind: 'refund',
+          },
         },
-      }),
+        { blackboard: new ActionBlackboard() },
+      ),
     ).toBe(true);
 
     expect(resources.sp).toBe(300);
@@ -446,12 +559,13 @@ describe('SkillResourceOperationExecutor', () => {
     expect(
       operations.execute(
         {
-          kind: 'changeResourceByActionValue',
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
             amount: numberInput({ kind: 'blackboard', key: 'atbReturn' }),
             coefficient: numberInput({ kind: 'blackboard', key: 'coefficient' }),
-            recipient: 'team',
+            source: { kind: 'fixed', target: 'caster' },
+            targets: { kind: 'fixed', target: 'caster' },
             spGainKind: 'refund',
             spGainSource: 'default',
           },
@@ -466,111 +580,5 @@ describe('SkillResourceOperationExecutor', () => {
       event: 'SpChanged',
       data: { baseValue: 15, gainKind: 'refund' },
     });
-  });
-
-  it('carries a Perlica cast cost into ordered squad ultimate-energy changes', () => {
-    const clock = new CombatClock();
-    const receipt = new CombatReceiptCollector();
-    const resources = new CombatResources({
-      sp: 100,
-      maxSp: 300,
-      returnedSp: 10,
-      sharedSpGain: { baseGainEfficiency: 1 },
-      spRecovery: { valuePerSecond: 10, pauseDuration: 1, pauseRemaining: 0 },
-      ultimateEnergySystemUnlocked: true,
-      normalSkillUltimateEnergy: { selfGainPerSp: 0.1, otherGainPerSp: 0.2 },
-      squad: [
-        {
-          operatorId: 'perlica',
-          ultimateEnergy: 0,
-          maxUltimateEnergy: 100,
-          ultimateEnergyGainMultiplier: 1.5,
-          allowedUltimateEnergyRecoveryTags: null,
-        },
-        {
-          operatorId: 'ally',
-          ultimateEnergy: 0,
-          maxUltimateEnergy: 100,
-          ultimateEnergyGainMultiplier: 0.5,
-          allowedUltimateEnergyRecoveryTags: null,
-        },
-      ],
-    });
-    const delegatedKinds: string[] = [];
-    const delegate: CombatOperationExecutor = {
-      execute: step => {
-        delegatedKinds.push(step.kind);
-        return true;
-      },
-      evaluate: () => true,
-    };
-    let runtime: SkillRuntime;
-    const operations = new SkillResourceOperationExecutor({
-      sourceOperatorId: 'perlica',
-      sourceActionId: 'battleSkill',
-      clock,
-      resources,
-      receipt,
-      getNonReturnedSpCost: () => runtime.nonReturnedSpCost,
-      finisherSpRecovery: 100,
-      delegate,
-    });
-    runtime = new SkillRuntime(
-      compileSkill({
-        operatorId: 'perlica',
-        skillGroupKey: 'battleSkill',
-        skillType: 'battleSkill',
-        skillLevel: 12,
-        skill: findSkill('chr_0004_pelica_normal_skill'),
-        programs: new ActionGraphDefinitionRepository(),
-      }),
-      { clock, resources, receipt, operations, allocateSkillCastId: () => 1 },
-    );
-    const simulation = new CombatSimulation(clock);
-    simulation.add(runtime);
-
-    expect(runtime.tryStart()).toBe(true);
-    simulation.advanceFrames(13);
-
-    expect(runtime.nonReturnedSpCost).toBe(90);
-    expect(delegatedKinds).toEqual([
-      'findCharacterTeamTargets',
-      'applyElementalInfliction',
-      'dealDamage',
-    ]);
-    expect(resources.getUltimateEnergy('perlica')).toBe(13.5);
-    expect(resources.getUltimateEnergy('ally')).toBe(9);
-    expect(
-      receipt.entries
-        .filter(entry => entry.event === 'UltimateEnergyChanged')
-        .map(entry => ({ targetId: entry.targetId, data: entry.data })),
-    ).toEqual([
-      {
-        targetId: 'perlica',
-        data: {
-          skillId: 'battleSkill',
-          recipient: 'operator',
-          baseValue: 9,
-          requestedValue: 13.5,
-          applied: true,
-          actualValue: 13.5,
-          previousValue: 0,
-          currentValue: 13.5,
-        },
-      },
-      {
-        targetId: 'ally',
-        data: {
-          skillId: 'battleSkill',
-          recipient: 'operator',
-          baseValue: 18,
-          requestedValue: 9,
-          applied: true,
-          actualValue: 9,
-          previousValue: 0,
-          currentValue: 9,
-        },
-      },
-    ]);
   });
 });

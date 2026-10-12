@@ -1,3 +1,7 @@
+import { compileGraphSequence } from '../support/graphSequence.ts';
+import { CombatActionSequenceRuntime } from '../../../../src/core/combat/actions/combatActionSequenceRuntime.ts';
+import { ActionBlackboard } from '../../../../src/core/combat/actions/actionBlackboard.ts';
+import { ActionBlackboardOperationExecutor } from '../../../../src/core/combat/actions/actionBlackboardOperationExecutor.ts';
 import { describe, expect, it } from 'vitest';
 import type {
   ActionGraphDefinition,
@@ -54,6 +58,194 @@ function optimize(graph: ActionGraphDefinition, entry: ActionGraphReference) {
 }
 
 describe('图侧序列优化', () => {
+  it('简化图检查表达式但不将常量操作数当作条件序列的最终返回值', () => {
+    for (const passed of [true, false]) {
+      for (const unusedAction of [assign('unused', 1), damage()]) {
+        const f = fixture();
+        const unused = f.chain(unusedAction);
+        const selected = f.chain(assign('selected', 2));
+        const entry = f.chain({
+          kind: 'ifElse',
+          parameters: { alwaysNext: false },
+          condition: f.chain({
+            kind: 'checkCondition',
+            parameters: {
+              condition: { kind: 'not', condition: constant(!passed) },
+            },
+          }),
+          whenTrue: passed ? selected : unused,
+          whenFalse: passed ? unused : selected,
+        });
+        const result = optimize({ nodes: f.nodes }, entry);
+        const branch = result.graph.nodes[result.entry.$sequence!]!.action;
+        expect(branch.kind).toBe('ifElse');
+        if (branch.kind !== 'ifElse') throw new Error('missing branch');
+        const retained = passed ? branch.whenFalse : branch.whenTrue;
+        expect(retained.$sequence).not.toBeNull();
+        expect(result.graph.nodes[branch.condition.$sequence!]!.action).toMatchObject({
+          kind: 'checkCondition',
+          parameters: { condition: constant(passed) },
+        });
+      }
+    }
+  });
+
+  it('共享检查在结果被忽略的调用处删除，在选择分支的调用处保留', () => {
+    const f = fixture();
+    const check = f.chain({
+      kind: 'checkCondition',
+      parameters: { condition: { kind: 'casterControlled' } },
+    });
+    const entry = f.chain(
+      {
+        kind: 'ifElse',
+        parameters: { alwaysNext: true },
+        condition: { $sequence: null },
+        whenTrue: check,
+        whenFalse: { $sequence: null },
+      },
+      {
+        kind: 'ifElse',
+        parameters: { alwaysNext: true },
+        condition: check,
+        whenTrue: f.chain(assign('selected', 1)),
+        whenFalse: f.chain(assign('selected', 2)),
+      },
+    );
+    const graph = { nodes: f.nodes };
+    const result = optimize(graph, entry);
+    const execute = (graph: ActionGraphDefinition, entry: ActionGraphReference) => {
+      const blackboard = new ActionBlackboard();
+      const runtime = new CombatActionSequenceRuntime(
+        new ActionBlackboardOperationExecutor({ evaluate: () => false, execute: () => true }),
+        { blackboard },
+      );
+      const program = runtime.createSequence(compileGraphSequence(entry, graph));
+      program.reset({});
+      program.executeInstant({});
+      return blackboard.snapshot();
+    };
+    expect(execute(result.graph, result.entry)).toEqual(execute(graph, entry));
+    expect(execute(result.graph, result.entry)).toEqual({ selected: 2 });
+    const first = result.graph.nodes[result.entry.$sequence!]!.action;
+    expect(first).toMatchObject({ kind: 'ifElse', whenTrue: { $sequence: null } });
+  });
+
+  it('空分支数量检查只删除无写回的只读查询，保留位置创建与数量保存', () => {
+    for (const variant of ['read', 'save', 'point'] as const) {
+      const f = fixture();
+      const condition = f.chain({
+        kind: 'checkCondition',
+        parameters: {
+          condition: {
+            kind: 'entityCountCompare',
+            target:
+              variant === 'point'
+                ? {
+                    kind: 'fixedPoint',
+                    owner: { kind: 'owner' },
+                    center: { kind: 'owner' },
+                    directionTarget: { kind: 'inputTarget' },
+                  }
+                : { kind: 'inputTarget' },
+            containsHittableTarget: false,
+            excludeDeadEntity: false,
+            operator: 'greaterOrEqual',
+            value: 1,
+            ...(variant === 'save' ? { outputKey: 'count' } : {}),
+          },
+        },
+      });
+      const entry = f.chain({
+        kind: 'ifElse',
+        parameters: { alwaysNext: true },
+        condition,
+        whenTrue: { $sequence: null },
+        whenFalse: { $sequence: null },
+      });
+      const result = optimize({ nodes: f.nodes }, entry);
+      expect(
+        Object.values(result.graph.nodes).some(node => node.action.kind === 'checkCondition'),
+      ).toBe(variant !== 'read');
+    }
+  });
+
+  it('空分支可移除内部纯检查，但保留外层反转所观察的调用边界', () => {
+    const f = fixture();
+    const entry = f.chain(
+      { kind: 'invertNextResult', parameters: {} },
+      {
+        kind: 'ifElse',
+        parameters: { alwaysNext: true },
+        condition: f.chain(
+          { kind: 'invertNextResult', parameters: {} },
+          { kind: 'checkCondition', parameters: { condition: { kind: 'casterControlled' } } },
+        ),
+        whenTrue: { $sequence: null },
+        whenFalse: { $sequence: null },
+      },
+      assign('after', 1),
+    );
+    const graph = { nodes: f.nodes };
+    const result = optimize(graph, entry);
+    const execute = (graph: ActionGraphDefinition, entry: ActionGraphReference) => {
+      const blackboard = new ActionBlackboard();
+      const runtime = new CombatActionSequenceRuntime(
+        new ActionBlackboardOperationExecutor({ evaluate: () => false, execute: () => true }),
+        { blackboard },
+      );
+      const program = runtime.createSequence(compileGraphSequence(entry, graph));
+      program.reset({});
+      program.executeInstant({});
+      return blackboard.snapshot();
+    };
+    expect(execute(result.graph, result.entry)).toEqual(execute(graph, entry));
+    const branch = Object.values(result.graph.nodes).find(node => node.action.kind === 'ifElse');
+    expect(branch?.action).toMatchObject({ condition: { $sequence: null } });
+  });
+
+  it.each([1, 2])('原生等价分支有 %i 次写入时保留 NotNext 的执行边界', count => {
+    const f = fixture();
+    const writes = Array.from({ length: count }, (_, index) => assign(`value${index}`, index + 1));
+    const condition = f.chain({
+      kind: 'checkCondition',
+      parameters: { condition: constant(true) },
+    });
+    const entry = f.chain(
+      { kind: 'invertNextResult', parameters: {} },
+      {
+        kind: 'ifElse',
+        parameters: { alwaysNext: true },
+        condition,
+        whenTrue: f.chain(...writes),
+        whenFalse: f.chain(...writes),
+      },
+    );
+    const graph = { nodes: f.nodes };
+    const result = optimize(graph, entry);
+    const execute = (graph: ActionGraphDefinition, entry: ActionGraphReference) => {
+      const blackboard = new ActionBlackboard();
+      const runtime = new CombatActionSequenceRuntime(
+        new ActionBlackboardOperationExecutor({
+          evaluate: () => true,
+          execute: () => true,
+        }),
+        { blackboard },
+      );
+      const program = runtime.createSequence(compileGraphSequence(entry, graph));
+      program.reset({});
+      program.executeInstant({});
+      return blackboard.snapshot();
+    };
+    expect(execute(result.graph, result.entry)).toEqual(execute(graph, entry));
+    expect(execute(result.graph, result.entry)).toEqual(
+      Object.fromEntries(writes.map((_, index) => [`value${index}`, index + 1])),
+    );
+    expect(Object.values(result.graph.nodes).some(node => node.action.kind === 'ifElse')).toBe(
+      count > 1,
+    );
+  });
+
   it('报告模式保持原对象，关闭模式不报告改动，应用保留节点 key 且不修改输入', () => {
     const f = fixture();
     const whenTrue = f.chain(damage('original/steps/1'));
@@ -363,14 +555,14 @@ describe('图侧序列优化', () => {
     ).toHaveLength(1);
     const head = result.graph.nodes[result.entry.$sequence!]!.action as Extract<
       ActionGraphStep,
-      { kind: 'conditional' }
+      { kind: 'switch' }
     >;
-    expect(head.kind).toBe('conditional');
-    expect(head.parameters.alwaysNext).toBe(alwaysNext ? true : undefined);
-    expect(head.parameters.condition).toMatchObject({ kind: 'any' });
-    expect(head.whenFalse).toBeUndefined();
+    expect(head.kind).toBe('switch');
+    expect(head.parameters.alwaysNext).toBe(alwaysNext);
+    expect(head.options.map(option => option.value)).toEqual([0, 1, 2].map(literal));
+    expect(new Set(head.options.map(option => option.sequence.$sequence)).size).toBe(1);
     // 公共链保留原选项节点 id（interning 复用），伤害 key 取字典序最小的 options[0]。
-    const bodyHead = result.graph.nodes[head.whenTrue.$sequence!]!;
+    const bodyHead = result.graph.nodes[head.options[0]!.sequence.$sequence!]!;
     expect(bodyHead.action).toMatchObject({
       kind: 'dealDamage',
       key: 'fixture:/scheduledSequences/0/sequence/steps/0/options[0]/sequence/steps/0',
@@ -416,6 +608,10 @@ describe('图侧序列优化', () => {
     const f = fixture();
     const onceBody = f.chain(guard(constant(true), f.chain(assign('inner', 1))));
     const responseSequence = f.chain(guard(constant(true), f.chain(assign('response', 1))));
+    const jumpCondition = f.chain({
+      kind: 'checkCondition',
+      parameters: { condition: constant(false) },
+    });
     const entry = f.chain(
       { kind: 'once', parameters: {}, body: onceBody },
       {
@@ -438,24 +634,16 @@ describe('图侧序列优化', () => {
       },
       {
         kind: 'jumpTimeline',
-        parameters: {
-          destinationFrame: 30,
-          condition: {
-            kind: 'actionValueCompare',
-            left: literal(1),
-            operator: 'notEqual',
-            right: literal(1),
-          },
-        },
+        parameters: { destinationFrame: 30 },
+        condition: jumpCondition,
       },
     );
     const result = optimize({ nodes: f.nodes }, entry);
     const paths = result.report.changes.map(change => `${change.rule}@${change.path}`);
     expect(paths).toEqual([
-      'true-guard@entry[0]→once_7.body→conditional_2',
-      'true-guard@entry[0]→listenForCombatEvents_6.parameters.responses[0].sequence→conditional_4',
-      'constant-condition@entry[0]→listenForCombatEvents_6.parameters.responses[0].condition',
-      'constant-condition@entry[0]→jumpTimeline_5.parameters.condition',
+      'true-guard@entry[0]→once_8.body→conditional_2',
+      'true-guard@entry[0]→listenForCombatEvents_7.parameters.responses[0].sequence→conditional_4',
+      'constant-condition@entry[0]→listenForCombatEvents_7.parameters.responses[0].condition',
     ]);
     const once = result.graph.nodes[result.entry.$sequence!]!.action as Extract<
       ActionGraphStep,

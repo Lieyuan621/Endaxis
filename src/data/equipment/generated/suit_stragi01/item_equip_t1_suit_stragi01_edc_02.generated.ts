@@ -4,7 +4,7 @@ import type { GearDefinition } from '../../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'item_equip_t1_suit_stragi01_edc_02',
   assetSlug: 'item_equip_t1_suit_stragi01_edc_02',
-  iconPath: '/equipment/stragi01/item_equip_t1_suit_stragi01_edc_02.webp',
+  icon: 'endaxis:equipment/stragi01/item_equip_t1_suit_stragi01_edc_02',
   slotType: 'accessory',
   levelRequirement: 28,
   baseDefense: 8.4,

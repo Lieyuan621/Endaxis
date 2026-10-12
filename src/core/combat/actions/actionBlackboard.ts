@@ -1,11 +1,12 @@
+import type { ActionBlackboardValue } from '../../../../packages/game-data-contract/src/primitives.ts';
 import { valueInputBlackboardKey } from '../../compiler/compiledGraphData';
 import type { CompiledValueInput } from '../../compiler/compiledGraphData.ts';
+import type { ActionValueCalculation, ArtsIntensityFactor } from '../state/foundationState';
 /**
  * 将现有黑板对象调用接到纯数据黑板算法。共享实体板在数据中保持同一引用。
  * 此绑定不提供整场恢复入口；对象身份缓存仍需随技能宿主迁移。
  */
 export { type ActionBlackboardValue } from '../../../../packages/game-data-contract/src/primitives.ts';
-import type { ActionBlackboardValue } from '../../../../packages/game-data-contract/src/primitives.ts';
 
 import { createActionBlackboardState, type ActionBlackboardState } from '../state/foundationState';
 import {
@@ -55,10 +56,8 @@ export class ActionBlackboard {
   }
   assign(
     values?: Readonly<Record<string, ActionBlackboardValue>>,
-    factors?: Readonly<Record<string, import('../state/foundationState').ArtsIntensityFactor>>,
-    calculations?: Readonly<
-      Record<string, import('../state/foundationState').ActionValueCalculation>
-    >,
+    factors?: Readonly<Record<string, ArtsIntensityFactor>>,
+    calculations?: Readonly<Record<string, ActionValueCalculation>>,
   ): void {
     assignActionBlackboard(this.#state, values);
     for (const [key, factor] of Object.entries(factors ?? {})) {
@@ -68,17 +67,12 @@ export class ActionBlackboard {
     for (const [key, calculation] of Object.entries(calculations ?? {}))
       (this.#state.valueCalculations ??= new Map()).set(key, limitValueCalculation(calculation));
   }
-  getValueCalculation(
-    key: string,
-  ): import('../state/foundationState').ActionValueCalculation | undefined {
+  getValueCalculation(key: string): ActionValueCalculation | undefined {
     return (this.#state.values.has(key) ? this.#state : this.#state.entity)?.valueCalculations?.get(
       key,
     );
   }
-  setValueCalculation(
-    key: string,
-    calculation: import('../state/foundationState').ActionValueCalculation | undefined,
-  ): void {
+  setValueCalculation(key: string, calculation: ActionValueCalculation | undefined): void {
     const state = key.startsWith('EntityBB_') ? (this.#state.entity ?? this.#state) : this.#state;
     if (calculation === undefined) state.valueCalculations?.delete(key);
     else (state.valueCalculations ??= new Map()).set(key, limitValueCalculation(calculation));
@@ -86,9 +80,7 @@ export class ActionBlackboard {
   getArtsIntensityFactor(key: string): number | undefined {
     return this.getArtsIntensityDetail(key)?.multiplier;
   }
-  getArtsIntensityDetail(
-    key: string,
-  ): import('../state/foundationState').ArtsIntensityFactor | undefined {
+  getArtsIntensityDetail(key: string): ArtsIntensityFactor | undefined {
     const state = this.#state.values.has(key) ? this.#state : this.#state.entity;
     return state?.artsIntensityFactors?.get(key);
   }
@@ -130,8 +122,8 @@ export class ActionBlackboard {
   assignDynamic(key: string, value: number): boolean {
     return assignDynamicBlackboard(this.#state, key, value);
   }
-  /** 调用方已比较过 GetFloat 时，直接写入目标层。 */
-  assignDynamicUnconditionally(key: string, value: number): void {
+  /** 直接写入原生动态目标层，不进行数值近似比较。 */
+  assignDynamicUnconditionally(key: string, value: ActionBlackboardValue): void {
     assignDynamicBlackboardUnconditionally(this.#state, key, value);
   }
   snapshot(): Readonly<Record<string, ActionBlackboardValue>> {
@@ -146,12 +138,19 @@ export class ActionBlackboard {
       state.valueCalculations = new Map(this.#state.valueCalculations);
     return ActionBlackboard.#bind(state);
   }
+  /** 已求值的发射输入复制给新实体；同一实体的回调仍使用 detachedSnapshot 共享实体板。 */
+  forkEntityScope(): ActionBlackboard {
+    return ActionBlackboard.#bind({
+      ...this.detachedSnapshot().runtimeState,
+      entity: this.#state.entity
+        ? ActionBlackboard.#bind(this.#state.entity).detachedSnapshot().runtimeState
+        : undefined,
+    });
+  }
   restore(
     values: Readonly<Record<string, ActionBlackboardValue>>,
-    factors?: Readonly<Record<string, import('../state/foundationState').ArtsIntensityFactor>>,
-    calculations?: Readonly<
-      Record<string, import('../state/foundationState').ActionValueCalculation>
-    >,
+    factors?: Readonly<Record<string, ArtsIntensityFactor>>,
+    calculations?: Readonly<Record<string, ActionValueCalculation>>,
   ): void {
     this.#state.values.clear();
     this.#state.artsIntensityFactors?.clear();
@@ -184,9 +183,9 @@ export class ActionBlackboard {
 
 /** 单次命中的解释只保留有限层级，避免循环更新黑板时无限增大存档。 */
 export function limitValueCalculation(
-  calculation: import('../state/foundationState').ActionValueCalculation,
+  calculation: ActionValueCalculation,
   depth = 4,
-): import('../state/foundationState').ActionValueCalculation {
+): ActionValueCalculation {
   return {
     operation: calculation.operation,
     left: calculation.left,
@@ -222,12 +221,12 @@ export function resolveActionValueOperand(
 
 /** 记录技能表基础值之后实际执行的乘除；不从运算结果反推基础值。 */
 export function combineSkillSettingFactors(
-  operation: import('../state/foundationState').ActionValueCalculation['operation'],
-  left: import('../state/foundationState').ArtsIntensityFactor | undefined,
-  right: import('../state/foundationState').ArtsIntensityFactor | undefined,
+  operation: ActionValueCalculation['operation'],
+  left: ArtsIntensityFactor | undefined,
+  right: ArtsIntensityFactor | undefined,
   leftValue: number,
   rightValue: number,
-): import('../state/foundationState').ArtsIntensityFactor | undefined {
+): ArtsIntensityFactor | undefined {
   if (operation === 'assign') return right;
   if (operation === 'multiply') {
     if (left && !right)
@@ -248,7 +247,7 @@ export function combineSkillSettingFactors(
 export function resolveSkillSettingFactor(
   operand: CompiledValueInput | number,
   blackboard: ActionBlackboard,
-): import('../state/foundationState').ArtsIntensityFactor | undefined {
+): ArtsIntensityFactor | undefined {
   const key = valueInputBlackboardKey(operand);
   return key !== undefined ? blackboard.getArtsIntensityDetail(key) : undefined;
 }

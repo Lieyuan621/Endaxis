@@ -1,7 +1,6 @@
 /** 编辑器文案仅从语言资源读取。 */
 import { i18n } from '../../i18n';
 import type { NodeFieldSchema } from './nodeSchema';
-import type { BlackboardScope } from '../../application/editor/graphBlackboard';
 
 export function nodeName(kind: string): string {
   return i18n.global.t(`actionGraphEditor.nodes.${kind}.name`);
@@ -34,19 +33,4 @@ export function optionName(
   if (value === 'caster' && labels === 'operatorRole')
     return i18n.global.t('actionGraphEditor.options.roleCaster');
   return i18n.global.t(`actionGraphEditor.options.${value}`);
-}
-export function scopeName(scope: BlackboardScope): string {
-  if (!scope.parent) return scope.label;
-  return i18n.global.t('actionGraphEditor.localScope', {
-    name: scope.label,
-  });
-}
-export function scopeHelp(scope: BlackboardScope): string {
-  if (!scope.parent) return i18n.global.t('actionGraphEditor.currentScopeHelp');
-  return [
-    scope.copiesParent ? 'copyScopeHelp' : 'independentScopeHelp',
-    scope.sharesEntity ? 'sharedEntityHelp' : 'ownEntityHelp',
-  ]
-    .map(key => i18n.global.t(`actionGraphEditor.${key}`))
-    .join(' ');
 }

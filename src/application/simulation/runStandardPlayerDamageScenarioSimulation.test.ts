@@ -1,27 +1,50 @@
-import { skillFixture, type SkillFixtureProperties } from '../../test/skillFixture';
-import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import { describe, expect, it } from 'vitest';
-import type { ActionGraphReference } from '../../../packages/game-data-contract/src/actionGraph';
-import { ActionGraphDefinitionRepository } from '../../core/compiler/actionGraphDefinitionRepository';
-import { ExplicitCriticalSampleSource } from '../../core/combat/random/criticalSampleSource';
-import { createEmptyScenario } from '../../core/project/createProject';
-import { perlica, perlica as perlicaFormalOperator } from '../../data/operators/perlica.generated';
-import perlicaGeneratedOperator from '../../data/operators/perlica.generated';
-import { arclight as arclightGeneratedOperator } from '../../data/operators/arclight.generated';
-import { lifeng as lifengGeneratedOperator } from '../../data/operators/lifeng.generated';
-import { endministrator as endministratorGeneratedOperator } from '../../data/operators/endministrator.generated';
-import { lastRite as lastRiteGeneratedOperator } from '../../data/operators/last-rite.generated';
-import { tangtang as tangtangGeneratedOperator } from '../../data/operators/tangtang.generated';
-import { gilberta as gilbertaGeneratedOperator } from '../../data/operators/gilberta.generated';
-import { rossi as rossiGeneratedOperator } from '../../data/operators/rossi.generated';
-import { camille as camilleGeneratedOperator } from '../../data/operators/camille.generated';
-import { chenQianyu as chenQianyuGeneratedOperator } from '../../data/operators/chen-qianyu.generated';
-import { estella as estellaGeneratedOperator } from '../../data/operators/estella.generated';
 import type {
+  ActionGraphDefinition,
   ActionGraphNode,
+  ActionGraphReference,
   ActionGraphStep,
 } from '../../../packages/game-data-contract/src/actionGraph';
-import type { ScheduledSequenceDefinition } from '../../core/game-data/operatorDefinition';
+import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
+import { ExplicitCriticalSampleSource } from '../../core/combat/random/criticalSampleSource';
+import { StandardPlayerDamageCompatibilityError } from '../../core/combat/runtime/standardPlayerDamageCompatibility';
+import { ActionGraphDefinitionRepository } from '../../core/compiler/actionGraphDefinitionRepository';
+import type {
+  OperatorDefinition,
+  ScheduledSequenceDefinition,
+} from '../../core/game-data/operatorDefinition';
+import { MechanicAdapterRegistry } from '../../core/scenarioMechanics/mechanicCompiler';
+import { createEmptyScenario } from '../../core/project/createProject';
+import { projectBuffTimelineViz } from '../../core/projection/buffTimelineViz';
+import { commonBuffDefinitions } from '../../data/buffs/commonDefinitions';
+import { elementalAttachments } from '../../data/buffs/elementalAttachments';
+import { gameDataRepository } from '../../data/gameDataRepository';
+import {
+  CONTINGENCY_CONTRACT_MECHANIC_PREFIX,
+  contingencyContractMechanicAdapter,
+} from '../../data/contingencyContract/contingencyContractAdapter';
+import { akekuri } from '../../data/operators/akekuri.generated';
+import { arclight as arclightGeneratedOperator } from '../../data/operators/arclight.generated';
+import { camille as camilleGeneratedOperator } from '../../data/operators/camille.generated';
+import { chenQianyu as chenQianyuGeneratedOperator } from '../../data/operators/chen-qianyu.generated';
+import { endministrator as endministratorGeneratedOperator } from '../../data/operators/endministrator.generated';
+import { estella as estellaGeneratedOperator } from '../../data/operators/estella.generated';
+import { gilberta as gilbertaGeneratedOperator } from '../../data/operators/gilberta.generated';
+import { lastRite as lastRiteGeneratedOperator } from '../../data/operators/last-rite.generated';
+import { lifeng as lifengGeneratedOperator } from '../../data/operators/lifeng.generated';
+import { mifu as mifuGeneratedOperator } from '../../data/operators/mifu.generated';
+import perlicaGeneratedOperator, {
+  perlica,
+  perlica as perlicaFormalOperator,
+} from '../../data/operators/perlica.generated';
+import { rossi as rossiGeneratedOperator } from '../../data/operators/rossi.generated';
+import { tangtang as tangtangGeneratedOperator } from '../../data/operators/tangtang.generated';
+import { skillFixture, type SkillFixtureProperties } from '../../test/skillFixture';
+import { placeSkillGroup } from '../../ui/timeline/interaction/placeSkillGroup';
+import { findBuffDamageSegment } from '../../ui/timeline/results/enemyBuffDamageHits';
+import { projectPhysicalStatusDisplay } from '../../ui/timeline/results/physicalStatusDisplay';
+import { projectTimelineHitOccurrences } from '../../ui/timeline/results/timelineHitEffects';
+import { runStandardPlayerDamageScenarioSimulation } from './runStandardPlayerDamageScenarioSimulation';
 
 /** 一段按帧排程的线性步骤链；节点归属由下面的辅助函数显式铺入技能图。 */
 interface FixtureSequence {
@@ -55,7 +78,7 @@ function projectGraphSequences(sequences: readonly FixtureSequence[]): {
 function graphFixtureSkill(
   fixture: Omit<SkillFixtureProperties, 'scheduledSequences' | 'actionGraph'> & {
     readonly sequences: readonly FixtureSequence[];
-    readonly dataNodes?: import('../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'];
+    readonly dataNodes?: ActionGraphDefinition['dataNodes'];
   },
 ): SkillDefinition {
   const { sequences, dataNodes, ...fields } = fixture;
@@ -128,24 +151,6 @@ function graphProgramContains(
   }
   return false;
 }
-import { mifu as mifuGeneratedOperator } from '../../data/operators/mifu.generated';
-import { akekuri } from '../../data/operators/akekuri.generated';
-import { commonBuffDefinitions } from '../../data/buffs/commonDefinitions';
-import { elementalAttachments } from '../../data/buffs/elementalAttachments';
-import { placeSkillGroup } from '../../ui/timeline/interaction/placeSkillGroup';
-import { StandardPlayerDamageCompatibilityError } from '../../core/combat/runtime/standardPlayerDamageCompatibility';
-import { runStandardPlayerDamageScenarioSimulation } from './runStandardPlayerDamageScenarioSimulation';
-import type { OperatorDefinition } from '../../core/game-data/operatorDefinition';
-import { MechanicAdapterRegistry } from '../../core/mechanics/mechanicCompiler';
-import { projectBuffTimelineViz } from '../../core/projection/buffTimelineViz';
-import { findBuffDamageSegment } from '../../ui/timeline/results/enemyBuffDamageHits';
-import { projectTimelineHitOccurrences } from '../../ui/timeline/results/timelineHitEffects';
-import { projectPhysicalStatusDisplay } from '../../ui/timeline/results/physicalStatusDisplay';
-import { gameDataRepository } from '../../data/gameDataRepository';
-import {
-  CONTINGENCY_CONTRACT_MECHANIC_PREFIX,
-  contingencyContractMechanicAdapter,
-} from '../../data/mechanics/contingencyContractAdapter';
 
 function createPerlicaScenario() {
   const scenario = createEmptyScenario('scenario:standard-damage', '标准伤害样本');
@@ -256,8 +261,9 @@ describe('标准入口普通倒地装配', () => {
           startFrame: 0,
           steps: [
             ...Array.from({ length: 2 }, () => ({
-              kind: 'applyKnockDown' as const,
+              kind: 'applyPhysicalInfliction' as const,
               parameters: {
+                type: 'knockDown' as const,
                 target: 'enemy' as const,
                 duration: { kind: 'constant' as const, value: 0.1 },
                 force: false,
@@ -1053,8 +1059,8 @@ function createGeneratedMifuBattleChainScenario() {
                 steps: Array.from({ length: 3 }, () => ({
                   kind: 'applyBuff' as const,
                   parameters: {
-                    buffId: 'buff_physical_no_guard',
-                    target: 'enemy' as const,
+                    buffs: [{ buffId: 'buff_physical_no_guard' }],
+                    targets: { kind: 'fixed', target: 'enemy' } as const,
                     inheritSourceSkillCastInfo: true,
                   },
                 })),
@@ -1206,12 +1212,16 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
             {
               kind: 'applyBuff',
               parameters: {
-                buffId: 'buff_common_cryst_triggered_physical_break',
-                target: 'enemy',
+                buffs: [
+                  {
+                    buffId: 'buff_common_cryst_triggered_physical_break',
+                    blackboardAssignments: {
+                      atk_scale: { kind: 'constant', value: 0 },
+                    },
+                  },
+                ],
+                targets: { kind: 'fixed', target: 'enemy' },
                 inheritSourceSkillCastInfo: true,
-                blackboardAssignments: {
-                  atk_scale: { kind: 'constant', value: 0 },
-                },
               },
             },
           ],
@@ -1613,11 +1623,18 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         String(entry.data?.stepKey).includes('buffInterval'),
     );
     expect(tutorialSuccessDamage).toEqual([]);
-    expect(
-      result.receiptEntries.some(
-        entry => entry.event === 'SkillTimelineFinished' && entry.sourceId === 'track:rossi',
-      ),
-    ).toBe(true);
+    // 原生第 214 帧执行 InterruptCurSkillAction；它不是时间线自然结束。
+    expect(result.receiptEntries).toContainEqual(
+      expect.objectContaining({
+        event: 'SkillInterrupted',
+        sourceId: 'track:rossi',
+        frame: 220,
+        data: expect.objectContaining({
+          skillId: 'chr_0028_wulfa_normal_skill',
+          reason: 'default',
+        }),
+      }),
+    );
   });
 
   it('runs Rossi attack 4 on the controlled and off-field native timeline branches', () => {
@@ -1924,11 +1941,11 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         String(entry.data?.stepKey).includes('chr_0033_camille_ultimate_skill:'),
     );
     expect(directHits).toHaveLength(9);
-    expect(
-      directHits.filter(entry =>
-        String(entry.data?.stepKey).includes('scheduledSequences[3].sequence'),
-      ),
-    ).toHaveLength(7);
+    // 引导段按原生倍率键识别，不依赖生成时定时入口的数组下标。
+    const channelHits = directHits.filter(
+      entry => entry.data?.skillMultiplierSourceKey === 'atk_scale_1',
+    );
+    expect(channelHits.map(entry => entry.frame)).toEqual([76, 78, 80, 82, 84, 86, 88]);
   });
 
   it('keeps Rossi follow-up available for the native combo window after the precise-link timer', () => {
@@ -2080,16 +2097,16 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
                     ...Array.from({ length: 3 }, (): ActionGraphStep => ({
                       kind: 'applyBuff',
                       parameters: {
-                        buffId: 'buff_physical_no_guard',
-                        target: 'enemy',
+                        buffs: [{ buffId: 'buff_physical_no_guard' }],
+                        targets: { kind: 'fixed', target: 'enemy' },
                         inheritSourceSkillCastInfo: true,
                       },
                     })),
                     {
                       kind: 'applyBuff',
                       parameters: {
-                        buffId: 'buff_common_energy_shard_attached_fire',
-                        target: 'enemy',
+                        buffs: [{ buffId: 'buff_common_energy_shard_attached_fire' }],
+                        targets: { kind: 'fixed', target: 'enemy' },
                         inheritSourceSkillCastInfo: true,
                       },
                     },
@@ -2424,12 +2441,12 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
     );
     expect(tangtangDamage(triggered)).toHaveLength(tangtangDamage(baseline).length);
     // 图身份：末段跟进伤害定位到实体子技能图内的具体节点，升级后换用另一节点。
-    expect(tangtangDamage(baseline).at(-1)?.stepKey).toContain(
-      '/childSkill/actionGraph/main/nodes/dealDamage_3/action',
-    );
-    expect(tangtangDamage(triggered).at(-1)?.stepKey).toContain(
-      '/childSkill/actionGraph/main/nodes/dealDamage_5/action',
-    );
+    const baselineStep = tangtangDamage(baseline).at(-1)?.stepKey;
+    const upgradedStep = tangtangDamage(triggered).at(-1)?.stepKey;
+    for (const stepKey of [baselineStep, upgradedStep]) {
+      expect(stepKey).toMatch(/\/childSkill\/actionGraph\/main\/nodes\/dealDamage_\d+\/action/);
+    }
+    expect(upgradedStep).not.toBe(baselineStep);
     expect(tangtangDamage(triggered).at(-1)?.value).toBeGreaterThan(
       tangtangDamage(baseline).at(-1)?.value as number,
     );
@@ -2520,12 +2537,16 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       }),
     );
     // 原生终结技第 98 帧明确配置 0 倍率 DamageAction；它仍执行命中与停帧动作。
+    const ultimateCast = result.receiptEntries.find(
+      entry =>
+        entry.event === 'SkillStarted' && entry.data?.skillId === 'chr_0031_mifu_ultimate_skill',
+    )!;
     expect(result.receiptEntries).toContainEqual(
       expect.objectContaining({
         event: 'DamageApplied',
         sourceId: 'track:mifu',
         data: expect.objectContaining({
-          stepKey: expect.stringContaining('chr_0031_mifu_ultimate_skill:scheduledSequences[3]'),
+          castId: ultimateCast.data!.castId,
           expectedDamage: 0,
         }),
       }),
@@ -2966,8 +2987,8 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
     expect(damageAtKnockDown).toContainEqual(
       expect.objectContaining({
         data: expect.objectContaining({
-          stepKey:
-            '["buffDefinitions.\\"buff_chr_0015_lifeng_talent_2\\".abilityEventResponses[0].sequence/%5Bnull%2C%22conditional_9%22%5D:0","[null,\\"dealDamage_3\\"]"]',
+          stepKey: expect.stringContaining('buff_chr_0015_lifeng_talent_2'),
+          skillMultiplierPercent: 350,
         }),
       }),
     );
@@ -3210,13 +3231,17 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       ),
     ).toContainEqual(
       expect.objectContaining({
-        iconId: 'icon_energy_fusion_pulse',
+        icon: 'endaxis:icons/icon_energy_fusion_pulse',
         showInHeadBarCommon: false,
         showInHeadBarAttached: true,
       }),
     );
-    expect(result.receiptEntries.some(entry => entry.event === 'ElementalReactionApplied')).toBe(
-      true,
+    expect(result.receiptEntries).toContainEqual(
+      expect.objectContaining({
+        event: 'BuffApplied',
+        targetId: 'enemy',
+        data: expect.objectContaining({ buffId: 'buff_common_pulse_pulse_conduct_triggered_do' }),
+      }),
     );
     expect(result.enemyVitals.finalPoise).toBe(0);
 

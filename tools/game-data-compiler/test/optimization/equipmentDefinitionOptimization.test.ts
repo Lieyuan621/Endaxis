@@ -54,9 +54,9 @@ const bodyReference = { $sequence: 'body-0' };
 const createBuff = (): SkillBuffDefinition => ({
   stackingType: 'unlimited',
   blackboard: { externalConsumer: 9 },
-  lifecycleSequences: { enable: guarded, disable: guarded },
+  lifecycleSequences: { enable: [guarded], disable: [guarded] },
   scheduledSequences: [{ startFrame: 2, endFrame: 5, sequence: guarded }],
-  igniteEventResponses: [{ igniteType: 'fixture', finishAfterIgnited: true, sequence: guarded }],
+  igniteEventResponses: [{ igniteType: 'fixture', finishAfterIgnited: true, sequences: [guarded] }],
   actionGraph: guardedGraph(),
 });
 const buff = createBuff();
@@ -95,8 +95,8 @@ function expectContributionOptimized(
   expect(result.blackboard).toEqual({ output: 0 });
   expect(result.buffDefinitions?.buff_fixture?.blackboard).toEqual(buff.blackboard);
   expect(result.buffDefinitions?.buff_fixture?.lifecycleSequences).toEqual({
-    enable: bodyReference,
-    disable: bodyReference,
+    enable: [bodyReference],
+    disable: [bodyReference],
   });
   expect(result.buffDefinitions?.buff_fixture?.scheduledSequences).toEqual([
     { startFrame: 2, endFrame: 5, sequence: bodyReference },
@@ -137,8 +137,8 @@ describe('公共 Buff 和装备定义的优化入口', () => {
       buffDefinitions: appliedWeapon.definition.buffDefinitions,
     });
     expectContributionOptimized(appliedSuit.definition);
-    expect(appliedWeapon.report.skillValues).toEqual([]);
-    expect(appliedSuit.report.skillValues).toEqual([]);
+    expect(appliedWeapon.report.resourceValues).toEqual([]);
+    expect(appliedSuit.report.resourceValues).toEqual([]);
     expect(weapon).toEqual(original);
     expect(
       finalizeWeaponDefinition(appliedWeapon.definition, 'apply').report.programs.flatMap(
@@ -161,11 +161,11 @@ describe('公共 Buff 和装备定义的优化入口', () => {
     expect(Object.keys(applied.definitions)).toEqual(['shared_a', 'shared_b']);
     expect(applied.definitions.shared_a?.blackboard).toEqual(buff.blackboard);
     expect(applied.definitions.shared_a?.igniteEventResponses).toEqual([
-      { igniteType: 'fixture', finishAfterIgnited: true, sequence: bodyReference },
+      { igniteType: 'fixture', finishAfterIgnited: true, sequences: [bodyReference] },
     ]);
     expect(applied.report.before.steps).toBe(8);
     expect(applied.report.after.steps).toBe(4);
-    expect(applied.report.skillValues).toEqual([]);
+    expect(applied.report.resourceValues).toEqual([]);
   });
 
   it('武器既有审计文件携带优化报告，正式 TS 文件不受报告字段影响', () => {

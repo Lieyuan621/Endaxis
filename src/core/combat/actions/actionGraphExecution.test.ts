@@ -5,6 +5,7 @@ import type {
   ActionGraphResourceDefinition,
 } from '../../../../packages/game-data-contract/src/actionGraph';
 import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import { createProgramDefinitionCompiler } from '../../compiler/compileProgramDefinitions';
 import { ActionBlackboard, resolveActionValueOperand } from './actionBlackboard';
 import { CombatActionSequenceRuntime } from './combatActionSequenceRuntime';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
@@ -15,20 +16,23 @@ import { CombatOperationPrograms } from './combatOperationPrograms';
 import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
 import { createNativeEventFixture } from '../events/nativeEventTestFixture';
 import { ActionExecutionTrace } from './actionExecutionTrace';
+import { ComboWindowRuntime } from '../skills/comboWindowRuntime';
+import { CombatClock } from '../time/combatClock';
+import { CombatReceiptCollector } from '../receipt/combatReceipt';
 
 const graph: ActionGraphDefinition = {
   nodes: {
     first: {
       action: {
-        kind: 'setContextFlag',
-        parameters: { flag: 'first', value: true, target: 'caster' },
+        kind: 'triggerCustomAbilityEvent',
+        parameters: { eventName: 'first', eventParam: 0, target: 'caster' as const },
       },
       next: 'damage',
     },
     second: {
       action: {
-        kind: 'setContextFlag',
-        parameters: { flag: 'second', value: true, target: 'caster' },
+        kind: 'triggerCustomAbilityEvent',
+        parameters: { eventName: 'second', eventParam: 0, target: 'caster' as const },
       },
       next: 'damage',
     },
@@ -56,6 +60,301 @@ function fixture(execute?: CombatOperationExecutor['execute']) {
 }
 
 describe('直接图执行', () => {
+  it('不同子技能的局部调用路径相同时，匿名命中仍分别归属各自技能', () => {
+    const resource = { main: graph, macros: {} };
+    const compilation = createActionGraphCompilation(resource, 1);
+    const definitions = createProgramDefinitionCompiler(
+      1,
+      compilation.compileEntry,
+      () => compilation.compileEntry,
+    );
+    const keys = ['projectile-hit', 'projectile-hit-visual'].map(skillId => {
+      const child = definitions.childSkill(
+        {
+          skillId,
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 1,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'sp', value: 0, availabilityThreshold: 0 },
+          },
+          scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'damage' } }],
+          actionGraph: resource,
+        },
+        'graph.launch.callbacks[0].skill',
+      );
+      const runtime = fixture();
+      runtime.runtime.createSequence(child.timelineActions[0]!.sequence).execute({});
+      return vi.mocked(runtime.operations.execute).mock.calls[0]![0].key;
+    });
+    expect(keys.every(key => typeof key === 'string')).toBe(true);
+    expect(keys[0]).not.toBe(keys[1]);
+  });
+
+  it.each(['natural', 'interrupted', 'normalOnly', 'restored'] as const)(
+    '动画结束子序列保留输入和一次性生命周期：%s',
+    mode => {
+      const program = createActionGraphCompilation(
+        {
+          nodes: {
+            animation: {
+              action: {
+                kind: 'playAnimation',
+                parameters: {
+                  durationSeconds: 2,
+                  blendOutSeconds: 0.5,
+                  executeOnNormalEndOnly: mode === 'normalOnly',
+                },
+                onEnd: { $sequence: 'callback' },
+              },
+              next: null,
+            },
+            callback: {
+              action: {
+                kind: 'triggerCustomAbilityEvent',
+                parameters: { eventName: 'ended', eventParam: 0, target: 'caster' as const },
+              },
+              next: null,
+            },
+          },
+        },
+        1,
+      ).compileAll();
+      const calls: unknown[] = [];
+      const context = {
+        blackboard: new ActionBlackboard(),
+        actionInputTarget: { kind: 'operator' as const, operatorId: 'saved' },
+      };
+      const makeRuntime = () =>
+        new CombatActionSequenceRuntime(
+          {
+            evaluate: () => true,
+            execute: (_step, input) => {
+              calls.push(input?.actionInputTarget);
+              return true;
+            },
+          },
+          context,
+        );
+      let action = makeRuntime().createGraphSequence(program, 'animation', 'root');
+      action.tryExecute({});
+      action.tick(0.5, {});
+      expect(calls).toEqual([]);
+      context.actionInputTarget = { kind: 'operator', operatorId: 'later' };
+      if (mode === 'restored')
+        action = makeRuntime().createGraphSequence(
+          program,
+          'animation',
+          'root',
+          undefined,
+          structuredClone(action.runtimeState),
+        );
+      if (mode === 'natural' || mode === 'restored') {
+        action.tick(1, {});
+        expect(calls).toEqual([{ kind: 'operator', operatorId: 'saved' }]);
+      }
+      action.end({});
+      action.end({});
+      expect(calls).toEqual(
+        mode === 'normalOnly' ? [] : [{ kind: 'operator', operatorId: 'saved' }],
+      );
+    },
+  );
+
+  it.each([false, true])('QTE 保存输入并在恢复后按动作实例清理：restore=%s', restore => {
+    const program = createActionGraphCompilation(
+      {
+        nodes: {
+          qte: {
+            action: {
+              kind: 'showComboRingQte',
+              parameters: {
+                earlyDurationSeconds: { kind: 'constant', value: 0 },
+                activeDurationSeconds: { kind: 'constant', value: 1 },
+              },
+              triggeredAction: { $sequence: 'success' },
+            },
+            next: null,
+          },
+          success: {
+            action: {
+              kind: 'triggerCustomAbilityEvent',
+              parameters: { eventName: 'success', eventParam: 0, target: 'caster' as const },
+            },
+            next: null,
+          },
+        },
+      },
+      1,
+    ).compileAll();
+    const calls: unknown[] = [];
+    const clock = new CombatClock();
+    let windows = new ComboWindowRuntime(clock, new CombatReceiptCollector(), 5);
+    windows.open('rossi', 'combo');
+    const context = {
+      blackboard: new ActionBlackboard(),
+      actionSourceId: 'rossi',
+      actionInputTarget: { kind: 'operator' as const, operatorId: 'saved' },
+    };
+    const makeRuntime = () =>
+      new CombatActionSequenceRuntime(
+        {
+          comboWindows: windows,
+          evaluate: () => true,
+          execute: (_step, callback) => {
+            calls.push(callback?.actionInputTarget);
+            return true;
+          },
+        },
+        context,
+      );
+    let action = makeRuntime().createGraphSequence(program, 'qte', 'root');
+    action.tryExecute({});
+    context.actionInputTarget = { kind: 'operator', operatorId: 'later' };
+    if (restore) {
+      windows = new ComboWindowRuntime(
+        clock,
+        new CombatReceiptCollector(),
+        5,
+        [],
+        structuredClone(windows.runtimeState),
+      );
+      action = makeRuntime().createGraphSequence(
+        program,
+        'qte',
+        'root',
+        undefined,
+        structuredClone(action.runtimeState),
+      );
+    }
+    windows.consume('rossi', 'combo', result => result);
+    expect(calls).toEqual([{ kind: 'operator', operatorId: 'saved' }]);
+    action.end({});
+    expect(windows.runtimeState.ringQtes.size).toBe(0);
+  });
+  it.each(['restore', 'apply', 'enter', 'exit', 'empty'] as const)('Aura 生命周期：%s', mode => {
+    const program = createActionGraphCompilation(
+      {
+        nodes: {
+          aura: {
+            action: {
+              kind: 'aura',
+              parameters: { targets: { kind: 'characterTeam', excludeOwner: false }, buffs: [] },
+              onEnter: { $sequence: mode === 'empty' ? null : 'enter' },
+              onExit: { $sequence: mode === 'empty' ? null : 'exit' },
+            },
+            next: null,
+          },
+          enter: {
+            action: {
+              kind: 'triggerCustomAbilityEvent',
+              parameters: { eventName: 'enter', eventParam: 0, target: 'caster' as const },
+            },
+            next: null,
+          },
+          exit: {
+            action: {
+              kind: 'triggerCustomAbilityEvent',
+              parameters: { eventName: 'exit', eventParam: 0, target: 'caster' as const },
+            },
+            next: null,
+          },
+        },
+      },
+      1,
+    ).compileAll();
+    const events: string[] = [];
+    let stop: () => void = () => {};
+    const targets = [
+      { kind: 'operator' as const, operatorId: 'a' },
+      { kind: 'operator' as const, operatorId: 'b' },
+    ];
+    const operations: CombatOperationExecutor = {
+      evaluate: () => true,
+      execute: (step, context) => {
+        if (step.kind === 'triggerCustomAbilityEvent') {
+          const target = context!.actionInputTarget!;
+          events.push(
+            `${step.parameters.eventName}:${target.kind === 'operator' ? target.operatorId : target.kind}`,
+          );
+          if (step.parameters.eventName === mode) stop();
+        }
+        return true;
+      },
+      aura: {
+        targets: () => targets,
+        apply: (_parameters, target) => {
+          const ownerId = target.kind === 'operator' ? target.operatorId : 'enemy';
+          events.push(`apply:${ownerId}`);
+          if (mode === 'apply') stop();
+          return [{ ownerId, instanceId: 1 }];
+        },
+        finish: references =>
+          references.forEach(reference => events.push(`finish:${reference.ownerId}`)),
+      },
+    };
+    const runtime = new CombatActionSequenceRuntime(operations, {
+      blackboard: new ActionBlackboard(),
+    });
+    const action = runtime.createGraphSequence(program, 'aura', 'root');
+    stop = () => action.end({});
+    action.tryExecute({});
+    if (mode === 'empty') {
+      expect(events).toEqual(['apply:a', 'apply:b']);
+      const restored = runtime.createGraphSequence(
+        program,
+        'aura',
+        'root',
+        undefined,
+        structuredClone(action.runtimeState),
+      );
+      restored.tick(1 / 30, {});
+      expect(events).toEqual(['apply:a', 'apply:b']);
+      restored.end({});
+      expect(events).toEqual(['apply:a', 'apply:b', 'finish:b', 'finish:a']);
+      return;
+    }
+    if (mode === 'apply' || mode === 'enter') {
+      expect(events.filter(event => event.startsWith('apply:'))).toEqual(['apply:a']);
+      expect(events.filter(event => event.startsWith('finish:'))).toEqual(['finish:a']);
+      expect(events.filter(event => event.startsWith('exit:'))).toEqual(['exit:a']);
+      const ended = [...events];
+      action.tick(1 / 30, {});
+      action.end({});
+      expect(events).toEqual(ended);
+      return;
+    }
+    expect(events).toEqual(['apply:a', 'enter:a', 'apply:b', 'enter:b']);
+    const restored = runtime.createGraphSequence(
+      program,
+      'aura',
+      'root',
+      undefined,
+      structuredClone(action.runtimeState),
+    );
+    stop = () => restored.end({});
+    if (mode === 'exit') {
+      restored.end({});
+      expect(events.slice(4)).toEqual(['finish:b', 'exit:b', 'finish:a', 'exit:a']);
+      restored.end({});
+      expect(events).toHaveLength(8);
+      return;
+    }
+    restored.tick(1 / 30, {});
+    expect(events).toHaveLength(4);
+    // 离场后重新进入是新的影响实例；恢复不能复用已经结束的回调状态。
+    const departed = targets.pop()!;
+    restored.tick(1 / 30, {});
+    expect(events.slice(4)).toEqual(['finish:b', 'exit:b']);
+    targets.push(departed);
+    restored.tick(1 / 30, {});
+    expect(events.slice(6)).toEqual(['apply:b', 'enter:b']);
+    restored.end({});
+    expect(events.slice(8)).toEqual(['finish:b', 'exit:b', 'finish:a', 'exit:a']);
+  });
+
   it('诊断记录不重放动作，区分共享图调用，并在异常后恢复观察作用域', () => {
     const program = createActionGraphCompilation(graph, 1).compileAll();
     const trace = new ActionExecutionTrace('cast');
@@ -277,12 +576,15 @@ describe('直接图执行', () => {
     expect(resumed.isComplete).toBe(true);
     expect(timeline.isComplete).toBe(false);
   });
-  it('图内结束时间线同步终止后续操作，跳转恢复不重复发出请求', () => {
+  it('图内跳转恢复不重复发出请求', () => {
     const source: ActionGraphDefinition = {
       nodes: {
-        finish: { action: { kind: 'finishTimeline', parameters: {} }, next: 'damage' },
         jump: {
-          action: { kind: 'jumpTimeline', parameters: { destinationFrame: 30 } },
+          action: {
+            kind: 'jumpTimeline',
+            parameters: { destinationFrame: 30 },
+            condition: { $sequence: null },
+          },
           next: null,
         },
         damage: graph.nodes.damage!,
@@ -291,17 +593,11 @@ describe('直接图执行', () => {
     const program = createActionGraphCompilation(source, 1, 'timeline').compileAll();
     const execute = vi.fn(() => true);
     const jump = vi.fn();
-    let finish = () => {};
     const context = {
       blackboard: new ActionBlackboard(),
-      requestTimelineFinish: () => finish(),
       requestTimelineJump: jump,
     };
     const runtime = new CombatActionSequenceRuntime({ execute, evaluate: () => true }, context);
-    const execution = runtime.createGraphSequence(program, 'finish', 'finish-root');
-    finish = () => execution.end({});
-    execution.tryExecute({});
-    expect(execute).not.toHaveBeenCalled();
     const jumping = runtime.createGraphSequence(program, 'jump', 'jump-root');
     jumping.tryExecute({});
     expect(jump).toHaveBeenCalledExactlyOnceWith(30);
@@ -316,13 +612,13 @@ describe('直接图执行', () => {
     resumed.tick(1 / 30, {});
     expect(jump).toHaveBeenCalledTimes(1);
   });
-  it('逐目标调用共享静态 once 位置但隔离动态进度，恢复后按目标结束', () => {
+  it('逐目标调用共享子序列与 once 位置，即时结束后恢复不重复清理', () => {
     const source: ActionGraphDefinition = {
       nodes: {
         loop: {
           action: {
             kind: 'forEachContextTarget',
-            parameters: { contextKey: 'items' },
+            parameters: { targets: { kind: 'context', key: 'items' } },
             body: { $sequence: 'once' },
           },
           next: null,
@@ -350,13 +646,13 @@ describe('直接图执行', () => {
             evaluate: () => true,
             execute: (step, context) => {
               seen.push(
-                `execute:${step.kind === 'setContextFlag' ? step.parameters.flag : step.kind}:${context?.currentTarget?.kind === 'abilityEntity' ? context.currentTarget.instanceId : 0}`,
+                `execute:${step.kind === 'triggerCustomAbilityEvent' ? step.parameters.eventName : step.kind}:${context?.currentTarget?.kind === 'abilityEntity' ? context.currentTarget.instanceId : 0}`,
               );
               return true;
             },
             end: (step, context) => {
               seen.push(
-                `end:${step.kind === 'setContextFlag' ? step.parameters.flag : step.kind}:${context?.currentTarget?.kind === 'abilityEntity' ? context.currentTarget.instanceId : 0}`,
+                `end:${step.kind === 'triggerCustomAbilityEvent' ? step.parameters.eventName : step.kind}:${context?.currentTarget?.kind === 'abilityEntity' ? context.currentTarget.instanceId : 0}`,
               );
             },
           },
@@ -371,13 +667,13 @@ describe('直接图执行', () => {
       'execute:first:1',
       'end:first:1',
       'execute:second:1',
+      'end:second:1',
       'execute:second:2',
+      'end:second:2',
     ]);
     const loop = execution.runtimeState.nodes.get('loop')!.data;
     if (loop.kind !== 'graphTargets') throw new Error('expected target loop');
-    const [a, b] = [...loop.loop.bodies.values()].map(body => body.sequence);
-    expect(a!.callSite).toBe(b!.callSite);
-    expect(a!.invocation).not.toBe(b!.invocation);
+    expect(loop.body).not.toBeNull();
     targets.set('items', []);
     const restored = make();
     const resumed = restored.runtime.createGraphSequence(
@@ -389,8 +685,9 @@ describe('直接图执行', () => {
     );
     expect(restored.seen).toEqual([]);
     resumed.end({});
-    expect(restored.seen).toEqual(['end:second:1', 'end:second:2']);
-    expect(loop.loop.activeBodies).toEqual([1, 2]);
+    expect(restored.seen).toEqual([]);
+    execution.end({});
+    expect(resumed.runtimeState.nodes.get('loop')!.data).toEqual(loop);
   });
 
   it('多目标循环内匿名伤害共享静态身份，目标由回执目标区分而非 stepKey', () => {
@@ -402,7 +699,7 @@ describe('直接图执行', () => {
         loop: {
           action: {
             kind: 'forEachContextTarget',
-            parameters: { contextKey: 'items' },
+            parameters: { targets: { kind: 'context', key: 'items' } },
             body: { $sequence: 'hit' },
           },
           next: 'outside',
@@ -459,14 +756,14 @@ describe('直接图执行', () => {
       {
         evaluate: () => true,
         execute: (step, context) => {
-          if (step.kind !== 'setContextFlag') throw new Error('unexpected operation');
+          if (step.kind !== 'triggerCustomAbilityEvent') throw new Error('unexpected operation');
           const event = context?.event;
           const buffId =
             event && 'payload' in event && event.event === 'addedBuff'
               ? event.payload.buffId
               : 'missing';
-          seen.push(`${step.parameters.flag}:${buffId}`);
-          if (step.parameters.flag === 'emit') {
+          seen.push(`${step.parameters.eventName}:${buffId}`);
+          if (step.parameters.eventName === 'emit') {
             if (seen.length > 10) throw new Error('recursive listener');
             emit('nested');
           }
@@ -505,15 +802,15 @@ describe('直接图执行', () => {
         },
         emit: {
           action: {
-            kind: 'setContextFlag',
-            parameters: { flag: 'emit', value: true, target: 'caster' },
+            kind: 'triggerCustomAbilityEvent',
+            parameters: { eventName: 'emit', eventParam: 0, target: 'caster' as const },
           },
           next: 'tail',
         },
         tail: {
           action: {
-            kind: 'setContextFlag',
-            parameters: { flag: 'tail', value: true, target: 'caster' },
+            kind: 'triggerCustomAbilityEvent',
+            parameters: { eventName: 'tail', eventParam: 0, target: 'caster' as const },
           },
           next: null,
         },
@@ -532,45 +829,6 @@ describe('直接图执行', () => {
     emit('after-end');
     expect(seen).toHaveLength(4);
   });
-  it('计数循环只在入口读取次数，子程序写黑板不改变本轮循环次数', () => {
-    const source: ActionGraphDefinition = {
-      nodes: {
-        repeat: {
-          action: {
-            kind: 'repeatByActionValue',
-            parameters: { count: { kind: 'valueNode', nodeId: 'test_data_1' } },
-            body: { $sequence: 'add' },
-          },
-          next: null,
-        },
-        add: {
-          action: {
-            kind: 'modifyActionValue',
-            parameters: { key: 'count', operation: 'add', value: { kind: 'constant', value: 1 } },
-          },
-          next: null,
-        },
-      },
-
-      dataNodes: {
-        test_data_1: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
-      },
-    };
-    const board = new ActionBlackboard({ count: 3 });
-    const runtime = new CombatActionSequenceRuntime(
-      new ActionBlackboardOperationExecutor({ execute: () => false, evaluate: () => false }),
-      { blackboard: board },
-    );
-    const program = createActionGraphCompilation(source, 1, 'counted').compileAll();
-    const execution = runtime.createGraphSequence(program, 'repeat', 'root');
-    expect(execution.tryExecute({})).toBe(true);
-    expect(board.getNumber('count')).toBe(6);
-    board.assignDynamicUnconditionally('count', -1);
-    execution.end({});
-    execution.reset({});
-    expect(() => execution.tryExecute({})).toThrow('non-negative integer');
-  });
-
   it('共享节点的操作登记按调用隔离，恢复后不改变槽位', () => {
     const program = createActionGraphCompilation(graph, 1, 'slots').compileAll();
     const directory = new CombatOperationPrograms();
@@ -615,87 +873,12 @@ describe('直接图执行', () => {
       ),
     ).toThrow('binding is missing');
   });
-  it.each(['parent', 'execution'] as const)(
-    '局部黑板 %s 寿命在图恢复后保持，重置不重放变量写入',
-    lifetime => {
-      const source: ActionGraphDefinition = {
-        nodes: {
-          scope: {
-            action: {
-              kind: 'withActionBlackboardScope',
-              parameters: {
-                scopeKey: 'local',
-                lifetime,
-                initialValues: { count: [1, 2] },
-                inheritParent: false,
-              },
-              body: { $sequence: 'add' },
-            },
-            next: null,
-          },
-          add: {
-            action: {
-              kind: 'modifyActionValue',
-              parameters: { key: 'count', operation: 'add', value: { kind: 'constant', value: 1 } },
-            },
-            next: null,
-          },
-        },
-      };
-      const program = createActionGraphCompilation(source, 2, 'scope').compileAll();
-      const make = (
-        blackboard: ActionBlackboard,
-        state?: ReturnType<typeof fixture>['runtime']['scopeState'],
-      ) =>
-        new CombatActionSequenceRuntime(
-          new ActionBlackboardOperationExecutor({ execute: () => false, evaluate: () => false }),
-          { blackboard },
-          {},
-          undefined,
-          undefined,
-          state,
-        );
-      const parent = new ActionBlackboard({ count: 100 });
-      const runtime = make(parent);
-      const first = runtime.createGraphSequence(program, 'scope', 'root');
-      first.reset({});
-      first.tryExecute({});
-      expect(parent.getNumber('count')).toBe(100);
-      const saved = structuredClone({
-        execution: first.runtimeState,
-        scopes: runtime.scopeState,
-        parent: parent.runtimeState,
-      });
-      const next = make(ActionBlackboard.bindRuntimeState(saved.parent), saved.scopes);
-      const resumed = next.createGraphSequence(
-        program,
-        'scope',
-        'root',
-        undefined,
-        saved.execution,
-      );
-      const getCount = () => {
-        const data = resumed.runtimeState.nodes.get('scope')!.data;
-        if (data.kind !== 'graphScope' || !data.body) throw new Error('missing graph scope');
-        return data.body.blackboard.values.get('count');
-      };
-      expect(getCount()).toBe(3);
-      resumed.end({});
-      resumed.reset({});
-      resumed.tryExecute({});
-      expect(getCount()).toBe(lifetime === 'parent' ? 4 : 3);
-      const original = first.runtimeState.nodes.get('scope')!.data;
-      if (original.kind !== 'graphScope' || !original.body)
-        throw new Error('missing original scope');
-      expect(original.body.blackboard.values.get('count')).toBe(3);
-    },
-  );
 
-  it('once 的共享键跨入口有效，省略键时调用位置独立', () => {
+  it('once 的状态属于调用实例，相同图入口的不同实例互不抑制', () => {
     const source: ActionGraphDefinition = {
       nodes: {
         shared: {
-          action: { kind: 'once', parameters: { scopeKey: 'shared' }, body: { $sequence: 'body' } },
+          action: { kind: 'once', parameters: {}, body: { $sequence: 'body' } },
           next: null,
         },
         local: {
@@ -715,8 +898,7 @@ describe('直接图执行', () => {
         execution.end({});
       }
     }
-    expect(operations.execute).toHaveBeenCalledTimes(3);
-    expect(runtime.scopeState.executedOnce.size).toBe(3);
+    expect(operations.execute).toHaveBeenCalledTimes(4);
   });
 
   it('原生重复动作恢复计时和首次 Tick 标记，不重放 Execute', () => {
@@ -789,8 +971,8 @@ describe('直接图执行', () => {
           body: { ...graph.nodes.first!, next: 'stop' },
           stop: {
             action: {
-              kind: 'setContextFlag',
-              parameters: { flag: 'stop', value: true, target: 'caster' },
+              kind: 'triggerCustomAbilityEvent',
+              parameters: { eventName: 'stop', eventParam: 0, target: 'caster' as const },
             },
             next: 'unreached',
           },
@@ -800,7 +982,7 @@ describe('直接图执行', () => {
       };
       const events: string[] = [];
       const label = (step: Parameters<CombatOperationExecutor['execute']>[0]) =>
-        step.kind === 'setContextFlag' ? step.parameters.flag : step.kind;
+        step.kind === 'triggerCustomAbilityEvent' ? step.parameters.eventName : step.kind;
       const runtime = new CombatActionSequenceRuntime(
         {
           execute: step => {
@@ -1017,8 +1199,8 @@ describe('直接图执行', () => {
   });
 
   it('同步结束阻止后续节点进入，Reset 仍准备尚未进入的节点', () => {
-    const program = createActionGraphCompilation(graph, 1, 'revision-1').compileAll();
     let finish = () => {};
+    const program = createActionGraphCompilation(graph, 1, 'revision-1').compileAll();
     const { runtime, operations } = fixture(() => {
       finish();
       return true;
@@ -1180,7 +1362,11 @@ describe('直接图执行', () => {
             a: {
               action: {
                 kind: 'spawnAbilityEntity',
-                parameters: { abilityEntityId: 'fixture', dieWhenSourceDies: false },
+                parameters: {
+                  bornAt: { kind: 'owner' },
+                  abilityEntityId: 'fixture',
+                  dieWhenSourceDies: false,
+                },
               },
               next: null,
             },
@@ -1197,6 +1383,7 @@ describe('直接图执行', () => {
             action: {
               kind: 'spawnAbilityEntity',
               parameters: {
+                bornAt: { kind: 'owner' as const },
                 abilityEntityId: 'fixture',
                 dieWhenSourceDies: false,
                 definition: { lifetime: { kind: 'infinite' } },
@@ -1242,6 +1429,7 @@ it('宏参数绑定保留独立子技能的可执行图，子技能仍能单独�
               action: {
                 kind: 'spawnAbilityEntity',
                 parameters: {
+                  bornAt: { kind: 'owner' as const },
                   abilityEntityId: 'child',
                   dieWhenSourceDies: false,
                   overrideDurationSeconds: { kind: 'valueNode', nodeId: 'duration' },
@@ -1264,11 +1452,11 @@ it('宏参数绑定保留独立子技能的可执行图，子技能仍能单独�
                             flag: {
                               next: null,
                               action: {
-                                kind: 'setContextFlag',
+                                kind: 'triggerCustomAbilityEvent',
                                 parameters: {
-                                  flag: 'child-executed',
-                                  value: true,
-                                  target: 'caster',
+                                  eventName: 'child-executed',
+                                  eventParam: 0,
+                                  target: 'caster' as const,
                                 },
                               },
                             },
@@ -1294,7 +1482,7 @@ it('宏参数绑定保留独立子技能的可执行图，子技能仍能单独�
       ).toBe(3);
       const entry = step.parameters.definition!.childSkill!.timelineActions[0]!.sequence;
       host.runtime.createSequence(entry).executeInstant({});
-    } else if (step.kind === 'setContextFlag') flags.push(step.parameters.flag);
+    } else if (step.kind === 'triggerCustomAbilityEvent') flags.push(step.parameters.eventName);
     return true;
   });
   const compiled = createActionGraphCompilation(resource, 1).compileEntry(

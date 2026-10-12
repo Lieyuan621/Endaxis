@@ -1,23 +1,24 @@
+import type { ComparisonOperator } from '../../../../packages/game-data-contract/src/primitives.ts';
 import type { BuffApplicationActionSource } from '../source/buffActions.ts';
+import type { GlobalBuffActionSource } from '../source/globalBuffActions.ts';
+import type { GameplayTagRegistry } from '../source/nativeGameplayTags.ts';
+import type { SkillTypeMutationActionSource } from '../source/presentationActions.ts';
 import type { ProjectileLaunchActionSource } from '../source/referenceActions.ts';
 import type { ScalarSource } from '../source/scalar.ts';
-import type { CompiledBuffNumberSource } from './buffs/buffProjectionTypes.ts';
-import type { CompiledBuffStepSource } from './actions/combatActionProjectionTypes.ts';
-import type { GameplayTagRegistry } from '../source/nativeGameplayTags.ts';
-import type { CompiledAbilityEntityTemplateCatalogSource } from './abilities/abilityEntityCatalog.ts';
-import type { GlobalBuffActionSource } from '../source/globalBuffActions.ts';
 import type { SkillSettingReadActionSource } from '../source/skillSettingActions.ts';
-import type { TargetGroupActionSource } from '../source/targetGroup.ts';
-import type { ActionValueOperand } from './intermediateDefinitions.ts';
-import type { ComparisonOperator } from '../../../../packages/game-data-contract/src/primitives.ts';
 import type { SkillSlotReplacementActionSource } from '../source/skillSlotActions.ts';
 import type { TargetReferenceSource } from '../source/target.ts';
-import type { SkillTypeMutationActionSource } from '../source/presentationActions.ts';
+import type { TargetGroupActionSource } from '../source/targetGroup.ts';
+import type { CompiledAbilityEntityTemplateCatalogSource } from './abilities/abilityEntityCatalog.ts';
+import type { ActionGraphBuilder } from './actions/actionGraphBuilder.ts';
+import type { CompiledBuffStepSource } from './actions/combatActionProjectionTypes.ts';
+import type { CompiledBuffNumberSource } from './buffs/buffProjectionTypes.ts';
 
 /** 公共投影的底层约定：宿主/目标身份、已证明的即时搜索、数值引用和共享枚举映射。
  * 条件、动作及 Buff 装配共用同一份实现；不得反向调用序列编排或具体动作投影。 */
 
 export type ProjectedTargetGroup =
+  | 'godEntity'
   | 'party'
   | 'partyExceptCaster'
   | 'abilityEntity'
@@ -89,9 +90,7 @@ export function isPlainOwnerTarget(target: TargetReferenceSource): boolean {
 /** 原生动作身份由宿主及事件方向共同投影，不能把物理事件来源一律当作 ActionSource。 */
 export interface CombatActionProjectionContextSource {
   /** 当前独立资源的节点容器；进入分支复用，进入另一个原生资源必须重新创建。 */
-  readonly graph: import('./actions/actionGraphBuilder.ts').ActionGraphBuilder<
-    import('./actions/combatActionProjectionTypes.ts').CompiledBuffStepSource
-  >;
+  readonly graph: ActionGraphBuilder<CompiledBuffStepSource>;
   /** 完整 Buff 施加链已证明只会解析到纯表现 Buff 的动态 ID 黑板键。 */
   readonly combatInvisibleDynamicBuffBlackboardKeys?: ReadonlySet<string>;
   /** 仅基础攻击组装配保留 AllowNextSkillAction，用于按实际条件分支发布技能块边界。 */
@@ -159,8 +158,8 @@ export interface CombatActionProjectionContextSource {
   readonly provenOnlyHitProjectilePaths?: ReadonlySet<string>;
   /** 条件分支已证明发射目标 Context 当前保存唯一敌人；与 OnlyHit 白名单证明分开。 */
   readonly provenZeroSpaceProjectilePaths?: ReadonlySet<string>;
-  /** RandomPointFinder 命名空间点组的原生 pointNum；只折叠几何，不折叠回调次数。 */
-  readonly dynamicSpatialPointCounts?: ReadonlyMap<string, ActionValueOperand>;
+  /** RandomPointFinder 写入的空间点组；消费者读取运行时组，不重新计算点数。 */
+  readonly randomPointTargetGroupKeys?: ReadonlySet<string>;
   /** 仍有运行时 Context 数量读取的组；静态查询也必须实际写入，不能只保存编译期事实。 */
   readonly materializedTargetGroupKeys?: ReadonlySet<string>;
   /** 完整主动技能中仅由 SpawnAbilityEntity 写入的 Context；集合可为空，但成员身份固定。 */
@@ -168,6 +167,7 @@ export interface CombatActionProjectionContextSource {
   /** 完整技能内所有读取均为表现的查询；不能在单个序列内自行推断。 */
   readonly presentationOnlyTargetGroupKeys?: ReadonlySet<string>;
   readonly unconsumedTargetGroupKeys?: ReadonlySet<string>;
+  readonly unobservedTargetQueryOutputs?: ReadonlySet<string>;
   /** 完整技能数据流已证明只被 PointFinder 空间坐标消费的随机动作黑板键。 */
   readonly combatInvisibleRandomBlackboardKeys?: ReadonlySet<string>;
   /** 只在表现分支间传递的确定性动作黑板键；写入与消费可一并省略。 */
@@ -197,17 +197,17 @@ export interface CombatActionProjectionContextSource {
   readonly actionEnvironmentSkillCastInfoIsSourceCast?: boolean;
   /** 调用方已证明施法输入来自友方角色；不改变输入目标的运行时绑定方式。 */
   readonly actionInputIsOperator?: boolean;
+  /** 输入来自已证明的零空间目标组；只证明移动锚点，不证明敌人或可命中身份。 */
+  readonly actionInputIsZeroSpace?: boolean;
 }
 
 /** 领域宿主可显式补入公共动作叶子的已审计投影；未提供时仍严格失败。 */
 export interface CombatActionProjectionExtensionsSource {
-  /** 仅主动 SkillData 的根调度 Sequence 开放；递归子树不会继承。 */
-  readonly allowRootTimelineFinish?: boolean;
   readonly compileProjectileLaunch?: (
     action: ProjectileLaunchActionSource,
     sourcePath: string,
     context: CombatActionProjectionContextSource,
-  ) => readonly CompiledBuffStepSource[];
+  ) => readonly [Extract<CompiledBuffStepSource, { kind: 'launchProjectile' }>];
   readonly resolveTimeDilationPriority?: (tagId: number, sourcePath: string) => number;
   readonly compileGlobalBuffAction?: (
     action: GlobalBuffActionSource,
@@ -252,7 +252,7 @@ export function requireActionOwnerProjection(
  * 固定唯一敌人模型中的静态敌方目标组搜索。HitBox 的形状、中心和方向在零空间下
  * 不改变集合；checkAlive=false 只会放宽死亡目标，不能引入第二个普通敌人实例。
  * NoInteractive 只排除场景交互物；标准敌方木桩仍属于该候选集合。
- * 过滤、后处理仍须为空，且必须保留原生布尔字段而不是接受未解析状态。
+ * 过滤和后处理必须已证明不改变这个单元素集合；未解析的原生字段不能视为通过。
  */
 export function isStaticSingleEnemyTargetGroup(write: TargetGroupActionSource): boolean {
   const hasDistanceValidator = write.validatorTypes.includes('DistanceValidator');
@@ -333,36 +333,6 @@ export function isDynamicSingleEnemyTagTargetGroup(write: TargetGroupActionSourc
     write.validatorTagQueries.length === 1 &&
     write.validatorTagQueries[0]![1].length > 0 &&
     postProcessingKeepsSingleEnemy(write)
-  );
-}
-
-/**
- * SmartTarget SelectByBuff 在标准场景中只可能返回空集或唯一木桩。
- * 这里完整限制选择器载荷；“非空”仍由后续 Context 数量条件在运行时判断。
- */
-export function isDynamicSingleEnemySmartTargetGroup(write: TargetGroupActionSource): boolean {
-  const selection = write.smartTargetSelection ?? null;
-  return (
-    write.producerType === 'FindTargetAction' &&
-    write.finderType === 'SmartTargetFinder' &&
-    write.validatorTypes.length === 0 &&
-    write.postProcessorTypes.length === 0 &&
-    write.priorityFilters.length === 0 &&
-    write.shuffleTargets.length === 0 &&
-    write.center === 'ActionSource' &&
-    write.centerContextKey === '' &&
-    write.selectorOwner === 'ActionSource' &&
-    write.selectorOwnerContextKey === '' &&
-    selection !== null &&
-    selection.strategy === 'SelectByBuff' &&
-    selection.buffIds.length === 1 &&
-    selection.tagQuery.tagIds.length === 0 &&
-    selection.buffFindCheckType === 'Id' &&
-    selection.buffFindIds.length === 0 &&
-    selection.buffFindTagQuery.tagIds.length === 0 &&
-    !selection.useCustomRange &&
-    selection.range.blackboardKey === '' &&
-    !selection.limitFallbackRange
   );
 }
 

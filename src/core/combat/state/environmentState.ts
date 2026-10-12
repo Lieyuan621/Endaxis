@@ -4,14 +4,16 @@
  * 本文件保存所有参与者共享的时钟与资源、敌我生命、时间膨胀、随机源和已经消费到的位置。
  * 它不负责校验初始配置，也不执行资源、生命或时间推进；这些操作留在 runtime 目录。
  */
-import { type ActionBlackboardValue } from '../../../../packages/game-data-contract/src/primitives';
-import { type ElementalReaction, type PlayerSkillInput } from '../../game-data/operatorDefinition';
-import { type GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags';
-import {
-  type CombatObjectRef,
-  type SharedSpGainModifierState,
-  type SharedSpRecoveryModifierState,
-  type SkillSimulationInputs,
+import type { GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags';
+import type { ActionBlackboardValue } from '../../../../packages/game-data-contract/src/primitives';
+import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+import type { PlayerSkillInput } from '../../game-data/operatorDefinition';
+import type {
+  CombatObjectRef,
+  CombatSkillCastInfo,
+  SharedSpGainModifierState,
+  SharedSpRecoveryModifierState,
+  SkillSimulationInputs,
 } from './foundationState';
 
 /** 当前已经推进到的整数帧。 */
@@ -32,7 +34,7 @@ export interface SkillCastIdState {
 export interface SkillCastInheritanceRegistration {
   readonly operatorId: string;
   readonly id: number;
-  readonly skillCastInfo: import('./foundationState').CombatSkillCastInfo;
+  readonly skillCastInfo: CombatSkillCastInfo;
 }
 
 /** 当前帧主动使用物品；目标由 operatorId 明确指定，不伪装为技能施放。 */
@@ -77,8 +79,8 @@ export interface BuffProgressRecorderState {
 
 /** 连携条件求值后可保存到候选窗口的数据。 */
 export interface ComboCastParameters {
-  readonly inputTarget: import('../../game-data/logicalAbilityEntity').RuntimeTargetRef;
-  readonly triggerTarget: import('../../game-data/logicalAbilityEntity').RuntimeTargetRef | null;
+  readonly inputTarget: RuntimeTargetRef;
+  readonly triggerTarget: RuntimeTargetRef | null;
   readonly assignPairs: Readonly<Record<string, ActionBlackboardValue>> | null;
 }
 
@@ -96,14 +98,15 @@ export interface PendingComboWindow {
 
 export interface PendingComboRecord {
   readonly operatorId: string;
-  readonly activationSequence: number;
-  readonly openedFrame: number;
+  activationSequence: number;
+  openedFrame: number;
   readonly candidates: PendingComboWindow[];
 }
 
 export interface ComboRingQteRegistration {
   readonly sequence: number;
   readonly operatorId: string;
+  listening: boolean;
   readonly startRemainingFrames: number;
   readonly earlyDurationFrames: number;
   readonly activeDurationFrames: number;
@@ -114,7 +117,6 @@ export interface ComboWindowState {
   readonly records: Map<string, PendingComboRecord>;
   readonly pausedOperators: Set<string>;
   readonly ringQtes: Map<number, ComboRingQteRegistration>;
-  readonly successfulRingQteSkillCastIds: Set<number>;
   globallyPaused: boolean;
   nextSequence: number;
   nextRingQteSequence: number;
@@ -125,7 +127,6 @@ export function createComboWindowState(): ComboWindowState {
     records: new Map(),
     pausedOperators: new Set(),
     ringQtes: new Map(),
-    successfulRingQteSkillCastIds: new Set(),
     globallyPaused: false,
     nextSequence: 0,
     nextRingQteSequence: 0,
@@ -138,7 +139,7 @@ export interface GlobalCooldownState {
   lastTick: number;
 }
 
-export type TimedMarkerClockDomain = 'default' | 'global' | 'globalScaled';
+export type TimedMarkerClockDomain = 'default' | 'globalScaled';
 
 export interface TimedMarkerSnapshot {
   readonly instanceId: number;
@@ -339,7 +340,6 @@ export interface StandardCombatEnvironmentState {
   readonly random: SimulationRandomState | null;
   readonly enemyVitals: CombatVitalsState;
   readonly operatorVitals: Map<string, CombatVitalsState>;
-  readonly reactions: Map<ElementalReaction, ElementalReactionState>;
   readonly knockDown: OrdinaryKnockDownState | null;
   readonly buffProgress: BuffProgressRecorderState;
   readonly poiseBreakBuffs: Set<number>;
@@ -416,6 +416,7 @@ export interface CombatSharedState {
   readonly identities: {
     readonly abilityEntities: AbilityEntityInstanceIdState;
     readonly skillCasts: SkillCastIdState;
+    readonly spatialPoints: SpatialPointIdentityState;
   };
 }
 
@@ -481,15 +482,6 @@ export interface ScheduledExternalCombatEventInput extends ExternalCombatEventIn
   readonly frame: number;
 }
 
-/** 敌人身上一个反应状态的当前取值。 */
-export interface ElementalReactionState {
-  readonly reaction: ElementalReaction;
-  readonly level: number;
-  /** 到期时间（战斗时钟的秒）；查询时已过期即视为不存在。 */
-  readonly expiresAt: number;
-  readonly sourceId: string;
-}
-
 /** 可完整恢复后续随机序列的原生减法随机状态；不补造未知的初始化规则。 */
 export interface BattleRandomState {
   readonly currentIndex: number;
@@ -525,15 +517,7 @@ export function createSimulationRandomState(): SimulationRandomState {
   };
 }
 
-export interface ActiveCombatStatus {
-  readonly statusKey: string;
-  readonly sourceId: string;
-  readonly skillId: string;
-  stacks: number;
-  remainingFrames: number | null;
-}
-
-/** 一个实体当前存在的语义状态，保持施加顺序和原始来源；定义规则由程序另行持有。 */
-export interface CombatStatusState {
-  readonly statuses: Map<string, ActiveCombatStatus>;
+/** 位置目标跨动作宿主传递，身份序列随战斗切面保存。 */
+export interface SpatialPointIdentityState {
+  nextSpatialPointId: number;
 }

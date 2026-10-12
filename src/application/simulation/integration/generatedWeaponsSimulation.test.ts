@@ -132,7 +132,7 @@ describe('生成武器的正式模拟门禁', () => {
         targetId: 'track:weapon-owner',
         data: {
           visible: true,
-          iconId: 'icon_battle_buff_atk_up',
+          icon: 'endaxis:icons/icon_battle_buff_atk_up',
           sourceActionId: expect.stringContaining('weapon-trait:'),
         },
       });

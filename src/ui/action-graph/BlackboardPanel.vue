@@ -3,7 +3,6 @@
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { EaButton, EaInput } from '@/design-system';
-import { scopeName, scopeHelp } from './editorNodeText';
 import EditorHelp from '../editor/EditorHelp.vue';
 const { t } = useI18n();
 import type {
@@ -65,7 +64,7 @@ defineExpose({ resolve: (id: string) => props.analysis.variables.find(v => ident
     />
     <template v-for="scope in analysis.scopes.values()" :key="scope.id">
       <details open>
-        <summary>{{ scopeName(scope) }}<EditorHelp :text="scopeHelp(scope)" /></summary>
+        <summary>{{ scope.label }}</summary>
         <!-- 可拖拽变量卡片需要在按钮根节点上捕获指针，保留专用交互表面。 -->
         <button
           v-for="v in analysis.variables.filter(

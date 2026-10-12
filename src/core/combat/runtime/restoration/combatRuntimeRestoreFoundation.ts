@@ -5,27 +5,31 @@
  * 宿主，也不允许推进战斗。后续阶段在这些稳定外壳上建立干员、能力实体和跨对象关系。
  */
 import type { BuffOperationTarget } from '../../buffs/buffOperationExecutor';
-import type { CombatRuntimeRestorePreparation } from './combatRuntimeRestorePreparation';
-import type { OperatorBuffRuntime } from '../combatRuntimeAssembly';
-import type { BoundCombatBattleRuntimes, CombatEnemyProgram } from '../combatRuntimeAssembly';
-import type { ProjectileRuntimeDependencies } from '../../skills/skillRuntime';
 import { CombatSemanticEventRuntime } from '../../events/combatSemanticEventRuntime';
+import type { CriticalSampleSource } from '../../random/criticalSampleSource';
+import type { ProbabilitySampleSource } from '../../random/probabilitySampleSource';
+import type { SimulationRandomMode } from '../../random/simulationRandom';
+import {
+  SimulationRandomSource,
+  type SimulationRandomSettings,
+} from '../../random/simulationRandom';
+import { CombatVitals } from '../../resources/combatVitals';
+import type { ProjectileRuntimeDependencies } from '../../skills/skillRuntime';
+import type {
+  BoundCombatBattleRuntimes,
+  CombatEnemyProgram,
+  OperatorBuffRuntime,
+} from '../combatRuntimeAssembly';
 import {
   CombatSharedRuntime,
   type CombatSharedRuntimeOptions,
   type RestoredCombatSharedRuntime,
 } from '../combatSharedRuntime';
-import { CombatVitals } from '../../resources/combatVitals';
 import {
   StandardPlayerDamageEnvironment,
   type StandardPlayerDamageEnvironmentOptions,
 } from '../standardPlayerDamageEnvironment';
-import type { CriticalSampleSource } from '../../random/criticalSampleSource';
-import type { ProbabilitySampleSource } from '../../random/probabilitySampleSource';
-import {
-  SimulationRandomSource,
-  type SimulationRandomSettings,
-} from '../../random/simulationRandom';
+import type { CombatRuntimeRestorePreparation } from './combatRuntimeRestorePreparation';
 
 type RestoredCombatEnvironmentBase = Omit<
   StandardPlayerDamageEnvironmentOptions,
@@ -42,7 +46,7 @@ type RestoredCombatEnvironmentBase = Omit<
 type DirectRestoredCombatEnvironmentInput = RestoredCombatEnvironmentBase & {
   readonly criticalSamples: CriticalSampleSource;
   readonly probabilitySamples?: ProbabilitySampleSource;
-  readonly randomMode?: import('../../random/simulationRandom').SimulationRandomMode;
+  readonly randomMode?: SimulationRandomMode;
   readonly simulationRandomSettings?: never;
 };
 
@@ -159,7 +163,7 @@ export function bindRestoredCombatRuntimeFoundation(
   }
   const semanticEvents = new CombatSemanticEventRuntime(
     environment.runtimeOptions.registerCombatAbilityEvent,
-    { state: graph.events.semantic, bindNative },
+    { bindNative },
   );
   const createOperatorBuffRuntime = environment.runtimeOptions.createOperatorBuffRuntime;
   if (createOperatorBuffRuntime === undefined) {

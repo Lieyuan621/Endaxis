@@ -2,19 +2,21 @@
  * 投射物生命周期数据与当前分支执行端口的绑定。
  * 数据只保存投射物、回调程序和 reset 订阅的稳定身份；恢复装配按这些身份重新连接宿主行为。
  */
-import type { FrameRuntime } from '../runtime/combatSimulation';
-import { ProjectileCallbackPrograms } from './projectileCallbackPrograms';
-import type { AbilityResetReference } from '../events/combatAbilityEvent';
+import type { CompiledAbilityEntityChildSkillProgram } from '../../compiler/combatProgram';
 import type {
   AbilityEntityTargetRef,
   RuntimeTargetRef,
 } from '../../game-data/logicalAbilityEntity';
-import { AbilityEntityInstanceIdAllocator } from './abilityEntityInstanceIdAllocator';
+import type { AbilityResetReference } from '../events/combatAbilityEvent';
+import type { FrameRuntime } from '../runtime/combatSimulation';
 import { createProjectileLifecycleState } from '../state/instanceState';
+import { AbilityEntityInstanceIdAllocator } from './abilityEntityInstanceIdAllocator';
+import { ProjectileCallbackPrograms } from './projectileCallbackPrograms';
 import {
   advanceProjectileAbilityFrame,
   advanceProjectileLifetimes,
   beginProjectileAbilityFrame,
+  finishProjectileByAction,
   launchProjectile,
   registerProjectileReset,
   unregisterProjectileReset,
@@ -44,6 +46,13 @@ interface ProjectileHostBinding extends ProjectileHostPorts {
   readonly resetRegistrations: Set<number>;
 }
 
+/** Buff 在技能之前计时，技能之后回收；宿主回收另行处理。 */
+export interface ProjectileBuffLifecycle {
+  readonly tick: (instanceId: number) => void;
+  readonly recycleFinished: (instanceId: number) => void;
+  readonly recycled: (instanceId: number) => void;
+}
+
 export class ProjectileLifecycleRuntime implements FrameRuntime {
   readonly callbackPrograms: ProjectileCallbackPrograms;
   readonly #state: ReturnType<typeof createProjectileLifecycleState>;
@@ -65,6 +74,7 @@ export class ProjectileLifecycleRuntime implements FrameRuntime {
       readonly resolveHost?: (instanceId: number) => ProjectileHostPorts;
       readonly resolveResetHandler?: (handlerId: number) => () => void;
     },
+    private readonly buffLifecycle?: ProjectileBuffLifecycle,
   ) {
     if (restored !== undefined && allocateInstanceId === undefined)
       throw new Error('restoring projectiles requires the restored instance id allocator');
@@ -111,6 +121,7 @@ export class ProjectileLifecycleRuntime implements FrameRuntime {
     const bindings = new Map<number, ProjectileHostBinding>();
     const resetHandlers = new Map<number, () => void>();
     for (const [id, instance] of this.#state.instances) {
+      if (instance.phase === 'reset') continue;
       try {
         const ports = options.resolveHost(id);
         if (ports === undefined) throw new Error(`missing projectile host ${id}`);
@@ -171,7 +182,33 @@ export class ProjectileLifecycleRuntime implements FrameRuntime {
 
   /** reset 通知完成前仍可查询来源。 */
   findSource(instanceId: number): RuntimeTargetRef | undefined {
-    return this.#state.instances.get(instanceId)?.source;
+    const instance = this.#state.instances.get(instanceId);
+    return (
+      instance?.source ??
+      (instance?.phase === 'reset' ? { kind: 'abilityEntity', instanceId } : undefined)
+    );
+  }
+
+  finishByAction(target: RuntimeTargetRef): boolean {
+    this.#requireRelations();
+    return (
+      target.kind === 'abilityEntity' && finishProjectileByAction(this.#state, target.instanceId)
+    );
+  }
+
+  /** 原生 children 在回收时脱链，已结束但未回收的投射物仍属于来源。 */
+  findOwnerSpawned(ownerId: string): readonly AbilityEntityTargetRef[] {
+    return [...this.#state.instances.values()]
+      .filter(instance => {
+        if (instance.phase === 'reset') return false;
+        const source = instance.source;
+        return source?.kind === 'operator'
+          ? source.operatorId === ownerId
+          : source?.kind === 'enemy'
+            ? ownerId === 'enemy'
+            : source?.kind === 'abilityEntity' && ownerId === `ability-entity:${source.instanceId}`;
+      })
+      .map(instance => ({ kind: 'abilityEntity', instanceId: instance.instanceId }));
   }
 
   isActive(target: RuntimeTargetRef): boolean {
@@ -200,14 +237,16 @@ export class ProjectileLifecycleRuntime implements FrameRuntime {
 
   advanceAbilityFrame(): void {
     this.#requireRelations();
-    advanceProjectileAbilityFrame(this.#state, id =>
-      this.#bindings.get(id)!.abilityRuntime?.advanceFrame(),
-    );
+    advanceProjectileAbilityFrame(this.#state, id => {
+      this.buffLifecycle?.tick(id);
+      this.#bindings.get(id)!.abilityRuntime?.advanceFrame();
+      this.buffLifecycle?.recycleFinished(id);
+    });
   }
 
   launch(
     request: ProjectileLaunchData & {
-      readonly callbackPrograms?: readonly import('../../compiler/combatProgram').CompiledAbilityEntityChildSkillProgram[];
+      readonly callbackPrograms?: readonly CompiledAbilityEntityChildSkillProgram[];
       readonly resolveTickDeltaSeconds: () => number | null;
       readonly reach?: () => void;
       readonly block?: () => void;
@@ -281,9 +320,12 @@ export class ProjectileLifecycleRuntime implements FrameRuntime {
         return hit();
       },
       finish: id => this.#bindings.get(id)!.finish(),
-      beforeReset: id => this.#bindings.get(id)!.beforeReset(),
+      beforeReset: id => {
+        this.#bindings.get(id)!.beforeReset();
+      },
       resolveResetHandler: id => this.#resetHandlers.get(id)!,
       released: id => {
+        this.buffLifecycle?.recycled(id);
         this.#bindings.get(id)!.released?.();
         for (const registrationId of this.#bindings.get(id)!.resetRegistrations)
           this.#resetHandlers.delete(registrationId);
@@ -293,7 +335,9 @@ export class ProjectileLifecycleRuntime implements FrameRuntime {
   }
 
   get activeCount(): number {
-    return this.#state.instances.size;
+    let count = 0;
+    for (const instance of this.#state.instances.values()) if (instance.phase !== 'reset') count++;
+    return count;
   }
 
   #requireRelations(): void {

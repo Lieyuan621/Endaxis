@@ -53,10 +53,8 @@ export function layoutEnemyStatusRows<
   }
   let offset = 0;
   let attachmentRow = 1;
-  let anomalyRow = 2;
   for (let group = 0; group < groups.length; group++) {
     if (group === 1) attachmentRow = offset;
-    if (group === 2) anomalyRow = offset;
     const ends: number[] = [];
     if (group === 3) {
       const items = [
@@ -95,7 +93,7 @@ export function layoutEnemyStatusRows<
     slots.set(`${lanes.get(buff)}:${buff.startFrame}`, 1);
   }
   const markerPositions = markers.map(marker => {
-    const row = marker.kind === 'reactionConsumed' ? anomalyRow : attachmentRow;
+    const row = attachmentRow;
     const key = `${row}:${marker.frame}`;
     const slot = slots.get(key) ?? 0;
     slots.set(key, slot + 1);

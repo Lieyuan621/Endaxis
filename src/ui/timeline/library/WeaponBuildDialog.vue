@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { resolveImage } from '../../imageResources';
 /**
  * Next 时间轴的武器养成编辑弹窗。界面沿用旧版武器编辑器，但只读取稳定的 Build 投影，
  * 所有用户修改均通过事件交给父层持久化；组件本身不访问旧 Store，也不补造定义中不存在的数据。
@@ -225,7 +226,7 @@ function maxOut(): void {
               :style="weapon.definition.rarity === 6 ? {} : { borderColor: rarityColor }"
             >
               <img
-                :src="weapon.definition.iconPath || DEFAULT_WEAPON_ICON_PATH"
+                :src="resolveImage(weapon.definition.icon) || DEFAULT_WEAPON_ICON_PATH"
                 alt=""
                 class="portrait"
               />

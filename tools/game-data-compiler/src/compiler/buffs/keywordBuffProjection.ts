@@ -1,4 +1,6 @@
 import type { KeywordBuffActionSource } from '../../source/keywordActions.ts';
+import { projectActionTargetQuery } from '../conditions/combatConditionProjection.ts';
+import { COMPILED_BUFF_TARGET_KINDS } from './compiledBuffMetadata.ts';
 import type { CompiledBuffStepSource } from '../actions/combatActionProjectionTypes.ts';
 import type { CombatActionProjectionContextSource } from '../combatProjectionCommon.ts';
 import type { ScalarSource } from '../../source/scalar.ts';
@@ -61,24 +63,30 @@ export function projectKeywordBuffAction(
   return {
     kind: 'applyBuff',
     parameters: {
-      buffId: action.carrierBuffId,
-      target,
+      buffs: [
+        {
+          buffId: action.carrierBuffId,
+          blackboardAssignments: { duration: operand(action.duration), rate: operand(action.rate) },
+          ...(action.enhancements.length === 0
+            ? {}
+            : {
+                keywordEnhancements: action.enhancements.map(enhancement => ({
+                  triggerBuffIds: enhancement.buffIds,
+                  operation: enhancement.operation.toLowerCase() as 'assign' | 'add' | 'multiply',
+                  value: operand(enhancement.value),
+                })),
+              }),
+          ...(action.overrideChildBuffId
+            ? { stringBlackboardAssignments: { child_buff_id: action.childBuffId.value } }
+            : {}),
+        },
+      ],
+      targets: projectActionTargetQuery(action.target, context, `${path}.target`),
+      source: projectActionTargetQuery(action.source, context, `${path}.source`),
+      [COMPILED_BUFF_TARGET_KINDS]: { target, source: 'caster' },
       inheritSourceSkillCastInfo: true,
       ...(action.asChildBuff ? { asChildBuff: true } : {}),
       ...(action.autoFinishByAction ? { finishByAction: true } : {}),
-      blackboardAssignments: { duration: operand(action.duration), rate: operand(action.rate) },
-      ...(action.enhancements.length === 0
-        ? {}
-        : {
-            keywordEnhancements: action.enhancements.map(enhancement => ({
-              triggerBuffIds: enhancement.buffIds,
-              operation: enhancement.operation.toLowerCase() as 'assign' | 'add' | 'multiply',
-              value: operand(enhancement.value),
-            })),
-          }),
-      ...(action.overrideChildBuffId
-        ? { stringBlackboardAssignments: { child_buff_id: action.childBuffId.value } }
-        : {}),
     },
   };
 }

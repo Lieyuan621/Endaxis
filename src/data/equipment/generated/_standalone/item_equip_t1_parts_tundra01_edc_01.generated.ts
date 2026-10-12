@@ -4,7 +4,7 @@ import type { GearDefinition } from '../../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'item_equip_t1_parts_tundra01_edc_01',
   assetSlug: 'item_equip_t1_parts_tundra01_edc_01',
-  iconPath: '/equipment/tundra01/item_equip_t1_parts_tundra01_edc_01.webp',
+  icon: 'endaxis:equipment/tundra01/item_equip_t1_parts_tundra01_edc_01',
   slotType: 'accessory',
   levelRequirement: 20,
   baseDefense: 6,

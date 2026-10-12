@@ -129,7 +129,8 @@ async function run(
                   action: {
                     kind: 'finishBuffsByTag' as const,
                     parameters: {
-                      target: 'enemy' as const,
+                      targets: { kind: 'fixed', target: 'enemy' } as const,
+                      finishSource: { kind: 'source' } as const,
                       tagQueryType: 'hasAny' as const,
                       buffTags: [
                         consume === 'electrification'
@@ -235,7 +236,7 @@ it.each(compoundStatusFactories.factories)(
       { frame: head.endFrame, kind: 'attachmentTrigger', element: factory.incomingElement },
     ]);
     expect(segments.filter(s => attachmentIds.has(s.buffId))).toHaveLength(1);
-    expect(Boolean(tail.iconPath || tail.iconId)).toBe(true);
+    expect(Boolean(tail.icon)).toBe(true);
     expect(resolveBuffDisplayName(tail.buffId, { te: () => true, t: key => key })).toMatch(
       /^effects.name\./,
     );

@@ -12,16 +12,7 @@ export interface ActionGraphReference {
   readonly $sequence: string | null;
 }
 
-/** 子程序显式使用图引用；作用域省略身份时由调用位置绑定。 */
-export type ActionGraphStepForKind<K extends CombatStepKind> = {
-  [Kind in K]: Kind extends 'once' | 'withActionBlackboardScope'
-    ? Omit<CombatStepForKind<Kind>, 'parameters'> & {
-        readonly parameters: Omit<CombatStepForKind<Kind>['parameters'], 'scopeKey'> & {
-          readonly scopeKey?: string;
-        };
-      }
-    : CombatStepForKind<Kind>;
-}[K];
+export type ActionGraphStepForKind<K extends CombatStepKind> = CombatStepForKind<K>;
 
 /** 调用同一定义内的宏。内部节点由宏图保存，调用点仍有独立执行状态。 */
 export interface ActionGraphMacroCall {
@@ -51,7 +42,7 @@ export interface ActionGraphResourceCall {
 }
 
 export type ActionGraphStep =
-  ActionGraphStepForKind<CombatStepKind> | ActionGraphMacroCall | ActionGraphResourceCall;
+  CombatStepForKind<CombatStepKind> | ActionGraphMacroCall | ActionGraphResourceCall;
 
 export interface ActionGraphNode {
   readonly action: ActionGraphStep;

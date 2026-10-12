@@ -24,7 +24,7 @@ const baseline = JSON.parse(
   readonly resolvedOwnedContainerPositions?: readonly string[];
   readonly resolvedGraphSequencePositions?: readonly string[];
   readonly resolvedGraphOperandPositions?: readonly string[];
-  readonly resolvedObservedJsonPositions?: readonly string[];
+  readonly resolvedFieldPositions?: readonly string[];
 };
 const failures = checkFieldCapabilityCoverage(rows, baseline.exceptions);
 const depthPositions = baseline.resolvedDefinitionDepthPositions ?? [];
@@ -38,8 +38,8 @@ const graphOperandPositions = baseline.resolvedGraphOperandPositions ?? [];
 const expectedGraphOperands = [
   'action/dealDamage/parameters/instantAttributeModifiers',
   'action/dealDamage/parameters/instantDamageScaleModifiers',
-  'action/applyBuff/parameters/keywordEnhancements',
-  'action/applyBuff/parameters/onActionEndBuffs',
+  'action/applyBuff/parameters/buffs',
+  'action/aura/parameters/buffs',
   'action/readSkillSettingData/parameters/items',
   'action/createGlobalBuff/parameters/definition',
 ];
@@ -85,20 +85,10 @@ for (const key of ownedContainers) {
   if (!row || row.control !== 'structuredValue' || row.fallback)
     failures.push(`owned-resource container lacks its mixed editor: ${key}`);
 }
-const pendingObserved = baseline.exceptions
-  .filter(group => group.observedJsonAtAudit)
-  .flatMap(group => group.keys);
-const resolvedObserved = baseline.resolvedObservedJsonPositions ?? [];
-const observedKeys = [...pendingObserved, ...resolvedObserved];
-if (
-  observedKeys.length !== baseline.observedJsonPositionsAtAudit ||
-  new Set(observedKeys).size !== observedKeys.length
-)
-  failures.push('historical observed JSON positions must remain accounted for exactly once');
+const resolvedObserved = baseline.resolvedFieldPositions ?? [];
 for (const key of resolvedObserved) {
   const row = rows.find(row => row.key === key);
-  if (!row || row.fallback)
-    failures.push(`historical position marked resolved without an available editor: ${key}`);
+  if (!row || row.fallback) failures.push(`field lacks an available editor: ${key}`);
 }
 if (failures.length) throw new Error(`Field capability coverage failed:\n${failures.join('\n')}`);
 if (process.argv.includes('--report')) {

@@ -50,13 +50,13 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'beforeOutputBuff',
           priority: 0,
-          sequence: { $sequence: 'conditional_4' },
+          sequence: { $sequence: 'checkCondition_4' },
         },
         {
           key: 'skill3:event:1:sequence:0',
           abilityEvent: 'beforeOutputPhysicalInfliction',
           priority: 0,
-          sequence: { $sequence: 'conditional_8' },
+          sequence: { $sequence: 'checkCondition_8' },
         },
       ],
       actionGraph: {
@@ -66,11 +66,16 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_claym_0015',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_claym_0015',
+                      copiedBlackboardAssignments: { def_up: 'def_up', duration: 'duration' },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: { def_up: 'def_up', duration: 'duration' },
                 },
               },
               next: null,
@@ -79,37 +84,35 @@ const definition = {
               action: {
                 kind: 'createTimedMarker',
                 parameters: {
-                  target: 'caster',
+                  targets: { kind: 'source' },
                   markerId: 'wpn_claym_0015',
                   durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
                   autoFinishByAction: false,
+                  timeDomain: 'globalScaled',
                 },
               },
               next: 'applyBuff_1',
             },
-            conditional_3: {
+            checkCondition_3: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+              },
+              next: 'createTimedMarker_2',
+            },
+            checkCondition_4: {
+              action: {
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'createTimedMarker_2' },
               },
-              next: null,
+              next: 'checkCondition_3',
             },
-            conditional_4: {
+            checkCondition_8: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-                whenTrue: { $sequence: 'conditional_3' },
               },
-              next: null,
-            },
-            conditional_8: {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-                whenTrue: { $sequence: 'conditional_3' },
-              },
-              next: null,
+              next: 'checkCondition_3',
             },
           },
           dataNodes: {
@@ -118,15 +121,12 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                returnTrueIfNotExists: true,
                 target: 'caster',
                 markerId: 'wpn_claym_0015',
               },
             },
             data_3: {
-              type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-            },
-            data_4: {
               type: 'boolean',
               expression: {
                 kind: 'eventBuffTagsMatch',
@@ -134,7 +134,7 @@ const definition = {
                 buffTags: ['Skill/Character/Common/Affixes/Weak'],
               },
             },
-            data_5: {
+            data_4: {
               type: 'boolean',
               expression: { kind: 'eventPhysicalInflictionTypeIn', types: ['knockDown'] },
             },
@@ -150,7 +150,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_claym_0015',
-  iconPath: '/weapons/claym/wpn_claym_0015.webp',
+  icon: 'endaxis:weapons/claym/wpn_claym_0015',
   buffDefinitions: {
     buff_wpn_claym_0015: {
       stackingType: 'refresh',
@@ -159,8 +159,7 @@ const definition = {
       durationSeconds: { blackboardKey: 'duration' },
       presentation: {
         visible: true,
-        iconId: 'icon_battle_buff_def_up',
-        iconPath: '/icons/icon_battle_buff_def_up.webp',
+        icon: 'endaxis:icons/icon_battle_buff_def_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

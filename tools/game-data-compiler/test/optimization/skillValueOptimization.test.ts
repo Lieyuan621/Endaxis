@@ -1,9 +1,12 @@
+import { createNativeEventFixture } from '../../../../src/core/combat/events/nativeEventTestFixture';
 import { skillFixture } from '../../../../src/test/skillFixture';
+import { extractResourceDataNodes } from '../../src/compiler/extractGraphDataNodes.ts';
 /** 验证黑板裁剪的真实读取、缺键错误、跨入口保留和序列生命周期。 */
 import { describe, expect, it } from 'vitest';
 import type { CombatStepForKind } from '../../src/compiler/intermediateDefinitions.ts';
 import type { SkillDefinition } from '../../src/compiler/intermediateDefinitions.ts';
 import { pruneUnusedGraphSkillValues } from '../../src/compiler/optimization/graphValueOptimization.ts';
+import { optimizeResourceGraphs } from '../../src/compiler/optimization/resourceGraphOptimization.ts';
 import { compileGraphSequence } from '../support/graphSequence.ts';
 import { CombatActionSequenceRuntime } from '../../../../src/core/combat/actions/combatActionSequenceRuntime.ts';
 import {
@@ -24,8 +27,13 @@ const assign = (key: string, value: number): CombatStepForKind<'modifyActionValu
   parameters: { key, operation: 'assign', value: literal(value) },
 });
 const spend = (key: string): ActionGraphStep => ({
-  kind: 'changeResourceByActionValue',
-  parameters: { resource: 'sp', recipient: 'team', amount: board(key) },
+  kind: 'changeResource',
+  parameters: {
+    resource: 'sp',
+    source: { kind: 'owner' },
+    targets: { kind: 'owner' },
+    amount: board(key),
+  },
 });
 const signal: ActionGraphStep = {
   kind: 'triggerCustomAbilityEvent',
@@ -49,19 +57,6 @@ function chain(
     };
   });
   return { $sequence: `${prefix}-0` };
-}
-
-function scope(
-  nodes: Record<string, ActionGraphNode>,
-  prefix: string,
-  parameters: CombatStepForKind<'withActionBlackboardScope'>['parameters'],
-  ...steps: ActionGraphStep[]
-): ActionGraphStep {
-  return {
-    kind: 'withActionBlackboardScope',
-    parameters,
-    body: chain(nodes, `${prefix}-body`, steps),
-  };
 }
 
 function skill(
@@ -104,14 +99,27 @@ function executeSkillPrograms(input: SkillDefinition): readonly number[] {
   const observed: number[] = [];
   const operations = new ActionBlackboardOperationExecutor({
     execute(step, context) {
-      if (step.kind === 'changeResourceByActionValue') {
-        observed.push(resolveActionValueOperand(step.parameters.amount, context!.blackboard));
+      if (step.kind === 'changeResource') {
+        observed.push(
+          typeof step.parameters.amount === 'number'
+            ? step.parameters.amount
+            : resolveActionValueOperand(step.parameters.amount, context!.blackboard),
+        );
+      }
+      if (step.kind === 'createSpatialPointTargets') {
+        observed.push(resolveActionValueOperand(step.parameters.count, context!.blackboard));
       }
       return true;
     },
     evaluate: () => true,
   });
-  const runtime = new CombatActionSequenceRuntime(operations, { blackboard });
+  const runtime = new CombatActionSequenceRuntime(
+    operations,
+    { blackboard },
+    {},
+    createNativeEventFixture().semanticEvents,
+    'fixture',
+  );
   for (const entry of input.scheduledSequences) {
     const program = runtime.createSequence(compileGraphSequence(entry.sequence, input.actionGraph));
     program.reset({});
@@ -121,6 +129,413 @@ function executeSkillPrograms(input: SkillDefinition): readonly number[] {
 }
 
 describe('技能黑板和算术写入裁剪', () => {
+  it.each([false, true])('无人读取的逻辑点及距离写入可删，动态数量的读取仍保留：%s', dynamic => {
+    const input = skill(
+      nodes => {
+        const point = chain(nodes, 'point', [
+          {
+            kind: 'createSpatialPointTargets',
+            parameters: {
+              saveToContextKey: 'points',
+              count: dynamic ? board('distance') : literal(1),
+            },
+          },
+        ]);
+        const yes = chain(nodes, 'yes', [assign('distance', 3)]);
+        const no = chain(nodes, 'no', [assign('distance', 4)]);
+        nodes[yes.$sequence!] = { ...nodes[yes.$sequence!]!, next: point.$sequence };
+        nodes[no.$sequence!] = { ...nodes[no.$sequence!]!, next: point.$sequence };
+        return [
+          {
+            startFrame: 0,
+            sequence: chain(nodes, 'entry', [
+              assign('distance', 0),
+              {
+                kind: 'ifElse',
+                parameters: { alwaysNext: true },
+                condition: chain(nodes, 'condition', [
+                  {
+                    kind: 'checkCondition',
+                    parameters: {
+                      condition: {
+                        kind: 'actionValueCompare',
+                        left: board('distance'),
+                        operator: 'lessOrEqual',
+                        right: literal(10),
+                      },
+                    },
+                  },
+                ]),
+                whenTrue: yes,
+                whenFalse: no,
+              },
+            ]),
+          },
+        ];
+      },
+      { distance: 0 },
+    );
+    const result = optimizeResourceGraphs(
+      input,
+      'apply',
+      value => pruneUnusedGraphSkillValues(value).skill,
+    ).value;
+    const actions = Object.values(result.actionGraph.main.nodes).map(node => node.action);
+    expect(actions.some(action => action.kind === 'modifyActionValue')).toBe(dynamic);
+    expect(actions.some(action => action.kind === 'createSpatialPointTargets')).toBe(dynamic);
+    if (!dynamic) expect(result.blackboard).not.toHaveProperty('distance');
+    expect(executeSkillPrograms(input)).toEqual([dynamic ? 3 : 1]);
+    expect(executeSkillPrograms(result)).toEqual(dynamic ? [3] : []);
+  });
+
+  it.each([false, true])('动画结束回调的无用写入可删空，后续读取仍保留：%s', readAfter => {
+    const input = skill(
+      nodes => [
+        {
+          startFrame: 0,
+          sequence: chain(nodes, 'main', [
+            {
+              kind: 'playAnimation',
+              parameters: { durationSeconds: 1, blendOutSeconds: 0, executeOnNormalEndOnly: true },
+              onEnd: chain(nodes, 'end', [assign('value', 7)]),
+            },
+          ]),
+        },
+        ...(readAfter
+          ? [{ startFrame: 60, sequence: chain(nodes, 'read', [spend('value')]) }]
+          : []),
+      ],
+      { value: 0 },
+    );
+    const result = optimizeResourceGraphs(
+      input,
+      'apply',
+      value => pruneUnusedGraphSkillValues(value).skill,
+    ).value;
+    expect(
+      Object.values(result.actionGraph.main.nodes).some(
+        node => node.action.kind === 'playAnimation',
+      ),
+    ).toBe(readAfter);
+    if (!readAfter) {
+      expect(result.scheduledSequences).toEqual([]);
+      expect(result.blackboard).not.toHaveProperty('value');
+      return;
+    }
+    const boardState = new ActionBlackboard({ value: 0 });
+    const runtime = new CombatActionSequenceRuntime(
+      new ActionBlackboardOperationExecutor({
+        execute: () => true,
+        evaluate: () => true,
+      }),
+      { blackboard: boardState },
+    );
+    const action = runtime.createSequence(
+      compileGraphSequence(result.scheduledSequences[0]!.sequence, result.actionGraph),
+    );
+    action.tryExecute({});
+    action.tick(1, {});
+    expect(boardState.getNumber('value')).toBe(7);
+  });
+
+  it.each([
+    [false, false],
+    [true, false],
+    [false, true],
+    [true, true],
+  ])('无外部消费者的局部计算可删除：外部读取=%s，分支自增=%s', (externalRead, branchWrite) => {
+    const input = skill(
+      nodes => {
+        const condition = chain(nodes, 'condition', [
+          ...(!branchWrite ? [assign('local', 5)] : []),
+          {
+            kind: 'checkCondition',
+            parameters: {
+              condition: {
+                kind: 'actionValueCompare',
+                left: board('local'),
+                operator: 'greater',
+                right: literal(0),
+              },
+            },
+          },
+        ]);
+        return [
+          {
+            startFrame: 0,
+            sequence: chain(nodes, 'entry', [
+              {
+                kind: 'ifElse',
+                parameters: { alwaysNext: true },
+                condition,
+                whenTrue: branchWrite
+                  ? chain(nodes, 'increment', [
+                      {
+                        kind: 'calculateActionValue',
+                        parameters: {
+                          key: 'local',
+                          operation: 'add',
+                          left: board('local'),
+                          right: literal(1),
+                        },
+                      },
+                    ])
+                  : { $sequence: null },
+                whenFalse: { $sequence: null },
+              },
+              ...(externalRead ? [spend('local')] : []),
+            ]),
+          },
+        ];
+      },
+      { local: 1 },
+    );
+    const result = pruneUnusedGraphSkillValues(input).skill;
+    expect(executeSkillPrograms(result)).toEqual(executeSkillPrograms(input));
+    expect(
+      Object.values(result.actionGraph.main.nodes).some(
+        node =>
+          node.action.kind === 'modifyActionValue' || node.action.kind === 'calculateActionValue',
+      ),
+    ).toBe(externalRead);
+  });
+
+  it.each([false, true])('分支返回值仅在父节点使用时保留：alwaysNext=%s', alwaysNext => {
+    const input = skill(
+      nodes => [
+        {
+          startFrame: 0,
+          sequence: chain(nodes, 'main', [
+            {
+              kind: 'ifElse',
+              parameters: { alwaysNext },
+              condition: chain(nodes, 'condition', [signal]),
+              whenTrue: chain(nodes, 'body', [assign('unused', 7)]),
+              whenFalse: { $sequence: null },
+            },
+          ]),
+        },
+      ],
+      { unused: 0 },
+    );
+    const result = pruneUnusedGraphSkillValues(input);
+    expect(result.report.removedWrites).toHaveLength(alwaysNext ? 1 : 0);
+    expect(executeSkillPrograms(result.skill)).toEqual(executeSkillPrograms(input));
+  });
+
+  it('异步读取保护共享值，但不阻止同步区域的独立死写入删除', () => {
+    let response: ActionGraphReference;
+    const input = skill(
+      nodes => {
+        response = chain(nodes, 'response', [spend('shared')]);
+        return [
+          {
+            startFrame: 0,
+            sequence: chain(nodes, 'main', [
+              spend('local'),
+              {
+                kind: 'listenForCombatEvents',
+                parameters: {
+                  responses: [
+                    {
+                      key: 'listener',
+                      event: { kind: 'knockDownOutput' },
+                      sequence: response,
+                    },
+                  ],
+                },
+              },
+              assign('shared', 7),
+              assign('local', 9),
+            ]),
+          },
+        ];
+      },
+      { local: 3, shared: 1 },
+    );
+    const result = pruneUnusedGraphSkillValues(input);
+    expect(result.report.removedWrites.map(item => item.key)).toEqual(['local']);
+    // 延后执行同一变量板上的事件入口，验证注册之后的写入仍能被观察。
+    const executeWithResponse = (value: SkillDefinition) =>
+      executeSkillPrograms({
+        ...value,
+        scheduledSequences: [...value.scheduledSequences, { startFrame: 1, sequence: response! }],
+      });
+    expect(executeWithResponse(result.skill)).toEqual([3, 7]);
+    expect(executeWithResponse(result.skill)).toEqual(executeWithResponse(input));
+  });
+
+  it.each(['switch', 'anyCondition'] as const)('%s 的子序列出口连接外层后继', kind => {
+    const input = skill(
+      nodes => {
+        const body = chain(nodes, 'body', [spend('value'), assign('value', 7)]);
+        const action: ActionGraphStep =
+          kind === 'switch'
+            ? {
+                kind,
+                parameters: { choice: literal(1), alwaysNext: true },
+                options: [{ value: literal(1), sequence: body }],
+              }
+            : { kind, parameters: {}, conditions: [body] };
+        return [
+          {
+            startFrame: 0,
+            sequence: chain(nodes, 'main', [action, spend('value'), assign('value', 9)]),
+          },
+        ];
+      },
+      { value: 3 },
+    );
+    const result = pruneUnusedGraphSkillValues(input);
+    expect(executeSkillPrograms(result.skill)).toEqual([3, 7]);
+    expect(executeSkillPrograms(result.skill)).toEqual(executeSkillPrograms(input));
+    expect(result.report.removedWrites.map(item => item.path)).toEqual([
+      'scheduledSequences[0].sequence→main-2',
+    ]);
+  });
+
+  it('多个调度分别保留跨入口用途，删除不被其他入口观察的末尾写入', () => {
+    const input = skill(
+      nodes => [
+        {
+          startFrame: 0,
+          sequence: chain(nodes, 'first', [
+            spend('local'),
+            assign('local', 9),
+            assign('shared', 7),
+          ]),
+        },
+        { startFrame: 1, sequence: chain(nodes, 'second', [spend('shared')]) },
+      ],
+      { local: 3, shared: 1 },
+    );
+    const result = pruneUnusedGraphSkillValues(input);
+    expect(executeSkillPrograms(result.skill)).toEqual([3, 7]);
+    expect(result.report.removedWrites.map(item => item.key)).toEqual(['local']);
+  });
+
+  it.each([false, true])('分支末尾写入依据外层后继读取保留：%s', readAfter => {
+    const input = skill(
+      nodes => {
+        const branch = chain(nodes, 'branch', [spend('value'), assign('value', 7)]);
+        const condition = chain(nodes, 'condition', [signal]);
+        return [
+          {
+            startFrame: 0,
+            sequence: chain(nodes, 'main', [
+              {
+                kind: 'ifElse',
+                parameters: { alwaysNext: true },
+                condition,
+                whenTrue: branch,
+                whenFalse: { $sequence: null },
+              },
+              ...(readAfter ? [spend('value')] : []),
+            ]),
+          },
+        ];
+      },
+      { value: 3 },
+    );
+    const result = pruneUnusedGraphSkillValues(input);
+    expect(executeSkillPrograms(result.skill)).toEqual(readAfter ? [3, 7] : [3]);
+    expect(executeSkillPrograms(result.skill)).toEqual(executeSkillPrograms(input));
+    expect(result.report.removedWrites).toHaveLength(readAfter ? 0 : 1);
+  });
+
+  it('共享分支合并所有调用点的后继读取', () => {
+    const input = skill(
+      nodes => {
+        const branch = chain(nodes, 'shared', [spend('value'), assign('value', 7)]);
+        const condition = chain(nodes, 'condition', [signal]);
+        const call: ActionGraphStep = {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition,
+          whenTrue: branch,
+          whenFalse: { $sequence: null },
+        };
+        return [{ startFrame: 0, sequence: chain(nodes, 'main', [call, spend('value'), call]) }];
+      },
+      { value: 3 },
+    );
+    const result = pruneUnusedGraphSkillValues(input);
+    expect(result.report.removedWrites).toEqual([]);
+    expect(executeSkillPrograms(result.skill)).toEqual(executeSkillPrograms(input));
+  });
+
+  it('保留读取之前的写入，删除同一入口最后一次读取之后的写入', () => {
+    const input = {
+      ...single([assign('value', 3), spend('value'), assign('value', 7)]),
+      blackboard: { value: 0 },
+    };
+    const result = pruneUnusedGraphSkillValues(input);
+    expect(executeSkillPrograms(result.skill)).toEqual(executeSkillPrograms(input));
+    expect(result.report.removedWrites).toEqual([
+      { path: 'scheduledSequences[0].sequence→main-2', key: 'value' },
+    ]);
+    expect(pruneUnusedGraphSkillValues(result.skill).report.removedWrites).toEqual([]);
+  });
+
+  it('后续调度读取和受保护变量不能当作直链末尾的死写入', () => {
+    const input = skill(
+      nodes => [
+        { startFrame: 0, sequence: chain(nodes, 'first', [spend('value'), assign('value', 7)]) },
+        { startFrame: 1, sequence: chain(nodes, 'second', [spend('value')]) },
+      ],
+      { value: 3 },
+    );
+    expect(executeSkillPrograms(pruneUnusedGraphSkillValues(input).skill)).toEqual([3, 7]);
+    const protectedInput = {
+      ...single([spend('value'), assign('value', 7)]),
+      blackboard: { value: 3 },
+    };
+    expect(
+      pruneUnusedGraphSkillValues(protectedInput, new Set(['value'])).report.removedWrites,
+    ).toEqual([]);
+  });
+
+  it('后续 Assign 在容差内保留旧值，不能据此删除先前写入', () => {
+    const input = {
+      ...single([assign('value', 1), assign('value', 1.000005), spend('value')]),
+      blackboard: { value: 0 },
+    };
+    const result = pruneUnusedGraphSkillValues(input);
+    expect(executeSkillPrograms(result.skill)).toEqual([1]);
+    expect(result.report.removedWrites).toEqual([]);
+    const withoutFirst = {
+      ...single([assign('value', 1.000005), spend('value')]),
+      blackboard: { value: 0 },
+    };
+    expect(executeSkillPrograms(withoutFirst)[0]).not.toBe(1);
+  });
+
+  it('投射物实体赋值是发射动作的输入，不依赖额外作用域节点保留来源', () => {
+    const input = single([
+      assign('payload', 7),
+      {
+        kind: 'launchProjectile',
+        parameters: {
+          inheritActionBlackboard: false,
+          entityAssignments: { EntityBB_payload: board('payload') },
+          finish: 1,
+          recycleDelaySeconds: 0,
+        },
+        callbacks: [],
+      },
+    ]);
+    const result = pruneUnusedGraphSkillValues({
+      ...input,
+      blackboard: { payload: 0, unused: 3 },
+    });
+    expect(result.skill.blackboard).toEqual({ payload: 0 });
+    expect(result.report.removedWrites).toEqual([]);
+    expect(readKinds(result.skill, result.skill.scheduledSequences[0]!.sequence)).toEqual([
+      'modifyActionValue',
+      'launchProjectile',
+    ]);
+  });
+
   it('删除不影响行为的写入与初值，保留事件且不改变输入', () => {
     const input = single([assign('unused', 3), signal]);
     const withBlackboard: SkillDefinition = {
@@ -157,8 +572,13 @@ describe('技能黑板和算术写入裁剪', () => {
               },
             },
             {
-              kind: 'changeResourceByActionValue',
-              parameters: { resource: 'sp', recipient: 'team', amount: board('second') },
+              kind: 'changeResource',
+              parameters: {
+                resource: 'sp',
+                source: { kind: 'owner' },
+                targets: { kind: 'owner' },
+                amount: board('second'),
+              },
             },
           ]),
         },
@@ -229,8 +649,13 @@ describe('技能黑板和算术写入裁剪', () => {
           startFrame: 10,
           sequence: chain(nodes, 'later', [
             {
-              kind: 'changeResourceByActionValue',
-              parameters: { resource: 'sp', recipient: 'team', amount: board('later') },
+              kind: 'changeResource',
+              parameters: {
+                resource: 'sp',
+                source: { kind: 'owner' },
+                targets: { kind: 'owner' },
+                amount: board('later'),
+              },
             },
           ]),
         },
@@ -246,10 +671,11 @@ describe('技能黑板和算术写入裁剪', () => {
                     event: { kind: 'skillHit', skillKey: 'battleSkill', scope: 'operator' },
                     sequence: chain(nodes, 'listener-body', [
                       {
-                        kind: 'changeResourceByActionValue',
+                        kind: 'changeResource',
                         parameters: {
                           resource: 'sp',
-                          recipient: 'team',
+                          source: { kind: 'owner' },
+                          targets: { kind: 'owner' },
                           amount: board('eventValue'),
                         },
                       },
@@ -284,7 +710,7 @@ describe('技能黑板和算术写入裁剪', () => {
     expect(pruneUnusedGraphSkillValues(input, new Set(['patched'])).skill).toBe(input);
   });
 
-  it('序列不能删空，恢复保留动作时也恢复其输入初值', () => {
+  it('时间线不读取根序列返回值，允许删空无用写入及其输入初值', () => {
     const input = skill(
       nodes => [
         {
@@ -305,177 +731,10 @@ describe('技能黑板和算术写入裁剪', () => {
       { input: 1, unused: 0, unrelated: 5 },
     );
     const result = pruneUnusedGraphSkillValues(input);
-    expect(result.report.retainedLifetimePaths).toHaveLength(1);
-    expect(result.skill.scheduledSequences).toEqual(input.scheduledSequences);
-    expect(result.skill.blackboard).toEqual({ input: 1, unused: 0 });
-  });
-
-  it('父快照覆盖子初值，保留子程序读写涉及的父键，但不裁剪子写入', () => {
-    const input = skill(
-      nodes => [
-        {
-          startFrame: 0,
-          sequence: chain(nodes, 'main', [
-            assign('unused', 3),
-            scope(
-              nodes,
-              'child',
-              {
-                scopeKey: 'child',
-                initialValues: { inherited: 1, localUnused: 0 },
-                inheritParent: true,
-              },
-              assign('localUnused', 7),
-              spend('inherited'),
-            ),
-          ]),
-        },
-      ],
-      { inherited: 9, unused: 2 },
-    );
-    const result = pruneUnusedGraphSkillValues(input);
-    expect(result.report.retainedReason).toBeUndefined();
-    expect(result.report.removedInitialKeys).toEqual(['unused']);
-    expect(result.report.removedWrites.map(item => item.key)).toEqual(['unused']);
-    const remaining = readKinds(result.skill, result.skill.scheduledSequences[0]!.sequence);
-    expect(remaining).toEqual(['withActionBlackboardScope']);
-    expect(executeSkillPrograms(input)).toEqual([9]);
+    expect(result.report.retainedLifetimePaths).toEqual([]);
+    expect(result.skill.scheduledSequences[0]!.sequence.$sequence).toBeNull();
+    expect(result.skill.blackboard).toEqual({});
     expect(executeSkillPrograms(result.skill)).toEqual(executeSkillPrograms(input));
-  });
-
-  it('同 scopeKey 的后续入口沿用首次创建的父快照，不能按后续 inheritParent=false 删值', () => {
-    const input = skill(
-      nodes => [
-        {
-          startFrame: 0,
-          sequence: chain(nodes, 'first', [
-            scope(
-              nodes,
-              'first',
-              { scopeKey: 'shared', initialValues: {}, inheritParent: true },
-              signal,
-            ),
-          ]),
-        },
-        {
-          startFrame: 10,
-          sequence: chain(nodes, 'second', [
-            scope(
-              nodes,
-              'second',
-              { scopeKey: 'shared', initialValues: { inherited: 1 }, inheritParent: false },
-              spend('inherited'),
-            ),
-          ]),
-        },
-      ],
-      { inherited: 9, unused: 2 },
-    );
-    const result = pruneUnusedGraphSkillValues(input);
-    expect(result.skill.blackboard).toEqual({ inherited: 9 });
-    expect(executeSkillPrograms(input)).toEqual([9]);
-    expect(executeSkillPrograms(result.skill)).toEqual(executeSkillPrograms(input));
-  });
-
-  it('shareParentBlackboard 的子写入能被其他入口读取，保留同一父板及近似初值', () => {
-    const input = skill(
-      nodes => [
-        {
-          startFrame: 0,
-          sequence: chain(nodes, 'main', [
-            scope(
-              nodes,
-              'shared',
-              {
-                scopeKey: 'shared',
-                initialValues: {},
-                inheritParent: true,
-                shareParentBlackboard: true,
-              },
-              assign('value', 3),
-            ),
-            spend('value'),
-          ]),
-        },
-      ],
-      { value: 3.000001, unused: 9 },
-    );
-    const result = pruneUnusedGraphSkillValues(input);
-    expect(result.skill.blackboard).toEqual({ value: 3.000001 });
-    expect(executeSkillPrograms(input)).toEqual([3.000001]);
-    expect(executeSkillPrograms(result.skill)).toEqual(executeSkillPrograms(input));
-  });
-
-  it('独立子板的 entityAssignments 仍严格读取父板，实体初值被赋值覆盖', () => {
-    const input = skill(
-      nodes => [
-        {
-          startFrame: 0,
-          sequence: chain(nodes, 'main', [
-            scope(
-              nodes,
-              'isolated',
-              {
-                scopeKey: 'isolated',
-                initialValues: {},
-                inheritParent: false,
-                entityInitialValues: { assigned: 1 },
-                entityAssignments: { assigned: board('source') },
-              },
-              spend('assigned'),
-            ),
-          ]),
-        },
-      ],
-      { source: 6, unused: 9 },
-    );
-    const result = pruneUnusedGraphSkillValues(input);
-    expect(result.skill.blackboard).toEqual({ source: 6 });
-    expect(executeSkillPrograms(input)).toEqual([6]);
-    expect(executeSkillPrograms(result.skill)).toEqual(executeSkillPrograms(input));
-  });
-
-  it('实体整板继承及其外层子作用域继续阻止技能裁剪', () => {
-    const escaped: ActionGraphStep = {
-      kind: 'spawnAbilityEntity',
-      parameters: {
-        abilityEntityId: 'entity',
-        dieWhenSourceDies: true,
-        inheritActionBlackboard: true,
-      },
-    };
-    for (const build of [
-      (nodes: Record<string, ActionGraphNode>) =>
-        chain(nodes, 'main', [assign('copied', 1), escaped]),
-      (nodes: Record<string, ActionGraphNode>) =>
-        chain(nodes, 'main', [
-          assign('copied', 1),
-          scope(
-            nodes,
-            'child',
-            { scopeKey: 'child', initialValues: {}, inheritParent: true },
-            escaped,
-          ),
-        ]),
-      (nodes: Record<string, ActionGraphNode>) =>
-        chain(nodes, 'main', [
-          assign('copied', 1),
-          scope(
-            nodes,
-            'isolated',
-            { scopeKey: 'isolated', initialValues: {}, inheritParent: false },
-            escaped,
-          ),
-        ]),
-    ]) {
-      const input = skill(nodes => [{ startFrame: 0, sequence: build(nodes) }], {
-        copied: 0,
-        mayBeReadByChild: 5,
-      });
-      const result = pruneUnusedGraphSkillValues(input);
-      expect(result.skill).toBe(input);
-      expect(result.report.retainedReason).toBe('unresolved-blackboard-access');
-    }
   });
 });
 
@@ -491,3 +750,44 @@ function readKinds(skillValue: SkillDefinition, reference: ActionGraphReference)
   }
   return kinds;
 }
+
+it('无用途夹角计算可正式化，存在跨调度消费者时拒绝发布', () => {
+  const angle: ActionGraphStep = {
+    kind: 'saveTwoDirectionAngle',
+    parameters: {
+      outputKey: 'angle',
+      direction1Source: { kind: 'source' },
+      direction1Target: { kind: 'inputTarget' },
+      direction1Type: 'CameraForward',
+      direction2Source: { kind: 'source' },
+      direction2Target: { kind: 'mainTarget', owner: { kind: 'owner' } },
+      direction2Type: 'SourceToTarget',
+    },
+  };
+  const create = (consumed: boolean) =>
+    skill(
+      nodes => [
+        {
+          startFrame: 0,
+          sequence: chain(nodes, 'write', [
+            angle,
+            {
+              kind: 'modifyActionValue',
+              parameters: { key: 'copy', operation: 'assign', value: board('angle') },
+            },
+          ]),
+        },
+        ...(consumed ? [{ startFrame: 10, sequence: chain(nodes, 'read', [spend('copy')]) }] : []),
+      ],
+      { angle: 0, copy: 0 },
+    );
+  const unused = pruneUnusedGraphSkillValues(create(false));
+  expect(unused.skill.actionGraph.main.nodes).toEqual({});
+  expect(unused.skill.blackboard).toEqual({});
+  expect(() => extractResourceDataNodes(unused.skill.actionGraph)).not.toThrow();
+  const used = create(true);
+  expect(pruneUnusedGraphSkillValues(used).skill).toBe(used);
+  expect(() => extractResourceDataNodes(used.actionGraph)).toThrow(
+    'direction angle still affects combat',
+  );
+});

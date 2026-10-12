@@ -1,5 +1,9 @@
+import { targetFixture } from './sourceFixtures.ts';
 import { describe, expect, it } from 'vitest';
-import { inspectExternalBlackboardUsage } from '../src/compiler/references/externalBlackboardUsage.ts';
+import {
+  collectExternalBuffBlackboardReads,
+  inspectExternalBlackboardUsage,
+} from '../src/compiler/references/externalBlackboardUsage.ts';
 import type { DefinitionReferenceSource } from '../src/source/referenceGraph.ts';
 import { parseProjectileBlackboardReceiverSource } from '../src/source/projectileRuntime.ts';
 
@@ -16,6 +20,42 @@ const ref = (
 });
 
 describe('黑板接收资源的读取检查', () => {
+  it('普通接续施法不继承动作变量，但实体变量仍检查后续技能', () => {
+    const load = () => ({
+      value: { key: 'camera_angle', inputValueKey: 'EntityBB_count' },
+      references: [],
+    });
+    const local = inspectExternalBlackboardUsage([ref('next')], load, undefined, 'action');
+    expect(local.mentionedKeys.size).toBe(0);
+    expect(local.unresolved).toEqual([]);
+    const shared = inspectExternalBlackboardUsage([ref('next')], load, undefined, 'entity');
+    expect(shared.mentionedKeys.has('EntityBB_count')).toBe(true);
+    const callback = { ...ref('callback'), usage: 'projectileHit' };
+    expect(
+      inspectExternalBlackboardUsage([callback], load, undefined, 'action').mentionedKeys.has(
+        'camera_angle',
+      ),
+    ).toBe(true);
+  });
+  it('声明不消费上游赋值，真实读取和字符串初值仍保护对应键', () => {
+    const inspect = (value: unknown) =>
+      inspectExternalBlackboardUsage([ref('receiver')], () => ({ value, references: [] }));
+    const declaration = { key: 'EntityBB_angle', valueDouble: 0, valueStr: '', isDynamic: true };
+    expect(inspect({ entityBlackboard: [declaration] }).mentionedKeys.has('EntityBB_angle')).toBe(
+      false,
+    );
+    expect(
+      inspect({
+        entityBlackboard: [declaration],
+        inputValueKey: 'EntityBB_angle',
+      }).mentionedKeys.has('EntityBB_angle'),
+    ).toBe(true);
+    expect(
+      inspect({
+        blackboard: [{ ...declaration, key: 'alias', valueStr: 'EntityBB_angle' }],
+      }).mentionedKeys.has('EntityBB_angle'),
+    ).toBe(true);
+  });
   it('Buff 继承名单不执行技能，同一技能若同时有真实回调仍须检查', () => {
     const inheritance = { ...ref('next'), usage: 'buffInheritance' };
     const loaded: string[] = [];
@@ -28,6 +68,13 @@ describe('黑板接收资源的读取检查', () => {
     expect(
       inspectExternalBlackboardUsage([inheritance, ref('next')], load).mentionedKeys.has('angle'),
     ).toBe(true);
+    expect(loaded).toEqual(['next']);
+    const ended = ['finish', 'finishQuery'].map(usage => ({
+      ...ref('existing'),
+      kind: 'buff' as const,
+      usage,
+    }));
+    expect(inspectExternalBlackboardUsage(ended, load).mentionedKeys.size).toBe(0);
     expect(loaded).toEqual(['next']);
   });
   it('动态候选带来的新资源会触发重新证明，失效的结论不留作成功', () => {
@@ -139,4 +186,25 @@ describe('黑板接收资源的读取检查', () => {
     expect(loaded).toEqual(['missing']);
     expect(usage.unresolved.map(reference => reference.id)).toEqual(['missing', 'dynamic']);
   });
+});
+
+it('外部 Buff 读取保守保护同名键，非法读取配置不能当作无读取', () => {
+  const read = {
+    $type: 'Beyond.Gameplay.Core.GetTargetBuffBBAction+Data, Gameplay.Beyond',
+    isEnable: true,
+    priorityLevel: 'Default',
+    priorityOffset: 0,
+    serverActionIndex: 1,
+    targetSettings: targetFixture('Target'),
+    buffId: 'buff',
+    desiredKey: 'shared',
+    blackboardKey: 'result',
+  };
+  const resources = [{ sourcePath: 'external', value: { actions: [read] } }];
+  expect(collectExternalBuffBlackboardReads(resources)).toEqual(new Set(['shared']));
+  expect(() =>
+    collectExternalBuffBlackboardReads([
+      { sourcePath: 'invalid', value: { ...read, desiredKey: '' } },
+    ]),
+  ).toThrow();
 });

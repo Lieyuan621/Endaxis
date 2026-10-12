@@ -1,33 +1,270 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
 import type {
+  ActionGraphDefinition,
   ActionGraphNode,
   ActionGraphStep,
 } from '../../../../packages/game-data-contract/src/actionGraph';
 import type { ResolvedActionSequence } from '../../compiler/combatProgram';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import { AbilitySystemRuntime } from '../abilities/abilitySystemRuntime';
+import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
+import { AbilityEventDispatcher } from '../events/abilityEventDispatcher';
+import type { AbilityEventPayloadMap } from '../events/combatAbilityEvent';
+import { CombatSemanticEventRuntime } from '../events/combatSemanticEventRuntime';
+import { createNativeEventFixture } from '../events/nativeEventTestFixture';
+import type { CombatOperationExecutor } from '../skills/skillRuntime';
+import { SkillSlotOperationExecutor } from '../skills/skillSlotOperationExecutor';
 import { ActionBlackboard } from './actionBlackboard';
 import { CombatActionSequenceRuntime } from './combatActionSequenceRuntime';
-import type { CombatOperationExecutor } from '../skills/skillRuntime';
-import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
-import { createNativeEventFixture } from '../events/nativeEventTestFixture';
-import { CombatSemanticEventRuntime } from '../events/combatSemanticEventRuntime';
-import { AbilityEventDispatcher } from '../events/abilityEventDispatcher';
-import { AbilitySystemRuntime } from '../abilities/abilitySystemRuntime';
-import { SkillSlotOperationExecutor } from '../skills/skillSlotOperationExecutor';
-import type { AbilityEventPayloadMap } from '../events/combatAbilityEvent';
 
 function operation(flag: string): ActionGraphStep {
   return {
-    kind: 'setContextFlag',
-    parameters: { flag, value: true, target: 'caster' },
+    kind: 'triggerCustomAbilityEvent',
+    parameters: { eventName: flag, eventParam: 0, target: 'caster' as const },
   };
 }
+
+it.each([
+  [false, 0.125, -1, 4],
+  [false, 0.125, 0.125, 2],
+  [true, 0.125, -1, 4],
+  [false, 0, -1, 4],
+] as const)(
+  'ChannelingV2 补轮次并保留各轮时间，恢复不重放：%s/%s/%s',
+  (executeEachFrame, triggerIntervalSeconds, targetTriggerIntervalSeconds, expected) => {
+    let frame = 0;
+    let hits = 0;
+    const context = { blackboard: new ActionBlackboard() };
+    const runtime = new CombatActionSequenceRuntime(
+      {
+        frame: () => frame,
+        queryTargets: () => [{ kind: 'enemy' }],
+        execute: () => {
+          hits++;
+          return true;
+        },
+        evaluate: () => true,
+      },
+      context,
+    );
+    const program = compileGraphEntry('channeling-v2', 'loop', {
+      loop: {
+        action: {
+          kind: 'repeatEachTick',
+          parameters: {
+            nativeChanneling: {
+              catchUpMissedTicks: true,
+              target: { kind: 'fixed', target: 'enemy' },
+              executeEachFrame,
+              triggerIntervalSeconds,
+              maxCountPerTarget: -1,
+              targetTriggerIntervalSeconds,
+            },
+          },
+          body: { $sequence: 'hit' },
+        },
+        next: null,
+      },
+      hit: { action: operation('hit'), next: null },
+    });
+    const action = runtime.createSequence(program);
+    action.execute({});
+    frame = 3;
+    action.tick(0.375, {});
+    expect(hits).toBe(expected);
+    const restored = runtime.createSequence(program, context, structuredClone(action.runtimeState));
+    restored.tick(0, {});
+    expect(hits).toBe(expected);
+    frame = 4;
+    restored.tick(0.125, {});
+    expect(hits).toBe(expected + 1);
+  },
+);
+
+it('OR 条件组按序即时执行并短路；恢复后保留独立子序列状态', () => {
+  const seen: string[] = [];
+  const context = { blackboard: new ActionBlackboard() };
+  const runtime = new CombatActionSequenceRuntime(
+    {
+      execute: step => {
+        if (step.kind !== 'triggerCustomAbilityEvent') throw new Error('unexpected operation');
+        seen.push(`execute:${step.parameters.eventName}`);
+        return step.parameters.eventName !== 'fail';
+      },
+      end: step => {
+        if (step.kind !== 'triggerCustomAbilityEvent') throw new Error('unexpected operation');
+        seen.push(`end:${step.parameters.eventName}`);
+      },
+      evaluate: () => true,
+    },
+    context,
+  );
+  const program = compileGraphEntry('native-or', 'or', {
+    or: {
+      action: {
+        kind: 'anyCondition',
+        parameters: {},
+        conditions: [{ $sequence: 'fail' }, { $sequence: 'pass' }, { $sequence: 'unused' }],
+      },
+      next: null,
+    },
+    fail: { action: operation('fail'), next: 'unreachable' },
+    unreachable: { action: operation('unreachable'), next: null },
+    pass: { action: operation('pass'), next: null },
+    unused: { action: operation('unused'), next: null },
+  });
+  const original = runtime.createSequence(program);
+  expect(original.executeInstant({})).toBe(true);
+  expect(seen).toEqual(['execute:fail', 'end:fail', 'execute:pass', 'end:pass']);
+  seen.length = 0;
+  const restored = runtime.createSequence(program, context, structuredClone(original.runtimeState));
+  expect(seen).toEqual([]);
+  expect(restored.executeInstant({})).toBe(true);
+  expect(seen).toEqual(['execute:fail', 'end:fail', 'execute:pass', 'end:pass']);
+  expect(
+    runtime
+      .createSequence(
+        chainEntry('empty-or', [{ kind: 'anyCondition', parameters: {}, conditions: [] }]),
+      )
+      .executeInstant({}),
+  ).toBe(false);
+});
+
+it.each([false, true])(
+  'IfElse 即时结束条件动作，分支寿命留到父序列结束，alwaysNext=%s',
+  alwaysNext => {
+    const seen: string[] = [];
+    const context = { blackboard: new ActionBlackboard() };
+    const runtime = new CombatActionSequenceRuntime(
+      {
+        execute: step => {
+          if (step.kind !== 'triggerCustomAbilityEvent') throw new Error('unexpected operation');
+          seen.push(`execute:${step.parameters.eventName}`);
+          return step.parameters.eventName !== 'true';
+        },
+        end: step => {
+          if (step.kind !== 'triggerCustomAbilityEvent') throw new Error('unexpected operation');
+          seen.push(`end:${step.parameters.eventName}`);
+        },
+        evaluate: () => {
+          seen.push('check');
+          return true;
+        },
+      },
+      context,
+    );
+    const program = compileGraphEntry('native-if-else', 'branch', {
+      branch: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext },
+          condition: { $sequence: 'write' },
+          whenTrue: { $sequence: 'true' },
+          whenFalse: { $sequence: 'false' },
+        },
+        next: 'after',
+      },
+      write: { action: operation('condition'), next: 'check' },
+      check: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'constant', value: true } },
+        },
+        next: null,
+      },
+      true: { action: operation('true'), next: null },
+      false: { action: operation('false'), next: null },
+      after: { action: operation('after'), next: null },
+    });
+    const action = runtime.createSequence(program);
+    expect(action.tryExecute({})).toBe(alwaysNext);
+    expect(seen).toEqual([
+      'execute:condition',
+      'end:condition',
+      'check',
+      'execute:true',
+      ...(alwaysNext ? ['execute:after'] : []),
+    ]);
+    seen.length = 0;
+    const restored = runtime.createSequence(program, context, structuredClone(action.runtimeState));
+    restored.end({});
+    expect(seen).toEqual(['end:true', ...(alwaysNext ? ['end:after'] : [])]);
+  },
+);
+
+it.each([true, false])('NotNext 反转普通动作返回值 %s，且下次执行不残留反转状态', result => {
+  const seen: string[] = [];
+  const runtime = new CombatActionSequenceRuntime(
+    {
+      execute: step => {
+        if (step.kind !== 'triggerCustomAbilityEvent') throw new Error('unexpected operation');
+        const flag = step.parameters.eventName as string;
+        seen.push(flag);
+        return flag === 'first' ? result : true;
+      },
+      evaluate: () => false,
+    },
+    { blackboard: new ActionBlackboard() },
+  );
+  const sequence = runtime.createSequence(
+    chainEntry('native-not-next', [
+      { kind: 'invertNextResult', parameters: {} },
+      operation('first'),
+      operation('after'),
+    ]),
+  );
+  expect(sequence.executeInstant({})).toBe(!result);
+  expect(sequence.executeInstant({})).toBe(!result);
+  expect(seen).toEqual(result ? ['first', 'first'] : ['first', 'after', 'first', 'after']);
+});
+
+it('独立条件动作失败时短路，检查通过才执行后继', () => {
+  let permitted = false;
+  const execute = vi.fn(() => true);
+  const runtime = new CombatActionSequenceRuntime(
+    { execute, evaluate: () => permitted },
+    { blackboard: new ActionBlackboard() },
+  );
+  const sequence = runtime.createSequence(
+    chainEntry('native-check', [
+      { kind: 'checkCondition', parameters: { condition: { kind: 'constant', value: true } } },
+      operation('after'),
+    ]),
+  );
+  expect(sequence.executeInstant({})).toBe(false);
+  expect(execute).not.toHaveBeenCalled();
+  permitted = true;
+  expect(sequence.executeInstant({})).toBe(true);
+  expect(execute).toHaveBeenCalledTimes(1);
+});
+
+it('恢复条件动作的执行状态，不重新检查或重放后继', () => {
+  const evaluate = vi.fn(() => true);
+  const execute = vi.fn(() => true);
+  const context = { blackboard: new ActionBlackboard() };
+  const runtime = new CombatActionSequenceRuntime({ execute, evaluate }, context);
+  const program = chainEntry('saved-check', [
+    { kind: 'checkCondition', parameters: { condition: { kind: 'constant', value: true } } },
+    operation('after'),
+  ]);
+  const original = runtime.createSequence(program);
+  expect(original.tryExecute({})).toBe(true);
+  const restored = runtime.createSequence(program, context, structuredClone(original.runtimeState));
+  restored.tick(1, {});
+  restored.end({});
+  expect(evaluate).toHaveBeenCalledTimes(1);
+  expect(execute).toHaveBeenCalledTimes(1);
+  restored.reset({});
+  expect(restored.tryExecute({})).toBe(true);
+  expect(evaluate).toHaveBeenCalledTimes(2);
+  expect(execute).toHaveBeenCalledTimes(2);
+});
 
 const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
-  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
   graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
   entry,
@@ -37,7 +274,7 @@ const compileGraphEntry = (
 const chainEntry = (
   revision: string,
   actions: readonly ActionGraphStep[],
-  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => {
   const nodes: Record<string, ActionGraphNode> = {};
   actions.forEach((action, index) => {
@@ -52,19 +289,85 @@ const chainEntry = (
 function createFixture(conditionResult = true) {
   const executed: string[] = [];
   const operations: CombatOperationExecutor = {
+    frame: () => 0,
     execute: vi.fn(step => {
-      executed.push(step.parameters.flag as string);
+      executed.push(step.parameters.eventName as string);
       return true;
     }),
     evaluate: vi.fn(() => conditionResult),
   };
   const runtime = new CombatActionSequenceRuntime(operations, {
+    actionOwnerId: 'caster',
     blackboard: new ActionBlackboard(),
   });
   return { executed, operations, runtime };
 }
 
 describe('CombatActionSequenceRuntime', () => {
+  it('Channeling 每轮查询目标，按身份限次，切面恢复不重放且 Reset 不清空记录', () => {
+    let frame = 10;
+    const seen: unknown[] = [];
+    const targets = new RuntimeTargetContext();
+    targets.set('targets', [{ kind: 'operator', operatorId: 'a' }]);
+    const context = { blackboard: new ActionBlackboard(), targetContext: targets };
+    const runtime = new CombatActionSequenceRuntime(
+      {
+        frame: () => frame,
+        execute: (_step, context) => {
+          seen.push(context?.actionInputTarget);
+          return false;
+        },
+        evaluate: () => true,
+      },
+      context,
+    );
+    const program = compileGraphEntry('channeling-targets', 'channel', {
+      channel: {
+        action: {
+          kind: 'repeatEachTick',
+          parameters: {
+            nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'context', key: 'targets' },
+              executeEachFrame: true,
+              triggerIntervalSeconds: 0.1,
+              maxCountPerTarget: 1,
+              targetTriggerIntervalSeconds: -1,
+            },
+          },
+          body: { $sequence: 'body' },
+        },
+        next: null,
+      },
+      body: { action: operation('hit'), next: null },
+    });
+    const action = runtime.createSequence(program);
+    action.execute({});
+    targets.set('targets', [
+      { kind: 'operator', operatorId: 'a' },
+      { kind: 'operator', operatorId: 'b' },
+    ]);
+    action.tick(0, {});
+    expect(seen).toEqual([{ kind: 'operator', operatorId: 'a' }]);
+    // 同帧仍检查周期；不能无条件跳过。
+    action.tick(0.1, {});
+    expect(seen).toHaveLength(2);
+    const saved = structuredClone(action.runtimeState);
+    const restored = runtime.createSequence(program, context, saved);
+    expect(seen).toHaveLength(2);
+    frame++;
+    restored.tick(0, {});
+    expect(seen).toHaveLength(2);
+    const state = saved.nodes.get('channel')!.data;
+    if (state.kind !== 'channeling') throw new Error('expected channeling');
+    restored.reset({});
+    expect(state.channeling.targets.size).toBe(2);
+    restored.execute({});
+    expect(seen).toHaveLength(4);
+    restored.end({});
+    expect(state.channeling.targets.size).toBe(0);
+  });
+
   it('ExecuteInterval 保留子动作到下一周期，切面恢复后仍能结束原登记', () => {
     const bind = () => {
       const finish = vi.fn();
@@ -189,7 +492,7 @@ describe('CombatActionSequenceRuntime', () => {
     const definition = chainEntry('basic-attack-restore', [
       {
         kind: 'overrideBasicAttackMapping',
-        parameters: { skillId: 'current' },
+        parameters: { skillIds: ['current', 'current.next'] },
       },
     ]);
     const action = first.runtime.createSequence(definition);
@@ -199,7 +502,7 @@ describe('CombatActionSequenceRuntime', () => {
     const second = bind(restored);
     const resumed = second.runtime.createSequence(definition, second.context, saved.action);
     expect(second.register).not.toHaveBeenCalled();
-    expect(saved.ability.nextBasicAttackMappingId).toBe(2);
+    expect(saved.ability.nextBasicAttackMappingId).toBe(3);
     restored.overrideBasicAttackMapping('later');
     resumed.end({});
     resumed.end({});
@@ -207,6 +510,7 @@ describe('CombatActionSequenceRuntime', () => {
     expect([...original.runtimeState.buffBasicAttackMappings.values()]).toEqual([
       'earlier',
       'current',
+      'current.next',
     ]);
     expect(second.context).not.toHaveProperty('actionRegistrationState');
   });
@@ -270,16 +574,16 @@ describe('CombatActionSequenceRuntime', () => {
               if (step.kind !== 'skillAffix') return false;
               const state = operationContext?.actionRegistrationState;
               if (state === undefined) throw new Error('missing SkillAffix action data');
-              state.registrationId = 17;
+              state.registrationIds = [17];
               installed.push(17);
               return true;
             },
             end: (step, operationContext) => {
               if (step.kind !== 'skillAffix') return;
               const state = operationContext?.actionRegistrationState;
-              if (state?.registrationId === null || state?.registrationId === undefined) return;
-              finished.push(state.registrationId);
-              state.registrationId = null;
+              if (state === undefined) return;
+              finished.push(...state.registrationIds);
+              state.registrationIds = [];
             },
             evaluate: () => false,
           },
@@ -347,16 +651,14 @@ describe('CombatActionSequenceRuntime', () => {
     const saved = structuredClone({
       sequence: listener.runtimeState,
       parent: parent.runtimeState,
-      scopes: original.scopeState,
+      sequenceHost: original.sequenceHostState,
       native: native.dispatcher.runtimeState,
-      semantic: native.semanticEvents.runtimeState,
     });
     const dispatcher = new AbilityEventDispatcher<
       keyof AbilityEventPayloadMap,
       AbilityEventPayloadMap
     >(saved.native);
     const semantic = new CombatSemanticEventRuntime(undefined, {
-      state: saved.semantic,
       bindNative: (reference, receive) =>
         dispatcher.bindSubscription(reference, event => {
           if (event.event !== 'addedBuff') throw new Error('unexpected fixture event');
@@ -371,7 +673,7 @@ describe('CombatActionSequenceRuntime', () => {
       {},
       semantic,
       'owner',
-      saved.scopes,
+      saved.sequenceHost,
     );
     const nextId = saved.native.nextRegistrationId;
     const resumed = restored.createSequence(definition, undefined, saved.sequence);
@@ -444,19 +746,14 @@ describe('CombatActionSequenceRuntime', () => {
     expect(saved.scheduling.active).toEqual([0]);
   });
 
-  it('恢复宿主作用域后保留 once 标记和缓存黑板，后续新序列继续复用', () => {
+  it('恢复后保留 once 状态，重置可重新执行且不改变原分支', () => {
     const original = createFixture();
     const parent = original.runtime.context.blackboard;
-    const scoped = {
-      parameters: { scopeKey: 'shared', inheritParent: true, initialValues: { value: 1 } },
-    } as const;
-    const board = original.runtime.getActionBlackboardScope(scoped, parent);
-    board.assignDynamic('value', 9);
     const definition = compileGraphEntry('restored-scope-once', 'once', {
       once: {
         action: {
           kind: 'once',
-          parameters: { scopeKey: 'once' },
+          parameters: {},
           body: { $sequence: 'apply' },
         },
         next: null,
@@ -466,10 +763,12 @@ describe('CombatActionSequenceRuntime', () => {
         next: null,
       },
     });
-    original.runtime.createSequence(definition).executeInstant({});
+    const originalSequence = original.runtime.createSequence(definition);
+    originalSequence.executeInstant({});
     const saved = structuredClone({
+      execution: originalSequence.runtimeState,
       parent: parent.runtimeState,
-      scopes: original.runtime.scopeState,
+      sequenceHost: original.runtime.sequenceHostState,
     });
     const restoredParent = ActionBlackboard.bindRuntimeState(saved.parent);
     const execute = vi.fn(() => true);
@@ -479,22 +778,19 @@ describe('CombatActionSequenceRuntime', () => {
       {},
       undefined,
       undefined,
-      saved.scopes,
+      saved.sequenceHost,
     );
-    expect(restored.scopeState).toBe(saved.scopes);
-    const restoredBoard = restored.getActionBlackboardScope(scoped, restoredParent);
-    expect(restoredBoard.runtimeState).toBe(
-      saved.scopes.blackboards.get(saved.parent)!.get('shared'),
-    );
-    expect(restoredBoard.getNumber('value')).toBe(9);
-    restored.createSequence(definition).executeInstant({});
+    expect(restored.sequenceHostState).toBe(saved.sequenceHost);
+    const restoredSequence = restored.createSequence(definition, undefined, saved.execution);
+    restoredSequence.executeInstant({});
     expect(execute).not.toHaveBeenCalled();
-    restoredBoard.assignDynamic('value', 12);
-    expect(board.getNumber('value')).toBe(9);
-    restored.reset();
-    restored.createSequence(definition).executeInstant({});
+    restoredSequence.reset({});
+    restoredSequence.executeInstant({});
     expect(execute).toHaveBeenCalledTimes(1);
-    expect(original.runtime.scopeState.executedOnce.has('once')).toBe(true);
+    expect(originalSequence.runtimeState.nodes.get('once')!.data).toMatchObject({
+      kind: 'graphOnce',
+      executed: true,
+    });
   });
 
   it('无状态投射物步骤可绑定，序列长度仍必须匹配', () => {
@@ -503,6 +799,7 @@ describe('CombatActionSequenceRuntime', () => {
       {
         kind: 'launchProjectile',
         parameters: {
+          inheritActionBlackboard: true,
           finish: { reachAfterTicks: 2, maxDurationSeconds: 2 },
           recycleDelaySeconds: 0,
         },
@@ -517,50 +814,39 @@ describe('CombatActionSequenceRuntime', () => {
     );
   });
 
-  it('恢复同步循环、结束时间轴和可操作边界步骤，不重放已执行动作', () => {
-    const definition = compileGraphEntry(
-      'restored-counted-loop',
-      'repeat',
-      {
-        repeat: {
-          action: {
-            kind: 'repeatByActionValue',
-            parameters: { count: { kind: 'valueNode', nodeId: 'input_1' } },
-            body: { $sequence: 'hit' },
-          },
-          next: 'boundary',
+  it('恢复单次执行和可操作边界步骤，不重放已执行动作', () => {
+    const definition = compileGraphEntry('restored-once-boundary', 'once', {
+      once: {
+        action: {
+          kind: 'once',
+          parameters: {},
+          body: { $sequence: 'hit' },
         },
-        boundary: {
-          action: { kind: 'reachSkillOperableBoundary', parameters: { skillIds: ['native'] } },
-          next: 'finish',
-        },
-        finish: {
-          action: { kind: 'finishTimeline', parameters: {} },
-          next: null,
-        },
-        hit: {
-          action: operation('hit'),
-          next: null,
-        },
+        next: 'boundary',
       },
-      { input_1: { type: 'number', expression: { kind: 'blackboard', key: 'count' } } },
-    );
+      boundary: {
+        action: { kind: 'reachSkillOperableBoundary', parameters: { skillIds: ['native'] } },
+        next: null,
+      },
+      hit: {
+        action: operation('hit'),
+        next: null,
+      },
+    });
     const bind = () => {
       const execute = vi.fn(() => true);
-      const finish = vi.fn();
       const boundary = vi.fn();
       const context = {
-        blackboard: new ActionBlackboard({ count: 2 }),
-        requestTimelineFinish: finish,
+        blackboard: new ActionBlackboard(),
         reachSkillOperableBoundary: boundary,
       };
       const runtime = new CombatActionSequenceRuntime({ execute, evaluate: () => true }, context);
-      return { runtime, context, execute, finish, boundary };
+      return { runtime, context, execute, boundary };
     };
     const original = bind();
     const action = original.runtime.createSequence(definition);
     action.execute({});
-    expect(original.execute).toHaveBeenCalledTimes(2);
+    expect(original.execute).toHaveBeenCalledTimes(1);
     const next = bind();
     const restored = next.runtime.createSequence(
       definition,
@@ -570,95 +856,11 @@ describe('CombatActionSequenceRuntime', () => {
     restored.tick(1, {});
     restored.end({});
     expect(next.execute).not.toHaveBeenCalled();
-    expect(next.finish).not.toHaveBeenCalled();
     expect(next.boundary).not.toHaveBeenCalled();
     restored.reset({});
     restored.execute({});
-    expect(next.execute).toHaveBeenCalledTimes(2);
-    expect(next.finish).toHaveBeenCalledOnce();
+    expect(next.execute).toHaveBeenCalledTimes(1);
     expect(next.boundary).toHaveBeenCalledExactlyOnceWith(['native']);
-    expect(original.finish).toHaveBeenCalledOnce();
-  });
-
-  it('恢复目标循环中的作用域和计时器，不重选目标或重新初始化黑板', () => {
-    const definition = compileGraphEntry('restored-target-loop', 'loop', {
-      loop: {
-        action: {
-          kind: 'forEachContextTarget',
-          parameters: { contextKey: 'targets' },
-          body: { $sequence: 'scope' },
-        },
-        next: null,
-      },
-      scope: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            scopeKey: 'target',
-            lifetime: 'execution',
-            inheritParent: true,
-            initialValues: { count: 0 },
-          },
-          body: { $sequence: 'each' },
-        },
-        next: null,
-      },
-      each: {
-        action: {
-          kind: 'repeatEachTick',
-          parameters: {},
-          body: { $sequence: 'count' },
-        },
-        next: null,
-      },
-      count: {
-        action: operation('count'),
-        next: null,
-      },
-    });
-    const targets = new RuntimeTargetContext();
-    targets.set('targets', [
-      { kind: 'abilityEntity', instanceId: 3 },
-      { kind: 'abilityEntity', instanceId: 7 },
-    ]);
-    const create = (targetContext: RuntimeTargetContext) => {
-      const seen: unknown[] = [];
-      const runtime = new CombatActionSequenceRuntime(
-        {
-          evaluate: () => true,
-          execute: (_step, context) => {
-            const board = context!.blackboard;
-            const previous = board.getNumber('count');
-            if (previous === undefined) throw new Error('restored scope is missing count');
-            const count = previous + 1;
-            board.assignDynamic('count', count);
-            seen.push([context!.currentTarget, count]);
-            return true;
-          },
-        },
-        { blackboard: new ActionBlackboard(), targetContext },
-      );
-      return { seen, runtime };
-    };
-    const original = create(targets);
-    const action = original.runtime.createSequence(definition);
-    action.execute({});
-    action.tick(0, {});
-    const saved = structuredClone(action.runtimeState);
-    const restored = create(new RuntimeTargetContext());
-    const resumed = restored.runtime.createSequence(definition, undefined, structuredClone(saved));
-    expect(restored.seen).toEqual([]);
-    resumed.tick(1 / 30, {});
-    expect(restored.seen).toEqual([
-      [{ kind: 'abilityEntity', instanceId: 3 }, 2],
-      [{ kind: 'abilityEntity', instanceId: 7 }, 2],
-    ]);
-    action.tick(1 / 30, {});
-    expect(resumed.runtimeState).toEqual(action.runtimeState);
-    resumed.end({});
-    const loop = saved.nodes.get('loop');
-    if (loop?.data.kind !== 'graphTargets') throw new Error('expected target loop');
-    expect(loop.data.loop.bodies.size).toBe(2);
   });
 
   it('重新绑定分支循环后只继续 Tick，不重放 Execute 或重新求值分支', () => {
@@ -773,6 +975,7 @@ describe('CombatActionSequenceRuntime', () => {
     const seen: string[] = [];
     const runtime = new CombatActionSequenceRuntime(
       {
+        frame: () => 0,
         execute: () => {
           seen.push('apply');
           return true;
@@ -782,7 +985,7 @@ describe('CombatActionSequenceRuntime', () => {
         },
         evaluate: () => true,
       },
-      { blackboard: new ActionBlackboard() },
+      { blackboard: new ActionBlackboard(), actionOwnerId: 'caster' },
     );
     const timeline = runtime.createTimeline([
       {
@@ -794,6 +997,8 @@ describe('CombatActionSequenceRuntime', () => {
               kind: 'repeatEachTick',
               parameters: {
                 nativeChanneling: {
+                  catchUpMissedTicks: false,
+                  target: { kind: 'owner' },
                   executeEachFrame: true,
                   triggerIntervalSeconds: 0.033,
                   maxCountPerTarget: 1,
@@ -808,8 +1013,8 @@ describe('CombatActionSequenceRuntime', () => {
             action: {
               kind: 'applyBuff',
               parameters: {
-                buffId: 'fixture',
-                target: 'caster',
+                buffs: [{ buffId: 'fixture' }],
+                targets: { kind: 'fixed', target: 'caster' },
                 finishByAction: true,
               },
             },
@@ -915,17 +1120,17 @@ describe('CombatActionSequenceRuntime', () => {
     const runtime = new CombatActionSequenceRuntime(
       {
         execute: (step, current) => {
-          if (step.kind !== 'setContextFlag') throw new Error('unexpected test action');
+          if (step.kind !== 'triggerCustomAbilityEvent') throw new Error('unexpected test action');
           expect(current).toBe(context);
-          const flag = step.parameters.flag;
+          const flag = step.parameters.eventName;
           if (flag === 'first') current!.blackboard.assignDynamic('shared', 7);
           else expect(current!.blackboard.getNumber('shared')).toBe(7);
           trace.push(`start:${flag}`);
           return true;
         },
         end: step => {
-          if (step.kind !== 'setContextFlag') throw new Error('unexpected test action');
-          trace.push(`end:${step.parameters.flag}`);
+          if (step.kind !== 'triggerCustomAbilityEvent') throw new Error('unexpected test action');
+          trace.push(`end:${step.parameters.eventName}`);
         },
         evaluate: () => true,
       },
@@ -1016,8 +1221,8 @@ describe('CombatActionSequenceRuntime', () => {
       {
         evaluate: () => true,
         execute: step => {
-          if (step.kind !== 'setContextFlag') throw new Error('unexpected operation');
-          calls.push(step.parameters.flag as string);
+          if (step.kind !== 'triggerCustomAbilityEvent') throw new Error('unexpected operation');
+          calls.push(step.parameters.eventName as string);
           return true;
         },
       },
@@ -1086,13 +1291,13 @@ describe('CombatActionSequenceRuntime', () => {
           return true;
         },
         execute: (step, context) => {
-          if (step.kind !== 'setContextFlag') throw new Error('unexpected operation');
+          if (step.kind !== 'triggerCustomAbilityEvent') throw new Error('unexpected operation');
           const id =
             context?.event && 'payload' in context.event && context.event.event === 'addedBuff'
               ? context.event.payload.buffId
               : 'missing';
-          calls.push(`${step.parameters.flag}:${id}`);
-          if (step.parameters.flag === 'emit') {
+          calls.push(`${step.parameters.eventName}:${id}`);
+          if (step.parameters.eventName === 'emit') {
             // Bound a broken implementation's recursion so the regression fails
             // with a useful assertion rather than megabytes of stack errors.
             if (calls.length > 12) throw new Error('listener recursively restarted');
@@ -1215,7 +1420,7 @@ describe('CombatActionSequenceRuntime', () => {
         loop: {
           action: {
             kind: 'forEachContextTarget',
-            parameters: { contextKey: 'items' },
+            parameters: { targets: { kind: 'context', key: 'items' } },
             body: { $sequence: 'launch' },
           },
           next: null,
@@ -1223,7 +1428,7 @@ describe('CombatActionSequenceRuntime', () => {
         launch: {
           action: {
             kind: 'launchProjectile',
-            parameters: { finish, recycleDelaySeconds: 1.5, source },
+            parameters: { inheritActionBlackboard: true, finish, recycleDelaySeconds: 1.5, source },
             callbacks: [],
           },
           next: null,
@@ -1246,13 +1451,60 @@ describe('CombatActionSequenceRuntime', () => {
       );
   });
 
+  it('投射物白名单在发射时读取一次，并保留空间点身份而不当成敌人', () => {
+    const selected = [{ kind: 'spatialPoint' as const, pointId: 7 }];
+    const queryTargets = vi.fn(() => selected);
+    const launchProjectile = vi.fn(() => ({
+      target: { kind: 'abilityEntity' as const, instanceId: 1 },
+      instanceId: 1,
+      onReset: () => ({ registrationId: 0, dispose: () => {} }),
+    }));
+    const targetContext = new RuntimeTargetContext();
+    targetContext.set('points', [
+      { kind: 'spatialPoint', pointId: 8 },
+      { kind: 'spatialPoint', pointId: 9 },
+    ]);
+    const runtime = new CombatActionSequenceRuntime(
+      { execute: () => true, evaluate: () => true, queryTargets },
+      { blackboard: new ActionBlackboard(), launchProjectile, targetContext },
+    );
+    runtime
+      .createSequence(
+        compileGraphEntry('filtered-launch', 'launch', {
+          launch: {
+            action: {
+              kind: 'launchProjectile',
+              parameters: {
+                inheritActionBlackboard: false,
+                finish: 1,
+                targets: { kind: 'context', contextKey: 'points' },
+                onlyHitTargets: { kind: 'inputTarget' },
+              },
+              callbacks: [],
+            },
+            next: null,
+          },
+        }),
+      )
+      .executeInstant({});
+    selected.length = 0;
+    expect(queryTargets).toHaveBeenCalledOnce();
+    expect(launchProjectile).toHaveBeenCalledTimes(2);
+    expect(launchProjectile).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        onlyHitTargets: [{ kind: 'spatialPoint', pointId: 7 }],
+      }),
+    );
+  });
+
   it('唯一目标 ForEach 仍隔离内部失败并让外层后继继续', () => {
     const seen: unknown[] = [];
     const runtime = new CombatActionSequenceRuntime(
       {
         execute: (step, context) => {
-          if (step.kind !== 'setContextFlag') throw new Error('unexpected test operation');
-          seen.push([step.parameters.flag, context?.currentTarget]);
+          if (step.kind !== 'triggerCustomAbilityEvent')
+            throw new Error('unexpected test operation');
+          seen.push([step.parameters.eventName, context?.currentTarget]);
           return true;
         },
         evaluate: () => false,
@@ -1270,7 +1522,7 @@ describe('CombatActionSequenceRuntime', () => {
               loop: {
                 action: {
                   kind: 'forEachContextTarget',
-                  parameters: { target: 'enemy' },
+                  parameters: { targets: { kind: 'fixed', target: 'enemy' } },
                   body: { $sequence: 'guard' },
                 },
                 next: 'outside',
@@ -1315,8 +1567,9 @@ describe('CombatActionSequenceRuntime', () => {
     const runtime = new CombatActionSequenceRuntime(
       {
         execute: (step, context) => {
-          if (step.kind !== 'setContextFlag') throw new Error('unexpected test operation');
-          seen.push([step.parameters.flag, context?.currentTarget]);
+          if (step.kind !== 'triggerCustomAbilityEvent')
+            throw new Error('unexpected test operation');
+          seen.push([step.parameters.eventName, context?.currentTarget]);
           expect(context?.blackboard).toBe(blackboard);
           return true;
         },
@@ -1341,7 +1594,7 @@ describe('CombatActionSequenceRuntime', () => {
               loop: {
                 action: {
                   kind: 'forEachContextTarget',
-                  parameters: { contextKey: 'items' },
+                  parameters: { targets: { kind: 'context', key: 'items' } },
                   body: { $sequence: 'guard' },
                 },
                 next: 'after',
@@ -1391,7 +1644,7 @@ describe('CombatActionSequenceRuntime', () => {
       loop: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { contextKey: 'items' },
+          parameters: { targets: { kind: 'context', key: 'items' } },
           body: { $sequence: 'bad' },
         },
         next: null,
@@ -1406,7 +1659,7 @@ describe('CombatActionSequenceRuntime', () => {
     expect(() => runtime.createSequence(definition).executeInstant({})).toThrow('invalid data');
   });
 
-  it('keeps per-target body operations alive until the enclosing action ends', () => {
+  it('每个目标的循环体即时结束，外层 End 不重复清理', () => {
     const end = vi.fn();
     const runtime = new CombatActionSequenceRuntime(
       {
@@ -1421,7 +1674,7 @@ describe('CombatActionSequenceRuntime', () => {
         loop: {
           action: {
             kind: 'forEachContextTarget',
-            parameters: { target: 'enemy' },
+            parameters: { targets: { kind: 'fixed', target: 'enemy' } },
             body: { $sequence: 'scoped' },
           },
           next: null,
@@ -1435,405 +1688,10 @@ describe('CombatActionSequenceRuntime', () => {
 
     action.execute({});
     action.tick(1 / 30, {});
-    expect(end).not.toHaveBeenCalled();
+    expect(end).toHaveBeenCalledTimes(1);
 
     action.end({});
     expect(end).toHaveBeenCalledTimes(1);
-  });
-
-  it('同名子作用域只在同一父黑板内复用，不跨投射物宿主串板', () => {
-    const fixture = createFixture();
-    const step = {
-      parameters: { scopeKey: 'callback', inheritParent: true, initialValues: {} },
-    } as const;
-    const firstParent = new ActionBlackboard({ sourceValue: 2 });
-    const secondParent = new ActionBlackboard({ sourceValue: 7 });
-    const first = fixture.runtime.getActionBlackboardScope(step, firstParent);
-    const second = fixture.runtime.getActionBlackboardScope(step, secondParent);
-    expect(first).not.toBe(second);
-    expect(first.getNumber('sourceValue')).toBe(2);
-    expect(second.getNumber('sourceValue')).toBe(7);
-    expect(fixture.runtime.getActionBlackboardScope(step, firstParent)).toBe(first);
-  });
-
-  it('作用域子序列惰性接入数据树，重置清除当前子序列但不影响已保存的切面', () => {
-    const parent = new ActionBlackboard();
-    const boards: ActionBlackboard[] = [];
-    const runtime = new CombatActionSequenceRuntime(
-      {
-        execute: (_step, context) => {
-          boards.push(context!.blackboard);
-          context!.blackboard.assignDynamic('count', 7);
-          return true;
-        },
-        evaluate: () => true,
-      },
-      { blackboard: parent },
-    );
-    const action = runtime.createSequence(
-      compileGraphEntry('lazy-scope-body', 'scope', {
-        scope: {
-          action: {
-            kind: 'withActionBlackboardScope',
-            parameters: {
-              scopeKey: 'saved-scope',
-              lifetime: 'execution',
-              inheritParent: true,
-              initialValues: { count: 1 },
-            },
-            body: { $sequence: 'write' },
-          },
-          next: null,
-        },
-        write: {
-          action: operation('write'),
-          next: null,
-        },
-      }),
-    );
-    // 图节点数据只在到达时建立；执行前作用域子序列尚未物化。
-    expect(action.runtimeState.nodes.get('scope')).toBeUndefined();
-    action.execute({});
-    const data = action.runtimeState.nodes.get('scope')!.data;
-    if (data.kind !== 'graphScope') throw new Error('expected scope data');
-    expect(data.body!.blackboard).toBe(boards[0]!.runtimeState);
-    const saved = structuredClone(action.runtimeState);
-    action.end({});
-    action.reset({});
-    expect(data.body).toBeNull();
-    const savedData = saved.nodes.get('scope')!.data;
-    if (savedData.kind !== 'graphScope') throw new Error('expected saved scope');
-    expect(savedData.body!.blackboard.values.get('count')).toBe(7);
-    expect(savedData.body!.execution.nodes.get('write')!.lifecycle.state).toBe('started');
-    action.execute({});
-    expect(boards[1]).not.toBe(boards[0]);
-    expect(data.body!.blackboard).toBe(boards[1]!.runtimeState);
-  });
-
-  it('逐目标循环在同一静态路径创建独立实体板，保留当前目标', () => {
-    const targetContext = new RuntimeTargetContext();
-    targetContext.set('lances', [
-      { kind: 'abilityEntity', instanceId: 3 },
-      { kind: 'abilityEntity', instanceId: 7 },
-    ]);
-    const observed: unknown[] = [];
-    const runtime = new CombatActionSequenceRuntime(
-      {
-        execute: (_step, context) => {
-          observed.push([context!.currentTarget, context!.blackboard.getNumber('EntityBB_count')]);
-          context!.blackboard.assignDynamic('EntityBB_count', 99);
-          return true;
-        },
-        evaluate: () => true,
-      },
-      { blackboard: new ActionBlackboard(), targetContext },
-    );
-    runtime
-      .createSequence(
-        compileGraphEntry('per-target-entity-boards', 'loop', {
-          loop: {
-            action: {
-              kind: 'forEachContextTarget',
-              parameters: { contextKey: 'lances' },
-              body: { $sequence: 'launch' },
-            },
-            next: null,
-          },
-          launch: {
-            action: {
-              kind: 'withActionBlackboardScope',
-              parameters: {
-                scopeKey: 'launch',
-                lifetime: 'execution',
-                initialValues: {},
-                entityInitialValues: { EntityBB_count: 0 },
-                inheritParent: true,
-              },
-              body: { $sequence: 'callback' },
-            },
-            next: null,
-          },
-          callback: {
-            action: {
-              kind: 'withActionBlackboardScope',
-              parameters: {
-                scopeKey: 'callback',
-                initialValues: {},
-                inheritParent: true,
-              },
-              body: { $sequence: 'visit' },
-            },
-            next: null,
-          },
-          visit: {
-            action: operation('visit'),
-            next: null,
-          },
-        }),
-      )
-      .executeInstant({});
-    expect(observed).toEqual([
-      [{ kind: 'abilityEntity', instanceId: 3 }, 0],
-      [{ kind: 'abilityEntity', instanceId: 7 }, 0],
-    ]);
-  });
-
-  it('兄弟回调共享宿主实体层，但各自 direct 修改不覆盖源快照或另一个回调', () => {
-    const parent = new ActionBlackboard({ shared: 6 });
-    const seen: unknown[] = [];
-    const runtime = new CombatActionSequenceRuntime(
-      {
-        execute: (step, context) => {
-          if (step.kind !== 'setContextFlag') throw new Error('unexpected operation');
-          const board = context!.blackboard;
-          seen.push([
-            step.parameters.flag,
-            board.getNumber('shared'),
-            board.getNumber('EntityBB_count'),
-          ]);
-          board.assign({ shared: 123 });
-          board.assignDynamic('EntityBB_count', 8);
-          return true;
-        },
-        evaluate: () => true,
-      },
-      { blackboard: parent },
-    );
-    const launch = compileGraphEntry('sibling-callbacks', 'projectile', {
-      projectile: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            scopeKey: 'projectile',
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: { EntityBB_count: 0 },
-          },
-          body: { $sequence: 'hit' },
-        },
-        next: null,
-      },
-      hit: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: { scopeKey: 'hit', initialValues: { shared: 0 }, inheritParent: true },
-          body: { $sequence: 'hit-op' },
-        },
-        next: 'reach',
-      },
-      reach: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: { scopeKey: 'reach', initialValues: { shared: 0 }, inheritParent: true },
-          body: { $sequence: 'reach-op' },
-        },
-        next: null,
-      },
-      'hit-op': {
-        action: operation('hit'),
-        next: null,
-      },
-      'reach-op': {
-        action: operation('reach'),
-        next: null,
-      },
-    });
-    const action = runtime.createSequence(launch);
-    action.executeInstant({});
-    parent.assign({ shared: 10 });
-    action.executeInstant({});
-    expect(seen).toEqual([
-      ['hit', 6, 0],
-      ['reach', 6, 8],
-      ['hit', 10, 0],
-      ['reach', 10, 8],
-    ]);
-    expect(parent.snapshot()).toEqual({ shared: 10 });
-  });
-
-  it.each([false, true])('回调边界 alwaysNext=%s 只影响局部短路，不跳过执行', alwaysNext => {
-    const fixture = createFixture(false);
-    fixture.runtime
-      .createSequence(
-        compileGraphEntry(
-          `callback-boundary-${alwaysNext}`,
-          'scope',
-          {
-            scope: {
-              action: {
-                kind: 'withActionBlackboardScope',
-                parameters: {
-                  scopeKey: 'callback',
-                  initialValues: {},
-                  inheritParent: true,
-                  alwaysNext,
-                },
-                body: { $sequence: 'guard' },
-              },
-              next: 'after',
-            },
-            guard: {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'input_1' } },
-                whenTrue: { $sequence: 'blocked' },
-              },
-              next: null,
-            },
-            blocked: {
-              action: operation('blocked'),
-              next: null,
-            },
-            after: {
-              action: operation('after'),
-              next: null,
-            },
-          },
-          { input_1: { type: 'boolean', expression: { kind: 'combatActive' } } },
-        ),
-      )
-      .executeInstant({});
-    expect(fixture.operations.evaluate).toHaveBeenCalledTimes(1);
-    expect(fixture.executed).toEqual(alwaysNext ? ['after'] : []);
-  });
-
-  it('并列 Buff 回调隔离短路结果但共享父级 direct blackboard', () => {
-    const parent = new ActionBlackboard();
-    const seen: number[] = [];
-    const runtime = new CombatActionSequenceRuntime(
-      {
-        execute: (step, context) => {
-          if (step.kind !== 'setContextFlag') throw new Error('unexpected test operation');
-          if (step.parameters.flag === 'write') {
-            context!.blackboard.assignDynamic('shared_from_callback', 4);
-          } else {
-            seen.push(context!.blackboard.getNumber('shared_from_callback')!);
-          }
-          return true;
-        },
-        evaluate: () => false,
-      },
-      { blackboard: parent },
-    );
-
-    expect(
-      runtime
-        .createSequence(
-          compileGraphEntry(
-            'sibling-callback-shared-board',
-            'first',
-            {
-              first: {
-                action: {
-                  kind: 'withActionBlackboardScope',
-                  parameters: {
-                    scopeKey: 'first',
-                    lifetime: 'execution',
-                    alwaysNext: true,
-                    shareParentBlackboard: true,
-                    initialValues: {},
-                    inheritParent: true,
-                  },
-                  body: { $sequence: 'write' },
-                },
-                next: 'second',
-              },
-              second: {
-                action: {
-                  kind: 'withActionBlackboardScope',
-                  parameters: {
-                    scopeKey: 'second',
-                    lifetime: 'execution',
-                    alwaysNext: true,
-                    shareParentBlackboard: true,
-                    initialValues: {},
-                    inheritParent: true,
-                  },
-                  body: { $sequence: 'read' },
-                },
-                next: null,
-              },
-              write: {
-                action: operation('write'),
-                next: 'unreachable-guard',
-              },
-              'unreachable-guard': {
-                action: {
-                  kind: 'conditional',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'input_1' } },
-                  whenTrue: { $sequence: 'unreachable' },
-                },
-                next: null,
-              },
-              unreachable: {
-                action: operation('unreachable'),
-                next: null,
-              },
-              read: {
-                action: operation('read'),
-                next: null,
-              },
-            },
-            { input_1: { type: 'boolean', expression: { kind: 'combatActive' } } },
-          ),
-        )
-        .executeInstant({}),
-    ).toBe(true);
-    expect(seen).toEqual([4]);
-    expect(parent.getNumber('shared_from_callback')).toBe(4);
-  });
-
-  it('execution 作用域在执行、tick 和 end 期间保持同一黑板', () => {
-    const boards: ActionBlackboard[] = [];
-    const runtime = new CombatActionSequenceRuntime(
-      {
-        execute: (_step, context) => {
-          boards.push(context!.blackboard);
-          return true;
-        },
-        end: (_step, context) => {
-          boards.push(context!.blackboard);
-        },
-        evaluate: () => true,
-      },
-      { blackboard: new ActionBlackboard() },
-    );
-    const action = runtime.createSequence(
-      compileGraphEntry('execution-scope-board', 'scope', {
-        scope: {
-          action: {
-            kind: 'withActionBlackboardScope',
-            parameters: {
-              scopeKey: 'launch',
-              lifetime: 'execution',
-              initialValues: {},
-              inheritParent: true,
-            },
-            body: { $sequence: 'loop' },
-          },
-          next: null,
-        },
-        loop: {
-          action: {
-            kind: 'repeatEachTick',
-            parameters: {},
-            body: { $sequence: 'tick' },
-          },
-          next: null,
-        },
-        tick: {
-          action: operation('tick'),
-          next: null,
-        },
-      }),
-    );
-    action.execute({});
-    action.tick(0, {});
-    action.tick(1, {});
-    action.end({});
-    expect(boards.length).toBe(4);
-    expect(new Set(boards).size).toBe(1);
   });
 
   it('严格按照声明顺序执行普通步骤', () => {
@@ -1844,191 +1702,6 @@ describe('CombatActionSequenceRuntime', () => {
       .executeInstant({});
 
     expect(fixture.executed).toEqual(['first', 'second']);
-  });
-
-  it('按动作黑板整数重复，并为每次 execution 子作用域创建独立黑板', () => {
-    const parent = new ActionBlackboard({ projectile_count: 3 });
-    const boards: ActionBlackboard[] = [];
-    const runtime = new CombatActionSequenceRuntime(
-      {
-        execute: (_step, context) => {
-          boards.push(context!.blackboard);
-          return true;
-        },
-        evaluate: () => true,
-      },
-      { blackboard: parent },
-    );
-    runtime
-      .createSequence(
-        compileGraphEntry(
-          'counted-repeat-scopes',
-          'repeat',
-          {
-            repeat: {
-              action: {
-                kind: 'repeatByActionValue',
-                parameters: { count: { kind: 'valueNode', nodeId: 'input_1' } },
-                body: { $sequence: 'scope' },
-              },
-              next: null,
-            },
-            scope: {
-              action: {
-                kind: 'withActionBlackboardScope',
-                parameters: {
-                  scopeKey: 'projectile:reach',
-                  lifetime: 'execution',
-                  initialValues: {},
-                  inheritParent: true,
-                },
-                body: { $sequence: 'reach' },
-              },
-              next: null,
-            },
-            reach: {
-              action: operation('reach'),
-              next: null,
-            },
-          },
-          {
-            input_1: {
-              type: 'number',
-              expression: { kind: 'blackboard', key: 'projectile_count' },
-            },
-          },
-        ),
-      )
-      .executeInstant({});
-
-    expect(boards).toHaveLength(3);
-    expect(new Set(boards).size).toBe(3);
-    expect(boards.every(board => board.getNumber('projectile_count') === 3)).toBe(true);
-  });
-
-  it('动态重复序列在首次执行前先准备内部操作', () => {
-    let prepared = false;
-    const runtime = new CombatActionSequenceRuntime(
-      {
-        prepare: () => {
-          prepared = true;
-        },
-        execute: () => {
-          expect(prepared).toBe(true);
-          return true;
-        },
-        evaluate: () => true,
-      },
-      { blackboard: new ActionBlackboard({ count: 1 }) },
-    );
-
-    runtime
-      .createSequence(
-        compileGraphEntry(
-          'counted-repeat-prepare',
-          'repeat',
-          {
-            repeat: {
-              action: {
-                kind: 'repeatByActionValue',
-                parameters: { count: { kind: 'valueNode', nodeId: 'input_1' } },
-                body: { $sequence: 'prepared' },
-              },
-              next: null,
-            },
-            prepared: {
-              action: operation('prepared'),
-              next: null,
-            },
-          },
-          { input_1: { type: 'number', expression: { kind: 'blackboard', key: 'count' } } },
-        ),
-      )
-      .executeInstant({});
-  });
-
-  it('在命中时创建并复用隔离的子 SkillData 动作黑板', () => {
-    const parent = new ActionBlackboard({ inherited: 1, childOnly: 99 });
-    const snapshots: Readonly<Record<string, unknown>>[] = [];
-    const operations: CombatOperationExecutor = {
-      execute: (_step, context) => {
-        snapshots.push(context!.blackboard.snapshot());
-        context!.blackboard.assignDynamic('childOnly', 3);
-        return true;
-      },
-      evaluate: vi.fn(() => true),
-    };
-    const runtime = new CombatActionSequenceRuntime(operations, { blackboard: parent });
-    const scheduled = compileGraphEntry('isolated-child-scope', 'scope', {
-      scope: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            scopeKey: 'projectile:child:1',
-            initialValues: { inherited: 0, childOnly: 2 },
-            inheritParent: true,
-          },
-          body: { $sequence: 'child' },
-        },
-        next: null,
-      },
-      child: {
-        action: operation('child'),
-        next: null,
-      },
-    });
-    parent.assignDynamic('inherited', 7);
-
-    runtime.createSequence(scheduled).executeInstant({});
-    runtime.createSequence(scheduled).executeInstant({});
-
-    expect(snapshots).toEqual([
-      { inherited: 7, childOnly: 99 },
-      { inherited: 7, childOnly: 3 },
-    ]);
-    expect(parent.snapshot()).toEqual({ inherited: 7, childOnly: 99 });
-  });
-
-  it('在同一投射物作用域内复用模板实体黑板，并在运行时重置后重新初始化', () => {
-    const observed: number[] = [];
-    const operations: CombatOperationExecutor = {
-      execute: (_step, context) => {
-        const blackboard = context!.blackboard;
-        observed.push(blackboard.getNumber('EntityBB_hitCount')!);
-        blackboard.assignDynamic('EntityBB_hitCount', observed.at(-1)! + 1);
-        return true;
-      },
-      evaluate: vi.fn(() => true),
-    };
-    const runtime = new CombatActionSequenceRuntime(operations, {
-      blackboard: new ActionBlackboard(),
-    });
-    const scheduled = compileGraphEntry('template-entity-board', 'scope', {
-      scope: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            scopeKey: 'projectile:instance:1',
-            initialValues: {},
-            entityInitialValues: { EntityBB_hitCount: 0 },
-            inheritParent: true,
-          },
-          body: { $sequence: 'hit' },
-        },
-        next: null,
-      },
-      hit: {
-        action: operation('hit'),
-        next: null,
-      },
-    });
-
-    runtime.createSequence(scheduled).executeInstant({});
-    runtime.createSequence(scheduled).executeInstant({});
-    runtime.reset();
-    runtime.createSequence(scheduled).executeInstant({});
-
-    expect(observed).toEqual([0, 1, 0]);
   });
 
   it('根据条件结果只执行对应分支', () => {
@@ -2063,7 +1736,7 @@ describe('CombatActionSequenceRuntime', () => {
           {
             input_1: {
               type: 'boolean',
-              expression: { kind: 'contextFlagEquals', flag: 'enabled', value: true },
+              expression: { kind: 'combatActive' },
             },
           },
         ),
@@ -2079,13 +1752,15 @@ describe('CombatActionSequenceRuntime', () => {
     const runtime = new CombatActionSequenceRuntime(
       {
         execute: step => {
-          if (step.kind !== 'setContextFlag') throw new Error('unexpected test operation');
-          lifecycle.push(`execute:${step.parameters.flag}`);
+          if (step.kind !== 'triggerCustomAbilityEvent')
+            throw new Error('unexpected test operation');
+          lifecycle.push(`execute:${step.parameters.eventName}`);
           return true;
         },
         end: step => {
-          if (step.kind !== 'setContextFlag') throw new Error('unexpected test operation');
-          lifecycle.push(`end:${step.parameters.flag}`);
+          if (step.kind !== 'triggerCustomAbilityEvent')
+            throw new Error('unexpected test operation');
+          lifecycle.push(`end:${step.parameters.eventName}`);
         },
         evaluate: () => true,
       },
@@ -2153,7 +1828,7 @@ describe('CombatActionSequenceRuntime', () => {
           {
             input_1: {
               type: 'boolean',
-              expression: { kind: 'contextFlagEquals', flag: 'enabled', value: true },
+              expression: { kind: 'combatActive' },
             },
           },
         ),
@@ -2164,13 +1839,13 @@ describe('CombatActionSequenceRuntime', () => {
     expect(fixture.executed).toEqual(['after']);
   });
 
-  it('在当前状态所有者内去重 once，并允许显式重置', () => {
+  it('同一 once 实例跨瞬时执行保留标记，正常重置后允许再次执行', () => {
     const fixture = createFixture();
     const action = compileGraphEntry('once-dedup', 'once', {
       once: {
         action: {
           kind: 'once',
-          parameters: { scopeKey: 'shared-effect' },
+          parameters: {},
           body: { $sequence: 'apply' },
         },
         next: null,
@@ -2181,12 +1856,13 @@ describe('CombatActionSequenceRuntime', () => {
       },
     });
 
-    fixture.runtime.createSequence(action).executeInstant({});
-    fixture.runtime.createSequence(action).executeInstant({});
+    const sequence = fixture.runtime.createSequence(action);
+    sequence.executeInstant({});
+    sequence.executeInstant({});
     expect(fixture.executed).toEqual(['once']);
 
-    fixture.runtime.reset();
-    fixture.runtime.createSequence(action).executeInstant({});
+    sequence.reset({});
+    sequence.executeInstant({});
     expect(fixture.executed).toEqual(['once', 'once']);
   });
 
@@ -2217,6 +1893,35 @@ describe('CombatActionSequenceRuntime', () => {
     expect(fixture.executed).toEqual(['frame', 'frame', 'frame']);
   });
 
+  it('周期子序列复用 once 实例，正常重置后重新执行', () => {
+    const fixture = createFixture();
+    const action = fixture.runtime.createSequence(
+      compileGraphEntry('periodic-once', 'loop', {
+        loop: {
+          action: {
+            kind: 'repeatEachTick',
+            parameters: { nativeTickInterval: { executeEachFrame: true, intervalSeconds: 0.1 } },
+            body: { $sequence: 'once' },
+          },
+          next: null,
+        },
+        once: {
+          action: { kind: 'once', parameters: {}, body: { $sequence: 'apply' } },
+          next: null,
+        },
+        apply: { action: operation('apply'), next: null },
+      }),
+    );
+    action.execute({});
+    action.tick(1 / 30, {});
+    action.tick(1 / 30, {});
+    expect(fixture.executed).toEqual(['apply']);
+    action.end({});
+    action.reset({});
+    action.execute({});
+    expect(fixture.executed).toEqual(['apply', 'apply']);
+  });
+
   it('按原生单精度扫描门槛驱动固定单目标 Channeling', () => {
     const fixture = createFixture();
     const action = fixture.runtime.createSequence(
@@ -2226,6 +1931,8 @@ describe('CombatActionSequenceRuntime', () => {
             kind: 'repeatEachTick',
             parameters: {
               nativeChanneling: {
+                catchUpMissedTicks: false,
+                target: { kind: 'owner' },
                 executeEachFrame: false,
                 triggerIntervalSeconds: 0.06,
                 maxCountPerTarget: 3,
@@ -2266,6 +1973,8 @@ describe('CombatActionSequenceRuntime', () => {
               kind: 'repeatEachTick',
               parameters: {
                 nativeChanneling: {
+                  catchUpMissedTicks: false,
+                  target: { kind: 'owner' },
                   executeEachFrame: false,
                   triggerIntervalSeconds: 0.1,
                   maxCountPerTarget: -1,
@@ -2295,7 +2004,7 @@ describe('CombatActionSequenceRuntime', () => {
         {
           input_1: {
             type: 'boolean',
-            expression: { kind: 'contextFlagEquals', flag: 'enabled', value: true },
+            expression: { kind: 'combatActive' },
           },
         },
       ),
@@ -2340,41 +2049,54 @@ describe('CombatActionSequenceRuntime', () => {
     expect(fixture.executed).toEqual(['interval', 'interval', 'interval']);
   });
 
-  it('原生周期动作自身在 Execute 内触发一次，后续首次普通 Tick 不跳过，终点 Tick 先于 End', () => {
-    const fixture = createFixture();
-    const timeline = fixture.runtime.createTimeline([
-      {
-        startFrame: 1,
-        endFrame: 3,
-        sequence: compileGraphEntry('native-interval-timeline', 'loop', {
-          loop: {
-            action: {
-              kind: 'repeatEachTick',
-              parameters: {
-                nativeTickInterval: { executeEachFrame: false, intervalSeconds: 0.033 },
+  it.each(['tickInterval', 'channeling'] as const)(
+    '%s 启动后不重复跳过首次普通 Tick，终点 Tick 先于 End',
+    kind => {
+      const fixture = createFixture();
+      const timeline = fixture.runtime.createTimeline([
+        {
+          startFrame: 1,
+          endFrame: 3,
+          sequence: compileGraphEntry('native-interval-timeline', 'loop', {
+            loop: {
+              action: {
+                kind: 'repeatEachTick',
+                parameters:
+                  kind === 'tickInterval'
+                    ? { nativeTickInterval: { executeEachFrame: false, intervalSeconds: 0.033 } }
+                    : {
+                        nativeChanneling: {
+                          catchUpMissedTicks: false,
+                          target: { kind: 'owner' },
+                          executeEachFrame: false,
+                          triggerIntervalSeconds: 0.033,
+                          maxCountPerTarget: 5,
+                          targetTriggerIntervalSeconds: 0,
+                        },
+                      },
+                body: { $sequence: 'interval' },
               },
-              body: { $sequence: 'interval' },
+              next: null,
             },
-            next: null,
-          },
-          interval: {
-            action: operation('interval'),
-            next: null,
-          },
-        }),
-      },
-    ]);
-    timeline.reset({});
-    timeline.tick(1, 1 / 30, {});
-    expect(fixture.executed).toEqual(['interval']);
-    timeline.tick(2, 1 / 30, {});
-    expect(fixture.executed).toEqual(['interval', 'interval']);
-    timeline.tick(3, 1 / 30, {});
-    expect(fixture.executed).toEqual(['interval', 'interval', 'interval']);
-    expect(timeline.isComplete).toBe(true);
-    timeline.tick(4, 1 / 30, {});
-    expect(fixture.executed).toEqual(['interval', 'interval', 'interval']);
-  });
+            interval: {
+              action: operation('interval'),
+              next: null,
+            },
+          }),
+        },
+      ]);
+      timeline.reset({});
+      timeline.tick(1, 1 / 30, {});
+      expect(fixture.executed).toEqual(['interval']);
+      timeline.tick(2, 1 / 30, {});
+      expect(fixture.executed).toEqual(['interval', 'interval']);
+      timeline.tick(3, 1 / 30, {});
+      expect(fixture.executed).toEqual(['interval', 'interval', 'interval']);
+      expect(timeline.isComplete).toBe(true);
+      timeline.tick(4, 1 / 30, {});
+      expect(fixture.executed).toEqual(['interval', 'interval', 'interval']);
+    },
+  );
 
   it('对 Context 快照中的每个稳定目标同步执行 body', () => {
     const targetContext = new RuntimeTargetContext();
@@ -2403,7 +2125,7 @@ describe('CombatActionSequenceRuntime', () => {
           loop: {
             action: {
               kind: 'forEachContextTarget',
-              parameters: { contextKey: 'lances' },
+              parameters: { targets: { kind: 'context', key: 'lances' } },
               body: { $sequence: 'visit' },
             },
             next: null,
@@ -2428,7 +2150,11 @@ describe('CombatActionSequenceRuntime', () => {
     });
     const action = runtime.createSequence(
       chainEntry('unconditional-jump', [
-        { kind: 'jumpTimeline', parameters: { destinationFrame: 150 } },
+        {
+          kind: 'jumpTimeline',
+          parameters: { destinationFrame: 150 },
+          condition: { $sequence: null },
+        },
       ]),
     );
 
@@ -2474,18 +2200,24 @@ describe('CombatActionSequenceRuntime', () => {
       requestTimelineJump,
     });
     const condition = { kind: 'conditionNode', nodeId: 'active' } as const;
-    const action = runtime.createSequence(
-      chainEntry(
-        'conditional-jump',
-        [
-          {
+    const program = compileGraphEntry(
+      'conditional-jump',
+      'jump',
+      {
+        jump: {
+          action: {
             kind: 'jumpTimeline',
-            parameters: { destinationFrame: 89, condition },
+            parameters: { destinationFrame: 89 },
+            condition: { $sequence: 'write' },
           },
-        ],
-        { active: { type: 'boolean', expression: { kind: 'combatActive' } } },
-      ),
+          next: null,
+        },
+        write: { action: operation('condition-write'), next: 'check' },
+        check: { action: { kind: 'checkCondition', parameters: { condition } }, next: null },
+      },
+      { active: { type: 'boolean', expression: { kind: 'combatActive' } } },
     );
+    const action = runtime.createSequence(program);
 
     action.execute({});
     action.tick(0, {});
@@ -2495,7 +2227,120 @@ describe('CombatActionSequenceRuntime', () => {
     action.tick(1 / 30, {});
 
     expect(operations.evaluate).toHaveBeenCalledTimes(2);
+    expect(operations.execute).toHaveBeenCalledTimes(2);
+    const restored = runtime.createSequence(
+      program,
+      undefined,
+      structuredClone(action.runtimeState),
+    );
+    restored.tick(1 / 30, {});
+    restored.end({});
+    expect(operations.evaluate).toHaveBeenCalledTimes(2);
     expect(requestTimelineJump).toHaveBeenCalledTimes(1);
     expect(requestTimelineJump).toHaveBeenCalledWith(89);
   });
+});
+
+it('循环查询一次并捕获列表，子序列失败不阻止后继', () => {
+  const team = ['first', 'second'];
+  const calls: string[] = [];
+  const board = new ActionBlackboard();
+  const query = vi.fn((excludedOwnerId?: string) => {
+    expect(excludedOwnerId).toBe('owner');
+    return team.map(operatorId => ({ kind: 'operator' as const, operatorId }));
+  });
+  const runtime = new CombatActionSequenceRuntime(
+    {
+      queryTargets: (selection, context) => {
+        expect(selection).toEqual({ kind: 'characterTeam', excludeOwner: true });
+        return query(context.actionOwnerId);
+      },
+      evaluate: () => true,
+      execute: (step, context) => {
+        if (step.kind !== 'triggerCustomAbilityEvent') throw new Error('unexpected operation');
+        const target = context?.currentTarget;
+        const id = target?.kind === 'operator' ? target.operatorId : 'outside';
+        calls.push(`execute:${step.parameters.eventName}:${id}`);
+        expect(context?.blackboard).toBe(board);
+        if (id !== 'outside') expect(context?.actionInputTarget).toEqual(target);
+        team.pop();
+        return id !== 'first';
+      },
+      end: (step, context) => {
+        if (step.kind !== 'triggerCustomAbilityEvent') return;
+        const target = context?.currentTarget;
+        calls.push(
+          `end:${step.parameters.eventName}:${target?.kind === 'operator' ? target.operatorId : 'outside'}`,
+        );
+      },
+    },
+    { blackboard: board, actionOwnerId: 'owner' },
+  );
+  const action = runtime.createSequence(
+    compileGraphEntry('party-loop', 'loop', {
+      loop: {
+        action: {
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'characterTeam', excludeOwner: true } },
+          body: { $sequence: 'body' },
+        },
+        next: 'outside',
+      },
+      body: { action: operation('body'), next: null },
+      outside: { action: operation('after'), next: null },
+    }),
+  );
+  action.execute({});
+  expect(query).toHaveBeenCalledTimes(1);
+  expect(calls).toEqual([
+    'execute:body:first',
+    'end:body:first',
+    'execute:body:second',
+    'end:body:second',
+    'execute:after:outside',
+  ]);
+  action.end({});
+  expect(calls.at(-1)).toBe('end:after:outside');
+  expect(calls).toHaveLength(6);
+});
+
+it('末尾 NotNext 跨同一环境入口保留；切面恢复保留待消费策略且不同宿主互不影响', () => {
+  const program = createActionGraphCompilation(
+    {
+      nodes: {
+        invert: { action: { kind: 'invertNextResult', parameters: {} }, next: null },
+        pass: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'constant', value: true } },
+          },
+          next: null,
+        },
+      },
+    },
+    1,
+  );
+  const operations = { execute: () => true, evaluate: () => true };
+  const context = { blackboard: new ActionBlackboard() };
+  const runtime = new CombatActionSequenceRuntime(operations, context);
+  const invert = runtime.createSequence(program.compileEntry({ $sequence: 'invert' }, 'invert'));
+  expect(invert.executeInstant({})).toBe(true);
+  invert.reset({});
+  const saved = structuredClone(runtime.sequenceHostState);
+  const probe = program.compileEntry({ $sequence: 'pass' }, 'probe');
+  expect(
+    new CombatActionSequenceRuntime(operations, context).createSequence(probe).executeInstant({}),
+  ).toBe(true);
+  const restored = new CombatActionSequenceRuntime(
+    operations,
+    context,
+    {},
+    undefined,
+    undefined,
+    saved,
+  );
+  const resumed = restored.createSequence(probe);
+  expect(resumed.executeInstant({})).toBe(false);
+  expect(resumed.executeInstant({})).toBe(true);
+  expect(runtime.createSequence(probe).executeInstant({})).toBe(false);
 });

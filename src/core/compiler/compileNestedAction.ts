@@ -11,21 +11,14 @@ import {
   type BindProgramResource,
 } from './compileProgramDefinitions';
 
-export type NestedActionKind =
-  | 'startCurrentAbilityEntityChildSkill'
-  | 'launchProjectile'
-  | 'spawnAbilityEntity'
-  | 'applyBuff'
-  | 'applyPhysicalInfliction';
+export type NestedActionKind = 'launchProjectile' | 'spawnAbilityEntity' | 'applyBuff';
 export function isNestedAction<Step extends { kind: CombatStepKind }>(
   step: Step,
 ): step is Extract<Step, { kind: NestedActionKind }> {
   return (
-    step.kind === 'startCurrentAbilityEntityChildSkill' ||
     step.kind === 'launchProjectile' ||
     step.kind === 'spawnAbilityEntity' ||
-    step.kind === 'applyBuff' ||
-    step.kind === 'applyPhysicalInfliction'
+    step.kind === 'applyBuff'
   );
 }
 export function compileNestedAction(
@@ -39,18 +32,6 @@ export function compileNestedAction(
   const definitions = createProgramDefinitionCompiler(skillLevel, compileEntry, bindResource);
   const keyed = step.key === undefined ? {} : { key: step.key };
   switch (step.kind) {
-    case 'startCurrentAbilityEntityChildSkill':
-      return {
-        ...keyed,
-        kind: step.kind,
-        parameters: {
-          childSkill: definitions.childSkill(
-            step.parameters.childSkill,
-            `${path}.parameters.childSkill`,
-          ),
-        },
-      };
-
     case 'launchProjectile': {
       const timing = step.parameters.finish;
       if (typeof timing === 'number') {
@@ -97,82 +78,34 @@ export function compileNestedAction(
     case 'applyBuff': {
       if ('definition' in step.parameters)
         throw new Error(`${path}: applyBuff must reference an owner Buff definition`);
-      const { blackboardAssignments, ...parameters } = step.parameters;
+      const parameters = step.parameters;
       return {
         ...keyed,
         kind: step.kind,
         parameters: {
           ...parameters,
-          ...(blackboardAssignments === undefined
-            ? {}
-            : {
-                blackboardAssignments: Object.fromEntries(
-                  Object.entries(blackboardAssignments).map(([key, value]) => [
-                    key,
-                    typeof value === 'object' && 'kind' in value
-                      ? value
-                      : {
-                          kind: 'constant' as const,
-                          value: resolveLevelValue(
-                            value as LevelValues,
-                            skillLevel,
-                            `${path}.parameters.blackboardAssignments.${key}`,
-                          ),
-                        },
-                  ]),
-                ),
-              }),
-        },
-      };
-    }
-
-    case 'applyPhysicalInfliction': {
-      const { noGuardDefinition, ...parameters } = step.parameters;
-      const resolvedNoGuard = definitions.buff(
-        noGuardDefinition,
-        `${path}.parameters.noGuardDefinition`,
-      );
-      if (parameters.type === 'crush') {
-        const { crushedDefinition, ...crushParameters } = parameters;
-        return {
-          ...keyed,
-          kind: step.kind,
-          parameters: {
-            ...crushParameters,
-            noGuardDefinition: resolvedNoGuard,
-            crushedDefinition: definitions.buff(
-              crushedDefinition,
-              `${path}.parameters.crushedDefinition`,
-            ),
-          },
-        };
-      }
-      if (parameters.type === 'airborne') {
-        const { airborneDefinition, ...airborneParameters } = parameters;
-        return {
-          ...keyed,
-          kind: step.kind,
-          parameters: {
-            ...airborneParameters,
-            noGuardDefinition: resolvedNoGuard,
-            airborneDefinition: definitions.buff(
-              airborneDefinition,
-              `${path}.parameters.airborneDefinition`,
-            ),
-          },
-        };
-      }
-      const { fractureDefinition, ...fractureParameters } = parameters;
-      return {
-        ...keyed,
-        kind: step.kind,
-        parameters: {
-          ...fractureParameters,
-          noGuardDefinition: resolvedNoGuard,
-          fractureDefinition: definitions.buff(
-            fractureDefinition,
-            `${path}.parameters.fractureDefinition`,
-          ),
+          buffs: parameters.buffs.map(({ blackboardAssignments, ...entry }, index) => ({
+            ...entry,
+            ...(blackboardAssignments === undefined
+              ? {}
+              : {
+                  blackboardAssignments: Object.fromEntries(
+                    Object.entries(blackboardAssignments).map(([key, value]) => [
+                      key,
+                      typeof value === 'object' && 'kind' in value
+                        ? value
+                        : {
+                            kind: 'constant' as const,
+                            value: resolveLevelValue(
+                              value as LevelValues,
+                              skillLevel,
+                              `${path}.parameters.buffs[${index}].blackboardAssignments.${key}`,
+                            ),
+                          },
+                    ]),
+                  ),
+                }),
+          })),
         },
       };
     }

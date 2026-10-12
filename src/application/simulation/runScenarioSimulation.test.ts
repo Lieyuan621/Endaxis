@@ -84,6 +84,7 @@ function options(): CompileScenarioRuntimeAssemblyOptions {
       normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
     },
     environment: {
+      comboSkillPendingInterval: 5,
       enemyBuffRuntime: enemyBuffRuntime(),
       createOperatorBuffRuntime: operatorBuffRuntime,
       createOperationExecutor: () => operationExecutor(),

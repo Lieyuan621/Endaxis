@@ -69,11 +69,16 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_funnel_0019_intensityup',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_funnel_0019_intensityup',
+                      copiedBlackboardAssignments: { phy_spell_up: 'phy_spell_up' },
+                    },
+                  ],
+                  targets: { kind: 'owner' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: { phy_spell_up: 'phy_spell_up' },
                 },
               },
               next: null,
@@ -82,8 +87,9 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_funnel_0019_burstup_layer',
-                  target: 'caster',
+                  buffs: [{ buffId: 'buff_wpn_funnel_0019_burstup_layer' }],
+                  targets: { kind: 'owner' },
+                  source: { kind: 'source' },
                   count: { kind: 'valueNode', nodeId: 'data_1' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
@@ -91,22 +97,22 @@ const definition = {
               },
               next: 'applyBuff_1',
             },
-            conditional_3: {
+            checkCondition_3: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                whenTrue: { $sequence: 'applyBuff_2' },
               },
-              next: null,
+              next: 'applyBuff_2',
             },
             createTimedMarker_4: {
               action: {
                 kind: 'createTimedMarker',
                 parameters: {
-                  target: 'caster',
+                  targets: { kind: 'owner' },
                   markerId: 'sk_wpn_funnel_0019',
                   durationSeconds: { kind: 'constant', value: 0.1 },
                   autoFinishByAction: false,
+                  timeDomain: 'globalScaled',
                 },
               },
               next: null,
@@ -115,11 +121,16 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_funnel_0019_spelldmgup',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_funnel_0019_spelldmgup',
+                      copiedBlackboardAssignments: { spell_dmg_up2: 'spell_dmg_up2' },
+                    },
+                  ],
+                  targets: { kind: 'owner' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: { spell_dmg_up2: 'spell_dmg_up2' },
                 },
               },
               next: 'createTimedMarker_4',
@@ -128,7 +139,8 @@ const definition = {
               action: {
                 kind: 'finishBuffsById',
                 parameters: {
-                  target: 'caster',
+                  targets: { kind: 'owner' },
+                  finishSource: { kind: 'source' },
                   buffIds: ['buff_wpn_funnel_0019_burstup_layer'],
                   reason: 'other',
                   count: { kind: 'constant', value: 1 },
@@ -136,21 +148,19 @@ const definition = {
               },
               next: 'applyBuff_5',
             },
-            conditional_7: {
+            checkCondition_7: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'finishBuffsById_6' },
               },
-              next: null,
+              next: 'finishBuffsById_6',
             },
-            conditional_8: {
+            checkCondition_8: {
               action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-                whenTrue: { $sequence: 'conditional_7' },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
               },
-              next: null,
+              next: 'checkCondition_7',
             },
           },
           dataNodes: {
@@ -173,13 +183,10 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                returnTrueIfNotExists: true,
                 target: 'caster',
                 markerId: 'sk_wpn_funnel_0019',
               },
-            },
-            data_5: {
-              type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_4' } },
             },
           },
         },
@@ -191,13 +198,13 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'beforeCastSkill',
           priority: 0,
-          sequence: { $sequence: 'conditional_3' },
+          sequence: { $sequence: 'checkCondition_3' },
         },
         {
           key: 'skill3:event:1:sequence:0',
           abilityEvent: 'beforeOutputSpellBurst',
           priority: 0,
-          sequence: { $sequence: 'conditional_8' },
+          sequence: { $sequence: 'checkCondition_8' },
         },
       ],
       blackboard: {
@@ -208,7 +215,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_funnel_0019',
-  iconPath: '/weapons/funnel/wpn_funnel_0019.webp',
+  icon: 'endaxis:weapons/funnel/wpn_funnel_0019',
   buffDefinitions: {
     buff_wpn_funnel_0019_burstup_layer: {
       stackingType: 'stack',
@@ -220,8 +227,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_buff_wpn_funnel_0019',
-        iconPath: '/icons/icon_battle_buff_wpn_funnel_0019.webp',
+        icon: 'endaxis:icons/icon_battle_buff_wpn_funnel_0019',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -257,8 +263,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_physical_infliction_up',
-        iconPath: '/icons/icon_battle_physical_infliction_up.webp',
+        icon: 'endaxis:icons/icon_battle_physical_infliction_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -299,8 +304,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_spell_up',
-        iconPath: '/icons/icon_battle_spell_up.webp',
+        icon: 'endaxis:icons/icon_battle_spell_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

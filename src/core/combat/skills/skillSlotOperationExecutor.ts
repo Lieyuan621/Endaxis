@@ -39,8 +39,9 @@ export class SkillSlotOperationExecutor implements CombatOperationExecutor {
       const state = context?.actionRegistrationState;
       if (register === undefined || finish === undefined || state === undefined)
         throw new Error('basic-attack mapping requires action state and lifecycle ports');
-      if (state.registrationId !== null) finish(state.registrationId);
-      state.registrationId = register(step.parameters.skillId);
+      for (const id of state.registrationIds) finish(id);
+      state.registrationIds = [];
+      for (const skillId of step.parameters.skillIds) state.registrationIds.push(register(skillId));
       return true;
     }
     if (step.kind === 'changePlayerActionMode') {
@@ -49,8 +50,8 @@ export class SkillSlotOperationExecutor implements CombatOperationExecutor {
       const state = context?.actionRegistrationState;
       if (activate === undefined || finish === undefined || state === undefined)
         throw new Error('native player-action mode requires action state and lifecycle ports');
-      if (state.registrationId !== null) finish(state.registrationId);
-      state.registrationId = activate(step.parameters.modeId);
+      for (const id of state.registrationIds) finish(id);
+      state.registrationIds = [activate(step.parameters.modeId)];
       return true;
     }
     if (step.kind === 'overrideMultiDashLimit') {
@@ -61,7 +62,7 @@ export class SkillSlotOperationExecutor implements CombatOperationExecutor {
       const raw = resolveActionValueOperand(step.parameters.dashCount, context.blackboard);
       const nativeLimit = Math.trunc(raw);
       setLimit(nativeLimit < 0 ? 0x7fffffff : nativeLimit);
-      state.registrationId = 0;
+      state.registrationIds = [0];
       return true;
     }
     if (step.kind === 'changeNativeSkillType') {
@@ -81,16 +82,18 @@ export class SkillSlotOperationExecutor implements CombatOperationExecutor {
       const state = context?.actionRegistrationState;
       if (replace === undefined || finish === undefined || state === undefined)
         throw new Error('skill-slot replacement requires action state and lifecycle ports');
-      if (state.registrationId !== null) finish(step.parameters.skillSlotKey, state.registrationId);
-      state.registrationId = replace({
-        skillSlotKey: step.parameters.skillSlotKey,
-        targetSkillKey: step.parameters.targetSkillKey,
-        ...(step.parameters.revertedSkillKey === undefined
-          ? {}
-          : { revertedSkillKey: step.parameters.revertedSkillKey }),
-        inheritOriginSkillCooldownProgress:
-          step.parameters.inheritOriginSkillCooldownProgress ?? false,
-      });
+      for (const id of state.registrationIds) finish(step.parameters.skillSlotKey, id);
+      state.registrationIds = [
+        replace({
+          skillSlotKey: step.parameters.skillSlotKey,
+          targetSkillKey: step.parameters.targetSkillKey,
+          ...(step.parameters.revertedSkillKey === undefined
+            ? {}
+            : { revertedSkillKey: step.parameters.revertedSkillKey }),
+          inheritOriginSkillCooldownProgress:
+            step.parameters.inheritOriginSkillCooldownProgress ?? false,
+        }),
+      ];
     } else {
       this.options.changeSkillSlot(
         step.parameters.skillSlotKey,
@@ -107,8 +110,8 @@ export class SkillSlotOperationExecutor implements CombatOperationExecutor {
       const finish = this.options.finishBasicAttackMapping;
       if (state === undefined || finish === undefined)
         throw new Error('basic-attack mapping requires action state and lifecycle ports');
-      if (state.registrationId !== null) finish(state.registrationId);
-      state.registrationId = null;
+      for (const id of state.registrationIds) finish(id);
+      state.registrationIds = [];
       return;
     }
     if (step.kind === 'changeSkillSlot') {
@@ -117,9 +120,8 @@ export class SkillSlotOperationExecutor implements CombatOperationExecutor {
         const finish = this.options.finishSkillSlotReplacement;
         if (state === undefined || finish === undefined)
           throw new Error('skill-slot replacement requires action state and lifecycle ports');
-        if (state.registrationId !== null)
-          finish(step.parameters.skillSlotKey, state.registrationId);
-        state.registrationId = null;
+        for (const id of state.registrationIds) finish(step.parameters.skillSlotKey, id);
+        state.registrationIds = [];
       }
       return;
     }
@@ -128,8 +130,8 @@ export class SkillSlotOperationExecutor implements CombatOperationExecutor {
       const finish = this.options.finishPlayerActionMode;
       if (state === undefined || finish === undefined)
         throw new Error('native player-action mode requires action state and lifecycle ports');
-      if (state.registrationId !== null) finish(state.registrationId);
-      state.registrationId = null;
+      for (const id of state.registrationIds) finish(id);
+      state.registrationIds = [];
       return;
     }
     if (step.kind === 'overrideMultiDashLimit') {
@@ -137,8 +139,8 @@ export class SkillSlotOperationExecutor implements CombatOperationExecutor {
       const setLimit = this.options.setMultiDashLimit;
       if (state === undefined || setLimit === undefined)
         throw new Error('multi-dash limit requires action state and lifecycle ports');
-      if (state.registrationId !== null) setLimit(null);
-      state.registrationId = null;
+      if (state.registrationIds.length > 0) setLimit(null);
+      state.registrationIds = [];
       return;
     }
     this.options.delegate.end?.(step, context);

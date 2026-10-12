@@ -1,19 +1,31 @@
-import type { BuffFinishReason } from '../state/foundationState';
-import {
-  type BuffDuration,
-  type BuffKeywordEnhancementDefinition,
-  type BuffMaxStackCount,
-  type BuffPriority,
-  type BuffShieldAttributeValue,
-  type BuffShieldDefinition,
-  type BuffStackingType,
-  type BuffSustainedProtectionDefinition,
-  type BuffTimeClock,
-  type BuffTriggerCount,
-  type CombatBuffChildPresentation,
-  type CombatBuffPresentation,
+import type {
+  BuffDuration,
+  BuffKeywordEnhancementDefinition,
+  BuffMaxStackCount,
+  BuffPriority,
+  BuffShieldAttributeValue,
+  BuffShieldDefinition,
+  BuffStackingType,
+  BuffSustainedProtectionDefinition,
+  BuffTimeClock,
+  BuffTriggerCount,
+  CombatBuffChildPresentation,
+  CombatBuffPresentation,
 } from '../../../../packages/game-data-contract/src/buffs.ts';
-import type { BuffShieldState } from '../state/instanceState';
+import type { ModifierConditionRuntime } from '../actions/modifierConditionRuntime';
+import type { DamageModifierConditionRuntime } from '../damage/damageModifiers';
+import type { AppliedDamageModifier } from '../damage/damageScale';
+import type { PoiseModifierConditionInput } from '../damage/poiseModifiers';
+import type { HealModifierConditionInput } from '../heal/healModifiers';
+import type { CombatObjectRef } from '../receipt/combatReceipt';
+import type { ActionSequenceState } from '../state/actionState';
+import type {
+  ActionValueCalculation,
+  ArtsIntensityFactor,
+  BuffFinishReason,
+  BuffReference,
+} from '../state/foundationState';
+import type { BuffShieldState, BuffStackingState } from '../state/instanceState';
 import {
   createBuffContainerState,
   createBuffInstanceState,
@@ -21,6 +33,7 @@ import {
   type BuffContainerState,
   type BuffInstanceState,
 } from '../state/instanceState';
+import type { GameplayTagPredefine } from '../tags/gameplayTagPredefine';
 import {
   removeBuffAttributeModifiers,
   replaceBuffAttributeModifiers,
@@ -75,13 +88,17 @@ export {
  * 一次模拟中每个实体的 Buff 状态所有者。
  * 调用方通过稳定定义添加 Buff，并按战斗时钟推进；不得把实例写回定义或项目存档。
  */
+import type {
+  DamageModifierDefinition,
+  HealModifierDefinition,
+  HealModifierSide,
+  HealProcessTiming,
+  PoiseModifierDefinition,
+  PoiseModifierSide,
+  PoiseProcessTiming,
+} from '../../../../packages/game-data-contract/src/modifiers';
 import type { DamageType } from '../../game-data/operatorDefinition';
 import { ActionBlackboard, type ActionBlackboardValue } from '../actions/actionBlackboard';
-import {
-  ATTRIBUTE_MODIFIER_SOURCES,
-  type AttributeModifierSource,
-  type CombatAttributeModifier,
-} from '../state/foundationState';
 import {
   attributeModifierValues,
   createCombatAttributeModifier,
@@ -91,30 +108,22 @@ import {
   type CombatAttributeSet,
 } from '../attributes/combatAttributes';
 import { DamageModifier } from '../damage/damageModifiers';
-import { type DamageModifierDefinition } from '../../../../packages/game-data-contract/src/modifiers';
 import type {
   DamageModifierSide,
   DamageProcessTiming,
   PlayerDamageContext,
 } from '../damage/playerDamageContext';
 import { PoiseModifier, type PoiseCalculationContext } from '../damage/poiseModifiers';
-import {
-  type PoiseModifierDefinition,
-  type PoiseModifierSide,
-  type PoiseProcessTiming,
-} from '../../../../packages/game-data-contract/src/modifiers';
 import { HealModifier, type HealCalculationContext } from '../heal/healModifiers';
-import {
-  type HealModifierDefinition,
-  type HealModifierSide,
-  type HealProcessTiming,
-} from '../../../../packages/game-data-contract/src/modifiers';
 import {
   createSharedSpGainModifier,
   type SharedSpGainModifierSet,
 } from '../resources/sharedSpGainModifiers';
 import type { CombatSkillCastInfo, DamageModifierState } from '../state/foundationState';
 import {
+  ATTRIBUTE_MODIFIER_SOURCES,
+  type AttributeModifierSource,
+  type CombatAttributeModifier,
   type HealModifier as HealModifierState,
   type PoiseModifier as PoiseModifierState,
   type SharedSpGainAttribute,
@@ -188,6 +197,7 @@ export interface BuffLifecycleActions<Key extends string> {
   readonly enable?: (buff: CombatBuff<Key>) => void;
   readonly disable?: (buff: CombatBuff<Key>) => void;
   readonly finish?: (buff: CombatBuff<Key>) => void;
+  readonly dispelled?: (buff: CombatBuff<Key>, sourceId: string) => void;
   /** 宿主释放时清理局部执行器；不是普通结束动作或对外结束事件。 */
   readonly release?: (buff: CombatBuff<Key>) => void;
   readonly beforeEnhance?: (buff: CombatBuff<Key>, sourceId: string) => void;
@@ -215,6 +225,7 @@ export interface CombatBuffDefinition<Key extends string> {
   readonly applyTags?: readonly GameplayTag[];
   /** 跳过施加标签对应的免疫检查。 */
   readonly ignoreTagImmune?: boolean;
+  readonly dispelLevel?: number;
   /** Buff 到期但被 ExtendBuffAction 阻止结束后，临时注册到所属实体的标签。 */
   readonly extendTags?: readonly GameplayTag[];
   readonly stackingType: BuffStackingType;
@@ -232,24 +243,20 @@ export interface CombatBuffDefinition<Key extends string> {
   readonly damageModifiers?: readonly (Omit<DamageModifierDefinition, 'condition'> & {
     readonly createCondition?: (
       buff: CombatBuff<Key>,
-      state?: import('../state/actionState').ActionSequenceState,
-    ) => import('../damage/damageModifiers').DamageModifierConditionRuntime;
+      state?: ActionSequenceState,
+    ) => DamageModifierConditionRuntime;
   })[];
   readonly healModifiers?: readonly (Omit<HealModifierDefinition, 'condition'> & {
     readonly createCondition?: (
       buff: CombatBuff<Key>,
-      state?: import('../state/actionState').ActionSequenceState,
-    ) => import('../actions/modifierConditionRuntime').ModifierConditionRuntime<
-      import('../heal/healModifiers').HealModifierConditionInput
-    >;
+      state?: ActionSequenceState,
+    ) => ModifierConditionRuntime<HealModifierConditionInput>;
   })[];
   readonly poiseModifiers?: readonly (Omit<PoiseModifierDefinition, 'condition'> & {
     readonly createCondition?: (
       buff: CombatBuff<Key>,
-      state?: import('../state/actionState').ActionSequenceState,
-    ) => import('../actions/modifierConditionRuntime').ModifierConditionRuntime<
-      import('../damage/poiseModifiers').PoiseModifierConditionInput
-    >;
+      state?: ActionSequenceState,
+    ) => ModifierConditionRuntime<PoiseModifierConditionInput>;
   })[];
   readonly keywordEnhancements?: readonly BuffKeywordEnhancementDefinition[];
   readonly attributeModifiers?: readonly BuffAttributeModifierDefinition<Key>[];
@@ -269,14 +276,10 @@ export interface CombatBuffDefinition<Key extends string> {
 
 /** 添加 Buff 实例时由具体行为提供的初始黑板和层数。 */
 export interface CombatBuffAddOptions {
-  readonly blackboardValueCalculations?: Readonly<
-    Record<string, import('../state/foundationState').ActionValueCalculation>
-  >;
-  readonly producedBy?: import('../receipt/combatReceipt').CombatObjectRef;
+  readonly blackboardValueCalculations?: Readonly<Record<string, ActionValueCalculation>>;
+  readonly producedBy?: CombatObjectRef;
   readonly blackboardValues?: Readonly<Record<string, ActionBlackboardValue>>;
-  readonly blackboardArtsIntensityFactors?: Readonly<
-    Record<string, import('../state/foundationState').ArtsIntensityFactor>
-  >;
+  readonly blackboardArtsIntensityFactors?: Readonly<Record<string, ArtsIntensityFactor>>;
   /** 创建该实例的技能、被动或配装动作身份，用于解释后续生命周期步骤。 */
   readonly sourceActionId?: string;
   /** 创建该定义的 AbilitySystem；跨实体挂载和事件触发都不改变它。 */
@@ -294,7 +297,7 @@ export interface CombatBuffAddOptions {
 /** 一个实体上某项 Buff 的独立运行时实例。 */
 /** 由宿主精确持有的实例结束端口；null 是已知空施法，省略仍表示未核实。 */
 export interface BuffApplicationHandle {
-  readonly reference: import('../state/foundationState').BuffReference;
+  readonly reference: BuffReference;
   /** 回收完成后引用失效；仅结束、或正在执行回收回调时仍有效。 */
   readonly isRecycled: boolean;
   readonly isFinished?: boolean;
@@ -321,7 +324,7 @@ export class CombatBuff<Key extends string> {
     return this.#state;
   }
   /** 只包含目标与实例编号，可随战斗数据保存；不能保存整个 Buff 对象。 */
-  get reference(): import('../state/foundationState').BuffReference {
+  get reference(): BuffReference {
     return { ownerId: this.#state.identity.ownerId, instanceId: this.#state.identity.instanceId };
   }
   readonly #childBindings = new Map<
@@ -1281,17 +1284,14 @@ export class CombatBuffContainer<Key extends string> {
     ) => void,
     readonly onBuffReleased?: (buff: CombatBuff<Key>) => void,
     restoredState?: BuffContainerState<Key>,
-    readonly onBuffCreated?: (
-      buff: CombatBuff<Key>,
-      producedBy?: import('../receipt/combatReceipt').CombatObjectRef,
-    ) => void,
+    readonly onBuffCreated?: (buff: CombatBuff<Key>, producedBy?: CombatObjectRef) => void,
     /** 只读观察：实际层数已更新，但尚未执行增强回调；不改变原生事件。 */
     readonly onBuffStackChanged?: (
       buff: CombatBuff<Key>,
       previousLayers: number,
       sourceId?: string,
       skillCastInfo?: CombatSkillCastInfo | null,
-      producedBy?: import('../receipt/combatReceipt').CombatObjectRef,
+      producedBy?: CombatObjectRef,
     ) => void,
     /** 只读观察属性修正重建；观察者仅在摘要事实变化时记录，不发布原生事件。 */
     readonly onBuffAttributeModifiersRefreshed?: (
@@ -1300,7 +1300,7 @@ export class CombatBuffContainer<Key extends string> {
     ) => void,
     /** 只读观察真实启停边界；结束/释放已有独立事实，恢复绑定不得重放。 */
     readonly onBuffEnabledChanged?: (buff: CombatBuff<Key>) => void,
-    readonly tagPredefine?: import('../tags/gameplayTagPredefine').GameplayTagPredefine,
+    readonly tagPredefine?: GameplayTagPredefine,
   ) {
     if (restoredState === undefined) {
       this.#state = createBuffContainerState(
@@ -1403,9 +1403,7 @@ export class CombatBuffContainer<Key extends string> {
 
   /** 所有目标容器完成实例绑定后，再解析可能跨目标的父子关系。 */
   bindRestoredRelations(
-    resolveHandle: (
-      reference: import('../state/foundationState').BuffReference,
-    ) => BuffApplicationHandle | undefined,
+    resolveHandle: (reference: BuffReference) => BuffApplicationHandle | undefined,
   ): void {
     for (const buff of this.#snapshotBuffs()) {
       for (const reference of buff.runtimeState.children.members.values()) {
@@ -1482,9 +1480,7 @@ export class CombatBuffContainer<Key extends string> {
     return binding;
   }
 
-  resolveHandle(
-    reference: import('../state/foundationState').BuffReference,
-  ): BuffApplicationHandle | undefined {
+  resolveHandle(reference: BuffReference): BuffApplicationHandle | undefined {
     if (reference.ownerId !== this.ownerId) {
       throw new Error(
         `Buff reference owner '${reference.ownerId}' does not match '${this.ownerId}'`,
@@ -1500,17 +1496,6 @@ export class CombatBuffContainer<Key extends string> {
 
   get superArmor(): number {
     return Math.max(0, ...[...this.#state.sustainedProtections.values()].map(value => value[0]));
-  }
-
-  setMovementGaitLimit(limit: NonNullable<BuffContainerState['movementGaitLimit']>): void {
-    this.#state.movementGaitActionCount++;
-    this.#state.movementGaitLimit = limit;
-  }
-
-  endMovementGaitLimit(): void {
-    if (--this.#state.movementGaitActionCount > 0) return;
-    this.#state.movementGaitActionCount = 0;
-    this.#state.movementGaitLimit = null;
   }
 
   get impactResistance(): number {
@@ -1738,7 +1723,7 @@ export class CombatBuffContainer<Key extends string> {
 
   /** 固定当前匹配实例并禁止其结束；释放不会影响保护开始后新增的同 ID Buff。 */
   holdByIds(ids: readonly string[]): {
-    readonly references: readonly import('../state/foundationState').BuffReference[];
+    readonly references: readonly BuffReference[];
     release(): void;
   } {
     const accepted = new Set(ids);
@@ -1758,7 +1743,7 @@ export class CombatBuffContainer<Key extends string> {
   }
 
   /** 按保存的实例身份释放动作期保护；不会误伤保护开始后新增的同 ID Buff。 */
-  releaseHeld(references: readonly import('../state/foundationState').BuffReference[]): void {
+  releaseHeld(references: readonly BuffReference[]): void {
     for (const reference of references) {
       if (reference.ownerId !== this.ownerId) {
         throw new Error(`Buff hold owner '${reference.ownerId}' does not match '${this.ownerId}'`);
@@ -1872,6 +1857,31 @@ export class CombatBuffContainer<Key extends string> {
     );
   }
 
+  /** 按容器顺序驱散允许的实例，驱散回调先于普通结束。 */
+  dispel(
+    sourceId: string,
+    level: number,
+    query?: { buffTags: readonly GameplayTag[]; tagQueryType: GameplayTagQueryType },
+  ): void {
+    for (const buff of this.#iterateBuffs()) {
+      const requiredLevel = buff.definition.dispelLevel;
+      if (
+        buff.isFinished ||
+        requiredLevel === undefined ||
+        level < requiredLevel ||
+        (query !== undefined &&
+          !this.tagRegistry.query(
+            buff.definition.applyTags ?? [],
+            query.buffTags,
+            query.tagQueryType,
+          ))
+      )
+        continue;
+      buff.definition.actions?.dispelled?.(buff, sourceId);
+      this.#finishWithSource(buff, 'dispelled', sourceId, null);
+    }
+  }
+
   /** 按容器插入顺序结束所有匹配标签查询的 Buff，并返回实际结束数量。 */
   finishByTags(
     tags: readonly GameplayTag[],
@@ -1965,18 +1975,15 @@ export class CombatBuffContainer<Key extends string> {
   }
 
   /** 读取实际注册的直接属性修正，不重算 Buff 定义或保存来源链。 */
-  captureAttributeModifierDetails(
-    side: DamageModifierSide,
-  ): import('../damage/damageScale').AppliedDamageModifier[] {
+  captureAttributeModifierDetails(side: DamageModifierSide): AppliedDamageModifier[] {
     const active = new Set(this.attributes.runtimeState.modifiers);
-    const result: import('../damage/damageScale').AppliedDamageModifier[] = [];
+    const result: AppliedDamageModifier[] = [];
     for (const buff of this.#memberBindings.values()) {
       for (const modifier of buff.attributeModifiers) {
         if (!active.has(modifier)) continue;
         for (const slot in modifier.values) {
           if (!Object.hasOwn(modifier.values, slot)) continue;
-          const value =
-            modifier.values[slot as import('../attributes/combatAttributes').AttributeModifierSlot];
+          const value = modifier.values[slot as AttributeModifierSlot];
           const neutral = slot === 'finalMultiplier' || slot === 'baseFinalMultiplier' ? 1 : 0;
           if (value === neutral) continue;
           result.push({
@@ -1987,7 +1994,7 @@ export class CombatBuffContainer<Key extends string> {
             sourceActionId: buff.sourceActionId,
             side,
             attribute: modifier.attribute,
-            slot: slot as import('../attributes/combatAttributes').AttributeModifierSlot,
+            slot: slot as AttributeModifierSlot,
             value,
           });
         }
@@ -2248,9 +2255,9 @@ function isEnhanceChangedStackingType(stackingType: BuffStackingType): boolean {
 }
 
 class BuffStackingGroup<Key extends string> {
-  readonly #state: import('../state/instanceState').BuffStackingState;
+  readonly #state: BuffStackingState;
   /** 容器持有同一份叠层数据，实例关系按编号保留。 */
-  get runtimeState(): import('../state/instanceState').BuffStackingState {
+  get runtimeState(): BuffStackingState {
     return this.#state;
   }
   // 迁移期间的对象绑定；完整恢复时须从恢复后的容器重建。

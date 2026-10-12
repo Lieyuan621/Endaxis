@@ -2,7 +2,12 @@
  * 把 Buff 生命周期回执投影成时间轴可画的持续段。
  * 这里只解释已发生的施加、叠层、数值变化和结束事实；展示位置和样式属于 UI。
  */
-import type { CombatReceiptEntry, CombatReceiptValue } from '../combat/receipt/combatReceipt';
+import type {
+  BuffAttributeEffect,
+  BuffDamageEffect,
+  CombatReceiptEntry,
+  CombatReceiptValue,
+} from '../combat/receipt/combatReceipt';
 
 /** 腐蚀展示包括三种附着转化的 wrapper，以及内部减抗状态。 */
 export function isCorrosionTimelineBuff(buffId: string | undefined): boolean {
@@ -16,8 +21,8 @@ export function isCorrosionTimelineBuff(buffId: string | undefined): boolean {
 
 export interface BuffTimelineSegment {
   readonly maxStackCount?: number;
-  readonly attributeEffects?: readonly import('../combat/receipt/combatReceipt').BuffAttributeEffect[];
-  readonly damageEffects?: readonly import('../combat/receipt/combatReceipt').BuffDamageEffect[];
+  readonly attributeEffects?: readonly BuffAttributeEffect[];
+  readonly damageEffects?: readonly BuffDamageEffect[];
   readonly sourceId?: string;
   readonly sourceActionId?: string;
   readonly targetId: string;
@@ -73,8 +78,7 @@ export interface BuffTimelineSegment {
   readonly simpleModifierAttribute?: string;
   readonly simpleModifierSlot?: string;
   readonly simpleModifierValue?: number;
-  readonly iconId?: string;
-  readonly iconPath?: string;
+  readonly icon?: string;
   readonly showInHeadBarCommon?: boolean;
   readonly showInHeadBarAttached?: boolean;
   readonly showInSquadIcon?: boolean;
@@ -607,9 +611,7 @@ export function projectBuffIconTimelineMetadata(
     endFrame,
     data =>
       data.visible !== false &&
-      (data.visible === true ||
-        optionalString(data, 'iconPath') !== undefined ||
-        optionalString(data, 'iconId') !== undefined),
+      (data.visible === true || optionalString(data, 'icon') !== undefined),
   );
 }
 
@@ -783,8 +785,7 @@ function projectBuffSegments(
       !(
         entry.event === 'BuffPresentationStarted' &&
         data.visible !== false &&
-        (optionalString(data, 'iconPath') !== undefined ||
-          optionalString(data, 'iconId') !== undefined)
+        optionalString(data, 'icon') !== undefined
       )
     )
       continue;
@@ -859,12 +860,7 @@ function projectBuffSegments(
       ...copyOptionalBoolean(data, 'hasFiniteLifetime'),
       placement: presentationPlacement(data),
       ...(modifierFact ?? {}),
-      ...(optionalString(data, 'iconId') === undefined
-        ? {}
-        : { iconId: optionalString(data, 'iconId') }),
-      ...(optionalString(data, 'iconPath') === undefined
-        ? {}
-        : { iconPath: optionalString(data, 'iconPath') }),
+      ...(optionalString(data, 'icon') === undefined ? {} : { icon: optionalString(data, 'icon') }),
       ...copyOptionalBoolean(data, 'showInHeadBarCommon'),
       ...copyOptionalBoolean(data, 'showInHeadBarAttached'),
       ...copyOptionalBoolean(data, 'showInSquadIcon'),

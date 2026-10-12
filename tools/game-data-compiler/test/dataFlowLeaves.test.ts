@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  collectTargetGroupWrites,
   parseBlackboardCalculationActionSource,
   parseBlackboardMutationActionSource,
   parseBlackboardMutationPayloadSource,
@@ -341,47 +340,6 @@ describe('目标组单动作解析', () => {
         clampToXZ: false,
       },
     ]);
-  });
-
-  it('收集器关联同层 CheckEntityNum 的数量写回键', () => {
-    const merge = {
-      $type: 'Example.MergeTargetAction+Data, Example',
-      isEnable: true,
-      priorityLevel: 'Default',
-      priorityOffset: 0,
-      serverActionIndex: 4,
-      targetGroupKey: 'combined',
-      targets: [targetFixture('Target')],
-    };
-    const count = {
-      $type: 'Example.CheckEntityNum+Data, Example',
-      isEnable: true,
-      serverActionIndex: 5,
-      storeKey: 'target_count',
-      checkTarget: { targetSource: 'Context', targetGroupKey: 'combined' },
-    };
-    const root = {
-      actionGroupData: {
-        timelineActions: [
-          {
-            _startFrame: 3,
-            _endFrame: 8,
-            _sequenceActionData: { actionData: [merge, count] },
-          },
-        ],
-      },
-    };
-    const writes = collectTargetGroupWrites(root, 'fixture.json');
-    expect(writes).toMatchObject([
-      {
-        producerType: 'MergeTargetAction',
-        targetGroupKey: 'combined',
-        saveCountToBlackboardKey: 'target_count',
-      },
-    ]);
-    expect(writes[0]?.sourcePath).toBe(
-      'fixture.json.actionGroupData.timelineActions[0]._sequenceActionData.actionData[0]',
-    );
   });
 });
 

@@ -213,11 +213,7 @@ function graphFixtureSkill(
     actionGraph: { main: { nodes }, macros: {} },
   });
 }
-import { projectTimelineEditor } from '../../../ui/timeline/timelineEditorViewModel';
-import {
-  projectHitEffectsByCast,
-  projectTimelineHitActualFrames,
-} from '../../../ui/timeline/results/timelineHitEffects';
+import { projectTimelineHitOccurrences } from '../../../ui/timeline/results/timelineHitEffects';
 import { runStandardPlayerDamageScenarioSimulation } from '../runStandardPlayerDamageScenarioSimulation';
 import { createDefaultOperatorInstance } from '../../editor/loadoutBuildFactory';
 
@@ -999,7 +995,7 @@ describe('registered generated operators', () => {
     const startEntry =
       enhancementBuff?.lifecycleSequences?.start == null
         ? null
-        : enhancementBuff.lifecycleSequences.start.$sequence;
+        : enhancementBuff.lifecycleSequences.start[0]!.$sequence;
     const enhancementSteps: unknown[] = [];
     if (
       enhancementBuff !== undefined &&
@@ -1022,19 +1018,27 @@ describe('registered generated operators', () => {
       {
         kind: 'applyBuff',
         parameters: {
-          buffId: 'buff_common_affixes_enhance_crystal',
-          stringBlackboardAssignments: {
-            child_buff_id: 'buff_chr_0011_seraph_ultimate_effect',
-          },
+          buffs: [
+            {
+              buffId: 'buff_common_affixes_enhance_crystal',
+              stringBlackboardAssignments: {
+                child_buff_id: 'buff_chr_0011_seraph_ultimate_effect',
+              },
+            },
+          ],
         },
       },
       {
         kind: 'applyBuff',
         parameters: {
-          buffId: 'buff_common_affixes_enhance_natural',
-          stringBlackboardAssignments: {
-            child_buff_id: 'buff_chr_0011_seraph_ultimate_effect_2',
-          },
+          buffs: [
+            {
+              buffId: 'buff_common_affixes_enhance_natural',
+              stringBlackboardAssignments: {
+                child_buff_id: 'buff_chr_0011_seraph_ultimate_effect_2',
+              },
+            },
+          ],
         },
       },
     ]);
@@ -2479,20 +2483,12 @@ describe('registered generated operators', () => {
         entry => entry.event === 'DamageApplied' && entry.sourceId === 'track:zhuang-fangyi',
       ),
     ).toBe(true);
-    const castModel = projectTimelineEditor(placed, gameDataRepository).tracks[0]!.skillCasts[0]!;
-    const actualHitFrames = projectTimelineHitActualFrames(result.receiptEntries);
-    const visibleMarkers = castModel.hitMarkers.filter(marker => actualHitFrames.has(marker.hitId));
+    const castId = placed.tracks[0]!.skillCasts[0]!.id;
+    const visibleMarkers = projectTimelineHitOccurrences(result.receiptEntries).get(castId) ?? [];
     // 原生 sword_triggerd 先把总数减一；只有一把剑时普通段的 index < count 不成立，
     // 仅 index == count 的最后一剑生效。旧 Python 产物曾错误裁掉这两层条件而重复结算。
-    expect(visibleMarkers.map(marker => actualHitFrames.get(marker.hitId))).toEqual([29]);
-    expect(
-      projectHitEffectsByCast(
-        placed,
-        result.receiptEntries,
-        placed.tracks[0]!.skillCasts[0]!.id,
-        castModel.hitMarkers,
-      ).size,
-    ).toBe(1);
+    expect(visibleMarkers.map(marker => marker.frame)).toEqual([29]);
+    expect(visibleMarkers[0]!.label.damage).toHaveLength(1);
   });
 
   it('projects Zhuang Fangyi enhanced heavy-attack ability-entity damage back to its skill block', () => {
@@ -2551,9 +2547,7 @@ describe('registered generated operators', () => {
     });
 
     const cast = placed.tracks[0]!.skillCasts[0]!;
-    const castModel = projectTimelineEditor(placed, gameDataRepository).tracks[0]!.skillCasts[0]!;
-    const actualHitFrames = projectTimelineHitActualFrames(result.receiptEntries);
-    const visibleMarkers = castModel.hitMarkers.filter(marker => actualHitFrames.has(marker.hitId));
+    const visibleMarkers = projectTimelineHitOccurrences(result.receiptEntries).get(cast.id) ?? [];
     expect(result.receiptEntries).toContainEqual(
       expect.objectContaining({
         event: 'AbilityEntitySpawned',
@@ -2572,9 +2566,7 @@ describe('registered generated operators', () => {
       ),
     ).toHaveLength(1);
     expect(visibleMarkers).toHaveLength(1);
-    expect(
-      projectHitEffectsByCast(placed, result.receiptEntries, cast.id, castModel.hitMarkers).size,
-    ).toBe(1);
+    expect(visibleMarkers[0]!.label.damage).toHaveLength(1);
   });
 
   it('applies Zhuang Fangyi talent 1 electromagnetic enhancement to battle-skill hits', () => {

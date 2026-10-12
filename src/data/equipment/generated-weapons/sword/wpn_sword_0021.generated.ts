@@ -45,19 +45,19 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'beforeOutputBuff',
           priority: 0,
-          sequence: { $sequence: 'conditional_2' },
+          sequence: { $sequence: 'checkCondition_2' },
         },
         {
           key: 'skill3:event:0:sequence:1',
           abilityEvent: 'beforeOutputBuff',
           priority: 0,
-          sequence: { $sequence: 'conditional_4' },
+          sequence: { $sequence: 'checkCondition_4' },
         },
         {
           key: 'skill3:event:1:sequence:0',
           abilityEvent: 'beforeCastSkill',
           priority: 0,
-          sequence: { $sequence: 'conditional_7' },
+          sequence: { $sequence: 'checkCondition_7' },
         },
       ],
       actionGraph: {
@@ -67,59 +67,65 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_sword_0021_exist',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_sword_0021_exist',
+                      copiedBlackboardAssignments: { duration: 'duration' },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: { duration: 'duration' },
                 },
               },
               next: null,
             },
-            conditional_2: {
+            checkCondition_2: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
               },
-              next: null,
+              next: 'applyBuff_1',
             },
-            conditional_4: {
+            checkCondition_4: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
               },
-              next: null,
+              next: 'applyBuff_1',
             },
             applyBuff_5: {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_sword_0021_valid',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_sword_0021_valid',
+                      copiedBlackboardAssignments: { phy_dmg_up: 'phy_dmg_up' },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   lifetimeOwner: 'currentCastSkill',
-                  copiedBlackboardAssignments: { phy_dmg_up: 'phy_dmg_up' },
                 },
               },
               next: null,
             },
-            conditional_6: {
+            checkCondition_6: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'applyBuff_5' },
               },
-              next: null,
+              next: 'applyBuff_5',
             },
-            conditional_7: {
+            checkCondition_7: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-                whenTrue: { $sequence: 'conditional_6' },
               },
-              next: null,
+              next: 'checkCondition_6',
             },
           },
           dataNodes: {
@@ -160,7 +166,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_sword_0021',
-  iconPath: '/weapons/sword/wpn_sword_0021.webp',
+  icon: 'endaxis:weapons/sword/wpn_sword_0021',
   buffDefinitions: {
     buff_wpn_sword_0021_exist: {
       stackingType: 'overwriteDuration',
@@ -172,8 +178,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_weapon_atk_skill_ready',
-        iconPath: '/icons/icon_battle_weapon_atk_skill_ready.webp',
+        icon: 'endaxis:icons/icon_battle_weapon_atk_skill_ready',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -215,7 +220,7 @@ const definition = {
           value: { blackboardKey: 'phy_dmg_up' },
         },
       ],
-      lifecycleSequences: { finish: { $sequence: 'finishBuffsById_1' } },
+      lifecycleSequences: { finish: [{ $sequence: 'finishBuffsById_1' }] },
       actionGraph: {
         main: {
           nodes: {
@@ -223,7 +228,8 @@ const definition = {
               action: {
                 kind: 'finishBuffsById',
                 parameters: {
-                  target: 'caster',
+                  targets: { kind: 'source' },
+                  finishSource: { kind: 'source' },
                   buffIds: ['buff_wpn_sword_0021_exist'],
                   reason: 'other',
                 },

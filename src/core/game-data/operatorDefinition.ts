@@ -54,8 +54,6 @@ export {
   type ActionStringOperand,
   DAMAGE_CALCULATIONS,
   type DamageCalculation,
-  RESOURCE_RECIPIENTS,
-  type ResourceRecipient,
   HEAL_TARGETS,
   type HealTarget,
   SP_GAIN_KINDS,
@@ -67,7 +65,6 @@ export {
 } from '../../../packages/game-data-contract/src/primitives.ts';
 export {
   type DealDamageParameters,
-  type DealFixedDamageParameters,
   type StatusModifierDefinition,
   STATUS_MODIFIER_KINDS,
   type CombatStepParameters,

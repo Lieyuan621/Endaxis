@@ -26,6 +26,7 @@ import {
 import { UltimatePresentationRuntime } from '../skills/ultimatePresentationRuntime';
 
 export interface CombatSharedRuntimeOptions {
+  readonly comboSkillPendingInterval: number;
   readonly resources: CombatResourceSnapshot;
   readonly resourceResolvers?: CombatResourceRuntimeResolvers;
   readonly operatorOrder: readonly string[];
@@ -86,6 +87,7 @@ export class CombatSharedRuntime {
     this.comboWindows = new ComboWindowRuntime(
       this.clock,
       this.receipt,
+      options.comboSkillPendingInterval,
       options.operatorOrder,
       state?.comboWindows,
     );
@@ -125,6 +127,7 @@ export class CombatSharedRuntime {
       identities: {
         abilityEntities: this.abilityEntityInstanceIds.runtimeState,
         skillCasts: this.skillCastIds.runtimeState,
+        spatialPoints: { nextSpatialPointId: 1 },
       },
     };
   }

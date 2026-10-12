@@ -1,21 +1,23 @@
+import type { KnownNativeActionLeafSource } from './actionLeaf.ts';
+import { parseKnownNativeActionLeafSource } from './actionLeaf.ts';
+import type { AttributeTypeSource } from './attributeModifiers.ts';
 import {
+  parseAttributeTypeName,
   parseGameplayAttributeModifierEntrySource,
   parseGameplayAttributeModifierSource,
-  parseAttributeTypeName,
   type GameplayAttributeModifierEntrySource,
   type GameplayAttributeModifierSource,
 } from './attributeModifiers.ts';
 import { numericDeclaredBlackboard } from './blackboard.ts';
-import { readHealModifierSide, readModifierSide } from './nativeEnums.ts';
 import {
   parseKnownNativeBuffActionGraphSource,
   type BuffActionGraphSource,
 } from './buffActionGraph.ts';
-import type { KnownNativeActionLeafSource } from './actionLeaf.ts';
-import { parseKnownNativeActionLeafSource } from './actionLeaf.ts';
-import { parseDamageProcessors, type DamageProcessorSource } from './damageActions.ts';
-import { parseEffectActionSource } from './presentationActions.ts';
 import { parseNativeSequenceSource, type NativeSequenceSource } from './controlFlow.ts';
+import { parseDamageProcessors, type DamageProcessorSource } from './damageActions.ts';
+import { parseBuffDispelLevel } from './dispelActions.ts';
+import { readHealModifierSide, readModifierSide } from './nativeEnums.ts';
+import { parseEffectActionSource } from './presentationActions.ts';
 import {
   requireArray,
   requireBoolean,
@@ -105,6 +107,7 @@ export interface BuffPresentationSource {
 }
 
 export interface BuffLifecycleSource {
+  readonly dispelLevel: number | null;
   readonly addingCooldown: ScalarSource | null;
   readonly ignoreAddingCooldown: boolean;
   readonly ignoreTagImmune: boolean;
@@ -175,7 +178,7 @@ export interface BuffShieldSource {
     | {
         readonly kind: 'attribute';
         readonly valueSource: string;
-        readonly attributeType: import('./attributeModifiers.ts').AttributeTypeSource;
+        readonly attributeType: AttributeTypeSource;
         readonly multiplier: ScalarSource;
         readonly addition: ScalarSource;
       };
@@ -259,6 +262,7 @@ export function parseBuffRuntimeSource(
     graph,
     presentation: parsePresentation(root, sourcePath),
     lifecycle: {
+      dispelLevel: parseBuffDispelLevel(root.dispelConfig, `${sourcePath}.dispelConfig`),
       addingCooldown,
       ignoreTagImmune: requireBoolean(root.ignoreTagImmune, `${sourcePath}.ignoreTagImmune`),
       ignoreAddingCooldown: requireBoolean(
@@ -789,16 +793,6 @@ function validatePassiveFlags(
   requireBoolean(addingCooldown.useBlackboardKey, `${sourcePath}.addingCooldown.useBlackboardKey`);
   requireNumber(addingCooldown.value, `${sourcePath}.addingCooldown.value`);
   requireString(addingCooldown.blackboardKey, `${sourcePath}.addingCooldown.blackboardKey`);
-  const dispel = requireRecord(root.dispelConfig, `${sourcePath}.dispelConfig`);
-  requireExactFields(
-    dispel,
-    new Set(['canBeDispelled', 'dispelledLevel']),
-    `${sourcePath}.dispelConfig`,
-  );
-  requireBoolean(dispel.canBeDispelled, `${sourcePath}.dispelConfig.canBeDispelled`);
-  if (typeof dispel.dispelledLevel === 'number')
-    requireNonNegativeInteger(dispel.dispelledLevel, `${sourcePath}.dispelConfig.dispelledLevel`);
-  else requireNonEmptyString(dispel.dispelledLevel, `${sourcePath}.dispelConfig.dispelledLevel`);
   return parsedAddingCooldown;
 }
 

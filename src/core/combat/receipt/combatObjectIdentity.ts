@@ -30,6 +30,7 @@ export function combatObjectKey(ref: CombatObjectRef): string {
   switch (ref.kind) {
     case 'operator':
       return JSON.stringify([ref.kind, ref.operatorId]);
+    case 'godEntity':
     case 'enemy':
       return JSON.stringify([ref.kind]);
     case 'spatialPoint':

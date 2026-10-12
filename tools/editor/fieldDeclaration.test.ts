@@ -139,9 +139,10 @@ test('branch and container contexts inherit roles while real child properties re
     applyBuff: {
       buffId: string | { blackboardKey: string };
       inheritToNextSkillIds: readonly string[];
-      onActionEndBuffs: readonly { blackboardAssignments: Readonly<Record<string, number>> }[];
+      buffs: readonly BuffApplicationEntry[];
     };
-  }`;
+  }
+  interface BuffApplicationEntry { blackboardAssignments: Readonly<Record<string, number>> }`;
   const options = { target: ts.ScriptTarget.ES2023, strict: true, types: [] };
   const host = ts.createCompilerHost(options);
   const original = host.getSourceFile;
@@ -184,17 +185,14 @@ test('branch and container contexts inherit roles while real child properties re
   const list = context('inheritToNextSkillIds');
   const string = checker.getTypeArguments(list.type as ts.TypeReference)[0]!;
   assert.deepEqual(extractor.metadata(extractor.element(list, string)), { referenceKind: 'skill' });
-  const endBuffs = context('onActionEndBuffs');
-  const rowType = checker.getTypeArguments(endBuffs.type as ts.TypeReference)[0]!;
-  const row = extractor.element(endBuffs, rowType);
-  assert.equal(
-    extractor.metadata(row).declaration,
-    'CombatStepParameters.applyBuff.onActionEndBuffs',
-  );
+  const buffs = context('buffs');
+  const rowType = checker.getTypeArguments(buffs.type as ts.TypeReference)[0]!;
+  const row = extractor.element(buffs, rowType);
+  assert.equal(extractor.metadata(row).declaration, 'CombatStepParameters.applyBuff.buffs');
   const assignments = checker.getPropertyOfType(rowType, 'blackboardAssignments')!;
   assert.equal(
     extractor.metadata(extractor.property(row, checker.getTypeOfSymbol(assignments), assignments))
       .declaration,
-    'CombatStepParameters.applyBuff.onActionEndBuffs.blackboardAssignments',
+    'BuffApplicationEntry.blackboardAssignments',
   );
 });

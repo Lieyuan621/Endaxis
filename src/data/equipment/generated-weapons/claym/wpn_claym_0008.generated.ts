@@ -44,79 +44,96 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_claym_0008_atk_up',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_claym_0008_atk_up',
+                      copiedBlackboardAssignments: { atk_up: 'atk_up', duration: 'duration' },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: { atk_up: 'atk_up', duration: 'duration' },
                 },
               },
               next: null,
             },
-            conditional_2: {
+            checkCondition_2: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+              },
+              next: 'applyBuff_1',
+            },
+            invertNextResult_3: {
+              action: { kind: 'invertNextResult', parameters: {} },
+              next: 'checkCondition_2',
+            },
+            checkCondition_4: {
+              action: {
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
               },
-              next: null,
+              next: 'invertNextResult_3',
             },
-            conditional_3: {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'conditional_2' },
-              },
-              next: null,
-            },
-            applyBuff_4: {
+            applyBuff_5: {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_claym_0008_atk_up',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_claym_0008_atk_up',
+                      copiedBlackboardAssignments: {
+                        atk_up: 'atk_up_dynamic',
+                        duration: 'duration',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: { atk_up: 'atk_up_dynamic', duration: 'duration' },
                 },
               },
               next: null,
             },
-            calculateActionValue_5: {
+            calculateActionValue_6: {
               action: {
                 kind: 'calculateActionValue',
                 parameters: {
                   key: 'atk_up_dynamic',
                   operation: 'multiply',
-                  left: { kind: 'valueNode', nodeId: 'data_4' },
-                  right: { kind: 'valueNode', nodeId: 'data_5' },
+                  left: { kind: 'valueNode', nodeId: 'data_3' },
+                  right: { kind: 'valueNode', nodeId: 'data_4' },
                 },
               },
-              next: 'applyBuff_4',
+              next: 'applyBuff_5',
             },
-            conditional_6: {
+            checkCondition_7: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+              },
+              next: 'calculateActionValue_6',
+            },
+            checkCondition_8: {
+              action: {
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-                whenTrue: { $sequence: 'calculateActionValue_5' },
               },
-              next: null,
+              next: 'checkCondition_7',
             },
-            conditional_7: {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-                whenTrue: { $sequence: 'conditional_6' },
-              },
-              next: null,
-            },
-            applyBuff_8: {
+            applyBuff_9: {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_claym_0008',
-                  target: 'caster',
-                  blackboardAssignments: { poise_up: { kind: 'valueNode', nodeId: 'data_8' } },
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_claym_0008',
+                      blackboardAssignments: { poise_up: { kind: 'valueNode', nodeId: 'data_7' } },
+                    },
+                  ],
+                  targets: { kind: 'fixed', target: 'caster' },
                 },
               },
               next: null,
@@ -126,9 +143,16 @@ const definition = {
             data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
             data_2: {
               type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+              expression: {
+                kind: 'eventDamageTagsMatch',
+                match: 'hasAll',
+                tags: ['normalAttackLastCombo'],
+              },
             },
-            data_3: {
+            data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_up' } },
+            data_4: { type: 'number', expression: { kind: 'blackboard', key: 'multi' } },
+            data_5: { type: 'boolean', expression: { kind: 'casterControlled' } },
+            data_6: {
               type: 'boolean',
               expression: {
                 kind: 'eventDamageTagsMatch',
@@ -136,18 +160,7 @@ const definition = {
                 tags: ['normalAttackLastCombo'],
               },
             },
-            data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_up' } },
-            data_5: { type: 'number', expression: { kind: 'blackboard', key: 'multi' } },
-            data_6: { type: 'boolean', expression: { kind: 'casterControlled' } },
             data_7: {
-              type: 'boolean',
-              expression: {
-                kind: 'eventDamageTagsMatch',
-                match: 'hasAll',
-                tags: ['normalAttackLastCombo'],
-              },
-            },
-            data_8: {
               type: 'number',
               expression: { kind: 'blackboard', key: 'install_0_poise_up' },
             },
@@ -161,18 +174,19 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'beforeOutputDamage',
           priority: 0,
-          sequence: { $sequence: 'conditional_3' },
+          sequence: { $sequence: 'checkCondition_4' },
         },
         {
           key: 'skill3:event:0:sequence:1',
           abilityEvent: 'beforeOutputDamage',
           priority: 0,
-          sequence: { $sequence: 'conditional_7' },
+          sequence: { $sequence: 'checkCondition_8' },
         },
       ],
-      enableSequence: { $sequence: 'applyBuff_8' },
+      enableSequence: { $sequence: 'applyBuff_9' },
       blackboard: {
         atk_up: [0.1, 0.12, 0.14, 0.16, 0.18, 0.2, 0.22, 0.24, 0.28],
+        atk_up_dynamic: 0,
         duration: [8, 8, 8, 8, 8, 8, 8, 8, 8],
         multi: 2,
         install_0_poise_up: [0.12, 0.144, 0.168, 0.192, 0.216, 0.24, 0.264, 0.288, 0.336],
@@ -180,7 +194,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_claym_0008',
-  iconPath: '/weapons/claym/wpn_claym_0008.webp',
+  icon: 'endaxis:weapons/claym/wpn_claym_0008',
   buffDefinitions: {
     buff_wpn_claym_0008: {
       stackingType: 'unique',
@@ -196,7 +210,7 @@ const definition = {
       poiseModifiers: [
         {
           enabledSide: 'attacker',
-          condition: { $sequence: 'conditional_2' },
+          condition: { $sequence: 'checkCondition_2' },
           processors: [
             {
               kind: 'modifyPoiseScalar',
@@ -210,21 +224,19 @@ const definition = {
       actionGraph: {
         main: {
           nodes: {
-            conditional_1: {
+            checkCondition_1: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: null },
               },
               next: null,
             },
-            conditional_2: {
+            checkCondition_2: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                whenTrue: { $sequence: 'conditional_1' },
               },
-              next: null,
+              next: 'checkCondition_1',
             },
           },
           dataNodes: {
@@ -252,8 +264,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_buff_atk_up',
-        iconPath: '/icons/icon_battle_buff_atk_up.webp',
+        icon: 'endaxis:icons/icon_battle_buff_atk_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

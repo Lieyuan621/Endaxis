@@ -5,6 +5,7 @@ import { gameDataRepository } from '../../../data/gameDataRepository';
 import { yvonne } from '../../../data/operators/yvonne.generated';
 import { placeSkillGroup } from '../../../ui/timeline/interaction/placeSkillGroup';
 import { runStandardPlayerDamageScenarioSimulation } from '../runStandardPlayerDamageScenarioSimulation';
+import { createEditorSimulationService } from '../testSupport/editorSimulationService';
 
 it.each([false, true])('伊冯正式战技 SkillAffix 生命周期 interruption=%s', interrupted => {
   const scenario = createEmptyScenario('affix:yvonne', '伊冯 SkillAffix 生命周期');
@@ -114,4 +115,16 @@ it.each([false, true])('伊冯正式战技 SkillAffix 生命周期 interruption=
     expect(finished!.frame).toBe(ends[0]!.frame);
   }
   expect(ends[0]!.frame).toBe(interrupted ? 10 : 151);
+  const session = createEditorSimulationService().createCombatSession(placed, 300);
+  session.advanceToFrame(launches[0]!.frame);
+  expect(
+    [...session.runtime.readState().instances.projectiles.instances.values()].some(
+      projectile => projectile.resetListeners.size > 0,
+    ),
+  ).toBe(true);
+  const checkpoint = session.runtime.save();
+  session.advanceToFrame(300);
+  const restored = session.fork(checkpoint);
+  restored.advanceToFrame(300);
+  expect(restored.collectResult()).toEqual(session.collectResult());
 });

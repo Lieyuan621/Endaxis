@@ -1,16 +1,19 @@
 import type { CompiledStepParameters } from '../../compiler/compiledGraphData.ts';
+import type { ProjectileCallbackState } from '../state/instanceState';
 /**
  * 投射物寿命的无状态算法。每次调用显式接收当前数据和本次步进的宿主端口。
  * 保留原生结束、标记回收、reset 三个阶段及 float32 运算；不推导空间命中或更改技能规则。
  */
 
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+import { createActionBlackboardState, type ActionBlackboardState } from '../state/foundationState';
 import type { ProjectileLifecycleState } from '../state/instanceState';
 
 export type ProjectileFinishTiming = CompiledStepParameters['launchProjectile']['finish'];
 
 export interface ProjectileLaunchData {
-  readonly callbacks?: readonly import('../state/instanceState').ProjectileCallbackState[];
+  readonly entityBlackboard?: ActionBlackboardState;
+  readonly callbacks?: readonly ProjectileCallbackState[];
   readonly source?: RuntimeTargetRef;
   readonly finishDelaySeconds: ProjectileFinishTiming;
   readonly recycleDelaySeconds: number;
@@ -58,6 +61,8 @@ export function launchProjectile(
     throw new Error(`duplicate projectile AbilityEntity instance id '${instanceId}'`);
   state.instances.set(instanceId, {
     callbacks: request.callbacks ?? [],
+    entityBlackboard: request.entityBlackboard ?? createActionBlackboardState(),
+    buffs: null,
     instanceId,
     ...(request.source === undefined ? {} : { source: { ...request.source } }),
     phase: 'active',
@@ -93,6 +98,23 @@ export function unregisterProjectileReset(
   state.instances.get(instanceId)?.resetListeners.delete(registrationId);
 }
 
+/** FinishOwner 的 ByAction/null：停止飞行，不施放结束技能，仍经过延迟回收及 reset。 */
+export function finishProjectileByAction(
+  state: ProjectileLifecycleState,
+  instanceId: number,
+): boolean {
+  const instance = state.instances.get(instanceId);
+  if (!instance || instance.phase === 'reset') return false;
+  if (instance.phase === 'active') {
+    instance.phase = 'finished';
+    instance.remainingSeconds = instance.recycleDelaySeconds;
+    instance.remainingReachTicks = null;
+    instance.pendingBlock = false;
+    if (instance.firstTickHit) instance.firstTickHit.pending = false;
+  }
+  return true;
+}
+
 /** 端口只在推进过程中使用，不保存在状态中。相互触发的事件仍然同步执行。 */
 export interface ProjectileLifecycleHost {
   resolveTickDeltaSeconds(instanceId: number): number | null;
@@ -113,6 +135,7 @@ export function advanceProjectileLifetimes(
 ): void {
   // 结束回调可再发射投射物，新对象不在本轮准入集合里。
   for (const instance of [...state.instances.values()]) {
+    if (instance.phase === 'reset') continue;
     const delta = host.resolveTickDeltaSeconds(instance.instanceId);
     if (delta === null) continue;
     const nativeDelta = Math.fround(delta);
@@ -128,7 +151,9 @@ export function advanceProjectileLifetimes(
         for (const callback of callbacks) callback();
       } finally {
         instance.resetListeners.clear();
-        state.instances.delete(instance.instanceId);
+        delete instance.source;
+        // 回池不等于实体释放。剩余 Buff 保留状态和引用，但不再随投射物计时。
+        if (!instance.buffs?.instances.size) state.instances.delete(instance.instanceId);
         host.released(instance.instanceId);
       }
       continue;
@@ -142,6 +167,7 @@ export function advanceProjectileLifetimes(
       instance.firstTickHit.pending = false;
       if (host.hit === undefined) throw new Error('projectile first-tick hit requires a hit port');
       const hit = host.hit(instance.instanceId);
+      if (instance.phase !== 'active') continue;
       if (!hit && instance.firstTickHit.retryRejectedHit) instance.firstTickHit.pending = true;
       if (hit && instance.firstTickHit.finishOnHit) {
         instance.phase = 'finished';
@@ -154,6 +180,7 @@ export function advanceProjectileLifetimes(
     if (instance.phase === 'active' && instance.pendingBlock) {
       instance.pendingBlock = false;
       host.block?.(instance.instanceId);
+      if (instance.phase !== 'active') continue;
       instance.phase = 'finished';
       instance.remainingReachTicks = null;
       instance.remainingSeconds = instance.recycleDelaySeconds;
@@ -173,8 +200,10 @@ export function advanceProjectileLifetimes(
         instance.firstTickHit.pending = false;
         if (host.hit === undefined) throw new Error('projectile reach hit requires a hit port');
         finishedByHit = host.hit(instance.instanceId) && instance.firstTickHit.finishOnHit;
+        if (instance.phase !== 'active') continue;
       }
       if (reached) host.reach?.(instance.instanceId);
+      if (instance.phase !== 'active') continue;
       if (reached && !instance.finishOnReach && !finishedByHit && instance.remainingSeconds > 0)
         continue;
       instance.phase = 'finished';
@@ -189,7 +218,9 @@ export function advanceProjectileLifetimes(
 export function beginProjectileAbilityFrame(state: ProjectileLifecycleState): void {
   if (state.admittedAbilities !== null)
     throw new Error('projectile ability phase has not finished');
-  state.admittedAbilities = [...state.instances.keys()];
+  state.admittedAbilities = [...state.instances.values()]
+    .filter(instance => instance.phase !== 'reset')
+    .map(instance => instance.instanceId);
 }
 
 export function advanceProjectileAbilityFrame(

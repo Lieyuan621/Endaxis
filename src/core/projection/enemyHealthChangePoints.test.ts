@@ -48,9 +48,7 @@ describe('projectEnemyHealthChangePoints', () => {
       sequence: 3,
       sourceId: 'perlica',
       targetId: 'enemy',
-      damageType: 'physical',
-      value: 100,
-      actualDamage: 95,
+      healthChange: -95,
       remainingHealth: 9905,
     });
   });
@@ -66,8 +64,5 @@ describe('projectEnemyHealthChangePoints', () => {
         }),
       ]),
     ).toThrow('has no finite actualDamage');
-    expect(() =>
-      projectEnemyHealthChangePoints([damageEntry({ data: { ...baseData, isCritical: 1 } })]),
-    ).toThrow('no boolean isCritical');
   });
 });

@@ -99,7 +99,6 @@ export function restoreCombatRuntime(options: RestoreCombatRuntimeOptions): Rest
     options.enemyTimedMarkerHooks,
     options.graph.enemy.timedMarkers,
     {
-      global: foundation.shared.timeDilation ?? foundation.shared.clock,
       globalScaled: foundation.shared.timeDilation ?? foundation.shared.clock,
     },
   );

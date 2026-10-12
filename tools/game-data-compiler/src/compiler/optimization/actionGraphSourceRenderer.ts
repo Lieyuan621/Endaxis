@@ -70,6 +70,7 @@ export function renderValue(value: unknown, context: RenderContext): string {
 
 /** 图节点使用与既有生成结果相同的浮点精度。 */
 export function renderGraphValue(value: unknown, property?: string): string {
+  if (isRaw(value)) return value.rawExpression;
   if (typeof value === 'number') {
     if (value === Infinity) return 'Number.POSITIVE_INFINITY';
     if (value === -Infinity) return 'Number.NEGATIVE_INFINITY';
@@ -105,11 +106,54 @@ export function renderIndependentGraphDefinition(
   validateActionGraphOwner({ ...value, actionGraph }, 'independent graph definition');
   const context = createRenderContext();
   const definition = renderValue({ ...value, actionGraph: raw(graphExpression) }, context);
+  const callbacks = shareRenderedCallbacks(actionGraph, graphExpression);
   return {
     definition,
-    graph: renderGraphValue(actionGraph),
+    graph: renderGraphValue(callbacks.graph),
+    declarations: callbacks.declarations,
     helpers: [...context.helpers].sort(),
   };
+}
+
+/**
+ * 同一宿主图中的相同内嵌回调只输出一份私有只读常量。
+ * 不合并发射节点、执行入口或调用身份，也不建立跨干员/武器的技能目录。
+ * 子资源是边界：这里只共享其完整定义，不改写它的内部节点。
+ */
+function shareRenderedCallbacks(graph: ActionGraphResourceDefinition, prefix: string) {
+  const candidates = new Map<string, { count: number; name: string }>();
+  const signatures = new WeakMap<object, string>();
+  function collect(value: unknown): void {
+    if (!value || typeof value !== 'object') return;
+    if ('actionGraph' in value) {
+      if ('skillId' in value && typeof value.skillId === 'string') {
+        const signature = renderGraphValue(value);
+        signatures.set(value, signature);
+        const previous = candidates.get(signature);
+        if (previous) previous.count++;
+        else
+          candidates.set(signature, { count: 1, name: `${prefix}Callback${candidates.size + 1}` });
+      }
+      return;
+    }
+    Object.values(value).forEach(collect);
+  }
+  collect(graph);
+  const declarations = [...candidates]
+    .filter(([, item]) => item.count > 1)
+    .map(([signature, item]) => `const ${item.name} = ${signature} as const;`);
+  function replace(value: unknown): unknown {
+    if (!value || typeof value !== 'object') return value;
+    const signature = signatures.get(value);
+    if (signature !== undefined) {
+      const item = candidates.get(signature)!;
+      return item.count > 1 ? raw(item.name) : value;
+    }
+    if ('actionGraph' in value) return value;
+    if (Array.isArray(value)) return value.map(replace);
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, replace(item)]));
+  }
+  return { graph: declarations.length ? replace(graph) : graph, declarations };
 }
 
 function renderNumber(value: number): string {

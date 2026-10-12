@@ -1,494 +1,884 @@
-import { describe, expect, it } from 'vitest';
 import {
-  collectPresentationOnlyBlackboardKeys,
-  collectPresentationOnlyTargetGroups,
-  collectUnconsumedTargetGroups,
-  collectCombatInvisibleRandomBlackboardKeys,
+  collectUnobservedTargetQueryOutputs,
+  summarizeNativeTargetUsage,
+} from '../../src/compiler/optimization/nativeTargetUsage.ts';
+import { collectCombatInvisibleRandomKeys } from '../../src/compiler/optimization/nativePresentationUsage.ts';
+import { targetFixture } from '../sourceFixtures.ts';
+import { parseTargetReferenceSource } from '../../src/source/target.ts';
+import { parseTargetGroupActionSource } from '../../src/source/targetGroup.ts';
+import { simplifyNativeSequences } from '../../src/compiler/optimization/nativeSequenceOptimization.ts';
+import type { ProjectileLaunchActionSource } from '../../src/source/referenceActions.ts';
+import { describe, expect, it } from 'vitest';
+import type { KnownNativeActionLeafSource } from '../../src/source/actionLeaf.ts';
+import type { NativeSequenceSource } from '../../src/source/controlFlow.ts';
+import type { SkillActionGraphSource } from '../../src/source/skillActionGraph.ts';
+import {
   collectPresentationSelectionTimelineIndexes,
-  isPresentationOnlyActionSequence,
+  collectPresentationOnlyTargetGroups,
+  collectMaterializedTargetGroups,
+  collectPresentationOnlyBlackboardKeys,
+  collectCombatInvisibleRandomBlackboardKeys,
+  collectUnconsumedTargetGroups,
 } from '../../src/compiler/skills/skillPresentationTargets.ts';
+const scalar = (blackboardKey: string | null = null) => ({
+  value: 1,
+  blackboardKey,
+  levelValues: null,
+});
 
-describe('整张 SkillData 的表现目标依赖', () => {
-  it('跨时间线的镜头选敌子图整体省略，但输出进入战斗时完整保留', () => {
-    const leaf = (family: string, action: Record<string, unknown>) => ({
-      sourcePath: `fixture.${family}`,
-      metadata: { nativeName: family, enabled: true },
-      body: { kind: 'leaf', value: { family, action } },
-    });
-    const target = leaf('targetGroup', {
-      producerType: 'FindTargetAction',
-      finderType: 'AllEnemyFinder',
-      targetGroupKey: 'camera_targets',
-    });
-    const angle = leaf('presentationCalculation', {
-      kind: 'saveTwoDirectionAngle',
-      outputKey: 'camera_angle',
-    });
-    const side = leaf('blackboardMutation', {
-      kind: 'blackboardMutation',
-      key: 'camera_side',
-    });
-    const camera = leaf('presentation', { kind: 'cameraRotate', key: 'camera_angle' });
-    const forEach = {
-      sourcePath: 'fixture.forEach',
-      metadata: { nativeName: 'ForEachAction', enabled: true },
-      body: {
-        kind: 'forEach',
-        target: { targetSource: 'Context', targetGroupKey: 'camera_targets' },
-        action: {
-          actions: [angle, leaf('condition', { kind: 'floatCompare', key: 'camera_angle' }), side],
-        },
+it('纯选位查询与空回调一起裁剪，计数有外部消费者或战斗回调则保留', () => {
+  const target = parseTargetReferenceSource(targetFixture('Owner'), 'target');
+  const make = (storeKey: string, callback: NativeSequenceSource<KnownNativeActionLeafSource>) => {
+    const query = sequence({
+      family: 'condition',
+      action: {
+        kind: 'entityCount',
+        sourceType: 'CheckEntityNum',
+        target: { ...target, targetSource: 'InstantSearch', finderType: 'ShapeFinder' },
+        targetSource: 'InstantSearch',
+        targetGroupKey: '',
+        minimumCount: 0,
+        comparison: 'LE',
+        containsHittableTarget: false,
+        excludeDeadEntity: false,
+        storeKey,
       },
-    };
-    const timelines = [
-      { sequence: { actions: [target, forEach] } },
+    });
+    const motion = sequence({
+      family: 'spatial',
+      action: {
+        kind: 'teleport',
+        target,
+        radius: scalar(),
+      },
+    }).actions[0]!;
+    if (motion.body.kind !== 'leaf') throw new Error('expected leaf');
+    return graph([
       {
-        sequence: {
-          actions: [leaf('condition', { kind: 'floatCompare', key: 'camera_side' }), camera],
-        },
-      },
-    ];
-    const source = { actionGroup: { timelineActions: timelines } } as unknown as Parameters<
-      typeof collectPresentationSelectionTimelineIndexes
-    >[0];
-    expect([...collectPresentationSelectionTimelineIndexes(source)]).toEqual([0, 1]);
-
-    const combatSource = {
-      actionGroup: {
-        timelineActions: [
-          ...timelines,
+        ...query,
+        actions: [
+          ...query.actions,
           {
-            sequence: {
-              actions: [leaf('damage', { kind: 'simpleDamage', key: 'camera_side' })],
+            ...motion,
+            body: {
+              kind: 'actionWithCallback',
+              value: motion.body.value,
+              trigger: 'targetPointInvalid',
+              callback,
             },
           },
         ],
       },
-    } as unknown as Parameters<typeof collectPresentationSelectionTimelineIndexes>[0];
-    // 生产 camera_side 的查询/计算时间线必须保留；纯镜头消费者自身仍可独立删除。
-    expect([...collectPresentationSelectionTimelineIndexes(combatSource)]).toEqual([1]);
-  });
+    ]);
+  };
+  expect(collectPresentationSelectionTimelineIndexes(make('', sequence()))).toEqual(new Set([0]));
+  const counted = make('shared', sequence());
+  expect(collectPresentationSelectionTimelineIndexes(counted)).toEqual(new Set([0]));
+  expect(
+    collectPresentationSelectionTimelineIndexes(
+      graph([counted.actionGroup.timelineActions[0]!.sequence, consumer]),
+    ).size,
+  ).toBe(0);
+  expect(collectPresentationSelectionTimelineIndexes(make('', consumer)).size).toBe(0);
+});
 
-  it('只用于选择镜头的条件树可整体省略，任一战斗分支都会保留', () => {
-    const leaf = (family: string, kind: string) => ({
-      sourcePath: `fixture.${kind}`,
-      metadata: { nativeName: kind, enabled: true },
-      body: { kind: 'leaf', value: { family, action: { kind } } },
+it('夹角写入使用公共输出摘要，战斗消费者阻止整条表现时间线裁剪', () => {
+  const target = parseTargetReferenceSource(targetFixture('Owner'), 'target');
+  const angle = sequence({
+    family: 'directionAngle',
+    action: {
+      kind: 'saveTwoDirectionAngle',
+      direction1Source: target,
+      direction1Target: target,
+      direction1Type: 'CameraForward',
+      direction2Source: target,
+      direction2Target: target,
+      direction2Type: 'SourceToTarget',
+      outputKey: 'shared',
+    },
+  });
+  expect(collectPresentationSelectionTimelineIndexes(graph([angle]))).toEqual(new Set([0]));
+  expect(collectPresentationSelectionTimelineIndexes(graph([angle, consumer])).size).toBe(0);
+  expect(collectPresentationSelectionTimelineIndexes(graph([angle], [consumer])).size).toBe(0);
+});
+function sequence(
+  ...leaves: KnownNativeActionLeafSource[]
+): NativeSequenceSource<KnownNativeActionLeafSource> {
+  return {
+    onlyExecuteWhenSourceIsMainCharacter: false,
+    onlyExecuteWhenSourceIsGuard: false,
+    actions: leaves.map((value, index) => ({
+      sourcePath: `fixture/${index}`,
+      metadata: {
+        nativeType: 'fixture',
+        nativeName: 'fixture',
+        enabled: true,
+        priorityLevel: 'Default',
+        priorityOffset: 0,
+        serverActionIndex: index,
+      },
+      body: { kind: 'leaf', value },
+    })),
+  };
+}
+const consumer = sequence({
+  family: 'dashEnergyRecovery',
+  action: { kind: 'dashEnergyRecovery', amount: scalar('shared'), canRecoverWhenOverdraft: false },
+});
+const producer = sequence(
+  {
+    family: 'blackboardCalculation',
+    action: {
+      kind: 'blackboardCalculation',
+      key: 'shared',
+      operation: 'Add',
+      left: scalar(),
+      right: scalar(),
+      addend: null,
+    },
+  },
+  { family: 'presentation', action: { kind: 'cameraRotate', readBlackboardKeys: ['shared'] } },
+);
+function graph(
+  sequences: readonly NativeSequenceSource<KnownNativeActionLeafSource>[],
+  passive: readonly NativeSequenceSource<KnownNativeActionLeafSource>[] = [],
+): SkillActionGraphSource<KnownNativeActionLeafSource> {
+  return {
+    skillId: 'fixture',
+    level: 1,
+    durationFrame: 30,
+    declaredBlackboard: [],
+    actionGroup: {
+      timelineActions: sequences.map(sequence => ({
+        startFrame: 0,
+        endFrame: 30,
+        sequence,
+        forceSyncAnimation: { forceSync: false, montageName: '', targetFrame: 0, playbackSpeed: 1 },
+      })),
+      passiveEvents: passive.length ? [{ abilityEvent: 'fixture', actions: passive }] : [],
+    },
+  };
+}
+function projectile(assignBlackboard: boolean): ProjectileLaunchActionSource {
+  const target = parseTargetReferenceSource(targetFixture('Source'), 'fixture');
+  const zero = [0, 0, 0] as const;
+  return {
+    kind: 'projectileLaunch',
+    projectileId: 'projectile',
+    projectileSkillId: 'callback',
+    projectileSource: target,
+    syncTimeScale: false,
+    assignBlackboard,
+    assignEntityBlackboard: false,
+    assignments: [],
+    emitPosition: target,
+    emitMountPoint: '',
+    useWeaponMountPoint: false,
+    weaponIndex: 0,
+    weaponMountPoint: 0,
+    overrideEmitBone: false,
+    emitPositionFixedOffset: zero,
+    emitPositionForwardMode: 'World',
+    emitPositionRandomOffset: zero,
+    target,
+    targetFilterMode: 'None',
+    targetFilterSettings: null,
+    alsoLaunchToHittableTarget: false,
+    overrideHitBone: false,
+    hitMountPoint: '',
+    hitBoneFixedOffset: zero,
+    hitBoneForwardMode: 'World',
+    hitBoneRandomOffset: zero,
+    presetPoints: [],
+    callbacks: [],
+  };
+}
+describe('来源裁剪的跨入口消费者', () => {
+  it('纯表现分支仅在无副作用且总是继续时删除，随机输入随消费者消失', () => {
+    const random = sequence({
+      family: 'randomBlackboard',
+      action: {
+        kind: 'randomBlackboardWrite',
+        randomType: 'Int',
+        minimum: scalar(),
+        maximum: scalar(),
+        targetKey: 'shared',
+      },
     });
-    const sequence = {
-      sourcePath: 'fixture.sequence',
-      guard: null,
+    const source: NativeSequenceSource<KnownNativeActionLeafSource> = {
+      ...random,
       actions: [
+        ...random.actions,
         {
-          sourcePath: 'fixture.ifElse',
-          metadata: { nativeName: 'IfElseAction', enabled: true },
+          ...random.actions[0]!,
           body: {
-            kind: 'ifElse',
-            condition: {
-              actions: [
-                leaf('condition', 'mainOperator'),
-                leaf('condition', 'floatCompare'),
-                leaf('condition', 'objectTypeMatch'),
-                leaf('condition', 'superArmor'),
-              ],
-            },
-            whenTrue: { actions: [leaf('spatial', 'customRootMotion')] },
-            whenFalse: {
-              actions: [
-                {
-                  sourcePath: 'fixture.nested',
-                  metadata: { nativeName: 'IfElseAction', enabled: true },
-                  body: {
-                    kind: 'ifElse',
-                    condition: { actions: [leaf('condition', 'distance')] },
-                    whenTrue: { actions: [leaf('presentation', 'cameraControl')] },
-                    whenFalse: { actions: [leaf('presentation', 'cameraControl')] },
-                  },
-                },
-              ],
-            },
+            kind: 'switch',
+            choice: scalar('shared'),
+            alwaysNext: true,
+            options: [
+              {
+                value: scalar(),
+                action: sequence({ family: 'presentation', action: { kind: 'cameraRotate' } }),
+              },
+            ],
           },
         },
       ],
-    } as unknown as Parameters<typeof isPresentationOnlyActionSequence>[0];
-    expect(isPresentationOnlyActionSequence(sequence)).toBe(true);
-    const branch = sequence.actions[0]!;
-    if (branch.body.kind !== 'ifElse') throw new Error('fixture');
-    const combat = {
-      ...sequence,
+    };
+    const conditional: NativeSequenceSource<KnownNativeActionLeafSource> = {
+      ...source,
       actions: [
+        {
+          ...random.actions[0]!,
+          body: {
+            kind: 'ifElse',
+            alwaysNext: true,
+            condition: sequence(),
+            whenTrue: sequence({ family: 'presentation', action: { kind: 'cameraRotate' } }),
+            whenFalse: sequence(),
+          },
+        },
+      ],
+    };
+    expect(simplifyNativeSequences(conditional).actions).toHaveLength(0);
+    // 无战斗副作用的调用仍可能是 NotNext 的返回值消费者，不能让反转移到后继。
+    for (const branch of [conditional.actions[0]!, source.actions[1]!]) {
+      const inverted: NativeSequenceSource<KnownNativeActionLeafSource> = {
+        ...conditional,
+        actions: [{ ...branch, body: { kind: 'negateNextResult' } }, branch, ...consumer.actions],
+      };
+      const retained = simplifyNativeSequences(inverted);
+      expect(retained.actions.map(node => node.body.kind)).toEqual(
+        inverted.actions.map(node => node.body.kind),
+      );
+    }
+    const conditionalNode = conditional.actions[0]!;
+    if (conditionalNode.body.kind !== 'ifElse') throw new Error('expected ifElse');
+    for (const body of [
+      { ...conditionalNode.body, alwaysNext: false },
+      { ...conditionalNode.body, condition: consumer },
+      { ...conditionalNode.body, whenTrue: consumer },
+      {
+        ...conditionalNode.body,
+        whenTrue: sequence({ family: 'presentation', action: { kind: 'passiveUiValue' } }),
+      },
+    ]) {
+      expect(
+        simplifyNativeSequences({
+          ...conditional,
+          actions: [{ ...conditionalNode, body }],
+        }).actions,
+      ).toHaveLength(1);
+    }
+    const pruned = simplifyNativeSequences(source);
+    expect(pruned.actions).toHaveLength(1);
+    expect(collectCombatInvisibleRandomBlackboardKeys(graph([pruned])).has('shared')).toBe(true);
+    const branch = source.actions[1]!;
+    if (branch.body.kind !== 'switch') throw new Error('expected switch');
+    const visibleUi = {
+      ...source,
+      actions: [
+        source.actions[0]!,
         {
           ...branch,
           body: {
             ...branch.body,
-            whenFalse: {
-              ...branch.body.whenFalse,
-              actions: [leaf('resource', 'modifySkillPoint')],
-            },
+            options: [
+              {
+                value: scalar(),
+                action: sequence({ family: 'presentation', action: { kind: 'passiveUiValue' } }),
+              },
+            ],
           },
         },
       ],
-    } as unknown as Parameters<typeof isPresentationOnlyActionSequence>[0];
-    expect(isPresentationOnlyActionSequence(combat)).toBe(false);
-  });
-
-  it('只写入镜头控制树的动作黑板键可跨时间线整体删除', () => {
-    const leaf = (family: string, kind: string, action: Record<string, unknown> = { kind }) => ({
-      sourcePath: `fixture.${kind}`,
-      metadata: { nativeName: kind, enabled: true },
-      body: { kind: 'leaf', value: { family, action } },
-    });
-    const branch = (condition: unknown, action: unknown) => ({
-      sourcePath: 'fixture.ifElse',
-      metadata: { nativeName: 'IfElseAction', enabled: true },
-      body: {
-        kind: 'ifElse',
-        condition: { actions: [condition] },
-        whenTrue: { actions: [] },
-        whenFalse: { actions: [action] },
-      },
-    });
-    const write = leaf('blackboardMutation', 'blackboardMutation', {
-      kind: 'blackboardMutation',
-      key: 'isWall',
-    });
-    const cameraCalculation = leaf('blackboardCalculation', 'blackboardCalculation', {
-      kind: 'blackboardCalculation',
-      key: 'cameraAngle',
-      left: { kind: 'blackboard', key: 'cameraAngle' },
-      right: { kind: 'constant', value: 165 },
-    });
-    const cameraCondition = leaf('condition', 'skillCameraMotionFree');
-    const compare = leaf('condition', 'floatCompare', {
-      kind: 'floatCompare',
-      left: { blackboardKey: 'isWall' },
-    });
-    const timelines = [
-      { sequence: { actions: [branch(cameraCondition, write)] } },
-      {
-        sequence: {
-          actions: [branch(compare, leaf('presentation', 'animatedCamera'))],
-        },
-      },
-      {
-        sequence: {
-          actions: [branch(cameraCondition, cameraCalculation)],
-        },
-      },
-    ];
-    const source = {
-      actionGroup: { timelineActions: timelines },
-    } as unknown as Parameters<typeof collectPresentationOnlyBlackboardKeys>[0];
-    const keys = collectPresentationOnlyBlackboardKeys(source);
-    expect([...keys]).toEqual(['isWall', 'cameraAngle']);
+    };
+    expect(simplifyNativeSequences(visibleUi).actions).toHaveLength(2);
     expect(
-      timelines.every(item => isPresentationOnlyActionSequence(item.sequence as never, keys)),
+      collectPresentationSelectionTimelineIndexes(
+        graph([sequence({ family: 'presentation', action: { kind: 'passiveUiValue' } })]),
+      ).size,
+    ).toBe(0);
+    const returnsResult = {
+      ...source,
+      actions: [source.actions[0]!, { ...branch, body: { ...branch.body, alwaysNext: false } }],
+    };
+    expect(simplifyNativeSequences(returnsResult).actions).toHaveLength(2);
+    const effective = {
+      ...source,
+      actions: [
+        source.actions[0]!,
+        { ...branch, body: { ...branch.body, options: [{ value: scalar(), action: consumer }] } },
+      ],
+    };
+    expect(
+      collectCombatInvisibleRandomBlackboardKeys(graph([simplifyNativeSequences(effective)])).has(
+        'shared',
+      ),
+    ).toBe(false);
+  });
+
+  it('同名事件不是变量读取，实际变量消费者仍保护写入', () => {
+    const namedEvent = sequence({
+      family: 'eventListener',
+      action: {
+        kind: 'eventListener',
+        events: [{ abilityEvent: 'shared', actions: [consumer] }],
+      },
+    });
+    const unrelatedEvent = sequence({
+      family: 'eventListener',
+      action: {
+        kind: 'eventListener',
+        events: [{ abilityEvent: 'shared', actions: [] }],
+      },
+    });
+    expect(
+      collectPresentationOnlyBlackboardKeys(graph([producer], [unrelatedEvent])).has('shared'),
     ).toBe(true);
-
-    const combatSource = {
-      actionGroup: {
-        timelineActions: [
-          ...timelines,
-          { sequence: { actions: [leaf('resource', 'modifySkillPoint', { key: 'isWall' })] } },
-        ],
-      },
-    } as unknown as Parameters<typeof collectPresentationOnlyBlackboardKeys>[0];
-    expect([...collectPresentationOnlyBlackboardKeys(combatSource)]).toEqual(['cameraAngle']);
+    expect(
+      collectPresentationSelectionTimelineIndexes(graph([producer], [unrelatedEvent])).has(0),
+    ).toBe(true);
+    expect(
+      collectPresentationOnlyBlackboardKeys(graph([producer], [namedEvent])).has('shared'),
+    ).toBe(false);
+    expect(
+      collectPresentationSelectionTimelineIndexes(graph([producer], [namedEvent])).has(0),
+    ).toBe(false);
+    const disabledEvent = {
+      ...namedEvent,
+      actions: namedEvent.actions.map(node => ({
+        ...node,
+        metadata: { ...node.metadata, enabled: false },
+      })),
+    };
+    expect(
+      collectPresentationSelectionTimelineIndexes(graph([producer], [disabledEvent])).has(0),
+    ).toBe(true);
   });
 
-  it('随机黑板值只有全部消费者均为 PointFinder 空间槽时才可省略', () => {
-    const leaf = (family: string, action: Record<string, unknown>) => ({
-      sourcePath: `fixture.${family}`,
-      metadata: { nativeName: family, enabled: true },
-      body: { kind: 'leaf', value: { family, action } },
-    });
-    const random = leaf('randomBlackboard', {
-      kind: 'randomBlackboardWrite',
-      targetKey: 'pull_offset',
-      minimum: { value: 0.8, blackboardKey: null },
-      maximum: { value: 1.5, blackboardKey: null },
-    });
-    const point = leaf('targetGroup', {
-      producerType: 'FindTargetAction',
-      finderType: 'PointFinder',
-      finderPointBlackboardKeys: ['pull_offset'],
-      targetGroupKey: 'position',
-    });
-    const source = {
-      actionGroup: { timelineActions: [{ sequence: { actions: [random, point] } }] },
-    } as unknown as Parameters<typeof collectCombatInvisibleRandomBlackboardKeys>[0];
-    expect([...collectCombatInvisibleRandomBlackboardKeys(source)]).toEqual(['pull_offset']);
-
-    const presentationOnly = {
-      actionGroup: { timelineActions: [{ sequence: { actions: [random] } }] },
-    } as unknown as Parameters<typeof collectCombatInvisibleRandomBlackboardKeys>[0];
-    expect([...collectCombatInvisibleRandomBlackboardKeys(presentationOnly)]).toEqual([
-      'pull_offset',
-    ]);
-
-    const projectileOnly = {
-      actionGroup: {
-        timelineActions: [
-          {
-            sequence: {
-              actions: [
-                random,
-                leaf('projectile', {
-                  kind: 'projectileLaunch',
-                  assignments: [
-                    { targetKey: 'EntityBB_Degree_Low', inputValueKey: 'pull_offset' },
-                    { targetKey: 'EntityBB_Degree_High', inputValueKey: 'pull_offset' },
-                  ],
-                }),
-              ],
-            },
-          },
-        ],
-      },
-    } as unknown as Parameters<typeof collectCombatInvisibleRandomBlackboardKeys>[0];
-    expect([...collectCombatInvisibleRandomBlackboardKeys(projectileOnly)]).toEqual([
-      'pull_offset',
-    ]);
-
-    const nested = {
-      actionGroup: {
-        timelineActions: [
-          {
-            sequence: {
-              actions: [
-                {
-                  sourcePath: 'fixture.ifElse',
-                  metadata: { nativeName: 'IfElseAction', enabled: true },
-                  body: {
-                    kind: 'ifElse',
-                    condition: { actions: [] },
-                    whenTrue: { actions: [random, point] },
-                    whenFalse: { actions: [] },
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    } as unknown as Parameters<typeof collectCombatInvisibleRandomBlackboardKeys>[0];
-    expect([...collectCombatInvisibleRandomBlackboardKeys(nested)]).toEqual(['pull_offset']);
-
-    const combatConsumer = leaf('damage', {
-      attackScale: { kind: 'blackboard', key: 'pull_offset' },
-    });
-    const unsafe = {
-      actionGroup: {
-        timelineActions: [{ sequence: { actions: [random, point, combatConsumer] } }],
-      },
-    } as unknown as Parameters<typeof collectCombatInvisibleRandomBlackboardKeys>[0];
-    expect([...collectCombatInvisibleRandomBlackboardKeys(unsafe)]).toEqual([]);
+  it('表现调度中的无用末端写入可裁剪，有效消费者与调度排列无关', () => {
+    const writesLast = { ...producer, actions: [...producer.actions].reverse() };
+    expect(collectPresentationSelectionTimelineIndexes(graph([writesLast]))).toEqual(new Set([0]));
+    expect(collectPresentationSelectionTimelineIndexes(graph([writesLast, consumer])).size).toBe(0);
+    expect(collectPresentationSelectionTimelineIndexes(graph([consumer, writesLast])).size).toBe(0);
+    expect(collectPresentationSelectionTimelineIndexes(graph([writesLast], [consumer])).size).toBe(
+      0,
+    );
   });
 
-  it('技能生成能力实体时不把可能传给子技能的黑板写入当成纯表现', () => {
-    const source = {
-      actionGroup: {
-        timelineActions: [
-          {
-            sequence: {
-              actions: [
-                {
-                  sourcePath: 'fixture.write',
-                  metadata: { nativeName: 'ModifyDynamicBlackboard', enabled: true },
-                  body: {
-                    kind: 'leaf',
-                    value: {
-                      family: 'blackboardMutation',
-                      action: { kind: 'blackboardMutation', key: 'isCombo' },
-                    },
-                  },
-                },
-              ],
-            },
-          },
-          {
-            sequence: {
-              actions: [
-                {
-                  sourcePath: 'fixture.spawn',
-                  metadata: { nativeName: 'SpawnAbilityEntity', enabled: true },
-                  body: {
-                    kind: 'leaf',
-                    value: {
-                      family: 'abilityEntity',
-                      action: { kind: 'abilityEntitySpawn' },
-                    },
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    } as unknown as Parameters<typeof collectPresentationOnlyBlackboardKeys>[0];
-
-    expect([...collectPresentationOnlyBlackboardKeys(source)]).toEqual([]);
-  });
-
-  it('SnapPoint 输出只被空间动作读取时可省略，同帧伤害不影响叶级证明', () => {
-    const leaf = (family: string, action: Record<string, unknown>) => ({
-      sourcePath: `fixture.${family}`,
-      metadata: { nativeName: family, enabled: true },
-      body: { kind: 'leaf', value: { family, action } },
-    });
-    const snap = leaf('targetGroup', {
-      producerType: 'FindTargetAction',
-      finderType: 'SnapPointFinder',
-      targetGroupKey: 'pos',
-      validatorTypes: [],
-      postProcessorTypes: [],
-    });
-    const move = leaf('spatial', {
-      kind: 'moveTo',
-      target: { targetSource: 'Context', targetGroupKey: 'pos' },
-    });
-    const pull = leaf('stumpControl', {
-      kind: 'pull',
-      destination: { targetSource: 'Context', targetGroupKey: 'pos' },
-    });
-    const damage = leaf('damage', { kind: 'simpleDamage', attackScale: 1 });
-    const source = {
-      actionGroup: {
-        timelineActions: [{ sequence: { actions: [damage, snap, move, pull] } }],
-      },
-    } as unknown as Parameters<typeof collectPresentationOnlyTargetGroups>[0];
-    expect([...collectPresentationOnlyTargetGroups(source)]).toContain('pos');
-
-    const unsafe = {
-      actionGroup: {
-        timelineActions: [
-          {
-            sequence: {
-              actions: [
-                snap,
-                leaf('damage', {
-                  kind: 'simpleDamage',
-                  target: { targetSource: 'Context', targetGroupKey: 'pos' },
-                }),
-              ],
-            },
-          },
-        ],
-      },
-    } as unknown as Parameters<typeof collectPresentationOnlyTargetGroups>[0];
-    expect([...collectPresentationOnlyTargetGroups(unsafe)]).not.toContain('pos');
-  });
-
-  it('ConvertToTargetContext 的纯转向与相机链可省略，进入伤害时保留', () => {
-    const leaf = (family: string, action: Record<string, unknown>) => ({
-      sourcePath: `fixture.${family}`,
-      metadata: { nativeName: family, enabled: true },
-      body: { kind: 'leaf', value: { family, action } },
-    });
-    const attacker = leaf('targetGroup', {
-      producerType: 'ConvertToTargetContext',
-      conversionOperation: 'None',
-      targetGroupKey: 'Attacker',
-      inputTargets: [{ targetSource: 'Target', targetGroupKey: '' }],
-    });
-    const hitTarget = leaf('targetGroup', {
-      producerType: 'ConvertToTargetContext',
-      conversionOperation: 'None',
-      targetGroupKey: 'HitTar',
-      inputTargets: [{ targetSource: 'Context', targetGroupKey: 'Attacker' }],
-    });
-    const angle = leaf('condition', {
-      kind: 'targetAngle',
-      origin: { targetSource: 'Context', targetGroupKey: 'Attacker' },
-    });
-    const move = leaf('spatial', {
-      kind: 'moveTo',
-      target: { targetSource: 'Context', targetGroupKey: 'HitTar' },
-    });
-    const source = {
-      actionGroup: {
-        timelineActions: [{ sequence: { actions: [attacker, angle, hitTarget, move] } }],
-      },
-    } as unknown as Parameters<typeof collectPresentationOnlyTargetGroups>[0];
-    expect([...collectPresentationOnlyTargetGroups(source)].sort()).toEqual(['Attacker', 'HitTar']);
-    const nested = {
-      actionGroup: {
-        timelineActions: [
-          {
-            sequence: {
-              actions: [
-                leaf('eventListener', {
-                  kind: 'eventListener',
-                  events: [
-                    {
-                      abilityEvent: 'OnBeforeTakeDamage',
-                      actions: [{ actions: [attacker, angle, hitTarget, move] }],
-                    },
-                  ],
-                }),
-              ],
-            },
-          },
-        ],
-      },
-    } as unknown as Parameters<typeof collectPresentationOnlyTargetGroups>[0];
-    expect([...collectPresentationOnlyTargetGroups(nested)].sort()).toEqual(['Attacker', 'HitTar']);
-
-    const unsafe = {
-      actionGroup: {
-        timelineActions: [
-          {
-            sequence: {
-              actions: [
-                attacker,
-                leaf('damage', {
-                  kind: 'simpleDamage',
-                  target: { targetSource: 'Context', targetGroupKey: 'Attacker' },
-                }),
-              ],
-            },
-          },
-        ],
-      },
-    } as unknown as Parameters<typeof collectPresentationOnlyTargetGroups>[0];
-    expect([...collectPresentationOnlyTargetGroups(unsafe)]).not.toContain('Attacker');
-  });
-
-  it('单独记录从未被读取的目标组，不把同序列其他战斗动作误判为消费者', () => {
-    const write = {
-      sourcePath: 'fixture.find',
-      metadata: { nativeName: 'FindTargetAction', enabled: true },
+  it('等价多动作分支只删除纯条件，保留原生返回边界和条件写入', () => {
+    const branch = { ...consumer, actions: [...consumer.actions, ...consumer.actions] };
+    const whenFalse = {
+      ...branch,
+      actions: branch.actions.map(node => ({
+        ...node,
+        sourcePath: `other/${node.sourcePath}`,
+        metadata: { ...node.metadata, serverActionIndex: node.metadata.serverActionIndex + 10 },
+      })),
+    };
+    const node = {
+      ...consumer.actions[0]!,
       body: {
-        kind: 'leaf',
-        value: {
-          family: 'targetGroup',
-          action: { producerType: 'FindTargetAction', targetGroupKey: 'unused' },
+        kind: 'ifElse' as const,
+        alwaysNext: false,
+        condition: sequence({
+          family: 'condition',
+          action: {
+            kind: 'mainOperator',
+            sourceType: 'CheckMainCharacterCondition',
+            targetSource: 'Source',
+            targetGroupKey: '',
+          },
+        }),
+        whenTrue: branch,
+        whenFalse,
+      },
+    };
+    const result = simplifyNativeSequences({ ...consumer, actions: [node] });
+    expect(result.actions).toHaveLength(1);
+    expect(result.actions[0]!.body).toEqual({
+      ...node.body,
+      condition: sequence(),
+    });
+    const writesCondition = {
+      ...consumer,
+      actions: [{ ...node, body: { ...node.body, condition: producer } }],
+    };
+    expect(simplifyNativeSequences(writesCondition)).toEqual(writesCondition);
+  });
+  it('选点输出追踪到有效消费者，目标组不受黑板继承影响', () => {
+    const selected = parseTargetReferenceSource(
+      targetFixture('Context', undefined, 'point'),
+      'fixture',
+    );
+    const selection = sequence(
+      {
+        family: 'spatial',
+        action: {
+          kind: 'teleportPositionSelection',
+          target: parseTargetReferenceSource(targetFixture('Target'), 'fixture'),
+          teleportType: 'FixedDistance',
+          excludeCurrentPosition: false,
+          distance: scalar(),
+          useAddScoreToPreviousSide: false,
+          forwardDistance: scalar(),
+          outputContextKey: 'point',
         },
       },
-    };
-    const damage = {
-      sourcePath: 'fixture.damage',
-      metadata: { nativeName: 'DamageAction', enabled: true },
-      body: { kind: 'leaf', value: { family: 'damage', action: { kind: 'damage' } } },
-    };
-    const source = {
-      actionGroup: { timelineActions: [{ sequence: { actions: [write, damage] } }] },
-    } as unknown as Parameters<typeof collectUnconsumedTargetGroups>[0];
-    expect([...collectUnconsumedTargetGroups(source)]).toEqual(['unused']);
-
-    const consumer = {
-      ...damage,
-      body: {
-        ...damage.body,
-        value: {
-          ...damage.body.value,
-          action: { targetSource: 'Context', targetGroupKey: 'unused' },
+      { family: 'spatial', action: { kind: 'teleport', target: selected, radius: scalar() } },
+    );
+    const launch = sequence({ family: 'projectile', action: projectile(true) });
+    expect(collectPresentationSelectionTimelineIndexes(graph([selection, launch]))).toEqual(
+      new Set([0]),
+    );
+    const effectiveReader = sequence(
+      {
+        family: 'condition',
+        action: {
+          kind: 'entityCount',
+          sourceType: 'CheckEntityNum',
+          target: selected,
+          targetSource: 'Context',
+          targetGroupKey: 'point',
+          minimumCount: 1,
+          comparison: 'GE',
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          storeKey: '',
         },
       },
+      {
+        family: 'dashEnergyRecovery',
+        action: { kind: 'dashEnergyRecovery', amount: scalar(), canRecoverWhenOverdraft: false },
+      },
+    );
+    expect(
+      collectPresentationSelectionTimelineIndexes(graph([selection, effectiveReader, launch])).size,
+    ).toBe(0);
+  });
+  it.each([false, true])('投射物整板继承=%s 时，只在不传出黑板的情况下裁剪局部值', inherited => {
+    const launch = sequence({ family: 'projectile', action: projectile(inherited) });
+    const source = graph([producer], [launch]);
+    expect(collectPresentationSelectionTimelineIndexes(source).has(0)).toBe(!inherited);
+    const random = sequence({
+      family: 'randomBlackboard',
+      action: {
+        kind: 'randomBlackboardWrite',
+        randomType: 'Float',
+        minimum: scalar(),
+        maximum: scalar(),
+        targetKey: 'shared',
+      },
+    });
+    expect(
+      collectCombatInvisibleRandomBlackboardKeys(graph([random], [launch])).has('shared'),
+    ).toBe(!inherited);
+  });
+  it('实体赋值仅在启用且读取变量时保护随机写入', () => {
+    const random = sequence({
+      family: 'randomBlackboard',
+      action: {
+        kind: 'randomBlackboardWrite',
+        randomType: 'Float',
+        minimum: scalar(),
+        maximum: scalar(),
+        targetKey: 'shared',
+      },
+    });
+    for (const assignEntityBlackboard of [false, true]) {
+      for (const useDirectValue of [false, true]) {
+        const launch = sequence({
+          family: 'projectile',
+          action: {
+            ...projectile(false),
+            assignEntityBlackboard,
+            assignments: [
+              {
+                targetKey: 'EntityBB_Value',
+                inputValueKey: 'shared',
+                useDirectValue,
+                valueType: 'Numeric',
+                numericValue: 1,
+                stringValue: '',
+              },
+            ],
+          },
+        });
+        expect(collectCombatInvisibleRandomKeys([random, launch], () => true).has('shared')).toBe(
+          !assignEntityBlackboard || useDirectValue,
+        );
+        const simplified = simplifyNativeSequences(launch, key => key === 'EntityBB_Value');
+        expect(
+          collectCombatInvisibleRandomKeys([random, simplified], () => true).has('shared'),
+        ).toBe(true);
+        expect(simplifyNativeSequences(launch, () => false)).toEqual(launch);
+      }
+    }
+  });
+
+  it('整板继承只裁剪外部闭包已证明无用的键，并追踪派生输出', () => {
+    const random = sequence({
+      family: 'randomBlackboard',
+      action: {
+        kind: 'randomBlackboardWrite',
+        randomType: 'Float',
+        minimum: scalar(),
+        maximum: scalar(),
+        targetKey: 'shared',
+      },
+    });
+    const launch = sequence({ family: 'projectile', action: projectile(true) });
+    const unused = (key: string) => key === 'shared';
+    // 同样的局部序列，在外部可见性未知时不能删除；其他入口读取也必须保留。
+    expect(collectCombatInvisibleRandomKeys([random], () => false).size).toBe(0);
+    expect(collectCombatInvisibleRandomKeys([random], unused)).toEqual(new Set(['shared']));
+    expect(collectCombatInvisibleRandomKeys([random, consumer], unused).size).toBe(0);
+
+    expect(collectCombatInvisibleRandomBlackboardKeys(graph([random, launch]), unused)).toEqual(
+      new Set(['shared']),
+    );
+    expect(collectPresentationSelectionTimelineIndexes(graph([producer, launch]), unused)).toEqual(
+      new Set([0]),
+    );
+    expect(
+      collectPresentationSelectionTimelineIndexes(graph([producer, launch]), () => false).size,
+    ).toBe(0);
+    const calculation = sequence({
+      family: 'blackboardCalculation',
+      action: {
+        kind: 'blackboardCalculation',
+        key: 'externalResult',
+        operation: 'Add',
+        left: scalar('shared'),
+        right: scalar(),
+        addend: null,
+      },
+    });
+    expect(
+      collectCombatInvisibleRandomBlackboardKeys(graph([random, calculation, launch]), unused).size,
+    ).toBe(0);
+  });
+  it('显式传给投射物的随机输入必须等待回调消费者分析', () => {
+    const random = sequence({
+      family: 'randomBlackboard',
+      action: {
+        kind: 'randomBlackboardWrite',
+        randomType: 'Float',
+        minimum: scalar(),
+        maximum: scalar(),
+        targetKey: 'shared',
+      },
+    });
+    const launch = sequence({
+      family: 'projectile',
+      action: {
+        ...projectile(false),
+        assignEntityBlackboard: true,
+        assignments: [
+          {
+            targetKey: 'EntityBB_result',
+            inputValueKey: 'shared',
+            useDirectValue: false,
+            valueType: 'Float',
+            numericValue: 0,
+            stringValue: '',
+          },
+        ],
+      },
+    });
+    expect(collectCombatInvisibleRandomBlackboardKeys(graph([random, launch])).size).toBe(0);
+    expect(
+      collectCombatInvisibleRandomBlackboardKeys(graph([random, launch]), () => true).size,
+    ).toBe(0);
+  });
+
+  it.each(['earlier', 'later', 'passive'] as const)(
+    '保留由 %s 入口消费的镜头计算结果',
+    location => {
+      const source =
+        location === 'passive'
+          ? graph([producer], [consumer])
+          : graph(location === 'earlier' ? [consumer, producer] : [producer, consumer]);
+      expect(collectPresentationSelectionTimelineIndexes(source).size).toBe(0);
+      expect(collectPresentationOnlyBlackboardKeys(source).has('shared')).toBe(false);
+      expect(collectPresentationSelectionTimelineIndexes(graph([producer]))).toEqual(new Set([0]));
+    },
+  );
+  it('被动事件读取的随机数不能作为无消费者随机值裁掉', () => {
+    const random = sequence({
+      family: 'randomBlackboard',
+      action: {
+        kind: 'randomBlackboardWrite',
+        randomType: 'Float',
+        minimum: scalar(),
+        maximum: scalar(),
+        targetKey: 'shared',
+      },
+    });
+    expect(
+      collectCombatInvisibleRandomBlackboardKeys(graph([random], [consumer])).has('shared'),
+    ).toBe(false);
+    expect(collectCombatInvisibleRandomBlackboardKeys(graph([random])).has('shared')).toBe(true);
+    const point = sequence({
+      family: 'targetGroup',
+      action: {
+        ...parseTargetGroupActionSource(
+          {
+            $type: 'Beyond.Gameplay.Core.MergeTargetAction+Data, Gameplay.Beyond',
+            isEnable: true,
+            priorityLevel: 'Default',
+            priorityOffset: 0,
+            serverActionIndex: 0,
+            targetGroupKey: 'point',
+            targets: [],
+          },
+          'point',
+        )!,
+        producerType: 'FindTargetAction',
+        finderType: 'PointFinder',
+        finderPointBlackboardKeys: ['shared'],
+      },
+    });
+    expect(collectCombatInvisibleRandomBlackboardKeys(graph([random, point])).has('shared')).toBe(
+      true,
+    );
+    const pointNode = point.actions[0]!;
+    if (pointNode.body.kind !== 'leaf' || pointNode.body.value.family !== 'targetGroup')
+      throw new Error('expected target query');
+    const converted = sequence({
+      family: 'targetGroup',
+      action: {
+        ...pointNode.body.value.action,
+        producerType: 'ConvertToTargetContext',
+        conversionOperation: 'ConvertEntityToPosition',
+        conversionSource: parseTargetReferenceSource(targetFixture('Owner'), 'owner'),
+      },
+    });
+    const motion = sequence({
+      family: 'spatial',
+      action: {
+        kind: 'teleport',
+        target: parseTargetReferenceSource(targetFixture('Context', undefined, 'point'), 'point'),
+        radius: scalar(),
+      },
+    }).actions[0]!;
+    if (motion.body.kind !== 'leaf') throw new Error('expected spatial action');
+    const motionValue = motion.body.value;
+    const withCallback = (callback: NativeSequenceSource<KnownNativeActionLeafSource>) => ({
+      ...sequence(),
+      actions: [
+        {
+          ...motion,
+          body: {
+            kind: 'actionWithCallback' as const,
+            value: motionValue,
+            trigger: 'targetPointInvalid' as const,
+            callback,
+          },
+        },
+      ],
+    });
+    expect(
+      collectPresentationOnlyTargetGroups(graph([point, converted, withCallback(sequence())])),
+    ).toContain('point');
+    expect(
+      collectMaterializedTargetGroups(graph([point, converted, withCallback(sequence())])),
+    ).not.toContain('point');
+    expect(
+      collectPresentationOnlyTargetGroups(graph([point, converted, withCallback(consumer)])),
+    ).not.toContain('point');
+    const pointCount = sequence({
+      family: 'condition',
+      action: {
+        kind: 'entityCount',
+        sourceType: 'CheckEntityNum',
+        target: parseTargetReferenceSource(targetFixture('Context', undefined, 'point'), 'point'),
+        targetSource: 'Context',
+        targetGroupKey: 'point',
+        minimumCount: 1,
+        comparison: 'GE',
+        containsHittableTarget: false,
+        excludeDeadEntity: false,
+        storeKey: 'count',
+      },
+    });
+    expect(collectMaterializedTargetGroups(graph([point], [pointCount]))).toContain('point');
+    expect(
+      collectCombatInvisibleRandomBlackboardKeys(graph([random, point, pointCount])).has('shared'),
+    ).toBe(false);
+    const unrelatedEvent = sequence({
+      family: 'eventListener',
+      action: {
+        kind: 'eventListener',
+        events: [{ abilityEvent: 'shared', actions: [] }],
+      },
+    });
+    expect(
+      collectCombatInvisibleRandomBlackboardKeys(graph([random], [unrelatedEvent])).has('shared'),
+    ).toBe(true);
+    const interval: NativeSequenceSource<KnownNativeActionLeafSource> = {
+      ...random,
+      actions: [
+        {
+          ...random.actions[0]!,
+          body: {
+            kind: 'tickInterval',
+            bodyLifetime: 'instant',
+            executeEachFrame: false,
+            intervalSeconds: 1,
+            useIntervalBlackboardKey: true,
+            intervalBlackboardKey: 'shared',
+            actionOnTick: sequence(),
+          },
+        },
+      ],
     };
-    const consumed = {
-      actionGroup: { timelineActions: [{ sequence: { actions: [write, consumer] } }] },
-    } as unknown as Parameters<typeof collectUnconsumedTargetGroups>[0];
-    expect([...collectUnconsumedTargetGroups(consumed)]).toEqual([]);
+    expect(
+      collectCombatInvisibleRandomBlackboardKeys(graph([random, interval])).has('shared'),
+    ).toBe(false);
+    const readOwnBound = sequence({
+      family: 'randomBlackboard',
+      action: {
+        kind: 'randomBlackboardWrite',
+        randomType: 'Float',
+        minimum: scalar('shared'),
+        maximum: scalar(),
+        targetKey: 'shared',
+      },
+    });
+    expect(collectCombatInvisibleRandomBlackboardKeys(graph([readOwnBound])).has('shared')).toBe(
+      false,
+    );
+  });
+  it('被动事件使用的目标组不能判为无人读取', () => {
+    const targets = sequence({
+      family: 'targetGroup',
+      action: parseTargetGroupActionSource(
+        {
+          $type: 'Beyond.Gameplay.Core.MergeTargetAction+Data, Gameplay.Beyond',
+          isEnable: true,
+          priorityLevel: 'Default',
+          priorityOffset: 0,
+          serverActionIndex: 0,
+          targetGroupKey: 'selected',
+          targets: [targetFixture('Target')],
+        },
+        'fixture',
+      )!,
+    });
+    const consume = sequence({
+      family: 'spatial',
+      action: {
+        kind: 'selfRotate',
+        rotateType: 'ToTarget',
+        target: parseTargetReferenceSource(
+          targetFixture('Context', undefined, 'selected'),
+          'fixture',
+        ),
+        rootMotion: false,
+        immediateRotate: true,
+      },
+    });
+    const targetNode = targets.actions[0]!;
+    if (targetNode.body.kind !== 'leaf' || targetNode.body.value.family !== 'targetGroup')
+      throw new Error('expected target group');
+    for (const center of ['ActionSource', 'ContextTarget']) {
+      const query = sequence({
+        family: 'targetGroup',
+        action: {
+          ...targetNode.body.value.action,
+          producerType: 'FindTargetAction',
+          finderType: 'FixedPointFinder',
+          center,
+          centerContextKey: 'center',
+          selectorOwner: center,
+          selectorOwnerContextKey: 'selectorOwner',
+        },
+      }).actions[0]!;
+      const querySequence = { ...targets, actions: [query] };
+      expect(collectPresentationSelectionTimelineIndexes(graph([querySequence]))).toEqual(
+        new Set([0]),
+      );
+      expect(
+        collectPresentationSelectionTimelineIndexes(graph([querySequence], [consume])).size,
+      ).toBe(0);
+      expect(collectUnobservedTargetQueryOutputs([querySequence])).toEqual(new Set(['selected']));
+      expect(collectUnobservedTargetQueryOutputs([querySequence, consume]).size).toBe(0);
+      expect(summarizeNativeTargetUsage(query).reads).toEqual(
+        new Set(center === 'ContextTarget' ? ['center', 'selectorOwner'] : []),
+      );
+      expect(
+        summarizeNativeTargetUsage({ ...query, metadata: { ...query.metadata, enabled: false } })
+          .writes.size,
+      ).toBe(0);
+    }
+    expect(collectUnconsumedTargetGroups(graph([targets]))).toEqual(new Set(['selected']));
+    const staleReference = sequence({
+      family: 'spatial',
+      action: {
+        kind: 'selfRotate',
+        rotateType: 'ToTarget',
+        target: parseTargetReferenceSource(
+          targetFixture('Owner', undefined, 'selected'),
+          'fixture',
+        ),
+        rootMotion: false,
+        immediateRotate: true,
+      },
+    });
+    expect(collectUnconsumedTargetGroups(graph([targets], [staleReference]))).toEqual(
+      new Set(['selected']),
+    );
+
+    expect(collectUnconsumedTargetGroups(graph([targets], [consume])).size).toBe(0);
+    const animationResponse = sequence({
+      family: 'animationEventListener',
+      action: {
+        kind: 'animationEventListener',
+        eventId: 'consume',
+        eventParameterBlackboardKey: '',
+        actionOnEvent: consume,
+      },
+    });
+    expect(summarizeNativeTargetUsage(animationResponse.actions[0]!).reads.size).toBe(0);
+    const nestedResponse = sequence({
+      family: 'eventListener',
+      action: {
+        kind: 'eventListener',
+        events: [{ abilityEvent: 'fixture', actions: [animationResponse] }],
+      },
+    });
+    expect(collectUnconsumedTargetGroups(graph([targets], [nestedResponse])).size).toBe(0);
+    const sameNameEvent = sequence({
+      family: 'eventListener',
+      action: { kind: 'eventListener', events: [{ abilityEvent: 'selected', actions: [] }] },
+    });
+    expect(collectUnconsumedTargetGroups(graph([targets, sameNameEvent]))).toEqual(
+      new Set(['selected']),
+    );
+    const transfer = sequence({
+      family: 'buffApplication',
+      action: {
+        kind: 'buffApplication',
+        lifetimeOwner: 'independent',
+        buffs: [],
+        count: scalar(),
+        target: parseTargetReferenceSource(targetFixture('Owner'), 'fixture'),
+        buffSource: 'ActionOwner',
+        contextKey: '',
+        autoFinishByAction: false,
+        inheritSkillIds: [],
+        finishWithNextSkillIfNotInherited: false,
+        asChildBuff: false,
+        inheritSourceSkillCastId: false,
+        inheritSourceSkillCastInfo: false,
+        isExtra: false,
+        passTargetGroupsToBuff: true,
+        overrideBuffIconDuration: false,
+        buffIconDuration: { durationSourceType: 'Default', timedMarkerId: '' },
+      },
+    });
+    expect(collectUnconsumedTargetGroups(graph([targets, transfer])).size).toBe(0);
   });
 });

@@ -54,13 +54,17 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_pistol_0005',
-                  target: 'caster',
-                  blackboardAssignments: {
-                    crit_up2: { kind: 'valueNode', nodeId: 'data_1' },
-                    dmg_up: { kind: 'valueNode', nodeId: 'data_2' },
-                    duration: { kind: 'valueNode', nodeId: 'data_3' },
-                  },
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_pistol_0005',
+                      blackboardAssignments: {
+                        crit_up2: { kind: 'valueNode', nodeId: 'data_1' },
+                        dmg_up: { kind: 'valueNode', nodeId: 'data_2' },
+                        duration: { kind: 'valueNode', nodeId: 'data_3' },
+                      },
+                    },
+                  ],
+                  targets: { kind: 'fixed', target: 'caster' },
                 },
               },
               next: null,
@@ -90,7 +94,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_pistol_0005',
-  iconPath: '/weapons/pistol/wpn_pistol_0005.webp',
+  icon: 'endaxis:weapons/pistol/wpn_pistol_0005',
   buffDefinitions: {
     buff_wpn_pistol_0005: {
       stackingType: 'unique',
@@ -103,24 +107,31 @@ const definition = {
       extendTags: [],
       blackboard: { crit_up2: 0, dmg_up: 0, duration: 0 },
       attributeModifiers: [],
-      lifecycleSequences: { enable: { $sequence: 'applyBuff_1' } },
+      lifecycleSequences: { enable: [{ $sequence: 'aura_1' }] },
       actionGraph: {
         main: {
           nodes: {
-            applyBuff_1: {
+            aura_1: {
               action: {
-                kind: 'applyBuff',
+                kind: 'aura',
                 parameters: {
-                  buffId: 'buff_wpn_pistol_0005_inaura',
-                  target: 'enemy',
-                  finishByAction: true,
+                  targets: { kind: 'fixed', target: 'enemy' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
-                  blackboardAssignments: {
-                    dmg_up: { kind: 'valueNode', nodeId: 'data_1' },
-                    duration: { kind: 'valueNode', nodeId: 'data_2' },
-                    crit_up2: { kind: 'valueNode', nodeId: 'data_3' },
-                  },
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_pistol_0005_inaura',
+                      blackboardAssignments: {
+                        dmg_up: { kind: 'valueNode', nodeId: 'data_1' },
+                        duration: { kind: 'valueNode', nodeId: 'data_2' },
+                        crit_up2: { kind: 'valueNode', nodeId: 'data_3' },
+                      },
+                      stringBlackboardAssignments: {},
+                    },
+                  ],
                 },
+                onEnter: { $sequence: null },
+                onExit: { $sequence: null },
               },
               next: null,
             },
@@ -153,8 +164,8 @@ const definition = {
       },
       attributeModifiers: [],
       abilityEventResponses: [
-        { event: 'beforeAddedBuff', priority: 0, sequence: { $sequence: 'conditional_5' } },
-        { event: 'beforeAddedBuff', priority: 0, sequence: { $sequence: 'conditional_8' } },
+        { event: 'beforeAddedBuff', priority: 0, sequence: { $sequence: 'checkCondition_5' } },
+        { event: 'beforeAddedBuff', priority: 0, sequence: { $sequence: 'checkCondition_9' } },
       ],
       actionGraph: {
         main: {
@@ -163,15 +174,19 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_pistol_0005_valid',
-                  target: 'buffSource',
-                  source: 'buffSource',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_pistol_0005_valid',
+                      copiedBlackboardAssignments: {
+                        dmg_up: 'dmg_up_dynamic',
+                        crit_up2: 'crit_up2_dynamic',
+                        duration: 'duration',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
-                  copiedBlackboardAssignments: {
-                    dmg_up: 'dmg_up_dynamic',
-                    crit_up2: 'crit_up2_dynamic',
-                    duration: 'duration',
-                  },
                 },
               },
               next: null,
@@ -195,67 +210,70 @@ const definition = {
                   key: 'dmg_up_dynamic',
                   operation: 'multiply',
                   left: { kind: 'valueNode', nodeId: 'data_3' },
-                  right: { kind: 'valueNode', nodeId: 'data_4' },
+                  right: { kind: 'valueNode', nodeId: 'data_2' },
                 },
               },
               next: 'calculateActionValue_2',
             },
-            conditional_4: {
+            checkCondition_4: {
               action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-                whenTrue: { $sequence: 'calculateActionValue_3' },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
               },
-              next: null,
+              next: 'calculateActionValue_3',
             },
-            conditional_5: {
+            checkCondition_5: {
               action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-                whenTrue: { $sequence: 'conditional_4' },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
               },
-              next: null,
+              next: 'checkCondition_4',
             },
             applyBuff_6: {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_pistol_0005_valid',
-                  target: 'buffSource',
-                  source: 'buffSource',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_pistol_0005_valid',
+                      copiedBlackboardAssignments: {
+                        dmg_up: 'dmg_up',
+                        crit_up2: 'crit_up2',
+                        duration: 'duration',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
-                  copiedBlackboardAssignments: {
-                    dmg_up: 'dmg_up',
-                    crit_up2: 'crit_up2',
-                    duration: 'duration',
-                  },
                 },
               },
               next: null,
             },
-            conditional_7: {
+            checkCondition_7: {
               action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-                whenTrue: { $sequence: 'applyBuff_6' },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
               },
-              next: null,
+              next: 'applyBuff_6',
             },
-            conditional_8: {
+            invertNextResult_8: {
+              action: { kind: 'invertNextResult', parameters: {} },
+              next: 'checkCondition_7',
+            },
+            checkCondition_9: {
               action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
-                whenTrue: { $sequence: 'conditional_7' },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
               },
-              next: null,
+              next: 'invertNextResult_8',
             },
           },
           dataNodes: {
             data_1: { type: 'number', expression: { kind: 'blackboard', key: 'crit_up2' } },
             data_2: { type: 'number', expression: { kind: 'blackboard', key: 'multi' } },
             data_3: { type: 'number', expression: { kind: 'blackboard', key: 'dmg_up' } },
-            data_4: { type: 'number', expression: { kind: 'blackboard', key: 'multi' } },
-            data_5: {
+            data_4: {
               type: 'boolean',
               expression: {
                 kind: 'actionInputTargetIdentityMatch',
@@ -263,7 +281,7 @@ const definition = {
                 operator: 'equal',
               },
             },
-            data_6: {
+            data_5: {
               type: 'boolean',
               expression: {
                 kind: 'eventBuffTagsMatch',
@@ -274,7 +292,7 @@ const definition = {
                 ],
               },
             },
-            data_7: {
+            data_6: {
               type: 'boolean',
               expression: {
                 kind: 'actionInputTargetIdentityMatch',
@@ -282,11 +300,7 @@ const definition = {
                 operator: 'equal',
               },
             },
-            data_8: {
-              type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-            },
-            data_9: {
+            data_7: {
               type: 'boolean',
               expression: {
                 kind: 'eventBuffTagsMatch',
@@ -312,8 +326,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_buff_atk_up',
-        iconPath: '/icons/icon_battle_buff_atk_up.webp',
+        icon: 'endaxis:icons/icon_battle_buff_atk_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

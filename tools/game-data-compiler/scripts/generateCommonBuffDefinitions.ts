@@ -1,3 +1,4 @@
+import type { GraphSharedEntityValueUsage } from '../src/compiler/optimization/graphValueOptimization.ts';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -74,7 +75,8 @@ export async function generateCommonBuffDefinitions(args: Arguments) {
     collector.add(slug, plan.commonBuffDefinitions);
     sources.releaseOperator();
   }
-  const rendered = await renderCollectedCommonBuffDefinitions(args, collector, sources);
+  collectSystemBuffDefinitions(args, collector, sources);
+  const rendered = await renderCommonBuffDefinitions(collector.definitions, args.optimization);
   if (args.check) checkGeneratedDefinitionFiles(args.output, rendered.files);
   else await writeGeneratedDefinitionFiles(args.output, rendered.files);
   return {
@@ -85,8 +87,8 @@ export async function generateCommonBuffDefinitions(args: Arguments) {
   };
 }
 
-/** 已有干员计划时直接收集其中的公共定义，再补系统根、优化并渲染；本函数不写文件。 */
-export async function renderCollectedCommonBuffDefinitions(
+/** 在用途分析结束前收齐系统根；此阶段不优化、不渲染。 */
+export function collectSystemBuffDefinitions(
   args: Pick<
     Arguments,
     | 'buffDataRoot'
@@ -94,7 +96,6 @@ export async function renderCollectedCommonBuffDefinitions(
     | 'skillSettingCatalog'
     | 'gameplayTagCatalog'
     | 'timeDilationCatalog'
-    | 'optimization'
   >,
   collector: CommonBuffCollector<OperatorBuffDefinitions[string]>,
   sources?: OperatorPlanningSources,
@@ -139,10 +140,15 @@ export async function renderCollectedCommonBuffDefinitions(
   const blocked = systemClosure.diagnostics.filter(item => item.status === 'blocked');
   if (blocked.length) throw new Error(`system Buff roots are blocked: ${JSON.stringify(blocked)}`);
   collector.add('<system>', systemClosure.definitions);
-  const optimized = finalizeCommonBuffDefinitions(
-    collector.definitions,
-    args.optimization ?? 'apply',
-  );
+}
+
+/** 只消费已经收齐的定义，不在渲染过程中追加资源。 */
+export async function renderCommonBuffDefinitions(
+  collected: OperatorBuffDefinitions,
+  mode: DefinitionOptimizationMode = 'apply',
+  sharedUsage?: GraphSharedEntityValueUsage,
+) {
+  const optimized = finalizeCommonBuffDefinitions(collected, mode, sharedUsage);
   const definitions = optimized.definitions;
   const presentationNameKeys = readPresentationNameKeys(presentationNamesPath);
 

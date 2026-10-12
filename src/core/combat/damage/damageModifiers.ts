@@ -1,11 +1,12 @@
 /** Buff 实例持有的伤害修正器；条件状态随战斗切面保存。 */
 import type { ModifierConditionRuntime } from '../actions/modifierConditionRuntime';
+import type { BuffConditionSummary } from '../receipt/combatReceipt';
+import type { DamageModifierResult, DamageScaleSide } from './damageScale';
 
-import { type DamageModifierDefinition } from '../../../../packages/game-data-contract/src/modifiers.ts';
+import type { DamageModifierDefinition } from '../../../../packages/game-data-contract/src/modifiers.ts';
 
 import { resolveBuffModifierNumber } from '../buffs/buffModifierNumberSource';
-import type { DamageModifierState } from '../state/foundationState';
-import { type BuffModifierNumberSource } from '../state/foundationState';
+import type { BuffModifierNumberSource, DamageModifierState } from '../state/foundationState';
 import { applyDamageModifier } from './damageModifierExecution';
 import type {
   DamageModifierSide,
@@ -29,7 +30,7 @@ export interface DamageModifierConditionInput {
 export interface DamageModifierConditionRuntime extends ModifierConditionRuntime<DamageModifierConditionInput> {
   /** 单一伤害类型筛选的展示摘要；实际判断仍执行动作序列。 */
   readonly damageTypes?: readonly PlayerDamageContext['damageType'][];
-  readonly summary?: import('../receipt/combatReceipt').BuffConditionSummary;
+  readonly summary?: BuffConditionSummary;
 }
 
 /** 由一个已启用 Buff 实例持有的运行时修正。 */
@@ -64,10 +65,7 @@ export class DamageModifier {
     timing: DamageProcessTiming,
     side: DamageModifierSide,
     context: PlayerDamageContext,
-    recordModifier?: (
-      side: import('./damageScale').DamageScaleSide,
-      result: import('./damageScale').DamageModifierResult,
-    ) => void,
+    recordModifier?: (side: DamageScaleSide, result: DamageModifierResult) => void,
   ): void {
     applyDamageModifier(
       this.runtimeState.ownerId,

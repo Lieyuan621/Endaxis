@@ -3,7 +3,7 @@ import {
   collectContingencyContractGlobalBuffIds,
   compileContingencyContractTagDefinitions,
   parseContingencyContractCatalogSource,
-} from '../src/domains/mechanics/contingencyContractSource.ts';
+} from '../src/domains/contingencyContract/contingencyContractSource.ts';
 
 function tag(tagId: number, termType: number, buffId: string) {
   return {
@@ -66,7 +66,7 @@ describe('Contingency Contract native source', () => {
       keyId: '',
       lockIds: [],
       romanNumSuffix: '',
-      iconPath: '/contingency_contract/1/icon_100201.webp',
+      icon: 'endaxis:contingency_contract/1/icon_100201',
       blackboard: { value: 0.5 },
     });
   });

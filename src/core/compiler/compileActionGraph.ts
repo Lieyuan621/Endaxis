@@ -1,3 +1,5 @@
+import type { ResolvedCombatStepParameters } from './combatProgram';
+import { resolveLevelValue } from './compileActionValues';
 import type { CompiledGraphStepForKind, CompiledValueInput } from './compiledGraphData.ts';
 /** 每个节点只编译一次；控制出口与嵌套宿主保留程序引用，不构造序列树。 */
 import type {
@@ -10,24 +12,16 @@ import {
   validateActionGraphResource,
 } from '../action-graph/actionGraphValidation';
 
-import { compileGraphData, type CompiledDataNode, type CompiledInputs } from './compiledGraphData';
-import { compileLeafAction, isLeafCombatStep, type ResolvedLeafAction } from './compileLeafAction';
-import { compileActionScopeParameters } from './compileActionValues';
-import { compileNestedAction, isNestedAction, type NestedActionKind } from './compileNestedAction';
 import type { AbilityEntityDefinition } from '../game-data/operatorDefinition';
 import type {
+  CompiledGraphEntry,
   ResolvedAbilityEntityDefinition,
   ResolvedCombatStepForKind,
-  CompiledGraphEntry,
 } from './combatProgram';
+import { compileGraphData, type CompiledDataNode, type CompiledInputs } from './compiledGraphData';
+import { compileLeafAction, isLeafCombatStep, type ResolvedLeafAction } from './compileLeafAction';
+import { compileNestedAction, isNestedAction, type NestedActionKind } from './compileNestedAction';
 import { createProgramDefinitionCompiler } from './compileProgramDefinitions';
-
-export type CompiledGraphScope = Omit<
-  CompiledGraphStepForKind<'withActionBlackboardScope'>,
-  'parameters'
-> & {
-  readonly parameters: ReturnType<typeof compileActionScopeParameters>;
-};
 
 export type CompiledGraphOperation =
   ResolvedLeafAction | ResolvedCombatStepForKind<NestedActionKind>;
@@ -50,14 +44,22 @@ export interface CompiledActionGraphNode {
     | CompiledGraphMacroCall
     | CompiledGraphStepForKind<
         | 'conditional'
+        | 'checkCondition'
+        | 'invertNextResult'
+        | 'jumpTimeline'
+        | 'ifElse'
+        | 'anyCondition'
         | 'switch'
         | 'once'
         | 'repeatEachTick'
-        | 'repeatByActionValue'
         | 'forEachContextTarget'
         | 'listenForCombatEvents'
+        | 'playAnimation'
+        | 'showComboRingQte'
       >
-    | CompiledGraphScope;
+    | (Omit<CompiledGraphStepForKind<'aura'>, 'parameters'> & {
+        readonly parameters: ResolvedCombatStepParameters['aura'];
+      });
   readonly next: string | null;
 }
 
@@ -274,14 +276,51 @@ export function createActionGraphCompilation(
       const node = graph.nodes[id]!;
       let action: CompiledActionGraphNode['action'];
       if (
+        node.action.kind === 'playAnimation' ||
+        node.action.kind === 'showComboRingQte' ||
         node.action.kind === 'conditional' ||
+        node.action.kind === 'checkCondition' ||
+        node.action.kind === 'invertNextResult' ||
+        node.action.kind === 'jumpTimeline' ||
+        node.action.kind === 'ifElse' ||
+        node.action.kind === 'anyCondition' ||
         node.action.kind === 'switch' ||
         node.action.kind === 'once' ||
         node.action.kind === 'repeatEachTick' ||
-        node.action.kind === 'repeatByActionValue' ||
         node.action.kind === 'forEachContextTarget'
       ) {
         action = node.action;
+      } else if (node.action.kind === 'aura') {
+        action = {
+          ...node.action,
+          parameters: {
+            ...node.action.parameters,
+            buffs: node.action.parameters.buffs.map(
+              ({ blackboardAssignments, ...entry }, index) => ({
+                ...entry,
+                ...(blackboardAssignments === undefined
+                  ? {}
+                  : {
+                      blackboardAssignments: Object.fromEntries(
+                        Object.entries(blackboardAssignments).map(([key, value]) => [
+                          key,
+                          typeof value === 'object' && 'kind' in value
+                            ? value
+                            : {
+                                kind: 'constant' as const,
+                                value: resolveLevelValue(
+                                  value,
+                                  skillLevel,
+                                  `graph.${id}.buffs[${index}].${key}`,
+                                ),
+                              },
+                        ]),
+                      ),
+                    }),
+              }),
+            ),
+          },
+        };
       } else if (node.action.kind === 'listenForCombatEvents') {
         action = node.action;
       } else if (node.action.kind === 'callResource') {
@@ -309,15 +348,6 @@ export function createActionGraphCompilation(
           ...(node.action.nodeBindings ? { nodeBindings: node.action.nodeBindings } : {}),
         };
         if (entry !== null && !nodes.has(entry)) pending.add(entry);
-      } else if (node.action.kind === 'withActionBlackboardScope') {
-        action = {
-          ...node.action,
-          parameters: compileActionScopeParameters(
-            { ...node.action.parameters, scopeKey: node.action.parameters.scopeKey },
-            skillLevel,
-            `graph.${id}`,
-          ),
-        };
       } else if (isNestedAction(node.action)) {
         action = compileNestedAction(
           node.action,

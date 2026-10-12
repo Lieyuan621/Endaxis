@@ -11,6 +11,7 @@ import {
   type GlobalBuffDraftContext,
 } from '../../application/editor/globalBuffFieldContext';
 import { graphOperandSchemas, isSkillSettingValuesSchema } from './graphOperandContainerSchema';
+import { hasSemanticAlias } from '../../core/editor/fieldSemantics';
 import { validMappingValue, validNumericReadSource } from './blackboardMapping';
 import { graphDataExpression } from '../../core/action-graph/actionGraphData';
 import {
@@ -142,7 +143,10 @@ export function validateStructuredValue(
     )
       throw new Error('skillSettingValues.invalid');
     if (graphOperands?.has(declared)) {
-      if (!validMappingValue(value, 'operand')) throw new Error('actionGraphEditor.invalid');
+      const mode = hasSemanticAlias(declared.semantics, 'LevelValues')
+        ? 'levelsOrOperand'
+        : 'operand';
+      if (!validMappingValue(value, mode)) throw new Error('actionGraphEditor.invalid');
       // 全局效果拥有自己的变量作用域；连接到的数据节点在该作用域读取。
       if (
         isGlobalBuffDefinitionPath(options.kind, path) &&

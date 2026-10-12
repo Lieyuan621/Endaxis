@@ -1,15 +1,25 @@
+import type { ActionTargetQuery } from '../../../../packages/game-data-contract/src/conditions';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
+import type { OwnerSpawnedAbilityEntityQuery } from '../../game-data/logicalAbilityEntity';
+import { sameRuntimeTarget as sameTarget } from './runtimeTargetContext';
 
-import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
-import { abilityEventSourceId, abilityEventTargetId } from '../events/combatAbilityEvent';
-import { runtimeTargetFromEntityId } from '../../game-data/logicalAbilityEntity';
 import type { CombatObjectType } from '../../../../packages/game-data-contract/src/primitives';
-import { matchesCombatObjectType, resolveCombatObjectType } from './combatObjectType';
-import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
+import type {
+  ResolvedCombatOperationStep,
+  ResolvedCombatStepForKind,
+} from '../../compiler/combatProgram';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
-import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
-import type { CombatVitals } from '../resources/combatVitals';
+import {
+  runtimeTargetEntityId,
+  runtimeTargetFromEntityId,
+} from '../../game-data/logicalAbilityEntity';
+import { compareCombatNumbers } from '../../math/combatNumbers';
 import { resolveActionValueOperand } from '../actions/actionBlackboard';
+import { abilityEventSourceId, abilityEventTargetId } from '../events/combatAbilityEvent';
+import type { CombatVitals } from '../resources/combatVitals';
+import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
+import type { SpatialPointIdentityState } from '../state/environmentState';
+import { matchesCombatObjectType, resolveCombatObjectType } from './combatObjectType';
 
 export interface CharacterTeamTargetQueryDependencies {
   readonly listOperatorIds: () => readonly string[];
@@ -17,9 +27,31 @@ export interface CharacterTeamTargetQueryDependencies {
   readonly resolveVitals: (operatorId: string) => CombatVitals;
 }
 
+/** 直接引用只读取动作环境；返回 undefined 表示还需要实体目录或队伍查询。 */
+export function resolveDirectActionTargets(
+  query: ActionTargetQuery,
+  context: CombatOperationContext,
+  casterId?: string,
+): readonly RuntimeTargetRef[] | undefined {
+  if (query.kind === 'battleMainTarget') return [{ kind: 'enemy' }];
+  if (query.kind === 'godEntity') return [{ kind: 'godEntity' }];
+  if (query.kind === 'context') return context.targetContext?.getOptional(query.key) ?? [];
+  if (query.kind === 'inputTarget')
+    return context.actionInputTarget ? [context.actionInputTarget] : [];
+  if (query.kind === 'owner' || query.kind === 'source') {
+    const id = query.kind === 'owner' ? context.actionOwnerId : context.actionSourceId;
+    return id === undefined ? [] : [runtimeTargetFromEntityId(id)];
+  }
+  if (query.kind === 'fixed') {
+    if (query.target === 'enemy') return [{ kind: 'enemy' }];
+    if (casterId === undefined) throw new Error('caster target requires an operator');
+    return [{ kind: 'operator', operatorId: casterId }];
+  }
+  return undefined;
+}
+
 /** 执行不依赖空间的通用 Context 目标组集合操作。 */
 export class TargetContextOperationExecutor implements CombatOperationExecutor {
-  #nextSpatialPointId = 1;
   constructor(
     readonly operatorId: string,
     readonly delegate: CombatOperationExecutor,
@@ -30,13 +62,31 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
     /** 共用实体句柄不代表共用原生类型；正式装配从实例目录查询。 */
     readonly resolveAbilityEntityObjectType?: (instanceId: number) => CombatObjectType,
     readonly listUnfinishedProjectiles?: () => readonly RuntimeTargetRef[],
+    readonly targetQueries?: {
+      enemyMatchesTags?(query: Extract<ActionTargetQuery, { kind: 'enemyByTags' }>): boolean;
+      entityLifeState?(target: RuntimeTargetRef): 'alive' | 'dead' | 'unknown' | undefined;
+      mainTarget(): RuntimeTargetRef | undefined;
+      ownerSpawned(query: OwnerSpawnedAbilityEntityQuery): readonly RuntimeTargetRef[];
+      ownerSpawnedProjectiles?(ownerId: string): readonly RuntimeTargetRef[];
+    },
+    readonly runtimeState: SpatialPointIdentityState = { nextSpatialPointId: 1 },
   ) {}
 
   execute(step: ResolvedCombatOperationStep, context?: CombatOperationContext): boolean {
-    if (step.kind === 'findUnfinishedProjectileTargets') {
-      if (context?.targetContext === undefined || this.listUnfinishedProjectiles === undefined)
-        throw new Error('projectile query requires a target context and projectile directory');
-      context.targetContext.set(step.parameters.saveToContextKey, this.listUnfinishedProjectiles());
+    if (step.kind === 'findTargets') {
+      if (!context?.targetContext) throw new Error('findTargets requires a target context');
+      const owner = this.queryTargets(step.parameters.owner, context)[0];
+      if (!owner || owner.kind === 'spatialPoint') return false;
+      context.targetContext.set(
+        step.parameters.saveToContextKey,
+        this.queryTargets(step.parameters.query, context),
+      );
+      return true;
+    }
+    if (step.kind === 'copyContextTargets') {
+      if (!context?.targetContext) throw new Error('copyContextTargets requires a target context');
+      const targets = this.queryTargets(step.parameters.source, context);
+      context.targetContext.set(step.parameters.saveToContextKey, targets);
       return true;
     }
     if (step.kind === 'findCharacterTeamTargets') {
@@ -55,7 +105,7 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
         step.parameters.saveToContextKey,
         Array.from({ length: count }, () => ({
           kind: 'spatialPoint' as const,
-          pointId: this.#nextSpatialPointId++,
+          pointId: this.runtimeState.nextSpatialPointId++,
         })),
       );
       return true;
@@ -170,6 +220,44 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
   }
 
   evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
+    if (condition.kind === 'entityCountCompare') {
+      if (!context) throw new Error('entity count requires an action context');
+      const lifeState = this.targetQueries?.entityLifeState;
+      if (!lifeState) throw new Error('entity count requires an entity directory');
+      let count = 0;
+      for (const target of this.queryTargets(condition.target, context)) {
+        if (target.kind === 'spatialPoint') continue;
+        const state = lifeState(target);
+        if (state === undefined) continue;
+        if (condition.excludeDeadEntity) {
+          if (state === 'unknown') throw new Error('entity count cannot resolve target life state');
+          if (state === 'dead') continue;
+        }
+        count++;
+      }
+      // 当前场景没有独立 IHittableObject 集合，不能把空间点或实体重复充当受击对象。
+      if (!compareCombatNumbers(count, condition.value, condition.operator)) return false;
+      if (condition.outputKey !== undefined) {
+        const old = context.blackboard.getNumber(condition.outputKey);
+        if (old === undefined)
+          throw new Error(`action blackboard value '${condition.outputKey}' is missing`);
+        if (Math.abs(Math.fround(Math.fround(old) - Math.fround(count))) > Math.fround(0.00001))
+          context.blackboard.assignDynamicUnconditionally(condition.outputKey, count);
+      }
+      return true;
+    }
+    if (condition.kind === 'targetDistance') {
+      if (!context) throw new Error('targetDistance requires an action context');
+      const source = this.queryTargets(condition.source, context)[0];
+      const target = this.queryTargets(condition.target, context)[0];
+      if (!source || !target) return false;
+      // 场景没有位置和碰撞体积，实体与空间点的位置、半径均按0处理。
+      // 目标解析仍执行，不能把缺失目标也当成距离0。
+      const distance = 0;
+      return condition.lessThan
+        ? distance <= Math.fround(condition.distance)
+        : distance > Math.fround(condition.distance);
+    }
     if (condition.kind === 'contextTargetObjectTypeMatch') {
       if (context?.targetContext === undefined)
         throw new Error('object type check requires a combat target context');
@@ -184,29 +272,38 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
       if (context?.targetContext === undefined) {
         throw new Error('context target identity check requires a combat target context');
       }
-      const target = context.targetContext.getOptional(condition.contextKey)?.[0];
+      const targets = context.targetContext.getOptional(condition.contextKey) ?? [];
+      let others: readonly RuntimeTargetRef[];
+      if (condition.other === 'controlledOperator') {
+        const team = this.characterTeam;
+        if (team === undefined)
+          throw new Error('context target identity check requires character team');
+        others = team
+          .listOperatorIds()
+          .filter(id => team.isOperatorControlled(id))
+          .map(operatorId => ({ kind: 'operator', operatorId }));
+      } else {
+        const id =
+          condition.other === 'actionSource' ? context.actionSourceId : context.actionOwnerId;
+        others = id === undefined ? [] : [runtimeTargetFromEntityId(id)];
+      }
+      // 主控检查取首目标；CheckTargetsEqual 则要求两组互相包含。
       const matches =
-        target !== undefined &&
-        (condition.other === 'controlledOperator'
-          ? target.kind === 'operator' &&
-            this.characterTeam !== undefined &&
-            this.characterTeam.isOperatorControlled(target.operatorId)
-          : targetId(target) ===
-            (condition.other === 'actionSource' ? context.actionSourceId : context.actionOwnerId));
+        condition.selection === 'first'
+          ? targets[0] !== undefined && others[0] !== undefined && sameTarget(targets[0], others[0])
+          : targets.every(target => others.some(other => sameTarget(target, other))) &&
+            others.every(other => targets.some(target => sameTarget(target, other)));
       return condition.operator === 'equal' ? matches : !matches;
     }
-    if (condition.kind !== 'contextTargetContains') {
+    if (condition.kind !== 'targetContains') {
       return context === undefined
         ? this.delegate.evaluate(condition)
         : this.delegate.evaluate(condition, context);
     }
-    if (context?.targetContext === undefined) {
-      throw new Error('contextTargetContains requires a combat target context');
-    }
-    const child = this.#resolveTarget(condition.child, context);
-    return context.targetContext
-      .get(condition.parentContextKey)
-      .some(target => sameTarget(target, child));
+    if (!context) throw new Error('targetContains requires an action context');
+    const parents = this.queryTargets(condition.parent, context);
+    const children = this.queryTargets(condition.child, context);
+    return children.every(child => parents.some(parent => sameTarget(parent, child)));
   }
 
   #resolveTarget(
@@ -217,16 +314,7 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
     if (target === 'enemy') return { kind: 'enemy' };
     if (target === 'eventSource') {
       const event = context.event;
-      const sourceId =
-        event === undefined
-          ? undefined
-          : 'payload' in event
-            ? abilityEventSourceId(event)
-            : 'sourceId' in event
-              ? event.sourceId
-              : 'sourceOperatorId' in event
-                ? event.sourceOperatorId
-                : undefined;
+      const sourceId = event === undefined ? undefined : abilityEventSourceId(event);
       if (typeof sourceId !== 'string')
         throw new Error('eventSource requires a combat event with source identity');
       return runtimeTargetFromEntityId(sourceId);
@@ -236,7 +324,7 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
         throw new Error('buffSource requires a Buff lifecycle context');
       }
       const sourceId = this.resolveAbilitySystemSourceId(context.buffSourceId);
-      return sourceId === 'enemy' ? { kind: 'enemy' } : { kind: 'operator', operatorId: sourceId };
+      return runtimeTargetFromEntityId(sourceId);
     }
     if (target === 'currentTarget') {
       if (context.currentTarget === undefined) {
@@ -245,15 +333,77 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
       return context.currentTarget;
     }
     const targetId = eventTargetId(context);
-    return targetId === 'enemy' ? { kind: 'enemy' } : { kind: 'operator', operatorId: targetId };
+    return runtimeTargetFromEntityId(targetId);
   }
-}
 
-function targetId(target: RuntimeTargetRef): string | undefined {
-  if (target.kind === 'enemy') return 'enemy';
-  if (target.kind === 'operator') return target.operatorId;
-  if (target.kind === 'abilityEntity') return `abilityEntity:${target.instanceId}`;
-  return undefined;
+  queryTargets(
+    query: ActionTargetQuery,
+    context: CombatOperationContext,
+  ): readonly RuntimeTargetRef[] {
+    const direct = resolveDirectActionTargets(query, context, this.operatorId);
+    if (direct !== undefined) return direct;
+    if (query.kind === 'enemyByTags') {
+      if (!this.targetQueries?.enemyMatchesTags)
+        throw new Error('enemy tag query requires a target tag reader');
+      const matches = this.targetQueries.enemyMatchesTags(query);
+      return matches ? [{ kind: 'enemy' }] : [];
+    }
+    if (query.kind === 'unfinishedProjectiles') {
+      if (!this.listUnfinishedProjectiles) throw new Error('projectile query requires a directory');
+      return this.listUnfinishedProjectiles();
+    }
+    if (query.kind === 'characterTeam') {
+      if (!this.characterTeam) throw new Error('team query requires a character team');
+      const selectedOwner = query.excludeOwner
+        ? this.queryTargets(query.owner ?? { kind: 'owner' }, context)[0]
+        : undefined;
+      const owner = selectedOwner === undefined ? undefined : runtimeTargetEntityId(selectedOwner);
+      return [...this.characterTeam.listOperatorIds()]
+        .reverse()
+        .filter(id => !query.excludeOwner || id !== owner)
+        .map(operatorId => ({ kind: 'operator', operatorId }));
+    }
+    if (query.kind === 'mainCharacter') {
+      if (!this.characterTeam) throw new Error('main-character query requires a character team');
+      const id = this.characterTeam.listOperatorIds().find(this.characterTeam.isOperatorControlled);
+      return id === undefined ? [] : [{ kind: 'operator', operatorId: id }];
+    }
+    if (query.kind === 'fixedPoint') {
+      const owner = this.queryTargets(query.owner, context)[0];
+      if (!owner || owner.kind === 'spatialPoint') return [];
+      this.queryTargets(query.directionTarget, context);
+      this.queryTargets(query.center, context);
+      // 零空间模型保留一个位置目标及其身份，不执行几何偏移。
+      return [{ kind: 'spatialPoint', pointId: this.runtimeState.nextSpatialPointId++ }];
+    }
+    if (query.kind === 'mainTarget' || query.kind === 'ownerSpawned') {
+      if (!this.targetQueries) throw new Error('target query requires an entity directory');
+      const owner = this.queryTargets(query.owner, context)[0];
+      if (!owner || owner.kind === 'spatialPoint') return [];
+      if (query.kind === 'mainTarget') {
+        const target = this.targetQueries.mainTarget();
+        return target === undefined ? [] : [target];
+      }
+      const ownerId = runtimeTargetEntityId(owner)!;
+      const sourceSkillCastId = query.sameSourceSkillCast
+        ? context.skillCastInfo?.skillCastId
+        : undefined;
+      if (query.sameSourceSkillCast && sourceSkillCastId === undefined)
+        throw new Error('same-cast target query requires SkillCastInfo');
+      const entities = this.targetQueries.ownerSpawned({
+        ownerId,
+        abilityEntityIds: query.abilityEntityIds,
+        ...(sourceSkillCastId === undefined ? {} : { sourceSkillCastId }),
+      });
+      if (query.objectType === 'abilityEntity') return entities;
+      if (!this.targetQueries.ownerSpawnedProjectiles)
+        throw new Error('all owner-spawned targets require a projectile directory');
+      return [...entities, ...this.targetQueries.ownerSpawnedProjectiles(ownerId)].sort((a, b) =>
+        a.kind === 'abilityEntity' && b.kind === 'abilityEntity' ? a.instanceId - b.instanceId : 0,
+      );
+    }
+    throw new Error('unsupported action target query');
+  }
 }
 
 function eventTargetId(context: CombatOperationContext): string {
@@ -264,24 +414,5 @@ function eventTargetId(context: CombatOperationContext): string {
       throw new Error('eventTarget requires a combat event with target identity');
     return target;
   }
-  if (event === undefined || !('targetId' in event)) {
-    throw new Error('eventTarget requires a combat event with target identity');
-  }
-  return event.targetId;
-}
-
-function sameTarget(left: RuntimeTargetRef, right: RuntimeTargetRef): boolean {
-  if (left.kind !== right.kind) return false;
-  if (left.kind === 'enemy') return true;
-  if (left.kind === 'operator' && right.kind === 'operator') {
-    return left.operatorId === right.operatorId;
-  }
-  if (left.kind === 'spatialPoint' && right.kind === 'spatialPoint') {
-    return left.pointId === right.pointId;
-  }
-  return (
-    left.kind === 'abilityEntity' &&
-    right.kind === 'abilityEntity' &&
-    left.instanceId === right.instanceId
-  );
+  throw new Error('eventTarget requires a combat event with target identity');
 }

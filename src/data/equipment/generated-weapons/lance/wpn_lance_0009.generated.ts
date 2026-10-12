@@ -35,6 +35,6 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_lance_0009',
-  iconPath: '/weapons/lance/wpn_lance_0009.webp',
+  icon: 'endaxis:weapons/lance/wpn_lance_0009',
 } as const satisfies WeaponDefinition;
 export default definition;

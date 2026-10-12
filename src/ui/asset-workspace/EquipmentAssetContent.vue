@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { resolveImage } from '../imageResources';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { EaButton } from '@/design-system';
@@ -49,7 +50,11 @@ function summary(field: string) {
 
 <template>
   <div class="ap-document-heading">
-    <img v-if="edit.definition.iconPath" :src="edit.definition.iconPath" alt="" />
+    <img
+      v-if="resolveImage(edit.definition.icon)"
+      :src="resolveImage(edit.definition.icon)"
+      alt=""
+    />
     <WorkspaceIcon v-else name="box" :size="30" />
     <div>
       <div class="ap-eyebrow">{{ t(`definitionEditor.kinds.${edit.kind}`) }}</div>

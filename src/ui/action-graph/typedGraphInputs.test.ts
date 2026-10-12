@@ -49,16 +49,20 @@ it('projects boolean conditions and existing record values but never ordinary st
   const inputs = actionTypedInputs({
     kind: 'applyBuff',
     parameters: {
-      target: 'caster',
-      buffId: { kind: 'stringNode', nodeId: 'buff' },
-      blackboardAssignments: { power: [2, 3] },
-      stringBlackboardAssignments: { name: 'label' },
+      buffs: [
+        {
+          buffId: { kind: 'stringNode', nodeId: 'buff' },
+          blackboardAssignments: { power: [2, 3] },
+          stringBlackboardAssignments: { name: 'label' },
+        },
+      ],
+      targets: { kind: 'fixed', target: 'caster' },
     },
   });
   expect(inputs.map(input => input.path.join('.'))).toEqual([
-    'parameters.buffId',
+    'parameters.buffs.0.buffId',
+    'parameters.buffs.0.blackboardAssignments.power',
     'parameters.count',
-    'parameters.blackboardAssignments.power',
   ]);
   expect(inputs.map(input => input.type)).toEqual(['string', 'number', 'number']);
 });
@@ -226,7 +230,11 @@ it('projects only formal string operand slots, including string references and m
   expect(
     dataTypedInputs({
       type: 'boolean',
-      expression: { kind: 'abilityEntityTimedMarkerPresent', markerId: linked },
+      expression: {
+        kind: 'abilityEntityTimedMarkerPresent',
+        returnTrueIfNotExists: false,
+        markerId: linked,
+      },
     }),
   ).toContainEqual({ path: ['markerId'], type: 'string', source: 'read', value: linked });
   expect(dataTypedInputs({ type: 'string', expression: { blackboardKey: 'id' } })).toEqual([

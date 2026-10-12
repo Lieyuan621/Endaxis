@@ -1,3 +1,5 @@
+import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
+import { resolveDirectActionTargets } from '../abilities/targetContextOperationExecutor';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import type { SpGainSource } from '../../game-data/operatorDefinition';
 /**
@@ -59,30 +61,6 @@ export class SkillResourceOperationExecutor implements CombatOperationExecutor {
       this.runtimeState.ultimateRecoveryRestrictionHandles.set(this.programs.slot(step), handle);
       return true;
     }
-    if (step.kind === 'changeResourceByActionValue') {
-      if (context === undefined) {
-        throw new Error('changeResourceByActionValue requires a combat operation context');
-      }
-      const { amount, coefficient, ...parameters } = step.parameters;
-      return this.execute(
-        {
-          kind: 'changeResource',
-          parameters: {
-            ...parameters,
-            amount: Math.fround(resolveActionValueOperand(amount, context.blackboard)),
-            ...(coefficient === undefined
-              ? {}
-              : {
-                  coefficient:
-                    typeof coefficient === 'object'
-                      ? Math.fround(resolveActionValueOperand(coefficient, context.blackboard))
-                      : coefficient,
-                }),
-          },
-        },
-        context,
-      );
-    }
     if (step.kind === 'recoverDashEnergy') {
       if (context === undefined)
         throw new Error('recoverDashEnergy requires a combat operation context');
@@ -115,38 +93,72 @@ export class SkillResourceOperationExecutor implements CombatOperationExecutor {
       });
       return true;
     }
-    if (
-      step.kind === 'changeResource' &&
-      step.parameters.resource === 'sp' &&
-      step.parameters.recipient === 'team'
-    ) {
-      const amount = Math.fround(step.parameters.amount * (step.parameters.coefficient ?? 1));
-      const change = this.dependencies.resources.gainSp(
-        amount,
-        step.parameters.spGainKind,
-        step.parameters.spGainSource ?? 'default',
-      );
-      this.#recordSpChange(change, step.parameters.spGainSource ?? 'default', context);
-      return true;
-    }
-
-    if (
-      step.kind === 'changeResource' &&
-      step.parameters.resource === 'ultimateEnergy' &&
-      step.parameters.recipient === 'caster'
-    ) {
-      const amount = Math.fround(step.parameters.amount);
-      const change = this.dependencies.resources.changeUltimateEnergy(
-        this.dependencies.sourceOperatorId,
-        amount,
-        {
-          coefficient: step.parameters.coefficient,
-          isPercentValue: step.parameters.isPercentValue,
-          recoveryTag: step.parameters.ultimateRecoveryTag,
-          ignoreGainMultiplier: step.parameters.ignoreUltimateEnergyGainMultiplier,
-        },
-      );
-      this.#recordUltimateEnergyChange(change, context);
+    if (step.kind === 'changeResource') {
+      const p = step.parameters;
+      if (context === undefined) throw new Error('resource change requires an action context');
+      const query = (selection: typeof p.source) => {
+        const direct = resolveDirectActionTargets(
+          selection,
+          context,
+          this.dependencies.sourceOperatorId,
+        );
+        if (direct !== undefined) return direct;
+        if (!this.dependencies.delegate.queryTargets)
+          throw new Error('resource target query is unavailable');
+        return this.dependencies.delegate.queryTargets(selection, context);
+      };
+      const source = query(p.source)[0];
+      if (!source) return false;
+      const sourceId = runtimeTargetEntityId(source);
+      if (sourceId === undefined) return false;
+      const targets = query(p.targets);
+      if (
+        p.resource === 'sp' &&
+        p.onlyMainOperator &&
+        (source.kind !== 'operator' ||
+          !this.dependencies.delegate.evaluate(
+            {
+              kind: 'actionInputTargetIdentityMatch',
+              other: 'controlledOperator',
+              operator: 'equal',
+            },
+            { ...context, actionInputTarget: source },
+          ))
+      )
+        return true;
+      const read = (value: typeof p.amount): number => {
+        if (typeof value === 'number') return value;
+        if (context === undefined)
+          throw new Error('dynamic resource amount requires an action context');
+        return Math.fround(resolveActionValueOperand(value, context.blackboard));
+      };
+      const amount = read(p.amount);
+      const coefficient = p.coefficient === undefined ? undefined : read(p.coefficient);
+      for (const target of targets) {
+        if (target.kind === 'spatialPoint') continue;
+        if (p.resource === 'sp') {
+          const change = this.dependencies.resources.gainSp(
+            Math.fround(amount * (coefficient ?? 1)),
+            p.spGainKind,
+            p.spGainSource ?? 'default',
+          );
+          this.#recordSpChange(change, p.spGainSource ?? 'default', context, sourceId);
+        } else {
+          if (target.kind !== 'operator')
+            throw new Error('ultimate energy recipient requires an operator');
+          const change = this.dependencies.resources.changeUltimateEnergy(
+            target.operatorId,
+            Math.fround(amount),
+            {
+              coefficient,
+              isPercentValue: p.isPercentValue,
+              recoveryTag: p.ultimateRecoveryTag,
+              ignoreGainMultiplier: p.ignoreUltimateEnergyGainMultiplier,
+            },
+          );
+          this.#recordUltimateEnergyChange(change, context, sourceId);
+        }
+      }
       return true;
     }
 
@@ -195,12 +207,17 @@ export class SkillResourceOperationExecutor implements CombatOperationExecutor {
       : this.dependencies.delegate.evaluate(condition, context);
   }
 
-  #recordSpChange(change: SpChange, source: SpGainSource, context?: CombatOperationContext): void {
+  #recordSpChange(
+    change: SpChange,
+    source: SpGainSource,
+    context?: CombatOperationContext,
+    sourceId = this.dependencies.sourceOperatorId,
+  ): void {
     this.dependencies.receipt.record({
       frame: this.dependencies.clock.frame,
       time: this.dependencies.clock.time,
       event: 'SpChanged',
-      sourceId: this.dependencies.sourceOperatorId,
+      sourceId,
       producedBy: operationProducer(context),
       data: {
         skillId: this.dependencies.sourceActionId,
@@ -218,7 +235,7 @@ export class SkillResourceOperationExecutor implements CombatOperationExecutor {
     // RealDelta 为 0，Pogranichnik 等监听器仍需观察这次技能产出。
     if (change.requestedValue > 0) {
       this.dependencies.onSpGained?.({
-        sourceOperatorId: this.dependencies.sourceOperatorId,
+        sourceId,
         source,
         gainKind: change.gainKind,
         requestedAmount: change.requestedValue,
@@ -230,12 +247,13 @@ export class SkillResourceOperationExecutor implements CombatOperationExecutor {
   #recordUltimateEnergyChange(
     change: UltimateEnergyChange,
     context?: CombatOperationContext,
+    sourceId = this.dependencies.sourceOperatorId,
   ): void {
     this.dependencies.receipt.record({
       frame: this.dependencies.clock.frame,
       time: this.dependencies.clock.time,
       event: 'UltimateEnergyChanged',
-      sourceId: this.dependencies.sourceOperatorId,
+      sourceId,
       producedBy: operationProducer(context),
       targetId: change.operatorId,
       data: {

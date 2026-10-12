@@ -1,21 +1,30 @@
-import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
-import type { ActionGraphNode } from '../../../../packages/game-data-contract/src/actionGraph';
 import { describe, expect, it, vi } from 'vitest';
+import type {
+  ActionGraphDefinition,
+  ActionGraphNode,
+} from '../../../../packages/game-data-contract/src/actionGraph';
 import type {
   ResolvedActionSequence,
   ResolvedSkillBuffLifecycleSequences,
 } from '../../compiler/combatProgram';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import type { DamageTag } from '../../game-data/operatorDefinition';
 import { LogicalAbilityEntityRuntime } from '../abilities/logicalAbilityEntityRuntime';
 import {
   ProjectileLifecycleRuntime,
   type ProjectileFinishTiming,
 } from '../abilities/projectileLifecycleRuntime';
+import { resolveDirectActionTargets } from '../abilities/targetContextOperationExecutor';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
 import { CombatAttributeSet } from '../attributes/combatAttributes';
 import { AbilityEventDispatcher } from '../events/abilityEventDispatcher';
 import { withAbilityEventResponseContext } from '../events/abilityEventResponseContext';
-import type { AbilityEventPayloadMap } from '../events/combatAbilityEvent';
+import type {
+  AbilityEventPayloadMap,
+  NativeKillEvent,
+  SpGainAbilityEvent,
+} from '../events/combatAbilityEvent';
 import { abilityEventSkillCastInfo } from '../events/combatAbilityEvent';
 import { EventContextConditionExecutor } from '../events/eventContextConditionExecutor';
 import { createKillEvent } from '../events/killEventTestFixture';
@@ -29,17 +38,19 @@ import {
   createPostSkillRequestListenerState,
   type PostSkillRequestListenerState,
 } from '../state/environmentState';
-import type { AbilityResponseEventName } from '../state/foundationState';
+import type { AbilityResponseEventName, CombatSkillCastInfo } from '../state/foundationState';
 import { BuffDefinitionOperationTarget } from './buffDefinitionOperationTarget';
+import type { RegisterBuffAbilityEventAction } from './buffLifecycleSequenceRuntime';
 import { attachBuffLifecycleSequences } from './buffLifecycleSequenceRuntime';
 import { BuffOperationExecutor } from './buffOperationExecutor';
+import type { CombatBuff } from './combatBuffs';
 import { CombatBuffContainer, type CombatBuffDefinition } from './combatBuffs';
 
 const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
-  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
   graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
   entry,
@@ -49,7 +60,7 @@ const compileGraphEntry = (
 const chainEntry = (
   revision: string,
   actions: readonly ActionGraphNode['action'][],
-  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => {
   const nodes: Record<string, ActionGraphNode> = {};
   actions.forEach((action, index) => {
@@ -73,7 +84,11 @@ describe('attachBuffLifecycleSequences', () => {
           apply: {
             action: {
               kind: 'applyBuff',
-              parameters: { buffId: childDefinition.id, target: 'caster', finishByAction: true },
+              parameters: {
+                buffs: [{ buffId: childDefinition.id }],
+                targets: { kind: 'fixed', target: 'caster' },
+                finishByAction: true,
+              },
             },
             next: null,
           },
@@ -93,11 +108,12 @@ describe('attachBuffLifecycleSequences', () => {
           damageModifiers: [{ enabledSide: 'attacker', processors: [] }],
         },
         {
-          enable: { graph, entry: 'apply', callSite: 'enable' },
+          enable: [{ graph, entry: 'apply', callSite: 'enable' }],
         },
         () =>
           new BuffOperationExecutor({
             sourceId: 'owner',
+            queryTargets: (query, context) => resolveDirectActionTargets(query, context, 'owner')!,
             resolveTarget: () => target,
             resolveEventTarget: () => target,
             delegate: { execute: () => false, evaluate: () => false },
@@ -108,7 +124,6 @@ describe('attachBuffLifecycleSequences', () => {
         [],
         [],
         [],
-        undefined,
         { damage: [{ graph, entry: null, callSite: 'damageModifier.condition' }] },
       );
     };
@@ -159,23 +174,23 @@ describe('attachBuffLifecycleSequences', () => {
     const responseSequence = compileGraphEntry('restored-event-response', 'set-always', {
       'set-always': {
         action: {
-          kind: 'setContextFlag',
-          parameters: { flag: 'always', value: true, target: 'caster' },
+          kind: 'triggerCustomAbilityEvent',
+          parameters: { eventName: 'always', eventParam: 0, target: 'caster' as const },
         },
         next: 'once',
       },
       once: {
         action: {
           kind: 'once',
-          parameters: { scopeKey: 'saved-once' },
+          parameters: {},
           body: { $sequence: 'set-once' },
         },
         next: null,
       },
       'set-once': {
         action: {
-          kind: 'setContextFlag',
-          parameters: { flag: 'once', value: true, target: 'caster' },
+          kind: 'triggerCustomAbilityEvent',
+          parameters: { eventName: 'once', eventParam: 0, target: 'caster' as const },
         },
         next: null,
       },
@@ -189,8 +204,9 @@ describe('attachBuffLifecycleSequences', () => {
         {},
         () => ({
           execute: step => {
-            if (step.kind !== 'setContextFlag') throw new Error(`unexpected step '${step.kind}'`);
-            reached.push(step.parameters.flag);
+            if (step.kind !== 'triggerCustomAbilityEvent')
+              throw new Error(`unexpected step '${step.kind}'`);
+            reached.push(step.parameters.eventName);
             return true;
           },
           evaluate: () => true,
@@ -274,13 +290,12 @@ describe('attachBuffLifecycleSequences', () => {
         AbilityEventPayloadMap
       >();
       const container = new CombatBuffContainer<never>('owner', new CombatAttributeSet<never>());
-      let request:
-        ((info: import('../state/foundationState').CombatSkillCastInfo | null) => void) | undefined;
+      let request: ((info: CombatSkillCastInfo | null) => void) | undefined;
       const dispose = vi.fn();
       const definition = attachBuffLifecycleSequences<never>(
         { id: 'affix', stackingType: 'unique' },
         {
-          enable: chainEntry('affix-enable', [{ kind: 'skillAffix', parameters: {} }]),
+          enable: [chainEntry('affix-enable', [{ kind: 'skillAffix', parameters: {} }])],
         },
         () =>
           new BuffOperationExecutor({
@@ -295,7 +310,6 @@ describe('attachBuffLifecycleSequences', () => {
         [],
         [],
         [],
-        undefined,
         {},
         (event, callback) => dispatcher.registerCallback(event, callback),
         callback => {
@@ -353,15 +367,9 @@ describe('attachBuffLifecycleSequences', () => {
     const createPostRegistrar =
       (
         state: PostSkillRequestListenerState,
-        handlers: Map<
-          number,
-          (info: import('../state/foundationState').CombatSkillCastInfo | null) => void
-        >,
+        handlers: Map<number, (info: CombatSkillCastInfo | null) => void>,
       ) =>
-      (
-        handle: (info: import('../state/foundationState').CombatSkillCastInfo | null) => void,
-        restoredId?: number,
-      ) => {
+      (handle: (info: CombatSkillCastInfo | null) => void, restoredId?: number) => {
         const registrationId = restoredId ?? registerPostSkillRequestListener(state, 'owner');
         if (restoredId !== undefined) requirePostSkillRequestListener(state, 'owner', restoredId);
         if (handlers.has(registrationId)) throw new Error('duplicate request handler');
@@ -382,15 +390,12 @@ describe('attachBuffLifecycleSequences', () => {
       container: CombatBuffContainer<never>,
       dispatcher: AbilityEventDispatcher<AbilityResponseEventName, AbilityEventPayloadMap>,
       requestState: PostSkillRequestListenerState,
-      requestHandlers: Map<
-        number,
-        (info: import('../state/foundationState').CombatSkillCastInfo | null) => void
-      >,
+      requestHandlers: Map<number, (info: CombatSkillCastInfo | null) => void>,
       restoredProjectiles?: ProjectileLifecycleRuntime,
     ) =>
       attachBuffLifecycleSequences<never>(
         { id: 'restored-affix', stackingType: 'unique' },
-        { enable: enableSequence },
+        { enable: [enableSequence] },
         () =>
           new BuffOperationExecutor({
             sourceId: 'owner',
@@ -404,7 +409,6 @@ describe('attachBuffLifecycleSequences', () => {
         [],
         [],
         [],
-        undefined,
         {},
         (event, callback, subscriptions) =>
           subscriptions === undefined
@@ -436,10 +440,7 @@ describe('attachBuffLifecycleSequences', () => {
       AbilityEventPayloadMap
     >();
     const originalRequestState = createPostSkillRequestListenerState();
-    const originalRequestHandlers = new Map<
-      number,
-      (info: import('../state/foundationState').CombatSkillCastInfo | null) => void
-    >();
+    const originalRequestHandlers = new Map<number, (info: CombatSkillCastInfo | null) => void>();
     const original = new CombatBuffContainer<never>('owner', new CombatAttributeSet<never>());
     const originalDefinition = createDefinition(
       original,
@@ -499,10 +500,7 @@ describe('attachBuffLifecycleSequences', () => {
       AbilityResponseEventName,
       AbilityEventPayloadMap
     >(saved.events);
-    const restoredRequestHandlers = new Map<
-      number,
-      (info: import('../state/foundationState').CombatSkillCastInfo | null) => void
-    >();
+    const restoredRequestHandlers = new Map<number, (info: CombatSkillCastInfo | null) => void>();
     const restoredProjectiles = new ProjectileLifecycleRuntime(() => 2, {
       state: saved.projectiles,
     });
@@ -588,7 +586,7 @@ describe('attachBuffLifecycleSequences', () => {
 
   it('父结束动作先执行并可新增子实例，标记父已结束后再以空施法清理全部子实例', () => {
     const seen: unknown[] = [];
-    let parent: import('./combatBuffs').CombatBuff<never>;
+    let parent: CombatBuff<never>;
     const container = new CombatBuffContainer<never>(
       'owner',
       new CombatAttributeSet<never>(),
@@ -603,7 +601,7 @@ describe('attachBuffLifecycleSequences', () => {
       originSkillType: 'battleSkill' as const,
       nonReturnedSpCost: 100,
     };
-    const children: import('./combatBuffs').CombatBuff<never>[] = [];
+    const children: CombatBuff<never>[] = [];
     const createChild = (context: CombatOperationContext, id: string) => {
       const child = container.add({ id, stackingType: 'unlimited' }, 'caster', {
         skillCastInfo: cast,
@@ -614,23 +612,27 @@ describe('attachBuffLifecycleSequences', () => {
     const definition = attachBuffLifecycleSequences<never>(
       { id: 'parent', stackingType: 'unlimited' },
       {
-        enable: chainEntry('parent-enable', [
-          {
-            kind: 'setContextFlag',
-            parameters: { flag: 'start', value: true, target: 'caster' },
-          },
-        ]),
-        finish: chainEntry('parent-finish', [
-          {
-            kind: 'setContextFlag',
-            parameters: { flag: 'finish', value: true, target: 'caster' },
-          },
-        ]),
+        enable: [
+          chainEntry('parent-enable', [
+            {
+              kind: 'triggerCustomAbilityEvent',
+              parameters: { eventName: 'start', eventParam: 0, target: 'caster' as const },
+            },
+          ]),
+        ],
+        finish: [
+          chainEntry('parent-finish', [
+            {
+              kind: 'triggerCustomAbilityEvent',
+              parameters: { eventName: 'finish', eventParam: 0, target: 'caster' as const },
+            },
+          ]),
+        ],
       },
       () => ({
         execute: (step, context) => {
-          if (step.kind !== 'setContextFlag') return false;
-          if (step.parameters.flag === 'start') createChild(context!, 'initial-child');
+          if (step.kind !== 'triggerCustomAbilityEvent') return false;
+          if (step.parameters.eventName === 'start') createChild(context!, 'initial-child');
           else {
             seen.push(['finish-action', parent.isFinished, children[0]!.isFinished]);
             createChild(context!, 'finish-child');
@@ -638,7 +640,7 @@ describe('attachBuffLifecycleSequences', () => {
           return true;
         },
         end: step => {
-          if (step.kind === 'setContextFlag' && step.parameters.flag === 'start')
+          if (step.kind === 'triggerCustomAbilityEvent' && step.parameters.eventName === 'start')
             seen.push(['enable-end', parent.isFinished]);
         },
         evaluate: () => false,
@@ -657,93 +659,6 @@ describe('attachBuffLifecycleSequences', () => {
     expect(parent.finish('other')).toBe(false);
     expect(seen).toHaveLength(5);
   });
-  it.each([false, true])(
-    '倒地兼容响应复用目标/来源作用域，不给手工标记补原生信息：native=%s',
-    native => {
-      const container = new CombatBuffContainer<never>('owner', new CombatAttributeSet<never>());
-      let receive!: Parameters<
-        import('./buffLifecycleSequenceRuntime').RegisterBuffSemanticEventAction
-      >[2];
-      let disposed = false;
-      const contexts: import('../skills/skillRuntime').CombatOperationContext[] = [];
-      const snapshots: unknown[] = [];
-      const definition = attachBuffLifecycleSequences<never>(
-        { id: 'knock-response', stackingType: 'unique' },
-        {},
-        () => ({
-          execute: (_step, context) => {
-            contexts.push(context!);
-            snapshots.push({
-              event: context?.event,
-              source: context?.eventSkillCastInfo,
-              owner: context?.actionOwnerId,
-              actionSource: context?.actionSourceId,
-              input: context?.actionInputTarget,
-              trigger: context?.targetContext?.getOptional('trigger'),
-            });
-            return true;
-          },
-          evaluate: () => true,
-        }),
-        undefined,
-        [
-          {
-            event: 'outputKnockDown',
-            priority: 0,
-            sequence: chainEntry('knock-response-seen', [
-              {
-                kind: 'setContextFlag',
-                parameters: { flag: 'seen', value: true, target: 'caster' },
-              },
-            ]),
-          },
-        ],
-        undefined,
-        [],
-        [],
-        [],
-        (_event, _priority, handle) => {
-          receive = handle;
-          return {
-            dispose: () => {
-              disposed = true;
-            },
-          };
-        },
-      );
-      const buff = container.add(definition, 'buff-source')!;
-      const published = native
-        ? {
-            event: 'afterOutputKnockDown' as const,
-            payload: {
-              sourceId: 'owner',
-              targetId: 'enemy',
-              fromAirborne: true,
-              skillCastInfo: null,
-            },
-          }
-        : { kind: 'knockDownOutput' as const, sourceOperatorId: 'owner', targetId: 'enemy' };
-      const targets = {
-        inputTarget: { kind: 'enemy' as const },
-        triggerTarget: { kind: 'operator' as const, operatorId: 'owner' },
-      };
-      receive(published, native ? targets : undefined);
-      expect(snapshots).toEqual([
-        {
-          event: published,
-          source: native ? null : undefined,
-          owner: 'owner',
-          actionSource: 'buff-source',
-          input: native ? targets.inputTarget : undefined,
-          trigger: native ? [targets.triggerTarget] : undefined,
-        },
-      ]);
-      expect(contexts[0]?.event).toBeUndefined();
-      expect(contexts[0]?.targetContext?.getOptional('trigger')).toBeUndefined();
-      buff.finish('other');
-      expect(disposed).toBe(true);
-    },
-  );
 
   it.each(
     [undefined, 42].flatMap(processing =>
@@ -786,13 +701,11 @@ describe('attachBuffLifecycleSequences', () => {
       const observedInActionPhase: boolean[] = [];
       // 先注册动作，仍必须在后来注册的原生回调之后执行。
       dispatcher.registerAction('skillEnd', 0, () => observedInActionPhase.push(buff.isFinished));
-      const callbacks = new Set<
-        Parameters<import('./buffLifecycleSequenceRuntime').RegisterBuffAbilityEventAction>[2]
-      >();
+      const callbacks = new Set<Parameters<RegisterBuffAbilityEventAction>[2]>();
       const definition = attachBuffLifecycleSequences<never>(
         { id: 'affix', stackingType: 'unique' },
         {
-          enable: chainEntry('affix-lifetime-enable', [{ kind: 'skillAffix', parameters: {} }]),
+          enable: [chainEntry('affix-lifetime-enable', [{ kind: 'skillAffix', parameters: {} }])],
         },
         () =>
           new BuffOperationExecutor({
@@ -812,7 +725,6 @@ describe('attachBuffLifecycleSequences', () => {
         [],
         [],
         [],
-        undefined,
         {},
         (event, callback) => {
           expect([
@@ -992,13 +904,15 @@ describe('attachBuffLifecycleSequences', () => {
     const definition = attachBuffLifecycleSequences<never>(
       { id: 'blocked-affix', stackingType: 'unique' },
       {
-        enable: chainEntry('blocked-affix-enable', [
-          {
-            kind: 'setContextFlag',
-            parameters: { flag: 'failure', value: true, target: 'caster' },
-          },
-          { kind: 'skillAffix', parameters: {} },
-        ]),
+        enable: [
+          chainEntry('blocked-affix-enable', [
+            {
+              kind: 'triggerCustomAbilityEvent',
+              parameters: { eventName: 'failure', eventParam: 0, target: 'caster' as const },
+            },
+            { kind: 'skillAffix', parameters: {} },
+          ]),
+        ],
       },
       () =>
         new BuffOperationExecutor({
@@ -1026,9 +940,7 @@ describe('attachBuffLifecycleSequences', () => {
     matching.recordBuffAffixSkillCastId(99);
     container.add(seal, 'operator', { skillCastInfo: cast(99) })!.recordBuffAffixSkillCastId(42);
     container.add(seal, 'operator', { skillCastInfo: cast(42) })!.finish('other');
-    let handle:
-      | Parameters<import('./buffLifecycleSequenceRuntime').RegisterBuffAbilityEventAction>[2]
-      | undefined;
+    let handle: Parameters<RegisterBuffAbilityEventAction>[2] | undefined;
     let reached = 0;
     const definition = attachBuffLifecycleSequences<never>(
       { id: 'listener', stackingType: 'unique' },
@@ -1067,12 +979,8 @@ describe('attachBuffLifecycleSequences', () => {
               },
               matched: {
                 action: {
-                  kind: 'setContextFlag',
-                  parameters: {
-                    flag: 'matched',
-                    value: true,
-                    target: 'caster',
-                  },
+                  kind: 'triggerCustomAbilityEvent',
+                  parameters: { eventName: 'matched', eventParam: 0, target: 'caster' as const },
                 },
                 next: null,
               },
@@ -1282,33 +1190,47 @@ describe('attachBuffLifecycleSequences', () => {
     expect(oldBuff.isFinished).toBe(false);
   });
 
-  it('为每个 Buff 实例隔离黑板和 once 状态', () => {
+  it('独立启用序列不传播失败，实例状态隔离且停用后可重新执行', () => {
     const reached: number[] = [];
     const operations: CombatOperationExecutor = {
-      execute(_step, context): boolean {
+      execute(step, context): boolean {
+        if (step.kind === 'triggerCustomAbilityEvent' && step.parameters.eventName === 'reject')
+          return false;
         reached.push(context!.blackboard.getNumber('instance')!);
         return true;
       },
       evaluate: () => true,
     };
     const sequences: ResolvedSkillBuffLifecycleSequences = {
-      enable: compileGraphEntry('isolated-enable', 'once', {
-        once: {
-          action: {
-            kind: 'once',
-            parameters: { scopeKey: 'enable-once' },
-            body: { $sequence: 'reached' },
+      enable: [
+        chainEntry('reject-enable', [
+          {
+            kind: 'triggerCustomAbilityEvent',
+            parameters: { eventName: 'reject', eventParam: 0, target: 'caster' as const },
           },
-          next: null,
-        },
-        reached: {
-          action: {
-            kind: 'setContextFlag',
-            parameters: { flag: 'reached', value: true, target: 'caster' },
+          {
+            kind: 'triggerCustomAbilityEvent',
+            parameters: { eventName: 'unreachable', eventParam: 0, target: 'caster' as const },
           },
-          next: null,
-        },
-      }),
+        ]),
+        compileGraphEntry('isolated-enable', 'once', {
+          once: {
+            action: {
+              kind: 'once',
+              parameters: {},
+              body: { $sequence: 'reached' },
+            },
+            next: null,
+          },
+          reached: {
+            action: {
+              kind: 'triggerCustomAbilityEvent',
+              parameters: { eventName: 'reached', eventParam: 0, target: 'caster' as const },
+            },
+            next: null,
+          },
+        }),
+      ],
     };
     const base: CombatBuffDefinition<never> = {
       id: 'isolated',
@@ -1324,7 +1246,7 @@ describe('attachBuffLifecycleSequences', () => {
     first.enable();
 
     expect(second.isEnabled).toBe(true);
-    expect(reached).toEqual([1, 2]);
+    expect(reached).toEqual([1, 2, 1]);
   });
 
   it('拒绝把新序列和旧生命周期回调混装到同一定义', () => {
@@ -1355,12 +1277,14 @@ describe('attachBuffLifecycleSequences', () => {
     const definition = attachBuffLifecycleSequences<never>(
       { id: 'shared', stackingType: 'unlimited' },
       {
-        start: chainEntry('shared-start', [
-          {
-            kind: 'setContextFlag',
-            parameters: { flag: 'started', value: true, target: 'caster' },
-          },
-        ]),
+        start: [
+          chainEntry('shared-start', [
+            {
+              kind: 'triggerCustomAbilityEvent',
+              parameters: { eventName: 'started', eventParam: 0, target: 'caster' as const },
+            },
+          ]),
+        ],
       },
       buff => executor(buff.sourceId),
     );
@@ -1392,30 +1316,36 @@ describe('attachBuffLifecycleSequences', () => {
     const definition = attachBuffLifecycleSequences<never>(
       { id: 'target-context', stackingType: 'unique' },
       {
-        enable: compileGraphEntry('target-context-enable', 'find', {
-          find: {
-            action: {
-              kind: 'findOwnerSpawnedAbilityEntities',
-              parameters: { saveToContextKey: 'seals', abilityEntityIds: ['seal'] },
+        enable: [
+          compileGraphEntry('target-context-enable', 'find', {
+            find: {
+              action: {
+                kind: 'findOwnerSpawnedAbilityEntities',
+                parameters: {
+                  owner: { kind: 'source' },
+                  saveToContextKey: 'seals',
+                  abilityEntityIds: ['seal'],
+                },
+              },
+              next: 'loop',
             },
-            next: 'loop',
-          },
-          loop: {
-            action: {
-              kind: 'forEachContextTarget',
-              parameters: { contextKey: 'seals' },
-              body: { $sequence: 'visit' },
+            loop: {
+              action: {
+                kind: 'forEachContextTarget',
+                parameters: { targets: { kind: 'context', key: 'seals' } },
+                body: { $sequence: 'visit' },
+              },
+              next: null,
             },
-            next: null,
-          },
-          visit: {
-            action: {
-              kind: 'setContextFlag',
-              parameters: { flag: 'visited', value: true, target: 'caster' },
+            visit: {
+              action: {
+                kind: 'triggerCustomAbilityEvent',
+                parameters: { eventName: 'visited', eventParam: 0, target: 'caster' as const },
+              },
+              next: null,
             },
-            next: null,
-          },
-        }),
+          }),
+        ],
       },
       () => operations,
     );
@@ -1452,8 +1382,8 @@ describe('attachBuffLifecycleSequences', () => {
           startFrame: 2,
           sequence: chainEntry('scheduled-reached', [
             {
-              kind: 'setContextFlag',
-              parameters: { flag: 'reached', value: true, target: 'caster' },
+              kind: 'triggerCustomAbilityEvent',
+              parameters: { eventName: 'reached', eventParam: 0, target: 'caster' as const },
             },
           ]),
         },
@@ -1484,8 +1414,8 @@ describe('attachBuffLifecycleSequences', () => {
     const scheduledSequence = (flag: string) =>
       chainEntry(`restored-scheduled-${flag}`, [
         {
-          kind: 'setContextFlag',
-          parameters: { flag, value: true, target: 'caster' },
+          kind: 'triggerCustomAbilityEvent',
+          parameters: { eventName: flag, eventParam: 0, target: 'caster' as const },
         },
       ]);
     const futureSequence = scheduledSequence('future');
@@ -1497,8 +1427,9 @@ describe('attachBuffLifecycleSequences', () => {
         {},
         () => ({
           execute: step => {
-            if (step.kind !== 'setContextFlag') throw new Error(`unexpected step '${step.kind}'`);
-            reached.push(step.parameters.flag);
+            if (step.kind !== 'triggerCustomAbilityEvent')
+              throw new Error(`unexpected step '${step.kind}'`);
+            reached.push(step.parameters.eventName);
             return true;
           },
           evaluate: () => true,
@@ -1567,16 +1498,18 @@ describe('attachBuffLifecycleSequences', () => {
     const definition = attachBuffLifecycleSequences<never>(
       { id: 'persistent-aura', stackingType: 'unlimited' },
       {
-        enable: chainEntry('persistent-aura-enable', [
-          {
-            kind: 'applyBuff',
-            parameters: {
-              buffId: 'aura-child',
-              target: 'enemy',
-              finishByAction: true,
+        enable: [
+          chainEntry('persistent-aura-enable', [
+            {
+              kind: 'applyBuff',
+              parameters: {
+                buffs: [{ buffId: 'aura-child' }],
+                targets: { kind: 'fixed', target: 'enemy' },
+                finishByAction: true,
+              },
             },
-          },
-        ]),
+          ]),
+        ],
       },
       () => operations,
     );
@@ -1638,8 +1571,8 @@ describe('attachBuffLifecycleSequences', () => {
               },
               matched: {
                 action: {
-                  kind: 'setContextFlag',
-                  parameters: { flag: 'matched', value: true, target: 'caster' },
+                  kind: 'triggerCustomAbilityEvent',
+                  parameters: { eventName: 'matched', eventParam: 0, target: 'caster' as const },
                 },
                 next: null,
               },
@@ -1670,10 +1603,7 @@ describe('attachBuffLifecycleSequences', () => {
     expect(buff.runtimeState.actionHost!.eventResponses[0]!.subscriptions[0]!.state).toBe(
       dispatcher.runtimeState,
     );
-    const dispatch = (
-      tags: readonly import('../../game-data/operatorDefinition').DamageTag[],
-      sourceId = 'seal',
-    ) =>
+    const dispatch = (tags: readonly DamageTag[], sourceId = 'seal') =>
       dispatcher.dispatch(
         {
           event: 'beforeTakeDamage',
@@ -1702,10 +1632,10 @@ describe('attachBuffLifecycleSequences', () => {
   });
 
   it('把失衡归零事件保留为带来源身份的 Ability 事件', () => {
-    const reached: string[] = [];
+    const received: unknown[] = [];
     const terminal: CombatOperationExecutor = {
       execute: (_step, context) => {
-        reached.push(context!.event!.kind ?? 'native');
+        received.push(context!.event);
         return true;
       },
       evaluate: condition => {
@@ -1722,28 +1652,15 @@ describe('attachBuffLifecycleSequences', () => {
         {
           event: 'poiseZero',
           priority: 0,
-          sequence: compileGraphEntry(
-            'poise-listener-response',
-            'guard',
-            {
-              guard: {
-                action: {
-                  kind: 'conditional',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'input_1' } },
-                  whenTrue: { $sequence: 'broken' },
-                },
-                next: null,
+          sequence: compileGraphEntry('poise-listener-response', 'broken', {
+            broken: {
+              action: {
+                kind: 'triggerCustomAbilityEvent',
+                parameters: { eventName: 'broken', eventParam: 0, target: 'caster' as const },
               },
-              broken: {
-                action: {
-                  kind: 'setContextFlag',
-                  parameters: { flag: 'broken', value: true, target: 'caster' },
-                },
-                next: null,
-              },
+              next: null,
             },
-            { input_1: { type: 'boolean', expression: { kind: 'eventSourceControlled' } } },
-          ),
+          }),
         },
       ],
       (event, priority, handle) => {
@@ -1765,14 +1682,15 @@ describe('attachBuffLifecycleSequences', () => {
       [],
     );
 
-    expect(reached).toEqual(['native']);
+    expect(received).toEqual([
+      { event: 'poiseZero', payload: { sourceId: 'operator', targetId: 'enemy' } },
+    ]);
   });
 
   it('只在 Buff 启用期间订阅原生击杀事件', () => {
     const reached: string[] = [];
     const received: unknown[] = [];
-    let handler:
-      ((event: import('../events/combatAbilityEvent').NativeKillEvent) => void) | undefined;
+    let handler: ((event: NativeKillEvent) => void) | undefined;
     const definition = attachBuffLifecycleSequences<never>(
       { id: 'kill-listener', stackingType: 'unique' },
       {},
@@ -1780,7 +1698,7 @@ describe('attachBuffLifecycleSequences', () => {
         execute: (_step, context) => {
           const event = context!.event!;
           received.push(event);
-          reached.push('payload' in event ? event.event : event.kind);
+          reached.push(event.event);
           return true;
         },
         evaluate: () => true,
@@ -1792,8 +1710,8 @@ describe('attachBuffLifecycleSequences', () => {
           priority: 3,
           sequence: chainEntry('kill-listener-extended', [
             {
-              kind: 'setContextFlag',
-              parameters: { flag: 'extended', value: true, target: 'caster' },
+              kind: 'triggerCustomAbilityEvent',
+              parameters: { eventName: 'extended', eventParam: 0, target: 'caster' as const },
             },
           ]),
         },
@@ -1826,8 +1744,7 @@ describe('attachBuffLifecycleSequences', () => {
     ['skill', 'refund'],
   ] as const)('Buff OnObtainAtb 不提前过滤 %s/%s', (source, gainKind) => {
     const reached: string[] = [];
-    let handler:
-      ((event: import('../events/combatAbilityEvent').SpGainAbilityEvent) => void) | undefined;
+    let handler: ((event: SpGainAbilityEvent) => void) | undefined;
     const definition = attachBuffLifecycleSequences<never>(
       { id: 'skill-sp-listener', stackingType: 'unique' },
       {},
@@ -1845,8 +1762,8 @@ describe('attachBuffLifecycleSequences', () => {
           priority: 0,
           sequence: chainEntry('skill-sp-listener-reached', [
             {
-              kind: 'setContextFlag',
-              parameters: { flag: 'reached', value: true, target: 'caster' },
+              kind: 'triggerCustomAbilityEvent',
+              parameters: { eventName: 'reached', eventParam: 0, target: 'caster' as const },
             },
           ]),
         },
@@ -1862,7 +1779,7 @@ describe('attachBuffLifecycleSequences', () => {
     handler!({
       event: 'skillSpGained',
       payload: {
-        sourceOperatorId: 'operator',
+        sourceId: 'operator',
         source,
         gainKind,
         requestedAmount: 20,
@@ -2075,9 +1992,7 @@ describe('attachBuffLifecycleSequences', () => {
     const createSequence = vi.spyOn(CombatActionSequenceRuntime.prototype, 'createSequence');
     let registered = 0;
     let disposed = 0;
-    const handles: Array<
-      Parameters<import('./buffLifecycleSequenceRuntime').RegisterBuffAbilityEventAction>[2]
-    > = [];
+    const handles: Array<Parameters<RegisterBuffAbilityEventAction>[2]> = [];
     let reached = 0;
     const definition = attachBuffLifecycleSequences<never>(
       { id: 'same-priority', stackingType: 'unique' },
@@ -2108,8 +2023,8 @@ describe('attachBuffLifecycleSequences', () => {
               },
               flag: {
                 action: {
-                  kind: 'setContextFlag',
-                  parameters: { flag: 'first', value: true, target: 'caster' },
+                  kind: 'triggerCustomAbilityEvent',
+                  parameters: { eventName: 'first', eventParam: 0, target: 'caster' as const },
                 },
                 next: null,
               },
@@ -2122,8 +2037,8 @@ describe('attachBuffLifecycleSequences', () => {
           priority: 0,
           sequence: chainEntry('same-priority-second', [
             {
-              kind: 'setContextFlag',
-              parameters: { flag: 'second', value: true, target: 'caster' },
+              kind: 'triggerCustomAbilityEvent',
+              parameters: { eventName: 'second', eventParam: 0, target: 'caster' as const },
             },
           ]),
         },
@@ -2188,8 +2103,8 @@ describe('attachBuffLifecycleSequences', () => {
         {},
         () => ({
           execute: step => {
-            if (step.kind !== 'setContextFlag') throw new Error('unexpected step');
-            reached.push(step.parameters.flag);
+            if (step.kind !== 'triggerCustomAbilityEvent') throw new Error('unexpected step');
+            reached.push(step.parameters.eventName);
             finishOwner();
             return true;
           },
@@ -2205,8 +2120,8 @@ describe('attachBuffLifecycleSequences', () => {
             {
               set: {
                 action: {
-                  kind: 'setContextFlag',
-                  parameters: { flag, value: true, target: 'caster' },
+                  kind: 'triggerCustomAbilityEvent',
+                  parameters: { eventName: flag, eventParam: 0, target: 'caster' as const },
                 },
                 next: 'guard',
               },
@@ -2222,8 +2137,12 @@ describe('attachBuffLifecycleSequences', () => {
               },
               nested: {
                 action: {
-                  kind: 'setContextFlag',
-                  parameters: { flag: 'nested-later', value: true, target: 'caster' },
+                  kind: 'triggerCustomAbilityEvent',
+                  parameters: {
+                    eventName: 'nested-later',
+                    eventParam: 0,
+                    target: 'caster' as const,
+                  },
                 },
                 next: null,
               },
@@ -2265,35 +2184,104 @@ describe('attachBuffLifecycleSequences', () => {
     },
   );
 
-  it('叠层回调使用本次来源，满层仍回调，且不重置实例 once 状态', () => {
+  it('驱散回调保留 Buff 来源，以驱散者为输入目标，切面恢复不重置 once', () => {
+    const reached: unknown[] = [];
+    const entry = compileGraphEntry('dispel', 'callback', {
+      callback: {
+        action: {
+          kind: 'triggerCustomAbilityEvent',
+          parameters: { eventName: 'callback', eventParam: 0, target: 'caster' as const },
+        },
+        next: 'once',
+      },
+      once: { action: { kind: 'once', parameters: {}, body: { $sequence: 'body' } }, next: null },
+      body: {
+        action: {
+          kind: 'triggerCustomAbilityEvent',
+          parameters: { eventName: 'once', eventParam: 0, target: 'caster' as const },
+        },
+        next: null,
+      },
+    });
+    const definition = attachBuffLifecycleSequences<never>(
+      { id: 'cold', stackingType: 'unlimited', dispelLevel: 0 },
+      { dispelled: [entry] },
+      () => ({
+        execute: (step, context) => {
+          if (step.kind !== 'triggerCustomAbilityEvent') throw new Error('unexpected action');
+          reached.push([
+            step.parameters.eventName,
+            context?.actionSourceId,
+            context?.actionInputTarget,
+          ]);
+          return true;
+        },
+        evaluate: () => true,
+      }),
+    );
+    const container = new CombatBuffContainer<never>('owner', new CombatAttributeSet<never>());
+    const buff = container.add(definition, 'creator')!;
+    buff.setFinishable(false);
+    container.dispel('healer', 0);
+    expect(reached).toEqual([
+      ['callback', 'creator', { kind: 'operator', operatorId: 'healer' }],
+      ['once', 'creator', { kind: 'operator', operatorId: 'healer' }],
+    ]);
+    const saved = structuredClone(container.runtimeState);
+    const restored = new CombatBuffContainer<never>(
+      'owner',
+      new CombatAttributeSet(saved.attributes),
+      undefined,
+      null,
+      ActionBlackboard.bindRuntimeState(saved.entityBlackboard),
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      saved,
+    );
+    restored.bindRestoredInstances(() => definition);
+    reached.length = 0;
+    restored.dispel('another-healer', 0);
+    expect(reached).toEqual([
+      ['callback', 'creator', { kind: 'operator', operatorId: 'another-healer' }],
+    ]);
+    expect(restored.getInstance(buff.instanceId)?.isFinished).toBe(false);
+  });
+
+  it('叠层回调只更换输入目标，满层仍回调，且不重置实例 once 状态', () => {
     const reached: unknown[] = [];
     const definition = attachBuffLifecycleSequences<never>(
       { id: 'layer', stackingType: 'enhanceAndRefresh', maxStackCount: 2 },
       {
-        afterEnhance: compileGraphEntry('layer-after-enhance', 'callback', {
-          callback: {
-            action: {
-              kind: 'setContextFlag',
-              parameters: { flag: 'callback', value: true, target: 'caster' },
+        afterEnhance: [
+          compileGraphEntry('layer-after-enhance', 'callback', {
+            callback: {
+              action: {
+                kind: 'triggerCustomAbilityEvent',
+                parameters: { eventName: 'callback', eventParam: 0, target: 'caster' as const },
+              },
+              next: 'once',
             },
-            next: 'once',
-          },
-          once: {
-            action: {
-              kind: 'once',
-              parameters: { scopeKey: 'per-buff' },
-              body: { $sequence: 'body' },
+            once: {
+              action: {
+                kind: 'once',
+                parameters: {},
+                body: { $sequence: 'body' },
+              },
+              next: null,
             },
-            next: null,
-          },
-          body: {
-            action: {
-              kind: 'setContextFlag',
-              parameters: { flag: 'callback', value: true, target: 'caster' },
+            body: {
+              action: {
+                kind: 'triggerCustomAbilityEvent',
+                parameters: { eventName: 'callback', eventParam: 0, target: 'caster' as const },
+              },
+              next: null,
             },
-            next: null,
-          },
-        }),
+          }),
+        ],
       },
       (buff, sourceId = buff.sourceId) => ({
         execute: (_step, context) => {
@@ -2302,6 +2290,7 @@ describe('attachBuffLifecycleSequences', () => {
             context?.actionSourceId,
             buff.enhanceCount,
             context?.buffSourceId,
+            context?.actionInputTarget,
           ]);
           return true;
         },
@@ -2311,18 +2300,39 @@ describe('attachBuffLifecycleSequences', () => {
     const container = new CombatBuffContainer<never>('enemy', new CombatAttributeSet<never>());
     const buff = container.add(definition, 'creator')!;
     expect(reached).toEqual([
-      ['creator', 'creator', 1, 'creator'],
-      ['creator', 'creator', 1, 'creator'],
+      ['creator', 'creator', 1, 'creator', { kind: 'operator', operatorId: 'creator' }],
+      ['creator', 'creator', 1, 'creator', { kind: 'operator', operatorId: 'creator' }],
     ]);
     container.add(definition, 'teammate-a');
     container.add(definition, 'teammate-b');
     expect(reached).toEqual([
-      ['creator', 'creator', 1, 'creator'],
-      ['creator', 'creator', 1, 'creator'],
-      ['teammate-a', 'teammate-a', 2, 'creator'],
-      ['teammate-b', 'teammate-b', 2, 'creator'],
+      ['creator', 'creator', 1, 'creator', { kind: 'operator', operatorId: 'creator' }],
+      ['creator', 'creator', 1, 'creator', { kind: 'operator', operatorId: 'creator' }],
+      ['creator', 'creator', 2, 'creator', { kind: 'operator', operatorId: 'teammate-a' }],
+      ['creator', 'creator', 2, 'creator', { kind: 'operator', operatorId: 'teammate-b' }],
     ]);
     expect(buff.sourceId).toBe('creator');
+    const saved = structuredClone(container.runtimeState);
+    const restored = new CombatBuffContainer<never>(
+      'enemy',
+      new CombatAttributeSet(saved.attributes),
+      undefined,
+      null,
+      ActionBlackboard.bindRuntimeState(saved.entityBlackboard),
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      saved,
+    );
+    restored.bindRestoredInstances(() => definition);
+    const before = reached.length;
+    restored.add(definition, 'after-restore');
+    expect(reached.slice(before)).toEqual([
+      ['creator', 'creator', 2, 'creator', { kind: 'operator', operatorId: 'after-restore' }],
+    ]);
   });
 
   it.each(['deferred', 'other', 'early'] as const)(
@@ -2361,22 +2371,26 @@ describe('attachBuffLifecycleSequences', () => {
           {
             igniteType: 'EndminUlt',
             finishAfterIgnited: true,
-            sequence: chainEntry('ignite-reached', [
-              {
-                kind: 'setContextFlag',
-                parameters: { flag: 'reached', value: true, target: 'caster' },
-              },
-            ]),
+            sequences: [
+              chainEntry('ignite-reached', [
+                {
+                  kind: 'triggerCustomAbilityEvent',
+                  parameters: { eventName: 'reached', eventParam: 0, target: 'caster' as const },
+                },
+              ]),
+            ],
           },
           {
             igniteType: 'EndminUlt',
             finishAfterIgnited: false,
-            sequence: chainEntry('ignite-second-map', [
-              {
-                kind: 'setContextFlag',
-                parameters: { flag: 'second-map', value: true, target: 'caster' },
-              },
-            ]),
+            sequences: [
+              chainEntry('ignite-second-map', [
+                {
+                  kind: 'triggerCustomAbilityEvent',
+                  parameters: { eventName: 'second-map', eventParam: 0, target: 'caster' as const },
+                },
+              ]),
+            ],
           },
         ],
       );
@@ -2415,7 +2429,7 @@ describe('attachBuffLifecycleSequences', () => {
 it('物理后置 Buff 监听使用原始注册口并随启停注销，保留挂载端口', () => {
   const dispatcher = new AbilityEventDispatcher<
     'afterOutputPhysicalInfliction',
-    import('../events/combatAbilityEvent').AbilityEventPayloadMap
+    AbilityEventPayloadMap
   >();
   const received: unknown[] = [];
   const definition = attachBuffLifecycleSequences<never>(
@@ -2434,7 +2448,10 @@ it('物理后置 Buff 监听使用原始注册口并随启停注销，保留挂�
         event: 'afterOutputPhysicalInfliction',
         priority: 3,
         sequence: chainEntry('physical-listener-seen', [
-          { kind: 'setContextFlag', parameters: { flag: 'seen', value: true, target: 'caster' } },
+          {
+            kind: 'triggerCustomAbilityEvent',
+            parameters: { eventName: 'seen', eventParam: 0, target: 'caster' as const },
+          },
         ]),
       },
     ],

@@ -143,10 +143,11 @@ export interface TargetGroupWriteSource {
   readonly circularOrderRangeCheckTarget: TargetReferenceSource | null;
   readonly pickIndexValue: number | null;
   readonly pickIndexBlackboardKey: string | null;
-  readonly saveCountToBlackboardKey: string | null;
   /** ConvertToTargetContext 的原生操作；空间变换分支仍保持失败关闭。 */
   readonly conversionOperation?:
     'None' | 'ConvertEntityToPosition' | 'ConvertEntityToSlot' | 'ExcludeTarget';
+  /** 完整的 convertFrom；查询中心、方向和 finder 参数不能由摘要反推。 */
+  readonly conversionSource?: TargetReferenceSource;
   /** None 分支不消费这些字段，但来源 IR 仍完整保留，避免把原生事实吞掉。 */
   readonly conversionTransform?: TargetContextTransformSource;
   /** TargetPostProcessorAction 不重新搜索，而是复制候选组后依次执行 validator/postprocessor。 */
@@ -193,12 +194,7 @@ export interface TargetContextTransformSource {
 /** 不含时间轴位置和相邻动作关联的纯原生目标组动作事实。 */
 export type TargetGroupActionSource = Omit<
   TargetGroupWriteSource,
-  | 'startFrame'
-  | 'endFrame'
-  | 'actionIndex'
-  | 'actionPath'
-  | 'sourcePath'
-  | 'saveCountToBlackboardKey'
+  'startFrame' | 'endFrame' | 'actionIndex' | 'actionPath' | 'sourcePath'
 >;
 
 export interface TargetGroupScheduleContext {
@@ -308,7 +304,6 @@ export function parseTargetGroupWriteAction(
     actionPath: schedule.actionPath,
     sourcePath: path,
     ...source,
-    saveCountToBlackboardKey: null,
   };
 }
 
@@ -553,6 +548,7 @@ function parseConvertToTargetContextAction(
       ? {}
       : { targetContainsParents: summary.targetContainsParents }),
     conversionOperation: operation,
+    conversionSource: source,
     conversionTransform: {
       translateOperation,
       translationRef,
@@ -898,7 +894,6 @@ export function collectTargetGroupWrites(
       value.forEach((child, index) => {
         const childPath = [...actionPath, `[${index}]`];
         visit(child, startFrame, endFrame, childPath);
-        associateStoredTargetCount(child, startFrame, endFrame, actionPath, childPath);
       });
       return;
     }
@@ -916,52 +911,6 @@ export function collectTargetGroupWrites(
     Object.entries(action).forEach(([key, child]) => {
       visit(child, startFrame, endFrame, [...actionPath, key]);
     });
-  }
-
-  function associateStoredTargetCount(
-    value: unknown,
-    startFrame: number,
-    endFrame: number,
-    parentPath: readonly string[],
-    childPath: readonly string[],
-  ): void {
-    if (typeof value !== 'object' || value === null) return;
-    const action = value as Record<string, unknown>;
-    if (action.isEnable === false || typeof action.$type !== 'string') return;
-    if (nativeActionName(action.$type) !== 'CheckEntityNum') return;
-    if (typeof action.storeKey !== 'string' || !action.storeKey) return;
-    if (typeof action.checkTarget !== 'object' || action.checkTarget === null) return;
-    const target = action.checkTarget as Record<string, unknown>;
-    if (
-      target.targetSource !== 'Context' ||
-      typeof target.targetGroupKey !== 'string' ||
-      !target.targetGroupKey
-    ) {
-      return;
-    }
-    const checkIndex = requireNonNegativeInteger(
-      action.serverActionIndex,
-      `${formatTargetGroupActionSourcePath(sourceName, childPath)}.serverActionIndex`,
-    );
-    let candidateIndex = -1;
-    result.forEach((write, index) => {
-      if (
-        write.startFrame === startFrame &&
-        write.endFrame === endFrame &&
-        write.targetGroupKey === target.targetGroupKey &&
-        write.actionIndex < checkIndex &&
-        samePath(write.actionPath.slice(0, -1), parentPath) &&
-        (candidateIndex < 0 || write.actionIndex > result[candidateIndex]!.actionIndex)
-      ) {
-        candidateIndex = index;
-      }
-    });
-    if (candidateIndex >= 0) {
-      result[candidateIndex] = {
-        ...result[candidateIndex]!,
-        saveCountToBlackboardKey: action.storeKey,
-      };
-    }
   }
 
   requireArray(group.timelineActions, `${sourceName}.actionGroupData.timelineActions`).forEach(
@@ -988,8 +937,4 @@ function formatTargetGroupActionSourcePath(
     '',
   );
   return `${sourceName}.actionGroupData.${relative}`;
-}
-
-function samePath(left: readonly string[], right: readonly string[]): boolean {
-  return left.length === right.length && left.every((part, index) => part === right[index]);
 }

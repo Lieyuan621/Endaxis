@@ -1,18 +1,23 @@
 /** 跨状态层共享的数据节点、稳定身份和修正项；不引用执行实现或上层状态。 */
-import { type SkillType, type OperatorAttribute } from '../../game-data/operatorDefinition';
-import { type ActionBlackboardValue } from '../../../../packages/game-data-contract/src/primitives';
-import { type RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
-import {
-  type AttributeModifierSlot,
-  type AttributeModifierTiming,
-  type AttributeModifierValues,
-  type DamageScaleSide,
-  type DamageScaleZone,
-  type DamageModifierDefinition,
-  type HealModifierDefinition,
-  type PoiseModifierDefinition,
+import type { AbilityEvent } from '../../../../packages/game-data-contract/src/abilityEvents';
+import type {
+  AttributeModifierSlot,
+  AttributeModifierTiming,
+  AttributeModifierValues,
+  DamageModifierDefinition,
+  DamageScaleSide,
+  DamageScaleZone,
+  HealModifierDefinition,
+  PoiseModifierDefinition,
 } from '../../../../packages/game-data-contract/src/modifiers';
-import { type AbilityEvent } from '../../../../packages/game-data-contract/src/abilityEvents';
+import type { ActionBlackboardValue } from '../../../../packages/game-data-contract/src/primitives';
+import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+import type {
+  DamageElement,
+  OperatorAttribute,
+  SkillType,
+} from '../../game-data/operatorDefinition';
+import type { ActionSequenceState } from './actionState';
 
 /** 一项配装贡献的原始定义位置。 */
 export type EquipmentContributionSource =
@@ -87,7 +92,7 @@ export interface AttackReceiptSnapshot {
 }
 
 export interface SkillCastEventData extends AbilityOriginPayload {
-  readonly element?: import('../../game-data/operatorDefinition').DamageElement;
+  readonly element?: DamageElement;
   /** 玩家技能库分类；实体内部技能没有此分类。 */
   readonly skillType?: SkillType;
   readonly skillId: string;
@@ -226,11 +231,11 @@ export interface DamageModifierState {
   readonly ownerId: string;
   readonly definition: Omit<DamageModifierDefinition, 'condition'>;
   readonly numberSource: BuffModifierNumberSource | undefined;
-  readonly condition: import('./actionState').ActionSequenceState | null;
+  readonly condition: ActionSequenceState | null;
 }
 
 export interface HealModifier {
-  readonly condition: import('./actionState').ActionSequenceState | null;
+  readonly condition: ActionSequenceState | null;
   readonly ownerId: string;
   readonly definition: Omit<HealModifierDefinition, 'condition'>;
   readonly numberSource: BuffModifierNumberSource;
@@ -238,7 +243,7 @@ export interface HealModifier {
 
 /** 由一个已启用 Buff 实例持有的失衡修正器。 */
 export interface PoiseModifier {
-  readonly condition: import('./actionState').ActionSequenceState | null;
+  readonly condition: ActionSequenceState | null;
   readonly ownerId: string;
   readonly definition: Omit<PoiseModifierDefinition, 'condition'>;
   readonly numberSource: BuffModifierNumberSource;
@@ -304,7 +309,7 @@ export interface CombatSkillCastInfo {
   /** 最初发起本次施法链的技能；当前直接释放时就是正在执行的技能。 */
   readonly originSkillId: string;
   /** 玩家技能库分类；没有继承玩家施法来源的实体技能不填写。 */
-  readonly originSkillType?: import('../../game-data/operatorDefinition').SkillType;
+  readonly originSkillType?: SkillType;
   /** 时间轴上的技能块身份；单元测试或非时间轴技能可以缺失。 */
   readonly originCastId?: string;
   /** 本次施法在当前时刻已经实际扣除且未返还的技力。 */
@@ -359,8 +364,8 @@ export interface AbilityOriginPayload extends AbilityEntityPair {
   readonly skillCastInfo?: CombatSkillCastInfo | null;
 }
 
-/** 原生响应端口；旧 outputKnockDown 标记不是原生事件，不在此边界内。 */
-export type AbilityResponseEventName = Exclude<AbilityEvent, 'outputKnockDown'>;
+/** 原生能力事件响应端口。 */
+export type AbilityResponseEventName = AbilityEvent;
 
 export interface SkillCastStartPreparation {
   readonly trigger?: RuntimeTargetRef;

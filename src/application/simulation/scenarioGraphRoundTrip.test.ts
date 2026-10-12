@@ -38,8 +38,8 @@ it('方案自定义局部图保存重开、Worker 传输和执行中切面恢复
                 nodes: {
                   hit: {
                     action: {
-                      kind: 'dealFixedDamage',
-                      parameters: { damageType: 'physical', value: 7, tags: [] },
+                      kind: 'dealDamage',
+                      parameters: { damageType: 'physical', attackScale: 7, tags: [] },
                     },
                     next: null,
                   },
@@ -95,8 +95,12 @@ it('方案自定义局部图保存重开、Worker 传输和执行中切面恢复
                   nodes: {
                     hit: {
                       action: {
-                        kind: 'dealFixedDamage',
-                        parameters: { damageType: 'physical', value: 123, tags: ['normalSkill'] },
+                        kind: 'dealDamage',
+                        parameters: {
+                          damageType: 'physical',
+                          attackScale: 123,
+                          tags: ['normalSkill'],
+                        },
                       },
                       next: null,
                     },
@@ -118,8 +122,8 @@ it('方案自定义局部图保存重开、Worker 传输和执行中切面恢复
         ...graph.nodes,
         hit: {
           action: {
-            kind: 'dealFixedDamage',
-            parameters: { damageType: 'physical', value: 456, tags: ['normalSkill'] },
+            kind: 'dealDamage',
+            parameters: { damageType: 'physical', attackScale: 456, tags: ['normalSkill'] },
           },
           next: null,
         },

@@ -16,6 +16,7 @@ export interface LogicalAbilityEntityDefinition {
 export type RuntimeTargetRef =
   | { readonly kind: 'operator'; readonly operatorId: string }
   | { readonly kind: 'enemy' }
+  | { readonly kind: 'godEntity' }
   | AbilityEntityTargetRef
   | { readonly kind: 'spatialPoint'; readonly pointId: number };
 
@@ -39,6 +40,7 @@ export function logicalAbilityEntityRuntimeId(instanceId: number): string {
 /** 解码既有实体身份；不查询活动目录或推断创建关系。 */
 export function runtimeTargetFromEntityId(entityId: string): RuntimeTargetRef {
   if (entityId === 'enemy') return { kind: 'enemy' };
+  if (entityId === 'god-entity') return { kind: 'godEntity' };
   const match = /^ability-entity:([1-9]\d*)$/.exec(entityId);
   if (match !== null) {
     const instanceId = Number(match[1]);
@@ -54,4 +56,20 @@ export interface OwnerSpawnedAbilityEntityQuery {
   readonly abilityEntityIds?: readonly string[];
   /** 原生 SkillCastIdValidator：只保留同一来源施法生成的实例。 */
   readonly sourceSkillCastId?: number;
+}
+
+/** 位置目标不是实体；其余句柄使用同一稳定实体 ID。 */
+export function runtimeTargetEntityId(target: RuntimeTargetRef): string | undefined {
+  switch (target.kind) {
+    case 'operator':
+      return target.operatorId;
+    case 'enemy':
+      return 'enemy';
+    case 'godEntity':
+      return 'god-entity';
+    case 'abilityEntity':
+      return logicalAbilityEntityRuntimeId(target.instanceId);
+    case 'spatialPoint':
+      return undefined;
+  }
 }

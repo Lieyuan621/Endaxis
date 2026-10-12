@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { parseGlobalPartyAuraActionSource } from '../src/source/auraActions.ts';
+import { parseGlobalPartyAuraActionSource as parseAura } from '../src/source/auraActions.ts';
 import { scalarFixture, targetFixture } from './sourceFixtures.ts';
+
+import { parseKnownNativeActionSequenceSource } from '../src/source/actionLeaf.ts';
+
+const parseGlobalPartyAuraActionSource = (value: unknown, path: string) =>
+  parseAura(value, path, (sequence, sequencePath) =>
+    parseKnownNativeActionSequenceSource(sequence, sequencePath, {}),
+  );
 
 const emptySequence = {
   actionData: [],
@@ -117,9 +124,12 @@ describe('Aura 新版默认影响过滤', () => {
         },
         'aura',
       );
-    expect(parse('Owner').exitOwnerCleanupBuffIds).toEqual(['buff_fixture']);
-    expect(parse('Target').exitOwnerCleanupBuffIds).toBeUndefined();
-    expect(() => parse('Source')).toThrow('expected plain Target');
+    for (const target of ['Owner', 'Target', 'Source']) {
+      expect(parse(target).actionOnExit.actions[0]?.body).toMatchObject({
+        kind: 'leaf',
+        value: { family: 'buffFinish', action: { owner: { targetSource: target } } },
+      });
+    }
   });
 
   it('默认 Source 阵营和关闭几何限制不改变 Buff 与来源身份', () => {

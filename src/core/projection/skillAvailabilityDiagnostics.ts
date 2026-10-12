@@ -39,6 +39,10 @@ export interface SkillAvailabilityDiagnostic {
   readonly currentCastId?: string;
   /** 中断判定缺少证据时的具体边界。 */
   readonly interruptionDetail?: string;
+  /** 释放受限时实际命中的标签；不从模拟结束状态倒推。 */
+  readonly tagBlockers?: Partial<
+    Record<'skillCommonTagUnavailable' | 'skillTypeTagUnavailable', readonly string[]>
+  >;
 }
 
 function readReason(event: string): SkillAvailabilityDiagnosticReason | undefined {
@@ -69,7 +73,9 @@ export function projectSkillAvailabilityDiagnostics(
       entry.event !== 'SkillInputResolvedToDifferentSkill' &&
       entry.event !== 'SkillInputResolutionUnknown' &&
       entry.event !== 'SkillInputCannotInterruptCurrentSkill' &&
-      entry.event !== 'SkillInputInterruptionUnknown'
+      entry.event !== 'SkillInputInterruptionUnknown' &&
+      entry.event !== 'SkillInputBlockedByCommonTag' &&
+      entry.event !== 'SkillInputBlockedByTypeTag'
     )
       continue;
     const details = detailsBySequence.get(entry.sequence);
@@ -94,8 +100,19 @@ export function projectSkillAvailabilityDiagnostics(
     const currentSkillId = interruptionBlocked?.data?.currentSkillId;
     const currentCastId = interruptionBlocked?.data?.currentCastId;
     const interruptionDetail = interruptionUnknown?.data?.reason;
+    const tagBlockers: NonNullable<SkillAvailabilityDiagnostic['tagBlockers']> = {};
+    for (const entry of related) {
+      const reason = readReason(entry.event);
+      if (reason !== 'skillCommonTagUnavailable' && reason !== 'skillTypeTagUnavailable') continue;
+      const tags = entry.data?.blockingTags;
+      if (typeof tags !== 'string' || tags.length === 0) continue;
+      const values = tags.split('|').filter(Boolean);
+      if (values.length)
+        tagBlockers[reason] = [...new Set([...(tagBlockers[reason] ?? []), ...values])];
+    }
     return {
       ...diagnostic,
+      ...(Object.keys(tagBlockers).length ? { tagBlockers } : {}),
       ...(typeof actualSkillId === 'string' && actualSkillId.length > 0 ? { actualSkillId } : {}),
       ...(typeof inputResolutionDetail === 'string' && inputResolutionDetail.length > 0
         ? { inputResolutionDetail }

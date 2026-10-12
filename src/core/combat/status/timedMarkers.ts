@@ -39,7 +39,6 @@ export class TimedMarkerContainer {
     clocks: Partial<Record<Exclude<TimedMarkerClockDomain, 'default'>, TimedMarkerClock>> = {},
   ) {
     this.#clocks.set('default', clock);
-    if (clocks.global !== undefined) this.#clocks.set('global', clocks.global);
     if (clocks.globalScaled !== undefined) this.#clocks.set('globalScaled', clocks.globalScaled);
     for (const entry of runtimeState.entries) {
       if (!this.#clocks.has(entry.clockDomain)) {

@@ -170,8 +170,8 @@ export async function createProjectGameDataRepository(
   ] = await Promise.all([
     import('./combat/skillSettings.generated'),
     import('./buffs/commonDefinitions'),
-    import('./mechanics/generated/contingencyContractDefinitions.generated'),
-    import('./mechanics/contingencyContractAdapter'),
+    import('./contingencyContract/generated/contingencyContractDefinitions.generated'),
+    import('./contingencyContract/contingencyContractAdapter'),
     import('./enemies/generated/index.generated'),
     import('./consumables'),
     loadReferencedDefinitions(project),

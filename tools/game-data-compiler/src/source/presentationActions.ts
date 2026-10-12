@@ -1,27 +1,28 @@
+import type { NativeSkillType } from '../../../../packages/game-data-contract/src/index.ts';
+import type { KnownNativeActionLeafSource } from './actionLeaf.ts';
+import { parseAdvancedBuffFinishActionSource } from './buffActions.ts';
+import {
+  parseNativeSequenceSource,
+  type NativeLeafParser,
+  type NativeSequenceSource,
+} from './controlFlow.ts';
+import { parseFinishOwnerActionSource } from './lifecycleActions.ts';
 import {
   requireArray,
   requireBoolean,
   requireExactFields,
   requireInteger,
-  requireNonEmptyString,
-  requireNativeActionPriority,
   requireNamedOrInteger,
+  requireNativeActionPriority,
+  requireNonEmptyString,
   requireNumber,
   requireRecord,
   requireString,
-  nativeActionName,
 } from './primitives.ts';
-import { parseTargetReferenceSource, type TargetReferenceSource } from './target.ts';
 import { parseScalarSource, type BlackboardLevelValues, type ScalarSource } from './scalar.ts';
-import { parseTimeDilationCurveKeys } from './timeDilationActions.ts';
-import {
-  parseBuffApplicationActionSource,
-  parseAdvancedBuffFinishActionSource,
-  type BuffApplicationActionSource,
-} from './buffActions.ts';
-import { parseConditionLeafSource, type NativeConditionSource } from './condition.ts';
+import { parseTargetReferenceSource, type TargetReferenceSource } from './target.ts';
 import { parseTargetGroupActionSource } from './targetGroup.ts';
-import { parseFinishOwnerActionSource } from './lifecycleActions.ts';
+import { parseTimeDilationCurveKeys } from './timeDilationActions.ts';
 
 export interface PlaySoundActionSource {
   readonly kind: 'playSound';
@@ -49,7 +50,7 @@ export interface SkillTypeMutationActionSource {
   readonly kind: 'skillTypeMutation';
   readonly target: TargetReferenceSource;
   readonly skillId: string;
-  readonly nativeSkillType: import('../../../../packages/game-data-contract/src/index.ts').NativeSkillType;
+  readonly nativeSkillType: NativeSkillType;
 }
 
 export interface DebugPrintActionSource {
@@ -140,7 +141,7 @@ export interface OtherCameraPresentationActionSource {
   readonly readBlackboardKeys?: readonly string[];
   readonly target?: TargetReferenceSource;
   readonly skillId?: string;
-  readonly nativeSkillType?: import('../../../../packages/game-data-contract/src/index.ts').NativeSkillType;
+  readonly nativeSkillType?: NativeSkillType;
   readonly value?: ScalarSource;
 }
 
@@ -610,9 +611,7 @@ export function parseSkillTypeMutationSource(
   ) {
     throw new Error(`${path}: unsupported ChangeSkillType projection`);
   }
-  const nativeSkillTypeByName: Readonly<
-    Record<string, import('../../../../packages/game-data-contract/src/index.ts').NativeSkillType>
-  > = {
+  const nativeSkillTypeByName: Readonly<Record<string, NativeSkillType>> = {
     PassiveSkill: 'passiveSkill',
     Attack: 'attack',
     BreakingAttack: 'breakingAttack',
@@ -1139,11 +1138,8 @@ export interface PlayAnimationActionSource {
   readonly blendOutSeconds: number;
   readonly playbackSpeed: number;
   readonly executeOnNormalEndOnly: boolean;
-  /** 只保留当前已严格解析的“条件守卫后创建 Buff”结束子图；是否可省略由投影层判定。 */
-  readonly onEnd?: {
-    readonly conditions: readonly NativeConditionSource[];
-    readonly buffApplications: readonly BuffApplicationActionSource[];
-  };
+  /** 原生结束子序列；顺序、守卫和动作身份均保留，是否可省略由投影层判断。 */
+  readonly onEnd?: NativeSequenceSource<KnownNativeActionLeafSource>;
 }
 
 const ACTION_META_FIELDS = [
@@ -1370,14 +1366,12 @@ export function parseLockCameraAimActionSource(
   return { kind: 'lockCameraAim', ...(readBlackboardKeys.length ? { readBlackboardKeys } : {}) };
 }
 
-/**
- * 动画结束后的纯动画链可省略；条件和 Buff 需保留，其他战斗回调仍严格拒绝。
- * 递归检查子动画，不能因为根动作是表现动作就连带删除战斗逻辑。
- */
+/** 动画与结束回调分别读取；回调使用公共序列解析器，不按动作类别重排。 */
 export function parsePlayAnimationActionSource(
   value: unknown,
   path: string,
-  inheritedBlackboard: BlackboardLevelValues = {},
+  inheritedBlackboard: BlackboardLevelValues,
+  parseLeaf: NativeLeafParser<KnownNativeActionLeafSource>,
 ): PlayAnimationActionSource {
   const action = requireRecord(value, path);
   requireExactFields(
@@ -1399,59 +1393,12 @@ export function parsePlayAnimationActionSource(
     ]),
     path,
   );
-  const onEnd = requireRecord(action.onEndAction, `${path}.onEndAction`);
-  requireExactFields(
-    onEnd,
-    new Set(['actionData', 'onlyExecuteWhenSourceIsMainChar', 'onlyExecuteWhenSourceIsGuard']),
+  const onEnd = parseNativeSequenceSource(
+    action.onEndAction,
     `${path}.onEndAction`,
+    inheritedBlackboard,
+    parseLeaf,
   );
-  const onEndActions = requireArray(onEnd.actionData, `${path}.onEndAction.actionData`);
-  if (
-    requireBoolean(
-      onEnd.onlyExecuteWhenSourceIsMainChar,
-      `${path}.onEndAction.onlyExecuteWhenSourceIsMainChar`,
-    ) ||
-    requireBoolean(
-      onEnd.onlyExecuteWhenSourceIsGuard,
-      `${path}.onEndAction.onlyExecuteWhenSourceIsGuard`,
-    )
-  ) {
-    throw new Error(`${path}.onEndAction: animation end combat actions are unsupported`);
-  }
-  const conditions: NativeConditionSource[] = [];
-  const buffApplications: BuffApplicationActionSource[] = [];
-  const enabledOnEndActions = onEndActions.filter((raw, index) =>
-    requireBoolean(
-      requireRecord(raw, `${path}.onEndAction.actionData[${index}]`).isEnable,
-      `${path}.onEndAction.actionData[${index}].isEnable`,
-    ),
-  );
-  enabledOnEndActions.forEach((raw, index) => {
-    const actionPath = `${path}.onEndAction.actionData[${index}]`;
-    const child = requireRecord(raw, actionPath);
-    const name = nativeActionName(requireNonEmptyString(child.$type, `${actionPath}.$type`));
-    if (name === 'PlayAnimationAction') {
-      const nested = parsePlayAnimationActionSource(child, actionPath, inheritedBlackboard);
-      if (nested.onEnd !== undefined)
-        throw new Error(
-          `${actionPath}.onEndAction: nested animation end combat actions are unsupported`,
-        );
-      return;
-    }
-    if (name === 'CreateBuffAction' || name === 'CreateBuffAttachingSkill') {
-      buffApplications.push(
-        parseBuffApplicationActionSource(child, actionPath, inheritedBlackboard),
-      );
-      return;
-    }
-    if (name.startsWith('Check')) {
-      conditions.push(parseConditionLeafSource(child, actionPath, inheritedBlackboard));
-      return;
-    }
-    throw new Error(
-      `${path}.onEndAction: animation end combat actions are unsupported (${actionPath}: ${JSON.stringify(name)})`,
-    );
-  });
   return {
     kind: 'playAnimation',
     animationName: requireString(action.animName, `${path}.animName`),
@@ -1462,9 +1409,7 @@ export function parsePlayAnimationActionSource(
       action.executeOnNormalEndOnly,
       `${path}.executeOnNormalEndOnly`,
     ),
-    ...(conditions.length === 0 && buffApplications.length === 0
-      ? {}
-      : { onEnd: { conditions, buffApplications } }),
+    ...(onEnd.actions.length === 0 ? {} : { onEnd }),
   };
 }
 

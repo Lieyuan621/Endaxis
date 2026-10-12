@@ -5,7 +5,6 @@ import type {
   GearSetDefinition,
   WeaponDefinition,
   IntermediateDefinition,
-  SkillDefinition,
   OperatorDefinition,
 } from './intermediateDefinitions.ts';
 import { pruneUnusedGraphEquipmentContributionBlackboard } from './optimization/graphValueOptimization.ts';
@@ -14,13 +13,10 @@ import type {
   DefinitionOptimizationMode,
   DefinitionOptimizationReport,
 } from './optimization/definitionOptimization.ts';
-import type { SkillValueOptimizationReport } from './optimization/skillValueOptimization.ts';
+import type { ResourceValueOptimizationReport } from './optimization/resourceValueOptimization.ts';
 import type { EquipmentValueOptimizationReport } from './optimization/equipmentValueOptimization.ts';
 import type { GraphSharedEntityValueUsage } from './optimization/graphValueOptimization.ts';
-import {
-  createGraphEntityUsageContext,
-  pruneUnusedGraphSkillValues,
-} from './optimization/graphValueOptimization.ts';
+import { createGraphEntityUsageContext } from './optimization/graphValueOptimization.ts';
 
 import { optimizeResourceGraphs } from './optimization/resourceGraphOptimization.ts';
 import { prepareActionGraphIdentities } from './optimization/actionGraphProjection.ts';
@@ -31,7 +27,7 @@ export interface DefinitionProgramOptimizationReport {
   readonly programs: readonly DefinitionOptimizationReport[];
   readonly before: { readonly steps: number; readonly conditions: number };
   readonly after: { readonly steps: number; readonly conditions: number };
-  readonly skillValues: readonly SkillValueOptimizationReport[];
+  readonly resourceValues: readonly ResourceValueOptimizationReport[];
   readonly equipmentValues: readonly EquipmentValueOptimizationReport[];
 }
 
@@ -39,12 +35,18 @@ export function finalizeDefinitionResources<T>(
   value: IntermediateDefinition<T>,
   mode: DefinitionOptimizationMode,
   pruneValues?: (simplified: IntermediateDefinition<T>) => IntermediateDefinition<T>,
+  resourceValues?: Parameters<typeof optimizeResourceGraphs>[3],
 ): {
   readonly value: T;
   readonly report: DefinitionProgramOptimizationReport;
 } {
   // 先确定真正被外部配置引用的动作身份；无引用的生成路径不能阻止局部宏提取。
-  const result = optimizeResourceGraphs(prepareActionGraphIdentities(value), mode, pruneValues);
+  const result = optimizeResourceGraphs(
+    prepareActionGraphIdentities(value),
+    mode,
+    pruneValues,
+    resourceValues,
+  );
   const total = (which: 'before' | 'after') =>
     result.reports.reduce(
       (sum, item) => ({
@@ -60,7 +62,7 @@ export function finalizeDefinitionResources<T>(
       programs: result.reports,
       before: total('before'),
       after: total('after'),
-      skillValues: [],
+      resourceValues: result.resourceValues,
       equipmentValues: [],
     },
   };
@@ -74,70 +76,53 @@ export function finalizeOperatorDefinition(
   readonly operator: Contract.OperatorDefinition;
   readonly report: DefinitionProgramOptimizationReport;
 } {
-  const protectedKeys = new Set(
-    [...operator.talents, ...operator.potentials].flatMap(
-      upgrade =>
-        upgrade.modifiers?.flatMap(modifier =>
-          modifier.kind === 'patchSkillBlackboard' || modifier.kind === 'patchPassiveBlackboard'
-            ? [modifier.blackboardKey]
-            : [],
-        ) ?? [],
-    ),
-  );
-  const skillValues: SkillValueOptimizationReport[] = [];
-  const skill = (value: SkillDefinition) => {
-    const pruned = pruneUnusedGraphSkillValues(
-      value,
-      protectedKeys,
-      createGraphEntityUsageContext(operator.abilityEntityDefinitions, sharedEntityUsage),
-    );
-    skillValues.push(pruned.report);
-    return pruned.skill;
-  };
-  const skills = (values: SkillDefinition | readonly SkillDefinition[]) =>
-    'key' in values ? skill(values) : values.map(skill);
+  const skillInitialKeys = new Map<string, Set<string>>();
+  const passiveInitialKeys = new Map<string, Set<string>>();
+  for (const upgrade of [...operator.talents, ...operator.potentials]) {
+    for (const modifier of upgrade.modifiers ?? []) {
+      if (modifier.kind !== 'patchSkillBlackboard' && modifier.kind !== 'patchPassiveBlackboard')
+        continue;
+      const keysByResource =
+        modifier.kind === 'patchSkillBlackboard' ? skillInitialKeys : passiveInitialKeys;
+      const resourceId =
+        modifier.kind === 'patchSkillBlackboard' ? modifier.skillKey : modifier.passiveSkillKey;
+      const keys = keysByResource.get(resourceId) ?? new Set<string>();
+      keys.add(modifier.blackboardKey);
+      keysByResource.set(resourceId, keys);
+    }
+  }
   const result = finalizeDefinitionResources<Contract.OperatorDefinition>(
     operator,
     mode,
-    simplified => ({
-      ...simplified,
-      skillGroups: simplified.skillGroups.map(group => ({
-        ...group,
-        skills: skills(group.skills),
-        ...(group.variants === undefined
-          ? {}
-          : {
-              variants: group.variants.map(variant => ({
-                ...variant,
-                skills: skills(variant.skills),
-              })),
-            }),
-        ...(group.replacementSkills === undefined
-          ? {}
-          : { replacementSkills: group.replacementSkills.map(skill) }),
-        ...(group.routedReplacementSkills === undefined
-          ? {}
-          : {
-              routedReplacementSkills: group.routedReplacementSkills.map(route => ({
-                ...route,
-                skill: skill(route.skill),
-              })),
-            }),
-      })),
-    }),
+    undefined,
+    {
+      skillInitialKeys,
+      passiveInitialKeys,
+      sharedUsage: sharedEntityUsage,
+      usageContext: createGraphEntityUsageContext(
+        operator.abilityEntityDefinitions,
+        sharedEntityUsage,
+      ),
+    },
   );
-  return {
-    operator: result.value,
-    report: { ...result.report, skillValues },
-  };
+  return { operator: result.value, report: result.report };
 }
 
 export function finalizeCommonBuffDefinitions(
   definitions: OperatorBuffDefinitions,
   mode: DefinitionOptimizationMode = 'apply',
+  sharedUsage?: GraphSharedEntityValueUsage,
 ) {
-  const result = finalizeDefinitionResources<Contract.OperatorBuffDefinitions>(definitions, mode);
-  return { definitions: result.value, report: result.report };
+  const result = finalizeDefinitionResources<{ buffDefinitions: Contract.OperatorBuffDefinitions }>(
+    { buffDefinitions: definitions },
+    mode,
+    undefined,
+    {
+      sharedUsage,
+      usageContext: createGraphEntityUsageContext(undefined, sharedUsage),
+    },
+  );
+  return { definitions: result.value.buffDefinitions, report: result.report };
 }
 
 function prune<T extends EquipmentContributionDefinition>(
@@ -161,9 +146,23 @@ function prune<T extends EquipmentContributionDefinition>(
   };
 }
 
+function recordEquipmentReport(
+  reports: EquipmentValueOptimizationReport[],
+  report: EquipmentValueOptimizationReport,
+) {
+  const index = reports.findIndex(item => item.path === report.path);
+  if (index < 0) reports.push(report);
+  else
+    reports[index] = {
+      ...report,
+      removedInitialKeys: [...reports[index]!.removedInitialKeys, ...report.removedInitialKeys],
+    };
+}
+
 export function finalizeWeaponDefinition(
   definition: WeaponDefinition,
   mode: DefinitionOptimizationMode = 'apply',
+  sharedUsage?: GraphSharedEntityValueUsage,
 ) {
   const equipmentValues: EquipmentValueOptimizationReport[] = [];
   const optimized = finalizeDefinitionResources<Contract.WeaponDefinition>(
@@ -173,10 +172,11 @@ export function finalizeWeaponDefinition(
       ...simplified,
       traits: simplified.traits.map((trait, index) => {
         const result = prune(trait, 'apply', `${definition.slug}:${trait.key}`, `traits[${index}]`);
-        equipmentValues.push(result.report);
+        recordEquipmentReport(equipmentValues, result.report);
         return result.value;
       }),
     }),
+    { sharedUsage, usageContext: createGraphEntityUsageContext(undefined, sharedUsage) },
   );
   if (mode === 'off') {
     definition.traits.forEach((trait, index) =>
@@ -194,6 +194,7 @@ export function finalizeWeaponDefinition(
 export function finalizeGearSetDefinition(
   definition: GearSetDefinition,
   mode: DefinitionOptimizationMode = 'apply',
+  sharedUsage?: GraphSharedEntityValueUsage,
 ) {
   const equipmentValues: EquipmentValueOptimizationReport[] = [];
   const optimized = finalizeDefinitionResources<Contract.GearSetDefinition>(
@@ -201,9 +202,10 @@ export function finalizeGearSetDefinition(
     mode,
     simplified => {
       const result = prune(simplified, 'apply', definition.slug, 'contribution');
-      equipmentValues.push(result.report);
+      recordEquipmentReport(equipmentValues, result.report);
       return result.value;
     },
+    { sharedUsage, usageContext: createGraphEntityUsageContext(undefined, sharedUsage) },
   );
   if (mode === 'off')
     equipmentValues.push(prune(definition, mode, definition.slug, 'contribution').report);

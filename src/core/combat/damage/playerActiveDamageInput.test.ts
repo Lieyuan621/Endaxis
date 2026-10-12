@@ -108,21 +108,5 @@ describe('resolvePlayerActiveDamageInput', () => {
         },
       }).finalAttackValue,
     ).toBe(1);
-    expect(() =>
-      resolvePlayerActiveDamageInput({
-        ...common,
-        step: {
-          ...step,
-          parameters: {
-            ...step.parameters,
-            attackScalePerStatusStack: {
-              statusKey: 'test',
-              target: 'caster',
-              coefficient: 1,
-            },
-          },
-        },
-      }),
-    ).toThrow('must be resolved');
   });
 });

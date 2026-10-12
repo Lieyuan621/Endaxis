@@ -55,32 +55,41 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_lance_0006_exist',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_lance_0006_exist',
+                      copiedBlackboardAssignments: { duration: 'duration', max_stack: 'max_stack' },
+                    },
+                  ],
+                  targets: { kind: 'owner' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: { duration: 'duration', max_stack: 'max_stack' },
                 },
               },
               next: null,
             },
-            conditional_2: {
+            checkCondition_2: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
               },
-              next: null,
+              next: 'applyBuff_1',
             },
             applyBuff_3: {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_lance_0006_skill_pulse01',
-                  target: 'caster',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_lance_0006_skill_pulse01',
+                      copiedBlackboardAssignments: { pulse_dmg_up: 'pulse_dmg' },
+                    },
+                  ],
+                  targets: { kind: 'owner' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   lifetimeOwner: 'currentCastSkill',
-                  copiedBlackboardAssignments: { pulse_dmg_up: 'pulse_dmg' },
                 },
               },
               next: null,
@@ -108,13 +117,12 @@ const definition = {
               },
               next: 'calculateActionValue_4',
             },
-            conditional_6: {
+            checkCondition_6: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-                whenTrue: { $sequence: 'readBuffStackCount_5' },
               },
-              next: null,
+              next: 'readBuffStackCount_5',
             },
           },
           dataNodes: {
@@ -138,24 +146,26 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'beforeCastSkill',
           priority: 0,
-          sequence: { $sequence: 'conditional_2' },
+          sequence: { $sequence: 'checkCondition_2' },
         },
         {
           key: 'skill3:event:1:sequence:0',
           abilityEvent: 'beforeCastSkill',
           priority: 0,
-          sequence: { $sequence: 'conditional_6' },
+          sequence: { $sequence: 'checkCondition_6' },
         },
       ],
       blackboard: {
+        count: 1,
         duration: [30, 30, 30, 30, 30, 30, 30, 30, 30],
         max_stack: [3, 3, 3, 3, 3, 3, 3, 3, 3],
+        pulse_dmg: 0.15,
         pulse_dmg_up: [0.1, 0.12, 0.14, 0.16, 0.18, 0.2, 0.22, 0.24, 0.28],
       },
     },
   ],
   assetSlug: 'wpn_lance_0006',
-  iconPath: '/weapons/lance/wpn_lance_0006.webp',
+  icon: 'endaxis:weapons/lance/wpn_lance_0006',
   buffDefinitions: {
     buff_wpn_lance_0006_exist: {
       stackingType: 'stack',
@@ -167,8 +177,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_weapon_atk_skill_ready',
-        iconPath: '/icons/icon_battle_weapon_atk_skill_ready.webp',
+        icon: 'endaxis:icons/icon_battle_weapon_atk_skill_ready',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -210,7 +219,7 @@ const definition = {
           value: { blackboardKey: 'pulse_dmg_up' },
         },
       ],
-      lifecycleSequences: { finish: { $sequence: 'finishBuffsById_1' } },
+      lifecycleSequences: { finish: [{ $sequence: 'finishBuffsById_1' }] },
       actionGraph: {
         main: {
           nodes: {
@@ -218,7 +227,8 @@ const definition = {
               action: {
                 kind: 'finishBuffsById',
                 parameters: {
-                  target: 'buffOwner',
+                  targets: { kind: 'owner' },
+                  finishSource: { kind: 'source' },
                   buffIds: ['buff_wpn_lance_0006_exist'],
                   reason: 'other',
                 },

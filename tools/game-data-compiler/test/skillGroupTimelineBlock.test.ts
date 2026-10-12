@@ -315,7 +315,7 @@ describe('单技能入口的预览宽度', () => {
             main: {
               nodes: {
                 entry: {
-                  action: { kind: 'finishTimeline' as const, parameters: {} },
+                  action: { kind: 'markCurrentSkillCanInterrupt' as const, parameters: {} },
                   next: null,
                 },
               },

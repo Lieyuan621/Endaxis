@@ -44,9 +44,13 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_lance_0003',
-                  target: 'caster',
-                  blackboardAssignments: { atk_up: { kind: 'valueNode', nodeId: 'data_1' } },
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_lance_0003',
+                      blackboardAssignments: { atk_up: { kind: 'valueNode', nodeId: 'data_1' } },
+                    },
+                  ],
+                  targets: { kind: 'fixed', target: 'caster' },
                 },
               },
               next: null,
@@ -64,7 +68,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_lance_0003',
-  iconPath: '/weapons/lance/wpn_lance_0003.webp',
+  icon: 'endaxis:weapons/lance/wpn_lance_0003',
   buffDefinitions: {
     buff_wpn_lance_0003: {
       stackingType: 'unique',
@@ -75,7 +79,7 @@ const definition = {
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: { atk_up: 0, hp_ratio_c: 0 },
+      blackboard: { atk_up: 0 },
       attributeModifiers: [
         { attribute: 'Atk', slot: 'baseMultiplier', value: { blackboardKey: 'atk_up' } },
       ],

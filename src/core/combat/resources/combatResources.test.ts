@@ -475,6 +475,11 @@ describe('CombatResources', () => {
     expect(changes.map(change => change.currentValue)).toEqual([4.5, 3]);
     expect(resources.getUltimateEnergy('source')).toBe(4.5);
     expect(resources.getUltimateEnergy('other')).toBe(3);
+
+    const fractional = createResources().gainSquadUltimateEnergyFromSkillCost('source', 13.1, 0.7);
+    expect(fractional.map(change => change.baseValue)).toEqual([
+      0.9169999957084656, 1.8339999914169312,
+    ]);
   });
 
   it('passes non-positive gains through without applying the gain multiplier', () => {

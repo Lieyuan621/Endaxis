@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { resolveImage } from '../../imageResources';
 /**
  * Next 时间轴的整轨装备养成编辑器。
  *
@@ -235,7 +236,7 @@ const activeSetBonuses = computed(() => {
             <div class="gear-main">
               <div class="gear-icon-frame" :style="{ borderColor: slot.levelColor }">
                 <img
-                  :src="slot.build.definition.iconPath || DEFAULT_GAME_ICON_PATH"
+                  :src="resolveImage(slot.build.definition.icon) || DEFAULT_GAME_ICON_PATH"
                   :alt="slot.name"
                   class="gear-icon"
                 />

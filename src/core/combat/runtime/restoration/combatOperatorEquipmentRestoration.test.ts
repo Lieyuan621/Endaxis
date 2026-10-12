@@ -19,7 +19,12 @@ const contribution: CompiledEquipmentContribution = {
       sequence: chainEntry('equipment-gain', [
         {
           kind: 'changeResource',
-          parameters: { resource: 'sp', amount: 1, recipient: 'team' },
+          parameters: {
+            resource: 'sp',
+            amount: 1,
+            source: { kind: 'fixed' as const, target: 'caster' as const },
+            targets: { kind: 'fixed' as const, target: 'caster' as const },
+          },
         },
       ]),
     },
@@ -80,7 +85,7 @@ it('恢复装备来源时按原订阅响应，并只解析一次子 Buff', () =>
     {
       event: 'skillSpGained',
       payload: {
-        sourceOperatorId: 'operator',
+        sourceId: 'operator',
         source: 'skill',
         gainKind: 'gain',
         requestedAmount: 1,

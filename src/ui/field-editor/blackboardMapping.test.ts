@@ -12,76 +12,21 @@ import {
 const field = (kind: keyof typeof actionNodeSchemas, name: string) =>
   actionNodeSchemas[kind].fields.find(field => field.path.join('.') === `parameters.${name}`)!;
 
-describe('blackboard mapping declaration metadata', () => {
-  it.each([
-    ['withActionBlackboardScope', 'initialValues', 'levels', 'childAction'],
-    ['withActionBlackboardScope', 'entityInitialValues', 'levels', 'childEntity'],
-    ['withActionBlackboardScope', 'entityAssignments', 'operand', 'childEntity'],
-    ['applyBuff', 'blackboardAssignments', 'levelsOrOperand', 'buff'],
-    ['applyBuff', 'copiedBlackboardAssignments', 'copy', 'buff'],
-    ['applyBuff', 'stringBlackboardAssignments', 'string', 'buff'],
-    ['spawnAbilityEntity', 'blackboardAssignments', 'operand', 'abilityEntity'],
-    ['spawnAbilityEntity', 'stringBlackboardAssignments', 'string', 'abilityEntity'],
-    ['createGlobalBuff', 'blackboardAssignments', 'operand', 'globalBuff'],
-  ] as const)(
-    'identifies %s.%s without confusing source and destination',
-    (kind, name, value, destination) => {
-      expect(resolveBlackboardMapping(field(kind, name))).toEqual({ value, destination });
-    },
-  );
-
-  it('rejects coincidental names, nested leaves and different declarations', () => {
-    const original = field('applyBuff', 'copiedBlackboardAssignments');
-    expect(
-      resolveBlackboardMapping({
-        ...original,
-        valueSchema: { ...original.valueSchema, declaration: undefined },
-      }),
-    ).toBeUndefined();
-    expect(
-      resolveBlackboardMapping({
-        ...original,
-        valueSchema: {
-          ...original.valueSchema,
-          declaration: 'CombatStepParameters.applyBuff.stringBlackboardAssignments',
-        },
-      }),
-    ).toBeUndefined();
-    expect(
-      resolveBlackboardMapping({ ...original, path: ['nested', ...original.path] }),
-    ).toBeUndefined();
-    expect(
-      resolveBlackboardMapping({
-        ...original,
-        valueSchema: { kind: 'string', declaration: original.valueSchema.declaration },
-      }),
-    ).toBeUndefined();
-    expect(
-      resolveBlackboardMapping(
-        {
-          kind: 'string',
-          declaration: original.valueSchema.declaration,
-          semantics: original.valueSchema.semantics,
-        },
-        'copiedBlackboardAssignments',
-      ),
-    ).toBeUndefined();
+it('嵌套 Buff 条目的变量映射保留目标作用域，不凭字段同名推断', () => {
+  const root = field('applyBuff', 'buffs').valueSchema;
+  if (root.kind !== 'array' || root.element.kind !== 'object')
+    throw new Error('expected buff entries');
+  const schema = root.element.fields.copiedBlackboardAssignments!;
+  expect(resolveBlackboardMapping(schema, 'copiedBlackboardAssignments')).toEqual({
+    value: 'copy',
+    destination: 'buff',
   });
-
-  it('supports a definition record retaining the exact formal declaration', () => {
-    const original = field('applyBuff', 'copiedBlackboardAssignments');
-    expect(
-      resolveBlackboardMapping(
-        {
-          kind: 'record',
-          value: { kind: 'string' },
-          declaration: original.valueSchema.declaration,
-          semantics: original.valueSchema.semantics,
-        },
-        'copiedBlackboardAssignments',
-      ),
-    ).toEqual({ value: 'copy', destination: 'buff' });
-  });
+  expect(
+    resolveBlackboardMapping(
+      { kind: 'record', value: { kind: 'string' } },
+      'copiedBlackboardAssignments',
+    ),
+  ).toBeUndefined();
 });
 
 describe('blackboard mapping transaction helpers', () => {

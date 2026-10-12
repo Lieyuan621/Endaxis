@@ -56,44 +56,4 @@ describe('projectEnemyEffectViz', () => {
       markers: [{ frame: 20, kind: 'attachmentTrigger', element: 'electric' }],
     });
   });
-  it('只投影爆发和成功消费等瞬时标记', () => {
-    expect(
-      projectEnemyEffectViz(
-        [
-          receipt(0, 20, 'DamageApplied', { spellBurstType: 'Pulse', value: 1 }),
-          receipt(1, 30, 'ElementalReactionApplied', {
-            reaction: 'electrification',
-            level: 2,
-          }),
-          receipt(2, 60, 'ElementalReactionConsumed', {
-            reaction: 'electrification',
-            level: 2,
-            consumed: true,
-          }),
-        ],
-        90,
-      ),
-    ).toEqual({
-      damageHits: [receipt(0, 20, 'DamageApplied', { spellBurstType: 'Pulse', value: 1 })],
-      markers: [
-        { frame: 20, kind: 'burst', burstType: 'Pulse' },
-        { frame: 60, kind: 'reactionConsumed', reaction: 'electrification', level: 2 },
-      ],
-    });
-  });
-
-  it('未成功消费不生成标记', () => {
-    expect(
-      projectEnemyEffectViz(
-        [
-          receipt(0, 60, 'ElementalReactionConsumed', {
-            reaction: 'electrification',
-            level: 0,
-            consumed: false,
-          }),
-        ],
-        90,
-      ).markers,
-    ).toEqual([]);
-  });
 });

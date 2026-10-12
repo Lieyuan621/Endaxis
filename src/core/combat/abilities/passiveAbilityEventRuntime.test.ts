@@ -34,7 +34,12 @@ const chainSequence = (
 
 const changeResourceStep = {
   kind: 'changeResource' as const,
-  parameters: { resource: 'sp' as const, amount: 1, recipient: 'team' as const },
+  parameters: {
+    resource: 'sp' as const,
+    amount: 1,
+    source: { kind: 'fixed' as const, target: 'caster' as const },
+    targets: { kind: 'fixed' as const, target: 'caster' as const },
+  },
 };
 
 const responses = [
@@ -157,7 +162,7 @@ it('技力与治疗原生响应写入各自的请求量和实际量，不合并�
     {
       event: 'skillSpGained',
       payload: {
-        sourceOperatorId: 'operator',
+        sourceId: 'operator',
         source: 'powerAttack',
         gainKind: 'refund',
         requestedAmount: 30,

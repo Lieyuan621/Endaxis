@@ -1,3 +1,4 @@
+import { imageRefFromPath } from '../../compiler/publication/imageResources.ts';
 import type { ConsumableDefinition } from '../../../../../packages/game-data-contract/src/consumables.ts';
 import { parseItemIdentitySource } from '../../source/itemIdentity.ts';
 import {
@@ -115,7 +116,7 @@ export function compileConsumableCatalog(
     definitions.push(
       Object.freeze({
         id: itemId,
-        iconPath: `/consumables/${item.iconId}.webp`,
+        icon: imageRefFromPath(`/consumables/${item.iconId}.webp`),
         rarity: item.rarity,
         kind: 'operatorBuff' as const,
         durationSeconds,

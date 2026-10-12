@@ -1,32 +1,33 @@
-import { extractGraphDataNodes } from '../../../../tools/game-data-compiler/src/compiler/extractGraphDataNodes';
-import { createKillEvent } from '../events/killEventTestFixture';
 import { describe, expect, it, vi } from 'vitest';
-import { parseKnownNativeActionSequenceSource } from '../../../../tools/game-data-compiler/src/source/actionLeaf.ts';
+import type { ActionGraphNode } from '../../../../packages/game-data-contract/src/actionGraph';
+import { createActionGraphBuilder } from '../../../../tools/game-data-compiler/src/compiler/actions/actionGraphBuilder.ts';
+import type { CompiledBuffStepSource } from '../../../../tools/game-data-compiler/src/compiler/actions/combatActionProjectionTypes.ts';
 import { compileCombatConditionSequenceSource } from '../../../../tools/game-data-compiler/src/compiler/buffs/buffRuntimeProjection.ts';
+import { extractGraphDataNodes } from '../../../../tools/game-data-compiler/src/compiler/extractGraphDataNodes';
+import { parseKnownNativeActionSequenceSource } from '../../../../tools/game-data-compiler/src/source/actionLeaf.ts';
 import {
   scalarFixture,
   targetFixture,
 } from '../../../../tools/game-data-compiler/test/sourceFixtures.ts';
-import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
-import { createActionGraphBuilder } from '../../../../tools/game-data-compiler/src/compiler/actions/actionGraphBuilder.ts';
-import type { CompiledBuffStepSource } from '../../../../tools/game-data-compiler/src/compiler/actions/combatActionProjectionTypes.ts';
-import type { ActionGraphNode } from '../../../../packages/game-data-contract/src/actionGraph';
+import lastRite from '../../../data/operators/last-rite.generated';
 import type { ResolvedActionSequence } from '../../compiler/combatProgram';
+import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
+import type { DamageTag } from '../../game-data/operatorDefinition';
+import { ActionBlackboard } from '../actions/actionBlackboard';
+import { ActionBlackboardOperationExecutor } from '../actions/actionBlackboardOperationExecutor';
+import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
 import { CombatAttributeSet } from '../attributes/combatAttributes';
 import { CombatBuffContainer, type CombatBuffDefinition } from '../buffs/combatBuffs';
-import { PlayerDamageContext, type PlayerDamageAttributeSnapshots } from './playerDamageContext';
+import { EventContextConditionExecutor } from '../events/eventContextConditionExecutor';
+import { createKillEvent } from '../events/killEventTestFixture';
+import type { CombatOperationContext } from '../skills/skillRuntime';
+import type { ActionSequenceState } from '../state/actionState';
+import { createDamageModifierCondition } from './damageModifierSequenceRuntime';
 import {
   DAMAGE_SCALE_ATTRIBUTE_KEYS,
   type DamageScaleAttributeSnapshot,
 } from './damageScaleAttributes';
-import type { DamageTag } from '../../game-data/operatorDefinition';
-import { ActionBlackboardOperationExecutor } from '../actions/actionBlackboardOperationExecutor';
-import { EventContextConditionExecutor } from '../events/eventContextConditionExecutor';
-import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
-import { createDamageModifierCondition } from './damageModifierSequenceRuntime';
-import type { CombatOperationContext } from '../skills/skillRuntime';
-import { ActionBlackboard } from '../actions/actionBlackboard';
-import lastRite from '../../../data/operators/last-rite.generated';
+import { PlayerDamageContext, type PlayerDamageAttributeSnapshots } from './playerDamageContext';
 
 it('别礼正式战技条件：潜能、主控、重击缺一不可，连续命中与切面恢复一致', () => {
   const buff = lastRite.buffDefinitions!.buff_chr_0026_lastrite_normal_skill!;
@@ -51,7 +52,7 @@ it('别礼正式战技条件：潜能、主控、重击缺一不可，连续命�
           },
         }),
       );
-      const create = (state?: import('../state/actionState').ActionSequenceState) =>
+      const create = (state?: ActionSequenceState) =>
         createDamageModifierCondition(
           sequence,
           new CombatActionSequenceRuntime(operations, {

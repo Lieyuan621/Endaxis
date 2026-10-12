@@ -13,7 +13,7 @@ const ELEMENTS = {
   heat: {
     native: 'Fire',
     id: 'fire',
-    iconId: 'icon_energy_fusion_fire',
+    icon: 'endaxis:icons/icon_energy_fusion_fire',
     tag: 'Skill/Character/Common/SpellInflict/FireInflict',
     burstDamageType: 'heat',
     attachmentKeys: [
@@ -30,7 +30,7 @@ const ELEMENTS = {
   electric: {
     native: 'Pulse',
     id: 'pulse',
-    iconId: 'icon_energy_fusion_pulse',
+    icon: 'endaxis:icons/icon_energy_fusion_pulse',
     tag: 'Skill/Character/Common/SpellInflict/PulseInflict',
     burstDamageType: 'electric',
     attachmentKeys: [
@@ -46,7 +46,7 @@ const ELEMENTS = {
   cryo: {
     native: 'Cryst',
     id: 'cryst',
-    iconId: 'icon_energy_fusion_cryst',
+    icon: 'endaxis:icons/icon_energy_fusion_cryst',
     tag: 'Skill/Character/Common/SpellInflict/CrystInflict',
     burstDamageType: 'cryo',
     attachmentKeys: [
@@ -62,7 +62,7 @@ const ELEMENTS = {
   nature: {
     native: 'Natural',
     id: 'natural',
-    iconId: 'icon_infliction_nature',
+    icon: 'endaxis:icons/icon_energy_fusion_nature',
     tag: 'Skill/Character/Common/SpellInflict/NaturalInflict',
     burstDamageType: 'nature',
     attachmentKeys: [
@@ -81,7 +81,7 @@ function attachmentDefinition(element: InflictionElement): CombatBuffDefinitionE
     id: `buff_common_energy_shard_attached_${metadata.id}`,
     presentation: {
       visible: true,
-      iconId: metadata.iconId,
+      icon: metadata.icon,
       showInHeadBarCommon: false,
       showInHeadBarAttached: true,
       showInSquadIcon: false,
@@ -189,7 +189,7 @@ function conductStatus(
     id,
     presentation: {
       visible: true,
-      iconId: 'icon_battle_conduct',
+      icon: 'endaxis:icons/icon_battle_conduct',
       showInHeadBarCommon: true,
       showInHeadBarAttached: false,
       showInSquadIcon: false,
@@ -258,9 +258,9 @@ function compoundDamage(
 }
 
 const STATUS_PRESENTATION = {
-  heat: { iconId: 'icon_battle_burning', abnormalColorType: 'Fire' },
-  cryo: { iconId: 'icon_battle_frozen', abnormalColorType: 'Cryst' },
-  nature: { iconId: 'icon_battle_corrupt', abnormalColorType: 'Natural' },
+  heat: { icon: 'endaxis:icons/icon_battle_burning', abnormalColorType: 'Fire' },
+  cryo: { icon: 'endaxis:icons/icon_battle_frozen', abnormalColorType: 'Cryst' },
+  nature: { icon: 'endaxis:icons/icon_battle_corrupt', abnormalColorType: 'Natural' },
 } as const;
 
 function visibleCompoundPresentation(element: keyof typeof STATUS_PRESENTATION) {

@@ -24,7 +24,7 @@ function vitals(health: number): CombatVitals {
 }
 
 describe('TargetContextOperationExecutor', () => {
-  it('事件来源写入 Context 时保留实体身份，不替换成宿主或敌人', () => {
+  it('事件和 Buff 来源写入 Context 时保留实体身份，不替换成宿主或敌人', () => {
     const executor = new TargetContextOperationExecutor('caster', terminal);
     const targetContext = new RuntimeTargetContext();
     executor.execute(
@@ -42,6 +42,65 @@ describe('TargetContextOperationExecutor', () => {
       },
     );
     expect(targetContext.get('attacker')).toEqual([{ kind: 'abilityEntity', instanceId: 7 }]);
+    for (const target of ['eventTarget', 'buffSource'] as const) {
+      for (const [id, expected] of [
+        ['ability-entity:7', { kind: 'abilityEntity', instanceId: 7 }],
+        ['god-entity', { kind: 'godEntity' }],
+      ] as const) {
+        executor.execute(
+          {
+            kind: 'mergeContextTargets',
+            parameters: { saveToContextKey: 'resolved', sources: [{ kind: 'target', target }] },
+          },
+          {
+            blackboard: new ActionBlackboard(),
+            targetContext,
+            buffSourceId: id,
+            event: { event: 'hpChanged', payload: { sourceId: 'caster', targetId: id } },
+          },
+        );
+        expect(targetContext.get('resolved')).toEqual([expected]);
+      }
+    }
+    targetContext.setSingle('point', { kind: 'spatialPoint', pointId: 1 });
+    expect(
+      executor.evaluate(
+        {
+          kind: 'contextTargetIdentityMatch',
+          selection: 'all',
+          contextKey: 'point',
+          other: 'actionSource',
+          operator: 'equal',
+        },
+        { blackboard: new ActionBlackboard(), targetContext, actionSourceId: 'enemy' },
+      ),
+    ).toBe(false);
+  });
+
+  it('全局机制查询保持独立身份，并能从目标组状态恢复', () => {
+    const executor = new TargetContextOperationExecutor('caster', terminal);
+    const targetContext = new RuntimeTargetContext();
+    executor.execute(
+      {
+        kind: 'findTargets',
+        parameters: {
+          owner: { kind: 'owner' },
+          query: { kind: 'godEntity' },
+          saveToContextKey: 'mechanism',
+        },
+      },
+      { blackboard: new ActionBlackboard(), actionOwnerId: 'caster', targetContext },
+    );
+    const restored = new RuntimeTargetContext(structuredClone(targetContext.runtimeState));
+    expect(
+      executor.queryTargets(
+        { kind: 'context', key: 'mechanism' },
+        {
+          blackboard: new ActionBlackboard(),
+          targetContext: restored,
+        },
+      ),
+    ).toEqual([{ kind: 'godEntity' }]);
   });
 
   it('投射物查询保存当时的候选，后续发射不混入旧结果，重新查询覆盖旧组', () => {
@@ -65,11 +124,15 @@ describe('TargetContextOperationExecutor', () => {
       () => projectiles.getUnfinishedTargets(),
     );
     const targetContext = new RuntimeTargetContext();
-    const context = { blackboard: new ActionBlackboard(), targetContext };
+    const context = { blackboard: new ActionBlackboard(), targetContext, actionOwnerId: 'caster' };
     const query = {
-      kind: 'findUnfinishedProjectileTargets' as const,
-      parameters: { saveToContextKey: 'projectiles' },
-    };
+      kind: 'findTargets',
+      parameters: {
+        owner: { kind: 'owner' },
+        query: { kind: 'unfinishedProjectiles' },
+        saveToContextKey: 'projectiles',
+      },
+    } as const;
     expect(executor.execute(query, context)).toBe(true);
     launch();
     expect(targetContext.get('projectiles')).toEqual([first.target]);
@@ -348,12 +411,13 @@ describe('TargetContextOperationExecutor', () => {
     ]);
   });
 
-  it('initializes, merges and deduplicates event targets by stable identity', () => {
+  it('initializes, merges and checks containment using resolved target groups', () => {
     const executor = new TargetContextOperationExecutor('operator', terminal);
     const targetContext = new RuntimeTargetContext();
     const context = {
       blackboard: new ActionBlackboard(),
       targetContext,
+      actionInputTarget: { kind: 'enemy' as const },
       event: {
         event: 'beforeTakeInfliction' as const,
         payload: {
@@ -366,13 +430,27 @@ describe('TargetContextOperationExecutor', () => {
       },
     };
 
+    expect(
+      executor.evaluate(
+        {
+          kind: 'targetContains',
+          parent: { kind: 'context', key: 'seen' },
+          child: { kind: 'inputTarget' },
+        },
+        context,
+      ),
+    ).toBe(false);
     executor.execute(
       { kind: 'mergeContextTargets', parameters: { saveToContextKey: 'seen', sources: [] } },
       context,
     );
     expect(
       executor.evaluate(
-        { kind: 'contextTargetContains', parentContextKey: 'seen', child: 'eventTarget' },
+        {
+          kind: 'targetContains',
+          parent: { kind: 'context', key: 'seen' },
+          child: { kind: 'inputTarget' },
+        },
         context,
       ),
     ).toBe(false);
@@ -390,9 +468,26 @@ describe('TargetContextOperationExecutor', () => {
     executor.execute(merge, context);
     executor.execute(merge, context);
     expect(targetContext.get('seen')).toEqual([{ kind: 'enemy' }]);
+    const containsGroup = {
+      kind: 'targetContains' as const,
+      parent: { kind: 'context' as const, key: 'seen' },
+      child: { kind: 'context' as const, key: 'children' },
+    };
+    expect(executor.evaluate(containsGroup, context)).toBe(true);
+    targetContext.set('children', [
+      { kind: 'enemy' },
+      { kind: 'operator', operatorId: 'operator' },
+    ]);
+    expect(executor.evaluate(containsGroup, context)).toBe(false);
+    targetContext.set('children', [{ kind: 'enemy' }, { kind: 'enemy' }]);
+    expect(executor.evaluate(containsGroup, context)).toBe(true);
     expect(
       executor.evaluate(
-        { kind: 'contextTargetContains', parentContextKey: 'seen', child: 'eventTarget' },
+        {
+          kind: 'targetContains',
+          parent: { kind: 'context', key: 'seen' },
+          child: { kind: 'inputTarget' },
+        },
         context,
       ),
     ).toBe(true);

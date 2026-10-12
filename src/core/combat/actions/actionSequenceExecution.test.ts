@@ -8,7 +8,8 @@ import {
   tickActionSequence,
   type ActionSequenceExecutionHost,
 } from './actionSequenceExecution';
-import { STEP_RESULT_MODE, type CombatExecutionContext } from './combatStep';
+import type { CombatExecutionContext } from './combatStep';
+import { STEP_RESULT_MODE } from '../state/actionState';
 
 /** 共享内核状态的测试夹具：与图执行器同样按 `entries()` 枚举步骤生命周期。 */
 function createActionSequenceState(stepCount: number): { entries: ActionStepState[] } {

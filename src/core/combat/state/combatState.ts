@@ -19,7 +19,6 @@ import {
   type CombatInputRuntimeState,
   type DodgeInputRuntimeState,
   type CombatSharedState,
-  type CombatStatusState,
   type ExternalCombatEventRuntimeState,
   type StandardCombatEnvironmentState,
   type TimedMarkerState,
@@ -48,7 +47,6 @@ export interface CombatOperatorState {
   readonly upgradeEvents: OperatorUpgradeEventState | null;
   readonly comboConditions: Map<string, ComboSkillConditionState>;
   readonly cooldowns: Map<string, SkillCooldownState>;
-  readonly statuses: CombatStatusState | null;
   readonly timedMarkers: TimedMarkerState;
   readonly buffs: BuffContainerState | null;
 }
@@ -67,11 +65,9 @@ export interface CombatStateGraph {
   readonly environment: StandardCombatEnvironmentState | null;
   readonly events: {
     readonly native: Map<string, AbilityEventState<string>> | null;
-    readonly semantic: AbilityEventState<'airborneOutput' | 'knockDownOutput'>;
   };
   readonly operators: Map<string, CombatOperatorState>;
   readonly enemy: {
-    readonly statuses: CombatStatusState | null;
     readonly timedMarkers: TimedMarkerState;
     readonly buffs: BuffContainerState | null;
   };

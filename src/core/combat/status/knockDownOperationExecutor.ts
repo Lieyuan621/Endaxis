@@ -1,3 +1,7 @@
+import {
+  PHYSICAL_NO_GUARD_BUFF as NO_GUARD,
+  PHYSICAL_INFLICTION_BUFFS,
+} from './physicalInfliction';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import type {
   ResolvedCombatOperationStep,
@@ -49,8 +53,7 @@ export interface KnockDownOperationDependencies {
   readonly delegate: CombatOperationExecutor;
 }
 
-const NO_GUARD = 'buff_physical_no_guard';
-const KNOCK_DOWN = 'buff_physical_knockdown';
+const KNOCK_DOWN = PHYSICAL_INFLICTION_BUFFS.knockDown;
 const PHYSICAL_STATUS_TAG = 'Skill/Character/Common/PhysicalStatus/KnockdownStatus';
 
 /**
@@ -62,11 +65,12 @@ export class KnockDownOperationExecutor implements CombatOperationExecutor {
   constructor(readonly dependencies: KnockDownOperationDependencies) {}
 
   execute(step: ResolvedCombatOperationStep, context?: CombatOperationContext): boolean {
-    if (step.kind !== 'applyKnockDown') return this.dependencies.delegate.execute(step, context);
+    if (step.kind !== 'applyPhysicalInfliction' || step.parameters.type !== 'knockDown')
+      return this.dependencies.delegate.execute(step, context);
     const d = this.dependencies;
     if (d.sourceId === null) return false;
     if (context?.skillCastInfo === undefined)
-      throw new Error('applyKnockDown requires a skill runtime context');
+      throw new Error('physical knockDown requires a skill runtime context');
     // IsExtra 的通用 BuffAddContext 尚未贯通，不可把 true 静默投影成普通异常。
     if (step.parameters.isExtra)
       throw new Error('extra knock-down requires BuffAddContext support');

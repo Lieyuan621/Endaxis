@@ -14,7 +14,12 @@ const program: CompiledOperatorUpgradeEventProgram = {
   sequence: chainEntry('potential:event', [
     {
       kind: 'changeResource',
-      parameters: { resource: 'sp', amount: 1, recipient: 'team' },
+      parameters: {
+        resource: 'sp',
+        amount: 1,
+        source: { kind: 'fixed' as const, target: 'caster' as const },
+        targets: { kind: 'fixed' as const, target: 'caster' as const },
+      },
     },
   ]),
 };
@@ -38,7 +43,6 @@ it('恢复潜能事件时复用原订阅身份且只由当前分支处理函数�
   }));
   const copied = structuredClone({
     upgrade: original.runtimeState,
-    events: originalEvents.runtimeState,
     native: originalDispatcher.runtimeState,
   });
   const restoredDispatcher = new AbilityEventDispatcher<
@@ -46,7 +50,6 @@ it('恢复潜能事件时复用原订阅身份且只由当前分支处理函数�
     AbilityEventPayloadMap
   >(copied.native);
   const restoredEvents = new CombatSemanticEventRuntime(undefined, {
-    state: copied.events,
     bindNative: (reference, receive) =>
       restoredDispatcher.bindSubscriptionFor('skillSpGained', reference, event =>
         receive({ event }),
@@ -70,7 +73,7 @@ it('恢复潜能事件时复用原订阅身份且只由当前分支处理函数�
     {
       event: 'skillSpGained',
       payload: {
-        sourceOperatorId: 'operator',
+        sourceId: 'operator',
         source: 'skill',
         gainKind: 'gain',
         requestedAmount: 1,

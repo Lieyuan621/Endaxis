@@ -4,50 +4,50 @@
  * 这里集中保存 Buff 动作宿主、全局 Buff、能力实体、投射物和 SkillAffix 的身份与寿命。
  * 所有跨实例关系都使用稳定编号、目标引用或共享数据节点；回调和运行对象由恢复阶段重新绑定。
  */
+import type {
+  BuffKeywordEnhancementDefinition,
+  BuffStackingType,
+} from '../../../../packages/game-data-contract/src/buffs';
+import type { GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags';
+import type {
+  AbilityEntityTargetRef,
+  LogicalAbilityEntityDefinition,
+  RuntimeTargetRef,
+} from '../../game-data/logicalAbilityEntity';
+import type { CombatStepParameters, DamageType } from '../../game-data/operatorDefinition';
+import type {
+  AbilityEntityChildSkillState,
+  CallbackSkillHostState,
+  DamageCalculationSnapshotState,
+  PassiveAbilityEventState,
+  RuntimeTargetContextState,
+} from './abilityState';
+import type {
+  ActionSequenceHostState,
+  ActionSequenceState,
+  CombatOperationHostState,
+  TimelineRuntimeState,
+} from './actionState';
+import type { TimedMarkerState } from './environmentState';
 import {
-  type GlobalBuffInstanceState,
+  createActionBlackboardState,
+  createCombatAttributeState,
   type AbilityEventSubscriptionReference,
   type AbilityResponseEventName,
   type ActionBlackboardState,
   type BuffFinishReason,
   type BuffReference,
-  type CombatSkillCastInfo,
-  type LogicalAbilityEntityFinishReason,
-  type SharedSpGainModifier,
-  type DamageModifierState,
-  type HealModifier,
-  type PoiseModifier,
-  createActionBlackboardState,
-  type SharedSpGainModifierState,
-  createCombatAttributeState,
-  type CombatAttributeState,
   type CombatAttributeModifier,
+  type CombatAttributeState,
+  type CombatSkillCastInfo,
+  type DamageModifierState,
+  type GlobalBuffInstanceState,
+  type HealModifier,
+  type LogicalAbilityEntityFinishReason,
+  type PoiseModifier,
+  type SharedSpGainModifier,
+  type SharedSpGainModifierState,
 } from './foundationState';
-import {
-  type AbilityEntityTargetRef,
-  type LogicalAbilityEntityDefinition,
-  type RuntimeTargetRef,
-} from '../../game-data/logicalAbilityEntity';
-import {
-  type ActionSequenceState,
-  type ActionScopeState,
-  type CombatOperationHostState,
-  type TimelineRuntimeState,
-} from './actionState';
-import { type DamageType } from '../../game-data/operatorDefinition';
-import type {
-  BuffKeywordEnhancementDefinition,
-  BuffStackingType,
-} from '../../../../packages/game-data-contract/src/buffs';
-import {
-  type AbilityEntityChildSkillState,
-  type CallbackSkillHostState,
-  type DamageCalculationSnapshotState,
-  type PassiveAbilityEventState,
-  type RuntimeTargetContextState,
-} from './abilityState';
-import { type TimedMarkerState } from './environmentState';
-import { type GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags';
 
 export type SkillAffixObjectReference =
   | {
@@ -104,11 +104,12 @@ export interface BuffActionHostState {
   readonly affixes: SkillAffixState[];
   nextAffixId: number;
   readonly eventResponses: BuffEventResponseState[];
-  readonly scopes: ActionScopeState;
+  readonly sequenceHost: ActionSequenceHostState;
   readonly targets: RuntimeTargetContextState;
   readonly damageSnapshots: DamageCalculationSnapshotState;
-  enable: ActionSequenceState | null;
-  trigger: ActionSequenceState | null;
+  enable: ActionSequenceState[] | null;
+  trigger: ActionSequenceState[] | null;
+  readonly instantSequences: Map<string, ActionSequenceState[]>;
   scheduled: BuffScheduledActionState | null;
   skillSlotsReplaced: boolean;
 }
@@ -144,6 +145,8 @@ export interface LogicalAbilityEntityState {
   target?: RuntimeTargetRef;
   readonly dieWhenSourceDies: boolean;
   readonly blackboard: ActionBlackboardState;
+  /** 出生时实际采用的计时器周期，包含时长覆盖；null 表示无限寿命。赋值不改变周期。 */
+  readonly durationPeriodSeconds: number | null;
   remainingDurationSeconds: number | null;
   elapsedDurationSeconds: number;
   isAlive: boolean;
@@ -167,7 +170,7 @@ export interface ProjectileCallbackState {
   readonly event: 'hit' | 'block' | 'reach' | 'finish';
   /** 本次发射的碰撞标签条件；只保存纯数据，恢复时重新绑定当前分支的判断逻辑。 */
   readonly hitTagFilter?: NonNullable<
-    import('../../game-data/operatorDefinition').CombatStepParameters['launchProjectile']['hit']
+    CombatStepParameters['launchProjectile']['hit']
   >['hitTagFilter'];
   programId: number | null;
   readonly definitionOperatorId: string;
@@ -178,9 +181,11 @@ export interface ProjectileCallbackState {
 }
 
 export interface ProjectileLifetimeState {
+  readonly entityBlackboard: ActionBlackboardState;
+  buffs: BuffContainerState | null;
   readonly callbacks: readonly ProjectileCallbackState[];
   readonly instanceId: number;
-  readonly source?: RuntimeTargetRef;
+  source?: RuntimeTargetRef;
   phase: 'active' | 'finished' | 'marked' | 'reset';
   remainingSeconds: number;
   remainingReachTicks: number | null;
@@ -198,7 +203,7 @@ export interface ProjectileLifetimeState {
   readonly resetListeners: Map<number, number>;
 }
 
-/** 当前全部投射物及本帧已经准入的实例。 */
+/** 活动投射物和回池后仍承载 Buff 的宿主；回池宿主不再步进。 */
 export interface ProjectileLifecycleState {
   readonly instances: Map<number, ProjectileLifetimeState>;
   admittedAbilities: number[] | null;
@@ -355,11 +360,6 @@ export interface BuffContainerState<Key extends string = string> {
   readonly poiseModifiers: PoiseModifier[];
   readonly activeShields: BuffShieldState[];
   readonly sustainedProtections: Map<BuffInstanceState<Key>, readonly [number, number]>;
-  /** 原生 MoveGaitAction 共用 Skill 限制槽，最后设置值保留到计数归零。 */
-  movementGaitActionCount: number;
-  movementGaitLimit:
-    | import('../../../../packages/game-data-contract/src/actions').CombatStepParameters['limitMovementGait']
-    | null;
   readonly attributes: CombatAttributeState<Key>;
   readonly entityBlackboard: ActionBlackboardState;
   /** 已完成创建的实例数据；尚在 Start 中的实例可能还未进入发布列表。 */
@@ -385,8 +385,6 @@ export function createBuffContainerState<Key extends string = string>(
     poiseModifiers: [],
     activeShields: [],
     sustainedProtections: new Map(),
-    movementGaitActionCount: 0,
-    movementGaitLimit: null,
     attributes,
     entityBlackboard,
     instances: new Map(),

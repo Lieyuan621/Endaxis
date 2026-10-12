@@ -12,7 +12,10 @@ import { compileGraphSequence } from './support/graphSequence.ts';
 import { CombatActionSequenceRuntime } from '../../../src/core/combat/actions/combatActionSequenceRuntime.ts';
 import { ActionBlackboard } from '../../../src/core/combat/actions/actionBlackboard.ts';
 import { RuntimeTargetContext } from '../../../src/core/combat/abilities/runtimeTargetContext.ts';
-import { TargetContextOperationExecutor } from '../../../src/core/combat/abilities/targetContextOperationExecutor.ts';
+import {
+  TargetContextOperationExecutor,
+  resolveDirectActionTargets,
+} from '../../../src/core/combat/abilities/targetContextOperationExecutor.ts';
 import { fixtureGameplayTagRegistry } from './gameplayTagFixtures.ts';
 import {
   ownerSpawnedAbilityEntityFindTargetActionFixture,
@@ -66,9 +69,20 @@ function applyBuff(targetSource: string, targetGroupKey = '') {
   };
 }
 
-function project(kind: 'forEach' | 'applyBuff', group: string, abilityEntityEvent: boolean) {
+function project(
+  kind: 'forEach' | 'applyBuff',
+  group: string,
+  abilityEntityEvent: boolean,
+  intervalSeconds?: number,
+) {
   const query = {
     ...ownerSpawnedAbilityEntityFindTargetActionFixture(),
+    ...(intervalSeconds === undefined
+      ? {}
+      : {
+          $type: 'Example.ContinuousFindTargetAction+Data, Example',
+          findInterval: intervalSeconds,
+        }),
     targetGroupKey: group,
     selectorData: {
       finderData: { $type: 'Example.Selector+InFightEnemyFinder+Data, Example' },
@@ -111,6 +125,92 @@ function project(kind: 'forEach' | 'applyBuff', group: string, abilityEntityEven
 }
 
 describe('动态敌人集合的投影', () => {
+  it('不能把动态持续查询静默转换为单次查询', () => {
+    expect(() => project('applyBuff', 'filtered', false, 0.5)).toThrow(
+      'continuous target query requires a runtime lifecycle',
+    );
+  });
+
+  it('智能选择未命中仍回退主目标，缺宿主不覆盖旧组，空结果覆盖旧组', () => {
+    const builder = createActionGraphBuilder<CompiledBuffStepSource>();
+    const query = {
+      ...ownerSpawnedAbilityEntityFindTargetActionFixture(),
+      targetGroupKey: 'selected',
+      selectorOwner: 'ActionSource',
+      selectorData: {
+        finderData: {
+          $type: 'Example.Selector+SmartTargetFinder+Data, Example',
+          selectSetting: {
+            smartTargetSelectStrategy: 'SelectByBuff',
+            smartTargetBuffIds: [{ buffId: 'absent_buff' }],
+            smartTargetTagQuery: { queryType: 'HasAny', tags: [] },
+            smartTargetBuffFindSettings: {
+              checkType: 'Id',
+              buffIdList: [],
+              tagQuery: { queryType: 'HasAny', tags: [] },
+            },
+          },
+          useCustomRange: false,
+          range: scalarFixture(0),
+          limitFallbackRange: false,
+        },
+        validatorData: [],
+        postProcessorData: [],
+      },
+    };
+    const entry = compileCombatActionSequenceSource(
+      parseKnownNativeActionSequenceSource(sequence([query]), 'smartTarget', {}),
+      {
+        graph: builder,
+        actionOwnerTarget: 'caster',
+        actionSourceTarget: 'caster',
+        actionTargetTarget: 'enemy',
+      },
+    );
+    const graph = builder.finish();
+    expect(readActionGraphChain(graph, entry)).toMatchObject([
+      {
+        kind: 'findTargets',
+        parameters: { owner: { kind: 'source' }, query: { kind: 'mainTarget' } },
+      },
+    ]);
+    let hasTarget = true;
+    const targets = new RuntimeTargetContext();
+    targets.set('selected', [{ kind: 'operator', operatorId: 'old' }]);
+    const executor = new TargetContextOperationExecutor(
+      'operator',
+      {
+        execute: () => {
+          throw new Error('unexpected synthetic action');
+        },
+        evaluate: () => {
+          throw new Error('unexpected Buff condition');
+        },
+      },
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { mainTarget: () => (hasTarget ? { kind: 'enemy' } : undefined), ownerSpawned: () => [] },
+    );
+    const run = (actionSourceId?: string) =>
+      new CombatActionSequenceRuntime(executor, {
+        blackboard: new ActionBlackboard(),
+        targetContext: targets,
+        actionSourceId,
+      })
+        .createSequence(compileGraphSequence(entry, graph))
+        .executeInstant({});
+    expect(run()).toBe(false);
+    expect(targets.get('selected')).toEqual([{ kind: 'operator', operatorId: 'old' }]);
+    expect(run('operator')).toBe(true);
+    expect(targets.get('selected')).toEqual([{ kind: 'enemy' }]);
+    hasTarget = false;
+    expect(run('operator')).toBe(true);
+    expect(targets.get('selected')).toEqual([]);
+  });
+
   it.each([
     ['forEach', 'filtered', false],
     ['forEach', 'another_group', true],
@@ -118,41 +218,61 @@ describe('动态敌人集合的投影', () => {
     ['applyBuff', 'another_group', true],
   ] as const)('%s 保留 %s 的零次或一次执行（实体事件=%s）', (kind, group, entityEvent) => {
     const projected = project(kind, group, entityEvent);
-    const loopStep = projected.steps[1]!;
-    if (loopStep.kind !== 'forEachContextTarget')
-      throw new Error('expected a forEachContextTarget step');
-    expect(loopStep).toMatchObject({
-      kind: 'forEachContextTarget',
-      parameters: { contextKey: group },
+    expect(projected.steps[0]).toMatchObject({
+      kind: 'findTargets',
+      parameters: { query: { kind: 'enemyByTags' }, saveToContextKey: group },
     });
-    expect(loopStep.parameters).not.toHaveProperty('target');
-    // 生命周期闭包需要知道被创建 Buff 的宿主种类；外层循环继续负责零次或一次执行。
-    expect(collectCompiledBuffApplications(projected)).toEqual([
+    const loopStep = projected.steps[1]!;
+    expect(loopStep).toMatchObject({
+      kind: kind === 'forEach' ? 'forEachContextTarget' : 'applyBuff',
+      parameters: { targets: { kind: 'context', key: group } },
+    });
+    // 生命周期闭包保留宿主种类；原生显式循环与 CreateBuff 内部遍历共用目标查询。
+    expect(collectCompiledBuffApplications(projected.graph)).toEqual([
       { buffId: 'test_buff', target: 'enemy' },
     ]);
 
     const targets = new RuntimeTargetContext();
     const applications: unknown[] = [];
     let matchesTag = false;
-    const executor = new TargetContextOperationExecutor('operator', {
-      evaluate: condition => {
-        expect(condition).toEqual({
-          kind: 'entityTagMatch',
-          target: 'enemy',
-          tagQueryType: 'hasAny',
-          tags: ['Test/Tag123'],
-        });
-        return matchesTag;
+    const executor = new TargetContextOperationExecutor(
+      'operator',
+      {
+        evaluate: condition => {
+          throw new Error(`unexpected synthetic condition ${condition.kind}`);
+        },
+        execute: (step, context) => {
+          expect(step.kind).toBe('applyBuff');
+          if (step.kind !== 'applyBuff') throw new Error(`unexpected ${step.kind}`);
+          applications.push(
+            ...resolveDirectActionTargets(step.parameters.targets, context!, 'operator')!,
+          );
+          return true;
+        },
       },
-      execute: (step, context) => {
-        expect(step.kind).toBe('applyBuff');
-        applications.push(context?.currentTarget);
-        return true;
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      {
+        mainTarget: () => undefined,
+        ownerSpawned: () => [],
+        enemyMatchesTags: query => {
+          expect(query).toEqual({
+            kind: 'enemyByTags',
+            tagQueryType: 'hasAny',
+            tags: ['Test/Tag123'],
+          });
+          return matchesTag;
+        },
       },
-    });
+    );
     const runtime = new CombatActionSequenceRuntime(executor, {
       blackboard: new ActionBlackboard(),
       targetContext: targets,
+      actionOwnerId: 'operator',
+      actionSourceId: 'operator',
     });
     const compiled = runtime.createSequence(projected.compiled());
 
@@ -207,11 +327,7 @@ describe('跨时间段的目标组读写', () => {
         [
           branch(
             count('Target'),
-            [
-              query({
-                $type: 'Example.Selector+AllEnemyFinder+Data, Example',
-              }),
-            ],
+            [query({ $type: 'Example.Selector+AllEnemyFinder+Data, Example' })],
             [
               query({
                 $type: 'Example.Selector+FixedPointFinder+Data, Example',
@@ -259,25 +375,42 @@ describe('跨时间段的目标组读写', () => {
       const targets = new RuntimeTargetContext();
       const applications: string[] = [];
       const runtime = new CombatActionSequenceRuntime(
-        new TargetContextOperationExecutor('operator', {
-          evaluate: condition => {
-            if (condition.kind === 'casterControlled') return controlled;
-            expect(condition).toEqual({
-              kind: 'contextTargetCountCompare',
-              contextKey: group,
-              operator: 'greaterOrEqual',
-              value: 1,
-            });
-            // 使用正式 Context 读取；缺少 writer 必须失败，不能将未创建的组默认为空。
-            return targets.get(group).length >= 1;
+        new TargetContextOperationExecutor(
+          'operator',
+          {
+            evaluate: condition => {
+              if (condition.kind === 'casterControlled') return controlled;
+              throw new Error(`unexpected ${condition.kind}`);
+            },
+            execute: (step, context) => {
+              if (step.kind !== 'applyBuff') throw new Error(`unexpected ${step.kind}`);
+              for (const target of resolveDirectActionTargets(
+                step.parameters.targets,
+                context!,
+                'operator',
+              )!)
+                applications.push(target.kind === 'enemy' ? 'enemy' : 'caster');
+              return true;
+            },
           },
-          execute: step => {
-            if (step.kind !== 'applyBuff') throw new Error(`unexpected ${step.kind}`);
-            applications.push(step.parameters.target);
-            return true;
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          {
+            entityLifeState: () => 'alive',
+            mainTarget: () => undefined,
+            ownerSpawned: () => [],
           },
-        }),
-        { blackboard: new ActionBlackboard(), targetContext: targets },
+        ),
+        {
+          blackboard: new ActionBlackboard(),
+          targetContext: targets,
+          actionInputTarget: { kind: 'enemy' },
+          actionOwnerId: 'operator',
+          actionSourceId: 'operator',
+        },
       );
       for (const scheduled of projected.scheduledSequences) {
         runtime

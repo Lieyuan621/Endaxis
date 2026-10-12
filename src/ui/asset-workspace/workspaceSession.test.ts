@@ -1,21 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { perlica } from '../../data/operators/perlica.generated';
-import { createEmptyProject } from '../../core/project/createProject';
+import type { ActionGraphResourceDefinition } from '../../../packages/game-data-contract/src/actionGraph';
+import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills';
+import { addSkillTimelineSchedule } from '../../application/editor/actionGraphEditing';
+import { addResourceNode } from '../../application/editor/actionGraphResourceEditing';
 import { saveProjectTemplateDefinition } from '../../application/editor/projectTemplateCommands';
-import { WorkspaceAssetSession, type WorkspaceAssetSource } from './workspaceSession';
+import { createEmptyProject } from '../../core/project/createProject';
+import { commonBuffDefinitions } from '../../data/buffs/commonDefinitions';
 import { consumableDefinitions } from '../../data/consumables';
 import { generatedEnemyDefinitions } from '../../data/enemies/generated/index.generated';
-import { commonBuffDefinitions } from '../../data/buffs/commonDefinitions';
-import { describeWorkspaceResources } from './workspaceResources';
-import { definitionSchemas } from '../definition-editor/definitionSchemas.generated';
-import { fieldSchemaForValue } from '../definition-editor/definitionFieldRuntime';
 import { GLOBAL_EFFECT_PRESETS } from '../../data/globalEffectPresets';
-import { contingencyContractTags } from '../../data/mechanics/contingencyContractCatalog';
-import { addResourceNode } from '../../application/editor/actionGraphResourceEditing';
-import { fieldValueAt } from '../definition-editor/definitionFieldRuntime';
+import { contingencyContractTags } from '../../data/contingencyContract/contingencyContractCatalog';
+import { perlica } from '../../data/operators/perlica.generated';
+import { fieldSchemaForValue, fieldValueAt } from '../definition-editor/definitionFieldRuntime';
 import { resourcePresentationKey } from '../definition-editor/definitionResources';
-import { addSkillTimelineSchedule } from '../../application/editor/actionGraphEditing';
-import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills';
+import { definitionSchemas } from '../definition-editor/definitionSchemas.generated';
+import { describeWorkspaceResources } from './workspaceResources';
+import { WorkspaceAssetSession, type WorkspaceAssetSource } from './workspaceSession';
 
 const source: WorkspaceAssetSource = {
   id: 'operator:perlica',
@@ -377,35 +377,34 @@ describe('工作区资产草稿', () => {
 });
 
 it('edits a Buff condition graph through asset history and project roundtrip', () => {
-  const actionGraph: import('../../../packages/game-data-contract/src/actionGraph').ActionGraphResourceDefinition =
-    {
-      main: {
-        nodes: {
-          guard: {
-            action: {
-              kind: 'conditional',
-              parameters: { condition: { kind: 'conditionNode', nodeId: 'compare' } },
-              whenTrue: { $sequence: null },
-            },
-            next: null,
+  const actionGraph: ActionGraphResourceDefinition = {
+    main: {
+      nodes: {
+        guard: {
+          action: {
+            kind: 'conditional',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'compare' } },
+            whenTrue: { $sequence: null },
           },
-        },
-        dataNodes: {
-          compare: {
-            type: 'boolean',
-            expression: {
-              kind: 'actionValueCompare',
-              left: { kind: 'valueNode', nodeId: 'rate' },
-              operator: 'equal',
-              right: { kind: 'valueNode', nodeId: 'threshold' },
-            },
-          },
-          rate: { type: 'number', expression: { kind: 'blackboard', key: 'rate' } },
-          threshold: { type: 'number', expression: { kind: 'constant', value: 1 } },
+          next: null,
         },
       },
-      macros: {},
-    };
+      dataNodes: {
+        compare: {
+          type: 'boolean',
+          expression: {
+            kind: 'actionValueCompare',
+            left: { kind: 'valueNode', nodeId: 'rate' },
+            operator: 'equal',
+            right: { kind: 'valueNode', nodeId: 'threshold' },
+          },
+        },
+        rate: { type: 'number', expression: { kind: 'blackboard', key: 'rate' } },
+        threshold: { type: 'number', expression: { kind: 'constant', value: 1 } },
+      },
+    },
+    macros: {},
+  };
   const effect = {
     ...GLOBAL_EFFECT_PRESETS[0]!,
     buff: {

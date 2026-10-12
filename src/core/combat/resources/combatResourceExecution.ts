@@ -209,7 +209,11 @@ export function gainSquadUltimateEnergyFromSkillCost(
       member.operatorId === sourceOperatorId
         ? state.normalSkillUltimateEnergy.selfGainPerSp
         : state.normalSkillUltimateEnergy.otherGainPerSp;
-    const baseValue = coefficient * nonReturnedSpCost * gainPerSp;
+    // 原生先完成两次 float 乘法，再交给 double 回能公式。
+    const baseValue = Math.fround(
+      Math.fround(Math.fround(coefficient) * Math.fround(nonReturnedSpCost)) *
+        Math.fround(gainPerSp),
+    );
     return changeUltimateEnergy(state, resolvers, member.operatorId, baseValue);
   });
 }

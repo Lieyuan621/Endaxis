@@ -1,4 +1,4 @@
-import { sameFieldDeclaration } from '../../core/editor/fieldSemantics.ts';
+import { hasSemanticAlias, sameFieldDeclaration } from '../../core/editor/fieldSemantics.ts';
 import { actionNodeSchemas } from '../action-graph/actionNodeSchemas.generated.ts';
 import type {
   DefinitionFieldSchema,
@@ -22,7 +22,8 @@ export function graphOperandSchemas(
   if (!switchOptions && (path.length !== 2 || path[0] !== 'parameters')) return;
   const slots: Readonly<Record<string, Readonly<Record<string, readonly string[]>>>> = {
     dealDamage: { instantAttributeModifiers: ['value'], instantDamageScaleModifiers: ['addition'] },
-    applyBuff: { keywordEnhancements: ['value'], onActionEndBuffs: ['blackboardAssignments', '*'] },
+    applyBuff: { buffs: ['blackboardAssignments', '*'] },
+    aura: { buffs: ['blackboardAssignments', '*'] },
     readSkillSettingData: { items: ['column'] },
   };
   const keys = switchOptions ? ['value'] : slots[kind]?.[String(path[1])];
@@ -54,6 +55,20 @@ export function graphOperandSchemas(
   }
   if (value.kind !== 'array') return;
   value = resolveDefinitionSchema(value.element, references);
+  if ((kind === 'applyBuff' || kind === 'aura') && path[1] === 'buffs') {
+    if (value.kind !== 'object') return;
+    const assignments = value.fields.blackboardAssignments;
+    const enhancements = value.fields.keywordEnhancements;
+    if (assignments?.kind !== 'record' || enhancements?.kind !== 'array') return;
+    const entry = resolveDefinitionSchema(enhancements.element, references);
+    if (entry.kind !== 'object' || !entry.fields.value) return;
+    const operands = [assignments.value, entry.fields.value].map(value =>
+      resolveDefinitionSchema(value, references),
+    );
+    // 等级数值和图输入共用赋值槽；只开放正式 Buff 条目内的两个数值入口。
+    if (operands.some(value => !hasSemanticAlias(value.semantics, 'ActionValueOperand'))) return;
+    return new Set(operands);
+  }
   for (const key of keys!) {
     const child =
       key === '*' && value.kind === 'record'

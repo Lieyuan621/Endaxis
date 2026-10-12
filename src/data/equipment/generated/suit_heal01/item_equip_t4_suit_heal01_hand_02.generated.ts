@@ -4,7 +4,7 @@ import type { GearDefinition } from '../../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'item_equip_t4_suit_heal01_hand_02',
   assetSlug: 'item_equip_t4_suit_heal01_hand_02',
-  iconPath: '/equipment/heal01/item_equip_t4_suit_heal01_hand_02.webp',
+  icon: 'endaxis:equipment/heal01/item_equip_t4_suit_heal01_hand_02',
   slotType: 'gloves',
   levelRequirement: 70,
   baseDefense: 42,

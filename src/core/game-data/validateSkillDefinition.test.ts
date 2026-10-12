@@ -71,9 +71,9 @@ describe('validateSkillDefinition', () => {
     const applyToHost = {
       kind: 'applyBuff' as const,
       parameters: {
-        buffId: 'entity-monitor',
-        target: 'currentAbilityEntity' as const,
-        source: 'currentAbilityEntity' as const,
+        buffs: [{ buffId: 'entity-monitor' }],
+        targets: { kind: 'inputTarget' } as const,
+        source: { kind: 'inputTarget' } as const,
       },
     };
 
@@ -173,6 +173,7 @@ describe('validateSkillDefinition', () => {
     expect(validateSkillDefinition(skill)).toEqual([]);
 
     parameters.nativeChanneling = {
+      catchUpMissedTicks: false,
       executeEachFrame: false,
       triggerIntervalSeconds: 0.1,
       maxCountPerTarget: 1,
@@ -185,63 +186,6 @@ describe('validateSkillDefinition', () => {
         }),
       ]),
     );
-  });
-
-  it.each([{ lifetime: 'unknown' }, { lifetime: null }, { alwaysNext: 1 }])(
-    '拒绝非法黑板生命周期参数 %j',
-    invalid => {
-      const skill = skillWithSteps([
-        {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            scopeKey: 'callback',
-            initialValues: {},
-            inheritParent: true,
-            ...invalid,
-          },
-          body: { $sequence: null },
-        },
-      ]);
-      expect(validateSkillDefinition(skill)).not.toEqual([]);
-    },
-  );
-  it.each([
-    { shareParentBlackboard: 'yes' },
-    { shareParentBlackboard: true, initialValues: { local: [1] } },
-    { shareParentBlackboard: true, inheritParent: false },
-    { shareParentBlackboard: true, entityInitialValues: {} },
-    { shareParentBlackboard: true, entityAssignments: {} },
-  ])('拒绝非法共享父黑板参数 %j', invalid => {
-    const skill = skillWithSteps([
-      {
-        kind: 'withActionBlackboardScope',
-        parameters: {
-          scopeKey: 'native-callback',
-          initialValues: {},
-          inheritParent: true,
-          ...invalid,
-        },
-        body: { $sequence: null },
-      },
-    ]);
-    expect(validateSkillDefinition(skill)).not.toEqual([]);
-  });
-  it('接受只隔离控制流的共享父 Buff 黑板回调边界', () => {
-    const skill = skillWithSteps([
-      {
-        kind: 'withActionBlackboardScope',
-        parameters: {
-          scopeKey: 'native-callback',
-          lifetime: 'execution',
-          alwaysNext: true,
-          shareParentBlackboard: true,
-          initialValues: {},
-          inheritParent: true,
-        },
-        body: { $sequence: null },
-      },
-    ]);
-    expect(validateSkillDefinition(skill)).toEqual([]);
   });
   it.each([null, 'nearest'])('拒绝未知智能目标 %j', smartTarget => {
     expect(validateSkillDefinition({ ...baseSkill(), smartTarget })).toEqual(
@@ -257,10 +201,6 @@ describe('validateSkillDefinition', () => {
         type: 'fracture',
         target: 'enemy',
         isExtra: false,
-        noGuardBuffId: 'buff_physical_no_guard',
-        noGuardDefinition: { stackingType: 'unlimited' },
-        fractureBuffId: 'buff_physical_fracture',
-        fractureDefinition: { stackingType: 'refresh' },
       },
     };
     const definition = skillWithSteps([step]);
@@ -440,8 +380,7 @@ describe('validateSkillDefinition', () => {
     const definition: Record<string, unknown> = {
       stackingType: 'refresh',
       presentation: {
-        iconId: 'icon_battle_buff_atk_up',
-        iconPath: '/icons/buffs/example.webp',
+        icon: 'endaxis:icons/buffs/example',
         visible: true,
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
@@ -458,9 +397,9 @@ describe('validateSkillDefinition', () => {
     };
     expect(validateBuff(definition)).toEqual([]);
 
-    definition.presentation = { iconPath: '', color: '#fff' };
+    definition.presentation = { icon: '', color: '#fff' };
     const issues = validateBuff(definition);
-    expect(issues.some(issue => issue.path.endsWith('.presentation.iconPath'))).toBe(true);
+    expect(issues.some(issue => issue.path.endsWith('.presentation.icon'))).toBe(true);
     expect(issues.some(issue => issue.path.endsWith('.presentation.color'))).toBe(true);
   });
 
@@ -495,7 +434,7 @@ describe('validateSkillDefinition', () => {
     const definition: Record<string, unknown> = {
       stackingType: 'unique',
       actions: { start: [] },
-      lifecycleSequences: { update: { $sequence: null } },
+      lifecycleSequences: { update: [{ $sequence: null }] },
     };
     const issues = validateBuff(definition);
     expect(issues.some(issue => issue.path.endsWith('.definition.actions'))).toBe(true);
@@ -591,9 +530,11 @@ describe('validateSkillDefinition', () => {
     ).toBe(true);
   });
 
-  it('rejects entity finish operations outside an entity iteration', () => {
-    const skill = skillWithSteps([{ kind: 'finishCurrentAbilityEntity', parameters: {} }]);
-    expect(validateSkillDefinition(skill)).not.toEqual([]);
+  it('结束动作自带目标查询，不要求外层实体循环', () => {
+    const skill = skillWithSteps([
+      { kind: 'finishOwner', parameters: { targets: { kind: 'inputTarget' } } },
+    ]);
+    expect(validateSkillDefinition(skill)).toEqual([]);
   });
 
   it('requires an end frame for nested combat event listeners', () => {
@@ -635,7 +576,7 @@ describe('validateSkillDefinition', () => {
       { target: 'caster', source: 'currentAbilityEntity' },
     ]) {
       const skill = skillWithSteps([
-        { kind: 'applyBuff', parameters: { buffId: 'entity-monitor', ...parameters } },
+        { kind: 'applyBuff', parameters: { buffs: [{ buffId: 'entity-monitor' }], ...parameters } },
       ]);
       expect(validateSkillDefinition(skill)).not.toEqual([]);
     }
@@ -646,13 +587,13 @@ describe('validateSkillDefinition', () => {
       [
         {
           kind: 'forEachContextTarget',
-          parameters: { contextKey: 'entities' },
+          parameters: { targets: { kind: 'context', key: 'entities' } },
           body: { $sequence: 'child-0' },
         },
       ],
       {
         'child-0': {
-          action: { kind: 'finishCurrentAbilityEntity', parameters: {} },
+          action: { kind: 'finishOwner', parameters: { targets: { kind: 'inputTarget' } } },
           next: null,
         },
       },
@@ -664,16 +605,16 @@ describe('validateSkillDefinition', () => {
     const apply = {
       kind: 'applyBuff' as const,
       parameters: {
-        buffId: 'entity-monitor',
-        target: 'currentAbilityEntity' as const,
-        source: 'currentAbilityEntity' as const,
+        buffs: [{ buffId: 'entity-monitor' }],
+        targets: { kind: 'inputTarget' } as const,
+        source: { kind: 'inputTarget' } as const,
       },
     };
     const wrapped = skillWithSteps(
       [
         {
           kind: 'forEachContextTarget',
-          parameters: { contextKey: 'entities' },
+          parameters: { targets: { kind: 'context', key: 'entities' } },
           body: { $sequence: 'child-0' },
         },
       ],
@@ -728,12 +669,13 @@ describe('validateSkillDefinition', () => {
     const coefficient: Record<string, unknown> = { kind: 'blackboard', key: 'targetCount' };
     const skill = skillWithSteps([
       {
-        kind: 'changeResourceByActionValue',
+        kind: 'changeResource',
         parameters: {
           resource: 'sp',
           amount: { kind: 'blackboard', key: 'refundAmount' },
           coefficient,
-          recipient: 'team',
+          source: { kind: 'owner' },
+          targets: { kind: 'owner' },
         },
       },
     ]);
@@ -753,6 +695,7 @@ describe('validateSkillDefinition', () => {
     const step: Record<string, unknown> = {
       kind: 'spawnAbilityEntity',
       parameters: {
+        bornAt: { kind: 'owner' as const },
         abilityEntityId: 'fixture',
         definition: {
           lifetime: { kind: 'limited', durationSeconds: 5 },
@@ -792,7 +735,14 @@ describe('validateSkillDefinition', () => {
 
   it.each(['projectiles', undefined, 12])('投射物查询必须提供目标组名称：%s', saveToContextKey => {
     const skill = skillWithSteps([
-      { kind: 'findUnfinishedProjectileTargets', parameters: { saveToContextKey } },
+      {
+        kind: 'findTargets',
+        parameters: {
+          owner: { kind: 'owner' },
+          query: { kind: 'unfinishedProjectiles' },
+          saveToContextKey,
+        },
+      },
     ]);
     const errors = validateSkillDefinition(skill);
     if (saveToContextKey === 'projectiles') expect(errors).toEqual([]);
@@ -836,9 +786,9 @@ describe('validateSkillDefinition', () => {
       {
         kind: 'applyBuff',
         parameters: {
-          buffId: 'test',
-          target: 'caster',
-          sourceContextKey: 'queried',
+          buffs: [{ buffId: 'test' }],
+          targets: { kind: 'fixed', target: 'caster' },
+          source: { kind: 'context', key: 'queried' },
           ...(conflicting ? { source: 'caster' } : {}),
         },
       },
@@ -858,10 +808,7 @@ describe('validateSkillDefinition', () => {
   it('validates Buff-source context targets and contextual ability-entity owners', () => {
     const second: Record<string, unknown> = {
       kind: 'findOwnerSpawnedAbilityEntities',
-      parameters: {
-        saveToContextKey: 'entities',
-        ownerContextKey: 'source',
-      },
+      parameters: { owner: { kind: 'context', key: 'source' }, saveToContextKey: 'entities' },
     };
     const skill = skillWithSteps([
       {
@@ -876,11 +823,11 @@ describe('validateSkillDefinition', () => {
 
     expect(validateSkillDefinition(skill)).toEqual([]);
 
-    (second.parameters as Record<string, unknown>).ownerContextKey = '';
+    (second.parameters as Record<string, unknown>).owner = { kind: 'context', key: '' };
     expect(validateSkillDefinition(skill)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          path: `${nodeActionPath('step-1')}.parameters.ownerContextKey`,
+          path: `${nodeActionPath('step-1')}.parameters.owner.key`,
         }),
       ]),
     );

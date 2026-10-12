@@ -1,11 +1,12 @@
 import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs';
+import type { GameDataRepository } from '../game-data/gameDataRepository';
+import type { CompiledMechanics } from '../scenarioMechanics/mechanicCompiler';
 import type { GlobalConfigDocument } from '../project/schema';
-import type { CompiledMechanics } from '../mechanics/mechanicCompiler';
-import { compileIndependentBuffResource } from './compileSkill';
 import { ActionGraphDefinitionRepository } from './actionGraphDefinitionRepository';
+import { compileIndependentBuffResource } from './compileSkill';
 
 export type GlobalEffectDefinitionSource = Pick<
-  import('../game-data/gameDataRepository').GameDataRepository,
+  GameDataRepository,
   'actionPrograms' | 'getGlobalEffect'
 >;
 

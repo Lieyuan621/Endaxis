@@ -47,14 +47,19 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_funnel_0008_magic_damage_taken_up',
-                  target: 'eventTarget',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_funnel_0008_magic_damage_taken_up',
+                      copiedBlackboardAssignments: {
+                        spell_damage_taken_up: 'spell_damage_taken_up',
+                        duration: 'duration',
+                        lv: 'lv',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'inputTarget' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
-                  copiedBlackboardAssignments: {
-                    spell_damage_taken_up: 'spell_damage_taken_up',
-                    duration: 'duration',
-                    lv: 'lv',
-                  },
                 },
               },
               next: null,
@@ -80,7 +85,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_funnel_0010',
-  iconPath: '/weapons/funnel/wpn_funnel_0010.webp',
+  icon: 'endaxis:weapons/funnel/wpn_funnel_0010',
   buffDefinitions: {
     buff_wpn_funnel_0008_magic_damage_taken_up: {
       stackingType: 'highPriority',
@@ -92,8 +97,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_spell_taken_up',
-        iconPath: '/icons/icon_battle_spell_taken_up.webp',
+        icon: 'endaxis:icons/icon_battle_spell_taken_up',
         showInHeadBarCommon: true,
         showInHeadBarAttached: false,
         showInSquadIcon: false,
@@ -119,7 +123,7 @@ const definition = {
       damageModifiers: [
         {
           enabledSide: 'defender',
-          condition: { $sequence: 'conditional_1' },
+          condition: { $sequence: 'checkCondition_1' },
           processors: [
             {
               kind: 'damageScale',
@@ -133,11 +137,10 @@ const definition = {
       actionGraph: {
         main: {
           nodes: {
-            conditional_1: {
+            checkCondition_1: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: null },
               },
               next: null,
             },

@@ -1,32 +1,38 @@
-import type { DeclaredBlackboardValueSource } from '../../source/blackboard.ts';
-import type { ProjectileLaunchActionSource } from '../../source/referenceActions.ts';
-import type { ProjectileRuntimeSource } from '../../source/projectileRuntime.ts';
+import type { ActionTargetQuery } from '../../../../../packages/game-data-contract/src/conditions.ts';
+import type { SkillCastResourceDefinition } from '../../../../../packages/game-data-contract/src/index.ts';
 import type { KnownNativeActionLeafSource } from '../../source/actionLeaf.ts';
-import type { SkillActionGraphSource } from '../../source/skillActionGraph.ts';
+import type { DeclaredBlackboardValueSource } from '../../source/blackboard.ts';
 import { collectNativeActionNodes } from '../../source/controlFlow.ts';
+import type { ProjectileRuntimeSource } from '../../source/projectileRuntime.ts';
+import type { ProjectileLaunchActionSource } from '../../source/referenceActions.ts';
+import type { SkillActionGraphSource } from '../../source/skillActionGraph.ts';
+import {
+  createActionGraphBuilder,
+  type ActionGraphBuilder,
+} from '../actions/actionGraphBuilder.ts';
+import type {
+  CompiledBuffSequenceSource,
+  CompiledBuffStepSource,
+} from '../actions/combatActionProjectionTypes.ts';
 import { compileCombatActionSequenceSource } from '../buffs/buffRuntimeProjection.ts';
 import type {
   CombatActionProjectionContextSource,
   CombatActionProjectionExtensionsSource,
 } from '../combatProjectionCommon.ts';
-import { projectGameplayTags } from '../combatProjectionCommon.ts';
-import type { CompiledBuffSequenceSource } from '../actions/combatActionProjectionTypes.ts';
+import { isStaticSingleEnemyTargetGroup, projectGameplayTags } from '../combatProjectionCommon.ts';
+import { projectActionTargetQuery } from '../conditions/combatConditionProjection.ts';
+import type { CombatStepParameters } from '../intermediateDefinitions.ts';
 import {
-  createActionGraphBuilder,
-  type ActionGraphBuilder,
-} from '../actions/actionGraphBuilder.ts';
-import type { CompiledBuffStepSource } from '../actions/combatActionProjectionTypes.ts';
-import {
-  compileProjectileLaunchScopeSource,
-  omitDeadSingleEnemyBounceBookkeeping,
-  numericInitialValues,
-} from './projectileCallbackScopes.ts';
-import { isStaticSingleEnemyTargetGroup } from '../combatProjectionCommon.ts';
-import {
+  collectMaterializedTargetGroups,
   collectPresentationOnlyBlackboardKeys,
+  collectPresentationOnlyTargetGroups,
   isPresentationOnlyActionSequence,
 } from '../skills/skillPresentationTargets.ts';
-import type { SkillCastResourceDefinition } from '../../../../../packages/game-data-contract/src/index.ts';
+import {
+  compileProjectileBlackboardSource,
+  numericInitialValues,
+  omitDeadSingleEnemyBounceBookkeeping,
+} from './projectileBlackboard.ts';
 
 /** A callback skill before any zero-distance/immediate execution optimization. */
 export interface ProjectileCallbackSkillSource {
@@ -78,9 +84,7 @@ export interface ZeroDistanceProjectileProjectionCatalogSource {
   readonly callbackCastResources?: ReadonlyMap<string, SkillCastResourceDefinition>;
 }
 
-type ProjectileLaunchHitParameters = NonNullable<
-  import('../intermediateDefinitions.ts').CombatStepParameters['launchProjectile']['hit']
->;
+type ProjectileLaunchHitParameters = NonNullable<CombatStepParameters['launchProjectile']['hit']>;
 
 /**
  * 把版本化 ProjectileData、实体模板与回调 SkillData 目录接成公共动作扩展。
@@ -159,6 +163,7 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
           {
             kind: 'launchProjectile',
             parameters: {
+              inheritActionBlackboard: launch.assignBlackboard,
               ...(launch.syncTimeScale ? { syncTimeScale: true } : {}),
               finish: {
                 reachAfterTicks: runtime.moveSegments.length,
@@ -184,6 +189,7 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
         {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: launch.assignBlackboard,
             finish: 'firstTickReach',
             ...(launch.syncTimeScale ? { syncTimeScale: true } : {}),
           },
@@ -244,6 +250,7 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
         {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: launch.assignBlackboard,
             finish: 'firstTickReach',
             ...(launch.syncTimeScale ? { syncTimeScale: true } : {}),
             recycleDelaySeconds: resolveProjectileRecycleDelaySource(
@@ -256,7 +263,12 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
         },
       ];
     }
-    assertSupportedLaunchTargetControls(launch, sourcePath, projectionContext);
+    const onlyHitTargets = assertSupportedLaunchTargetControls(
+      launch,
+      sourcePath,
+      projectionContext,
+      true,
+    );
     if (!['Source', 'Owner'].includes(launch.projectileSource.targetSource))
       throw new Error(`${sourcePath}: projectile source must resolve to Source or Owner`);
     if (!hasNoModeledBlockingSurfaces(runtime))
@@ -314,23 +326,22 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
     }
     if (!Number.isFinite(runtime.finishDuration) || runtime.finishDuration <= 0)
       throw new Error(`${sourcePath}: projectile duration must be positive and finite`);
-    const finish: import('../intermediateDefinitions.ts').CombatStepParameters['launchProjectile']['finish'] =
-      landsOnFirstTick
-        ? ('firstTickBlock' as const)
-        : runtime.finishOnReach
-          ? runtime.useSegmentMove && runtime.moveSegments.length > 1
-            ? {
-                reachAfterTicks: runtime.moveSegments.length,
-                maxDurationSeconds: runtime.finishDuration,
-              }
-            : ('firstTickReach' as const)
-          : hasReach || runtime.hitOnReach
-            ? {
-                reachAfterTicks: runtime.useSegmentMove ? runtime.moveSegments.length : 1,
-                maxDurationSeconds: runtime.finishDuration,
-                finishOnReach: false,
-              }
-            : runtime.finishDuration;
+    const finish: CombatStepParameters['launchProjectile']['finish'] = landsOnFirstTick
+      ? ('firstTickBlock' as const)
+      : runtime.finishOnReach
+        ? runtime.useSegmentMove && runtime.moveSegments.length > 1
+          ? {
+              reachAfterTicks: runtime.moveSegments.length,
+              maxDurationSeconds: runtime.finishDuration,
+            }
+          : ('firstTickReach' as const)
+        : hasReach || runtime.hitOnReach
+          ? {
+              reachAfterTicks: runtime.useSegmentMove ? runtime.moveSegments.length : 1,
+              maxDurationSeconds: runtime.finishDuration,
+              finishOnReach: false,
+            }
+          : runtime.finishDuration;
     const hitTagFilter =
       hasHit && !runtime.hitOnReach
         ? projectProjectileHitTagFilter(runtime, callbackContext, sourcePath)
@@ -400,50 +411,48 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
             : { hitTagFilter, retryRejectedHit: typeof finish === 'number' }),
         }
       : undefined;
+    const blackboard = compileProjectileBlackboardSource({
+      sourcePath,
+      launch,
+      template,
+      invocations: callbacks.map(({ route, compiled, skill }) => ({
+        program: compiled.program,
+        event: route.event,
+        skillId: compiled.skillId,
+        declaredBlackboard: compiled.declaredBlackboard,
+        sequence: compiled.program.sequence(
+          skill.scheduledSequences.flatMap(timeline => compiled.program.actions(timeline.sequence)),
+        ),
+      })),
+      allowMissingEntityBlackboardEvidence: true,
+      blockEndsFlight: landsOnFirstTick,
+    });
     return [
-      compileProjectileLaunchScopeSource({
-        sourcePath,
-        launch,
-        template,
-        invocations: callbacks.map(({ route, compiled, skill }) => ({
-          program: compiled.program,
-          event: route.event,
-          skillId: compiled.skillId,
-          declaredBlackboard: compiled.declaredBlackboard,
-          sequence: compiled.program.sequence(
-            skill.scheduledSequences.flatMap(timeline =>
-              compiled.program.actions(timeline.sequence),
-            ),
+      {
+        kind: 'launchProjectile',
+        parameters: {
+          ...blackboard,
+          ...(onlyHitTargets === undefined ? {} : { onlyHitTargets }),
+          finish,
+          ...(launch.projectileSource.targetSource === 'Owner'
+            ? { source: 'actionOwner' as const }
+            : {}),
+          ...(launch.syncTimeScale ? { syncTimeScale: true } : {}),
+          recycleDelaySeconds: resolveProjectileRecycleDelaySource(
+            launch,
+            input.catalog.callbackGraphs,
+            sourcePath,
           ),
-        })),
-        allowMissingEntityBlackboardEvidence: true,
-        blockEndsFlight: landsOnFirstTick,
-        body: projectionContext.graph.sequence([
-          {
-            kind: 'launchProjectile',
-            parameters: {
-              finish,
-              ...(launch.projectileSource.targetSource === 'Owner'
-                ? { source: 'actionOwner' as const }
-                : {}),
-              ...(launch.syncTimeScale ? { syncTimeScale: true } : {}),
-              recycleDelaySeconds: resolveProjectileRecycleDelaySource(
-                launch,
-                input.catalog.callbackGraphs,
-                sourcePath,
-              ),
-              ...(hit === undefined ? {} : { hit }),
-            },
-            callbacks: callbacks.map(({ route, skill, compiled }) => ({
-              event: route.event,
-              skill: {
-                actionGraph: { main: compiled.program.finish(), macros: {} },
-                ...skill,
-              },
-            })),
+          ...(hit === undefined ? {} : { hit }),
+        },
+        callbacks: callbacks.map(({ route, skill, compiled }) => ({
+          event: route.event,
+          skill: {
+            actionGraph: { main: compiled.program.finish(), macros: {} },
+            ...skill,
           },
-        ]),
-      }),
+        })),
+      },
     ];
   };
 }
@@ -517,9 +526,15 @@ export function compileProjectileCallbackSkillSource(input: {
           : '',
       ),
   );
+  const presentationOnlyTargetGroupKeys = collectPresentationOnlyTargetGroups(graph);
   const callbackContext: CombatActionProjectionContextSource = {
     ...context,
     graph: program,
+    presentationOnlyTargetGroupKeys,
+    materializedTargetGroupKeys: collectMaterializedTargetGroups(
+      graph,
+      presentationOnlyTargetGroupKeys,
+    ),
     staticEnemyTargetGroupKeys: new Set([
       ...(context.staticEnemyTargetGroupKeys ?? []),
       ...discoveredEnemyGroups,
@@ -555,7 +570,13 @@ function assertSupportedLaunchTargetControls(
   launch: ProjectileLaunchActionSource,
   path: string,
   context?: CombatActionProjectionContextSource,
-): void {
+  retainDynamicFilter = false,
+): ActionTargetQuery | undefined {
+  if (launch.alsoLaunchToHittableTarget !== false) {
+    throw new Error(
+      `${path}.alsoLaunchToHittableTarget: additional projectile launches are not modeled`,
+    );
+  }
   if (
     launch.targetFilterMode === 'OnlyHit' &&
     launch.targetFilterSettings !== null &&
@@ -563,14 +584,20 @@ function assertSupportedLaunchTargetControls(
       context?.provenOnlyHitProjectilePaths?.has(path) === true)
   ) {
     // 唯一可能碰撞的敌人属于白名单，过滤前后可见 hit 集合相同。
+  } else if (
+    retainDynamicFilter &&
+    launch.targetFilterMode === 'OnlyHit' &&
+    launch.targetFilterSettings !== null &&
+    context !== undefined
+  ) {
+    return projectActionTargetQuery(
+      launch.targetFilterSettings,
+      context,
+      `${path}.targetFilterSettings`,
+    );
   } else if (launch.targetFilterMode !== 'None') {
     throw new Error(
       `${path}.targetFilterMode: projectile target filter ${launch.targetFilterMode} is not modeled`,
-    );
-  }
-  if (launch.alsoLaunchToHittableTarget !== false) {
-    throw new Error(
-      `${path}.alsoLaunchToHittableTarget: additional projectile launches are not modeled`,
     );
   }
 }
@@ -841,12 +868,14 @@ function isPlainZeroSpaceFixedPoint(
     (context.actionTargetTarget === 'enemy' ||
       context.actionTargetTarget === 'caster' ||
       context.actionTargetTarget === 'currentOperator' ||
-      context.actionTargetTarget === 'currentAbilityEntity');
+      context.actionTargetTarget === 'currentAbilityEntity' ||
+      (context.actionTargetTarget === 'actionInputTarget' &&
+        context.actionInputIsZeroSpace === true));
   const contextTargetIsProvenZeroSpace =
     target.targetSource === 'Context' &&
     target.targetGroupKey !== '' &&
     (context.staticZeroSpaceTargetGroupKeys?.has(target.targetGroupKey) === true ||
-      context.dynamicSpatialPointCounts?.has(target.targetGroupKey) === true ||
+      context.randomPointTargetGroupKeys?.has(target.targetGroupKey) === true ||
       (sourcePath !== undefined &&
         context.provenZeroSpaceProjectilePaths?.has(sourcePath) === true));
   const instantPointAnchoredToCaster =

@@ -35,6 +35,6 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_claym_0010',
-  iconPath: '/weapons/claym/wpn_claym_0010.webp',
+  icon: 'endaxis:weapons/claym/wpn_claym_0010',
 } as const satisfies WeaponDefinition;
 export default definition;

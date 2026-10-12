@@ -229,10 +229,11 @@ describe('公共 Buff 环境读取：来源到正式执行器', () => {
             [
               ...projected.steps,
               {
-                kind: 'changeResourceByActionValue',
+                kind: 'changeResource',
                 parameters: {
                   resource: 'sp',
-                  recipient: 'caster',
+                  source: { kind: 'owner' },
+                  targets: { kind: 'owner' },
                   amount: { kind: 'constant', value: 1 },
                 },
               },
@@ -334,10 +335,11 @@ describe('公共 Buff 环境读取：来源到正式执行器', () => {
       [
         ...projected.steps,
         {
-          kind: 'changeResourceByActionValue',
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            recipient: 'caster',
+            source: { kind: 'owner' },
+            targets: { kind: 'owner' },
             amount: { kind: 'constant', value: 1 },
           },
         },

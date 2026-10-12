@@ -1,13 +1,17 @@
-import { numberInput } from '../../../test/compiledGraphInputs';
+import type { ActionGraphDefinition } from '../../../../packages/game-data-contract/src/actionGraph';
 import { extractResourceDataNodes } from '../../../../tools/game-data-compiler/src/compiler/extractGraphDataNodes';
 import bedazzlingNightDebut from '../../../data/equipment/generated-weapons/lance/wpn_lance_0014.generated';
+import { numberInput } from '../../../test/compiledGraphInputs';
 import {
-  projectBuffTimelineViz,
   mergeOverlappingBuffTimelineSegments,
+  projectBuffTimelineViz,
 } from '../../projection/buffTimelineViz';
 import { projectCombatStatusIndicators } from '../../projection/combatStatusIndicators';
+import { TargetContextOperationExecutor } from '../abilities/targetContextOperationExecutor';
+import type { BuffConsumedEvent } from '../buffs/buffOperationExecutor';
 import { withAbilityEventResponseContext } from '../events/abilityEventResponseContext';
 import { CombatVitals } from '../resources/combatVitals';
+import type { CombatOperationContext } from '../skills/skillRuntime';
 import type { BoundCombatBattleRuntimes } from './combatRuntimeAssembly';
 
 import { AbilitySystemRuntime } from '../abilities/abilitySystemRuntime';
@@ -124,7 +128,6 @@ it('恢复环境直接绑定账本和事件目录，不重新登记监听或改�
     saved.environment.postSkillRequestListeners,
   );
   expect(restored.runtimeState.buffProgress).toBe(saved.environment.buffProgress);
-  expect(restored.runtimeState.reactions).toBe(saved.environment.reactions);
   const restoredReceived = vi.fn();
   restored
     .eventsFor('enemy')
@@ -464,7 +467,7 @@ it.each(['early', 'absorbed'] as const)('结束通知和%s回调保持同一独�
         expect(event.payload.skillCastInfo).toBe(source);
       });
     }
-    const observer = (event: import('../buffs/buffOperationExecutor').BuffConsumedEvent) => {
+    const observer = (event: BuffConsumedEvent) => {
       order.push('source-notification');
       expect(event.skillCastInfo).toBe(source);
       expect(event).toMatchObject({
@@ -547,10 +550,17 @@ it.each([
     const operations = new BuffOperationExecutor({
       sourceId: 'operator',
       resolveTarget: () => target,
+      resolveEventTarget: () => target,
+      queryTargets: (query, context) =>
+        new TargetContextOperationExecutor('operator', {
+          execute: () => false,
+          evaluate: () => false,
+        }).queryTargets(query, context),
       delegate: { execute: () => false, evaluate: () => false },
     });
     const common = {
-      target: 'enemy' as const,
+      targets: { kind: 'fixed', target: 'enemy' } as const,
+      finishSource: { kind: 'source' } as const,
       reason: 'other' as const,
       ...(count === undefined ? {} : { count: { kind: 'constant' as const, value: count } }),
     };
@@ -587,7 +597,7 @@ it('Buff 层数变化在 owner 发布，载荷不伪造目标且消费同一原�
     expect(published).toBe(event);
     expect(published.payload.sourceId).toBe('enemy');
     expect('targetId' in published.payload).toBe(false);
-    const context: import('../skills/skillRuntime').CombatOperationContext = {
+    const context: CombatOperationContext = {
       blackboard: new ActionBlackboard(),
     };
     withAbilityEventResponseContext(context, event, undefined, () => {
@@ -606,6 +616,11 @@ it('Buff 层数变化在 owner 发布，载荷不伪造目标且消费同一原�
 });
 
 import { describe, expect, it, vi } from 'vitest';
+import type {
+  ActionGraphNode,
+  ActionGraphStep,
+} from '../../../../packages/game-data-contract/src/actionGraph';
+import type { CombatBuffDefinitionsDocument } from '../../../../packages/game-data-contract/src/buffs';
 import { compileEventTargetSimpleDamageOperationSource } from '../../../../tools/game-data-compiler/src/compiler/actions/simpleDamageOperation.ts';
 import { compilePendingComboConditionSource } from '../../../../tools/game-data-compiler/src/compiler/conditions/comboSkillConditions.ts';
 import { parseDamageActionSource } from '../../../../tools/game-data-compiler/src/source/damageActions.ts';
@@ -624,22 +639,16 @@ import type {
   ResolvedSkillBuffDefinition,
 } from '../../compiler/combatProgram';
 import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
-import type {
-  ActionGraphNode,
-  ActionGraphStep,
-} from '../../../../packages/game-data-contract/src/actionGraph';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { ActionBlackboardOperationExecutor } from '../actions/actionBlackboardOperationExecutor';
 import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
-import { ATTRIBUTE_MODIFIER_SOURCES } from '../state/foundationState';
 import {
   attributeModifierValues,
   createCombatAttributeModifier,
 } from '../attributes/combatAttributes';
 import { BuffDefinitionOperationTarget } from '../buffs/buffDefinitionOperationTarget';
 import { BuffOperationExecutor } from '../buffs/buffOperationExecutor';
-import type { CombatBuffDefinitionsDocument } from '../../../../packages/game-data-contract/src/buffs';
-import { POISE_BREAK_BUFF_ID, FINISHER_ELIGIBILITY_BUFF_ID } from '../buffs/poiseBreakBuffRuntime';
+import { FINISHER_ELIGIBILITY_BUFF_ID, POISE_BREAK_BUFF_ID } from '../buffs/poiseBreakBuffRuntime';
 import { CombatSemanticEventRuntime } from '../events/combatSemanticEventRuntime';
 import { EventContextConditionExecutor } from '../events/eventContextConditionExecutor';
 import { ELEMENTAL_INFLICTION_EVENTS } from '../infliction/elementalInflictionOperationExecutor';
@@ -649,6 +658,7 @@ import { CombatResources } from '../resources/combatResources';
 import { CombatVitalsConditionExecutor } from '../resources/combatVitalsConditionExecutor';
 import { createEnemyCombatVitals } from '../resources/combatVitalsFactory';
 import type { PendingComboCondition } from '../skills/comboSkillConditionRuntime';
+import { ATTRIBUTE_MODIFIER_SOURCES } from '../state/foundationState';
 import { CombatClock } from '../time/combatClock';
 import type {
   CombatEnemyProgram,
@@ -662,7 +672,7 @@ const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
-  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
   graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
   entry,
@@ -672,7 +682,7 @@ const compileGraphEntry = (
 const chainEntry = (
   revision: string,
   actions: readonly ActionGraphStep[],
-  dataNodes: import('../../../../packages/game-data-contract/src/actionGraph').ActionGraphDefinition['dataNodes'] = {},
+  dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => {
   const nodes: Record<string, ActionGraphNode> = {};
   actions.forEach((action, index) => {
@@ -750,13 +760,15 @@ it.each([
           waitFirstTriggerInterval: true,
           maxTriggerCount: 1,
           lifecycleSequences: {
-            trigger: chainEntry(`spell-burst-trigger-${idPart}`, [
-              { kind: 'triggerSpellBurst', parameters: { burstType } },
-              {
-                kind: 'dealDamage',
-                parameters: { damageType: element, attackScale: 1, tags: [tag] },
-              },
-            ]),
+            trigger: [
+              chainEntry(`spell-burst-trigger-${idPart}`, [
+                { kind: 'triggerSpellBurst', parameters: { burstType } },
+                {
+                  kind: 'dealDamage',
+                  parameters: { damageType: element, attackScale: 1, tags: [tag] },
+                },
+              ]),
+            ],
           },
         },
       },
@@ -1807,6 +1819,7 @@ describe('StandardPlayerDamageEnvironment', () => {
           costFrame: 0,
         };
         const assembly = new CombatRuntimeAssembly({
+          comboSkillPendingInterval: 5,
           ...environment.runtimeOptions,
           enemy: testEnemy,
           resources: context.resources.snapshot(),
@@ -3622,8 +3635,7 @@ describe('StandardPlayerDamageEnvironment', () => {
           attributeModifiers: [{ attribute: 'Atk', slot: 'baseMultiplier', value: 0.1 }],
           presentation: {
             visible: true,
-            iconId: 'icon_battle_buff_atk_up',
-            iconPath: '/icons/icon_battle_buff_atk_up.webp',
+            icon: 'endaxis:icons/icon_battle_buff_atk_up',
             showInSquadIcon: true,
             showProgressInHpBar: true,
             showProgressInNormalSkillButton: true,
@@ -3642,7 +3654,7 @@ describe('StandardPlayerDamageEnvironment', () => {
               buffId: 'buff:operator-visible:child',
               presentation: {
                 visible: true,
-                iconPath: '/icons/icon_battle_buff_child.webp',
+                icon: 'endaxis:icons/icon_battle_buff_child',
               },
             },
           ],
@@ -3662,8 +3674,7 @@ describe('StandardPlayerDamageEnvironment', () => {
         simpleModifierSlot: 'baseMultiplier',
         simpleModifierValue: 0.1,
         visible: true,
-        iconId: 'icon_battle_buff_atk_up',
-        iconPath: '/icons/icon_battle_buff_atk_up.webp',
+        icon: 'endaxis:icons/icon_battle_buff_atk_up',
         showInSquadIcon: true,
         showProgressInHpBar: true,
         showProgressInNormalSkillButton: true,
@@ -3683,7 +3694,7 @@ describe('StandardPlayerDamageEnvironment', () => {
         parentBuffId: 'buff:operator-visible',
         instanceId: 1,
         sourceActionId: 'buff:operator-visible',
-        iconPath: '/icons/icon_battle_buff_child.webp',
+        icon: 'endaxis:icons/icon_battle_buff_child',
       },
     });
     for (let frame = 0; frame < 3; frame += 1) {
@@ -3793,7 +3804,16 @@ describe('StandardPlayerDamageEnvironment', () => {
             next: null,
           },
         },
-        { input_1: { type: 'boolean', expression: { kind: 'eventSourceControlled' } } },
+        {
+          input_1: {
+            type: 'boolean',
+            expression: {
+              kind: 'actionInputTargetIdentityMatch',
+              other: 'controlledOperator',
+              operator: 'equal',
+            },
+          },
+        },
       ),
       operations: new EventContextConditionExecutor(
         {
@@ -3910,39 +3930,6 @@ describe('StandardPlayerDamageEnvironment', () => {
     );
   });
 
-  it('applies reactions with levels and evaluates reaction conditions', () => {
-    const context = createContext();
-    const receipt = context.receipt as CombatReceiptCollector;
-    const environment = createEnvironment();
-    const executor = environment.runtimeOptions.createOperationExecutor(context);
-    const step = {
-      kind: 'applyElementalReaction' as const,
-      parameters: {
-        reaction: 'electrification' as const,
-        target: 'enemy' as const,
-        durationSeconds: 5,
-        effectiveness: 1,
-      },
-    };
-
-    expect(executor.execute(step)).toBe(true);
-    expect(executor.execute(step)).toBe(true);
-    expect(receipt.entries.at(-1)).toMatchObject({
-      event: 'ElementalReactionApplied',
-      data: { reaction: 'electrification', level: 2, previousLevel: 1 },
-    });
-    expect(
-      executor.evaluate({
-        kind: 'elementalReactionActive',
-        reaction: 'electrification',
-        minimumLevel: 2,
-      }),
-    ).toBe(true);
-    expect(executor.evaluate({ kind: 'elementalReactionActive', reaction: 'corrosion' })).toBe(
-      false,
-    );
-  });
-
   it('rejects operations outside the recovered subset', () => {
     const environment = createEnvironment();
     const executor = environment.runtimeOptions.createOperationExecutor(createContext());
@@ -3950,7 +3937,10 @@ describe('StandardPlayerDamageEnvironment', () => {
     expect(() =>
       executor.execute({
         kind: 'applyBuff',
-        parameters: { buffId: 'buff:missing', target: 'enemy' },
+        parameters: {
+          buffs: [{ buffId: 'buff:missing' }],
+          targets: { kind: 'fixed', target: 'enemy' },
+        },
       }),
     ).toThrow("does not support 'applyBuff'");
   });

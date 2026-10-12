@@ -24,6 +24,8 @@ export type TimelineSkillDiagnosticReason =
   | 'skillGroupInterrupted'
   | `skillInputMismatch: expected '${string}', actual '${string}'`
   | `skillInputUnknown: ${string}`
+  | `skillCommonTagUnavailable: ${string}`
+  | `skillTypeTagUnavailable: ${string}`
   | `skillInterruptUnavailable: cast '${string}'`
   | `skillInterruptUnknown: ${string}`;
 
@@ -282,6 +284,10 @@ export function useScenarioSimulation(
         sourceId: diagnostic.sourceId,
         skillId: diagnostic.skillId,
         reason: diagnostic.reasons.map(reason => {
+          if (reason === 'skillCommonTagUnavailable' || reason === 'skillTypeTagUnavailable') {
+            const tags = diagnostic.tagBlockers?.[reason];
+            if (tags?.length) return `${reason}: ${tags.join('|')}` as const;
+          }
           if (reason === 'skillInputMismatch' && diagnostic.actualSkillId !== undefined)
             return `skillInputMismatch: expected '${diagnostic.skillId}', actual '${diagnostic.actualSkillId}'` as const;
           if (reason === 'skillInputUnknown' && diagnostic.inputResolutionDetail !== undefined)

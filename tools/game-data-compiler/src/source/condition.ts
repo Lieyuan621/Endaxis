@@ -1,3 +1,4 @@
+import { readDirectionType } from './targetEnums.ts';
 import {
   nativeActionName,
   requireArray,
@@ -335,10 +336,10 @@ export type NativeConditionSource =
       readonly kind: 'twoDirectionAngle';
       readonly dir1Source: TargetReferenceSource;
       readonly dir1Target: TargetReferenceSource;
-      readonly dir1DirectionType: string;
+      readonly dir1DirectionType: ReturnType<typeof readDirectionType>;
       readonly dir2Source: TargetReferenceSource;
       readonly dir2Target: TargetReferenceSource;
-      readonly dir2DirectionType: string;
+      readonly dir2DirectionType: ReturnType<typeof readDirectionType>;
       readonly comparison: string;
       readonly value: ScalarSource;
     })
@@ -355,16 +356,7 @@ export type NativeConditionSource =
       readonly returnValueIfMissing: boolean;
       readonly comparison: string;
       readonly value: ScalarSource;
-    })
-  | (ConditionIdentity & {
-      readonly kind: 'any';
-      readonly groups: readonly ConditionAnyGroupSource[];
     });
-
-export interface ConditionAnyGroupSource {
-  readonly conditions: readonly NativeConditionSource[];
-  readonly negated: readonly boolean[];
-}
 
 export interface BuffStackConditionSource {
   readonly kind: 'buffStack';
@@ -588,8 +580,6 @@ export function parseConditionLeafSource(
         comparison: readCompareType(condition.compareType, `${path}.compareType`),
         value: parseScalarSource(condition.value, `${path}.value`, inheritedBlackboard),
       };
-    case 'OrConditionAction':
-      return parseAnyCondition(condition, path, sourceType, inheritedBlackboard);
     case 'CompareFloat':
       return {
         kind: 'floatCompare',
@@ -1341,54 +1331,6 @@ function parseHealth(
   };
 }
 
-function parseAnyCondition(
-  condition: Record<string, unknown>,
-  path: string,
-  sourceType: string,
-  inheritedBlackboard: BlackboardLevelValues,
-): NativeConditionSource {
-  const groups: ConditionAnyGroupSource[] = [];
-  requireArray(condition.conditionList, `${path}.conditionList`).forEach((rawGroup, groupIndex) => {
-    const groupPath = `${path}.conditionList[${groupIndex}]`;
-    const group = requireRecord(rawGroup, groupPath);
-    requireExactFields(
-      group,
-      new Set(['actionData', 'onlyExecuteWhenSourceIsMainChar', 'onlyExecuteWhenSourceIsGuard']),
-      groupPath,
-    );
-    if (group.onlyExecuteWhenSourceIsMainChar !== false) {
-      throw new Error(`${groupPath}: main-character-only OR groups are unsupported`);
-    }
-    if (group.onlyExecuteWhenSourceIsGuard !== false) {
-      throw new Error(`${groupPath}: guard-only OR groups are unsupported`);
-    }
-
-    const conditions: NativeConditionSource[] = [];
-    const negated: boolean[] = [];
-    let negateNext = false;
-    requireArray(group.actionData, `${groupPath}.actionData`).forEach((rawItem, index) => {
-      const itemPath = `${groupPath}.actionData[${index}]`;
-      const item = requireRecord(rawItem, itemPath);
-      if (item.isEnable === false) return;
-      const itemType = typeof item.$type === 'string' ? nativeActionName(item.$type) : '';
-      if (itemType === 'NotNextCheckAction') {
-        if (negateNext) {
-          throw new Error(`${itemPath}: consecutive NotNextCheckAction is unsupported`);
-        }
-        negateNext = true;
-        return;
-      }
-      conditions.push(parseConditionLeafSource(item, itemPath, inheritedBlackboard));
-      negated.push(negateNext);
-      negateNext = false;
-    });
-    if (negateNext) throw new Error(`${groupPath}: dangling NotNextCheckAction`);
-    if (conditions.length > 0) groups.push({ conditions, negated });
-  });
-  if (groups.length === 0) throw new Error(`${path}: OrConditionAction has no non-empty groups`);
-  return { kind: 'any', sourceType, groups };
-}
-
 function parseDamageType(
   condition: Record<string, unknown>,
   path: string,
@@ -1604,16 +1546,10 @@ function parseTwoDirectionAngle(
     sourceType,
     dir1Source: parseTargetReferenceSource(condition.dir1Source, `${path}.dir1Source`),
     dir1Target: parseTargetReferenceSource(condition.dir1Target, `${path}.dir1Target`),
-    dir1DirectionType: requireNonEmptyString(
-      condition.dir1DirectionType,
-      `${path}.dir1DirectionType`,
-    ),
+    dir1DirectionType: readDirectionType(condition.dir1DirectionType, `${path}.dir1DirectionType`),
     dir2Source: parseTargetReferenceSource(condition.dir2Source, `${path}.dir2Source`),
     dir2Target: parseTargetReferenceSource(condition.dir2Target, `${path}.dir2Target`),
-    dir2DirectionType: requireNonEmptyString(
-      condition.dir2DirectionType,
-      `${path}.dir2DirectionType`,
-    ),
+    dir2DirectionType: readDirectionType(condition.dir2DirectionType, `${path}.dir2DirectionType`),
     comparison: requireNonEmptyString(condition.compareType, `${path}.compareType`),
     value: parseScalarSource(condition.value, `${path}.value`, inheritedBlackboard),
   };

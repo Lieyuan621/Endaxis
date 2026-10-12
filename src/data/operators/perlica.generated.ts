@@ -12,6 +12,8 @@ export const perlicaChr_0004_pelica_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.0333333350718021,
             hit: { finishOnHit: true },
@@ -31,52 +33,77 @@ export const perlicaChr_0004_pelica_attack1ActionGraph = {
                 },
                 blackboard: { atb: 0, atk_scale: 0 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_opt2' } },
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
                 ],
                 actionGraph: {
                   main: {
                     nodes: {
-                      changeResourceByActionValue_1: {
+                      changeResource_3: {
                         action: {
-                          kind: 'changeResourceByActionValue',
+                          kind: 'changeResource',
                           parameters: {
                             resource: 'sp',
                             amount: { kind: 'valueNode', nodeId: 'data_1' },
                             coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'team',
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
                             spGainKind: 'gain',
                             spGainSource: 'normalAttack',
                           },
                         },
                         next: null,
                       },
-                      conditional_opt1: {
+                      checkCondition_1: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_2' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                         },
                         next: null,
                       },
-                      dealDamage_opt2: {
+                      checkCondition_2: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+                        },
+                        next: 'checkCondition_1',
+                      },
+                      ifElse_4: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_2' },
+                          whenTrue: { $sequence: 'changeResource_3' },
+                          whenFalse: { $sequence: null },
+                        },
+                        next: null,
+                      },
+                      dealDamage_5: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'electric',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
                             tags: ['normalAttack'],
                           },
                         },
-                        next: 'conditional_opt1',
+                        next: 'ifElse_4',
                       },
                     },
                     dataNodes: {
                       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-                      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-                      data_3: {
+                      data_2: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityCountCompare',
+                          target: { kind: 'fixed', target: 'enemy' },
+                          containsHittableTarget: false,
+                          excludeDeadEntity: false,
+                          operator: 'greaterOrEqual',
+                          value: 1,
+                        },
+                      },
+                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_4: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -90,20 +117,7 @@ export const perlicaChr_0004_pelica_attack1ActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_2: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_1' },
-        },
-        next: null,
-      },
-      reachSkillOperableBoundary_3: {
+      reachSkillOperableBoundary_2: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0004_pelica_attack2'] },
@@ -139,9 +153,10 @@ export const perlicaChr_0004_pelica_attack1: SkillDefinition = {
   },
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 8, endFrame: 8, sequence: { $sequence: 'withActionBlackboardScope_2' } },
-    { startFrame: 16, endFrame: 27, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
+    { startFrame: 8, endFrame: 8, sequence: { $sequence: 'launchProjectile_1' } },
+    { startFrame: 16, endFrame: 27, sequence: { $sequence: 'reachSkillOperableBoundary_2' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0004_pelica_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
@@ -156,6 +171,8 @@ export const perlicaChr_0004_pelica_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.100000001490116,
             hit: { finishOnHit: true },
@@ -175,37 +192,44 @@ export const perlicaChr_0004_pelica_attack2ActionGraph = {
                 },
                 blackboard: { atb: 0, atk_scale: 0 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_3' } },
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_4' } },
                 ],
                 actionGraph: {
                   main: {
                     nodes: {
-                      changeResourceByActionValue_1: {
+                      changeResource_2: {
                         action: {
-                          kind: 'changeResourceByActionValue',
+                          kind: 'changeResource',
                           parameters: {
                             resource: 'sp',
                             amount: { kind: 'valueNode', nodeId: 'data_1' },
                             coefficient: { kind: 'constant', value: 0.3333333 },
-                            recipient: 'team',
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
                             spGainKind: 'gain',
                             spGainSource: 'normalAttack',
                           },
                         },
                         next: null,
                       },
-                      conditional_2: {
+                      checkCondition_1: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_2' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                         },
                         next: null,
                       },
-                      dealDamage_3: {
+                      ifElse_3: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_1' },
+                          whenTrue: { $sequence: 'changeResource_2' },
+                          whenFalse: { $sequence: null },
+                        },
+                        next: null,
+                      },
+                      dealDamage_4: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
@@ -214,7 +238,7 @@ export const perlicaChr_0004_pelica_attack2ActionGraph = {
                             tags: ['normalAttack'],
                           },
                         },
-                        next: 'conditional_2',
+                        next: 'ifElse_3',
                       },
                     },
                     dataNodes: {
@@ -234,20 +258,7 @@ export const perlicaChr_0004_pelica_attack2ActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_2: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_1' },
-        },
-        next: null,
-      },
-      reachSkillOperableBoundary_5: {
+      reachSkillOperableBoundary_3: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0004_pelica_attack3'] },
@@ -265,7 +276,6 @@ export const perlicaChr_0004_pelica_attack2: SkillDefinition = {
   blackboard: {
     atb: 0,
     atk_scale: [0.15, 0.17, 0.18, 0.2, 0.21, 0.23, 0.24, 0.26, 0.27, 0.29, 0.31, 0.34],
-    display_atk_scale: [0.3, 0.33, 0.36, 0.39, 0.42, 0.45, 0.48, 0.51, 0.54, 0.58, 0.62, 0.68],
   },
   timelineBlockFrames: 18,
   naturalDurationFrames: 168,
@@ -284,10 +294,11 @@ export const perlicaChr_0004_pelica_attack2: SkillDefinition = {
   },
   costFrame: 11,
   scheduledSequences: [
-    { startFrame: 9, endFrame: 9, sequence: { $sequence: 'withActionBlackboardScope_2' } },
-    { startFrame: 12, endFrame: 12, sequence: { $sequence: 'withActionBlackboardScope_2' } },
-    { startFrame: 18, endFrame: 28, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
+    { startFrame: 9, endFrame: 9, sequence: { $sequence: 'launchProjectile_1' } },
+    { startFrame: 12, endFrame: 12, sequence: { $sequence: 'launchProjectile_1' } },
+    { startFrame: 18, endFrame: 28, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0004_pelica_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
@@ -302,6 +313,8 @@ export const perlicaChr_0004_pelica_attack3ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.0333333350718021,
             hit: { finishOnHit: true },
@@ -321,52 +334,77 @@ export const perlicaChr_0004_pelica_attack3ActionGraph = {
                 },
                 blackboard: {},
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_opt2' } },
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
                 ],
                 actionGraph: {
                   main: {
                     nodes: {
-                      changeResourceByActionValue_1: {
+                      changeResource_3: {
                         action: {
-                          kind: 'changeResourceByActionValue',
+                          kind: 'changeResource',
                           parameters: {
                             resource: 'sp',
                             amount: { kind: 'valueNode', nodeId: 'data_1' },
                             coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'team',
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
                             spGainKind: 'gain',
                             spGainSource: 'normalAttack',
                           },
                         },
                         next: null,
                       },
-                      conditional_opt1: {
+                      checkCondition_1: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_2' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                         },
                         next: null,
                       },
-                      dealDamage_opt2: {
+                      checkCondition_2: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+                        },
+                        next: 'checkCondition_1',
+                      },
+                      ifElse_4: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_2' },
+                          whenTrue: { $sequence: 'changeResource_3' },
+                          whenFalse: { $sequence: null },
+                        },
+                        next: null,
+                      },
+                      dealDamage_5: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'electric',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
                             tags: ['normalAttack'],
                           },
                         },
-                        next: 'conditional_opt1',
+                        next: 'ifElse_4',
                       },
                     },
                     dataNodes: {
                       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-                      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-                      data_3: {
+                      data_2: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityCountCompare',
+                          target: { kind: 'fixed', target: 'enemy' },
+                          containsHittableTarget: false,
+                          excludeDeadEntity: false,
+                          operator: 'greaterOrEqual',
+                          value: 1,
+                        },
+                      },
+                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_4: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -380,20 +418,7 @@ export const perlicaChr_0004_pelica_attack3ActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_2: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_1' },
-        },
-        next: null,
-      },
-      reachSkillOperableBoundary_7: {
+      reachSkillOperableBoundary_4: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0004_pelica_attack4'] },
@@ -411,7 +436,6 @@ export const perlicaChr_0004_pelica_attack3: SkillDefinition = {
   blackboard: {
     atb: 0,
     atk_scale: [0.12, 0.14, 0.15, 0.16, 0.17, 0.19, 0.2, 0.21, 0.22, 0.24, 0.26, 0.28],
-    display_atk_scale: [0.37, 0.41, 0.45, 0.48, 0.52, 0.56, 0.59, 0.63, 0.67, 0.71, 0.77, 0.84],
   },
   timelineBlockFrames: 26,
   naturalDurationFrames: 173,
@@ -430,11 +454,12 @@ export const perlicaChr_0004_pelica_attack3: SkillDefinition = {
   },
   costFrame: 13,
   scheduledSequences: [
-    { startFrame: 16, endFrame: 16, sequence: { $sequence: 'withActionBlackboardScope_2' } },
-    { startFrame: 19, endFrame: 19, sequence: { $sequence: 'withActionBlackboardScope_2' } },
-    { startFrame: 22, endFrame: 22, sequence: { $sequence: 'withActionBlackboardScope_2' } },
-    { startFrame: 26, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
+    { startFrame: 16, endFrame: 16, sequence: { $sequence: 'launchProjectile_1' } },
+    { startFrame: 19, endFrame: 19, sequence: { $sequence: 'launchProjectile_1' } },
+    { startFrame: 22, endFrame: 22, sequence: { $sequence: 'launchProjectile_1' } },
+    { startFrame: 26, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_4' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0004_pelica_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
@@ -449,6 +474,8 @@ export const perlicaChr_0004_pelica_attack4ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.0333333350718021,
             hit: { finishOnHit: true },
@@ -468,58 +495,83 @@ export const perlicaChr_0004_pelica_attack4ActionGraph = {
                 },
                 blackboard: {},
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_opt2' } },
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
                 ],
                 actionGraph: {
                   main: {
                     nodes: {
-                      changeResourceByActionValue_1: {
+                      changeResource_3: {
                         action: {
-                          kind: 'changeResourceByActionValue',
+                          kind: 'changeResource',
                           parameters: {
                             resource: 'sp',
                             amount: { kind: 'valueNode', nodeId: 'data_1' },
                             coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'team',
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
                             spGainKind: 'gain',
                             spGainSource: 'normalAttack',
                           },
                         },
                         next: null,
                       },
-                      conditional_opt1: {
+                      checkCondition_1: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_2' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                         },
                         next: null,
                       },
-                      dealDamage_opt2: {
+                      checkCondition_2: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+                        },
+                        next: 'checkCondition_1',
+                      },
+                      ifElse_4: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_2' },
+                          whenTrue: { $sequence: 'changeResource_3' },
+                          whenFalse: { $sequence: null },
+                        },
+                        next: null,
+                      },
+                      dealDamage_5: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'electric',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
                             tags: ['normalAttack', 'normalAttackLastCombo'],
-                            stagger: { kind: 'valueNode', nodeId: 'data_4' },
+                            stagger: { kind: 'valueNode', nodeId: 'data_5' },
                             staggerOnlyWhenCasterControlled: true,
                           },
                         },
-                        next: 'conditional_opt1',
+                        next: 'ifElse_4',
                       },
                     },
                     dataNodes: {
                       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-                      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-                      data_3: {
+                      data_2: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityCountCompare',
+                          target: { kind: 'fixed', target: 'enemy' },
+                          containsHittableTarget: false,
+                          excludeDeadEntity: false,
+                          operator: 'greaterOrEqual',
+                          value: 1,
+                        },
+                      },
+                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_4: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
-                      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+                      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
                     },
                   },
                   macros: {},
@@ -530,20 +582,7 @@ export const perlicaChr_0004_pelica_attack4ActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_2: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_1' },
-        },
-        next: null,
-      },
-      reachSkillOperableBoundary_3: {
+      reachSkillOperableBoundary_2: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0004_pelica_attack1'] },
@@ -580,9 +619,10 @@ export const perlicaChr_0004_pelica_attack4: SkillDefinition = {
   },
   costFrame: 13,
   scheduledSequences: [
-    { startFrame: 27, endFrame: 27, sequence: { $sequence: 'withActionBlackboardScope_2' } },
-    { startFrame: 54, endFrame: 64, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
+    { startFrame: 27, endFrame: 27, sequence: { $sequence: 'launchProjectile_1' } },
+    { startFrame: 54, endFrame: 64, sequence: { $sequence: 'reachSkillOperableBoundary_2' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0004_pelica_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
@@ -593,14 +633,15 @@ export const perlicaChr_0004_pelica_attack4: SkillDefinition = {
 export const perlicaChr_0004_pelica_power_attackActionGraph = {
   main: {
     nodes: {
-      gainFinisherSp_1: {
+      gainFinisherSp_2: {
         action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
         next: null,
       },
-      applyKnockDown_2: {
+      applyPhysicalInfliction_3: {
         action: {
-          kind: 'applyKnockDown',
+          kind: 'applyPhysicalInfliction',
           parameters: {
+            type: 'knockDown',
             target: 'enemy',
             duration: { kind: 'constant', value: 1.5 },
             force: true,
@@ -609,17 +650,26 @@ export const perlicaChr_0004_pelica_power_attackActionGraph = {
             returnWhen: 'always',
           },
         },
-        next: 'gainFinisherSp_1',
+        next: 'gainFinisherSp_2',
       },
-      conditional_3: {
+      checkCondition_1: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' }, alwaysNext: true },
-          whenTrue: { $sequence: 'applyKnockDown_2' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
         },
         next: null,
       },
-      dealDamage_4: {
+      ifElse_4: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_1' },
+          whenTrue: { $sequence: 'applyPhysicalInfliction_3' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_5: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -630,9 +680,9 @@ export const perlicaChr_0004_pelica_power_attackActionGraph = {
             tags: ['normalAttack', 'powerAttack'],
           },
         },
-        next: 'conditional_3',
+        next: 'ifElse_4',
       },
-      startTimeDilation_5: {
+      startTimeDilation_7: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -647,32 +697,36 @@ export const perlicaChr_0004_pelica_power_attackActionGraph = {
         },
         next: null,
       },
-      conditional_6: {
+      ifElse_8: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_5' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_1' },
+          whenTrue: { $sequence: 'startTimeDilation_7' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
-      applyBuff_7: {
+      applyBuff_9: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_full_immune_medium',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_common_full_immune_medium' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
         },
         next: null,
       },
-      applyBuff_8: {
+      applyBuff_10: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_power_attack_disable_cast_skill',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_common_power_attack_disable_cast_skill' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
@@ -683,14 +737,12 @@ export const perlicaChr_0004_pelica_power_attackActionGraph = {
     dataNodes: {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const perlicaChr_0004_pelica_power_attack: SkillDefinition = {
-  actionGraph: perlicaChr_0004_pelica_power_attackActionGraph,
   key: 'chr_0004_pelica_power_attack',
   element: 'electric',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -709,38 +761,41 @@ export const perlicaChr_0004_pelica_power_attack: SkillDefinition = {
   },
   costFrame: 4,
   scheduledSequences: [
-    { startFrame: 35, endFrame: 44, sequence: { $sequence: 'dealDamage_4' } },
-    { startFrame: 35, endFrame: 38, sequence: { $sequence: 'conditional_6' } },
-    { startFrame: 0, endFrame: 50, sequence: { $sequence: 'applyBuff_7' } },
-    { startFrame: 0, endFrame: 35, sequence: { $sequence: 'applyBuff_8' } },
+    { startFrame: 35, endFrame: 44, sequence: { $sequence: 'dealDamage_5' } },
+    { startFrame: 35, endFrame: 38, sequence: { $sequence: 'ifElse_8' } },
+    { startFrame: 0, endFrame: 50, sequence: { $sequence: 'applyBuff_9' } },
+    { startFrame: 0, endFrame: 35, sequence: { $sequence: 'applyBuff_10' } },
   ],
+  defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
+  actionGraph: perlicaChr_0004_pelica_power_attackActionGraph,
 };
 
 export const perlicaChr_0004_pelica_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      changeResourceByActionValue_1: {
+      mergeContextTargets_1: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+        },
+        next: null,
+      },
+      changeResource_2: {
+        action: {
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
             amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'team',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+            onlyMainOperator: true,
             spGainKind: 'gain',
             spGainSource: 'normalAttack',
           },
-        },
-        next: null,
-      },
-      conditional_2: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
         },
         next: null,
       },
@@ -749,16 +804,20 @@ export const perlicaChr_0004_pelica_plunging_attack_endActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'electric',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['normalAttack', 'plungingAttack'],
           },
         },
-        next: 'conditional_2',
+        next: 'changeResource_2',
       },
       launchProjectile_4: {
         action: {
           kind: 'launchProjectile',
-          parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.0333333350718021 },
+          parameters: {
+            inheritActionBlackboard: true,
+            finish: 'firstTickReach',
+            recycleDelaySeconds: 0.0333333350718021,
+          },
           callbacks: [],
         },
         next: null,
@@ -766,7 +825,11 @@ export const perlicaChr_0004_pelica_plunging_attack_endActionGraph = {
       launchProjectile_5: {
         action: {
           kind: 'launchProjectile',
-          parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.0333333350718021 },
+          parameters: {
+            inheritActionBlackboard: true,
+            finish: 'firstTickReach',
+            recycleDelaySeconds: 0.0333333350718021,
+          },
           callbacks: [],
         },
         next: 'launchProjectile_4',
@@ -774,7 +837,11 @@ export const perlicaChr_0004_pelica_plunging_attack_endActionGraph = {
       launchProjectile_6: {
         action: {
           kind: 'launchProjectile',
-          parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.0333333350718021 },
+          parameters: {
+            inheritActionBlackboard: true,
+            finish: 'firstTickReach',
+            recycleDelaySeconds: 0.0333333350718021,
+          },
           callbacks: [],
         },
         next: 'launchProjectile_5',
@@ -782,7 +849,11 @@ export const perlicaChr_0004_pelica_plunging_attack_endActionGraph = {
       launchProjectile_7: {
         action: {
           kind: 'launchProjectile',
-          parameters: { finish: 'firstTickReach', recycleDelaySeconds: 0.0333333350718021 },
+          parameters: {
+            inheritActionBlackboard: true,
+            finish: 'firstTickReach',
+            recycleDelaySeconds: 0.0333333350718021,
+          },
           callbacks: [],
         },
         next: 'launchProjectile_6',
@@ -790,8 +861,7 @@ export const perlicaChr_0004_pelica_plunging_attack_endActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
   macros: {},
@@ -811,9 +881,11 @@ export const perlicaChr_0004_pelica_plunging_attack_end: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [
+    { startFrame: 3, endFrame: 7, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 3, endFrame: 8, sequence: { $sequence: 'dealDamage_3' } },
     { startFrame: 1, endFrame: 1, sequence: { $sequence: 'launchProjectile_7' } },
   ],
+  defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
@@ -822,18 +894,19 @@ export const perlicaChr_0004_pelica_plunging_attack_end: SkillDefinition = {
 export const perlicaChr_0004_pelica_normal_skillActionGraph = {
   main: {
     nodes: {
-      findCharacterTeamTargets_1: {
+      applyBuff_3: {
         action: {
-          kind: 'findCharacterTeamTargets',
-          parameters: { saveToContextKey: 'mainchar', selection: { kind: 'controlledOperator' } },
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_common_obtain_ultimate_sp' }],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
         },
         next: null,
       },
-      gainSquadUltimateEnergyFromSkillCost_2: {
-        action: { kind: 'gainSquadUltimateEnergyFromSkillCost', parameters: { coefficient: 1 } },
-        next: null,
-      },
-      dealDamage_3: {
+      dealDamage_4: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -844,14 +917,21 @@ export const perlicaChr_0004_pelica_normal_skillActionGraph = {
             stagger: { kind: 'valueNode', nodeId: 'data_2' },
           },
         },
-        next: 'gainSquadUltimateEnergyFromSkillCost_2',
+        next: 'applyBuff_3',
       },
-      applyElementalInfliction_4: {
+      applyElementalInfliction_5: {
         action: {
           kind: 'applyElementalInfliction',
           parameters: { element: 'electric', isExtra: false },
         },
-        next: 'dealDamage_3',
+        next: 'dealDamage_4',
+      },
+      mergeContextTargets_6: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+        },
+        next: 'applyElementalInfliction_5',
       },
     },
     dataNodes: {
@@ -863,7 +943,6 @@ export const perlicaChr_0004_pelica_normal_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const perlicaChr_0004_pelica_normal_skill: SkillDefinition = {
-  actionGraph: perlicaChr_0004_pelica_normal_skillActionGraph,
   key: 'chr_0004_pelica_normal_skill',
   element: 'electric',
   blackboard: {
@@ -881,22 +960,42 @@ export const perlicaChr_0004_pelica_normal_skill: SkillDefinition = {
   },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 0, endFrame: 2, sequence: { $sequence: 'findCharacterTeamTargets_1' } },
-    { startFrame: 13, endFrame: 13, sequence: { $sequence: 'applyElementalInfliction_4' } },
+    { startFrame: 13, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_6' } },
   ],
+  defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
+  actionGraph: perlicaChr_0004_pelica_normal_skillActionGraph,
 };
 
 export const perlicaChr_0004_pelica_combo_skillActionGraph = {
   main: {
     nodes: {
-      launchProjectile_1: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+        },
+        next: null,
+      },
+      ifElse_2: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: null },
+          whenTrue: { $sequence: 'mergeContextTargets_1' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      launchProjectile_3: {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: { EntityBB_bounced: 0 },
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.0333333350718021,
             hit: { onReach: true, finishOnHit: true },
@@ -915,69 +1014,168 @@ export const perlicaChr_0004_pelica_combo_skillActionGraph = {
                   cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                 },
                 blackboard: {
-                  atb: 0,
                   atk_scale: 1,
                   duration: 5,
                   extra_scaling: 1,
-                  level: 1,
                   poise: 0,
                   talent2: 0,
                   usp: 0,
                 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'applyBuff_opt2' } },
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_opt2' } },
                 ],
                 actionGraph: {
                   main: {
                     nodes: {
-                      changeResourceByActionValue_3: {
+                      checkCondition_1: {
                         action: {
-                          kind: 'changeResourceByActionValue',
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+                        },
+                        next: null,
+                      },
+                      checkCondition_2: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+                        },
+                        next: 'checkCondition_1',
+                      },
+                      checkCondition_3: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+                        },
+                        next: 'checkCondition_2',
+                      },
+                      changeResource_6: {
+                        action: {
+                          kind: 'changeResource',
                           parameters: {
                             resource: 'ultimateEnergy',
-                            amount: { kind: 'valueNode', nodeId: 'data_1' },
+                            amount: { kind: 'valueNode', nodeId: 'data_6' },
                             coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'caster',
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
                           },
                         },
                         next: null,
                       },
-                      dealDamage_opt1: {
+                      checkCondition_7: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+                        },
+                        next: 'changeResource_6',
+                      },
+                      dealDamage_8: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'electric',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_8' },
                             tags: ['comboSkill'],
                             features: ['canBreakWeakness'],
-                            stagger: { kind: 'valueNode', nodeId: 'data_3' },
+                            stagger: { kind: 'valueNode', nodeId: 'data_9' },
                           },
                         },
-                        next: 'changeResourceByActionValue_3',
+                        next: 'checkCondition_7',
                       },
-                      applyBuff_opt2: {
+                      applyBuff_9: {
                         action: {
                           kind: 'applyBuff',
                           parameters: {
-                            buffId: 'buff_common_pulse_pulse_conduct_triggered',
-                            target: 'enemy',
+                            buffs: [
+                              {
+                                buffId: 'buff_common_pulse_pulse_conduct_triggered',
+                                copiedBlackboardAssignments: {
+                                  duration: 'duration',
+                                  extra_scaling: 'extra_scaling',
+                                },
+                              },
+                            ],
+                            targets: { kind: 'fixed', target: 'enemy' },
+                            source: { kind: 'source' },
                             inheritSourceSkillCastInfo: true,
-                            copiedBlackboardAssignments: {
-                              duration: 'duration',
-                              extra_scaling: 'extra_scaling',
-                            },
                           },
                         },
-                        next: 'dealDamage_opt1',
+                        next: 'dealDamage_8',
+                      },
+                      modifyActionValue_opt1: {
+                        action: {
+                          kind: 'modifyActionValue',
+                          parameters: {
+                            key: 'EntityBB_bounced',
+                            operation: 'assign',
+                            value: { kind: 'constant', value: 1 },
+                          },
+                        },
+                        next: null,
+                      },
+                      ifElse_opt2: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_3' },
+                          whenTrue: { $sequence: 'modifyActionValue_opt1' },
+                          whenFalse: { $sequence: null },
+                        },
+                        next: 'applyBuff_9',
                       },
                     },
                     dataNodes: {
-                      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+                      data_1: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'EntityBB_bounced', fallback: 0 },
+                      },
                       data_2: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'actionValueCompare',
+                          left: { kind: 'valueNode', nodeId: 'data_1' },
+                          operator: 'equal',
+                          right: { kind: 'constant', value: 0 },
+                        },
+                      },
+                      data_3: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityTagMatch',
+                          target: 'enemy',
+                          tagQueryType: 'hasAny',
+                          tags: ['Skill/Character/Common/NoGuard'],
+                        },
+                      },
+                      data_4: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'talent2', fallback: 0 },
+                      },
+                      data_5: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'actionValueCompare',
+                          left: { kind: 'valueNode', nodeId: 'data_4' },
+                          operator: 'equal',
+                          right: { kind: 'constant', value: 1 },
+                        },
+                      },
+                      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+                      data_7: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityCountCompare',
+                          target: { kind: 'fixed', target: 'enemy' },
+                          containsHittableTarget: false,
+                          excludeDeadEntity: false,
+                          operator: 'greaterOrEqual',
+                          value: 1,
+                        },
+                      },
+                      data_8: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
-                      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+                      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
                     },
                   },
                   macros: {},
@@ -988,20 +1186,7 @@ export const perlicaChr_0004_pelica_combo_skillActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_2: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_1' },
-        },
-        next: null,
-      },
-      startTimeDilation_3: {
+      startTimeDilation_4: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1044,9 +1229,11 @@ export const perlicaChr_0004_pelica_combo_skill: SkillDefinition = {
   },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 24, endFrame: 27, sequence: { $sequence: 'withActionBlackboardScope_2' } },
-    { startFrame: 0, endFrame: 22, sequence: { $sequence: 'startTimeDilation_3' } },
+    { startFrame: 0, endFrame: 11, sequence: { $sequence: 'ifElse_2' } },
+    { startFrame: 24, endFrame: 27, sequence: { $sequence: 'launchProjectile_3' } },
+    { startFrame: 0, endFrame: 22, sequence: { $sequence: 'startTimeDilation_4' } },
   ],
+  defaultTarget: 'enemy',
   cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 570],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
@@ -1057,14 +1244,7 @@ export const perlicaChr_0004_pelica_combo_skill: SkillDefinition = {
 export const perlicaChr_0004_pelica_ultimate_skillActionGraph = {
   main: {
     nodes: {
-      findCharacterTeamTargets_1: {
-        action: {
-          kind: 'findCharacterTeamTargets',
-          parameters: { saveToContextKey: 'mainchar', selection: { kind: 'controlledOperator' } },
-        },
-        next: null,
-      },
-      startUltimateTimeDilation_2: {
+      startUltimateTimeDilation_1: {
         action: {
           kind: 'startUltimateTimeDilation',
           parameters: {
@@ -1075,8 +1255,8 @@ export const perlicaChr_0004_pelica_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      hideUi_3: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      dealDamage_4: {
+      hideUi_2: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      dealDamage_3: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -1098,12 +1278,23 @@ export const perlicaChr_0004_pelica_ultimate_skillActionGraph = {
         },
         next: null,
       },
+      mergeContextTargets_4: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: {
+            saveToContextKey: 'targets',
+            sources: [{ kind: 'target', target: 'enemy' }],
+          },
+        },
+        next: 'dealDamage_3',
+      },
       applyBuff_5: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_damage_immune_ult_skill',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_common_damage_immune_ult_skill' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
@@ -1114,6 +1305,12 @@ export const perlicaChr_0004_pelica_ultimate_skillActionGraph = {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
+            bornAt: {
+              kind: 'fixedPoint',
+              owner: { kind: 'owner' },
+              directionTarget: { kind: 'source' },
+              center: { kind: 'inputTarget' },
+            },
             abilityEntityId: 'abilityentity_chr_0004_pelica_ultimate_skill',
             childSkillId: 'chr_0004_pelica_ultimate_skill_abilityrange',
             inheritActionBlackboard: true,
@@ -1138,11 +1335,8 @@ export const perlicaChr_0004_pelica_ultimate_skill: SkillDefinition = {
   element: 'electric',
   blackboard: {
     atk_scale: [4.45, 4.89, 5.34, 5.78, 6.22, 6.67, 7.11, 7.56, 8, 8.56, 9.23, 10],
-    atk_scale_2: 0,
     crit: 0,
     poise: 20,
-    radius: 4,
-    select_radius: 10,
   },
   timelineBlockFrames: 86,
   naturalDurationFrames: 114,
@@ -1159,13 +1353,13 @@ export const perlicaChr_0004_pelica_ultimate_skill: SkillDefinition = {
   },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findCharacterTeamTargets_1' } },
-    { startFrame: 0, endFrame: 50, sequence: { $sequence: 'startUltimateTimeDilation_2' } },
-    { startFrame: 0, endFrame: 52, sequence: { $sequence: 'hideUi_3' } },
-    { startFrame: 58, endFrame: 63, sequence: { $sequence: 'dealDamage_4' } },
+    { startFrame: 0, endFrame: 50, sequence: { $sequence: 'startUltimateTimeDilation_1' } },
+    { startFrame: 0, endFrame: 52, sequence: { $sequence: 'hideUi_2' } },
+    { startFrame: 58, endFrame: 63, sequence: { $sequence: 'mergeContextTargets_4' } },
     { startFrame: 0, endFrame: 85, sequence: { $sequence: 'applyBuff_5' } },
     { startFrame: 55, endFrame: 58, sequence: { $sequence: 'spawnAbilityEntity_6' } },
   ],
+  defaultTarget: 'enemy',
   cooldownFrames: 300,
   costs: [{ resource: 'ultimateEnergy', value: 80 }],
   skillType: 'ultimate',
@@ -1188,6 +1382,7 @@ export const perlicaCommon_character_perfect_dodge: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [],
+  defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
 };
@@ -1195,29 +1390,26 @@ export const perlicaCommon_character_perfect_dodge: SkillDefinition = {
 const perlicaComboCondition1ActionGraph = {
   main: {
     nodes: {
-      conditional_1: {
+      checkCondition_1: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-          whenTrue: { $sequence: null },
         },
         next: null,
       },
-      conditional_2: {
+      checkCondition_2: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'conditional_1' },
         },
-        next: null,
+        next: 'checkCondition_1',
       },
-      conditional_3: {
+      checkCondition_3: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-          whenTrue: { $sequence: 'conditional_2' },
         },
-        next: null,
+        next: 'checkCondition_2',
       },
     },
     dataNodes: {
@@ -1229,7 +1421,14 @@ const perlicaComboCondition1ActionGraph = {
           objectTypes: ['enemy'],
         },
       },
-      data_2: { type: 'boolean', expression: { kind: 'eventSourceControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionInputTargetIdentityMatch',
+          other: 'controlledOperator',
+          operator: 'equal',
+        },
+      },
       data_3: {
         type: 'boolean',
         expression: {
@@ -1249,7 +1448,7 @@ const perlicaComboCondition1: ComboSkillConditionDefinition = {
   event: 'beforeTakeDamage',
   immediately: false,
   initialValues: null,
-  sequence: { $sequence: 'conditional_3' },
+  sequence: { $sequence: 'checkCondition_3' },
   actionGraph: perlicaComboCondition1ActionGraph,
 };
 
@@ -1260,22 +1459,25 @@ const perlicaBuff1ActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0004_pelica_potential_3_atkup',
-            target: 'buffOwner',
-            source: 'buffSource',
+            buffs: [
+              {
+                buffId: 'buff_chr_0004_pelica_potential_3_atkup',
+                copiedBlackboardAssignments: { atk_up: 'atk_up', atk_duration: 'atk_duration' },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
-            copiedBlackboardAssignments: { atk_up: 'atk_up', atk_duration: 'atk_duration' },
           },
         },
         next: null,
       },
-      conditional_2: {
+      checkCondition_2: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-          whenTrue: { $sequence: 'applyBuff_1' },
         },
-        next: null,
+        next: 'applyBuff_1',
       },
     },
     dataNodes: {
@@ -1298,10 +1500,10 @@ const perlicaBuff1: SkillBuffDefinition = {
   maxStackCount: 20,
   applyTags: [],
   extendTags: [],
-  blackboard: { atk_duration: 0, atk_up: 0, max_stack: 0 },
+  blackboard: { atk_duration: 0, atk_up: 0 },
   attributeModifiers: [],
   abilityEventResponses: [
-    { event: 'outputBuff', priority: 0, sequence: { $sequence: 'conditional_2' } },
+    { event: 'outputBuff', priority: 0, sequence: { $sequence: 'checkCondition_2' } },
   ],
   actionGraph: perlicaBuff1ActionGraph,
 };
@@ -1318,8 +1520,7 @@ const perlicaBuff2: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'atk_duration' },
   presentation: {
     visible: true,
-    iconId: 'icon_battle_buff_atk_up',
-    iconPath: '/icons/icon_battle_buff_atk_up.webp',
+    icon: 'endaxis:icons/icon_battle_buff_atk_up',
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
     showInSquadIcon: true,
@@ -1350,11 +1551,10 @@ const perlicaBuff2: SkillBuffDefinition = {
 const perlicaBuff3ActionGraph = {
   main: {
     nodes: {
-      conditional_1: {
+      checkCondition_1: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-          whenTrue: { $sequence: null },
         },
         next: null,
       },
@@ -1386,7 +1586,7 @@ const perlicaBuff3: SkillBuffDefinition = {
   damageModifiers: [
     {
       enabledSide: 'attacker',
-      condition: { $sequence: 'conditional_1' },
+      condition: { $sequence: 'checkCondition_1' },
       processors: [
         {
           kind: 'damageScale',
@@ -1406,6 +1606,7 @@ export const perlica: OperatorDefinition = {
   rarity: 5,
   weaponType: 'funnel',
   element: 'electric',
+  characterTypeId: 'Pulse',
   role: 'caster',
   mainAttribute: 'intellect',
   secondaryAttribute: 'will',
@@ -1572,8 +1773,8 @@ export const perlica: OperatorDefinition = {
         actionGraph: {
           main: {
             nodes: {
-              finishActionOwnerAbilityEntity_1: {
-                action: { kind: 'finishActionOwnerAbilityEntity', parameters: {} },
+              finishOwner_1: {
+                action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
                 next: null,
               },
             },
@@ -1591,11 +1792,7 @@ export const perlica: OperatorDefinition = {
         },
         blackboard: {},
         scheduledSequences: [
-          {
-            startFrame: 54,
-            endFrame: 54,
-            sequence: { $sequence: 'finishActionOwnerAbilityEntity_1' },
-          },
+          { startFrame: 54, endFrame: 54, sequence: { $sequence: 'finishOwner_1' } },
         ],
       },
     },

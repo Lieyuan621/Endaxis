@@ -1,4 +1,5 @@
 /** 在分支去重之后，提取同一资源内输入相同、后续不同的同步直线中间段。 */
+import { visitActionGraphReferences } from './actionGraphReferences.ts';
 import type {
   ActionGraphDefinition,
   ActionGraphMacroDefinition,
@@ -18,7 +19,6 @@ const SYNCHRONOUS_LEAF_KINDS = new Set<ActionGraphStep['kind']>([
   'readBuffStackCount',
   'readBuffBlackboard',
   'storeSourceAttributeValue',
-  'setContextFlag',
 ]);
 
 export interface ActionGraphMiddleSegmentCandidate {
@@ -66,18 +66,6 @@ function signature(value: unknown): string {
   return `${typeof value}:${typeof value === 'number' && Object.is(value, -0) ? '-0' : (JSON.stringify(value) ?? String(value))}${typeof value === 'number' && !Number.isFinite(value) ? String(value) : ''}`;
 }
 
-/** 外部资源具有自己的节点空间，只统计当前资源的入口引用。 */
-function visitReferences(value: unknown, visit: (id: string) => void): void {
-  if (!value || typeof value !== 'object' || 'actionGraph' in value) return;
-  if ('$sequence' in value && Object.keys(value).length === 1) {
-    const id = (value as ActionGraphReference).$sequence;
-    if (id !== null) visit(id);
-    return;
-  }
-  for (const [key, item] of Object.entries(value))
-    if (key !== 'nodeBindings') visitReferences(item, visit);
-}
-
 /** 不改变图入口，不展开动作树；没有合格候选时直接返回原图和原入口。 */
 export function extractActionGraphMiddleSegments(
   graph: ActionGraphDefinition,
@@ -107,7 +95,9 @@ export function extractActionGraphMiddleSegments(
       pending.push(target);
     };
     if (node.next !== null) register(node.next);
-    visitReferences(node.action, register);
+    visitActionGraphReferences(node.action, reference => {
+      if (reference.$sequence !== null) register(reference.$sequence);
+    });
   }
 
   const actionTokens = new Map<string, number>();
@@ -116,7 +106,9 @@ export function extractActionGraphMiddleSegments(
     const action = graph.nodes[id]!.action;
     if (!SYNCHRONOUS_LEAF_KINDS.has(action.kind)) continue;
     let hasReference = false;
-    visitReferences(action, () => (hasReference = true));
+    visitActionGraphReferences(action, reference => {
+      if (reference.$sequence !== null) hasReference = true;
+    });
     if (hasReference) continue;
     const key = signature(action);
     if (!actionTokens.has(key)) actionTokens.set(key, actionTokens.size);

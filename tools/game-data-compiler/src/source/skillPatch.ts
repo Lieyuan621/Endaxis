@@ -10,6 +10,8 @@ import {
 
 export interface SkillPatchSource {
   readonly element?: DamageElement;
+  readonly iconId?: string;
+  readonly useSkillGroupIcon?: boolean;
   readonly levels: readonly number[];
   readonly blackboard: Readonly<Record<string, readonly number[]>>;
   readonly cooldownSeconds: readonly number[];
@@ -76,7 +78,12 @@ export function parseSkillPatchSource(value: unknown, skillId: string): SkillPat
   if (iconBgTypes.some(value => value !== iconBgTypes[0])) {
     throw new Error(`${rootPath}.iconBgType: skill element differs between levels`);
   }
+  const firstLevel = requireRecord(bundles[levels.indexOf(1)] ?? bundles[0], rootPath);
   return {
+    ...(firstLevel.iconId
+      ? { iconId: requireNonEmptyString(firstLevel.iconId, `${rootPath}.iconId`) }
+      : {}),
+    useSkillGroupIcon: firstLevel.useSkillGroupIcon === true,
     levels,
     element: iconBgTypes[0]!,
     blackboard: Object.fromEntries(allKeys.map(key => [key, rows.map(row => row[key]!)])),

@@ -125,9 +125,9 @@ export class ProjectileCallbackRuntime {
 
   hit(): boolean {
     if (!this.acceptsHit()) return false;
-    for (const target of this.runtimeState.inputTargets ?? [this.runtimeState.inputTarget])
-      this.#startHost(target);
-    return true;
+    const targets = this.runtimeState.inputTargets ?? [this.runtimeState.inputTarget];
+    for (const target of targets) this.#startHost(target);
+    return targets.length > 0;
   }
 
   advance(deltaSeconds: number): void {

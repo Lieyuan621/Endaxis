@@ -12,7 +12,7 @@ export interface StoreCurrentSkillExecuteFrameActionSource {
   readonly outputKey: string;
 }
 
-/** Python 生成器既有严格来源边界：动作本身只携带待结束技能的所有者。 */
+/** 读取原生动作指定的技能持有者。 */
 export function parseInterruptCurrentSkillActionSource(
   value: unknown,
   path: string,

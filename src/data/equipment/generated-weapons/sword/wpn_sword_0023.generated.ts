@@ -53,41 +53,36 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_sword_0023_spelldmgup',
-                  target: 'eventTarget',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_sword_0023_intensityup',
+                      copiedBlackboardAssignments: {
+                        phy_spell_up: 'phy_spell_up',
+                        duration: 'duration',
+                      },
+                    },
+                    {
+                      buffId: 'buff_wpn_sword_0023_spelldmgup',
+                      copiedBlackboardAssignments: {
+                        spell_dmg_up: 'spell_dmg_up',
+                        duration: 'duration',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'inputTarget' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    spell_dmg_up: 'spell_dmg_up',
-                    duration: 'duration',
-                  },
                 },
               },
               next: null,
             },
-            applyBuff_2: {
+            checkCondition_2: {
               action: {
-                kind: 'applyBuff',
-                parameters: {
-                  buffId: 'buff_wpn_sword_0023_intensityup',
-                  target: 'eventTarget',
-                  inheritSourceSkillCastInfo: true,
-                  asChildBuff: true,
-                  copiedBlackboardAssignments: {
-                    phy_spell_up: 'phy_spell_up',
-                    duration: 'duration',
-                  },
-                },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
               },
               next: 'applyBuff_1',
-            },
-            conditional_3: {
-              action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: 'applyBuff_2' },
-              },
-              next: null,
             },
           },
           dataNodes: {
@@ -109,7 +104,7 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'outputHeal',
           priority: 0,
-          sequence: { $sequence: 'conditional_3' },
+          sequence: { $sequence: 'checkCondition_2' },
         },
       ],
       blackboard: {
@@ -120,7 +115,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_sword_0023',
-  iconPath: '/weapons/sword/wpn_sword_0023.webp',
+  icon: 'endaxis:weapons/sword/wpn_sword_0023',
   buffDefinitions: {
     buff_wpn_sword_0023_intensityup: {
       stackingType: 'highPriorityWithMaxStack',
@@ -132,8 +127,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_physical_infliction_up',
-        iconPath: '/icons/icon_battle_physical_infliction_up.webp',
+        icon: 'endaxis:icons/icon_battle_physical_infliction_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,
@@ -174,8 +168,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_spell_up',
-        iconPath: '/icons/icon_battle_spell_up.webp',
+        icon: 'endaxis:icons/icon_battle_spell_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

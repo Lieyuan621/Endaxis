@@ -1,3 +1,4 @@
+import type { AbilitySystemRuntime } from '../abilities/abilitySystemRuntime';
 import type { CombatInputExecution } from '../skills/combatInputExecution';
 import type {
   CombatSkillInput,
@@ -12,9 +13,7 @@ export interface CombatSkillInputPhase extends CombatInputExecution {
   /** 在当前输入阶段查询原生槽位；不执行技能，也不改变运行状态。 */
   resolvePlayerInputSkill(
     input: ScheduledSkillInput,
-  ): ReturnType<
-    import('../abilities/abilitySystemRuntime').AbilitySystemRuntime['resolvePlayerInputSkill']
-  >;
+  ): ReturnType<AbilitySystemRuntime['resolvePlayerInputSkill']>;
   /** 提交输入；自定义程序只能随对应输入一起登记，不能单独写入当前分支。 */
   submit(
     input: ScheduledSkillInput,

@@ -103,7 +103,7 @@ Buff 的叠加方式由战斗运行时执行。结果投影读取实例身份、
 
 `enhanceAndRefresh` 与 `enhanceAndOverwriteDuration` 在增强回调和层数变更前解析并校验本次寿命，非法寿命不会先执行增强。叠层组类型属于切面状态；成员全部回收后仍保留，恢复空组不执行任何实例生命周期，之后施加仍遵守原类型约束。
 
-添加冷却在创建/叠层前登记，`unique` 等策略随后拒绝本次施加也不撤销。`ignoreAddingCooldown` 只跳过已有冷却检查，不跳过登记。此顺序符合 [combat-spec 的原生添加冷却说明](https://github.com/SQwatermark/combat-spec/blob/refactor/operator-completion/docs/buff-adding-cooldown.md)，不能移到“成功添加后”。
+添加冷却在创建/叠层前登记，`unique` 等策略随后拒绝本次施加也不撤销。`ignoreAddingCooldown` 只跳过已有冷却检查，不跳过登记。冷却登记不能移到“成功添加后”。
 
 ## 编译与验证入口
 

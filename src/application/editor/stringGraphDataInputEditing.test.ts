@@ -18,21 +18,30 @@ function fixture(): ActionGraphDefinition {
       first: {
         action: {
           kind: 'applyBuff',
-          parameters: { target: 'caster', buffId: { kind: 'stringNode', nodeId: 'shared' } },
+          parameters: {
+            buffs: [{ buffId: { kind: 'stringNode', nodeId: 'shared' } }],
+            targets: { kind: 'fixed', target: 'caster' },
+          },
         },
         next: 'second',
       },
       second: {
         action: {
           kind: 'applyBuff',
-          parameters: { target: 'caster', buffId: { kind: 'stringNode', nodeId: 'shared' } },
+          parameters: {
+            buffs: [{ buffId: { kind: 'stringNode', nodeId: 'shared' } }],
+            targets: { kind: 'fixed', target: 'caster' },
+          },
         },
         next: 'independent',
       },
       independent: {
         action: {
           kind: 'applyBuff',
-          parameters: { target: 'caster', buffId: { kind: 'stringNode', nodeId: 'independent' } },
+          parameters: {
+            buffs: [{ buffId: { kind: 'stringNode', nodeId: 'independent' } }],
+            targets: { kind: 'fixed', target: 'caster' },
+          },
         },
         next: null,
       },
@@ -47,7 +56,7 @@ function fixture(): ActionGraphDefinition {
 }
 function input(graph: ActionGraphDefinition, id = 'first') {
   return actionTypedInputs(graph.nodes[id]!.action).find(
-    input => input.path.join('.') === 'parameters.buffId',
+    input => input.path.join('.') === 'parameters.buffs.0.buffId',
   )!;
 }
 
@@ -98,7 +107,7 @@ it('string connections retain raw exact literals, shared readers, independent re
   expect(
     setGraphDataInput(connected, 'action', 'first', input(connected), null, '\t\r\n').nodes.first!
       .action,
-  ).toHaveProperty('parameters.buffId', '\t\r\n');
+  ).toHaveProperty('parameters.buffs.0.buffId', '\t\r\n');
 });
 
 it('string data root inputs use the same immutable boundary and reject cycles without losing redo', () => {
@@ -198,7 +207,7 @@ it('workspace save and official project import preserve literal and connected st
           literal: {
             action: {
               kind: 'applyBuff' as const,
-              parameters: { target: 'caster' as const, buffId: 'legacy literal' },
+              parameters: { buffs: [{ buffId: 'legacy literal' }], targets: { kind: 'fixed', target: 'caster' } as const },
             },
             next: 'invoke',
           },
@@ -249,19 +258,25 @@ it('workspace save and official project import preserve literal and connected st
   const reopened =
     parsed.value.definitionLibrary!.operators[request.targetId]!.definition.dodgeSkill!;
   expect(reopened.actionGraph.main.nodes.first!.action).toHaveProperty(
-    'parameters.buffId',
+    'parameters.buffs.0.buffId',
     literal,
   );
-  expect(reopened.actionGraph.main.nodes.second!.action).toHaveProperty('parameters.buffId', {
-    kind: 'stringNode',
-    nodeId: 'shared',
-  });
-  expect(reopened.actionGraph.main.nodes.independent!.action).toHaveProperty('parameters.buffId', {
-    kind: 'stringNode',
-    nodeId: 'independent',
-  });
+  expect(reopened.actionGraph.main.nodes.second!.action).toHaveProperty(
+    'parameters.buffs.0.buffId',
+    {
+      kind: 'stringNode',
+      nodeId: 'shared',
+    },
+  );
+  expect(reopened.actionGraph.main.nodes.independent!.action).toHaveProperty(
+    'parameters.buffs.0.buffId',
+    {
+      kind: 'stringNode',
+      nodeId: 'independent',
+    },
+  );
   expect(reopened.actionGraph.main.nodes.literal!.action).toHaveProperty(
-    'parameters.buffId',
+    'parameters.buffs.0.buffId',
     'legacy literal',
   );
   expect(reopened.actionGraph.macros.local!.graph.dataNodes!.shared!.expression).toBe('macro buff');
@@ -271,7 +286,9 @@ it('workspace save and official project import preserve literal and connected st
   const compilation = createActionGraphCompilation(reopened.actionGraph, 1);
   compilation.compileEntry({ $sequence: 'first' }, 'roundtrip');
   const ids = [...compilation.program.nodes.values()].flatMap(node =>
-    node.action.kind === 'applyBuff' ? [stringInputExpression(node.action.parameters.buffId)] : [],
+    node.action.kind === 'applyBuff'
+      ? [stringInputExpression(node.action.parameters.buffs[0]!.buffId)]
+      : [],
   );
   expect(ids).toContain(literal);
   expect(ids).toContain('macro buff');

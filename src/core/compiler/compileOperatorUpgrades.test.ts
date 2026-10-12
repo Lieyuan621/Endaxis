@@ -2,7 +2,6 @@ import type {
   ActionGraphReference,
   ActionGraphResourceDefinition,
 } from '../../../packages/game-data-contract/src/actionGraph';
-import { createActionGraphCompilation } from './compileActionGraph';
 import { ActionGraphDefinitionRepository } from './actionGraphDefinitionRepository';
 import { actionSteps } from '../../test/actionProgramMatchers';
 import { rootActionSteps } from './actionProgramInspection';
@@ -70,7 +69,12 @@ it('被动能力事件按所属技能等级编译，不在编译期执行或改�
               response: {
                 action: {
                   kind: 'changeResource',
-                  parameters: { resource: 'sp', amount: [3, 7], recipient: 'team' },
+                  parameters: {
+                    resource: 'sp',
+                    amount: [3, 7],
+                    source: { kind: 'fixed' as const, target: 'caster' as const },
+                    targets: { kind: 'fixed' as const, target: 'caster' as const },
+                  },
                 },
                 next: null,
               },
@@ -166,9 +170,10 @@ describe('operator upgrade compilation', () => {
                     action: {
                       kind: 'applyBuff',
                       parameters: {
-                        buffId: 'buff.potential',
-                        target: 'caster',
-                        blackboardAssignments: { add: [0.2, 0.3] },
+                        buffs: [
+                          { buffId: 'buff.potential', blackboardAssignments: { add: [0.2, 0.3] } },
+                        ],
+                        targets: { kind: 'fixed', target: 'caster' },
                       },
                     },
                     next: null,
@@ -190,8 +195,12 @@ describe('operator upgrade compilation', () => {
           {
             kind: 'applyBuff',
             parameters: {
-              buffId: 'buff.potential',
-              blackboardAssignments: { add: { kind: 'constant', value: 0.3 } },
+              buffs: [
+                {
+                  buffId: 'buff.potential',
+                  blackboardAssignments: { add: { kind: 'constant', value: 0.3 } },
+                },
+              ],
             },
           },
         ]),
@@ -478,78 +487,6 @@ describe('operator upgrade compilation', () => {
     );
   });
 
-  it('patches one keyed elemental reaction without mutating the source program', () => {
-    const sequence = {
-      graph: createActionGraphCompilation(
-        {
-          nodes: {
-            reaction: {
-              action: {
-                key: 'combo.electrification',
-                kind: 'applyElementalReaction' as const,
-                parameters: {
-                  reaction: 'electrification' as const,
-                  target: 'enemy' as const,
-                  durationSeconds: 5,
-                  effectiveness: 1,
-                },
-              },
-              next: null,
-            },
-          },
-        },
-        1,
-        'combo-reaction',
-      ).compileAll(),
-      entry: 'reaction',
-      callSite: 'combo-reaction',
-    };
-    const source = [
-      {
-        ...program('combo', 'comboSkill', 'sp', 0),
-        skillType: 'comboSkill' as const,
-        timelineActions: [
-          {
-            startFrame: 24,
-            sequence,
-          },
-        ],
-      },
-    ];
-    const patched = applyOperatorUpgradeSkillPatches(source, [
-      {
-        source: 'potential',
-        index: 0,
-        level: 1,
-        definition: {
-          levels: 1,
-          modifiers: [
-            {
-              kind: 'multiplyEffectDuration',
-              skillKey: 'combo',
-              stepKey: 'combo.electrification',
-              multiplier: 1.75,
-            },
-            {
-              kind: 'setEffectiveness',
-              skillKey: 'combo',
-              stepKey: 'combo.electrification',
-              value: 1.33,
-            },
-          ],
-        },
-      },
-    ]);
-
-    expect(rootActionSteps(patched[0]!.timelineActions[0]!.sequence)[0]).toMatchObject({
-      kind: 'applyElementalReaction',
-      parameters: { durationSeconds: 5, durationMultiplier: 1.75, effectiveness: 1.33 },
-    });
-    expect(rootActionSteps(source[0]!.timelineActions[0]!.sequence)[0]).toMatchObject({
-      parameters: { durationSeconds: 5, effectiveness: 1 },
-    });
-  });
-
   it('resolves an upgrade event listener blackboard at the selected talent level', () => {
     const definition: OperatorUpgradeDefinition = {
       levels: 2,
@@ -604,30 +541,6 @@ describe('operator upgrade compilation', () => {
     expect(patched.map(item => item.initialBlackboard.value)).toEqual([4, 2]);
   });
 
-  it('fails closed when a keyed reaction patch has no unique root reaction target', () => {
-    const source = [program('combo', 'comboSkill', 'sp', 0)];
-    expect(() =>
-      applyOperatorUpgradeSkillPatches(source, [
-        {
-          source: 'potential',
-          index: 0,
-          level: 1,
-          definition: {
-            levels: 1,
-            modifiers: [
-              {
-                kind: 'multiplyEffectDuration',
-                skillKey: 'combo',
-                stepKey: 'missing',
-                multiplier: 1.5,
-              },
-            ],
-          },
-        },
-      ]),
-    ).toThrow("expected exactly one root reaction step 'missing', found 0");
-  });
-
   it('compiles active passive skills with upgrade-level blackboard values', () => {
     const programs = compileOperatorPassivePrograms(
       [
@@ -649,11 +562,15 @@ describe('operator upgrade compilation', () => {
                         action: {
                           kind: 'applyBuff',
                           parameters: {
-                            buffId: 'persistent-buff',
-                            target: 'caster',
-                            blackboardAssignments: {
-                              attackIncrease: { kind: 'valueNode', nodeId: 'test_data_1' },
-                            },
+                            buffs: [
+                              {
+                                buffId: 'persistent-buff',
+                                blackboardAssignments: {
+                                  attackIncrease: { kind: 'valueNode', nodeId: 'test_data_1' },
+                                },
+                              },
+                            ],
+                            targets: { kind: 'fixed', target: 'caster' },
                           },
                         },
                         next: null,
@@ -687,17 +604,21 @@ describe('operator upgrade compilation', () => {
           {
             kind: 'applyBuff',
             parameters: {
-              buffId: 'persistent-buff',
-              target: 'caster',
-              blackboardAssignments: {
-                attackIncrease: expect.objectContaining({
-                  kind: 'valueNode',
-                  node: {
-                    type: 'number',
-                    expression: { kind: 'blackboard', key: 'attackIncrease' },
+              buffs: [
+                {
+                  buffId: 'persistent-buff',
+                  blackboardAssignments: {
+                    attackIncrease: expect.objectContaining({
+                      kind: 'valueNode',
+                      node: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'attackIncrease' },
+                      },
+                    }),
                   },
-                }),
-              },
+                },
+              ],
+              targets: { kind: 'fixed', target: 'caster' },
             },
           },
         ]),
@@ -821,7 +742,12 @@ it('compiles graph upgrade hosts with shared nodes, distinct entries and level-s
         entry: {
           action: {
             kind: 'changeResource',
-            parameters: { resource: 'sp', amount: [3, 7], recipient: 'team' },
+            parameters: {
+              resource: 'sp',
+              amount: [3, 7],
+              source: { kind: 'fixed' as const, target: 'caster' as const },
+              targets: { kind: 'fixed' as const, target: 'caster' as const },
+            },
           },
           next: null,
         },
@@ -899,9 +825,13 @@ it('direct talent Buff installations resolve level values without an operator gr
     {
       kind: 'applyBuff',
       parameters: {
-        buffId: 'native-buff',
-        target: 'caster',
-        blackboardAssignments: { power: { kind: 'constant', value: 7 } },
+        buffs: [
+          {
+            buffId: 'native-buff',
+            blackboardAssignments: { power: { kind: 'constant', value: 7 } },
+          },
+        ],
+        targets: { kind: 'fixed', target: 'caster' },
       },
     },
   ]);

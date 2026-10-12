@@ -1,3 +1,4 @@
+import { imageRefFromPath } from '../src/compiler/publication/imageResources.ts';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { isAbsolute, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -34,7 +35,7 @@ interface EnemySelectionCatalog {
 interface EnemyDefinitionSource {
   readonly id: string;
   readonly gameId: string;
-  readonly iconPath?: string;
+  readonly icon?: string;
   readonly tier: (typeof TIER_BY_DISPLAY_TYPE)[keyof typeof TIER_BY_DISPLAY_TYPE];
   readonly rank: 'mob' | 'boss' | 'elite';
   readonly levelHp: readonly { readonly level: number; readonly hp: number }[];
@@ -166,7 +167,7 @@ export async function planEnemyDefinitions(
     return {
       id: gameId.replaceAll('_', '-'),
       gameId,
-      ...(iconAssetPath === undefined ? {} : { iconPath: `/enemies/${gameId}.webp` }),
+      ...(iconAssetPath === undefined ? {} : { icon: imageRefFromPath(`/enemies/${gameId}.webp`) }),
       tier,
       rank,
       levelHp: levelHp.map(({ level, hp }) => ({ level, hp })),
@@ -204,7 +205,7 @@ export async function planEnemyDefinitions(
 
   const hiddenSelectionIds = new Set(selection.hiddenEnemyIds);
   for (const definition of definitions) {
-    if (!hiddenSelectionIds.has(definition.id) && !definition.iconPath) {
+    if (!hiddenSelectionIds.has(definition.id) && !definition.icon) {
       throw new Error(`${definition.gameId}: selectable enemy has no icon`);
     }
   }
@@ -304,11 +305,17 @@ async function readEnemySelectionCatalog(
     if (!/^[a-z][A-Za-z0-9]*$/.test(id) || categoryIds.includes(id))
       throw new Error(`${label}.id: invalid or duplicate category ${id}`);
     categoryIds.push(id);
-    for (const [enemyIndex, rawId] of requireArray(category.enemyIds, `${label}.enemyIds`).entries()) {
+    for (const [enemyIndex, rawId] of requireArray(
+      category.enemyIds,
+      `${label}.enemyIds`,
+    ).entries()) {
       categoryByEnemyId[claim(rawId, `${label}.enemyIds[${enemyIndex}]`)] = id;
     }
   });
-  for (const [index, rawId] of requireArray(source.uncategorizedEnemyIds, `${path}.uncategorizedEnemyIds`).entries()) {
+  for (const [index, rawId] of requireArray(
+    source.uncategorizedEnemyIds,
+    `${path}.uncategorizedEnemyIds`,
+  ).entries()) {
     claim(rawId, `${path}.uncategorizedEnemyIds[${index}]`);
   }
   const hiddenEnemyIds = requireArray(source.hiddenEnemyIds, `${path}.hiddenEnemyIds`).map(
@@ -418,7 +425,14 @@ function parseArguments(values: readonly string[]): Arguments {
   const outputDirectory = resolve(parsed.get('--output') ?? 'src/data/enemies/generated');
   if (!isAbsolute(tablesDirectory) || !isAbsolute(rankEvidence))
     throw new Error('--tables and --rank-evidence are required');
-  return { tablesDirectory, rankEvidence, runtimeDefaults, selectionCategories, outputDirectory, check };
+  return {
+    tablesDirectory,
+    rankEvidence,
+    runtimeDefaults,
+    selectionCategories,
+    outputDirectory,
+    check,
+  };
 }
 
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {

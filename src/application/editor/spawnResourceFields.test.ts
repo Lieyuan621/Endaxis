@@ -43,7 +43,12 @@ const field = actionNodeSchemas.spawnAbilityEntity.fields.find(
 )!;
 const action = (definition: unknown): any => ({
   kind: 'spawnAbilityEntity',
-  parameters: { abilityEntityId: 'inline', dieWhenSourceDies: false, definition },
+  parameters: {
+    bornAt: { kind: 'owner' },
+    abilityEntityId: 'inline',
+    dieWhenSourceDies: false,
+    definition,
+  },
 });
 function fixture() {
   const graph: ActionGraphDefinition = {
@@ -185,7 +190,7 @@ it('discovers nested spawns and rejects cycles, excessive depth, nodes and empty
       nodes: Object.fromEntries(
         Array.from({ length: 16_385 }, (_, i) => [
           String(i),
-          { action: { kind: 'finishTimeline', parameters: {} }, next: null },
+          { action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} }, next: null },
         ]),
       ),
     },
@@ -471,6 +476,7 @@ it('matches real runtime assignments precedence and fallback, excluding template
     const runtime = new LogicalAbilityEntityRuntime({});
     const executor = new AbilityEntityOperationExecutor('operator', runtime, {
       execute: () => false,
+      queryTargets: () => [{ kind: 'operator' as const, operatorId: 'owner' }],
       evaluate: () => false,
     });
     executor.execute(a, { blackboard: new ActionBlackboard({ duration: 8 }) });
@@ -518,6 +524,7 @@ it('runtime inheritance copies direct snapshot values only, even when an entity 
     const runtime = new LogicalAbilityEntityRuntime({});
     const executor = new AbilityEntityOperationExecutor('owner', runtime, {
       execute: () => false,
+      queryTargets: () => [{ kind: 'operator' as const, operatorId: 'owner' }],
       evaluate: () => false,
     });
     executor.execute(

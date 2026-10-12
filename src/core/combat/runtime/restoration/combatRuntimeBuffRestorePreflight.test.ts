@@ -11,10 +11,7 @@ import {
 import type { ActionGraphExecutionState, ActionGraphNodeData } from '../../state/actionState';
 import type { CombatStateGraph } from '../../state/combatState';
 import { createTimedMarkerState } from '../../state/environmentState';
-import {
-  createActionBlackboardState,
-  createAbilityEventState,
-} from '../../state/foundationState';
+import { createActionBlackboardState } from '../../state/foundationState';
 import {
   createBuffContainerState,
   createBuffInstanceState,
@@ -100,7 +97,11 @@ function createGraph(heldInstanceId: number): CombatStateGraph {
   );
 
   return {
-    shared: new CombatSharedRuntime({ resources, operatorOrder: ['operator'] }).runtimeState,
+    shared: new CombatSharedRuntime({
+      comboSkillPendingInterval: 5,
+      resources,
+      operatorOrder: ['operator'],
+    }).runtimeState,
     inputs: {
       initialInputPending: false,
       castParameters: new Map(),
@@ -122,7 +123,6 @@ function createGraph(heldInstanceId: number): CombatStateGraph {
     environment: null,
     events: {
       native: null,
-      semantic: createAbilityEventState<'airborneOutput' | 'knockDownOutput'>(),
     },
     operators: new Map([
       [
@@ -138,13 +138,12 @@ function createGraph(heldInstanceId: number): CombatStateGraph {
           upgradeEvents: null,
           comboConditions: new Map(),
           cooldowns: new Map(),
-          statuses: null,
           timedMarkers: createTimedMarkerState(),
           buffs,
         },
       ],
     ]),
-    enemy: { statuses: null, timedMarkers: createTimedMarkerState(), buffs: null },
+    enemy: { timedMarkers: createTimedMarkerState(), buffs: null },
     instances: {
       abilityEntities: { instances: new Map(), deadSources: [] },
       projectiles: createProjectileLifecycleState(),

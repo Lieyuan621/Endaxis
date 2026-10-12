@@ -21,22 +21,6 @@ const main = { kind: 'main' } as const;
 const macro = { kind: 'macro', macroId: 'shared' } as const;
 const hit = { kind: 'dealStagger', parameters: { value: 2 } } as const;
 
-it('结束时间线没有继续出口，也不能通过编辑命令接出后续动作', () => {
-  const skill = fixture();
-  const node: ActionGraphNode = { action: { kind: 'finishTimeline', parameters: {} }, next: null };
-  const changed = {
-    ...skill,
-    actionGraph: {
-      ...skill.actionGraph,
-      main: { ...skill.actionGraph.main, nodes: { ...skill.actionGraph.main.nodes, finish: node } },
-    },
-  };
-  expect(listGraphPorts(node)).toEqual([]);
-  expect(() => setGraphConnection(changed, main, 'finish', ['next'], 'a')).toThrow(
-    'has no control port',
-  );
-});
-
 function fixture(): SkillDefinition {
   return skillFixture({
     key: 'editable',

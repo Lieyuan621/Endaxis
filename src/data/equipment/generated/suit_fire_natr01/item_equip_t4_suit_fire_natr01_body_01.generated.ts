@@ -4,7 +4,7 @@ import type { GearDefinition } from '../../../../core/game-data/equipmentDefinit
 const definition = {
   slug: 'item_equip_t4_suit_fire_natr01_body_01',
   assetSlug: 'item_equip_t4_suit_fire_natr01_body_01',
-  iconPath: '/equipment/fire_natr01/item_equip_t4_suit_fire_natr01_body_01.webp',
+  icon: 'endaxis:equipment/fire_natr01/item_equip_t4_suit_fire_natr01_body_01',
   slotType: 'armor',
   levelRequirement: 70,
   baseDefense: 56,

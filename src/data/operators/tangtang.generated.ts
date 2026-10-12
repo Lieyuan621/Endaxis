@@ -15,6 +15,8 @@ export const tangtangChr_0027_tangtang_attack1ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.0333333350718021,
             hit: { finishOnHit: true },
@@ -32,7 +34,7 @@ export const tangtangChr_0027_tangtang_attack1ActionGraph = {
                   maxChargeTime: 1,
                   cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                 },
-                blackboard: { atb: 0, atk_scale: 0.1 },
+                blackboard: { atk_scale: 0.1 },
                 scheduledSequences: [
                   { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_1' } },
                 ],
@@ -66,20 +68,7 @@ export const tangtangChr_0027_tangtang_attack1ActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_2: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_1' },
-        },
-        next: null,
-      },
-      reachSkillOperableBoundary_3: {
+      reachSkillOperableBoundary_2: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0027_tangtang_attack2'] },
@@ -95,7 +84,6 @@ export const tangtangChr_0027_tangtang_attack1: SkillDefinition = {
   key: 'chr_0027_tangtang_attack1',
   element: 'cryo',
   blackboard: {
-    atb: 0,
     atk_scale: [0.23, 0.25, 0.27, 0.29, 0.32, 0.34, 0.36, 0.39, 0.41, 0.44, 0.47, 0.51],
   },
   timelineBlockFrames: 7,
@@ -115,9 +103,10 @@ export const tangtangChr_0027_tangtang_attack1: SkillDefinition = {
   },
   costFrame: 3,
   scheduledSequences: [
-    { startFrame: 3, endFrame: 3, sequence: { $sequence: 'withActionBlackboardScope_2' } },
-    { startFrame: 7, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
+    { startFrame: 3, endFrame: 3, sequence: { $sequence: 'launchProjectile_1' } },
+    { startFrame: 7, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_2' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0027_tangtang_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
@@ -132,6 +121,8 @@ export const tangtangChr_0027_tangtang_attack2ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.0333333350718021,
             hit: { finishOnHit: true },
@@ -149,7 +140,7 @@ export const tangtangChr_0027_tangtang_attack2ActionGraph = {
                   maxChargeTime: 1,
                   cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                 },
-                blackboard: { atb: 0, atk_scale_1: 0.09 },
+                blackboard: { atk_scale_1: 0.09 },
                 scheduledSequences: [
                   { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_1' } },
                 ],
@@ -183,23 +174,12 @@ export const tangtangChr_0027_tangtang_attack2ActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_2: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_1' },
-        },
-        next: null,
-      },
-      launchProjectile_3: {
+      launchProjectile_2: {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.0333333350718021,
             hit: { finishOnHit: true },
@@ -219,45 +199,52 @@ export const tangtangChr_0027_tangtang_attack2ActionGraph = {
                 },
                 blackboard: { atb: 0, atk_scale_2: 0.09 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_opt2' } },
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
                 ],
                 actionGraph: {
                   main: {
                     nodes: {
-                      changeResourceByActionValue_1: {
+                      changeResource_3: {
                         action: {
-                          kind: 'changeResourceByActionValue',
+                          kind: 'changeResource',
                           parameters: {
                             resource: 'sp',
                             amount: { kind: 'valueNode', nodeId: 'data_1' },
                             coefficient: { kind: 'constant', value: 0.5 },
-                            recipient: 'team',
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
+                            onlyMainOperator: true,
                             spGainKind: 'gain',
                             spGainSource: 'normalAttack',
                           },
                         },
                         next: null,
                       },
-                      conditional_2: {
+                      checkCondition_1: {
                         action: {
-                          kind: 'conditional',
+                          kind: 'checkCondition',
                           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                          whenTrue: { $sequence: 'changeResourceByActionValue_1' },
                         },
                         next: null,
                       },
-                      conditional_opt1: {
+                      checkCondition_2: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_3' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_2' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+                        },
+                        next: 'checkCondition_1',
+                      },
+                      ifElse_4: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_2' },
+                          whenTrue: { $sequence: 'changeResource_3' },
+                          whenFalse: { $sequence: null },
                         },
                         next: null,
                       },
-                      dealDamage_opt2: {
+                      dealDamage_5: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
@@ -266,12 +253,22 @@ export const tangtangChr_0027_tangtang_attack2ActionGraph = {
                             tags: ['normalAttack'],
                           },
                         },
-                        next: 'conditional_opt1',
+                        next: 'ifElse_4',
                       },
                     },
                     dataNodes: {
                       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-                      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_2: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityCountCompare',
+                          target: { kind: 'fixed', target: 'enemy' },
+                          containsHittableTarget: false,
+                          excludeDeadEntity: false,
+                          operator: 'greaterOrEqual',
+                          value: 1,
+                        },
+                      },
                       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
                       data_4: {
                         type: 'number',
@@ -287,20 +284,7 @@ export const tangtangChr_0027_tangtang_attack2ActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_4: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_3' },
-        },
-        next: null,
-      },
-      reachSkillOperableBoundary_5: {
+      reachSkillOperableBoundary_3: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0027_tangtang_attack3'] },
@@ -319,7 +303,6 @@ export const tangtangChr_0027_tangtang_attack2: SkillDefinition = {
     atb: 0,
     atk_scale_1: [0.1, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.21, 0.23],
     atk_scale_2: [0.15, 0.17, 0.18, 0.2, 0.21, 0.23, 0.24, 0.26, 0.27, 0.29, 0.31, 0.34],
-    display_atk_scale: [0.25, 0.28, 0.3, 0.33, 0.35, 0.38, 0.4, 0.43, 0.45, 0.48, 0.52, 0.56],
   },
   timelineBlockFrames: 18,
   naturalDurationFrames: 117,
@@ -338,10 +321,11 @@ export const tangtangChr_0027_tangtang_attack2: SkillDefinition = {
   },
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 6, endFrame: 6, sequence: { $sequence: 'withActionBlackboardScope_2' } },
-    { startFrame: 10, endFrame: 10, sequence: { $sequence: 'withActionBlackboardScope_4' } },
-    { startFrame: 18, endFrame: 39, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
+    { startFrame: 6, endFrame: 6, sequence: { $sequence: 'launchProjectile_1' } },
+    { startFrame: 10, endFrame: 10, sequence: { $sequence: 'launchProjectile_2' } },
+    { startFrame: 18, endFrame: 39, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0027_tangtang_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
@@ -352,7 +336,14 @@ export const tangtangChr_0027_tangtang_attack2: SkillDefinition = {
 export const tangtangChr_0027_tangtang_attack3ActionGraph = {
   main: {
     nodes: {
-      dealDamage_1: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+        },
+        next: null,
+      },
+      dealDamage_2: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -363,25 +354,29 @@ export const tangtangChr_0027_tangtang_attack3ActionGraph = {
         },
         next: null,
       },
-      repeatEachTick_2: {
+      repeatEachTick_3: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'fixed', target: 'enemy' },
               executeEachFrame: false,
               triggerIntervalSeconds: 0.06,
               maxCountPerTarget: -1,
               targetTriggerIntervalSeconds: -1,
             },
           },
-          body: { $sequence: 'dealDamage_1' },
+          body: { $sequence: 'dealDamage_2' },
         },
         next: null,
       },
-      launchProjectile_3: {
+      launchProjectile_4: {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.0333333350718021,
             hit: { finishOnHit: false },
@@ -399,7 +394,7 @@ export const tangtangChr_0027_tangtang_attack3ActionGraph = {
                   maxChargeTime: 1,
                   cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                 },
-                blackboard: { atb: 0, atk_scale_2: 0 },
+                blackboard: { atk_scale_2: 0 },
                 scheduledSequences: [
                   { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_1' } },
                 ],
@@ -433,20 +428,7 @@ export const tangtangChr_0027_tangtang_attack3ActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_4: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_3' },
-        },
-        next: null,
-      },
-      reachSkillOperableBoundary_11: {
+      reachSkillOperableBoundary_8: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0027_tangtang_attack4'] },
@@ -465,10 +447,8 @@ export const tangtangChr_0027_tangtang_attack3: SkillDefinition = {
   key: 'chr_0027_tangtang_attack3',
   element: 'cryo',
   blackboard: {
-    atb: 0,
     atk_scale_1: [0.05, 0.06, 0.06, 0.07, 0.07, 0.08, 0.08, 0.09, 0.09, 0.1, 0.1, 0.11],
     atk_scale_2: [0.03, 0.03, 0.03, 0.03, 0.04, 0.04, 0.04, 0.04, 0.05, 0.05, 0.05, 0.06],
-    display_atk_scale: [0.35, 0.39, 0.42, 0.46, 0.49, 0.53, 0.56, 0.6, 0.63, 0.67, 0.73, 0.79],
   },
   timelineBlockFrames: 26,
   naturalDurationFrames: 115,
@@ -487,13 +467,15 @@ export const tangtangChr_0027_tangtang_attack3: SkillDefinition = {
   },
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 5, endFrame: 13, sequence: { $sequence: 'repeatEachTick_2' } },
-    { startFrame: 17, endFrame: 17, sequence: { $sequence: 'withActionBlackboardScope_4' } },
-    { startFrame: 17, endFrame: 17, sequence: { $sequence: 'withActionBlackboardScope_4' } },
-    { startFrame: 18, endFrame: 18, sequence: { $sequence: 'withActionBlackboardScope_4' } },
-    { startFrame: 18, endFrame: 18, sequence: { $sequence: 'withActionBlackboardScope_4' } },
-    { startFrame: 26, endFrame: 43, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
+    { startFrame: 5, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 5, endFrame: 13, sequence: { $sequence: 'repeatEachTick_3' } },
+    { startFrame: 17, endFrame: 17, sequence: { $sequence: 'launchProjectile_4' } },
+    { startFrame: 17, endFrame: 17, sequence: { $sequence: 'launchProjectile_4' } },
+    { startFrame: 18, endFrame: 18, sequence: { $sequence: 'launchProjectile_4' } },
+    { startFrame: 18, endFrame: 18, sequence: { $sequence: 'launchProjectile_4' } },
+    { startFrame: 26, endFrame: 43, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0027_tangtang_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
@@ -504,7 +486,7 @@ export const tangtangChr_0027_tangtang_attack3: SkillDefinition = {
 export const tangtangChr_0027_tangtang_attack4ActionGraph = {
   main: {
     nodes: {
-      dealDamage_1: {
+      dealDamage_4: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -515,7 +497,7 @@ export const tangtangChr_0027_tangtang_attack4ActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_3: {
+      startTimeDilation_7: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -530,15 +512,24 @@ export const tangtangChr_0027_tangtang_attack4ActionGraph = {
         },
         next: null,
       },
-      conditional_4: {
+      checkCondition_6: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
-          whenTrue: { $sequence: 'startTimeDilation_3' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: null,
       },
-      dealDamage_5: {
+      ifElse_8: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_6' },
+          whenTrue: { $sequence: 'startTimeDilation_7' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_9: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -547,9 +538,9 @@ export const tangtangChr_0027_tangtang_attack4ActionGraph = {
             tags: ['normalAttack'],
           },
         },
-        next: 'conditional_4',
+        next: 'ifElse_8',
       },
-      reachSkillOperableBoundary_6: {
+      reachSkillOperableBoundary_10: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0027_tangtang_attack5'] },
@@ -570,10 +561,8 @@ export const tangtangChr_0027_tangtang_attack4: SkillDefinition = {
   key: 'chr_0027_tangtang_attack4',
   element: 'cryo',
   blackboard: {
-    atb: 0,
     atk_scale_1: [0.08, 0.09, 0.1, 0.1, 0.11, 0.12, 0.13, 0.14, 0.14, 0.15, 0.17, 0.18],
     atk_scale_2: [0.21, 0.23, 0.25, 0.27, 0.29, 0.31, 0.33, 0.35, 0.37, 0.39, 0.43, 0.46],
-    display_atk_scale: [0.37, 0.4, 0.44, 0.47, 0.51, 0.55, 0.58, 0.62, 0.66, 0.7, 0.76, 0.82],
   },
   timelineBlockFrames: 24,
   naturalDurationFrames: 143,
@@ -592,11 +581,12 @@ export const tangtangChr_0027_tangtang_attack4: SkillDefinition = {
   },
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 6, endFrame: 8, sequence: { $sequence: 'dealDamage_1' } },
-    { startFrame: 10, endFrame: 12, sequence: { $sequence: 'dealDamage_1' } },
-    { startFrame: 23, endFrame: 28, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 24, endFrame: 50, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
+    { startFrame: 6, endFrame: 8, sequence: { $sequence: 'dealDamage_4' } },
+    { startFrame: 10, endFrame: 12, sequence: { $sequence: 'dealDamage_4' } },
+    { startFrame: 23, endFrame: 28, sequence: { $sequence: 'dealDamage_9' } },
+    { startFrame: 24, endFrame: 50, sequence: { $sequence: 'reachSkillOperableBoundary_10' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0027_tangtang_attack5',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
@@ -611,6 +601,8 @@ export const tangtangChr_0027_tangtang_attack5ActionGraph = {
         action: {
           kind: 'launchProjectile',
           parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: { EntityBB_atk05_cnt: 0 },
             finish: 'firstTickReach',
             recycleDelaySeconds: 0.0333333350718021,
             hit: { finishOnHit: false },
@@ -628,14 +620,14 @@ export const tangtangChr_0027_tangtang_attack5ActionGraph = {
                   maxChargeTime: 1,
                   cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                 },
-                blackboard: { atb: 0, atk_scale: 0, cnt: 0, poise: 0 },
+                blackboard: { atb: 0, atk_scale: 0, poise: 0 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_opt2' } },
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_8' } },
                 ],
                 actionGraph: {
                   main: {
                     nodes: {
-                      modifyActionValue_1: {
+                      modifyActionValue_3: {
                         action: {
                           kind: 'modifyActionValue',
                           parameters: {
@@ -646,56 +638,69 @@ export const tangtangChr_0027_tangtang_attack5ActionGraph = {
                         },
                         next: null,
                       },
-                      changeResourceByActionValue_2: {
+                      changeResource_4: {
                         action: {
-                          kind: 'changeResourceByActionValue',
+                          kind: 'changeResource',
                           parameters: {
                             resource: 'sp',
                             amount: { kind: 'valueNode', nodeId: 'data_1' },
                             coefficient: { kind: 'constant', value: 1 },
-                            recipient: 'team',
+                            source: { kind: 'source' },
+                            targets: { kind: 'source' },
                             spGainKind: 'gain',
                             spGainSource: 'normalAttack',
                           },
                         },
-                        next: 'modifyActionValue_1',
+                        next: 'modifyActionValue_3',
                       },
-                      conditional_3: {
+                      checkCondition_5: {
                         action: {
-                          kind: 'conditional',
+                          kind: 'checkCondition',
                           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                          whenTrue: { $sequence: 'changeResourceByActionValue_2' },
                         },
-                        next: null,
+                        next: 'changeResource_4',
                       },
-                      dealStagger_4: {
+                      dealStagger_6: {
                         action: {
                           kind: 'dealStagger',
                           parameters: { value: { kind: 'valueNode', nodeId: 'data_4' } },
                         },
-                        next: 'conditional_3',
+                        next: 'checkCondition_5',
                       },
-                      conditional_opt1: {
+                      checkCondition_1: {
                         action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_5' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'dealStagger_4' },
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
                         },
                         next: null,
                       },
-                      dealDamage_opt2: {
+                      checkCondition_2: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+                        },
+                        next: 'checkCondition_1',
+                      },
+                      ifElse_7: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { $sequence: 'checkCondition_2' },
+                          whenTrue: { $sequence: 'dealStagger_6' },
+                          whenFalse: { $sequence: null },
+                        },
+                        next: null,
+                      },
+                      dealDamage_8: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_6' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_7' },
                             tags: ['normalAttack', 'normalAttackLastCombo'],
                           },
                         },
-                        next: 'conditional_opt1',
+                        next: 'ifElse_7',
                       },
                     },
                     dataNodes: {
@@ -714,8 +719,19 @@ export const tangtangChr_0027_tangtang_attack5ActionGraph = {
                         },
                       },
                       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-                      data_5: { type: 'boolean', expression: { kind: 'casterControlled' } },
-                      data_6: {
+                      data_5: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityCountCompare',
+                          target: { kind: 'fixed', target: 'enemy' },
+                          containsHittableTarget: false,
+                          excludeDeadEntity: false,
+                          operator: 'greaterOrEqual',
+                          value: 1,
+                        },
+                      },
+                      data_6: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_7: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -729,20 +745,7 @@ export const tangtangChr_0027_tangtang_attack5ActionGraph = {
         },
         next: null,
       },
-      withActionBlackboardScope_2: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: { EntityBB_atk05_cnt: 0 },
-          },
-          body: { $sequence: 'launchProjectile_1' },
-        },
-        next: null,
-      },
-      reachSkillOperableBoundary_3: {
+      reachSkillOperableBoundary_2: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0027_tangtang_attack1'] },
@@ -760,7 +763,6 @@ export const tangtangChr_0027_tangtang_attack5: SkillDefinition = {
   blackboard: {
     atb: 18,
     atk_scale: [0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.96, 1.04, 1.13],
-    cnt: 0,
     poise: 18,
   },
   timelineBlockFrames: 36,
@@ -780,9 +782,10 @@ export const tangtangChr_0027_tangtang_attack5: SkillDefinition = {
   },
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 22, endFrame: 22, sequence: { $sequence: 'withActionBlackboardScope_2' } },
-    { startFrame: 36, endFrame: 77, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
+    { startFrame: 22, endFrame: 22, sequence: { $sequence: 'launchProjectile_1' } },
+    { startFrame: 36, endFrame: 77, sequence: { $sequence: 'reachSkillOperableBoundary_2' } },
   ],
+  defaultTarget: 'enemy',
   timelineContinuationSkillId: 'chr_0027_tangtang_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
@@ -793,7 +796,65 @@ export const tangtangChr_0027_tangtang_attack5: SkillDefinition = {
 export const tangtangChr_0027_tangtang_power_attackActionGraph = {
   main: {
     nodes: {
-      startTimeDilation_1: {
+      checkCondition_1: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+      ifElse_3: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_1' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      checkCondition_2: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: null,
+      },
+      ifElse_5: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_2' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: 'ifElse_3' },
+        },
+        next: null,
+      },
+      checkCondition_4: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+        },
+        next: null,
+      },
+      ifElse_7: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_4' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: 'ifElse_5' },
+        },
+        next: null,
+      },
+      checkCondition_6: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+        },
+        next: null,
+      },
+      startTimeDilation_9: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -848,20 +909,47 @@ export const tangtangChr_0027_tangtang_power_attackActionGraph = {
         },
         next: null,
       },
-      dealDamage_2: {
+      checkCondition_8: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+        },
+        next: null,
+      },
+      ifElse_10: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_8' },
+          whenTrue: { $sequence: 'startTimeDilation_9' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      ifElse_11: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_6' },
+          whenTrue: { $sequence: 'ifElse_7' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'ifElse_10',
+      },
+      dealDamage_12: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_6' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.3,
             tags: ['normalAttack', 'powerAttack'],
           },
         },
-        next: 'startTimeDilation_1',
+        next: 'ifElse_11',
       },
-      startTimeDilation_3: {
+      startTimeDilation_19: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -874,43 +962,45 @@ export const tangtangChr_0027_tangtang_power_attackActionGraph = {
             targets: ['caster'],
           },
         },
-        next: null,
+        next: 'ifElse_7',
       },
-      dealDamage_4: {
+      dealDamage_20: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_6' },
             calculation: 'breakingAttack',
             calculationMultiplier: 0.7,
             tags: ['normalAttack', 'powerAttack'],
           },
         },
-        next: 'startTimeDilation_3',
+        next: 'startTimeDilation_19',
       },
-      gainFinisherSp_5: {
+      gainFinisherSp_21: {
         action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
-        next: 'dealDamage_4',
+        next: 'dealDamage_20',
       },
-      applyBuff_6: {
+      applyBuff_22: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_full_immune_medium',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_common_full_immune_medium' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
         },
         next: null,
       },
-      applyBuff_7: {
+      applyBuff_23: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_power_attack_disable_cast_skill',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_common_power_attack_disable_cast_skill' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
@@ -919,15 +1009,28 @@ export const tangtangChr_0027_tangtang_power_attackActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_1: { type: 'boolean', expression: { kind: 'enemyRankIn', ranks: ['elite', 'boss'] } },
+      data_2: { type: 'boolean', expression: { kind: 'enemyRankIn', ranks: ['mob'] } },
+      data_3: { type: 'boolean', expression: { kind: 'enemyRankIn', ranks: [] } },
+      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_5: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const tangtangChr_0027_tangtang_power_attack: SkillDefinition = {
-  actionGraph: tangtangChr_0027_tangtang_power_attackActionGraph,
   key: 'chr_0027_tangtang_power_attack',
   element: 'cryo',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -937,20 +1040,22 @@ export const tangtangChr_0027_tangtang_power_attack: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 4,
   scheduledSequences: [
-    { startFrame: 9, endFrame: 9, sequence: { $sequence: 'dealDamage_2' } },
-    { startFrame: 21, endFrame: 21, sequence: { $sequence: 'gainFinisherSp_5' } },
-    { startFrame: 0, endFrame: 47, sequence: { $sequence: 'applyBuff_6' } },
-    { startFrame: 0, endFrame: 33, sequence: { $sequence: 'applyBuff_7' } },
+    { startFrame: 9, endFrame: 9, sequence: { $sequence: 'dealDamage_12' } },
+    { startFrame: 21, endFrame: 21, sequence: { $sequence: 'gainFinisherSp_21' } },
+    { startFrame: 0, endFrame: 47, sequence: { $sequence: 'applyBuff_22' } },
+    { startFrame: 0, endFrame: 33, sequence: { $sequence: 'applyBuff_23' } },
   ],
+  defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
+  actionGraph: tangtangChr_0027_tangtang_power_attackActionGraph,
 };
 
 export const tangtangChr_0027_tangtang_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      dealDamage_2: {
+      dealDamage_3: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -961,11 +1066,11 @@ export const tangtangChr_0027_tangtang_plunging_attack_endActionGraph = {
         },
         next: null,
       },
-      repeatEachTick_3: {
+      repeatEachTick_4: {
         action: {
           kind: 'repeatEachTick',
           parameters: { nativeTickInterval: { executeEachFrame: false, intervalSeconds: 0.07 } },
-          body: { $sequence: 'dealDamage_2' },
+          body: { $sequence: 'dealDamage_3' },
         },
         next: null,
       },
@@ -976,7 +1081,6 @@ export const tangtangChr_0027_tangtang_plunging_attack_endActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const tangtangChr_0027_tangtang_plunging_attack_end: SkillDefinition = {
-  actionGraph: tangtangChr_0027_tangtang_plunging_attack_endActionGraph,
   key: 'chr_0027_tangtang_plunging_attack_end',
   element: 'cryo',
   blackboard: { atk_scale: [0.2, 0.22, 0.24, 0.26, 0.28, 0.3, 0.32, 0.34, 0.36, 0.39, 0.42, 0.45] },
@@ -986,25 +1090,28 @@ export const tangtangChr_0027_tangtang_plunging_attack_end: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 3, endFrame: 11, sequence: { $sequence: 'repeatEachTick_3' } },
+    { startFrame: 3, endFrame: 11, sequence: { $sequence: 'repeatEachTick_4' } },
   ],
+  defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
+  actionGraph: tangtangChr_0027_tangtang_plunging_attack_endActionGraph,
 };
 
 export const tangtangChr_0027_tangtang_normal_skillActionGraph = {
   main: {
     nodes: {
-      findCharacterTeamTargets_1: {
+      applyBuff_2: {
         action: {
-          kind: 'findCharacterTeamTargets',
-          parameters: { saveToContextKey: 'mainchar', selection: { kind: 'controlledOperator' } },
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_common_obtain_ultimate_sp' }],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
         },
-        next: null,
-      },
-      gainSquadUltimateEnergyFromSkillCost_2: {
-        action: { kind: 'gainSquadUltimateEnergyFromSkillCost', parameters: { coefficient: 1 } },
         next: null,
       },
       startTimeDilation_3: {
@@ -1023,11 +1130,7 @@ export const tangtangChr_0027_tangtang_normal_skillActionGraph = {
         next: null,
       },
       once_4: {
-        action: {
-          kind: 'once',
-          parameters: {},
-          body: { $sequence: 'gainSquadUltimateEnergyFromSkillCost_2' },
-        },
+        action: { kind: 'once', parameters: {}, body: { $sequence: 'applyBuff_2' } },
         next: 'startTimeDilation_3',
       },
       dealDamage_5: {
@@ -1048,6 +1151,8 @@ export const tangtangChr_0027_tangtang_normal_skillActionGraph = {
           kind: 'repeatEachTick',
           parameters: {
             nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'fixed', target: 'enemy' },
               executeEachFrame: true,
               triggerIntervalSeconds: 0.033,
               maxCountPerTarget: 5,
@@ -1058,29 +1163,23 @@ export const tangtangChr_0027_tangtang_normal_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_14: {
+      applyBuff_38: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0027_tangtang_normalskill_abilityentity_1',
-            target: 'currentAbilityEntity',
+            buffs: [{ buffId: 'buff_chr_0027_tangtang_normalskill_abilityentity_1' }],
+            targets: { kind: 'context', key: 'normalskill_watermove_1' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
         },
         next: null,
       },
-      forEachContextTarget_19: {
-        action: {
-          kind: 'forEachContextTarget',
-          parameters: { contextKey: 'normalskill_watermove_1' },
-          body: { $sequence: 'applyBuff_14' },
-        },
-        next: null,
-      },
-      spawnAbilityEntity_20: {
+      spawnAbilityEntity_39: {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
+            bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_move',
             childSkillId: 'chr_0027_tangtang_normal_skill_abilityentitymove',
             inheritActionBlackboard: true,
@@ -1089,82 +1188,115 @@ export const tangtangChr_0027_tangtang_normal_skillActionGraph = {
             saveToContextKey: 'normalskill_watermove_1',
           },
         },
-        next: 'forEachContextTarget_19',
+        next: 'applyBuff_38',
       },
-      applyBuff_7: {
+      applyBuff_25: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0027_tangtang_water_wake',
-            target: 'currentAbilityEntity',
+            buffs: [{ buffId: 'buff_chr_0027_tangtang_water_wake' }],
+            targets: { kind: 'context', key: 'water' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
         },
         next: null,
       },
-      forEachContextTarget_8: {
-        action: {
-          kind: 'forEachContextTarget',
-          parameters: { contextKey: 'water' },
-          body: { $sequence: 'applyBuff_7' },
-        },
-        next: null,
-      },
-      modifyActionValue_9: {
+      modifyActionValue_26: {
         action: {
           kind: 'modifyActionValue',
           parameters: { key: 'water_cnt', operation: 'add', value: { kind: 'constant', value: 1 } },
         },
-        next: 'forEachContextTarget_8',
+        next: 'applyBuff_25',
       },
-      changeResourceByActionValue_10: {
+      checkCondition_24: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+        },
+        next: null,
+      },
+      ifElse_27: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_24' },
+          whenTrue: { $sequence: 'modifyActionValue_26' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      changeResource_29: {
+        action: {
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_3' },
+            amount: { kind: 'valueNode', nodeId: 'data_4' },
             coefficient: { kind: 'constant', value: 2 },
-            recipient: 'team',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
             spGainKind: 'refund',
             spGainSource: 'skill',
           },
         },
         next: null,
       },
-      conditional_12: {
+      checkCondition_28: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' }, alwaysNext: true },
-          whenTrue: { $sequence: 'changeResourceByActionValue_10' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
         next: null,
       },
-      changeResourceByActionValue_11: {
+      ifElse_32: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_28' },
+          whenTrue: { $sequence: 'changeResource_29' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      changeResource_31: {
+        action: {
+          kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_6' },
+            amount: { kind: 'valueNode', nodeId: 'data_4' },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'team',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
             spGainKind: 'refund',
             spGainSource: 'skill',
           },
         },
         next: null,
       },
-      forEachContextTarget_15: {
+      checkCondition_30: {
         action: {
-          kind: 'forEachContextTarget',
-          parameters: { contextKey: 'normalskill_watermove' },
-          body: { $sequence: 'applyBuff_14' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
         next: null,
       },
-      spawnAbilityEntity_16: {
+      applyBuff_34: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0027_tangtang_normalskill_abilityentity_1' }],
+            targets: { kind: 'context', key: 'normalskill_watermove' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      spawnAbilityEntity_35: {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
+            bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_move',
             childSkillId: 'chr_0027_tangtang_normal_skill_abilityentitymove',
             inheritActionBlackboard: true,
@@ -1173,121 +1305,140 @@ export const tangtangChr_0027_tangtang_normal_skillActionGraph = {
             saveToContextKey: 'normalskill_watermove',
           },
         },
-        next: 'forEachContextTarget_15',
+        next: 'applyBuff_34',
       },
-      conditional_17: {
+      ifElse_36: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' }, alwaysNext: true },
-          whenTrue: { $sequence: 'changeResourceByActionValue_11' },
-          whenFalse: { $sequence: 'conditional_12' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_30' },
+          whenTrue: { $sequence: 'changeResource_31' },
+          whenFalse: { $sequence: 'ifElse_32' },
         },
-        next: 'spawnAbilityEntity_16',
+        next: 'spawnAbilityEntity_35',
       },
-      forEachContextTarget_18: {
+      forEachContextTarget_37: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { contextKey: 'water' },
-          body: { $sequence: 'modifyActionValue_9' },
+          parameters: { targets: { kind: 'context', key: 'water' } },
+          body: { $sequence: 'ifElse_27' },
         },
-        next: 'conditional_17',
+        next: 'ifElse_36',
       },
-      conditional_21: {
+      checkCondition_33: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' }, alwaysNext: true },
-          whenTrue: { $sequence: 'forEachContextTarget_18' },
-          whenFalse: { $sequence: 'spawnAbilityEntity_20' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
         },
         next: null,
       },
-      modifyActionValue_22: {
+      ifElse_40: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_33' },
+          whenTrue: { $sequence: 'forEachContextTarget_37' },
+          whenFalse: { $sequence: 'spawnAbilityEntity_39' },
+        },
+        next: null,
+      },
+      modifyActionValue_41: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
             key: 'tornado_atk_scale03',
             operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_10' },
+            value: { kind: 'valueNode', nodeId: 'data_9' },
           },
         },
-        next: 'conditional_21',
+        next: 'ifElse_40',
       },
-      modifyActionValue_23: {
+      modifyActionValue_42: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
             key: 'tornado_atk_scale02',
             operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_11' },
+            value: { kind: 'valueNode', nodeId: 'data_10' },
           },
         },
-        next: 'modifyActionValue_22',
+        next: 'modifyActionValue_41',
       },
-      modifyActionValue_24: {
+      modifyActionValue_43: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
             key: 'tornado_atk_scale01',
             operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_12' },
+            value: { kind: 'valueNode', nodeId: 'data_11' },
           },
         },
-        next: 'modifyActionValue_23',
+        next: 'modifyActionValue_42',
       },
-      findOwnerSpawnedAbilityEntities_25: {
+      findOwnerSpawnedAbilityEntities_44: {
         action: {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'water',
             abilityEntityIds: ['abilityentity_chr_0027_tangtang_comboskill_water'],
+            owner: { kind: 'owner' },
           },
         },
-        next: 'modifyActionValue_24',
+        next: 'modifyActionValue_43',
       },
-      applyBuff_26: {
+      applyBuff_45: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0027_tangtang_normalskill_abilityentity_2',
-            target: 'currentAbilityEntity',
+            buffs: [{ buffId: 'buff_chr_0027_tangtang_normalskill_abilityentity_2' }],
+            targets: { kind: 'inputTarget' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
         },
         next: null,
       },
-      forEachContextTarget_opt1: {
+      checkCondition_46: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
+        },
+        next: 'applyBuff_45',
+      },
+      forEachContextTarget_47: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { contextKey: 'normalwater_move' },
-          body: { $sequence: 'applyBuff_26' },
+          parameters: { targets: { kind: 'context', key: 'normalwater_move' } },
+          body: { $sequence: 'checkCondition_46' },
         },
         next: null,
       },
-      conditional_opt2: {
+      checkCondition_48: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
-          whenTrue: { $sequence: 'forEachContextTarget_opt1' },
         },
-        next: null,
+        next: 'forEachContextTarget_47',
       },
-      findOwnerSpawnedAbilityEntities_opt3: {
+      findOwnerSpawnedAbilityEntities_49: {
         action: {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'normalwater_move',
             abilityEntityIds: ['abilityentity_chr_0027_tangtang_normal_skill_move'],
+            owner: { kind: 'owner' },
             sameSourceSkillCast: true,
           },
         },
-        next: 'conditional_opt2',
+        next: 'checkCondition_48',
       },
-      applyBuff_31: {
+      applyBuff_50: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0027_tangtang_skillappear',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_chr_0027_tangtang_skillappear' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
@@ -1298,54 +1449,80 @@ export const tangtangChr_0027_tangtang_normal_skillActionGraph = {
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise1' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atb_return' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'water_cnt', fallback: 0 } },
-      data_5: {
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'targetDistance',
+          source: { kind: 'owner' },
+          target: { kind: 'inputTarget' },
+          distance: 50,
+          lessThan: true,
+          includeTargetRadius: false,
+          containsHittableObject: false,
+        },
+      },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atb_return' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'water_cnt', fallback: 0 } },
+      data_6: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_4' },
+          left: { kind: 'valueNode', nodeId: 'data_5' },
           operator: 'equal',
           right: { kind: 'constant', value: 2 },
         },
       },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atb_return' } },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'water_cnt', fallback: 0 } },
-      data_8: {
+      data_7: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_7' },
+          left: { kind: 'valueNode', nodeId: 'data_5' },
           operator: 'equal',
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_9: {
+      data_8: {
         type: 'boolean',
         expression: {
-          kind: 'contextTargetCountCompare',
-          contextKey: 'water',
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'water' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
           operator: 'greaterOrEqual',
           value: 1,
         },
       },
-      data_10: {
+      data_9: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'EntityBB_abilityentity_water03' },
       },
-      data_11: {
+      data_10: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'EntityBB_abilityentity_water02' },
       },
-      data_12: {
+      data_11: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'EntityBB_abilityentity_water01' },
+      },
+      data_12: {
+        type: 'boolean',
+        expression: {
+          kind: 'targetDistance',
+          source: { kind: 'owner' },
+          target: { kind: 'inputTarget' },
+          distance: 50,
+          lessThan: true,
+          includeTargetRadius: false,
+          containsHittableObject: false,
+        },
       },
       data_13: {
         type: 'boolean',
         expression: {
-          kind: 'contextTargetCountCompare',
-          contextKey: 'normalwater_move',
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'normalwater_move' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
           operator: 'greaterOrEqual',
           value: 1,
           outputKey: 'normalskillwatermove_cnt',
@@ -1361,43 +1538,26 @@ export const tangtangChr_0027_tangtang_normal_skill: SkillDefinition = {
   element: 'cryo',
   blackboard: {
     atb_return: 20,
-    atb_return_02: 40,
-    atk_scale_02: 0,
     atk_scale_1: [0.16, 0.176, 0.192, 0.208, 0.224, 0.24, 0.256, 0.272, 0.288, 0.308, 0.332, 0.36],
-    cam_angle: 0,
-    cam_duration: 0,
     duration: 5,
     duration_spellvulnerable: 15,
-    duration_tornado: 3,
-    hit_cnt: 4,
     hit_cntmax: 10,
-    hit_duration: 5,
-    input_angle: 0,
     max_stack: 0,
     normalskillwatermove_cnt: 0,
     poise_tornado: 0,
     poise1: 2,
-    potential_5_CrystDamageIncrease: 0,
     potential3: 0,
-    potential5: 0,
-    potential5_duration: 0,
     rate_spellvulnerable: [
       0.03, 0.03, 0.03, 0.035, 0.035, 0.035, 0.04, 0.04, 0.04, 0.045, 0.045, 0.05,
     ],
     rate_spellvulnerable_02: [
       0.06, 0.06, 0.06, 0.07, 0.07, 0.07, 0.08, 0.08, 0.08, 0.09, 0.09, 0.1,
     ],
-    talent2: 0,
     talent2_ultskill: 0,
     tornado_atk_scale01: 0,
     tornado_atk_scale02: 0,
     tornado_atk_scale03: 0,
-    tornado_usp_01: 0,
-    tornado_usp_02: 0,
     water_cnt: 0,
-    display_atk_scale1: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
-    display_atk_scale2: [1.33, 1.47, 1.6, 1.74, 1.87, 2, 2.14, 2.27, 2.4, 2.57, 2.77, 3],
-    display_poise: 10,
   },
   timelineBlockFrames: 51,
   naturalDurationFrames: 136,
@@ -1410,15 +1570,10 @@ export const tangtangChr_0027_tangtang_normal_skill: SkillDefinition = {
   },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 0, endFrame: 2, sequence: { $sequence: 'findCharacterTeamTargets_1' } },
     { startFrame: 27, endFrame: 39, sequence: { $sequence: 'repeatEachTick_6' } },
-    { startFrame: 11, endFrame: 11, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_25' } },
-    {
-      startFrame: 44,
-      endFrame: 45,
-      sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_opt3' },
-    },
-    { startFrame: 1, endFrame: 24, sequence: { $sequence: 'applyBuff_31' } },
+    { startFrame: 11, endFrame: 11, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_44' } },
+    { startFrame: 44, endFrame: 45, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_49' } },
+    { startFrame: 1, endFrame: 24, sequence: { $sequence: 'applyBuff_50' } },
   ],
   smartTarget: 'input',
   costs: [{ resource: 'sp', value: 100 }],
@@ -1446,47 +1601,33 @@ export const tangtangChr_0027_tangtang_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      findCharacterTeamTargets_2: {
-        action: {
-          kind: 'findCharacterTeamTargets',
-          parameters: { saveToContextKey: 'mainchar', selection: { kind: 'controlledOperator' } },
-        },
-        next: null,
-      },
-      conditional_3: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' }, alwaysNext: true },
-          whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'findCharacterTeamTargets_2' },
-        },
-        next: null,
-      },
-      finishBuffsById_5: {
+      finishBuffsById_2: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
-            target: 'caster',
+            targets: { kind: 'source' },
+            finishSource: { kind: 'source' },
             buffIds: ['buff_chr_0027_tangtang_ultskill_vfx'],
             reason: 'other',
           },
         },
         next: null,
       },
-      applyBuff_6: {
+      applyBuff_3: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_damage_immune_ult_skill',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_common_damage_immune_ult_skill' }],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
         },
         next: null,
       },
-      hideUi_7: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      startUltimateTimeDilation_8: {
+      hideUi_4: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      startUltimateTimeDilation_5: {
         action: {
           kind: 'startUltimateTimeDilation',
           parameters: {
@@ -1497,10 +1638,11 @@ export const tangtangChr_0027_tangtang_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      spawnAbilityEntity_11: {
+      spawnAbilityEntity_9: {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
+            bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0027_tangtang_ultskill',
             childSkillId: 'chr_0027_tangtang_ultimate_skill_1',
             inheritActionBlackboard: true,
@@ -1509,7 +1651,7 @@ export const tangtangChr_0027_tangtang_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      modifyActionValue_10: {
+      modifyActionValue_8: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -1518,35 +1660,65 @@ export const tangtangChr_0027_tangtang_ultimate_skillActionGraph = {
             value: { kind: 'constant', value: 1 },
           },
         },
-        next: 'spawnAbilityEntity_11',
+        next: 'spawnAbilityEntity_9',
       },
-      conditional_12: {
+      checkCondition_6: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' }, alwaysNext: true },
-          whenTrue: { $sequence: 'modifyActionValue_10' },
-          whenFalse: { $sequence: 'spawnAbilityEntity_11' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: null,
       },
-      modifyActionValue_13: {
+      ifElse_10: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_6' },
+          whenTrue: { $sequence: 'modifyActionValue_8' },
+          whenFalse: { $sequence: 'spawnAbilityEntity_9' },
+        },
+        next: null,
+      },
+      modifyActionValue_11: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
             key: 'duration_spellvulnerable',
             operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_4' },
+            value: { kind: 'valueNode', nodeId: 'data_3' },
           },
         },
-        next: 'conditional_12',
+        next: 'ifElse_10',
       },
-      modifyActionValue_14: {
+      modifyActionValue_12: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
             key: 'rate_spellvulnerable_02',
             operation: 'add',
+            value: { kind: 'valueNode', nodeId: 'data_4' },
+          },
+        },
+        next: 'modifyActionValue_11',
+      },
+      modifyActionValue_13: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'rate_spellvulnerable',
+            operation: 'add',
             value: { kind: 'valueNode', nodeId: 'data_5' },
+          },
+        },
+        next: 'modifyActionValue_12',
+      },
+      modifyActionValue_14: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'tornado_atk_scale03',
+            operation: 'assign',
+            value: { kind: 'valueNode', nodeId: 'data_6' },
           },
         },
         next: 'modifyActionValue_13',
@@ -1555,9 +1727,9 @@ export const tangtangChr_0027_tangtang_ultimate_skillActionGraph = {
         action: {
           kind: 'modifyActionValue',
           parameters: {
-            key: 'rate_spellvulnerable',
-            operation: 'add',
-            value: { kind: 'valueNode', nodeId: 'data_6' },
+            key: 'tornado_atk_scale02',
+            operation: 'assign',
+            value: { kind: 'valueNode', nodeId: 'data_7' },
           },
         },
         next: 'modifyActionValue_14',
@@ -1566,69 +1738,46 @@ export const tangtangChr_0027_tangtang_ultimate_skillActionGraph = {
         action: {
           kind: 'modifyActionValue',
           parameters: {
-            key: 'tornado_atk_scale03',
-            operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_7' },
-          },
-        },
-        next: 'modifyActionValue_15',
-      },
-      modifyActionValue_17: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'tornado_atk_scale02',
+            key: 'tornado_atk_scale01',
             operation: 'assign',
             value: { kind: 'valueNode', nodeId: 'data_8' },
           },
         },
-        next: 'modifyActionValue_16',
-      },
-      modifyActionValue_18: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'tornado_atk_scale01',
-            operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_9' },
-          },
-        },
-        next: 'modifyActionValue_17',
+        next: 'modifyActionValue_15',
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'talent2', fallback: 0 } },
-      data_3: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'talent2', fallback: 0 } },
+      data_2: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_2' },
+          left: { kind: 'valueNode', nodeId: 'data_1' },
           operator: 'greaterOrEqual',
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_4: {
+      data_3: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'EntityBB_abilityentity_duration_spellvulnerable' },
       },
-      data_5: {
+      data_4: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'EntityBB_abilityentity_rate_spellvulnerable_02' },
       },
-      data_6: {
+      data_5: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'EntityBB_abilityentity_rate_spellvulnerable' },
       },
-      data_7: {
+      data_6: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'EntityBB_abilityentity_water03' },
       },
-      data_8: {
+      data_7: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'EntityBB_abilityentity_water02' },
       },
-      data_9: {
+      data_8: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'EntityBB_abilityentity_water01' },
       },
@@ -1647,27 +1796,18 @@ export const tangtangChr_0027_tangtang_ultimate_skill: SkillDefinition = {
     dmg_up_water_ult: 0,
     duration: 12,
     duration_spellvulnerable: 0,
-    duration_talent1buff: 3,
-    poise1: 0,
     poise2: 15,
     poise3: 20,
-    potential1: 0,
     potential3_rate_spellvulnerable: 0,
-    potential4: 0,
     potential5: 0,
     rate_spellvulnerable: 0,
     rate_spellvulnerable_02: 0,
     rate_vul_base: 0,
-    ratio_speed: 0.2,
-    ratio_speedreduction: 0.8,
-    talent1_speed: 0,
     talent2: 0,
     talent2_ultskill: 0,
     tornado_atk_scale01: 0,
     tornado_atk_scale02: 0,
     tornado_atk_scale03: 0,
-    display_atk_scale: [1.42, 1.56, 1.71, 1.85, 1.99, 2.13, 2.28, 2.42, 2.56, 2.74, 2.95, 3.2],
-    display_duration: 4,
   },
   timelineBlockFrames: 85,
   naturalDurationFrames: 202,
@@ -1686,13 +1826,13 @@ export const tangtangChr_0027_tangtang_ultimate_skill: SkillDefinition = {
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
-    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'conditional_3' } },
-    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'finishBuffsById_5' } },
-    { startFrame: 0, endFrame: 84, sequence: { $sequence: 'applyBuff_6' } },
-    { startFrame: 0, endFrame: 82, sequence: { $sequence: 'hideUi_7' } },
-    { startFrame: 0, endFrame: 82, sequence: { $sequence: 'startUltimateTimeDilation_8' } },
-    { startFrame: 76, endFrame: 76, sequence: { $sequence: 'modifyActionValue_18' } },
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'finishBuffsById_2' } },
+    { startFrame: 0, endFrame: 84, sequence: { $sequence: 'applyBuff_3' } },
+    { startFrame: 0, endFrame: 82, sequence: { $sequence: 'hideUi_4' } },
+    { startFrame: 0, endFrame: 82, sequence: { $sequence: 'startUltimateTimeDilation_5' } },
+    { startFrame: 76, endFrame: 76, sequence: { $sequence: 'modifyActionValue_16' } },
   ],
+  defaultTarget: 'enemy',
   cooldownFrames: 600,
   costs: [{ resource: 'ultimateEnergy', value: 90 }],
   skillType: 'ultimate',
@@ -1700,6 +1840,234 @@ export const tangtangChr_0027_tangtang_ultimate_skill: SkillDefinition = {
   nativeSkillType: 'ultimateSkill',
   actionGraph: tangtangChr_0027_tangtang_ultimate_skillActionGraph,
 };
+
+const tangtangChr_0027_tangtang_combo_skillActionGraphCallback1 = {
+  skillId: 'chr_0027_tangtang_combo_skill_water_gene',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 900,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: { duration_water: 30 },
+  scheduledSequences: [{ startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_15' } }],
+  actionGraph: {
+    main: {
+      nodes: {
+        createTimedMarker_12: {
+          action: {
+            kind: 'createTimedMarker',
+            parameters: {
+              targets: { kind: 'context', key: 'water_abilityentity01' },
+              markerId: 'tangtang_waterabilityentity01',
+              durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
+              autoFinishByAction: false,
+              timeDomain: 'globalScaled',
+            },
+          },
+          next: null,
+        },
+        applyBuff_13: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [
+                {
+                  buffId: 'buff_chr_0027_tangtang_water',
+                  copiedBlackboardAssignments: { duration_water: 'duration_water' },
+                },
+              ],
+              targets: { kind: 'source' },
+              source: { kind: 'source' },
+              inheritSourceSkillCastInfo: true,
+            },
+          },
+          next: 'createTimedMarker_12',
+        },
+        spawnAbilityEntity_14: {
+          action: {
+            kind: 'spawnAbilityEntity',
+            parameters: {
+              bornAt: { kind: 'fixed', target: 'enemy' },
+              abilityEntityId: 'abilityentity_chr_0027_tangtang_comboskill_water',
+              childSkillId: 'chr_0027_tangtang_combo_skill_water',
+              inheritActionBlackboard: true,
+              dieWhenSourceDies: false,
+              saveToContextKey: 'water_abilityentity01',
+            },
+          },
+          next: 'applyBuff_13',
+        },
+        createTimedMarker_6: {
+          action: {
+            kind: 'createTimedMarker',
+            parameters: {
+              targets: { kind: 'context', key: 'water_abilityentity02' },
+              markerId: 'tangtang_waterabilityentity01',
+              durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
+              autoFinishByAction: false,
+              timeDomain: 'globalScaled',
+            },
+          },
+          next: null,
+        },
+        createTimedMarker_3: {
+          action: {
+            kind: 'createTimedMarker',
+            parameters: {
+              targets: { kind: 'context', key: 'water_abilityentity02' },
+              markerId: 'tangtang_waterabilityentity02',
+              durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
+              autoFinishByAction: false,
+              timeDomain: 'globalScaled',
+            },
+          },
+          next: null,
+        },
+        createTimedMarker_2: {
+          action: {
+            kind: 'createTimedMarker',
+            parameters: {
+              targets: { kind: 'context', key: 'water_abilityentity02' },
+              markerId: 'tangtang_waterabilityentity03',
+              durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
+              autoFinishByAction: false,
+              timeDomain: 'globalScaled',
+            },
+          },
+          next: null,
+        },
+        checkCondition_1: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          },
+          next: null,
+        },
+        ifElse_5: {
+          action: {
+            kind: 'ifElse',
+            parameters: { alwaysNext: true },
+            condition: { $sequence: 'checkCondition_1' },
+            whenTrue: { $sequence: 'createTimedMarker_2' },
+            whenFalse: { $sequence: 'createTimedMarker_3' },
+          },
+          next: null,
+        },
+        checkCondition_4: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          },
+          next: null,
+        },
+        ifElse_8: {
+          action: {
+            kind: 'ifElse',
+            parameters: { alwaysNext: true },
+            condition: { $sequence: 'checkCondition_4' },
+            whenTrue: { $sequence: 'ifElse_5' },
+            whenFalse: { $sequence: 'createTimedMarker_6' },
+          },
+          next: null,
+        },
+        findOwnerSpawnedAbilityEntities_9: {
+          action: {
+            kind: 'findOwnerSpawnedAbilityEntities',
+            parameters: {
+              saveToContextKey: 'water_group',
+              abilityEntityIds: ['abilityentity_chr_0027_tangtang_comboskill_water'],
+              owner: { kind: 'source' },
+            },
+          },
+          next: 'ifElse_8',
+        },
+        applyBuff_10: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [
+                {
+                  buffId: 'buff_chr_0027_tangtang_water',
+                  copiedBlackboardAssignments: { duration_water: 'duration_water' },
+                },
+              ],
+              targets: { kind: 'source' },
+              source: { kind: 'source' },
+              inheritSourceSkillCastInfo: true,
+            },
+          },
+          next: 'findOwnerSpawnedAbilityEntities_9',
+        },
+        spawnAbilityEntity_11: {
+          action: {
+            kind: 'spawnAbilityEntity',
+            parameters: {
+              bornAt: { kind: 'fixed', target: 'enemy' },
+              abilityEntityId: 'abilityentity_chr_0027_tangtang_comboskill_water',
+              childSkillId: 'chr_0027_tangtang_combo_skill_water',
+              inheritActionBlackboard: true,
+              dieWhenSourceDies: false,
+              saveToContextKey: 'water_abilityentity02',
+            },
+          },
+          next: 'applyBuff_10',
+        },
+        checkCondition_7: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+          },
+          next: null,
+        },
+        ifElse_15: {
+          action: {
+            kind: 'ifElse',
+            parameters: { alwaysNext: true },
+            condition: { $sequence: 'checkCondition_7' },
+            whenTrue: { $sequence: 'spawnAbilityEntity_11' },
+            whenFalse: { $sequence: 'spawnAbilityEntity_14' },
+          },
+          next: null,
+        },
+      },
+      dataNodes: {
+        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'duration_water' } },
+        data_2: {
+          type: 'boolean',
+          expression: {
+            kind: 'abilityEntityTimedMarkerPresent',
+            returnTrueIfNotExists: false,
+            contextKey: 'water_group',
+            markerId: 'tangtang_waterabilityentity02',
+          },
+        },
+        data_3: {
+          type: 'boolean',
+          expression: {
+            kind: 'abilityEntityTimedMarkerPresent',
+            returnTrueIfNotExists: false,
+            contextKey: 'water_group',
+            markerId: 'tangtang_waterabilityentity01',
+          },
+        },
+        data_4: {
+          type: 'boolean',
+          expression: {
+            kind: 'buffIdStackCompare',
+            target: 'caster',
+            buffIds: ['buff_chr_0027_tangtang_water'],
+            operator: 'greater',
+            value: { kind: 'constant', value: 0 },
+          },
+        },
+      },
+    },
+    macros: {},
+  },
+} as const;
 
 export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
   main: {
@@ -1711,501 +2079,60 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
         },
         next: null,
       },
-      launchProjectile_12: {
+      mergeContextTargets_2: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+        },
+        next: null,
+      },
+      launchProjectile_15: {
         action: {
           kind: 'launchProjectile',
-          parameters: { finish: 'firstTickBlock', recycleDelaySeconds: 30 },
+          parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
+            finish: 'firstTickBlock',
+            recycleDelaySeconds: 30,
+          },
           callbacks: [
-            {
-              event: 'block',
-              skill: {
-                skillId: 'chr_0027_tangtang_combo_skill_water_gene',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 900,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { duration_water: 30, potential1: 0, radius: 4 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'conditional_16' } },
-                ],
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      createAbilityEntityTimedMarker_8: {
-                        action: {
-                          kind: 'createAbilityEntityTimedMarker',
-                          parameters: {
-                            markerId: 'tangtang_waterabilityentity01',
-                            durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
-                            autoFinishByAction: false,
-                            timeDomain: 'global',
-                          },
-                        },
-                        next: null,
-                      },
-                      forEachContextTarget_13: {
-                        action: {
-                          kind: 'forEachContextTarget',
-                          parameters: { contextKey: 'water_abilityentity01' },
-                          body: { $sequence: 'createAbilityEntityTimedMarker_8' },
-                        },
-                        next: null,
-                      },
-                      applyBuff_14: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffId: 'buff_chr_0027_tangtang_water',
-                            target: 'caster',
-                            inheritSourceSkillCastInfo: true,
-                            copiedBlackboardAssignments: { duration_water: 'duration_water' },
-                          },
-                        },
-                        next: 'forEachContextTarget_13',
-                      },
-                      spawnAbilityEntity_15: {
-                        action: {
-                          kind: 'spawnAbilityEntity',
-                          parameters: {
-                            abilityEntityId: 'abilityentity_chr_0027_tangtang_comboskill_water',
-                            childSkillId: 'chr_0027_tangtang_combo_skill_water',
-                            inheritActionBlackboard: true,
-                            dieWhenSourceDies: false,
-                            saveToContextKey: 'water_abilityentity01',
-                          },
-                        },
-                        next: 'applyBuff_14',
-                      },
-                      forEachContextTarget_7: {
-                        action: {
-                          kind: 'forEachContextTarget',
-                          parameters: { contextKey: 'water_abilityentity02' },
-                          body: { $sequence: 'createAbilityEntityTimedMarker_8' },
-                        },
-                        next: null,
-                      },
-                      createAbilityEntityTimedMarker_2: {
-                        action: {
-                          kind: 'createAbilityEntityTimedMarker',
-                          parameters: {
-                            markerId: 'tangtang_waterabilityentity02',
-                            durationSeconds: { kind: 'valueNode', nodeId: 'data_2' },
-                            autoFinishByAction: false,
-                            timeDomain: 'global',
-                          },
-                        },
-                        next: null,
-                      },
-                      forEachContextTarget_4: {
-                        action: {
-                          kind: 'forEachContextTarget',
-                          parameters: { contextKey: 'water_abilityentity02' },
-                          body: { $sequence: 'createAbilityEntityTimedMarker_2' },
-                        },
-                        next: null,
-                      },
-                      createAbilityEntityTimedMarker_1: {
-                        action: {
-                          kind: 'createAbilityEntityTimedMarker',
-                          parameters: {
-                            markerId: 'tangtang_waterabilityentity03',
-                            durationSeconds: { kind: 'valueNode', nodeId: 'data_3' },
-                            autoFinishByAction: false,
-                            timeDomain: 'global',
-                          },
-                        },
-                        next: null,
-                      },
-                      forEachContextTarget_3: {
-                        action: {
-                          kind: 'forEachContextTarget',
-                          parameters: { contextKey: 'water_abilityentity02' },
-                          body: { $sequence: 'createAbilityEntityTimedMarker_1' },
-                        },
-                        next: null,
-                      },
-                      conditional_6: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_4' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'forEachContextTarget_3' },
-                          whenFalse: { $sequence: 'forEachContextTarget_4' },
-                        },
-                        next: null,
-                      },
-                      conditional_9: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_5' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_6' },
-                          whenFalse: { $sequence: 'forEachContextTarget_7' },
-                        },
-                        next: null,
-                      },
-                      findOwnerSpawnedAbilityEntities_10: {
-                        action: {
-                          kind: 'findOwnerSpawnedAbilityEntities',
-                          parameters: {
-                            saveToContextKey: 'water_group',
-                            abilityEntityIds: ['abilityentity_chr_0027_tangtang_comboskill_water'],
-                          },
-                        },
-                        next: 'conditional_9',
-                      },
-                      applyBuff_11: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffId: 'buff_chr_0027_tangtang_water',
-                            target: 'caster',
-                            inheritSourceSkillCastInfo: true,
-                            copiedBlackboardAssignments: { duration_water: 'duration_water' },
-                          },
-                        },
-                        next: 'findOwnerSpawnedAbilityEntities_10',
-                      },
-                      spawnAbilityEntity_12: {
-                        action: {
-                          kind: 'spawnAbilityEntity',
-                          parameters: {
-                            abilityEntityId: 'abilityentity_chr_0027_tangtang_comboskill_water',
-                            childSkillId: 'chr_0027_tangtang_combo_skill_water',
-                            inheritActionBlackboard: true,
-                            dieWhenSourceDies: false,
-                            saveToContextKey: 'water_abilityentity02',
-                          },
-                        },
-                        next: 'applyBuff_11',
-                      },
-                      conditional_16: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_6' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'spawnAbilityEntity_12' },
-                          whenFalse: { $sequence: 'spawnAbilityEntity_15' },
-                        },
-                        next: null,
-                      },
-                    },
-                    dataNodes: {
-                      data_1: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'duration_water' },
-                      },
-                      data_2: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'duration_water' },
-                      },
-                      data_3: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'duration_water' },
-                      },
-                      data_4: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'abilityEntityTimedMarkerPresent',
-                          contextKey: 'water_group',
-                          markerId: 'tangtang_waterabilityentity02',
-                        },
-                      },
-                      data_5: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'abilityEntityTimedMarkerPresent',
-                          contextKey: 'water_group',
-                          markerId: 'tangtang_waterabilityentity01',
-                        },
-                      },
-                      data_6: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'buffIdStackCompare',
-                          target: 'caster',
-                          buffIds: ['buff_chr_0027_tangtang_water'],
-                          operator: 'greater',
-                          value: { kind: 'constant', value: 0 },
-                        },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-              },
-            },
-            {
-              event: 'finish',
-              skill: {
-                skillId: 'chr_0027_tangtang_combo_skill_water_gene',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 900,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { duration_water: 30, potential1: 0, radius: 4 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'conditional_16' } },
-                ],
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      createAbilityEntityTimedMarker_8: {
-                        action: {
-                          kind: 'createAbilityEntityTimedMarker',
-                          parameters: {
-                            markerId: 'tangtang_waterabilityentity01',
-                            durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
-                            autoFinishByAction: false,
-                            timeDomain: 'global',
-                          },
-                        },
-                        next: null,
-                      },
-                      forEachContextTarget_13: {
-                        action: {
-                          kind: 'forEachContextTarget',
-                          parameters: { contextKey: 'water_abilityentity01' },
-                          body: { $sequence: 'createAbilityEntityTimedMarker_8' },
-                        },
-                        next: null,
-                      },
-                      applyBuff_14: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffId: 'buff_chr_0027_tangtang_water',
-                            target: 'caster',
-                            inheritSourceSkillCastInfo: true,
-                            copiedBlackboardAssignments: { duration_water: 'duration_water' },
-                          },
-                        },
-                        next: 'forEachContextTarget_13',
-                      },
-                      spawnAbilityEntity_15: {
-                        action: {
-                          kind: 'spawnAbilityEntity',
-                          parameters: {
-                            abilityEntityId: 'abilityentity_chr_0027_tangtang_comboskill_water',
-                            childSkillId: 'chr_0027_tangtang_combo_skill_water',
-                            inheritActionBlackboard: true,
-                            dieWhenSourceDies: false,
-                            saveToContextKey: 'water_abilityentity01',
-                          },
-                        },
-                        next: 'applyBuff_14',
-                      },
-                      forEachContextTarget_7: {
-                        action: {
-                          kind: 'forEachContextTarget',
-                          parameters: { contextKey: 'water_abilityentity02' },
-                          body: { $sequence: 'createAbilityEntityTimedMarker_8' },
-                        },
-                        next: null,
-                      },
-                      createAbilityEntityTimedMarker_2: {
-                        action: {
-                          kind: 'createAbilityEntityTimedMarker',
-                          parameters: {
-                            markerId: 'tangtang_waterabilityentity02',
-                            durationSeconds: { kind: 'valueNode', nodeId: 'data_2' },
-                            autoFinishByAction: false,
-                            timeDomain: 'global',
-                          },
-                        },
-                        next: null,
-                      },
-                      forEachContextTarget_4: {
-                        action: {
-                          kind: 'forEachContextTarget',
-                          parameters: { contextKey: 'water_abilityentity02' },
-                          body: { $sequence: 'createAbilityEntityTimedMarker_2' },
-                        },
-                        next: null,
-                      },
-                      createAbilityEntityTimedMarker_1: {
-                        action: {
-                          kind: 'createAbilityEntityTimedMarker',
-                          parameters: {
-                            markerId: 'tangtang_waterabilityentity03',
-                            durationSeconds: { kind: 'valueNode', nodeId: 'data_3' },
-                            autoFinishByAction: false,
-                            timeDomain: 'global',
-                          },
-                        },
-                        next: null,
-                      },
-                      forEachContextTarget_3: {
-                        action: {
-                          kind: 'forEachContextTarget',
-                          parameters: { contextKey: 'water_abilityentity02' },
-                          body: { $sequence: 'createAbilityEntityTimedMarker_1' },
-                        },
-                        next: null,
-                      },
-                      conditional_6: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_4' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'forEachContextTarget_3' },
-                          whenFalse: { $sequence: 'forEachContextTarget_4' },
-                        },
-                        next: null,
-                      },
-                      conditional_9: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_5' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'conditional_6' },
-                          whenFalse: { $sequence: 'forEachContextTarget_7' },
-                        },
-                        next: null,
-                      },
-                      findOwnerSpawnedAbilityEntities_10: {
-                        action: {
-                          kind: 'findOwnerSpawnedAbilityEntities',
-                          parameters: {
-                            saveToContextKey: 'water_group',
-                            abilityEntityIds: ['abilityentity_chr_0027_tangtang_comboskill_water'],
-                          },
-                        },
-                        next: 'conditional_9',
-                      },
-                      applyBuff_11: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffId: 'buff_chr_0027_tangtang_water',
-                            target: 'caster',
-                            inheritSourceSkillCastInfo: true,
-                            copiedBlackboardAssignments: { duration_water: 'duration_water' },
-                          },
-                        },
-                        next: 'findOwnerSpawnedAbilityEntities_10',
-                      },
-                      spawnAbilityEntity_12: {
-                        action: {
-                          kind: 'spawnAbilityEntity',
-                          parameters: {
-                            abilityEntityId: 'abilityentity_chr_0027_tangtang_comboskill_water',
-                            childSkillId: 'chr_0027_tangtang_combo_skill_water',
-                            inheritActionBlackboard: true,
-                            dieWhenSourceDies: false,
-                            saveToContextKey: 'water_abilityentity02',
-                          },
-                        },
-                        next: 'applyBuff_11',
-                      },
-                      conditional_16: {
-                        action: {
-                          kind: 'conditional',
-                          parameters: {
-                            condition: { kind: 'conditionNode', nodeId: 'data_6' },
-                            alwaysNext: true,
-                          },
-                          whenTrue: { $sequence: 'spawnAbilityEntity_12' },
-                          whenFalse: { $sequence: 'spawnAbilityEntity_15' },
-                        },
-                        next: null,
-                      },
-                    },
-                    dataNodes: {
-                      data_1: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'duration_water' },
-                      },
-                      data_2: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'duration_water' },
-                      },
-                      data_3: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'duration_water' },
-                      },
-                      data_4: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'abilityEntityTimedMarkerPresent',
-                          contextKey: 'water_group',
-                          markerId: 'tangtang_waterabilityentity02',
-                        },
-                      },
-                      data_5: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'abilityEntityTimedMarkerPresent',
-                          contextKey: 'water_group',
-                          markerId: 'tangtang_waterabilityentity01',
-                        },
-                      },
-                      data_6: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'buffIdStackCompare',
-                          target: 'caster',
-                          buffIds: ['buff_chr_0027_tangtang_water'],
-                          operator: 'greater',
-                          value: { kind: 'constant', value: 0 },
-                        },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-              },
-            },
+            { event: 'block', skill: tangtangChr_0027_tangtang_combo_skillActionGraphCallback1 },
+            { event: 'finish', skill: tangtangChr_0027_tangtang_combo_skillActionGraphCallback1 },
           ],
         },
         next: null,
       },
-      withActionBlackboardScope_15: {
+      checkCondition_6: {
         action: {
-          kind: 'withActionBlackboardScope',
-          parameters: {
-            lifetime: 'execution',
-            initialValues: {},
-            inheritParent: true,
-            entityInitialValues: {},
-          },
-          body: { $sequence: 'launchProjectile_12' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
         },
         next: null,
       },
-      conditional_11: {
+      ifElse_11: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' }, alwaysNext: true },
-          whenTrue: { $sequence: 'withActionBlackboardScope_15' },
-          whenFalse: { $sequence: 'withActionBlackboardScope_15' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_6' },
+          whenTrue: { $sequence: 'launchProjectile_15' },
+          whenFalse: { $sequence: 'launchProjectile_15' },
         },
         next: null,
       },
-      conditional_13: {
+      checkCondition_9: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
-          whenTrue: { $sequence: 'conditional_11' },
-          whenFalse: { $sequence: 'conditional_11' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: null,
+      },
+      ifElse_13: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_9' },
+          whenTrue: { $sequence: 'ifElse_11' },
+          whenFalse: { $sequence: 'ifElse_11' },
         },
         next: null,
       },
@@ -2215,20 +2142,36 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
           parameters: {
             saveToContextKey: 'water_group',
             abilityEntityIds: ['abilityentity_chr_0027_tangtang_comboskill_water'],
+            owner: { kind: 'source' },
           },
         },
-        next: 'conditional_13',
+        next: 'ifElse_13',
       },
-      conditional_16: {
+      checkCondition_12: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' }, alwaysNext: true },
-          whenTrue: { $sequence: 'findOwnerSpawnedAbilityEntities_14' },
-          whenFalse: { $sequence: 'withActionBlackboardScope_15' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
         next: null,
       },
-      modifyActionValue_17: {
+      ifElse_17: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_12' },
+          whenTrue: { $sequence: 'findOwnerSpawnedAbilityEntities_14' },
+          whenFalse: { $sequence: 'launchProjectile_15' },
+        },
+        next: null,
+      },
+      mergeContextTargets_18: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar01', sources: [{ kind: 'target', target: 'enemy' }] },
+        },
+        next: 'ifElse_17',
+      },
+      modifyActionValue_19: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -2237,9 +2180,16 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
             value: { kind: 'constant', value: 1 },
           },
         },
-        next: 'conditional_16',
+        next: 'mergeContextTargets_18',
       },
-      modifyActionValue_18: {
+      checkCondition_16: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+        },
+        next: null,
+      },
+      modifyActionValue_21: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -2250,19 +2200,27 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
         },
         next: null,
       },
-      changeResourceByActionValue_19: {
+      changeResource_22: {
         action: {
-          kind: 'changeResourceByActionValue',
+          kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_4' },
+            amount: { kind: 'valueNode', nodeId: 'data_6' },
             coefficient: { kind: 'constant', value: 1 },
-            recipient: 'caster',
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
           },
         },
-        next: 'modifyActionValue_18',
+        next: 'modifyActionValue_21',
       },
-      startTimeDilation_20: {
+      checkCondition_20: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+        },
+        next: null,
+      },
+      startTimeDilation_23: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -2277,42 +2235,53 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
         },
         next: null,
       },
-      conditional_21: {
+      ifElse_24: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' }, alwaysNext: true },
-          whenTrue: { $sequence: 'changeResourceByActionValue_19' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_20' },
+          whenTrue: { $sequence: 'changeResource_22' },
+          whenFalse: { $sequence: null },
         },
-        next: 'startTimeDilation_20',
+        next: 'startTimeDilation_23',
       },
-      dealStagger_22: {
+      dealStagger_25: {
         action: {
           kind: 'dealStagger',
-          parameters: { value: { kind: 'valueNode', nodeId: 'data_7' } },
+          parameters: { value: { kind: 'valueNode', nodeId: 'data_9' } },
         },
-        next: 'conditional_21',
+        next: 'ifElse_24',
       },
-      dealDamage_23: {
+      dealDamage_26: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_8' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_10' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
           },
         },
-        next: 'dealStagger_22',
+        next: 'dealStagger_25',
       },
-      conditional_24: {
+      ifElse_27: {
         action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' }, alwaysNext: true },
-          whenTrue: { $sequence: 'modifyActionValue_17' },
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_16' },
+          whenTrue: { $sequence: 'modifyActionValue_19' },
+          whenFalse: { $sequence: null },
         },
-        next: 'dealDamage_23',
+        next: 'dealDamage_26',
       },
-      startTimeDilation_26: {
+      checkCondition_28: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
+        },
+        next: 'ifElse_27',
+      },
+      startTimeDilation_33: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -2328,7 +2297,24 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_27: {
+      checkCondition_29: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
+        },
+        next: null,
+      },
+      ifElse_37: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_29' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: 'findCharacterTeamTargets_1' },
+        },
+        next: null,
+      },
+      startTimeDilation_38: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -2350,6 +2336,7 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'abilityEntityTimedMarkerPresent',
+          returnTrueIfNotExists: false,
           contextKey: 'water_group',
           markerId: 'tangtang_waterabilityentity02',
         },
@@ -2358,6 +2345,7 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'abilityEntityTimedMarkerPresent',
+          returnTrueIfNotExists: false,
           contextKey: 'water_group',
           markerId: 'tangtang_waterabilityentity01',
         },
@@ -2372,32 +2360,44 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
           value: { kind: 'constant', value: 0 },
         },
       },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'tar_cnt', fallback: 0 } },
-      data_6: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_5' },
-          operator: 'lessOrEqual',
-          right: { kind: 'constant', value: 0 },
-        },
-      },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_9: {
+      data_4: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'combowater_cnt', fallback: 0 },
       },
-      data_10: {
+      data_5: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_9' },
+          left: { kind: 'valueNode', nodeId: 'data_4' },
           operator: 'lessOrEqual',
           right: { kind: 'constant', value: 0 },
         },
       },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'tar_cnt', fallback: 0 } },
+      data_8: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_7' },
+          operator: 'lessOrEqual',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_11: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_12: { type: 'boolean', expression: { kind: 'casterControlled' } },
     },
   },
   macros: {},
@@ -2408,22 +2408,15 @@ export const tangtangChr_0027_tangtang_combo_skill: SkillDefinition = {
   element: 'cryo',
   blackboard: {
     atk_scale: [1.067, 1.173, 1.28, 1.387, 1.494, 1.6, 1.707, 1.814, 1.92, 2.054, 2.214, 2.4],
-    cam_angle2: 0,
-    cam_duration2: 0,
     combowater_cnt: 0,
     dmg_up_water_ult: 0,
     duration: 3,
     duration_talent1buff: 0,
     duration_water: 30,
-    input_angle2: 0,
     max_stack: 0,
-    owner_mainchar_alpha: 0,
-    owner_mainchar_distance: 0,
     poise: 10,
     potential1: 0,
-    potential3_duration: 0,
     potential5: 0,
-    potential5_dmg_up_water_ult: 0,
     range_talent1buff: 5,
     ratio_speed: 0,
     ratio_speedreduction: 0,
@@ -2444,9 +2437,11 @@ export const tangtangChr_0027_tangtang_combo_skill: SkillDefinition = {
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findCharacterTeamTargets_1' } },
-    { startFrame: 26, endFrame: 29, sequence: { $sequence: 'conditional_24' } },
-    { startFrame: 0, endFrame: 23, sequence: { $sequence: 'startTimeDilation_26' } },
-    { startFrame: 0, endFrame: 5, sequence: { $sequence: 'startTimeDilation_27' } },
+    { startFrame: 26, endFrame: 29, sequence: { $sequence: 'mergeContextTargets_2' } },
+    { startFrame: 26, endFrame: 29, sequence: { $sequence: 'checkCondition_28' } },
+    { startFrame: 0, endFrame: 23, sequence: { $sequence: 'startTimeDilation_33' } },
+    { startFrame: 0, endFrame: 22, sequence: { $sequence: 'ifElse_37' } },
+    { startFrame: 0, endFrame: 5, sequence: { $sequence: 'startTimeDilation_38' } },
   ],
   smartTarget: 'trigger',
   cooldownFrames: [420, 420, 420, 420, 420, 420, 420, 420, 390, 390, 390, 360],
@@ -2471,6 +2466,7 @@ export const tangtangCommon_character_perfect_dodge: SkillDefinition = {
   offsetRecordFrame: 0,
   costFrame: 0,
   scheduledSequences: [],
+  defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
 };
@@ -2482,8 +2478,8 @@ const tangtangPassive1ActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0027_tangtang_water_passiveui',
-            target: 'caster',
+            buffs: [{ buffId: 'buff_chr_0027_tangtang_water_passiveui' }],
+            targets: { kind: 'fixed', target: 'caster' },
             inheritSourceSkillCastInfo: false,
           },
         },
@@ -2493,17 +2489,21 @@ const tangtangPassive1ActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0027_tangtang_passive_0',
-            target: 'caster',
+            buffs: [
+              {
+                buffId: 'buff_chr_0027_tangtang_passive_0',
+                blackboardAssignments: {
+                  duration_spellvulnerable: { kind: 'valueNode', nodeId: 'data_1' },
+                  normalskill_atk_scale01: { kind: 'valueNode', nodeId: 'data_2' },
+                  normalskill_atk_scale02: { kind: 'valueNode', nodeId: 'data_3' },
+                  normalskill_atk_scale03: { kind: 'valueNode', nodeId: 'data_4' },
+                  rate_spellvulnerable: { kind: 'valueNode', nodeId: 'data_5' },
+                  rate_spellvulnerable_02: { kind: 'valueNode', nodeId: 'data_6' },
+                },
+              },
+            ],
+            targets: { kind: 'fixed', target: 'caster' },
             inheritSourceSkillCastInfo: false,
-            blackboardAssignments: {
-              duration_spellvulnerable: { kind: 'valueNode', nodeId: 'data_1' },
-              normalskill_atk_scale01: { kind: 'valueNode', nodeId: 'data_2' },
-              normalskill_atk_scale02: { kind: 'valueNode', nodeId: 'data_3' },
-              normalskill_atk_scale03: { kind: 'valueNode', nodeId: 'data_4' },
-              rate_spellvulnerable: { kind: 'valueNode', nodeId: 'data_5' },
-              rate_spellvulnerable_02: { kind: 'valueNode', nodeId: 'data_6' },
-            },
           },
         },
         next: 'applyBuff_1',
@@ -2560,21 +2560,19 @@ const tangtangPassive1: OperatorPassiveSkillDefinition = {
 const tangtangComboCondition1ActionGraph = {
   main: {
     nodes: {
-      conditional_1: {
+      checkCondition_1: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-          whenTrue: { $sequence: null },
         },
         next: null,
       },
-      conditional_2: {
+      checkCondition_2: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'conditional_1' },
         },
-        next: null,
+        next: 'checkCondition_1',
       },
     },
     dataNodes: {
@@ -2605,18 +2603,17 @@ const tangtangComboCondition1: ComboSkillConditionDefinition = {
   event: 'takeDamage',
   immediately: false,
   initialValues: null,
-  sequence: { $sequence: 'conditional_2' },
+  sequence: { $sequence: 'checkCondition_2' },
   actionGraph: tangtangComboCondition1ActionGraph,
 };
 
 const tangtangComboCondition2ActionGraph = {
   main: {
     nodes: {
-      conditional_1: {
+      checkCondition_1: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-          whenTrue: { $sequence: null },
         },
         next: null,
       },
@@ -2637,7 +2634,7 @@ const tangtangComboCondition2: ComboSkillConditionDefinition = {
   event: 'beforeTakeInfliction',
   immediately: false,
   initialValues: null,
-  sequence: { $sequence: 'conditional_1' },
+  sequence: { $sequence: 'checkCondition_1' },
   actionGraph: tangtangComboCondition2ActionGraph,
 };
 
@@ -2665,16 +2662,21 @@ const tangtangBuff2ActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_affixes_speedup',
-            target: 'caster',
+            buffs: [
+              {
+                buffId: 'buff_common_affixes_speedup',
+                blackboardAssignments: {
+                  duration: { kind: 'valueNode', nodeId: 'data_1' },
+                  rate: { kind: 'valueNode', nodeId: 'data_2' },
+                },
+                stringBlackboardAssignments: { child_buff_id: 'buff_chr_0027_tangtang_water_icon' },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             asChildBuff: true,
             finishByAction: true,
-            blackboardAssignments: {
-              duration: { kind: 'valueNode', nodeId: 'data_1' },
-              rate: { kind: 'valueNode', nodeId: 'data_2' },
-            },
-            stringBlackboardAssignments: { child_buff_id: 'buff_chr_0027_tangtang_water_icon' },
           },
         },
         next: null,
@@ -2683,7 +2685,8 @@ const tangtangBuff2ActionGraph = {
         action: {
           kind: 'finishBuffsById',
           parameters: {
-            target: 'buffOwner',
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
             buffIds: ['buff_chr_0027_tangtang_comboskill_waterbuff_outaura'],
             reason: 'other',
           },
@@ -2706,8 +2709,7 @@ const tangtangBuff2: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration_waterbuff' },
   presentation: {
     visible: true,
-    iconId: 'icon_battle_tangtang_speedup',
-    iconPath: '/icons/icon_battle_tangtang_speedup.webp',
+    icon: 'endaxis:icons/icon_battle_tangtang_speedup',
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
     showInSquadIcon: false,
@@ -2731,8 +2733,8 @@ const tangtangBuff2: SkillBuffDefinition = {
   blackboard: { duration_waterbuff: 30, ratio_speed: 0.1 },
   attributeModifiers: [],
   lifecycleSequences: {
-    start: { $sequence: 'finishBuffsById_2' },
-    enable: { $sequence: 'applyBuff_1' },
+    start: [{ $sequence: 'finishBuffsById_2' }],
+    enable: [{ $sequence: 'applyBuff_1' }],
   },
   actionGraph: tangtangBuff2ActionGraph,
 };
@@ -2744,27 +2746,31 @@ const tangtangBuff3ActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_affixes_speedup',
-            target: 'caster',
+            buffs: [
+              {
+                buffId: 'buff_common_affixes_speedup',
+                blackboardAssignments: {
+                  duration: { kind: 'valueNode', nodeId: 'data_1' },
+                  rate: { kind: 'valueNode', nodeId: 'data_2' },
+                },
+                stringBlackboardAssignments: { child_buff_id: 'buff_chr_0027_tangtang_water_icon' },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             asChildBuff: true,
             finishByAction: true,
-            blackboardAssignments: {
-              duration: { kind: 'valueNode', nodeId: 'data_1' },
-              rate: { kind: 'valueNode', nodeId: 'data_2' },
-            },
-            stringBlackboardAssignments: { child_buff_id: 'buff_chr_0027_tangtang_water_icon' },
           },
         },
         next: null,
       },
-      conditional_2: {
+      checkCondition_2: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-          whenTrue: { $sequence: 'applyBuff_1' },
         },
-        next: null,
+        next: 'applyBuff_1',
       },
     },
     dataNodes: {
@@ -2792,8 +2798,7 @@ const tangtangBuff3: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration_talent1buff' },
   presentation: {
     visible: true,
-    iconId: 'icon_battle_tangtang_speedup',
-    iconPath: '/icons/icon_battle_tangtang_speedup.webp',
+    icon: 'endaxis:icons/icon_battle_tangtang_speedup',
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
     showInSquadIcon: false,
@@ -2816,7 +2821,7 @@ const tangtangBuff3: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration_talent1buff: 3, ratio_speed: 0.2 },
   attributeModifiers: [],
-  lifecycleSequences: { enable: { $sequence: 'conditional_2' } },
+  lifecycleSequences: { enable: [{ $sequence: 'checkCondition_2' }] },
   actionGraph: tangtangBuff3ActionGraph,
 };
 
@@ -2827,15 +2832,20 @@ const tangtangBuff4ActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_affixes_slow',
-            target: 'enemy',
+            buffs: [
+              {
+                buffId: 'buff_common_affixes_slow',
+                blackboardAssignments: {
+                  duration: { kind: 'valueNode', nodeId: 'data_1' },
+                  rate: { kind: 'valueNode', nodeId: 'data_2' },
+                },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             asChildBuff: true,
             finishByAction: true,
-            blackboardAssignments: {
-              duration: { kind: 'valueNode', nodeId: 'data_1' },
-              rate: { kind: 'valueNode', nodeId: 'data_2' },
-            },
           },
         },
         next: null,
@@ -2858,7 +2868,7 @@ const tangtangBuff4: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration_waterdebuff: 30, ratio_speedreduction: 0.7 },
   attributeModifiers: [],
-  lifecycleSequences: { enable: { $sequence: 'applyBuff_1' } },
+  lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
   actionGraph: tangtangBuff4ActionGraph,
 };
 
@@ -2869,15 +2879,20 @@ const tangtangBuff5ActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_affixes_slow',
-            target: 'enemy',
+            buffs: [
+              {
+                buffId: 'buff_common_affixes_slow',
+                blackboardAssignments: {
+                  duration: { kind: 'valueNode', nodeId: 'data_1' },
+                  rate: { kind: 'valueNode', nodeId: 'data_2' },
+                },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             asChildBuff: true,
             finishByAction: true,
-            blackboardAssignments: {
-              duration: { kind: 'valueNode', nodeId: 'data_1' },
-              rate: { kind: 'valueNode', nodeId: 'data_2' },
-            },
           },
         },
         next: null,
@@ -2900,7 +2915,7 @@ const tangtangBuff5: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration_talent1buff: 3, ratio_speedreduction: 0.7 },
   attributeModifiers: [],
-  lifecycleSequences: { enable: { $sequence: 'applyBuff_1' } },
+  lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
   actionGraph: tangtangBuff5ActionGraph,
 };
 
@@ -2916,7 +2931,7 @@ const tangtangBuff6: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration' },
   applyTags: [],
   extendTags: [],
-  blackboard: { duration: 10, duration_move: 1 },
+  blackboard: { duration: 10 },
   attributeModifiers: [],
   actionGraph: tangtangBuff6ActionGraph,
 };
@@ -2924,16 +2939,58 @@ const tangtangBuff6: SkillBuffDefinition = {
 const tangtangBuff7ActionGraph = {
   main: {
     nodes: {
-      finishBuffsById_1: {
+      checkCondition_1: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+      findTargets_2: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
+      finishBuffsById_5: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
-            target: 'buffOwner',
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
             buffIds: ['buff_chr_0027_tangtang_normalskill_abilityentity_1'],
             reason: 'other',
           },
         },
         next: null,
+      },
+      ifElse_opt1: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_1' },
+          whenTrue: { $sequence: 'findTargets_2' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'mainTarget', owner: { kind: 'owner' } },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
     },
   },
@@ -2950,9 +3007,11 @@ const tangtangBuff7: SkillBuffDefinition = {
   maxTriggerCount: -1,
   applyTags: [],
   extendTags: [],
-  blackboard: { duration: 3, duration_move: 3, speed: 5, trigger: 0.1 },
+  blackboard: { duration: 3, trigger: 0.1 },
   attributeModifiers: [],
-  lifecycleSequences: { enable: { $sequence: 'finishBuffsById_1' } },
+  lifecycleSequences: {
+    enable: [{ $sequence: 'ifElse_opt1' }, { $sequence: 'finishBuffsById_5' }],
+  },
   actionGraph: tangtangBuff7ActionGraph,
 };
 
@@ -2963,23 +3022,32 @@ const tangtangBuff8ActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_common_affixes_vulnerable_spell',
-            target: 'enemy',
+            buffs: [
+              {
+                buffId: 'buff_common_affixes_vulnerable_spell',
+                blackboardAssignments: {
+                  duration: { kind: 'valueNode', nodeId: 'data_1' },
+                  rate: { kind: 'valueNode', nodeId: 'data_2' },
+                },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             asChildBuff: true,
             finishByAction: true,
-            blackboardAssignments: {
-              duration: { kind: 'valueNode', nodeId: 'data_1' },
-              rate: { kind: 'valueNode', nodeId: 'data_2' },
-            },
           },
         },
         next: null,
       },
-      readCurrentBuffRemainingDuration_2: {
+      readBuffRemainingDuration_2: {
         action: {
-          kind: 'readCurrentBuffRemainingDuration',
-          parameters: { outputKey: 'real_duration' },
+          kind: 'readBuffRemainingDuration',
+          parameters: {
+            target: { kind: 'owner' },
+            query: { kind: 'environment' },
+            outputKey: 'real_duration',
+          },
         },
         next: 'applyBuff_1',
       },
@@ -3003,11 +3071,10 @@ const tangtangBuff8: SkillBuffDefinition = {
     cntmax: 1,
     duration_spellvulnerable: 10,
     rate_spellvulnerable: 0.05,
-    rate_vul_base: 0,
     real_duration: 0,
   },
   attributeModifiers: [],
-  lifecycleSequences: { enable: { $sequence: 'readCurrentBuffRemainingDuration_2' } },
+  lifecycleSequences: { enable: [{ $sequence: 'readBuffRemainingDuration_2' }] },
   actionGraph: tangtangBuff8ActionGraph,
 };
 
@@ -3136,32 +3203,54 @@ const tangtangBuff10ActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0027_tangtang_normalskill_abilityentity_2',
-            target: 'currentAbilityEntity',
-            source: 'buffSource',
+            buffs: [{ buffId: 'buff_chr_0027_tangtang_normalskill_abilityentity_2' }],
+            targets: { kind: 'inputTarget' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
         },
         next: null,
       },
-      forEachContextTarget_opt1: {
+      checkCondition_2: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: 'applyBuff_1',
+      },
+      forEachContextTarget_3: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { contextKey: 'water_move' },
-          body: { $sequence: 'applyBuff_1' },
+          parameters: { targets: { kind: 'context', key: 'water_move' } },
+          body: { $sequence: 'checkCondition_2' },
         },
         next: null,
       },
-      findOwnerSpawnedAbilityEntities_opt2: {
+      findOwnerSpawnedAbilityEntities_4: {
         action: {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'water_move',
             abilityEntityIds: ['abilityentity_chr_0027_tangtang_normal_skill_move'],
+            owner: { kind: 'owner' },
             sameSourceSkillCast: true,
           },
         },
-        next: 'forEachContextTarget_opt1',
+        next: 'forEachContextTarget_3',
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'targetDistance',
+          source: { kind: 'owner' },
+          target: { kind: 'inputTarget' },
+          distance: 50,
+          lessThan: true,
+          includeTargetRadius: false,
+          containsHittableObject: false,
+        },
       },
     },
   },
@@ -3177,7 +3266,7 @@ const tangtangBuff10: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  lifecycleSequences: { finish: { $sequence: 'findOwnerSpawnedAbilityEntities_opt2' } },
+  lifecycleSequences: { finish: [{ $sequence: 'findOwnerSpawnedAbilityEntities_4' }] },
   actionGraph: tangtangBuff10ActionGraph,
 };
 
@@ -3187,7 +3276,11 @@ const tangtangBuff11ActionGraph = {
       findOwnerSpawnedAbilityEntities_1: {
         action: {
           kind: 'findOwnerSpawnedAbilityEntities',
-          parameters: { saveToContextKey: 'ultwater_abilityentity', abilityEntityIds: [] },
+          parameters: {
+            saveToContextKey: 'ultwater_abilityentity',
+            abilityEntityIds: [],
+            owner: { kind: 'source' },
+          },
         },
         next: null,
       },
@@ -3203,20 +3296,32 @@ const tangtangBuff11: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration' },
   applyTags: [],
   extendTags: [],
-  blackboard: { duration: 10, duration_move: 1 },
+  blackboard: { duration: 10 },
   attributeModifiers: [],
-  lifecycleSequences: { enable: { $sequence: 'findOwnerSpawnedAbilityEntities_1' } },
+  lifecycleSequences: { enable: [{ $sequence: 'findOwnerSpawnedAbilityEntities_1' }] },
   actionGraph: tangtangBuff11ActionGraph,
 };
 
 const tangtangBuff12ActionGraph = {
   main: {
     nodes: {
-      finishBuffsById_1: {
+      findTargets_1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'tar',
+          },
+        },
+        next: null,
+      },
+      finishBuffsById_2: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
-            target: 'buffOwner',
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
             buffIds: ['buff_chr_0027_tangtang_normalskill_abilityentity_1'],
             reason: 'other',
           },
@@ -3238,9 +3343,11 @@ const tangtangBuff12: SkillBuffDefinition = {
   maxTriggerCount: -1,
   applyTags: [],
   extendTags: [],
-  blackboard: { duration: 3, duration_move: 3, speed: 8, trigger: 0.1 },
+  blackboard: { duration: 3, trigger: 0.1 },
   attributeModifiers: [],
-  lifecycleSequences: { enable: { $sequence: 'finishBuffsById_1' } },
+  lifecycleSequences: {
+    enable: [{ $sequence: 'findTargets_1' }, { $sequence: 'finishBuffsById_2' }],
+  },
   actionGraph: tangtangBuff12ActionGraph,
 };
 
@@ -3251,29 +3358,27 @@ const tangtangBuff13ActionGraph = {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0027_tangtang_ultskill_buff_damage',
-            target: 'controlledOperator',
-            source: 'buffSource',
+            buffs: [{ buffId: 'buff_chr_0027_tangtang_ultskill_buff_damage' }],
+            targets: { kind: 'mainCharacter' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
         },
         next: null,
       },
-      conditional_2: {
+      checkCondition_2: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-          whenTrue: { $sequence: 'applyBuff_1' },
         },
-        next: null,
+        next: 'applyBuff_1',
       },
-      conditional_3: {
+      checkCondition_3: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'conditional_2' },
         },
-        next: null,
+        next: 'checkCondition_2',
       },
     },
     dataNodes: {
@@ -3297,8 +3402,7 @@ const tangtangBuff13: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'duration' },
   presentation: {
     visible: true,
-    iconId: 'icon_battle_tangtang_ultskilldebuff',
-    iconPath: '/icons/icon_battle_tangtang_ultskilldebuff.webp',
+    icon: 'endaxis:icons/icon_battle_tangtang_ultskilldebuff',
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
     showInSquadIcon: true,
@@ -3322,7 +3426,7 @@ const tangtangBuff13: SkillBuffDefinition = {
   blackboard: { duration: 5 },
   attributeModifiers: [],
   abilityEventResponses: [
-    { event: 'beforeDamageAction', priority: 0, sequence: { $sequence: 'conditional_3' } },
+    { event: 'beforeDamageAction', priority: 0, sequence: { $sequence: 'checkCondition_3' } },
   ],
   actionGraph: tangtangBuff13ActionGraph,
 };
@@ -3356,8 +3460,7 @@ const tangtangBuff15: SkillBuffDefinition = {
   durationSeconds: { blackboardKey: 'ultskill_debuff_duration' },
   presentation: {
     visible: true,
-    iconId: 'icon_battle_tangtang_ultskilldebuff',
-    iconPath: '/icons/icon_battle_tangtang_ultskilldebuff.webp',
+    icon: 'endaxis:icons/icon_battle_tangtang_ultskilldebuff',
     showInHeadBarCommon: true,
     showInHeadBarAttached: false,
     showInSquadIcon: false,
@@ -3378,7 +3481,7 @@ const tangtangBuff15: SkillBuffDefinition = {
   },
   applyTags: [],
   extendTags: [],
-  blackboard: { timedilation_duration: -1, ultskill_debuff_duration: 4 },
+  blackboard: { ultskill_debuff_duration: 4 },
   attributeModifiers: [],
   actionGraph: tangtangBuff15ActionGraph,
 };
@@ -3386,10 +3489,23 @@ const tangtangBuff15: SkillBuffDefinition = {
 const tangtangBuff16ActionGraph = {
   main: {
     nodes: {
-      spawnAbilityEntity_5: {
+      applyBuff_9: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0027_tangtang_ultskill_abilityentity_1' }],
+            targets: { kind: 'context', key: 'ultskill_watermove' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      spawnAbilityEntity_10: {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
+            bornAt: { kind: 'context', key: 'ultwater_abilityentity' },
             abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_move',
             childSkillId: 'chr_0027_tangtang_ult_skill_abilityentitymove',
             inheritActionBlackboard: true,
@@ -3398,73 +3514,70 @@ const tangtangBuff16ActionGraph = {
             saveToContextKey: 'ultskill_watermove',
           },
         },
-        next: null,
+        next: 'applyBuff_9',
       },
-      applyBuff_6: {
+      applyBuff_2: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0027_tangtang_ultskill_abilityentity_1',
-            target: 'currentAbilityEntity',
-            source: 'buffSource',
+            buffs: [{ buffId: 'buff_chr_0027_tangtang_water_ultskillwake' }],
+            targets: { kind: 'inputTarget' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
         },
         next: null,
       },
-      forEachContextTarget_10: {
-        action: {
-          kind: 'forEachContextTarget',
-          parameters: { contextKey: 'ultskill_watermove' },
-          body: { $sequence: 'applyBuff_6' },
-        },
-        next: null,
-      },
-      conditional_11: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-          whenTrue: { $sequence: 'spawnAbilityEntity_5' },
-        },
-        next: 'forEachContextTarget_10',
-      },
-      applyBuff_1: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffId: 'buff_chr_0027_tangtang_water_ultskillwake',
-            target: 'currentAbilityEntity',
-            source: 'buffSource',
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-      modifyActionValue_2: {
+      modifyActionValue_3: {
         action: {
           kind: 'modifyActionValue',
           parameters: { key: 'water_cnt', operation: 'add', value: { kind: 'constant', value: 1 } },
         },
-        next: 'applyBuff_1',
+        next: 'applyBuff_2',
       },
-      forEachContextTarget_9: {
+      checkCondition_1: {
         action: {
-          kind: 'forEachContextTarget',
-          parameters: { contextKey: 'water' },
-          body: { $sequence: 'modifyActionValue_2' },
-        },
-        next: 'conditional_11',
-      },
-      conditional_12: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' }, alwaysNext: true },
-          whenTrue: { $sequence: 'forEachContextTarget_9' },
-          whenFalse: { $sequence: 'conditional_11' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
         },
         next: null,
       },
-      modifyActionValue_13: {
+      ifElse_4: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_1' },
+          whenTrue: { $sequence: 'modifyActionValue_3' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      forEachContextTarget_8: {
+        action: {
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'context', key: 'water' } },
+          body: { $sequence: 'ifElse_4' },
+        },
+        next: 'spawnAbilityEntity_10',
+      },
+      checkCondition_5: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: null,
+      },
+      ifElse_11: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { $sequence: 'checkCondition_5' },
+          whenTrue: { $sequence: 'forEachContextTarget_8' },
+          whenFalse: { $sequence: 'spawnAbilityEntity_10' },
+        },
+        next: null,
+      },
+      modifyActionValue_12: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -3473,9 +3586,9 @@ const tangtangBuff16ActionGraph = {
             value: { kind: 'valueNode', nodeId: 'data_3' },
           },
         },
-        next: 'conditional_12',
+        next: 'ifElse_11',
       },
-      modifyActionValue_14: {
+      modifyActionValue_13: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -3484,9 +3597,9 @@ const tangtangBuff16ActionGraph = {
             value: { kind: 'valueNode', nodeId: 'data_4' },
           },
         },
-        next: 'modifyActionValue_13',
+        next: 'modifyActionValue_12',
       },
-      modifyActionValue_15: {
+      modifyActionValue_14: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -3495,91 +3608,97 @@ const tangtangBuff16ActionGraph = {
             value: { kind: 'valueNode', nodeId: 'data_5' },
           },
         },
+        next: 'modifyActionValue_13',
+      },
+      findOwnerSpawnedAbilityEntities_15: {
+        action: {
+          kind: 'findOwnerSpawnedAbilityEntities',
+          parameters: {
+            saveToContextKey: 'ultwater_abilityentity',
+            abilityEntityIds: ['abilityentity_chr_0027_tangtang_ultskill'],
+            owner: { kind: 'owner' },
+          },
+        },
         next: 'modifyActionValue_14',
       },
       findOwnerSpawnedAbilityEntities_16: {
         action: {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
-            saveToContextKey: 'ultwater_abilityentity',
-            abilityEntityIds: ['abilityentity_chr_0027_tangtang_ultskill'],
-          },
-        },
-        next: 'modifyActionValue_15',
-      },
-      findOwnerSpawnedAbilityEntities_17: {
-        action: {
-          kind: 'findOwnerSpawnedAbilityEntities',
-          parameters: {
             saveToContextKey: 'water',
             abilityEntityIds: ['abilityentity_chr_0027_tangtang_comboskill_water'],
+            owner: { kind: 'owner' },
           },
         },
-        next: 'findOwnerSpawnedAbilityEntities_16',
+        next: 'findOwnerSpawnedAbilityEntities_15',
       },
-      applyBuff_18: {
+      applyBuff_17: {
         action: {
           kind: 'applyBuff',
           parameters: {
-            buffId: 'buff_chr_0027_tangtang_ultskill_abilityentity_2',
-            target: 'currentAbilityEntity',
-            source: 'buffSource',
+            buffs: [{ buffId: 'buff_chr_0027_tangtang_ultskill_abilityentity_2' }],
+            targets: { kind: 'context', key: 'ultwater_move' },
+            source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
         },
         next: null,
       },
+      checkCondition_18: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+        },
+        next: 'applyBuff_17',
+      },
       forEachContextTarget_19: {
         action: {
           kind: 'forEachContextTarget',
-          parameters: { contextKey: 'ultwater_move' },
-          body: { $sequence: 'applyBuff_18' },
+          parameters: { targets: { kind: 'context', key: 'ultwater_move' } },
+          body: { $sequence: 'checkCondition_18' },
         },
         next: null,
       },
-      forEachContextTarget_opt1: {
+      checkCondition_20: {
         action: {
-          kind: 'forEachContextTarget',
-          parameters: { contextKey: 'ultwater_move' },
-          body: { $sequence: 'forEachContextTarget_19' },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
-        next: null,
+        next: 'forEachContextTarget_19',
       },
-      conditional_opt2: {
-        action: {
-          kind: 'conditional',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-          whenTrue: { $sequence: 'forEachContextTarget_opt1' },
-        },
-        next: null,
-      },
-      findOwnerSpawnedAbilityEntities_opt3: {
+      findOwnerSpawnedAbilityEntities_21: {
         action: {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
             saveToContextKey: 'ultwater_move',
             abilityEntityIds: ['abilityentity_chr_0027_tangtang_normal_skill_move'],
+            owner: { kind: 'owner' },
             sameSourceSkillCast: true,
           },
         },
-        next: 'conditional_opt2',
+        next: 'checkCondition_20',
       },
     },
     dataNodes: {
       data_1: {
         type: 'boolean',
         expression: {
-          kind: 'contextTargetCountCompare',
-          contextKey: 'ultwater_abilityentity',
-          operator: 'greater',
-          value: 0,
+          kind: 'targetDistance',
+          source: { kind: 'owner' },
+          target: { kind: 'inputTarget' },
+          distance: 50,
+          lessThan: true,
+          includeTargetRadius: false,
+          containsHittableObject: false,
         },
       },
       data_2: {
         type: 'boolean',
         expression: {
-          kind: 'contextTargetCountCompare',
-          contextKey: 'water',
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'water' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
           operator: 'greaterOrEqual',
           value: 1,
         },
@@ -3599,8 +3718,22 @@ const tangtangBuff16ActionGraph = {
       data_6: {
         type: 'boolean',
         expression: {
-          kind: 'contextTargetCountCompare',
-          contextKey: 'ultwater_move',
+          kind: 'targetDistance',
+          source: { kind: 'owner' },
+          target: { kind: 'context', key: 'ultwater_move' },
+          distance: 50,
+          lessThan: true,
+          includeTargetRadius: false,
+          containsHittableObject: false,
+        },
+      },
+      data_7: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'ultwater_move' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
           operator: 'greaterOrEqual',
           value: 1,
           outputKey: 'water_cnt',
@@ -3622,10 +3755,7 @@ const tangtangBuff16: SkillBuffDefinition = {
     dmg_up_water_ult: 0,
     duration: 5,
     duration_spellvulnerable: 0,
-    hit_cnt: 4,
     hit_cntmax: 10,
-    hit_duration: 5,
-    poise_tomado: 0,
     rate_spellvulnerable: 0,
     rate_spellvulnerable_02: 0,
     talent2_ultskill: 0,
@@ -3636,12 +3766,8 @@ const tangtangBuff16: SkillBuffDefinition = {
   },
   attributeModifiers: [],
   scheduledSequences: [
-    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_17' } },
-    {
-      startFrame: 12,
-      endFrame: 13,
-      sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_opt3' },
-    },
+    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_16' } },
+    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_21' } },
   ],
   actionGraph: tangtangBuff16ActionGraph,
 };
@@ -3678,8 +3804,7 @@ const tangtangBuff18: SkillBuffDefinition = {
   maxTriggerCount: 1,
   presentation: {
     visible: true,
-    iconId: 'icon_battle_affix_speedup',
-    iconPath: '/icons/icon_battle_affix_speedup.webp',
+    icon: 'endaxis:icons/icon_battle_affix_speedup',
     showInHeadBarCommon: true,
     showInHeadBarAttached: false,
     showInSquadIcon: true,
@@ -3722,13 +3847,12 @@ const tangtangBuff19ActionGraph = {
         },
         next: 'setCharacterPassiveUiValue_7',
       },
-      conditional_9: {
+      checkCondition_9: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-          whenTrue: { $sequence: 'modifyActionValue_8' },
         },
-        next: null,
+        next: 'modifyActionValue_8',
       },
       modifyActionValue_11: {
         action: {
@@ -3741,13 +3865,12 @@ const tangtangBuff19ActionGraph = {
         },
         next: 'setCharacterPassiveUiValue_7',
       },
-      conditional_12: {
+      checkCondition_12: {
         action: {
-          kind: 'conditional',
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-          whenTrue: { $sequence: 'modifyActionValue_11' },
         },
-        next: null,
+        next: 'modifyActionValue_11',
       },
     },
     dataNodes: {
@@ -3784,8 +3907,8 @@ const tangtangBuff19: SkillBuffDefinition = {
   blackboard: { water_num: 0 },
   attributeModifiers: [],
   abilityEventResponses: [
-    { event: 'abilityEntitySpawned', priority: 0, sequence: { $sequence: 'conditional_9' } },
-    { event: 'abilityEntityFinished', priority: 0, sequence: { $sequence: 'conditional_12' } },
+    { event: 'abilityEntitySpawned', priority: 0, sequence: { $sequence: 'checkCondition_9' } },
+    { event: 'abilityEntityFinished', priority: 0, sequence: { $sequence: 'checkCondition_12' } },
   ],
   actionGraph: tangtangBuff19ActionGraph,
 };
@@ -3830,6 +3953,7 @@ export const tangtang: OperatorDefinition = {
   rarity: 6,
   weaponType: 'pistol',
   element: 'cryo',
+  characterTypeId: 'Cryst',
   role: 'caster',
   mainAttribute: 'agility',
   secondaryAttribute: 'strength',
@@ -4223,42 +4347,25 @@ export const tangtang: OperatorDefinition = {
           },
           blackboard: {
             atk_scale: 0.1,
-            atk_scale_03: 0,
             duration: 5,
-            hit_cnt: 4,
             hit_cntmax: 10,
-            hit_duration: 5,
             poise: 5,
             poise_tornado: 0,
             water_cnt: 0,
           },
           scheduledSequences: [
-            { startFrame: 12, endFrame: 12, sequence: { $sequence: 'conditional_11' } },
-            {
-              startFrame: 298,
-              endFrame: 298,
-              sequence: { $sequence: 'finishActionOwnerAbilityEntity_12' },
-            },
-            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'applyBuff_13' } },
+            { startFrame: 12, endFrame: 12, sequence: { $sequence: 'ifElse_13' } },
+            { startFrame: 298, endFrame: 298, sequence: { $sequence: 'finishOwner_14' } },
+            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'applyBuff_15' } },
           ],
           actionGraph: {
             main: {
               nodes: {
-                modifyActionValue_9: {
-                  action: {
-                    kind: 'modifyActionValue',
-                    parameters: {
-                      key: 'water_cnt',
-                      operation: 'assign',
-                      value: { kind: 'constant', value: 0 },
-                    },
-                  },
-                  next: null,
-                },
-                spawnAbilityEntity_10: {
+                spawnAbilityEntity_12: {
                   action: {
                     kind: 'spawnAbilityEntity',
                     parameters: {
+                      bornAt: { kind: 'owner' },
                       abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill',
                       childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit',
                       inheritActionBlackboard: true,
@@ -4266,12 +4373,13 @@ export const tangtang: OperatorDefinition = {
                       target: 'currentAbilityEntity',
                     },
                   },
-                  next: 'modifyActionValue_9',
+                  next: null,
                 },
-                spawnAbilityEntity_6: {
+                spawnAbilityEntity_7: {
                   action: {
                     kind: 'spawnAbilityEntity',
                     parameters: {
+                      bornAt: { kind: 'owner' },
                       abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_02_02',
                       childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit_1',
                       inheritActionBlackboard: true,
@@ -4279,12 +4387,13 @@ export const tangtang: OperatorDefinition = {
                       target: 'currentAbilityEntity',
                     },
                   },
-                  next: 'modifyActionValue_9',
+                  next: null,
                 },
-                spawnAbilityEntity_7: {
+                spawnAbilityEntity_8: {
                   action: {
                     kind: 'spawnAbilityEntity',
                     parameters: {
+                      bornAt: { kind: 'owner' },
                       abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_02',
                       childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit_1',
                       inheritActionBlackboard: true,
@@ -4292,12 +4401,13 @@ export const tangtang: OperatorDefinition = {
                       target: 'currentAbilityEntity',
                     },
                   },
-                  next: 'spawnAbilityEntity_6',
+                  next: 'spawnAbilityEntity_7',
                 },
-                spawnAbilityEntity_2: {
+                spawnAbilityEntity_3: {
                   action: {
                     kind: 'spawnAbilityEntity',
                     parameters: {
+                      bornAt: { kind: 'owner' },
                       abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_03_03',
                       childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
                       inheritActionBlackboard: true,
@@ -4305,26 +4415,14 @@ export const tangtang: OperatorDefinition = {
                       target: 'currentAbilityEntity',
                     },
                   },
-                  next: 'modifyActionValue_9',
-                },
-                spawnAbilityEntity_3: {
-                  action: {
-                    kind: 'spawnAbilityEntity',
-                    parameters: {
-                      abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_03_02',
-                      childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
-                      inheritActionBlackboard: true,
-                      dieWhenSourceDies: false,
-                      target: 'currentAbilityEntity',
-                    },
-                  },
-                  next: 'spawnAbilityEntity_2',
+                  next: null,
                 },
                 spawnAbilityEntity_4: {
                   action: {
                     kind: 'spawnAbilityEntity',
                     parameters: {
-                      abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_03',
+                      bornAt: { kind: 'owner' },
+                      abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_03_02',
                       childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
                       inheritActionBlackboard: true,
                       dieWhenSourceDies: false,
@@ -4333,40 +4431,65 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: 'spawnAbilityEntity_3',
                 },
-                conditional_8: {
+                spawnAbilityEntity_5: {
                   action: {
-                    kind: 'conditional',
+                    kind: 'spawnAbilityEntity',
                     parameters: {
-                      condition: { kind: 'conditionNode', nodeId: 'data_2' },
-                      alwaysNext: true,
+                      bornAt: { kind: 'owner' },
+                      abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_03',
+                      childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
+                      inheritActionBlackboard: true,
+                      dieWhenSourceDies: false,
+                      target: 'currentAbilityEntity',
                     },
-                    whenTrue: { $sequence: 'spawnAbilityEntity_4' },
-                    whenFalse: { $sequence: 'spawnAbilityEntity_7' },
+                  },
+                  next: 'spawnAbilityEntity_4',
+                },
+                checkCondition_1: {
+                  action: {
+                    kind: 'checkCondition',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                   },
                   next: null,
                 },
-                conditional_11: {
+                ifElse_10: {
                   action: {
-                    kind: 'conditional',
-                    parameters: {
-                      condition: { kind: 'conditionNode', nodeId: 'data_4' },
-                      alwaysNext: true,
-                    },
-                    whenTrue: { $sequence: 'conditional_8' },
-                    whenFalse: { $sequence: 'spawnAbilityEntity_10' },
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { $sequence: 'checkCondition_1' },
+                    whenTrue: { $sequence: 'spawnAbilityEntity_5' },
+                    whenFalse: { $sequence: 'spawnAbilityEntity_8' },
                   },
                   next: null,
                 },
-                finishActionOwnerAbilityEntity_12: {
-                  action: { kind: 'finishActionOwnerAbilityEntity', parameters: {} },
+                checkCondition_9: {
+                  action: {
+                    kind: 'checkCondition',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+                  },
                   next: null,
                 },
-                applyBuff_13: {
+                ifElse_13: {
+                  action: {
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { $sequence: 'checkCondition_9' },
+                    whenTrue: { $sequence: 'ifElse_10' },
+                    whenFalse: { $sequence: 'spawnAbilityEntity_12' },
+                  },
+                  next: null,
+                },
+                finishOwner_14: {
+                  action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
+                  next: null,
+                },
+                applyBuff_15: {
                   action: {
                     kind: 'applyBuff',
                     parameters: {
-                      buffId: 'buff_chr_0027_tangtang_normalskill_abilityentity_1',
-                      target: 'currentAbilityEntity',
+                      buffs: [{ buffId: 'buff_chr_0027_tangtang_normalskill_abilityentity_1' }],
+                      targets: { kind: 'owner' },
+                      source: { kind: 'source' },
                       inheritSourceSkillCastInfo: true,
                     },
                   },
@@ -4388,14 +4511,10 @@ export const tangtang: OperatorDefinition = {
                   },
                 },
                 data_3: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'water_cnt', fallback: 0 },
-                },
-                data_4: {
                   type: 'boolean',
                   expression: {
                     kind: 'actionValueCompare',
-                    left: { kind: 'valueNode', nodeId: 'data_3' },
+                    left: { kind: 'valueNode', nodeId: 'data_1' },
                     operator: 'greater',
                     right: { kind: 'constant', value: 0 },
                   },
@@ -4419,41 +4538,24 @@ export const tangtang: OperatorDefinition = {
             atk_scale: 0.1,
             dmg_up_water_ult: 0,
             duration: 5,
-            hit_cnt: 4,
             hit_cntmax: 10,
-            hit_duration: 5,
             poise: 5,
             poise_tornado: 0,
-            talent2: 0,
             talent2_ultskill: 0,
             water_cnt: 0,
           },
           scheduledSequences: [
-            { startFrame: 18, endFrame: 18, sequence: { $sequence: 'conditional_11' } },
-            {
-              startFrame: 150,
-              endFrame: 150,
-              sequence: { $sequence: 'finishActionOwnerAbilityEntity_12' },
-            },
+            { startFrame: 18, endFrame: 18, sequence: { $sequence: 'ifElse_13' } },
+            { startFrame: 150, endFrame: 150, sequence: { $sequence: 'finishOwner_14' } },
           ],
           actionGraph: {
             main: {
               nodes: {
-                modifyActionValue_9: {
-                  action: {
-                    kind: 'modifyActionValue',
-                    parameters: {
-                      key: 'water_cnt',
-                      operation: 'assign',
-                      value: { kind: 'constant', value: 0 },
-                    },
-                  },
-                  next: null,
-                },
-                spawnAbilityEntity_10: {
+                spawnAbilityEntity_12: {
                   action: {
                     kind: 'spawnAbilityEntity',
                     parameters: {
+                      bornAt: { kind: 'owner' },
                       abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill',
                       childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit',
                       inheritActionBlackboard: true,
@@ -4461,12 +4563,13 @@ export const tangtang: OperatorDefinition = {
                       target: 'currentAbilityEntity',
                     },
                   },
-                  next: 'modifyActionValue_9',
+                  next: null,
                 },
-                spawnAbilityEntity_6: {
+                spawnAbilityEntity_7: {
                   action: {
                     kind: 'spawnAbilityEntity',
                     parameters: {
+                      bornAt: { kind: 'owner' },
                       abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_02_02',
                       childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit_1',
                       inheritActionBlackboard: true,
@@ -4474,12 +4577,13 @@ export const tangtang: OperatorDefinition = {
                       target: 'currentAbilityEntity',
                     },
                   },
-                  next: 'modifyActionValue_9',
+                  next: null,
                 },
-                spawnAbilityEntity_7: {
+                spawnAbilityEntity_8: {
                   action: {
                     kind: 'spawnAbilityEntity',
                     parameters: {
+                      bornAt: { kind: 'owner' },
                       abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_02',
                       childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit_1',
                       inheritActionBlackboard: true,
@@ -4487,12 +4591,13 @@ export const tangtang: OperatorDefinition = {
                       target: 'currentAbilityEntity',
                     },
                   },
-                  next: 'spawnAbilityEntity_6',
+                  next: 'spawnAbilityEntity_7',
                 },
-                spawnAbilityEntity_2: {
+                spawnAbilityEntity_3: {
                   action: {
                     kind: 'spawnAbilityEntity',
                     parameters: {
+                      bornAt: { kind: 'owner' },
                       abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_03_03',
                       childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
                       inheritActionBlackboard: true,
@@ -4500,26 +4605,14 @@ export const tangtang: OperatorDefinition = {
                       target: 'currentAbilityEntity',
                     },
                   },
-                  next: 'modifyActionValue_9',
-                },
-                spawnAbilityEntity_3: {
-                  action: {
-                    kind: 'spawnAbilityEntity',
-                    parameters: {
-                      abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_03_02',
-                      childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
-                      inheritActionBlackboard: true,
-                      dieWhenSourceDies: false,
-                      target: 'currentAbilityEntity',
-                    },
-                  },
-                  next: 'spawnAbilityEntity_2',
+                  next: null,
                 },
                 spawnAbilityEntity_4: {
                   action: {
                     kind: 'spawnAbilityEntity',
                     parameters: {
-                      abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_03',
+                      bornAt: { kind: 'owner' },
+                      abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_03_02',
                       childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
                       inheritActionBlackboard: true,
                       dieWhenSourceDies: false,
@@ -4528,32 +4621,56 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: 'spawnAbilityEntity_3',
                 },
-                conditional_8: {
+                spawnAbilityEntity_5: {
                   action: {
-                    kind: 'conditional',
+                    kind: 'spawnAbilityEntity',
                     parameters: {
-                      condition: { kind: 'conditionNode', nodeId: 'data_2' },
-                      alwaysNext: true,
+                      bornAt: { kind: 'owner' },
+                      abilityEntityId: 'abilityentity_chr_0027_tangtang_normal_skill_03',
+                      childSkillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
+                      inheritActionBlackboard: true,
+                      dieWhenSourceDies: false,
+                      target: 'currentAbilityEntity',
                     },
-                    whenTrue: { $sequence: 'spawnAbilityEntity_4' },
-                    whenFalse: { $sequence: 'spawnAbilityEntity_7' },
+                  },
+                  next: 'spawnAbilityEntity_4',
+                },
+                checkCondition_1: {
+                  action: {
+                    kind: 'checkCondition',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                   },
                   next: null,
                 },
-                conditional_11: {
+                ifElse_10: {
                   action: {
-                    kind: 'conditional',
-                    parameters: {
-                      condition: { kind: 'conditionNode', nodeId: 'data_4' },
-                      alwaysNext: true,
-                    },
-                    whenTrue: { $sequence: 'conditional_8' },
-                    whenFalse: { $sequence: 'spawnAbilityEntity_10' },
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { $sequence: 'checkCondition_1' },
+                    whenTrue: { $sequence: 'spawnAbilityEntity_5' },
+                    whenFalse: { $sequence: 'spawnAbilityEntity_8' },
                   },
                   next: null,
                 },
-                finishActionOwnerAbilityEntity_12: {
-                  action: { kind: 'finishActionOwnerAbilityEntity', parameters: {} },
+                checkCondition_9: {
+                  action: {
+                    kind: 'checkCondition',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+                  },
+                  next: null,
+                },
+                ifElse_13: {
+                  action: {
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { $sequence: 'checkCondition_9' },
+                    whenTrue: { $sequence: 'ifElse_10' },
+                    whenFalse: { $sequence: 'spawnAbilityEntity_12' },
+                  },
+                  next: null,
+                },
+                finishOwner_14: {
+                  action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
                   next: null,
                 },
               },
@@ -4572,14 +4689,10 @@ export const tangtang: OperatorDefinition = {
                   },
                 },
                 data_3: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'water_cnt', fallback: 0 },
-                },
-                data_4: {
                   type: 'boolean',
                   expression: {
                     kind: 'actionValueCompare',
-                    left: { kind: 'valueNode', nodeId: 'data_3' },
+                    left: { kind: 'valueNode', nodeId: 'data_1' },
                     operator: 'greater',
                     right: { kind: 'constant', value: 0 },
                   },
@@ -4620,21 +4733,10 @@ export const tangtang: OperatorDefinition = {
           cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
         },
         blackboard: {
-          atk_scale_water: 1,
           duration_talent1buff: 3,
-          max_stack: 0,
-          potential1: 0,
-          potential3_duration: 0,
-          potential5: 0,
-          potential5_dmg_up_water_ult: 0,
-          range_talent1buff: 5,
           ratio_speed: 0.2,
           ratio_speedreduction: 0.8,
           talent1_speed: 0,
-          talent2_ultskill: 0,
-          tornado_atk_scale01: 0,
-          tornado_atk_scale02: 0,
-          tornado_atk_scale03: 0,
         },
         scheduledSequences: [
           {
@@ -4645,36 +4747,16 @@ export const tangtang: OperatorDefinition = {
           {
             startFrame: 1515,
             endFrame: 1516,
-            sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_opt5' },
+            sequence: { $sequence: 'createSpatialPointTargets_23' },
           },
-          { startFrame: 0, endFrame: 1500, sequence: { $sequence: 'jumpTimeline_22' } },
-          { startFrame: 0, endFrame: 1500, sequence: { $sequence: 'jumpTimeline_23' } },
-          {
-            startFrame: 1500,
-            endFrame: 1501,
-            sequence: { $sequence: 'finishActionOwnerAbilityEntity_24' },
-          },
-          {
-            startFrame: 1515,
-            endFrame: 1516,
-            sequence: { $sequence: 'finishActionOwnerAbilityEntity_24' },
-          },
-          {
-            startFrame: 900,
-            endFrame: 901,
-            sequence: { $sequence: 'finishActionOwnerAbilityEntity_27' },
-          },
-          {
-            startFrame: 1500,
-            endFrame: 1501,
-            sequence: { $sequence: 'finishActionOwnerAbilityEntity_24' },
-          },
-          {
-            startFrame: 1515,
-            endFrame: 1516,
-            sequence: { $sequence: 'finishActionOwnerAbilityEntity_24' },
-          },
-          { startFrame: 0, endFrame: 1500, sequence: { $sequence: 'conditional_34' } },
+          { startFrame: 0, endFrame: 1500, sequence: { $sequence: 'jumpTimeline_25' } },
+          { startFrame: 0, endFrame: 1500, sequence: { $sequence: 'jumpTimeline_27' } },
+          { startFrame: 1500, endFrame: 1501, sequence: { $sequence: 'finishOwner_28' } },
+          { startFrame: 1515, endFrame: 1516, sequence: { $sequence: 'finishOwner_28' } },
+          { startFrame: 900, endFrame: 901, sequence: { $sequence: 'finishOwner_31' } },
+          { startFrame: 1500, endFrame: 1501, sequence: { $sequence: 'finishOwner_28' } },
+          { startFrame: 1515, endFrame: 1516, sequence: { $sequence: 'finishOwner_28' } },
+          { startFrame: 0, endFrame: 1500, sequence: { $sequence: 'checkCondition_40' } },
         ],
         actionGraph: {
           main: {
@@ -4682,36 +4764,45 @@ export const tangtang: OperatorDefinition = {
               launchProjectile_3: {
                 action: {
                   kind: 'launchProjectile',
-                  parameters: { finish: { reachAfterTicks: 2, maxDurationSeconds: 2 } },
+                  parameters: {
+                    inheritActionBlackboard: true,
+                    finish: { reachAfterTicks: 2, maxDurationSeconds: 2 },
+                    targets: { kind: 'context', contextKey: 'tangtang' },
+                  },
                   callbacks: [],
                 },
                 next: null,
               },
-              forEachContextTarget_5: {
+              checkCondition_1: {
                 action: {
-                  kind: 'forEachContextTarget',
-                  parameters: { contextKey: 'tangtang' },
-                  body: { $sequence: 'launchProjectile_3' },
+                  kind: 'checkCondition',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
                 },
                 next: null,
               },
-              conditional_7: {
+              ifElse_6: {
                 action: {
-                  kind: 'conditional',
-                  parameters: {
-                    condition: { kind: 'conditionNode', nodeId: 'data_1' },
-                    alwaysNext: true,
-                  },
-                  whenTrue: { $sequence: 'forEachContextTarget_5' },
-                  whenFalse: { $sequence: 'forEachContextTarget_5' },
+                  kind: 'ifElse',
+                  parameters: { alwaysNext: true },
+                  condition: { $sequence: 'checkCondition_1' },
+                  whenTrue: { $sequence: 'launchProjectile_3' },
+                  whenFalse: { $sequence: 'launchProjectile_3' },
                 },
                 next: null,
               },
-              finishBuffsById_8: {
+              checkCondition_4: {
+                action: {
+                  kind: 'checkCondition',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+                },
+                next: null,
+              },
+              finishBuffsById_7: {
                 action: {
                   kind: 'finishBuffsById',
                   parameters: {
-                    target: 'caster',
+                    targets: { kind: 'source' },
+                    finishSource: { kind: 'source' },
                     buffIds: ['buff_chr_0027_tangtang_water'],
                     reason: 'other',
                     count: { kind: 'constant', value: 1 },
@@ -4719,17 +4810,25 @@ export const tangtang: OperatorDefinition = {
                 },
                 next: null,
               },
-              conditional_9: {
+              ifElse_8: {
                 action: {
-                  kind: 'conditional',
-                  parameters: {
-                    condition: { kind: 'conditionNode', nodeId: 'data_2' },
-                    alwaysNext: true,
-                  },
-                  whenTrue: { $sequence: 'forEachContextTarget_5' },
-                  whenFalse: { $sequence: 'conditional_7' },
+                  kind: 'ifElse',
+                  parameters: { alwaysNext: true },
+                  condition: { $sequence: 'checkCondition_4' },
+                  whenTrue: { $sequence: 'launchProjectile_3' },
+                  whenFalse: { $sequence: 'ifElse_6' },
                 },
-                next: 'finishBuffsById_8',
+                next: 'finishBuffsById_7',
+              },
+              createSpatialPointTargets_9: {
+                action: {
+                  kind: 'createSpatialPointTargets',
+                  parameters: {
+                    saveToContextKey: 'water_back_pos',
+                    count: { kind: 'constant', value: 1 },
+                  },
+                },
+                next: 'ifElse_8',
               },
               findOwnerSpawnedAbilityEntities_10: {
                 action: {
@@ -4737,172 +4836,240 @@ export const tangtang: OperatorDefinition = {
                   parameters: {
                     saveToContextKey: 'tangtang',
                     abilityEntityIds: ['abilityentity_chr_0027_tangtang_normal_skill_move'],
+                    owner: { kind: 'source' },
                   },
                 },
-                next: 'conditional_9',
+                next: 'createSpatialPointTargets_9',
               },
-              forEachContextTarget_15: {
+              launchProjectile_13: {
                 action: {
-                  kind: 'forEachContextTarget',
-                  parameters: { contextKey: 'ultskill_center_abilityentity' },
-                  body: { $sequence: 'launchProjectile_3' },
+                  kind: 'launchProjectile',
+                  parameters: {
+                    inheritActionBlackboard: true,
+                    finish: { reachAfterTicks: 2, maxDurationSeconds: 2 },
+                    targets: { kind: 'context', contextKey: 'ultskill_center_abilityentity' },
+                  },
+                  callbacks: [],
                 },
                 next: null,
               },
-              conditional_17: {
+              ifElse_16: {
                 action: {
-                  kind: 'conditional',
-                  parameters: {
-                    condition: { kind: 'conditionNode', nodeId: 'data_3' },
-                    alwaysNext: true,
-                  },
-                  whenTrue: { $sequence: 'forEachContextTarget_15' },
-                  whenFalse: { $sequence: 'forEachContextTarget_15' },
+                  kind: 'ifElse',
+                  parameters: { alwaysNext: true },
+                  condition: { $sequence: 'checkCondition_1' },
+                  whenTrue: { $sequence: 'launchProjectile_13' },
+                  whenFalse: { $sequence: 'launchProjectile_13' },
                 },
                 next: null,
               },
-              conditional_19: {
+              ifElse_20: {
                 action: {
-                  kind: 'conditional',
-                  parameters: {
-                    condition: { kind: 'conditionNode', nodeId: 'data_4' },
-                    alwaysNext: true,
-                  },
-                  whenTrue: { $sequence: 'forEachContextTarget_15' },
-                  whenFalse: { $sequence: 'conditional_17' },
+                  kind: 'ifElse',
+                  parameters: { alwaysNext: true },
+                  condition: { $sequence: 'checkCondition_4' },
+                  whenTrue: { $sequence: 'launchProjectile_13' },
+                  whenFalse: { $sequence: 'ifElse_16' },
                 },
-                next: 'finishBuffsById_8',
+                next: 'finishBuffsById_7',
               },
-              conditional_opt4: {
+              checkCondition_17: {
                 action: {
-                  kind: 'conditional',
-                  parameters: {
-                    condition: { kind: 'conditionNode', nodeId: 'data_7' },
-                    alwaysNext: true,
-                  },
-                  whenTrue: { $sequence: 'conditional_19' },
+                  kind: 'checkCondition',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                 },
                 next: null,
               },
-              findOwnerSpawnedAbilityEntities_opt5: {
+              checkCondition_18: {
+                action: {
+                  kind: 'checkCondition',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+                },
+                next: 'checkCondition_17',
+              },
+              ifElse_21: {
+                action: {
+                  kind: 'ifElse',
+                  parameters: { alwaysNext: true },
+                  condition: { $sequence: 'checkCondition_18' },
+                  whenTrue: { $sequence: 'ifElse_20' },
+                  whenFalse: { $sequence: null },
+                },
+                next: null,
+              },
+              findOwnerSpawnedAbilityEntities_22: {
                 action: {
                   kind: 'findOwnerSpawnedAbilityEntities',
                   parameters: {
                     saveToContextKey: 'ultskill_center_abilityentity',
                     abilityEntityIds: ['abilityentity_chr_0027_tangtang_ultskill'],
+                    owner: { kind: 'source' },
                   },
                 },
-                next: 'conditional_opt4',
+                next: 'ifElse_21',
               },
-              jumpTimeline_22: {
+              createSpatialPointTargets_23: {
+                action: {
+                  kind: 'createSpatialPointTargets',
+                  parameters: {
+                    saveToContextKey: 'water_back_pos',
+                    count: { kind: 'constant', value: 1 },
+                  },
+                },
+                next: 'findOwnerSpawnedAbilityEntities_22',
+              },
+              checkCondition_24: {
+                action: {
+                  kind: 'checkCondition',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+                },
+                next: null,
+              },
+              jumpTimeline_25: {
                 action: {
                   kind: 'jumpTimeline',
-                  parameters: {
-                    destinationFrame: 1500,
-                    condition: { kind: 'conditionNode', nodeId: 'data_8' },
-                  },
+                  parameters: { destinationFrame: 1500 },
+                  condition: { $sequence: 'checkCondition_24' },
                 },
                 next: null,
               },
-              jumpTimeline_23: {
+              checkCondition_26: {
+                action: {
+                  kind: 'checkCondition',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+                },
+                next: null,
+              },
+              jumpTimeline_27: {
                 action: {
                   kind: 'jumpTimeline',
-                  parameters: {
-                    destinationFrame: 1515,
-                    condition: { kind: 'conditionNode', nodeId: 'data_9' },
-                  },
+                  parameters: { destinationFrame: 1515 },
+                  condition: { $sequence: 'checkCondition_26' },
                 },
                 next: null,
               },
-              finishActionOwnerAbilityEntity_24: {
-                action: { kind: 'finishActionOwnerAbilityEntity', parameters: {} },
+              finishOwner_28: {
+                action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
                 next: null,
               },
-              finishActionOwnerAbilityEntity_27: {
-                action: { kind: 'finishActionOwnerAbilityEntity', parameters: {} },
-                next: 'finishBuffsById_8',
+              finishOwner_31: {
+                action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
+                next: 'finishBuffsById_7',
               },
-              applyBuff_30: {
+              applyBuff_35: {
                 action: {
                   kind: 'applyBuff',
                   parameters: {
-                    buffId: 'buff_chr_0027_tangtang_comboskill_waterbuff',
-                    target: 'party',
-                    finishByAction: true,
-                    onActionEndBuffs: [
-                      {
-                        buffId: 'buff_chr_0027_tangtang_comboskill_waterbuff_outaura',
-                        target: 'party',
-                        inheritSourceSkillCastInfo: true,
-                        blackboardAssignments: {
-                          duration_talent1buff: { kind: 'valueNode', nodeId: 'data_10' },
-                          ratio_speed: { kind: 'valueNode', nodeId: 'data_11' },
-                        },
-                      },
-                    ],
-                    inheritSourceSkillCastInfo: true,
-                    blackboardAssignments: {
-                      ratio_speed: { kind: 'valueNode', nodeId: 'data_12' },
-                    },
-                  },
-                },
-                next: null,
-              },
-              finishBuffsById_31: {
-                action: {
-                  kind: 'finishBuffsById',
-                  parameters: {
-                    target: 'party',
-                    buffIds: ['buff_chr_0027_tangtang_comboskill_waterbuff_outaura'],
-                    reason: 'other',
-                  },
-                },
-                next: 'applyBuff_30',
-              },
-              applyBuff_32: {
-                action: {
-                  kind: 'applyBuff',
-                  parameters: {
-                    buffId: 'buff_chr_0027_tangtang_comboskill_waterdebuff',
-                    target: 'enemy',
-                    finishByAction: true,
-                    onActionEndBuffs: [
+                    buffs: [
                       {
                         buffId: 'buff_chr_0027_tangtang_comboskill_waterdebuff_outaura',
-                        target: 'enemy',
-                        inheritSourceSkillCastInfo: true,
-                        blackboardAssignments: {
-                          duration_talent1buff: { kind: 'valueNode', nodeId: 'data_13' },
-                          ratio_speedreduction: { kind: 'valueNode', nodeId: 'data_14' },
+                        copiedBlackboardAssignments: {
+                          duration_talent1buff: 'duration_talent1buff',
+                          ratio_speedreduction: 'ratio_speedreduction',
                         },
                       },
                     ],
+                    targets: { kind: 'fixed', target: 'enemy' },
+                    source: { kind: 'source' },
                     inheritSourceSkillCastInfo: true,
-                    blackboardAssignments: {
-                      ratio_speedreduction: { kind: 'valueNode', nodeId: 'data_15' },
-                    },
                   },
                 },
-                next: 'finishBuffsById_31',
+                next: null,
               },
-              finishBuffsById_33: {
+              finishBuffsById_34: {
                 action: {
                   kind: 'finishBuffsById',
                   parameters: {
-                    target: 'enemy',
+                    targets: { kind: 'fixed', target: 'enemy' },
+                    finishSource: { kind: 'source' },
                     buffIds: ['buff_chr_0027_tangtang_comboskill_waterdebuff_outaura'],
                     reason: 'other',
                   },
                 },
-                next: 'applyBuff_32',
+                next: null,
               },
-              conditional_34: {
+              applyBuff_37: {
                 action: {
-                  kind: 'conditional',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_17' } },
-                  whenTrue: { $sequence: 'finishBuffsById_33' },
+                  kind: 'applyBuff',
+                  parameters: {
+                    buffs: [
+                      {
+                        buffId: 'buff_chr_0027_tangtang_comboskill_waterbuff_outaura',
+                        copiedBlackboardAssignments: {
+                          duration_talent1buff: 'duration_talent1buff',
+                          ratio_speed: 'ratio_speed',
+                        },
+                      },
+                    ],
+                    targets: { kind: 'inputTarget' },
+                    source: { kind: 'source' },
+                    inheritSourceSkillCastInfo: true,
+                  },
                 },
                 next: null,
+              },
+              finishBuffsById_36: {
+                action: {
+                  kind: 'finishBuffsById',
+                  parameters: {
+                    targets: { kind: 'inputTarget' },
+                    finishSource: { kind: 'source' },
+                    buffIds: ['buff_chr_0027_tangtang_comboskill_waterbuff_outaura'],
+                    reason: 'other',
+                  },
+                },
+                next: null,
+              },
+              aura_38: {
+                action: {
+                  kind: 'aura',
+                  parameters: {
+                    targets: { kind: 'characterTeam', excludeOwner: true },
+                    source: { kind: 'source' },
+                    inheritSourceSkillCastInfo: true,
+                    buffs: [
+                      {
+                        buffId: 'buff_chr_0027_tangtang_comboskill_waterbuff',
+                        blackboardAssignments: {
+                          ratio_speed: { kind: 'valueNode', nodeId: 'data_7' },
+                        },
+                        stringBlackboardAssignments: {},
+                      },
+                    ],
+                  },
+                  onEnter: { $sequence: 'finishBuffsById_36' },
+                  onExit: { $sequence: 'applyBuff_37' },
+                },
+                next: null,
+              },
+              aura_39: {
+                action: {
+                  kind: 'aura',
+                  parameters: {
+                    targets: { kind: 'fixed', target: 'enemy' },
+                    source: { kind: 'source' },
+                    inheritSourceSkillCastInfo: true,
+                    buffs: [
+                      {
+                        buffId: 'buff_chr_0027_tangtang_comboskill_waterdebuff',
+                        blackboardAssignments: {
+                          ratio_speedreduction: { kind: 'valueNode', nodeId: 'data_8' },
+                        },
+                        stringBlackboardAssignments: {},
+                      },
+                    ],
+                  },
+                  onEnter: { $sequence: 'finishBuffsById_34' },
+                  onExit: { $sequence: 'applyBuff_35' },
+                },
+                next: 'aura_38',
+              },
+              checkCondition_40: {
+                action: {
+                  kind: 'checkCondition',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
+                },
+                next: 'aura_39',
               },
             },
             dataNodes: {
@@ -4910,6 +5077,7 @@ export const tangtang: OperatorDefinition = {
                 type: 'boolean',
                 expression: {
                   kind: 'abilityEntityTimedMarkerPresent',
+                  returnTrueIfNotExists: false,
                   markerId: 'tangtang_waterabilityentity02',
                 },
               },
@@ -4917,52 +5085,34 @@ export const tangtang: OperatorDefinition = {
                 type: 'boolean',
                 expression: {
                   kind: 'abilityEntityTimedMarkerPresent',
+                  returnTrueIfNotExists: false,
                   markerId: 'tangtang_waterabilityentity01',
                 },
               },
               data_3: {
                 type: 'boolean',
                 expression: {
-                  kind: 'abilityEntityTimedMarkerPresent',
-                  markerId: 'tangtang_waterabilityentity02',
+                  kind: 'entityCountCompare',
+                  target: { kind: 'context', key: 'ultskill_center_abilityentity' },
+                  containsHittableTarget: false,
+                  excludeDeadEntity: false,
+                  operator: 'greaterOrEqual',
+                  value: 1,
                 },
               },
               data_4: {
                 type: 'boolean',
                 expression: {
-                  kind: 'abilityEntityTimedMarkerPresent',
-                  markerId: 'tangtang_waterabilityentity01',
+                  kind: 'targetDistance',
+                  source: { kind: 'mainCharacter' },
+                  target: { kind: 'context', key: 'ultskill_center_abilityentity' },
+                  distance: 8,
+                  lessThan: true,
+                  includeTargetRadius: false,
+                  containsHittableObject: false,
                 },
               },
               data_5: {
-                type: 'boolean',
-                expression: {
-                  kind: 'contextTargetCountCompare',
-                  contextKey: 'ultskill_center_abilityentity',
-                  operator: 'greater',
-                  value: 0,
-                },
-              },
-              data_6: {
-                type: 'boolean',
-                expression: {
-                  kind: 'contextTargetCountCompare',
-                  contextKey: 'ultskill_center_abilityentity',
-                  operator: 'greaterOrEqual',
-                  value: 1,
-                },
-              },
-              data_7: {
-                type: 'boolean',
-                expression: {
-                  kind: 'all',
-                  conditions: [
-                    { kind: 'conditionNode', nodeId: 'data_5' },
-                    { kind: 'conditionNode', nodeId: 'data_6' },
-                  ],
-                },
-              },
-              data_8: {
                 type: 'boolean',
                 expression: {
                   kind: 'buffIdStackCompare',
@@ -4972,7 +5122,7 @@ export const tangtang: OperatorDefinition = {
                   value: { kind: 'constant', value: 1 },
                 },
               },
-              data_9: {
+              data_6: {
                 type: 'boolean',
                 expression: {
                   kind: 'buffIdStackCompare',
@@ -4982,33 +5132,20 @@ export const tangtang: OperatorDefinition = {
                   value: { kind: 'constant', value: 1 },
                 },
               },
-              data_10: {
-                type: 'number',
-                expression: { kind: 'blackboard', key: 'duration_talent1buff' },
-              },
-              data_11: { type: 'number', expression: { kind: 'blackboard', key: 'ratio_speed' } },
-              data_12: { type: 'number', expression: { kind: 'blackboard', key: 'ratio_speed' } },
-              data_13: {
-                type: 'number',
-                expression: { kind: 'blackboard', key: 'duration_talent1buff' },
-              },
-              data_14: {
+              data_7: { type: 'number', expression: { kind: 'blackboard', key: 'ratio_speed' } },
+              data_8: {
                 type: 'number',
                 expression: { kind: 'blackboard', key: 'ratio_speedreduction' },
               },
-              data_15: {
-                type: 'number',
-                expression: { kind: 'blackboard', key: 'ratio_speedreduction' },
-              },
-              data_16: {
+              data_9: {
                 type: 'number',
                 expression: { kind: 'blackboard', key: 'talent1_speed', fallback: 0 },
               },
-              data_17: {
+              data_10: {
                 type: 'boolean',
                 expression: {
                   kind: 'actionValueCompare',
-                  left: { kind: 'valueNode', nodeId: 'data_16' },
+                  left: { kind: 'valueNode', nodeId: 'data_9' },
                   operator: 'greaterOrEqual',
                   right: { kind: 'constant', value: 1 },
                 },
@@ -5043,61 +5180,34 @@ export const tangtang: OperatorDefinition = {
           atk_scale_2: 0,
           atk_scale_3: 0,
           dmg_up_water_ult: 0,
-          duration: 12,
           duration_spellvulnerable: 0,
-          duration_talent1buff: 3,
-          max_stack: 0,
-          poise1: 0,
           poise2: 0,
           poise3: 0,
-          potential_5_CrystDamageIncrease: 0,
-          potential1: 0,
-          potential3_rate_spellvulnerable: 0,
-          potential4: 0,
-          potential5: 0,
-          potential5_duration: 0,
           rate_spellvulnerable: 0,
           rate_spellvulnerable_02: 0,
-          rate_vul_base: 0,
-          ratio_speed: 0,
-          ratio_speedreduction: 0.8,
-          talent1_speed: 0,
           talent2: 0,
           talent2_ultskill: 0,
-          tomado_atk_scale01: 0,
-          tomado_atk_scale02: 0,
-          tomado_atk_scale03: 0,
-          water_cnt: 0,
-          potential3: 0,
         },
         scheduledSequences: [
-          { startFrame: 0, endFrame: 120, sequence: { $sequence: 'repeatEachTick_2' } },
-          { startFrame: 120, endFrame: 123, sequence: { $sequence: 'dealDamage_3' } },
-          { startFrame: 133, endFrame: 136, sequence: { $sequence: 'dealDamage_5' } },
-          {
-            startFrame: 0,
-            endFrame: 121,
-            sequence: { $sequence: 'createAbilityEntityTimedMarker_8' },
-          },
-          { startFrame: 128, endFrame: 136, sequence: { $sequence: 'conditional_12' } },
-          { startFrame: 128, endFrame: 128, sequence: { $sequence: 'conditional_14' } },
-          { startFrame: 127, endFrame: 128, sequence: { $sequence: 'finishTimeline_15' } },
-          { startFrame: 0, endFrame: 119, sequence: { $sequence: 'listenForCombatEvents_18' } },
-          {
-            startFrame: 127,
-            endFrame: 128,
-            sequence: { $sequence: 'finishActionOwnerAbilityEntity_19' },
-          },
-          {
-            startFrame: 156,
-            endFrame: 157,
-            sequence: { $sequence: 'finishActionOwnerAbilityEntity_19' },
-          },
+          { startFrame: 0, endFrame: 120, sequence: { $sequence: 'repeatEachTick_6' } },
+          { startFrame: 120, endFrame: 123, sequence: { $sequence: 'dealDamage_7' } },
+          { startFrame: 133, endFrame: 136, sequence: { $sequence: 'dealDamage_9' } },
+          { startFrame: 0, endFrame: 121, sequence: { $sequence: 'createTimedMarker_14' } },
+          { startFrame: 128, endFrame: 136, sequence: { $sequence: 'ifElse_opt1' } },
+          { startFrame: 128, endFrame: 128, sequence: { $sequence: 'checkCondition_23' } },
+          { startFrame: 127, endFrame: 128, sequence: { $sequence: 'interruptCurrentSkill_24' } },
+          { startFrame: 0, endFrame: 119, sequence: { $sequence: 'listenForCombatEvents_27' } },
+          { startFrame: 127, endFrame: 128, sequence: { $sequence: 'finishOwner_28' } },
+          { startFrame: 156, endFrame: 157, sequence: { $sequence: 'finishOwner_28' } },
         ],
         actionGraph: {
           main: {
             nodes: {
-              dealDamage_1: {
+              once_4: {
+                action: { kind: 'once', parameters: {}, body: { $sequence: null } },
+                next: null,
+              },
+              dealDamage_5: {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
@@ -5106,26 +5216,28 @@ export const tangtang: OperatorDefinition = {
                     tags: ['ultimateSkill'],
                     features: ['canBreakWeakness'],
                   },
-                  key: 'abilityentity_chr_0027_tangtang_ultskill:chr_0027_tangtang_ultimate_skill_1:/childSkill/actionGraph/main/nodes/dealDamage_1/action',
+                  key: 'abilityentity_chr_0027_tangtang_ultskill:chr_0027_tangtang_ultimate_skill_1:/childSkill/actionGraph/main/nodes/dealDamage_5/action',
                 },
-                next: null,
+                next: 'once_4',
               },
-              repeatEachTick_2: {
+              repeatEachTick_6: {
                 action: {
                   kind: 'repeatEachTick',
                   parameters: {
                     nativeChanneling: {
+                      catchUpMissedTicks: false,
+                      target: { kind: 'fixed', target: 'enemy' },
                       executeEachFrame: true,
                       triggerIntervalSeconds: 0.033,
                       maxCountPerTarget: 8,
                       targetTriggerIntervalSeconds: 0.5,
                     },
                   },
-                  body: { $sequence: 'dealDamage_1' },
+                  body: { $sequence: 'dealDamage_5' },
                 },
                 next: null,
               },
-              dealDamage_3: {
+              dealDamage_7: {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
@@ -5136,11 +5248,11 @@ export const tangtang: OperatorDefinition = {
                     features: ['canBreakWeakness'],
                     stagger: { kind: 'valueNode', nodeId: 'data_3' },
                   },
-                  key: 'abilityentity_chr_0027_tangtang_ultskill:chr_0027_tangtang_ultimate_skill_1:/childSkill/actionGraph/main/nodes/dealDamage_3/action',
+                  key: 'abilityentity_chr_0027_tangtang_ultskill:chr_0027_tangtang_ultimate_skill_1:/childSkill/actionGraph/main/nodes/dealDamage_7/action',
                 },
                 next: null,
               },
-              startTimeDilation_4: {
+              startTimeDilation_8: {
                 action: {
                   kind: 'startTimeDilation',
                   parameters: {
@@ -5155,7 +5267,7 @@ export const tangtang: OperatorDefinition = {
                 },
                 next: null,
               },
-              dealDamage_5: {
+              dealDamage_9: {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
@@ -5166,131 +5278,150 @@ export const tangtang: OperatorDefinition = {
                     features: ['canBreakWeakness'],
                     stagger: { kind: 'valueNode', nodeId: 'data_5' },
                   },
-                  key: 'abilityentity_chr_0027_tangtang_ultskill:chr_0027_tangtang_ultimate_skill_1:/childSkill/actionGraph/main/nodes/dealDamage_5/action',
+                  key: 'abilityentity_chr_0027_tangtang_ultskill:chr_0027_tangtang_ultimate_skill_1:/childSkill/actionGraph/main/nodes/dealDamage_9/action',
                 },
-                next: 'startTimeDilation_4',
+                next: 'startTimeDilation_8',
               },
-              applyBuff_6: {
+              finishBuffsById_10: {
                 action: {
-                  kind: 'applyBuff',
+                  kind: 'finishBuffsById',
                   parameters: {
-                    buffId: 'buff_chr_0027_tangtang_ultskill_buff',
-                    target: 'party',
-                    source: 'currentAbilityEntity',
-                    finishByAction: true,
-                    iconDurationSource: {
-                      kind: 'actionOwnerTimedMarker',
-                      markerId: 'tangtang_ult',
-                    },
-                    inheritSourceSkillCastInfo: true,
+                    targets: { kind: 'fixed', target: 'enemy' },
+                    finishSource: { kind: 'source' },
+                    buffIds: ['buff_chr_0027_tangtang_ultskill_debuff'],
+                    reason: 'other',
                   },
                 },
                 next: null,
               },
-              applyBuff_7: {
+              finishBuffsById_11: {
                 action: {
-                  kind: 'applyBuff',
+                  kind: 'finishBuffsById',
                   parameters: {
-                    buffId: 'buff_chr_0027_tangtang_ultskill_debuff',
-                    target: 'enemy',
-                    finishByAction: true,
+                    targets: { kind: 'inputTarget' },
+                    finishSource: { kind: 'source' },
+                    buffIds: ['buff_chr_0027_tangtang_ultskill_buff'],
+                    reason: 'other',
+                  },
+                },
+                next: null,
+              },
+              aura_12: {
+                action: {
+                  kind: 'aura',
+                  parameters: {
+                    targets: { kind: 'characterTeam', excludeOwner: true },
+                    source: { kind: 'owner' },
                     iconDurationSource: {
                       kind: 'actionOwnerTimedMarker',
                       markerId: 'tangtang_ult',
                     },
                     inheritSourceSkillCastInfo: true,
+                    buffs: [{ buffId: 'buff_chr_0027_tangtang_ultskill_buff' }],
                   },
+                  onEnter: { $sequence: null },
+                  onExit: { $sequence: 'finishBuffsById_11' },
                 },
-                next: 'applyBuff_6',
+                next: null,
               },
-              createAbilityEntityTimedMarker_8: {
+              aura_13: {
                 action: {
-                  kind: 'createAbilityEntityTimedMarker',
+                  kind: 'aura',
                   parameters: {
+                    targets: { kind: 'fixed', target: 'enemy' },
+                    source: { kind: 'source' },
+                    iconDurationSource: {
+                      kind: 'actionOwnerTimedMarker',
+                      markerId: 'tangtang_ult',
+                    },
+                    inheritSourceSkillCastInfo: true,
+                    buffs: [{ buffId: 'buff_chr_0027_tangtang_ultskill_debuff' }],
+                  },
+                  onEnter: { $sequence: null },
+                  onExit: { $sequence: 'finishBuffsById_10' },
+                },
+                next: 'aura_12',
+              },
+              createTimedMarker_14: {
+                action: {
+                  kind: 'createTimedMarker',
+                  parameters: {
+                    targets: { kind: 'owner' },
                     markerId: 'tangtang_ult',
                     durationSeconds: { kind: 'constant', value: 4 },
                     autoFinishByAction: true,
                     timeDomain: 'self',
                   },
                 },
-                next: 'applyBuff_7',
+                next: 'aura_13',
               },
-              applyBuff_11: {
+              aura_20: {
+                action: {
+                  kind: 'aura',
+                  parameters: {
+                    targets: { kind: 'fixed', target: 'enemy' },
+                    source: { kind: 'source' },
+                    inheritSourceSkillCastInfo: true,
+                    buffs: [{ buffId: 'buff_chr_0027_tangtang_ultskill_debuff' }],
+                  },
+                  onEnter: { $sequence: null },
+                  onExit: { $sequence: 'finishBuffsById_10' },
+                },
+                next: null,
+              },
+              applyBuff_22: {
                 action: {
                   kind: 'applyBuff',
                   parameters: {
-                    buffId: 'buff_chr_0027_tangtang_ultskill_debuff',
-                    target: 'enemy',
-                    finishByAction: true,
+                    buffs: [
+                      {
+                        buffId: 'buff_chr_0027_tangtang_ultskill_waterwake',
+                        copiedBlackboardAssignments: {
+                          talent2_ultskill: 'talent2_ultskill',
+                          dmg_up_water_ult: 'dmg_up_water_ult',
+                          rate_spellvulnerable: 'rate_spellvulnerable',
+                          rate_spellvulnerable_02: 'rate_spellvulnerable_02',
+                          duration_spellvulnerable: 'duration_spellvulnerable',
+                        },
+                      },
+                    ],
+                    targets: { kind: 'source' },
+                    source: { kind: 'source' },
                     inheritSourceSkillCastInfo: true,
                   },
                 },
                 next: null,
               },
-              calculateActionValue_10: {
+              checkCondition_23: {
                 action: {
-                  kind: 'calculateActionValue',
-                  parameters: {
-                    key: 'potential3_rate_spellvulnerable',
-                    operation: 'add',
-                    left: { kind: 'valueNode', nodeId: 'data_6' },
-                    right: { kind: 'valueNode', nodeId: 'data_7' },
-                  },
+                  kind: 'checkCondition',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
                 },
-                next: 'applyBuff_11',
+                next: 'applyBuff_22',
               },
-              conditional_12: {
+              interruptCurrentSkill_24: {
                 action: {
-                  kind: 'conditional',
-                  parameters: {
-                    condition: { kind: 'conditionNode', nodeId: 'data_9' },
-                    alwaysNext: true,
-                  },
-                  whenTrue: { $sequence: 'calculateActionValue_10' },
-                  whenFalse: { $sequence: 'applyBuff_11' },
+                  kind: 'interruptCurrentSkill',
+                  parameters: { targets: { kind: 'owner' } },
                 },
                 next: null,
               },
-              applyBuff_13: {
+              jumpTimeline_25: {
                 action: {
-                  kind: 'applyBuff',
-                  parameters: {
-                    buffId: 'buff_chr_0027_tangtang_ultskill_waterwake',
-                    target: 'caster',
-                    inheritSourceSkillCastInfo: true,
-                    copiedBlackboardAssignments: {
-                      talent2_ultskill: 'talent2_ultskill',
-                      dmg_up_water_ult: 'dmg_up_water_ult',
-                      rate_spellvulnerable: 'rate_spellvulnerable',
-                      rate_spellvulnerable_02: 'rate_spellvulnerable_02',
-                      duration_spellvulnerable: 'duration_spellvulnerable',
-                    },
-                  },
+                  kind: 'jumpTimeline',
+                  parameters: { destinationFrame: 128 },
+                  condition: { $sequence: null },
                 },
                 next: null,
               },
-              conditional_14: {
+              checkCondition_26: {
                 action: {
-                  kind: 'conditional',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
-                  whenTrue: { $sequence: 'applyBuff_13' },
+                  kind: 'checkCondition',
+                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
                 },
-                next: null,
+                next: 'jumpTimeline_25',
               },
-              finishTimeline_15: { action: { kind: 'finishTimeline', parameters: {} }, next: null },
-              jumpTimeline_16: {
-                action: { kind: 'jumpTimeline', parameters: { destinationFrame: 128 } },
-                next: null,
-              },
-              conditional_17: {
-                action: {
-                  kind: 'conditional',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
-                  whenTrue: { $sequence: 'jumpTimeline_16' },
-                },
-                next: null,
-              },
-              listenForCombatEvents_18: {
+              listenForCombatEvents_27: {
                 action: {
                   kind: 'listenForCombatEvents',
                   parameters: {
@@ -5300,15 +5431,25 @@ export const tangtang: OperatorDefinition = {
                         event: { kind: 'abilityEvent', event: 'outputBuff' },
                         phase: 'dataAction',
                         priority: 0,
-                        sequence: { $sequence: 'conditional_17' },
+                        sequence: { $sequence: 'checkCondition_26' },
                       },
                     ],
                   },
                 },
                 next: null,
               },
-              finishActionOwnerAbilityEntity_19: {
-                action: { kind: 'finishActionOwnerAbilityEntity', parameters: {} },
+              finishOwner_28: {
+                action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
+                next: null,
+              },
+              ifElse_opt1: {
+                action: {
+                  kind: 'ifElse',
+                  parameters: { alwaysNext: true },
+                  condition: { $sequence: null },
+                  whenTrue: { $sequence: 'aura_20' },
+                  whenFalse: { $sequence: 'aura_20' },
+                },
                 next: null,
               },
             },
@@ -5320,36 +5461,18 @@ export const tangtang: OperatorDefinition = {
               data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise3' } },
               data_6: {
                 type: 'number',
-                expression: { kind: 'blackboard', key: 'potential3_rate_spellvulnerable' },
-              },
-              data_7: { type: 'number', expression: { kind: 'blackboard', key: 'rate_vul_base' } },
-              data_8: {
-                type: 'number',
-                expression: { kind: 'blackboard', key: 'potential3', fallback: 0 },
-              },
-              data_9: {
-                type: 'boolean',
-                expression: {
-                  kind: 'actionValueCompare',
-                  left: { kind: 'valueNode', nodeId: 'data_8' },
-                  operator: 'greaterOrEqual',
-                  right: { kind: 'constant', value: 1 },
-                },
-              },
-              data_10: {
-                type: 'number',
                 expression: { kind: 'blackboard', key: 'talent2', fallback: 0 },
               },
-              data_11: {
+              data_7: {
                 type: 'boolean',
                 expression: {
                   kind: 'actionValueCompare',
-                  left: { kind: 'valueNode', nodeId: 'data_10' },
+                  left: { kind: 'valueNode', nodeId: 'data_6' },
                   operator: 'greaterOrEqual',
                   right: { kind: 'constant', value: 1 },
                 },
               },
-              data_12: {
+              data_8: {
                 type: 'boolean',
                 expression: {
                   kind: 'buffIdStackCompare',
@@ -5365,7 +5488,7 @@ export const tangtang: OperatorDefinition = {
         },
       },
       presentation: {
-        icon: '/operators/tangtang/ultimate.webp',
+        icon: 'endaxis:operators/tangtang/ultimate_01',
         nameKey: 'effects.name.oldenStare',
         placement: 'enemy',
         damageDisplayBuffId: 'buff_chr_0027_tangtang_ultskill_debuff',
@@ -5383,201 +5506,6 @@ export const tangtang: OperatorDefinition = {
       maxStackingCount: 1,
       childSkills: {
         chr_0027_tangtang_normal_skill_water_projhit_2: {
-          actionGraph: {
-            main: {
-              nodes: {
-                applyBuff_1: {
-                  action: {
-                    kind: 'applyBuff',
-                    parameters: {
-                      buffId: 'buff_chr_0027_tangtang_comboskill_spelllnfliction',
-                      target: 'enemy',
-                      inheritSourceSkillCastInfo: true,
-                    },
-                  },
-                  next: null,
-                },
-                applyElementalInfliction_2: {
-                  action: {
-                    kind: 'applyElementalInfliction',
-                    parameters: { element: 'cryo', isExtra: false },
-                  },
-                  next: 'applyBuff_1',
-                },
-                applyBuff_3: {
-                  action: {
-                    kind: 'applyBuff',
-                    parameters: {
-                      buffId: 'buff_chr_0027_tangtang_normalskill_spellvulnerable',
-                      target: 'enemy',
-                      inheritSourceSkillCastInfo: true,
-                      copiedBlackboardAssignments: {
-                        duration_spellvulnerable: 'duration_spellvulnerable',
-                        rate_spellvulnerable: 'rate_spellvulnerable_02',
-                      },
-                    },
-                  },
-                  next: null,
-                },
-                dealDamage_4: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      instantDamageScaleModifiers: [
-                        {
-                          side: 'attacker',
-                          zone: 'normal',
-                          addition: { kind: 'valueNode', nodeId: 'data_2' },
-                        },
-                      ],
-                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
-                    },
-                    key: 'abilityentity_chr_0027_tangtang_normal_skill_03_03:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_4/action',
-                  },
-                  next: null,
-                },
-                dealDamage_5: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_4' },
-                      takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_5' },
-                    },
-                    key: 'abilityentity_chr_0027_tangtang_normal_skill_03_03:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_5/action',
-                  },
-                  next: null,
-                },
-                conditional_6: {
-                  action: {
-                    kind: 'conditional',
-                    parameters: {
-                      condition: { kind: 'conditionNode', nodeId: 'data_7' },
-                      alwaysNext: true,
-                    },
-                    whenTrue: { $sequence: 'dealDamage_4' },
-                    whenFalse: { $sequence: 'dealDamage_5' },
-                  },
-                  next: null,
-                },
-                conditional_7: {
-                  action: {
-                    kind: 'conditional',
-                    parameters: {
-                      condition: { kind: 'conditionNode', nodeId: 'data_9' },
-                      alwaysNext: true,
-                    },
-                    whenTrue: { $sequence: 'applyBuff_3' },
-                  },
-                  next: 'conditional_6',
-                },
-                conditional_8: {
-                  action: {
-                    kind: 'conditional',
-                    parameters: {
-                      condition: { kind: 'conditionNode', nodeId: 'data_11' },
-                      alwaysNext: true,
-                    },
-                    whenTrue: { $sequence: 'applyElementalInfliction_2' },
-                  },
-                  next: 'conditional_7',
-                },
-                repeatEachTick_9: {
-                  action: {
-                    kind: 'repeatEachTick',
-                    parameters: {
-                      nativeChanneling: {
-                        executeEachFrame: false,
-                        triggerIntervalSeconds: 0.26,
-                        maxCountPerTarget: -1,
-                        targetTriggerIntervalSeconds: -1,
-                      },
-                    },
-                    body: { $sequence: 'conditional_8' },
-                  },
-                  next: null,
-                },
-                finishActionOwnerAbilityEntity_10: {
-                  action: { kind: 'finishActionOwnerAbilityEntity', parameters: {} },
-                  next: null,
-                },
-              },
-              dataNodes: {
-                data_1: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'tornado_atk_scale01' },
-                },
-                data_2: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
-                },
-                data_3: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'poise_tornado' },
-                },
-                data_4: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'tornado_atk_scale01' },
-                },
-                data_5: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'poise_tornado' },
-                },
-                data_6: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'talent2_ultskill', fallback: 0 },
-                },
-                data_7: {
-                  type: 'boolean',
-                  expression: {
-                    kind: 'actionValueCompare',
-                    left: { kind: 'valueNode', nodeId: 'data_6' },
-                    operator: 'greaterOrEqual',
-                    right: { kind: 'constant', value: 1 },
-                  },
-                },
-                data_8: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'hit_spellvulnerablemax' },
-                },
-                data_9: {
-                  type: 'boolean',
-                  expression: {
-                    kind: 'buffIdStackCompare',
-                    target: 'enemy',
-                    buffIds: ['buff_chr_0027_tangtang_normalskill_spellvulnerable'],
-                    operator: 'less',
-                    value: { kind: 'valueNode', nodeId: 'data_8' },
-                    sameSourceSkillCast: true,
-                  },
-                },
-                data_10: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'hit_spelllnflictionmax02' },
-                },
-                data_11: {
-                  type: 'boolean',
-                  expression: {
-                    kind: 'buffIdStackCompare',
-                    target: 'enemy',
-                    buffIds: ['buff_chr_0027_tangtang_comboskill_spelllnfliction'],
-                    operator: 'less',
-                    value: { kind: 'valueNode', nodeId: 'data_10' },
-                    sameSourceSkillCast: true,
-                  },
-                },
-              },
-            },
-            macros: {},
-          },
           skillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
           nativeSkillType: 'normalSkill',
           naturalDurationFrames: 95,
@@ -5588,35 +5516,235 @@ export const tangtang: OperatorDefinition = {
             cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
           },
           blackboard: {
-            atb: 0,
-            atk_scale_1: 0,
-            atk_scale_2: 0,
             dmg_up_water_ult: 0.3,
-            duration: 5,
             duration_spellvulnerable: 10,
-            hit_cnt: 4,
-            hit_cntmax: 10,
-            hit_duration: 3,
             hit_spelllnflictionmax02: 1,
             hit_spellvulnerablemax: 1,
             poise_tornado: 0,
-            potential3: 0,
-            potential5: 0,
-            rate_spellvulnerable: 0.05,
             rate_spellvulnerable_02: 0.1,
             talent2_ultskill: 0,
             tornado_atk_scale01: 0,
-            tornado_atk_scale02: 0,
-            tornado_atk_scale03: 0,
           },
           scheduledSequences: [
-            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'repeatEachTick_9' } },
-            {
-              startFrame: 90,
-              endFrame: 90,
-              sequence: { $sequence: 'finishActionOwnerAbilityEntity_10' },
-            },
+            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'once_14' } },
+            { startFrame: 90, endFrame: 90, sequence: { $sequence: 'finishOwner_15' } },
           ],
+          actionGraph: {
+            main: {
+              nodes: {
+                checkCondition_2: {
+                  action: {
+                    kind: 'checkCondition',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+                  },
+                  next: null,
+                },
+                applyBuff_3: {
+                  action: {
+                    kind: 'applyBuff',
+                    parameters: {
+                      buffs: [{ buffId: 'buff_chr_0027_tangtang_comboskill_spelllnfliction' }],
+                      targets: { kind: 'fixed', target: 'enemy' },
+                      source: { kind: 'source' },
+                      inheritSourceSkillCastInfo: true,
+                    },
+                  },
+                  next: null,
+                },
+                applyElementalInfliction_4: {
+                  action: {
+                    kind: 'applyElementalInfliction',
+                    parameters: { element: 'cryo', isExtra: false },
+                  },
+                  next: 'applyBuff_3',
+                },
+                checkCondition_5: {
+                  action: {
+                    kind: 'checkCondition',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+                  },
+                  next: null,
+                },
+                applyBuff_6: {
+                  action: {
+                    kind: 'applyBuff',
+                    parameters: {
+                      buffs: [
+                        {
+                          buffId: 'buff_chr_0027_tangtang_normalskill_spellvulnerable',
+                          copiedBlackboardAssignments: {
+                            duration_spellvulnerable: 'duration_spellvulnerable',
+                            rate_spellvulnerable: 'rate_spellvulnerable_02',
+                          },
+                        },
+                      ],
+                      targets: { kind: 'fixed', target: 'enemy' },
+                      source: { kind: 'source' },
+                      inheritSourceSkillCastInfo: true,
+                    },
+                  },
+                  next: null,
+                },
+                checkCondition_7: {
+                  action: {
+                    kind: 'checkCondition',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+                  },
+                  next: null,
+                },
+                dealDamage_8: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_7' },
+                      takeAttackSnapshot: true,
+                      tags: ['normalSkill'],
+                      features: ['canBreakWeakness'],
+                      instantDamageScaleModifiers: [
+                        {
+                          side: 'attacker',
+                          zone: 'normal',
+                          addition: { kind: 'valueNode', nodeId: 'data_8' },
+                        },
+                      ],
+                      stagger: { kind: 'valueNode', nodeId: 'data_9' },
+                    },
+                    key: 'abilityentity_chr_0027_tangtang_normal_skill_03_03:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_8/action',
+                  },
+                  next: null,
+                },
+                dealDamage_9: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_7' },
+                      takeAttackSnapshot: true,
+                      tags: ['normalSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_9' },
+                    },
+                    key: 'abilityentity_chr_0027_tangtang_normal_skill_03_03:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_9/action',
+                  },
+                  next: null,
+                },
+                ifElse_10: {
+                  action: {
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { $sequence: 'checkCondition_7' },
+                    whenTrue: { $sequence: 'dealDamage_8' },
+                    whenFalse: { $sequence: 'dealDamage_9' },
+                  },
+                  next: null,
+                },
+                ifElse_11: {
+                  action: {
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { $sequence: 'checkCondition_5' },
+                    whenTrue: { $sequence: 'applyBuff_6' },
+                    whenFalse: { $sequence: null },
+                  },
+                  next: 'ifElse_10',
+                },
+                ifElse_12: {
+                  action: {
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { $sequence: 'checkCondition_2' },
+                    whenTrue: { $sequence: 'applyElementalInfliction_4' },
+                    whenFalse: { $sequence: null },
+                  },
+                  next: 'ifElse_11',
+                },
+                repeatEachTick_13: {
+                  action: {
+                    kind: 'repeatEachTick',
+                    parameters: {
+                      nativeChanneling: {
+                        catchUpMissedTicks: false,
+                        target: { kind: 'fixed', target: 'enemy' },
+                        executeEachFrame: false,
+                        triggerIntervalSeconds: 0.26,
+                        maxCountPerTarget: -1,
+                        targetTriggerIntervalSeconds: -1,
+                      },
+                    },
+                    body: { $sequence: 'ifElse_12' },
+                  },
+                  next: null,
+                },
+                once_14: {
+                  action: { kind: 'once', parameters: {}, body: { $sequence: null } },
+                  next: 'repeatEachTick_13',
+                },
+                finishOwner_15: {
+                  action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
+                  next: null,
+                },
+              },
+              dataNodes: {
+                data_1: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'hit_spelllnflictionmax02' },
+                },
+                data_2: {
+                  type: 'boolean',
+                  expression: {
+                    kind: 'buffIdStackCompare',
+                    target: 'enemy',
+                    buffIds: ['buff_chr_0027_tangtang_comboskill_spelllnfliction'],
+                    operator: 'less',
+                    value: { kind: 'valueNode', nodeId: 'data_1' },
+                    sameSourceSkillCast: true,
+                  },
+                },
+                data_3: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'hit_spellvulnerablemax' },
+                },
+                data_4: {
+                  type: 'boolean',
+                  expression: {
+                    kind: 'buffIdStackCompare',
+                    target: 'enemy',
+                    buffIds: ['buff_chr_0027_tangtang_normalskill_spellvulnerable'],
+                    operator: 'less',
+                    value: { kind: 'valueNode', nodeId: 'data_3' },
+                    sameSourceSkillCast: true,
+                  },
+                },
+                data_5: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'talent2_ultskill', fallback: 0 },
+                },
+                data_6: {
+                  type: 'boolean',
+                  expression: {
+                    kind: 'actionValueCompare',
+                    left: { kind: 'valueNode', nodeId: 'data_5' },
+                    operator: 'greaterOrEqual',
+                    right: { kind: 'constant', value: 1 },
+                  },
+                },
+                data_7: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'tornado_atk_scale01' },
+                },
+                data_8: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
+                },
+                data_9: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'poise_tornado' },
+                },
+              },
+            },
+            macros: {},
+          },
         },
         chr_0027_tangtang_normal_skill_projhit: {
           actionGraph: {
@@ -5626,7 +5754,8 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'finishBuffsById',
                     parameters: {
-                      target: 'enemy',
+                      targets: { kind: 'fixed', target: 'enemy' },
+                      finishSource: { kind: 'source' },
                       buffIds: ['buff_chr_0027_tangtang_comboskill_hit'],
                       reason: 'other',
                       count: { kind: 'constant', value: 5 },
@@ -5641,24 +5770,24 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: 'finishBuffsById_1',
                 },
-                conditional_3: {
+                checkCondition_3: {
                   action: {
-                    kind: 'conditional',
+                    kind: 'checkCondition',
                     parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                    whenTrue: { $sequence: 'applyElementalInfliction_2' },
                   },
-                  next: null,
+                  next: 'applyElementalInfliction_2',
                 },
                 applyBuff_4: {
                   action: {
                     kind: 'applyBuff',
                     parameters: {
-                      buffId: 'buff_common_obtain_ultimate_sp',
-                      target: 'caster',
+                      buffs: [{ buffId: 'buff_common_obtain_ultimate_sp' }],
+                      targets: { kind: 'source' },
+                      source: { kind: 'source' },
                       inheritSourceSkillCastInfo: true,
                     },
                   },
-                  next: 'conditional_3',
+                  next: 'checkCondition_3',
                 },
                 dealDamage_5: {
                   action: {
@@ -5673,12 +5802,23 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: 'applyBuff_4',
                 },
+                mergeContextTargets_6: {
+                  action: {
+                    kind: 'mergeContextTargets',
+                    parameters: {
+                      saveToContextKey: 'tar',
+                      sources: [{ kind: 'target', target: 'enemy' }],
+                    },
+                  },
+                  next: 'dealDamage_5',
+                },
               },
               dataNodes: {
                 data_1: {
                   type: 'boolean',
                   expression: {
                     kind: 'contextTargetBuffIdStackCompare',
+                    compareZeroWhenTargetMissing: true,
                     contextKey: 'tar',
                     buffIds: ['buff_chr_0027_tangtang_comboskill_hit'],
                     operator: 'greaterOrEqual',
@@ -5702,12 +5842,12 @@ export const tangtang: OperatorDefinition = {
           },
           blackboard: { atk_scale: 0.1, poise: 5 },
           scheduledSequences: [
-            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_5' } },
+            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'mergeContextTargets_6' } },
           ],
         },
       },
       presentation: {
-        icon: '/operators/tangtang/talent 2.webp',
+        icon: 'endaxis:operators/tangtang/talent_2',
         nameKey: 'effects.name.waterspouts',
         placement: 'enemy',
       },
@@ -5724,201 +5864,6 @@ export const tangtang: OperatorDefinition = {
       maxStackingCount: 1,
       childSkills: {
         chr_0027_tangtang_normal_skill_water_projhit_2: {
-          actionGraph: {
-            main: {
-              nodes: {
-                applyBuff_1: {
-                  action: {
-                    kind: 'applyBuff',
-                    parameters: {
-                      buffId: 'buff_chr_0027_tangtang_comboskill_spelllnfliction',
-                      target: 'enemy',
-                      inheritSourceSkillCastInfo: true,
-                    },
-                  },
-                  next: null,
-                },
-                applyElementalInfliction_2: {
-                  action: {
-                    kind: 'applyElementalInfliction',
-                    parameters: { element: 'cryo', isExtra: false },
-                  },
-                  next: 'applyBuff_1',
-                },
-                applyBuff_3: {
-                  action: {
-                    kind: 'applyBuff',
-                    parameters: {
-                      buffId: 'buff_chr_0027_tangtang_normalskill_spellvulnerable',
-                      target: 'enemy',
-                      inheritSourceSkillCastInfo: true,
-                      copiedBlackboardAssignments: {
-                        duration_spellvulnerable: 'duration_spellvulnerable',
-                        rate_spellvulnerable: 'rate_spellvulnerable_02',
-                      },
-                    },
-                  },
-                  next: null,
-                },
-                dealDamage_4: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      instantDamageScaleModifiers: [
-                        {
-                          side: 'attacker',
-                          zone: 'normal',
-                          addition: { kind: 'valueNode', nodeId: 'data_2' },
-                        },
-                      ],
-                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
-                    },
-                    key: 'abilityentity_chr_0027_tangtang_normal_skill_03_02:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_4/action',
-                  },
-                  next: null,
-                },
-                dealDamage_5: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_4' },
-                      takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_5' },
-                    },
-                    key: 'abilityentity_chr_0027_tangtang_normal_skill_03_02:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_5/action',
-                  },
-                  next: null,
-                },
-                conditional_6: {
-                  action: {
-                    kind: 'conditional',
-                    parameters: {
-                      condition: { kind: 'conditionNode', nodeId: 'data_7' },
-                      alwaysNext: true,
-                    },
-                    whenTrue: { $sequence: 'dealDamage_4' },
-                    whenFalse: { $sequence: 'dealDamage_5' },
-                  },
-                  next: null,
-                },
-                conditional_7: {
-                  action: {
-                    kind: 'conditional',
-                    parameters: {
-                      condition: { kind: 'conditionNode', nodeId: 'data_9' },
-                      alwaysNext: true,
-                    },
-                    whenTrue: { $sequence: 'applyBuff_3' },
-                  },
-                  next: 'conditional_6',
-                },
-                conditional_8: {
-                  action: {
-                    kind: 'conditional',
-                    parameters: {
-                      condition: { kind: 'conditionNode', nodeId: 'data_11' },
-                      alwaysNext: true,
-                    },
-                    whenTrue: { $sequence: 'applyElementalInfliction_2' },
-                  },
-                  next: 'conditional_7',
-                },
-                repeatEachTick_9: {
-                  action: {
-                    kind: 'repeatEachTick',
-                    parameters: {
-                      nativeChanneling: {
-                        executeEachFrame: false,
-                        triggerIntervalSeconds: 0.26,
-                        maxCountPerTarget: -1,
-                        targetTriggerIntervalSeconds: -1,
-                      },
-                    },
-                    body: { $sequence: 'conditional_8' },
-                  },
-                  next: null,
-                },
-                finishActionOwnerAbilityEntity_10: {
-                  action: { kind: 'finishActionOwnerAbilityEntity', parameters: {} },
-                  next: null,
-                },
-              },
-              dataNodes: {
-                data_1: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'tornado_atk_scale01' },
-                },
-                data_2: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
-                },
-                data_3: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'poise_tornado' },
-                },
-                data_4: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'tornado_atk_scale01' },
-                },
-                data_5: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'poise_tornado' },
-                },
-                data_6: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'talent2_ultskill', fallback: 0 },
-                },
-                data_7: {
-                  type: 'boolean',
-                  expression: {
-                    kind: 'actionValueCompare',
-                    left: { kind: 'valueNode', nodeId: 'data_6' },
-                    operator: 'greaterOrEqual',
-                    right: { kind: 'constant', value: 1 },
-                  },
-                },
-                data_8: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'hit_spellvulnerablemax' },
-                },
-                data_9: {
-                  type: 'boolean',
-                  expression: {
-                    kind: 'buffIdStackCompare',
-                    target: 'enemy',
-                    buffIds: ['buff_chr_0027_tangtang_normalskill_spellvulnerable'],
-                    operator: 'less',
-                    value: { kind: 'valueNode', nodeId: 'data_8' },
-                    sameSourceSkillCast: true,
-                  },
-                },
-                data_10: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'hit_spelllnflictionmax02' },
-                },
-                data_11: {
-                  type: 'boolean',
-                  expression: {
-                    kind: 'buffIdStackCompare',
-                    target: 'enemy',
-                    buffIds: ['buff_chr_0027_tangtang_comboskill_spelllnfliction'],
-                    operator: 'less',
-                    value: { kind: 'valueNode', nodeId: 'data_10' },
-                    sameSourceSkillCast: true,
-                  },
-                },
-              },
-            },
-            macros: {},
-          },
           skillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
           nativeSkillType: 'normalSkill',
           naturalDurationFrames: 95,
@@ -5929,35 +5874,235 @@ export const tangtang: OperatorDefinition = {
             cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
           },
           blackboard: {
-            atb: 0,
-            atk_scale_1: 0,
-            atk_scale_2: 0,
             dmg_up_water_ult: 0.3,
-            duration: 5,
             duration_spellvulnerable: 10,
-            hit_cnt: 4,
-            hit_cntmax: 10,
-            hit_duration: 3,
             hit_spelllnflictionmax02: 1,
             hit_spellvulnerablemax: 1,
             poise_tornado: 0,
-            potential3: 0,
-            potential5: 0,
-            rate_spellvulnerable: 0.05,
             rate_spellvulnerable_02: 0.1,
             talent2_ultskill: 0,
             tornado_atk_scale01: 0,
-            tornado_atk_scale02: 0,
-            tornado_atk_scale03: 0,
           },
           scheduledSequences: [
-            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'repeatEachTick_9' } },
-            {
-              startFrame: 90,
-              endFrame: 90,
-              sequence: { $sequence: 'finishActionOwnerAbilityEntity_10' },
-            },
+            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'once_14' } },
+            { startFrame: 90, endFrame: 90, sequence: { $sequence: 'finishOwner_15' } },
           ],
+          actionGraph: {
+            main: {
+              nodes: {
+                checkCondition_2: {
+                  action: {
+                    kind: 'checkCondition',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+                  },
+                  next: null,
+                },
+                applyBuff_3: {
+                  action: {
+                    kind: 'applyBuff',
+                    parameters: {
+                      buffs: [{ buffId: 'buff_chr_0027_tangtang_comboskill_spelllnfliction' }],
+                      targets: { kind: 'fixed', target: 'enemy' },
+                      source: { kind: 'source' },
+                      inheritSourceSkillCastInfo: true,
+                    },
+                  },
+                  next: null,
+                },
+                applyElementalInfliction_4: {
+                  action: {
+                    kind: 'applyElementalInfliction',
+                    parameters: { element: 'cryo', isExtra: false },
+                  },
+                  next: 'applyBuff_3',
+                },
+                checkCondition_5: {
+                  action: {
+                    kind: 'checkCondition',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+                  },
+                  next: null,
+                },
+                applyBuff_6: {
+                  action: {
+                    kind: 'applyBuff',
+                    parameters: {
+                      buffs: [
+                        {
+                          buffId: 'buff_chr_0027_tangtang_normalskill_spellvulnerable',
+                          copiedBlackboardAssignments: {
+                            duration_spellvulnerable: 'duration_spellvulnerable',
+                            rate_spellvulnerable: 'rate_spellvulnerable_02',
+                          },
+                        },
+                      ],
+                      targets: { kind: 'fixed', target: 'enemy' },
+                      source: { kind: 'source' },
+                      inheritSourceSkillCastInfo: true,
+                    },
+                  },
+                  next: null,
+                },
+                checkCondition_7: {
+                  action: {
+                    kind: 'checkCondition',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+                  },
+                  next: null,
+                },
+                dealDamage_8: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_7' },
+                      takeAttackSnapshot: true,
+                      tags: ['normalSkill'],
+                      features: ['canBreakWeakness'],
+                      instantDamageScaleModifiers: [
+                        {
+                          side: 'attacker',
+                          zone: 'normal',
+                          addition: { kind: 'valueNode', nodeId: 'data_8' },
+                        },
+                      ],
+                      stagger: { kind: 'valueNode', nodeId: 'data_9' },
+                    },
+                    key: 'abilityentity_chr_0027_tangtang_normal_skill_03_02:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_8/action',
+                  },
+                  next: null,
+                },
+                dealDamage_9: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_7' },
+                      takeAttackSnapshot: true,
+                      tags: ['normalSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_9' },
+                    },
+                    key: 'abilityentity_chr_0027_tangtang_normal_skill_03_02:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_9/action',
+                  },
+                  next: null,
+                },
+                ifElse_10: {
+                  action: {
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { $sequence: 'checkCondition_7' },
+                    whenTrue: { $sequence: 'dealDamage_8' },
+                    whenFalse: { $sequence: 'dealDamage_9' },
+                  },
+                  next: null,
+                },
+                ifElse_11: {
+                  action: {
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { $sequence: 'checkCondition_5' },
+                    whenTrue: { $sequence: 'applyBuff_6' },
+                    whenFalse: { $sequence: null },
+                  },
+                  next: 'ifElse_10',
+                },
+                ifElse_12: {
+                  action: {
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { $sequence: 'checkCondition_2' },
+                    whenTrue: { $sequence: 'applyElementalInfliction_4' },
+                    whenFalse: { $sequence: null },
+                  },
+                  next: 'ifElse_11',
+                },
+                repeatEachTick_13: {
+                  action: {
+                    kind: 'repeatEachTick',
+                    parameters: {
+                      nativeChanneling: {
+                        catchUpMissedTicks: false,
+                        target: { kind: 'fixed', target: 'enemy' },
+                        executeEachFrame: false,
+                        triggerIntervalSeconds: 0.26,
+                        maxCountPerTarget: -1,
+                        targetTriggerIntervalSeconds: -1,
+                      },
+                    },
+                    body: { $sequence: 'ifElse_12' },
+                  },
+                  next: null,
+                },
+                once_14: {
+                  action: { kind: 'once', parameters: {}, body: { $sequence: null } },
+                  next: 'repeatEachTick_13',
+                },
+                finishOwner_15: {
+                  action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
+                  next: null,
+                },
+              },
+              dataNodes: {
+                data_1: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'hit_spelllnflictionmax02' },
+                },
+                data_2: {
+                  type: 'boolean',
+                  expression: {
+                    kind: 'buffIdStackCompare',
+                    target: 'enemy',
+                    buffIds: ['buff_chr_0027_tangtang_comboskill_spelllnfliction'],
+                    operator: 'less',
+                    value: { kind: 'valueNode', nodeId: 'data_1' },
+                    sameSourceSkillCast: true,
+                  },
+                },
+                data_3: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'hit_spellvulnerablemax' },
+                },
+                data_4: {
+                  type: 'boolean',
+                  expression: {
+                    kind: 'buffIdStackCompare',
+                    target: 'enemy',
+                    buffIds: ['buff_chr_0027_tangtang_normalskill_spellvulnerable'],
+                    operator: 'less',
+                    value: { kind: 'valueNode', nodeId: 'data_3' },
+                    sameSourceSkillCast: true,
+                  },
+                },
+                data_5: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'talent2_ultskill', fallback: 0 },
+                },
+                data_6: {
+                  type: 'boolean',
+                  expression: {
+                    kind: 'actionValueCompare',
+                    left: { kind: 'valueNode', nodeId: 'data_5' },
+                    operator: 'greaterOrEqual',
+                    right: { kind: 'constant', value: 1 },
+                  },
+                },
+                data_7: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'tornado_atk_scale01' },
+                },
+                data_8: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
+                },
+                data_9: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'poise_tornado' },
+                },
+              },
+            },
+            macros: {},
+          },
         },
         chr_0027_tangtang_normal_skill_projhit: {
           actionGraph: {
@@ -5967,7 +6112,8 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'finishBuffsById',
                     parameters: {
-                      target: 'enemy',
+                      targets: { kind: 'fixed', target: 'enemy' },
+                      finishSource: { kind: 'source' },
                       buffIds: ['buff_chr_0027_tangtang_comboskill_hit'],
                       reason: 'other',
                       count: { kind: 'constant', value: 5 },
@@ -5982,24 +6128,24 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: 'finishBuffsById_1',
                 },
-                conditional_3: {
+                checkCondition_3: {
                   action: {
-                    kind: 'conditional',
+                    kind: 'checkCondition',
                     parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                    whenTrue: { $sequence: 'applyElementalInfliction_2' },
                   },
-                  next: null,
+                  next: 'applyElementalInfliction_2',
                 },
                 applyBuff_4: {
                   action: {
                     kind: 'applyBuff',
                     parameters: {
-                      buffId: 'buff_common_obtain_ultimate_sp',
-                      target: 'caster',
+                      buffs: [{ buffId: 'buff_common_obtain_ultimate_sp' }],
+                      targets: { kind: 'source' },
+                      source: { kind: 'source' },
                       inheritSourceSkillCastInfo: true,
                     },
                   },
-                  next: 'conditional_3',
+                  next: 'checkCondition_3',
                 },
                 dealDamage_5: {
                   action: {
@@ -6014,12 +6160,23 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: 'applyBuff_4',
                 },
+                mergeContextTargets_6: {
+                  action: {
+                    kind: 'mergeContextTargets',
+                    parameters: {
+                      saveToContextKey: 'tar',
+                      sources: [{ kind: 'target', target: 'enemy' }],
+                    },
+                  },
+                  next: 'dealDamage_5',
+                },
               },
               dataNodes: {
                 data_1: {
                   type: 'boolean',
                   expression: {
                     kind: 'contextTargetBuffIdStackCompare',
+                    compareZeroWhenTargetMissing: true,
                     contextKey: 'tar',
                     buffIds: ['buff_chr_0027_tangtang_comboskill_hit'],
                     operator: 'greaterOrEqual',
@@ -6043,12 +6200,12 @@ export const tangtang: OperatorDefinition = {
           },
           blackboard: { atk_scale: 0.1, poise: 5 },
           scheduledSequences: [
-            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_5' } },
+            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'mergeContextTargets_6' } },
           ],
         },
       },
       presentation: {
-        icon: '/operators/tangtang/talent 2.webp',
+        icon: 'endaxis:operators/tangtang/talent_2',
         nameKey: 'effects.name.waterspouts',
         placement: 'enemy',
       },
@@ -6065,201 +6222,6 @@ export const tangtang: OperatorDefinition = {
       maxStackingCount: 1,
       childSkills: {
         chr_0027_tangtang_normal_skill_water_projhit_2: {
-          actionGraph: {
-            main: {
-              nodes: {
-                applyBuff_1: {
-                  action: {
-                    kind: 'applyBuff',
-                    parameters: {
-                      buffId: 'buff_chr_0027_tangtang_comboskill_spelllnfliction',
-                      target: 'enemy',
-                      inheritSourceSkillCastInfo: true,
-                    },
-                  },
-                  next: null,
-                },
-                applyElementalInfliction_2: {
-                  action: {
-                    kind: 'applyElementalInfliction',
-                    parameters: { element: 'cryo', isExtra: false },
-                  },
-                  next: 'applyBuff_1',
-                },
-                applyBuff_3: {
-                  action: {
-                    kind: 'applyBuff',
-                    parameters: {
-                      buffId: 'buff_chr_0027_tangtang_normalskill_spellvulnerable',
-                      target: 'enemy',
-                      inheritSourceSkillCastInfo: true,
-                      copiedBlackboardAssignments: {
-                        duration_spellvulnerable: 'duration_spellvulnerable',
-                        rate_spellvulnerable: 'rate_spellvulnerable_02',
-                      },
-                    },
-                  },
-                  next: null,
-                },
-                dealDamage_4: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      instantDamageScaleModifiers: [
-                        {
-                          side: 'attacker',
-                          zone: 'normal',
-                          addition: { kind: 'valueNode', nodeId: 'data_2' },
-                        },
-                      ],
-                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
-                    },
-                    key: 'abilityentity_chr_0027_tangtang_normal_skill_03:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_4/action',
-                  },
-                  next: null,
-                },
-                dealDamage_5: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_4' },
-                      takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_5' },
-                    },
-                    key: 'abilityentity_chr_0027_tangtang_normal_skill_03:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_5/action',
-                  },
-                  next: null,
-                },
-                conditional_6: {
-                  action: {
-                    kind: 'conditional',
-                    parameters: {
-                      condition: { kind: 'conditionNode', nodeId: 'data_7' },
-                      alwaysNext: true,
-                    },
-                    whenTrue: { $sequence: 'dealDamage_4' },
-                    whenFalse: { $sequence: 'dealDamage_5' },
-                  },
-                  next: null,
-                },
-                conditional_7: {
-                  action: {
-                    kind: 'conditional',
-                    parameters: {
-                      condition: { kind: 'conditionNode', nodeId: 'data_9' },
-                      alwaysNext: true,
-                    },
-                    whenTrue: { $sequence: 'applyBuff_3' },
-                  },
-                  next: 'conditional_6',
-                },
-                conditional_8: {
-                  action: {
-                    kind: 'conditional',
-                    parameters: {
-                      condition: { kind: 'conditionNode', nodeId: 'data_11' },
-                      alwaysNext: true,
-                    },
-                    whenTrue: { $sequence: 'applyElementalInfliction_2' },
-                  },
-                  next: 'conditional_7',
-                },
-                repeatEachTick_9: {
-                  action: {
-                    kind: 'repeatEachTick',
-                    parameters: {
-                      nativeChanneling: {
-                        executeEachFrame: false,
-                        triggerIntervalSeconds: 0.26,
-                        maxCountPerTarget: -1,
-                        targetTriggerIntervalSeconds: -1,
-                      },
-                    },
-                    body: { $sequence: 'conditional_8' },
-                  },
-                  next: null,
-                },
-                finishActionOwnerAbilityEntity_10: {
-                  action: { kind: 'finishActionOwnerAbilityEntity', parameters: {} },
-                  next: null,
-                },
-              },
-              dataNodes: {
-                data_1: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'tornado_atk_scale01' },
-                },
-                data_2: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
-                },
-                data_3: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'poise_tornado' },
-                },
-                data_4: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'tornado_atk_scale01' },
-                },
-                data_5: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'poise_tornado' },
-                },
-                data_6: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'talent2_ultskill', fallback: 0 },
-                },
-                data_7: {
-                  type: 'boolean',
-                  expression: {
-                    kind: 'actionValueCompare',
-                    left: { kind: 'valueNode', nodeId: 'data_6' },
-                    operator: 'greaterOrEqual',
-                    right: { kind: 'constant', value: 1 },
-                  },
-                },
-                data_8: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'hit_spellvulnerablemax' },
-                },
-                data_9: {
-                  type: 'boolean',
-                  expression: {
-                    kind: 'buffIdStackCompare',
-                    target: 'enemy',
-                    buffIds: ['buff_chr_0027_tangtang_normalskill_spellvulnerable'],
-                    operator: 'less',
-                    value: { kind: 'valueNode', nodeId: 'data_8' },
-                    sameSourceSkillCast: true,
-                  },
-                },
-                data_10: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'hit_spelllnflictionmax02' },
-                },
-                data_11: {
-                  type: 'boolean',
-                  expression: {
-                    kind: 'buffIdStackCompare',
-                    target: 'enemy',
-                    buffIds: ['buff_chr_0027_tangtang_comboskill_spelllnfliction'],
-                    operator: 'less',
-                    value: { kind: 'valueNode', nodeId: 'data_10' },
-                    sameSourceSkillCast: true,
-                  },
-                },
-              },
-            },
-            macros: {},
-          },
           skillId: 'chr_0027_tangtang_normal_skill_water_projhit_2',
           nativeSkillType: 'normalSkill',
           naturalDurationFrames: 95,
@@ -6270,35 +6232,235 @@ export const tangtang: OperatorDefinition = {
             cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
           },
           blackboard: {
-            atb: 0,
-            atk_scale_1: 0,
-            atk_scale_2: 0,
             dmg_up_water_ult: 0.3,
-            duration: 5,
             duration_spellvulnerable: 10,
-            hit_cnt: 4,
-            hit_cntmax: 10,
-            hit_duration: 3,
             hit_spelllnflictionmax02: 1,
             hit_spellvulnerablemax: 1,
             poise_tornado: 0,
-            potential3: 0,
-            potential5: 0,
-            rate_spellvulnerable: 0.05,
             rate_spellvulnerable_02: 0.1,
             talent2_ultskill: 0,
             tornado_atk_scale01: 0,
-            tornado_atk_scale02: 0,
-            tornado_atk_scale03: 0,
           },
           scheduledSequences: [
-            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'repeatEachTick_9' } },
-            {
-              startFrame: 90,
-              endFrame: 90,
-              sequence: { $sequence: 'finishActionOwnerAbilityEntity_10' },
-            },
+            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'once_14' } },
+            { startFrame: 90, endFrame: 90, sequence: { $sequence: 'finishOwner_15' } },
           ],
+          actionGraph: {
+            main: {
+              nodes: {
+                checkCondition_2: {
+                  action: {
+                    kind: 'checkCondition',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+                  },
+                  next: null,
+                },
+                applyBuff_3: {
+                  action: {
+                    kind: 'applyBuff',
+                    parameters: {
+                      buffs: [{ buffId: 'buff_chr_0027_tangtang_comboskill_spelllnfliction' }],
+                      targets: { kind: 'fixed', target: 'enemy' },
+                      source: { kind: 'source' },
+                      inheritSourceSkillCastInfo: true,
+                    },
+                  },
+                  next: null,
+                },
+                applyElementalInfliction_4: {
+                  action: {
+                    kind: 'applyElementalInfliction',
+                    parameters: { element: 'cryo', isExtra: false },
+                  },
+                  next: 'applyBuff_3',
+                },
+                checkCondition_5: {
+                  action: {
+                    kind: 'checkCondition',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+                  },
+                  next: null,
+                },
+                applyBuff_6: {
+                  action: {
+                    kind: 'applyBuff',
+                    parameters: {
+                      buffs: [
+                        {
+                          buffId: 'buff_chr_0027_tangtang_normalskill_spellvulnerable',
+                          copiedBlackboardAssignments: {
+                            duration_spellvulnerable: 'duration_spellvulnerable',
+                            rate_spellvulnerable: 'rate_spellvulnerable_02',
+                          },
+                        },
+                      ],
+                      targets: { kind: 'fixed', target: 'enemy' },
+                      source: { kind: 'source' },
+                      inheritSourceSkillCastInfo: true,
+                    },
+                  },
+                  next: null,
+                },
+                checkCondition_7: {
+                  action: {
+                    kind: 'checkCondition',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+                  },
+                  next: null,
+                },
+                dealDamage_8: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_7' },
+                      takeAttackSnapshot: true,
+                      tags: ['normalSkill'],
+                      features: ['canBreakWeakness'],
+                      instantDamageScaleModifiers: [
+                        {
+                          side: 'attacker',
+                          zone: 'normal',
+                          addition: { kind: 'valueNode', nodeId: 'data_8' },
+                        },
+                      ],
+                      stagger: { kind: 'valueNode', nodeId: 'data_9' },
+                    },
+                    key: 'abilityentity_chr_0027_tangtang_normal_skill_03:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_8/action',
+                  },
+                  next: null,
+                },
+                dealDamage_9: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_7' },
+                      takeAttackSnapshot: true,
+                      tags: ['normalSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_9' },
+                    },
+                    key: 'abilityentity_chr_0027_tangtang_normal_skill_03:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_9/action',
+                  },
+                  next: null,
+                },
+                ifElse_10: {
+                  action: {
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { $sequence: 'checkCondition_7' },
+                    whenTrue: { $sequence: 'dealDamage_8' },
+                    whenFalse: { $sequence: 'dealDamage_9' },
+                  },
+                  next: null,
+                },
+                ifElse_11: {
+                  action: {
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { $sequence: 'checkCondition_5' },
+                    whenTrue: { $sequence: 'applyBuff_6' },
+                    whenFalse: { $sequence: null },
+                  },
+                  next: 'ifElse_10',
+                },
+                ifElse_12: {
+                  action: {
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { $sequence: 'checkCondition_2' },
+                    whenTrue: { $sequence: 'applyElementalInfliction_4' },
+                    whenFalse: { $sequence: null },
+                  },
+                  next: 'ifElse_11',
+                },
+                repeatEachTick_13: {
+                  action: {
+                    kind: 'repeatEachTick',
+                    parameters: {
+                      nativeChanneling: {
+                        catchUpMissedTicks: false,
+                        target: { kind: 'fixed', target: 'enemy' },
+                        executeEachFrame: false,
+                        triggerIntervalSeconds: 0.26,
+                        maxCountPerTarget: -1,
+                        targetTriggerIntervalSeconds: -1,
+                      },
+                    },
+                    body: { $sequence: 'ifElse_12' },
+                  },
+                  next: null,
+                },
+                once_14: {
+                  action: { kind: 'once', parameters: {}, body: { $sequence: null } },
+                  next: 'repeatEachTick_13',
+                },
+                finishOwner_15: {
+                  action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
+                  next: null,
+                },
+              },
+              dataNodes: {
+                data_1: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'hit_spelllnflictionmax02' },
+                },
+                data_2: {
+                  type: 'boolean',
+                  expression: {
+                    kind: 'buffIdStackCompare',
+                    target: 'enemy',
+                    buffIds: ['buff_chr_0027_tangtang_comboskill_spelllnfliction'],
+                    operator: 'less',
+                    value: { kind: 'valueNode', nodeId: 'data_1' },
+                    sameSourceSkillCast: true,
+                  },
+                },
+                data_3: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'hit_spellvulnerablemax' },
+                },
+                data_4: {
+                  type: 'boolean',
+                  expression: {
+                    kind: 'buffIdStackCompare',
+                    target: 'enemy',
+                    buffIds: ['buff_chr_0027_tangtang_normalskill_spellvulnerable'],
+                    operator: 'less',
+                    value: { kind: 'valueNode', nodeId: 'data_3' },
+                    sameSourceSkillCast: true,
+                  },
+                },
+                data_5: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'talent2_ultskill', fallback: 0 },
+                },
+                data_6: {
+                  type: 'boolean',
+                  expression: {
+                    kind: 'actionValueCompare',
+                    left: { kind: 'valueNode', nodeId: 'data_5' },
+                    operator: 'greaterOrEqual',
+                    right: { kind: 'constant', value: 1 },
+                  },
+                },
+                data_7: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'tornado_atk_scale01' },
+                },
+                data_8: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
+                },
+                data_9: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'poise_tornado' },
+                },
+              },
+            },
+            macros: {},
+          },
         },
         chr_0027_tangtang_normal_skill_projhit: {
           actionGraph: {
@@ -6308,7 +6470,8 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'finishBuffsById',
                     parameters: {
-                      target: 'enemy',
+                      targets: { kind: 'fixed', target: 'enemy' },
+                      finishSource: { kind: 'source' },
                       buffIds: ['buff_chr_0027_tangtang_comboskill_hit'],
                       reason: 'other',
                       count: { kind: 'constant', value: 5 },
@@ -6323,24 +6486,24 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: 'finishBuffsById_1',
                 },
-                conditional_3: {
+                checkCondition_3: {
                   action: {
-                    kind: 'conditional',
+                    kind: 'checkCondition',
                     parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                    whenTrue: { $sequence: 'applyElementalInfliction_2' },
                   },
-                  next: null,
+                  next: 'applyElementalInfliction_2',
                 },
                 applyBuff_4: {
                   action: {
                     kind: 'applyBuff',
                     parameters: {
-                      buffId: 'buff_common_obtain_ultimate_sp',
-                      target: 'caster',
+                      buffs: [{ buffId: 'buff_common_obtain_ultimate_sp' }],
+                      targets: { kind: 'source' },
+                      source: { kind: 'source' },
                       inheritSourceSkillCastInfo: true,
                     },
                   },
-                  next: 'conditional_3',
+                  next: 'checkCondition_3',
                 },
                 dealDamage_5: {
                   action: {
@@ -6355,12 +6518,23 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: 'applyBuff_4',
                 },
+                mergeContextTargets_6: {
+                  action: {
+                    kind: 'mergeContextTargets',
+                    parameters: {
+                      saveToContextKey: 'tar',
+                      sources: [{ kind: 'target', target: 'enemy' }],
+                    },
+                  },
+                  next: 'dealDamage_5',
+                },
               },
               dataNodes: {
                 data_1: {
                   type: 'boolean',
                   expression: {
                     kind: 'contextTargetBuffIdStackCompare',
+                    compareZeroWhenTargetMissing: true,
                     contextKey: 'tar',
                     buffIds: ['buff_chr_0027_tangtang_comboskill_hit'],
                     operator: 'greaterOrEqual',
@@ -6384,12 +6558,12 @@ export const tangtang: OperatorDefinition = {
           },
           blackboard: { atk_scale: 0.1, poise: 5 },
           scheduledSequences: [
-            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_5' } },
+            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'mergeContextTargets_6' } },
           ],
         },
       },
       presentation: {
-        icon: '/operators/tangtang/talent 2.webp',
+        icon: 'endaxis:operators/tangtang/talent_2',
         nameKey: 'effects.name.waterspouts',
         placement: 'enemy',
       },
@@ -6407,201 +6581,6 @@ export const tangtang: OperatorDefinition = {
       maxStackingCount: 1,
       childSkills: {
         chr_0027_tangtang_normal_skill_water_projhit_1: {
-          actionGraph: {
-            main: {
-              nodes: {
-                applyBuff_1: {
-                  action: {
-                    kind: 'applyBuff',
-                    parameters: {
-                      buffId: 'buff_chr_0027_tangtang_comboskill_spelllnfliction',
-                      target: 'enemy',
-                      inheritSourceSkillCastInfo: true,
-                    },
-                  },
-                  next: null,
-                },
-                applyElementalInfliction_2: {
-                  action: {
-                    kind: 'applyElementalInfliction',
-                    parameters: { element: 'cryo', isExtra: false },
-                  },
-                  next: 'applyBuff_1',
-                },
-                applyBuff_3: {
-                  action: {
-                    kind: 'applyBuff',
-                    parameters: {
-                      buffId: 'buff_chr_0027_tangtang_normalskill_spellvulnerable',
-                      target: 'enemy',
-                      inheritSourceSkillCastInfo: true,
-                      copiedBlackboardAssignments: {
-                        duration_spellvulnerable: 'duration_spellvulnerable',
-                        rate_spellvulnerable: 'rate_spellvulnerable',
-                      },
-                    },
-                  },
-                  next: null,
-                },
-                dealDamage_4: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      instantDamageScaleModifiers: [
-                        {
-                          side: 'attacker',
-                          zone: 'normal',
-                          addition: { kind: 'valueNode', nodeId: 'data_2' },
-                        },
-                      ],
-                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
-                    },
-                    key: 'abilityentity_chr_0027_tangtang_normal_skill_02_02:chr_0027_tangtang_normal_skill_water_projhit_1|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_1/actionGraph/main/nodes/dealDamage_4/action',
-                  },
-                  next: null,
-                },
-                dealDamage_5: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_4' },
-                      takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_5' },
-                    },
-                    key: 'abilityentity_chr_0027_tangtang_normal_skill_02_02:chr_0027_tangtang_normal_skill_water_projhit_1|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_1/actionGraph/main/nodes/dealDamage_5/action',
-                  },
-                  next: null,
-                },
-                conditional_6: {
-                  action: {
-                    kind: 'conditional',
-                    parameters: {
-                      condition: { kind: 'conditionNode', nodeId: 'data_7' },
-                      alwaysNext: true,
-                    },
-                    whenTrue: { $sequence: 'dealDamage_4' },
-                    whenFalse: { $sequence: 'dealDamage_5' },
-                  },
-                  next: null,
-                },
-                conditional_7: {
-                  action: {
-                    kind: 'conditional',
-                    parameters: {
-                      condition: { kind: 'conditionNode', nodeId: 'data_9' },
-                      alwaysNext: true,
-                    },
-                    whenTrue: { $sequence: 'applyBuff_3' },
-                  },
-                  next: 'conditional_6',
-                },
-                conditional_8: {
-                  action: {
-                    kind: 'conditional',
-                    parameters: {
-                      condition: { kind: 'conditionNode', nodeId: 'data_11' },
-                      alwaysNext: true,
-                    },
-                    whenTrue: { $sequence: 'applyElementalInfliction_2' },
-                  },
-                  next: 'conditional_7',
-                },
-                repeatEachTick_9: {
-                  action: {
-                    kind: 'repeatEachTick',
-                    parameters: {
-                      nativeChanneling: {
-                        executeEachFrame: false,
-                        triggerIntervalSeconds: 0.26,
-                        maxCountPerTarget: -1,
-                        targetTriggerIntervalSeconds: -1,
-                      },
-                    },
-                    body: { $sequence: 'conditional_8' },
-                  },
-                  next: null,
-                },
-                finishActionOwnerAbilityEntity_10: {
-                  action: { kind: 'finishActionOwnerAbilityEntity', parameters: {} },
-                  next: null,
-                },
-              },
-              dataNodes: {
-                data_1: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'tornado_atk_scale01' },
-                },
-                data_2: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
-                },
-                data_3: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'poise_tornado' },
-                },
-                data_4: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'tornado_atk_scale01' },
-                },
-                data_5: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'poise_tornado' },
-                },
-                data_6: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'talent2_ultskill', fallback: 0 },
-                },
-                data_7: {
-                  type: 'boolean',
-                  expression: {
-                    kind: 'actionValueCompare',
-                    left: { kind: 'valueNode', nodeId: 'data_6' },
-                    operator: 'greaterOrEqual',
-                    right: { kind: 'constant', value: 1 },
-                  },
-                },
-                data_8: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'hit_spellvulnerablemax' },
-                },
-                data_9: {
-                  type: 'boolean',
-                  expression: {
-                    kind: 'buffIdStackCompare',
-                    target: 'enemy',
-                    buffIds: ['buff_chr_0027_tangtang_normalskill_spellvulnerable'],
-                    operator: 'less',
-                    value: { kind: 'valueNode', nodeId: 'data_8' },
-                    sameSourceSkillCast: true,
-                  },
-                },
-                data_10: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'hit_spelllnflictionmax02' },
-                },
-                data_11: {
-                  type: 'boolean',
-                  expression: {
-                    kind: 'buffIdStackCompare',
-                    target: 'enemy',
-                    buffIds: ['buff_chr_0027_tangtang_comboskill_spelllnfliction'],
-                    operator: 'less',
-                    value: { kind: 'valueNode', nodeId: 'data_10' },
-                    sameSourceSkillCast: true,
-                  },
-                },
-              },
-            },
-            macros: {},
-          },
           skillId: 'chr_0027_tangtang_normal_skill_water_projhit_1',
           nativeSkillType: 'normalSkill',
           naturalDurationFrames: 95,
@@ -6612,34 +6591,235 @@ export const tangtang: OperatorDefinition = {
             cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
           },
           blackboard: {
-            atb: 0,
-            atk_scale_1: 0,
-            atk_scale_2: 0.2,
             dmg_up_water_ult: 0,
-            duration: 5,
             duration_spellvulnerable: 10,
-            hit_cnt: 4,
-            hit_cntmax: 10,
-            hit_duration: 3,
             hit_spelllnflictionmax02: 1,
             hit_spellvulnerablemax: 1,
             poise_tornado: 0,
-            potential3: 0,
-            potential5: 0,
             rate_spellvulnerable: 0.05,
             talent2_ultskill: 0,
             tornado_atk_scale01: 0,
-            tornado_atk_scale02: 0,
-            tornado_atk_scale03: 0,
           },
           scheduledSequences: [
-            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'repeatEachTick_9' } },
-            {
-              startFrame: 90,
-              endFrame: 90,
-              sequence: { $sequence: 'finishActionOwnerAbilityEntity_10' },
-            },
+            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'once_14' } },
+            { startFrame: 90, endFrame: 90, sequence: { $sequence: 'finishOwner_15' } },
           ],
+          actionGraph: {
+            main: {
+              nodes: {
+                checkCondition_2: {
+                  action: {
+                    kind: 'checkCondition',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+                  },
+                  next: null,
+                },
+                applyBuff_3: {
+                  action: {
+                    kind: 'applyBuff',
+                    parameters: {
+                      buffs: [{ buffId: 'buff_chr_0027_tangtang_comboskill_spelllnfliction' }],
+                      targets: { kind: 'fixed', target: 'enemy' },
+                      source: { kind: 'source' },
+                      inheritSourceSkillCastInfo: true,
+                    },
+                  },
+                  next: null,
+                },
+                applyElementalInfliction_4: {
+                  action: {
+                    kind: 'applyElementalInfliction',
+                    parameters: { element: 'cryo', isExtra: false },
+                  },
+                  next: 'applyBuff_3',
+                },
+                checkCondition_5: {
+                  action: {
+                    kind: 'checkCondition',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+                  },
+                  next: null,
+                },
+                applyBuff_6: {
+                  action: {
+                    kind: 'applyBuff',
+                    parameters: {
+                      buffs: [
+                        {
+                          buffId: 'buff_chr_0027_tangtang_normalskill_spellvulnerable',
+                          copiedBlackboardAssignments: {
+                            duration_spellvulnerable: 'duration_spellvulnerable',
+                            rate_spellvulnerable: 'rate_spellvulnerable',
+                          },
+                        },
+                      ],
+                      targets: { kind: 'fixed', target: 'enemy' },
+                      source: { kind: 'source' },
+                      inheritSourceSkillCastInfo: true,
+                    },
+                  },
+                  next: null,
+                },
+                checkCondition_7: {
+                  action: {
+                    kind: 'checkCondition',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+                  },
+                  next: null,
+                },
+                dealDamage_8: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_7' },
+                      takeAttackSnapshot: true,
+                      tags: ['normalSkill'],
+                      features: ['canBreakWeakness'],
+                      instantDamageScaleModifiers: [
+                        {
+                          side: 'attacker',
+                          zone: 'normal',
+                          addition: { kind: 'valueNode', nodeId: 'data_8' },
+                        },
+                      ],
+                      stagger: { kind: 'valueNode', nodeId: 'data_9' },
+                    },
+                    key: 'abilityentity_chr_0027_tangtang_normal_skill_02_02:chr_0027_tangtang_normal_skill_water_projhit_1|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_1/actionGraph/main/nodes/dealDamage_8/action',
+                  },
+                  next: null,
+                },
+                dealDamage_9: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_7' },
+                      takeAttackSnapshot: true,
+                      tags: ['normalSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_9' },
+                    },
+                    key: 'abilityentity_chr_0027_tangtang_normal_skill_02_02:chr_0027_tangtang_normal_skill_water_projhit_1|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_1/actionGraph/main/nodes/dealDamage_9/action',
+                  },
+                  next: null,
+                },
+                ifElse_10: {
+                  action: {
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { $sequence: 'checkCondition_7' },
+                    whenTrue: { $sequence: 'dealDamage_8' },
+                    whenFalse: { $sequence: 'dealDamage_9' },
+                  },
+                  next: null,
+                },
+                ifElse_11: {
+                  action: {
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { $sequence: 'checkCondition_5' },
+                    whenTrue: { $sequence: 'applyBuff_6' },
+                    whenFalse: { $sequence: null },
+                  },
+                  next: 'ifElse_10',
+                },
+                ifElse_12: {
+                  action: {
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { $sequence: 'checkCondition_2' },
+                    whenTrue: { $sequence: 'applyElementalInfliction_4' },
+                    whenFalse: { $sequence: null },
+                  },
+                  next: 'ifElse_11',
+                },
+                repeatEachTick_13: {
+                  action: {
+                    kind: 'repeatEachTick',
+                    parameters: {
+                      nativeChanneling: {
+                        catchUpMissedTicks: false,
+                        target: { kind: 'fixed', target: 'enemy' },
+                        executeEachFrame: false,
+                        triggerIntervalSeconds: 0.26,
+                        maxCountPerTarget: -1,
+                        targetTriggerIntervalSeconds: -1,
+                      },
+                    },
+                    body: { $sequence: 'ifElse_12' },
+                  },
+                  next: null,
+                },
+                once_14: {
+                  action: { kind: 'once', parameters: {}, body: { $sequence: null } },
+                  next: 'repeatEachTick_13',
+                },
+                finishOwner_15: {
+                  action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
+                  next: null,
+                },
+              },
+              dataNodes: {
+                data_1: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'hit_spelllnflictionmax02' },
+                },
+                data_2: {
+                  type: 'boolean',
+                  expression: {
+                    kind: 'buffIdStackCompare',
+                    target: 'enemy',
+                    buffIds: ['buff_chr_0027_tangtang_comboskill_spelllnfliction'],
+                    operator: 'less',
+                    value: { kind: 'valueNode', nodeId: 'data_1' },
+                    sameSourceSkillCast: true,
+                  },
+                },
+                data_3: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'hit_spellvulnerablemax' },
+                },
+                data_4: {
+                  type: 'boolean',
+                  expression: {
+                    kind: 'buffIdStackCompare',
+                    target: 'enemy',
+                    buffIds: ['buff_chr_0027_tangtang_normalskill_spellvulnerable'],
+                    operator: 'less',
+                    value: { kind: 'valueNode', nodeId: 'data_3' },
+                    sameSourceSkillCast: true,
+                  },
+                },
+                data_5: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'talent2_ultskill', fallback: 0 },
+                },
+                data_6: {
+                  type: 'boolean',
+                  expression: {
+                    kind: 'actionValueCompare',
+                    left: { kind: 'valueNode', nodeId: 'data_5' },
+                    operator: 'greaterOrEqual',
+                    right: { kind: 'constant', value: 1 },
+                  },
+                },
+                data_7: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'tornado_atk_scale01' },
+                },
+                data_8: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
+                },
+                data_9: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'poise_tornado' },
+                },
+              },
+            },
+            macros: {},
+          },
         },
         chr_0027_tangtang_normal_skill_projhit: {
           actionGraph: {
@@ -6649,7 +6829,8 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'finishBuffsById',
                     parameters: {
-                      target: 'enemy',
+                      targets: { kind: 'fixed', target: 'enemy' },
+                      finishSource: { kind: 'source' },
                       buffIds: ['buff_chr_0027_tangtang_comboskill_hit'],
                       reason: 'other',
                       count: { kind: 'constant', value: 5 },
@@ -6664,24 +6845,24 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: 'finishBuffsById_1',
                 },
-                conditional_3: {
+                checkCondition_3: {
                   action: {
-                    kind: 'conditional',
+                    kind: 'checkCondition',
                     parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                    whenTrue: { $sequence: 'applyElementalInfliction_2' },
                   },
-                  next: null,
+                  next: 'applyElementalInfliction_2',
                 },
                 applyBuff_4: {
                   action: {
                     kind: 'applyBuff',
                     parameters: {
-                      buffId: 'buff_common_obtain_ultimate_sp',
-                      target: 'caster',
+                      buffs: [{ buffId: 'buff_common_obtain_ultimate_sp' }],
+                      targets: { kind: 'source' },
+                      source: { kind: 'source' },
                       inheritSourceSkillCastInfo: true,
                     },
                   },
-                  next: 'conditional_3',
+                  next: 'checkCondition_3',
                 },
                 dealDamage_5: {
                   action: {
@@ -6696,12 +6877,23 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: 'applyBuff_4',
                 },
+                mergeContextTargets_6: {
+                  action: {
+                    kind: 'mergeContextTargets',
+                    parameters: {
+                      saveToContextKey: 'tar',
+                      sources: [{ kind: 'target', target: 'enemy' }],
+                    },
+                  },
+                  next: 'dealDamage_5',
+                },
               },
               dataNodes: {
                 data_1: {
                   type: 'boolean',
                   expression: {
                     kind: 'contextTargetBuffIdStackCompare',
+                    compareZeroWhenTargetMissing: true,
                     contextKey: 'tar',
                     buffIds: ['buff_chr_0027_tangtang_comboskill_hit'],
                     operator: 'greaterOrEqual',
@@ -6725,12 +6917,12 @@ export const tangtang: OperatorDefinition = {
           },
           blackboard: { atk_scale: 0.1, poise: 5 },
           scheduledSequences: [
-            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_5' } },
+            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'mergeContextTargets_6' } },
           ],
         },
       },
       presentation: {
-        icon: '/operators/tangtang/talent 2.webp',
+        icon: 'endaxis:operators/tangtang/talent_2',
         nameKey: 'effects.name.waterspouts',
         placement: 'enemy',
       },
@@ -6747,201 +6939,6 @@ export const tangtang: OperatorDefinition = {
       maxStackingCount: 1,
       childSkills: {
         chr_0027_tangtang_normal_skill_water_projhit_1: {
-          actionGraph: {
-            main: {
-              nodes: {
-                applyBuff_1: {
-                  action: {
-                    kind: 'applyBuff',
-                    parameters: {
-                      buffId: 'buff_chr_0027_tangtang_comboskill_spelllnfliction',
-                      target: 'enemy',
-                      inheritSourceSkillCastInfo: true,
-                    },
-                  },
-                  next: null,
-                },
-                applyElementalInfliction_2: {
-                  action: {
-                    kind: 'applyElementalInfliction',
-                    parameters: { element: 'cryo', isExtra: false },
-                  },
-                  next: 'applyBuff_1',
-                },
-                applyBuff_3: {
-                  action: {
-                    kind: 'applyBuff',
-                    parameters: {
-                      buffId: 'buff_chr_0027_tangtang_normalskill_spellvulnerable',
-                      target: 'enemy',
-                      inheritSourceSkillCastInfo: true,
-                      copiedBlackboardAssignments: {
-                        duration_spellvulnerable: 'duration_spellvulnerable',
-                        rate_spellvulnerable: 'rate_spellvulnerable',
-                      },
-                    },
-                  },
-                  next: null,
-                },
-                dealDamage_4: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      instantDamageScaleModifiers: [
-                        {
-                          side: 'attacker',
-                          zone: 'normal',
-                          addition: { kind: 'valueNode', nodeId: 'data_2' },
-                        },
-                      ],
-                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
-                    },
-                    key: 'abilityentity_chr_0027_tangtang_normal_skill_02:chr_0027_tangtang_normal_skill_water_projhit_1|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_1/actionGraph/main/nodes/dealDamage_4/action',
-                  },
-                  next: null,
-                },
-                dealDamage_5: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_4' },
-                      takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_5' },
-                    },
-                    key: 'abilityentity_chr_0027_tangtang_normal_skill_02:chr_0027_tangtang_normal_skill_water_projhit_1|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_1/actionGraph/main/nodes/dealDamage_5/action',
-                  },
-                  next: null,
-                },
-                conditional_6: {
-                  action: {
-                    kind: 'conditional',
-                    parameters: {
-                      condition: { kind: 'conditionNode', nodeId: 'data_7' },
-                      alwaysNext: true,
-                    },
-                    whenTrue: { $sequence: 'dealDamage_4' },
-                    whenFalse: { $sequence: 'dealDamage_5' },
-                  },
-                  next: null,
-                },
-                conditional_7: {
-                  action: {
-                    kind: 'conditional',
-                    parameters: {
-                      condition: { kind: 'conditionNode', nodeId: 'data_9' },
-                      alwaysNext: true,
-                    },
-                    whenTrue: { $sequence: 'applyBuff_3' },
-                  },
-                  next: 'conditional_6',
-                },
-                conditional_8: {
-                  action: {
-                    kind: 'conditional',
-                    parameters: {
-                      condition: { kind: 'conditionNode', nodeId: 'data_11' },
-                      alwaysNext: true,
-                    },
-                    whenTrue: { $sequence: 'applyElementalInfliction_2' },
-                  },
-                  next: 'conditional_7',
-                },
-                repeatEachTick_9: {
-                  action: {
-                    kind: 'repeatEachTick',
-                    parameters: {
-                      nativeChanneling: {
-                        executeEachFrame: false,
-                        triggerIntervalSeconds: 0.26,
-                        maxCountPerTarget: -1,
-                        targetTriggerIntervalSeconds: -1,
-                      },
-                    },
-                    body: { $sequence: 'conditional_8' },
-                  },
-                  next: null,
-                },
-                finishActionOwnerAbilityEntity_10: {
-                  action: { kind: 'finishActionOwnerAbilityEntity', parameters: {} },
-                  next: null,
-                },
-              },
-              dataNodes: {
-                data_1: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'tornado_atk_scale01' },
-                },
-                data_2: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
-                },
-                data_3: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'poise_tornado' },
-                },
-                data_4: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'tornado_atk_scale01' },
-                },
-                data_5: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'poise_tornado' },
-                },
-                data_6: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'talent2_ultskill', fallback: 0 },
-                },
-                data_7: {
-                  type: 'boolean',
-                  expression: {
-                    kind: 'actionValueCompare',
-                    left: { kind: 'valueNode', nodeId: 'data_6' },
-                    operator: 'greaterOrEqual',
-                    right: { kind: 'constant', value: 1 },
-                  },
-                },
-                data_8: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'hit_spellvulnerablemax' },
-                },
-                data_9: {
-                  type: 'boolean',
-                  expression: {
-                    kind: 'buffIdStackCompare',
-                    target: 'enemy',
-                    buffIds: ['buff_chr_0027_tangtang_normalskill_spellvulnerable'],
-                    operator: 'less',
-                    value: { kind: 'valueNode', nodeId: 'data_8' },
-                    sameSourceSkillCast: true,
-                  },
-                },
-                data_10: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'hit_spelllnflictionmax02' },
-                },
-                data_11: {
-                  type: 'boolean',
-                  expression: {
-                    kind: 'buffIdStackCompare',
-                    target: 'enemy',
-                    buffIds: ['buff_chr_0027_tangtang_comboskill_spelllnfliction'],
-                    operator: 'less',
-                    value: { kind: 'valueNode', nodeId: 'data_10' },
-                    sameSourceSkillCast: true,
-                  },
-                },
-              },
-            },
-            macros: {},
-          },
           skillId: 'chr_0027_tangtang_normal_skill_water_projhit_1',
           nativeSkillType: 'normalSkill',
           naturalDurationFrames: 95,
@@ -6952,34 +6949,235 @@ export const tangtang: OperatorDefinition = {
             cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
           },
           blackboard: {
-            atb: 0,
-            atk_scale_1: 0,
-            atk_scale_2: 0.2,
             dmg_up_water_ult: 0,
-            duration: 5,
             duration_spellvulnerable: 10,
-            hit_cnt: 4,
-            hit_cntmax: 10,
-            hit_duration: 3,
             hit_spelllnflictionmax02: 1,
             hit_spellvulnerablemax: 1,
             poise_tornado: 0,
-            potential3: 0,
-            potential5: 0,
             rate_spellvulnerable: 0.05,
             talent2_ultskill: 0,
             tornado_atk_scale01: 0,
-            tornado_atk_scale02: 0,
-            tornado_atk_scale03: 0,
           },
           scheduledSequences: [
-            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'repeatEachTick_9' } },
-            {
-              startFrame: 90,
-              endFrame: 90,
-              sequence: { $sequence: 'finishActionOwnerAbilityEntity_10' },
-            },
+            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'once_14' } },
+            { startFrame: 90, endFrame: 90, sequence: { $sequence: 'finishOwner_15' } },
           ],
+          actionGraph: {
+            main: {
+              nodes: {
+                checkCondition_2: {
+                  action: {
+                    kind: 'checkCondition',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+                  },
+                  next: null,
+                },
+                applyBuff_3: {
+                  action: {
+                    kind: 'applyBuff',
+                    parameters: {
+                      buffs: [{ buffId: 'buff_chr_0027_tangtang_comboskill_spelllnfliction' }],
+                      targets: { kind: 'fixed', target: 'enemy' },
+                      source: { kind: 'source' },
+                      inheritSourceSkillCastInfo: true,
+                    },
+                  },
+                  next: null,
+                },
+                applyElementalInfliction_4: {
+                  action: {
+                    kind: 'applyElementalInfliction',
+                    parameters: { element: 'cryo', isExtra: false },
+                  },
+                  next: 'applyBuff_3',
+                },
+                checkCondition_5: {
+                  action: {
+                    kind: 'checkCondition',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+                  },
+                  next: null,
+                },
+                applyBuff_6: {
+                  action: {
+                    kind: 'applyBuff',
+                    parameters: {
+                      buffs: [
+                        {
+                          buffId: 'buff_chr_0027_tangtang_normalskill_spellvulnerable',
+                          copiedBlackboardAssignments: {
+                            duration_spellvulnerable: 'duration_spellvulnerable',
+                            rate_spellvulnerable: 'rate_spellvulnerable',
+                          },
+                        },
+                      ],
+                      targets: { kind: 'fixed', target: 'enemy' },
+                      source: { kind: 'source' },
+                      inheritSourceSkillCastInfo: true,
+                    },
+                  },
+                  next: null,
+                },
+                checkCondition_7: {
+                  action: {
+                    kind: 'checkCondition',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+                  },
+                  next: null,
+                },
+                dealDamage_8: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_7' },
+                      takeAttackSnapshot: true,
+                      tags: ['normalSkill'],
+                      features: ['canBreakWeakness'],
+                      instantDamageScaleModifiers: [
+                        {
+                          side: 'attacker',
+                          zone: 'normal',
+                          addition: { kind: 'valueNode', nodeId: 'data_8' },
+                        },
+                      ],
+                      stagger: { kind: 'valueNode', nodeId: 'data_9' },
+                    },
+                    key: 'abilityentity_chr_0027_tangtang_normal_skill_02:chr_0027_tangtang_normal_skill_water_projhit_1|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_1/actionGraph/main/nodes/dealDamage_8/action',
+                  },
+                  next: null,
+                },
+                dealDamage_9: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_7' },
+                      takeAttackSnapshot: true,
+                      tags: ['normalSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_9' },
+                    },
+                    key: 'abilityentity_chr_0027_tangtang_normal_skill_02:chr_0027_tangtang_normal_skill_water_projhit_1|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_1/actionGraph/main/nodes/dealDamage_9/action',
+                  },
+                  next: null,
+                },
+                ifElse_10: {
+                  action: {
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { $sequence: 'checkCondition_7' },
+                    whenTrue: { $sequence: 'dealDamage_8' },
+                    whenFalse: { $sequence: 'dealDamage_9' },
+                  },
+                  next: null,
+                },
+                ifElse_11: {
+                  action: {
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { $sequence: 'checkCondition_5' },
+                    whenTrue: { $sequence: 'applyBuff_6' },
+                    whenFalse: { $sequence: null },
+                  },
+                  next: 'ifElse_10',
+                },
+                ifElse_12: {
+                  action: {
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { $sequence: 'checkCondition_2' },
+                    whenTrue: { $sequence: 'applyElementalInfliction_4' },
+                    whenFalse: { $sequence: null },
+                  },
+                  next: 'ifElse_11',
+                },
+                repeatEachTick_13: {
+                  action: {
+                    kind: 'repeatEachTick',
+                    parameters: {
+                      nativeChanneling: {
+                        catchUpMissedTicks: false,
+                        target: { kind: 'fixed', target: 'enemy' },
+                        executeEachFrame: false,
+                        triggerIntervalSeconds: 0.26,
+                        maxCountPerTarget: -1,
+                        targetTriggerIntervalSeconds: -1,
+                      },
+                    },
+                    body: { $sequence: 'ifElse_12' },
+                  },
+                  next: null,
+                },
+                once_14: {
+                  action: { kind: 'once', parameters: {}, body: { $sequence: null } },
+                  next: 'repeatEachTick_13',
+                },
+                finishOwner_15: {
+                  action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
+                  next: null,
+                },
+              },
+              dataNodes: {
+                data_1: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'hit_spelllnflictionmax02' },
+                },
+                data_2: {
+                  type: 'boolean',
+                  expression: {
+                    kind: 'buffIdStackCompare',
+                    target: 'enemy',
+                    buffIds: ['buff_chr_0027_tangtang_comboskill_spelllnfliction'],
+                    operator: 'less',
+                    value: { kind: 'valueNode', nodeId: 'data_1' },
+                    sameSourceSkillCast: true,
+                  },
+                },
+                data_3: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'hit_spellvulnerablemax' },
+                },
+                data_4: {
+                  type: 'boolean',
+                  expression: {
+                    kind: 'buffIdStackCompare',
+                    target: 'enemy',
+                    buffIds: ['buff_chr_0027_tangtang_normalskill_spellvulnerable'],
+                    operator: 'less',
+                    value: { kind: 'valueNode', nodeId: 'data_3' },
+                    sameSourceSkillCast: true,
+                  },
+                },
+                data_5: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'talent2_ultskill', fallback: 0 },
+                },
+                data_6: {
+                  type: 'boolean',
+                  expression: {
+                    kind: 'actionValueCompare',
+                    left: { kind: 'valueNode', nodeId: 'data_5' },
+                    operator: 'greaterOrEqual',
+                    right: { kind: 'constant', value: 1 },
+                  },
+                },
+                data_7: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'tornado_atk_scale01' },
+                },
+                data_8: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
+                },
+                data_9: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'poise_tornado' },
+                },
+              },
+            },
+            macros: {},
+          },
         },
         chr_0027_tangtang_normal_skill_projhit: {
           actionGraph: {
@@ -6989,7 +7187,8 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'finishBuffsById',
                     parameters: {
-                      target: 'enemy',
+                      targets: { kind: 'fixed', target: 'enemy' },
+                      finishSource: { kind: 'source' },
                       buffIds: ['buff_chr_0027_tangtang_comboskill_hit'],
                       reason: 'other',
                       count: { kind: 'constant', value: 5 },
@@ -7004,24 +7203,24 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: 'finishBuffsById_1',
                 },
-                conditional_3: {
+                checkCondition_3: {
                   action: {
-                    kind: 'conditional',
+                    kind: 'checkCondition',
                     parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                    whenTrue: { $sequence: 'applyElementalInfliction_2' },
                   },
-                  next: null,
+                  next: 'applyElementalInfliction_2',
                 },
                 applyBuff_4: {
                   action: {
                     kind: 'applyBuff',
                     parameters: {
-                      buffId: 'buff_common_obtain_ultimate_sp',
-                      target: 'caster',
+                      buffs: [{ buffId: 'buff_common_obtain_ultimate_sp' }],
+                      targets: { kind: 'source' },
+                      source: { kind: 'source' },
                       inheritSourceSkillCastInfo: true,
                     },
                   },
-                  next: 'conditional_3',
+                  next: 'checkCondition_3',
                 },
                 dealDamage_5: {
                   action: {
@@ -7036,12 +7235,23 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: 'applyBuff_4',
                 },
+                mergeContextTargets_6: {
+                  action: {
+                    kind: 'mergeContextTargets',
+                    parameters: {
+                      saveToContextKey: 'tar',
+                      sources: [{ kind: 'target', target: 'enemy' }],
+                    },
+                  },
+                  next: 'dealDamage_5',
+                },
               },
               dataNodes: {
                 data_1: {
                   type: 'boolean',
                   expression: {
                     kind: 'contextTargetBuffIdStackCompare',
+                    compareZeroWhenTargetMissing: true,
                     contextKey: 'tar',
                     buffIds: ['buff_chr_0027_tangtang_comboskill_hit'],
                     operator: 'greaterOrEqual',
@@ -7065,12 +7275,12 @@ export const tangtang: OperatorDefinition = {
           },
           blackboard: { atk_scale: 0.1, poise: 5 },
           scheduledSequences: [
-            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_5' } },
+            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'mergeContextTargets_6' } },
           ],
         },
       },
       presentation: {
-        icon: '/operators/tangtang/talent 2.webp',
+        icon: 'endaxis:operators/tangtang/talent_2',
         nameKey: 'effects.name.waterspouts',
         placement: 'enemy',
       },
@@ -7087,160 +7297,6 @@ export const tangtang: OperatorDefinition = {
       maxStackingCount: 1,
       childSkills: {
         chr_0027_tangtang_normal_skill_water_projhit: {
-          actionGraph: {
-            main: {
-              nodes: {
-                applyBuff_1: {
-                  action: {
-                    kind: 'applyBuff',
-                    parameters: {
-                      buffId: 'buff_chr_0027_tangtang_comboskill_spelllnfliction',
-                      target: 'enemy',
-                      inheritSourceSkillCastInfo: true,
-                    },
-                  },
-                  next: null,
-                },
-                applyElementalInfliction_2: {
-                  action: {
-                    kind: 'applyElementalInfliction',
-                    parameters: { element: 'cryo', isExtra: false },
-                  },
-                  next: 'applyBuff_1',
-                },
-                dealDamage_3: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      instantDamageScaleModifiers: [
-                        {
-                          side: 'attacker',
-                          zone: 'normal',
-                          addition: { kind: 'valueNode', nodeId: 'data_2' },
-                        },
-                      ],
-                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
-                    },
-                    key: 'abilityentity_chr_0027_tangtang_normal_skill:chr_0027_tangtang_normal_skill_water_projhit|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit/actionGraph/main/nodes/dealDamage_3/action',
-                  },
-                  next: null,
-                },
-                dealDamage_4: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_4' },
-                      takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_5' },
-                    },
-                    key: 'abilityentity_chr_0027_tangtang_normal_skill:chr_0027_tangtang_normal_skill_water_projhit|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit/actionGraph/main/nodes/dealDamage_4/action',
-                  },
-                  next: null,
-                },
-                conditional_5: {
-                  action: {
-                    kind: 'conditional',
-                    parameters: {
-                      condition: { kind: 'conditionNode', nodeId: 'data_7' },
-                      alwaysNext: true,
-                    },
-                    whenTrue: { $sequence: 'dealDamage_3' },
-                    whenFalse: { $sequence: 'dealDamage_4' },
-                  },
-                  next: null,
-                },
-                conditional_6: {
-                  action: {
-                    kind: 'conditional',
-                    parameters: {
-                      condition: { kind: 'conditionNode', nodeId: 'data_9' },
-                      alwaysNext: true,
-                    },
-                    whenTrue: { $sequence: 'applyElementalInfliction_2' },
-                  },
-                  next: 'conditional_5',
-                },
-                repeatEachTick_7: {
-                  action: {
-                    kind: 'repeatEachTick',
-                    parameters: {
-                      nativeChanneling: {
-                        executeEachFrame: false,
-                        triggerIntervalSeconds: 0.26,
-                        maxCountPerTarget: -1,
-                        targetTriggerIntervalSeconds: -1,
-                      },
-                    },
-                    body: { $sequence: 'conditional_6' },
-                  },
-                  next: null,
-                },
-                finishActionOwnerAbilityEntity_8: {
-                  action: { kind: 'finishActionOwnerAbilityEntity', parameters: {} },
-                  next: null,
-                },
-              },
-              dataNodes: {
-                data_1: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'tornado_atk_scale01' },
-                },
-                data_2: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
-                },
-                data_3: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'poise_tornado' },
-                },
-                data_4: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'tornado_atk_scale01' },
-                },
-                data_5: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'poise_tornado' },
-                },
-                data_6: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'talent2_ultskill', fallback: 0 },
-                },
-                data_7: {
-                  type: 'boolean',
-                  expression: {
-                    kind: 'actionValueCompare',
-                    left: { kind: 'valueNode', nodeId: 'data_6' },
-                    operator: 'greaterOrEqual',
-                    right: { kind: 'constant', value: 1 },
-                  },
-                },
-                data_8: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'hit_spelllnflictionmax_01' },
-                },
-                data_9: {
-                  type: 'boolean',
-                  expression: {
-                    kind: 'buffIdStackCompare',
-                    target: 'enemy',
-                    buffIds: ['buff_chr_0027_tangtang_comboskill_spelllnfliction'],
-                    operator: 'less',
-                    value: { kind: 'valueNode', nodeId: 'data_8' },
-                    sameSourceSkillCast: true,
-                  },
-                },
-              },
-            },
-            macros: {},
-          },
           skillId: 'chr_0027_tangtang_normal_skill_water_projhit',
           nativeSkillType: 'normalSkill',
           naturalDurationFrames: 95,
@@ -7251,31 +7307,180 @@ export const tangtang: OperatorDefinition = {
             cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
           },
           blackboard: {
-            atb: 0,
-            atk_scale_1: 0,
-            atk_scale_2: 0,
-            atk_water: 0,
             dmg_up_water_ult: 0.3,
-            duration: 5,
-            hit_cnt: 4,
-            hit_cntmax: 10,
-            hit_duration: 5,
             hit_spelllnflictionmax_01: 1,
             poise_tornado: 0,
-            potential3: 0,
-            potential5: 0,
-            talent2: 0,
             talent2_ultskill: 0,
             tornado_atk_scale01: 0,
           },
           scheduledSequences: [
-            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'repeatEachTick_7' } },
-            {
-              startFrame: 90,
-              endFrame: 90,
-              sequence: { $sequence: 'finishActionOwnerAbilityEntity_8' },
-            },
+            { startFrame: 0, endFrame: 90, sequence: { $sequence: 'once_11' } },
+            { startFrame: 90, endFrame: 90, sequence: { $sequence: 'finishOwner_12' } },
           ],
+          actionGraph: {
+            main: {
+              nodes: {
+                checkCondition_2: {
+                  action: {
+                    kind: 'checkCondition',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+                  },
+                  next: null,
+                },
+                applyBuff_3: {
+                  action: {
+                    kind: 'applyBuff',
+                    parameters: {
+                      buffs: [{ buffId: 'buff_chr_0027_tangtang_comboskill_spelllnfliction' }],
+                      targets: { kind: 'fixed', target: 'enemy' },
+                      source: { kind: 'source' },
+                      inheritSourceSkillCastInfo: true,
+                    },
+                  },
+                  next: null,
+                },
+                applyElementalInfliction_4: {
+                  action: {
+                    kind: 'applyElementalInfliction',
+                    parameters: { element: 'cryo', isExtra: false },
+                  },
+                  next: 'applyBuff_3',
+                },
+                checkCondition_5: {
+                  action: {
+                    kind: 'checkCondition',
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+                  },
+                  next: null,
+                },
+                dealDamage_6: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+                      takeAttackSnapshot: true,
+                      tags: ['normalSkill'],
+                      features: ['canBreakWeakness'],
+                      instantDamageScaleModifiers: [
+                        {
+                          side: 'attacker',
+                          zone: 'normal',
+                          addition: { kind: 'valueNode', nodeId: 'data_6' },
+                        },
+                      ],
+                      stagger: { kind: 'valueNode', nodeId: 'data_7' },
+                    },
+                    key: 'abilityentity_chr_0027_tangtang_normal_skill:chr_0027_tangtang_normal_skill_water_projhit|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit/actionGraph/main/nodes/dealDamage_6/action',
+                  },
+                  next: null,
+                },
+                dealDamage_7: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+                      takeAttackSnapshot: true,
+                      tags: ['normalSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_7' },
+                    },
+                    key: 'abilityentity_chr_0027_tangtang_normal_skill:chr_0027_tangtang_normal_skill_water_projhit|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit/actionGraph/main/nodes/dealDamage_7/action',
+                  },
+                  next: null,
+                },
+                ifElse_8: {
+                  action: {
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { $sequence: 'checkCondition_5' },
+                    whenTrue: { $sequence: 'dealDamage_6' },
+                    whenFalse: { $sequence: 'dealDamage_7' },
+                  },
+                  next: null,
+                },
+                ifElse_9: {
+                  action: {
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { $sequence: 'checkCondition_2' },
+                    whenTrue: { $sequence: 'applyElementalInfliction_4' },
+                    whenFalse: { $sequence: null },
+                  },
+                  next: 'ifElse_8',
+                },
+                repeatEachTick_10: {
+                  action: {
+                    kind: 'repeatEachTick',
+                    parameters: {
+                      nativeChanneling: {
+                        catchUpMissedTicks: false,
+                        target: { kind: 'fixed', target: 'enemy' },
+                        executeEachFrame: false,
+                        triggerIntervalSeconds: 0.26,
+                        maxCountPerTarget: -1,
+                        targetTriggerIntervalSeconds: -1,
+                      },
+                    },
+                    body: { $sequence: 'ifElse_9' },
+                  },
+                  next: null,
+                },
+                once_11: {
+                  action: { kind: 'once', parameters: {}, body: { $sequence: null } },
+                  next: 'repeatEachTick_10',
+                },
+                finishOwner_12: {
+                  action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
+                  next: null,
+                },
+              },
+              dataNodes: {
+                data_1: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'hit_spelllnflictionmax_01' },
+                },
+                data_2: {
+                  type: 'boolean',
+                  expression: {
+                    kind: 'buffIdStackCompare',
+                    target: 'enemy',
+                    buffIds: ['buff_chr_0027_tangtang_comboskill_spelllnfliction'],
+                    operator: 'less',
+                    value: { kind: 'valueNode', nodeId: 'data_1' },
+                    sameSourceSkillCast: true,
+                  },
+                },
+                data_3: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'talent2_ultskill', fallback: 0 },
+                },
+                data_4: {
+                  type: 'boolean',
+                  expression: {
+                    kind: 'actionValueCompare',
+                    left: { kind: 'valueNode', nodeId: 'data_3' },
+                    operator: 'greaterOrEqual',
+                    right: { kind: 'constant', value: 1 },
+                  },
+                },
+                data_5: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'tornado_atk_scale01' },
+                },
+                data_6: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
+                },
+                data_7: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'poise_tornado' },
+                },
+              },
+            },
+            macros: {},
+          },
         },
         chr_0027_tangtang_normal_skill_projhit: {
           actionGraph: {
@@ -7285,7 +7490,8 @@ export const tangtang: OperatorDefinition = {
                   action: {
                     kind: 'finishBuffsById',
                     parameters: {
-                      target: 'enemy',
+                      targets: { kind: 'fixed', target: 'enemy' },
+                      finishSource: { kind: 'source' },
                       buffIds: ['buff_chr_0027_tangtang_comboskill_hit'],
                       reason: 'other',
                       count: { kind: 'constant', value: 5 },
@@ -7300,24 +7506,24 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: 'finishBuffsById_1',
                 },
-                conditional_3: {
+                checkCondition_3: {
                   action: {
-                    kind: 'conditional',
+                    kind: 'checkCondition',
                     parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                    whenTrue: { $sequence: 'applyElementalInfliction_2' },
                   },
-                  next: null,
+                  next: 'applyElementalInfliction_2',
                 },
                 applyBuff_4: {
                   action: {
                     kind: 'applyBuff',
                     parameters: {
-                      buffId: 'buff_common_obtain_ultimate_sp',
-                      target: 'caster',
+                      buffs: [{ buffId: 'buff_common_obtain_ultimate_sp' }],
+                      targets: { kind: 'source' },
+                      source: { kind: 'source' },
                       inheritSourceSkillCastInfo: true,
                     },
                   },
-                  next: 'conditional_3',
+                  next: 'checkCondition_3',
                 },
                 dealDamage_5: {
                   action: {
@@ -7332,12 +7538,23 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: 'applyBuff_4',
                 },
+                mergeContextTargets_6: {
+                  action: {
+                    kind: 'mergeContextTargets',
+                    parameters: {
+                      saveToContextKey: 'tar',
+                      sources: [{ kind: 'target', target: 'enemy' }],
+                    },
+                  },
+                  next: 'dealDamage_5',
+                },
               },
               dataNodes: {
                 data_1: {
                   type: 'boolean',
                   expression: {
                     kind: 'contextTargetBuffIdStackCompare',
+                    compareZeroWhenTargetMissing: true,
                     contextKey: 'tar',
                     buffIds: ['buff_chr_0027_tangtang_comboskill_hit'],
                     operator: 'greaterOrEqual',
@@ -7361,12 +7578,12 @@ export const tangtang: OperatorDefinition = {
           },
           blackboard: { atk_scale: 0.1, poise: 5 },
           scheduledSequences: [
-            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_5' } },
+            { startFrame: 0, endFrame: 0, sequence: { $sequence: 'mergeContextTargets_6' } },
           ],
         },
       },
       presentation: {
-        icon: '/operators/tangtang/talent 2.webp',
+        icon: 'endaxis:operators/tangtang/talent_2',
         nameKey: 'effects.name.waterspouts',
         placement: 'enemy',
       },

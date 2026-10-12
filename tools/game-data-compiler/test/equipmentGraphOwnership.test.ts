@@ -38,7 +38,7 @@ it('相同原生技能与 Buff ID 在不同武器中保留各自程序和黑板'
       'same-native-buff': {
         stackingType: 'unique',
         lifecycleSequences: {
-          trigger: { $sequence: 'entry' },
+          trigger: [{ $sequence: 'entry' }],
         },
         actionGraph: {
           main: {
@@ -90,9 +90,9 @@ it('相同原生技能与 Buff ID 在不同武器中保留各自程序和黑板'
     first.buffDefinitions!['same-native-buff'],
   );
   expect(
-    rootActionSteps(firstBuffs['same-native-buff']!.lifecycleSequences!.trigger!)[0],
+    rootActionSteps(firstBuffs['same-native-buff']!.lifecycleSequences!.trigger![0]!)[0],
   ).toMatchObject({ parameters: { value: 6 } });
   expect(
-    rootActionSteps(secondBuffs['same-native-buff']!.lifecycleSequences!.trigger!)[0],
+    rootActionSteps(secondBuffs['same-native-buff']!.lifecycleSequences!.trigger![0]!)[0],
   ).toMatchObject({ parameters: { value: 14 } });
 });

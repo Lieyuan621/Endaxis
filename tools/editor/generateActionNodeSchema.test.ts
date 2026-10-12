@@ -49,7 +49,6 @@ test('keeps contract optionality in the value schema, enum values and documentat
     Boolean(field('dealDamage', 'parameters', 'damageType').valueSchema.optional),
     false,
   );
-  assert.equal(Boolean(field('once', 'parameters', 'scopeKey').valueSchema.optional), true);
 });
 
 test('retains fields found in only some alternatives of a parameter union', () => {
@@ -66,10 +65,6 @@ test('uses graph references as sequence controls and leaves independent resource
   assert.equal(field('conditional', 'whenFalse').control, 'sequence');
   assert.equal(Boolean(field('conditional', 'whenFalse').valueSchema.optional), true);
   assert.equal(field('callResource', 'resource').control, 'resource');
-  assert.equal(
-    field('startCurrentAbilityEntityChildSkill', 'parameters', 'childSkill').control,
-    'resource',
-  );
   assert.equal(field('launchProjectile', 'callbacks').control, 'resource');
   assert.ok(
     Object.values(schemas).every(schema => schema.fields.every(item => item.path.length <= 2)),

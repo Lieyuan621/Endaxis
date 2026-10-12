@@ -45,13 +45,13 @@ const definition = {
           key: 'skill3:event:0:sequence:0',
           abilityEvent: 'beforeOutputSpellBurst',
           priority: 0,
-          sequence: { $sequence: 'conditional_2' },
+          sequence: { $sequence: 'checkCondition_2' },
         },
         {
           key: 'skill3:event:1:sequence:0',
           abilityEvent: 'beforeOutputPhysicalInfliction',
           priority: 0,
-          sequence: { $sequence: 'conditional_2' },
+          sequence: { $sequence: 'checkCondition_2' },
         },
       ],
       actionGraph: {
@@ -61,22 +61,30 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_funnel_0014_up',
-                  target: 'party',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_funnel_0014_up',
+                      copiedBlackboardAssignments: {
+                        dmg_up: 'dmg_up',
+                        duration: 'duration',
+                        lv: 'lv',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'characterTeam', excludeOwner: false },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
                   asChildBuff: true,
-                  copiedBlackboardAssignments: { dmg_up: 'dmg_up', duration: 'duration', lv: 'lv' },
                 },
               },
               next: null,
             },
-            conditional_2: {
+            checkCondition_2: {
               action: {
-                kind: 'conditional',
+                kind: 'checkCondition',
                 parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                whenTrue: { $sequence: 'applyBuff_1' },
               },
-              next: null,
+              next: 'applyBuff_1',
             },
           },
           dataNodes: {
@@ -96,7 +104,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_funnel_0014',
-  iconPath: '/weapons/funnel/wpn_funnel_0014.webp',
+  icon: 'endaxis:weapons/funnel/wpn_funnel_0014',
   buffDefinitions: {
     buff_wpn_funnel_0014_up: {
       stackingType: 'highPriorityWithMaxStack',
@@ -108,8 +116,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_buff_atk_up',
-        iconPath: '/icons/icon_battle_buff_atk_up.webp',
+        icon: 'endaxis:icons/icon_battle_buff_atk_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

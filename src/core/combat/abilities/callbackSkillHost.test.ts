@@ -27,8 +27,8 @@ it('回调重复命中不能越过自身冷却，冷却结束后才再次执行'
         endFrame: 0,
         sequence: chainEntry('callback', [
           {
-            kind: 'setContextFlag',
-            parameters: { flag: 'hit', value: true, target: 'caster' },
+            kind: 'triggerCustomAbilityEvent',
+            parameters: { eventName: 'hit', eventParam: 0, target: 'caster' as const },
           },
         ]),
       },
@@ -114,7 +114,10 @@ it('多目标命中复用回调宿主，并逐次传递各自的输入目标', (
         startFrame: 0,
         endFrame: 0,
         sequence: chainEntry('callback', [
-          { kind: 'setContextFlag', parameters: { flag: 'hit', value: true, target: 'caster' } },
+          {
+            kind: 'triggerCustomAbilityEvent',
+            parameters: { eventName: 'hit', eventParam: 0, target: 'caster' as const },
+          },
         ]),
       },
     ],
@@ -191,7 +194,10 @@ it('恢复回调宿主后逐帧状态和回执一致，绑定不分配编号或�
         startFrame: 2,
         endFrame: 3,
         sequence: chainEntry('callback', [
-          { kind: 'setContextFlag', parameters: { flag: 'hit', value: true, target: 'caster' } },
+          {
+            kind: 'triggerCustomAbilityEvent',
+            parameters: { eventName: 'hit', eventParam: 0, target: 'caster' as const },
+          },
         ]),
       },
     ],

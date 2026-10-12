@@ -43,11 +43,11 @@ export function assignDynamicBlackboard(
   return true;
 }
 
-/** 调用方已按原生 GetFloat 完成比较时，不能再按实体板的另一个值跳过赋值。 */
+/** 直接写入原生动态目标层，不进行数值近似比较。 */
 export function assignDynamicBlackboardUnconditionally(
   state: ActionBlackboardState,
   key: string,
-  value: number,
+  value: ActionBlackboardValue,
 ): void {
   const target = dynamicTarget(state, key);
   target.values.set(key, value);

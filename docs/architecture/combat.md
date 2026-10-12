@@ -57,7 +57,7 @@ Owner、Source、当前执行对象、来源施法和贡献提供者是不同关
 
 监听由其技能、Buff 或装备宿主管理。结束、释放和回收不能互相代替：投射物回收先结束当前技能，再通知 reset，最后清理 Source，让回调仍能读取原来源。已独立存在的效果不因技能块缩短自动删除。
 
-独立落地投射物在零空间模型中近似为首个移动 Tick 阻挡：仅适用于无碰撞延迟、非分段、正半径球体、WallAndGround 阻挡且遇阻结束的点到点路线，不套用于同时有 Hit/Reach 回调的弹体。Block 执行后进入回收寿命，不执行超时 Finish 回调；二者可引用同一技能，不能因此重复生成效果。汤汤水流使用此规则。首 Tick 是本项目的空间简化，不是对实机垂直运动耗时的断言；原生回调证据见 [combat-spec](https://github.com/SQwatermark/combat-spec/blob/refactor/operator-completion/docs/projectile-block-finish.md)。
+独立落地投射物在零空间模型中近似为首个移动 Tick 阻挡：仅适用于无碰撞延迟、非分段、正半径球体、WallAndGround 阻挡且遇阻结束的点到点路线，不套用于同时有 Hit/Reach 回调的弹体。Block 执行后进入回收寿命，不执行超时 Finish 回调；二者可引用同一技能，不能因此重复生成效果。汤汤水流使用此规则。首 Tick 是本项目的空间简化，不是对实机垂直运动耗时的断言。
 
 Buff 回收后的句柄如何处理，见[切面的身份与引用](checkpoints.md#身份与引用)。
 

@@ -28,11 +28,7 @@ import type { CombatRuntimeRestorePreparation } from './combatRuntimeRestorePrep
 
 type OperatorCoreBindings = Pick<
   RestoreCombatOperatorCoreOptions,
-  | 'createSkillDependencies'
-  | 'abilityRuntime'
-  | 'onCooldownReady'
-  | 'timedMarkerHooks'
-  | 'preboundStatusRuntime'
+  'createSkillDependencies' | 'abilityRuntime' | 'onCooldownReady' | 'timedMarkerHooks'
 >;
 
 type OperatorSourceBindings = Omit<

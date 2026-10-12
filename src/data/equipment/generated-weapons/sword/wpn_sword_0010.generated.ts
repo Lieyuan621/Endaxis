@@ -54,13 +54,17 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_sword_0010',
-                  target: 'caster',
-                  blackboardAssignments: {
-                    dmg_up: { kind: 'valueNode', nodeId: 'data_1' },
-                    duration: { kind: 'valueNode', nodeId: 'data_2' },
-                    max_stack: { kind: 'valueNode', nodeId: 'data_3' },
-                  },
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_sword_0010',
+                      blackboardAssignments: {
+                        dmg_up: { kind: 'valueNode', nodeId: 'data_1' },
+                        duration: { kind: 'valueNode', nodeId: 'data_2' },
+                        max_stack: { kind: 'valueNode', nodeId: 'data_3' },
+                      },
+                    },
+                  ],
+                  targets: { kind: 'fixed', target: 'caster' },
                 },
               },
               next: null,
@@ -90,7 +94,7 @@ const definition = {
     },
   ],
   assetSlug: 'wpn_sword_0010',
-  iconPath: '/weapons/sword/wpn_sword_0010.webp',
+  icon: 'endaxis:weapons/sword/wpn_sword_0010',
   buffDefinitions: {
     buff_wpn_sword_0010: {
       stackingType: 'unique',
@@ -101,26 +105,33 @@ const definition = {
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: { dmg_up: 0, duration: 0, max_stack: 3, radius: 40 },
+      blackboard: { dmg_up: 0, duration: 0, max_stack: 3 },
       attributeModifiers: [],
-      lifecycleSequences: { enable: { $sequence: 'applyBuff_1' } },
+      lifecycleSequences: { enable: [{ $sequence: 'aura_1' }] },
       actionGraph: {
         main: {
           nodes: {
-            applyBuff_1: {
+            aura_1: {
               action: {
-                kind: 'applyBuff',
+                kind: 'aura',
                 parameters: {
-                  buffId: 'buff_wpn_sword_0010_inaura',
-                  target: 'enemy',
-                  finishByAction: true,
+                  targets: { kind: 'fixed', target: 'enemy' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
-                  blackboardAssignments: {
-                    dmg_up: { kind: 'valueNode', nodeId: 'data_1' },
-                    max_stack: { kind: 'valueNode', nodeId: 'data_2' },
-                    duration: { kind: 'valueNode', nodeId: 'data_3' },
-                  },
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_sword_0010_inaura',
+                      blackboardAssignments: {
+                        dmg_up: { kind: 'valueNode', nodeId: 'data_1' },
+                        max_stack: { kind: 'valueNode', nodeId: 'data_2' },
+                        duration: { kind: 'valueNode', nodeId: 'data_3' },
+                      },
+                      stringBlackboardAssignments: {},
+                    },
+                  ],
                 },
+                onEnter: { $sequence: null },
+                onExit: { $sequence: null },
               },
               next: null,
             },
@@ -146,7 +157,7 @@ const definition = {
       blackboard: { dmg_up: 0, duration: 10, max_stack: 3 },
       attributeModifiers: [],
       abilityEventResponses: [
-        { event: 'beforeAddedBuff', priority: 0, sequence: { $sequence: 'conditional_4' } },
+        { event: 'beforeAddedBuff', priority: 0, sequence: { $sequence: 'checkCondition_4' } },
       ],
       actionGraph: {
         main: {
@@ -155,10 +166,11 @@ const definition = {
               action: {
                 kind: 'createTimedMarker',
                 parameters: {
-                  target: 'buffSource',
+                  targets: { kind: 'source' },
                   markerId: 'wpn_sword_0010',
                   durationSeconds: { kind: 'constant', value: 0.1 },
                   autoFinishByAction: false,
+                  timeDomain: 'globalScaled',
                 },
               },
               next: null,
@@ -167,34 +179,36 @@ const definition = {
               action: {
                 kind: 'applyBuff',
                 parameters: {
-                  buffId: 'buff_wpn_sword_0010_valid',
-                  target: 'buffSource',
-                  source: 'buffSource',
+                  buffs: [
+                    {
+                      buffId: 'buff_wpn_sword_0010_valid',
+                      copiedBlackboardAssignments: {
+                        dmg_up: 'dmg_up',
+                        max_stack: 'max_stack',
+                        duration: 'duration',
+                      },
+                    },
+                  ],
+                  targets: { kind: 'source' },
+                  source: { kind: 'source' },
                   inheritSourceSkillCastInfo: true,
-                  copiedBlackboardAssignments: {
-                    dmg_up: 'dmg_up',
-                    max_stack: 'max_stack',
-                    duration: 'duration',
-                  },
                 },
               },
               next: 'createTimedMarker_1',
             },
-            conditional_3: {
+            checkCondition_3: {
               action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                whenTrue: { $sequence: 'applyBuff_2' },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
               },
-              next: null,
+              next: 'applyBuff_2',
             },
-            conditional_4: {
+            checkCondition_4: {
               action: {
-                kind: 'conditional',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                whenTrue: { $sequence: 'conditional_3' },
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
               },
-              next: null,
+              next: 'checkCondition_3',
             },
           },
           dataNodes: {
@@ -202,15 +216,12 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                returnTrueIfNotExists: true,
                 target: 'buffSource',
                 markerId: 'wpn_sword_0010',
               },
             },
             data_2: {
-              type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-            },
-            data_3: {
               type: 'boolean',
               expression: {
                 kind: 'eventBuffTagsMatch',
@@ -236,8 +247,7 @@ const definition = {
       maxTriggerCount: 1,
       presentation: {
         visible: true,
-        iconId: 'icon_battle_buff_atk_up',
-        iconPath: '/icons/icon_battle_buff_atk_up.webp',
+        icon: 'endaxis:icons/icon_battle_buff_atk_up',
         showInHeadBarCommon: false,
         showInHeadBarAttached: false,
         showInSquadIcon: true,

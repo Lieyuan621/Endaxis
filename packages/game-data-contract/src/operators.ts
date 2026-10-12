@@ -4,28 +4,33 @@
  * 生成器把游戏中的角色与养成数据整理成这里的结构；构筑界面用它创建干员方案，模拟器
  * 再按所选等级和养成项安装技能、Buff、事件响应、能力实体及角色专属状态显示。
  */
-import {
-  type CombatResource,
-  type DamageElement,
-  type ElementalReaction,
-  type LevelValues,
-  type OperatorAttribute,
-  type OperatorConversionSupport,
-  type OperatorRarity,
-  type OperatorRole,
-  type OperatorWeaponType,
-  type SkillLevelSource,
-} from './primitives.ts';
-import { type BuildCondition, type CombatConditionExpression } from './conditions.ts';
+import type { AbilityEvent, AbilityEventResponse } from './abilityEvents.ts';
 import type { ActionGraphReference, ActionGraphResourceDefinition } from './actionGraph.ts';
-import { type CombatEventTrigger } from './actions.ts';
-import {
-  type ComboSkillPriority,
-  type OperatorAbilityEntityDefinitions,
-  type SkillGroupDefinition,
+import type { CombatEventTrigger } from './actions.ts';
+import type { OperatorBuffDefinitions } from './buffs.ts';
+import type { BuildCondition, CombatConditionExpression } from './conditions.ts';
+import type {
+  CombatResource,
+  DamageElement,
+  ElementalReaction,
+  ImageRef,
+  LevelValues,
+  OperatorAttribute,
+  OperatorConversionSupport,
+  OperatorRarity,
+  OperatorRole,
+  OperatorWeaponType,
+  SkillLevelSource,
+} from './primitives.ts';
+import type {
+  ComboSkillPriority,
+  OperatorAbilityEntityDefinitions,
+  OperatorPlayerActionModeDefinition,
+  OperatorPlayerActionRoutes,
+  OperatorSkillSlotDefinition,
+  SkillDefinition,
+  SkillGroupDefinition,
 } from './skills.ts';
-import { type OperatorBuffDefinitions } from './buffs.ts';
-import { type AbilityEvent, type AbilityEventResponse } from './abilityEvents.ts';
 
 /** 当前模拟器支持干员被动直接监听的能力事件。 */
 export const OPERATOR_PASSIVE_ABILITY_EVENTS = [
@@ -116,16 +121,6 @@ export type UpgradeModifierDefinition =
       branchKey: string;
     }
   | {
-      /** 乘算某个技能步骤产生效果的持续时间。 */
-      kind: 'multiplyEffectDuration';
-      /** 目标执行技能；身份在所属定义宿主内唯一，与展示组无关。 */
-      skillKey: string;
-      /** 目标步骤。 */
-      stepKey: string;
-      /** 持续时间乘数。 */
-      multiplier: number;
-    }
-  | {
       /** 乘算技能的资源费用。 */
       kind: 'multiplySkillCost';
       /** 目标执行技能；身份在所属定义宿主内唯一，与展示组无关。 */
@@ -134,16 +129,6 @@ export type UpgradeModifierDefinition =
       resource: CombatResource;
       /** 费用乘数。 */
       multiplier: number;
-    }
-  | {
-      /** 设置一个技能步骤的效果系数。 */
-      kind: 'setEffectiveness';
-      /** 目标执行技能；身份在所属定义宿主内唯一，与展示组无关。 */
-      skillKey: string;
-      /** 目标步骤。 */
-      stepKey: string;
-      /** 新的效果系数。 */
-      value: number;
     }
   | {
       /** 将构筑期常驻增伤写入对应伤害属性；数值使用小数，例如 15% 写作 0.15。 */
@@ -285,9 +270,7 @@ export type UpgradeModifierDefinition =
 export const UPGRADE_MODIFIER_KINDS = [
   'addConditionalDamage',
   'enableSkillBranch',
-  'multiplyEffectDuration',
   'multiplySkillCost',
-  'setEffectiveness',
   'addSkillStat',
   'patchSkillBlackboard',
   'patchPassiveBlackboard',
@@ -476,7 +459,7 @@ export interface AbilityEntityCountPassiveUiDefinition {
   readonly kind: 'abilityEntityCount';
   readonly abilityEntityId: string;
   /** 图标资源路径。 */
-  readonly icon: string;
+  readonly icon: ImageRef;
   /** 实体显示名称的 i18n 键。 */
   readonly nameKey: string;
 }
@@ -524,6 +507,8 @@ export interface OperatorDefinition {
   weaponType: OperatorWeaponType;
   /** 干员元素。 */
   element: DamageElement;
+  /** 原生角色表类型身份；没有角色表记录的自定义干员可不提供。 */
+  characterTypeId?: string;
   /** 干员战斗定位。 */
   role: OperatorRole;
   /** 干员主属性。 */
@@ -537,18 +522,18 @@ export interface OperatorDefinition {
   /** 干员技能库的操作组集合；不包含切人、闪避、跳跃。组成员配置操作段的目标技能。 */
   skillGroups: readonly SkillGroupDefinition[];
   /** 完美闪避成功后由中心状态机施放的隐藏技能；不作为普通技能块出现在技能库。 */
-  dodgeSkill?: import('./skills.ts').SkillDefinition;
+  dodgeSkill?: SkillDefinition;
   /** 进入原生 Dash 状态时附着到当前干员的 Buff，以及创建实例时写入的字面黑板。 */
   dashBuffs?: readonly {
     readonly buffId: string;
     readonly blackboard: Readonly<Record<string, number | string>>;
   }[];
   /** 战斗时可被 Buff/Mode 改写的技能槽；独立于技能库分组。 */
-  skillSlots?: readonly import('./skills.ts').OperatorSkillSlotDefinition[];
+  skillSlots?: readonly OperatorSkillSlotDefinition[];
   /** 四类玩家语义动作的原生路由；缺失边必须诊断为 unknown。 */
-  playerActionRoutes?: import('./skills.ts').OperatorPlayerActionRoutes;
+  playerActionRoutes?: OperatorPlayerActionRoutes;
   /** CharacterData 中会覆盖普攻序列或命令映射的模式；独立于技能库分组。 */
-  playerActionModes?: readonly import('./skills.ts').OperatorPlayerActionModeDefinition[];
+  playerActionModes?: readonly OperatorPlayerActionModeDefinition[];
   /** 旧项目技能身份到当前规范身份的只读兼容映射；不得作为技能库中的额外入口展示。 */
   skillAliases?: readonly {
     /** 旧项目中的技能组和技能键。 */

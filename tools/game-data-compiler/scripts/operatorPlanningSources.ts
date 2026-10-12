@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from 'node:fs';
+import { collectExternalBuffBlackboardReads } from '../src/compiler/references/externalBlackboardUsage.ts';
 /**
  * 一轮干员规划共用的只读来源。固定表和解析后的目录跨干员复用，技能、Buff、投射物原文按干员释放。
  * 每次生成、每次独立检查都必须新建实例；这里不缓存依赖等级、黑板或场景的动作图和编译结果。
@@ -18,6 +20,7 @@ import { readAbilityEntityTemplates } from './readAbilityEntityTemplates.ts';
 import { readGameplayTagPaths } from './readGameplayTagPaths.ts';
 
 export class OperatorPlanningSources {
+  private readonly buffReads = new Map<string, ReadonlySet<string>>();
   private readonly shared = new SourceFileCache(32 * 1024 * 1024);
   private readonly currentOperator = new SourceFileCache(16 * 1024 * 1024);
   private readonly sharedPaths: ReadonlySet<string>;
@@ -77,6 +80,24 @@ export class OperatorPlanningSources {
     this.settings.clear();
     this.tags.clear();
     this.priorities.clear();
+    this.buffReads.clear();
+  }
+
+  externalBuffReads(sourceRoot: string): ReadonlySet<string> {
+    const root = path.resolve(sourceRoot);
+    let result = this.buffReads.get(root);
+    if (result === undefined) {
+      function* resources() {
+        for (const file of readdirSync(root, { recursive: true, encoding: 'utf8' })) {
+          if (!file.endsWith('.json')) continue;
+          const sourcePath = path.join(root, file);
+          yield { sourcePath, value: JSON.parse(readFileSync(sourcePath, 'utf8')) as unknown };
+        }
+      }
+      result = collectExternalBuffBlackboardReads(resources());
+      this.buffReads.set(root, result);
+    }
+    return result;
   }
 
   abilityEntities(file: string): CompiledAbilityEntityTemplateCatalogSource {

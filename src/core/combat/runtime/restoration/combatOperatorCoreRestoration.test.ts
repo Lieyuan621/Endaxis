@@ -3,8 +3,6 @@ import type { CompiledSkillProgram } from '../../../compiler/combatProgram';
 import { CombatAttributeSet } from '../../attributes/combatAttributes';
 import { CombatBuffContainer } from '../../buffs/combatBuffs';
 import { CombatReceiptCollector } from '../../receipt/combatReceipt';
-import { CombatStatusContainer } from '../../status/combatStatuses';
-import { CombatStatusRuntime } from '../../status/combatStatusRuntime';
 import { AbilitySystemRuntime } from '../../abilities/abilitySystemRuntime';
 import { ActionBlackboard } from '../../actions/actionBlackboard';
 import { BuffDefinitionOperationTarget } from '../../buffs/buffDefinitionOperationTarget';
@@ -41,7 +39,7 @@ function operations(state: ReturnType<typeof createCombatOperationHostState>) {
   return executor;
 }
 
-it('单个干员核心恢复保持黑板、状态、标记、冷却、技能和能力系统的数据关系', () => {
+it('单个干员核心恢复保持黑板、标记、冷却、技能和能力系统的数据关系', () => {
   const clock = new CombatClock();
   const receipt = new CombatReceiptCollector();
   const blackboard = new ActionBlackboard({ phase: 2 });
@@ -52,17 +50,6 @@ it('单个干员核心恢复保持黑板、状态、标记、冷却、技能和�
     null,
     blackboard,
   );
-  const statusTemplate = new CombatStatusContainer('operator', [
-    {
-      statusKey: 'charge',
-      applyStacks: 1,
-      maxStacks: 3,
-      durationFrames: 10,
-      durationStacking: 'refresh',
-      consumeStacks: 1,
-    },
-  ]);
-  statusTemplate.apply({ statusKey: 'charge', sourceId: 'operator', skillId: 'skill' });
   const markers = new TimedMarkerContainer('operator', clock);
   markers.add('window', 1);
   const scaledClock = { time: 0 };
@@ -94,7 +81,6 @@ it('单个干员核心恢复保持黑板、状态、标记、冷却、技能和�
     upgradeEvents: null,
     comboConditions: new Map(),
     cooldowns: new Map([['skill', cooldown.runtimeState]]),
-    statuses: statusTemplate.runtimeState,
     timedMarkers: markers.runtimeState,
     buffs: buffs.runtimeState,
   });
@@ -117,23 +103,15 @@ it('单个干员核心恢复保持黑板、状态、标记、冷却、技能和�
     skills: [program],
     skillCooldownPrograms: [{ ...program, nativeSkillType: 'attachSkill' as const }],
     buffRuntime: new BuffDefinitionOperationTarget(restoredBuffs, { get: () => undefined }),
-    statusContainer: statusTemplate,
   };
   const restoredClock = new CombatClock(structuredClone(clock.runtimeState));
   const restoredReceipt = new CombatReceiptCollector(receipt.history.snapshot());
-  const preboundStatus = new CombatStatusRuntime(
-    statusTemplate.bindRuntimeState(saved.statuses),
-    restoredClock,
-    restoredReceipt,
-  );
-
   const restored = bindRestoredCombatOperatorCore({
     operator,
     state: saved,
     skills: [{ program, fixed, state: saved.skills.get('skill\u0000')! }],
     clock: restoredClock,
     receipt: restoredReceipt,
-    preboundStatusRuntime: preboundStatus,
     globalScaledClock: scaledClock,
     createSkillDependencies: (binding, context) => ({
       clock: restoredClock,
@@ -148,8 +126,6 @@ it('单个干员核心恢复保持黑板、状态、标记、冷却、技能和�
   });
 
   expect(restored.blackboard.runtimeState).toBe(saved.blackboard);
-  expect(restored.statuses!.container.runtimeState).toBe(saved.statuses);
-  expect(restored.statuses).toBe(preboundStatus);
   expect(restored.timedMarkers.runtimeState).toBe(saved.timedMarkers);
   expect(restored.timedMarkers.has('scaled-window')).toBe(true);
   scaledClock.time = 2;

@@ -11,7 +11,10 @@ import {
   bindProjectileCallbackLifecycle,
   restoreProjectileCallback,
 } from '../../abilities/projectileCallbackRuntime';
-import { ProjectileLifecycleRuntime } from '../../abilities/projectileLifecycleRuntime';
+import {
+  ProjectileLifecycleRuntime,
+  type ProjectileBuffLifecycle,
+} from '../../abilities/projectileLifecycleRuntime';
 import type { BuffApplicationHandle } from '../../buffs/combatBuffs';
 import type {
   CombatOperationExecutor,
@@ -34,6 +37,7 @@ export function createRestoredCombatProjectileDirectory(options: {
   readonly preparation: CombatRuntimeRestorePreparation;
   readonly foundation: RestoredCombatRuntimeFoundation;
   readonly callbackPrograms: ProjectileCallbackPrograms;
+  readonly buffLifecycle?: ProjectileBuffLifecycle;
 }): ProjectileLifecycleRuntime {
   for (const [instanceId, state] of options.preparation.graph.instances.projectiles.instances) {
     for (const callback of state.callbacks) {
@@ -50,6 +54,7 @@ export function createRestoredCombatProjectileDirectory(options: {
       state: options.preparation.graph.instances.projectiles,
       callbackPrograms: options.callbackPrograms,
     },
+    options.buffLifecycle,
   );
 }
 

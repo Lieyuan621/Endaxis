@@ -1,15 +1,9 @@
 // 纯数据契约由独立包唯一声明；此路径保留兼容导出。
-export {
-  ATTRIBUTE_MODIFIER_SLOTS,
-  ATTRIBUTE_MODIFIER_TIMINGS,
-  type AttributeModifierSlot,
-  type AttributeModifierTiming,
-  type AttributeModifierValues,
+import type {
+  AttributeModifierSlot,
+  AttributeModifierValues,
 } from '../../../../packages/game-data-contract/src/modifiers.ts';
-import {
-  type AttributeModifierSlot,
-  type AttributeModifierValues,
-} from '../../../../packages/game-data-contract/src/modifiers.ts';
+import type { CombatAttributeState } from '../state/foundationState';
 import {
   ATTRIBUTE_MODIFIER_SOURCES,
   createCombatAttributeState,
@@ -25,6 +19,13 @@ import {
   removeCombatAttributeModifier,
   setCombatAttributeRawValue,
 } from './combatAttributeExecution';
+export {
+  ATTRIBUTE_MODIFIER_SLOTS,
+  ATTRIBUTE_MODIFIER_TIMINGS,
+  type AttributeModifierSlot,
+  type AttributeModifierTiming,
+  type AttributeModifierValues,
+} from '../../../../packages/game-data-contract/src/modifiers.ts';
 /**
  * 面板解析和战斗运行时共享的属性修正聚合核心。
  * 调用方必须按已确认的原生槽位注册修正，并显式管理启停，不能预先合并而丢失来源身份。
@@ -51,12 +52,12 @@ export function attributeModifierValues(
 
 /** 属性集合的现有调用接口，状态与算法由独立模块提供。 */
 export class CombatAttributeSet<Key extends string> {
-  readonly #state: import('../state/foundationState').CombatAttributeState<Key>;
+  readonly #state: CombatAttributeState<Key>;
   constructor(state = createCombatAttributeState<Key>()) {
     this.#state = state;
   }
   /** 供实体宿主纳入完整数据图；不提供单独恢复属性的入口。 */
-  get runtimeState(): import('../state/foundationState').CombatAttributeState<Key> {
+  get runtimeState(): CombatAttributeState<Key> {
     return this.#state;
   }
   get modifierCount(): number {

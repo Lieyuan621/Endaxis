@@ -1,4 +1,4 @@
-import { numberInput, conditionInput } from '../../../test/compiledGraphInputs';
+import { numberInput, conditionInput, stringInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it, vi } from 'vitest';
 import { ActionBlackboard } from './actionBlackboard';
 import { ActionBlackboardOperationExecutor } from './actionBlackboardOperationExecutor';
@@ -12,6 +12,59 @@ const delegate = {
 };
 
 describe('ActionBlackboardOperationExecutor', () => {
+  it('读取角色原生类型，只写成功目标；重复执行和缺失目标不改写语义', () => {
+    const executor = new ActionBlackboardOperationExecutor(
+      delegate,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      {
+        sourceId: 'caster',
+        resolve: () => 'electric',
+        readTypeId: id => (id === 'caster' ? 'Pulse' : undefined),
+      },
+    );
+    const blackboard = new ActionBlackboard();
+    const step = {
+      kind: 'storeCharacterTypeId',
+      parameters: { target: 'caster', outputKey: 'type' },
+    } as const;
+    expect(executor.execute(step, { blackboard })).toBe(true);
+    expect(blackboard.getString('type')).toBe('Pulse');
+    expect(executor.execute(step, { blackboard })).toBe(true);
+    expect(
+      executor.execute(
+        { ...step, parameters: { ...step.parameters, target: 'enemy' } },
+        { blackboard },
+      ),
+    ).toBe(false);
+    expect(
+      executor.execute(
+        { ...step, parameters: { ...step.parameters, target: 'currentTarget' } },
+        {
+          blackboard,
+          currentTarget: { kind: 'operator', operatorId: 'unregistered' },
+        },
+      ),
+    ).toBe(false);
+    expect(blackboard.getString('type')).toBe('Pulse');
+  });
+
+  it('字符串比较保留大小写、空字符串和动态读取，不为缺失变量补默认值', () => {
+    const executor = new ActionBlackboardOperationExecutor(delegate);
+    const blackboard = new ActionBlackboard({ type: 'Pulse' });
+    const condition = { kind: 'stringEquals', left: stringInput('type'), right: 'Pulse' } as const;
+    expect(executor.evaluate(condition, { blackboard })).toBe(true);
+    blackboard.assign({ type: 'pulse' });
+    expect(executor.evaluate(condition, { blackboard })).toBe(false);
+    blackboard.assign({ type: '' });
+    expect(executor.evaluate({ ...condition, right: '' }, { blackboard })).toBe(true);
+    expect(() =>
+      executor.evaluate({ ...condition, left: stringInput('missing') }, { blackboard }),
+    ).toThrow("missing string variable 'missing'");
+  });
+
   it('checks an exact Buff owner profession through the runtime operator registry', () => {
     const executor = new ActionBlackboardOperationExecutor(
       delegate,
@@ -37,12 +90,17 @@ describe('ActionBlackboardOperationExecutor', () => {
         buffOwnerId: 'gilberta-target',
       }),
     ).toBe(true);
-    expect(() =>
+    expect(
       executor.evaluate(condition, {
         blackboard: new ActionBlackboard(),
         buffOwnerId: 'enemy',
       }),
-    ).toThrow("operatorRoleIn requires CharacterTable.profession for 'enemy'");
+    ).toBe(false);
+    expect(executor.evaluate(condition, { blackboard: new ActionBlackboard() })).toBe(false);
+
+    expect(() => new ActionBlackboardOperationExecutor(delegate).evaluate(condition)).toThrow(
+      'operatorRoleIn requires an operator registry',
+    );
   });
 
   it('stores the integer frame exposed by the current timeline host', () => {
@@ -108,7 +166,7 @@ describe('ActionBlackboardOperationExecutor', () => {
           event: {
             event: 'skillSpGained' as const,
             payload: {
-              sourceOperatorId: 'pogranichnik',
+              sourceId: 'pogranichnik',
               source: 'skill',
               gainKind: 'gain',
               requestedAmount: 37,
@@ -800,6 +858,19 @@ describe('ActionBlackboardOperationExecutor', () => {
     });
   });
 
+  it('reads hit state only from the executing skill', () => {
+    const executor = new ActionBlackboardOperationExecutor(delegate);
+    const condition = { kind: 'skillHasHit' as const };
+    const context = {
+      blackboard: new ActionBlackboard(),
+      skillExecution: { hasOutputDamageBattle: false },
+    };
+    expect(executor.evaluate(condition, context)).toBe(false);
+    context.skillExecution.hasOutputDamageBattle = true;
+    expect(executor.evaluate(condition, context)).toBe(true);
+    expect(executor.evaluate(condition, { blackboard: context.blackboard })).toBe(false);
+  });
+
   it('compares dynamic action values with native float tolerance', () => {
     const executor = new ActionBlackboardOperationExecutor(delegate);
     const context = { blackboard: new ActionBlackboard({ swordCount: 3 }) };
@@ -815,6 +886,29 @@ describe('ActionBlackboardOperationExecutor', () => {
         context,
       ),
     ).toBe(true);
+    expect(
+      executor.evaluate(
+        {
+          kind: 'actionValueCompare',
+          left: { kind: 'constant', value: 16777216 },
+          operator: 'equal',
+          right: { kind: 'constant', value: 16777217 },
+        },
+        context,
+      ),
+    ).toBe(true);
+    // 上一个float加容差后舍入到256；双精度直接相加会错误判为大于。
+    expect(
+      executor.evaluate(
+        {
+          kind: 'actionValueCompare',
+          left: { kind: 'constant', value: 256 },
+          operator: 'greater',
+          right: { kind: 'constant', value: 255.99998474121094 },
+        },
+        context,
+      ),
+    ).toBe(false);
   });
 
   it('rejects a missing action value instead of silently choosing a branch', () => {
@@ -845,6 +939,24 @@ describe('ActionBlackboardOperationExecutor', () => {
 
     expect(executor.evaluate(condition, { blackboard: new ActionBlackboard() })).toBe(true);
     expect(executor.evaluate(condition, { blackboard: new ActionBlackboard() })).toBe(false);
+
+    const boundary = new ActionBlackboardOperationExecutor(
+      delegate,
+      new ExplicitProbabilitySampleSource([0.000020000001313746907, 0.50001002]),
+    );
+    const context = { blackboard: new ActionBlackboard() };
+    // 相邻 float32 值能区分双精度容差和原生单精度相加。
+    expect(
+      boundary.evaluate(
+        {
+          kind: 'probability',
+          probability: { kind: 'constant', value: 0.000010000000656873453 },
+        },
+        context,
+      ),
+    ).toBe(false);
+    // 样本进入原生 Dice 比较时也已是 float。
+    expect(boundary.evaluate(condition, context)).toBe(true);
   });
 
   it('resolves dynamic probabilities from the action blackboard', () => {
@@ -934,7 +1046,15 @@ describe('ActionBlackboardOperationExecutor', () => {
       undefined,
       undefined,
       undefined,
-      { strength: 10, agility: 20, intellect: 100, will: 100 },
+      {
+        sourceId: 'caster',
+        resolve: id =>
+          id === 'caster'
+            ? { strength: 1000, agility: 1000.00002, intellect: 100, will: 100 }
+            : id === 'recipient'
+              ? { strength: 20, agility: 10, intellect: 50, will: 100 }
+              : undefined,
+      },
     );
 
     expect(
@@ -945,6 +1065,33 @@ describe('ActionBlackboardOperationExecutor', () => {
         right: 'will',
       }),
     ).toBe(true);
+    expect(
+      executor.evaluate({
+        kind: 'deckAttributeCompare',
+        left: 'strength',
+        operator: 'less',
+        right: 'agility',
+      }),
+    ).toBe(true);
+    const condition = {
+      kind: 'deckAttributeCompare' as const,
+      left: 'intellect' as const,
+      operator: 'greaterOrEqual' as const,
+      right: 'will' as const,
+    };
+    expect(
+      executor.evaluate(condition, {
+        blackboard: new ActionBlackboard(),
+        buffOwnerId: 'recipient',
+        buffSourceId: 'caster',
+      }),
+    ).toBe(false);
+    expect(
+      executor.evaluate(condition, {
+        blackboard: new ActionBlackboard(),
+        actionOwnerId: 'enemy',
+      }),
+    ).toBe(false);
   });
 
   it('rejects Deck comparisons without a build snapshot', () => {
@@ -955,6 +1102,6 @@ describe('ActionBlackboardOperationExecutor', () => {
         operator: 'greaterOrEqual',
         right: 'will',
       }),
-    ).toThrow('deckAttributeCompare requires source Deck attributes');
+    ).toThrow('deckAttributeCompare requires an operator registry');
   });
 });

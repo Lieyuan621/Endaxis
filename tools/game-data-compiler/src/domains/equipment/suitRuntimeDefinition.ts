@@ -1,11 +1,9 @@
-import type { GameplayTagRegistry } from '../../source/nativeGameplayTags.ts';
-import { requireRecord } from '../../source/primitives.ts';
-import { parseBuffRuntimeSource } from '../../source/buffRuntime.ts';
-import type { CompiledBuffDefinitionSource } from '../../compiler/buffs/buffProjectionTypes.ts';
 import type {
   CompiledBuffSequenceSource,
   CompiledBuffStepSource,
 } from '../../compiler/actions/combatActionProjectionTypes.ts';
+import type { CompiledBuffDefinitionSource } from '../../compiler/buffs/buffProjectionTypes.ts';
+import { collectBuffRuntimeClosure } from '../../compiler/buffs/buffReferenceClosure.ts';
 import {
   buffRuntimeReadsBlackboardKey,
   collectBuffRuntimePresentationActionPaths,
@@ -13,20 +11,26 @@ import {
   isAfterEnemyDefeatedOnlyBuffRuntime,
   isPresentationOnlyBuffStackEffect,
 } from '../../compiler/buffs/buffRuntimeProjection.ts';
-import { collectBuffRuntimeClosure } from '../../compiler/buffs/buffReferenceClosure.ts';
+import type { ActionGraphResourceDefinition } from '../../compiler/intermediateDefinitions.ts';
+import {
+  evaluateStandardStumpFullHealthComparison,
+  standardStumpBuffAbilityEventOmissionReason,
+} from '../../compiler/scenario/standardStumpScenarioPolicy.ts';
+import { parseBuffRuntimeSource } from '../../source/buffRuntime.ts';
+import type { GameplayTagRegistry } from '../../source/nativeGameplayTags.ts';
+import { requireRecord } from '../../source/primitives.ts';
+import type { EquipmentDefinitionDiagnosticSource } from './formalDefinition.ts';
 import type {
-  CompiledGearSetStaticDefinitionSource,
   CompiledGearSetRuntimeDependencySource,
+  CompiledGearSetStaticDefinitionSource,
   CompiledGearSetToggleBuffGroupSource,
   UnresolvedSkillBlackboardValueSource,
 } from './suitStaticDefinition.ts';
-import type { EquipmentDefinitionDiagnosticSource } from './formalDefinition.ts';
-import { standardStumpBuffAbilityEventOmissionReason } from '../../compiler/scenario/standardStumpScenarioPolicy.ts';
 
 export interface CompiledEquipmentSuitRuntimeBatchSource {
   readonly definitions: readonly (CompiledGearSetStaticDefinitionSource & {
     readonly skillId: string;
-    readonly actionGraph?: import('../../compiler/intermediateDefinitions.ts').ActionGraphResourceDefinition;
+    readonly actionGraph?: ActionGraphResourceDefinition;
     readonly buffDefinitions?: Readonly<Record<string, CompiledBuffDefinitionSource>>;
     readonly enableSequence?: CompiledBuffSequenceSource;
     readonly initializationSequence?: CompiledBuffSequenceSource;
@@ -223,9 +227,15 @@ export function compileEquipmentSuitRuntimeBatchSource(
       steps.push({
         kind: 'applyBuff',
         parameters: {
-          buffId: installation.buffId,
-          target: 'caster',
-          ...(Object.keys(assignments).length === 0 ? {} : { blackboardAssignments: assignments }),
+          buffs: [
+            {
+              buffId: installation.buffId,
+              ...(Object.keys(assignments).length === 0
+                ? {}
+                : { blackboardAssignments: assignments }),
+            },
+          ],
+          targets: { kind: 'fixed', target: 'caster' },
         },
       });
     }
@@ -251,25 +261,7 @@ export function evaluateFixedFullHealthToggleCondition(
   condition: CompiledGearSetToggleBuffGroupSource['conditions'][number],
 ): boolean | null {
   if (isUnresolvedSkillBlackboardValue(condition.value)) return null;
-  const currentHpRatio = 1;
-  switch (condition.comparison) {
-    case 'GE':
-      return currentHpRatio >= condition.value;
-    case 'GT':
-      return currentHpRatio > condition.value;
-    case 'LE':
-      return currentHpRatio <= condition.value;
-    case 'LT':
-      return currentHpRatio < condition.value;
-    case 'EQ':
-      return currentHpRatio === condition.value;
-    case 'NE':
-      return currentHpRatio !== condition.value;
-    default:
-      throw new Error(
-        `unsupported current HP ratio comparison ${JSON.stringify(condition.comparison)}`,
-      );
-  }
+  return evaluateStandardStumpFullHealthComparison(condition.comparison, condition.value);
 }
 
 function isUnresolvedSkillBlackboardValue(

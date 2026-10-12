@@ -52,7 +52,6 @@ export const ABILITY_EVENTS = [
   'takeCriticalDamage',
   'outputDamage',
   'outputCriticalDamage',
-  'outputKnockDown',
   'outputHeal',
   'receiveHeal',
   'afterAddedShield',
@@ -61,6 +60,7 @@ export const ABILITY_EVENTS = [
   'beforeCastSkill',
   'afterSkillApplyCost',
   'skillEnd',
+  'skillInterrupted',
   'beforeOutputBuff',
   'beforeAddedBuff',
   'outputBuff',
@@ -92,6 +92,10 @@ export type AbilityEventTriggerEndpoint = AbilityEventActionContextEndpoint | nu
  * 未列出的事件不能用于需要完整动作环境的监听器或连携条件。
  */
 export const ABILITY_EVENT_ACTION_CONTEXT_BINDINGS = {
+  /** 施放前通知以施术者为输入目标，不携带 trigger。 */
+  beforeCastSkill: { inputTarget: 'eventSource', triggerTarget: null },
+  /** 爆发 Buff 的持有者是输入目标，来源是发布者与触发者。 */
+  beforeOutputSpellBurst: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
   beforeTakeSpellInfliction: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
   afterTakeSpellInfliction: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
   beforeTakeSpellAbnormal: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
@@ -132,6 +136,11 @@ export const ABILITY_EVENT_ACTION_CONTEXT_BINDINGS = {
   beforeOutputInfliction: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
   /** 物理异常目标是输入目标，输出者是事件来源和触发者。 */
   beforeOutputPhysicalInfliction: {
+    inputTarget: 'eventTarget',
+    triggerTarget: 'eventSource',
+  },
+  /** 物理异常目标是输入目标，输出者是触发者。 */
+  afterOutputPhysicalInfliction: {
     inputTarget: 'eventTarget',
     triggerTarget: 'eventSource',
   },

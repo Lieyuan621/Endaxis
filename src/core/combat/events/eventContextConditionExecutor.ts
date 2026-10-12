@@ -1,24 +1,29 @@
-import { readRequiredActionNumber } from '../actions/actionBlackboard';
-import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
-import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
-import { spellBurstAbilityEvent, characterInflictionAbilityEvent } from './combatAbilityEvent';
-import { skillAbilityEvent } from './combatAbilityEvent';
-import { customAbilityEvent } from './combatAbilityEvent';
-import { poiseAbilityEvent } from './combatAbilityEvent';
-import { inflictionAbilityEvent } from './combatAbilityEvent';
-import { abilityEventTargetId, abilityEventSourceId } from './combatAbilityEvent';
-import type { CombatObjectType } from '../../../../packages/game-data-contract/src/primitives';
-import { matchesCombatObjectType, resolveCombatObjectType } from '../abilities/combatObjectType';
-import { spGainAbilityEvent } from './combatAbilityEvent';
-import { physicalAbilityEvent } from './combatAbilityEvent';
-import { abilityEventSkillCastInfo } from './combatAbilityEvent';
-import { damageAbilityEvent } from './combatAbilityEvent';
-import { healAbilityEvent } from './combatAbilityEvent';
 import type {
   GameplayTag,
   GameplayTagMatchType,
 } from '../../../../packages/game-data-contract/src/gameplayTags';
-import { buffApplicationEvent, buffAbilityEvent } from './combatAbilityEvent';
+import type { CombatObjectType } from '../../../../packages/game-data-contract/src/primitives';
+import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
+import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
+import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
+import type { DamageType, SkillType } from '../../game-data/operatorDefinition';
+import { matchesCombatObjectType, resolveCombatObjectType } from '../abilities/combatObjectType';
+import { readRequiredActionNumber } from '../actions/actionBlackboard';
+import {
+  abilityEventSkillCastInfo,
+  abilityEventSourceId,
+  buffAbilityEvent,
+  buffApplicationEvent,
+  characterInflictionAbilityEvent,
+  customAbilityEvent,
+  damageAbilityEvent,
+  healAbilityEvent,
+  inflictionAbilityEvent,
+  physicalAbilityEvent,
+  skillAbilityEvent,
+  spellBurstAbilityEvent,
+  spGainAbilityEvent,
+} from './combatAbilityEvent';
 /**
  * 求值依赖当前事件负载的条件。
  *
@@ -26,17 +31,18 @@ import { buffApplicationEvent, buffAbilityEvent } from './combatAbilityEvent';
  * 技能临时监听器、常驻监听器与同步伤害条件共用；普通技能步骤误用事件条件时会明确失败。
  */
 import type { DamageFeature, DamageTag } from '../../game-data/operatorDefinition';
+import { compareCombatNumbers } from '../../math/combatNumbers.ts';
+import { resolveActionValueOperand } from '../actions/actionBlackboard';
+import { NATIVE_ELEMENT_VALUES, spellBurstElement } from '../infliction/elementalInfliction';
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
 import type { GameplayTagQueryType } from '../tags/gameplayTags';
-import { resolveActionValueOperand } from '../actions/actionBlackboard';
-import { compareCombatNumbers } from '../../mechanics/combatNumbers.ts';
-import { NATIVE_ELEMENT_VALUES, spellBurstElement } from '../infliction/elementalInfliction';
 
 export class EventContextConditionExecutor implements CombatOperationExecutor {
   constructor(
     readonly delegate: CombatOperationExecutor,
     readonly isOperatorControlled?: (operatorId: string) => boolean,
-    readonly resolveEntitySourceId?: (entityId: string) => string,
+    /** SourceFinder 只读取一层 AbilitySystem.source，不追溯到最终干员。 */
+    readonly findEntitySourceId?: (entityId: string) => string | undefined,
     readonly matchBuffTags?: (
       targetId: string,
       ownedTags: readonly GameplayTag[],
@@ -46,7 +52,7 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
     readonly resolveCurrentSkillType?: (
       target: 'caster' | 'buffOwner',
       context?: CombatOperationContext,
-    ) => import('../../game-data/operatorDefinition').SkillType | undefined,
+    ) => SkillType | undefined,
     readonly resolveAbilityEntityObjectType?: (instanceId: number) => CombatObjectType,
   ) {}
 
@@ -61,6 +67,12 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
   }
 
   evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
+    if (condition.kind === 'skillInterruptReasonIn') {
+      const event = context?.event === undefined ? undefined : skillAbilityEvent(context.event);
+      return (
+        event?.event === 'skillInterrupted' && condition.reasons.includes(event.payload.reason)
+      );
+    }
     if (condition.kind === 'skillDamageTypeIn') {
       const eventSkill =
         context?.event === undefined ? undefined : skillAbilityEvent(context.event);
@@ -141,12 +153,9 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
       condition.kind !== 'eventHealTagsMatch' &&
       condition.kind !== 'eventSpGainMatch' &&
       condition.kind !== 'eventConsumedBuffLayerCompare' &&
-      condition.kind !== 'eventSourceTargetMatch' &&
-      condition.kind !== 'eventActionOwnerTargetMatch' &&
       condition.kind !== 'eventOverheal' &&
       condition.kind !== 'eventSourceMatchesBuffSource' &&
       condition.kind !== 'eventSourceMatchesBuffSourceEntitySource' &&
-      condition.kind !== 'eventSourceControlled' &&
       condition.kind !== 'actionInputTargetObjectTypeMatch' &&
       condition.kind !== 'actionInputTargetIdentityMatch' &&
       condition.kind !== 'eventProjectilePerfectDodgeCooldownEquals' &&
@@ -211,12 +220,7 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
       if (context === undefined || target === undefined) {
         throw new Error('actionInputTargetIdentityMatch requires an action InputTarget');
       }
-      const targetId =
-        target.kind === 'operator'
-          ? target.operatorId
-          : target.kind === 'abilityEntity'
-            ? `abilityEntity:${target.instanceId}`
-            : 'enemy';
+      const targetId = runtimeTargetEntityId(target);
       const matches =
         condition.other === 'controlledOperator'
           ? (() => {
@@ -266,22 +270,13 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
       if (context.buffSourceId === undefined) {
         throw new Error('eventSourceMatchesBuffSourceEntitySource requires a Buff source identity');
       }
-      if (this.resolveEntitySourceId === undefined) {
+      if (this.findEntitySourceId === undefined) {
         throw new Error('eventSourceMatchesBuffSourceEntitySource requires entity provenance');
       }
-      const source = this.resolveEntitySourceId(context.buffSourceId);
+      const source = this.findEntitySourceId(context.buffSourceId);
+      if (source === undefined) throw new Error('SourceFinder requires an entity identity');
       if (damage !== undefined) return damage.payload.sourceId === source;
       return physicalAbilityEvent(context.event)?.payload.sourceId === source;
-    }
-    if (condition.kind === 'eventSourceControlled') {
-      if (this.isOperatorControlled === undefined) {
-        throw new Error('eventSourceControlled requires control state');
-      }
-      const heal = healAbilityEvent(context.event);
-      if (heal !== undefined) return this.isOperatorControlled(heal.payload.sourceId);
-      if (damage !== undefined) return this.isOperatorControlled(damage.payload.sourceId);
-      const poise = poiseAbilityEvent(context.event);
-      return poise !== undefined && this.isOperatorControlled(poise.payload.sourceId);
     }
     if (condition.kind === 'eventSkillTypeIn') {
       const skill = skillAbilityEvent(context.event);
@@ -297,8 +292,12 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
         return false;
       }
       if (condition.outputKey !== undefined && condition.outputKey !== '') {
-        context.blackboard.assignDynamic(condition.outputKey, custom.payload.eventParam);
-        context.refreshCurrentBuffAttributeModifiers?.();
+        const old = Math.fround(readRequiredActionNumber(context.blackboard, condition.outputKey));
+        const value = Math.fround(custom.payload.eventParam);
+        if (!(Math.abs(Math.fround(old - value)) <= Math.fround(0.00001))) {
+          context.blackboard.assignDynamicUnconditionally(condition.outputKey, value);
+          context.refreshCurrentBuffAttributeModifiers?.();
+        }
       }
       return true;
     }
@@ -410,60 +409,43 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
         (event.event !== 'buffConsumed' && event.event !== 'buffAbsorbed')
       )
         return false;
-      if (condition.outputKey !== undefined) {
-        context.blackboard.assignDynamic(condition.outputKey, event.payload.layers);
-      }
-      return compareCombatNumbers(
+      const matched = compareCombatNumbers(
         event.payload.layers,
         resolveActionValueOperand(condition.value, context.blackboard),
         condition.operator,
       );
-    }
-    if (condition.kind === 'eventSourceTargetMatch') {
-      const event = context.event;
-      const equal =
-        'payload' in event
-          ? abilityEventTargetId(event) === undefined
-            ? null
-            : abilityEventSourceId(event) === abilityEventTargetId(event)
-          : 'sourceId' in event &&
-              typeof event.sourceId === 'string' &&
-              'targetId' in event &&
-              typeof event.targetId === 'string'
-            ? event.sourceId === event.targetId
-            : null;
-      if (equal === null) return false;
-      return condition.operator === 'equal' ? equal : !equal;
-    }
-    if (condition.kind === 'eventActionOwnerTargetMatch') {
-      const ownerId = context.actionOwnerId ?? context.buffOwnerId;
-      if (ownerId === undefined) {
-        throw new Error('eventActionOwnerTargetMatch requires an action owner identity');
+      if (!matched) return false;
+      if (condition.outputKey) {
+        const old = Math.fround(readRequiredActionNumber(context.blackboard, condition.outputKey));
+        const value = Math.fround(event.payload.layers);
+        if (!(Math.abs(Math.fround(old - value)) <= Math.fround(0.00001))) {
+          context.blackboard.assignDynamicUnconditionally(condition.outputKey, value);
+        }
       }
-      const event = context.event;
-      const targetId =
-        'payload' in event
-          ? abilityEventTargetId(event)
-          : 'targetId' in event && typeof event.targetId === 'string'
-            ? event.targetId
-            : null;
-      if (targetId == null) return false;
-      const equal = ownerId === targetId;
-      return condition.operator === 'equal' ? equal : !equal;
+      return true;
     }
     if (condition.kind === 'eventOverheal') {
       const event = healAbilityEvent(context.event)?.payload;
       if (event === undefined) return false;
       if (condition.overHealKey) {
-        context.blackboard.assignDynamic(condition.overHealKey, event.overhealing);
+        context.blackboard.assignDynamicUnconditionally(
+          condition.overHealKey,
+          Math.fround(event.requestedHealing - event.actualHealing),
+        );
       }
       if (condition.finalHealKey) {
-        context.blackboard.assignDynamic(condition.finalHealKey, event.requestedHealing);
+        context.blackboard.assignDynamicUnconditionally(
+          condition.finalHealKey,
+          Math.fround(event.requestedHealing),
+        );
       }
       if (condition.realHealKey) {
-        context.blackboard.assignDynamic(condition.realHealKey, event.actualHealing);
+        context.blackboard.assignDynamicUnconditionally(
+          condition.realHealKey,
+          Math.fround(event.actualHealing),
+        );
       }
-      return event.requestedHealing > event.actualHealing + 0.00001;
+      return event.requestedHealing > event.actualHealing + Math.fround(0.00001);
     }
     const damageEvent = eventDamageProperties(context.event);
     if (damageEvent === null) return false;
@@ -508,7 +490,7 @@ function eventDamageProperties(event: NonNullable<CombatOperationContext['event'
   readonly tags: readonly DamageTag[];
   readonly gameplayTags?: readonly GameplayTag[];
   readonly features: readonly DamageFeature[];
-  readonly damageType?: import('../../game-data/operatorDefinition').DamageType;
+  readonly damageType?: DamageType;
 } | null {
   if ('event' in event && event.event === 'afterKillEntity') return event.payload;
   const damage = damageAbilityEvent(event);

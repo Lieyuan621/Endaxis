@@ -49,6 +49,12 @@ describe('AbilityEntityTemplateData 来源', () => {
 
   it('完整模板同时追踪根技能包、组件技能包和 Buff，保留原始字段供黑板扫描', () => {
     const raw = completeEntity();
+    raw.nativeData.template.skillDataBundle.allActiveSkillId = [
+      'SkillData/Character/root_skill.json',
+    ];
+    raw.nativeData.components['3010137844548109172'].data.skillDataBundle.allActiveSkillId = [
+      'GameData\\SkillData\\Character\\component_skill.json',
+    ];
     const receiver = parseAbilityEntityBlackboardReceiverSource(raw, 'entity');
     expect(receiver.complete).toBe(true);
     expect(receiver.value).toBe(raw);

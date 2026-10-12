@@ -1,6 +1,10 @@
 import type { AbilityEvent } from '../../../../packages/game-data-contract/src/abilityEvents';
+import type { SkillInterruptReason } from '../../../../packages/game-data-contract/src/conditions';
 import type { GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags';
 import type {
+  DamageFeature,
+  DamageTag,
+  DamageType,
   InflictionElement,
   PhysicalInflictionType,
   SpGainKind,
@@ -12,14 +16,12 @@ import type { HealthDamageEventPayload } from '../damage/healthDamage';
 import type { PlayerDamageContext } from '../damage/playerDamageContext';
 import type { ElementalInflictionEventPayload } from '../infliction/elementalInflictionOperationExecutor';
 import type {
+  AbilityEntityPair,
+  AbilityOriginPayload,
+  AbilityResponseEventName,
   BuffFinishReason,
   CombatSkillCastInfo,
   SkillCastEventData,
-} from '../state/foundationState';
-import {
-  type AbilityEntityPair,
-  type AbilityOriginPayload,
-  type AbilityResponseEventName,
 } from '../state/foundationState';
 import type { AbilityEventFromMap } from './abilityEventDispatcher';
 
@@ -61,7 +63,7 @@ export function characterInflictionAbilityEvent(
 }
 
 export type SkillAbilityEvent = CombatAbilityEvent<
-  'beforeCastSkill' | 'afterSkillApplyCost' | 'skillEnd'
+  'beforeCastSkill' | 'afterSkillApplyCost' | 'skillEnd' | 'skillInterrupted'
 > & { readonly kind?: never };
 /** 当前施法身份和继承来源相互独立；保留原始挂载端口，不重建技能对象。 */
 export function skillAbilityEvent(event: AbilityEventCandidate): SkillAbilityEvent | undefined {
@@ -69,7 +71,8 @@ export function skillAbilityEvent(event: AbilityEventCandidate): SkillAbilityEve
     !('event' in event) ||
     (event.event !== 'beforeCastSkill' &&
       event.event !== 'afterSkillApplyCost' &&
-      event.event !== 'skillEnd')
+      event.event !== 'skillEnd' &&
+      event.event !== 'skillInterrupted')
   )
     return undefined;
   return event;
@@ -182,7 +185,7 @@ export function abilityEventTargetId(event: CombatAbilityEvent): string | undefi
   return 'targetId' in event.payload ? event.payload.targetId : undefined;
 }
 export function abilityEventSourceId(event: CombatAbilityEvent): string {
-  return 'sourceId' in event.payload ? event.payload.sourceId : event.payload.sourceOperatorId;
+  return event.payload.sourceId;
 }
 
 /** 实际 AbilitySystem 的只读 reset 端口；不是另一个可配置事件。 */
@@ -292,7 +295,7 @@ export interface AbilityCustomPayload extends AbilityEntityPair {
 
 /** OnObtainAtb 的来源/方式及请求量/实增量；skillSpGained 是历史契约名称，不限定 Skill/Gain。 */
 export interface AbilitySpGainPayload {
-  readonly sourceOperatorId: string;
+  readonly sourceId: string;
   readonly source: SpGainSource;
   readonly gainKind: SpGainKind;
   readonly requestedAmount: number;
@@ -330,7 +333,6 @@ export interface AbilityEventPayloadMap {
   afterOutputPhysicalInfliction: AbilityPhysicalInflictionPayload;
   beforeOutputKnockDown: AbilityKnockDownPayload;
   afterOutputKnockDown: AbilityKnockDownPayload;
-  outputKnockDown: AbilityEntityPair;
   beforeOutputInfliction: ElementalInflictionEventPayload;
   afterOutputInfliction: ElementalInflictionEventPayload;
   beforeTakeSpellInfliction: AbilitySpellInflictionPayload;
@@ -350,6 +352,9 @@ export interface AbilityEventPayloadMap {
   beforeCastSkill: AbilitySkillPayload;
   afterSkillApplyCost: AbilitySkillPayload;
   skillEnd: AbilitySkillPayload;
+  skillInterrupted: AbilitySkillPayload & {
+    reason: SkillInterruptReason;
+  };
   beforeOutputBuff: BuffAppliedEvent;
   beforeAddedBuff: BuffAppliedEvent;
   outputBuff: AbilityOutputBuffPayload;
@@ -468,9 +473,9 @@ export interface ExternalOperatorHitPayload {
   readonly external: true;
   readonly sourceId: 'enemy';
   readonly targetId: string;
-  readonly damageType?: import('../../game-data/operatorDefinition').DamageType;
-  readonly tags: readonly import('../../game-data/operatorDefinition').DamageTag[];
-  readonly features: readonly import('../../game-data/operatorDefinition').DamageFeature[];
+  readonly damageType?: DamageType;
+  readonly tags: readonly DamageTag[];
+  readonly features: readonly DamageFeature[];
   readonly result?: never;
   readonly skillCastInfo?: never;
 }

@@ -223,14 +223,22 @@ describe('compileScenarioTimeline', () => {
             'spawn-generated': {
               action: {
                 kind: 'spawnAbilityEntity',
-                parameters: { abilityEntityId: 'generated', dieWhenSourceDies: false },
+                parameters: {
+                  bornAt: { kind: 'owner' as const },
+                  abilityEntityId: 'generated',
+                  dieWhenSourceDies: false,
+                },
               },
               next: 'spawn-custom',
             },
             'spawn-custom': {
               action: {
                 kind: 'spawnAbilityEntity',
-                parameters: { abilityEntityId: 'custom', dieWhenSourceDies: false },
+                parameters: {
+                  bornAt: { kind: 'owner' as const },
+                  abilityEntityId: 'custom',
+                  dieWhenSourceDies: false,
+                },
               },
               next: null,
             },
@@ -683,6 +691,7 @@ describe('compileScenarioTimeline', () => {
               action: {
                 kind: 'spawnAbilityEntity',
                 parameters: {
+                  bornAt: { kind: 'owner' as const },
                   abilityEntityId: 'ability:test',
                   dieWhenSourceDies: false,
                   inheritActionBlackboard: true,
@@ -705,8 +714,8 @@ describe('compileScenarioTimeline', () => {
                             'child-hit': {
                               action: {
                                 key: 'child-hit',
-                                kind: 'dealFixedDamage',
-                                parameters: { damageType: 'physical', value: 1, tags: [] },
+                                kind: 'dealDamage',
+                                parameters: { damageType: 'physical', attackScale: 1, tags: [] },
                               },
                               next: null,
                             },
@@ -799,7 +808,11 @@ it('场景中的技能、Buff 和实体各自编译自己的图', () => {
           spawnLocal: {
             action: {
               kind: 'spawnAbilityEntity' as const,
-              parameters: { abilityEntityId: 'localChild', dieWhenSourceDies: false },
+              parameters: {
+                bornAt: { kind: 'owner' as const },
+                abilityEntityId: 'localChild',
+                dieWhenSourceDies: false,
+              },
             },
             next: null,
           },
@@ -843,7 +856,7 @@ it('场景中的技能、Buff 和实体各自编译自己的图', () => {
       ...perlica.buffDefinitions,
       localBuff: {
         stackingType: 'unlimited' as const,
-        lifecycleSequences: { start: { $sequence: 'buffEntry' } },
+        lifecycleSequences: { start: [{ $sequence: 'buffEntry' }] },
         actionGraph: {
           main: {
             nodes: {
@@ -876,7 +889,8 @@ it('场景中的技能、Buff 和实体各自编译自己的图', () => {
   const childEntry = localChild?.childSkill?.timelineActions[0]?.sequence;
   expect(childEntry?.entry).toBe('[null,"localEntityAction"]');
   expect(childEntry?.graph).not.toBe(sequence.graph);
-  const buffStart = compiled.operators[0]!.buffDefinitions!.localBuff!.lifecycleSequences!.start!;
+  const buffStart =
+    compiled.operators[0]!.buffDefinitions!.localBuff!.lifecycleSequences!.start![0]!;
   if ('steps' in buffStart) throw new Error('expected compiled graph entry');
   expect(buffStart.graph.nodes.get(buffStart.entry!)!.action).toMatchObject({
     parameters: { value: 3 },
@@ -940,7 +954,9 @@ it('不含过渡总图的干员能分别编译主动技能与常驻被动', () =
   ).toMatchObject([
     {
       kind: 'applyBuff',
-      parameters: { buffId: 'native-buff', blackboardAssignments: { power: { value: 7 } } },
+      parameters: {
+        buffs: [{ buffId: 'native-buff', blackboardAssignments: { power: { value: 7 } } }],
+      },
     },
   ]);
 });
@@ -1016,6 +1032,29 @@ it('keeps a routed cast custom graph and blackboard instead of substituting the 
   expect(binding!.program.initialBlackboard.custom_marker).toBe(42);
   expect(binding!.program.timelineActions).toEqual([]);
   expect(binding!.program.executionSkillId).toBe(requireSingleSkill('comboSkill').key);
+  const programs = new ActionGraphDefinitionRepository();
+  const fixed = compileOperatorDefinitionSkills(
+    track.id,
+    track.operator!,
+    operator,
+    undefined,
+    undefined,
+    programs,
+  ).find(program => program.skillId === wrapper.key)!;
+  const [placed] = compileOperatorSkillCastPrograms(
+    track.id,
+    [{ ...cast, customDefinition: undefined }],
+    track.operator!,
+    operator,
+    undefined,
+    undefined,
+    programs,
+  );
+  // 完整重算与切面输入必须绑定同一执行体，不能只比较施放包装器的 skillId。
+  expect(fixed.timelineActions).toEqual(placed!.program.timelineActions);
+  expect(fixed.timelineActions[0]!.sequence.callSite).toContain(
+    requireSingleSkill('comboSkill').key,
+  );
 });
 
 it('keeps common ability entity child programs in their own graph across ID collisions', () => {
@@ -1036,7 +1075,11 @@ it('keeps common ability entity child programs in their own graph across ID coll
                     'shared-id': {
                       action: {
                         kind: 'spawnAbilityEntity' as const,
-                        parameters: { abilityEntityId: 'external', dieWhenSourceDies: false },
+                        parameters: {
+                          bornAt: { kind: 'owner' as const },
+                          abilityEntityId: 'external',
+                          dieWhenSourceDies: false,
+                        },
                       },
                       next: null,
                     },
@@ -1091,7 +1134,7 @@ it('keeps common ability entity child programs in their own graph across ID coll
         buffDefinitions: {
           separate: {
             stackingType: 'unlimited',
-            lifecycleSequences: { start: { $sequence: 'shared-id' } },
+            lifecycleSequences: { start: [{ $sequence: 'shared-id' }] },
             actionGraph: {
               main: {
                 nodes: {
@@ -1116,7 +1159,8 @@ it('keeps common ability entity child programs in their own graph across ID coll
   expect(child.graph).not.toBe(entry.graph);
   expect(child.graph.nodes.get(child.entry!)!.action).toMatchObject({ parameters: { value: 7 } });
   expect(entry.graph.nodes.get(entry.entry!)!.action.kind).toBe('spawnAbilityEntity');
-  const buffEntry = compiled.operators[0]!.buffDefinitions!.separate!.lifecycleSequences!.start!;
+  const buffEntry =
+    compiled.operators[0]!.buffDefinitions!.separate!.lifecycleSequences!.start![0]!;
   if ('steps' in buffEntry) throw new Error('unexpected tree');
   expect(buffEntry.graph).not.toBe(child.graph);
   expect(buffEntry.graph.nodes.get(buffEntry.entry!)!.action).toMatchObject({

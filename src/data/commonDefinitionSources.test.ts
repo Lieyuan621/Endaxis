@@ -14,7 +14,7 @@ const secondGraph: ActionGraphDefinition = {
 it('公共 Buff 校验自己的独立图入口', () => {
   const buff: SkillBuffDefinition = {
     stackingType: 'unlimited',
-    lifecycleSequences: { start: { $sequence: 'entry' } },
+    lifecycleSequences: { start: [{ $sequence: 'entry' }] },
     actionGraph: { main: firstGraph, macros: {} },
   };
   expect(() =>
@@ -24,7 +24,7 @@ it('公共 Buff 校验自己的独立图入口', () => {
         {
           id: 'buffs',
           buffDefinitions: {
-            first: { ...buff, lifecycleSequences: { start: { $sequence: 'missing' } } },
+            first: { ...buff, lifecycleSequences: { start: [{ $sequence: 'missing' }] } },
           },
         },
       ],
@@ -79,7 +79,7 @@ it('保留公共定义所属的来源身份，允许不同来源使用相同的�
         buffDefinitions: {
           first: {
             stackingType: 'unlimited',
-            lifecycleSequences: { start: { $sequence: 'entry' } },
+            lifecycleSequences: { start: [{ $sequence: 'entry' }] },
             actionGraph: { main: firstGraph, macros: {} },
           },
         },
@@ -148,7 +148,7 @@ it('独立定义不允许递归动作图', () => {
           buffDefinitions: {
             first: {
               stackingType: 'unlimited',
-              lifecycleSequences: { start: { $sequence: 'entry' } },
+              lifecycleSequences: { start: [{ $sequence: 'entry' }] },
               actionGraph: {
                 main: {
                   nodes: { entry: { action: firstGraph.nodes.entry!.action, next: 'entry' } },

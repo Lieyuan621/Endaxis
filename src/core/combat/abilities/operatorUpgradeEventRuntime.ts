@@ -35,7 +35,7 @@ export class OperatorUpgradeEventRuntime {
 
   constructor(
     semanticEvents: CombatSemanticEventRuntime,
-    operatorId: string,
+    private readonly operatorId: string,
     programs: readonly CompiledOperatorUpgradeEventProgram[],
     createExecutor: CreateOperatorUpgradeEventExecutor,
     state?: OperatorUpgradeEventState,
@@ -96,6 +96,8 @@ export class OperatorUpgradeEventRuntime {
     };
     const operationContext: CombatOperationContext = {
       blackboard: new ActionBlackboard(eventBlackboard),
+      actionOwnerId: this.operatorId,
+      actionSourceId: this.operatorId,
       event,
     };
     withCombatEventResponseContext(operationContext, response, () =>

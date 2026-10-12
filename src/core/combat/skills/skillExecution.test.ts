@@ -56,6 +56,7 @@ function createSession() {
         canExecute: () => true,
         execute: () => {
           state.calls.push('execute');
+          state.skill.hasOutputDamageBattle = true;
           return true;
         },
         tick: () => {
@@ -131,12 +132,15 @@ describe('skill execution data', () => {
     const session = createSession();
     session.step('start');
     const unpaid = session.save();
+    expect(session.read().skill.hasOutputDamageBattle).toBe(false);
     session.step('advance');
     expect(session.read().calls.slice(0, 3)).toEqual(['cost', 'timelineStart', 'execute']);
     const paid = session.save();
+    expect(session.read().skill.hasOutputDamageBattle).toBe(true);
     session.step('end');
     const stopped = session.save();
     session.restore(paid);
+    expect(session.read().skill.hasOutputDamageBattle).toBe(true);
     session.step('advance');
     session.step('advance');
     expect(session.read().sp).toBe(80);
@@ -149,6 +153,7 @@ describe('skill execution data', () => {
     ]);
     const expected = session.read();
     session.restore(unpaid);
+    expect(session.read().skill.hasOutputDamageBattle).toBe(false);
     session.step('advance');
     session.step('advance');
     session.step('advance');
@@ -168,6 +173,7 @@ describe('skill execution data', () => {
   it('consumes prepared identity and inherited payment without allocating again', () => {
     const state = createSkillExecutionState();
     state.preparedSkillCastId = 7;
+    state.hasOutputDamageBattle = true;
     state.preparedSkillCastInfo = {
       skillCastId: 7,
       originSkillId: 'origin',
@@ -180,6 +186,7 @@ describe('skill execution data', () => {
       throw new Error('unexpected allocation');
     });
     expect(state.skillCastId).toBe(7);
+    expect(state.hasOutputDamageBattle).toBe(false);
     expect(state.nonReturnedSpCost).toBe(20);
     expect(state.preparationCast).toBe(true);
     expect(state.attemptedCost).toBe(true);

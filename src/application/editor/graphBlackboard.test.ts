@@ -34,22 +34,6 @@ it('所属对象变量的读写出现在同一项，不把读取误记成局部�
   });
 });
 
-const scope = (
-  body: string,
-  inheritParent = false,
-  shareParentBlackboard = false,
-): ActionGraphNode => ({
-  action: {
-    kind: 'withActionBlackboardScope',
-    parameters: {
-      initialValues: shareParentBlackboard ? {} : { local: 1 },
-      inheritParent,
-      shareParentBlackboard,
-    },
-    body: { $sequence: body },
-  },
-  next: 'outside',
-});
 const use = (): ActionGraphNode => ({
   action: {
     kind: 'modifyActionValue',
@@ -64,35 +48,12 @@ const use = (): ActionGraphNode => ({
 function fixture(): ActionGraphDefinition {
   return {
     nodes: {
-      scope: scope('inside'),
       inside: use(),
-      outside: { action: { kind: 'finishTimeline', parameters: {} }, next: null },
+      outside: { action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} }, next: null },
     },
     dataNodes: { read: { type: 'number', expression: { kind: 'blackboard', key: 'local' } } },
   };
 }
-it('局部 body 与外侧 next 使用不同板，共享读节点登记全部调用环境', () => {
-  const graph = fixture();
-  const analysis = analyzeGraphBlackboard(graph, ['scope']);
-  expect([...analysis.contexts.get('inside')!]).toEqual(['current/scope']);
-  expect([...analysis.contexts.get('outside')!]).toEqual(['current']);
-  expect(blackboardScopeWarnings(analysis)).toEqual([]);
-  const shared = analyzeGraphBlackboard({ ...graph, nodes: { ...graph.nodes, outside: use() } }, [
-    'scope',
-  ]);
-  expect(shared.dataContexts.get('read')?.size).toBe(2);
-  expect(blackboardScopeWarnings(shared)).toHaveLength(1);
-});
-it('共享父板不伪造新作用域，宏参数单列只读', () => {
-  const graph = fixture();
-  const analysis = analyzeGraphBlackboard(
-    { ...graph, nodes: { ...graph.nodes, scope: scope('inside', true, true) } },
-    ['scope'],
-    ['input'],
-  );
-  expect(analysis.scopes.size).toBe(1);
-  expect(analysis.variables.find(v => v.key === 'input')?.layer).toBe('parameter');
-});
 it('不把显式缺值默认值或外部动态键误判为越界', () => {
   const graph = fixture();
   const changed: ActionGraphDefinition = {
@@ -102,66 +63,12 @@ it('不把显式缺值默认值或外部动态键误判为越界', () => {
       read: { type: 'number', expression: { kind: 'blackboard', key: 'local', fallback: 0 } },
     },
   };
-  expect(blackboardScopeWarnings(analyzeGraphBlackboard(changed, ['scope']))).toEqual([]);
+  expect(blackboardScopeWarnings(analyzeGraphBlackboard(changed, ['inside', 'outside']))).toEqual(
+    [],
+  );
   expect(
     blackboardScopeWarnings(
       analyzeGraphBlackboard({ ...graph, nodes: { outside: use() } }, ['outside']),
     ),
   ).toEqual([]);
-});
-
-it('shared and aliased string reads retain every call scope and entity read-site evidence', () => {
-  const read = {
-    action: {
-      kind: 'applyBuff' as const,
-      parameters: {
-        target: 'caster' as const,
-        buffId: { kind: 'stringNode' as const, nodeId: 'alias' },
-      },
-    },
-    next: null,
-  };
-  const graph: ActionGraphDefinition = {
-    nodes: {
-      scope: {
-        action: {
-          kind: 'withActionBlackboardScope',
-          parameters: { initialValues: { local: 1 }, inheritParent: false },
-          body: { $sequence: 'inside' },
-        },
-        next: 'outside',
-      },
-      inside: read,
-      outside: read,
-    },
-    dataNodes: {
-      alias: { type: 'string', expression: { kind: 'stringNode', nodeId: 'read' } },
-      read: { type: 'string', expression: { blackboardKey: 'local' } },
-    },
-  };
-  const analysis = analyzeGraphBlackboard(graph, ['scope']);
-  expect(analysis.dataContexts.get('read')).toEqual(new Set(['current', 'current/scope']));
-  expect(analysis.dataContexts.get('alias')).toEqual(analysis.dataContexts.get('read'));
-  expect(analysis.variables.filter(value => value.key === 'local')).toHaveLength(2);
-  for (const variable of analysis.variables.filter(value => value.key === 'local')) {
-    expect(variable.reads).toEqual(['read']);
-    expect(variable.requiredReads).toEqual(['read']);
-    expect(variable.readSites).toEqual([{ id: 'read', owner: 'data' }]);
-  }
-  expect(blackboardScopeWarnings(analysis)).toHaveLength(1);
-  const entity = analyzeGraphBlackboard(
-    {
-      ...graph,
-      dataNodes: {
-        ...graph.dataNodes,
-        read: { type: 'string', expression: { blackboardKey: 'EntityBB_marker' } },
-      },
-    },
-    ['scope'],
-  );
-  expect(
-    entity.variables
-      .filter(value => value.key === 'EntityBB_marker')
-      .every(value => value.layer === 'entity'),
-  ).toBe(true);
 });

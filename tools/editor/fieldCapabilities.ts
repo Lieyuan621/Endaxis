@@ -235,7 +235,11 @@ export function collectFieldCapabilities(
           actualControl || ['sequence', 'resource'].includes(field.control)
             ? undefined
             : (field.valueSchema.fallback?.reason ??
-              (expressionInput ? 'unassigned-input-editor-pending' : undefined));
+              (expressionInput
+                ? 'unassigned-input-editor-pending'
+                : complex
+                  ? 'structured-editor-pending'
+                  : undefined));
         rows.push({
           key: [surface, root, ...field.path].join('/'),
           surface,

@@ -2,14 +2,11 @@
  * 把构筑中启用的天赋、潜能统一解析为编译期养成计划，并将已支持的修正应用到技能程序。
  * 各编译阶段应复用这里的选择结果；运行时只消费修正后的程序，不再解释养成 DSL。
  */
+import type { ActionGraphReference } from '../../../packages/game-data-contract/src/actionGraph';
+import type { BuildCondition } from '../../../packages/game-data-contract/src/conditions';
+import { isOperatorPassiveAbilityEvent } from '../game-data/definitionGuards.ts';
 import type {
-  CompiledOperatorInitializationProgram,
-  CompiledOperatorPassiveProgram,
-  CompiledOperatorUpgradeEventProgram,
-  CompiledSkillProgram,
-  ResolvedCombatStepForKind,
-} from './combatProgram';
-import type {
+  ElementalReaction,
   LevelValues,
   OperatorAttribute,
   OperatorDefinition,
@@ -17,19 +14,22 @@ import type {
   OperatorUpgradeDefinition,
   UpgradeModifierDefinition,
 } from '../game-data/operatorDefinition';
-import type { ActionGraphReference } from '../../../packages/game-data-contract/src/actionGraph';
+import { compareCombatNumbers } from '../math/combatNumbers.ts';
 import type { OperatorInstanceDocument } from '../project/schema';
+import type {
+  CompiledGraphEntry,
+  CompiledOperatorInitializationProgram,
+  CompiledOperatorPassiveProgram,
+  CompiledOperatorUpgradeEventProgram,
+  CompiledSkillProgram,
+} from './combatProgram';
 import { createActionGraphCompilation } from './compileActionGraph';
-import type { CompiledGraphEntry } from './combatProgram';
 export type CompileUpgradeEntry = (
   entry: ActionGraphReference,
   level: number,
   path: string,
   owner: OperatorPassiveSkillDefinition | OperatorUpgradeDefinition,
 ) => CompiledGraphEntry;
-import { compareCombatNumbers } from '../mechanics/combatNumbers.ts';
-import { isOperatorPassiveAbilityEvent } from '../game-data/definitionGuards.ts';
-import type { BuildCondition } from '../../../packages/game-data-contract/src/conditions';
 
 export interface ActiveOperatorUpgrade {
   readonly source: 'talent' | 'potential';
@@ -41,7 +41,7 @@ export interface ActiveOperatorUpgrade {
 
 /** 由构筑静态解析、在该干员创建复合元素状态时使用的语义修正。 */
 export interface CompiledOperatorReactionModifier {
-  readonly reaction: import('../game-data/operatorDefinition').ElementalReaction;
+  readonly reaction: ElementalReaction;
   readonly durationSecondsAddition: number;
   readonly effectivenessAddition: number;
 }
@@ -50,7 +50,7 @@ export function compileOperatorReactionModifiers(
   upgrades: readonly ActiveOperatorUpgrade[],
 ): readonly CompiledOperatorReactionModifier[] {
   const totals = new Map<
-    import('../game-data/operatorDefinition').ElementalReaction,
+    ElementalReaction,
     { durationSecondsAddition: number; effectivenessAddition: number }
   >();
   for (const upgrade of upgrades) {
@@ -318,24 +318,28 @@ function compileOperatorInitializationProgramsWithEntry(
                     action: {
                       kind: 'applyBuff' as const,
                       parameters: {
-                        buffId: installation.buffId,
-                        target: 'caster' as const,
+                        buffs: [
+                          {
+                            buffId: installation.buffId,
+                            blackboardAssignments: Object.fromEntries(
+                              Object.entries(installation.blackboardAssignments ?? {}).map(
+                                ([key, value]) => [
+                                  key,
+                                  {
+                                    kind: 'constant' as const,
+                                    value: resolveUpgradeLevelValue(
+                                      value,
+                                      upgrade.level,
+                                      `${path}.attachedBuffs[${index}].blackboardAssignments.${key}`,
+                                    ),
+                                  },
+                                ],
+                              ),
+                            ),
+                          },
+                        ],
+                        targets: { kind: 'fixed' as const, target: 'caster' as const },
                         inheritSourceSkillCastInfo: false,
-                        blackboardAssignments: Object.fromEntries(
-                          Object.entries(installation.blackboardAssignments ?? {}).map(
-                            ([key, value]) => [
-                              key,
-                              {
-                                kind: 'constant' as const,
-                                value: resolveUpgradeLevelValue(
-                                  value,
-                                  upgrade.level,
-                                  `${path}.attachedBuffs[${index}].blackboardAssignments.${key}`,
-                                ),
-                              },
-                            ],
-                          ),
-                        ),
                       },
                     },
                     next: index + 1 < attachedBuffs.length ? `install:${index + 1}` : null,
@@ -453,99 +457,6 @@ function addSkillCooldownFrames(
   );
 }
 
-type CompiledReactionStep = ResolvedCombatStepForKind<'applyElementalReaction'>;
-
-function patchKeyedReactionStep(
-  programs: readonly CompiledSkillProgram[],
-  skillKey: string,
-  stepKey: string,
-  path: string,
-  patch: (step: CompiledReactionStep) => CompiledReactionStep,
-): readonly CompiledSkillProgram[] {
-  const isTarget = (program: CompiledSkillProgram): boolean =>
-    (program.executionSkillId ?? program.skillId) === skillKey;
-  const targets = programs.filter(isTarget);
-  if (targets.length === 0) {
-    throw new Error(`${path} references missing skill '${skillKey}'`);
-  }
-  let matchCount = 0;
-  const result = programs.map(program => {
-    if (!isTarget(program)) return program;
-    let programMatchCount = 0;
-    const patchedProgram = {
-      ...program,
-      timelineActions: program.timelineActions.map(action => {
-        const entry = action.sequence;
-        const nodes = new Map(entry.graph.nodes);
-        let changed = false;
-        for (let id = entry.entry; id !== null; id = entry.graph.nodes.get(id)!.next) {
-          const node = entry.graph.nodes.get(id)!;
-          if (node.action.key !== stepKey) continue;
-          if (node.action.kind !== 'applyElementalReaction')
-            throw new Error(
-              `${path} step '${stepKey}' is '${node.action.kind}', expected 'applyElementalReaction'`,
-            );
-          matchCount++;
-          programMatchCount++;
-          changed = true;
-          nodes.set(id, { ...node, action: patch(node.action) });
-        }
-        if (!changed) return action;
-        // 养成补丁只修改该入口根节点；原程序和旧结果仍持有旧节点目录。
-        const graph = {
-          ...entry.graph,
-          nodes,
-          operationBindings: new Map(),
-          revision: JSON.stringify([
-            entry.graph.revision,
-            path,
-            stepKey,
-            [...nodes].filter(([id]) => entry.graph.nodes.get(id) !== nodes.get(id)),
-          ]),
-        };
-        return { ...action, sequence: { ...entry, graph } };
-      }),
-    };
-    if (programMatchCount > 1) {
-      throw new Error(
-        `${path} expected at most one root reaction step '${stepKey}' per execution body`,
-      );
-    }
-    return patchedProgram;
-  });
-  if (matchCount === 0) {
-    throw new Error(`${path} expected exactly one root reaction step '${stepKey}', found 0`);
-  }
-  return result;
-}
-
-function multiplyEffectDuration(
-  programs: readonly CompiledSkillProgram[],
-  modifier: Extract<UpgradeModifierDefinition, { kind: 'multiplyEffectDuration' }>,
-  path: string,
-): readonly CompiledSkillProgram[] {
-  requireMultiplier(modifier.multiplier, `${path}.multiplier`);
-  return patchKeyedReactionStep(programs, modifier.skillKey, modifier.stepKey, path, step => ({
-    ...step,
-    parameters: {
-      ...step.parameters,
-      durationMultiplier: (step.parameters.durationMultiplier ?? 1) * modifier.multiplier,
-    },
-  }));
-}
-
-function setEffectiveness(
-  programs: readonly CompiledSkillProgram[],
-  modifier: Extract<UpgradeModifierDefinition, { kind: 'setEffectiveness' }>,
-  path: string,
-): readonly CompiledSkillProgram[] {
-  requireMultiplier(modifier.value, `${path}.value`);
-  return patchKeyedReactionStep(programs, modifier.skillKey, modifier.stepKey, path, step => ({
-    ...step,
-    parameters: { ...step.parameters, effectiveness: modifier.value },
-  }));
-}
-
 function addSkillStat(
   programs: readonly CompiledSkillProgram[],
   modifier: Extract<UpgradeModifierDefinition, { kind: 'addSkillStat' }>,
@@ -617,12 +528,9 @@ export function applyOperatorUpgradeSkillPatches(
         options.skipUncompiledSkills === true &&
         'skillKey' in modifier &&
         !patched.some(program => {
-          const usesExecutionIdentity = [
-            'patchSkillBlackboard',
-            'multiplyEffectDuration',
-            'setEffectiveness',
-            'addSkillStat',
-          ].includes(modifier.kind);
+          const usesExecutionIdentity = ['patchSkillBlackboard', 'addSkillStat'].includes(
+            modifier.kind,
+          );
           return (
             (usesExecutionIdentity
               ? (program.executionSkillId ?? program.skillId)
@@ -660,14 +568,6 @@ export function applyOperatorUpgradeSkillPatches(
         continue;
       }
       if (modifier.kind === 'patchPassiveBlackboard') continue;
-      if (modifier.kind === 'multiplyEffectDuration') {
-        patched = multiplyEffectDuration(patched, modifier, path);
-        continue;
-      }
-      if (modifier.kind === 'setEffectiveness') {
-        patched = setEffectiveness(patched, modifier, path);
-        continue;
-      }
       if (modifier.kind === 'addSkillStat') {
         patched = addSkillStat(patched, modifier, path);
         continue;

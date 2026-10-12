@@ -1,3 +1,4 @@
+import { TargetContextOperationExecutor } from '../../../../src/core/combat/abilities/targetContextOperationExecutor.ts';
 import { extractDefinitionDataNodes } from '../../src/compiler/extractGraphDataNodes.ts';
 import { skillFixture } from '../../../../src/test/skillFixture';
 /** 跨定义的实体黑板用途汇总；全部夹具为图形态，序列入口与节点表成对给出。 */
@@ -35,7 +36,10 @@ import {
   type GraphSharedEntityValueUsageInput,
 } from '../../src/compiler/optimization/graphValueOptimization.ts';
 import { pruneUnusedGraphSkillValues } from '../../src/compiler/optimization/graphValueOptimization.ts';
-import { finalizeOperatorDefinition } from '../../src/compiler/finalizeDefinitions.ts';
+import {
+  finalizeDefinitionResources,
+  finalizeOperatorDefinition,
+} from '../../src/compiler/finalizeDefinitions.ts';
 
 const board = (key: string) => ({ kind: 'blackboard' as const, key });
 const childSkillRuntime = {
@@ -49,8 +53,13 @@ const childSkillRuntime = {
   },
 } as const;
 const spend = (key: string): ActionGraphStep => ({
-  kind: 'changeResourceByActionValue',
-  parameters: { resource: 'sp', recipient: 'team', amount: board(key) },
+  kind: 'changeResource',
+  parameters: {
+    resource: 'sp',
+    source: { kind: 'owner' },
+    targets: { kind: 'owner' },
+    amount: board(key),
+  },
 });
 const assign = (key: string, value: number): ActionGraphStep => ({
   kind: 'modifyActionValue',
@@ -116,6 +125,7 @@ const spawn = (
 ): CombatStepForKind<'spawnAbilityEntity'> => ({
   kind: 'spawnAbilityEntity',
   parameters: {
+    bornAt: { kind: 'owner' as const },
     abilityEntityId: id,
     dieWhenSourceDies: false,
     inheritActionBlackboard: true,
@@ -124,7 +134,7 @@ const spawn = (
 });
 const callback = (body: GraphSequenceSource): CombatStepForKind<'launchProjectile'> => ({
   kind: 'launchProjectile',
-  parameters: { finish: 1, recycleDelaySeconds: 1 },
+  parameters: { inheritActionBlackboard: true, finish: 1, recycleDelaySeconds: 1 },
   callbacks: [
     {
       event: 'finish',
@@ -184,6 +194,7 @@ const queryEntityValue = (key: string): GraphSequenceSource =>
     {
       kind: 'findOwnerSpawnedAbilityEntities',
       parameters: {
+        owner: { kind: 'source' },
         saveToContextKey: 'found',
         circularOrder: { indexBlackboardKey: key, desiredCount: 1, reverseFlag: 1 },
       },
@@ -191,6 +202,49 @@ const queryEntityValue = (key: string): GraphSequenceSource =>
   ]);
 
 describe('实体用途分阶段收集', () => {
+  it('Buff 自有变量不保护其他实体的同名键，实体写入和外部读取仍保留', () => {
+    const collector = createGraphSharedEntityValueUsageCollector({});
+    const graph = program([
+      spend('local'),
+      spend('fallback'),
+      assign('EntityBB_shared', 1),
+      {
+        kind: 'readBuffBlackboard',
+        parameters: {
+          target: 'buffOwner',
+          query: { kind: 'id', buffIds: ['other'] },
+          desiredKey: 'local',
+          outputKey: 'result',
+        },
+      },
+    ]);
+    collector.addBuffDefinitions({
+      buff: {
+        stackingType: 'unlimited',
+        blackboard: { local: 0, result: 0, EntityBB_shared: 0 },
+        actionGraph: { main: graph.graph, macros: {} },
+        lifecycleSequences: { trigger: [graph.entry] },
+      },
+    });
+    const result = collector.finish();
+    expect(result.fallbackKeys).toEqual(new Set(['fallback', 'EntityBB_shared']));
+    expect(result.externalReads).toHaveLength(1);
+    expect(result.externalReads[0]?.key).toBe('local');
+  });
+
+  it('时间线跳转仍收集条件中的实体变量，不把控制效果误报成未知变量访问', () => {
+    const nodes: Record<string, ActionGraphNode> = {};
+    const condition = chain(nodes, 'condition', [queryEntityValueStep('jumpCondition')]);
+    const entry = chain(nodes, 'jump', [
+      { kind: 'jumpTimeline', parameters: { destinationFrame: 0 }, condition },
+    ]);
+    const collector = createGraphSharedEntityValueUsageCollector({});
+    collector.addSequence({ graph: { nodes }, entry });
+    const usage = collector.finish();
+    expect(usage.externalReads.map(read => read.key)).toContain('jumpCondition');
+    expect(usage.unknownAccess).toBe(false);
+  });
+
   it('按域合并摘要，再逐人收集，与一次性收集的全部用途一致', () => {
     const source = input({
       operators: [fixtureOperator(skill([queryEntityValueStep('operator')], {}), {})],
@@ -275,19 +329,57 @@ describe('实体用途分阶段收集', () => {
     collector.addBuffDefinitions(source.commonBuffDefinitions);
     const result = collector.finish();
     expect(result).toEqual(collectGraphSharedEntityValueUsage(source));
-    expect(result.reads).toEqual(
-      new Set([
-        'operator',
-        'commonBuff',
-        'commonEntity',
-        'weapon',
-        'gearSet',
-        'mechanicBuff',
-        'mechanicSequence',
-      ]),
+    expect(result.fallbackKeys).toEqual(new Set(['commonBuff', 'mechanicBuff']));
+    expect(new Set(result.externalReads.map(read => read.key))).toEqual(
+      new Set(['operator', 'commonEntity', 'weapon', 'gearSet', 'mechanicSequence']),
     );
     expect(result.unknownAccess).toBe(false);
     expect(result.commonAbilityEntityDefinitions).toBe(source.commonAbilityEntityDefinitions);
+  });
+
+  it('跨阶段保留 Buff 查询身份，不把同名键误认为当前板或另一 Buff 的读取', () => {
+    const catalog = {};
+    const first = createGraphSharedEntityValueUsageCollector(catalog);
+    first.addSequence(
+      program(
+        ['first', 'second'].map(buffId => ({
+          kind: 'readBuffBlackboard',
+          parameters: {
+            target: 'buffOwner',
+            query: { kind: 'id', buffIds: [buffId] },
+            desiredKey: 'count',
+            outputKey: 'local',
+          },
+        })),
+      ),
+    );
+    const second = createGraphSharedEntityValueUsageCollector(catalog);
+    second.addUsage(first.finish());
+    second.addSequence(
+      program([
+        {
+          kind: 'readEventBuffBlackboard',
+          parameters: { desiredKey: 'count', outputKey: 'local' },
+        },
+      ]),
+    );
+    const result = second.finish();
+    expect(result.fallbackKeys.size).toBe(0);
+    expect(result.externalReads).toEqual([
+      {
+        kind: 'buff',
+        target: 'buffOwner',
+        query: { kind: 'id', buffIds: ['first'] },
+        key: 'count',
+      },
+      {
+        kind: 'buff',
+        target: 'buffOwner',
+        query: { kind: 'id', buffIds: ['second'] },
+        key: 'count',
+      },
+      { kind: 'eventBuff', key: 'count' },
+    ]);
   });
 
   it('后加入来源或摘要中的未知访问仍阻止裁剪，不能被前一阶段的已知摘要掩盖', () => {
@@ -310,7 +402,7 @@ describe('实体用途分阶段收集', () => {
       addUnknown(collector);
       const result = collector.finish();
       expect(result.unknownAccess).toBe(true);
-      expect(result.reads).toEqual(new Set(['known']));
+      expect(result.externalReads.map(read => read.key)).toEqual(['known']);
       const value = skill([spawn('entity', { lifetime: { kind: 'infinite' } })], {
         known: 7,
         unused: 99,
@@ -336,7 +428,7 @@ describe('实体用途分阶段收集', () => {
     expect(() =>
       collector.addUsage(createGraphSharedEntityValueUsageCollector(catalog).finish()),
     ).toThrow('already finished');
-    expect(result.reads).toEqual(new Set(['before']));
+    expect(result.externalReads.map(read => read.key)).toEqual(['before']);
   });
 });
 
@@ -345,6 +437,7 @@ function queryEntityValueStep(key: string): ActionGraphStep {
   return {
     kind: 'findOwnerSpawnedAbilityEntities',
     parameters: {
+      owner: { kind: 'source' },
       saveToContextKey: 'found',
       circularOrder: { indexBlackboardKey: key, desiredCount: 1, reverseFlag: 1 },
     },
@@ -356,8 +449,12 @@ function executeEntitySkill(value: SkillDefinition) {
   const amounts: number[] = [];
   const actionOperations = new ActionBlackboardOperationExecutor({
     execute(step, context) {
-      if (step.kind === 'changeResourceByActionValue')
-        amounts.push(resolveActionValueOperand(step.parameters.amount, context!.blackboard));
+      if (step.kind === 'changeResource')
+        amounts.push(
+          typeof step.parameters.amount === 'number'
+            ? step.parameters.amount
+            : resolveActionValueOperand(step.parameters.amount, context!.blackboard),
+        );
       return true;
     },
     evaluate: () => true,
@@ -367,7 +464,7 @@ function executeEntitySkill(value: SkillDefinition) {
   const operations: AbilityEntityOperationExecutor = new AbilityEntityOperationExecutor(
     'fixture',
     entities,
-    actionOperations,
+    new TargetContextOperationExecutor('fixture', actionOperations),
     {
       resolveOperations: () => operations,
       createCallbackSkillHost: createCallbackSkillHostFactory({
@@ -386,7 +483,11 @@ function executeEntitySkill(value: SkillDefinition) {
       ]),
     ),
   );
-  const runtime = new CombatActionSequenceRuntime(operations, { blackboard });
+  const runtime = new CombatActionSequenceRuntime(operations, {
+    blackboard,
+    actionOwnerId: 'fixture',
+    actionSourceId: 'fixture',
+  });
   for (const item of value.scheduledSequences)
     runtime
       .createSequence(compileGraphSequence(item.sequence, value.actionGraph))
@@ -401,16 +502,18 @@ describe('跨技能黑板用途', () => {
       unused: 99,
     });
     const result = pruneUnusedGraphSkillValues(value);
-    // 当前因图版裁剪把投射物回调内容一律标为未知访问（不分析回调资源图）而保留整板，
-    // 已记录为生产缺陷；树版会分析回调体并正确裁剪 unused。
     expect(result.skill.blackboard).toEqual({ value: 7.000001 });
     expect(result.report.retainedReason).toBeUndefined();
     const run = (source: SkillDefinition) => {
       const amounts: number[] = [];
       const operations = new ActionBlackboardOperationExecutor({
         execute(step, context) {
-          if (step.kind === 'changeResourceByActionValue')
-            amounts.push(resolveActionValueOperand(step.parameters.amount, context!.blackboard));
+          if (step.kind === 'changeResource')
+            amounts.push(
+              typeof step.parameters.amount === 'number'
+                ? step.parameters.amount
+                : resolveActionValueOperand(step.parameters.amount, context!.blackboard),
+            );
           return true;
         },
         evaluate: () => true,
@@ -596,7 +699,7 @@ describe('跨技能黑板用途', () => {
     const query: CombatStepForKind<'findOwnerSpawnedAbilityEntities'> = {
       kind: 'findOwnerSpawnedAbilityEntities',
       parameters: {
-        ownerContextKey: 'owner',
+        owner: { kind: 'context', key: 'owner' },
         saveToContextKey: 'found',
         circularOrder: { indexBlackboardKey: 'slot', desiredCount: 3, reverseFlag: 1 },
       },
@@ -616,11 +719,17 @@ describe('跨技能黑板用途', () => {
     expect(pruned.blackboard).toEqual({ slot: 2 });
     const run = (source: SkillDefinition) => {
       const entities = new LogicalAbilityEntityRuntime({});
-      const executor = new AbilityEntityOperationExecutor('caster', entities, {
-        execute: () => true,
-        evaluate: () => true,
-      });
+      const executor = new AbilityEntityOperationExecutor(
+        'caster',
+        entities,
+        new TargetContextOperationExecutor('caster', {
+          execute: () => true,
+          evaluate: () => true,
+        }),
+      );
       const runtime = new CombatActionSequenceRuntime(executor, {
+        actionOwnerId: 'caster',
+        actionSourceId: 'caster',
         blackboard: new ActionBlackboard(
           Object.fromEntries(
             Object.entries(source.blackboard ?? {}).map(([key, item]) => [
@@ -669,7 +778,7 @@ describe('跨技能黑板用途', () => {
             const mechanicProgram = program([spend('mechanic')]);
             return {
               stackingType: 'unlimited' as const,
-              lifecycleSequences: { trigger: mechanicProgram.entry },
+              lifecycleSequences: { trigger: [mechanicProgram.entry] },
               actionGraph: { main: mechanicProgram.graph, macros: {} },
             };
           })(),
@@ -679,7 +788,7 @@ describe('跨技能黑板用途', () => {
             {
               kind: 'findOwnerSpawnedAbilityEntities',
               parameters: {
-                ownerContextKey: 'ally',
+                owner: { kind: 'context', key: 'ally' },
                 saveToContextKey: 'found',
                 circularOrder: { indexBlackboardKey: remote, desiredCount: 1, reverseFlag: 1 },
               },
@@ -712,15 +821,15 @@ describe('跨技能黑板用途', () => {
         commonBuffDefinitions: {
           carrier: {
             stackingType: 'unlimited',
-            lifecycleSequences: { trigger: carrierTrigger },
+            lifecycleSequences: { trigger: [carrierTrigger] },
             actionGraph: { main: { nodes: carrierNodes }, macros: {} },
           },
         },
       }),
     );
-    // 同上回调分析缺口：回调体不被分析，unknownAccess 被保守置真、callbackRead 丢失。
     expect(collected.unknownAccess).toBe(false);
-    expect(collected.reads).toEqual(new Set(['remote', 'mechanic', 'callbackRead']));
+    expect(collected.externalReads.map(read => read.key)).toEqual(['remote']);
+    expect(collected.fallbackKeys).toEqual(new Set(['mechanic', 'callbackRead']));
     const value = skill([spawn('empty', { lifetime: { kind: 'infinite' } })], {
       remote: 0,
       mechanic: 1,
@@ -868,15 +977,74 @@ describe('跨技能黑板用途', () => {
     });
     const usage = collectGraphSharedEntityValueUsage(input({ operators: [operator] }));
     expect(
-      finalizeOperatorDefinition(operator, 'apply').report.skillValues[0]?.retainedReason,
+      finalizeOperatorDefinition(operator, 'apply').report.resourceValues.find(
+        item => item.resourceId === 'fixture',
+      )?.retainedReason,
     ).toBe('unresolved-blackboard-access');
     const result = finalizeOperatorDefinition(operator, 'apply', usage);
-    expect(result.report.skillValues[0]?.removedInitialKeys).toEqual(['unused']);
+    expect(
+      result.report.resourceValues.find(item => item.resourceId === 'fixture')?.removedInitialKeys,
+    ).toEqual(['unused']);
     const report = finalizeOperatorDefinition(operator, 'report', usage);
     expect(report.operator).toEqual(extractDefinitionDataNodes(operator));
-    expect(report.report.skillValues).toEqual(result.report.skillValues);
+    expect(report.report.resourceValues).toEqual(result.report.resourceValues);
     expect(finalizeOperatorDefinition(operator, 'off', usage).operator).toEqual(
       extractDefinitionDataNodes(operator),
     );
+  });
+
+  it('子技能独立裁剪无用写入，保留传给后续实体的值及实体共享变量', () => {
+    const child = {
+      ...childSkill('child', [
+        assign('unused', 2),
+        assign('forwarded', 7),
+        assign('EntityBB_shared', 9),
+        spawn('receiver'),
+      ]),
+      blackboard: { unused: 0, forwarded: 1, EntityBB_shared: 0 },
+    };
+    const operator = fixtureOperator(skill([spawn('entity')], {}), {
+      entity: {
+        lifetime: { kind: 'infinite' },
+        childSkill: child,
+        childSkills: { child },
+      },
+      receiver: {
+        lifetime: { kind: 'infinite' },
+        childSkill: childSkill('receiver', [spend('forwarded')]),
+      },
+    });
+    const usage = collectGraphSharedEntityValueUsage(input({ operators: [operator] }));
+    const result = finalizeOperatorDefinition(operator, 'apply', usage);
+    const entity = result.operator.abilityEntityDefinitions!.entity!;
+    for (const value of [entity.childSkill!, entity.childSkills!.child!]) {
+      expect(value.blackboard).toEqual({ forwarded: 1, EntityBB_shared: 0 });
+      expect(
+        Object.values(value.actionGraph.main.nodes).filter(
+          node => node.action.kind === 'modifyActionValue',
+        ),
+      ).toHaveLength(2);
+    }
+    expect(result.report.resourceValues.filter(report => report.resourceId === 'child')).toEqual([
+      expect.objectContaining({ removedInitialKeys: ['unused'] }),
+      expect.objectContaining({ removedInitialKeys: ['unused'] }),
+    ]);
+  });
+  it('嵌在动作中的投射物回调也按独立技能裁剪，不依赖干员目录入口', () => {
+    const value = skill([callback(program([assign('unused', 2), spend('value')]))], {});
+    const result = finalizeDefinitionResources(value, 'apply');
+    const launch = Object.values(result.value.actionGraph.main.nodes).find(
+      node => node.action.kind === 'launchProjectile',
+    )!.action;
+    if (launch.kind !== 'launchProjectile') throw new Error('missing projectile');
+    const child = launch.callbacks[0]!.skill;
+    expect(Object.values(child.actionGraph.main.nodes).map(node => node.action.kind)).toEqual([
+      'changeResource',
+    ]);
+    expect(child.blackboard).toEqual({ value: 1 });
+    expect(
+      result.report.resourceValues.find(item => item.resourceId === 'callback_fixture')
+        ?.removedWrites,
+    ).toEqual([expect.objectContaining({ key: 'unused' })]);
   });
 });

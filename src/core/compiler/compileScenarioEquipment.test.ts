@@ -63,7 +63,10 @@ const gearSet: GearSetDefinition = {
     main: {
       nodes: {
         init: {
-          action: { kind: 'applyBuff', parameters: { buffId: 'buff.test-set', target: 'caster' } },
+          action: {
+            kind: 'applyBuff',
+            parameters: { buffs: [{ buffId: 'buff.test-set' }], targets: { kind: 'fixed', target: 'caster' } },
+          },
           next: null,
         },
       },
@@ -188,7 +191,7 @@ describe('compileScenarioEquipment', () => {
     expect(compiled!.contributions.at(-1)).toMatchObject({
       buffDefinitions: { 'buff.test-set': { stackingType: 'unique' } },
       initializationSequence: actionSteps([
-        { kind: 'applyBuff', parameters: { buffId: 'buff.test-set' } },
+        { kind: 'applyBuff', parameters: { buffs: [{ buffId: 'buff.test-set' }] } },
       ]),
     });
   });

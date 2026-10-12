@@ -18,8 +18,6 @@ export interface CombatFramePipeline {
   >;
   readonly enemyBuffs: EnemyBuffRuntime;
   readonly enemyVitals?: (FrameRuntime & { advance?(deltaSeconds: number): void }) | null;
-  readonly enemyStatuses?: FrameRuntime;
-  readonly operatorStatuses: readonly FrameRuntime[];
   readonly comboWindows: FrameRuntime & { advance?(deltaSeconds: number): void };
   /** PlayerController 的连续闪避窗口，每帧只推进一次。 */
   readonly playerMultiDash: FrameRuntime;
@@ -69,9 +67,7 @@ export function bindCombatFramePipeline(
         else enemyVitals.advance(COMBAT_FRAME_INTERVAL * timeDilation.currentGlobalScale);
       },
     });
-  if (systems.enemyStatuses !== undefined) simulation.add(systems.enemyStatuses);
   simulation.add({ advanceFrame: () => enemyBuffs.recycleFinishedBuffs?.() });
-  for (const status of systems.operatorStatuses) simulation.add(status);
   // 本帧归零的连携窗口不能再被同帧输入消费。
   simulation.add({ advanceFrame: () => advanceGlobal(systems.comboWindows) });
   simulation.add(systems.playerMultiDash);

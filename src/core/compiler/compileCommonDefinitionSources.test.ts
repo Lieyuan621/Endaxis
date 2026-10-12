@@ -20,7 +20,9 @@ it('纯静态资源不编译空图，并拒绝没有所属图的程序入口', (
   const result = compileCommonDefinitionSources([source], programs);
   expect(result.buffDefinitions.buff?.stackingType).toBe('unlimited');
   expect(result.abilityEntityDefinitions.entity?.lifetime).toEqual({ kind: 'infinite' });
-  Reflect.set(source.buffDefinitions!.buff!, 'lifecycleSequences', { start: { $sequence: null } });
+  Reflect.set(source.buffDefinitions!.buff!, 'lifecycleSequences', {
+    start: [{ $sequence: null }],
+  });
   expect(() => compileCommonDefinitionSources([source], programs)).toThrow(
     'executable Buff requires its own action graph',
   );
@@ -33,7 +35,7 @@ it('同一来源的两个公共 Buff 使用各自完整的图', () => {
       buffDefinitions: {
         first: {
           stackingType: 'unlimited',
-          lifecycleSequences: { start: { $sequence: 'entry' } },
+          lifecycleSequences: { start: [{ $sequence: 'entry' }] },
           actionGraph: {
             main: {
               nodes: {
@@ -45,7 +47,7 @@ it('同一来源的两个公共 Buff 使用各自完整的图', () => {
         } as SkillBuffDefinition,
         second: {
           stackingType: 'unlimited',
-          lifecycleSequences: { start: { $sequence: 'entry' } },
+          lifecycleSequences: { start: [{ $sequence: 'entry' }] },
           actionGraph: {
             main: {
               nodes: {
@@ -60,8 +62,8 @@ it('同一来源的两个公共 Buff 使用各自完整的图', () => {
     },
   ];
   const compiled = compileCommonDefinitionSources(sources, new ActionGraphDefinitionRepository());
-  const first = compiled.buffDefinitions.first!.lifecycleSequences!.start!;
-  const second = compiled.buffDefinitions.second!.lifecycleSequences!.start!;
+  const first = compiled.buffDefinitions.first!.lifecycleSequences!.start![0]!;
+  const second = compiled.buffDefinitions.second!.lifecycleSequences!.start![0]!;
   expect(first.graph).not.toBe(second.graph);
   expect(first.graph.nodes.get(first.entry!)!.action).toMatchObject({ parameters: { value: 1 } });
   expect(second.graph.nodes.get(second.entry!)!.action).toMatchObject({
@@ -108,14 +110,18 @@ it('不同资源不能共享同一份图对象', () => {
 it('独立公共 Buff 通过实体目录引用另一来源的能力实体', () => {
   const buff: SkillBuffDefinition = {
     stackingType: 'unlimited',
-    lifecycleSequences: { start: { $sequence: 'spawn' } },
+    lifecycleSequences: { start: [{ $sequence: 'spawn' }] },
     actionGraph: {
       main: {
         nodes: {
           spawn: {
             action: {
               kind: 'spawnAbilityEntity',
-              parameters: { abilityEntityId: 'child', dieWhenSourceDies: false },
+              parameters: {
+                bornAt: { kind: 'owner' as const },
+                abilityEntityId: 'child',
+                dieWhenSourceDies: false,
+              },
             },
             next: null,
           },
@@ -156,7 +162,7 @@ it('独立公共 Buff 通过实体目录引用另一来源的能力实体', () =
     },
   ];
   const compiled = compileCommonDefinitionSources(sources, new ActionGraphDefinitionRepository());
-  const start = compiled.buffDefinitions.active!.lifecycleSequences!.start!;
+  const start = compiled.buffDefinitions.active!.lifecycleSequences!.start![0]!;
   expect(start.graph.abilityEntityDefinitions.child).toBe(compiled.importsForLevel(0).child);
 });
 
@@ -167,7 +173,7 @@ it('公共 Buff 和能力实体分别绑定所属图的同名节点', () => {
       buffDefinitions: {
         first: {
           stackingType: 'unlimited',
-          lifecycleSequences: { start: { $sequence: 'entry' } },
+          lifecycleSequences: { start: [{ $sequence: 'entry' }] },
           actionGraph: {
             main: {
               nodes: {
@@ -179,14 +185,18 @@ it('公共 Buff 和能力实体分别绑定所属图的同名节点', () => {
         },
         secondBuff: {
           stackingType: 'unlimited',
-          lifecycleSequences: { start: { $sequence: 'spawn' } },
+          lifecycleSequences: { start: [{ $sequence: 'spawn' }] },
           actionGraph: {
             main: {
               nodes: {
                 spawn: {
                   action: {
                     kind: 'spawnAbilityEntity',
-                    parameters: { abilityEntityId: 'second', dieWhenSourceDies: false },
+                    parameters: {
+                      bornAt: { kind: 'owner' as const },
+                      abilityEntityId: 'second',
+                      dieWhenSourceDies: false,
+                    },
                   },
                   next: null,
                 },
@@ -227,7 +237,7 @@ it('公共 Buff 和能力实体分别绑定所属图的同名节点', () => {
     },
   ];
   const compiled = compileCommonDefinitionSources(sources, new ActionGraphDefinitionRepository());
-  const buffEntry = compiled.buffDefinitions.first!.lifecycleSequences!.start!;
+  const buffEntry = compiled.buffDefinitions.first!.lifecycleSequences!.start![0]!;
   const entityEntry = compiled.importsForLevel(0).second!.childSkill!.timelineActions[0]!.sequence;
   expect(buffEntry.graph).not.toBe(entityEntry.graph);
   expect(buffEntry.graph.nodes.get(buffEntry.entry!)!.action).toMatchObject({
@@ -236,7 +246,7 @@ it('公共 Buff 和能力实体分别绑定所属图的同名节点', () => {
   expect(entityEntry.graph.nodes.get(entityEntry.entry!)!.action).toMatchObject({
     parameters: { value: 2 },
   });
-  const spawnEntry = compiled.buffDefinitions.secondBuff!.lifecycleSequences!.start!;
+  const spawnEntry = compiled.buffDefinitions.secondBuff!.lifecycleSequences!.start![0]!;
   expect(spawnEntry.graph.abilityEntityDefinitions.second).toBe(compiled.importsForLevel(0).second);
   expect(compiled.importsForLevel(0)).toBe(compiled.importsForLevel(0));
 });
@@ -265,7 +275,11 @@ it('能力实体模板按实际可达节点导入其他来源的实体', () => {
                   entry: {
                     action: {
                       kind: 'spawnAbilityEntity',
-                      parameters: { abilityEntityId: 'second', dieWhenSourceDies: false },
+                      parameters: {
+                        bornAt: { kind: 'owner' as const },
+                        abilityEntityId: 'second',
+                        dieWhenSourceDies: false,
+                      },
                     },
                     next: null,
                   },
@@ -338,7 +352,11 @@ it('跨来源能力实体循环引用仍保留各自图和对象身份', () => {
               entry: {
                 action: {
                   kind: 'spawnAbilityEntity',
-                  parameters: { abilityEntityId: next, dieWhenSourceDies: false },
+                  parameters: {
+                    bornAt: { kind: 'owner' as const },
+                    abilityEntityId: next,
+                    dieWhenSourceDies: false,
+                  },
                 },
                 next: null,
               },
@@ -382,7 +400,11 @@ it('无来源总图时，独立实体跨来源互相引用并保持局部节点�
               entry: {
                 action: {
                   kind: 'spawnAbilityEntity',
-                  parameters: { abilityEntityId: next, dieWhenSourceDies: false },
+                  parameters: {
+                    bornAt: { kind: 'owner' as const },
+                    abilityEntityId: next,
+                    dieWhenSourceDies: false,
+                  },
                 },
                 next: null,
               },

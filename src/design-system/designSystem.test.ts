@@ -1,11 +1,12 @@
-import { createSSRApp, h, type Component } from 'vue';
-import { renderToString } from 'vue/server-renderer';
+import type * as ElementPlus from 'element-plus';
 import { ID_INJECTION_KEY, ZINDEX_INJECTION_KEY } from 'element-plus';
 import { expect, test, vi } from 'vitest';
+import { createSSRApp, h, type Component } from 'vue';
+import { renderToString } from 'vue/server-renderer';
 
 // 浮层只替换容器，用于验证适配器传入的交互状态。
 vi.mock('element-plus', async importOriginal => {
-  const original = await importOriginal<typeof import('element-plus')>();
+  const original = await importOriginal<typeof ElementPlus>();
   const { defineComponent, h } = await import('vue');
   const surface = defineComponent({
     inheritAttrs: false,

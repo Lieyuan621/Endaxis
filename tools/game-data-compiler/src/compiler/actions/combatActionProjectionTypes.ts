@@ -1,15 +1,21 @@
+import type { ActionGraphReference } from '../../../../../packages/game-data-contract/src/actionGraph.ts';
 import type {
-  CombatStepKind,
-  CombatStepParameters,
+  NativeSkillType,
+  SkillCastResourceDefinition,
+} from '../../../../../packages/game-data-contract/src/index.ts';
+import type { AbilityEntityTargetQuery } from '../../../../../packages/game-data-contract/src/skills.ts';
+import { COMPILED_BUFF_TARGET_KINDS } from '../buffs/compiledBuffMetadata.ts';
+import type {
+  ActionGraphResourceCall,
+  ActionGraphResourceDefinition,
   ActionSwitchOptionDefinition,
-  CombatEventResponseDefinition,
-} from '../intermediateDefinitions.ts';
-import type {
   ActionValueOperand,
   CombatCondition,
+  CombatEventResponseDefinition,
+  CombatStepKind,
+  CombatStepParameters,
   TimeScaleCurveDefinition,
 } from '../intermediateDefinitions.ts';
-import type { AbilityEntityTargetQuery } from '../../../../../packages/game-data-contract/src/skills.ts';
 
 /**
  * 公共动作投影的输出子集，不是第二套游戏 schema。
@@ -41,9 +47,10 @@ type MarkerTarget =
 
 export type CompiledBuffConditionSource =
   | Condition<'constant'>
+  | Condition<'skillHasHit'>
+  | Condition<'comboCameraAlphaSetting'>
   | Condition<'globalCooldownPresent'>
   | Condition<'casterComboPending'>
-  | Condition<'eventComboRingQteSucceeded'>
   | Condition<
       | 'casterControlled'
       | 'characterTypeIn'
@@ -52,7 +59,7 @@ export type CompiledBuffConditionSource =
       | 'deckAttributeCompare'
       | 'eventInflictionElementIn'
       | 'eventCustomAbilityNameMatch'
-      | 'contextTargetCountCompare'
+      | 'entityCountCompare'
       | 'contextTargetObjectTypeMatch'
       | 'actionInputTargetObjectTypeMatch'
       | 'actionInputTargetIdentityMatch'
@@ -62,24 +69,26 @@ export type CompiledBuffConditionSource =
       | 'contextTargetBuffIdStackCompare'
       | 'abilityEntityRemainingDurationCompare'
       | 'actionValueCompare'
+      | 'stringEquals'
       | 'eventOverheal'
       | 'eventSkillCastMatchesBuffSource'
       | 'eventSkillIdIn'
       | 'eventBuffIdMatch'
-      | 'eventSourceTargetMatch'
       | 'eventSourceMatchesBuffSource'
-      | 'eventSourceControlled'
+      | 'eventSourceMatchesBuffSourceEntitySource'
       | 'buffSourceMatchesOwner'
       | 'ownerSpawnedAbilityEntityPresent'
-      | 'eventActionOwnerTargetMatch'
       | 'eventPhysicalInflictionTypeIn'
       | 'eventDamageTypeIn'
       | 'eventHealTagsMatch'
       | 'eventConsumedBuffLayerCompare'
-      | 'contextTargetContains'
+      | 'targetContains'
       | 'eventBuffTagsMatch'
       | 'eventTargetBuffCountCompare'
       | 'enemySuperArmorCompare'
+      | 'twoDirectionAngleCompare'
+      | 'targetFacingAngle'
+      | 'targetDistance'
       | 'enemyRankIn'
       | 'targetStaggered'
       | 'probability'
@@ -94,6 +103,7 @@ export type CompiledBuffConditionSource =
   | Condition<'eventDamageTagsMatch' | 'eventDamageGameplayTagsMatch' | 'eventDamageFeaturesMatch'>
   | Condition<'eventSpGainMatch'>
   | Condition<'skillDamageTypeIn'>
+  | Condition<'skillInterruptReasonIn'>
   | (Condition<'eventSkillTypeIn'> & {
       readonly skillTypes: readonly (
         'basicAttack' | 'plungingAttack' | 'battleSkill' | 'comboSkill' | 'ultimate'
@@ -151,29 +161,6 @@ type EntityTimeDilation = Omit<
 };
 
 type ContextTargetSource = Parameters<'mergeContextTargets'>['sources'][number];
-type BuffApplicationParameters = Omit<
-  Parameters<'applyBuff'>,
-  'definition' | 'durationSeconds' | 'effectiveness' | 'target' | 'source'
-> & {
-  readonly target:
-    | 'caster'
-    | 'actionInputTarget'
-    | 'enemy'
-    | 'currentAbilityEntity'
-    | 'eventTarget'
-    | 'eventSource'
-    | 'buffOwner'
-    | 'buffSource'
-    | 'controlledOperator'
-    | 'party'
-    | 'partyExceptCaster'
-    | 'partyExceptCasterAndSameCharacterType'
-    | 'casterAndControlledOperator'
-    | 'casterAndLowestHealthRatioOperatorExceptCaster'
-    | 'currentTarget';
-  readonly source?: 'enemy' | 'eventSource' | 'buffSource' | 'buffOwner' | 'currentAbilityEntity';
-};
-
 type DamageParameters = Pick<
   Parameters<'dealDamage'>,
   | 'damageType'
@@ -264,18 +251,25 @@ type HealParameters = (
   );
 
 export type CompiledBuffStepSource =
-  | import('../intermediateDefinitions.ts').ActionGraphResourceCall
-  | Step<'applyKnockDown'>
+  | Step<'checkCondition'>
+  | Step<'invertNextResult'>
+  | (Step<'anyCondition'> & { readonly conditions: readonly CompiledBuffSequenceSource[] })
+  | (Step<'ifElse'> & {
+      readonly condition: CompiledBuffSequenceSource;
+      readonly whenTrue: CompiledBuffSequenceSource;
+      readonly whenFalse: CompiledBuffSequenceSource;
+    })
+  | ActionGraphResourceCall
   | Step<'applyPhysicalInfliction'>
   | Step<'findCharacterTeamTargets'>
-  | Step<'findUnfinishedProjectileTargets'>
   | Step<'createSpatialPointTargets'>
   | Step<'pickContextTarget'>
   | Step<'igniteBuffs'>
   | Step<'triggerSpellBurst'>
   | Step<'triggerCustomAbilityEvent'>
   | Step<'openComboWindow'>
-  | Step<'showComboRingQte'>
+  | (Step<'playAnimation'> & { readonly onEnd: CompiledBuffSequenceSource })
+  | (Step<'showComboRingQte'> & { readonly triggeredAction: CompiledBuffSequenceSource })
   | Step<'castSkillDuringAction'>
   | Step<'changeSkillSlot'>
   | Step<'overrideBasicAttackMapping'>
@@ -294,28 +288,12 @@ export type CompiledBuffStepSource =
         readonly ignoredTargets: readonly [];
       }
     >
-  | (Step<
-      'withActionBlackboardScope',
-      Pick<
-        Parameters<'withActionBlackboardScope'>,
-        'scopeKey' | 'alwaysNext' | 'inheritParent' | 'shareParentBlackboard'
-      > & {
-        readonly lifetime: 'execution';
-        readonly initialValues: Readonly<Record<string, number>>;
-        readonly entityInitialValues?: Readonly<Record<string, number>>;
-        readonly entityAssignments?: Readonly<Record<string, CompiledActionValueOperandSource>>;
-      }
-    > & { readonly body: CompiledBuffSequenceSource })
-  | Step<
-      'findOwnerSpawnedAbilityEntities',
-      Pick<
-        Parameters<'findOwnerSpawnedAbilityEntities'>,
-        'saveToContextKey' | 'sameSourceSkillCast' | 'maxTargets' | 'abilityEntityIds'
-      >
-    >
+  | Step<'findOwnerSpawnedAbilityEntities', Parameters<'findOwnerSpawnedAbilityEntities'>>
   | Step<
       'spawnAbilityEntity',
-      Required<Pick<Parameters<'spawnAbilityEntity'>, 'abilityEntityId' | 'dieWhenSourceDies'>> &
+      Required<
+        Pick<Parameters<'spawnAbilityEntity'>, 'abilityEntityId' | 'dieWhenSourceDies' | 'bornAt'>
+      > &
         Pick<
           Parameters<'spawnAbilityEntity'>,
           | 'childSkillId'
@@ -329,18 +307,13 @@ export type CompiledBuffStepSource =
         >
     >
   | Step<'setAbilityEntityRemainingDuration'>
-  | Step<'finishCurrentAbilityEntity'>
-  | Step<'finishActionOwnerAbilityEntity'>
-  | Step<
-      'jumpTimeline',
-      Pick<Parameters<'jumpTimeline'>, 'destinationFrame'> & {
-        readonly condition?: CompiledBuffConditionSource;
-      }
-    >
-  | Step<'finishTimeline'>
+  | Step<'finishOwner'>
+  | Step<'interruptCurrentSkill'>
+  | (Step<'jumpTimeline'> & { readonly condition: CompiledBuffSequenceSource })
   | Step<'reachSkillOperableBoundary'>
   | Step<'markCurrentSkillCanDash'>
   | Step<'markCurrentSkillCanInterrupt'>
+  | Step<'storeCharacterTypeId'>
   | Step<'storeCurrentTimelineFrame'>
   | Step<'storeEventSpGainAmount'>
   | Step<
@@ -357,16 +330,15 @@ export type CompiledBuffStepSource =
     >
   | (Step<'forEachContextTarget'> & { readonly body: CompiledBuffSequenceSource })
   | (Step<'repeatEachTick'> & { readonly body: CompiledBuffSequenceSource })
-  | (Step<'repeatByActionValue'> & { readonly body: CompiledBuffSequenceSource })
   | (Step<'launchProjectile'> & {
       readonly callbacks: readonly {
         readonly event: 'hit' | 'block' | 'reach' | 'finish';
         readonly skill: {
-          readonly actionGraph: import('../intermediateDefinitions.ts').ActionGraphResourceDefinition;
+          readonly actionGraph: ActionGraphResourceDefinition;
           readonly skillId: string;
-          readonly nativeSkillType: import('../../../../../packages/game-data-contract/src/index.ts').NativeSkillType;
+          readonly nativeSkillType: NativeSkillType;
           readonly naturalDurationFrames: number;
-          readonly castResource: import('../../../../../packages/game-data-contract/src/index.ts').SkillCastResourceDefinition;
+          readonly castResource: SkillCastResourceDefinition;
           readonly blackboard: Readonly<Record<string, number>>;
           readonly scheduledSequences: readonly {
             readonly startFrame: number;
@@ -382,27 +354,44 @@ export type CompiledBuffStepSource =
         readonly sequence: CompiledBuffSequenceSource;
       })[];
     })
+  | Step<'saveTwoDirectionAngle'>
+  | Step<'copyContextTargets'>
+  | Step<'findTargets'>
   | Step<
       'mergeContextTargets',
       Pick<Parameters<'mergeContextTargets'>, 'saveToContextKey'> & {
         readonly sources: readonly ContextTargetSource[];
       }
     >
-  | Step<'applyBuff', BuffApplicationParameters>
+  | (Step<
+      'aura',
+      Parameters<'aura'> & {
+        readonly [COMPILED_BUFF_TARGET_KINDS]?: {
+          readonly target: string;
+          readonly source?: string;
+        };
+      }
+    > & {
+      readonly onEnter: CompiledBuffSequenceSource;
+      readonly onExit: CompiledBuffSequenceSource;
+    })
+  | Step<
+      'applyBuff',
+      Parameters<'applyBuff'> & {
+        readonly [COMPILED_BUFF_TARGET_KINDS]?: {
+          readonly target: string;
+          readonly source?: string;
+        };
+      }
+    >
   | Step<'createGlobalBuff'>
   | Step<'finishParentGlobalBuff'>
   | Step<'finishGlobalBuffsById'>
   | Step<'readSkillSettingData'>
   | Step<'triggerCharacterInflictionEvent'>
-  | Step<'limitMovementGait'>
   | Step<'applyCharacterInfliction'>
   | Step<'applyElementalInfliction'>
-  | Step<
-      'applyElementalReaction',
-      Omit<Parameters<'applyElementalReaction'>, 'durationSeconds'> & {
-        readonly durationSeconds: CompiledActionValueOperandSource;
-      }
-    >
+  | Step<'forceSpellStatus'>
   | (Step<
       'conditional',
       Pick<Parameters<'conditional'>, 'alwaysNext'> & {
@@ -435,14 +424,13 @@ export type CompiledBuffStepSource =
   | Step<'storeEventHealValues'>
   | Step<'storeShieldValue'>
   | Step<'calculateActionValue'>
-  | Step<'readCurrentBuffRemainingDuration'>
   | Step<'readBuffRemainingDuration'>
   | Step<'setBuffRemainingDuration'>
   | Step<'setCurrentBuffRemainingDuration'>
   | Step<'refreshCurrentBuffAttributeModifiers'>
   | Step<
-      'changeResourceByActionValue',
-      Parameters<'changeResourceByActionValue'> & {
+      'changeResource',
+      Parameters<'changeResource'> & {
         readonly coefficient: CompiledActionValueOperandSource;
       }
     >
@@ -462,28 +450,13 @@ export type CompiledBuffStepSource =
   | CompiledSimpleDamageOperationSource
   | CompiledSimplePoiseOperationSource
   | Step<'heal', HealParameters>
-  | Step<
-      'finishBuffsById',
-      Parameters<'finishBuffsById'> & {
-        readonly target:
-          | 'buffOwner'
-          | 'buffSource'
-          | 'caster'
-          | 'enemy'
-          | 'currentAbilityEntity'
-          | 'currentTarget'
-          | 'party'
-          | 'partyExceptCaster';
-        readonly reason: 'early' | 'absorbed' | 'other';
-      }
-    >
+  | Step<'finishBuffsById'>
+  | Step<'dispelBuffs'>
   | Step<'finishBuffsByTag'>
-  | Step<'createTimedMarker', Parameters<'createTimedMarker'> & { readonly target: MarkerTarget }>
+  | Step<'createTimedMarker'>
   | Step<'setGlobalCooldown'>
-  | Step<'createAbilityEntityTimedMarker'>
   | Step<'finishCurrentBuff'>
   | Step<'skillAffix'>
   | Step<'setCurrentBuffTimePaused'>;
 
-export type CompiledBuffSequenceSource =
-  import('../../../../../packages/game-data-contract/src/actionGraph.ts').ActionGraphReference;
+export type CompiledBuffSequenceSource = ActionGraphReference;
