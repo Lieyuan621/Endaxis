@@ -5,11 +5,7 @@ import {
   projectEnemyEffectViz,
   projectBuffDamageDisplayOwners,
 } from '../../../core/projection/enemyEffectViz';
-import {
-  findBuffDamageSegment,
-  groupEnemyBuffDamageHits,
-  selectEnemyBuffDamageEntries,
-} from './enemyBuffDamageHits';
+import { findBuffDamageSegment, groupEnemyBuffDamageHits } from './enemyBuffDamageHits';
 
 const hit = (sequence = 1): CombatReceiptEntry => ({
   sequence,
@@ -79,15 +75,13 @@ it('实体伤害按实例归到承载 Buff，结束后的伤害仍归属原段',
   expect(groupEnemyBuffDamageHits(entries, [segment], owners)).toEqual([[damage]]);
 });
 
-it('retains actual damage only and opens each receipt without counting the audit twice', () => {
+it('groups actual damage without counting audit receipts twice', () => {
   const a = hit(),
     b = hit(2),
     audit = { ...hit(3), event: 'BuffDamageApplied' };
   const ordinary = { ...hit(4), data: { value: 9 } };
   expect(projectEnemyEffectViz([applied, a, b, audit, ordinary], 30).damageHits).toEqual([a, b]);
   expect(groupEnemyBuffDamageHits([a, b, audit, ordinary])).toEqual([[a, b]]);
-  expect(selectEnemyBuffDamageEntries([a, b], 2)).toEqual([a, b]);
-  expect(selectEnemyBuffDamageEntries([a], null)).toEqual([]);
 });
 
 it('leaves ability-entity-owned Buff damage to the source skill timeline', () => {
@@ -127,7 +121,9 @@ it('keeps hidden airborne damage and its icon without requiring a headbar row', 
   };
   const result = projectEnemyEffectViz([start, hit()], 30);
   expect(result.damageHits).toEqual([hit()]);
-  expect(findBuffDamageSegment(hit(), result.damageBuffs ?? [])?.icon).toBe('endaxis:icons/airborne');
+  expect(findBuffDamageSegment(hit(), result.damageBuffs ?? [])?.icon).toBe(
+    'endaxis:icons/airborne',
+  );
   expect(projectEnemyEffectViz([hit()], 30).damageHits).toEqual([hit()]);
 });
 

@@ -1387,7 +1387,6 @@ export class CombatRuntimeAssembly {
           projectiles: this.projectileLifetimes,
           buffs,
           operators,
-          abilityEntityRelations,
         },
         bindInputPhases: true,
         control: this.#operatorControl,

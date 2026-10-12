@@ -4,7 +4,7 @@ import {
   TimeDilationRuntime,
   advanceTimeDilation,
 } from './timeDilationRuntime';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 
 const LOW = 10;
 const HIGH = 20;
@@ -80,7 +80,7 @@ describe('TimeDilationRuntime', () => {
       curve,
     });
     runtime.advanceFrame();
-    const session = new StateStepper(runtime.runtimeState, (step, frames: number) => {
+    const session = createStateTestSession(runtime.runtimeState, (step, frames: number) => {
       const ended: string[] = [];
       for (let index = 0; index < frames; index++) {
         advanceTimeDilation(step.state, [curve], {
@@ -114,7 +114,7 @@ describe('TimeDilationRuntime', () => {
       curve,
     });
     original.advanceFrame();
-    const restoredState = new StateStepper(original.runtimeState, () => undefined).read();
+    const restoredState = createStateTestSession(original.runtimeState, () => undefined).read();
     const events: string[] = [];
 
     const restored = new TimeDilationRuntime(
@@ -140,7 +140,7 @@ describe('TimeDilationRuntime', () => {
       priority: LOW,
       curve: () => 0.5,
     });
-    const restoredState = new StateStepper(original.runtimeState, () => undefined).read();
+    const restoredState = createStateTestSession(original.runtimeState, () => undefined).read();
 
     expect(
       () =>

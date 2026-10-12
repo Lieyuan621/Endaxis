@@ -11,7 +11,6 @@ import { GLOBAL_EFFECT_PRESETS } from '../../data/globalEffectPresets';
 import { parseProjectDocument, serializeProjectDocument } from '../../core/project/serialization';
 import { ProjectEditorSession } from './projectEditorSession';
 import { saveProjectTemplateDefinition } from './projectTemplateCommands';
-import { duplicateDefinitionRecordResource } from './definitionDraftSession';
 import { emptyDefinitionActionGraph } from '../../ui/definition-editor/definitionFieldRuntime';
 
 describe('object definition project transaction', () => {
@@ -214,12 +213,13 @@ describe('object definition project transaction', () => {
   });
   it('saves a copied owned Buff through the same formal operator validation', () => {
     const sourceId = Object.keys(perlica.buffDefinitions ?? {})[0]!;
-    const copy = duplicateDefinitionRecordResource(
-      perlica,
-      'buffDefinitions',
-      sourceId,
-      'editor_test_buff',
-    );
+    const copy = {
+      ...perlica,
+      buffDefinitions: {
+        ...perlica.buffDefinitions,
+        editor_test_buff: structuredClone(perlica.buffDefinitions![sourceId]!),
+      },
+    };
     const id = 'project:operator:perlica-with-buff';
     const saved = saveProjectTemplateDefinition(
       createEmptyProject({ createdWith: 'test' }),

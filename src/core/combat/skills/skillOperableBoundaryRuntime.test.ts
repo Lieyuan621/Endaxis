@@ -4,14 +4,14 @@ import {
   advanceSkillOperableBoundaries,
   beginSkillOperableBoundary,
 } from './skillOperableBoundaryRuntime';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 
 describe('SkillOperableBoundaryRuntime', () => {
   it('在时间膨胀中保存，恢复后可按另一倍率推进，完成登记也一起恢复', () => {
     const runtime = new SkillOperableBoundaryRuntime();
     runtime.begin('cast', 1, 0);
     runtime.advance(0.25, 1);
-    const session = new StateStepper(runtime.runtimeState, (step, delta: number) =>
+    const session = createStateTestSession(runtime.runtimeState, (step, delta: number) =>
       advanceSkillOperableBoundaries(step.state, delta, 2),
     );
     const saved = session.save();

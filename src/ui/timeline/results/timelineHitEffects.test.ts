@@ -1,18 +1,10 @@
-import { skillFixture } from '../../../test/skillFixture';
 import { describe, expect, it } from 'vitest';
 import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
-import type { ScenarioDocument } from '../../../core/project/schema';
 import { deriveHitId } from '../../../core/combat/timeline/deriveHitId';
 import {
-  projectHitEffectsByCast,
-  projectTimelineHitReceipts,
   projectTimelineHitOccurrences,
-  projectTimelineHitActualFrames,
   projectTimelineHitDetailEntries,
 } from './timelineHitEffects';
-import { projectCastGraphHitMarkers } from './timelineHitProjection';
-import { perlica } from '../../../data/operators/perlica.generated';
-import { prepareActionGraphIdentities } from '../../../../tools/game-data-compiler/src/compiler/optimization/actionGraphProjection';
 
 function baseDamage(): Record<string, number | boolean | string | null> {
   return {
@@ -83,12 +75,6 @@ it('keeps target-owned Buff receipts out of skill markers while retaining delega
       .get('cast')
       ?.map(hit => hit.hitId),
   ).toEqual(['direct', 'sword']);
-  expect(projectTimelineHitActualFrames(entries)).toEqual(
-    new Map([
-      ['direct', 30],
-      ['sword', 30],
-    ]),
-  );
   expect(
     projectTimelineHitOccurrences(entries)
       .get('cast')
@@ -160,128 +146,8 @@ it('keeps spell-burst damage exclusively under its enemy effect marker', () => {
     }),
   ]);
   expect(projectTimelineHitDetailEntries([ordinary, burst], 'cast', 'hit')).toEqual([ordinary]);
-  expect(projectTimelineHitActualFrames([burst])).toEqual(new Map());
   expect(projectTimelineHitOccurrences([burst])).toEqual(new Map());
 });
-
-function scenarioWithCast(): ScenarioDocument {
-  return {
-    id: 'scenario:hit-effects',
-    name: '命中效果',
-    tracks: [
-      {
-        id: 'track:0',
-        operator: {
-          operatorSlug: 'perlica',
-          level: 90,
-          promoted: true,
-          potential: 0,
-          trustLevel: 4,
-          skillLevels: {},
-          talentStates: {},
-        },
-        weapon: null,
-        gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
-        initialState: { ultimateEnergy: 0 },
-        skillCasts: [
-          {
-            id: 'cast:1',
-            source: {
-              kind: 'operatorSkill',
-              skillGroupKey: 'battleSkill',
-              skillKey: 'battleSkill',
-            },
-            placement: { startFrame: 30 },
-            presentation: {
-              locked: false,
-              disabled: false,
-            },
-            customDefinition: skillFixture({
-              key: 'battleSkill',
-              timelineBlockFrames: 30,
-              scheduledSequences: [
-                {
-                  startFrame: 10,
-                  sequence: { $sequence: 'step-0' },
-                },
-              ],
-              actionGraph: {
-                main: {
-                  nodes: {
-                    'step-0': {
-                      action: {
-                        kind: 'dealDamage',
-                        parameters: { damageType: 'electric', attackScale: 1, tags: [] },
-                        key: 'step:damage',
-                      },
-                      next: 'step-1',
-                    },
-                    'step-1': {
-                      action: {
-                        kind: 'dealDamage',
-                        parameters: { damageType: 'physical', attackScale: 1, tags: [] },
-                        key: 'step:secondary',
-                      },
-                      next: null,
-                    },
-                  },
-                },
-                macros: {},
-              },
-            }),
-          },
-        ],
-      },
-      null,
-      null,
-      null,
-    ],
-    connections: [],
-    enemy: {
-      source: { kind: 'custom', level: 90 },
-      rank: 'mob',
-      editable: {
-        hp: 10000,
-        defense: 100,
-        superArmor: 0,
-        finisherMultiplier: 1,
-        resistances: {},
-        stagger: {
-          maximum: 300,
-          knotThresholds: [0.5],
-          knotBreakDurationFrames: 60,
-          brokenDurationFrames: 300,
-          finisherSpRecovery: 100,
-        },
-      },
-      edited: [],
-    },
-    battle: {
-      prepFrames: 150,
-      durationFrames: 3600,
-      resourceRules: {
-        maxSp: 300,
-        initialSp: 300,
-        spRecoveryPerSecond: 10,
-      },
-      cycleBoundaries: [],
-      controlSwitches: [],
-    },
-    mechanics: { selections: [] },
-    globalConfig: {},
-    editor: { trackHeightWeights: [1, 1, 1, 1], prepExpanded: true },
-  };
-}
-
-function markersForCast(scenario: ScenarioDocument, castId: string) {
-  const cast = scenario.tracks.flatMap(track => track?.skillCasts ?? []).find(c => c.id === castId);
-  if (cast === undefined || cast.customDefinition === undefined) return [];
-  return projectCastGraphHitMarkers(
-    cast,
-    cast.customDefinition,
-    prepareActionGraphIdentities(perlica),
-  );
-}
 
 function damageEntry(
   sequence: number,
@@ -328,7 +194,7 @@ function inflictionEntry(sequence: number, frame: number): CombatReceiptEntry {
   };
 }
 
-describe('projectHitEffectsByCast', () => {
+describe('skill hit occurrences and details', () => {
   it('marks only the hit that actually received the common combo damage Buff', () => {
     const ownDamage: CombatReceiptEntry = {
       ...damageEntry(1, 60),
@@ -375,29 +241,6 @@ describe('projectHitEffectsByCast', () => {
       projectTimelineHitDetailEntries(entries, 'cast:1', hitId).map(entry => entry.sequence),
     ).toEqual([1]);
   });
-  it('keeps ability-owned hit effects when cast and hit identities match', () => {
-    const scenario = scenarioWithCast();
-    const entries = [damageEntry(1, 60), inflictionEntry(2, 60)];
-    const delegated = entries.map(entry => ({ ...entry, sourceId: 'ability-entity:7' }));
-    const markers = markersForCast(scenario, 'cast:1');
-    expect(projectHitEffectsByCast(scenario, delegated, 'cast:1', markers)).toEqual(
-      projectHitEffectsByCast(scenario, entries, 'cast:1', markers),
-    );
-    expect(projectHitEffectsByCast(scenario, delegated, 'cast:1', markers).size).toBe(1);
-    expect(projectTimelineHitDetailEntries(delegated, 'cast:1', markers[0]!.hitId)).toEqual(
-      delegated,
-    );
-  });
-  it('复用同次模拟的解析结果不改变命中归因，也不混入其他释放', () => {
-    const scenario = scenarioWithCast();
-    const entries = [damageEntry(1, 40), damageEntry(2, 41, 'step:damage', 'other')];
-    const receipts = projectTimelineHitReceipts(entries);
-    const markers = markersForCast(scenario, 'cast:1');
-    expect(projectHitEffectsByCast(scenario, entries, 'cast:1', markers, receipts)).toEqual(
-      projectHitEffectsByCast(scenario, entries, 'cast:1', markers),
-    );
-    expect(projectHitEffectsByCast(scenario, entries, 'missing', markers, receipts).size).toBe(0);
-  });
   it('selects detail receipts by stable hit identity without requiring the operator source id', () => {
     const hitId = deriveHitId('cast:1', 'step:damage');
     const damage = {
@@ -414,75 +257,5 @@ describe('projectHitEffectsByCast', () => {
         hitId,
       ).map(entry => entry.sequence),
     ).toEqual([1, 2]);
-  });
-
-  it('uses exact cast and hit identities instead of authored local-frame offsets', () => {
-    const scenario = scenarioWithCast();
-    const effects = projectHitEffectsByCast(
-      scenario,
-      [
-        damageEntry(1, 60),
-        damageEntry(2, 60, 'step:unknown'),
-        damageEntry(3, 60, 'step:damage', 'cast:other'),
-      ],
-      'cast:1',
-      markersForCast(scenario, 'cast:1'),
-    );
-
-    const hitId = deriveHitId('cast:1', 'step:damage');
-    expect(effects.get(hitId)).toEqual({
-      damage: [{ value: 100, damageType: 'physical', isCritical: false }],
-      infliction: [],
-    });
-    expect(effects.size).toBe(1);
-  });
-
-  it('projects the first actual execution frame for each stable hit identity', () => {
-    const hitId = deriveHitId('cast:1', 'step:damage');
-    expect(
-      projectTimelineHitActualFrames([
-        damageEntry(1, 60),
-        damageEntry(2, 90),
-        damageEntry(3, 70, 'step:secondary'),
-      ]),
-    ).toEqual(
-      new Map([
-        [hitId, 60],
-        [deriveHitId('cast:1', 'step:secondary'), 70],
-      ]),
-    );
-  });
-
-  it('把同帧附着归因到命中标记', () => {
-    const scenario = scenarioWithCast();
-    const effects = projectHitEffectsByCast(
-      scenario,
-      [damageEntry(1, 60), inflictionEntry(2, 60)],
-      'cast:1',
-      markersForCast(scenario, 'cast:1'),
-    );
-
-    expect(effects.get(deriveHitId('cast:1', 'step:damage'))?.infliction).toEqual([
-      { element: 'electric', outcomeKind: 'attachmentOnly', currentLayers: 1 },
-    ]);
-  });
-
-  it('无匹配事实的命中标记不出现，未知释放返回空映射', () => {
-    const scenario = scenarioWithCast();
-    const effects = projectHitEffectsByCast(
-      scenario,
-      [damageEntry(1, 999, 'step:unknown')],
-      'cast:1',
-      markersForCast(scenario, 'cast:1'),
-    );
-    expect(effects.size).toBe(0);
-    expect(
-      projectHitEffectsByCast(
-        scenario,
-        [damageEntry(1, 40)],
-        'cast:missing',
-        markersForCast(scenario, 'cast:1'),
-      ).size,
-    ).toBe(0);
   });
 });

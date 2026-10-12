@@ -2,7 +2,7 @@ import { tickChanneling } from './channelingActionExecution';
 import { createChannelingActionState } from '../state/actionState';
 /** 将重复计时与跳转进度一起恢复，检查边界、兄弟分支和同步重入。 */
 import { describe, expect, it } from 'vitest';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 import { createRepeatedActionState } from '../state/actionState';
 import { executeRepeatedAction, tickRepeatedAction } from './repeatedActionExecution';
 import { createTimelineJumpState } from '../state/actionState';
@@ -14,7 +14,7 @@ import {
 
 function createSession() {
   const parameters = { nativeTickInterval: { executeEachFrame: false, intervalSeconds: 0.07 } };
-  return new StateStepper(
+  return createStateTestSession(
     { repeat: createRepeatedActionState(), jump: createTimelineJumpState(), hits: 0, jumps: 0 },
     (step, input: { start?: boolean; delta: number; allowed: boolean }) => {
       const state = step.state;
@@ -82,7 +82,7 @@ describe('action progress branches', () => {
       maxCountPerTarget: 2,
       targetTriggerIntervalSeconds: 0.25,
     };
-    const session = new StateStepper(
+    const session = createStateTestSession(
       { progress: createChannelingActionState(), hits: 0 },
       (step, delta: number | null) => {
         const state = step.state;

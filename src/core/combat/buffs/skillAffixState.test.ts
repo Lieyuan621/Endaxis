@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 import { createSkillAffixState } from '../state/instanceState';
 import {
   prepareSkillAffixRequest,
@@ -14,7 +14,7 @@ describe('SkillAffix 分支', () => {
     prepareSkillAffixRequest(initial, 42);
     expect(initial.references).toBe(2);
     expect(releaseSkillAffixReference(initial)).toBe(false);
-    const session = new StateStepper(initial, (step, input: number | 'end') => {
+    const session = createStateTestSession(initial, (step, input: number | 'end') => {
       if (input === 'end') return releaseSkillAffixReference(step.state);
       return startSkillAffixCast(step.state, input) && releaseSkillAffixReference(step.state);
     });

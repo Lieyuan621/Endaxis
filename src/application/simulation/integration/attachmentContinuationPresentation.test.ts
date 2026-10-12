@@ -8,10 +8,7 @@ import {
   mergeOverlappingBuffTimelineSegments,
   projectBuffTimelineViz,
 } from '../../../core/projection/buffTimelineViz';
-import {
-  projectAttachmentContinuations,
-  projectAttachmentConversionLinks,
-} from '../../../core/projection/attachmentContinuations';
+import { projectAttachmentConversionLinks } from '../../../core/projection/attachmentContinuations';
 import { projectEnemyEffectViz } from '../../../core/projection/enemyEffectViz';
 
 it.each(['repeat', 'convert', 'consume'])(
@@ -129,7 +126,6 @@ it.each(['repeat', 'convert', 'consume'])(
     expect(segments.every(segment => segment.startFrame < segment.endFrame)).toBe(true);
     expect(segments.map(segment => segment.layers)).toEqual([1, 2]);
     expect(segments[0]!.endFrame).toBe(segments[1]!.startFrame);
-    expect([...projectAttachmentContinuations(segments, ids)]).toEqual([segments[0]]);
     expect(segments.every(segment => Boolean(segment.icon))).toBe(true);
   },
 );

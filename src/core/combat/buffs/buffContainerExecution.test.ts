@@ -1,6 +1,6 @@
 /** 容器回退必须一起恢复编号、标签引用次数和添加冷却。 */
 import { expect, it } from 'vitest';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 import {
   createBuffContainerState,
   createBuffInstanceState,
@@ -16,7 +16,7 @@ it('restores tag counts, cooldown lists and allocation order', () => {
   const state = createBuffContainerState();
   addBuffEntityTags(state, ['active', 'active']);
   state.addingCooldowns.set('buff', [1, 3]);
-  const session = new StateStepper(state, (step, delta: number) => {
+  const session = createStateTestSession(state, (step, delta: number) => {
     advanceBuffAddingCooldowns(step.state, delta);
     removeBuffEntityTags(step.state, ['active']);
     return step.state.nextInstanceId++;
@@ -48,7 +48,7 @@ it('restores instance data and stacking membership after recycling a branch', ()
   state.memberIds.push(1);
   group.members.push(1);
   state.stackingGroups.set('group', group);
-  const session = new StateStepper(state, (step, recycle: boolean) => {
+  const session = createStateTestSession(state, (step, recycle: boolean) => {
     const buff = step.state.instances.get(1)!;
     buff.lifecycle.finished = true;
     if (recycle) {

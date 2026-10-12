@@ -1,5 +1,5 @@
 import { NATIVE_SKILL_TYPES, COMBAT_RESOURCES } from '../operatorDefinition';
-import { BUFF_APPLICATION_TARGETS, BUFF_APPLICATION_SOURCES } from '../operatorDefinition';
+import { BUFF_APPLICATION_SOURCES } from '../operatorDefinition';
 import { GAMEPLAY_TAG_QUERY_TYPES } from '../../../../packages/game-data-contract/src/gameplayTags';
 import { assertGameplayTag } from '../definitionGuards.ts';
 import {
@@ -313,7 +313,6 @@ export function validateGameplayTags(
   value.forEach((tag, index) => validateGameplayTag(tag, path + '[' + index + ']', out));
 }
 
-export const BUFF_APPLICATION_TARGETS_SET = new Set<string>(BUFF_APPLICATION_TARGETS);
 export const BUFF_APPLICATION_SOURCES_SET = new Set<string>(BUFF_APPLICATION_SOURCES);
 export function requireInteger(
   value: Record<string, unknown>,

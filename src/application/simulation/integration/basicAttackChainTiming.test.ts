@@ -14,7 +14,7 @@ import {
 import { ScenarioSimulationService } from '../scenarioSimulationService';
 import { resolveCompactSkillSelection } from '../../../ui/timeline/library/compactSkillSelection';
 import { SkillPlacementTransaction } from '../../../ui/timeline/interaction/skillPlacementTransaction';
-import { ScenarioEditorSession } from '../../editor/scenarioEditorSession';
+import { createScenarioEditorSession } from '../../../test/scenarioEditorSession';
 import {
   projectSkillCastActualDurationFrames,
   projectSkillCastActualStartFrames,
@@ -417,7 +417,7 @@ describe('generated basic attack chain input timing', () => {
     const authored = createChain(perlica);
     const original = structuredClone(authored);
     original.tracks[0]!.skillCasts = [];
-    const session = new ScenarioEditorSession(original);
+    const session = createScenarioEditorSession(original);
     const error = new Error('unsupported simulation data');
     const transaction = new SkillPlacementTransaction(
       {
@@ -490,7 +490,7 @@ describe('generated basic attack chain input timing', () => {
     );
     expect(selection.ok).toBe(true);
     if (!selection.ok) return;
-    const session = new ScenarioEditorSession(scenario);
+    const session = createScenarioEditorSession(scenario);
     const transaction = new SkillPlacementTransaction(service, () => session.snapshot.revision);
     const result = await transaction.resolve(
       { scenario, skillCastIds: selection.castIds },

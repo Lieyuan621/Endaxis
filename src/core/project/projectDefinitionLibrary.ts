@@ -133,24 +133,6 @@ export function deriveProjectOperatorTemplate(
   };
 }
 
-/** 新模板从同一干员派生时保留轨道构筑和已放置技能，只替换定义身份。 */
-export function switchTrackToCompatibleOperatorTemplate(
-  scenario: ScenarioDocument,
-  trackIndex: TrackIndex,
-  sourceTemplateId: string,
-  nextTemplateId: string,
-): ScenarioDocument {
-  const track = scenario.tracks[trackIndex];
-  if (track?.operator?.operatorSlug !== sourceTemplateId)
-    throw new Error(`track ${trackIndex} does not use operator '${sourceTemplateId}'`);
-  const tracks = [...scenario.tracks] as ScenarioDocument['tracks'];
-  tracks[trackIndex] = {
-    ...track,
-    operator: { ...track.operator, operatorSlug: nextTemplateId },
-  };
-  return { ...scenario, tracks };
-}
-
 /** 在项目历史边界校验并保存整个干员定义；外部传入对象不会成为可变存档引用。 */
 export function replaceProjectOperatorTemplateDefinition(
   project: EndaxisProjectDocument,

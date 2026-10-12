@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CombatResources } from './combatResources';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 import {
   pay,
   advanceInCombatSpRecovery,
@@ -44,23 +44,26 @@ describe('CombatResources', () => {
   it('同一切面的支付、回能限制和暂停恢复在各分支独立结算', () => {
     const resources = createResources();
     const handle = resources.requestUltimateEnergyRecoveryRestriction('source', new Set());
-    const session = new StateStepper(resources.runtimeState, (step, removeRestriction: boolean) => {
-      const state = step.state;
-      if (removeRestriction) revertUltimateEnergyRecoveryRestriction(state, {}, handle, false);
-      const payment = pay(state, 'source', [{ resource: 'sp', value: 20 }]);
-      const energy = gainSquadUltimateEnergyFromSkillCost(
-        state,
-        {},
-        'source',
-        payment.nonReturnedSpCost,
-        1,
-      );
-      const settings = { baseGainEfficiency: 1 };
-      const recovery = [0.5, 0.5, 1].map(
-        delta => advanceInCombatSpRecovery(state, settings, delta).actualValue,
-      );
-      return { payment, energy, recovery };
-    });
+    const session = createStateTestSession(
+      resources.runtimeState,
+      (step, removeRestriction: boolean) => {
+        const state = step.state;
+        if (removeRestriction) revertUltimateEnergyRecoveryRestriction(state, {}, handle, false);
+        const payment = pay(state, 'source', [{ resource: 'sp', value: 20 }]);
+        const energy = gainSquadUltimateEnergyFromSkillCost(
+          state,
+          {},
+          'source',
+          payment.nonReturnedSpCost,
+          1,
+        );
+        const settings = { baseGainEfficiency: 1 };
+        const recovery = [0.5, 0.5, 1].map(
+          delta => advanceInCombatSpRecovery(state, settings, delta).actualValue,
+        );
+        return { payment, energy, recovery };
+      },
+    );
     const checkpoint = session.save();
     const unrestricted = session.step(true);
     expect(unrestricted.payment.nonReturnedSpCost).toBe(10);
@@ -89,7 +92,7 @@ describe('CombatResources', () => {
     resources.pay('source', [{ resource: 'sp', value: 20 }]);
     const modifier = createSharedSpGainModifier('gainEfficiency', 'addition', 0.5, true);
     resources.sharedSpGainModifiers.add(modifier);
-    const session = new StateStepper(
+    const session = createStateTestSession(
       { resources: resources.runtimeState, modifier },
       () => undefined,
     );
@@ -113,7 +116,7 @@ describe('CombatResources', () => {
     original.sharedSpGainModifiers.add(gainModifier);
     original.sharedSpRecoveryModifiers.add(recoveryModifier);
     original.pay('source', [{ resource: 'sp', value: 20 }]);
-    const restoredState = new StateStepper(original.runtimeState, () => undefined).read();
+    const restoredState = createStateTestSession(original.runtimeState, () => undefined).read();
 
     const restored = new CombatResources(original.snapshot(), {}, restoredState);
 

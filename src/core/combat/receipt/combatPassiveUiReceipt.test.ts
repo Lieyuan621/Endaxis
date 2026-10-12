@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CombatReceiptCollector, type CombatReceiptEntry } from './combatReceipt';
 import { restoreCombatReceiptView } from './combatReceiptHistory';
-import { exportCombatReceiptJsonLines } from './combatReceiptExport';
 
 function value(frame: number, value: number, sourceId = 'source', targetId = 'target') {
   return {
@@ -71,10 +70,8 @@ describe('passive UI receipt compression', () => {
       { ...value(5, 3), sequence: 4 },
     ]);
     expect(saved.toArray()).toEqual(prefix);
-    const exported = [...exportCombatReceiptJsonLines(nested.history.snapshot(), 6)]
-      .slice(1)
-      .map(line => JSON.parse(line));
-    expect(exported).toEqual(nested.entries);
+    const restored = restoreCombatReceiptView(structuredClone(nested.entries));
+    expect(restored.toArray()).toEqual(nested.entries);
     const fresh = new CombatReceiptCollector();
     fresh.record(value(0, 0));
     expect(fresh.entries).toEqual([{ ...value(0, 0), sequence: 0 }]);
@@ -95,8 +92,5 @@ describe('passive UI receipt compression', () => {
     ];
     for (const entry of input) collector.record(entry);
     expect(collector.entries).toEqual(input.map((entry, sequence) => ({ ...entry, sequence })));
-    expect(() => [...exportCombatReceiptJsonLines(collector.history.snapshot(), 8)]).toThrow(
-      'non-finite number',
-    );
   });
 });

@@ -2,7 +2,7 @@ import { skillFixture } from '../../test/skillFixture';
 import type { AbilityEntityDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import type { OperatorPassiveSkillDefinition } from '../../../packages/game-data-contract/src/operators.ts';
 import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
-import { resolveScenarioBuilds } from './resolveScenarioBuilds';
+import { compileTimeline } from '../../test/compileTimeline';
 
 import { ActionGraphDefinitionRepository } from './actionGraphDefinitionRepository';
 import { rootActionSteps } from './actionProgramInspection';
@@ -14,9 +14,7 @@ import { placeSkillGroup } from '../../ui/timeline/interaction/placeSkillGroup';
 import {
   compileOperatorDefinitionSkills,
   compileOperatorSkillCastPrograms,
-  compileResolvedScenarioTimeline,
   compileSkillCastPlayerInput,
-  compileScenarioTimeline,
 } from './compileScenarioTimeline';
 import type { OperatorDefinition } from '../game-data/operatorDefinition';
 import { compileOperatorComboSkillConditions } from './compileOperatorComboSkillConditions';
@@ -107,7 +105,7 @@ function requireSingleSkill(skillGroupKey: string): SkillDefinition {
   return skills as SkillDefinition;
 }
 
-describe('compileScenarioTimeline', () => {
+describe('compileResolvedScenarioTimeline', () => {
   it('Switch 的候选伤害保留步骤 key，不预写施放 hitId', () => {
     const scenario = place(createScenario(), 'battleSkill', 0);
     const cast = scenario.tracks[0]!.skillCasts[0]!;
@@ -152,7 +150,7 @@ describe('compileScenarioTimeline', () => {
         macros: {},
       },
     });
-    const program = compileScenarioTimeline(scenario, index()).operators[0]!.skillCasts!.find(
+    const program = compileTimeline(scenario, index()).operators[0]!.skillCasts!.find(
       binding => binding.castId === cast.id,
     )!.program;
     const step = rootActionSteps(program.timelineActions[0]!.sequence)[0]!;
@@ -174,7 +172,7 @@ describe('compileScenarioTimeline', () => {
       criticalOverrides: { 'damage:1': true },
     };
 
-    const compiled = compileScenarioTimeline(scenario, index());
+    const compiled = compileTimeline(scenario, index());
 
     expect(compiled.inputs[0]?.simulationInputs).toEqual({
       randomSeed: 7,
@@ -192,7 +190,7 @@ describe('compileScenarioTimeline', () => {
         buff_chr_fixture_owned: { stackingType: 'refresh' as const },
       },
     };
-    const compiled = compileScenarioTimeline(createScenario(), {
+    const compiled = compileTimeline(createScenario(), {
       actionPrograms: new ActionGraphDefinitionRepository(),
       getOperator: slug => (slug === operator.slug ? operator : null),
       getCommonDefinitionSources: () => [
@@ -259,7 +257,7 @@ describe('compileScenarioTimeline', () => {
       },
     };
 
-    const compiled = compileScenarioTimeline(scenario, {
+    const compiled = compileTimeline(scenario, {
       actionPrograms: new ActionGraphDefinitionRepository(),
       getOperator: slug => (slug === operator.slug ? operator : null),
       getCommonDefinitionSources: () => [],
@@ -288,7 +286,7 @@ describe('compileScenarioTimeline', () => {
       ),
     };
 
-    const compiled = compileScenarioTimeline(baseScenario, {
+    const compiled = compileTimeline(baseScenario, {
       actionPrograms: new ActionGraphDefinitionRepository(),
       getOperator: slug => (slug === operator.slug ? operator : null),
       getCommonDefinitionSources: () => [],
@@ -323,7 +321,7 @@ describe('compileScenarioTimeline', () => {
       startFrame: 90,
       ids: { allocate: kind => `${kind}:replacement` },
     }).scenario;
-    const explicitCompiled = compileScenarioTimeline(explicit, {
+    const explicitCompiled = compileTimeline(explicit, {
       actionPrograms: new ActionGraphDefinitionRepository(),
       getOperator: slug => (slug === operator.slug ? operator : null),
       getCommonDefinitionSources: () => [],
@@ -363,7 +361,7 @@ describe('compileScenarioTimeline', () => {
       ),
     };
 
-    const compiled = compileScenarioTimeline(scenario, {
+    const compiled = compileTimeline(scenario, {
       actionPrograms: new ActionGraphDefinitionRepository(),
       getOperator: slug => (slug === operator.slug ? operator : null),
       getCommonDefinitionSources: () => [],
@@ -395,7 +393,7 @@ describe('compileScenarioTimeline', () => {
       ],
     };
 
-    const compiled = compileScenarioTimeline(scenario, {
+    const compiled = compileTimeline(scenario, {
       actionPrograms: new ActionGraphDefinitionRepository(),
       getOperator: slug => (slug === operator.slug ? operator : null),
       getCommonDefinitionSources: () => [],
@@ -479,7 +477,7 @@ describe('compileScenarioTimeline', () => {
       startFrame: 90,
       ids: { allocate: kind => `${kind}:routed` },
     }).scenario;
-    const compiled = compileScenarioTimeline(explicit, {
+    const compiled = compileTimeline(explicit, {
       actionPrograms: new ActionGraphDefinitionRepository(),
       getOperator: slug => (slug === operator.slug ? operator : null),
       getCommonDefinitionSources: () => [],
@@ -512,7 +510,7 @@ describe('compileScenarioTimeline', () => {
     let scenario = place(createScenario(), 'battleSkill', 60);
     scenario = place(scenario, 'ultimate', 60);
 
-    expect(compileScenarioTimeline(scenario, index()).inputs).toEqual([
+    expect(compileTimeline(scenario, index()).inputs).toEqual([
       {
         frame: 60,
         operatorId: 'track:0',
@@ -534,7 +532,7 @@ describe('compileScenarioTimeline', () => {
     const scenario = place(createScenario(), 'basicAttack', 30);
     const casts = scenario.tracks[0]!.skillCasts;
 
-    expect(compileScenarioTimeline(scenario, index()).inputs).toEqual(
+    expect(compileTimeline(scenario, index()).inputs).toEqual(
       casts.map(cast => ({
         frame: cast.placement.startFrame,
         operatorId: 'track:0',
@@ -549,7 +547,7 @@ describe('compileScenarioTimeline', () => {
     const scenario = place(createScenario(), 'battleSkill', 60);
     scenario.tracks[0]!.skillCasts[0]!.presentation = { disabled: true };
 
-    expect(compileScenarioTimeline(scenario, index()).inputs).toEqual([]);
+    expect(compileTimeline(scenario, index()).inputs).toEqual([]);
   });
 
   it.each(['none', 'head', 'middle', 'all'] as const)(
@@ -568,7 +566,7 @@ describe('compileScenarioTimeline', () => {
           cast.presentation = { disabled: true };
       }
       const before = structuredClone(scenario);
-      const compiled = compileScenarioTimeline(scenario, index());
+      const compiled = compileTimeline(scenario, index());
       const enabled = casts.filter(cast => !cast.presentation?.disabled);
       expect(compiled.inputs.map(input => input.castId)).toEqual(enabled.map(cast => cast.id));
       expect(compiled.inputs.every(input => input.frame === -12)).toBe(true);
@@ -596,7 +594,7 @@ describe('compileScenarioTimeline', () => {
     third!.placement = { afterCastId: second!.id };
     fourth!.placement = { startFrame: 100 };
     scenario.tracks[0]!.skillCasts = [third!, first!, fourth!, second!];
-    const compiled = compileScenarioTimeline(scenario, index());
+    const compiled = compileTimeline(scenario, index());
     expect(compiled.skillInputGroups).toEqual([
       { anchorCastId: first!.id, castIds: [first!.id, second!.id, third!.id] },
     ]);
@@ -630,7 +628,7 @@ describe('compileScenarioTimeline', () => {
       ],
     };
 
-    const compiled = compileScenarioTimeline(place(scenario, 'ultimate', 60), {
+    const compiled = compileTimeline(place(scenario, 'ultimate', 60), {
       actionPrograms: new ActionGraphDefinitionRepository(),
       getOperator: slug => (slug === operator.slug ? operator : null),
       getCommonDefinitionSources: () => [],
@@ -657,7 +655,7 @@ describe('compileScenarioTimeline', () => {
       ],
     };
 
-    const compiled = compileScenarioTimeline(scenario, index());
+    const compiled = compileTimeline(scenario, index());
     const binding = compiled.operators[0]!.skillCasts![0]!;
     const program = binding.program;
 
@@ -735,8 +733,7 @@ describe('compileScenarioTimeline', () => {
       },
     });
 
-    const program = compileScenarioTimeline(scenario, index()).operators[0]!.skillCasts![0]!
-      .program;
+    const program = compileTimeline(scenario, index()).operators[0]!.skillCasts![0]!.program;
     const root = rootActionSteps(program.timelineActions[0]!.sequence)[0]!;
     const spawn = rootActionSteps(program.timelineActions[0]!.sequence)[1]!;
     expect(root.key).toBe('root-hit');
@@ -775,7 +772,7 @@ describe('compileScenarioTimeline', () => {
       ],
     };
 
-    const compiled = compileScenarioTimeline(scenario, {
+    const compiled = compileTimeline(scenario, {
       actionPrograms: new ActionGraphDefinitionRepository(),
       getOperator: slug => (slug === operator.slug ? operator : null),
       getCommonDefinitionSources: () => [],
@@ -792,7 +789,7 @@ describe('compileScenarioTimeline', () => {
     if (cast.source.kind !== 'operatorSkill') throw new Error('unexpected fixture source');
     cast.source.skillKey = 'missing';
 
-    expect(() => compileScenarioTimeline(scenario, index())).toThrow("has no skill 'missing'");
+    expect(() => compileTimeline(scenario, index())).toThrow("has no skill 'missing'");
   });
 });
 
@@ -874,7 +871,7 @@ it('场景中的技能、Buff 和实体各自编译自己的图', () => {
       group.key === 'battleSkill' ? { ...group, skills: independentSkill } : group,
     ),
   };
-  const compiled = compileScenarioTimeline(scenario, {
+  const compiled = compileTimeline(scenario, {
     actionPrograms: new ActionGraphDefinitionRepository(),
     getOperator: slug => (slug === perlica.slug ? graphOperator : null),
     getCommonDefinitionSources: () => [],
@@ -933,7 +930,7 @@ it('不含过渡总图的干员能分别编译主动技能与常驻被动', () =
     entityBlackboardInitializers: [],
     skillSlots: perlica.skillSlots!.filter(slot => slot.key === 'battleSkill'),
   };
-  const compiled = compileScenarioTimeline(scenario, {
+  const compiled = compileTimeline(scenario, {
     actionPrograms: new ActionGraphDefinitionRepository(),
     getOperator: slug => (slug === perlica.slug ? graphlessOperator : null),
     getCommonDefinitionSources: () => [],
@@ -1120,7 +1117,7 @@ it('keeps common ability entity child programs in their own graph across ID coll
       },
     },
   };
-  const compiled = compileScenarioTimeline(scenario, {
+  const compiled = compileTimeline(scenario, {
     actionPrograms: new ActionGraphDefinitionRepository(),
     getOperator: slug => (slug === perlica.slug ? graphOperator : null),
     getCommonAbilityEntityDefinitions: () => externalEntity,
@@ -1166,28 +1163,4 @@ it('keeps common ability entity child programs in their own graph across ID coll
   expect(buffEntry.graph.nodes.get(buffEntry.entry!)!.action).toMatchObject({
     parameters: { value: 9 },
   });
-});
-
-it('compiles the same graph scene from the resolved build used by runtime assembly', () => {
-  const scenario = place(createScenario(), 'battleSkill', 30);
-  const programs = new ActionGraphDefinitionRepository();
-  const graphIndex = {
-    getOperator: (slug: string) => (slug === perlica.slug ? perlica : null),
-    getWeapon: (_slug: string) => null,
-    getGear: (_slug: string) => null,
-    getGearSet: (_slug: string) => null,
-    actionPrograms: programs,
-    getCommonDefinitionSources: () => [],
-  };
-  const builds = resolveScenarioBuilds(scenario, graphIndex);
-  const resolved = compileResolvedScenarioTimeline(builds, undefined, {
-    programs,
-    commonDefinitionSources: graphIndex.getCommonDefinitionSources(),
-  });
-  const direct = compileScenarioTimeline(scenario, graphIndex);
-  expect(resolved.inputs).toEqual(direct.inputs);
-  expect(resolved.operators[0]!.skillCasts?.map(binding => binding.castId)).toEqual(
-    direct.operators[0]!.skillCasts?.map(binding => binding.castId),
-  );
-  expect(resolved.operators[0]!.skillCasts![0]!.program.timelineActions.length).toBeGreaterThan(0);
 });

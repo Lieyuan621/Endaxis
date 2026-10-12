@@ -1,6 +1,6 @@
 /** 验证动作清理关系的分支隔离、调用顺序和失败时的保留行为。 */
 import { expect, it } from 'vitest';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 import { createTimeDilationActionState } from '../state/actionState';
 import {
   finishTimeDilationAction,
@@ -12,7 +12,7 @@ it('同一切面分别结束不同动作，保留另一动作的实例关系', (
   state.instanceIds.set(0, [2, 3]);
   state.instanceIds.set(1, [4]);
   state.ignoredEntityIds.set(0, ['caster', 'summon']);
-  const session = new StateStepper(state, (step, slot: number) => {
+  const session = createStateTestSession(state, (step, slot: number) => {
     const stopped: number[] = [];
     const ignored: [string, boolean][] = [];
     finishTimeDilationAction(step.state, slot, id => stopped.push(id));

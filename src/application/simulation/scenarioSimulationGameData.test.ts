@@ -6,7 +6,7 @@ import type {
   WeaponDefinition,
 } from '../../core/game-data/equipmentDefinition';
 import { compileResolvedScenarioEquipment } from '../../core/compiler/compileScenarioEquipment';
-import { compileScenarioTimeline } from '../../core/compiler/compileScenarioTimeline';
+import { compileTimeline } from '../../test/compileTimeline';
 import { resolveScenarioBuilds } from '../../core/compiler/resolveScenarioBuilds';
 import { createEmptyScenario } from '../../core/project/createProject';
 import type { GlobalEffectDefinition } from '../../core/game-data/globalEffectDefinition';
@@ -105,7 +105,8 @@ it('真实干员图经过 Worker 数据包后仍能编译时间轴技能', () =>
   const packet = captureScenarioSimulationGameData(placed, repository);
   const restored = restoreScenarioSimulationGameData(structuredClone(packet));
   expect(restored.getWeapon(graphWeapon.slug)).toEqual(graphWeapon);
-  const compiled = compileScenarioTimeline(placed, {
+  const compiled = compileTimeline(placed, {
+    ...restored,
     getOperator: restored.getOperator,
     actionPrograms: restored.actionPrograms!,
     getCommonDefinitionSources: () => restored.getCommonDefinitionSources!(),

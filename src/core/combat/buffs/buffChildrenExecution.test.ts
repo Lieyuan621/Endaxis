@@ -1,6 +1,6 @@
 /** 验证恢复后按新分支数据结束子实例，并保留原有实时遍历和异常行为。 */
 import { describe, expect, it } from 'vitest';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 import { createBuffChildrenState } from '../state/instanceState';
 import { attachBuffChild, finishBuffChildren } from './buffLifecycleExecution';
 
@@ -10,7 +10,7 @@ describe('buff child references', () => {
     attachBuffChild(children, { ownerId: 'a', instanceId: 1 });
     attachBuffChild(children, { ownerId: 'a', instanceId: 1 });
     attachBuffChild(children, { ownerId: 'b', instanceId: 1 });
-    const session = new StateStepper(
+    const session = createStateTestSession(
       { children, finished: [] as string[] },
       (step, append: boolean) => {
         finishBuffChildren(step.state.children, reference => {
@@ -33,7 +33,7 @@ describe('buff child references', () => {
   it('does not clear membership after a throwing child and can recover the full branch', () => {
     const children = createBuffChildrenState();
     attachBuffChild(children, { ownerId: 'a', instanceId: 1 });
-    const session = new StateStepper({ children, count: 0 }, (step, fail: boolean) => {
+    const session = createStateTestSession({ children, count: 0 }, (step, fail: boolean) => {
       finishBuffChildren(step.state.children, () => {
         step.state.count += 1;
         if (fail) throw new Error('child failed');

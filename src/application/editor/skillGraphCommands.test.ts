@@ -6,7 +6,7 @@ import { createEmptyProject } from '../../core/project/createProject';
 import { parseProjectDocument, serializeProjectDocument } from '../../core/project/serialization';
 import { createGameDataRepository } from '../../data/createGameDataRepository';
 import { perlica } from '../../data/operators/perlica.generated';
-import { ScenarioEditorSession } from './scenarioEditorSession';
+import { createScenarioEditorSession } from '../../test/scenarioEditorSession';
 import { editSkillCastGraph, replaceSkillCastDefinition } from './skillGraphCommands';
 import {
   readGraphPresentation,
@@ -16,7 +16,7 @@ import {
 it('自定义图的排版独立保存，撤销不改变技能逻辑和模拟输入', () => {
   const { project, scenario, repository, definition } = fixture();
   scenario.tracks[0]!.skillCasts[0]!.customDefinition = definition;
-  const session = new ScenarioEditorSession(scenario);
+  const session = createScenarioEditorSession(scenario);
   const presentation = {
     main: {
       nodePositions: { a: { x: 12, y: 34 } },
@@ -183,7 +183,7 @@ function fixture(custom = true) {
 
 it('正式图直接进入场景事务，保留共享宏及元数据，编辑只影响选中的技能块', () => {
   const { project, scenario, definition, command } = fixture();
-  const session = new ScenarioEditorSession(scenario);
+  const session = createScenarioEditorSession(scenario);
   expect(session.commit('edit-skill-graph', command)).toBe(true);
   const edited = session.snapshot.scenario;
   const skill = edited.tracks[0]!.skillCasts[0]!.customDefinition!;
@@ -208,7 +208,7 @@ it('正式图直接进入场景事务，保留共享宏及元数据，编辑只�
 
 it('非法回边和删除被引用节点均不能进入历史', () => {
   const { scenario, repository } = fixture();
-  const session = new ScenarioEditorSession(scenario);
+  const session = createScenarioEditorSession(scenario);
   const invalidGraphs: ActionGraphDefinition[] = [
     { nodes: { hit: { action: { kind: 'dealStagger', parameters: { value: 1 } }, next: 'hit' } } },
     { nodes: {} },
@@ -228,7 +228,7 @@ it('非法回边和删除被引用节点均不能进入历史', () => {
 
 it('复用场景继承边界，禁止通过编辑图改变冻结的历史输入', () => {
   const { scenario, command } = fixture();
-  const session = new ScenarioEditorSession(scenario, 50, { inputBeforeFrame: 30 });
+  const session = createScenarioEditorSession(scenario, 50, { inputBeforeFrame: 30 });
   expect(() => session.commit('edit-history', command)).toThrow();
   expect(session.snapshot.scenario).toBe(scenario);
   expect(session.canUndo).toBe(false);
@@ -236,7 +236,7 @@ it('复用场景继承边界，禁止通过编辑图改变冻结的历史输入'
 
 it('无改动不创建覆盖，不增加撤销记录', () => {
   const { scenario, repository } = fixture();
-  const session = new ScenarioEditorSession(scenario);
+  const session = createScenarioEditorSession(scenario);
   expect(
     session.commit(
       'noop',
@@ -249,7 +249,7 @@ it('无改动不创建覆盖，不增加撤销记录', () => {
 
 it('重接边与删除节点可以原子提交，缺失的宏不能误编辑主图', () => {
   const { scenario, repository } = fixture();
-  const session = new ScenarioEditorSession(scenario);
+  const session = createScenarioEditorSession(scenario);
   expect(() =>
     session.commit(
       'missing',
@@ -281,7 +281,7 @@ it('重接边与删除节点可以原子提交，缺失的宏不能误编辑主�
 
 it('完整技能保存一次提交元数据和图，克隆的打开快照支持撤销、重做与序列化', () => {
   const { project, scenario, repository, definition } = fixture();
-  const session = new ScenarioEditorSession(scenario);
+  const session = createScenarioEditorSession(scenario);
   const replacement: SkillDefinition = skillFixture({
     ...definition,
     timelineBlockFrames: 60,
@@ -322,7 +322,7 @@ it('完整技能保存一次提交元数据和图，克隆的打开快照支持�
 
 it('完整保存拒绝错误技能身份、非法参数、过期快照，失败不写入撤销记录', () => {
   const { scenario, repository, definition } = fixture();
-  const session = new ScenarioEditorSession(scenario);
+  const session = createScenarioEditorSession(scenario);
   expect(() =>
     session.commit(
       'wrong-skill',
@@ -376,7 +376,7 @@ it('完整保存拒绝错误技能身份、非法参数、过期快照，失败�
 
 it('完整保存复用冻结输入约束，同内容定义不创建无意义覆盖', () => {
   const { scenario, repository, definition } = fixture();
-  const session = new ScenarioEditorSession(scenario, 50, { inputBeforeFrame: 30 });
+  const session = createScenarioEditorSession(scenario, 50, { inputBeforeFrame: 30 });
   expect(
     session.commit(
       'noop',
@@ -413,7 +413,7 @@ it('自由展示块没有技能来源身份，携带完整定义也不能通过�
   const cast = scenario.tracks[0]!.skillCasts[0]!;
   cast.source = { kind: 'custom', actionType: 'note', name: '自由展示块' };
   cast.customDefinition = definition;
-  const session = new ScenarioEditorSession(scenario);
+  const session = createScenarioEditorSession(scenario);
   const commands = [
     replaceSkillCastDefinition(repository, 'first', definition),
     editSkillCastGraph(repository, 'first', { kind: 'main' }, graph => graph),
@@ -429,7 +429,7 @@ it('自由展示块没有技能来源身份，携带完整定义也不能通过�
 
 it('curve graph commands preserve both infinite tangent signs through real undo, redo and project reopening', () => {
   const { project, scenario, repository } = fixture();
-  const session = new ScenarioEditorSession(scenario);
+  const session = createScenarioEditorSession(scenario);
   const before = session.snapshot.scenario;
   const curve = {
     kind: 'inline' as const,

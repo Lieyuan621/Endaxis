@@ -482,13 +482,6 @@ export interface ScheduledExternalCombatEventInput extends ExternalCombatEventIn
   readonly frame: number;
 }
 
-/** 可完整恢复后续随机序列的原生减法随机状态；不补造未知的初始化规则。 */
-export interface BattleRandomState {
-  readonly currentIndex: number;
-  readonly pairedIndex: number;
-  readonly values: readonly number[];
-}
-
 /**
  * 场景随机流的全部可变数据。取样表只保存整数，不保存随机函数或闭包。
  * 状态由调用方持有；复制后可独立推进，替换后继续取样，不需要重新创建随机算法。

@@ -1,7 +1,7 @@
 import { effectScope, nextTick, shallowRef } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import type { ScenarioDocument } from '../../core/project/schema';
-import { ScenarioEditorSession } from '../../application/editor/scenarioEditorSession';
+import { createScenarioEditorSession } from '../../test/scenarioEditorSession';
 import { createEmptyScenario } from '../../core/project/createProject';
 import { arclight, perlica, zhuangFangyi } from '../../data/operators';
 import { gameDataRepository } from '../../data/gameDataRepository';
@@ -53,7 +53,7 @@ async function waitFor(predicate: () => boolean, timeoutMs = 1000): Promise<void
 }
 
 function createHarness(initial: ScenarioDocument, simulationService = service) {
-  const session = new ScenarioEditorSession(initial);
+  const session = createScenarioEditorSession(initial);
   const scenario = shallowRef<ScenarioDocument>(initial);
   session.subscribe(snapshot => {
     scenario.value = snapshot.scenario;
@@ -1016,7 +1016,7 @@ describe('useScenarioSimulation', () => {
     const fakeService = {
       simulate: async () => fakeRun,
     } as unknown as ScenarioSimulationService;
-    const session = new ScenarioEditorSession(initial);
+    const session = createScenarioEditorSession(initial);
     const scenario = shallowRef<ScenarioDocument>(initial);
     session.subscribe(snapshot => {
       scenario.value = snapshot.scenario;

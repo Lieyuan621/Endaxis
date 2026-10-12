@@ -22,7 +22,8 @@ import { CombatClock } from '../../../../src/core/combat/time/combatClock.ts';
 import { RuntimeTargetContext } from '../../../../src/core/combat/abilities/runtimeTargetContext.ts';
 import { CombatAttributeSet } from '../../../../src/core/combat/attributes/combatAttributes.ts';
 import { compileCombatBuffDefinitions } from '../../../../src/core/combat/buffs/combatBuffDefinitions.ts';
-import { ElementalBuffRuntime } from '../../../../src/core/combat/buffs/elementalBuffRuntime.ts';
+import { BuffDefinitionOperationTarget } from '../../../../src/core/combat/buffs/buffDefinitionOperationTarget.ts';
+import { CombatBuffContainer } from '../../../../src/core/combat/buffs/combatBuffs.ts';
 import { ActionBlackboard } from '../../../../src/core/combat/actions/actionBlackboard.ts';
 import { resolveActionValueOperand } from '../../../../src/core/combat/actions/actionBlackboard.ts';
 import { avywenna } from '../../../../src/data/operators/avywenna.generated.ts';
@@ -852,10 +853,9 @@ describe('跨技能黑板用途', () => {
 
   it('系统元素 Buff 的生命周期读取敌方独立板，不接收能力实体的同名初值', () => {
     const amounts: number[] = [];
-    const runtime = new ElementalBuffRuntime({
-      ownerId: 'enemy',
-      attributes: new CombatAttributeSet(),
-      index: compileCombatBuffDefinitions(
+    const runtime = new BuffDefinitionOperationTarget(
+      new CombatBuffContainer('enemy', new CombatAttributeSet()),
+      compileCombatBuffDefinitions(
         {
           schemaVersion: 1,
           revision: 'fixture',
@@ -884,7 +884,7 @@ describe('跨技能黑板用途', () => {
           onAttackScaledDamageTriggered: payload => amounts.push(payload.attackScale),
         },
       ),
-    });
+    );
     expect(runtime.entityBlackboard.snapshot()).toEqual({});
     runtime.apply({ buffId: 'system', sourceId: 'ability-entity:1', blackboardValues: {} });
     expect(amounts).toEqual([7]);

@@ -107,7 +107,4 @@ export class CombatAttributeSet<Key extends string> {
   clearInstantModifiers(): void {
     clearInstantAttributeModifiers(this.#state);
   }
-  capture(attributes: readonly Key[]): ReadonlyMap<Key, number> {
-    return new Map(attributes.map(attribute => [attribute, this.get(attribute)]));
-  }
 }

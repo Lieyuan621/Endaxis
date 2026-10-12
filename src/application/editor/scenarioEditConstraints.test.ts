@@ -1,7 +1,7 @@
 import { expect, it, vi } from 'vitest';
 import { createEmptyProject } from '../../core/project/createProject';
 import type { ScenarioDocument } from '../../core/project/schema';
-import { ScenarioEditorSession } from './scenarioEditorSession';
+import { createScenarioEditorSession } from '../../test/scenarioEditorSession';
 import { ActiveScenarioEditorSession, ProjectEditorSession } from './projectEditorSession';
 import { ScenarioEditConstraintError, type ScenarioEditPolicy } from './scenarioEditConstraints';
 
@@ -78,7 +78,7 @@ it('历史保护涵盖技能、切人、物品与人工事件，并保护空白�
     },
   ];
   for (const edit of edits) {
-    const session = new ScenarioEditorSession(frozenFixture(), 50, { inputBeforeFrame: 20 });
+    const session = createScenarioEditorSession(frozenFixture(), 50, { inputBeforeFrame: 20 });
     expect(() =>
       session.commit('change', before => {
         const next = structuredClone(before);
@@ -88,7 +88,7 @@ it('历史保护涵盖技能、切人、物品与人工事件，并保护空白�
     ).toThrow(ScenarioEditConstraintError);
     expect(session.snapshot.revision).toBe(0);
   }
-  const session = new ScenarioEditorSession(frozenFixture(), 50, { inputBeforeFrame: 20 });
+  const session = createScenarioEditorSession(frozenFixture(), 50, { inputBeforeFrame: 20 });
   expect(
     session.commit('at-boundary', before => {
       const next = structuredClone(before);
@@ -134,7 +134,7 @@ it('配置锁不锁名称、布局和未来输入，项目级提交也检查配�
 
 it('完整输入锁可锁标记；未解析连续组不能按未来放行，解析器必须区分候选文档', () => {
   const scenario = frozenFixture();
-  const locked = new ScenarioEditorSession(scenario, 50, {
+  const locked = createScenarioEditorSession(scenario, 50, {
     lockedInputs: [{ kind: 'consumable', id: 'item' }],
   });
   expect(() =>
@@ -145,11 +145,11 @@ it('完整输入锁可锁标记；未解析连续组不能按未来放行，解�
     }),
   ).toThrow(ScenarioEditConstraintError);
   scenario.tracks[0]!.skillCasts[1]!.placement = { afterCastId: 'anchor' };
-  const unresolved = new ScenarioEditorSession(scenario, 50, { inputBeforeFrame: 20 });
+  const unresolved = createScenarioEditorSession(scenario, 50, { inputBeforeFrame: 20 });
   expect(() => unresolved.commit('rename', before => ({ ...before, name: 'new' }))).toThrow(
     ScenarioEditConstraintError,
   );
-  const resolved = new ScenarioEditorSession(scenario, 50, {
+  const resolved = createScenarioEditorSession(scenario, 50, {
     inputBeforeFrame: 20,
     resolveSkillFrame: document => (document === scenario ? 30 : 19),
   });
@@ -174,7 +174,7 @@ it('启用固定约束后撤销也不能修改历史，拒绝后保留撤销栈'
 
 it('拒绝间接移动锁定成员，失败不发布、不记历史，项目级批量命令也不能绕过', () => {
   const project = fixture();
-  const single = new ScenarioEditorSession(project.scenarios[0]!);
+  const single = createScenarioEditorSession(project.scenarios[0]!);
   const projectSession = new ProjectEditorSession(project);
   const active = new ActiveScenarioEditorSession(projectSession);
   for (const session of [single, active]) {
@@ -195,7 +195,7 @@ it('拒绝间接移动锁定成员，失败不发布、不记历史，项目级�
 });
 
 it('位置锁允许参数和外观修改；单独解锁后可移动，撤销重做恢复锁和位置', () => {
-  const session = new ScenarioEditorSession(fixture().scenarios[0]!);
+  const session = createScenarioEditorSession(fixture().scenarios[0]!);
   session.commit('appearance', before => {
     const next = structuredClone(before);
     next.tracks[0]!.skillCasts[1]!.presentation!.color = 'red';
@@ -226,7 +226,7 @@ it('位置锁允许参数和外观修改；单独解锁后可移动，撤销重�
 it('禁止删除锁块或其前驱，但允许删除整个方案', () => {
   const project = fixture();
   for (const id of ['anchor', 'locked']) {
-    const session = new ScenarioEditorSession(project.scenarios[0]!);
+    const session = createScenarioEditorSession(project.scenarios[0]!);
     expect(() =>
       session.commit('delete', before => {
         const next = structuredClone(before);

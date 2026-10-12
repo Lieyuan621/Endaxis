@@ -84,12 +84,6 @@ vi.mock('../scripts/generateHitStopCurveCatalog.ts', () => ({
 vi.mock('../scripts/generateSkillSettingCatalog.ts', () => ({
   generateSkillSettingCatalog: async () => ({}),
 }));
-vi.mock('../scripts/generateDashEnergyConfig.ts', () => ({
-  generateDashEnergyConfig: async ({ output, check }: { output: string; check: boolean }) => {
-    if (!check) await json(output, { fixture: 'dash-energy' });
-    return {};
-  },
-}));
 vi.mock('../scripts/generateGlobalBuffCatalog.ts', () => ({
   generateGlobalBuffCatalog: mocks.globalBuffs,
 }));

@@ -6,7 +6,6 @@ import {
   mergeOverlappingBuffTimelineSegments,
   projectBuffTimelineViz,
 } from '../../projection/buffTimelineViz';
-import { projectCombatStatusIndicators } from '../../projection/combatStatusIndicators';
 import { TargetContextOperationExecutor } from '../abilities/targetContextOperationExecutor';
 import type { BuffConsumedEvent } from '../buffs/buffOperationExecutor';
 import { withAbilityEventResponseContext } from '../events/abilityEventResponseContext';
@@ -20,6 +19,15 @@ import type { AbilityEventPayloadMap } from '../events/combatAbilityEvent';
 import { buffEnhanceAbilityEvent } from '../events/combatAbilityEvent';
 import { SimulationRandomSource } from '../random/simulationRandom';
 import { createSimulationRandomState } from '../state/environmentState';
+
+function activeTimelineSegments(
+  segments: Parameters<typeof mergeOverlappingBuffTimelineSegments>[0],
+  frame: number,
+) {
+  return mergeOverlappingBuffTimelineSegments(segments).filter(
+    segment => segment.startFrame <= frame && frame < segment.endFrame,
+  );
+}
 
 it.each(['expected', 'sampled'] as const)('环境保存 %s 模式实际消费的随机位置', mode => {
   const state = createSimulationRandomState();
@@ -3262,9 +3270,7 @@ describe('StandardPlayerDamageEnvironment', () => {
     expect(phase.layers).toBe(4);
     expect(phase.members.map(member => member.instanceId)).toEqual([5, 6, 7, 8]);
     expect(new Set(phase.windows.map(window => window.instanceId)).size).toBe(8);
-    expect(projectCombatStatusIndicators(segments, 7).map(indicator => indicator.layers)).toEqual([
-      4,
-    ]);
+    expect(activeTimelineSegments(segments, 7).map(indicator => indicator.layers)).toEqual([4]);
 
     const savedHistory = receipt.history.snapshot();
     const originalPrefix = savedHistory.toArray();
@@ -3322,7 +3328,7 @@ describe('StandardPlayerDamageEnvironment', () => {
         const active = currentRuntime.container.buffs.filter(buff => buff.isEnabled);
         expect(active).toHaveLength(4);
         expect(
-          projectCombatStatusIndicators(
+          activeTimelineSegments(
             projectBuffTimelineViz(currentReceipt.entries, 100),
             currentContext.clock.frame,
           ).map(indicator => indicator.layers),
@@ -3369,9 +3375,10 @@ describe('StandardPlayerDamageEnvironment', () => {
     apply('winner-icon', 'shared-group', 2);
     apply('zero-icon', 'zero-group', 1, 0);
     expect(
-      projectCombatStatusIndicators(projectBuffTimelineViz(receipt.entries, 30), 0).map(
-        indicator => [indicator.buffId, indicator.layers],
-      ),
+      activeTimelineSegments(projectBuffTimelineViz(receipt.entries, 30), 0).map(indicator => [
+        indicator.buffId,
+        indicator.layers,
+      ]),
     ).toEqual([
       ['same-icon', 2],
       ['winner-icon', 1],
@@ -3379,9 +3386,10 @@ describe('StandardPlayerDamageEnvironment', () => {
     context.clock.advanceFrame();
     runtime.container.findFirstByIds(['winner-icon'])!.finish('lifetime');
     expect(
-      projectCombatStatusIndicators(projectBuffTimelineViz(receipt.entries, 30), 1).map(
-        indicator => [indicator.buffId, indicator.layers],
-      ),
+      activeTimelineSegments(projectBuffTimelineViz(receipt.entries, 30), 1).map(indicator => [
+        indicator.buffId,
+        indicator.layers,
+      ]),
     ).toEqual([
       ['same-icon', 2],
       ['suppressed-icon', 1],
@@ -3442,7 +3450,7 @@ describe('StandardPlayerDamageEnvironment', () => {
     ]);
     expect(
       [0, 1, 2].map(frame => {
-        const indicator = projectCombatStatusIndicators(segments, frame)[0]!;
+        const indicator = activeTimelineSegments(segments, frame)[0]!;
         return [indicator.layers, indicator.simpleModifierValue];
       }),
     ).toEqual([
@@ -3585,7 +3593,7 @@ describe('StandardPlayerDamageEnvironment', () => {
       expect(values[2]!.simpleModifierValue).toBeCloseTo(0.22);
       expect(values[1]!.startReason).toBe('modifierChanged');
     }
-    for (const indicator of projectCombatStatusIndicators(segments, 1))
+    for (const indicator of activeTimelineSegments(segments, 1))
       expect(indicator.simpleModifierValue).toBeCloseTo(0.2);
     // 归零后清除旧摘要；同帧第二次变化保留序号，不能继续显示上一时刻的 22%。
     restoredCarrier.blackboard.assignDynamic('rate', 0);
@@ -3601,15 +3609,15 @@ describe('StandardPlayerDamageEnvironment', () => {
       expect(phase.windows[1]!.startSequence).toBeLessThan(phase.startSequence!);
     }
     expect(
-      projectCombatStatusIndicators(cleared, 2).every(
+      activeTimelineSegments(cleared, 2).every(
         indicator => indicator.simpleModifierValue === undefined,
       ),
     ).toBe(true);
     restoredContext.clock.advanceFrame();
     restoredCarrier.finish('lifetime');
-    expect(
-      projectCombatStatusIndicators(projectBuffTimelineViz(restoredReceipt.entries, 10), 3),
-    ).toEqual([]);
+    expect(activeTimelineSegments(projectBuffTimelineViz(restoredReceipt.entries, 10), 3)).toEqual(
+      [],
+    );
     expect(
       restoredReceipt.entries.filter(
         entry => entry.event === 'BuffApplied' && entry.data?.buffId === 'carrier',

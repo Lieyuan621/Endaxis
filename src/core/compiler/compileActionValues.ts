@@ -1,7 +1,6 @@
 import type { CompiledValueInput } from './compiledGraphData.ts';
 /** 动作、Buff 与技能宿主共用的等级数值解析。 */
-import type { LevelValues, StatusModifierDefinition } from '../game-data/operatorDefinition';
-import type { ResolvedStatusModifier } from './combatProgram';
+import type { LevelValues } from '../game-data/operatorDefinition';
 export function resolveLevelValue(value: LevelValues, skillLevel: number, path: string): number {
   if (skillLevel === 0 && typeof value !== 'number') {
     throw new TypeError(`${path} must not depend on a skill level inside an operator Buff`);
@@ -21,44 +20,4 @@ export function resolveLevelValueOrActionOperand(
 ): number | CompiledValueInput {
   if (typeof value === 'object' && 'kind' in value) return value;
   return resolveLevelValue(value as LevelValues, skillLevel, path);
-}
-
-export function resolveStatusModifier(
-  modifier: StatusModifierDefinition,
-  skillLevel: number,
-  path: string,
-): ResolvedStatusModifier {
-  switch (modifier.kind) {
-    case 'attackPercent':
-      return {
-        kind: modifier.kind,
-        value: resolveLevelValue(modifier.value, skillLevel, `${path}.value`),
-      };
-    case 'susceptibility':
-      return {
-        kind: modifier.kind,
-        damageTypes: modifier.damageTypes,
-        value: resolveLevelValue(modifier.value, skillLevel, `${path}.value`),
-        ...(modifier.attributeScaling === undefined
-          ? {}
-          : {
-              attributeScaling: {
-                attribute: modifier.attributeScaling.attribute,
-                coefficient: resolveLevelValue(
-                  modifier.attributeScaling.coefficient,
-                  skillLevel,
-                  `${path}.attributeScaling.coefficient`,
-                ),
-              },
-            }),
-        ...(modifier.cap === undefined
-          ? {}
-          : { cap: resolveLevelValue(modifier.cap, skillLevel, `${path}.cap`) }),
-      };
-    case 'slowed':
-    case 'blockResourceGain':
-    case 'resourceCostMultiplier':
-    case 'skillCooldownMultiplier':
-      return modifier;
-  }
 }

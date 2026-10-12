@@ -18,10 +18,7 @@ import type { CombatBuffDefinitionsDocument } from '../../../packages/game-data-
 import type { PlayerDamageNonRandomRuntimeSnapshot } from '../../core/combat/damage/playerActiveDamageInput';
 import type { CompoundStatusFactoriesDocument } from '../../core/combat/infliction/compoundStatusFactories';
 import type { SkillSettingsDocument } from '../../core/combat/infliction/skillSettings';
-import {
-  EvenCriticalSampleSource,
-  type CriticalSampleSource,
-} from '../../core/combat/random/criticalSampleSource';
+import type { CriticalSampleSource } from '../../core/combat/random/criticalSampleSource';
 import type { ProbabilitySampleSource } from '../../core/combat/random/probabilitySampleSource';
 import {
   SimulationRandomSource,
@@ -76,16 +73,6 @@ export function defaultNonRandomRuntimeSnapshot(): PlayerDamageNonRandomRuntimeS
     appliesIgniteDamageMultiplier: false,
     appliesPhysicalInflictionDamageMultiplier: false,
   };
-}
-
-/** 编辑器默认的确定性暴击策略；每次模拟重新创建，避免运行顺序改变结果。 */
-export function createDefaultCriticalSampleSource(): CriticalSampleSource {
-  return new EvenCriticalSampleSource();
-}
-
-/** 编辑器默认采用不触发随机分支的确定性样本 1；概率为 100% 时仍必然成立。 */
-export function createDefaultProbabilitySampleSource(): ProbabilitySampleSource {
-  return { nextProbabilitySample: () => 1 };
 }
 
 function resolveScenarioRandomSettings(scenario: ScenarioDocument): {

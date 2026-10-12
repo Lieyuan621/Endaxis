@@ -1,6 +1,6 @@
 /** 将 Buff 生命周期与周期触发进度共同保存，验证结束分支、暂停分支和同步结束顺序。 */
 import { describe, expect, it } from 'vitest';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 import { createBuffLifecycleState } from '../state/instanceState';
 import {
   advanceBuffTriggers,
@@ -10,7 +10,7 @@ import {
 } from './buffLifecycleExecution';
 
 function createSession() {
-  return new StateStepper(
+  return createStateTestSession(
     {
       life: {
         ...createBuffLifecycleState(),

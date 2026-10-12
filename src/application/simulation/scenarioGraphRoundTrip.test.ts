@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { ScenarioEditorSession } from '../editor/scenarioEditorSession';
+import { createScenarioEditorSession } from '../../test/scenarioEditorSession';
 import { editSkillCastGraph } from '../editor/skillGraphCommands';
 import { projectTimelineEditor } from '../../ui/timeline/timelineEditorViewModel';
 import { listSkillGroupDefinitionBindings } from '../../core/game-data/operatorSkillDefinitions';
@@ -113,7 +113,7 @@ it('方案自定义局部图保存重开、Worker 传输和执行中切面恢复
       },
     ],
   };
-  const session = new ScenarioEditorSession(scenario);
+  const session = createScenarioEditorSession(scenario);
   session.commit(
     'edit-damage-macro',
     editSkillCastGraph(repository, 'custom-cast', { kind: 'macro', macroId: 'damage' }, graph => ({

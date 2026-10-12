@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
 import { createEmptyScenario } from '../../core/project/createProject';
 import { createInheritedScenario } from './scenarioInheritance';
-import { ScenarioEditorSession } from './scenarioEditorSession';
+import { createScenarioEditorSession } from '../../test/scenarioEditorSession';
 
 function source() {
   const scenario = createEmptyScenario('source', 'Source');
@@ -126,7 +126,7 @@ it('继承只保留历史 Dash，未来成功可以独立添加、修改和移�
     resolveSkillFrame: (_, id) => (id === 'b' ? 10 : 20),
   });
   expect(split.battle.dodgeMarkers?.[0]?.mode).toEqual({ kind: 'dodge' });
-  const session = new ScenarioEditorSession(split);
+  const session = createScenarioEditorSession(split);
   expect(
     session.commit('success', before => {
       const next = structuredClone(before);
@@ -172,7 +172,7 @@ it('继承后的历史连续组可查看和改外观，不能改输入，未来�
     frame: 20,
     resolveSkillFrame: (_, id) => (id === 'b' ? 10 : 30),
   });
-  const session = new ScenarioEditorSession(inherited);
+  const session = createScenarioEditorSession(inherited);
   expect(session.commit('rename', before => ({ ...before, name: 'new' }))).toBe(true);
   expect(() =>
     session.commit('past', before => {
@@ -204,7 +204,7 @@ it('继承后的历史连续组可查看和改外观，不能改输入，未来�
 it('继承文档自动启用通用配置与历史约束，不能清除元数据绕过', () => {
   const scenario = createEmptyScenario('copy', 'Copy');
   scenario.inheritance = { frame: 20, sourceScenarioId: 'missing' };
-  const session = new ScenarioEditorSession(scenario);
+  const session = createScenarioEditorSession(scenario);
   expect(() => session.commit('detach', before => ({ ...before, inheritance: undefined }))).toThrow(
     'fixed-inheritance',
   );

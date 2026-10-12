@@ -1,6 +1,5 @@
 import { expect, it } from 'vitest';
 import { CombatReceiptCollector, type CombatObjectRef } from '../combat/receipt/combatReceipt';
-import { exportCombatReceiptJsonLines } from '../combat/receipt/combatReceiptExport';
 import { restoreCombatReceiptView } from '../combat/receipt/combatReceiptHistory';
 import { CombatObjectOrigins } from './combatObjectOrigins';
 import { operationProducer } from '../combat/receipt/combatObjectIdentity';
@@ -220,13 +219,12 @@ it('reports missing, cyclic and bounded paths without using future same-frame bi
   expect(q.findAncestor(hit, hasBuff, { maxNodes: 1 }).status).toBe('limit');
 });
 
-it('keeps a frozen direct reference through the common export and restore path', () => {
+it('keeps a frozen direct reference through structured clone and restore', () => {
   const c = new CombatReceiptCollector();
   const producer = { kind: 'buff' as const, ownerId: 'caster', instanceId: 7 };
   append(c, 'DamageApplied', producer);
   producer.instanceId = 99;
-  const exported = [...exportCombatReceiptJsonLines(c.history.snapshot(), 0)];
-  const restored = restoreCombatReceiptView(exported.slice(1).map(line => JSON.parse(line)));
+  const restored = restoreCombatReceiptView(structuredClone(c.history.snapshot().toArray()));
   expect(restored.get(0)?.producedBy).toEqual({ kind: 'buff', ownerId: 'caster', instanceId: 7 });
   expect(Object.isFrozen(restored.get(0)?.producedBy)).toBe(true);
   const q = new CombatObjectOrigins(restored.entries());

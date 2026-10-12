@@ -1,6 +1,6 @@
 import { ref, shallowRef } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
-import { ScenarioEditorSession } from '../../../application/editor/scenarioEditorSession';
+import { createScenarioEditorSession } from '../../../test/scenarioEditorSession';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import type { ScenarioDocument, TrackIndex } from '../../../core/project/schema';
 import { gameDataRepository } from '../../../data/gameDataRepository';
@@ -13,7 +13,7 @@ import { useTimelineLoadoutEditor } from './useTimelineLoadoutEditor';
 
 function createEditor() {
   const initial = createEmptyScenario('scenario:loadout', '配装场景');
-  const session = new ScenarioEditorSession(initial);
+  const session = createScenarioEditorSession(initial);
   const scenario = shallowRef<ScenarioDocument>(initial);
   session.subscribe(snapshot => {
     scenario.value = snapshot.scenario;

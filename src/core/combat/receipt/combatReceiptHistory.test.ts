@@ -1,7 +1,6 @@
 import { expect, it } from 'vitest';
 import { CombatReceiptCollector } from './combatReceipt';
 import { restoreCombatReceiptView } from './combatReceiptHistory';
-import { exportCombatReceiptJsonLines } from './combatReceiptExport';
 
 it('freezes nested skill multiplier provenance at the receipt boundary', () => {
   const collector = new CombatReceiptCollector();
@@ -25,7 +24,7 @@ it('freezes nested skill multiplier provenance at the receipt boundary', () => {
   expect(structuredClone(saved).result).toBe(3);
 });
 
-it('freezes direct bonus results and includes them in the common export', () => {
+it('preserves frozen direct bonus results through structured clone and restore', () => {
   const collector = new CombatReceiptCollector();
   const item = {
     kind: 'damageScale' as const,
@@ -45,8 +44,9 @@ it('freezes direct bonus results and includes them in the common export', () => 
   const saved = collector.history.snapshot();
   expect(saved.get(0)?.appliedDamageModifiers?.[0]).toMatchObject({ addition: 0.2 });
   expect(Object.isFrozen(saved.get(0)?.appliedDamageModifiers?.[0])).toBe(true);
-  const exported = [...exportCombatReceiptJsonLines(saved, 0)].map(line => JSON.parse(line));
-  expect(exported[1].appliedDamageModifiers[0].addition).toBe(0.2);
+  const restored = restoreCombatReceiptView(structuredClone(saved.toArray()));
+  expect(restored.get(0)?.appliedDamageModifiers?.[0]).toMatchObject({ addition: 0.2 });
+  expect(Object.isFrozen(restored.get(0)?.appliedDamageModifiers?.[0])).toBe(true);
 });
 
 it('写入冻结事实，父分支继续追加不改变固定视图，分叉共享前缀但不共享后缀', () => {

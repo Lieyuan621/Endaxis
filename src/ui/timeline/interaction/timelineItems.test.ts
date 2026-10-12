@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyScenario } from '../../../core/project/createProject';
-import { ScenarioEditorSession } from '../../../application/editor/scenarioEditorSession';
+import { createScenarioEditorSession } from '../../../test/scenarioEditorSession';
 import {
   collectTimelineItems,
   moveTimelineItems,
@@ -80,7 +80,7 @@ describe('mixed timeline objects', () => {
       key('consumableUse', 'item'),
     ]);
     const plan = planTimelineItemMove(items, keys)!;
-    const session = new ScenarioEditorSession(s);
+    const session = createScenarioEditorSession(s);
     session.commit('moveTimelineItems', current => moveTimelineItems(current, plan, -100).scenario);
     const next = session.snapshot.scenario;
     expect(next.tracks[0]!.skillCasts.map(c => c.placement)).toEqual([
@@ -126,7 +126,7 @@ describe('mixed timeline objects', () => {
       frame: 120,
       mode: { kind: 'perfectDodge', successDelayFrames: 8 },
     });
-    const session = new ScenarioEditorSession(s);
+    const session = createScenarioEditorSession(s);
     session.commit('removeTimelineItems', current => removeTimelineItems(current, items));
     expect(session.snapshot.scenario.tracks[0]!.skillCasts).toHaveLength(0);
     expect(session.snapshot.scenario.battle.dodgeMarkers).toHaveLength(0);

@@ -1,7 +1,7 @@
 import { createTestBuffReference } from '../buffs/buffTestFixtures';
 import { describe, expect, it, vi } from 'vitest';
 import { AbilitySystemRuntime, type AbilitySkillRuntime } from './abilitySystemRuntime';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 import {
   storePostSkillCastRequest,
   takePostSkillCastRequest,
@@ -338,7 +338,7 @@ describe('AbilitySystemRuntime', () => {
     const payload = { ...beforeCastPayload, skillCastId: 42 };
     ability.prepareBeforeSkillCastStart('skill', undefined, payload);
     payload.skillCastId = 99;
-    const session = new StateStepper(ability.runtimeState, (step, _: undefined) =>
+    const session = createStateTestSession(ability.runtimeState, (step, _: undefined) =>
       takeBeforeSkillCastPreparation(step.state, 'skill\u0000'),
     );
     const saved = session.save();
@@ -356,7 +356,7 @@ describe('AbilitySystemRuntime', () => {
       onSkillOperableBoundaryReached: () => {},
     });
     ability.tryStartSkill('skill', 'cast');
-    const session = new StateStepper(ability.runtimeState, () => undefined);
+    const session = createStateTestSession(ability.runtimeState, () => undefined);
     const state = session.read();
     expect(state.currentSkillKey).toBe('skill\u0000cast');
     expect(state.operableBoundaries.pendingByCastId.get('cast')).toEqual({
@@ -376,7 +376,7 @@ describe('AbilitySystemRuntime', () => {
     const inputTarget = { kind: 'operator' as const, operatorId: 'attacker' };
     ability.requestPostSkillCast({ skillId: 'second', inputTarget });
     inputTarget.operatorId = 'changed-after-request';
-    const session = new StateStepper(ability.runtimeState, (step, replace: boolean) => {
+    const session = createStateTestSession(ability.runtimeState, (step, replace: boolean) => {
       if (replace) storePostSkillCastRequest(step.state, { skillId: 'first' });
       const request = takePostSkillCastRequest(step.state);
       storePostSkillCastRequest(step.state, { skillId: 'second', skipApplyCost: true });

@@ -55,7 +55,7 @@ import {
   collectCombatStateGraphResult,
   createCompiledScenarioRuntime,
   type ScenarioSimulationResult,
-} from './runScenarioSimulation';
+} from './scenarioSimulationRuntime';
 
 type DamageStep = ResolvedCombatStepForKind<'dealDamage'>;
 

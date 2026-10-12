@@ -7,7 +7,9 @@ import type { EnemyBuffRuntime } from '../combatRuntimeAssembly';
 import type { FrameRuntime } from '../combatSimulation';
 import { CombatSimulation } from '../combatSimulation';
 import type { RestoredCombatAbilityEntityDirectory } from './combatRuntimeAbilityEntityRestoration';
-import type { RestoredCombatRuntimeObjectGraph } from './combatRuntimeObjectGraphRestoration';
+import type { RestoredCombatBuffInstances } from './combatRuntimeBuffInstanceRestoration';
+import type { RestoredCombatRuntimeOperators } from './combatRuntimeOperatorRestoration';
+import type { ProjectileLifecycleRuntime } from '../../abilities/projectileLifecycleRuntime';
 import type { RestoredCombatRuntimeFoundation } from './combatRuntimeRestoreFoundation';
 import type { CombatRuntimeRestorePreparation } from './combatRuntimeRestorePreparation';
 
@@ -17,7 +19,11 @@ export interface RestoreCombatRuntimeFrameOptions {
   readonly preparation: CombatRuntimeRestorePreparation;
   readonly foundation: RestoredCombatRuntimeFoundation;
   readonly entities: RestoredCombatAbilityEntityDirectory;
-  readonly objects: RestoredCombatRuntimeObjectGraph;
+  readonly objects: {
+    readonly projectiles: ProjectileLifecycleRuntime;
+    readonly buffs: RestoredCombatBuffInstances;
+    readonly operators: RestoredCombatRuntimeOperators;
+  };
   readonly operatorCenters?: readonly FrameRuntime[];
   readonly playerMultiDash?: FrameRuntime;
   /** 输入运行时已经绑定保存游标时，在与普通装配完全相同的位置安装两个输入阶段。 */

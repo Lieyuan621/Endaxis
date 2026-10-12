@@ -6,7 +6,7 @@ import {
   BasicAttackSkillCastInheritanceRegistry,
   SkillCastInheritanceOperationExecutor,
 } from './skillCastInheritanceOperationExecutor';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 
 const terminal: CombatOperationExecutor = {
   execute: () => true,
@@ -76,7 +76,7 @@ describe('普通攻击施法身份继承槽', () => {
     );
     const context = { blackboard: new ActionBlackboard(), skillCastInfo: firstCast };
     originalExecutor.execute(step, context);
-    const copied = new StateStepper(
+    const copied = createStateTestSession(
       { registry: originalRegistry.runtimeState, actions: originalExecutor.runtimeState },
       () => undefined,
     ).read();

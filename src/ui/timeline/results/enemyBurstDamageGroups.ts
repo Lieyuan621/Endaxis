@@ -12,14 +12,3 @@ export function groupEnemyBurstDamageHits(entries: readonly CombatReceiptEntry[]
   }
   return [...groups.values()];
 }
-
-export function selectEnemyBurstDamageEntries(
-  entries: readonly CombatReceiptEntry[],
-  sequence: number | null,
-) {
-  return (
-    groupEnemyBurstDamageHits(entries).find(group =>
-      group.some(entry => entry.sequence === sequence),
-    ) ?? []
-  );
-}

@@ -3,8 +3,10 @@ import { createEmptyScenario } from '../../../core/project/createProject';
 import { perlica, zhuangFangyi } from '../../../data/operators';
 import { placeSkillGroup } from '../../../ui/timeline/interaction/placeSkillGroup';
 import { createEditorSimulationService } from '../testSupport/editorSimulationService';
-import { projectBuffTimelineViz } from '../../../core/projection/buffTimelineViz';
-import { projectCombatStatusIndicators } from '../../../core/projection/combatStatusIndicators';
+import {
+  mergeOverlappingBuffTimelineSegments,
+  projectBuffTimelineViz,
+} from '../../../core/projection/buffTimelineViz';
 
 it('导电图标跟随真实等级升级、封顶和重新施加', async () => {
   let scenario = createEmptyScenario('conduct-display', '导电等级显示回归');
@@ -64,15 +66,17 @@ it('导电图标跟随真实等级升级、封顶和重新施加', async () => {
     s => s.buffId === conductId,
   );
   expect(segments.map(segment => segment.layers)).toEqual([1, 2, 3, 4, 4, 2]);
-  // 图标和 HUD 都在替换边沿采用新等级，结束后不保留旧状态。
-  expect(
-    segments.map(segment => projectCombatStatusIndicators(segments, segment.startFrame)[0]?.layers),
-  ).toEqual([1, 2, 3, 4, 4, 2]);
+  // 时间轴图标在替换边沿采用新等级，结束后不保留旧状态。
+  expect(mergeOverlappingBuffTimelineSegments(segments).map(segment => segment.layers)).toEqual([
+    1, 2, 3, 4, 4, 2,
+  ]);
   expect(
     segments.slice(1).map((segment, index) => segment.startFrame === segments[index]!.endFrame),
   ).toEqual([true, true, true, true, true]);
   expect(segments.at(-1)).toMatchObject({ endFrame: 1624, endReason: 'lifetime' });
-  expect(projectCombatStatusIndicators(segments, 1624)).toEqual([]);
+  expect(
+    mergeOverlappingBuffTimelineSegments(segments).filter(segment => segment.endFrame > 1624),
+  ).toEqual([]);
   const applied = run.receiptEntries.filter(
     entry => entry.event === 'BuffApplied' && entry.data?.buffId === conductId,
   );

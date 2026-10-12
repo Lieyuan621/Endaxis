@@ -1,6 +1,6 @@
 /** 共享冷却状态的分支恢复，覆盖确认帧前返还和用户覆盖取消预占。 */
 import { describe, expect, it } from 'vitest';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 import {
   compileSkillCooldown,
   createSkillCooldownState,
@@ -15,7 +15,7 @@ describe('shared cooldown data', () => {
   it('restores shared identity and a reservation after a different branch overrides it', () => {
     const program = compileSkillCooldown(100, 10);
     const cooldown = createSkillCooldownState(program);
-    const session = new StateStepper(
+    const session = createStateTestSession(
       { first: cooldown, second: cooldown, multiplier: 2, reads: 0 },
       (step, input: 'reserve' | 'advance' | 'override' | 'finish') => {
         const state = step.state;

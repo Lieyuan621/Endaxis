@@ -8,7 +8,7 @@ import { CombatResources } from './combatResources';
 import { SkillResourceOperationExecutor } from './skillResourceOperationExecutor';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
 import { createSharedSpGainModifier } from './sharedSpGainModifiers';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 
 describe('SkillResourceOperationExecutor', () => {
   it('主控限制只跳过技力获取，切换主控后生效，且不限制终结技能量', () => {
@@ -213,7 +213,7 @@ describe('SkillResourceOperationExecutor', () => {
       },
     };
     originalExecutor.execute(step);
-    const copied = new StateStepper(
+    const copied = createStateTestSession(
       { resources: original.runtimeState, actions: originalExecutor.runtimeState },
       () => undefined,
     ).read();

@@ -3,7 +3,7 @@ import { ActionBlackboard } from '../actions/actionBlackboard';
 import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
 import { prepareComboCast } from './comboCastPreparation';
 import { applySkillCastStartPreparation } from './skillCastStartPreparation';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 import type { PendingComboCondition } from './comboSkillConditionRuntime';
 
 function pending(
@@ -50,7 +50,7 @@ describe('木桩连携施法准备', () => {
       blackboard: new ActionBlackboard({ local: 0 }, entity),
       targetContext: new RuntimeTargetContext(),
     };
-    const session = new StateStepper(
+    const session = createStateTestSession(
       { preparation: callback },
       (step, _: undefined) => step.state.preparation,
     );

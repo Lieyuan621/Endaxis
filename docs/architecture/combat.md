@@ -4,7 +4,7 @@
 
 ## 执行入口与分工
 
-[runScenarioSimulation.ts](../../src/application/simulation/runScenarioSimulation.ts) 组织场景编译与执行，[runStandardPlayerDamageScenarioSimulation.ts](../../src/application/simulation/runStandardPlayerDamageScenarioSimulation.ts) 准备当前单敌人环境。
+[runStandardPlayerDamageScenarioSimulation.ts](../../src/application/simulation/runStandardPlayerDamageScenarioSimulation.ts) 组织单敌人场景的编译与执行，[scenarioSimulationRuntime.ts](../../src/application/simulation/scenarioSimulationRuntime.ts) 提供共用的运行时装配、帧推进与结果收集。
 
 `src/core/combat` 按职责组织：`actions` 处理动作序列，`skills` 处理施放、候选和冷却，`abilities` 管理能力宿主与事件响应，`buffs` 管理 Buff 生命周期，`time` 提供时钟，`damage`、`heal`、`resources` 结算数值，`receipt` 记录事实。`runtime` 装配并推进这些系统，不再计算另一份伤害。
 

@@ -19,10 +19,7 @@ import {
   projectBuffTimelineViz,
 } from '../../../core/projection/buffTimelineViz';
 import { projectEnemyEffectViz } from '../../../core/projection/enemyEffectViz';
-import {
-  projectAttachmentContinuations,
-  projectAttachmentConversionLinks,
-} from '../../../core/projection/attachmentContinuations';
+import { projectAttachmentConversionLinks } from '../../../core/projection/attachmentContinuations';
 import { resolveBuffDisplayName } from '../../../ui/timeline/results/buffDisplayName';
 import {
   resolveDurationBarColor,
@@ -38,7 +35,6 @@ it('does not connect an expired attachment to a new instance', async () => {
   expect(attachments.map(s => s.layers)).toEqual([1, 1]);
   expect(attachments[0]!.endFrame).toBeLessThan(attachments[1]!.startFrame);
   expect(attachments[0]!.instanceId).not.toBe(attachments[1]!.instanceId);
-  expect(projectAttachmentContinuations(attachments, attachmentIds).size).toBe(0);
   expect(viz.markers).toEqual([]);
 });
 
@@ -261,7 +257,6 @@ it('preserves attachment stacking, capped refresh and natural expiry', async () 
   for (const change of stackChanges)
     expect(visible.some(s => s.windows.includes(change))).toBe(true);
   expect(new Set(attachments.map(s => s.instanceId)).size).toBe(1);
-  expect(projectAttachmentContinuations(visible, attachmentIds).size).toBe(4);
   expect(attachments.at(-1)!.endFrame).toBeLessThan(1800);
   expect(viz.markers.filter(m => m.kind === 'attachmentTrigger')).toEqual([]);
 });

@@ -9,7 +9,7 @@ import type {
 } from '../../../../packages/game-data-contract/src/actionGraph';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatOperationPrograms } from '../actions/combatOperationPrograms';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 import type { CombatOperationContext } from '../skills/skillRuntime';
 import {
   createCombatOperationHostState,
@@ -624,7 +624,7 @@ describe('AbilityEntityOperationExecutor', () => {
     };
     const context = { blackboard: new ActionBlackboard() };
     originalExecutor.execute(step, context);
-    const copied = new StateStepper(
+    const copied = createStateTestSession(
       { entities: originalEntities.runtimeState, actions: originalExecutor.runtimeState },
       () => undefined,
     ).read();

@@ -1,6 +1,6 @@
 /** 将分支选择与真实动作序列进度一起保存，避免只恢复选择却丢失分支内的执行状态。 */
 import { describe, expect, it } from 'vitest';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 import {
   COMBAT_STEP_STATE,
   createBranchActionState,
@@ -34,7 +34,7 @@ function createActionSequenceState(stepCount: number): { entries: ActionStepStat
 }
 
 function createSession(kind: 'switch' | 'conditional') {
-  return new StateStepper(
+  return createStateTestSession(
     {
       branch: createBranchActionState(),
       sequences: [createActionSequenceState(1), createActionSequenceState(1)],

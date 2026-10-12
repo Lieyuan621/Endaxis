@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { COMBAT_FRAME_INTERVAL } from '../time/combatClock';
 import { CombatVitals } from './combatVitals';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 import {
   registerVitalsHealthFloor,
   removeVitalsHealthFloor,
@@ -45,7 +45,7 @@ describe('CombatVitals', () => {
     vitals.beginPoiseBreakIfZero();
     vitals.tick(0.25);
     const floorId = registerVitalsHealthFloor(vitals.runtimeState, 500);
-    const session = new StateStepper(
+    const session = createStateTestSession(
       { vitals: vitals.runtimeState, floorId },
       (step, remove: boolean) => {
         if (remove) removeVitalsHealthFloor(step.state.vitals, step.state.floorId);

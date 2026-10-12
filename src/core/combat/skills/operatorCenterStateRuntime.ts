@@ -198,11 +198,6 @@ export class OperatorCenterStateRuntime {
     return !facts.movementBlocksFreeTransition;
   }
 
-  finishPerfectDodgeSkill(state: OperatorCenterState): void {
-    if (!state.perfectDodgeActive) return;
-    this.onSkillChanged(state, null);
-  }
-
   /** 原生 CenterBlackboard.Tick 接收角色缩放后的 deltaTime；这里用 30Hz 帧数表示同一增量。 */
   advanceFrame(state: OperatorCenterState, deltaFrames: number): void {
     requireFrames(deltaFrames, 'center deltaFrames');

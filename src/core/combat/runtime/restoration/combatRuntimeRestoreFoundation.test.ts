@@ -1,9 +1,7 @@
-import { expect, it, vi } from 'vitest';
-import { logicalAbilityEntityRuntimeId } from '../../../game-data/logicalAbilityEntity';
+import { expect, it } from 'vitest';
 import { AbilityEntityChildSkillPrograms } from '../../abilities/abilityEntityChildSkillPrograms';
 import { LogicalAbilityEntityRuntime } from '../../abilities/logicalAbilityEntityRuntime';
 import { ProjectileCallbackPrograms } from '../../abilities/projectileCallbackPrograms';
-import { ProjectileLifecycleRuntime } from '../../abilities/projectileLifecycleRuntime';
 import { CombatOperationPrograms } from '../../actions/combatOperationPrograms';
 import { SimulationRandomSource } from '../../random/simulationRandom';
 import { CombatVitals } from '../../resources/combatVitals';
@@ -21,10 +19,9 @@ import {
   createGlobalBuffState,
   createProjectileLifecycleState,
 } from '../../state/instanceState';
-import { CombatRuntimeAssembly, type AbilityEntityBuffRuntime } from '../combatRuntimeAssembly';
+import { CombatRuntimeAssembly } from '../combatRuntimeAssembly';
 import { CombatSharedRuntime } from '../combatSharedRuntime';
 import { StandardPlayerDamageEnvironment } from '../standardPlayerDamageEnvironment';
-import { restoreCombatRuntime } from './combatRuntimeRestoration';
 import { chainEntry, compileGraphEntry } from '../../../../test/compiledGraphEntry';
 import type { ActionGraphNode } from '../../../../../packages/game-data-contract/src/actionGraph';
 
@@ -190,127 +187,6 @@ it('整场恢复基础阶段直接绑定共享账本、环境和全部基础 Buf
       summon: { lifetime: { kind: 'limited' as const, durationSeconds: 10 } },
     },
   };
-  const callbackPrograms = new ProjectileCallbackPrograms();
-  let suppliedProjectiles: ProjectileLifecycleRuntime | undefined;
-  let coreRegistered = false;
-  let sourcesRegistered = false;
-  const candidate = restoreCombatRuntime({
-    graph,
-    programs: [program],
-    fixedSkillPrograms: new CombatSkillPrograms(),
-    foundation: {
-      shared: {
-        comboSkillPendingInterval: 5,
-        resources,
-      },
-      environment: environmentInput,
-      enemy,
-      resolveProjectileRuntimeDependencies: () => {
-        throw new Error('fixture does not launch projectiles');
-      },
-    },
-    objects: context => {
-      suppliedProjectiles = new ProjectileLifecycleRuntime(
-        () => context.foundation.shared.abilityEntityInstanceIds.allocate(),
-        { state: graph.instances.projectiles, callbackPrograms },
-      );
-      return {
-        callbackPrograms,
-        projectiles: suppliedProjectiles,
-        buffs: {
-          resolveDefinition: () => undefined,
-          resolveGlobalDefinition: () => undefined,
-        },
-        operators: {
-          createCoreBindings: () => ({
-            createSkillDependencies: () => {
-              throw new Error('fixture has no skills');
-            },
-            abilityRuntime: {},
-          }),
-          onCoreBound: () => {
-            coreRegistered = true;
-          },
-          createSourceBindings: () => {
-            expect(coreRegistered).toBe(true);
-            return {
-              createEquipmentExecutor: () => ({ execute: () => true, evaluate: () => true }),
-              createInitializationOperations: () => ({ execute: () => true, evaluate: () => true }),
-              createPassiveOperations: () => ({ execute: () => true, evaluate: () => true }),
-              registerPassive: () => {
-                throw new Error('fixture has no passive responses');
-              },
-              createUpgradeExecutor: () => ({ execute: () => true, evaluate: () => true }),
-            };
-          },
-          onSourcesBound: () => {
-            sourcesRegistered = true;
-          },
-        },
-        abilityEntityRelations: {
-          childSkillPrograms: new AbilityEntityChildSkillPrograms(),
-          createPassiveOperations: () => {
-            throw new Error('fixture has no AbilityEntity passives');
-          },
-          registerPassive: () => {
-            throw new Error('fixture has no AbilityEntity passive responses');
-          },
-          createChildSkillBindings: () => {
-            throw new Error('fixture has no AbilityEntity child skills');
-          },
-        },
-        createProjectileCallbackBindings: () => {
-          throw new Error('fixture has no projectile callbacks');
-        },
-      };
-    },
-  });
-  const { foundation: restored, entities, objects, frame } = candidate;
-  expect(candidate.enemyTimedMarkers.runtimeState).toBe(graph.enemy.timedMarkers);
-  expect(candidate.enemyTimedMarkers.has('scaled-marker')).toBe(true);
-  expect(candidate.enemyTimedMarkers.has('local-marker')).toBe(true);
-  expect(objects.operators.cores.get('operator')!.timedMarkers.has('scaled-marker')).toBe(true);
-
-  expect(restored.shared.runtimeState).toBe(saved.shared);
-  expect(restored.shared.clock.runtimeState).toBe(saved.shared.clock);
-  expect(restored.environment.runtimeState).toBe(saved.environment);
-  expect(restored.environment.runtimeOptions.enemyBuffRuntime.runtimeState).toBe(saved.enemyBuffs);
-  expect(restored.enemyBuffTarget).toBe(restored.environment.runtimeOptions.enemyBuffRuntime);
-  expect(restored.operatorBuffTargets.get('operator')!.runtimeState).toBe(saved.operatorBuffs);
-  expect(restored.operatorBuffTargets.get('operator')!.entityBlackboard!.runtimeState).toBe(
-    graph.operators.get('operator')!.blackboard,
-  );
-  expect(entities.runtime.runtimeState).toBe(graph.instances.abilityEntities);
-  expect([...entities.targets.keys()]).toEqual([
-    'enemy',
-    'operator',
-    logicalAbilityEntityRuntimeId(entityTarget.instanceId),
-  ]);
-  const entityBuffs = entities.targets.get(
-    logicalAbilityEntityRuntimeId(entityTarget.instanceId),
-  ) as AbilityEntityBuffRuntime;
-  const advanceEntityBuffs = vi.spyOn(entityBuffs, 'advanceWithDeltas');
-  const releaseEntityBuffs = vi.spyOn(entityBuffs, 'releaseAll');
-  expect(objects.buffs.globalBuffs.runtimeState).toBe(graph.instances.globalBuffs);
-  expect(objects.projectiles.runtimeState).toBe(graph.instances.projectiles);
-  expect(objects.projectiles).toBe(suppliedProjectiles);
-  expect(objects.operators.cores.get('operator')!.blackboard.runtimeState).toBe(
-    graph.operators.get('operator')!.blackboard,
-  );
-  expect(objects.operators.programs.get('operator')!.buffRuntime).toBe(
-    restored.operatorBuffTargets.get('operator'),
-  );
-  expect(sourcesRegistered).toBe(true);
-  const previousFrame = restored.shared.clock.frame;
-  frame.advanceFrame();
-  expect(restored.shared.clock.frame).toBe(previousFrame + 1);
-  expect(advanceEntityBuffs).toHaveBeenCalledOnce();
-  entities.runtime.finish(entityTarget);
-  expect(releaseEntityBuffs).toHaveBeenCalledOnce();
-  expect(entities.targets.has(logicalAbilityEntityRuntimeId(entityTarget.instanceId))).toBe(false);
-  objects.operators.disposeSources();
-  objects.abilityEntityRelations.disposePassives();
-
   const restoredAssembly = CombatRuntimeAssembly.restore({
     comboSkillPendingInterval: 5,
     receiptHistory: originalShared.receipt.history.snapshot(),

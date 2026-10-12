@@ -47,15 +47,3 @@ export function findBuffDamageSegment<T extends BuffTimelineSegment>(
 ): T | undefined {
   return findBuffTimelineSegmentForDamage(entry, segments);
 }
-
-export function selectEnemyBuffDamageEntries(
-  entries: readonly CombatReceiptEntry[],
-  sequence: number | null,
-  visibleBuffSegments?: readonly BuffTimelineSegment[],
-) {
-  return (
-    groupEnemyBuffDamageHits(entries, visibleBuffSegments).find(group =>
-      group.some(entry => entry.sequence === sequence),
-    ) ?? []
-  );
-}

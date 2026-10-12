@@ -41,7 +41,7 @@ import {
   updateBattleResourceRule,
   updateTrackInitialUltimateEnergy,
 } from './timelineDocumentCommands';
-import { ScenarioEditorSession } from '../../../application/editor/scenarioEditorSession';
+import { createScenarioEditorSession } from '../../../test/scenarioEditorSession';
 
 describe('battle axis commands', () => {
   it('changes the visual prep inset without shifting real battle frames', () => {
@@ -354,7 +354,7 @@ describe('手动技能组命令', () => {
 
   it('成组和拆组分别作为一个命令撤销，重做不重新分配任何身份', () => {
     const original = loose();
-    const session = new ScenarioEditorSession(original);
+    const session = createScenarioEditorSession(original);
     session.commit('group', current => createSkillCastGroup(current, members, frames));
     const group = session.snapshot.scenario;
     session.commit('dissolve', current => dissolveSkillCastGroups(current, members, frames));

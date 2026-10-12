@@ -1952,9 +1952,12 @@ export class CombatBuffContainer<Key extends string> {
       modifier.apply(timing, side, context, (side, result) => {
         if (result.kind === 'damageScale' && result.addition === 0) return;
         // 修正器与所属 Buff 已有对象关系，按身份查询，不另建来源目录。
-        const buff = [...this.#memberBindings.values()].find(buff =>
-          buff.damageModifiers.includes(modifier),
-        );
+        let buff: CombatBuff<Key> | undefined;
+        for (const member of this.#memberBindings.values()) {
+          if (!member.damageModifiers.includes(modifier)) continue;
+          buff = member;
+          break;
+        }
         if (buff === undefined) return;
         context.appliedDamageModifiers.push({
           buff: buff.reference,
@@ -1976,6 +1979,7 @@ export class CombatBuffContainer<Key extends string> {
 
   /** 读取实际注册的直接属性修正，不重算 Buff 定义或保存来源链。 */
   captureAttributeModifierDetails(side: DamageModifierSide): AppliedDamageModifier[] {
+    if (this.attributes.runtimeState.modifiers.length === 0) return [];
     const active = new Set(this.attributes.runtimeState.modifiers);
     const result: AppliedDamageModifier[] = [];
     for (const buff of this.#memberBindings.values()) {

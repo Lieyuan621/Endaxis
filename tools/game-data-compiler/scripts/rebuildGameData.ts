@@ -19,7 +19,6 @@ import { readAbilityEntityTemplates } from './readAbilityEntityTemplates.ts';
 import { generateTimeDilationCatalog } from './generateTimeDilationCatalog.ts';
 import { generateBattleCommandMappingCatalog } from './generateBattleCommandMappingCatalog.ts';
 import { generateMovementSettingCatalog } from './generateMovementSettingCatalog.ts';
-import { generateDashEnergyConfig } from './generateDashEnergyConfig.ts';
 import { generateHitStopCurveCatalog } from './generateHitStopCurveCatalog.ts';
 import { generateSkillSettingCatalog } from './generateSkillSettingCatalog.ts';
 import { formatGeneratedCandidate, formatGeneratedSource } from './formatGeneratedSource.ts';
@@ -99,7 +98,6 @@ const GAME_DATA_PUBLISH_FILE_OUTPUTS = [
   'src/data/combat/timeDilationCatalog.generated.ts',
   'src/data/combat/battleCommandMappingCatalog.generated.ts',
   'src/data/combat/movementSettingCatalog.generated.ts',
-  'src/data/combat/dashEnergyConfig.generated.ts',
   'src/data/combat/skillSettings.generated.ts',
   ...GAME_LOCALE_REBUILD_OUTPUTS,
 ] as const;
@@ -151,7 +149,6 @@ export const GAME_DATA_REBUILD_BOUNDARIES = [
       'src/data/combat/timeDilationCatalog.generated.ts',
       'src/data/combat/battleCommandMappingCatalog.generated.ts',
       'src/data/combat/movementSettingCatalog.generated.ts',
-      'src/data/combat/dashEnergyConfig.generated.ts',
       'src/data/combat/skillSettings.generated.ts',
       'src/data/contingencyContract/generated',
     ],
@@ -389,10 +386,6 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
           candidateRoot,
           'src/data/combat/movementSettingCatalog.generated.ts',
         );
-        const dashEnergyConfig = path.join(
-          candidateRoot,
-          'src/data/combat/dashEnergyConfig.generated.ts',
-        );
         const hitStopCurveCatalog = path.join(
           candidateRoot,
           'src/data/combat/hitStopCurveCatalog.generated.ts',
@@ -477,20 +470,6 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
             note: '来自当前 VFS manifest；连续 Dash 的内外窗口保留原生秒值。',
           };
         });
-        const dashEnergyOkay = await stage('dash-energy', async () => {
-          const input = {
-            source: path.join(sourceRoot, 'TableCfg-current/GlobalConst.json'),
-            output: dashEnergyConfig,
-            check: false,
-          };
-          const generated = await generateDashEnergyConfig(input);
-          await generateDashEnergyConfig({ ...input, check: true });
-          return {
-            ...generated,
-            deterministicCheck: 'passed',
-            note: '账号能量上限除以单次 Dash 消耗，生成模拟使用的共享闪避次数。',
-          };
-        });
         const hitStopOkay = await stage('hit-stop', async () => {
           const sourceUrl = await resolveNamedManifestAssetPreview(
             args.vfsBase,
@@ -571,7 +550,6 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
           timeDilationOkay &&
           battleCommandMappingOkay &&
           movementSettingOkay &&
-          dashEnergyOkay &&
           hitStopOkay &&
           skillSettingOkay &&
           globalBuffsOkay

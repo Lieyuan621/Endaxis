@@ -26,7 +26,7 @@ import {
 import { GameplayTagRegistry } from '../tags/gameplayTags';
 import { SharedSpGainModifierSet } from '../resources/sharedSpGainModifiers';
 import { ActionBlackboard } from '../actions/actionBlackboard';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 
 type Attribute = 'attack';
 
@@ -249,7 +249,7 @@ it('正式容器数据图保留 Buff 黑板与属性修正的共享关系', () =
       'source',
     ),
   );
-  const session = new StateStepper(container.runtimeState, () => undefined);
+  const session = createStateTestSession(container.runtimeState, () => undefined);
   const copied = session.read();
   const instance = copied.instances.get(buff.instanceId)!;
   expect(instance.sharedSpGainModifiers[0]).toBe(copied.sharedSpGainModifiers!.modifiers[0]);

@@ -7,7 +7,7 @@ import type { CombatOperationExecutor } from '../skills/skillRuntime';
 import { TimeDilationOperationExecutor } from './timeDilationOperationExecutor';
 import { TimeDilationRuntime } from './timeDilationRuntime';
 import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 
 const PRIORITY = 20;
 const delegate: CombatOperationExecutor = {
@@ -404,7 +404,7 @@ describe('TimeDilationOperationExecutor', () => {
     };
     const context = { blackboard: new ActionBlackboard() };
     originalExecutor.execute(step, context);
-    const copied = new StateStepper(
+    const copied = createStateTestSession(
       { time: originalRuntime.runtimeState, actions: originalExecutor.runtimeState },
       () => undefined,
     ).read();

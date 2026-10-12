@@ -12,7 +12,7 @@
 
 ## 编辑事务和输入归属
 
-[scenarioEditorSession.ts](../../src/application/editor/scenarioEditorSession.ts) 等应用入口组织文档修改和历史。一次完成的操作对应一次撤销；浏览、选择和展开面板不创建修改记录。取消、失焦或异步失败不能留下半次编辑。
+[projectEditorSession.ts](../../src/application/editor/projectEditorSession.ts) 统一组织项目和活动方案的文档修改与历史。一次完成的操作对应一次撤销；浏览、选择和展开面板不创建修改记录。取消、失焦或异步失败不能留下半次编辑。
 
 快捷键按逻辑输入区域路由。弹窗阻隔背景命令，关闭后恢复父区域；Teleport 改变 DOM 位置，不改变输入归属。文本框优先保留原生文本编辑行为。
 

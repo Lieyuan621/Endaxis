@@ -10,7 +10,7 @@ import { LogicalAbilityEntityRuntime } from '../abilities/logicalAbilityEntityRu
 import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
 import { TargetContextOperationExecutor } from '../abilities/targetContextOperationExecutor';
 import { runtimeTargetFromEntityId } from '../../game-data/logicalAbilityEntity';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 import { TimeDilationRuntime } from '../time/timeDilationRuntime';
 
 const delegate: CombatOperationExecutor = {
@@ -54,7 +54,7 @@ describe('TimedMarkerOperationExecutor', () => {
       );
     }
     dilation.advanceFrame();
-    const copy = new StateStepper(
+    const copy = createStateTestSession(
       { dilation: dilation.runtimeState, markers: markers.runtimeState },
       () => undefined,
     ).read();
@@ -249,7 +249,7 @@ describe('TimedMarkerOperationExecutor', () => {
     };
     const context = { blackboard: new ActionBlackboard() };
     originalExecutor.execute(step, context);
-    const copied = new StateStepper(
+    const copied = createStateTestSession(
       {
         clock: originalClock.runtimeState,
         markers: originalContainer.runtimeState,

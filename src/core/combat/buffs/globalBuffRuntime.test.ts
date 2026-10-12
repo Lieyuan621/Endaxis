@@ -8,7 +8,7 @@ import type { ResolvedSkillBuffDefinition } from '../../compiler/combatProgram';
 import type { BuffApplicationRequest, BuffOperationTarget } from './buffOperationExecutor';
 import { GlobalBuffOperationExecutor, GlobalBuffRuntime } from './globalBuffRuntime';
 import { ActionBlackboard } from '../actions/actionBlackboard';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 import { finishGlobalBuffInstance } from './globalBuffRuntime';
 import {
   SharedSpGainModifierSet,
@@ -108,7 +108,7 @@ describe('GlobalBuffRuntime', () => {
     executor.execute(first, context);
     executor.execute(second, context);
     expect(() => executor.execute(first, context)).toThrow('already active');
-    const session = new StateStepper(
+    const session = createStateTestSession(
       { actions: executor.runtimeState, global: runtime.runtimeState },
       () => undefined,
     );
@@ -135,7 +135,7 @@ describe('GlobalBuffRuntime', () => {
       sourceId: 'source',
       blackboardValues: { duration: 10 },
     });
-    const session = new StateStepper(
+    const session = createStateTestSession(
       { global: runtime.runtimeState, ended: [] as string[] },
       step => {
         const instance = step.state.global.groups.get('global')![0]!;
@@ -277,7 +277,7 @@ describe('GlobalBuffRuntime', () => {
       sourceId: 'akekuri',
       blackboardValues: {},
     });
-    const copied = new StateStepper(
+    const copied = createStateTestSession(
       {
         global: runtime.runtimeState,
         gain: gainModifiers.runtimeState,
@@ -346,7 +346,7 @@ describe('GlobalBuffRuntime', () => {
       definitionProgramId,
     );
     expect(originalExecutor.programs.resolve(definitionProgramId)).toBe(step);
-    const copied = new StateStepper(
+    const copied = createStateTestSession(
       { global: originalRuntime.runtimeState, actions: originalExecutor.runtimeState },
       () => undefined,
     ).read();

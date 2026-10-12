@@ -1,6 +1,6 @@
 /** 验证真实序列内核在兄弟分支中恢复进度，以及同步结束不会继续执行后续步骤。 */
 import { describe, expect, it } from 'vitest';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 import { COMBAT_STEP_STATE, type ActionStepState } from '../state/actionState';
 import {
   endActionSequence,
@@ -23,7 +23,7 @@ function createActionSequenceState(stepCount: number): { entries: ActionStepStat
 }
 
 function createSession() {
-  return new StateStepper(
+  return createStateTestSession(
     {
       sequence: createActionSequenceState(2),
       context: { sequence: { resultMode: STEP_RESULT_MODE.normal } } as CombatExecutionContext,

@@ -2,7 +2,7 @@
 import { expect, it } from 'vitest';
 import { RuntimeTargetContext, setRuntimeTargetGroup } from './runtimeTargetContext';
 import { createSkillExecutionState } from '../state/abilityState';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 
 it('修改输入目标对象不会改写已选择的身份', () => {
   const context = new RuntimeTargetContext();
@@ -18,7 +18,7 @@ it('技能状态恢复后，目标组可以独立替换而不污染另一个分�
   const state = createSkillExecutionState();
   const context = new RuntimeTargetContext(state.targetContext);
   context.setSingle('selected', { kind: 'abilityEntity', instanceId: 1 });
-  const session = new StateStepper(state, (step, id: number) => {
+  const session = createStateTestSession(state, (step, id: number) => {
     setRuntimeTargetGroup(step.state.targetContext, 'selected', [
       { kind: 'abilityEntity', instanceId: id },
     ]);

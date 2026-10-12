@@ -1,5 +1,5 @@
 import { computed, effectScope, shallowRef, watch } from 'vue';
-import { ScenarioEditorSession } from '../../../application/editor/scenarioEditorSession';
+import { createScenarioEditorSession } from '../../../test/scenarioEditorSession';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createEmptyScenario } from '../../../core/project/createProject';
 import { createInteractionSession } from '../../interaction/interactionSession';
@@ -52,7 +52,7 @@ function fixture(readOnly = false, minimumInputFrame = 0, blocked = false) {
   const actionSelection = shallowRef(createEmptyTimelineActionSelection());
   const interactionSession = createInteractionSession();
   const simulationService = { beginInteractiveSession: vi.fn(), endInteractiveSession: vi.fn() };
-  const session = new ScenarioEditorSession(original);
+  const session = createScenarioEditorSession(original);
   session.subscribe(snapshot => {
     scenario.value = snapshot.scenario;
   });

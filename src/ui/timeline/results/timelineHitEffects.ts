@@ -9,12 +9,10 @@ import {
   projectHitDamageReceipts,
   projectHitInflictionReceipts,
 } from '../../../core/projection/hitEffectProjection';
-import type { ScenarioDocument } from '../../../core/project/schema';
 import {
   findBuffTimelineSegmentForDamage,
   projectBuffIconTimelineMetadata,
 } from '../../../core/projection/buffTimelineViz';
-import type { TimelineHitMarker } from './timelineHitProjection';
 import { CombatObjectOrigins } from '../../../core/projection/combatObjectOrigins';
 import {
   isBuffDamageReceipt,
@@ -193,77 +191,10 @@ export function projectTimelineHitDetailEntries(
   });
 }
 
-/** 每个稳定命中身份首次实际执行的战斗帧；周期重复执行仍只对应定义中的一个标记。 */
-export function projectTimelineHitActualFrames(
-  entries: readonly CombatReceiptEntry[],
-): ReadonlyMap<string, number> {
-  const result = new Map<string, number>();
-  for (const receipt of projectHitDamageReceipts(excludeStandaloneEffectDamage(entries))) {
-    if (receipt.castId === undefined || receipt.hitId === undefined || result.has(receipt.hitId)) {
-      continue;
-    }
-    result.set(receipt.hitId, receipt.frame);
-  }
-  return result;
-}
-
 /** 把一次释放的命中标记与回执事实归因；键为 `hitId`。 */
 export function projectTimelineHitReceipts(entries: readonly CombatReceiptEntry[]) {
   return {
     damages: projectHitDamageReceipts(excludeStandaloneEffectDamage(entries)),
     inflictions: projectHitInflictionReceipts(entries),
   };
-}
-
-export function projectHitEffectsByCast(
-  scenario: ScenarioDocument,
-  entries: readonly CombatReceiptEntry[],
-  castId: string,
-  markers: readonly TimelineHitMarker[],
-  receipts = projectTimelineHitReceipts(entries),
-): ReadonlyMap<string, TimelineHitEffectLabel> {
-  let targetTrack = null;
-  let targetCast = null;
-  for (const track of scenario.tracks) {
-    const skillCast = track?.skillCasts.find(candidate => candidate.id === castId);
-    if (track !== null && skillCast !== undefined) {
-      targetTrack = track;
-      targetCast = skillCast;
-      break;
-    }
-  }
-  if (targetTrack === null || targetCast === null || targetTrack.operator === null) {
-    return new Map<string, TimelineHitEffectLabel>();
-  }
-  // 来源可以是技能创建的能力实体；归属与详情面板一样使用冻结的释放/命中身份，
-  // 不能额外要求 sourceId 是干员本人，也不能用同帧的其他释放补齐。
-  const damages = receipts.damages.filter(receipt => receipt.castId === castId);
-  const inflictions = receipts.inflictions.filter(receipt => receipt.castId === castId);
-
-  const byHitId = new Map<string, TimelineHitEffectLabel>();
-  for (const marker of markers) {
-    const matchingDamage = damages.filter(receipt => receipt.hitId === marker.hitId);
-    const absoluteFrame = matchingDamage[0]?.frame;
-    if (absoluteFrame === undefined) continue;
-    const damage = damages
-      .filter(receipt => receipt.hitId === marker.hitId && receipt.frame === absoluteFrame)
-      .map(receipt => ({
-        value: receipt.value,
-        damageType: receipt.damageType,
-        isCritical: receipt.isCritical,
-      }));
-    const infliction = inflictions
-      .filter(receipt => receipt.frame === absoluteFrame)
-      .map(receipt => ({
-        element: receipt.element,
-        outcomeKind: receipt.outcomeKind,
-        currentLayers: receipt.currentLayers,
-      }));
-    if (damage.length === 0 && infliction.length === 0) continue;
-    byHitId.set(marker.hitId, {
-      damage,
-      infliction,
-    });
-  }
-  return byHitId;
 }

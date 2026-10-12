@@ -141,24 +141,6 @@ export interface CompiledScenarioTimeline {
   readonly skillInputGroups?: readonly SkillInputGroup[];
 }
 
-interface GraphOperatorIndex {
-  readonly actionPrograms: ActionGraphDefinitionRepository;
-  getOperator(slug: string): OperatorDefinition | null;
-  getCommonAbilityEntityDefinitions?(): OperatorDefinition['abilityEntityDefinitions'];
-  getCommonDefinitionSources(): readonly CommonDefinitionSource[];
-}
-
-function requireOperator(
-  build: OperatorInstanceDocument,
-  index: GraphOperatorIndex,
-): OperatorDefinition {
-  const operator = index.getOperator(build.operatorSlug);
-  if (operator === null) {
-    throw new Error(`operator definition '${build.operatorSlug}' does not exist`);
-  }
-  return operator;
-}
-
 function requireSkillLevel(build: OperatorInstanceDocument, levelSource: string): number {
   const level = build.skillLevels[levelSource];
   if (level === undefined) {
@@ -538,34 +520,4 @@ export function compileResolvedScenarioTimeline(
     commonAbilityEntityDefinitions,
     context,
   );
-}
-
-/** Inputs retain declaration order within each frame. */
-export function compileScenarioTimeline(
-  scenario: ScenarioDocument,
-  index: GraphOperatorIndex,
-): CompiledScenarioTimeline {
-  const tracks: ResolvedTimelineTrack[] = [];
-  const seenOperatorIds = new Set<string>();
-
-  scenario.tracks.forEach((track, trackIndex) => {
-    if (track === null) return;
-    const operatorInstance = track.operator;
-    if (operatorInstance === null) {
-      if (track.skillCasts.length > 0) {
-        throw new Error(`track ${trackIndex} has skill casts but no operator instance`);
-      }
-      return;
-    }
-    if (seenOperatorIds.has(track.id)) {
-      throw new Error(`track '${track.id}' is assigned to multiple operator instances`);
-    }
-    seenOperatorIds.add(track.id);
-    const operator = requireOperator(operatorInstance, index);
-    tracks.push({ track, operatorInstance, operator });
-  });
-  return compileResolvedTimelineTracks(tracks, index.getCommonAbilityEntityDefinitions?.(), {
-    programs: index.actionPrograms,
-    commonDefinitionSources: index.getCommonDefinitionSources(),
-  });
 }

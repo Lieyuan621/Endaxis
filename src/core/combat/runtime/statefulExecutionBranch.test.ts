@@ -18,7 +18,11 @@ import { takeSimulationRandomSample, type SimulationRandomMode } from '../random
 import { createSimulationRandomState } from '../state/environmentState';
 import { createAbilityEventState } from '../state/foundationState';
 import { createBuffTriggerState, createProjectileLifecycleState } from '../state/instanceState';
-import { StateStepper, type StateStep } from './stateStepper';
+import {
+  createStateTestSession,
+  type StateTestSession,
+  type StateTestContext,
+} from '../../../test/stateTestSession';
 
 const DELTA = 1 / 30;
 
@@ -41,7 +45,7 @@ function initialState(mode: SimulationRandomMode) {
 type BranchState = ReturnType<typeof initialState>;
 type BranchInput = 'start' | 'stop' | 'advance';
 
-function executeFrame(step: StateStep<BranchState>, input: BranchInput): void {
+function executeFrame(step: StateTestContext<BranchState>, input: BranchInput): void {
   const state = step.state;
   state.frame++;
   advanceProjectileLifetimes(state.projectiles, {
@@ -93,7 +97,7 @@ function executeFrame(step: StateStep<BranchState>, input: BranchInput): void {
 }
 
 function runToEnd(
-  runtime: StateStepper<BranchState, BranchInput, void>,
+  runtime: StateTestSession<BranchState, BranchInput, void>,
   next: BranchInput,
 ): BranchState {
   runtime.step(next);
@@ -104,7 +108,7 @@ function runToEnd(
 it.each(['expected', 'sampled'] as const)(
   '%s：Buff 触发后的在途投射物、事件与随机位置在兄弟分支中完整恢复',
   mode => {
-    const runtime = new StateStepper(initialState(mode), executeFrame);
+    const runtime = createStateTestSession(initialState(mode), executeFrame);
     runtime.step('start');
     runtime.step('advance');
     runtime.step('advance');
@@ -131,7 +135,7 @@ it.each(['expected', 'sampled'] as const)(
       expect(runToEnd(runtime, 'advance')).toEqual(resultA);
     }
 
-    const fromStart = new StateStepper(initialState(mode), executeFrame);
+    const fromStart = createStateTestSession(initialState(mode), executeFrame);
     fromStart.step('start');
     fromStart.step('advance');
     fromStart.step('advance');
@@ -140,7 +144,7 @@ it.each(['expected', 'sampled'] as const)(
 );
 
 it('补触发期间关闭宿主会停止后续触发，恢复后仍可完整重跑', () => {
-  const runtime = new StateStepper(
+  const runtime = createStateTestSession(
     {
       enabled: true,
       calls: 0,

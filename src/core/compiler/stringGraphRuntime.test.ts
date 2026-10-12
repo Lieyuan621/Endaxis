@@ -16,7 +16,7 @@ import {
 } from '../combat/buffs/buffOperationExecutor';
 import { CombatBuffContainer } from '../combat/buffs/combatBuffs';
 import { TargetContextOperationExecutor } from '../combat/abilities/targetContextOperationExecutor';
-import { StateStepper } from '../combat/runtime/stateStepper';
+import { createStateTestSession } from '../../test/stateTestSession';
 import {
   SkillCastOperationExecutor,
   type SkillCastOperationExecutorDependencies,
@@ -280,7 +280,7 @@ describe('字符串数据图实际消费与切面恢复', () => {
     timeline.reset({});
     timeline.tick(0, 1 / 30, {});
     expect(request.mock.calls.map(([request]) => request.nativeSkillId)).toEqual(['before']);
-    const saved = new StateStepper(
+    const saved = createStateTestSession(
       { board: board.runtimeState, timeline: timeline.runtimeState },
       () => undefined,
     ).read();
@@ -337,7 +337,7 @@ describe('字符串数据图实际消费与切面恢复', () => {
     const running = runtime.createSequence(entry);
     running.tryExecute({});
     expect(markers.has('original-id')).toBe(true);
-    const saved = new StateStepper(
+    const saved = createStateTestSession(
       {
         clock: clock.runtimeState,
         markers: markers.runtimeState,

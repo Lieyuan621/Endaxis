@@ -970,15 +970,6 @@ export function planRoutedSkills(
   });
 }
 
-/**
- * 单名诊断用的保守渲染，不写文件，也不假定已收齐其他干员与装备的消费者。
- * 正式单名生成与整批重建共用 renderOperatorDefinitionBatch，不能用这里的文本复验正式库。
- */
-export async function renderOperatorDefinition(args: Parameters<typeof planOperatorDefinition>[0]) {
-  const plan = planOperatorDefinition(args);
-  return { plan, ...(await renderOperatorDefinitionFiles(args.slug, plan.operator, plan.audit)) };
-}
-
 /** 从已规划并优化的纯数据渲染文件；整批入口可先收齐跨干员用途，再进入此步骤。 */
 export async function renderOperatorDefinitionFiles(
   slug: string,

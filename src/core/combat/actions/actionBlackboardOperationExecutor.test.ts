@@ -4,7 +4,7 @@ import { ActionBlackboard } from './actionBlackboard';
 import { ActionBlackboardOperationExecutor } from './actionBlackboardOperationExecutor';
 import { ExplicitProbabilitySampleSource } from '../random/probabilitySampleSource';
 import { CombatVitals } from '../resources/combatVitals';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 
 const delegate = {
   execute: vi.fn(() => false),
@@ -374,7 +374,7 @@ describe('ActionBlackboardOperationExecutor', () => {
     };
     const context = { blackboard: new ActionBlackboard(), actionOwnerId: 'enemy' };
     originalExecutor.execute(step, context);
-    const copied = new StateStepper(
+    const copied = createStateTestSession(
       { vitals: originalVitals.runtimeState, actions: originalExecutor.runtimeState },
       () => undefined,
     ).read();

@@ -1,6 +1,6 @@
 /** 护盾与 Buff 一起恢复，耗尽回调只能看到已经扣除的余额和次数。 */
 import { expect, it } from 'vitest';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 import { createBuffInstanceState } from '../state/instanceState';
 import { absorbShieldDamage } from './buffShieldExecution';
 
@@ -24,7 +24,7 @@ it('restores shield consumption and finishing across branches', () => {
     absorbAllDamageWhenConsumed: false,
     removeBuffWhenConsumed: true,
   };
-  const session = new StateStepper(buff, (step, damage: number) =>
+  const session = createStateTestSession(buff, (step, damage: number) =>
     absorbShieldDamage(step.state.shields[0]!, program, 'physical', damage, () => {
       expect(step.state.shields[0]!.consumed).toBe(true);
       step.state.lifecycle.finished = true;

@@ -8,7 +8,7 @@ import {
   readActionBlackboard,
 } from '../actions/actionBlackboardExecution';
 import { createActionBlackboardState } from '../state/foundationState';
-import { StateStepper } from './stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 
 describe('blackboard data graph', () => {
   it('keeps local entity assignments on the existing number read interface', () => {
@@ -36,7 +36,7 @@ describe('blackboard data graph', () => {
     const entity = createActionBlackboardState({ EntityBB_value: 1 });
     const left = createActionBlackboardState({ local: 2 }, entity);
     const right = createActionBlackboardState({}, entity);
-    const session = new StateStepper({ entity, left, right }, (step, value: number) => {
+    const session = createStateTestSession({ entity, left, right }, (step, value: number) => {
       assignDynamicBlackboard(step.state.left, 'EntityBB_value', value);
       return readActionBlackboard(step.state.right, 'EntityBB_value');
     });

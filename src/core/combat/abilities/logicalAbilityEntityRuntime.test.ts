@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { LogicalAbilityEntityRuntime } from './logicalAbilityEntityRuntime';
 import { logicalAbilityEntityRuntimeId } from '../../game-data/logicalAbilityEntity';
 import { ActionBlackboard } from '../actions/actionBlackboard';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 import {
   killLogicalAbilityEntity,
   advanceAbilityEntityRelease,
@@ -179,7 +179,7 @@ describe('LogicalAbilityEntityRuntime', () => {
       second.dispose();
     });
     const second = runtime.onReset(entity, () => calls.push('second'));
-    const session = new StateStepper(runtime.runtimeState, () => undefined);
+    const session = createStateTestSession(runtime.runtimeState, () => undefined);
     const saved = session.read();
     const state = [...saved.instances.values()][0]!;
     expect(state.childBuffs).toEqual([reference]);
@@ -202,7 +202,7 @@ describe('LogicalAbilityEntityRuntime', () => {
       },
     });
     const state = [...runtime.runtimeState.instances.values()][0]!;
-    const session = new StateStepper(state, (step, kill: boolean) => {
+    const session = createStateTestSession(state, (step, kill: boolean) => {
       if (kill) {
         expect(killLogicalAbilityEntity(step.state, 'explicit')).toBe(true);
         expect(killLogicalAbilityEntity(step.state, 'sourceDied')).toBe(false);
@@ -244,7 +244,7 @@ describe('LogicalAbilityEntityRuntime', () => {
     runtime.advanceFrame();
     runtime.notifySourceDied(source);
     const blackboard = runtime.entityBlackboard(entity);
-    const session = new StateStepper(
+    const session = createStateTestSession(
       { directory: runtime.runtimeState, blackboard: blackboard.runtimeState },
       () => undefined,
     );

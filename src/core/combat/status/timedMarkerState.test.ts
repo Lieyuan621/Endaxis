@@ -1,13 +1,13 @@
 /** 标记副本按当前分支的时钟判断到期，不读取创建它的旧时钟对象。 */
 import { expect, it } from 'vitest';
 import { TimedMarkerContainer, sweepTimedMarkers } from './timedMarkers';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 
 it('恢复相同标记，使用各分支自己的时钟推进', () => {
   const clock = { time: 1 };
   const markers = new TimedMarkerContainer('owner', clock);
   markers.add('marker', 2);
-  const session = new StateStepper(markers.runtimeState, (step, time: number) => {
+  const session = createStateTestSession(markers.runtimeState, (step, time: number) => {
     const ended: string[] = [];
     sweepTimedMarkers(step.state, () => time, {
       finished: entry => ended.push(entry.sourceTargetId),

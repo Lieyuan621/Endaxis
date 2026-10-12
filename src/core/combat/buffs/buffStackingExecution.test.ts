@@ -1,6 +1,6 @@
 /** 叠层组成员和 Buff 状态一起恢复；同步回收不破坏本次优先级遍历。 */
 import { describe, expect, it } from 'vitest';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 import { createBuffLifecycleState, createBuffStackingState } from '../state/instanceState';
 import { decreaseBuffEnhancements, enhanceBuffLifecycle } from './buffLifecycleExecution';
 import {
@@ -12,7 +12,7 @@ import {
 } from './buffStackingExecution';
 
 function createSession() {
-  return new StateStepper(
+  return createStateTestSession(
     {
       group: { ...createBuffStackingState('highPriority'), members: [1, 2] },
       buffs: new Map([
@@ -77,7 +77,7 @@ describe('Buff stacking data', () => {
   });
 
   it('restores group and instance enhancement counts across increase and decrease branches', () => {
-    const session = new StateStepper(
+    const session = createStateTestSession(
       {
         group: {
           ...createBuffStackingState('enhance'),

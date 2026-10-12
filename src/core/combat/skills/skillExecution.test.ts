@@ -7,7 +7,7 @@ import {
   tickActionSequence,
   type ActionSequenceExecutionHost,
 } from '../actions/actionSequenceExecution';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 import { createSkillExecutionState } from '../state/abilityState';
 import {
   COMBAT_STEP_STATE,
@@ -41,7 +41,7 @@ function createActionSequenceState(stepCount: number): { entries: ActionStepStat
 }
 
 function createSession() {
-  return new StateStepper(
+  return createStateTestSession(
     {
       skill: createSkillExecutionState(),
       timeline: createTimelineActionState(),

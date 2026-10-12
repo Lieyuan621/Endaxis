@@ -8,7 +8,7 @@ import {
 } from '../attributes/combatAttributeExecution';
 import { attributeModifierValues } from '../attributes/combatAttributes';
 import { createCombatAttributeModifier } from '../attributes/combatAttributeExecution';
-import { StateStepper } from '../runtime/stateStepper';
+import { createStateTestSession } from '../../../test/stateTestSession';
 import { ATTRIBUTE_MODIFIER_SOURCES, createCombatAttributeState } from '../state/foundationState';
 import { createBuffAttributeState, createBuffInstanceState } from '../state/instanceState';
 import {
@@ -37,7 +37,7 @@ describe('buff attribute ownership', () => {
     const buff = instance.attributes;
     const other = modifier(7);
     addCombatAttributeModifier(attributes, other);
-    const session = new StateStepper(
+    const session = createStateTestSession(
       { attributes, buff, instance, other },
       (step, input: number | 'remove') => {
         const host = {
