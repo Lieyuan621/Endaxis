@@ -96,8 +96,6 @@ const sections = computed(() => [
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
-  max-height: calc(85dvh - 130px);
-  overflow-y: auto;
 }
 .shortcut-sections section {
   min-width: 0;

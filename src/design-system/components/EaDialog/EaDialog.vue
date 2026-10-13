@@ -15,6 +15,10 @@ const props = withDefaults(
     closeOnPressEscape?: boolean;
     destroyOnClose?: boolean;
     appendToBody?: boolean;
+    alignCenter?: boolean;
+    fullscreen?: boolean;
+    /** 普通面板整体滚动；详情面板可显式选择正文内部滚动。 */
+    scrollMode?: 'page' | 'body';
   }>(),
   {
     title: '',
@@ -25,6 +29,9 @@ const props = withDefaults(
     closeOnPressEscape: true,
     destroyOnClose: false,
     appendToBody: true,
+    alignCenter: true,
+    fullscreen: false,
+    scrollMode: 'page',
   },
 );
 
@@ -54,8 +61,8 @@ function beforeClose(done: () => void) {
   <el-dialog
     v-bind="attrs"
     class="ea-dialog"
-    :class="[`ea-dialog--${size}`, { 'ea-dialog--busy': busy }]"
-    modal-class="ea-dialog-overlay"
+    :class="[`ea-dialog--${size}`, `ea-dialog--scroll-${scrollMode}`, { 'ea-dialog--busy': busy }]"
+    :modal-class="`ea-dialog-overlay ea-dialog-overlay--${scrollMode}${fullscreen ? ' ea-dialog-overlay--fullscreen' : ''}`"
     :model-value="modelValue"
     :title="title"
     :width="width"
@@ -64,6 +71,8 @@ function beforeClose(done: () => void) {
     :show-close="!busy"
     :destroy-on-close="destroyOnClose"
     :append-to-body="appendToBody"
+    :align-center="alignCenter"
+    :fullscreen="fullscreen"
     :before-close="beforeClose"
     @update:model-value="emit('update:modelValue', $event)"
     @open="emit('open')"

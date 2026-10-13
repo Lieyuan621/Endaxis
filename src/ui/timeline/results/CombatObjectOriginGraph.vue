@@ -278,7 +278,6 @@ function changeSummary(node: CombatObjectNode): string | undefined {
       v-model="open"
       :title="title"
       width="min(1320px, 96vw)"
-      top="3vh"
       append-to-body
       destroy-on-close
       @opened="focusRoot"

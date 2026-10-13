@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { EaButton, EaNumberInput, EaSelect, type EaSelectValue } from '@/design-system';
+import { EaButton, EaDialog, EaNumberInput, EaSelect, type EaSelectValue } from '@/design-system';
 import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import {
   computed,
@@ -1053,9 +1053,30 @@ async function handleProjectFileChange(event: Event): Promise<void> {
   }
 }
 
+const legacyConversionConfirmation = shallowRef<{
+  content: string;
+  resolve: (confirmed: boolean) => void;
+} | null>(null);
+
+function finishLegacyConversionConfirmation(confirmed: boolean): void {
+  const pending = legacyConversionConfirmation.value;
+  legacyConversionConfirmation.value = null;
+  pending?.resolve(confirmed);
+}
+
+function downloadLegacyJson(): void {
+  const pending = legacyConversionConfirmation.value;
+  if (pending === null) return;
+  downloadBlob(
+    new Blob([pending.content], { type: 'application/json;charset=utf-8' }),
+    'Endaxis_Timeline_V2.json',
+  );
+}
+
+onScopeDispose(() => finishLegacyConversionConfirmation(false));
+
 async function openProjectContent(content: string): Promise<boolean> {
   let legacy = false;
-  const legacyTimingMode = ref<'repair' | 'preserve'>('preserve');
   try {
     let parsedInput: unknown = content;
     try {
@@ -1065,42 +1086,14 @@ async function openProjectContent(content: string): Promise<boolean> {
     }
     legacy = inspectProjectInput(parsedInput).kind === 'legacy';
     if (legacy) {
-      try {
-        await serviceModalBoundary.run(() =>
-          ElMessageBox.confirm(
-            () =>
-              h('div', [
-                h('p', '检测到旧版本轴。请选择技能时间的处理方式，原文件不会修改。'),
-                h(EaSelect, {
-                  modelValue: legacyTimingMode.value,
-                  'aria-label': '旧轴时间处理方式',
-                  options: [
-                    { label: '智能修复时间', value: 'repair' },
-                    { label: '保留原时间', value: 'preserve' },
-                  ],
-                  'onUpdate:modelValue': value => {
-                    if (value === 'repair' || value === 'preserve') legacyTimingMode.value = value;
-                  },
-                }),
-                h(
-                  'p',
-                  legacyTimingMode.value === 'repair'
-                    ? '按新版技能时长和接续规则顺延技能，可能改变增益覆盖。'
-                    : '保留旧轴技能位置，仅换算帧率。重叠和不可接续会在轴上显示告警。',
-                ),
-                h('p', '两种方式都会判断技能形态，并按需要补主控切换。'),
-              ]),
-            '转换旧版本轴',
-            {
-              confirmButtonText: '确定并转换',
-              cancelButtonText: '取消',
-              type: 'warning',
-            },
-          ),
-        );
-      } catch {
-        return false;
-      }
+      const confirmed = await serviceModalBoundary.run(
+        () =>
+          new Promise<boolean>(resolve => {
+            finishLegacyConversionConfirmation(false);
+            legacyConversionConfirmation.value = { content, resolve };
+          }),
+      );
+      if (!confirmed) return false;
     }
     await ensureAllGameData();
     let projectInput: unknown = parsedInput;
@@ -1121,7 +1114,6 @@ async function openProjectContent(content: string): Promise<boolean> {
           parsedInput,
           gameDataRepository,
           legacyMappings as Parameters<typeof convertLegacyTimeline>[2],
-          { timingMode: legacyTimingMode.value },
         );
         legacyConversionReport = conversion.report;
         if (conversion.project === null) {
@@ -1161,9 +1153,7 @@ async function openProjectContent(content: string): Promise<boolean> {
           identityChanges: [],
           sequenceExpansions: [],
           resourceAdjustments: [],
-          timingAdjustments: [],
           skillFormAdjustments: [],
-          controlSwitchAdjustments: [],
         },
         true,
       );
@@ -6242,6 +6232,36 @@ function setMobileGuideFrame(frame: number | null): void {
 </script>
 
 <template>
+  <EaDialog
+    :model-value="legacyConversionConfirmation !== null"
+    :title="t('timeline.legacyConversion.title')"
+    align-center
+    :close-on-click-modal="false"
+    @update:model-value="
+      value => {
+        if (!value) finishLegacyConversionConfirmation(false);
+      }
+    "
+  >
+    <p>{{ t('timeline.legacyConversion.question') }}</p>
+    <p>{{ t('timeline.legacyConversion.notice') }}</p>
+    <template #footer>
+      <div class="ea-dialog-actions ea-dialog-actions--end legacy-conversion-actions">
+        <EaButton @click="downloadLegacyJson">{{
+          t('timeline.legacyConversion.download')
+        }}</EaButton>
+        <EaButton @click="finishLegacyConversionConfirmation(false)">{{
+          t('common.cancel')
+        }}</EaButton>
+        <EaButton
+          class="legacy-conversion-confirm"
+          @click="finishLegacyConversionConfirmation(true)"
+        >
+          {{ t('timeline.legacyConversion.confirm') }}
+        </EaButton>
+      </div>
+    </template>
+  </EaDialog>
   <TimelineResetDialog
     v-if="resetDialogVisible"
     v-model="resetDialogVisible"
@@ -8422,6 +8442,25 @@ function setMobileGuideFrame(frame: number | null): void {
 </template>
 
 <style scoped>
+.legacy-conversion-actions .ea-button {
+  height: 32px;
+  padding: 8px 15px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.legacy-conversion-actions .legacy-conversion-confirm {
+  background: var(--el-color-primary);
+  border-color: var(--el-color-primary);
+  color: var(--el-color-white);
+}
+
+.legacy-conversion-actions .legacy-conversion-confirm:hover {
+  background: color-mix(in srgb, var(--el-color-primary) 85%, white);
+  border-color: color-mix(in srgb, var(--el-color-primary) 85%, white);
+  color: var(--el-color-white);
+}
+
 .project-file-input {
   display: none;
 }

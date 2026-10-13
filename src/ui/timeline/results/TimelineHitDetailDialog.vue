@@ -1087,6 +1087,7 @@ function onClose(): void {
 <template>
   <InputRegionBoundary label="TimelineHitDetailDialog" :active="visible" modal>
     <EaDialog
+      scroll-mode="body"
       :model-value="visible"
       :title="labels.dialogTitle"
       width="420px"

@@ -786,9 +786,7 @@ function removeKnotThreshold(index: number): void {
   margin-bottom: 2px;
 }
 .enemy-list-grid {
-  max-height: 450px;
   padding: 10px;
-  overflow-y: auto;
   scrollbar-width: none;
 }
 .enemy-group-section {

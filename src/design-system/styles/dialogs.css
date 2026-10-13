@@ -1,4 +1,6 @@
 .ea-dialog.el-dialog {
+  display: flex;
+  flex-direction: column;
   max-width: calc(100vw - 32px);
   border: 1px solid var(--ea-dialog-border);
   border-radius: var(--ea-control-radius);
@@ -6,7 +8,34 @@
   box-shadow: 0 18px 48px var(--ea-shadow-strong);
 }
 
+.ea-dialog-overlay--page .el-overlay-dialog {
+  padding: 16px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.ea-dialog-overlay--page .el-overlay-dialog.is-align-center {
+  align-items: flex-start;
+}
+
+.ea-dialog-overlay--page .ea-dialog.is-align-center {
+  margin: auto;
+  flex-shrink: 0;
+}
+
+.ea-dialog--scroll-body.el-dialog {
+  max-height: calc(100dvh - 32px);
+}
+
+.ea-dialog--scroll-body .el-dialog__body {
+  min-height: 0;
+  flex: 0 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .ea-dialog .el-dialog__header {
+  flex: 0 0 auto;
   margin: 0;
   padding: var(--ea-dialog-padding-y) var(--ea-dialog-padding-x);
   border-bottom: 1px solid var(--ea-dialog-divider);
@@ -52,6 +81,7 @@
 }
 
 .ea-dialog .el-dialog__footer {
+  flex: 0 0 auto;
   padding: 0 var(--ea-dialog-padding-x) var(--ea-dialog-padding-y);
   border-top: 1px solid var(--ea-dialog-divider);
 }
@@ -83,6 +113,21 @@
   cursor: progress;
 }
 
+.ea-dialog-overlay--fullscreen .el-overlay-dialog {
+  padding: 0;
+}
+
+.ea-dialog.el-dialog.is-fullscreen {
+  width: 100% !important;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0 !important;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+
 .ea-drawer.el-drawer {
   background: var(--ea-panel) !important;
 }
@@ -110,8 +155,7 @@
     display: flex;
     width: calc(100vw - 16px) !important;
     max-width: none;
-    max-height: calc(100dvh - 16px);
-    margin: 8px auto !important;
+    margin: auto !important;
     flex-direction: column;
   }
 
@@ -120,11 +164,12 @@
     flex: 0 0 auto;
   }
 
-  .ea-dialog .el-dialog__body {
-    min-height: 0;
-    flex: 1 1 auto;
-    overflow-y: auto;
-    overscroll-behavior: contain;
+  .ea-dialog-overlay--page .el-overlay-dialog {
+    padding: 8px;
+  }
+
+  .ea-dialog--scroll-body.el-dialog {
+    max-height: calc(100dvh - 16px);
   }
 
   .ea-dialog-actions--stack-mobile {

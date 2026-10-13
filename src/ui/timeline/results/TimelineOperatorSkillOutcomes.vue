@@ -58,6 +58,7 @@ const selected = computed(() => groups.value.find(group => group.castId === sele
   </div>
   <InputRegionBoundary label="OperatorSkillOutcomes" :active="selected !== undefined" modal>
     <EaDialog
+      scroll-mode="body"
       :model-value="selected !== undefined"
       :title="t('timeline.passiveUi.detailTitle')"
       width="440px"

@@ -150,6 +150,7 @@ function endReasonText(instance: BuffDetailInstance): string {
 <template>
   <InputRegionBoundary label="TimelineBuffDetailDialog" :active="visible" modal>
     <EaDialog
+      scroll-mode="body"
       :model-value="visible"
       :title="labels.title"
       width="440px"

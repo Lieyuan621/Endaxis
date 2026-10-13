@@ -85,9 +85,7 @@
 }
 
 .roster-scroll-container {
-  max-height: 400px;
   padding: 0 8px;
-  overflow-y: auto;
   scrollbar-width: none;
 }
 
@@ -415,15 +413,8 @@ html[data-theme='light'] .eq-affix-icon-img {
 }
 
 @media (max-width: 768px) {
-  .char-selector-dialog.el-dialog {
-    height: calc(100dvh - 16px);
-  }
-
   .char-selector-dialog .el-dialog__body {
-    display: flex;
-    flex-direction: column;
     padding: 10px 12px 12px;
-    overflow: hidden;
   }
 
   .selector-header {

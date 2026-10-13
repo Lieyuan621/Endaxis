@@ -224,6 +224,7 @@ async function save() {
 <template>
   <InputRegionBoundary label="skill-graph-editor" :active="true" modal>
     <EaDialog
+      scroll-mode="body"
       :model-value="true"
       class="skill-graph-dialog"
       size="full"

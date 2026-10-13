@@ -2928,6 +2928,13 @@
     "zhCNShort": "中"
   },
   "timeline": {
+    "legacyConversion": {
+      "title": "Convert legacy save",
+      "question": "A legacy save was detected. Convert it?",
+      "notice": "Conversion will not modify the JSON file on your drive, but will overwrite the data cached in your browser. Some skill durations and the timing of hits, elemental inflictions, and Buffs may change, so adjustments may be needed after conversion.",
+      "download": "Download legacy JSON",
+      "confirm": "Confirm conversion"
+    },
     "random": {
       "mode": "Random calculation",
       "expected": "Expected",
@@ -3026,6 +3033,8 @@
       "dps": "DPS",
       "noData": "No damage data available. Add actions to the timeline first.",
       "contributionByOperator": "Contribution by Operator",
+      "contributionDetails": "View contribution breakdown",
+      "contributionTotal": "Total",
       "lmdiModeStacks": "By Stacks",
       "lmdiModeStacksTip": "Breach, electrification, and corrosion contribution are split between the trigger and the infliction stack providers.",
       "lmdiModeApplier": "By Applier",
@@ -3040,7 +3049,7 @@
       "faq2Q": "What are the limitations of the damage calculation?",
       "faq2A": "The analysis only counts damage receipts produced by the formal simulation. It does not invent uncompiled behavior or missing conditions such as distance and target count. Reported simulation diagnostics can prevent some skills from executing.",
       "faq3Q": "How is contribution calculated?",
-      "faq3A": "Undecomposed damage is counted as the attacker's own damage. External bonus attribution is not connected yet, so the contribution chart currently shows own damage; this does not mean teammate buffs have no effect.",
+      "faq3A": "The inner ring shows total contribution; the outer ring separates own damage from bonuses provided to teammates. Logarithmic-mean decomposition assigns damage gains from effective direct modifiers to their providers, without tracing upstream causes. Supported factors include damage zones, direct multipliers, additive resistance reduction, and reconcilable percentage and flat ATK bonuses. Undecomposed damage stays with the attacker. Status stack sources are not redistributed. Negative contributions are shown in a table rather than a misleading pie chart.",
       "faq4Q": "How is the analysis range chosen?",
       "faq4A": "Counting starts at the scenario's simulation start and ignores earlier preparation damage. Rotation time ends at the last valid damage event. DPS is zero when there is no valid damage."
     },

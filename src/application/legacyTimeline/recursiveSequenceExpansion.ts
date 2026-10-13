@@ -5,13 +5,13 @@
  * 不在转换器里复制干员技能路由，也不向项目存档增加旧版专用字段。
  */
 import type { GameDataRepository } from '../../core/game-data/gameDataRepository';
-import type { EndaxisProjectDocument } from '../../core/project/schema';
+import type { EndaxisProjectDocument, ScenarioDocument } from '../../core/project/schema';
+import type { CombatReceiptEntry } from '../../core/combat/receipt/combatReceipt';
 import {
   planRecursiveSkillChain,
   type RecursiveSkillChain,
 } from '../simulation/recursiveSkillChain';
 import { resolveSkillGroupPlacementSkills } from '../editor/skillGroupPlacement';
-import type { LegacyRetimingSimulationRunner } from './heuristicRetiming';
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -38,7 +38,12 @@ export function expandLegacyRecursiveSkillSequences(
   project: EndaxisProjectDocument,
   preparedSource: unknown,
   repository: GameDataRepository,
-  runSimulation: LegacyRetimingSimulationRunner,
+  runSimulation: (
+    scenario: ScenarioDocument,
+    endFrame: number,
+  ) => {
+    readonly receiptEntries: readonly CombatReceiptEntry[];
+  },
 ): { expansions: LegacySequenceExpansion[]; issues: { path: string; message: string }[] } {
   const root = record(preparedSource);
   const sourceScenarios = records(root?.scenarioList);

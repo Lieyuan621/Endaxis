@@ -6,7 +6,7 @@ import { parseProjectDocument } from '../../core/project/serialization';
 import realAxisMappings from './mappings.json';
 import type { ConversionMappings } from './sourcePreparation';
 
-it('保留时间允许同轴重叠，智能修复则顺延，且不改变原始输入', () => {
+it('保留时间允许同轴重叠，不保存切面且不改变原始输入', () => {
   const input = fixture();
   const actions = input.scenarioList[0]!.data.tracks[0]!.actions;
   actions.push({ ...actions[0]!, startTime: 625, logicalStartTime: 625 });
@@ -29,30 +29,17 @@ it('保留时间允许同轴重叠，智能修复则顺延，且不改变原始�
   const save = vi.spyOn(CombatRuntimeSession.prototype, 'save');
   let preserved: ReturnType<typeof convertLegacyTimeline>;
   try {
-    preserved = convertLegacyTimeline(input, gameDataRepository, mappings, {
-      timingMode: 'preserve',
-    });
+    preserved = convertLegacyTimeline(input, gameDataRepository, mappings);
     expect(save).not.toHaveBeenCalled();
   } finally {
     save.mockRestore();
   }
-  const repaired = convertLegacyTimeline(input, gameDataRepository, mappings, {
-    timingMode: 'repair',
-  });
   expect(preserved.report.issues).toEqual([]);
-  expect(preserved.report.timingMode).toBe('preserve');
-  expect(preserved.report.timingAdjustments).toEqual([]);
-  for (const converted of [preserved, repaired]) {
-    expect(converted.project?.scenarios[0]?.battle.automaticControlSwitches).toBe(true);
-    expect(converted.project?.scenarios[0]?.battle.controlSwitches).toEqual([]);
-  }
+  expect(preserved.project?.scenarios[0]?.battle.automaticControlSwitches).toBe(true);
+  expect(preserved.project?.scenarios[0]?.battle.controlSwitches).toEqual([]);
   expect(
     preserved.project!.scenarios[0]!.tracks[0]!.skillCasts.map(c => c.placement.startFrame),
   ).toEqual([162, 163]);
-  expect(repaired.report.timingAdjustments.length).toBeGreaterThan(0);
-  expect(
-    repaired.project!.scenarios[0]!.tracks[0]!.skillCasts[1]!.placement.startFrame,
-  ).toBeGreaterThan(163);
   expect(input).toEqual(original);
 });
 
@@ -115,7 +102,6 @@ it('把旧版空闪避块转换为同轨普通闪避标签，不生成技能块�
     input,
     gameDataRepository,
     realAxisMappings as ConversionMappings,
-    { timingMode: 'preserve' },
   );
 
   expect(result.report.issues).toEqual([]);
@@ -475,7 +461,7 @@ it('produces a current reloadable document only after explicit skill mapping and
     true,
   );
 });
-it('clamps an excessive stored gauge to the current native maximum before retiming', () => {
+it('clamps an excessive stored gauge to the current native maximum before simulation', () => {
   const input = fixture();
   input.scenarioList[0]!.data.initialGaugeMode = 'custom';
   input.scenarioList[0]!.data.tracks[0]!.initialGauge = 999;
@@ -507,7 +493,7 @@ it('clamps an excessive stored gauge to the current native maximum before retimi
     reason: 'clampedToCurrentNativeMaximum',
   });
 });
-it('retimes from simulated starts, same-track ends, and ultimate dilation', () => {
+it('preserves original timing across overlapping ultimates and other tracks', () => {
   const input = fixture();
   const data = input.scenarioList[0]!.data as any;
   data.operators.push({
@@ -575,28 +561,8 @@ it('retimes from simulated starts, same-track ends, and ultimate dilation', () =
   expect(result.report.issues).toEqual([]);
   expect(
     result.project?.scenarios[0]?.tracks[0]?.skillCasts.map(cast => cast.placement.startFrame),
-  ).toEqual([150, 237]);
-  expect(result.project?.scenarios[0]?.tracks[1]?.skillCasts[0]?.placement.startFrame).toBe(288);
-  expect(result.report.timingAdjustments).toEqual([
-    expect.objectContaining({
-      trackIndex: 0,
-      actionIndex: 1,
-      sourceStartFrame: 180,
-      adjustedStartFrame: 237,
-      sameTrackEndCandidate: 237,
-      globalOrderCandidate: 180,
-      pushedByUltimateTimeDilation: false,
-    }),
-    expect.objectContaining({
-      trackIndex: 1,
-      actionIndex: 0,
-      sourceStartFrame: 190,
-      adjustedStartFrame: 288,
-      globalOrderCandidate: 247,
-      pushedByUltimateTimeDilation: true,
-      ultimateTimeDilationEndFrame: 287,
-    }),
-  ]);
+  ).toEqual([150, 180]);
+  expect(result.project?.scenarios[0]?.tracks[1]?.skillCasts[0]?.placement.startFrame).toBe(190);
 });
 it('preserves validated action-to-action connections with migrated cast identities', () => {
   const input = fixture();

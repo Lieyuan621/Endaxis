@@ -6,13 +6,11 @@ import { resolveScenarioBuilds } from '../../core/compiler/resolveScenarioBuilds
 import { resolveOperatorMaxUltimateEnergy } from '../../core/compiler/resolveScenarioResourceRules';
 import type { EndaxisProjectDocument } from '../../core/project/schema';
 import {
-  retimeLegacyProjectBySimulation,
+  resolveLegacySkillForms,
+  createLegacyPreservedInputRunner,
   type LegacyRuntimeReplacementResolver,
-  type LegacyTimingMode,
-} from './heuristicRetiming';
+} from './preservedInputs';
 import { ScenarioSimulationService } from '../simulation/scenarioSimulationService';
-import { CheckpointRetimingSession } from './checkpointRetiming';
-import { createLegacyPreservedInputRunner } from './preservedInputs';
 import { skillSettings, skillSettingResources } from '../../data/combat/skillSettings';
 import { elementalAttachments } from '../../data/buffs/elementalAttachments';
 import { compoundStatusFactories } from '../../data/buffs/compoundStatusFactories';
@@ -196,7 +194,6 @@ export function convertLegacyTimeline(
   input: unknown,
   repository: GameDataRepository,
   mappings: ConversionMappings = {},
-  options: { readonly timingMode?: LegacyTimingMode } = {},
 ) {
   const prepared = prepareLegacySourceBestEffort(input, mappings);
   const result = createLegacyProjectImporter(repository).migrate(prepared.source);
@@ -256,39 +253,20 @@ export function convertLegacyTimeline(
     }
   }
   issues.push(...sequenceExpansion.issues);
-  let retiming = {
-    timingAdjustments: [],
-    skillFormAdjustments: [],
-    controlSwitchAdjustments: [],
-    dodgeMarkerAdjustments: [],
-    simulationStats: {
-      scenarioCount: 0,
-      castCount: 0,
-      candidateProbes: 0,
-      simulationRuns: 0,
-    },
-  } as ReturnType<typeof retimeLegacyProjectBySimulation>;
+  let skillFormAdjustments: ReturnType<typeof resolveLegacySkillForms> = [];
   if (project !== null && fatalIssues.length === 0) {
-    const beforeRetiming = structuredClone(project);
+    const beforeResolution = structuredClone(project);
     try {
-      retiming = retimeLegacyProjectBySimulation(
+      skillFormAdjustments = resolveLegacySkillForms(
         project,
-        prepared.source,
-        runSimulation,
-        createLegacyRuntimeReplacementResolver(repository),
-        {
-          compileInputs: scenario => simulation.compileFixedInputs(scenario),
-          createSession: (scenario, frame) =>
-            new CheckpointRetimingSession(simulation.createInputCombatSession(scenario, frame)),
-        },
-        options.timingMode,
         createLegacyPreservedInputRunner(simulation),
+        createLegacyRuntimeReplacementResolver(repository),
       );
     } catch (error) {
-      project = beforeRetiming;
+      project = beforeResolution;
       issues.push({
         path: '',
-        message: `${options.timingMode === 'preserve' ? '保留时间的形态判断失败' : '智能调整时间失败'}，已保留直接转换的位置：${conversionIssue('', error).message}`,
+        message: `技能形态判断失败，已保留直接转换的结果：${conversionIssue('', error).message}`,
       });
     }
   }
@@ -305,7 +283,6 @@ export function convertLegacyTimeline(
           : 'converted',
     project: fatalIssues.length === 0 ? project : null,
     report: {
-      timingMode: options.timingMode ?? 'repair',
       issues,
       simulationIssues: issues.filter(issue => issue.impact !== 'presentation'),
       presentationIssues: issues.filter(issue => issue.impact === 'presentation'),
@@ -316,20 +293,14 @@ export function convertLegacyTimeline(
       unresolvedSkills: prepared.unresolvedSkills,
       sequenceExpansions: sequenceExpansion.expansions,
       resourceAdjustments,
-      timingAdjustments: retiming.timingAdjustments,
-      skillFormAdjustments: retiming.skillFormAdjustments,
-      controlSwitchAdjustments: retiming.controlSwitchAdjustments,
-      dodgeMarkerAdjustments: retiming.dodgeMarkerAdjustments,
-      retimingSimulationStats: retiming.simulationStats,
+      skillFormAdjustments,
       sourceActionCounts: prepared.source.scenarioList.map((s: any) => ({
         id: s.id,
         count: s.data.tracks.reduce((n: number, t: any) => n + t.actions.length, 0),
       })),
       limitations: [
-        options.timingMode === 'preserve'
-          ? '保留旧轴技能位置（换算为新版帧率），不修复重叠或不可接续；仍判断技能形态并补主控切换'
-          : '按旧版全局技能顺序，使用新版逐步模拟的开始、结束、允许接续窗口和终结技时间膨胀区间修正放置帧',
-        '旧轴默认第1轨道为主控，并在其他干员的普攻、强化普攻、下落攻击或处决开始时补主控切换标记',
+        '保留旧轴技能位置（换算为新版帧率），不修复重叠或不可接续；仍判断技能形态',
+        '开启方案级自动切换主控，保留原有显式切换，不添加推断切人标记',
         '标准旧闪避块转换为同轨普通向前闪避标签；旧格式没有方向或极限闪避成功事实，因此不补成功收益',
         '使用当前游戏定义重算；旧 hits、Buff、面板、伤害等快照不迁移',
         '连接只支持可唯一对应技能块的 action-to-action 端点；未实现旧自定义行为、派生端点、继承状态、合约及非中性全局修正',

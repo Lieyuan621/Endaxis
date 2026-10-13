@@ -9,6 +9,7 @@ import type { PieSeriesOption } from 'echarts/charts';
 import type { LegendComponentOption, TooltipComponentOption } from 'echarts/components';
 import { EaDialog } from '../../../design-system/index';
 import { useAppearance } from '../../appearance/useAppearance';
+import { lightenColor } from '../../gameColors';
 import '../../../utils/echartsSetup';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import type { TimelineDamageAnalysis, TimelineDamageAnalysisEntry } from './timelineDamageAnalysis';
@@ -150,8 +151,10 @@ const contributionChartOption = computed<ChartOption>(() => {
               name: `${part.label} · ${t(`objectOrigins.contributionParts.${part.kind}`)}`,
               value: part.value,
               itemStyle: {
-                color: part.color ?? '#888888',
-                opacity: part.kind === 'self' ? 1 : 0.6,
+                color:
+                  part.kind === 'self'
+                    ? (part.color ?? '#888888')
+                    : lightenColor(part.color ?? '#888888', 0.45),
               },
             })),
         ),
@@ -167,7 +170,6 @@ const damageTypeChartOption = computed(() => pieOption(props.analysis.byDamageTy
     <EaDialog
       :model-value="visible"
       width="90vw"
-      top="3vh"
       append-to-body
       destroy-on-close
       class="damage-analysis-dialog custom-dialog"
@@ -225,6 +227,49 @@ const damageTypeChartOption = computed(() => pieOption(props.analysis.byDamageTy
                   </tr>
                 </tbody>
               </table>
+              <el-collapse class="contribution-details">
+                <el-collapse-item
+                  :title="t('timeline.analysis.contributionDetails')"
+                  name="contribution"
+                >
+                  <table class="contribution-values">
+                    <thead>
+                      <tr>
+                        <th>{{ labels.contributionByOperator }}</th>
+                        <th>{{ t('objectOrigins.contributionParts.self') }}</th>
+                        <th>{{ t('objectOrigins.contributionParts.external') }}</th>
+                        <th>{{ t('timeline.analysis.contributionTotal') }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="entry in analysis.byContribution" :key="entry.key">
+                        <th>{{ entry.label }}</th>
+                        <td>
+                          {{
+                            formatNumber(
+                              analysis.contributionParts.find(
+                                part => part.key === entry.key && part.kind === 'self',
+                              )?.value ?? 0,
+                            )
+                          }}
+                        </td>
+                        <td>
+                          {{
+                            formatNumber(
+                              analysis.contributionParts.find(
+                                part => part.key === entry.key && part.kind === 'external',
+                              )?.value ?? 0,
+                            )
+                          }}
+                        </td>
+                        <td>
+                          {{ formatNumber(entry.value) }} ({{ (entry.ratio * 100).toFixed(1) }}%)
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </el-collapse-item>
+              </el-collapse>
             </section>
             <section class="chart-card">
               <h3 class="chart-title">{{ labels.damageByElement }}</h3>

@@ -24,7 +24,7 @@ function project(
   value: number,
   attacker: number,
   defender = 1,
-  extraData: Record<string, number | string> = {},
+  extraData: Record<string, number | string | boolean> = {},
 ) {
   const c = new CombatReceiptCollector();
   c.record({
@@ -60,6 +60,56 @@ it('护盾吸收后的伤害不能按吸收前的乘法公式分账', () => {
   expect(
     projectHitDamageContribution(origins, origins.get({ kind: 'receipt', sequence: 0 }), 'a'),
   ).toEqual({ self: 50, external: [], diagnostics: ['damage-absorbed'] });
+});
+
+it('攻击百分比和固定值按冻结攻击分账，保留自身构筑、取整及其他乘区', () => {
+  const attackModifier = (
+    sourceId: string,
+    slot: 'baseMultiplier' | 'baseFinalAddition',
+    value: number,
+  ): AppliedDamageModifier => ({
+    kind: 'attribute',
+    attribute: 'Atk',
+    side: 'attacker',
+    sourceId,
+    slot,
+    value,
+  });
+  const data = {
+    standardCalculation: true,
+    attack: 300,
+    baseDamage: 600,
+    skillMultiplierPercent: 200,
+    attackDetailRawBase: 100,
+    attackDetailActualBase: 200.4,
+    'attackDetailSlot:baseMultiplier': 0.804,
+    'attackDetailSlot:baseFinalAddition': 20,
+    attackDetailStrength: 100,
+    attackDetailStrengthCoefficient: 0.005,
+    attackDetailAgility: 0,
+    attackDetailAgilityCoefficient: 0,
+    attackDetailIntellect: 0,
+    attackDetailIntellectCoefficient: 0,
+    attackDetailWill: 0,
+    attackDetailWillCoefficient: 0,
+  };
+  const mods = [
+    attackModifier('a', 'baseMultiplier', 0.304),
+    attackModifier('b', 'baseMultiplier', 0.5),
+    attackModifier('c', 'baseFinalAddition', 20),
+  ];
+  const result = project(mods, 600, 1, 1, data);
+  expect(result.self).toBeCloseTo(390); // floor((200.4 - 50 - 20) * 1.5) * 2
+  expect(result.external[0]!.value).toBeCloseTo(150);
+  expect(result.external[1]!.value).toBeCloseTo(60);
+  expect(result.diagnostics).toEqual([]);
+  const combined = project([...mods, modifier('d', 0.5)], 900, 1.5, 1, data);
+  expect(combined.self).toBeCloseTo(390);
+  expect(combined.self + combined.external.reduce((sum, item) => sum + item.value, 0)).toBeCloseTo(
+    900,
+  );
+  expect(project(mods, 600, 1, 1, { ...data, baseDamage: 650 }).external).toEqual([]);
+  expect(project(mods, 600, 1, 1, { ...data, attackDetailMaximum: 150 }).external).toEqual([]);
 });
 
 it('直接倍率与已有乘区共用有限分配，保留自身倍率且不依赖记录顺序', () => {
@@ -169,9 +219,30 @@ it('属性原记录与注入副本不重复分配，无法稳定分解时保留�
     value: 0.2,
   };
   const r = project([attribute, { ...attribute, zone: 'normal' }], 120, 1.2);
-  expect(r.self).toBe(120);
-  expect(r.external).toEqual([]);
+  expect(r.self).toBeCloseTo(100);
+  expect(r.external).toHaveLength(1);
+  expect(r.external[0]!.value).toBeCloseTo(20);
   expect(r.diagnostics).toContain('unsupported-modifier');
+  const vulnerable = {
+    ...attribute,
+    side: 'defender' as const,
+    attribute: 'natureVulnerabilityIncrease',
+    zone: 'vulnerable' as const,
+    value: 0.3,
+  };
+  const v = project([vulnerable], 130, 1, 1, { 'damageScale:vulnerable:defender': 1.3 });
+  expect(v.self).toBeCloseTo(100);
+  expect(v.external[0]!.value).toBeCloseTo(30);
+  expect(v.diagnostics).toEqual([]);
+  const mixed = project(
+    [vulnerable, { ...vulnerable, sourceId: 'a', slot: 'finalMultiplier', value: 2 }],
+    160,
+    1,
+    1,
+    { 'damageScale:vulnerable:defender': 1.6 },
+  );
+  expect(mixed.external).toEqual([]);
+  expect(mixed.diagnostics).toContain('unsupported-damage-scale-attribute-slots');
   expect(project([modifier('b', 2)], 100, 1).self).toBe(100);
   expect(project([modifier('b', 2)], 100, 1).external).toEqual([]);
 });

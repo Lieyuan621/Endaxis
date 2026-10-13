@@ -74,6 +74,7 @@ function seconds(frames: number): string {
 <template>
   <InputRegionBoundary label="TimelineOperatorPassiveUiDetailDialog" :active="visible" modal>
     <EaDialog
+      scroll-mode="body"
       :model-value="visible"
       :title="t('timeline.passiveUi.detailTitle')"
       width="440px"

@@ -7,9 +7,7 @@ export interface LegacyConversionReportView {
   readonly identityChanges: readonly unknown[];
   readonly sequenceExpansions: readonly unknown[];
   readonly resourceAdjustments: readonly unknown[];
-  readonly timingAdjustments: readonly unknown[];
   readonly skillFormAdjustments: readonly unknown[];
-  readonly controlSwitchAdjustments: readonly unknown[];
 }
 
 function issueLine(issue: { readonly path: string; readonly message: string }): string {
@@ -21,9 +19,7 @@ export function formatLegacyConversionReport(report: LegacyConversionReportView)
     report.identityChanges.length +
     report.sequenceExpansions.length +
     report.resourceAdjustments.length +
-    report.timingAdjustments.length +
-    report.skillFormAdjustments.length +
-    report.controlSwitchAdjustments.length;
+    report.skillFormAdjustments.length;
   const lines: string[] = [];
   if (report.fatalIssues.length > 0) {
     lines.push('无法建立可打开的新版项目。');
