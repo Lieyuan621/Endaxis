@@ -212,6 +212,9 @@ export function useTimelineItemMove(options: Options) {
       });
     };
     const onCancel = (e: PointerEvent) => {
+      // 触屏按下时技能块拥有隐式捕获。转交给视口会让块的
+      // lostpointercapture 冒泡到视口，不能误判为视口自身丢失捕获。
+      if (e.type === 'lostpointercapture' && e.target !== viewport) return;
       if (e.pointerId === event.pointerId) cancel();
     };
     cleanup = () => {

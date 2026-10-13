@@ -18,8 +18,19 @@ test('来源图的节点、连线和箭头同步平移缩放', async ({ page }) 
   await page.locator('.hit-marker').first().click();
   await page.locator('.open-origin-graph').click();
   await expect(page.locator('.graph-node').first()).toBeVisible();
-  // opened 回调完成后才开始测量，避免把对话框入场动画计入位移。
-  await expect(page.locator('.zoom-controls')).toContainText('80%');
+  // 等待 opened 回调把根节点定位到画布左侧 32px，再开始测量。
+  await expect(page.locator('.zoom-controls')).toContainText('100%');
+  await expect
+    .poll(() =>
+      page
+        .locator('.graph-canvas')
+        .evaluate(
+          canvas =>
+            canvas.querySelector('.graph-node')!.getBoundingClientRect().left -
+            canvas.getBoundingClientRect().left,
+        ),
+    )
+    .toBeCloseTo(32, 0);
   await expect
     .poll(() =>
       page
@@ -31,8 +42,8 @@ test('来源图的节点、连线和箭头同步平移缩放', async ({ page }) 
     .toBe(0);
   await expect(page.locator('.graph-edge').first()).toBeVisible();
   const colorsMatch = await page.locator('.graph-canvas').evaluate(canvas =>
-    [...canvas.querySelectorAll('.graph-edge > path')].every(path => {
-      const reference = path.getAttribute('marker-end')!;
+    [...canvas.querySelectorAll('.graph-edge .timeline-connector-stroke__line')].every(path => {
+      const reference = path.getAttribute('marker-start')!;
       const id = reference.slice(reference.indexOf('#') + 1, -1);
       const arrow = document.getElementById(id)?.querySelector('path');
       return arrow && getComputedStyle(arrow).fill === getComputedStyle(path).stroke;

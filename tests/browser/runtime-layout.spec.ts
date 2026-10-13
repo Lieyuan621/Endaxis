@@ -77,6 +77,12 @@ test.describe('touch browser declaring desktop identity', () => {
     );
     await openPerlica(page);
     await placeBasicGroup(page);
+    await page.setViewportSize({ width: 1800, height: 1000 });
+    const lane = await box(page.locator('.track-lane').first());
+    await startPlacement(page, page.locator('.skill-card').nth(1));
+    await page.mouse.move(lane.x + 550, lane.y + 25, { steps: 20 });
+    await page.mouse.up();
+    await expect(page.locator('.timeline-action-block')).toHaveCount(5);
     const client = await page.context().newCDPSession(page);
     const swipe = async (x: number, y: number, delta: number) => {
       await client.send('Input.dispatchTouchEvent', {
@@ -93,7 +99,7 @@ test.describe('touch browser declaring desktop identity', () => {
       await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     };
     const viewport = page.locator('.timeline-scroll');
-    const block = page.locator('.timeline-action-block').first();
+    const block = page.locator('.timeline-action-block').last();
     const original = await box(block);
     await swipe(original.x + 10, original.y + 25, 60);
     await expect.poll(async () => (await box(block)).x - original.x).toBeCloseTo(60, 0);
@@ -103,10 +109,9 @@ test.describe('touch browser declaring desktop identity', () => {
       .locator('.timeline-action-block')
       .evaluateAll(elements => elements.map(element => (element as HTMLElement).style.left));
     const bounds = await box(viewport);
-    const lane = await box(page.locator('.track-lane').first());
     await swipe(bounds.x + bounds.width - 40, lane.y + lane.height - 20, -150);
     await expect.poll(() => viewport.evaluate(element => element.scrollLeft)).toBeGreaterThan(50);
-    await expect(page.locator('.timeline-action-block')).toHaveCount(4);
+    await expect(page.locator('.timeline-action-block')).toHaveCount(5);
     expect(
       await page
         .locator('.timeline-action-block')

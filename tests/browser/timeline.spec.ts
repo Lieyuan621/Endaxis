@@ -130,7 +130,7 @@ test('轴上独立技能移入连续组时提供加入选项', async ({ page }) 
   await expect(page.locator('.group-select-hitbox')).toHaveAttribute('aria-label', '连续 · 5');
 });
 
-test('技能库整组和单段放置、取消及横向滚动', async ({ page }) => {
+test('技能库整组和单段放置、取消及横向滚动', async ({ page, browserName }) => {
   await openPerlica(page);
   await placeBasicGroup(page);
 
@@ -154,9 +154,14 @@ test('技能库整组和单段放置、取消及横向滚动', async ({ page }) 
 
   const scrollbar = await box(page.locator('.timeline-horizontal-scrollbar'));
   await page.mouse.move(scrollbar.x + 20, scrollbar.y + 7);
-  await page.mouse.down();
-  await page.mouse.move(scrollbar.x + 180, scrollbar.y + 7, { steps: 15 });
-  await page.mouse.up();
+  if (browserName === 'webkit') {
+    // 无头 WebKit 不显示可拖的原生滑块，仍验证滚动槽的真实横向输入与同步。
+    await page.mouse.wheel(200, 0);
+  } else {
+    await page.mouse.down();
+    await page.mouse.move(scrollbar.x + 180, scrollbar.y + 7, { steps: 15 });
+    await page.mouse.up();
+  }
   await expect
     .poll(() => page.locator('.timeline-scroll').evaluate(el => el.scrollLeft))
     .toBeGreaterThan(0);
