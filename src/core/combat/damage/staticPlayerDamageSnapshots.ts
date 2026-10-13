@@ -139,6 +139,11 @@ export function resolveStaticPlayerDamageSnapshots(
   step: DamageStep,
   operatorAttributes: CombatAttributeSet<string>,
   enemyAttributes?: CombatAttributeSet<string>,
+  /** 已解析的运行时来源明细；只补充记录，不再次施加数值。 */
+  additionalModifierDetails?: {
+    readonly attacker: readonly AppliedDamageModifier[];
+    readonly defender: readonly AppliedDamageModifier[];
+  },
 ): PlayerDamageAttributeSnapshots {
   const panel = context.panel;
   if (panel === undefined) {
@@ -210,6 +215,8 @@ export function resolveStaticPlayerDamageSnapshots(
       });
     }
   }
+  if (additionalModifierDetails !== undefined)
+    modifierDetails.push(...additionalModifierDetails.attacker);
   const result: PlayerDamageAttributeSnapshots = {
     attacker: {
       modifierDetails,
@@ -264,6 +271,9 @@ export function resolveStaticPlayerDamageSnapshots(
               ]),
             ) as PlayerDamageAttributeSnapshots['defender']['resistances'],
           }),
+      ...(additionalModifierDetails === undefined
+        ? {}
+        : { modifierDetails: [...additionalModifierDetails.defender] }),
     },
   };
   return result;

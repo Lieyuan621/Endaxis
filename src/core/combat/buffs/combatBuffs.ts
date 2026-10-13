@@ -307,15 +307,7 @@ export interface BuffApplicationHandle {
 
 export class CombatBuff<Key extends string> {
   /** 每个实例只绑定一次；回调读取实时成员，恢复时随实例重建，不进入切面数据。 */
-  readonly #tickHost: BuffTickHost = {
-    trigger: elapsed => this.triggerInternal(elapsed),
-    tickDuringEnable: elapsed => this.#duringEnableAction?.tick(elapsed, this),
-    canTimedGrow: () => this.#stackingGroup?.canTimedGrow(this) === true,
-    growTimed: () => this.#stackingGroup?.growTimed(this) === true,
-    finishLifetime: () => {
-      this.finish('lifetime', null);
-    },
-  };
+  readonly #tickHost: BuffTickHost;
   /** 仅防止同步回收回调重入；完整帧保存点不会处于回收调用栈中。 */
   #recycling = false;
   readonly #state: BuffInstanceState<Key>;
@@ -504,6 +496,7 @@ export class CombatBuff<Key extends string> {
       this.shields = shieldDefinitions.map(
         (shield, index) => new CombatShield(this, shield, restoredState.shields[index]),
       );
+      this.#tickHost = this.#createTickHost();
       return;
     }
     this.blackboard = new ActionBlackboard(definition.blackboard, owner.entityBlackboard);
@@ -630,6 +623,25 @@ export class CombatBuff<Key extends string> {
     this.#duringEnableAction = definition.actions?.duringEnable?.createRuntimeInstance() ?? null;
     this.shields = (definition.shields ?? []).map(shield => new CombatShield(this, shield));
     this.#state.shields.push(...this.shields.map(shield => shield.runtimeState));
+    this.#tickHost = this.#createTickHost();
+  }
+
+  #createTickHost(): BuffTickHost {
+    return {
+      trigger:
+        this.#state.trigger.intervalSeconds === null
+          ? undefined
+          : elapsed => this.triggerInternal(elapsed),
+      tickDuringEnable:
+        this.#duringEnableAction === null
+          ? undefined
+          : elapsed => this.#duringEnableAction!.tick(elapsed, this),
+      canTimedGrow: () => this.#stackingGroup?.canTimedGrow(this) === true,
+      growTimed: () => this.#stackingGroup?.growTimed(this) === true,
+      finishLifetime: () => {
+        this.finish('lifetime', null);
+      },
+    };
   }
 
   get passedTime(): number {
@@ -1024,6 +1036,8 @@ export class CombatBuff<Key extends string> {
   }
 
   private triggerInternal(deltaTime: number): void {
+    if (this.#state.trigger.remainingCount === 0 || this.#state.trigger.intervalSeconds === null)
+      return;
     advanceBuffTriggers(this.#state.trigger, deltaTime, {
       isEnabled: () => this.#state.lifecycle.enabled,
       trigger: () => this.definition.actions?.trigger?.(this),
@@ -1571,38 +1585,48 @@ export class CombatBuffContainer<Key extends string> {
   }
 
   getCountById(id: string): number {
-    return this.#snapshotBuffs()
-      .filter(buff => !buff.isFinished && buff.definition.id === id)
-      .reduce((count, buff) => count + buff.enhanceCount, 0);
+    let count = 0;
+    for (const instanceId of this.#state.memberIds) {
+      const buff = this.#requireMember(instanceId);
+      if (!buff.isFinished && buff.definition.id === id) count += buff.enhanceCount;
+    }
+    return count;
   }
 
   /** 统计所有未结束且 ID 命中任一候选项的 Buff 层数。 */
   getCountByIds(ids: readonly string[], skillCastId?: number): number {
-    const accepted = new Set(ids);
-    return this.#snapshotBuffs()
-      .filter(
-        buff =>
-          !buff.isFinished &&
-          accepted.has(buff.definition.id) &&
-          (skillCastId === undefined || buff.skillCastInfo?.skillCastId === skillCastId),
+    let count = 0;
+    for (const instanceId of this.#state.memberIds) {
+      const buff = this.#requireMember(instanceId);
+      if (
+        !buff.isFinished &&
+        ids.includes(buff.definition.id) &&
+        (skillCastId === undefined || buff.skillCastInfo?.skillCastId === skillCastId)
       )
-      .reduce((count, buff) => count + buff.enhanceCount, 0);
+        count += buff.enhanceCount;
+    }
+    return count;
   }
 
   /** 显式实例数模式；原生 SaveBuffStackNumAdvanced 的 BuffCount 不使用此入口。 */
   getInstanceCountByIds(ids: readonly string[]): number {
-    return ids.reduce(
-      (total, id) =>
-        total +
-        this.#snapshotBuffs().filter(buff => !buff.isFinished && buff.definition.id === id).length,
-      0,
-    );
+    let count = 0;
+    for (const id of ids) {
+      for (const instanceId of this.#state.memberIds) {
+        const buff = this.#requireMember(instanceId);
+        if (!buff.isFinished && buff.definition.id === id) count++;
+      }
+    }
+    return count;
   }
 
   /** 按容器插入顺序返回首个未结束且 ID 命中任一候选项的 Buff。 */
   findFirstByIds(ids: readonly string[]): CombatBuff<Key> | undefined {
-    const accepted = new Set(ids);
-    return this.#snapshotBuffs().find(buff => !buff.isFinished && accepted.has(buff.definition.id));
+    for (const instanceId of this.#state.memberIds) {
+      const buff = this.#requireMember(instanceId);
+      if (!buff.isFinished && ids.includes(buff.definition.id)) return buff;
+    }
+    return undefined;
   }
 
   /** 按容器插入顺序结束所有 ID 命中任一候选项的 Buff。 */
@@ -2036,7 +2060,8 @@ export class CombatBuffContainer<Key extends string> {
       typeof deltaTime === 'number' ? deltaTime : resolveBuffTickDelta('default', deltaTime);
     advanceBuffAddingCooldowns(this.#state, defaultDelta);
     // 遍历当前成员数组，保留回调中增删成员对后续遍历的影响。
-    for (const id of this.#state.memberIds) this.#requireMember(id).tick(deltaTime);
+    for (let index = 0; index < this.#state.memberIds.length; index++)
+      this.#requireMember(this.#state.memberIds[index]!).tick(deltaTime);
   }
 
   /** 原生回收独立于 tick；逆序逐项检查当前结束状态。 */

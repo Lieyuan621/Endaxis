@@ -167,14 +167,6 @@ export class TimeDilationRuntime implements FrameRuntime {
     };
   }
 
-  get activeGlobalInfluencesSkillCooldown(): boolean {
-    const active = this.#selectActiveGlobal();
-    return (
-      active?.influenceSkillCooldownSeconds !== undefined &&
-      active.elapsedSeconds <= active.influenceSkillCooldownSeconds
-    );
-  }
-
   get globalInstances(): readonly TimeDilationInstanceSnapshot[] {
     return this.runtimeState.globalInstances.map(snapshotInstance);
   }
@@ -344,19 +336,24 @@ export class TimeDilationRuntime implements FrameRuntime {
     if (!Number.isFinite(rawDeltaSeconds) || rawDeltaSeconds < 0) {
       throw new RangeError('raw delta seconds must be a non-negative finite number');
     }
-    const globalScaledDeltaSeconds = rawDeltaSeconds * this.currentGlobalScale;
+    const activeGlobal = this.#selectActiveGlobal();
+    const globalScale = activeGlobal?.currentScale ?? 1;
+    const localScale = localTimeScale(this.runtimeState, operatorId);
+    const globalScaledDeltaSeconds = rawDeltaSeconds * globalScale;
     // 本管理器只注册 TimeDilation 来源；原生对此原因使用未缩放的默认时间。
     // 无膨胀时倍率为 1，两者等价。菜单暂停等其他缩放来源不在本模拟范围内。
     const defaultDeltaSeconds = rawDeltaSeconds;
     return {
       defaultDeltaSeconds,
       globalScaledDeltaSeconds,
-      selfScaledDeltaSeconds: rawDeltaSeconds * this.getOperatorScale(operatorId),
-      globalAndSelfScaledDeltaSeconds:
-        globalScaledDeltaSeconds * localTimeScale(this.runtimeState, operatorId),
-      skillCooldownDeltaSeconds: this.activeGlobalInfluencesSkillCooldown
-        ? globalScaledDeltaSeconds
-        : defaultDeltaSeconds,
+      selfScaledDeltaSeconds:
+        rawDeltaSeconds * entityTimeScale(this.runtimeState, operatorId, globalScale, localScale),
+      globalAndSelfScaledDeltaSeconds: globalScaledDeltaSeconds * localScale,
+      skillCooldownDeltaSeconds:
+        activeGlobal?.influenceSkillCooldownSeconds !== undefined &&
+        activeGlobal.elapsedSeconds <= activeGlobal.influenceSkillCooldownSeconds
+          ? globalScaledDeltaSeconds
+          : defaultDeltaSeconds,
     };
   }
 
@@ -499,37 +496,36 @@ export function advanceTimeDilation(
     }
   }
   // 本运行时先于 AbilitySystem 推进；使用更新后的当前倍率，与本帧其余 Ability tick 一致。
-  state.globalScaledTime +=
-    COMBAT_FRAME_INTERVAL * (selectActiveGlobalTimeDilation(state)?.currentScale ?? 1);
-  for (const [entityId, time] of state.entityScaledTimes) {
+  const updatedGlobalScale = selectActiveGlobalTimeDilation(state)?.currentScale ?? 1;
+  state.globalScaledTime += COMBAT_FRAME_INTERVAL * updatedGlobalScale;
+  state.entityScaledTimes.forEach((time, entityId) => {
     state.entityScaledTimes.set(
       entityId,
-      time + COMBAT_FRAME_INTERVAL * entityTimeScale(state, entityId),
+      time + COMBAT_FRAME_INTERVAL * entityTimeScale(state, entityId, updatedGlobalScale),
     );
-  }
+  });
 }
 
 function localTimeScale(state: TimeDilationState, entityId: string): number {
-  return state.entityInstances
-    .filter(instance => instance.entityId === entityId)
-    .reduce(
-      (scale, instance) => scale * instance.currentScale,
-      state.entityScaleInheritance.get(entityId)?.inheritedScale ?? 1,
-    );
+  let scale = state.entityScaleInheritance.get(entityId)?.inheritedScale ?? 1;
+  for (const instance of state.entityInstances) {
+    if (instance.entityId === entityId) scale *= instance.currentScale;
+  }
+  return scale;
 }
 
 function entityIgnoresGlobalTimeScale(state: TimeDilationState, entityId: string): boolean {
-  return (
-    state.ignoreGlobalTimeScaleEntityIds.has(entityId) ||
-    state.globalInstances.some(
-      instance => instance.active && instance.ignoredOperatorIds.has(entityId),
-    )
-  );
+  if (state.ignoreGlobalTimeScaleEntityIds.has(entityId)) return true;
+  for (const instance of state.globalInstances) {
+    if (instance.active && instance.ignoredOperatorIds.has(entityId)) return true;
+  }
+  return false;
 }
 
 /** 每次倍率修改后同步通知，不能延迟到投射物 Tick 再轮询来源的当前倍率。 */
 function refreshInheritedEntityScales(state: TimeDilationState): void {
-  for (const [entityId, binding] of state.entityScaleInheritance) {
+  if (state.entityScaleInheritance.size === 0) return;
+  state.entityScaleInheritance.forEach((binding, entityId) => {
     const ignoresGlobal = entityIgnoresGlobalTimeScale(state, binding.sourceId);
     if (ignoresGlobal !== binding.sourceIgnoresGlobal) {
       binding.sourceIgnoresGlobal = ignoresGlobal;
@@ -542,18 +538,21 @@ function refreshInheritedEntityScales(state: TimeDilationState): void {
       difference <=
       Math.max(1e-6 * Math.max(Math.abs(scale), Math.abs(binding.sourceFinalScale)), 1.121039e-44)
     )
-      continue;
+      return;
     binding.sourceFinalScale = scale;
     // 原生数值通知读取来源 selfScale，不使用通知的 finalScale。
     binding.inheritedScale = localTimeScale(state, binding.sourceId);
-  }
+  });
 }
 
-function entityTimeScale(state: TimeDilationState, entityId: string): number {
-  const globalScale = entityIgnoresGlobalTimeScale(state, entityId)
-    ? 1
-    : (selectActiveGlobalTimeDilation(state)?.currentScale ?? 1);
-  return Math.max(0, localTimeScale(state, entityId) * globalScale);
+function entityTimeScale(
+  state: TimeDilationState,
+  entityId: string,
+  globalScale = selectActiveGlobalTimeDilation(state)?.currentScale ?? 1,
+  localScale = localTimeScale(state, entityId),
+): number {
+  const appliedGlobalScale = entityIgnoresGlobalTimeScale(state, entityId) ? 1 : globalScale;
+  return Math.max(0, localScale * appliedGlobalScale);
 }
 
 function selectActiveGlobalTimeDilation(

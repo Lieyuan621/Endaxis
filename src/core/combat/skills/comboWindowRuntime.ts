@@ -285,7 +285,11 @@ export class ComboWindowRuntime implements FrameRuntime {
     if (this.runtimeState.globallyPaused) return;
     const previous = this.#perfectOperators();
     for (const record of [...this.runtimeState.records.values()]) {
-      if (this.runtimeState.pausedOperators.has(record.operatorId)) continue;
+      if (
+        record.candidates.length === 0 ||
+        this.runtimeState.pausedOperators.has(record.operatorId)
+      )
+        continue;
       for (const candidate of record.candidates)
         candidate.remainingFrames -= deltaSeconds * COMBAT_FRAMES_PER_SECOND;
       // 原生只在 remainTime < 0 时移除；恰好归零的候选在本帧仍然存在。
@@ -319,7 +323,8 @@ export class ComboWindowRuntime implements FrameRuntime {
   }
 
   /** 展示最新的活动提示；动作判定仍分别使用自己的连携剩余时间。 */
-  #perfectOperators(): ReadonlySet<string> {
+  #perfectOperators(): ReadonlySet<string> | undefined {
+    if (this.runtimeState.ringQtes.size === 0) return undefined;
     const latest = new Map<string, ComboRingQteRegistration>();
     for (const qte of this.runtimeState.ringQtes.values()) {
       if (!qte.listening) continue;
@@ -335,16 +340,18 @@ export class ComboWindowRuntime implements FrameRuntime {
     return result;
   }
 
-  #recordPerfectChanges(previous: ReadonlySet<string>): void {
+  #recordPerfectChanges(previous: ReadonlySet<string> | undefined): void {
     const current = this.#perfectOperators();
-    for (const operatorId of new Set([...previous, ...current])) {
-      if (previous.has(operatorId) === current.has(operatorId)) continue;
+    if (previous === undefined && current === undefined) return;
+    for (const operatorId of new Set([...(previous ?? []), ...(current ?? [])])) {
+      const active = current?.has(operatorId) ?? false;
+      if ((previous?.has(operatorId) ?? false) === active) continue;
       this.receipt.record({
         frame: this.clock.frame,
         time: this.clock.time,
         event: 'ComboRingQteActiveChanged',
         sourceId: operatorId,
-        data: { active: current.has(operatorId) },
+        data: { active },
       });
     }
   }

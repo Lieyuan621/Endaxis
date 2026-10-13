@@ -5,6 +5,7 @@
  * Buff、干员专属 UI 和后续其他状态只提供图形内容；边框、计数、悬停和持续条由这里统一。
  */
 import { computed, onBeforeUnmount, ref } from 'vue';
+import TimelineAttachmentContinuation from './TimelineAttachmentContinuation.vue';
 
 withDefaults(
   defineProps<{
@@ -13,6 +14,7 @@ withDefaults(
     width: number;
     title: string;
     durationColor?: string;
+    attachment?: boolean;
     count?: number | string | null;
     active?: boolean;
     interactive?: boolean;
@@ -106,8 +108,14 @@ onBeforeUnmount(() => clearTimeout(tooltipTimer));
           {{ count }}
         </span>
       </span>
+      <TimelineAttachmentContinuation
+        v-if="attachment && width > 0"
+        :width="width + 2"
+        :height="18"
+        :color="durationColor"
+      />
       <span
-        v-if="width > 0"
+        v-else-if="width > 0"
         class="timeline-status-segment__duration"
         :style="{ width: `${width}px`, backgroundColor: durationColor }"
       >

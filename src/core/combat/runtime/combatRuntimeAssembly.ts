@@ -1644,6 +1644,7 @@ export class CombatRuntimeAssembly {
           skillDefinitions: [...cooldownPrograms.values()],
           skillTickPlan: [...cooldownPrograms.keys()].map(skillId => {
             const ledger = this.#skillCooldowns.get(`${operator.operatorId}\u0000${skillId}`)!;
+            if (ledger.cooldown.runtimeState.timer === undefined) return { skillId };
             return {
               skillId,
               advanceCooldown: deltaSeconds => {

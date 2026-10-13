@@ -84,7 +84,7 @@ function createSession() {
       };
       const end = () =>
         endSkillExecution(state.skill, {
-          endTimeline: frame => endTimelineActions(state.timeline, program, frame, timeline),
+          endTimeline: frame => endTimelineActions(state.timeline, program, frame, timeline, {}),
           finishAttached: () => {
             state.calls.push('buffsEnd');
           },
@@ -108,7 +108,7 @@ function createSession() {
             state.skill.nonReturnedSpCost = 20;
           },
           tickTimeline: (frame, seconds) =>
-            tickTimelineActions(state.timeline, program, frame, seconds, timeline),
+            tickTimelineActions(state.timeline, program, frame, seconds, timeline, {}),
         });
       if (input === 'start') {
         beginSkillCast(state.skill, 0, () => state.nextCastId++);

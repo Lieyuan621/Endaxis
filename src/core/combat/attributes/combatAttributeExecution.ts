@@ -51,17 +51,18 @@ export function readCombatAttribute<Key extends string>(
   attribute: Key,
   stage: CombatAttributeValueStage,
   filter: AttributeModifierSource,
-  additionalValues: readonly AttributeModifierValues[] = [],
+  additionalValues?: readonly AttributeModifierValues[],
 ): number {
+  const additionalCount = additionalValues?.length ?? 0;
   const rawValue = state.rawValues.get(attribute);
   if (rawValue === undefined) {
-    if (additionalValues.length > 0) throw new Error(`attribute '${attribute}' is not defined`);
+    if (additionalCount > 0) throw new Error(`attribute '${attribute}' is not defined`);
     return 0;
   }
   const definition = state.definitions.get(attribute);
   if (definition === undefined) {
     if (
-      additionalValues.length > 0 ||
+      additionalCount > 0 ||
       state.modifiers.some(
         modifier => modifier.attribute === attribute && (modifier.source & filter) !== 0,
       )
@@ -81,13 +82,13 @@ export function readCombatAttribute<Key extends string>(
     finalAddition = 0,
     finalMultiplier = 1;
   const registeredCount = state.modifiers.length;
-  for (let index = 0; index < registeredCount + additionalValues.length; index++) {
+  for (let index = 0; index < registeredCount + additionalCount; index++) {
     let values: AttributeModifierValues;
     if (index < registeredCount) {
       const modifier = state.modifiers[index]!;
       if (modifier.attribute !== attribute || (modifier.source & filter) === 0) continue;
       values = modifier.values;
-    } else values = additionalValues[index - registeredCount]!;
+    } else values = additionalValues![index - registeredCount]!;
     baseAddition += values.baseAddition;
     baseMultiplier += values.baseMultiplier;
     baseFinalAddition += values.baseFinalAddition;

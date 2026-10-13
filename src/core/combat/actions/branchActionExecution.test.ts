@@ -73,21 +73,33 @@ function createSession(kind: 'switch' | 'conditional') {
         reset: index =>
           resetActionSequence(state.sequences[index]!.entries.entries(), {}, sequenceHost(index)),
       };
-      if (input === 'tick') tickBranchAction(state.branch, 1, host);
+      if (input === 'tick') tickBranchAction(state.branch, 1, host, {});
       else if (input === 'reset') {
-        if (kind === 'switch') resetSwitchAction(2, host);
-        else resetConditionalAction(state.branch, true, host);
+        if (kind === 'switch') resetSwitchAction(2, host, {});
+        else resetConditionalAction(state.branch, true, host, {});
       } else if (kind === 'switch') {
-        executeSwitchAction(state.branch, 2, false, {
-          ...host,
-          choice: () => input,
-          value: index => index,
-        });
+        executeSwitchAction(
+          state.branch,
+          2,
+          false,
+          {
+            ...host,
+            choice: () => input,
+            value: index => index,
+          },
+          {},
+        );
       } else {
-        executeConditionalAction(state.branch, true, false, {
-          ...host,
-          evaluate: () => input === 0,
-        });
+        executeConditionalAction(
+          state.branch,
+          true,
+          false,
+          {
+            ...host,
+            evaluate: () => input === 0,
+          },
+          {},
+        );
       }
     },
   );

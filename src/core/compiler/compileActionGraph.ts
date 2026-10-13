@@ -182,6 +182,23 @@ function bindResourceGraphs(resource: ActionGraphResourceDefinition) {
   };
 }
 
+function graphSpawnsAbilityEntity(
+  definition: ActionGraphDefinition | ActionGraphResourceDefinition,
+): boolean {
+  const pending: object[] = [definition];
+  const visited = new WeakSet<object>();
+  while (pending.length) {
+    const value = pending.pop()!;
+    if (visited.has(value)) continue;
+    visited.add(value);
+    if ('kind' in value && value.kind === 'spawnAbilityEntity') return true;
+    // 外部回调、实体子技能和 Buff 自有图也可能生成实体。
+    for (const child of Object.values(value))
+      if (child !== null && typeof child === 'object') pending.push(child);
+  }
+  return false;
+}
+
 /** 图结构准备与等级、实体导入无关；调用方只可对已冻结的定义复用结果。 */
 export function prepareActionGraphDefinition(
   definition: ActionGraphDefinition | ActionGraphResourceDefinition,
@@ -191,6 +208,7 @@ export function prepareActionGraphDefinition(
   const dependencies = validateActionGraph(graph);
   const compiled = compileGraphData(graph);
   return {
+    spawnsAbilityEntity: graphSpawnsAbilityEntity(definition),
     resource,
     graph: compiled,
     dependencies,

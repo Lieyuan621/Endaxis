@@ -95,8 +95,8 @@ export function finishBuffLifecycle(
 }
 
 export interface BuffTickHost {
-  trigger(elapsed: number): void;
-  tickDuringEnable(elapsed: number): void;
+  trigger?(elapsed: number): void;
+  tickDuringEnable?(elapsed: number): void;
   canTimedGrow(): boolean;
   growTimed(): boolean;
   finishLifetime(): void;
@@ -113,8 +113,8 @@ export function tickBuffLifecycle(
   const elapsed = Math.max(0, delta);
   state.passedTime += elapsed;
   if (state.enabled) {
-    host.trigger(elapsed);
-    host.tickDuringEnable(elapsed);
+    host.trigger?.(elapsed);
+    host.tickDuringEnable?.(elapsed);
   }
   if (state.timedGrowthPeriod !== null) {
     if (!host.canTimedGrow()) return;

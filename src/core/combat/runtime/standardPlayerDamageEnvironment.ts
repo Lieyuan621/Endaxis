@@ -4,7 +4,6 @@ import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import type { BuffAppliedEvent } from '../buffs/buffOperationExecutor';
 import type { CombatBuffDefinitionCompilerPorts } from '../buffs/combatBuffDefinitions';
 import type { CombatBuffDefinition } from '../buffs/combatBuffs';
-import type { PlayerDamageAttributeSnapshots } from '../damage/playerDamageContext';
 import {
   nextReactionDamageKey,
   type ReactionDamageIdentity,
@@ -788,29 +787,6 @@ export class StandardPlayerDamageEnvironment {
     return dispatcher;
   }
 
-  /** 主动技能与 Buff 伤害共用双方修正器、即时属性和准备事件接线。 */
-  #withAttributeModifierDetails(
-    snapshots: PlayerDamageAttributeSnapshots,
-    operatorBuffs: CombatBuffContainer<string>,
-  ): PlayerDamageAttributeSnapshots {
-    return {
-      attacker: {
-        ...snapshots.attacker,
-        modifierDetails: [
-          ...(snapshots.attacker.modifierDetails ?? []),
-          ...operatorBuffs.captureAttributeModifierDetails('attacker'),
-        ],
-      },
-      defender: {
-        ...snapshots.defender,
-        modifierDetails: [
-          ...(snapshots.defender.modifierDetails ?? []),
-          ...this.#enemyBuffs.captureAttributeModifierDetails('defender'),
-        ],
-      },
-    };
-  }
-
   #damagePreparationPorts(
     operatorId: string,
     operatorBuffs: CombatBuffContainer<string>,
@@ -884,14 +860,15 @@ export class StandardPlayerDamageEnvironment {
             attackDetail: panelAttackDetail(context.panel)!,
           }),
       captureAttributeSnapshots: step =>
-        this.#withAttributeModifierDetails(
-          resolveStaticPlayerDamageSnapshots(
-            context,
-            step,
-            operatorBuffs.attributes,
-            this.#enemyAttributes,
-          ),
-          operatorBuffs,
+        resolveStaticPlayerDamageSnapshots(
+          context,
+          step,
+          operatorBuffs.attributes,
+          this.#enemyAttributes,
+          {
+            attacker: operatorBuffs.captureAttributeModifierDetails('attacker'),
+            defender: this.#enemyBuffs.captureAttributeModifierDetails('defender'),
+          },
         ),
       criticalSamples: this.options.criticalSamples,
       randomMode: this.options.randomMode,
@@ -1608,14 +1585,15 @@ export class StandardPlayerDamageEnvironment {
       receipt: this.#requireReceipt(),
       ...(panel.attackDetail === undefined ? {} : { attackDetail: panelAttackDetail(panel)! }),
       captureAttributeSnapshots: step =>
-        this.#withAttributeModifierDetails(
-          resolveStaticPlayerDamageSnapshots(
-            { operatorId: sourceId, panel, enemy: this.#requireEnemyIdentity() },
-            step,
-            operatorBuffs.attributes,
-            this.#enemyAttributes,
-          ),
-          operatorBuffs,
+        resolveStaticPlayerDamageSnapshots(
+          { operatorId: sourceId, panel, enemy: this.#requireEnemyIdentity() },
+          step,
+          operatorBuffs.attributes,
+          this.#enemyAttributes,
+          {
+            attacker: operatorBuffs.captureAttributeModifierDetails('attacker'),
+            defender: this.#enemyBuffs.captureAttributeModifierDetails('defender'),
+          },
         ),
       criticalSamples: this.options.criticalSamples,
       randomMode: this.options.randomMode,

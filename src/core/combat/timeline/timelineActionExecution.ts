@@ -3,6 +3,7 @@
  * 同帧顺序、同步 End 和 JumpTo 的区别沿用原调度器，不改变游戏规则。
  */
 import type { TimelineActionState } from '../state/actionState';
+import type { CombatExecutionContext } from '../actions/combatStep';
 
 /** 已排序的动作区间；sourceIndex 对应原始配置中的步骤绑定。 */
 export interface TimelineActionInterval {
@@ -13,10 +14,10 @@ export interface TimelineActionInterval {
 
 /** 当前调用期间可用的动作端口；index 是排序后的程序下标。 */
 export interface TimelineActionExecutionHost {
-  reset(index: number): void;
-  execute(index: number): void;
-  tick(index: number, deltaTime: number): void;
-  end(index: number): void;
+  reset(index: number, context: CombatExecutionContext): void;
+  execute(index: number, context: CombatExecutionContext): void;
+  tick(index: number, deltaTime: number, context: CombatExecutionContext): void;
+  end(index: number, context: CombatExecutionContext): void;
   started(index: number, frame: number): void;
   ended(index: number, frame: number): void;
 }
@@ -49,6 +50,7 @@ export function resetTimelineActions(
   state: TimelineActionState,
   program: readonly TimelineActionInterval[],
   host: TimelineActionExecutionHost,
+  context: CombatExecutionContext,
 ): void {
   state.ended = false;
   state.nextPendingIndex = 0;
@@ -56,7 +58,7 @@ export function resetTimelineActions(
   state.starting = null;
   state.startingCrossedByJump = false;
   state.startingJumpDestination = null;
-  for (let index = 0; index < program.length; index += 1) host.reset(index);
+  for (let index = 0; index < program.length; index += 1) host.reset(index, context);
 }
 
 export function tickTimelineActions(
@@ -65,17 +67,24 @@ export function tickTimelineActions(
   currentFrame: number,
   deltaTime: number,
   host: TimelineActionExecutionHost,
+  context: CombatExecutionContext,
 ): void {
   if (state.ended) return;
   // 原生 Load 保留配置顺序，_TickInternal 按该顺序逐项推进和结束。
   // 按起点排序的程序只用于定位到期项，不能把活动节点和新节点分成两个执行阶段。
   const pendingStart = state.nextPendingIndex;
+  if (
+    state.active.length === 0 &&
+    (program[pendingStart] === undefined || program[pendingStart]!.startFrame > currentFrame)
+  )
+    return;
   const due = [...state.active];
   for (let index = pendingStart; index < program.length; index += 1) {
     if (program[index]!.startFrame > currentFrame) break;
     due.push(index);
   }
-  due.sort((left, right) => program[left]!.sourceIndex - program[right]!.sourceIndex);
+  if (due.length > 1)
+    due.sort((left, right) => program[left]!.sourceIndex - program[right]!.sourceIndex);
   // 本次调用内的乱序完成集合，不进入切面；返回前游标已经越过全部到期项。
   let started: Set<number> | undefined;
   for (const indexedAction of due) {
@@ -83,14 +92,14 @@ export function tickTimelineActions(
     if (indexedAction < pendingStart) {
       // 前一节点的同步 End / JumpTo 可能已经结束这个活动项。
       if (!state.active.includes(indexedAction)) continue;
-      host.tick(indexedAction, deltaTime);
+      host.tick(indexedAction, deltaTime, context);
       const activeIndex = state.active.indexOf(indexedAction);
       if (
         activeIndex >= 0 &&
         (program[indexedAction]!.endFrame ?? program[indexedAction]!.startFrame) <= currentFrame
       ) {
         state.active.splice(activeIndex, 1);
-        endInterval(indexedAction, currentFrame, host);
+        endInterval(indexedAction, currentFrame, host, context);
       }
       continue;
     }
@@ -103,10 +112,10 @@ export function tickTimelineActions(
     state.startingCrossedByJump = false;
     state.startingJumpDestination = null;
     host.started(indexedAction, currentFrame);
-    host.execute(indexedAction);
+    host.execute(indexedAction, context);
     // 同步 JumpTo / CastEnd 保留原有当前序列收尾协议。
     if (state.startingCrossedByJump) {
-      endInterval(indexedAction, state.startingJumpDestination!, host);
+      endInterval(indexedAction, state.startingJumpDestination!, host, context);
     } else {
       // 原生 Pending 分支直接进入下一节点，首次普通 Tick/End 留到后续访问。
       // 瞬时区间也进入活动集合，复用既有切面状态保存 Execute 后的寿命。
@@ -128,6 +137,7 @@ export function jumpToTimelineActions(
   destinationFrame: number,
   currentFrame: number,
   host: TimelineActionExecutionHost,
+  context: CombatExecutionContext,
 ): void {
   if (!Number.isInteger(destinationFrame)) {
     throw new TypeError('timeline jump destination must use an integer frame');
@@ -151,7 +161,7 @@ export function jumpToTimelineActions(
     if ((program[indexedAction]!.endFrame ?? program[indexedAction]!.startFrame) > destinationFrame)
       continue;
     state.active.splice(index, 1);
-    endInterval(indexedAction, destinationFrame, host);
+    endInterval(indexedAction, destinationFrame, host, context);
   }
 
   while (
@@ -168,6 +178,7 @@ export function finishTimelineActions(
   program: readonly TimelineActionInterval[],
   currentFrame: number,
   host: TimelineActionExecutionHost,
+  context: CombatExecutionContext,
 ): void {
   if (state.starting !== null) {
     state.startingCrossedByJump = true;
@@ -176,7 +187,7 @@ export function finishTimelineActions(
   for (let index = state.active.length - 1; index >= 0; index -= 1) {
     const indexedAction = state.active[index]!;
     state.active.splice(index, 1);
-    endInterval(indexedAction, currentFrame, host);
+    endInterval(indexedAction, currentFrame, host, context);
   }
   state.nextPendingIndex = program.length;
 }
@@ -186,6 +197,7 @@ export function endTimelineActions(
   program: readonly TimelineActionInterval[],
   currentFrame: number,
   host: TimelineActionExecutionHost,
+  context: CombatExecutionContext,
 ): void {
   if (state.ended) return;
   // 原生 CastEnd 清理后关闭 isCasting；下一条 timeline 每次检查该状态。
@@ -196,14 +208,19 @@ export function endTimelineActions(
     state.startingCrossedByJump = true;
     state.startingJumpDestination = currentFrame;
     // CastEnd 与 JumpTo 不同：原生同步 End 所有序列，包括当前进入中的序列。
-    host.end(state.starting);
+    host.end(state.starting, context);
   }
   for (const indexedAction of state.active.splice(0)) {
-    endInterval(indexedAction, currentFrame, host);
+    endInterval(indexedAction, currentFrame, host, context);
   }
 }
 
-function endInterval(index: number, frame: number, host: TimelineActionExecutionHost): void {
-  host.end(index);
+function endInterval(
+  index: number,
+  frame: number,
+  host: TimelineActionExecutionHost,
+  context: CombatExecutionContext,
+): void {
+  host.end(index, context);
   host.ended(index, frame);
 }

@@ -1,4 +1,3 @@
-import type { ActionGraphResourceDefinition } from '../../../packages/game-data-contract/src/actionGraph';
 import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import type {
   PlayerActionRouteDefinition,
@@ -57,21 +56,6 @@ import {
   type ResolvedSkillDefinition,
 } from './resolveSkillDefinition';
 
-function graphSpawnsEntity(graph: ActionGraphResourceDefinition): boolean {
-  const pending: object[] = [graph];
-  const visited = new WeakSet<object>();
-  while (pending.length) {
-    const value = pending.pop()!;
-    if (visited.has(value)) continue;
-    visited.add(value);
-    if ('kind' in value && value.kind === 'spawnAbilityEntity') return true;
-    // 外部回调、实体子技能和 Buff 自有图也可能生成实体，必须带上其依赖目录。
-    for (const child of Object.values(value))
-      if (child !== null && typeof child === 'object') pending.push(child);
-  }
-  return false;
-}
-
 function createOperatorSkillCompiler(
   abilityEntityDefinitions: OperatorDefinition['abilityEntityDefinitions'],
   programs: ActionGraphDefinitionRepository,
@@ -101,7 +85,9 @@ function createOperatorSkillCompiler(
     compileSkill({
       ...input,
       programs,
-      importedAbilityEntityDefinitions: graphSpawnsEntity(input.skill.actionGraph)
+      importedAbilityEntityDefinitions: programs.requiresAbilityEntityImports(
+        input.skill.actionGraph,
+      )
         ? resolveSkillImports(input.skillLevel)
         : importsForLevel?.(input.skillLevel),
     });

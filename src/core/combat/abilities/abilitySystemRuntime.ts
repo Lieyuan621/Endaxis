@@ -161,10 +161,10 @@ export interface AbilitySystemRuntimeOptions {
     AbilitySkillRuntime,
     'skillId' | 'skillType' | 'nativeSkillType'
   >[];
-  /** 完整技能目录的推进顺序；每个身份先更新共享冷却，再更新其放置实例。未放置身份只有冷却。 */
+  /** 完整技能目录的推进顺序；有冷却的身份先更新账本，再更新其放置实例。 */
   readonly skillTickPlan?: readonly {
     readonly skillId: string;
-    readonly advanceCooldown: (deltaSeconds: number) => void;
+    readonly advanceCooldown?: (deltaSeconds: number) => void;
   }[];
   /** 同一放置身份下可由战斗动作切换的技能形态。 */
   readonly skillSlotGroups?: readonly {
@@ -216,7 +216,7 @@ export class AbilitySystemRuntime implements FrameRuntime {
   readonly #unsharedActiveSkills: ActiveSkillBinding[] = [];
   readonly #skillTickPlan?: readonly {
     readonly skillId: string;
-    readonly advanceCooldown: (deltaSeconds: number) => void;
+    readonly advanceCooldown?: (deltaSeconds: number) => void;
     readonly activeSkills: ActiveSkillBinding[];
   }[];
   readonly #tickBindings = new Map<
@@ -1219,7 +1219,7 @@ export class AbilitySystemRuntime implements FrameRuntime {
       for (const entry of this.#skillTickPlan) {
         // 同一个原生技能的多次摆放共享冷却，任一实例当帧 DoCast 都保护该账本。
         // 仅归零增量，不跳过 Tick：零时刻条件/动作仍有生命周期语义。
-        entry.advanceCooldown(
+        entry.advanceCooldown?.(
           entry.activeSkills.some(({ skill }) => skill.startedInCurrentFrame)
             ? 0
             : deltas.skillCooldownDeltaSeconds,

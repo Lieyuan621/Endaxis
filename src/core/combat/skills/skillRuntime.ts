@@ -44,6 +44,7 @@ import {
   endSkillExecution,
   tickSkillExecution,
   type SkillAdvanceHost,
+  type SkillTickHost,
 } from './skillExecution';
 
 /** 发射动作只提交一次请求；回调技能及其宿主都归该投射物持有。 */
@@ -905,7 +906,9 @@ export class SkillRuntime {
     );
   }
 
-  readonly #advanceHost: SkillAdvanceHost = {
+  readonly #executionHost: SkillAdvanceHost & SkillTickHost = {
+    applyCost: () => this.#applyCost(true),
+    tickTimeline: (frame, delta) => this.#timeline?.tick(frame, delta, this.#context),
     advanceCooldown: delta => this.#cooldown.advance(delta),
     cooldownReady: () => this.record('SkillCooldownReady'),
     tick: delta => this.#tick(delta),
@@ -921,7 +924,7 @@ export class SkillRuntime {
       this.#advancesCooldown,
       timelineDeltaSeconds,
       cooldownDeltaSeconds,
-      this.#advanceHost,
+      this.#executionHost,
     );
   }
 
@@ -981,12 +984,7 @@ export class SkillRuntime {
   }
 
   #tick(deltaTime: number): void {
-    tickSkillExecution(this.#execution, this.#program.costFrame, deltaTime, {
-      applyCost: () => {
-        this.#applyCost(true);
-      },
-      tickTimeline: (frame, delta) => this.#timeline?.tick(frame, delta, this.#context),
-    });
+    tickSkillExecution(this.#execution, this.#program.costFrame, deltaTime, this.#executionHost);
   }
 
   #resolvedCosts(

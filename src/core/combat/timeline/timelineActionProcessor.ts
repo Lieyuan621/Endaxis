@@ -77,11 +77,11 @@ export class TimelineActionProcessor<State = ActionSequenceState> {
   }
 
   reset(context: CombatExecutionContext): void {
-    resetTimelineActions(this.#state, this.#program, this.#host(context));
+    resetTimelineActions(this.#state, this.#program, this.#host, context);
   }
 
   tick(currentFrame: number, deltaTime: number, context: CombatExecutionContext): void {
-    tickTimelineActions(this.#state, this.#program, currentFrame, deltaTime, this.#host(context));
+    tickTimelineActions(this.#state, this.#program, currentFrame, deltaTime, this.#host, context);
   }
 
   /** 向前跳转，目标帧上的待执行序列保留到下一次 Tick。 */
@@ -91,31 +91,30 @@ export class TimelineActionProcessor<State = ActionSequenceState> {
       this.#program,
       destinationFrame,
       currentFrame,
-      this.#host(context),
+      this.#host,
+      context,
     );
   }
 
   /** 结束活动项，丢弃全部尚未开始项。 */
   finish(currentFrame: number, context: CombatExecutionContext): void {
-    finishTimelineActions(this.#state, this.#program, currentFrame, this.#host(context));
+    finishTimelineActions(this.#state, this.#program, currentFrame, this.#host, context);
   }
 
   end(currentFrame: number, context: CombatExecutionContext): void {
-    endTimelineActions(this.#state, this.#program, currentFrame, this.#host(context));
+    endTimelineActions(this.#state, this.#program, currentFrame, this.#host, context);
   }
 
-  #host(context: CombatExecutionContext): TimelineActionExecutionHost {
-    return {
-      reset: index => this.#actions[index]!.sequence.reset(context),
-      execute: index => this.#actions[index]!.sequence.execute(context),
-      tick: (index, deltaTime) => this.#actions[index]!.sequence.tick(deltaTime, context),
-      end: index => this.#actions[index]!.sequence.end(context),
-      started: (index, frame) =>
-        this.#lifecycle.started?.(this.#actions[index]!, this.#program[index]!.sourceIndex, frame),
-      ended: (index, frame) =>
-        this.#lifecycle.ended?.(this.#actions[index]!, this.#program[index]!.sourceIndex, frame),
-    };
-  }
+  readonly #host: TimelineActionExecutionHost = {
+    reset: (index, context) => this.#actions[index]!.sequence.reset(context),
+    execute: (index, context) => this.#actions[index]!.sequence.execute(context),
+    tick: (index, deltaTime, context) => this.#actions[index]!.sequence.tick(deltaTime, context),
+    end: (index, context) => this.#actions[index]!.sequence.end(context),
+    started: (index, frame) =>
+      this.#lifecycle.started?.(this.#actions[index]!, this.#program[index]!.sourceIndex, frame),
+    ended: (index, frame) =>
+      this.#lifecycle.ended?.(this.#actions[index]!, this.#program[index]!.sourceIndex, frame),
+  };
 }
 
 /** 所有宿主共用的入口绑定；保存数组按调度顺序排列，定义数组可不排序。 */

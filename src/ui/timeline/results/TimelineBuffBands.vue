@@ -13,6 +13,7 @@ import type { BuffDetailTarget } from './buffDetail';
 import TimelineStatusSegment from './TimelineStatusSegment.vue';
 import { frameToTimelinePx } from '../timelineGeometry';
 import { timelineLowerBuffTop, timelineUpperBuffTop } from './timelineTrackEffectLayout';
+import { elementalAttachments } from '../../../data/buffs/elementalAttachments';
 
 const props = defineProps<{
   segments: readonly PositionedDisplayBuffTimelineSegment[];
@@ -46,6 +47,15 @@ const ICON_SIZE = 18;
 const durationBarColor = useDurationBarColor();
 const BAR_GAP = 2;
 const ACTION_TOP_FALLBACK = 55;
+const attachmentBuffIds = new Set([
+  ...elementalAttachments.buffs
+    .filter(buff => buff.role?.kind === 'elementalAttachment')
+    .map(buff => buff.id),
+  'buff_common_enemy_spell_fire_attached',
+  'buff_common_enemy_spell_pulse_attached',
+  'buff_common_enemy_spell_cryst_attached',
+  'buff_common_enemy_spell_natural_attached',
+]);
 
 const items = computed(() =>
   props.segments.map(segment => {
@@ -152,6 +162,7 @@ const items = computed(() =>
       :width="item.width"
       :title="item.tooltip"
       :duration-color="item.color"
+      :attachment="attachmentBuffIds.has(item.buffId)"
       :count="showBuffLayerBadge(item) ? item.layers : undefined"
       interactive
       @activate="emit('open-detail', item.detail)"

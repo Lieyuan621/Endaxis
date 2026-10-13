@@ -17,7 +17,7 @@ type EntityHit = {
  * 可见 Buff = 原生图标框 + 层数角标 + 45 度条纹时长条；爆发/反应消费 = 图标标记。
  * 坐标与资源曲线同一体系（准备区偏移 + 每帧像素 + 轨道头宽度，跟随时间轴滚动）。
  */
-import { computed, onMounted, onBeforeUnmount, ref, useId } from 'vue';
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue';
 import { elementalAttachments } from '../../../data/buffs/elementalAttachments';
 import { useDurationBarColor } from './durationBarColorContext';
 import { resolveDurationBarColor } from './durationBarColor';
@@ -29,10 +29,7 @@ import EnemyCombatHudSnapshot from './EnemyCombatHudSnapshot.vue';
 import { resolveBuffDisplayName } from './buffDisplayName';
 import { resolveBuffEffectSummary, showBuffLayerBadge } from './buffDisplayName';
 import type { BuffDetailTarget } from './buffDetail';
-import {
-  DEFAULT_GAME_ICON_PATH,
-  getSpellBurstIconPath,
-} from '../../gameAssetPaths';
+import { DEFAULT_GAME_ICON_PATH, getSpellBurstIconPath } from '../../gameAssetPaths';
 import { frameToCondensedTimelinePx } from '../timelineGeometry';
 import TimelineMonitorGrid from './TimelineMonitorGrid.vue';
 import { summarizeLastHitBuffs } from './lastHitBuffSummary';
@@ -42,7 +39,7 @@ import { findBuffDamageSegment } from './enemyBuffDamageHits';
 import { isPhysicalStatusRowBuff } from './physicalStatusDisplay';
 import { enemyStatusRowSize } from './monitorSectionMinimums';
 import { projectAttachmentConversionLinks } from '../../../core/projection/attachmentContinuations';
-import TimelineConnectorStroke from '../components/TimelineConnectorStroke.vue';
+import TimelineAttachmentContinuation from './TimelineAttachmentContinuation.vue';
 
 const { t, te } = useI18n();
 
@@ -249,12 +246,11 @@ const damageHits = computed(() =>
   }),
 );
 
-const conversionGradientPrefix = useId();
 const attachmentConversions = computed(() =>
   projectAttachmentConversionLinks(props.buffs, props.viz.attachmentConversions ?? []),
 );
 const buffs = computed(() =>
-  props.buffs.map((buff, index) => {
+  props.buffs.map(buff => {
     const start = pointX(buff.startFrame);
     const right = pointX(buff.durationEndFrame ?? buff.endFrame);
     const hideIcon = statusRows.value.hiddenIcons.has(buff);
@@ -281,7 +277,6 @@ const buffs = computed(() =>
     return {
       ...buff,
       isAttachment: props.attachmentBuffIds?.has(buff.buffId) ?? false,
-      gradientId: `${conversionGradientPrefix}-${index}`,
       endColor: resolveDurationBarColor(
         durationBarColor.value,
         'enemy',
@@ -499,39 +494,13 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
           <span v-else class="buff-fallback">+</span>
           <span v-if="showBuffLayerBadge(buff)" class="anomaly-stacks">{{ buff.layers }}</span>
         </span>
-        <svg
+        <TimelineAttachmentContinuation
           v-if="buff.isAttachment && buff.barWidthPx > 0"
-          class="attachment-continuation"
           :width="buff.barWidthPx + 2"
           :height="iconSize"
-          :style="{ color: buff.color ?? 'var(--ea-fg-muted)' }"
-          aria-hidden="true"
-        >
-          <defs>
-            <linearGradient
-              :id="buff.gradientId"
-              gradientUnits="userSpaceOnUse"
-              x1="0"
-              :y1="iconSize / 2"
-              :x2="buff.barWidthPx + 2"
-              :y2="iconSize / 2"
-            >
-              <stop offset="0%" stop-color="currentColor" stop-opacity="0.8" />
-              <stop
-                offset="100%"
-                :stop-color="buff.endColor ?? buff.color ?? 'currentColor'"
-                stop-opacity="1"
-              />
-            </linearGradient>
-          </defs>
-          <TimelineConnectorStroke
-            :path="`M 0 ${iconSize / 2} H ${buff.barWidthPx + 2}`"
-            :stroke="`url(#${buff.gradientId})`"
-            :start-color="buff.color"
-            :end-color="buff.endColor"
-            particle
-          />
-        </svg>
+          :color="buff.color"
+          :end-color="buff.endColor"
+        />
         <span
           v-else-if="buff.barWidthPx > 0"
           class="anomaly-duration-bar generic-buff-bar"
@@ -607,13 +576,6 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
 </style>
 
 <style scoped>
-.attachment-continuation {
-  position: relative;
-  z-index: 1;
-  overflow: visible;
-  pointer-events: none;
-  flex-shrink: 0;
-}
 .enemy-effects {
   position: relative;
   width: 100%;

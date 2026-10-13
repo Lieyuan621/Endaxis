@@ -45,26 +45,31 @@ export function bindRestoredCombatOperatorAbilitySystem(
       skillDefinitions: [...options.cooldowns.values()]
         .map(binding => binding.program)
         .filter(program => !instantiatedSkillIds.has(program.skillId)),
-      skillTickPlan: [...options.cooldowns].map(([skillId, binding]) => ({
-        skillId,
-        advanceCooldown: deltaSeconds => {
-          if (binding.cooldown.ready) return;
-          const recoveryScalar =
-            binding.program.skillType === 'comboSkill'
-              ? (options.operator.buffRuntime?.getAttributeValue?.(
-                  'ComboSkillCooldownRecoveryScalar',
-                ) ?? 1)
-              : 1;
-          if (!Number.isFinite(recoveryScalar) || recoveryScalar < 0) {
-            throw new RangeError(
-              `combo skill cooldown recovery scalar of '${options.operator.operatorId}' must be non-negative and finite, received ${recoveryScalar}`,
-            );
-          }
-          if (binding.cooldown.advance(deltaSeconds * COMBAT_FRAMES_PER_SECOND * recoveryScalar)) {
-            options.onCooldownReady?.(skillId);
-          }
-        },
-      })),
+      skillTickPlan: [...options.cooldowns].map(([skillId, binding]) => {
+        if (binding.cooldown.runtimeState.timer === undefined) return { skillId };
+        return {
+          skillId,
+          advanceCooldown: deltaSeconds => {
+            if (binding.cooldown.ready) return;
+            const recoveryScalar =
+              binding.program.skillType === 'comboSkill'
+                ? (options.operator.buffRuntime?.getAttributeValue?.(
+                    'ComboSkillCooldownRecoveryScalar',
+                  ) ?? 1)
+                : 1;
+            if (!Number.isFinite(recoveryScalar) || recoveryScalar < 0) {
+              throw new RangeError(
+                `combo skill cooldown recovery scalar of '${options.operator.operatorId}' must be non-negative and finite, received ${recoveryScalar}`,
+              );
+            }
+            if (
+              binding.cooldown.advance(deltaSeconds * COMBAT_FRAMES_PER_SECOND * recoveryScalar)
+            ) {
+              options.onCooldownReady?.(skillId);
+            }
+          },
+        };
+      }),
       skillSlotGroups: options.operator.skillSlotGroups,
       playerActionRoutes: options.operator.playerActionRoutes,
       playerActionModes: options.operator.playerActionModes,

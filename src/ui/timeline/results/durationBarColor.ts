@@ -18,13 +18,19 @@ const ELEMENT_COLOR_TYPES = {
   cryo: 'Cryst',
   nature: 'Natural',
 } as const;
-const attachmentColors: Readonly<Record<string, string>> = Object.fromEntries(
-  elementalAttachments.buffs.flatMap(buff =>
-    buff.role?.kind === 'elementalAttachment'
-      ? [[buff.id, ANOMALY_COLORS[ELEMENT_COLOR_TYPES[buff.role.element]]!]]
-      : [],
+const attachmentColors: Readonly<Record<string, string>> = {
+  ...Object.fromEntries(
+    elementalAttachments.buffs.flatMap(buff =>
+      buff.role?.kind === 'elementalAttachment'
+        ? [[buff.id, ANOMALY_COLORS[ELEMENT_COLOR_TYPES[buff.role.element]]!]]
+        : [],
+    ),
   ),
-);
+  buff_common_enemy_spell_fire_attached: ANOMALY_COLORS.Fire!,
+  buff_common_enemy_spell_pulse_attached: ANOMALY_COLORS.Pulse!,
+  buff_common_enemy_spell_cryst_attached: ANOMALY_COLORS.Cryst!,
+  buff_common_enemy_spell_natural_attached: ANOMALY_COLORS.Natural!,
+};
 export interface DurationBarColorPrefs {
   enabled: boolean;
   saturation: number;

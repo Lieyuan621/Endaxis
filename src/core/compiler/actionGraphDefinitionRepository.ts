@@ -106,6 +106,11 @@ export class ActionGraphDefinitionRepository {
     return prepared;
   };
 
+  /** 是否需要实体依赖目录是固定图结构属性，与技能等级和摆放位置无关。 */
+  requiresAbilityEntityImports(graph: ActionGraphResourceDefinition): boolean {
+    return this.#prepare(graph).spawnsAbilityEntity;
+  }
+
   compile(
     graph: ActionGraphDefinition | ActionGraphResourceDefinition,
     level: number,

@@ -19,11 +19,15 @@ export function removeBuffEntityTags(
 
 export function advanceBuffAddingCooldowns(state: BuffContainerState, deltaTime: number): void {
   if (!Number.isFinite(deltaTime)) throw new TypeError('buff delta time must be finite');
+  const delta = Math.max(0, deltaTime);
   for (const [stackingKey, values] of state.addingCooldowns) {
-    const remaining = values
-      .map(value => value - Math.max(0, deltaTime))
-      .filter(value => value > 0.00001);
-    if (remaining.length === 0) state.addingCooldowns.delete(stackingKey);
-    else state.addingCooldowns.set(stackingKey, remaining);
+    // 冷却数组由容器独占；原地保留未到期项，避免每帧创建两份数组。
+    let count = 0;
+    for (const value of values) {
+      const remaining = value - delta;
+      if (remaining > 0.00001) values[count++] = remaining;
+    }
+    values.length = count;
+    if (count === 0) state.addingCooldowns.delete(stackingKey);
   }
 }

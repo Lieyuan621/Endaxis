@@ -440,54 +440,69 @@ export class ActionGraphExecution
       const selected = data.selection.activeBranch;
       if (selected !== null && (!data.branches.has(selected) || !Number.isInteger(selected)))
         throw new Error(`missing selected graph branch: ${id}`);
-      const branchHost = (context: CombatExecutionContext): BranchActionHost => ({
-        execute: index => branch(index).tryExecute(context),
-        tick: (index, delta) => branch(index).tick(delta, context),
-        end: index => branch(index).end(context),
-        reset: index => branch(index).reset(context),
-      });
+      const branchHost: BranchActionHost = {
+        execute: (index, context) => branch(index).tryExecute(context),
+        tick: (index, delta, context) => branch(index).tick(delta, context),
+        end: (index, context) => branch(index).end(context),
+        reset: (index, context) => branch(index).reset(context),
+      };
+      let execute: GraphNodeBinding['execute'];
+      if (action.kind === 'switch') {
+        const switchHost = {
+          ...branchHost,
+          choice: () => this.host.value(action.parameters.choice),
+          value: (index: number) => this.host.value(action.options[index]!.value),
+        };
+        execute = context =>
+          executeSwitchAction(
+            data.selection,
+            entries.length,
+            action.parameters.alwaysNext,
+            switchHost,
+            context,
+          );
+      } else {
+        const conditionalHost = {
+          ...branchHost,
+          evaluate: (context: CombatExecutionContext) =>
+            action.kind === 'ifElse'
+              ? branch(2).executeInstant(context)
+              : this.host.evaluate(action.parameters.condition),
+        };
+        execute = context =>
+          executeConditionalAction(
+            data.selection,
+            action.whenFalse !== undefined,
+            action.parameters.alwaysNext === true,
+            conditionalHost,
+            context,
+          );
+      }
       binding = {
         data,
-        execute: context =>
-          action.kind === 'switch'
-            ? executeSwitchAction(data.selection, entries.length, action.parameters.alwaysNext, {
-                ...branchHost(context),
-                choice: () => this.host.value(action.parameters.choice),
-                value: index => this.host.value(action.options[index]!.value),
-              })
-            : executeConditionalAction(
-                data.selection,
-                action.whenFalse !== undefined,
-                action.parameters.alwaysNext === true,
-                {
-                  ...branchHost(context),
-                  evaluate: () =>
-                    action.kind === 'ifElse'
-                      ? branch(2).executeInstant(context)
-                      : this.host.evaluate(action.parameters.condition),
-                },
-              ),
+        execute,
         reset: context => {
           if (action.kind === 'ifElse') branch(2).reset(context);
           return action.kind === 'switch'
-            ? resetSwitchAction(entries.length, branchHost(context))
+            ? resetSwitchAction(entries.length, branchHost, context)
             : resetConditionalAction(
                 data.selection,
                 action.whenFalse !== undefined,
-                branchHost(context),
+                branchHost,
+                context,
               );
         },
         tick: (delta, context) => {
           if (action.kind === 'ifElse') {
             branch(0).tick(delta, context);
             branch(1).tick(delta, context);
-          } else tickBranchAction(data.selection, delta, branchHost(context));
+          } else tickBranchAction(data.selection, delta, branchHost, context);
         },
         end: context => {
           if (action.kind === 'ifElse') {
             branch(0).end(context);
             branch(1).end(context);
-          } else endBranchAction(data.selection, branchHost(context));
+          } else endBranchAction(data.selection, branchHost, context);
         },
       };
     } else if (action.kind === 'listenForCombatEvents') {

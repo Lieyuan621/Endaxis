@@ -101,5 +101,16 @@ describe('duration bar display preferences', () => {
     );
     expect(colors.every(color => color.startsWith('hsl('))).toBe(true);
     expect(new Set(colors).size).toBe(4);
+    for (const element of ['fire', 'pulse', 'cryst', 'natural']) {
+      expect(
+        resolveDurationBarColor(prefs, 'track', {
+          buffId: `buff_common_enemy_spell_${element}_attached`,
+        }),
+      ).toBe(
+        resolveDurationBarColor(prefs, 'enemy', {
+          buffId: `buff_common_energy_shard_attached_${element}`,
+        }),
+      );
+    }
   });
 });

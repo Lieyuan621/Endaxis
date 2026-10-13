@@ -51,7 +51,7 @@ function createSession() {
         canExecute: () => true,
         executeStep: index => {
           state.calls.push(`execute:${action}:${index}`);
-          if (input.interrupt) endTimelineActions(state.timeline, program, input.frame, host);
+          if (input.interrupt) endTimelineActions(state.timeline, program, input.frame, host, {});
           return true;
         },
         resetStep: () => {},
@@ -85,8 +85,8 @@ function createSession() {
         },
       };
       if (input.jump !== undefined) {
-        jumpToTimelineActions(state.timeline, program, input.jump, input.frame, host);
-      } else tickTimelineActions(state.timeline, program, input.frame, 1, host);
+        jumpToTimelineActions(state.timeline, program, input.jump, input.frame, host, {});
+      } else tickTimelineActions(state.timeline, program, input.frame, 1, host, {});
     },
   );
 }

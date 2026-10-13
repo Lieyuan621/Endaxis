@@ -256,7 +256,7 @@ describe('TimeDilationRuntime', () => {
       constantScale: 0.3,
     });
     expect(runtime.globalInstances[0]?.id).toBe(first);
-    expect(runtime.activeGlobalInfluencesSkillCooldown).toBe(true);
+    expect(runtime.getAbilityTickDeltas('operator', 1).skillCooldownDeltaSeconds).toBe(0.3);
   });
 
   it('multiplies entity and global scales unless the operator ignores global scale', () => {
