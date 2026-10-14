@@ -93,7 +93,6 @@ const editor = useResourceGraphEditor({
     commits.value++;
   },
 });
-const inspector = editor.inspector;
 const graph = computed(() => current.value.actionGraph.main);
 function applyAction(action: unknown) {
   return editor.edit(owner => replaceResourceNodeAction(owner, { kind: 'main' }, 'damage', action));
@@ -108,7 +107,12 @@ function travel(direction: 'undo' | 'redo') {
   <section data-testid="global-buff-definition">
     <label><input v-model="readonly" type="checkbox" />Readonly GlobalBuff</label>
     <ActionNodeInspector
-      ref="inspector"
+      :ref="
+        value =>
+          (editor.inspector.value = value
+            ? (value as InstanceType<typeof ActionNodeInspector>)
+            : undefined)
+      "
       node-id="damage"
       :node="graph.nodes.damage"
       :graph="graph"

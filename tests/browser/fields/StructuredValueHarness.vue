@@ -24,8 +24,8 @@ const graph: ActionGraphDefinition = {
     },
     sibling: {
       action: {
-        kind: 'setContextFlag',
-        parameters: { flag: 'keep', value: true, target: 'caster' },
+        kind: 'dealStagger',
+        parameters: { value: 1 },
       },
       next: null,
     },

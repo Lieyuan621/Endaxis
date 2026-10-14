@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.node.json",
+  "extends": "../../tsconfig.app.json",
   "compilerOptions": { "lib": ["ESNext", "DOM", "DOM.Iterable"] },
-  "include": ["../../playwright.config.ts", "./**/*.ts"]
+  "include": ["../../playwright.config.ts", "./**/*.ts", "./fields/**/*.vue"]
 }

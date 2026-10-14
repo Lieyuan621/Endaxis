@@ -38,7 +38,12 @@ const session = new WorkspaceAssetSession(
                 spawn: {
                   action: {
                     kind: 'spawnAbilityEntity',
-                    parameters: { abilityEntityId: 'inline', dieWhenSourceDies: false, definition },
+                    parameters: {
+                      bornAt: { kind: 'owner' },
+                      abilityEntityId: 'inline',
+                      dieWhenSourceDies: false,
+                      definition,
+                    },
                   },
                   next: null,
                 },

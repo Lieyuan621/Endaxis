@@ -213,7 +213,7 @@ function applyNode(value: unknown) {
     <GraphOperandHarness field="instantAttributeModifiers" />
     <GraphOperandHarness field="instantDamageScaleModifiers" />
     <GraphOperandHarness field="keywordEnhancements" />
-    <GraphOperandHarness field="onActionEndBuffs" />
+    <GraphOperandHarness field="buffs" />
     <GraphOperandHarness field="items" />
     <StringGraphHarness />
     <GlobalBuffHarness />

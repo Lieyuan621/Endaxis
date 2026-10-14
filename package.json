@@ -31,7 +31,7 @@
     "type-check:game-data-production": "tsc --project tools/game-data-compiler/tsconfig.production.json",
     "type-check:game-data": "tsc --project tools/game-data-compiler/tsconfig.json",
     "type-check:tools": "tsc -p tsconfig.node.json && tsc -p tools/editor/tsconfig.json && tsc -p tools/legacy-timeline/tsconfig.json && tsc -p tools/performance/tsconfig.json",
-    "type-check:browser": "tsc -p tests/browser/tsconfig.json",
+    "type-check:browser": "vue-tsc --noEmit -p tests/browser/tsconfig.json --incremental false",
     "check:editor-nodes": "node --experimental-strip-types tools/editor/generateActionNodeSchema.ts --check",
     "check:definition-fields": "node --experimental-strip-types tools/editor/generateDefinitionSchemas.ts --check",
     "check:field-capabilities": "node --experimental-strip-types tools/editor/checkFieldCapabilities.ts",

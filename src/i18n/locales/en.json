@@ -3348,6 +3348,8 @@
       "markerId": "Marker ID",
       "targetTrack": "Operator to switch to",
       "direction": "Dodge direction",
+      "forward": "Forward",
+      "backward": "Backward",
       "dodgeResult": "Declared result",
       "successDelayFrames": "Perfect-dodge success delay (frames)",
       "simulationResult": "Actual simulation result",

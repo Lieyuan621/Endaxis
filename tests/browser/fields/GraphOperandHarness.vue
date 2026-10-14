@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, shallowRef } from 'vue';
 import type { ActionGraphStep } from '../../../packages/game-data-contract/src/actionGraph';
+import type { ActionValueOperand } from '../../../packages/game-data-contract/src/conditions';
 import { DefinitionDraftSession } from '../../../src/application/editor/definitionDraftSession';
 import { replaceResourceNodeAction } from '../../../src/application/editor/actionGraphResourceEditing';
 import ActionNodeInspector from '../../../src/ui/action-graph/ActionNodeInspector.vue';
@@ -11,7 +12,7 @@ const props = defineProps<{
     | 'instantAttributeModifiers'
     | 'instantDamageScaleModifiers'
     | 'keywordEnhancements'
-    | 'onActionEndBuffs'
+    | 'buffs'
     | 'items';
 }>();
 const referenceChoices = {
@@ -32,42 +33,61 @@ const referenceChoices = {
   },
 };
 const action = (connected: boolean): ActionGraphStep => {
-  const value = connected
+  const value: ActionValueOperand = connected
     ? { kind: 'valueNode', nodeId: 'shared' }
     : { kind: 'constant', value: 1 };
-  const row =
-    props.field === 'instantAttributeModifiers'
-      ? {
-          targetSide: 'attacker',
-          attribute: 'Atk',
-          slot: 'baseAddition',
-          attributeTiming: 'runtime',
-          value,
-        }
-      : props.field === 'instantDamageScaleModifiers'
-        ? { side: 'attacker', zone: 'normal', addition: value }
-        : props.field === 'keywordEnhancements'
-          ? { triggerBuffIds: ['buff'], operation: 'add', value }
-          : props.field === 'onActionEndBuffs'
-            ? { buffId: 'buff', target: 'caster', blackboardAssignments: { amount: value } }
-            : { values: [1, 2, 3, 4], column: value, storeKey: 'result' };
-  const kind =
-    props.field === 'items'
-      ? 'readSkillSettingData'
-      : ['keywordEnhancements', 'onActionEndBuffs'].includes(props.field)
-        ? 'applyBuff'
-        : 'dealDamage';
-  return {
-    kind,
-    parameters: {
-      ...(kind === 'applyBuff'
-        ? { buffId: 'buff', target: 'caster', finishByAction: true }
-        : kind === 'dealDamage'
-          ? { damageType: 'physical', attackScale: 1, tags: [] }
-          : {}),
-      [props.field]: [row],
-    },
-  } as ActionGraphStep;
+  switch (props.field) {
+    case 'instantAttributeModifiers':
+      return {
+        kind: 'dealDamage',
+        parameters: {
+          damageType: 'physical',
+          attackScale: 1,
+          tags: [],
+          instantAttributeModifiers: [
+            {
+              targetSide: 'attacker',
+              attribute: 'Atk',
+              slot: 'baseAddition',
+              attributeTiming: 'runtime',
+              value,
+            },
+          ],
+        },
+      };
+    case 'instantDamageScaleModifiers':
+      return {
+        kind: 'dealDamage',
+        parameters: {
+          damageType: 'physical',
+          attackScale: 1,
+          tags: [],
+          instantDamageScaleModifiers: [{ side: 'attacker', zone: 'normal', addition: value }],
+        },
+      };
+    case 'keywordEnhancements':
+    case 'buffs':
+      return {
+        kind: 'applyBuff',
+        parameters: {
+          targets: { kind: 'owner' },
+          finishByAction: true,
+          buffs: [
+            {
+              buffId: 'buff',
+              ...(props.field === 'keywordEnhancements'
+                ? { keywordEnhancements: [{ triggerBuffIds: ['buff'], operation: 'add', value }] }
+                : { blackboardAssignments: { amount: value } }),
+            },
+          ],
+        },
+      };
+    case 'items':
+      return {
+        kind: 'readSkillSettingData',
+        parameters: { items: [{ values: [1, 2, 3, 4], column: value, storeKey: 'result' }] },
+      };
+  }
 };
 const history = new DefinitionDraftSession(
   {
@@ -110,7 +130,6 @@ const editor = useResourceGraphEditor({
     commits.value++;
   },
 });
-const inspector = editor.inspector;
 const graph = computed(() => current.value.actionGraph.main);
 function applyAction(action: unknown) {
   return editor.edit(owner => replaceResourceNodeAction(owner, { kind: 'main' }, 'damage', action));
@@ -125,7 +144,12 @@ function travel(direction: 'undo' | 'redo') {
   <section :data-testid="`graph-operand-${field}`">
     <label><input v-model="readonly" type="checkbox" />Readonly graph operands</label>
     <ActionNodeInspector
-      ref="inspector"
+      :ref="
+        value =>
+          (editor.inspector.value = value
+            ? (value as InstanceType<typeof ActionNodeInspector>)
+            : undefined)
+      "
       node-id="damage"
       :node="graph.nodes.damage"
       :graph="graph"

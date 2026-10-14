@@ -96,7 +96,7 @@ function changeInput(
   id: string,
   path: readonly string[],
   source: string | null,
-  constant?: number | boolean,
+  constant?: number | boolean | string,
 ) {
   edit(current => {
     const node = current.dataNodes?.[id];

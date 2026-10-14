@@ -41,7 +41,10 @@ const history = new DefinitionDraftSession(
       main: {
         nodes: {
           source: { action, next: null },
-          target: { action: { kind: 'finishTimeline' as const, parameters: {} }, next: null },
+          target: {
+            action: { kind: 'dealStagger' as const, parameters: { value: 1 } },
+            next: null,
+          },
         },
         dataNodes: {
           boolean: {
@@ -74,8 +77,7 @@ const editor = useResourceGraphEditor({
     commits.value++;
   },
 });
-const inspector = editor.inspector,
-  graph = computed(() => current.value.actionGraph.main);
+const graph = computed(() => current.value.actionGraph.main);
 provide(blackboardNavigationKey, target => {
   located.value = target.id;
   void editor.locateVariable(target.id, target.owner === 'data');
@@ -102,7 +104,12 @@ function disconnectFirst() {
   <section :data-testid="`sequence-${kind}`">
     <label><input v-model="readonly" type="checkbox" />Readonly branches</label>
     <ActionNodeInspector
-      ref="inspector"
+      :ref="
+        value =>
+          (editor.inspector.value = value
+            ? (value as InstanceType<typeof ActionNodeInspector>)
+            : undefined)
+      "
       node-id="source"
       :node="graph.nodes.source"
       :graph="graph"

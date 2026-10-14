@@ -10,10 +10,11 @@ import { createResourceEditorView } from '../../../src/ui/editor/resourceEditorV
 const action = (markerId: string | { kind: 'stringNode'; nodeId: string }): ActionGraphStep => ({
   kind: 'createTimedMarker',
   parameters: {
-    target: 'caster',
+    targets: { kind: 'owner' },
     markerId,
     durationSeconds: { kind: 'constant', value: 1 },
     autoFinishByAction: false,
+    timeDomain: 'self',
   },
 });
 const history = new DefinitionDraftSession(
@@ -55,7 +56,6 @@ const editor = useResourceGraphEditor({
     commits.value++;
   },
 });
-const inspector = editor.inspector;
 const graph = computed(() => current.value.actionGraph.main);
 function applyAction(value: unknown) {
   return editor.edit(owner => replaceResourceNodeAction(owner, { kind: 'main' }, 'first', value));
@@ -88,7 +88,12 @@ function travel(direction: 'undo' | 'redo') {
   <section data-testid="string-graph">
     <label><input v-model="readonly" type="checkbox" />Readonly string graph</label>
     <ActionNodeInspector
-      ref="inspector"
+      :ref="
+        value =>
+          (editor.inspector.value = value
+            ? (value as InstanceType<typeof ActionNodeInspector>)
+            : undefined)
+      "
       node-id="first"
       :node="graph.nodes.first"
       :graph="graph"

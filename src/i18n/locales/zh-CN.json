@@ -3365,6 +3365,8 @@
       "markerId": "标记 ID",
       "targetTrack": "切入干员",
       "direction": "闪避方向",
+      "forward": "向前",
+      "backward": "向后",
       "dodgeResult": "声明结果",
       "successDelayFrames": "极限闪避成功延迟（帧）",
       "simulationResult": "实际模拟结果",

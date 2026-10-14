@@ -613,22 +613,27 @@ for (const field of ['instantAttributeModifiers', 'instantDamageScaleModifiers']
   });
 }
 
-for (const field of ['keywordEnhancements', 'onActionEndBuffs', 'items']) {
+for (const field of ['keywordEnhancements', 'buffs', 'items']) {
   test(`nested ${field} repairs and stages typed values through real graph history`, async ({
     page,
   }) => {
     const panel = page.getByTestId(`graph-operand-${field}`);
-    const structure = panel.locator(`[data-structured-path="parameters.${field}"]`);
+    const structure = panel.locator(
+      `[data-structured-path="parameters.${field === 'items' ? 'items' : 'buffs'}"]`,
+    );
     await structure.getByRole('button', { name: 'Edit structure', exact: true }).click();
     for (const details of await structure.locator('details').all())
       if ((await details.getAttribute('open')) === null)
         await details.locator(':scope > summary').click();
-    const mapping = structure.locator('[data-mapping-destination="exitBuff"]');
-    if (field === 'onActionEndBuffs')
+    const mapping = structure.locator('[data-mapping-destination="buff"]');
+    if (field === 'buffs')
       await mapping.getByRole('button', { name: 'Edit mappings', exact: true }).click();
-    const number = structure.locator('[data-mapping-value="operand"] input[type="number"]').last();
+    const number =
+      field === 'buffs'
+        ? mapping.locator('input[type="number"]').last()
+        : structure.locator('[data-mapping-value="operand"] input[type="number"]').last();
     await number.fill('');
-    if (field === 'onActionEndBuffs') {
+    if (field === 'buffs') {
       await mapping.getByRole('button', { name: 'Apply mappings', exact: true }).click();
       await expect(mapping.getByRole('alert')).toBeVisible();
     } else {
@@ -636,7 +641,7 @@ for (const field of ['keywordEnhancements', 'onActionEndBuffs', 'items']) {
       await expect(structure.getByRole('alert')).toBeVisible();
     }
     await number.fill('3');
-    if (field === 'onActionEndBuffs')
+    if (field === 'buffs')
       await mapping.getByRole('button', { name: 'Apply mappings', exact: true }).click();
     await structure.getByRole('button', { name: 'Stage field', exact: true }).click();
     await expect(panel.getByTestId('graph-operand-commits')).toHaveText('0');
@@ -720,7 +725,7 @@ test('spawn field preserves unstaged work and opens an independent child resourc
   page,
 }) => {
   const panel = page.getByTestId('spawn-resource');
-  const structure = panel.locator('[data-structured-value]');
+  const structure = panel.locator('[data-structured-path="parameters.definition"]');
   await structure.getByRole('button', { name: 'Edit structure', exact: true }).click();
   await expect(
     structure.getByRole('button', { name: 'Open action graph', exact: true }),
@@ -773,9 +778,11 @@ test('string pins share an expression, preserve exact literals and undo without 
   await expect(host.getByTestId('string-graph-state')).toContainText(
     '"markerId":"  exact replacement  "',
   );
-  await expect(host.getByTestId('string-graph-state')).toContainText(
-    '"second":{"action":{"kind":"createTimedMarker","parameters":{"target":"caster","markerId":{"kind":"stringNode","nodeId":"shared"}',
-  );
+  const current = JSON.parse(await host.getByTestId('string-graph-state').innerText());
+  expect(current.actionGraph.main.nodes.second.action).toMatchObject({
+    kind: 'createTimedMarker',
+    parameters: { markerId: { kind: 'stringNode', nodeId: 'shared' } },
+  });
   await host.getByRole('button', { name: 'Undo string graph', exact: true }).click();
   await expect(pin.getByRole('button', { name: /marker/ })).toBeVisible();
   await host.getByRole('button', { name: 'Redo string graph', exact: true }).click();

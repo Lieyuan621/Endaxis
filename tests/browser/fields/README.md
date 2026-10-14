@@ -1,5 +1,10 @@
 # Field component browser tests
 
+Current verification (2026-10-14): all 34 component tests passed in Playwright
+Chromium on Windows. The browser type check now includes the Vue harnesses. The
+`UNRUN` notes below describe the original restricted authoring environment, not
+the current checkout's verification status.
+
 Run `npm run test:browser:fields` after installing dependencies and the supported
 Playwright Chromium browser (`npx playwright install chromium`). The dedicated
 configuration starts Vite on port 4188 and serves this test-only HTML entry. It
@@ -20,7 +25,7 @@ and submit-time revalidation that retains stale creator drafts. P3 adds atomic s
 immutable state round-tripping in this fixture. It is **not** application command
 history, persistence, or full end-to-end undo verification.
 
-`npm run type-check:browser` validates the test/config TypeScript. `npm run
+`npm run type-check:browser` validates the test/config TypeScript and Vue harnesses. `npm run
 test:browser:fields -- --list` validates test discovery. Neither runs a browser or
 establishes that the assertions pass. The harness Vue entry must also compile.
 
@@ -70,7 +75,7 @@ four skill availability/legacy-handler authoring entries remain deferred.
 
 P4.4c1 新增两个 dealDamage modifier 容器场景，GraphOperandHarness 使用实际 ActionNodeInspector/useResourceGraphEditor/DefinitionDraftSession/replaceResourceNodeAction，覆盖非法数字原位修正、Stage/整节点 Apply、共享来源保留、undo/redo 和 readonly。fixture/type/discovery/build 与实际执行分别报告；本环境实际浏览器仍 UNRUN，不尝试绕过既有启动限制。
 
-P4.4c2 adds keywordEnhancements, onActionEndBuffs and readSkillSettingData.items to the same real graph-host harness. Scenarios cover invalid operand repair, nested mapping acceptance, atomic Stage/Apply, shared source preservation, undo/redo and readonly controls. Actual browser execution remains **UNRUN** under the established environment restriction; discovery/types/harness compilation are not interaction passes.
+P4.4c2 adds keywordEnhancements, nested applyBuff.buffs mappings and readSkillSettingData.items to the same real graph-host harness. Scenarios cover invalid operand repair, nested mapping acceptance, atomic Stage/Apply, shared source preservation, undo/redo and readonly controls. The original browser execution remained **UNRUN** under its restricted authoring environment; discovery/types/harness compilation were not interaction passes.
 
 P4.4c3 adds GlobalBuffHarness with the real graph editor, definition-local values, a shared graph number source, atomic field/node staging, rejection when removing a required numeric creation override, undo/redo and readonly. Actual browser execution remains **UNRUN**; compile/discovery checks cannot certify interaction behavior.
 
