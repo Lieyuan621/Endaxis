@@ -32,10 +32,15 @@ const commonBuff1: SkillBuffDefinition = {
 const commonBuff2ActionGraph = {
   main: {
     nodes: {
-      checkCondition_1: {
+      applyBuff_5: {
         action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_cc_chr_combo_skill_cryst_inflict_stack' }],
+            targets: { kind: 'mainCharacter' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
         },
         next: null,
       },
@@ -72,30 +77,18 @@ const commonBuff2ActionGraph = {
           parameters: {
             targets: { kind: 'owner' },
             markerId: 'buff_cc_chr_combo_skill_cryst_inflict',
-            durationSeconds: { kind: 'valueNode', nodeId: 'data_3' },
+            durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
             autoFinishByAction: false,
             timeDomain: 'globalScaled',
           },
         },
         next: 'applyCharacterInfliction_3',
       },
-      applyBuff_5: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_cc_chr_combo_skill_cryst_inflict_stack' }],
-            targets: { kind: 'mainCharacter' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
       ifElse_6: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'createTimedMarker_4' },
           whenFalse: { $sequence: 'applyBuff_5' },
         },
@@ -129,18 +122,18 @@ const commonBuff2ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'd_times' } },
-      data_2: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'cd' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'd_times' } },
+      data_3: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
           target: 'controlledOperator',
           buffIds: ['buff_cc_chr_combo_skill_cryst_inflict_stack'],
           operator: 'greaterOrEqual',
-          value: { kind: 'valueNode', nodeId: 'data_1' },
+          value: { kind: 'valueNode', nodeId: 'data_2' },
         },
       },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'cd' } },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'times' } },
       data_5: {
         type: 'boolean',
@@ -1727,10 +1720,15 @@ const commonBuff22: SkillBuffDefinition = {
 const commonBuff23ActionGraph = {
   main: {
     nodes: {
-      checkCondition_1: {
+      applyBuff_5: {
         action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_cc_chr_normal_skill_cryst_inflict_stack' }],
+            targets: { kind: 'mainCharacter' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
         },
         next: null,
       },
@@ -1752,7 +1750,7 @@ const commonBuff23ActionGraph = {
           parameters: {
             targets: { kind: 'owner' },
             markerId: 'buff_cc_chr_normal_skill_cryst_inflict',
-            durationSeconds: { kind: 'valueNode', nodeId: 'data_3' },
+            durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
             autoFinishByAction: false,
             timeDomain: 'globalScaled',
           },
@@ -1774,23 +1772,11 @@ const commonBuff23ActionGraph = {
         },
         next: 'createTimedMarker_3',
       },
-      applyBuff_5: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_cc_chr_normal_skill_cryst_inflict_stack' }],
-            targets: { kind: 'mainCharacter' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
       ifElse_6: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'applyCharacterInfliction_4' },
           whenFalse: { $sequence: 'applyBuff_5' },
         },
@@ -1824,18 +1810,18 @@ const commonBuff23ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'd_times' } },
-      data_2: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'cd' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'd_times' } },
+      data_3: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
           target: 'controlledOperator',
           buffIds: ['buff_cc_chr_normal_skill_cryst_inflict_stack'],
           operator: 'greaterOrEqual',
-          value: { kind: 'valueNode', nodeId: 'data_1' },
+          value: { kind: 'valueNode', nodeId: 'data_2' },
         },
       },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'cd' } },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'times' } },
       data_5: {
         type: 'boolean',
@@ -3072,18 +3058,11 @@ const commonBuff39ActionGraph = {
         },
         next: null,
       },
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_5: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'heal_1' },
           whenFalse: { $sequence: 'finishBuffsById_4' },
         },
@@ -4116,13 +4095,6 @@ const commonBuff48: SkillBuffDefinition = {
 const commonBuff49ActionGraph = {
   main: {
     nodes: {
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       applyBuff_2: {
         action: {
           kind: 'applyBuff',
@@ -4137,13 +4109,6 @@ const commonBuff49ActionGraph = {
             source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
           },
-        },
-        next: null,
-      },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: null,
       },
@@ -4164,13 +4129,6 @@ const commonBuff49ActionGraph = {
         },
         next: null,
       },
-      checkCondition_5: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: null,
-      },
       applyBuff_6: {
         action: {
           kind: 'applyBuff',
@@ -4185,13 +4143,6 @@ const commonBuff49ActionGraph = {
             source: { kind: 'owner' },
             inheritSourceSkillCastInfo: true,
           },
-        },
-        next: null,
-      },
-      checkCondition_7: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
         },
         next: null,
       },
@@ -4216,7 +4167,7 @@ const commonBuff49ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_7' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'applyBuff_8' },
           whenFalse: { $sequence: null },
         },
@@ -4226,7 +4177,7 @@ const commonBuff49ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_5' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'applyBuff_6' },
           whenFalse: { $sequence: null },
         },
@@ -4236,7 +4187,7 @@ const commonBuff49ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'applyBuff_4' },
           whenFalse: { $sequence: null },
         },
@@ -4246,7 +4197,7 @@ const commonBuff49ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'applyBuff_2' },
           whenFalse: { $sequence: null },
         },
@@ -4280,19 +4231,19 @@ const commonBuff49ActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
-        expression: { kind: 'eventInflictionElementIn', elements: ['heat'] },
+        expression: { kind: 'eventInflictionElementIn', elements: ['nature'] },
       },
       data_2: {
         type: 'boolean',
-        expression: { kind: 'eventInflictionElementIn', elements: ['electric'] },
+        expression: { kind: 'eventInflictionElementIn', elements: ['cryo'] },
       },
       data_3: {
         type: 'boolean',
-        expression: { kind: 'eventInflictionElementIn', elements: ['cryo'] },
+        expression: { kind: 'eventInflictionElementIn', elements: ['electric'] },
       },
       data_4: {
         type: 'boolean',
-        expression: { kind: 'eventInflictionElementIn', elements: ['nature'] },
+        expression: { kind: 'eventInflictionElementIn', elements: ['heat'] },
       },
       data_5: {
         type: 'boolean',
@@ -4430,10 +4381,10 @@ const commonBuff54: SkillBuffDefinition = {
 const commonBuff55ActionGraph = {
   main: {
     nodes: {
-      checkCondition_1: {
+      triggerCharacterInflictionEvent_6: {
         action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+          kind: 'triggerCharacterInflictionEvent',
+          parameters: { event: 'afterTakeSpellInfliction', element: 'cryo', eventSource: 'caster' },
         },
         next: null,
       },
@@ -4472,16 +4423,9 @@ const commonBuff55ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'triggerCharacterInflictionEvent_4' },
           whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      triggerCharacterInflictionEvent_6: {
-        action: {
-          kind: 'triggerCharacterInflictionEvent',
-          parameters: { event: 'afterTakeSpellInfliction', element: 'cryo', eventSource: 'caster' },
         },
         next: null,
       },

@@ -64,7 +64,7 @@ function executionState(
 }
 
 /** 一个宏调用节点，宏体内只有一个 holdBuffsById 引用。 */
-function createGraph(heldInstanceId: number): CombatStateGraph {
+function createGraph(heldInstanceId: number, viaEvaluation = false): CombatStateGraph {
   const blackboard = createActionBlackboardState();
   const holdBody = executionState(
     'hold',
@@ -81,9 +81,10 @@ function createGraph(heldInstanceId: number): CombatStateGraph {
   );
   const enable = executionState(
     'call',
-    { call: { kind: 'graphMacro', body: holdBody } },
+    viaEvaluation ? {} : { call: { kind: 'graphMacro', body: holdBody } },
     'passive.enable',
   );
+  if (viaEvaluation) enable.evaluations = new Map([['condition', holdBody]]);
   const passive = createPassiveAbilityEventState(blackboard);
   passive.enableSequence = enable;
 
@@ -153,10 +154,13 @@ function createGraph(heldInstanceId: number): CombatStateGraph {
 }
 
 describe('prepareCombatBuffRestore', () => {
-  it('遍历宏调用体内的 Buff 引用：存在时通过，缺失时在创建对象前报错', () => {
-    expect(() => prepareCombatBuffRestore(createGraph(1))).not.toThrow();
-    expect(() => prepareCombatBuffRestore(createGraph(2))).toThrow(
-      `restored action-owned Buff '${JSON.stringify(['operator', 2])}' is missing`,
-    );
-  });
+  it.each([false, true])(
+    '遍历调用体内的 Buff 引用：存在时通过，缺失时在创建对象前报错，条件求值=%s',
+    viaEvaluation => {
+      expect(() => prepareCombatBuffRestore(createGraph(1, viaEvaluation))).not.toThrow();
+      expect(() => prepareCombatBuffRestore(createGraph(2, viaEvaluation))).toThrow(
+        `restored action-owned Buff '${JSON.stringify(['operator', 2])}' is missing`,
+      );
+    },
+  );
 });

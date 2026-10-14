@@ -67,7 +67,7 @@ export const arcaneChr_0032_lizhiyan_attack1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'dealDamage_13' },
           whenFalse: { $sequence: 'dealDamage_13' },
         },
@@ -91,7 +91,13 @@ export const arcaneChr_0032_lizhiyan_attack1ActionGraph = {
         next: null,
       },
     },
-    dataNodes: { data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } } },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+    },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
@@ -160,18 +166,11 @@ export const arcaneChr_0032_lizhiyan_attack2ActionGraph = {
         },
         next: null,
       },
-      checkCondition_17: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: null,
-      },
       ifElse_19: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_17' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'changeResource_18' },
           whenFalse: { $sequence: null },
         },
@@ -188,7 +187,7 @@ export const arcaneChr_0032_lizhiyan_attack2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'dealDamage_15' },
           whenFalse: { $sequence: 'dealDamage_15' },
         },
@@ -215,6 +214,10 @@ export const arcaneChr_0032_lizhiyan_attack2ActionGraph = {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
     },
   },
   macros: {},
@@ -286,18 +289,11 @@ export const arcaneChr_0032_lizhiyan_attack3ActionGraph = {
         },
         next: null,
       },
-      checkCondition_7: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: null,
-      },
       ifElse_9: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_7' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'changeResource_8' },
           whenFalse: { $sequence: null },
         },
@@ -314,7 +310,7 @@ export const arcaneChr_0032_lizhiyan_attack3ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'dealDamage_5' },
           whenFalse: { $sequence: 'dealDamage_5' },
         },
@@ -333,6 +329,10 @@ export const arcaneChr_0032_lizhiyan_attack3ActionGraph = {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
     },
   },
   macros: {},
@@ -546,24 +546,17 @@ export const arcaneChr_0032_lizhiyan_attack5ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'modifyActionValue_2' },
           whenFalse: { $sequence: null },
         },
         next: 'changeResource_4',
       },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_6: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'ifElse_5' },
           whenFalse: { $sequence: null },
         },
@@ -574,9 +567,9 @@ export const arcaneChr_0032_lizhiyan_attack5ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'nature',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
-            stagger: { kind: 'valueNode', nodeId: 'data_4' },
+            stagger: { kind: 'valueNode', nodeId: 'data_5' },
             staggerOnlyWhenCasterControlled: true,
           },
         },
@@ -637,18 +630,11 @@ export const arcaneChr_0032_lizhiyan_attack5ActionGraph = {
         },
         next: null,
       },
-      checkCondition_8: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-        },
-        next: null,
-      },
       ifElse_10: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_8' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'startTimeDilation_9' },
           whenFalse: { $sequence: null },
         },
@@ -670,14 +656,14 @@ export const arcaneChr_0032_lizhiyan_attack5ActionGraph = {
       checkCondition_21: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
         },
         next: 'createTimedMarker_20',
       },
       checkCondition_22: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
         },
         next: 'checkCondition_21',
       },
@@ -700,7 +686,7 @@ export const arcaneChr_0032_lizhiyan_attack5ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_10' },
           whenTrue: { $sequence: 'forEachContextTarget_opt1' },
           whenFalse: { $sequence: 'forEachContextTarget_opt1' },
         },
@@ -709,23 +695,27 @@ export const arcaneChr_0032_lizhiyan_attack5ActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_5: {
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_6: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'isHitbyMain', fallback: 0 },
       },
-      data_6: {
+      data_7: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_5' },
+          left: { kind: 'valueNode', nodeId: 'data_6' },
           operator: 'greaterOrEqual',
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_7: {
+      data_8: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -735,7 +725,7 @@ export const arcaneChr_0032_lizhiyan_attack5ActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_8: {
+      data_9: {
         type: 'boolean',
         expression: {
           kind: 'timedMarkerPresent',
@@ -743,6 +733,10 @@ export const arcaneChr_0032_lizhiyan_attack5ActionGraph = {
           target: 'caster',
           markerId: 'lizhiyan_attack5',
         },
+      },
+      data_10: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     },
   },
@@ -976,19 +970,12 @@ export const arcaneChr_0032_lizhiyan_power_attack: SkillDefinition = {
 export const arcaneChr_0032_lizhiyan_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -1003,7 +990,7 @@ export const arcaneChr_0032_lizhiyan_plunging_attack_endActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_3' },
           whenFalse: { $sequence: null },
         },
@@ -1022,8 +1009,8 @@ export const arcaneChr_0032_lizhiyan_plunging_attack_endActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -1149,18 +1136,11 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
         },
         next: 'calculateActionValue_15',
       },
-      checkCondition_13: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-        },
-        next: null,
-      },
       ifElse_19: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_13' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'calculateActionValue_15' },
           whenFalse: { $sequence: 'calculateActionValue_16' },
         },
@@ -1204,13 +1184,6 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_17: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
-        },
-        next: null,
-      },
       mergeContextTargets_32: {
         action: {
           kind: 'mergeContextTargets',
@@ -1225,7 +1198,7 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
           whenTrue: { $sequence: 'mergeContextTargets_32' },
           whenFalse: { $sequence: null },
         },
@@ -1299,7 +1272,7 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
             overrideDurationSeconds: { kind: 'constant', value: 40 },
             saveToContextKey: 'bunshin4',
             blackboardAssignments: {
-              EntityBB_wisd_greater_will: { kind: 'valueNode', nodeId: 'data_11' },
+              EntityBB_wisd_greater_will: { kind: 'valueNode', nodeId: 'data_10' },
             },
           },
         },
@@ -1317,7 +1290,7 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
             overrideDurationSeconds: { kind: 'constant', value: 40 },
             saveToContextKey: 'bunshin3',
             blackboardAssignments: {
-              EntityBB_wisd_greater_will: { kind: 'valueNode', nodeId: 'data_11' },
+              EntityBB_wisd_greater_will: { kind: 'valueNode', nodeId: 'data_10' },
             },
           },
         },
@@ -1335,7 +1308,7 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
             overrideDurationSeconds: { kind: 'constant', value: 40 },
             saveToContextKey: 'bunshin2',
             blackboardAssignments: {
-              EntityBB_wisd_greater_will: { kind: 'valueNode', nodeId: 'data_11' },
+              EntityBB_wisd_greater_will: { kind: 'valueNode', nodeId: 'data_10' },
             },
           },
         },
@@ -1353,7 +1326,7 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
             overrideDurationSeconds: { kind: 'constant', value: 40 },
             saveToContextKey: 'bunshin1',
             blackboardAssignments: {
-              EntityBB_wisd_greater_will: { kind: 'valueNode', nodeId: 'data_11' },
+              EntityBB_wisd_greater_will: { kind: 'valueNode', nodeId: 'data_10' },
             },
           },
         },
@@ -1390,7 +1363,7 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
       checkCondition_47: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
         },
         next: 'createSpatialPointTargets_46',
       },
@@ -1434,18 +1407,11 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
         },
         next: 'setAbilityEntityRemainingDuration_51',
       },
-      checkCondition_48: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
-        },
-        next: null,
-      },
       ifElse_53: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_48' },
+          condition: { kind: 'conditionNode', nodeId: 'data_12' },
           whenTrue: { $sequence: 'setAbilityEntityRemainingDuration_52' },
           whenFalse: { $sequence: null },
         },
@@ -1470,7 +1436,7 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
           parameters: {
             key: 'duration_total',
             operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_14' },
+            left: { kind: 'valueNode', nodeId: 'data_13' },
             right: { kind: 'constant', value: 0.067 },
           },
         },
@@ -1529,18 +1495,11 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_58: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_15' } },
-        },
-        next: null,
-      },
       ifElse_61: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_58' },
+          condition: { kind: 'conditionNode', nodeId: 'data_14' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: 'findCharacterTeamTargets_60' },
         },
@@ -1550,7 +1509,7 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_15' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: null },
         },
@@ -1560,7 +1519,7 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_17' },
+          condition: { kind: 'conditionNode', nodeId: 'data_17' },
           whenTrue: { $sequence: 'modifyActionValue_18' },
           whenFalse: { $sequence: 'ifElse_opt1' },
         },
@@ -1572,7 +1531,7 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
           parameters: {
             key: 'trigger_time',
             operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_14' },
+            left: { kind: 'valueNode', nodeId: 'data_13' },
             right: { kind: 'constant', value: -0.5 },
           },
         },
@@ -1584,8 +1543,8 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
           parameters: {
             key: 'duration_final',
             operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_16' },
-            right: { kind: 'valueNode', nodeId: 'data_17' },
+            left: { kind: 'valueNode', nodeId: 'data_18' },
+            right: { kind: 'valueNode', nodeId: 'data_19' },
           },
         },
         next: 'calculateActionValue_opt3',
@@ -1597,7 +1556,7 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
             key: 'duration',
             operation: 'add',
             left: { kind: 'constant', value: 0 },
-            right: { kind: 'valueNode', nodeId: 'data_18' },
+            right: { kind: 'valueNode', nodeId: 'data_20' },
           },
         },
         next: 'calculateActionValue_opt4',
@@ -1606,7 +1565,7 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_17' },
+          condition: { kind: 'conditionNode', nodeId: 'data_21' },
           whenTrue: { $sequence: 'calculateActionValue_opt4' },
           whenFalse: { $sequence: 'calculateActionValue_opt5' },
         },
@@ -1637,21 +1596,23 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
       data_7: { type: 'number', expression: { kind: 'blackboard', key: 'spell_vul_per_will' } },
       data_8: { type: 'number', expression: { kind: 'blackboard', key: 'will' } },
       data_9: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'EntityBB_wisd_greater_will', fallback: 0 },
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
       data_10: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_9' },
-          operator: 'greaterOrEqual',
-          right: { kind: 'constant', value: 1 },
-        },
-      },
-      data_11: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'EntityBB_wisd_greater_will' },
+      },
+      data_11: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: true,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
       data_12: {
         type: 'boolean',
@@ -1664,22 +1625,37 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
           value: 1,
         },
       },
-      data_13: {
+      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'duration_final' } },
+      data_14: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_15: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_16: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'EntityBB_wisd_greater_will', fallback: 0 },
+      },
+      data_17: {
         type: 'boolean',
         expression: {
-          kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          containsHittableTarget: false,
-          excludeDeadEntity: true,
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_16' },
           operator: 'greaterOrEqual',
-          value: 1,
+          right: { kind: 'constant', value: 1 },
         },
       },
-      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'duration_final' } },
-      data_15: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'duration_pre' } },
-      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
-      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'duration_will' } },
+      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'duration_pre' } },
+      data_19: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
+      data_20: { type: 'number', expression: { kind: 'blackboard', key: 'duration_will' } },
+      data_21: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_16' },
+          operator: 'greaterOrEqual',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
     },
   },
   macros: {},
@@ -2011,18 +1987,11 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_20: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: null,
-      },
       ifElse_24: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_20' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'applyElementalInfliction_21' },
           whenFalse: { $sequence: null },
         },
@@ -2035,18 +2004,11 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_22: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-        },
-        next: null,
-      },
       ifElse_27: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_22' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'applyElementalInfliction_23' },
           whenFalse: { $sequence: 'ifElse_24' },
         },
@@ -2059,18 +2021,11 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_25: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-        },
-        next: null,
-      },
       ifElse_30: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_25' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'applyElementalInfliction_26' },
           whenFalse: { $sequence: 'ifElse_27' },
         },
@@ -2083,18 +2038,11 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_28: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-        },
-        next: null,
-      },
       ifElse_31: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_28' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'applyElementalInfliction_29' },
           whenFalse: { $sequence: 'ifElse_30' },
         },
@@ -2125,13 +2073,6 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_32: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-        },
-        next: null,
-      },
       applyBuff_38: {
         action: {
           kind: 'applyBuff',
@@ -2155,7 +2096,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
           parameters: {
             key: 'spell_vul_rate',
             operation: 'add',
-            value: { kind: 'valueNode', nodeId: 'data_9' },
+            value: { kind: 'valueNode', nodeId: 'data_7' },
           },
         },
         next: 'applyBuff_38',
@@ -2186,23 +2127,16 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
           parameters: {
             key: 'spell_vul_rate_calc',
             operation: 'add',
-            value: { kind: 'valueNode', nodeId: 'data_9' },
+            value: { kind: 'valueNode', nodeId: 'data_7' },
           },
         },
         next: 'applyBuff_36',
-      },
-      checkCondition_35: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
-        },
-        next: null,
       },
       ifElse_41: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_35' },
+          condition: { kind: 'conditionNode', nodeId: 'data_10' },
           whenTrue: { $sequence: 'modifyActionValue_37' },
           whenFalse: { $sequence: 'modifyActionValue_39' },
         },
@@ -2214,8 +2148,8 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
           parameters: {
             key: 'spell_vul_rate_calc',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_13' },
-            right: { kind: 'valueNode', nodeId: 'data_14' },
+            left: { kind: 'valueNode', nodeId: 'data_11' },
+            right: { kind: 'valueNode', nodeId: 'data_12' },
           },
         },
         next: 'ifElse_41',
@@ -2262,7 +2196,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
       checkCondition_46: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_15' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
         },
         next: 'readBuffBlackboard_45',
       },
@@ -2272,8 +2206,8 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
           parameters: {
             key: 'spell_vul_rate_calc',
             operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_16' },
-            right: { kind: 'valueNode', nodeId: 'data_9' },
+            left: { kind: 'valueNode', nodeId: 'data_14' },
+            right: { kind: 'valueNode', nodeId: 'data_7' },
           },
         },
         next: 'checkCondition_46',
@@ -2305,7 +2239,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
       checkCondition_50: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_17' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_15' } },
         },
         next: 'readBuffBlackboard_49',
       },
@@ -2314,10 +2248,10 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'nature',
-            attackScale: { kind: 'valueNode', nodeId: 'data_18' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_16' },
             tags: ['ultimateSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_19' },
+            stagger: { kind: 'valueNode', nodeId: 'data_17' },
           },
         },
         next: null,
@@ -2326,7 +2260,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_32' },
+          condition: { kind: 'conditionNode', nodeId: 'data_19' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: 'checkCondition_50' },
         },
@@ -2336,7 +2270,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_32' },
+          condition: { kind: 'conditionNode', nodeId: 'data_20' },
           whenTrue: { $sequence: 'applyBuff_33' },
           whenFalse: { $sequence: 'forEachContextTarget_34' },
         },
@@ -2422,54 +2356,41 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
       },
       data_7: {
         type: 'number',
-        expression: { kind: 'blackboard', key: 'EntityBB_wisd_greater_will', fallback: 0 },
-      },
-      data_8: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_7' },
-          operator: 'greaterOrEqual',
-          right: { kind: 'constant', value: 1 },
-        },
-      },
-      data_9: {
-        type: 'number',
         expression: { kind: 'blackboard', key: 'spell_vul_rate_potential' },
       },
-      data_10: {
+      data_8: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'spell_vul_rate_calc', fallback: 0 },
       },
-      data_11: {
+      data_9: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'spell_vul_rate', fallback: 0 },
       },
-      data_12: {
+      data_10: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_10' },
+          left: { kind: 'valueNode', nodeId: 'data_8' },
           operator: 'lessOrEqual',
-          right: { kind: 'valueNode', nodeId: 'data_11' },
+          right: { kind: 'valueNode', nodeId: 'data_9' },
         },
       },
-      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'will' } },
-      data_14: {
+      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'will' } },
+      data_12: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'spell_vul_rate_per_will' },
       },
-      data_15: {
+      data_13: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_10' },
+          left: { kind: 'valueNode', nodeId: 'data_8' },
           operator: 'greater',
           right: { kind: 'constant', value: 0 },
         },
       },
-      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'spell_vul_rate' } },
-      data_17: {
+      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'spell_vul_rate' } },
+      data_15: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -2479,8 +2400,30 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_19: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_18: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'EntityBB_wisd_greater_will', fallback: 0 },
+      },
+      data_19: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_18' },
+          operator: 'greaterOrEqual',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_20: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_18' },
+          operator: 'greaterOrEqual',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
     },
   },
   macros: {},
@@ -2571,18 +2514,11 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
         },
         next: 'modifyActionValue_4',
       },
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-        },
-        next: null,
-      },
       ifElse_8: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'modifyActionValue_3' },
           whenFalse: { $sequence: 'modifyActionValue_4' },
         },
@@ -2672,18 +2608,11 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
         },
         next: 'applyBuff_6',
       },
-      checkCondition_5: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
-        },
-        next: null,
-      },
       ifElse_15: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_5' },
+          condition: { kind: 'conditionNode', nodeId: 'data_12' },
           whenTrue: { $sequence: 'checkCondition_7' },
           whenFalse: { $sequence: 'checkCondition_13' },
         },
@@ -2749,18 +2678,11 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
         },
         next: 'readBuffBlackboard_19',
       },
-      checkCondition_14: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_14' } },
-        },
-        next: null,
-      },
       ifElse_21: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_14' },
+          condition: { kind: 'conditionNode', nodeId: 'data_14' },
           whenTrue: { $sequence: 'readBuffBlackboard_20' },
           whenFalse: { $sequence: null },
         },
@@ -2869,19 +2791,12 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
         },
         next: null,
       },
-      checkCondition_29: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_17' } },
-        },
-        next: null,
-      },
       dealDamage_32: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'nature',
-            attackScale: { kind: 'valueNode', nodeId: 'data_18' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_17' },
             tags: ['ultimateSkill'],
             features: ['canBreakWeakness'],
             stagger: { kind: 'valueNode', nodeId: 'data_16' },
@@ -2893,24 +2808,17 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_29' },
+          condition: { kind: 'conditionNode', nodeId: 'data_18' },
           whenTrue: { $sequence: 'applyBuff_30' },
           whenFalse: { $sequence: null },
         },
         next: 'dealDamage_32',
       },
-      checkCondition_31: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_19' } },
-        },
-        next: null,
-      },
       ifElse_35: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_31' },
+          condition: { kind: 'conditionNode', nodeId: 'data_19' },
           whenTrue: { $sequence: 'ifElse_33' },
           whenFalse: { $sequence: 'dealDamage_34' },
         },
@@ -3009,7 +2917,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_43' },
+          condition: { kind: 'conditionNode', nodeId: 'data_25' },
           whenTrue: { $sequence: 'adjustSkillCooldown_44' },
           whenFalse: { $sequence: null },
         },
@@ -3057,7 +2965,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_26' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: null },
         },
@@ -3155,7 +3063,8 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
       },
       data_15: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_16: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_17: {
+      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_will' } },
+      data_18: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
@@ -3164,7 +3073,6 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
           right: { kind: 'constant', value: 0 },
         },
       },
-      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_will' } },
       data_19: {
         type: 'boolean',
         expression: {
@@ -3204,6 +3112,14 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
           operator: 'equal',
           right: { kind: 'constant', value: 0 },
         },
+      },
+      data_25: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_43' } },
+      },
+      data_26: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     },
   },
@@ -3312,18 +3228,11 @@ const arcanePassive1ActionGraph = {
         },
         next: null,
       },
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_5: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'modifyActionValue_2' },
           whenFalse: { $sequence: 'modifyActionValue_3' },
         },
@@ -3761,7 +3670,7 @@ const arcaneBuff2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'applyBuff_2' },
           whenFalse: { $sequence: 'applyBuff_2' },
         },
@@ -3809,6 +3718,12 @@ const arcaneBuff2ActionGraph = {
           },
         },
         next: 'forEachContextTarget_6',
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     },
   },
@@ -4634,22 +4549,15 @@ const arcaneBuff9ActionGraph = {
         },
         next: null,
       },
-      checkCondition_22: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: null,
-      },
       dealDamage_26: {
         action: {
           kind: 'dealDamage',
           parameters: {
             damageType: 'nature',
-            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_5' },
+            stagger: { kind: 'valueNode', nodeId: 'data_3' },
           },
         },
         next: null,
@@ -4659,18 +4567,11 @@ const arcaneBuff9ActionGraph = {
           kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_6' },
+            amount: { kind: 'valueNode', nodeId: 'data_4' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
           },
-        },
-        next: null,
-      },
-      checkCondition_28: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
         next: null,
       },
@@ -4689,18 +4590,11 @@ const arcaneBuff9ActionGraph = {
         },
         next: null,
       },
-      checkCondition_30: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-        },
-        next: null,
-      },
       ifElse_39: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_30' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: 'startTimeDilation_31' },
         },
@@ -4710,7 +4604,7 @@ const arcaneBuff9ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_28' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'changeResource_29' },
           whenFalse: { $sequence: null },
         },
@@ -4720,7 +4614,7 @@ const arcaneBuff9ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'dealDamage_26' },
           whenFalse: { $sequence: 'dealDamage_26' },
         },
@@ -4761,7 +4655,7 @@ const arcaneBuff9ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_22' },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
           whenTrue: { $sequence: 'switch_23' },
           whenFalse: { $sequence: null },
         },
@@ -4778,7 +4672,7 @@ const arcaneBuff9ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_10' },
           whenTrue: { $sequence: 'mergeContextTargets_opt5' },
           whenFalse: { $sequence: 'mergeContextTargets_opt5' },
         },
@@ -4787,23 +4681,20 @@ const arcaneBuff9ActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'EntityBB_consumed_type' } },
-      data_2: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'EntityBB_wisd_greater_will', fallback: 0 },
-      },
-      data_3: {
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_touch' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise_touch' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_5: {
         type: 'boolean',
         expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_2' },
-          operator: 'less',
-          right: { kind: 'constant', value: 1 },
+          kind: 'buffIdStackCompare',
+          target: 'caster',
+          buffIds: ['buff_chr_0032_lizhiyan_ultimate_skill_time_dilation_listener'],
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
         },
       },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_touch' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise_touch' } },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_7: {
+      data_6: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -4814,15 +4705,26 @@ const arcaneBuff9ActionGraph = {
           value: 1,
         },
       },
+      data_7: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
       data_8: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'EntityBB_wisd_greater_will', fallback: 0 },
+      },
+      data_9: {
         type: 'boolean',
         expression: {
-          kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0032_lizhiyan_ultimate_skill_time_dilation_listener'],
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_8' },
+          operator: 'less',
+          right: { kind: 'constant', value: 1 },
         },
+      },
+      data_10: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     },
   },
@@ -5218,10 +5120,14 @@ const arcaneBuff14: SkillBuffDefinition = {
 const arcaneBuff15ActionGraph = {
   main: {
     nodes: {
-      checkCondition_1: {
+      modifyActionValue_3: {
         action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'EntityBB_wisd_greater_will',
+            operation: 'assign',
+            value: { kind: 'constant', value: 0 },
+          },
         },
         next: null,
       },
@@ -5236,22 +5142,11 @@ const arcaneBuff15ActionGraph = {
         },
         next: null,
       },
-      modifyActionValue_3: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'EntityBB_wisd_greater_will',
-            operation: 'assign',
-            value: { kind: 'constant', value: 0 },
-          },
-        },
-        next: null,
-      },
       ifElse_4: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'modifyActionValue_2' },
           whenFalse: { $sequence: 'modifyActionValue_3' },
         },
@@ -5584,18 +5479,11 @@ const arcaneBuff20ActionGraph = {
         },
         next: 'applyBuff_19',
       },
-      checkCondition_17: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-        },
-        next: null,
-      },
       ifElse_25: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_17' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'spawnAbilityEntity_20' },
           whenFalse: { $sequence: null },
         },
@@ -5631,13 +5519,6 @@ const arcaneBuff20ActionGraph = {
         },
         next: 'applyBuff_23',
       },
-      checkCondition_21: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-        },
-        next: null,
-      },
       applyBuff_26: {
         action: {
           kind: 'applyBuff',
@@ -5654,7 +5535,7 @@ const arcaneBuff20ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_21' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'spawnAbilityEntity_24' },
           whenFalse: { $sequence: 'ifElse_25' },
         },
@@ -6625,13 +6506,6 @@ const arcaneBuff26ActionGraph = {
         },
         next: null,
       },
-      checkCondition_8: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-        },
-        next: null,
-      },
       setCharacterPassiveUiValue_9: {
         action: {
           kind: 'setCharacterPassiveUiValue',
@@ -6680,18 +6554,11 @@ const arcaneBuff26ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_8' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: 'changeResource_10' },
         },
         next: 'findOwnerSpawnedAbilityEntities_12',
-      },
-      checkCondition_14: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-        },
-        next: null,
       },
       applyBuff_15: {
         action: {
@@ -6709,7 +6576,7 @@ const arcaneBuff26ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_14' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'applyBuff_15' },
           whenFalse: { $sequence: null },
         },
@@ -6857,18 +6724,11 @@ const arcaneBuff27ActionGraph = {
         },
         next: 'applyBuff_12',
       },
-      checkCondition_10: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_18: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_10' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'spawnAbilityEntity_13' },
           whenFalse: { $sequence: null },
         },
@@ -6904,13 +6764,6 @@ const arcaneBuff27ActionGraph = {
         },
         next: 'applyBuff_16',
       },
-      checkCondition_14: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: null,
-      },
       applyBuff_19: {
         action: {
           kind: 'applyBuff',
@@ -6927,7 +6780,7 @@ const arcaneBuff27ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_14' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'spawnAbilityEntity_17' },
           whenFalse: { $sequence: 'ifElse_18' },
         },
@@ -7639,13 +7492,6 @@ export const arcane: OperatorDefinition = {
                   },
                   next: 'createTimedMarker_17',
                 },
-                checkCondition_16: {
-                  action: {
-                    kind: 'checkCondition',
-                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-                  },
-                  next: null,
-                },
                 startTimeDilation_19: {
                   action: {
                     kind: 'startTimeDilation',
@@ -7706,7 +7552,7 @@ export const arcane: OperatorDefinition = {
                   action: {
                     kind: 'ifElse',
                     parameters: { alwaysNext: true },
-                    condition: { $sequence: 'checkCondition_16' },
+                    condition: { kind: 'conditionNode', nodeId: 'data_6' },
                     whenTrue: { $sequence: 'dealDamage_18' },
                     whenFalse: { $sequence: null },
                   },
@@ -7737,18 +7583,11 @@ export const arcane: OperatorDefinition = {
                   },
                   next: null,
                 },
-                checkCondition_22: {
-                  action: {
-                    kind: 'checkCondition',
-                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-                  },
-                  next: null,
-                },
                 ifElse_24: {
                   action: {
                     kind: 'ifElse',
                     parameters: { alwaysNext: true },
-                    condition: { $sequence: 'checkCondition_22' },
+                    condition: { kind: 'conditionNode', nodeId: 'data_7' },
                     whenTrue: { $sequence: 'finishBuffsById_23' },
                     whenFalse: { $sequence: null },
                   },
@@ -7766,7 +7605,7 @@ export const arcane: OperatorDefinition = {
                   action: {
                     kind: 'ifElse',
                     parameters: { alwaysNext: true },
-                    condition: { $sequence: null },
+                    condition: { kind: 'conditionNode', nodeId: 'data_8' },
                     whenTrue: { $sequence: null },
                     whenFalse: { $sequence: null },
                   },
@@ -7840,6 +7679,10 @@ export const arcane: OperatorDefinition = {
                     operator: 'greaterOrEqual',
                     value: { kind: 'constant', value: 1 },
                   },
+                },
+                data_8: {
+                  type: 'boolean',
+                  expression: { kind: 'checkActionResult', action: { $sequence: null } },
                 },
               },
             },
@@ -7936,18 +7779,11 @@ export const arcane: OperatorDefinition = {
                   },
                   next: 'calculateActionValue_3',
                 },
-                checkCondition_2: {
-                  action: {
-                    kind: 'checkCondition',
-                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-                  },
-                  next: null,
-                },
                 ifElse_7: {
                   action: {
                     kind: 'ifElse',
                     parameters: { alwaysNext: true },
-                    condition: { $sequence: 'checkCondition_2' },
+                    condition: { kind: 'conditionNode', nodeId: 'data_4' },
                     whenTrue: { $sequence: 'modifyActionValue_4' },
                     whenFalse: { $sequence: 'modifyActionValue_6' },
                   },
@@ -7957,7 +7793,7 @@ export const arcane: OperatorDefinition = {
                   action: {
                     kind: 'jumpTimeline',
                     parameters: { destinationFrame: 240 },
-                    condition: { $sequence: null },
+                    condition: { kind: 'conditionNode', nodeId: 'data_5' },
                   },
                   next: null,
                 },
@@ -7965,7 +7801,7 @@ export const arcane: OperatorDefinition = {
                   action: {
                     kind: 'jumpTimeline',
                     parameters: { destinationFrame: 239 },
-                    condition: { $sequence: null },
+                    condition: { kind: 'conditionNode', nodeId: 'data_6' },
                   },
                   next: null,
                 },
@@ -8017,27 +7853,13 @@ export const arcane: OperatorDefinition = {
                   },
                   next: 'spawnAbilityEntity_11',
                 },
-                checkCondition_8: {
-                  action: {
-                    kind: 'checkCondition',
-                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-                  },
-                  next: null,
-                },
                 ifElse_15: {
                   action: {
                     kind: 'ifElse',
                     parameters: { alwaysNext: true },
-                    condition: { $sequence: 'checkCondition_8' },
+                    condition: { kind: 'conditionNode', nodeId: 'data_7' },
                     whenTrue: { $sequence: 'applyBuff_12' },
                     whenFalse: { $sequence: 'jumpTimeline_13' },
-                  },
-                  next: null,
-                },
-                checkCondition_14: {
-                  action: {
-                    kind: 'checkCondition',
-                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
                   },
                   next: null,
                 },
@@ -8045,7 +7867,7 @@ export const arcane: OperatorDefinition = {
                   action: {
                     kind: 'ifElse',
                     parameters: { alwaysNext: true },
-                    condition: { $sequence: 'checkCondition_14' },
+                    condition: { kind: 'conditionNode', nodeId: 'data_9' },
                     whenTrue: { $sequence: 'ifElse_15' },
                     whenFalse: { $sequence: null },
                   },
@@ -8100,7 +7922,7 @@ export const arcane: OperatorDefinition = {
                   action: {
                     kind: 'ifElse',
                     parameters: { alwaysNext: true },
-                    condition: { $sequence: 'checkCondition_14' },
+                    condition: { kind: 'conditionNode', nodeId: 'data_10' },
                     whenTrue: { $sequence: null },
                     whenFalse: { $sequence: 'applyBuff_20' },
                   },
@@ -8109,7 +7931,7 @@ export const arcane: OperatorDefinition = {
                 checkCondition_22: {
                   action: {
                     kind: 'checkCondition',
-                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
                   },
                   next: 'ifElse_21',
                 },
@@ -8154,7 +7976,7 @@ export const arcane: OperatorDefinition = {
                   action: {
                     kind: 'ifElse',
                     parameters: { alwaysNext: true },
-                    condition: { $sequence: null },
+                    condition: { kind: 'conditionNode', nodeId: 'data_12' },
                     whenTrue: { $sequence: 'createTimedMarker_27' },
                     whenFalse: { $sequence: 'createTimedMarker_27' },
                   },
@@ -8163,7 +7985,7 @@ export const arcane: OperatorDefinition = {
                 checkCondition_29: {
                   action: {
                     kind: 'checkCondition',
-                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
                   },
                   next: 'ifElse_28',
                 },
@@ -8193,6 +8015,14 @@ export const arcane: OperatorDefinition = {
                 },
                 data_5: {
                   type: 'boolean',
+                  expression: { kind: 'checkActionResult', action: { $sequence: null } },
+                },
+                data_6: {
+                  type: 'boolean',
+                  expression: { kind: 'checkActionResult', action: { $sequence: null } },
+                },
+                data_7: {
+                  type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
                     target: 'caster',
@@ -8202,20 +8032,29 @@ export const arcane: OperatorDefinition = {
                     sameSourceSkillCast: true,
                   },
                 },
-                data_6: {
+                data_8: {
                   type: 'number',
                   expression: { kind: 'blackboard', key: 'isWisd', fallback: 0 },
                 },
-                data_7: {
+                data_9: {
                   type: 'boolean',
                   expression: {
                     kind: 'actionValueCompare',
-                    left: { kind: 'valueNode', nodeId: 'data_6' },
+                    left: { kind: 'valueNode', nodeId: 'data_8' },
                     operator: 'greaterOrEqual',
                     right: { kind: 'constant', value: 1 },
                   },
                 },
-                data_8: {
+                data_10: {
+                  type: 'boolean',
+                  expression: {
+                    kind: 'actionValueCompare',
+                    left: { kind: 'valueNode', nodeId: 'data_8' },
+                    operator: 'greaterOrEqual',
+                    right: { kind: 'constant', value: 1 },
+                  },
+                },
+                data_11: {
                   type: 'boolean',
                   expression: {
                     kind: 'timedMarkerPresent',
@@ -8224,7 +8063,11 @@ export const arcane: OperatorDefinition = {
                     markerId: 'lizhiyan_combo_finisher',
                   },
                 },
-                data_9: {
+                data_12: {
+                  type: 'boolean',
+                  expression: { kind: 'checkActionResult', action: { $sequence: null } },
+                },
+                data_13: {
                   type: 'boolean',
                   expression: {
                     kind: 'timedMarkerPresent',
@@ -8286,7 +8129,13 @@ export const arcane: OperatorDefinition = {
             maxChargeTime: 1,
             cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
           },
-          blackboard: { atk_scale_will: 1, atk_scale_wisd: 1, poise: 0 },
+          blackboard: {
+            atk_scale_will: 1,
+            atk_scale_wisd: 1,
+            effect_count: 0,
+            max_effect_count: 3,
+            poise: 0,
+          },
           scheduledSequences: [
             { startFrame: 20, endFrame: 22, sequence: { $sequence: 'forEachContextTarget_15' } },
             { startFrame: 20, endFrame: 23, sequence: { $sequence: 'ifElse_17' } },
@@ -8295,34 +8144,35 @@ export const arcane: OperatorDefinition = {
           actionGraph: {
             main: {
               nodes: {
-                ifElse_7: {
+                calculateActionValue_4: {
+                  action: {
+                    kind: 'calculateActionValue',
+                    parameters: {
+                      key: 'effect_count',
+                      operation: 'add',
+                      left: { kind: 'valueNode', nodeId: 'data_1' },
+                      right: { kind: 'constant', value: 1 },
+                    },
+                  },
+                  next: null,
+                },
+                ifElse_6: {
                   action: {
                     kind: 'ifElse',
                     parameters: { alwaysNext: true },
-                    condition: { $sequence: null },
-                    whenTrue: { $sequence: null },
+                    condition: { kind: 'conditionNode', nodeId: 'data_4' },
+                    whenTrue: { $sequence: 'calculateActionValue_4' },
                     whenFalse: { $sequence: null },
                   },
                   next: null,
                 },
-                checkCondition_8: {
+                ifElse_7: {
                   action: {
-                    kind: 'checkCondition',
-                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                  },
-                  next: null,
-                },
-                dealDamage_9: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      damageType: 'nature',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_3' },
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_4' },
-                    },
-                    key: 'abilityentity_chr_0032_lizhiyan_normal_skill:chr_0032_lizhiyan_normal_skill_abilityrange2|chr_0032_lizhiyan_normal_skill_abilityrange:/childSkills/chr_0032_lizhiyan_normal_skill_abilityrange2/actionGraph/main/nodes/dealDamage_9/action',
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { kind: 'conditionNode', nodeId: 'data_5' },
+                    whenTrue: { $sequence: null },
+                    whenFalse: { $sequence: 'ifElse_6' },
                   },
                   next: null,
                 },
@@ -8331,10 +8181,10 @@ export const arcane: OperatorDefinition = {
                     kind: 'dealDamage',
                     parameters: {
                       damageType: 'nature',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+                      attackScale: { kind: 'valueNode', nodeId: 'data_6' },
                       tags: ['normalSkill'],
                       features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_4' },
+                      stagger: { kind: 'valueNode', nodeId: 'data_7' },
                     },
                     key: 'abilityentity_chr_0032_lizhiyan_normal_skill:chr_0032_lizhiyan_normal_skill_abilityrange2|chr_0032_lizhiyan_normal_skill_abilityrange:/childSkills/chr_0032_lizhiyan_normal_skill_abilityrange2/actionGraph/main/nodes/dealDamage_10/action',
                   },
@@ -8349,6 +8199,20 @@ export const arcane: OperatorDefinition = {
                     },
                   },
                   next: 'dealDamage_10',
+                },
+                dealDamage_9: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      damageType: 'nature',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_8' },
+                      tags: ['normalSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_7' },
+                    },
+                    key: 'abilityentity_chr_0032_lizhiyan_normal_skill:chr_0032_lizhiyan_normal_skill_abilityrange2|chr_0032_lizhiyan_normal_skill_abilityrange:/childSkills/chr_0032_lizhiyan_normal_skill_abilityrange2/actionGraph/main/nodes/dealDamage_9/action',
+                  },
+                  next: null,
                 },
                 startTimeDilation_12: {
                   action: {
@@ -8401,7 +8265,7 @@ export const arcane: OperatorDefinition = {
                   action: {
                     kind: 'ifElse',
                     parameters: { alwaysNext: true },
-                    condition: { $sequence: 'checkCondition_8' },
+                    condition: { kind: 'conditionNode', nodeId: 'data_10' },
                     whenTrue: { $sequence: 'dealDamage_9' },
                     whenFalse: { $sequence: 'mergeContextTargets_11' },
                   },
@@ -8438,7 +8302,7 @@ export const arcane: OperatorDefinition = {
                   action: {
                     kind: 'ifElse',
                     parameters: { alwaysNext: true },
-                    condition: { $sequence: null },
+                    condition: { kind: 'conditionNode', nodeId: 'data_11' },
                     whenTrue: { $sequence: 'applyBuff_16' },
                     whenFalse: { $sequence: null },
                   },
@@ -8450,7 +8314,46 @@ export const arcane: OperatorDefinition = {
                 },
               },
               dataNodes: {
-                data_1: {
+                data_1: { type: 'number', expression: { kind: 'blackboard', key: 'effect_count' } },
+                data_2: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'effect_count', fallback: 0 },
+                },
+                data_3: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'max_effect_count', fallback: 0 },
+                },
+                data_4: {
+                  type: 'boolean',
+                  expression: {
+                    kind: 'actionValueCompare',
+                    left: { kind: 'valueNode', nodeId: 'data_2' },
+                    operator: 'less',
+                    right: { kind: 'valueNode', nodeId: 'data_3' },
+                  },
+                },
+                data_5: {
+                  type: 'boolean',
+                  expression: {
+                    kind: 'targetDistance',
+                    source: { kind: 'owner' },
+                    target: { kind: 'fixed', target: 'enemy' },
+                    distance: 0.5,
+                    lessThan: false,
+                    includeTargetRadius: true,
+                    containsHittableObject: false,
+                  },
+                },
+                data_6: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'atk_scale_will' },
+                },
+                data_7: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+                data_8: {
+                  type: 'number',
+                  expression: { kind: 'blackboard', key: 'atk_scale_wisd' },
+                },
+                data_9: {
                   type: 'number',
                   expression: {
                     kind: 'blackboard',
@@ -8458,23 +8361,18 @@ export const arcane: OperatorDefinition = {
                     fallback: 0,
                   },
                 },
-                data_2: {
+                data_10: {
                   type: 'boolean',
                   expression: {
                     kind: 'actionValueCompare',
-                    left: { kind: 'valueNode', nodeId: 'data_1' },
+                    left: { kind: 'valueNode', nodeId: 'data_9' },
                     operator: 'greaterOrEqual',
                     right: { kind: 'constant', value: 1 },
                   },
                 },
-                data_3: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'atk_scale_wisd' },
-                },
-                data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-                data_5: {
-                  type: 'number',
-                  expression: { kind: 'blackboard', key: 'atk_scale_will' },
+                data_11: {
+                  type: 'boolean',
+                  expression: { kind: 'checkActionResult', action: { $sequence: null } },
                 },
               },
             },
@@ -8526,7 +8424,7 @@ export const arcane: OperatorDefinition = {
                   action: {
                     kind: 'jumpTimeline',
                     parameters: { destinationFrame: 180 },
-                    condition: { $sequence: null },
+                    condition: { kind: 'conditionNode', nodeId: 'data_1' },
                   },
                   next: null,
                 },
@@ -8544,7 +8442,7 @@ export const arcane: OperatorDefinition = {
                 checkCondition_4: {
                   action: {
                     kind: 'checkCondition',
-                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                   },
                   next: 'modifyActionValue_3',
                 },
@@ -8581,9 +8479,9 @@ export const arcane: OperatorDefinition = {
                     kind: 'dealDamage',
                     parameters: {
                       damageType: 'nature',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                      attackScale: { kind: 'valueNode', nodeId: 'data_3' },
                       tags: ['normalSkill'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
+                      stagger: { kind: 'valueNode', nodeId: 'data_4' },
                     },
                     key: 'abilityentity_chr_0032_lizhiyan_normal_skill:chr_0032_lizhiyan_normal_skill_abilityrange2|chr_0032_lizhiyan_normal_skill_abilityrange:/childSkills/chr_0032_lizhiyan_normal_skill_abilityrange/actionGraph/main/nodes/dealDamage_10/action',
                   },
@@ -8600,7 +8498,7 @@ export const arcane: OperatorDefinition = {
                 checkCondition_13: {
                   action: {
                     kind: 'checkCondition',
-                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+                    parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
                   },
                   next: 'applyElementalInfliction_9',
                 },
@@ -8609,9 +8507,9 @@ export const arcane: OperatorDefinition = {
                     kind: 'dealDamage',
                     parameters: {
                       damageType: 'nature',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                      attackScale: { kind: 'valueNode', nodeId: 'data_3' },
                       tags: ['normalSkill'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
+                      stagger: { kind: 'valueNode', nodeId: 'data_4' },
                     },
                     key: 'abilityentity_chr_0032_lizhiyan_normal_skill:chr_0032_lizhiyan_normal_skill_abilityrange2|chr_0032_lizhiyan_normal_skill_abilityrange:/childSkills/chr_0032_lizhiyan_normal_skill_abilityrange/actionGraph/main/nodes/dealDamage_14/action',
                   },
@@ -8629,22 +8527,26 @@ export const arcane: OperatorDefinition = {
               dataNodes: {
                 data_1: {
                   type: 'boolean',
+                  expression: { kind: 'checkActionResult', action: { $sequence: null } },
+                },
+                data_2: {
+                  type: 'boolean',
                   expression: {
                     kind: 'eventBuffIdMatch',
                     buffIds: ['buff_chr_0032_lizhiyan_normal_skill_listener'],
                   },
                 },
-                data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-                data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-                data_4: {
+                data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+                data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+                data_5: {
                   type: 'number',
                   expression: { kind: 'blackboard', key: 'isJumped', fallback: 0 },
                 },
-                data_5: {
+                data_6: {
                   type: 'boolean',
                   expression: {
                     kind: 'actionValueCompare',
-                    left: { kind: 'valueNode', nodeId: 'data_4' },
+                    left: { kind: 'valueNode', nodeId: 'data_5' },
                     operator: 'greaterOrEqual',
                     right: { kind: 'constant', value: 1 },
                   },
@@ -8698,10 +8600,25 @@ export const arcane: OperatorDefinition = {
                 },
                 next: null,
               },
-              checkCondition_2: {
+              aura_4: {
                 action: {
-                  kind: 'checkCondition',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+                  kind: 'aura',
+                  parameters: {
+                    targets: { kind: 'fixed', target: 'enemy' },
+                    source: { kind: 'source' },
+                    inheritSourceSkillCastInfo: true,
+                    buffs: [
+                      {
+                        buffId: 'buff_chr_0032_lizhiyan_ultimate_skill_inaura',
+                        blackboardAssignments: {
+                          atk_scale_laser: { kind: 'valueNode', nodeId: 'data_1' },
+                        },
+                        stringBlackboardAssignments: {},
+                      },
+                    ],
+                  },
+                  onEnter: { $sequence: null },
+                  onExit: { $sequence: null },
                 },
                 next: null,
               },
@@ -8716,29 +8633,7 @@ export const arcane: OperatorDefinition = {
                       {
                         buffId: 'buff_chr_0032_lizhiyan_ultimate_skill_inaura',
                         blackboardAssignments: {
-                          atk_scale_laser: { kind: 'valueNode', nodeId: 'data_3' },
-                        },
-                        stringBlackboardAssignments: {},
-                      },
-                    ],
-                  },
-                  onEnter: { $sequence: null },
-                  onExit: { $sequence: null },
-                },
-                next: null,
-              },
-              aura_4: {
-                action: {
-                  kind: 'aura',
-                  parameters: {
-                    targets: { kind: 'fixed', target: 'enemy' },
-                    source: { kind: 'source' },
-                    inheritSourceSkillCastInfo: true,
-                    buffs: [
-                      {
-                        buffId: 'buff_chr_0032_lizhiyan_ultimate_skill_inaura',
-                        blackboardAssignments: {
-                          atk_scale_laser: { kind: 'valueNode', nodeId: 'data_4' },
+                          atk_scale_laser: { kind: 'valueNode', nodeId: 'data_2' },
                         },
                         stringBlackboardAssignments: {},
                       },
@@ -8753,7 +8648,7 @@ export const arcane: OperatorDefinition = {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: 'checkCondition_2' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_4' },
                   whenTrue: { $sequence: 'aura_3' },
                   whenFalse: { $sequence: 'aura_4' },
                 },
@@ -8763,24 +8658,24 @@ export const arcane: OperatorDefinition = {
             dataNodes: {
               data_1: {
                 type: 'number',
-                expression: { kind: 'blackboard', key: 'isWisd', fallback: 0 },
+                expression: { kind: 'blackboard', key: 'atk_scale_laser_will' },
               },
               data_2: {
-                type: 'boolean',
-                expression: {
-                  kind: 'actionValueCompare',
-                  left: { kind: 'valueNode', nodeId: 'data_1' },
-                  operator: 'greaterOrEqual',
-                  right: { kind: 'constant', value: 1 },
-                },
-              },
-              data_3: {
                 type: 'number',
                 expression: { kind: 'blackboard', key: 'atk_scale_laser' },
               },
-              data_4: {
+              data_3: {
                 type: 'number',
-                expression: { kind: 'blackboard', key: 'atk_scale_laser_will' },
+                expression: { kind: 'blackboard', key: 'isWisd', fallback: 0 },
+              },
+              data_4: {
+                type: 'boolean',
+                expression: {
+                  kind: 'actionValueCompare',
+                  left: { kind: 'valueNode', nodeId: 'data_3' },
+                  operator: 'greaterOrEqual',
+                  right: { kind: 'constant', value: 1 },
+                },
               },
             },
           },
@@ -8889,7 +8784,7 @@ export const arcane: OperatorDefinition = {
                 },
                 next: null,
               },
-              checkCondition_5: {
+              checkCondition_7: {
                 action: {
                   kind: 'checkCondition',
                   parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
@@ -8909,17 +8804,13 @@ export const arcane: OperatorDefinition = {
                 },
                 next: null,
               },
-              checkCondition_7: {
+              ifElse_10: {
                 action: {
-                  kind: 'checkCondition',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                },
-                next: null,
-              },
-              checkCondition_8: {
-                action: {
-                  kind: 'checkCondition',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+                  kind: 'ifElse',
+                  parameters: { alwaysNext: true },
+                  condition: { kind: 'conditionNode', nodeId: 'data_3' },
+                  whenTrue: { $sequence: 'createTimedMarker_6' },
+                  whenFalse: { $sequence: 'checkCondition_7' },
                 },
                 next: null,
               },
@@ -8936,20 +8827,13 @@ export const arcane: OperatorDefinition = {
                 },
                 next: null,
               },
-              ifElse_10: {
+              ifElse_13: {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: 'checkCondition_5' },
-                  whenTrue: { $sequence: 'createTimedMarker_6' },
-                  whenFalse: { $sequence: 'checkCondition_7' },
-                },
-                next: null,
-              },
-              checkCondition_11: {
-                action: {
-                  kind: 'checkCondition',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+                  condition: { kind: 'conditionNode', nodeId: 'data_4' },
+                  whenTrue: { $sequence: 'createTimedMarker_9' },
+                  whenFalse: { $sequence: 'ifElse_10' },
                 },
                 next: null,
               },
@@ -8966,21 +8850,11 @@ export const arcane: OperatorDefinition = {
                 },
                 next: null,
               },
-              ifElse_13: {
-                action: {
-                  kind: 'ifElse',
-                  parameters: { alwaysNext: true },
-                  condition: { $sequence: 'checkCondition_8' },
-                  whenTrue: { $sequence: 'createTimedMarker_9' },
-                  whenFalse: { $sequence: 'ifElse_10' },
-                },
-                next: null,
-              },
               ifElse_14: {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: 'checkCondition_11' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_5' },
                   whenTrue: { $sequence: 'createTimedMarker_12' },
                   whenFalse: { $sequence: 'ifElse_13' },
                 },
@@ -8990,7 +8864,7 @@ export const arcane: OperatorDefinition = {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: null },
+                  condition: { kind: 'conditionNode', nodeId: 'data_6' },
                   whenTrue: { $sequence: null },
                   whenFalse: { $sequence: null },
                 },
@@ -9018,7 +8892,7 @@ export const arcane: OperatorDefinition = {
                   kind: 'timedMarkerPresent',
                   returnTrueIfNotExists: true,
                   target: 'caster',
-                  markerId: 'lizhiyan_ult_laser_hit3',
+                  markerId: 'lizhiyan_power_attack_effect',
                 },
               },
               data_3: {
@@ -9027,7 +8901,7 @@ export const arcane: OperatorDefinition = {
                   kind: 'timedMarkerPresent',
                   returnTrueIfNotExists: true,
                   target: 'caster',
-                  markerId: 'lizhiyan_power_attack_effect',
+                  markerId: 'lizhiyan_ult_laser_hit3',
                 },
               },
               data_4: {
@@ -9047,6 +8921,10 @@ export const arcane: OperatorDefinition = {
                   target: 'caster',
                   markerId: 'lizhiyan_ult_laser_hit1',
                 },
+              },
+              data_6: {
+                type: 'boolean',
+                expression: { kind: 'checkActionResult', action: { $sequence: null } },
               },
             },
           },

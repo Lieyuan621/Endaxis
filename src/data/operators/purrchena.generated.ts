@@ -30,27 +30,13 @@ export const purrchenaChr_0038_purrche_attack1ActionGraph = {
         action: { kind: 'once', parameters: {}, body: { $sequence: 'startTimeDilation_3' } },
         next: null,
       },
-      checkCondition_4: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_7: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_4' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'once_5' },
           whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      checkCondition_6: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: null,
       },
@@ -58,7 +44,7 @@ export const purrchenaChr_0038_purrche_attack1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_6' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'ifElse_7' },
           whenFalse: { $sequence: null },
         },
@@ -127,7 +113,7 @@ export const purrchenaChr_0038_purrche_attack1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_4' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'once_14' },
           whenFalse: { $sequence: null },
         },
@@ -137,7 +123,7 @@ export const purrchenaChr_0038_purrche_attack1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_6' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'ifElse_16' },
           whenFalse: { $sequence: null },
         },
@@ -148,7 +134,7 @@ export const purrchenaChr_0038_purrche_attack1ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_7' },
             tags: ['normalAttack'],
           },
         },
@@ -206,7 +192,19 @@ export const purrchenaChr_0038_purrche_attack1ActionGraph = {
       },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
+      data_5: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_6: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
     },
   },
   macros: {},
@@ -278,27 +276,13 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
         },
         next: 'startTimeDilation_5',
       },
-      checkCondition_4: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_8: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_4' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'modifyActionValue_6' },
           whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      checkCondition_7: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
         next: null,
       },
@@ -306,16 +290,9 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_7' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'ifElse_8' },
           whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      checkCondition_9: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
         },
         next: null,
       },
@@ -323,7 +300,7 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_9' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'ifElse_10' },
           whenFalse: { $sequence: null },
         },
@@ -395,18 +372,11 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
         },
         next: 'startTimeDilation_16',
       },
-      checkCondition_15: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-        },
-        next: null,
-      },
       ifElse_19: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_15' },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
           whenTrue: { $sequence: 'modifyActionValue_17' },
           whenFalse: { $sequence: null },
         },
@@ -416,7 +386,7 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_7' },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
           whenTrue: { $sequence: 'ifElse_19' },
           whenFalse: { $sequence: null },
         },
@@ -426,7 +396,7 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_9' },
+          condition: { kind: 'conditionNode', nodeId: 'data_10' },
           whenTrue: { $sequence: 'ifElse_21' },
           whenFalse: { $sequence: null },
         },
@@ -437,7 +407,7 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_9' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_11' },
             tags: ['normalAttack'],
           },
         },
@@ -498,18 +468,11 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
         },
         next: 'startTimeDilation_27',
       },
-      checkCondition_26: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
-        },
-        next: null,
-      },
       ifElse_30: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_26' },
+          condition: { kind: 'conditionNode', nodeId: 'data_13' },
           whenTrue: { $sequence: 'modifyActionValue_28' },
           whenFalse: { $sequence: null },
         },
@@ -519,7 +482,7 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_7' },
+          condition: { kind: 'conditionNode', nodeId: 'data_14' },
           whenTrue: { $sequence: 'ifElse_30' },
           whenFalse: { $sequence: null },
         },
@@ -529,7 +492,7 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_9' },
+          condition: { kind: 'conditionNode', nodeId: 'data_15' },
           whenTrue: { $sequence: 'ifElse_32' },
           whenFalse: { $sequence: null },
         },
@@ -540,7 +503,7 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_12' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_16' },
             tags: ['normalAttack'],
           },
         },
@@ -624,21 +587,45 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
+      data_9: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_10: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
+      data_12: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'hitstoptime_3', fallback: 0 },
       },
-      data_11: {
+      data_13: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_10' },
+          left: { kind: 'valueNode', nodeId: 'data_12' },
           operator: 'less',
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_3' } },
+      data_14: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_15: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_3' } },
     },
   },
   macros: {},
@@ -715,27 +702,13 @@ export const purrchenaChr_0038_purrche_attack3ActionGraph = {
         },
         next: 'startTimeDilation_4',
       },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_7: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'modifyActionValue_5' },
           whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      checkCondition_6: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
         next: null,
       },
@@ -743,16 +716,9 @@ export const purrchenaChr_0038_purrche_attack3ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_6' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'ifElse_7' },
           whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      checkCondition_8: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
         },
         next: null,
       },
@@ -760,7 +726,7 @@ export const purrchenaChr_0038_purrche_attack3ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_8' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'ifElse_9' },
           whenFalse: { $sequence: null },
         },
@@ -830,7 +796,7 @@ export const purrchenaChr_0038_purrche_attack3ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_6' },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
           whenTrue: { $sequence: 'once_17' },
           whenFalse: { $sequence: null },
         },
@@ -840,7 +806,7 @@ export const purrchenaChr_0038_purrche_attack3ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_8' },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
           whenTrue: { $sequence: 'ifElse_19' },
           whenFalse: { $sequence: null },
         },
@@ -851,9 +817,9 @@ export const purrchenaChr_0038_purrche_attack3ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_8' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_10' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
-            stagger: { kind: 'valueNode', nodeId: 'data_9' },
+            stagger: { kind: 'valueNode', nodeId: 'data_11' },
             staggerOnlyWhenCasterControlled: true,
           },
         },
@@ -925,8 +891,20 @@ export const purrchenaChr_0038_purrche_attack3ActionGraph = {
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
       data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_7: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
-      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_8: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_9: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
+      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
     },
   },
   macros: {},
@@ -1142,19 +1120,12 @@ export const purrchenaChr_0038_purrche_power_attack: SkillDefinition = {
 export const purrchenaChr_0038_purrche_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -1169,7 +1140,7 @@ export const purrchenaChr_0038_purrche_plunging_attack_endActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_3' },
           whenFalse: { $sequence: null },
         },
@@ -1188,8 +1159,8 @@ export const purrchenaChr_0038_purrche_plunging_attack_endActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -1342,13 +1313,6 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
         },
         next: 'copyContextTargets_22',
       },
-      checkCondition_21: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       castSkillDuringAction_31: {
         action: {
           kind: 'castSkillDuringAction',
@@ -1384,14 +1348,14 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
       checkCondition_34: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
         },
         next: 'copyContextTargets_33',
       },
       checkCondition_35: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: 'checkCondition_34',
       },
@@ -1433,7 +1397,7 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
       checkCondition_30: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
         next: 'copyContextTargets_29',
       },
@@ -1465,7 +1429,7 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 107 },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
         },
         next: null,
       },
@@ -1556,14 +1520,14 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 252 },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
         },
         next: null,
       },
       checkCondition_47: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
         },
         next: 'jumpTimeline_46',
       },
@@ -1605,14 +1569,14 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 674 },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_10' },
         },
         next: null,
       },
       checkCondition_53: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
         },
         next: 'jumpTimeline_52',
       },
@@ -1667,7 +1631,7 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_10' },
+            amount: { kind: 'valueNode', nodeId: 'data_12' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -1682,7 +1646,7 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_11' },
+            amount: { kind: 'valueNode', nodeId: 'data_13' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -1719,7 +1683,7 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_14' },
           whenTrue: { $sequence: 'copyContextTargets_20' },
           whenFalse: { $sequence: 'copyContextTargets_20' },
         },
@@ -1729,7 +1693,7 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_21' },
+          condition: { kind: 'conditionNode', nodeId: 'data_15' },
           whenTrue: { $sequence: 'findTargets_23' },
           whenFalse: { $sequence: 'ifElse_opt2' },
         },
@@ -1749,18 +1713,6 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
         expression: {
           kind: 'targetDistance',
           source: { kind: 'owner' },
-          target: { kind: 'context', key: 'Attacker' },
-          distance: 3.5,
-          lessThan: false,
-          includeTargetRadius: false,
-          containsHittableObject: false,
-        },
-      },
-      data_2: {
-        type: 'boolean',
-        expression: {
-          kind: 'targetDistance',
-          source: { kind: 'owner' },
           target: { kind: 'inputTarget' },
           distance: 3,
           lessThan: true,
@@ -1768,17 +1720,21 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
           containsHittableObject: false,
         },
       },
-      data_3: {
+      data_2: {
         type: 'boolean',
         expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_eny_0018_lbtough_pre_catch'] },
       },
-      data_4: {
+      data_3: {
         type: 'boolean',
         expression: {
           kind: 'eventDamageFeaturesMatch',
           match: 'exceptAny',
           features: ['dot', 'remainArea'],
         },
+      },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
       data_5: {
         type: 'boolean',
@@ -1806,14 +1762,38 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
       },
       data_8: {
         type: 'boolean',
-        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0038_purrche_block_end'] },
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
       data_9: {
         type: 'boolean',
         expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0038_purrche_block_end'] },
       },
-      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'potential_5_atb' } },
-      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'atb_return_1' } },
+      data_10: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_11: {
+        type: 'boolean',
+        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0038_purrche_block_end'] },
+      },
+      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'potential_5_atb' } },
+      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'atb_return_1' } },
+      data_14: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_15: {
+        type: 'boolean',
+        expression: {
+          kind: 'targetDistance',
+          source: { kind: 'owner' },
+          target: { kind: 'context', key: 'Attacker' },
+          distance: 3.5,
+          lessThan: false,
+          includeTargetRadius: false,
+          containsHittableObject: false,
+        },
+      },
     },
   },
   macros: {},
@@ -1964,13 +1944,6 @@ export const purrchenaChr_0038_purrche_normal_skill_counterActionGraph = {
         },
         next: 'changeResource_8',
       },
-      checkCondition_7: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-        },
-        next: null,
-      },
       startTimeDilation_12: {
         action: {
           kind: 'startTimeDilation',
@@ -2019,7 +1992,7 @@ export const purrchenaChr_0038_purrche_normal_skill_counterActionGraph = {
       switch_13: {
         action: {
           kind: 'switch',
-          parameters: { choice: { kind: 'valueNode', nodeId: 'data_5' }, alwaysNext: true },
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_3' }, alwaysNext: true },
           options: [
             {
               value: { kind: 'constant', value: 1 },
@@ -2041,18 +2014,11 @@ export const purrchenaChr_0038_purrche_normal_skill_counterActionGraph = {
         action: { kind: 'once', parameters: {}, body: { $sequence: 'switch_13' } },
         next: null,
       },
-      checkCondition_14: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-        },
-        next: null,
-      },
       ifElse_16: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_14' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'once_15' },
           whenFalse: { $sequence: null },
         },
@@ -2062,7 +2028,7 @@ export const purrchenaChr_0038_purrche_normal_skill_counterActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_7' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'changeResource_9' },
           whenFalse: { $sequence: null },
         },
@@ -2128,18 +2094,8 @@ export const purrchenaChr_0038_purrche_normal_skill_counterActionGraph = {
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'potential_5_atb' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb_return' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'is_block', fallback: 0 } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'block_time' } },
       data_4: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_3' },
-          operator: 'greaterOrEqual',
-          right: { kind: 'constant', value: 1 },
-        },
-      },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'block_time' } },
-      data_6: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -2148,6 +2104,16 @@ export const purrchenaChr_0038_purrche_normal_skill_counterActionGraph = {
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
           value: 1,
+        },
+      },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'is_block', fallback: 0 } },
+      data_6: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_5' },
+          operator: 'greaterOrEqual',
+          right: { kind: 'constant', value: 1 },
         },
       },
       data_7: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
@@ -2722,6 +2688,45 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
         },
         next: 'castSkillDuringAction_2',
       },
+      castSkillDuringAction_8: {
+        action: {
+          kind: 'castSkillDuringAction',
+          parameters: {
+            skillId: 'chr_0038_purrche_normal_skill_block_2',
+            target: 'actionInputTarget',
+            skipApplyCost: false,
+            inheritSourceSkillCastInfo: false,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          },
+        },
+        next: null,
+      },
+      applyBuff_9: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0038_purrche_block_immune_skillfx' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: 'castSkillDuringAction_8',
+      },
+      checkCondition_10: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: 'applyBuff_9',
+      },
+      checkCondition_11: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: 'checkCondition_10',
+      },
       castSkillDuringAction_4: {
         action: {
           kind: 'castSkillDuringAction',
@@ -2753,55 +2758,16 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
       checkCondition_6: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
         next: 'applyBuff_5',
       },
       checkCondition_7: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: 'checkCondition_6',
-      },
-      castSkillDuringAction_8: {
-        action: {
-          kind: 'castSkillDuringAction',
-          parameters: {
-            skillId: 'chr_0038_purrche_normal_skill_block_2',
-            target: 'actionInputTarget',
-            skipApplyCost: false,
-            inheritSourceSkillCastInfo: false,
-            interruptCurrentSkillOnlyWhenTargetCastable: true,
-          },
-        },
-        next: null,
-      },
-      applyBuff_9: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0038_purrche_block_immune_skillfx' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: 'castSkillDuringAction_8',
-      },
-      checkCondition_10: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: 'applyBuff_9',
-      },
-      checkCondition_11: {
-        action: {
-          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
         },
-        next: 'checkCondition_10',
+        next: 'checkCondition_6',
       },
       listenForCombatEvents_12: {
         action: {
@@ -2954,10 +2920,67 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
         },
         next: 'applyBuff_22',
       },
-      checkCondition_25: {
+      startTimeDilation_27: {
         action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.3 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: {
+              kind: 'inline',
+              keys: [
+                {
+                  time: 0.002380371,
+                  value: 0.01728821,
+                  inTangent: -0.009265231,
+                  outTangent: -0.009265231,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 0.1802043,
+                  value: 0.02063313,
+                  inTangent: -0.1249941,
+                  outTangent: -0.1249941,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 0.307336,
+                  value: 0.1805526,
+                  inTangent: 0.04394849,
+                  outTangent: 0.04394849,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 0.9206635,
+                  value: 0.1941004,
+                  inTangent: -0.002866605,
+                  outTangent: -0.002866605,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 10.158,
+                  outTangent: 10.158,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+            },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
         },
         next: null,
       },
@@ -3025,75 +3048,11 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_27: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.3 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: {
-              kind: 'inline',
-              keys: [
-                {
-                  time: 0.002380371,
-                  value: 0.01728821,
-                  inTangent: -0.009265231,
-                  outTangent: -0.009265231,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 0.1802043,
-                  value: 0.02063313,
-                  inTangent: -0.1249941,
-                  outTangent: -0.1249941,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 0.307336,
-                  value: 0.1805526,
-                  inTangent: 0.04394849,
-                  outTangent: 0.04394849,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 0.9206635,
-                  value: 0.1941004,
-                  inTangent: -0.002866605,
-                  outTangent: -0.002866605,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 10.158,
-                  outTangent: 10.158,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-            },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
-          },
-        },
-        next: null,
-      },
       ifElse_28: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_25' },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
           whenTrue: { $sequence: 'startTimeDilation_26' },
           whenFalse: { $sequence: 'startTimeDilation_27' },
         },
@@ -3117,24 +3076,6 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
       data_1: {
         type: 'boolean',
         expression: {
-          kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_aura_block'],
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-        },
-      },
-      data_2: {
-        type: 'boolean',
-        expression: {
-          kind: 'eventDamageFeaturesMatch',
-          match: 'exceptAny',
-          features: ['dot', 'remainArea'],
-        },
-      },
-      data_3: {
-        type: 'boolean',
-        expression: {
           kind: 'targetDistance',
           source: { kind: 'owner' },
           target: { kind: 'inputTarget' },
@@ -3144,9 +3085,27 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
           containsHittableObject: false,
         },
       },
-      data_4: {
+      data_2: {
         type: 'boolean',
         expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_eny_0018_lbtough_pre_catch'] },
+      },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: 'caster',
+          buffIds: ['buff_chr_0038_purrche_aura_block'],
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+        },
+      },
+      data_4: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventDamageFeaturesMatch',
+          match: 'exceptAny',
+          features: ['dot', 'remainArea'],
+        },
       },
       data_5: {
         type: 'boolean',
@@ -3238,7 +3197,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph = {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 360 },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
         },
         next: null,
       },
@@ -3254,27 +3213,13 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph = {
         },
         next: 'jumpTimeline_7',
       },
-      checkCondition_6: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_12: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_6' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: 'finishBuffsById_8' },
-        },
-        next: null,
-      },
-      checkCondition_9: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: null,
       },
@@ -3282,7 +3227,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_9' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'finishBuffsById_8' },
           whenFalse: { $sequence: 'ifElse_12' },
         },
@@ -3340,14 +3285,14 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph = {
       checkCondition_21: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
         },
         next: 'applyBuff_20',
       },
       checkCondition_22: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
         next: 'checkCondition_21',
       },
@@ -3382,7 +3327,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph = {
       checkCondition_18: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
         next: 'applyBuff_17',
       },
@@ -3413,7 +3358,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph = {
       checkCondition_25: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
         next: 'jumpTimeline_7',
       },
@@ -3438,6 +3383,10 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_2: {
+        type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
           target: 'caster',
@@ -3446,7 +3395,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_2: {
+      data_3: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -3456,7 +3405,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_3: {
+      data_4: {
         type: 'boolean',
         expression: {
           kind: 'targetDistance',
@@ -3468,11 +3417,11 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph = {
           containsHittableObject: false,
         },
       },
-      data_4: {
+      data_5: {
         type: 'boolean',
         expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_eny_0018_lbtough_pre_catch'] },
       },
-      data_5: {
+      data_6: {
         type: 'boolean',
         expression: {
           kind: 'eventDamageFeaturesMatch',
@@ -3480,7 +3429,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph = {
           features: ['dot', 'remainArea'],
         },
       },
-      data_6: {
+      data_7: {
         type: 'boolean',
         expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0038_purrche_block_end'] },
       },
@@ -3552,7 +3501,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_2ActionGraph = {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 360 },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
         },
         next: null,
       },
@@ -3568,27 +3517,13 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_2ActionGraph = {
         },
         next: 'jumpTimeline_4',
       },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_9: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: 'finishBuffsById_5' },
-        },
-        next: null,
-      },
-      checkCondition_6: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: null,
       },
@@ -3596,7 +3531,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_6' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'finishBuffsById_5' },
           whenFalse: { $sequence: 'ifElse_9' },
         },
@@ -3661,14 +3596,14 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_2ActionGraph = {
       checkCondition_22: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
         },
         next: 'copyContextTargets_21',
       },
       checkCondition_23: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
         next: 'checkCondition_22',
       },
@@ -3711,7 +3646,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_2ActionGraph = {
       checkCondition_18: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
         next: 'copyContextTargets_17',
       },
@@ -3742,7 +3677,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_2ActionGraph = {
       checkCondition_26: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
         next: 'jumpTimeline_4',
       },
@@ -3767,6 +3702,10 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_2ActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_2: {
+        type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
           target: 'caster',
@@ -3775,7 +3714,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_2ActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_2: {
+      data_3: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -3785,7 +3724,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_2ActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_3: {
+      data_4: {
         type: 'boolean',
         expression: {
           kind: 'targetDistance',
@@ -3797,11 +3736,11 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_2ActionGraph = {
           containsHittableObject: false,
         },
       },
-      data_4: {
+      data_5: {
         type: 'boolean',
         expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_eny_0018_lbtough_pre_catch'] },
       },
-      data_5: {
+      data_6: {
         type: 'boolean',
         expression: {
           kind: 'eventDamageFeaturesMatch',
@@ -3809,7 +3748,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_2ActionGraph = {
           features: ['dot', 'remainArea'],
         },
       },
-      data_6: {
+      data_7: {
         type: 'boolean',
         expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0038_purrche_block_end'] },
       },
@@ -3912,7 +3851,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 210 },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
         },
         next: null,
       },
@@ -3920,14 +3859,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 270 },
-          condition: { $sequence: null },
-        },
-        next: null,
-      },
-      checkCondition_6: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
         },
         next: null,
       },
@@ -3935,16 +3867,9 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_6' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'jumpTimeline_7' },
           whenFalse: { $sequence: 'jumpTimeline_8' },
-        },
-        next: null,
-      },
-      checkCondition_9: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: null,
       },
@@ -3952,7 +3877,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_9' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'ifElse_10' },
           whenFalse: { $sequence: null },
         },
@@ -4049,7 +3974,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
           parameters: {
             key: 'comboType_last',
             operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_3' },
+            value: { kind: 'valueNode', nodeId: 'data_5' },
           },
         },
         next: 'applyBuff_94',
@@ -4079,7 +4004,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
       checkCondition_85: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
         next: null,
       },
@@ -4087,16 +4012,9 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_85' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'modifyActionValue_88' },
           whenFalse: { $sequence: 'modifyActionValue_91' },
-        },
-        next: null,
-      },
-      checkCondition_92: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
         next: null,
       },
@@ -4104,7 +4022,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_92' },
+          condition: { kind: 'conditionNode', nodeId: 'data_10' },
           whenTrue: { $sequence: 'ifElse_93' },
           whenFalse: { $sequence: 'modifyActionValue_95' },
         },
@@ -4136,7 +4054,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_85' },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
           whenTrue: { $sequence: 'modifyActionValue_88' },
           whenFalse: { $sequence: 'modifyActionValue_80' },
         },
@@ -4146,7 +4064,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_92' },
+          condition: { kind: 'conditionNode', nodeId: 'data_12' },
           whenTrue: { $sequence: 'ifElse_82' },
           whenFalse: { $sequence: 'modifyActionValue_95' },
         },
@@ -4167,7 +4085,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_85' },
+          condition: { kind: 'conditionNode', nodeId: 'data_13' },
           whenTrue: { $sequence: 'modifyActionValue_98' },
           whenFalse: { $sequence: 'modifyActionValue_100' },
         },
@@ -4177,7 +4095,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_85' },
+          condition: { kind: 'conditionNode', nodeId: 'data_14' },
           whenTrue: { $sequence: 'modifyActionValue_91' },
           whenFalse: { $sequence: 'modifyActionValue_80' },
         },
@@ -4187,7 +4105,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_92' },
+          condition: { kind: 'conditionNode', nodeId: 'data_15' },
           whenTrue: { $sequence: 'ifElse_71' },
           whenFalse: { $sequence: 'modifyActionValue_95' },
         },
@@ -4207,7 +4125,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
       checkCondition_101: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_16' } },
         },
         next: null,
       },
@@ -4215,7 +4133,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_101' },
+          condition: { kind: 'conditionNode', nodeId: 'data_17' },
           whenTrue: { $sequence: 'modifyActionValue_103' },
           whenFalse: { $sequence: 'ifElse_104' },
         },
@@ -4245,18 +4163,11 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         },
         next: 'ifElse_108',
       },
-      checkCondition_105: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
-        },
-        next: null,
-      },
       ifElse_110: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_105' },
+          condition: { kind: 'conditionNode', nodeId: 'data_18' },
           whenTrue: { $sequence: 'readBuffBlackboard_107' },
           whenFalse: { $sequence: 'applyBuff_109' },
         },
@@ -4273,18 +4184,11 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_111: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
-        },
-        next: null,
-      },
       ifElse_115: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_111' },
+          condition: { kind: 'conditionNode', nodeId: 'data_19' },
           whenTrue: { $sequence: 'modifyActionValue_112' },
           whenFalse: { $sequence: null },
         },
@@ -4301,18 +4205,11 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_113: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
-        },
-        next: null,
-      },
       ifElse_118: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_113' },
+          condition: { kind: 'conditionNode', nodeId: 'data_20' },
           whenTrue: { $sequence: 'modifyActionValue_114' },
           whenFalse: { $sequence: 'ifElse_115' },
         },
@@ -4329,18 +4226,11 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_116: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
-        },
-        next: null,
-      },
       ifElse_119: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_116' },
+          condition: { kind: 'conditionNode', nodeId: 'data_21' },
           whenTrue: { $sequence: 'modifyActionValue_117' },
           whenFalse: { $sequence: 'ifElse_118' },
         },
@@ -4509,14 +4399,14 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
       checkCondition_325: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_22' } },
         },
         next: 'applyBuff_324',
       },
       checkCondition_326: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_14' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_23' } },
         },
         next: 'checkCondition_325',
       },
@@ -4551,7 +4441,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
       checkCondition_321: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_15' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_24' } },
         },
         next: 'applyBuff_320',
       },
@@ -4621,14 +4511,14 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
       checkCondition_334: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_16' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_25' } },
         },
         next: 'applyBuff_333',
       },
       checkCondition_335: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_17' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_26' } },
         },
         next: 'checkCondition_334',
       },
@@ -4663,7 +4553,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
       checkCondition_330: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_18' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_27' } },
         },
         next: 'applyBuff_329',
       },
@@ -4706,7 +4596,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
       checkCondition_338: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_19' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_28' } },
         },
         next: 'applyBuff_337',
       },
@@ -4761,7 +4651,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_29' },
           whenTrue: { $sequence: 'launchProjectile_122' },
           whenFalse: { $sequence: 'launchProjectile_122' },
         },
@@ -4771,6 +4661,14 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_3: {
+        type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
           target: 'caster',
@@ -4779,7 +4677,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
           value: { kind: 'constant', value: 2 },
         },
       },
-      data_2: {
+      data_4: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -4789,30 +4687,68 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'comboType' } },
-      data_4: {
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'comboType' } },
+      data_6: {
         type: 'boolean',
         expression: { kind: 'probability', probability: { kind: 'constant', value: 0.5 } },
       },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'comboType', fallback: 0 } },
-      data_6: {
+      data_7: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_85' } },
+      },
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'comboType', fallback: 0 } },
+      data_9: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'comboType_last', fallback: 0 },
       },
-      data_7: {
+      data_10: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_5' },
+          left: { kind: 'valueNode', nodeId: 'data_8' },
           operator: 'equal',
-          right: { kind: 'valueNode', nodeId: 'data_6' },
+          right: { kind: 'valueNode', nodeId: 'data_9' },
         },
       },
-      data_8: {
+      data_11: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_85' } },
+      },
+      data_12: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_8' },
+          operator: 'equal',
+          right: { kind: 'valueNode', nodeId: 'data_9' },
+        },
+      },
+      data_13: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_85' } },
+      },
+      data_14: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_85' } },
+      },
+      data_15: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_8' },
+          operator: 'equal',
+          right: { kind: 'valueNode', nodeId: 'data_9' },
+        },
+      },
+      data_16: {
         type: 'boolean',
         expression: { kind: 'probability', probability: { kind: 'constant', value: 0.3333 } },
       },
-      data_9: {
+      data_17: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_101' } },
+      },
+      data_18: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -4822,7 +4758,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_10: {
+      data_19: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -4832,7 +4768,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_11: {
+      data_20: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -4842,7 +4778,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_12: {
+      data_21: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -4852,7 +4788,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_13: {
+      data_22: {
         type: 'boolean',
         expression: {
           kind: 'targetDistance',
@@ -4864,11 +4800,11 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
           containsHittableObject: false,
         },
       },
-      data_14: {
+      data_23: {
         type: 'boolean',
         expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_eny_0018_lbtough_pre_catch'] },
       },
-      data_15: {
+      data_24: {
         type: 'boolean',
         expression: {
           kind: 'eventDamageFeaturesMatch',
@@ -4876,7 +4812,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
           features: ['dot', 'remainArea'],
         },
       },
-      data_16: {
+      data_25: {
         type: 'boolean',
         expression: {
           kind: 'targetDistance',
@@ -4888,11 +4824,11 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
           containsHittableObject: false,
         },
       },
-      data_17: {
+      data_26: {
         type: 'boolean',
         expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_eny_0018_lbtough_pre_catch'] },
       },
-      data_18: {
+      data_27: {
         type: 'boolean',
         expression: {
           kind: 'eventDamageFeaturesMatch',
@@ -4900,9 +4836,13 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
           features: ['dot', 'remainArea'],
         },
       },
-      data_19: {
+      data_28: {
         type: 'boolean',
         expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0038_purrche_block_end'] },
+      },
+      data_29: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     },
   },
@@ -5025,27 +4965,13 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_9: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_12: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_9' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: 'createSpatialPointTargets_10' },
-        },
-        next: null,
-      },
-      checkCondition_11: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: null,
       },
@@ -5053,7 +4979,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_11' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'ifElse_12' },
           whenFalse: { $sequence: null },
         },
@@ -5102,13 +5028,6 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_22: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-        },
-        next: null,
-      },
       modifyActionValue_25: {
         action: {
           kind: 'modifyActionValue',
@@ -5120,13 +5039,6 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_24: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-        },
-        next: null,
-      },
       modifyActionValue_27: {
         action: {
           kind: 'modifyActionValue',
@@ -5135,13 +5047,6 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
             operation: 'assign',
             value: { kind: 'constant', value: 3 },
           },
-        },
-        next: null,
-      },
-      checkCondition_26: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
         next: null,
       },
@@ -5167,13 +5072,6 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         },
         next: 'modifyActionValue_29',
       },
-      checkCondition_28: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-        },
-        next: null,
-      },
       modifyActionValue_32: {
         action: {
           kind: 'modifyActionValue',
@@ -5196,13 +5094,6 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         },
         next: 'modifyActionValue_32',
       },
-      checkCondition_31: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
-        },
-        next: null,
-      },
       modifyActionValue_36: {
         action: {
           kind: 'modifyActionValue',
@@ -5213,13 +5104,6 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
           },
         },
         next: 'modifyActionValue_32',
-      },
-      checkCondition_34: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
-        },
-        next: null,
       },
       finishBuffsById_37: {
         action: {
@@ -5237,7 +5121,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_34' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'modifyActionValue_36' },
           whenFalse: { $sequence: null },
         },
@@ -5247,7 +5131,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_31' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'modifyActionValue_33' },
           whenFalse: { $sequence: null },
         },
@@ -5257,7 +5141,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_28' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'modifyActionValue_30' },
           whenFalse: { $sequence: null },
         },
@@ -5267,7 +5151,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_26' },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
           whenTrue: { $sequence: 'modifyActionValue_27' },
           whenFalse: { $sequence: null },
         },
@@ -5277,7 +5161,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_24' },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
           whenTrue: { $sequence: 'modifyActionValue_25' },
           whenFalse: { $sequence: null },
         },
@@ -5287,7 +5171,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_22' },
+          condition: { kind: 'conditionNode', nodeId: 'data_10' },
           whenTrue: { $sequence: 'modifyActionValue_23' },
           whenFalse: { $sequence: null },
         },
@@ -5297,7 +5181,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_16' },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
           whenTrue: { $sequence: 'modifyActionValue_17' },
           whenFalse: { $sequence: null },
         },
@@ -5307,7 +5191,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_16' },
+          condition: { kind: 'conditionNode', nodeId: 'data_12' },
           whenTrue: { $sequence: 'modifyActionValue_17' },
           whenFalse: { $sequence: null },
         },
@@ -5317,7 +5201,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_16' },
+          condition: { kind: 'conditionNode', nodeId: 'data_13' },
           whenTrue: { $sequence: 'modifyActionValue_17' },
           whenFalse: { $sequence: null },
         },
@@ -5330,7 +5214,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
             key: 'prob',
             operation: 'add',
             left: { kind: 'valueNode', nodeId: 'data_3' },
-            right: { kind: 'valueNode', nodeId: 'data_11' },
+            right: { kind: 'valueNode', nodeId: 'data_14' },
           },
         },
         next: 'ifElse_46',
@@ -5341,8 +5225,8 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
           parameters: {
             key: 'add_prob',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_12' },
-            right: { kind: 'valueNode', nodeId: 'data_13' },
+            left: { kind: 'valueNode', nodeId: 'data_15' },
+            right: { kind: 'valueNode', nodeId: 'data_16' },
           },
         },
         next: 'calculateActionValue_47',
@@ -5798,18 +5682,11 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         },
         next: 'launchProjectile_111',
       },
-      checkCondition_109: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_15' } },
-        },
-        next: null,
-      },
       ifElse_116: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_109' },
+          condition: { kind: 'conditionNode', nodeId: 'data_18' },
           whenTrue: { $sequence: 'createSpatialPointTargets_112' },
           whenFalse: { $sequence: 'launchProjectile_113' },
         },
@@ -5818,7 +5695,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
       checkCondition_114: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_17' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_20' } },
         },
         next: null,
       },
@@ -5826,7 +5703,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_114' },
+          condition: { kind: 'conditionNode', nodeId: 'data_21' },
           whenTrue: { $sequence: 'launchProjectile_113' },
           whenFalse: { $sequence: 'ifElse_116' },
         },
@@ -5835,7 +5712,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
       switch_122: {
         action: {
           kind: 'switch',
-          parameters: { choice: { kind: 'valueNode', nodeId: 'data_18' }, alwaysNext: true },
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_22' }, alwaysNext: true },
           options: [
             {
               value: { kind: 'constant', value: 2 },
@@ -5854,7 +5731,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
       switch_96: {
         action: {
           kind: 'switch',
-          parameters: { choice: { kind: 'valueNode', nodeId: 'data_18' }, alwaysNext: true },
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_22' }, alwaysNext: true },
           options: [
             {
               value: { kind: 'constant', value: 2 },
@@ -5870,27 +5747,13 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_95: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_19' } },
-        },
-        next: null,
-      },
       ifElse_121: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_95' },
+          condition: { kind: 'conditionNode', nodeId: 'data_23' },
           whenTrue: { $sequence: 'switch_96' },
           whenFalse: { $sequence: 'switch_122' },
-        },
-        next: null,
-      },
-      checkCondition_120: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_20' } },
         },
         next: null,
       },
@@ -5898,7 +5761,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_120' },
+          condition: { kind: 'conditionNode', nodeId: 'data_24' },
           whenTrue: { $sequence: 'ifElse_121' },
           whenFalse: { $sequence: 'switch_122' },
         },
@@ -5918,7 +5781,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
       switch_140: {
         action: {
           kind: 'switch',
-          parameters: { choice: { kind: 'valueNode', nodeId: 'data_18' }, alwaysNext: true },
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_22' }, alwaysNext: true },
           options: [
             {
               value: { kind: 'constant', value: 1 },
@@ -5941,7 +5804,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_25' },
           whenTrue: { $sequence: 'switch_140' },
           whenFalse: { $sequence: null },
         },
@@ -5951,7 +5814,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_26' },
           whenTrue: { $sequence: 'ifElse_141' },
           whenFalse: { $sequence: null },
         },
@@ -5971,7 +5834,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
       switch_173: {
         action: {
           kind: 'switch',
-          parameters: { choice: { kind: 'valueNode', nodeId: 'data_18' }, alwaysNext: true },
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_22' }, alwaysNext: true },
           options: [
             {
               value: { kind: 'constant', value: 3 },
@@ -5988,7 +5851,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_27' },
           whenTrue: { $sequence: 'switch_173' },
           whenFalse: { $sequence: null },
         },
@@ -5998,7 +5861,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_28' },
           whenTrue: { $sequence: 'ifElse_174' },
           whenFalse: { $sequence: null },
         },
@@ -6053,18 +5916,11 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         next: null,
       },
       hideUi_178: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      checkCondition_179: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_22' } },
-        },
-        next: null,
-      },
       jumpTimeline_180: {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 68 },
-          condition: { $sequence: 'checkCondition_179' },
+          condition: { kind: 'conditionNode', nodeId: 'data_30' },
         },
         next: null,
       },
@@ -6072,7 +5928,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 135 },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_31' },
         },
         next: null,
       },
@@ -6114,7 +5970,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         expression: {
           kind: 'buffIdStackCompare',
           target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_train_ult_always3y'],
+          buffIds: ['buff_chr_0038_purrche_perform_test_always2r1h'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
         },
@@ -6124,7 +5980,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         expression: {
           kind: 'buffIdStackCompare',
           target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_train_ult_always2y1r'],
+          buffIds: ['buff_chr_0038_purrche_perform_test_always1r1b1h'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
         },
@@ -6134,7 +5990,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         expression: {
           kind: 'buffIdStackCompare',
           target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_perform_test_always3r'],
+          buffIds: ['buff_chr_0038_purrche_perform_test_always3boom'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
         },
@@ -6144,7 +6000,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         expression: {
           kind: 'buffIdStackCompare',
           target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_perform_test_always3boom'],
+          buffIds: ['buff_chr_0038_purrche_perform_test_always3r'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
         },
@@ -6154,7 +6010,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         expression: {
           kind: 'buffIdStackCompare',
           target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_perform_test_always1r1b1h'],
+          buffIds: ['buff_chr_0038_purrche_train_ult_always2y1r'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
         },
@@ -6164,34 +6020,50 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         expression: {
           kind: 'buffIdStackCompare',
           target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_perform_test_always2r1h'],
+          buffIds: ['buff_chr_0038_purrche_train_ult_always3y'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'add_prob' } },
-      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'skill_defend_count' } },
-      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'talent1_prob_up' } },
-      data_14: {
+      data_11: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_16' } },
+      },
+      data_12: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_16' } },
+      },
+      data_13: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_16' } },
+      },
+      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'add_prob' } },
+      data_15: { type: 'number', expression: { kind: 'blackboard', key: 'skill_defend_count' } },
+      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'talent1_prob_up' } },
+      data_17: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'black_hole_count', fallback: 0 },
       },
-      data_15: {
+      data_18: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_14' },
+          left: { kind: 'valueNode', nodeId: 'data_17' },
           operator: 'less',
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'normal_boom_prob' } },
-      data_17: {
+      data_19: { type: 'number', expression: { kind: 'blackboard', key: 'normal_boom_prob' } },
+      data_20: {
         type: 'boolean',
-        expression: { kind: 'probability', probability: { kind: 'valueNode', nodeId: 'data_16' } },
+        expression: { kind: 'probability', probability: { kind: 'valueNode', nodeId: 'data_19' } },
       },
-      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'box_num' } },
-      data_19: {
+      data_21: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_114' } },
+      },
+      data_22: { type: 'number', expression: { kind: 'blackboard', key: 'box_num' } },
+      data_23: {
         type: 'boolean',
         expression: {
           kind: 'targetDistance',
@@ -6203,7 +6075,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
           containsHittableObject: false,
         },
       },
-      data_20: {
+      data_24: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -6214,15 +6086,35 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
           value: 1,
         },
       },
-      data_21: { type: 'number', expression: { kind: 'blackboard', key: 'box_num', fallback: 0 } },
-      data_22: {
+      data_25: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_26: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_27: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_28: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_29: { type: 'number', expression: { kind: 'blackboard', key: 'box_num', fallback: 0 } },
+      data_30: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_21' },
+          left: { kind: 'valueNode', nodeId: 'data_29' },
           operator: 'greaterOrEqual',
           right: { kind: 'constant', value: 1 },
         },
+      },
+      data_31: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     },
   },
@@ -8687,27 +8579,13 @@ export const purrchena: OperatorDefinition = {
                 },
                 next: null,
               },
-              checkCondition_26: {
-                action: {
-                  kind: 'checkCondition',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                },
-                next: null,
-              },
               ifElse_31: {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: 'checkCondition_26' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_1' },
                   whenTrue: { $sequence: 'launchProjectile_27' },
                   whenFalse: { $sequence: 'createSpatialPointTargets_29' },
-                },
-                next: null,
-              },
-              checkCondition_30: {
-                action: {
-                  kind: 'checkCondition',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
                 },
                 next: null,
               },
@@ -8715,7 +8593,7 @@ export const purrchena: OperatorDefinition = {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: 'checkCondition_30' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_2' },
                   whenTrue: { $sequence: 'ifElse_31' },
                   whenFalse: { $sequence: 'createSpatialPointTargets_33' },
                 },
@@ -8868,20 +8746,11 @@ export const purrchena: OperatorDefinition = {
                                 },
                                 next: null,
                               },
-                              checkCondition_1: {
-                                action: {
-                                  kind: 'checkCondition',
-                                  parameters: {
-                                    condition: { kind: 'conditionNode', nodeId: 'data_2' },
-                                  },
-                                },
-                                next: null,
-                              },
                               ifElse_opt1: {
                                 action: {
                                   kind: 'ifElse',
                                   parameters: { alwaysNext: true },
-                                  condition: { $sequence: 'checkCondition_1' },
+                                  condition: { kind: 'conditionNode', nodeId: 'data_2' },
                                   whenTrue: { $sequence: 'spawnAbilityEntity_2' },
                                   whenFalse: { $sequence: 'spawnAbilityEntity_3' },
                                 },
@@ -8984,7 +8853,7 @@ export const purrchena: OperatorDefinition = {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: null },
+                  condition: { kind: 'conditionNode', nodeId: 'data_6' },
                   whenTrue: { $sequence: 'createSpatialPointTargets_21' },
                   whenFalse: { $sequence: 'createSpatialPointTargets_21' },
                 },
@@ -8994,7 +8863,7 @@ export const purrchena: OperatorDefinition = {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: 'checkCondition_30' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_7' },
                   whenTrue: { $sequence: 'ifElse_opt1' },
                   whenFalse: { $sequence: 'createSpatialPointTargets_21' },
                 },
@@ -9003,7 +8872,7 @@ export const purrchena: OperatorDefinition = {
               switch_opt3: {
                 action: {
                   kind: 'switch',
-                  parameters: { choice: { kind: 'valueNode', nodeId: 'data_6' }, alwaysNext: true },
+                  parameters: { choice: { kind: 'valueNode', nodeId: 'data_8' }, alwaysNext: true },
                   options: [
                     {
                       value: { kind: 'constant', value: 0 },
@@ -9053,7 +8922,22 @@ export const purrchena: OperatorDefinition = {
                 expression: { kind: 'blackboard', key: 'heal_static_value' },
               },
               data_5: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-              data_6: { type: 'number', expression: { kind: 'blackboard', key: 'comboType' } },
+              data_6: {
+                type: 'boolean',
+                expression: { kind: 'checkActionResult', action: { $sequence: null } },
+              },
+              data_7: {
+                type: 'boolean',
+                expression: {
+                  kind: 'entityCountCompare',
+                  target: { kind: 'fixed', target: 'enemy' },
+                  containsHittableTarget: false,
+                  excludeDeadEntity: false,
+                  operator: 'greaterOrEqual',
+                  value: 1,
+                },
+              },
+              data_8: { type: 'number', expression: { kind: 'blackboard', key: 'comboType' } },
             },
           },
           macros: {},

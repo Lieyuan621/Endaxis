@@ -348,7 +348,7 @@ for (const hostKind of ['resource', 'skill'] as const)
     it(`${hostKind} ${listener ? 'listener' : 'switch'} rendered canvas rejects preflush indexed execution and data events, then accepts refreshed pins`, async () => {
       const scene = await mountCanvas(hostKind, listener);
       try {
-        const output = scene.pin(['action', 'source', path]),
+        const output = scene.pin(['action', 'action', 'source', path]),
           target = scene.pin(['input', 'target']);
         scene.queueReorder();
         output.props.onClick(event());
@@ -361,7 +361,7 @@ for (const hostKind of ['resource', 'skill'] as const)
         scene.history.redo();
         scene.state.value = scene.history.current;
         await nextTick();
-        scene.pin(['action', 'source', path]).props.onClick(event());
+        scene.pin(['action', 'action', 'source', path]).props.onClick(event());
         scene.pin(['input', 'target']).props.onClick(event());
         await nextTick();
         expect(scene.sequence()[0].sequence.$sequence).toBe('target');
@@ -391,7 +391,7 @@ for (const hostKind of ['resource', 'skill'] as const)
     it(`${hostKind} ${listener ? 'listener' : 'switch'} canvas Alt-disconnect and selected-wire Delete retain the old source snapshot`, async () => {
       const scene = await mountCanvas(hostKind, listener, true);
       try {
-        const output = scene.pin(['action', 'source', path]);
+        const output = scene.pin(['action', 'action', 'source', path]);
         scene.queueReorder();
         output.props.onPointerdown(event({ altKey: true }));
         await nextTick();
@@ -408,7 +408,7 @@ for (const hostKind of ['resource', 'skill'] as const)
         await nextTick();
         expect(scene.host.error.value).toBeTruthy();
         expect(scene.sequence()[0].sequence.$sequence).toBe('target');
-        scene.pin(['action', 'source', path]).props.onContextmenu(event());
+        scene.pin(['action', 'action', 'source', path]).props.onContextmenu(event());
         await nextTick();
         scene.queueReorder();
         await click(scene.root, '断开连线');
@@ -483,7 +483,7 @@ it.each(['resource', 'skill'] as const)(
     const scene = await mountCanvas(hostKind);
     try {
       const path = ['action', 'options', '0', 'sequence', '$sequence'];
-      const output = scene.pin(['action', 'source', path]),
+      const output = scene.pin(['action', 'action', 'source', path]),
         target = scene.pin(['input', 'target']);
       scene.change(owner => ({
         ...owner,
@@ -503,7 +503,7 @@ it.each(['resource', 'skill'] as const)(
       await nextTick();
       expect(scene.host.error.value).toBeTruthy();
       expect(scene.sequence()[0].sequence.$sequence).toBeNull();
-      const freshOutput = scene.pin(['action', 'source', path]).props.onClick,
+      const freshOutput = scene.pin(['action', 'action', 'source', path]).props.onClick,
         freshTarget = scene.pin(['input', 'target']).props.onClick;
       const inner = scene.history.current.actionGraph.main;
       scene.change(owner => ({
@@ -522,7 +522,7 @@ it.each(['resource', 'skill'] as const)(
       // The macro may share this immutable graph object with the previously rendered main.
       // Switching graph namespaces must also invalidate callbacks even in that case.
       expect(scene.host.error.value).toBeTruthy();
-      const sameGraphOutput = scene.pin(['action', 'source', path]).props.onClick,
+      const sameGraphOutput = scene.pin(['action', 'action', 'source', path]).props.onClick,
         sameGraphTarget = scene.pin(['input', 'target']).props.onClick;
       scene.identity.value = 'another-resource';
       await nextTick();
@@ -541,6 +541,7 @@ it.each(['resource', 'skill'] as const)(
     const scene = await mountCanvas(hostKind);
     try {
       const output = scene.pin([
+          'action',
           'action',
           'source',
           ['action', 'options', '0', 'sequence', '$sequence'],

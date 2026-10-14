@@ -78,18 +78,11 @@ export const mifuChr_0031_mifu_attack1ActionGraph = {
         },
         next: 'switch_10',
       },
-      checkCondition_9: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_12: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_9' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'modifyActionValue_11' },
           whenFalse: { $sequence: null },
         },
@@ -156,13 +149,6 @@ export const mifuChr_0031_mifu_attack1ActionGraph = {
         },
         next: null,
       },
-      checkCondition_17: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-        },
-        next: null,
-      },
       modifyActionValue_19: {
         action: {
           kind: 'modifyActionValue',
@@ -178,7 +164,7 @@ export const mifuChr_0031_mifu_attack1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_17' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'modifyActionValue_18' },
           whenFalse: { $sequence: null },
         },
@@ -288,18 +274,11 @@ export const mifuChr_0031_mifu_attack2ActionGraph = {
         },
         next: null,
       },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_5: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'startTimeDilation_4' },
           whenFalse: { $sequence: null },
         },
@@ -352,7 +331,7 @@ export const mifuChr_0031_mifu_attack2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'startTimeDilation_9' },
           whenFalse: { $sequence: null },
         },
@@ -363,7 +342,7 @@ export const mifuChr_0031_mifu_attack2ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack'],
           },
         },
@@ -397,7 +376,8 @@ export const mifuChr_0031_mifu_attack2ActionGraph = {
     dataNodes: {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale1' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
+      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
     },
   },
   macros: {},
@@ -557,18 +537,11 @@ export const mifuChr_0031_mifu_attack3ActionGraph = {
         },
         next: 'switch_21',
       },
-      checkCondition_20: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: null,
-      },
       ifElse_23: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_20' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'modifyActionValue_22' },
           whenFalse: { $sequence: null },
         },
@@ -694,7 +667,7 @@ export const mifuChr_0031_mifu_attack3ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_20' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'modifyActionValue_34' },
           whenFalse: { $sequence: null },
         },
@@ -705,7 +678,7 @@ export const mifuChr_0031_mifu_attack3ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
             tags: ['normalAttack'],
           },
         },
@@ -761,13 +734,6 @@ export const mifuChr_0031_mifu_attack3ActionGraph = {
         },
         next: null,
       },
-      checkCondition_40: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-        },
-        next: null,
-      },
       modifyActionValue_42: {
         action: {
           kind: 'modifyActionValue',
@@ -783,7 +749,7 @@ export const mifuChr_0031_mifu_attack3ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_40' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'modifyActionValue_41' },
           whenFalse: { $sequence: null },
         },
@@ -801,16 +767,17 @@ export const mifuChr_0031_mifu_attack3ActionGraph = {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale1' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'hitstop_times' } },
       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
-      data_5: {
+      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
+      data_6: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'hit_target', fallback: 0 },
       },
-      data_6: {
+      data_7: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_5' },
+          left: { kind: 'valueNode', nodeId: 'data_6' },
           operator: 'greaterOrEqual',
           right: { kind: 'constant', value: 1 },
         },
@@ -882,18 +849,11 @@ export const mifuChr_0031_mifu_attack4ActionGraph = {
         },
         next: null,
       },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_5: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'startTimeDilation_4' },
           whenFalse: { $sequence: null },
         },
@@ -983,7 +943,7 @@ export const mifuChr_0031_mifu_attack4ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'startTimeDilation_10' },
           whenFalse: { $sequence: null },
         },
@@ -994,9 +954,9 @@ export const mifuChr_0031_mifu_attack4ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
-            stagger: { kind: 'valueNode', nodeId: 'data_5' },
+            stagger: { kind: 'valueNode', nodeId: 'data_6' },
             staggerOnlyWhenCasterControlled: true,
           },
         },
@@ -1014,8 +974,9 @@ export const mifuChr_0031_mifu_attack4ActionGraph = {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale1' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
     },
   },
   macros: {},
@@ -1057,19 +1018,12 @@ export const mifuChr_0031_mifu_attack4: SkillDefinition = {
 export const mifuChr_0031_mifu_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -1084,7 +1038,7 @@ export const mifuChr_0031_mifu_plunging_attack_endActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_3' },
           whenFalse: { $sequence: null },
         },
@@ -1103,8 +1057,8 @@ export const mifuChr_0031_mifu_plunging_attack_endActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -1268,6 +1222,16 @@ export const mifuChr_0031_mifu_powerattackActionGraph = {
         },
         next: 'startTimeDilation_11',
       },
+      ifElse_14: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+          whenTrue: { $sequence: 'dealDamage_12' },
+          whenFalse: { $sequence: 'dealDamage_13' },
+        },
+        next: null,
+      },
       dealDamage_18: {
         action: {
           kind: 'dealDamage',
@@ -1344,6 +1308,16 @@ export const mifuChr_0031_mifu_powerattackActionGraph = {
         action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
         next: null,
       },
+      ifElse_20: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          whenTrue: { $sequence: 'dealDamage_17' },
+          whenFalse: { $sequence: 'dealDamage_18' },
+        },
+        next: 'gainFinisherSp_19',
+      },
       applyBuff_21: {
         action: {
           kind: 'applyBuff',
@@ -1387,41 +1361,38 @@ export const mifuChr_0031_mifu_powerattackActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'dealDamage_8' },
           whenFalse: { $sequence: 'dealDamage_8' },
         },
         next: null,
       },
-      checkCondition_opt2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'constant', value: true } },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'constant', value: 1 },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
         },
-        next: null,
       },
-      ifElse_opt3: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_opt2' },
-          whenTrue: { $sequence: 'dealDamage_12' },
-          whenFalse: { $sequence: 'dealDamage_13' },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'constant', value: 1 },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
         },
-        next: null,
       },
-      ifElse_opt4: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_opt2' },
-          whenTrue: { $sequence: 'dealDamage_17' },
-          whenFalse: { $sequence: 'dealDamage_18' },
-        },
-        next: 'gainFinisherSp_19',
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     },
-    dataNodes: { data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } } },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
@@ -1452,8 +1423,8 @@ export const mifuChr_0031_mifu_powerattack: SkillDefinition = {
   scheduledSequences: [
     { startFrame: 5, endFrame: 5, sequence: { $sequence: 'startTimeDilation_5' } },
     { startFrame: 6, endFrame: 6, sequence: { $sequence: 'ifElse_opt1' } },
-    { startFrame: 17, endFrame: 17, sequence: { $sequence: 'ifElse_opt3' } },
-    { startFrame: 37, endFrame: 37, sequence: { $sequence: 'ifElse_opt4' } },
+    { startFrame: 17, endFrame: 17, sequence: { $sequence: 'ifElse_14' } },
+    { startFrame: 37, endFrame: 37, sequence: { $sequence: 'ifElse_20' } },
     { startFrame: 0, endFrame: 53, sequence: { $sequence: 'applyBuff_21' } },
     { startFrame: 0, endFrame: 38, sequence: { $sequence: 'applyBuff_22' } },
     { startFrame: 0, endFrame: 38, sequence: { $sequence: 'applyBuff_23' } },
@@ -1509,21 +1480,21 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 105 },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
         },
         next: null,
       },
       checkCondition_18: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: null,
       },
       checkCondition_19: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
         next: 'checkCondition_18',
       },
@@ -1531,7 +1502,7 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_19' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'jumpTimeline_20' },
           whenFalse: { $sequence: 'forEachContextTarget_21' },
         },
@@ -1541,7 +1512,7 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'ifElse_22' },
           whenFalse: { $sequence: null },
         },
@@ -1564,7 +1535,7 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_6' },
             tags: ['normalSkill'],
             features: ['canBreakWeakness'],
           },
@@ -1574,14 +1545,14 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
       checkCondition_26: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
         next: 'dealDamage_25',
       },
       checkCondition_27: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
         },
         next: 'checkCondition_26',
       },
@@ -1605,7 +1576,7 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 204 },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
         },
         next: null,
       },
@@ -1624,13 +1595,17 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_2: {
+        type: 'boolean',
         expression: {
           kind: 'enemySuperArmorCompare',
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 30 },
         },
       },
-      data_2: {
+      data_3: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -1641,8 +1616,16 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
           value: 1,
         },
       },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_4: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_19' } },
+      },
+      data_5: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_7: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -1653,7 +1636,7 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
           value: 1,
         },
       },
-      data_5: {
+      data_8: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -1663,6 +1646,10 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
           operator: 'greaterOrEqual',
           value: 1,
         },
+      },
+      data_9: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     },
   },
@@ -1719,13 +1706,6 @@ export const mifuChr_0031_mifu_normalskill_1: SkillDefinition = {
 export const mifuChr_0031_mifu_normalskill_2ActionGraph = {
   main: {
     nodes: {
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       finishBuffsById_6: {
         action: {
           kind: 'finishBuffsById',
@@ -1824,7 +1804,7 @@ export const mifuChr_0031_mifu_normalskill_2ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalSkill'],
             features: ['canBreakWeakness'],
           },
@@ -1834,7 +1814,7 @@ export const mifuChr_0031_mifu_normalskill_2ActionGraph = {
       checkCondition_20: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: 'dealDamage_19',
       },
@@ -1925,10 +1905,10 @@ export const mifuChr_0031_mifu_normalskill_2ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_5' },
+            stagger: { kind: 'valueNode', nodeId: 'data_4' },
           },
         },
         next: 'startTimeDilation_26',
@@ -1957,7 +1937,7 @@ export const mifuChr_0031_mifu_normalskill_2ActionGraph = {
       checkCondition_30: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
         next: 'forEachContextTarget_29',
       },
@@ -2015,7 +1995,7 @@ export const mifuChr_0031_mifu_normalskill_2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: null },
         },
@@ -2025,7 +2005,7 @@ export const mifuChr_0031_mifu_normalskill_2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: 'ifElse_opt1' },
         },
@@ -2034,15 +2014,14 @@ export const mifuChr_0031_mifu_normalskill_2ActionGraph = {
       checkCondition_opt3: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
         },
         next: 'ifElse_opt2',
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_3: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_2: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -2053,20 +2032,25 @@ export const mifuChr_0031_mifu_normalskill_2ActionGraph = {
           value: 1,
         },
       },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_5: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
       data_6: {
         type: 'boolean',
-        expression: {
-          kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          containsHittableTarget: false,
-          excludeDeadEntity: false,
-          operator: 'greaterOrEqual',
-          value: 1,
-        },
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_7: {
+      data_7: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_8: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -2144,13 +2128,6 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
             buffIds: ['buff_chr_0031_mifu_comboprocess'],
             reason: 'other',
           },
-        },
-        next: null,
-      },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
         },
         next: null,
       },
@@ -2240,18 +2217,11 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
         },
         next: null,
       },
-      checkCondition_12: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_15: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_12' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'startTimeDilation_13' },
           whenFalse: { $sequence: 'startTimeDilation_14' },
         },
@@ -2261,7 +2231,7 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
         action: {
           kind: 'dealStagger',
           parameters: {
-            value: { kind: 'valueNode', nodeId: 'data_3' },
+            value: { kind: 'valueNode', nodeId: 'data_2' },
             features: ['canBreakWeakness'],
           },
         },
@@ -2270,7 +2240,7 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
       checkCondition_17: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
         next: 'dealStagger_16',
       },
@@ -2369,7 +2339,7 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
       dealStagger_21: {
         action: {
           kind: 'dealStagger',
-          parameters: { value: { kind: 'valueNode', nodeId: 'data_3' } },
+          parameters: { value: { kind: 'valueNode', nodeId: 'data_2' } },
         },
         next: null,
       },
@@ -2377,7 +2347,7 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_12' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'startTimeDilation_19' },
           whenFalse: { $sequence: 'startTimeDilation_20' },
         },
@@ -2427,25 +2397,14 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
         },
         next: 'modifyActionValue_29',
       },
-      checkCondition_24: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-        },
-        next: null,
-      },
-      checkCondition_23: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
-        },
-        next: null,
-      },
       anyCondition_25: {
         action: {
           kind: 'anyCondition',
           parameters: {},
-          conditions: [{ $sequence: 'checkCondition_23' }, { $sequence: 'checkCondition_24' }],
+          conditions: [
+            { kind: 'conditionNode', nodeId: 'data_8' },
+            { kind: 'conditionNode', nodeId: 'data_9' },
+          ],
         },
         next: null,
       },
@@ -2472,7 +2431,7 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_26' },
+          condition: { kind: 'conditionNode', nodeId: 'data_13' },
           whenTrue: { $sequence: 'modifyActionValue_30' },
           whenFalse: { $sequence: null },
         },
@@ -2484,7 +2443,7 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
           parameters: {
             key: 'atk_scale_runtime',
             operation: 'multiply',
-            value: { kind: 'valueNode', nodeId: 'data_13' },
+            value: { kind: 'valueNode', nodeId: 'data_14' },
           },
         },
         next: 'ifElse_32',
@@ -2511,7 +2470,7 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
           parameters: {
             key: 'atk_scale_runtime',
             operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_14' },
+            value: { kind: 'valueNode', nodeId: 'data_15' },
           },
         },
         next: 'readSkillSettingData_34',
@@ -2540,7 +2499,7 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_16' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: null },
         },
@@ -2550,7 +2509,7 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_17' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: 'ifElse_opt1' },
         },
@@ -2559,14 +2518,13 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
       checkCondition_opt3: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_15' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_18' } },
         },
         next: 'ifElse_opt2',
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: {
+      data_1: {
         type: 'boolean',
         expression: {
           kind: 'enemySuperArmorCompare',
@@ -2574,8 +2532,8 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
           value: { kind: 'constant', value: 10 },
         },
       },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_4: {
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_3: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -2584,6 +2542,14 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
           value: 1,
+        },
+      },
+      data_4: {
+        type: 'boolean',
+        expression: {
+          kind: 'enemySuperArmorCompare',
+          operator: 'greater',
+          value: { kind: 'constant', value: 10 },
         },
       },
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'crushmulti' } },
@@ -2595,22 +2561,22 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
       data_8: {
         type: 'boolean',
         expression: {
+          kind: 'poiseCompare',
+          target: 'enemy',
+          returnValueIfMissing: false,
+          operator: 'equal',
+          value: { kind: 'constant', value: 0 },
+        },
+      },
+      data_9: {
+        type: 'boolean',
+        expression: {
           kind: 'buffStackCompare',
           target: 'enemy',
           tagQueryType: 'hasAny',
           buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerablePhysic'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
-        },
-      },
-      data_9: {
-        type: 'boolean',
-        expression: {
-          kind: 'poiseCompare',
-          target: 'enemy',
-          returnValueIfMissing: false,
-          operator: 'equal',
-          value: { kind: 'constant', value: 0 },
         },
       },
       data_10: { type: 'number', expression: { kind: 'blackboard', key: 'talent', fallback: 0 } },
@@ -2624,9 +2590,18 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
         },
       },
       data_12: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_runtime' } },
-      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'yuanshi_multi' } },
-      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_15: {
+      data_13: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_26' } },
+      },
+      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'yuanshi_multi' } },
+      data_15: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_16: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_17: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_18: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -3093,20 +3068,13 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       setGlobalCooldown_7: {
         action: {
           kind: 'setGlobalCooldown',
           parameters: {
             target: 'caster',
             markerId: 'buff_chr_0031_mifu_shield',
-            durationSeconds: { kind: 'valueNode', nodeId: 'data_3' },
+            durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
           },
         },
         next: null,
@@ -3137,7 +3105,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
           parameters: {
             key: 'talent_shield_maxhp',
             operation: 'multiply',
-            value: { kind: 'valueNode', nodeId: 'data_4' },
+            value: { kind: 'valueNode', nodeId: 'data_2' },
           },
         },
         next: 'applyBuff_8',
@@ -3161,7 +3129,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'applyBuff_4' },
           whenFalse: { $sequence: null },
         },
@@ -3185,7 +3153,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_6' },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
           whenTrue: { $sequence: 'ifElse_11' },
           whenFalse: { $sequence: null },
         },
@@ -3240,7 +3208,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
       checkCondition_21: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
         },
         next: 'startTimeDilation_20',
       },
@@ -3249,7 +3217,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_10' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_11' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
           },
@@ -3296,7 +3264,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
       checkCondition_24: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
         },
         next: 'startTimeDilation_23',
       },
@@ -3305,7 +3273,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_10' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_11' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
           },
@@ -3361,7 +3329,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
       checkCondition_27: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
         },
         next: 'startTimeDilation_26',
       },
@@ -3371,7 +3339,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
           parameters: {
             key: 'final_time',
             operation: 'add',
-            value: { kind: 'valueNode', nodeId: 'data_13' },
+            value: { kind: 'valueNode', nodeId: 'data_14' },
           },
         },
         next: null,
@@ -3382,17 +3350,10 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
           parameters: {
             key: 'final_effect',
             operation: 'add',
-            value: { kind: 'valueNode', nodeId: 'data_14' },
+            value: { kind: 'valueNode', nodeId: 'data_15' },
           },
         },
         next: 'modifyActionValue_29',
-      },
-      checkCondition_28: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_15' } },
-        },
-        next: null,
       },
       changeResource_32: {
         action: {
@@ -3407,18 +3368,11 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_31: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_17' } },
-        },
-        next: null,
-      },
       ifElse_33: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_31' },
+          condition: { kind: 'conditionNode', nodeId: 'data_17' },
           whenTrue: { $sequence: 'changeResource_32' },
           whenFalse: { $sequence: null },
         },
@@ -3458,7 +3412,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_28' },
+          condition: { kind: 'conditionNode', nodeId: 'data_20' },
           whenTrue: { $sequence: 'modifyActionValue_30' },
           whenFalse: { $sequence: null },
         },
@@ -3470,7 +3424,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
           parameters: {
             key: 'final_time',
             operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_20' },
+            value: { kind: 'valueNode', nodeId: 'data_21' },
           },
         },
         next: 'ifElse_36',
@@ -3481,7 +3435,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
           parameters: {
             key: 'final_effect',
             operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_21' },
+            value: { kind: 'valueNode', nodeId: 'data_22' },
           },
         },
         next: 'modifyActionValue_37',
@@ -3504,20 +3458,20 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'potential', fallback: 0 } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'talent_shield_cd' } },
       data_2: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'talent_shield_hppercent' },
+      },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'potential', fallback: 0 } },
+      data_4: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_1' },
+          left: { kind: 'valueNode', nodeId: 'data_3' },
           operator: 'greater',
           right: { kind: 'constant', value: 0 },
         },
-      },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'talent_shield_cd' } },
-      data_4: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'talent_shield_hppercent' },
       },
       data_5: {
         type: 'boolean',
@@ -3543,17 +3497,9 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
       },
       data_9: {
         type: 'boolean',
-        expression: {
-          kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          containsHittableTarget: false,
-          excludeDeadEntity: false,
-          operator: 'greaterOrEqual',
-          value: 1,
-        },
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_6' } },
       },
-      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale1' } },
-      data_11: {
+      data_10: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -3564,6 +3510,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
           value: 1,
         },
       },
+      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale1' } },
       data_12: {
         type: 'boolean',
         expression: {
@@ -3575,23 +3522,34 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
           value: 1,
         },
       },
-      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'extra_time' } },
-      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'extra_effect' } },
-      data_15: {
+      data_13: {
         type: 'boolean',
         expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_1' },
-          operator: 'equal',
-          right: { kind: 'constant', value: 1 },
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
         },
       },
+      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'extra_time' } },
+      data_15: { type: 'number', expression: { kind: 'blackboard', key: 'extra_effect' } },
       data_16: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
       data_17: { type: 'boolean', expression: { kind: 'skillHasHit' } },
       data_18: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
       data_19: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_20: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
-      data_21: { type: 'number', expression: { kind: 'blackboard', key: 'rate' } },
+      data_20: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_3' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_21: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
+      data_22: { type: 'number', expression: { kind: 'blackboard', key: 'rate' } },
     },
   },
   macros: {},

@@ -31,19 +31,9 @@ export function rootActionSteps(sequence: ResolvedActionSequence): readonly Reso
         onEnter: bind(action.onEnter.$sequence, `${id}:enter`),
         onExit: bind(action.onExit.$sequence, `${id}:exit`),
       });
-    } else if (action.kind === 'jumpTimeline') {
-      result.push({ ...action, condition: bind(action.condition.$sequence, `${id}:condition`) });
-    } else if (action.kind === 'anyCondition') {
-      result.push({
-        ...action,
-        conditions: action.conditions.map((condition, index) =>
-          bind(condition.$sequence, `${id}:${index}`),
-        ),
-      });
     } else if (action.kind === 'ifElse') {
       result.push({
         ...action,
-        condition: bind(action.condition.$sequence, `${id}:condition`),
         whenTrue: bind(action.whenTrue.$sequence, `${id}:true`),
         whenFalse: bind(action.whenFalse.$sequence, `${id}:false`),
       });

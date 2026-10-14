@@ -41,18 +41,11 @@ export const camilleChr_0033_camille_attack1ActionGraph = {
         },
         next: 'startTimeDilation_4',
       },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_6: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_5' },
           whenFalse: { $sequence: null },
         },
@@ -168,18 +161,11 @@ export const camilleChr_0033_camille_attack2ActionGraph = {
         },
         next: 'startTimeDilation_4',
       },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_6: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_5' },
           whenFalse: { $sequence: null },
         },
@@ -295,18 +281,11 @@ export const camilleChr_0033_camille_attack3ActionGraph = {
         },
         next: 'startTimeDilation_17',
       },
-      checkCondition_16: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_19: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_16' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_18' },
           whenFalse: { $sequence: null },
         },
@@ -472,19 +451,12 @@ export const camilleChr_0033_camille_attack4ActionGraph = {
         },
         next: null,
       },
-      checkCondition_4: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       changeResource_5: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 0.5 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -498,7 +470,7 @@ export const camilleChr_0033_camille_attack4ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_4' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_5' },
           whenFalse: { $sequence: null },
         },
@@ -524,8 +496,8 @@ export const camilleChr_0033_camille_attack4ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
     },
   },
@@ -574,13 +546,6 @@ export const camilleChr_0033_camille_attack4: SkillDefinition = {
 export const camilleChr_0033_camille_attack5ActionGraph = {
   main: {
     nodes: {
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       startTimeDilation_3: {
         action: {
           kind: 'startTimeDilation',
@@ -601,7 +566,7 @@ export const camilleChr_0033_camille_attack5ActionGraph = {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -615,7 +580,7 @@ export const camilleChr_0033_camille_attack5ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_4' },
           whenFalse: { $sequence: null },
         },
@@ -673,8 +638,8 @@ export const camilleChr_0033_camille_attack5ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
     },
@@ -750,18 +715,11 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
         },
         next: 'gainFinisherSp_2',
       },
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_4: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'startTimeDilation_3' },
           whenFalse: { $sequence: null },
         },
@@ -939,7 +897,7 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'startTimeDilation_14' },
           whenFalse: { $sequence: null },
         },
@@ -986,7 +944,7 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'startTimeDilation_17' },
           whenFalse: { $sequence: null },
         },
@@ -1022,6 +980,8 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
     dataNodes: {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
     },
   },
   macros: {},
@@ -1073,19 +1033,12 @@ export const camilleChr_0033_camille_power_attack: SkillDefinition = {
 export const camilleChr_0033_camille_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -1099,7 +1052,7 @@ export const camilleChr_0033_camille_plunging_attack_endActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_3' },
           whenFalse: { $sequence: null },
         },
@@ -1118,8 +1071,8 @@ export const camilleChr_0033_camille_plunging_attack_endActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -1408,18 +1361,11 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
         },
         next: null,
       },
-      checkCondition_15: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_17: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_15' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'startTimeDilation_16' },
           whenFalse: { $sequence: null },
         },
@@ -1488,7 +1434,7 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_15' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'startTimeDilation_22' },
           whenFalse: { $sequence: null },
         },
@@ -1499,10 +1445,10 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'heat',
-            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_5' },
+            stagger: { kind: 'valueNode', nodeId: 'data_6' },
           },
         },
         next: 'ifElse_23',
@@ -1533,7 +1479,7 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'heat',
-            attackScale: { kind: 'valueNode', nodeId: 'data_6' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_7' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
           },
@@ -1570,25 +1516,18 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
               children: [
                 {
                   buffId: 'buff_common_affixes_combo_trigger',
-                  blackboardAssignments: { imbue_scale: { kind: 'valueNode', nodeId: 'data_7' } },
+                  blackboardAssignments: { imbue_scale: { kind: 'valueNode', nodeId: 'data_8' } },
                 },
               ],
             },
             source: 'caster',
-            blackboardAssignments: { duration: { kind: 'valueNode', nodeId: 'data_8' } },
+            blackboardAssignments: { duration: { kind: 'valueNode', nodeId: 'data_9' } },
           },
         },
         next: null,
       },
       once_34: {
         action: { kind: 'once', parameters: {}, body: { $sequence: 'createGlobalBuff_32' } },
-        next: null,
-      },
-      checkCondition_33: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
-        },
         next: null,
       },
       applyBuff_36: {
@@ -1614,19 +1553,12 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
         },
         next: 'applyBuff_36',
       },
-      checkCondition_35: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
-        },
-        next: null,
-      },
       changeResource_38: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_12' },
+            amount: { kind: 'valueNode', nodeId: 'data_10' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -1644,8 +1576,8 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
             alwaysNext: true,
             tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
             attribute: 'intellect',
-            multiplier: { kind: 'valueNode', nodeId: 'data_13' },
-            addition: { kind: 'valueNode', nodeId: 'data_14' },
+            multiplier: { kind: 'valueNode', nodeId: 'data_11' },
+            addition: { kind: 'valueNode', nodeId: 'data_12' },
           },
         },
         next: null,
@@ -1666,7 +1598,7 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
           kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_15' },
+            amount: { kind: 'valueNode', nodeId: 'data_13' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -1677,7 +1609,7 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
       checkCondition_52: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_17' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_15' } },
         },
         next: 'changeResource_51',
       },
@@ -1722,7 +1654,7 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_33' },
+          condition: { kind: 'conditionNode', nodeId: 'data_17' },
           whenTrue: { $sequence: 'heal_42' },
           whenFalse: { $sequence: null },
         },
@@ -1745,7 +1677,7 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_20' },
           whenTrue: { $sequence: 'dealDamage_55' },
           whenFalse: { $sequence: 'dealDamage_55' },
         },
@@ -1759,7 +1691,7 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_35' },
+          condition: { kind: 'conditionNode', nodeId: 'data_21' },
           whenTrue: { $sequence: 'findOwnerSpawnedAbilityEntities_37' },
           whenFalse: { $sequence: null },
         },
@@ -1769,7 +1701,7 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_33' },
+          condition: { kind: 'conditionNode', nodeId: 'data_22' },
           whenTrue: { $sequence: 'once_34' },
           whenFalse: { $sequence: null },
         },
@@ -1797,22 +1729,46 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_1' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_2' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_3' } },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'imbue_scale' } },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'combo_duration' } },
-      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'talent_0', fallback: 0 } },
-      data_10: {
+      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_2' } },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_3' } },
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'imbue_scale' } },
+      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'combo_duration' } },
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'atb_ex' } },
+      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'heal_sub_multi' } },
+      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'heal_base' } },
+      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_14: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'usp_gained', fallback: 0 },
+      },
+      data_15: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_9' },
+          left: { kind: 'valueNode', nodeId: 'data_14' },
+          operator: 'lessOrEqual',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'talent_0', fallback: 0 } },
+      data_17: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_16' },
           operator: 'greaterOrEqual',
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_11: {
+      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_4' } },
+      data_19: { type: 'number', expression: { kind: 'blackboard', key: 'poise_2' } },
+      data_20: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_21: {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
@@ -1821,25 +1777,15 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
           tags: ['Skill/Character/chr_0033_camille/NormalSkillBatTarget'],
         },
       },
-      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'atb_ex' } },
-      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'heal_sub_multi' } },
-      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'heal_base' } },
-      data_15: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_16: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'usp_gained', fallback: 0 },
-      },
-      data_17: {
+      data_22: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
           left: { kind: 'valueNode', nodeId: 'data_16' },
-          operator: 'lessOrEqual',
-          right: { kind: 'constant', value: 0 },
+          operator: 'greaterOrEqual',
+          right: { kind: 'constant', value: 1 },
         },
       },
-      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_4' } },
-      data_19: { type: 'number', expression: { kind: 'blackboard', key: 'poise_2' } },
     },
   },
   macros: {},
@@ -1914,13 +1860,6 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       startTimeDilation_14: {
         action: {
           kind: 'startTimeDilation',
@@ -1940,7 +1879,7 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'startTimeDilation_14' },
           whenFalse: { $sequence: null },
         },
@@ -1994,7 +1933,7 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'startTimeDilation_19' },
           whenFalse: { $sequence: null },
         },
@@ -2005,7 +1944,7 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'heat',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
           },
@@ -2042,20 +1981,13 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
               children: [
                 {
                   buffId: 'buff_common_affixes_combo_trigger',
-                  blackboardAssignments: { imbue_scale: { kind: 'valueNode', nodeId: 'data_4' } },
+                  blackboardAssignments: { imbue_scale: { kind: 'valueNode', nodeId: 'data_5' } },
                 },
               ],
             },
             source: 'caster',
-            blackboardAssignments: { duration: { kind: 'valueNode', nodeId: 'data_5' } },
+            blackboardAssignments: { duration: { kind: 'valueNode', nodeId: 'data_6' } },
           },
-        },
-        next: null,
-      },
-      checkCondition_23: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
         next: null,
       },
@@ -2063,7 +1995,7 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_23' },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
           whenTrue: { $sequence: 'createGlobalBuff_24' },
           whenFalse: { $sequence: null },
         },
@@ -2091,13 +2023,6 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
           },
         },
         next: 'applyBuff_27',
-      },
-      checkCondition_25: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-        },
-        next: null,
       },
       changeResource_29: {
         action: {
@@ -2132,7 +2057,7 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_23' },
+          condition: { kind: 'conditionNode', nodeId: 'data_12' },
           whenTrue: { $sequence: 'heal_37' },
           whenFalse: { $sequence: null },
         },
@@ -2169,7 +2094,7 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
           kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_12' },
+            amount: { kind: 'valueNode', nodeId: 'data_13' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -2180,7 +2105,7 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
       checkCondition_51: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_14' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_15' } },
         },
         next: 'changeResource_50',
       },
@@ -2188,7 +2113,7 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_16' },
           whenTrue: { $sequence: 'startTimeDilation_41' },
           whenFalse: { $sequence: null },
         },
@@ -2198,7 +2123,7 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_25' },
+          condition: { kind: 'conditionNode', nodeId: 'data_17' },
           whenTrue: { $sequence: 'ifElse_39' },
           whenFalse: { $sequence: null },
         },
@@ -2209,10 +2134,10 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'heat',
-            attackScale: { kind: 'valueNode', nodeId: 'data_15' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_18' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_16' },
+            stagger: { kind: 'valueNode', nodeId: 'data_19' },
           },
         },
         next: 'ifElse_53',
@@ -2221,7 +2146,7 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_20' },
           whenTrue: { $sequence: 'dealDamage_54' },
           whenFalse: { $sequence: 'dealDamage_54' },
         },
@@ -2235,7 +2160,7 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_25' },
+          condition: { kind: 'conditionNode', nodeId: 'data_21' },
           whenTrue: { $sequence: 'findOwnerSpawnedAbilityEntities_28' },
           whenFalse: { $sequence: null },
         },
@@ -2262,20 +2187,48 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
     dataNodes: {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1_1' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1_2' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'imbue_scale' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'combo_duration' } },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'talent_0', fallback: 0 } },
-      data_7: {
+      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1_2' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'imbue_scale' } },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'combo_duration' } },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'talent_0', fallback: 0 } },
+      data_8: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_6' },
+          left: { kind: 'valueNode', nodeId: 'data_7' },
           operator: 'greaterOrEqual',
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_8: {
+      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'heal_sub_multi' } },
+      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'heal_base' } },
+      data_12: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_7' },
+          operator: 'greaterOrEqual',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_14: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'usp_gained', fallback: 0 },
+      },
+      data_15: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_14' },
+          operator: 'lessOrEqual',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_16: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_17: {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
@@ -2284,25 +2237,21 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
           tags: ['Skill/Character/chr_0033_camille/NormalSkillBatTarget'],
         },
       },
-      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'heal_sub_multi' } },
-      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'heal_base' } },
-      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_13: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'usp_gained', fallback: 0 },
+      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1_3' } },
+      data_19: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_20: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_14: {
+      data_21: {
         type: 'boolean',
         expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_13' },
-          operator: 'lessOrEqual',
-          right: { kind: 'constant', value: 0 },
+          kind: 'entityTagMatch',
+          target: 'enemy',
+          tagQueryType: 'hasAny',
+          tags: ['Skill/Character/chr_0033_camille/NormalSkillBatTarget'],
         },
       },
-      data_15: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1_3' } },
-      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
     },
   },
   macros: {},
@@ -2413,18 +2362,11 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
         },
         next: null,
       },
-      checkCondition_15: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_17: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_15' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'startTimeDilation_16' },
           whenFalse: { $sequence: null },
         },
@@ -2493,7 +2435,7 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_15' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'startTimeDilation_22' },
           whenFalse: { $sequence: null },
         },
@@ -2504,10 +2446,10 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'heat',
-            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_5' },
+            stagger: { kind: 'valueNode', nodeId: 'data_6' },
           },
         },
         next: 'ifElse_23',
@@ -2538,7 +2480,7 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'heat',
-            attackScale: { kind: 'valueNode', nodeId: 'data_6' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_7' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
           },
@@ -2575,25 +2517,18 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
               children: [
                 {
                   buffId: 'buff_common_affixes_combo_trigger',
-                  blackboardAssignments: { imbue_scale: { kind: 'valueNode', nodeId: 'data_7' } },
+                  blackboardAssignments: { imbue_scale: { kind: 'valueNode', nodeId: 'data_8' } },
                 },
               ],
             },
             source: 'caster',
-            blackboardAssignments: { duration: { kind: 'valueNode', nodeId: 'data_8' } },
+            blackboardAssignments: { duration: { kind: 'valueNode', nodeId: 'data_9' } },
           },
         },
         next: null,
       },
       once_34: {
         action: { kind: 'once', parameters: {}, body: { $sequence: 'createGlobalBuff_32' } },
-        next: null,
-      },
-      checkCondition_33: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
-        },
         next: null,
       },
       applyBuff_36: {
@@ -2619,19 +2554,12 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
         },
         next: 'applyBuff_36',
       },
-      checkCondition_35: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
-        },
-        next: null,
-      },
       changeResource_38: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_12' },
+            amount: { kind: 'valueNode', nodeId: 'data_10' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -2649,8 +2577,8 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
             alwaysNext: true,
             tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
             attribute: 'intellect',
-            multiplier: { kind: 'valueNode', nodeId: 'data_13' },
-            addition: { kind: 'valueNode', nodeId: 'data_14' },
+            multiplier: { kind: 'valueNode', nodeId: 'data_11' },
+            addition: { kind: 'valueNode', nodeId: 'data_12' },
           },
         },
         next: null,
@@ -2671,7 +2599,7 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
           kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_15' },
+            amount: { kind: 'valueNode', nodeId: 'data_13' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -2682,7 +2610,7 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
       checkCondition_52: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_17' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_15' } },
         },
         next: 'changeResource_51',
       },
@@ -2727,7 +2655,7 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_33' },
+          condition: { kind: 'conditionNode', nodeId: 'data_17' },
           whenTrue: { $sequence: 'heal_42' },
           whenFalse: { $sequence: null },
         },
@@ -2750,7 +2678,7 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_20' },
           whenTrue: { $sequence: 'dealDamage_55' },
           whenFalse: { $sequence: 'dealDamage_55' },
         },
@@ -2764,7 +2692,7 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_35' },
+          condition: { kind: 'conditionNode', nodeId: 'data_21' },
           whenTrue: { $sequence: 'findOwnerSpawnedAbilityEntities_37' },
           whenFalse: { $sequence: null },
         },
@@ -2774,7 +2702,7 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_33' },
+          condition: { kind: 'conditionNode', nodeId: 'data_22' },
           whenTrue: { $sequence: 'once_34' },
           whenFalse: { $sequence: null },
         },
@@ -2802,22 +2730,46 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_1' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_2' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_3' } },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'imbue_scale' } },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'combo_duration' } },
-      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'talent_0', fallback: 0 } },
-      data_10: {
+      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_2' } },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_3' } },
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'imbue_scale' } },
+      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'combo_duration' } },
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'atb_ex' } },
+      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'heal_sub_multi' } },
+      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'heal_base' } },
+      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_14: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'usp_gained', fallback: 0 },
+      },
+      data_15: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_9' },
+          left: { kind: 'valueNode', nodeId: 'data_14' },
+          operator: 'lessOrEqual',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'talent_0', fallback: 0 } },
+      data_17: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_16' },
           operator: 'greaterOrEqual',
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_11: {
+      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_4' } },
+      data_19: { type: 'number', expression: { kind: 'blackboard', key: 'poise_2' } },
+      data_20: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_21: {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
@@ -2826,25 +2778,15 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
           tags: ['Skill/Character/chr_0033_camille/NormalSkillBatTarget'],
         },
       },
-      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'atb_ex' } },
-      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'heal_sub_multi' } },
-      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'heal_base' } },
-      data_15: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_16: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'usp_gained', fallback: 0 },
-      },
-      data_17: {
+      data_22: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
           left: { kind: 'valueNode', nodeId: 'data_16' },
-          operator: 'lessOrEqual',
-          right: { kind: 'constant', value: 0 },
+          operator: 'greaterOrEqual',
+          right: { kind: 'constant', value: 1 },
         },
       },
-      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_4' } },
-      data_19: { type: 'number', expression: { kind: 'blackboard', key: 'poise_2' } },
     },
   },
   macros: {},
@@ -3018,19 +2960,12 @@ export const camilleChr_0033_camille_ultimate_skillActionGraph = {
         },
         next: 'applyBuff_26',
       },
-      checkCondition_25: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: null,
-      },
       changeResource_28: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_4' },
+            amount: { kind: 'valueNode', nodeId: 'data_3' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -3082,10 +3017,10 @@ export const camilleChr_0033_camille_ultimate_skillActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'heat',
-            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['ultimateSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_6' },
+            stagger: { kind: 'valueNode', nodeId: 'data_5' },
           },
         },
         next: 'startTimeDilation_29',
@@ -3098,7 +3033,7 @@ export const camilleChr_0033_camille_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_25' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'applyElementalInfliction_27' },
           whenFalse: { $sequence: null },
         },
@@ -3155,7 +3090,10 @@ export const camilleChr_0033_camille_ultimate_skillActionGraph = {
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
-      data_3: {
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_3' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_6: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -3165,9 +3103,6 @@ export const camilleChr_0033_camille_ultimate_skillActionGraph = {
           value: { kind: 'constant', value: 0 },
         },
       },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_3' } },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
     },
   },
   macros: {},
@@ -3598,7 +3533,7 @@ const camilleBuff3ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'finishOwner_3' },
           whenFalse: { $sequence: null },
         },
@@ -3636,6 +3571,10 @@ const camilleBuff3ActionGraph = {
           operator: 'lessOrEqual',
           value: 0,
         },
+      },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_2' } },
       },
     },
   },
@@ -3772,11 +3711,8 @@ const camilleBuff8ActionGraph = {
         },
         next: 'modifyActionValue_1',
       },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
+      finishOwner_6: {
+        action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
         next: null,
       },
       modifyActionValue_4: {
@@ -3785,7 +3721,7 @@ const camilleBuff8ActionGraph = {
           parameters: {
             key: 'EntityBB_bat_duration',
             operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_2' },
+            value: { kind: 'valueNode', nodeId: 'data_1' },
           },
         },
         next: null,
@@ -3804,15 +3740,11 @@ const camilleBuff8ActionGraph = {
         },
         next: 'modifyActionValue_4',
       },
-      finishOwner_6: {
-        action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
-        next: null,
-      },
       ifElse_7: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'readBuffRemainingDuration_5' },
           whenFalse: { $sequence: 'finishOwner_6' },
         },
@@ -3830,7 +3762,8 @@ const camilleBuff8ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'remain_time' } },
+      data_2: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -3841,7 +3774,6 @@ const camilleBuff8ActionGraph = {
           value: 1,
         },
       },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'remain_time' } },
     },
   },
   macros: {},

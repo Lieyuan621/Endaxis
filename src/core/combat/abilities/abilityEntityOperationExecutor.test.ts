@@ -1511,7 +1511,7 @@ describe('AbilityEntityOperationExecutor', () => {
                   sequence: stepEntry('jump-child-jump', {
                     kind: 'jumpTimeline',
                     parameters: { destinationFrame: 5 },
-                    condition: { $sequence: null },
+                    condition: { kind: 'constant', value: true },
                   }),
                 },
                 {

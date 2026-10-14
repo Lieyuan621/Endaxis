@@ -73,6 +73,18 @@ export function validateCombatCondition(
   }
 
   switch (kind) {
+    case 'checkActionResult': {
+      const action = asRecord(record.action, `${path}.action`, out);
+      if (
+        action &&
+        (Object.keys(action).length !== 1 ||
+          !Object.hasOwn(action, '$sequence') ||
+          (action.$sequence !== null &&
+            (typeof action.$sequence !== 'string' || !action.$sequence)))
+      )
+        push(out, `${path}.action`, 'expected an action graph reference');
+      break;
+    }
     case 'constant':
       if (typeof record.value !== 'boolean') push(out, `${path}.value`, 'expected boolean');
       break;

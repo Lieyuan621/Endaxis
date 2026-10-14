@@ -14,6 +14,10 @@ import { optimizeActionGraphDefinition } from '../../src/compiler/optimization/g
 
 const literal = (value: number) => ({ kind: 'constant' as const, value });
 const constant = (value: boolean): CombatCondition => ({ kind: 'constant', value });
+const actionResult = (action: ActionGraphReference): CombatCondition => ({
+  kind: 'checkActionResult',
+  action,
+});
 const assign = (key: string, value: number): ActionGraphStep => ({
   kind: 'modifyActionValue',
   parameters: { key, operation: 'assign', value: literal(value) },
@@ -67,12 +71,14 @@ describe('图侧序列优化', () => {
         const entry = f.chain({
           kind: 'ifElse',
           parameters: { alwaysNext: false },
-          condition: f.chain({
-            kind: 'checkCondition',
-            parameters: {
-              condition: { kind: 'not', condition: constant(!passed) },
-            },
-          }),
+          condition: actionResult(
+            f.chain({
+              kind: 'checkCondition',
+              parameters: {
+                condition: { kind: 'not', condition: constant(!passed) },
+              },
+            }),
+          ),
           whenTrue: passed ? selected : unused,
           whenFalse: passed ? unused : selected,
         });
@@ -82,7 +88,9 @@ describe('图侧序列优化', () => {
         if (branch.kind !== 'ifElse') throw new Error('missing branch');
         const retained = passed ? branch.whenFalse : branch.whenTrue;
         expect(retained.$sequence).not.toBeNull();
-        expect(result.graph.nodes[branch.condition.$sequence!]!.action).toMatchObject({
+        if (branch.condition.kind !== 'checkActionResult')
+          throw new Error('missing result adapter');
+        expect(result.graph.nodes[branch.condition.action.$sequence!]!.action).toMatchObject({
           kind: 'checkCondition',
           parameters: { condition: constant(passed) },
         });
@@ -100,14 +108,14 @@ describe('图侧序列优化', () => {
       {
         kind: 'ifElse',
         parameters: { alwaysNext: true },
-        condition: { $sequence: null },
+        condition: actionResult({ $sequence: null }),
         whenTrue: check,
         whenFalse: { $sequence: null },
       },
       {
         kind: 'ifElse',
         parameters: { alwaysNext: true },
-        condition: check,
+        condition: actionResult(check),
         whenTrue: f.chain(assign('selected', 1)),
         whenFalse: f.chain(assign('selected', 2)),
       },
@@ -159,7 +167,7 @@ describe('图侧序列优化', () => {
       const entry = f.chain({
         kind: 'ifElse',
         parameters: { alwaysNext: true },
-        condition,
+        condition: actionResult(condition),
         whenTrue: { $sequence: null },
         whenFalse: { $sequence: null },
       });
@@ -177,9 +185,11 @@ describe('图侧序列优化', () => {
       {
         kind: 'ifElse',
         parameters: { alwaysNext: true },
-        condition: f.chain(
-          { kind: 'invertNextResult', parameters: {} },
-          { kind: 'checkCondition', parameters: { condition: { kind: 'casterControlled' } } },
+        condition: actionResult(
+          f.chain(
+            { kind: 'invertNextResult', parameters: {} },
+            { kind: 'checkCondition', parameters: { condition: { kind: 'casterControlled' } } },
+          ),
         ),
         whenTrue: { $sequence: null },
         whenFalse: { $sequence: null },
@@ -201,7 +211,7 @@ describe('图侧序列优化', () => {
     };
     expect(execute(result.graph, result.entry)).toEqual(execute(graph, entry));
     const branch = Object.values(result.graph.nodes).find(node => node.action.kind === 'ifElse');
-    expect(branch?.action).toMatchObject({ condition: { $sequence: null } });
+    expect(branch?.action).toMatchObject({ condition: actionResult({ $sequence: null }) });
   });
 
   it.each([1, 2])('原生等价分支有 %i 次写入时保留 NotNext 的执行边界', count => {
@@ -216,7 +226,7 @@ describe('图侧序列优化', () => {
       {
         kind: 'ifElse',
         parameters: { alwaysNext: true },
-        condition,
+        condition: actionResult(condition),
         whenTrue: f.chain(...writes),
         whenFalse: f.chain(...writes),
       },
@@ -635,7 +645,7 @@ describe('图侧序列优化', () => {
       {
         kind: 'jumpTimeline',
         parameters: { destinationFrame: 30 },
-        condition: jumpCondition,
+        condition: actionResult(jumpCondition),
       },
     );
     const result = optimize({ nodes: f.nodes }, entry);

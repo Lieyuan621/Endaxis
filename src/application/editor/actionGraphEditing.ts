@@ -303,8 +303,9 @@ export function setGraphConnection(
   nodeId: string,
   path: readonly string[],
   targetId: string | null,
+  sourceOwner: 'action' | 'data' = 'action',
 ): SkillDefinition {
-  const changed = connectResourceNode(skill, address, nodeId, path, targetId);
+  const changed = connectResourceNode(skill, address, nodeId, path, targetId, sourceOwner);
   return changed === skill ? skill : validateEditedSkill(changed);
 }
 

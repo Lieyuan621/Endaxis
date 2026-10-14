@@ -1,4 +1,5 @@
 import { projectActionTargetQuery } from '../conditions/combatConditionProjection.ts';
+import { projectConditionInput } from '../actions/conditionInputProjection.ts';
 import {
   collectMaterializedSequenceTargetGroups,
   collectUnobservedTargetQueryOutputs,
@@ -1341,14 +1342,20 @@ function createBuffSequenceProjection(
       compileEventCondition(node, context, runtimeTargetGroups(targetGroups)),
     createConditionCheckStep: condition => ({ kind: 'checkCondition', parameters: { condition } }),
     createInvertNextResultStep: () => ({ kind: 'invertNextResult', parameters: {} }),
-    createAnyConditionStep: conditions => ({ kind: 'anyCondition', parameters: {}, conditions }),
-    createIfElseStep: ({ condition, whenTrue, whenFalse, alwaysNext }) => ({
-      kind: 'ifElse',
-      parameters: { alwaysNext },
-      condition,
-      whenTrue,
-      whenFalse,
+    createAnyConditionStep: conditions => ({
+      kind: 'anyCondition',
+      parameters: {},
+      conditions: conditions.map(condition => projectConditionInput(condition, context.graph)),
     }),
+    createIfElseStep: ({ condition, whenTrue, whenFalse, alwaysNext }) => {
+      return {
+        kind: 'ifElse',
+        parameters: { alwaysNext },
+        condition: projectConditionInput(condition, context.graph),
+        whenTrue,
+        whenFalse,
+      };
+    },
     compileLeaf,
     compileActionWithCallback: (node, state) => {
       const callback = compileActionSequenceProgram(node.body.callback, {

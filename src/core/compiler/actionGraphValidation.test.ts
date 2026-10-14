@@ -3,6 +3,28 @@ import type { ActionGraphDefinition } from '../../../packages/game-data-contract
 import { validateActionGraph } from '../action-graph/actionGraphValidation';
 
 describe('公共图结构校验', () => {
+  it('沿消费方向检查跨数据和行为的调用，并将间接行为纳入编译依赖', () => {
+    const expression = { kind: 'checkActionResult' as const, action: { $sequence: 'end' } };
+    const graph: ActionGraphDefinition = {
+      nodes: {
+        start: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'result' } },
+          },
+          next: null,
+        },
+        end: { action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} }, next: null },
+      },
+      dataNodes: { result: { type: 'boolean', expression } },
+    };
+    expect(validateActionGraph(graph).get('start')).toContain('end');
+    expression.action.$sequence = 'start';
+    expect(() => validateActionGraph(graph)).toThrow('recursive action graph');
+    expression.action.$sequence = 'missing';
+    expect(() => validateActionGraph(graph)).toThrow('missing action graph node: missing');
+  });
+
   it('允许共享尾部、空入口以及显式循环体', () => {
     const graph: ActionGraphDefinition = {
       nodes: {

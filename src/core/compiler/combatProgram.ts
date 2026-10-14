@@ -316,12 +316,12 @@ type ResolvedCombatStepNode<K extends CombatStepKind> = {
     : K extends 'aura'
       ? { readonly onEnter: ResolvedActionSequence; readonly onExit: ResolvedActionSequence }
       : K extends 'jumpTimeline'
-        ? { readonly condition: ResolvedActionSequence }
+        ? { readonly condition: CompiledCondition }
         : K extends 'anyCondition'
-          ? { readonly conditions: readonly ResolvedActionSequence[] }
+          ? { readonly conditions: readonly CompiledCondition[] }
           : K extends 'ifElse'
             ? {
-                readonly condition: ResolvedActionSequence;
+                readonly condition: CompiledCondition;
                 readonly whenTrue: ResolvedActionSequence;
                 readonly whenFalse: ResolvedActionSequence;
               }

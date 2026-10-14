@@ -71,7 +71,7 @@ export const antalChr_0023_antal_attack1ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_2' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_4' },
                           whenTrue: { $sequence: 'changeResource_3' },
                           whenFalse: { $sequence: null },
                         },
@@ -82,7 +82,7 @@ export const antalChr_0023_antal_attack1ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'electric',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
                           },
                         },
@@ -104,6 +104,13 @@ export const antalChr_0023_antal_attack1ActionGraph = {
                       },
                       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
                       data_4: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_2' },
+                        },
+                      },
+                      data_5: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -230,7 +237,7 @@ export const antalChr_0023_antal_attack2ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_2' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_4' },
                           whenTrue: { $sequence: 'changeResource_3' },
                           whenFalse: { $sequence: null },
                         },
@@ -241,7 +248,7 @@ export const antalChr_0023_antal_attack2ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'electric',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
                           },
                         },
@@ -263,6 +270,13 @@ export const antalChr_0023_antal_attack2ActionGraph = {
                       },
                       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
                       data_4: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_2' },
+                        },
+                      },
+                      data_5: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -389,7 +403,7 @@ export const antalChr_0023_antal_attack3ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_2' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_4' },
                           whenTrue: { $sequence: 'changeResource_3' },
                           whenFalse: { $sequence: null },
                         },
@@ -400,7 +414,7 @@ export const antalChr_0023_antal_attack3ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'electric',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
                           },
                         },
@@ -422,6 +436,13 @@ export const antalChr_0023_antal_attack3ActionGraph = {
                       },
                       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
                       data_4: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_2' },
+                        },
+                      },
+                      data_5: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -566,7 +587,7 @@ const antalChr_0023_antal_attack4ActionGraphCallback1 = {
           action: {
             kind: 'ifElse',
             parameters: { alwaysNext: true },
-            condition: { $sequence: 'checkCondition_2' },
+            condition: { kind: 'conditionNode', nodeId: 'data_5' },
             whenTrue: { $sequence: 'changeResource_4' },
             whenFalse: { $sequence: null },
           },
@@ -579,24 +600,17 @@ const antalChr_0023_antal_attack4ActionGraphCallback1 = {
               damageType: 'electric',
               attackScale: { kind: 'valueNode', nodeId: 'data_1' },
               tags: ['normalAttack', 'normalAttackLastCombo'],
-              stagger: { kind: 'valueNode', nodeId: 'data_5' },
+              stagger: { kind: 'valueNode', nodeId: 'data_6' },
               staggerOnlyWhenCasterControlled: true,
             },
           },
           next: 'ifElse_6',
         },
-        checkCondition_5: {
-          action: {
-            kind: 'checkCondition',
-            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-          },
-          next: null,
-        },
         ifElse_9: {
           action: {
             kind: 'ifElse',
             parameters: { alwaysNext: true },
-            condition: { $sequence: 'checkCondition_5' },
+            condition: { kind: 'conditionNode', nodeId: 'data_7' },
             whenTrue: { $sequence: 'dealDamage_7' },
             whenFalse: { $sequence: 'dealDamage_8' },
           },
@@ -618,8 +632,12 @@ const antalChr_0023_antal_attack4ActionGraphCallback1 = {
           },
         },
         data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
-        data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-        data_6: {
+        data_5: {
+          type: 'boolean',
+          expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_2' } },
+        },
+        data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+        data_7: {
           type: 'boolean',
           expression: {
             kind: 'timedMarkerPresent',
@@ -790,7 +808,7 @@ export const antalChr_0023_antal_power_attackActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_2' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_4' },
                           whenTrue: { $sequence: 'changeResource_3' },
                           whenFalse: { $sequence: null },
                         },
@@ -801,7 +819,7 @@ export const antalChr_0023_antal_power_attackActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'electric',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             calculation: 'breakingAttack',
                             calculationMultiplier: 0.06,
                             tags: ['normalAttack', 'powerAttack'],
@@ -825,6 +843,13 @@ export const antalChr_0023_antal_power_attackActionGraph = {
                       },
                       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
                       data_4: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_2' },
+                        },
+                      },
+                      data_5: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -1124,18 +1149,11 @@ export const antalChr_0023_antal_normal_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_5: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: null,
-      },
       ifElse_7: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_5' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'startTimeDilation_6' },
           whenFalse: { $sequence: null },
         },
@@ -1382,7 +1400,7 @@ export const antalChr_0023_antal_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'startTimeDilation_15' },
           whenFalse: { $sequence: 'startTimeDilation_15' },
         },
@@ -1411,6 +1429,10 @@ export const antalChr_0023_antal_combo_skillActionGraph = {
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'EntityBB_combo_type' } },
+      data_6: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
     },
   },
   macros: {},

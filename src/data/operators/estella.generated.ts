@@ -8,19 +8,12 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const estellaChr_0021_whiten_attack1ActionGraph = {
   main: {
     nodes: {
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -50,7 +43,7 @@ export const estellaChr_0021_whiten_attack1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'startTimeDilation_4' },
           whenFalse: { $sequence: null },
         },
@@ -76,8 +69,8 @@ export const estellaChr_0021_whiten_attack1ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -122,19 +115,12 @@ export const estellaChr_0021_whiten_attack1: SkillDefinition = {
 export const estellaChr_0021_whiten_attack2ActionGraph = {
   main: {
     nodes: {
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -164,7 +150,7 @@ export const estellaChr_0021_whiten_attack2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'startTimeDilation_4' },
           whenFalse: { $sequence: null },
         },
@@ -190,8 +176,8 @@ export const estellaChr_0021_whiten_attack2ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -267,18 +253,11 @@ export const estellaChr_0021_whiten_attack3ActionGraph = {
         },
         next: 'changeResource_4',
       },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_6: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'startTimeDilation_5' },
           whenFalse: { $sequence: null },
         },
@@ -314,7 +293,7 @@ export const estellaChr_0021_whiten_attack3ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'startTimeDilation_10' },
           whenFalse: { $sequence: null },
         },
@@ -325,7 +304,7 @@ export const estellaChr_0021_whiten_attack3ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
             tags: ['normalAttack'],
           },
         },
@@ -343,7 +322,8 @@ export const estellaChr_0021_whiten_attack3ActionGraph = {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
+      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
     },
   },
   macros: {},
@@ -389,19 +369,12 @@ export const estellaChr_0021_whiten_attack3: SkillDefinition = {
 export const estellaChr_0021_whiten_attack4ActionGraph = {
   main: {
     nodes: {
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -431,7 +404,7 @@ export const estellaChr_0021_whiten_attack4ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'startTimeDilation_4' },
           whenFalse: { $sequence: null },
         },
@@ -459,8 +432,8 @@ export const estellaChr_0021_whiten_attack4ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
     },
@@ -522,18 +495,11 @@ export const estellaChr_0021_whiten_power_attackActionGraph = {
         },
         next: null,
       },
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_3: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'startTimeDilation_2' },
           whenFalse: { $sequence: null },
         },
@@ -547,7 +513,7 @@ export const estellaChr_0021_whiten_power_attackActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'gainFinisherSp_5' },
           whenFalse: { $sequence: null },
         },
@@ -558,7 +524,7 @@ export const estellaChr_0021_whiten_power_attackActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             calculation: 'breakingAttack',
             calculationMultiplier: 1,
             tags: ['normalAttack', 'powerAttack'],
@@ -595,7 +561,8 @@ export const estellaChr_0021_whiten_power_attackActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
   macros: {},
@@ -635,19 +602,12 @@ export const estellaChr_0021_whiten_power_attack: SkillDefinition = {
 export const estellaChr_0021_whiten_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -662,7 +622,7 @@ export const estellaChr_0021_whiten_plunging_attack_endActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_3' },
           whenFalse: { $sequence: null },
         },
@@ -681,8 +641,8 @@ export const estellaChr_0021_whiten_plunging_attack_endActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -719,18 +679,11 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_3: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: 'createSpatialPointTargets_2' },
         },
@@ -765,7 +718,7 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'createSpatialPointTargets_6' },
           whenFalse: { $sequence: null },
         },
@@ -905,18 +858,11 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
                         },
                         next: 'modifyActionValue_5',
                       },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-                        },
-                        next: null,
-                      },
                       ifElse_8: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_6' },
                           whenTrue: { $sequence: 'modifyActionValue_6' },
                           whenFalse: { $sequence: 'dealDamage_7' },
                         },
@@ -976,7 +922,7 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'launchProjectile_28' },
           whenFalse: { $sequence: 'launchProjectile_28' },
         },
@@ -1010,7 +956,7 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_4' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -1035,7 +981,7 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
       checkCondition_34: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
         next: 'readBuffBlackboard_33',
       },
@@ -1052,8 +998,16 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
           value: 1,
         },
       },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
       data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_5: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -1370,27 +1324,13 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
         },
         next: 'applyBuff_9',
       },
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-        },
-        next: null,
-      },
       ifElse_11: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'modifyActionValue_6' },
           whenFalse: { $sequence: 'applyBuff_9' },
-        },
-        next: null,
-      },
-      checkCondition_10: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
         next: null,
       },
@@ -1398,7 +1338,7 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_10' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'ifElse_11' },
           whenFalse: { $sequence: 'applyPhysicalInfliction_13' },
         },
@@ -1421,7 +1361,7 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
           whenTrue: { $sequence: 'changeResource_15' },
           whenFalse: { $sequence: null },
         },
@@ -1465,18 +1405,11 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_18: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
-        },
-        next: null,
-      },
       ifElse_21: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_18' },
+          condition: { kind: 'conditionNode', nodeId: 'data_10' },
           whenTrue: { $sequence: 'startTimeDilation_19' },
           whenFalse: { $sequence: 'startTimeDilation_20' },
         },
@@ -1485,7 +1418,7 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
       checkCondition_22: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
         },
         next: 'ifElse_21',
       },
@@ -1534,8 +1467,12 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
         },
       },
       data_8: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_9: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_10: {
+      data_9: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_10: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_11: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',

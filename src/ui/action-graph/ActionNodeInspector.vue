@@ -5,6 +5,7 @@ import type { BlackboardFieldContext } from '@/application/editor/blackboardFiel
 import GraphDataInputs from './GraphDataInputs.vue';
 import { actionTypedInputs } from './typedGraphInputs';
 import { resolveFieldEditor } from '../field-editor/fieldEditorDispatch';
+import { isConditionListField } from '../field-editor/conditionListSchema';
 import { resolveBlackboardMapping } from '../field-editor/blackboardMapping';
 import type { ReferenceChoices } from '../definition-editor/fieldInputConfig';
 /** 从契约生成的字段描述构建表单；特殊资源与控制流通过独立入口编辑。 */
@@ -77,13 +78,15 @@ const fields = computed(() =>
   schema.value.fields.filter(
     field =>
       field.control !== 'sequence' &&
-      (hasInlineLevelValue(field) ||
+      (isConditionListField(field) ||
+        hasInlineLevelValue(field) ||
         !actionTypedInputs(props.node.action).some(
           input =>
             input.path.join('.') === field.path.join('.') &&
             !(input.type === 'string' && input.source === null),
         )) &&
-      (hasInlineLevelValue(field) ||
+      (isConditionListField(field) ||
+        hasInlineLevelValue(field) ||
         resolveBlackboardMapping(field) ||
         resolveFieldEditor(field, { nodeKind: props.node.action.kind }).control ===
           'structuredValue' ||

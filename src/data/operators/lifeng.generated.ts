@@ -73,18 +73,11 @@ export const lifengChr_0015_lifeng_attack1ActionGraph = {
         },
         next: 'changeResource_4',
       },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_6: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'startTimeDilation_5' },
           whenFalse: { $sequence: null },
         },
@@ -157,19 +150,12 @@ export const lifengChr_0015_lifeng_attack1: SkillDefinition = {
 export const lifengChr_0015_lifeng_attack2ActionGraph = {
   main: {
     nodes: {
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -230,7 +216,7 @@ export const lifengChr_0015_lifeng_attack2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'startTimeDilation_4' },
           whenFalse: { $sequence: null },
         },
@@ -256,8 +242,8 @@ export const lifengChr_0015_lifeng_attack2ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -302,19 +288,12 @@ export const lifengChr_0015_lifeng_attack2: SkillDefinition = {
 export const lifengChr_0015_lifeng_attack3ActionGraph = {
   main: {
     nodes: {
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -344,7 +323,7 @@ export const lifengChr_0015_lifeng_attack3ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'startTimeDilation_4' },
           whenFalse: { $sequence: null },
         },
@@ -370,8 +349,8 @@ export const lifengChr_0015_lifeng_attack3ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -528,7 +507,7 @@ export const lifengChr_0015_lifeng_attack5ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_9' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'startTimeDilation_11' },
           whenFalse: { $sequence: null },
         },
@@ -556,7 +535,7 @@ export const lifengChr_0015_lifeng_attack5ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
           whenTrue: { $sequence: 'dealDamage_6' },
           whenFalse: { $sequence: 'dealDamage_6' },
         },
@@ -588,6 +567,14 @@ export const lifengChr_0015_lifeng_attack5ActionGraph = {
         },
       },
       data_6: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_7: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_9' } },
+      },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
     },
   },
   macros: {},
@@ -664,13 +651,6 @@ export const lifengChr_0015_lifeng_power_attackActionGraph = {
         },
         next: 'gainFinisherSp_2',
       },
-      checkCondition_4: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       startTimeDilation_5: {
         action: {
           kind: 'startTimeDilation',
@@ -730,7 +710,7 @@ export const lifengChr_0015_lifeng_power_attackActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_4' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'startTimeDilation_5' },
           whenFalse: { $sequence: null },
         },
@@ -816,19 +796,12 @@ export const lifengChr_0015_lifeng_power_attack: SkillDefinition = {
 export const lifengChr_0015_lifeng_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -843,7 +816,7 @@ export const lifengChr_0015_lifeng_plunging_attack_endActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_3' },
           whenFalse: { $sequence: null },
         },
@@ -862,8 +835,8 @@ export const lifengChr_0015_lifeng_plunging_attack_endActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -910,18 +883,11 @@ export const lifengChr_0015_lifeng_normal_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_22: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_24: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_22' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'applyBuff_23' },
           whenFalse: { $sequence: null },
         },
@@ -1113,18 +1079,11 @@ export const lifengChr_0015_lifeng_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_7: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_9: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_7' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'modifyActionValue_8' },
           whenFalse: { $sequence: null },
         },
@@ -1153,18 +1112,11 @@ export const lifengChr_0015_lifeng_ultimate_skillActionGraph = {
         },
         next: 'spawnAbilityEntity_13',
       },
-      checkCondition_10: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: null,
-      },
       ifElse_14: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_10' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'mergeContextTargets_12' },
           whenFalse: { $sequence: 'spawnAbilityEntity_13' },
         },
@@ -1328,7 +1280,7 @@ export const lifengChr_0015_lifeng_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: null },
         },
@@ -1338,7 +1290,7 @@ export const lifengChr_0015_lifeng_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: null },
         },
@@ -1352,6 +1304,14 @@ export const lifengChr_0015_lifeng_combo_skillActionGraph = {
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'imbue_scale' } },
       data_6: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
+      data_7: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
     },
   },
   macros: {},
@@ -1797,10 +1757,14 @@ const lifengBuff6: SkillBuffDefinition = {
 const lifengBuff7ActionGraph = {
   main: {
     nodes: {
-      checkCondition_1: {
+      dealDamage_9: {
         action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            tags: [],
+          },
         },
         next: null,
       },
@@ -1855,8 +1819,8 @@ const lifengBuff7ActionGraph = {
           parameters: {
             key: 'final_atk_scale_talent2',
             operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_4' },
-            right: { kind: 'valueNode', nodeId: 'data_5' },
+            left: { kind: 'valueNode', nodeId: 'data_1' },
+            right: { kind: 'valueNode', nodeId: 'data_4' },
           },
         },
         next: 'dealDamage_4',
@@ -1897,22 +1861,11 @@ const lifengBuff7ActionGraph = {
         },
         next: 'readBuffBlackboard_7',
       },
-      dealDamage_9: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
-            tags: [],
-          },
-        },
-        next: null,
-      },
       ifElse_10: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'readBuffBlackboard_8' },
           whenFalse: { $sequence: 'dealDamage_9' },
         },
@@ -1920,7 +1873,14 @@ const lifengBuff7ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_talent2' } },
+      data_2: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'final_atk_scale_talent2' },
+      },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise_potential5' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_potential5' } },
+      data_5: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -1930,13 +1890,6 @@ const lifengBuff7ActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_2: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'final_atk_scale_talent2' },
-      },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise_potential5' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_talent2' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_potential5' } },
     },
   },
   macros: {},
@@ -2253,14 +2206,7 @@ export const lifeng: OperatorDefinition = {
                 action: {
                   kind: 'jumpTimeline',
                   parameters: { destinationFrame: 150 },
-                  condition: { $sequence: null },
-                },
-                next: null,
-              },
-              checkCondition_9: {
-                action: {
-                  kind: 'checkCondition',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+                  condition: { kind: 'conditionNode', nodeId: 'data_7' },
                 },
                 next: null,
               },
@@ -2268,7 +2214,7 @@ export const lifeng: OperatorDefinition = {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: 'checkCondition_9' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_9' },
                   whenTrue: { $sequence: 'jumpTimeline_10' },
                   whenFalse: { $sequence: 'modifyActionValue_11' },
                 },
@@ -2283,14 +2229,18 @@ export const lifeng: OperatorDefinition = {
               data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale3' } },
               data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise3' } },
               data_7: {
+                type: 'boolean',
+                expression: { kind: 'checkActionResult', action: { $sequence: null } },
+              },
+              data_8: {
                 type: 'number',
                 expression: { kind: 'blackboard', key: 'isCombo', fallback: 0 },
               },
-              data_8: {
+              data_9: {
                 type: 'boolean',
                 expression: {
                   kind: 'actionValueCompare',
-                  left: { kind: 'valueNode', nodeId: 'data_7' },
+                  left: { kind: 'valueNode', nodeId: 'data_8' },
                   operator: 'equal',
                   right: { kind: 'constant', value: 0 },
                 },

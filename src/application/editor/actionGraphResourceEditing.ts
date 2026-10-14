@@ -7,7 +7,7 @@ import type {
 } from '../../../packages/game-data-contract/src/actionGraph';
 import { validateActionGraphOwner } from '../../core/action-graph/actionGraphValidation';
 import { validateActionGraphStepDefinition } from '../../core/game-data/validation/actionPrograms';
-import { listGraphPorts } from './actionGraphPorts';
+import { listGraphPorts, listDataActionPorts } from './actionGraphPorts';
 
 export type ActionGraphAddress =
   { readonly kind: 'main' } | { readonly kind: 'macro'; readonly macroId: string };
@@ -104,8 +104,29 @@ export function connectResourceNode<T extends ActionGraphResourceOwner>(
   nodeId: string,
   path: readonly string[],
   targetId: string | null,
+  sourceOwner: 'action' | 'data' = 'action',
 ): T {
   const graph = resourceGraph(owner, address);
+  if (sourceOwner === 'data') {
+    const source = graph.dataNodes?.[nodeId];
+    if (
+      !source ||
+      source.type !== 'boolean' ||
+      source.expression.kind !== 'checkActionResult' ||
+      !listDataActionPorts(source).some(port => port.path.join('.') === path.join('.'))
+    )
+      throw new Error(`data node '${nodeId}' has no control port '${path.join('.')}'`);
+    if (targetId !== null) node(graph, targetId);
+    if (source.expression.action.$sequence === targetId) return owner;
+    const changed = {
+      ...source,
+      expression: { ...source.expression, action: { $sequence: targetId } },
+    };
+    return updateResourceGraph(owner, address, previous => ({
+      ...previous,
+      dataNodes: { ...previous.dataNodes, [nodeId]: changed },
+    }));
+  }
   const source = node(graph, nodeId);
   const port = listGraphPorts(source).find(
     item =>
@@ -214,7 +235,25 @@ export function removeResourceNode<T extends ActionGraphResourceOwner>(
         },
       };
   }
-  return updateResourceGraph(withEntries, address, () => ({ ...graph, nodes }));
+  const dataNodes = Object.fromEntries(
+    Object.entries(graph.dataNodes ?? {}).map(([id, source]) => {
+      if (
+        source.type === 'boolean' &&
+        source.expression.kind === 'checkActionResult' &&
+        source.expression.action.$sequence === nodeId
+      )
+        return [
+          id,
+          { ...source, expression: { ...source.expression, action: { $sequence: null } } },
+        ];
+      return [id, source];
+    }),
+  );
+  return updateResourceGraph(withEntries, address, () => ({
+    ...graph,
+    nodes,
+    ...(graph.dataNodes === undefined ? {} : { dataNodes }),
+  }));
 }
 
 export interface ResourceGraphEntry {

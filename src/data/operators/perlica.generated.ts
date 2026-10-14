@@ -71,7 +71,7 @@ export const perlicaChr_0004_pelica_attack1ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_2' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_4' },
                           whenTrue: { $sequence: 'changeResource_3' },
                           whenFalse: { $sequence: null },
                         },
@@ -82,7 +82,7 @@ export const perlicaChr_0004_pelica_attack1ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'electric',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
                           },
                         },
@@ -104,6 +104,13 @@ export const perlicaChr_0004_pelica_attack1ActionGraph = {
                       },
                       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
                       data_4: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_2' },
+                        },
+                      },
+                      data_5: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -212,18 +219,11 @@ export const perlicaChr_0004_pelica_attack2ActionGraph = {
                         },
                         next: null,
                       },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                        },
-                        next: null,
-                      },
                       ifElse_3: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_2' },
                           whenTrue: { $sequence: 'changeResource_2' },
                           whenFalse: { $sequence: null },
                         },
@@ -372,7 +372,7 @@ export const perlicaChr_0004_pelica_attack3ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_2' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_4' },
                           whenTrue: { $sequence: 'changeResource_3' },
                           whenFalse: { $sequence: null },
                         },
@@ -383,7 +383,7 @@ export const perlicaChr_0004_pelica_attack3ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'electric',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
                           },
                         },
@@ -405,6 +405,13 @@ export const perlicaChr_0004_pelica_attack3ActionGraph = {
                       },
                       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
                       data_4: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_2' },
+                        },
+                      },
+                      data_5: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -533,7 +540,7 @@ export const perlicaChr_0004_pelica_attack4ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_2' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_4' },
                           whenTrue: { $sequence: 'changeResource_3' },
                           whenFalse: { $sequence: null },
                         },
@@ -544,9 +551,9 @@ export const perlicaChr_0004_pelica_attack4ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'electric',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack', 'normalAttackLastCombo'],
-                            stagger: { kind: 'valueNode', nodeId: 'data_5' },
+                            stagger: { kind: 'valueNode', nodeId: 'data_6' },
                             staggerOnlyWhenCasterControlled: true,
                           },
                         },
@@ -568,10 +575,17 @@ export const perlicaChr_0004_pelica_attack4ActionGraph = {
                       },
                       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
                       data_4: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_2' },
+                        },
+                      },
+                      data_5: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
-                      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+                      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
                     },
                   },
                   macros: {},
@@ -652,18 +666,11 @@ export const perlicaChr_0004_pelica_power_attackActionGraph = {
         },
         next: 'gainFinisherSp_2',
       },
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_4: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'applyPhysicalInfliction_3' },
           whenFalse: { $sequence: null },
         },
@@ -701,7 +708,7 @@ export const perlicaChr_0004_pelica_power_attackActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'startTimeDilation_7' },
           whenFalse: { $sequence: null },
         },
@@ -737,6 +744,7 @@ export const perlicaChr_0004_pelica_power_attackActionGraph = {
     dataNodes: {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
     },
   },
   macros: {},
@@ -984,7 +992,7 @@ export const perlicaChr_0004_pelica_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'mergeContextTargets_1' },
           whenFalse: { $sequence: null },
         },
@@ -1116,7 +1124,7 @@ export const perlicaChr_0004_pelica_combo_skillActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_3' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_10' },
                           whenTrue: { $sequence: 'modifyActionValue_opt1' },
                           whenFalse: { $sequence: null },
                         },
@@ -1176,6 +1184,13 @@ export const perlicaChr_0004_pelica_combo_skillActionGraph = {
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
                       data_9: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+                      data_10: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_3' },
+                        },
+                      },
                     },
                   },
                   macros: {},
@@ -1201,6 +1216,12 @@ export const perlicaChr_0004_pelica_combo_skillActionGraph = {
           },
         },
         next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     },
   },

@@ -1,4 +1,20 @@
-import type { ActionGraphNode } from '../../../packages/game-data-contract/src/actionGraph';
+import type {
+  ActionGraphNode,
+  ActionGraphDataNode,
+} from '../../../packages/game-data-contract/src/actionGraph';
+
+/** 求值转接节点只有行为调用出口，没有行为输入或顺序 next。 */
+export function listDataActionPorts(node: ActionGraphDataNode): readonly GraphPort[] {
+  return node.type === 'boolean' && node.expression.kind === 'checkActionResult'
+    ? [
+        {
+          path: ['expression', 'action', '$sequence'],
+          label: 'action',
+          target: node.expression.action.$sequence,
+        },
+      ]
+    : [];
+}
 
 export interface GraphPort {
   /** 从节点根开始的字段路径，例如 next 或 action.body.$sequence。 */

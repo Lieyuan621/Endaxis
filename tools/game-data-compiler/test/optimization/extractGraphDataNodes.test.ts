@@ -8,6 +8,46 @@ import { ActionBlackboard } from '../../../../src/core/combat/actions/actionBlac
 import { ActionBlackboardOperationExecutor } from '../../../../src/core/combat/actions/actionBlackboardOperationExecutor';
 import { ExplicitProbabilitySampleSource } from '../../../../src/core/combat/random/probabilitySampleSource';
 
+it('原生条件中的行为保留为求值时调用，IfElse 只消费布尔输入', () => {
+  const graph = extractGraphDataNodes({
+    nodes: {
+      branch: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'checkActionResult', action: { $sequence: 'effect' } },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      effect: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'count',
+            operation: 'add',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+        next: null,
+      },
+    },
+  });
+  const entry = createActionGraphCompilation(graph, 1).compileEntry(
+    { $sequence: 'branch' },
+    'test',
+  );
+  const branch = entry.graph.nodes.get('branch')!.action;
+  if (branch.kind !== 'ifElse' || branch.condition.kind !== 'conditionNode')
+    throw new Error('expected IfElse boolean input');
+  expect(branch.condition.node.expression).toEqual({
+    kind: 'checkActionResult',
+    action: { $sequence: 'effect' },
+  });
+  expect(entry.graph.nodes.has('effect')).toBe(true);
+});
+
 it.each(['off', 'report'] as const)(
   '%s 模式仍生成数据节点；短路不抽样，多次消费读取各自当前状态',
   mode => {

@@ -55,13 +55,14 @@ const fields = computed(
   () =>
     schema.value?.fields.filter(
       field =>
-        isConditionListField(field) ||
-        (!dataTypedInputs(props.node).some(
-          input =>
-            input.path.join('.') === field.path.join('.') &&
-            !(input.type === 'string' && input.source === null),
-        ) &&
-          !listDataInputs(readNodeField(formValue.value, field.path)).length),
+        field.control !== 'sequence' &&
+        (isConditionListField(field) ||
+          (!dataTypedInputs(props.node).some(
+            input =>
+              input.path.join('.') === field.path.join('.') &&
+              !(input.type === 'string' && input.source === null),
+          ) &&
+            !listDataInputs(readNodeField(formValue.value, field.path)).length)),
     ) ?? [],
 );
 const choices = computed((): Readonly<Record<string, readonly string[]>> => {

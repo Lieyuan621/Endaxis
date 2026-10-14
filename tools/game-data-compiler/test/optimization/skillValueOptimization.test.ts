@@ -153,19 +153,22 @@ describe('技能黑板和算术写入裁剪', () => {
               {
                 kind: 'ifElse',
                 parameters: { alwaysNext: true },
-                condition: chain(nodes, 'condition', [
-                  {
-                    kind: 'checkCondition',
-                    parameters: {
-                      condition: {
-                        kind: 'actionValueCompare',
-                        left: board('distance'),
-                        operator: 'lessOrEqual',
-                        right: literal(10),
+                condition: {
+                  kind: 'checkActionResult',
+                  action: chain(nodes, 'condition', [
+                    {
+                      kind: 'checkCondition',
+                      parameters: {
+                        condition: {
+                          kind: 'actionValueCompare',
+                          left: board('distance'),
+                          operator: 'lessOrEqual',
+                          right: literal(10),
+                        },
                       },
                     },
-                  },
-                ]),
+                  ]),
+                },
                 whenTrue: yes,
                 whenFalse: no,
               },
@@ -267,7 +270,7 @@ describe('技能黑板和算术写入裁剪', () => {
               {
                 kind: 'ifElse',
                 parameters: { alwaysNext: true },
-                condition,
+                condition: { kind: 'checkActionResult', action: condition },
                 whenTrue: branchWrite
                   ? chain(nodes, 'increment', [
                       {
@@ -309,7 +312,7 @@ describe('技能黑板和算术写入裁剪', () => {
             {
               kind: 'ifElse',
               parameters: { alwaysNext },
-              condition: chain(nodes, 'condition', [signal]),
+              condition: { kind: 'checkActionResult', action: chain(nodes, 'condition', [signal]) },
               whenTrue: chain(nodes, 'body', [assign('unused', 7)]),
               whenFalse: { $sequence: null },
             },
@@ -376,7 +379,7 @@ describe('技能黑板和算术写入裁剪', () => {
                 parameters: { choice: literal(1), alwaysNext: true },
                 options: [{ value: literal(1), sequence: body }],
               }
-            : { kind, parameters: {}, conditions: [body] };
+            : { kind, parameters: {}, conditions: [{ kind: 'checkActionResult', action: body }] };
         return [
           {
             startFrame: 0,
@@ -426,7 +429,7 @@ describe('技能黑板和算术写入裁剪', () => {
               {
                 kind: 'ifElse',
                 parameters: { alwaysNext: true },
-                condition,
+                condition: { kind: 'checkActionResult', action: condition },
                 whenTrue: branch,
                 whenFalse: { $sequence: null },
               },
@@ -451,7 +454,7 @@ describe('技能黑板和算术写入裁剪', () => {
         const call: ActionGraphStep = {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition,
+          condition: { kind: 'checkActionResult', action: condition },
           whenTrue: branch,
           whenFalse: { $sequence: null },
         };

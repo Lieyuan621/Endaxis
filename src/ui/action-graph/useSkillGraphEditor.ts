@@ -1,4 +1,5 @@
 import type { GraphInteractionSnapshot } from './graphInteractionSnapshot';
+import { listDataActionPorts } from '../../application/editor/actionGraphPorts';
 import { toRaw, computed, nextTick, onBeforeUnmount, watch, ref, shallowRef } from 'vue';
 import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills';
 import { listNodeCreations, nodeCreationGroup } from './nodeCreation';
@@ -388,6 +389,10 @@ export function useSkillGraphEditor(document: SkillGraphDocument) {
     // 一次断开输入的所有来源只记一次撤销，不能让半次断线暴露给界面。
     edit(skill => {
       let changed = skill;
+      for (const [nodeId, node] of Object.entries(graph.value.dataNodes ?? {}))
+        for (const port of listDataActionPorts(node))
+          if (port.target === id)
+            changed = setGraphConnection(changed, address.value, nodeId, port.path, null, 'data');
       for (const [nodeId, node] of Object.entries(graph.value.nodes))
         for (const port of listGraphPorts(node))
           if (port.target === id)
@@ -463,9 +468,10 @@ export function useSkillGraphEditor(document: SkillGraphDocument) {
     path: readonly string[],
     target: string | null,
     expectedGraph?: GraphInteractionSnapshot,
+    sourceOwner: 'action' | 'data' = 'action',
   ) {
     if (!canUseGraphSnapshot(expectedGraph)) return;
-    edit(skill => setGraphConnection(skill, address.value, nodeId, path, target));
+    edit(skill => setGraphConnection(skill, address.value, nodeId, path, target, sourceOwner));
   }
   function connectEntry(
     ids: readonly string[],

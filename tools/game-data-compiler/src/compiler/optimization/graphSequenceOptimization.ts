@@ -262,7 +262,8 @@ function processChainInner(
         action.key === undefined &&
         ((action.kind === 'ifElse' &&
           action.parameters.alwaysNext &&
-          action.condition.$sequence === null &&
+          action.condition.kind === 'checkActionResult' &&
+          action.condition.action.$sequence === null &&
           action.whenTrue.$sequence === null &&
           action.whenFalse.$sequence === null) ||
           (action.kind === 'switch' &&
@@ -370,7 +371,7 @@ function processAction(
         {
           ...action,
           conditions: action.conditions.map((condition, index) =>
-            processChain(condition, `${path}.conditions[${index}]`, context),
+            processConditionInput(condition, `${path}.conditions[${index}]`, context),
           ),
         },
       ];
@@ -387,12 +388,15 @@ function processAction(
         context,
         !action.parameters.alwaysNext,
       );
-      const condition = processChain(
-        action.condition,
-        `${path}.condition`,
-        context,
-        !(action.parameters.alwaysNext && whenTrue.$sequence === whenFalse.$sequence),
-      );
+      const condition =
+        action.condition.kind === 'checkActionResult'
+          ? processChain(
+              action.condition.action,
+              `${path}.condition`,
+              context,
+              !(action.parameters.alwaysNext && whenTrue.$sequence === whenFalse.$sequence),
+            )
+          : undefined;
       // 常量检查不代表条件序列的最终返回值：外层 NotNext 可通过共享执行上下文反转它。
       // 在未证明入口返回值策略前，不能据此删除任一分支。
       // 单次变量运算没有准备、Tick 或 End 行为，并保留外层一次返回值边界。
@@ -407,9 +411,13 @@ function processAction(
         );
       };
       const checks =
-        condition.$sequence === null ? undefined : collectChain(context.nodes, condition.$sequence);
+        condition === undefined || condition.$sequence === null
+          ? undefined
+          : collectChain(context.nodes, condition.$sequence);
       const discardable =
-        condition.$sequence === null ||
+        (condition === undefined
+          ? canDiscardEquivalentBranchCondition(action.condition)
+          : condition.$sequence === null) ||
         (checks !== undefined &&
           !checks.cyclic &&
           checks.ids.every(id => {
@@ -424,14 +432,21 @@ function processAction(
         whenTrue.$sequence === whenFalse.$sequence
       ) {
         // 保留原生 IfElse 调用的返回边界；只删除已不能影响结果的内部检查。
-        if (condition.$sequence !== null)
+        if (condition?.$sequence !== null)
           change(
             context,
             path,
             'equivalent-branches',
             '两支指向同一序列且始终继续，内部纯检查不影响执行结果',
           );
-        return [{ ...action, condition: EMPTY_REFERENCE, whenTrue, whenFalse }];
+        return [
+          {
+            ...action,
+            condition: { kind: 'checkActionResult', action: EMPTY_REFERENCE },
+            whenTrue,
+            whenFalse,
+          },
+        ];
       }
       if (
         action.key === undefined &&
@@ -445,7 +460,17 @@ function processAction(
           return chainActions(merged, context);
         }
       }
-      return [{ ...action, condition, whenTrue, whenFalse }];
+      return [
+        {
+          ...action,
+          condition:
+            condition === undefined
+              ? action.condition
+              : { kind: 'checkActionResult', action: condition },
+          whenTrue,
+          whenFalse,
+        },
+      ];
     }
     case 'conditional':
       return processConditional(action, path, context);
@@ -504,11 +529,36 @@ function processAction(
     }
     case 'jumpTimeline':
       return [
-        { ...action, condition: processChain(action.condition, `${path}.condition`, context) },
+        {
+          ...action,
+          condition: processConditionInput(action.condition, `${path}.condition`, context),
+        },
       ];
     default:
       return [action];
   }
+}
+
+function processConditionInput(
+  condition: CombatCondition,
+  path: string,
+  context: GraphOptimizationContext,
+): CombatCondition {
+  if (condition.kind === 'checkActionResult')
+    return { ...condition, action: processChain(condition.action, `${path}.action`, context) };
+  if (condition.kind === 'all' || condition.kind === 'any')
+    return {
+      ...condition,
+      conditions: condition.conditions.map((input, index) =>
+        processConditionInput(input, `${path}.conditions[${index}]`, context),
+      ),
+    };
+  if (condition.kind === 'not')
+    return {
+      ...condition,
+      condition: processConditionInput(condition.condition, `${path}.condition`, context),
+    };
+  return condition;
 }
 
 function processConditional(
@@ -942,16 +992,18 @@ function graphStepUsage(
 ): DefinitionValueUsage {
   switch (action.kind) {
     case 'jumpTimeline':
-      return { ...walkReference(action.condition), observable: true };
+      return { ...analyzeConditionUsage(action.condition, walkReference), observable: true };
     case 'anyCondition':
       return {
-        ...mergeDefinitionValueUsage(action.conditions.map(walkReference)),
+        ...mergeDefinitionValueUsage(
+          action.conditions.map(condition => analyzeConditionUsage(condition, walkReference)),
+        ),
         observable: true,
       };
     case 'ifElse':
       return {
         ...mergeDefinitionValueUsage([
-          walkReference(action.condition),
+          analyzeConditionUsage(action.condition, walkReference),
           walkReference(action.whenTrue),
           walkReference(action.whenFalse),
         ]),

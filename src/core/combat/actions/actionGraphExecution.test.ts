@@ -583,7 +583,7 @@ describe('直接图执行', () => {
           action: {
             kind: 'jumpTimeline',
             parameters: { destinationFrame: 30 },
-            condition: { $sequence: null },
+            condition: { kind: 'constant', value: true },
           },
           next: null,
         },

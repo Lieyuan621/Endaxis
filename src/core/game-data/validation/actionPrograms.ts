@@ -2068,15 +2068,15 @@ function validateActionChildren(
   if (recordStep === null) return;
   const stepKind = recordStep.kind;
   if (stepKind === 'jumpTimeline') {
-    validateActionGraphReference(recordStep.condition, `${path}.condition`, out);
+    validateCombatCondition(recordStep.condition, `${path}.condition`, out);
   } else if (stepKind === 'anyCondition') {
     if (!Array.isArray(recordStep.conditions)) push(out, `${path}.conditions`, 'expected an array');
     else
       recordStep.conditions.forEach((condition, index) =>
-        validateActionGraphReference(condition, `${path}.conditions[${index}]`, out),
+        validateCombatCondition(condition, `${path}.conditions[${index}]`, out),
       );
   } else if (stepKind === 'ifElse') {
-    validateActionGraphReference(recordStep.condition, `${path}.condition`, out);
+    validateCombatCondition(recordStep.condition, `${path}.condition`, out);
     validateActionGraphReference(recordStep.whenTrue, `${path}.whenTrue`, out);
     validateActionGraphReference(recordStep.whenFalse, `${path}.whenFalse`, out);
   } else if (stepKind === 'conditional') {
@@ -2410,6 +2410,9 @@ export function validateActionGraphContexts(
   const main = lenientRecord(resource.main);
   const mainNodes = main === null ? null : lenientRecord(main.nodes);
   if (mainNodes === null) return;
+  const dataByScope = new Map<string, Record<string, unknown>>([
+    ['main', lenientRecord(main?.dataNodes) ?? {}],
+  ]);
   const macros = new Map<
     string,
     { readonly nodes: Record<string, unknown>; readonly entry: unknown }
@@ -2420,7 +2423,10 @@ export function validateActionGraphContexts(
       const macro = lenientRecord(macroValue);
       const graph = macro === null ? null : lenientRecord(macro.graph);
       const nodes = graph === null ? null : lenientRecord(graph.nodes);
-      if (nodes !== null) macros.set(id, { nodes, entry: macro!.entry });
+      if (nodes !== null) {
+        macros.set(id, { nodes, entry: macro!.entry });
+        dataByScope.set(`macro:${id}`, lenientRecord(graph?.dataNodes) ?? {});
+      }
     }
   interface WalkContext {
     readonly currentTarget: boolean;
@@ -2461,18 +2467,24 @@ export function validateActionGraphContexts(
         // 子入口按所属种类的上下文规则递归；同级 next 不继承 forEach 的实体上下文。
         const child = (ref: unknown, next: WalkContext) =>
           walkReference(scope, graphPath, nodes, scopeMacros, ref, next);
+        // 数据输入可在消费处调用行为；该行为继承消费者的目标与生命周期上下文。
+        const inspectedInputs = new Set<string>();
+        const inspectInputs = (value: unknown): void => {
+          if (!value || typeof value !== 'object' || 'actionGraph' in value) return;
+          const input = lenientRecord(value);
+          if (input?.kind === 'conditionNode' && typeof input.nodeId === 'string') {
+            if (inspectedInputs.has(input.nodeId)) return;
+            inspectedInputs.add(input.nodeId);
+            const data = lenientRecord(dataByScope.get(scope)?.[input.nodeId]);
+            inspectInputs(data?.expression);
+          } else if (input?.kind === 'checkActionResult') child(input.action, context);
+          else for (const field of Object.values(value)) inspectInputs(field);
+        };
+        inspectInputs(action);
         switch (action.kind) {
-          case 'jumpTimeline':
-            child(action.condition, context);
-            break;
           case 'ifElse':
-            child(action.condition, context);
             child(action.whenTrue, context);
             child(action.whenFalse, context);
-            break;
-          case 'anyCondition':
-            if (Array.isArray(action.conditions))
-              action.conditions.forEach(condition => child(condition, context));
             break;
           case 'conditional':
             child(action.whenTrue, context);

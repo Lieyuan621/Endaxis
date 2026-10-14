@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { ActionGraphResourceDefinition } from '../../../packages/game-data-contract/src/actionGraph';
 import {
   addResourceNode,
   connectResourceEntry,
@@ -27,6 +28,46 @@ function resource() {
 }
 
 describe('independent resource graph editing', () => {
+  it('连接数据节点的行为出口时拒绝跨类型环，删除行为节点同时断开该出口', () => {
+    const source: { actionGraph: ActionGraphResourceDefinition } = {
+      actionGraph: {
+        main: {
+          nodes: {
+            check: {
+              action: {
+                kind: 'checkCondition',
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'result' } },
+              },
+              next: null,
+            },
+            effect: { action: { kind: 'dealStagger', parameters: { value: 2 } }, next: null },
+          },
+          dataNodes: {
+            result: {
+              type: 'boolean',
+              expression: { kind: 'checkActionResult', action: { $sequence: null } },
+            },
+          },
+        },
+        macros: {},
+      },
+    };
+    const port = ['expression', 'action', '$sequence'];
+    expect(() =>
+      connectResourceNode(source, { kind: 'main' }, 'result', port, 'check', 'data'),
+    ).toThrow('recursive action graph');
+    const connected = connectResourceNode(
+      source,
+      { kind: 'main' },
+      'result',
+      port,
+      'effect',
+      'data',
+    );
+    const removed = removeResourceNode(connected, { kind: 'main' }, 'effect');
+    expect(removed.actionGraph.main.dataNodes).toEqual(source.actionGraph.main.dataNodes);
+    expect(connected.actionGraph.main.nodes.effect).toBeDefined();
+  });
   it('connects its own entry and nodes without changing the source resource', () => {
     const source = resource();
     const entries = listResourceGraphEntries(source, { kind: 'main' });

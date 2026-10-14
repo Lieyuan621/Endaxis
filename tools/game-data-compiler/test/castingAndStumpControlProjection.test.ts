@@ -266,7 +266,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
     expect(branch?.kind).toBe('ifElse');
     if (branch?.kind !== 'ifElse') throw new Error('expected native IfElse');
     // 当前固定木桩投影省略位移；IfElse 仍保留真实的条件序列入口。
-    expect(readActionGraphChain(graph, branch.condition)).toEqual([]);
+    expect(branch.condition).toEqual({ kind: 'checkActionResult', action: { $sequence: null } });
   });
 
   it('只把已证明的 Buff Owner 职业筛选投影为干员定位条件', () => {

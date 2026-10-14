@@ -4,6 +4,7 @@
  */
 import type {
   ActionTargetQuery,
+  ActionGraphReference,
   CombatStepDefinition,
   CombatStepForKind,
   CombatStepParameters,
@@ -151,7 +152,10 @@ function numericOutputUsage(keys: readonly (string | undefined)[]): DefinitionVa
 }
 
 /** 条件即使只返回真假，也可能写值、抽样或要求特定事件环境。 */
-export function analyzeConditionUsage(condition: CombatCondition): DefinitionValueUsage {
+export function analyzeConditionUsage(
+  condition: CombatCondition,
+  sequenceUsage?: (reference: ActionGraphReference) => DefinitionValueUsage,
+): DefinitionValueUsage {
   const value = (operand: ActionValueOperand | number, writes: readonly string[] = []) => ({
     ...mergeDefinitionValueUsage([actionValueUsage(operand), numericOutputUsage(writes)]),
     // 除字面量比较之外的查询需要运行环境；优化器不能把环境错误一起抹掉。
@@ -163,16 +167,22 @@ export function analyzeConditionUsage(condition: CombatCondition): DefinitionVal
     mayThrow: true,
   });
   switch (condition.kind) {
+    case 'checkActionResult':
+      return sequenceUsage
+        ? sequenceUsage(condition.action)
+        : { ...EMPTY, unknownAccess: true, mayThrow: true, observable: true };
     case 'constant':
       return EMPTY;
     case 'conditionNode':
       // 数据节点按当前作用域求值，结果取决于节点自身图；不能静态归并，也不能静默删除。
       return { ...EMPTY, unknownAccess: true, mayThrow: true };
     case 'not':
-      return analyzeConditionUsage(condition.condition);
+      return analyzeConditionUsage(condition.condition, sequenceUsage);
     case 'all':
     case 'any':
-      return mergeDefinitionValueUsage(condition.conditions.map(analyzeConditionUsage));
+      return mergeDefinitionValueUsage(
+        condition.conditions.map(child => analyzeConditionUsage(child, sequenceUsage)),
+      );
     case 'stringEquals':
       return mergeDefinitionValueUsage([
         actionStringUsage(condition.left),

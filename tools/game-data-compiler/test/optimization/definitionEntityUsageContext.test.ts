@@ -237,7 +237,11 @@ describe('实体用途分阶段收集', () => {
     const nodes: Record<string, ActionGraphNode> = {};
     const condition = chain(nodes, 'condition', [queryEntityValueStep('jumpCondition')]);
     const entry = chain(nodes, 'jump', [
-      { kind: 'jumpTimeline', parameters: { destinationFrame: 0 }, condition },
+      {
+        kind: 'jumpTimeline',
+        parameters: { destinationFrame: 0 },
+        condition: { kind: 'checkActionResult', action: condition },
+      },
     ]);
     const collector = createGraphSharedEntityValueUsageCollector({});
     collector.addSequence({ graph: { nodes }, entry });

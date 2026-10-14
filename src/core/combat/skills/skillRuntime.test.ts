@@ -1739,7 +1739,7 @@ describe('SkillRuntime', () => {
               {
                 kind: 'jumpTimeline',
                 parameters: { destinationFrame: 5 },
-                condition: { $sequence: null },
+                condition: { kind: 'constant', value: true },
               },
             ],
           },
@@ -1816,7 +1816,7 @@ describe('SkillRuntime', () => {
               {
                 kind: 'jumpTimeline',
                 parameters: { destinationFrame: 5 },
-                condition: { $sequence: null },
+                condition: { kind: 'constant', value: true },
               },
             ],
           },
@@ -1890,7 +1890,7 @@ describe('SkillRuntime', () => {
               {
                 kind: 'jumpTimeline',
                 parameters: { destinationFrame: 6 },
-                condition: { $sequence: null },
+                condition: { kind: 'constant', value: true },
               },
               {
                 kind: 'triggerCustomAbilityEvent',
@@ -2054,7 +2054,7 @@ describe('SkillRuntime', () => {
             action: {
               kind: 'jumpTimeline',
               parameters: { destinationFrame: 6 },
-              condition: { $sequence: null },
+              condition: { kind: 'constant', value: true },
             },
             next: null,
           },

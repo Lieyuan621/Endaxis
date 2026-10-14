@@ -140,3 +140,18 @@ export function conditionInputExpression(
 ): CompiledBooleanNode['expression'] {
   return input.kind === 'conditionNode' ? conditionInputExpression(input.node.expression) : input;
 }
+
+const actionResultDependencies = new WeakMap<object, boolean>();
+/** 只检查编译定义的调用依赖，不求值；普通条件保留原宿主的求值和诊断路径。 */
+export function conditionInvokesAction(input: CompiledCondition): boolean {
+  const cached = actionResultDependencies.get(input);
+  if (cached !== undefined) return cached;
+  const expression = conditionInputExpression(input);
+  const result =
+    expression.kind === 'checkActionResult' ||
+    (expression.kind === 'not' && conditionInvokesAction(expression.condition)) ||
+    ((expression.kind === 'all' || expression.kind === 'any') &&
+      expression.conditions.some(conditionInvokesAction));
+  actionResultDependencies.set(input, result);
+  return result;
+}

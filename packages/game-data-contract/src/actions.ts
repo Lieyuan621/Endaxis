@@ -1430,12 +1430,13 @@ type CombatStepNode<K extends CombatStepKind> = {
   : K extends 'showComboRingQte'
     ? { triggeredAction: ActionGraphReference }
     : K extends 'jumpTimeline'
-      ? { condition: ActionGraphReference }
+      ? { condition: CombatCondition }
       : K extends 'anyCondition'
-        ? { conditions: readonly ActionGraphReference[] }
+        ? { conditions: readonly CombatCondition[] }
         : K extends 'ifElse'
           ? {
-              condition: ActionGraphReference;
+              /** 消费布尔输入时求值；含行为的原生条件由 checkActionResult 显式转接。 */
+              condition: CombatCondition;
               whenTrue: ActionGraphReference;
               whenFalse: ActionGraphReference;
             }

@@ -5,6 +5,10 @@ import type {
   CompiledGraphStepForKind,
   CompiledValueInput,
 } from '../../compiler/compiledGraphData.ts';
+import {
+  conditionInputExpression,
+  conditionInvokesAction,
+} from '../../compiler/compiledGraphData.ts';
 import type { AuraInfluenceState } from '../state/actionState';
 import type { BuffReference } from '../state/foundationState';
 import type { ExecutionTracePhase } from './actionExecutionTrace';
@@ -64,6 +68,8 @@ import {
 import { executeTimelineJump, resetTimelineJump, tickTimelineJump } from './sequenceControl';
 
 export interface ActionGraphExecutionHost {
+  /** 只观察已经取得的结果，不参与求值或执行策略。 */
+  readonly observeCondition?: (input: CompiledCondition, result: boolean) => void;
   readonly comboQte?: {
     register(earlySeconds: number, activeSeconds: number): number;
     bind(registration: number, triggered: () => void): void;
@@ -169,6 +175,7 @@ function wrapMacroHost(
     executionPolicy: host.executionPolicy,
     requestTimelineJump: host.requestTimelineJump,
     ...(host.trace === undefined ? {} : { trace: host.trace }),
+    ...(host.observeCondition === undefined ? {} : { observeCondition: host.observeCondition }),
     listener: (responses, state, create) =>
       host.listener(substitute(responses), state, (reference, index, inner, saved) =>
         create(reference, index, wrapMacroHost(inner, args), saved),
@@ -195,6 +202,7 @@ export class ActionGraphExecution
   readonly runtimeState: ActionGraphExecutionState;
   // 生命周期对象随实例保持稳定，枚举时复用绑定与状态的配对，不逐帧分配包装。
   readonly #bindings = new Map<string, [GraphNodeBinding, ActionStepState]>();
+  readonly #evaluations = new Map<string, ActionGraphExecution>();
 
   constructor(
     readonly program: CompiledActionGraph,
@@ -279,6 +287,92 @@ export class ActionGraphExecution
     return this.nodeBindings?.[id] ?? id;
   }
 
+  #evaluation(input: CompiledCondition, consumer: string, inputPath: string): ActionGraphExecution {
+    const expression = conditionInputExpression(input);
+    if (expression.kind !== 'checkActionResult' || input.kind !== 'conditionNode')
+      throw new Error('checkActionResult requires a data node identity');
+    const key = JSON.stringify([this.#identity(consumer), inputPath, input.nodeId]);
+    let execution = this.#evaluations.get(key);
+    if (!execution) {
+      const states = (this.runtimeState.evaluations ??= new Map());
+      execution = this.#child(key, 0, expression.action.$sequence, states.get(key));
+      states.set(key, execution.runtimeState);
+      this.#evaluations.set(key, execution);
+    }
+    return execution;
+  }
+
+  #resetEvaluation(
+    input: CompiledCondition,
+    consumer: string,
+    context: CombatExecutionContext,
+    inputPath = 'condition',
+  ): void {
+    if (!conditionInvokesAction(input)) return;
+    const expression = conditionInputExpression(input);
+    if (expression.kind === 'checkActionResult')
+      this.#evaluation(input, consumer, inputPath).reset(context);
+    else if (expression.kind === 'all' || expression.kind === 'any')
+      expression.conditions.forEach((condition, index) =>
+        this.#resetEvaluation(condition, consumer, context, `${inputPath}/${index}`),
+      );
+    else if (expression.kind === 'not')
+      this.#resetEvaluation(expression.condition, consumer, context, `${inputPath}/not`);
+  }
+
+  #evaluate(
+    input: CompiledCondition,
+    consumer: string,
+    context: CombatExecutionContext,
+    inputPath = 'condition',
+  ): boolean {
+    const result = this.#evaluateInput(input, consumer, context, inputPath);
+    this.host.observeCondition?.(input, result);
+    return result;
+  }
+
+  #evaluateInput(
+    input: CompiledCondition,
+    consumer: string,
+    context: CombatExecutionContext,
+    inputPath: string,
+  ): boolean {
+    if (!conditionInvokesAction(input)) return this.host.evaluate(input);
+    const expression = conditionInputExpression(input);
+    if (expression.kind === 'checkActionResult')
+      return this.#evaluation(input, consumer, inputPath).executeInstant(context);
+    // 顺序求值且短路，不能先把所有输入替换为常量：输入可能会执行行为。
+    if (expression.kind === 'all')
+      return expression.conditions.every((condition, index) =>
+        this.#evaluate(condition, consumer, context, `${inputPath}/${index}`),
+      );
+    if (expression.kind === 'any')
+      return expression.conditions.some((condition, index) =>
+        this.#evaluate(condition, consumer, context, `${inputPath}/${index}`),
+      );
+    if (expression.kind === 'not')
+      return !this.#evaluate(expression.condition, consumer, context, `${inputPath}/not`);
+    return this.host.evaluate(input);
+  }
+
+  #evaluateBranchCondition(
+    input: CompiledCondition,
+    consumer: string,
+    context: CombatExecutionContext,
+    inputPath = 'condition',
+  ): boolean {
+    if (conditionInvokesAction(input)) return this.#evaluate(input, consumer, context, inputPath);
+    // 原生控制节点的条件是即时执行的动作。去掉单个纯判断的 checkCondition 包装后，
+    // 仍在此消费一次执行门禁与 NotNext；转接序列已经处理过，不能再反转一次。
+    const mode = context.sequence?.resultMode;
+    const result = this.host.canExecute() && this.#evaluate(input, consumer, context);
+    if (mode === STEP_RESULT_MODE.invertNextResult) {
+      context.sequence!.resultMode = STEP_RESULT_MODE.normal;
+      return !result;
+    }
+    return result;
+  }
+
   #binding(id: string): [GraphNodeBinding, ActionStepState] {
     const existing = this.#bindings.get(id);
     if (existing) return existing;
@@ -340,30 +434,17 @@ export class ActionGraphExecution
               inline: create => (create ? getBody() : body),
             };
     } else if (action.kind === 'anyCondition') {
-      if (saved && saved.kind !== 'graphConditions')
-        throw new Error(`expected condition sequences: ${id}`);
-      const data = saved ?? {
-        kind: 'graphConditions' as const,
-        sequences: new Map<number, ActionGraphExecutionState>(),
-      };
-      const children = new Map<number, ActionGraphExecution>();
-      const child = (index: number) => {
-        let body = children.get(index);
-        if (!body) {
-          const entry = action.conditions[index];
-          if (!entry) throw new Error(`invalid condition sequence: ${id}/${index}`);
-          body = this.#child(id, index, entry.$sequence, data.sequences.get(index));
-          children.set(index, body);
-          data.sequences.set(index, body.runtimeState);
-        }
-        return body;
-      };
-      for (const index of data.sequences.keys()) child(index);
+      if (saved && saved.kind !== 'stateless') throw new Error(`expected condition state: ${id}`);
       binding = {
-        data,
+        data: saved ?? { kind: 'stateless' },
         execute: context =>
-          action.conditions.some((_, index) => child(index).executeInstant(context)),
-        reset: context => action.conditions.forEach((_, index) => child(index).reset(context)),
+          action.conditions.some((input, index) =>
+            this.#evaluateBranchCondition(input, id, context, `conditions/${index}`),
+          ),
+        reset: context =>
+          action.conditions.forEach((input, index) =>
+            this.#resetEvaluation(input, id, context, `conditions/${index}`),
+          ),
         tick() {},
         end() {},
       };
@@ -373,12 +454,15 @@ export class ActionGraphExecution
         data: saved ?? { kind: 'stateless' },
         execute: context => {
           if (action.kind === 'checkCondition')
-            return this.host.evaluate(action.parameters.condition);
+            return this.#evaluate(action.parameters.condition, id, context);
           if (!context.sequence) throw new Error('NotNext requires a sequence execution context');
           context.sequence.resultMode = STEP_RESULT_MODE.invertNextResult;
           return true;
         },
-        reset() {},
+        reset: context => {
+          if (action.kind === 'checkCondition')
+            this.#resetEvaluation(action.parameters.condition, id, context);
+        },
         tick() {},
         end() {},
       };
@@ -393,8 +477,8 @@ export class ActionGraphExecution
         data.body === null ? undefined : this.#child(id, 0, action.whenTrue.$sequence, data.body);
       binding = {
         data,
-        execute: () => this.host.evaluate(action.parameters.condition),
-        reset() {},
+        execute: context => this.#evaluate(action.parameters.condition, id, context),
+        reset: context => this.#resetEvaluation(action.parameters.condition, id, context),
         tick() {},
         end() {},
         inline: create => {
@@ -422,7 +506,6 @@ export class ActionGraphExecution
           : [
               action.whenTrue.$sequence,
               ...(action.whenFalse === undefined ? [] : [action.whenFalse.$sequence]),
-              ...(action.kind === 'ifElse' ? [action.condition.$sequence] : []),
             ];
       const bindings = new Map<number, ActionGraphExecution>();
       const branch = (index: number) => {
@@ -466,8 +549,8 @@ export class ActionGraphExecution
           ...branchHost,
           evaluate: (context: CombatExecutionContext) =>
             action.kind === 'ifElse'
-              ? branch(2).executeInstant(context)
-              : this.host.evaluate(action.parameters.condition),
+              ? this.#evaluateBranchCondition(action.condition, id, context)
+              : this.#evaluate(action.parameters.condition, id, context),
         };
         execute = context =>
           executeConditionalAction(
@@ -482,7 +565,9 @@ export class ActionGraphExecution
         data,
         execute,
         reset: context => {
-          if (action.kind === 'ifElse') branch(2).reset(context);
+          if (action.kind === 'ifElse') this.#resetEvaluation(action.condition, id, context);
+          if (action.kind === 'conditional')
+            this.#resetEvaluation(action.parameters.condition, id, context);
           return action.kind === 'switch'
             ? resetSwitchAction(entries.length, branchHost, context)
             : resetConditionalAction(
@@ -747,12 +832,9 @@ export class ActionGraphExecution
       const data = saved ?? {
         kind: 'graphJump' as const,
         jump: createTimelineJumpState(),
-        condition: null,
       };
-      const condition = this.#child(id, 0, action.condition.$sequence, data.condition ?? undefined);
-      data.condition = condition.runtimeState;
       const jumpHost = (context: CombatExecutionContext) => ({
-        evaluate: () => condition.executeInstant(context),
+        evaluate: () => this.#evaluateBranchCondition(action.condition, id, context),
         resolveRequest: () => {
           const request = this.host.requestTimelineJump;
           if (!request) throw new Error('jumpTimeline requires a timeline host');
@@ -766,10 +848,11 @@ export class ActionGraphExecution
           return true;
         },
         tick: (_delta, context) => tickTimelineJump(data.jump, jumpHost(context)),
-        end: context => condition.end(context),
+        // 条件每次求值均即时 End，父动作结束时没有存活的条件动作。
+        end() {},
         reset: context => {
           resetTimelineJump(data.jump);
-          condition.reset(context);
+          this.#resetEvaluation(action.condition, id, context);
         },
       };
     } else if (action.kind === 'forEachContextTarget') {
@@ -912,7 +995,6 @@ export class ActionGraphExecution
         saved?.kind === 'graphAnimation' ||
         saved?.kind === 'graphComboQte' ||
         saved?.kind === 'graphBranch' ||
-        saved?.kind === 'graphConditions' ||
         saved?.kind === 'graphMacro' ||
         saved?.kind === 'graphGuard' ||
         saved?.kind === 'graphOnce' ||

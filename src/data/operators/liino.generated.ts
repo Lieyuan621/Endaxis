@@ -246,13 +246,6 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_20: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_14' } },
-        },
-        next: null,
-      },
       applyBuff_24: {
         action: {
           kind: 'applyBuff',
@@ -286,18 +279,11 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_22: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_15' } },
-        },
-        next: null,
-      },
       ifElse_25: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_22' },
+          condition: { kind: 'conditionNode', nodeId: 'data_14' },
           whenTrue: { $sequence: 'inheritBuffById_23' },
           whenFalse: { $sequence: 'applyBuff_24' },
         },
@@ -307,7 +293,7 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_20' },
+          condition: { kind: 'conditionNode', nodeId: 'data_15' },
           whenTrue: { $sequence: 'inheritBuffById_21' },
           whenFalse: { $sequence: null },
         },
@@ -364,18 +350,11 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_28: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_16' } },
-        },
-        next: null,
-      },
       ifElse_31: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_28' },
+          condition: { kind: 'conditionNode', nodeId: 'data_16' },
           whenTrue: { $sequence: 'inheritBuffById_29' },
           whenFalse: { $sequence: 'applyBuff_30' },
         },
@@ -463,7 +442,7 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
         expression: {
           kind: 'buffIdStackCompare',
           target: 'caster',
-          buffIds: ['buff_chr_0035_liino_showhide_attack'],
+          buffIds: ['buff_chr_0035_liino_showhide'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
         },
@@ -473,7 +452,7 @@ export const liinoChr_0035_liino_combo_skillActionGraph = {
         expression: {
           kind: 'buffIdStackCompare',
           target: 'caster',
-          buffIds: ['buff_chr_0035_liino_showhide'],
+          buffIds: ['buff_chr_0035_liino_showhide_attack'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
         },
@@ -581,18 +560,11 @@ export const liinoChr_0035_liino_attack1ActionGraph = {
         },
         next: null,
       },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_5: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'startTimeDilation_4' },
           whenFalse: { $sequence: null },
         },
@@ -863,18 +835,11 @@ export const liinoChr_0035_liino_attack3ActionGraph = {
         },
         next: null,
       },
-      checkCondition_20: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_23: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_20' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'inheritBuffById_21' },
           whenFalse: { $sequence: 'applyBuff_22' },
         },
@@ -915,18 +880,11 @@ export const liinoChr_0035_liino_attack3ActionGraph = {
         },
         next: null,
       },
-      checkCondition_24: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: null,
-      },
       ifElse_27: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_24' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'inheritBuffById_25' },
           whenFalse: { $sequence: 'applyBuff_26' },
         },
@@ -973,18 +931,11 @@ export const liinoChr_0035_liino_attack3ActionGraph = {
         },
         next: null,
       },
-      checkCondition_28: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-        },
-        next: null,
-      },
       ifElse_31: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_28' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'inheritBuffById_29' },
           whenFalse: { $sequence: 'applyBuff_30' },
         },
@@ -1025,18 +976,11 @@ export const liinoChr_0035_liino_attack3ActionGraph = {
         },
         next: null,
       },
-      checkCondition_32: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-        },
-        next: null,
-      },
       ifElse_35: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_32' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'inheritBuffById_33' },
           whenFalse: { $sequence: 'applyBuff_34' },
         },
@@ -1259,18 +1203,11 @@ export const liinoChr_0035_liino_attack4ActionGraph = {
         },
         next: null,
       },
-      checkCondition_21: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_24: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_21' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'inheritBuffById_22' },
           whenFalse: { $sequence: 'applyBuff_23' },
         },
@@ -1311,18 +1248,11 @@ export const liinoChr_0035_liino_attack4ActionGraph = {
         },
         next: null,
       },
-      checkCondition_25: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_28: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_25' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'inheritBuffById_26' },
           whenFalse: { $sequence: 'applyBuff_27' },
         },
@@ -1369,18 +1299,11 @@ export const liinoChr_0035_liino_attack4ActionGraph = {
         },
         next: null,
       },
-      checkCondition_29: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: null,
-      },
       ifElse_32: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_29' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'inheritBuffById_30' },
           whenFalse: { $sequence: 'applyBuff_31' },
         },
@@ -1421,18 +1344,11 @@ export const liinoChr_0035_liino_attack4ActionGraph = {
         },
         next: null,
       },
-      checkCondition_33: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-        },
-        next: null,
-      },
       ifElse_36: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_33' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'inheritBuffById_34' },
           whenFalse: { $sequence: 'applyBuff_35' },
         },
@@ -1567,18 +1483,11 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
         },
         next: null,
       },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_4: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_2' },
           whenFalse: { $sequence: null },
         },
@@ -1603,7 +1512,7 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'startTimeDilation_5' },
           whenFalse: { $sequence: null },
         },
@@ -1618,18 +1527,31 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'electric',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
-            stagger: { kind: 'valueNode', nodeId: 'data_4' },
+            stagger: { kind: 'valueNode', nodeId: 'data_5' },
             staggerOnlyWhenCasterControlled: true,
           },
         },
         next: 'once_7',
       },
-      checkCondition_9: {
+      applyBuff_11: {
         action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0035_liino_showhide_attack' }],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+            inheritToNextSkillIds: [
+              'chr_0035_liino_attack3',
+              'chr_0035_liino_attack4',
+              'chr_0035_liino_attack5',
+              'chr_0035_liino_power_attack',
+              'chr_0035_liino_normal_skill',
+            ],
+          },
         },
         next: null,
       },
@@ -1652,57 +1574,13 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
         },
         next: null,
       },
-      applyBuff_11: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0035_liino_showhide_attack' }],
-            targets: { kind: 'source' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-            finishByAction: true,
-            inheritToNextSkillIds: [
-              'chr_0035_liino_attack3',
-              'chr_0035_liino_attack4',
-              'chr_0035_liino_attack5',
-              'chr_0035_liino_power_attack',
-              'chr_0035_liino_normal_skill',
-            ],
-          },
-        },
-        next: null,
-      },
       ifElse_12: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_9' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'inheritBuffById_10' },
           whenFalse: { $sequence: 'applyBuff_11' },
-        },
-        next: null,
-      },
-      checkCondition_13: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-        },
-        next: null,
-      },
-      inheritBuffById_14: {
-        action: {
-          kind: 'inheritBuffById',
-          parameters: {
-            target: 'caster',
-            buffId: 'buff_chr_0035_liino_showhide_fire',
-            inheritToNextSkillIds: [
-              'chr_0035_liino_attack3',
-              'chr_0035_liino_attack4',
-              'chr_0035_liino_attack5',
-            ],
-            finishByAction: true,
-            finishWithNextSkillIfNotInherited: true,
-          },
         },
         next: null,
       },
@@ -1724,40 +1602,30 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
         },
         next: null,
       },
-      ifElse_16: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_13' },
-          whenTrue: { $sequence: 'inheritBuffById_14' },
-          whenFalse: { $sequence: 'applyBuff_15' },
-        },
-        next: null,
-      },
-      checkCondition_17: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-        },
-        next: null,
-      },
-      inheritBuffById_18: {
+      inheritBuffById_14: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
             target: 'caster',
-            buffId: 'buff_chr_0035_liino_showhide_audio',
+            buffId: 'buff_chr_0035_liino_showhide_fire',
             inheritToNextSkillIds: [
-              'chr_0035_liino_normal_skill',
               'chr_0035_liino_attack3',
               'chr_0035_liino_attack4',
               'chr_0035_liino_attack5',
-              'chr_0035_liino_combo_skill',
-              'chr_0035_liino_power_attack',
             ],
             finishByAction: true,
             finishWithNextSkillIfNotInherited: true,
           },
+        },
+        next: null,
+      },
+      ifElse_16: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
+          whenTrue: { $sequence: 'inheritBuffById_14' },
+          whenFalse: { $sequence: 'applyBuff_15' },
         },
         next: null,
       },
@@ -1782,37 +1650,33 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
         },
         next: null,
       },
-      ifElse_20: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_17' },
-          whenTrue: { $sequence: 'inheritBuffById_18' },
-          whenFalse: { $sequence: 'applyBuff_19' },
-        },
-        next: null,
-      },
-      checkCondition_21: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-        },
-        next: null,
-      },
-      inheritBuffById_22: {
+      inheritBuffById_18: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
             target: 'caster',
-            buffId: 'buff_chr_0035_liino_showhide_audio_fire',
+            buffId: 'buff_chr_0035_liino_showhide_audio',
             inheritToNextSkillIds: [
+              'chr_0035_liino_normal_skill',
               'chr_0035_liino_attack3',
               'chr_0035_liino_attack4',
               'chr_0035_liino_attack5',
+              'chr_0035_liino_combo_skill',
+              'chr_0035_liino_power_attack',
             ],
             finishByAction: true,
             finishWithNextSkillIfNotInherited: true,
           },
+        },
+        next: null,
+      },
+      ifElse_20: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
+          whenTrue: { $sequence: 'inheritBuffById_18' },
+          whenFalse: { $sequence: 'applyBuff_19' },
         },
         next: null,
       },
@@ -1834,11 +1698,28 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
         },
         next: null,
       },
+      inheritBuffById_22: {
+        action: {
+          kind: 'inheritBuffById',
+          parameters: {
+            target: 'caster',
+            buffId: 'buff_chr_0035_liino_showhide_audio_fire',
+            inheritToNextSkillIds: [
+              'chr_0035_liino_attack3',
+              'chr_0035_liino_attack4',
+              'chr_0035_liino_attack5',
+            ],
+            finishByAction: true,
+            finishWithNextSkillIfNotInherited: true,
+          },
+        },
+        next: null,
+      },
       ifElse_24: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_21' },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
           whenTrue: { $sequence: 'inheritBuffById_22' },
           whenFalse: { $sequence: 'applyBuff_23' },
         },
@@ -1854,10 +1735,14 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_5: {
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_6: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -1867,7 +1752,7 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_6: {
+      data_7: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -1877,7 +1762,7 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_7: {
+      data_8: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -1887,7 +1772,7 @@ export const liinoChr_0035_liino_attack5ActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_8: {
+      data_9: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -2088,30 +1973,6 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
         },
         next: null,
       },
-      checkCondition_9: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
-      inheritBuffById_10: {
-        action: {
-          kind: 'inheritBuffById',
-          parameters: {
-            target: 'caster',
-            buffId: 'buff_chr_0035_liino_showhide_attack',
-            inheritToNextSkillIds: [
-              'chr_0035_liino_attack3',
-              'chr_0035_liino_attack4',
-              'chr_0035_liino_attack5',
-            ],
-            finishByAction: true,
-            finishWithNextSkillIfNotInherited: true,
-          },
-        },
-        next: null,
-      },
       applyBuff_11: {
         action: {
           kind: 'applyBuff',
@@ -2130,23 +1991,16 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
         },
         next: null,
       },
-      checkCondition_12: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: null,
-      },
-      inheritBuffById_13: {
+      inheritBuffById_10: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
             target: 'caster',
             buffId: 'buff_chr_0035_liino_showhide_attack',
             inheritToNextSkillIds: [
-              'chr_0035_liino_power_attack',
-              'chr_0035_liino_normal_skill',
-              'chr_0035_liino_combo_skill',
+              'chr_0035_liino_attack3',
+              'chr_0035_liino_attack4',
+              'chr_0035_liino_attack5',
             ],
             finishByAction: true,
             finishWithNextSkillIfNotInherited: true,
@@ -2172,11 +2026,28 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
         },
         next: null,
       },
+      inheritBuffById_13: {
+        action: {
+          kind: 'inheritBuffById',
+          parameters: {
+            target: 'caster',
+            buffId: 'buff_chr_0035_liino_showhide_attack',
+            inheritToNextSkillIds: [
+              'chr_0035_liino_power_attack',
+              'chr_0035_liino_normal_skill',
+              'chr_0035_liino_combo_skill',
+            ],
+            finishByAction: true,
+            finishWithNextSkillIfNotInherited: true,
+          },
+        },
+        next: null,
+      },
       ifElse_15: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_12' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'inheritBuffById_13' },
           whenFalse: { $sequence: 'applyBuff_14' },
         },
@@ -2186,7 +2057,7 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_9' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'inheritBuffById_10' },
           whenFalse: { $sequence: 'applyBuff_11' },
         },
@@ -2201,33 +2072,6 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
-          },
-        },
-        next: null,
-      },
-      checkCondition_18: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-        },
-        next: null,
-      },
-      inheritBuffById_19: {
-        action: {
-          kind: 'inheritBuffById',
-          parameters: {
-            target: 'caster',
-            buffId: 'buff_chr_0035_liino_showhide_audio',
-            inheritToNextSkillIds: [
-              'chr_0035_liino_normal_skill',
-              'chr_0035_liino_attack3',
-              'chr_0035_liino_attack4',
-              'chr_0035_liino_attack5',
-              'chr_0035_liino_combo_skill',
-              'chr_0035_liino_power_attack',
-            ],
-            finishByAction: true,
-            finishWithNextSkillIfNotInherited: true,
           },
         },
         next: null,
@@ -2253,11 +2097,31 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
         },
         next: null,
       },
+      inheritBuffById_19: {
+        action: {
+          kind: 'inheritBuffById',
+          parameters: {
+            target: 'caster',
+            buffId: 'buff_chr_0035_liino_showhide_audio',
+            inheritToNextSkillIds: [
+              'chr_0035_liino_normal_skill',
+              'chr_0035_liino_attack3',
+              'chr_0035_liino_attack4',
+              'chr_0035_liino_attack5',
+              'chr_0035_liino_combo_skill',
+              'chr_0035_liino_power_attack',
+            ],
+            finishByAction: true,
+            finishWithNextSkillIfNotInherited: true,
+          },
+        },
+        next: null,
+      },
       ifElse_21: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_18' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'inheritBuffById_19' },
           whenFalse: { $sequence: 'applyBuff_20' },
         },
@@ -2284,7 +2148,7 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
         expression: {
           kind: 'buffIdStackCompare',
           target: 'caster',
-          buffIds: ['buff_chr_0035_liino_showhide_attack'],
+          buffIds: ['buff_chr_0035_liino_showhide'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
         },
@@ -2294,7 +2158,7 @@ export const liinoChr_0035_liino_power_attackActionGraph = {
         expression: {
           kind: 'buffIdStackCompare',
           target: 'caster',
-          buffIds: ['buff_chr_0035_liino_showhide'],
+          buffIds: ['buff_chr_0035_liino_showhide_attack'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
         },
@@ -2480,18 +2344,11 @@ export const liinoChr_0035_liino_plunging_attack_endActionGraph = {
         },
         next: null,
       },
-      checkCondition_11: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: null,
-      },
       ifElse_14: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_11' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'inheritBuffById_12' },
           whenFalse: { $sequence: 'applyBuff_13' },
         },
@@ -2556,18 +2413,11 @@ export const liinoChr_0035_liino_plunging_attack_endActionGraph = {
         },
         next: null,
       },
-      checkCondition_16: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-        },
-        next: null,
-      },
       ifElse_19: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_16' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'inheritBuffById_17' },
           whenFalse: { $sequence: 'applyBuff_18' },
         },
@@ -2864,18 +2714,11 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                         },
                         next: null,
                       },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                        },
-                        next: null,
-                      },
                       ifElse_4: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_1' },
                           whenTrue: { $sequence: 'launchProjectile_2' },
                           whenFalse: { $sequence: 'launchProjectile_3' },
                         },
@@ -3085,18 +2928,11 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                         },
                         next: null,
                       },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                        },
-                        next: null,
-                      },
                       ifElse_4: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_1' },
                           whenTrue: { $sequence: 'launchProjectile_2' },
                           whenFalse: { $sequence: 'launchProjectile_3' },
                         },
@@ -3304,18 +3140,11 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                         },
                         next: null,
                       },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                        },
-                        next: null,
-                      },
                       ifElse_4: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_1' },
                           whenTrue: { $sequence: 'launchProjectile_2' },
                           whenFalse: { $sequence: 'launchProjectile_3' },
                         },
@@ -3523,18 +3352,11 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                         },
                         next: null,
                       },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                        },
-                        next: null,
-                      },
                       ifElse_4: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_1' },
                           whenTrue: { $sequence: 'launchProjectile_2' },
                           whenFalse: { $sequence: 'launchProjectile_3' },
                         },
@@ -3742,18 +3564,11 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
                         },
                         next: null,
                       },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                        },
-                        next: null,
-                      },
                       ifElse_4: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_1' },
                           whenTrue: { $sequence: 'launchProjectile_2' },
                           whenFalse: { $sequence: 'launchProjectile_3' },
                         },
@@ -3811,7 +3626,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 1967 },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
         },
         next: null,
       },
@@ -3823,7 +3638,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
             skill: { kind: 'id', skillId: 'chr_0035_liino_normal_skill' },
             operation: 'set',
             basis: 'absoluteSeconds',
-            value: { kind: 'valueNode', nodeId: 'data_1' },
+            value: { kind: 'valueNode', nodeId: 'data_2' },
           },
         },
         next: 'jumpTimeline_11',
@@ -3859,7 +3674,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
       checkCondition_15: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
         next: 'applyBuff_14',
       },
@@ -3899,7 +3714,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
       checkCondition_19: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
         },
         next: 'finishBuffsById_18',
       },
@@ -4055,13 +3870,6 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_28: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-        },
-        next: null,
-      },
       applyBuff_33: {
         action: {
           kind: 'applyBuff',
@@ -4097,18 +3905,11 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_31: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-        },
-        next: null,
-      },
       ifElse_34: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_31' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'inheritBuffById_32' },
           whenFalse: { $sequence: 'applyBuff_33' },
         },
@@ -4118,7 +3919,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_28' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'inheritBuffById_29' },
           whenFalse: { $sequence: 'applyBuff_30' },
         },
@@ -4181,18 +3982,11 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_37: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-        },
-        next: null,
-      },
       ifElse_40: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_37' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'inheritBuffById_38' },
           whenFalse: { $sequence: 'applyBuff_39' },
         },
@@ -4221,7 +4015,7 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_7' },
+            amount: { kind: 'valueNode', nodeId: 'data_8' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -4250,18 +4044,11 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         },
         next: 'checkCondition_44',
       },
-      checkCondition_42: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-        },
-        next: null,
-      },
       ifElse_46: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_42' },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
           whenTrue: { $sequence: 'finishBuffsById_45' },
           whenFalse: { $sequence: null },
         },
@@ -4288,27 +4075,21 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'set_cd' } },
-      data_2: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'set_cd' } },
+      data_3: {
         type: 'boolean',
         expression: {
           kind: 'eventBuffIdMatch',
           buffIds: ['buff_chr_0035_liino_normalskill_end_active'],
         },
       },
-      data_3: {
-        type: 'boolean',
-        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0035_liino_normalskill_end'] },
-      },
       data_4: {
         type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0035_liino_showhide'],
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-        },
+        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0035_liino_normalskill_end'] },
       },
       data_5: {
         type: 'boolean',
@@ -4325,13 +4106,23 @@ export const liinoChr_0035_liino_normal_skillActionGraph = {
         expression: {
           kind: 'buffIdStackCompare',
           target: 'caster',
+          buffIds: ['buff_chr_0035_liino_showhide'],
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+        },
+      },
+      data_7: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: 'caster',
           buffIds: ['buff_chr_0035_liino_showhide_audio'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'potential_atb_return' } },
-      data_8: {
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'potential_atb_return' } },
+      data_9: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -4457,7 +4248,7 @@ export const liinoChr_0035_liino_normal_skill_comboActionGraph = {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 1938 },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
         },
         next: null,
       },
@@ -4473,7 +4264,7 @@ export const liinoChr_0035_liino_normal_skill_comboActionGraph = {
             skill: { kind: 'id', skillId: 'chr_0035_liino_normal_skill' },
             operation: 'set',
             basis: 'absoluteSeconds',
-            value: { kind: 'valueNode', nodeId: 'data_1' },
+            value: { kind: 'valueNode', nodeId: 'data_2' },
           },
         },
         next: 'jumpTimeline_2',
@@ -4509,7 +4300,7 @@ export const liinoChr_0035_liino_normal_skill_comboActionGraph = {
       checkCondition_8: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
         next: 'applyBuff_7',
       },
@@ -4549,7 +4340,7 @@ export const liinoChr_0035_liino_normal_skill_comboActionGraph = {
       checkCondition_12: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
         },
         next: 'finishBuffsById_11',
       },
@@ -4661,18 +4452,11 @@ export const liinoChr_0035_liino_normal_skill_comboActionGraph = {
         },
         next: null,
       },
-      checkCondition_21: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-        },
-        next: null,
-      },
       ifElse_24: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_21' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'inheritBuffById_22' },
           whenFalse: { $sequence: 'applyBuff_23' },
         },
@@ -4749,18 +4533,11 @@ export const liinoChr_0035_liino_normal_skill_comboActionGraph = {
         },
         next: null,
       },
-      checkCondition_28: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-        },
-        next: null,
-      },
       ifElse_31: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_28' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'inheritBuffById_29' },
           whenFalse: { $sequence: 'applyBuff_30' },
         },
@@ -4811,7 +4588,7 @@ export const liinoChr_0035_liino_normal_skill_comboActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_28' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'inheritBuffById_33' },
           whenFalse: { $sequence: 'applyBuff_34' },
         },
@@ -4837,19 +4614,23 @@ export const liinoChr_0035_liino_normal_skill_comboActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'set_cd' } },
-      data_2: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'set_cd' } },
+      data_3: {
         type: 'boolean',
         expression: {
           kind: 'eventBuffIdMatch',
           buffIds: ['buff_chr_0035_liino_normalskill_end_active'],
         },
       },
-      data_3: {
+      data_4: {
         type: 'boolean',
         expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0035_liino_normalskill_end'] },
       },
-      data_4: {
+      data_5: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -4859,7 +4640,17 @@ export const liinoChr_0035_liino_normal_skill_comboActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_5: {
+      data_6: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: 'caster',
+          buffIds: ['buff_chr_0035_liino_showhide_audio'],
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+        },
+      },
+      data_7: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -5222,7 +5013,7 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 540 },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
         },
         next: null,
       },
@@ -5253,7 +5044,7 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
       checkCondition_18: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
         next: 'applyBuff_17',
       },
@@ -5306,23 +5097,16 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
           parameters: {
             key: 'fnlatk_up',
             operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_6' },
+            value: { kind: 'valueNode', nodeId: 'data_7' },
           },
         },
         next: 'applyBuff_22',
-      },
-      checkCondition_20: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
-        },
-        next: null,
       },
       ifElse_24: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_20' },
+          condition: { kind: 'conditionNode', nodeId: 'data_10' },
           whenTrue: { $sequence: 'applyBuff_22' },
           whenFalse: { $sequence: 'modifyActionValue_23' },
         },
@@ -5336,7 +5120,7 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
             stage: 'finalNonConverted',
             useFloor: false,
             divisor: { kind: 'constant', value: 1 },
-            multiplier: { kind: 'valueNode', nodeId: 'data_10' },
+            multiplier: { kind: 'valueNode', nodeId: 'data_11' },
             base: { kind: 'constant', value: 0 },
             targetKey: 'fnlatk_up',
           },
@@ -5448,23 +5232,6 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_33: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
-        },
-        next: null,
-      },
-      ifElse_34: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_33' },
-          whenTrue: { $sequence: null },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'ultheal_value' } },
@@ -5472,6 +5239,10 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'ultheal_rate' } },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_3' } },
       data_5: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_6: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -5481,28 +5252,19 @@ export const liinoChr_0035_liino_ultimate_skillActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'will_max' } },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'fnlatk_up', fallback: 0 } },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'will_max', fallback: 0 } },
-      data_9: {
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'will_max' } },
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'fnlatk_up', fallback: 0 } },
+      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'will_max', fallback: 0 } },
+      data_10: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_7' },
+          left: { kind: 'valueNode', nodeId: 'data_8' },
           operator: 'lessOrEqual',
-          right: { kind: 'valueNode', nodeId: 'data_8' },
+          right: { kind: 'valueNode', nodeId: 'data_9' },
         },
       },
-      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'will_up' } },
-      data_11: {
-        type: 'boolean',
-        expression: {
-          kind: 'entityTagMatch',
-          target: 'caster',
-          tagQueryType: 'hasAny',
-          tags: ['Skill/Character/chr_0035_liino/ComboSkill'],
-        },
-      },
+      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'will_up' } },
     },
   },
   macros: {},
@@ -5577,7 +5339,6 @@ export const liinoChr_0035_liino_ultimate_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 80, sequence: { $sequence: 'applyBuff_30' } },
     { startFrame: 0, endFrame: 77, sequence: { $sequence: 'hideUi_31' } },
     { startFrame: 0, endFrame: 77, sequence: { $sequence: 'startUltimateTimeDilation_32' } },
-    { startFrame: 77, endFrame: 406, sequence: { $sequence: 'ifElse_34' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 600,
@@ -5827,18 +5588,11 @@ const liinoBuff3ActionGraph = {
         },
         next: 'finishParentGlobalBuff_10',
       },
-      checkCondition_7: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_15: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_7' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_9' },
           whenFalse: { $sequence: 'findTargets_12' },
         },
@@ -5851,18 +5605,11 @@ const liinoBuff3ActionGraph = {
         },
         next: 'ifElse_15',
       },
-      checkCondition_13: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-        },
-        next: null,
-      },
       ifElse_17: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_13' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'ifElse_15' },
           whenFalse: { $sequence: 'checkCondition_16' },
         },
@@ -6617,18 +6364,11 @@ const liinoBuff12ActionGraph = {
                         },
                         next: 'heal_2',
                       },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-                        },
-                        next: null,
-                      },
                       ifElse_6: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_5' },
                           whenTrue: { $sequence: 'storeSourceAttributeValue_3' },
                           whenFalse: { $sequence: 'checkCondition_5' },
                         },
@@ -6758,18 +6498,11 @@ const liinoBuff12ActionGraph = {
                         },
                         next: 'heal_2',
                       },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-                        },
-                        next: null,
-                      },
                       ifElse_6: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_5' },
                           whenTrue: { $sequence: 'storeSourceAttributeValue_3' },
                           whenFalse: { $sequence: 'checkCondition_5' },
                         },
@@ -7111,12 +6844,35 @@ const liinoBuff14: SkillBuffDefinition = {
 const liinoBuff15ActionGraph = {
   main: {
     nodes: {
-      checkCondition_1: {
+      applyBuff_4: {
         action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_chr_0035_liino_normalskill_music_animation_hitr',
+                copiedBlackboardAssignments: { atk_scale_2: 'atk_scale_2' },
+              },
+            ],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+            asChildBuff: true,
+          },
         },
         next: null,
+      },
+      calculateActionValue_5: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'hit_check',
+            operation: 'multiply',
+            left: { kind: 'valueNode', nodeId: 'data_1' },
+            right: { kind: 'constant', value: -1 },
+          },
+        },
+        next: 'applyBuff_4',
       },
       applyBuff_2: {
         action: {
@@ -7142,47 +6898,17 @@ const liinoBuff15ActionGraph = {
           parameters: {
             key: 'hit_check',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_3' },
+            left: { kind: 'valueNode', nodeId: 'data_1' },
             right: { kind: 'constant', value: -1 },
           },
         },
         next: 'applyBuff_2',
       },
-      applyBuff_4: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [
-              {
-                buffId: 'buff_chr_0035_liino_normalskill_music_animation_hitr',
-                copiedBlackboardAssignments: { atk_scale_2: 'atk_scale_2' },
-              },
-            ],
-            targets: { kind: 'source' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-            asChildBuff: true,
-          },
-        },
-        next: null,
-      },
-      calculateActionValue_5: {
-        action: {
-          kind: 'calculateActionValue',
-          parameters: {
-            key: 'hit_check',
-            operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_3' },
-            right: { kind: 'constant', value: -1 },
-          },
-        },
-        next: 'applyBuff_4',
-      },
       ifElse_6: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'calculateActionValue_3' },
           whenFalse: { $sequence: 'calculateActionValue_5' },
         },
@@ -7245,17 +6971,17 @@ const liinoBuff15ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'hit_check', fallback: 0 } },
-      data_2: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'hit_check' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'hit_check', fallback: 0 } },
+      data_3: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_1' },
+          left: { kind: 'valueNode', nodeId: 'data_2' },
           operator: 'greater',
           right: { kind: 'constant', value: 0 },
         },
       },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'hit_check' } },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'hit_duration' } },
       data_5: {
         type: 'boolean',
@@ -7464,25 +7190,6 @@ const liinoBuff22: SkillBuffDefinition = {
 const liinoBuff23ActionGraph = {
   main: {
     nodes: {
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
-      applyBuff_2: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0035_liino_normalskill_end_active' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
       applyBuff_3: {
         action: {
           kind: 'applyBuff',
@@ -7498,15 +7205,27 @@ const liinoBuff23ActionGraph = {
       checkCondition_4: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
         },
         next: 'applyBuff_3',
+      },
+      applyBuff_2: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0035_liino_normalskill_end_active' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
       },
       ifElse_5: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'applyBuff_2' },
           whenFalse: { $sequence: 'checkCondition_4' },
         },
@@ -7516,15 +7235,15 @@ const liinoBuff23ActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
+        expression: { kind: 'currentSkillTypeIn', target: 'buffOwner', skillTypes: ['ultimate'] },
+      },
+      data_2: {
+        type: 'boolean',
         expression: {
           kind: 'currentSkillTypeIn',
           target: 'buffOwner',
           skillTypes: ['battleSkill'],
         },
-      },
-      data_2: {
-        type: 'boolean',
-        expression: { kind: 'currentSkillTypeIn', target: 'buffOwner', skillTypes: ['ultimate'] },
       },
     },
   },
@@ -7969,18 +7688,11 @@ const liinoBuff33ActionGraph = {
                         },
                         next: null,
                       },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                        },
-                        next: null,
-                      },
                       ifElse_6: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_2' },
                           whenTrue: { $sequence: 'dealDamage_2' },
                           whenFalse: { $sequence: null },
                         },
@@ -8013,13 +7725,6 @@ const liinoBuff33ActionGraph = {
                         },
                         next: 'heal_4',
                       },
-                      checkCondition_3: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-                        },
-                        next: null,
-                      },
                       applyBuff_7: {
                         action: {
                           kind: 'applyBuff',
@@ -8035,7 +7740,7 @@ const liinoBuff33ActionGraph = {
                       checkCondition_8: {
                         action: {
                           kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
                         },
                         next: 'applyBuff_7',
                       },
@@ -8043,7 +7748,7 @@ const liinoBuff33ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_3' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_7' },
                           whenTrue: { $sequence: 'storeSourceAttributeValue_5' },
                           whenFalse: { $sequence: 'ifElse_6' },
                         },
@@ -8077,18 +7782,18 @@ const liinoBuff33ActionGraph = {
                       data_6: {
                         type: 'boolean',
                         expression: {
-                          kind: 'actionInputTargetObjectTypeMatch',
-                          objectTypes: ['character'],
-                        },
-                      },
-                      data_7: {
-                        type: 'boolean',
-                        expression: {
                           kind: 'buffIdStackCompare',
                           target: 'caster',
                           buffIds: ['buff_chr_0035_liino_chrdung_armorbreak'],
                           operator: 'greaterOrEqual',
                           value: { kind: 'constant', value: 1 },
+                        },
+                      },
+                      data_7: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'actionInputTargetObjectTypeMatch',
+                          objectTypes: ['character'],
                         },
                       },
                     },
@@ -8147,18 +7852,11 @@ const liinoBuff33ActionGraph = {
                         },
                         next: null,
                       },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                        },
-                        next: null,
-                      },
                       ifElse_6: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_2' },
                           whenTrue: { $sequence: 'dealDamage_2' },
                           whenFalse: { $sequence: null },
                         },
@@ -8191,13 +7889,6 @@ const liinoBuff33ActionGraph = {
                         },
                         next: 'heal_4',
                       },
-                      checkCondition_3: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-                        },
-                        next: null,
-                      },
                       applyBuff_7: {
                         action: {
                           kind: 'applyBuff',
@@ -8213,7 +7904,7 @@ const liinoBuff33ActionGraph = {
                       checkCondition_8: {
                         action: {
                           kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
                         },
                         next: 'applyBuff_7',
                       },
@@ -8221,7 +7912,7 @@ const liinoBuff33ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_3' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_7' },
                           whenTrue: { $sequence: 'storeSourceAttributeValue_5' },
                           whenFalse: { $sequence: 'ifElse_6' },
                         },
@@ -8255,18 +7946,18 @@ const liinoBuff33ActionGraph = {
                       data_6: {
                         type: 'boolean',
                         expression: {
-                          kind: 'actionInputTargetObjectTypeMatch',
-                          objectTypes: ['character'],
-                        },
-                      },
-                      data_7: {
-                        type: 'boolean',
-                        expression: {
                           kind: 'buffIdStackCompare',
                           target: 'caster',
                           buffIds: ['buff_chr_0035_liino_chrdung_armorbreak'],
                           operator: 'greaterOrEqual',
                           value: { kind: 'constant', value: 1 },
+                        },
+                      },
+                      data_7: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'actionInputTargetObjectTypeMatch',
+                          objectTypes: ['character'],
                         },
                       },
                     },
@@ -9286,18 +8977,11 @@ export const liino: OperatorDefinition = {
                 },
                 next: 'launchProjectile_3',
               },
-              checkCondition_2: {
-                action: {
-                  kind: 'checkCondition',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                },
-                next: null,
-              },
               ifElse_7: {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: 'checkCondition_2' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_1' },
                   whenTrue: { $sequence: 'launchProjectile_4' },
                   whenFalse: { $sequence: 'launchProjectile_6' },
                 },
@@ -9539,7 +9223,7 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: 'checkCondition_2' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_2' },
                   whenTrue: { $sequence: 'launchProjectile_10' },
                   whenFalse: { $sequence: 'launchProjectile_12' },
                 },
@@ -9781,7 +9465,7 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: 'checkCondition_2' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_3' },
                   whenTrue: { $sequence: 'launchProjectile_16' },
                   whenFalse: { $sequence: 'launchProjectile_18' },
                 },
@@ -10023,7 +9707,7 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: 'checkCondition_2' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_4' },
                   whenTrue: { $sequence: 'launchProjectile_22' },
                   whenFalse: { $sequence: 'launchProjectile_24' },
                 },
@@ -10265,7 +9949,7 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: 'checkCondition_2' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_5' },
                   whenTrue: { $sequence: 'launchProjectile_28' },
                   whenFalse: { $sequence: 'launchProjectile_30' },
                 },
@@ -10507,7 +10191,7 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: 'checkCondition_2' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_6' },
                   whenTrue: { $sequence: 'launchProjectile_34' },
                   whenFalse: { $sequence: 'launchProjectile_36' },
                 },
@@ -10749,7 +10433,7 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: 'checkCondition_2' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_7' },
                   whenTrue: { $sequence: 'launchProjectile_40' },
                   whenFalse: { $sequence: 'launchProjectile_42' },
                 },
@@ -10961,7 +10645,7 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: 'checkCondition_2' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_8' },
                   whenTrue: { $sequence: 'launchProjectile_45' },
                   whenFalse: { $sequence: 'launchProjectile_46' },
                 },
@@ -11203,7 +10887,7 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: 'checkCondition_2' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_9' },
                   whenTrue: { $sequence: 'launchProjectile_50' },
                   whenFalse: { $sequence: 'launchProjectile_52' },
                 },
@@ -11445,7 +11129,7 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: 'checkCondition_2' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_10' },
                   whenTrue: { $sequence: 'launchProjectile_56' },
                   whenFalse: { $sequence: 'launchProjectile_58' },
                 },
@@ -11687,7 +11371,7 @@ export const liino: OperatorDefinition = {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: 'checkCondition_2' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_11' },
                   whenTrue: { $sequence: 'launchProjectile_62' },
                   whenFalse: { $sequence: 'launchProjectile_64' },
                 },
@@ -11696,6 +11380,116 @@ export const liino: OperatorDefinition = {
             },
             dataNodes: {
               data_1: {
+                type: 'boolean',
+                expression: {
+                  kind: 'entityCountCompare',
+                  target: { kind: 'fixed', target: 'enemy' },
+                  containsHittableTarget: false,
+                  excludeDeadEntity: false,
+                  operator: 'greaterOrEqual',
+                  value: 1,
+                },
+              },
+              data_2: {
+                type: 'boolean',
+                expression: {
+                  kind: 'entityCountCompare',
+                  target: { kind: 'fixed', target: 'enemy' },
+                  containsHittableTarget: false,
+                  excludeDeadEntity: false,
+                  operator: 'greaterOrEqual',
+                  value: 1,
+                },
+              },
+              data_3: {
+                type: 'boolean',
+                expression: {
+                  kind: 'entityCountCompare',
+                  target: { kind: 'fixed', target: 'enemy' },
+                  containsHittableTarget: false,
+                  excludeDeadEntity: false,
+                  operator: 'greaterOrEqual',
+                  value: 1,
+                },
+              },
+              data_4: {
+                type: 'boolean',
+                expression: {
+                  kind: 'entityCountCompare',
+                  target: { kind: 'fixed', target: 'enemy' },
+                  containsHittableTarget: false,
+                  excludeDeadEntity: false,
+                  operator: 'greaterOrEqual',
+                  value: 1,
+                },
+              },
+              data_5: {
+                type: 'boolean',
+                expression: {
+                  kind: 'entityCountCompare',
+                  target: { kind: 'fixed', target: 'enemy' },
+                  containsHittableTarget: false,
+                  excludeDeadEntity: false,
+                  operator: 'greaterOrEqual',
+                  value: 1,
+                },
+              },
+              data_6: {
+                type: 'boolean',
+                expression: {
+                  kind: 'entityCountCompare',
+                  target: { kind: 'fixed', target: 'enemy' },
+                  containsHittableTarget: false,
+                  excludeDeadEntity: false,
+                  operator: 'greaterOrEqual',
+                  value: 1,
+                },
+              },
+              data_7: {
+                type: 'boolean',
+                expression: {
+                  kind: 'entityCountCompare',
+                  target: { kind: 'fixed', target: 'enemy' },
+                  containsHittableTarget: false,
+                  excludeDeadEntity: false,
+                  operator: 'greaterOrEqual',
+                  value: 1,
+                },
+              },
+              data_8: {
+                type: 'boolean',
+                expression: {
+                  kind: 'entityCountCompare',
+                  target: { kind: 'fixed', target: 'enemy' },
+                  containsHittableTarget: false,
+                  excludeDeadEntity: false,
+                  operator: 'greaterOrEqual',
+                  value: 1,
+                },
+              },
+              data_9: {
+                type: 'boolean',
+                expression: {
+                  kind: 'entityCountCompare',
+                  target: { kind: 'fixed', target: 'enemy' },
+                  containsHittableTarget: false,
+                  excludeDeadEntity: false,
+                  operator: 'greaterOrEqual',
+                  value: 1,
+                },
+              },
+              data_10: {
+                type: 'boolean',
+                expression: {
+                  kind: 'entityCountCompare',
+                  target: { kind: 'fixed', target: 'enemy' },
+                  containsHittableTarget: false,
+                  excludeDeadEntity: false,
+                  operator: 'greaterOrEqual',
+                  value: 1,
+                },
+              },
+              data_11: {
                 type: 'boolean',
                 expression: {
                   kind: 'entityCountCompare',

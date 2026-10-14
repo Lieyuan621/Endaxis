@@ -71,7 +71,7 @@ export const xaihiChr_0011_seraph_attack1ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_2' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_4' },
                           whenTrue: { $sequence: 'changeResource_3' },
                           whenFalse: { $sequence: null },
                         },
@@ -82,7 +82,7 @@ export const xaihiChr_0011_seraph_attack1ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
                           },
                         },
@@ -104,6 +104,13 @@ export const xaihiChr_0011_seraph_attack1ActionGraph = {
                       },
                       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
                       data_4: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_2' },
+                        },
+                      },
+                      data_5: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -231,7 +238,7 @@ export const xaihiChr_0011_seraph_attack2ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_2' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_4' },
                           whenTrue: { $sequence: 'changeResource_3' },
                           whenFalse: { $sequence: null },
                         },
@@ -242,7 +249,7 @@ export const xaihiChr_0011_seraph_attack2ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
                           },
                         },
@@ -264,6 +271,13 @@ export const xaihiChr_0011_seraph_attack2ActionGraph = {
                       },
                       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
                       data_4: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_2' },
+                        },
+                      },
+                      data_5: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -391,7 +405,7 @@ export const xaihiChr_0011_seraph_attack3ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_2' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_4' },
                           whenTrue: { $sequence: 'changeResource_3' },
                           whenFalse: { $sequence: null },
                         },
@@ -402,7 +416,7 @@ export const xaihiChr_0011_seraph_attack3ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
                           },
                         },
@@ -424,6 +438,13 @@ export const xaihiChr_0011_seraph_attack3ActionGraph = {
                       },
                       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
                       data_4: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_2' },
+                        },
+                      },
+                      data_5: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -551,7 +572,7 @@ export const xaihiChr_0011_seraph_attack4ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_2' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_4' },
                           whenTrue: { $sequence: 'changeResource_3' },
                           whenFalse: { $sequence: null },
                         },
@@ -562,7 +583,7 @@ export const xaihiChr_0011_seraph_attack4ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
                           },
                         },
@@ -584,6 +605,13 @@ export const xaihiChr_0011_seraph_attack4ActionGraph = {
                       },
                       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
                       data_4: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_2' },
+                        },
+                      },
+                      data_5: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -659,26 +687,12 @@ export const xaihiChr_0011_seraph_attack5ActionGraph = {
         },
         next: null,
       },
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
-      checkCondition_7: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       changeResource_13: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_3' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -688,18 +702,25 @@ export const xaihiChr_0011_seraph_attack5ActionGraph = {
         },
         next: null,
       },
+      checkCondition_11: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: null,
+      },
       checkCondition_12: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
-        next: 'checkCondition_7',
+        next: 'checkCondition_11',
       },
       ifElse_14: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_12' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'changeResource_13' },
           whenFalse: { $sequence: null },
         },
@@ -736,7 +757,7 @@ export const xaihiChr_0011_seraph_attack5ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'findTargets_2' },
           whenFalse: { $sequence: null },
         },
@@ -746,7 +767,7 @@ export const xaihiChr_0011_seraph_attack5ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_7' },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
           whenTrue: { $sequence: 'ifElse_opt1' },
           whenFalse: { $sequence: null },
         },
@@ -754,18 +775,7 @@ export const xaihiChr_0011_seraph_attack5ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: {
-        type: 'boolean',
-        expression: {
-          kind: 'targetDistance',
-          source: { kind: 'owner' },
-          target: { kind: 'fixed', target: 'enemy' },
-          distance: 12,
-          lessThan: true,
-          includeTargetRadius: false,
-          containsHittableObject: false,
-        },
-      },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_2: {
         type: 'boolean',
         expression: {
@@ -777,10 +787,36 @@ export const xaihiChr_0011_seraph_attack5ActionGraph = {
           value: 1,
         },
       },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_12' } },
+      },
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_7: {
+        type: 'boolean',
+        expression: {
+          kind: 'targetDistance',
+          source: { kind: 'owner' },
+          target: { kind: 'fixed', target: 'enemy' },
+          distance: 12,
+          lessThan: true,
+          includeTargetRadius: false,
+          containsHittableObject: false,
+        },
+      },
+      data_8: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
     },
   },
   macros: {},
@@ -826,13 +862,6 @@ export const xaihiChr_0011_seraph_attack5: SkillDefinition = {
 export const xaihiChr_0011_seraph_power_attackActionGraph = {
   main: {
     nodes: {
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       startTimeDilation_2: {
         action: {
           kind: 'startTimeDilation',
@@ -852,7 +881,7 @@ export const xaihiChr_0011_seraph_power_attackActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'startTimeDilation_2' },
           whenFalse: { $sequence: null },
         },
@@ -1030,18 +1059,11 @@ export const xaihiChr_0011_seraph_normal_skillActionGraph = {
         },
         next: 'finishBuffsById_2',
       },
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_4: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_3' },
           whenFalse: { $sequence: null },
         },
@@ -1137,13 +1159,6 @@ export const xaihiChr_0011_seraph_combo_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       createSpatialPointTargets_4: {
         action: {
           kind: 'createSpatialPointTargets',
@@ -1162,7 +1177,7 @@ export const xaihiChr_0011_seraph_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'findTargets_2' },
           whenFalse: { $sequence: 'mergeContextTargets_3' },
         },
@@ -1262,27 +1277,13 @@ export const xaihiChr_0011_seraph_combo_skillActionGraph = {
                         },
                         next: null,
                       },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                        },
-                        next: null,
-                      },
                       ifElse_4: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_1' },
                           whenTrue: { $sequence: 'applyBuff_2' },
                           whenFalse: { $sequence: null },
-                        },
-                        next: null,
-                      },
-                      checkCondition_3: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
                         },
                         next: null,
                       },
@@ -1290,7 +1291,7 @@ export const xaihiChr_0011_seraph_combo_skillActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_3' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_3' },
                           whenTrue: { $sequence: 'ifElse_4' },
                           whenFalse: { $sequence: null },
                         },
@@ -1338,18 +1339,11 @@ export const xaihiChr_0011_seraph_combo_skillActionGraph = {
                         },
                         next: 'changeResource_11',
                       },
-                      checkCondition_10: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
-                        },
-                        next: null,
-                      },
                       ifElse_13: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_10' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_9' },
                           whenTrue: { $sequence: 'startTimeDilation_12' },
                           whenFalse: { $sequence: null },
                         },
@@ -1390,7 +1384,7 @@ export const xaihiChr_0011_seraph_combo_skillActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_7' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_12' },
                           whenTrue: { $sequence: 'modifyActionValue_opt1' },
                           whenFalse: { $sequence: null },
                         },
@@ -1466,6 +1460,13 @@ export const xaihiChr_0011_seraph_combo_skillActionGraph = {
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
                       data_11: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+                      data_12: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_7' },
+                        },
+                      },
                     },
                   },
                   macros: {},
@@ -1512,7 +1513,7 @@ export const xaihiChr_0011_seraph_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'launchProjectile_14' },
           whenFalse: { $sequence: 'launchProjectile_14' },
         },
@@ -1547,6 +1548,10 @@ export const xaihiChr_0011_seraph_combo_skillActionGraph = {
           operator: 'greaterOrEqual',
           value: 1,
         },
+      },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     },
   },
@@ -1636,13 +1641,6 @@ export const xaihiChr_0011_seraph_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_5: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       dispelBuffs_6: {
         action: {
           kind: 'dispelBuffs',
@@ -1665,7 +1663,7 @@ export const xaihiChr_0011_seraph_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_5' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'dispelBuffs_6' },
           whenFalse: { $sequence: null },
         },
@@ -1790,10 +1788,14 @@ export const xaihiCommon_character_perfect_dodge: SkillDefinition = {
 const xaihiBuff1ActionGraph = {
   main: {
     nodes: {
-      checkCondition_1: {
+      modifyActionValue_3: {
         action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'final_final_atkup',
+            operation: 'assign',
+            value: { kind: 'valueNode', nodeId: 'data_1' },
+          },
         },
         next: null,
       },
@@ -1803,18 +1805,7 @@ const xaihiBuff1ActionGraph = {
           parameters: {
             key: 'final_final_atkup',
             operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_4' },
-          },
-        },
-        next: null,
-      },
-      modifyActionValue_3: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'final_final_atkup',
-            operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_5' },
+            value: { kind: 'valueNode', nodeId: 'data_2' },
           },
         },
         next: null,
@@ -1827,8 +1818,8 @@ const xaihiBuff1ActionGraph = {
               {
                 buffId: 'buff_common_affixes_enhance_natural',
                 blackboardAssignments: {
-                  duration: { kind: 'valueNode', nodeId: 'data_6' },
-                  rate: { kind: 'valueNode', nodeId: 'data_7' },
+                  duration: { kind: 'valueNode', nodeId: 'data_3' },
+                  rate: { kind: 'valueNode', nodeId: 'data_4' },
                 },
                 stringBlackboardAssignments: {
                   child_buff_id: 'buff_chr_0011_seraph_ultimate_effect_2',
@@ -1851,8 +1842,8 @@ const xaihiBuff1ActionGraph = {
               {
                 buffId: 'buff_common_affixes_enhance_crystal',
                 blackboardAssignments: {
-                  duration: { kind: 'valueNode', nodeId: 'data_6' },
-                  rate: { kind: 'valueNode', nodeId: 'data_7' },
+                  duration: { kind: 'valueNode', nodeId: 'data_3' },
+                  rate: { kind: 'valueNode', nodeId: 'data_4' },
                 },
                 stringBlackboardAssignments: {
                   child_buff_id: 'buff_chr_0011_seraph_ultimate_effect',
@@ -1873,8 +1864,8 @@ const xaihiBuff1ActionGraph = {
           parameters: {
             key: 'final_final_atkup',
             operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_7' },
-            right: { kind: 'valueNode', nodeId: 'data_8' },
+            left: { kind: 'valueNode', nodeId: 'data_4' },
+            right: { kind: 'valueNode', nodeId: 'data_5' },
           },
         },
         next: 'applyBuff_5',
@@ -1883,7 +1874,7 @@ const xaihiBuff1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
           whenTrue: { $sequence: 'modifyActionValue_2' },
           whenFalse: { $sequence: 'modifyActionValue_3' },
         },
@@ -1906,25 +1897,25 @@ const xaihiBuff1ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'final_atkup' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'wisd_max' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'final_final_atkup' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_up' } },
+      data_6: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'final_atkup', fallback: 0 },
       },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'wisd_max', fallback: 0 } },
-      data_3: {
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'wisd_max', fallback: 0 } },
+      data_8: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_1' },
+          left: { kind: 'valueNode', nodeId: 'data_6' },
           operator: 'greaterOrEqual',
-          right: { kind: 'valueNode', nodeId: 'data_2' },
+          right: { kind: 'valueNode', nodeId: 'data_7' },
         },
       },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'wisd_max' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'final_atkup' } },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'final_final_atkup' } },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'atk_up' } },
       data_9: { type: 'number', expression: { kind: 'blackboard', key: 'wisd_up' } },
     },
   },
@@ -2815,13 +2806,6 @@ export const xaihi: OperatorDefinition = {
                 },
                 next: null,
               },
-              checkCondition_3: {
-                action: {
-                  kind: 'checkCondition',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-                },
-                next: null,
-              },
               applyBuff_4: {
                 action: {
                   kind: 'applyBuff',
@@ -2850,7 +2834,7 @@ export const xaihi: OperatorDefinition = {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: 'checkCondition_3' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_5' },
                   whenTrue: { $sequence: null },
                   whenFalse: { $sequence: 'finishBuffsById_5' },
                 },

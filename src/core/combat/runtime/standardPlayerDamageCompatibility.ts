@@ -1,4 +1,5 @@
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
+import type { ActionGraphReference } from '../../../../packages/game-data-contract/src/actionGraph';
 import { rootActionSteps } from '../../compiler/actionProgramInspection';
 /**
  * 在启动模拟前检查编译产物是否完全落在标准玩家生命伤害环境的能力边界内。
@@ -79,10 +80,21 @@ function inspectCondition(
   path: string,
   collect: IssueCollector,
   flags: CompatibilityFlags,
+  inspectAction?: (entry: ActionGraphReference, path: string) => void,
 ): void {
   switch (condition.kind) {
     case 'conditionNode':
-      inspectCondition(condition.node.expression, path, collect, flags);
+      inspectCondition(condition.node.expression, path, collect, flags, inspectAction);
+      return;
+    case 'checkActionResult':
+      if (inspectAction) inspectAction(condition.action, `${path}.action`);
+      else
+        report(
+          collect,
+          'unsupported-condition',
+          path,
+          'checkActionResult requires an action graph invocation',
+        );
       return;
     case 'constant':
     case 'skillHasHit':
@@ -157,12 +169,12 @@ function inspectCondition(
       }
       return;
     case 'not':
-      inspectCondition(condition.condition, `${path}.condition`, collect, flags);
+      inspectCondition(condition.condition, `${path}.condition`, collect, flags, inspectAction);
       return;
     case 'all':
     case 'any':
       condition.conditions.forEach((child, index) =>
-        inspectCondition(child, `${path}.conditions[${index}]`, collect, flags),
+        inspectCondition(child, `${path}.conditions[${index}]`, collect, flags, inspectAction),
       );
       return;
     default:
@@ -177,6 +189,8 @@ function inspectSequence(
   flags: CompatibilityFlags,
   source: 'skill' | 'equipment' = 'skill',
 ): void {
+  const inspectAction = (entry: ActionGraphReference, inputPath: string) =>
+    inspectSequence({ ...sequence, entry: entry.$sequence }, inputPath, collect, flags, source);
   rootActionSteps(sequence).forEach((step, index) => {
     const stepPath = `${path}.steps[${index}]`;
     switch (step.kind) {
@@ -402,7 +416,7 @@ function inspectSequence(
         }
         return;
       case 'jumpTimeline':
-        inspectSequence(step.condition, `${stepPath}.condition`, collect, flags);
+        inspectCondition(step.condition, `${stepPath}.condition`, collect, flags, inspectAction);
         return;
       case 'reachSkillOperableBoundary':
       case 'markCurrentSkillCanDash':
@@ -456,11 +470,17 @@ function inspectSequence(
         return;
       case 'anyCondition':
         step.conditions.forEach((condition, index) =>
-          inspectSequence(condition, `${stepPath}.conditions[${index}]`, collect, flags, source),
+          inspectCondition(
+            condition,
+            `${stepPath}.conditions[${index}]`,
+            collect,
+            flags,
+            inspectAction,
+          ),
         );
         return;
       case 'ifElse':
-        inspectSequence(step.condition, `${stepPath}.condition`, collect, flags, source);
+        inspectCondition(step.condition, `${stepPath}.condition`, collect, flags, inspectAction);
         inspectSequence(step.whenTrue, `${stepPath}.whenTrue`, collect, flags, source);
         inspectSequence(step.whenFalse, `${stepPath}.whenFalse`, collect, flags, source);
         return;
@@ -470,6 +490,7 @@ function inspectSequence(
           `${stepPath}.parameters.condition`,
           collect,
           flags,
+          inspectAction,
         );
         return;
       case 'conditional':
@@ -478,6 +499,7 @@ function inspectSequence(
           `${stepPath}.parameters.condition`,
           collect,
           flags,
+          inspectAction,
         );
         inspectSequence(step.whenTrue, `${stepPath}.whenTrue`, collect, flags, source);
         if (step.whenFalse !== undefined) {

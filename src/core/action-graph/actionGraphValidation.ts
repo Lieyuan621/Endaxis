@@ -3,7 +3,11 @@ import type {
   ActionGraphReference,
   ActionGraphResourceDefinition,
 } from '../../../packages/game-data-contract/src/actionGraph.ts';
-import { validateGraphDataReferences, graphDataExpression } from './actionGraphData.ts';
+import {
+  validateGraphDataReferences,
+  graphDataExpression,
+  isGraphDataReference,
+} from './actionGraphData.ts';
 
 /**
  * 图结构校验由生成器、编辑器和编译器共用。只读取引用，不展开程序。
@@ -15,6 +19,9 @@ export function validateActionGraph(
 ): ReadonlyMap<string, readonly (string | null)[]> {
   validateGraphDataReferences(graph);
   const edges = new Map<string, readonly (string | null)[]>();
+  // 调用方向与画布箭头不同：行为调用后续行为，数值消费者调用数值提供者。
+  // 两类节点必须放在同一张依赖图中检查，否则转接头形成的跨类型环会漏检。
+  const dependencies = new Map<string, string[]>();
   function reference(value: unknown, path: string): string | null {
     if (value !== null && (typeof value !== 'string' || !value))
       throw new Error(`${path}: invalid action graph reference`);
@@ -22,38 +29,50 @@ export function validateActionGraph(
       throw new Error(`${path}: missing action graph node: ${value}`);
     return value;
   }
+  function collect(value: unknown, path: string, targets: string[]): void {
+    if (!value || typeof value !== 'object') return;
+    if ('actionGraph' in value) {
+      validateActionGraphOwner(value as { actionGraph: ActionGraphResourceDefinition }, path);
+      return;
+    }
+    if (isGraphDataReference(value)) {
+      targets.push(`data:${value.nodeId}`);
+      return;
+    }
+    if (Object.hasOwn(value, '$sequence')) {
+      const record = value as Record<string, unknown>;
+      if (Object.keys(record).length !== 1)
+        throw new Error(`${path}: action graph reference contains unexpected fields`);
+      const target = reference(record.$sequence, path);
+      if (target !== null) targets.push(`action:${target}`);
+      return;
+    }
+    for (const [key, item] of Object.entries(value)) collect(item, `${path}.${key}`, targets);
+  }
+  for (const [id, node] of Object.entries(graph.dataNodes ?? {})) {
+    const targets: string[] = [];
+    collect(node.expression, `data.${id}`, targets);
+    dependencies.set(`data:${id}`, targets);
+  }
   for (const [id, node] of Object.entries(graph.nodes)) {
     if (!id) throw new Error('action graph node identity must not be empty');
     if (node.action.kind === 'applyBuff' && 'definition' in node.action.parameters)
       throw new Error(`graph.${id}: applyBuff must reference an owner Buff definition`);
-    const targets = [reference(node.next, `graph.${id}.next`)];
-    // 宏引用和节点身份绑定不是本图控制边；宏接口单独由资源校验检查。
-    const pending: { value: unknown; path: string }[] =
-      node.action.kind === 'callMacro' ? [] : [{ value: node.action, path: `graph.${id}.action` }];
-    // 检查本图的所有控制出口；独立资源另行校验，不能把其入口当成本图边。
-    while (pending.length) {
-      const { value, path } = pending.pop()!;
-      if (!value || typeof value !== 'object') continue;
-      if ('actionGraph' in value) {
-        validateActionGraphOwner(value as { actionGraph: ActionGraphResourceDefinition }, path);
-        continue;
-      }
-      if (Object.hasOwn(value, '$sequence')) {
-        const record = value as Record<string, unknown>;
-        if (Object.keys(record).length !== 1)
-          throw new Error(`${path}: action graph reference contains unexpected fields`);
-        targets.push(reference(record.$sequence, path));
-      } else {
-        for (const [key, item] of Object.entries(value))
-          pending.push({ value: item, path: `${path}.${key}` });
-      }
-    }
-    edges.set(id, targets);
+    const next = reference(node.next, `graph.${id}.next`);
+    const calls = next === null ? [] : [`action:${next}`];
+    // 宏身份绑定不是引用；实参仍然可能依赖本图的数据节点。
+    collect(
+      node.action.kind === 'callMacro' ? node.action.arguments : node.action,
+      `graph.${id}.action`,
+      calls,
+    );
+    edges.set(id, [next]);
+    dependencies.set(`action:${id}`, [...new Set(calls)]);
   }
   entries.forEach((entry, index) => reference(entry.$sequence, `entries[${index}]`));
   const complete = new Set<string>();
   const visiting = new Set<string>();
-  for (const root of edges.keys()) {
+  for (const root of dependencies.keys()) {
     const pending: { id: string | null; exit?: boolean }[] = [{ id: root }];
     while (pending.length) {
       const { id, exit } = pending.pop()!;
@@ -62,12 +81,29 @@ export function validateActionGraph(
         visiting.delete(id);
         complete.add(id);
       } else {
-        if (visiting.has(id)) throw new Error(`recursive action graph: ${id}`);
+        if (visiting.has(id))
+          throw new Error(`recursive action graph: ${id.slice(id.indexOf(':') + 1)}`);
         visiting.add(id);
         pending.push({ id, exit: true });
-        for (const target of edges.get(id)!) pending.push({ id: target });
+        for (const target of dependencies.get(id)!) pending.push({ id: target });
       }
     }
+  }
+  // 编译器按行为入口编译；经数值求值间接调用的行为也属于该入口的依赖。
+  for (const [id, targets] of edges) {
+    const actions = new Set(targets);
+    const seen = new Set<string>();
+    const pending = [...dependencies.get(`action:${id}`)!];
+    while (pending.length) {
+      const target = pending.pop()!;
+      if (target.startsWith('action:')) {
+        actions.add(target.slice('action:'.length));
+      } else if (!seen.has(target)) {
+        seen.add(target);
+        pending.push(...dependencies.get(target)!);
+      }
+    }
+    edges.set(id, [...actions]);
   }
   return edges;
 }

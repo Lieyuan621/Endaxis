@@ -261,7 +261,9 @@ export function dataNodeHasEffects(graph: ActionGraphDefinition, id: string): bo
     if (
       typeof expression === 'object' &&
       'kind' in expression &&
-      (expression.kind === 'probability' || expression.kind === 'buffBlackboardValueCompare')
+      (expression.kind === 'checkActionResult' ||
+        expression.kind === 'probability' ||
+        expression.kind === 'buffBlackboardValueCompare')
     )
       return true;
     let effects = false;

@@ -2,6 +2,25 @@ import { mountSetup } from '../../test/componentSetup';
 import { expect, it } from 'vitest';
 import type { CombatCondition } from '../../../packages/game-data-contract/src/conditions';
 import ConditionListField from './ConditionListField.vue';
+import ActionNodeInspector from '../action-graph/ActionNodeInspector.vue';
+
+it('行为节点的条件列表接线后仍保留列表编辑入口', async () => {
+  const panel = await mountSetup(ActionNodeInspector, {
+    nodeId: 'any',
+    node: {
+      action: { kind: 'anyCondition', conditions: [{ kind: 'conditionNode', nodeId: 'shared' }] },
+      next: null,
+    },
+    applyAction: () => true,
+  });
+  try {
+    expect(panel.state.fields.value.map((field: { path: string[] }) => field.path)).toContainEqual([
+      'conditions',
+    ]);
+  } finally {
+    panel.stop();
+  }
+});
 
 async function mount(value: readonly CombatCondition[], editable = true) {
   const changes: (readonly CombatCondition[])[] = [];

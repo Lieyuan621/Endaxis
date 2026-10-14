@@ -1566,6 +1566,8 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
   }
 
   evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
+    if (condition.kind === 'checkActionResult')
+      throw new Error('checkActionResult must be evaluated by its action graph invocation');
     if (condition.kind === 'contextTargetBuffStackCompare') {
       if (context?.targetContext === undefined)
         throw new Error('context Buff count requires a combat target context');

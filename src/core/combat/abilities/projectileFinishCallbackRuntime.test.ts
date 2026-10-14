@@ -237,7 +237,7 @@ describe('projectile callback action lifecycle', () => {
               {
                 kind: 'jumpTimeline',
                 parameters: { destinationFrame: 6 },
-                condition: { $sequence: null },
+                condition: { kind: 'constant', value: true },
               },
               probe,
             ]),

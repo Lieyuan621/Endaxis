@@ -8,19 +8,12 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const arclightChr_0007_ikut_attack1ActionGraph = {
   main: {
     nodes: {
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -34,7 +27,7 @@ export const arclightChr_0007_ikut_attack1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_3' },
           whenFalse: { $sequence: null },
         },
@@ -60,8 +53,8 @@ export const arclightChr_0007_ikut_attack1ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -101,19 +94,12 @@ export const arclightChr_0007_ikut_attack1: SkillDefinition = {
 export const arclightChr_0007_ikut_attack2ActionGraph = {
   main: {
     nodes: {
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -127,7 +113,7 @@ export const arclightChr_0007_ikut_attack2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_3' },
           whenFalse: { $sequence: null },
         },
@@ -153,8 +139,8 @@ export const arclightChr_0007_ikut_attack2ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -210,18 +196,11 @@ export const arclightChr_0007_ikut_attack3ActionGraph = {
         },
         next: null,
       },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_5: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_4' },
           whenFalse: { $sequence: null },
         },
@@ -305,18 +284,11 @@ export const arclightChr_0007_ikut_attack4ActionGraph = {
         },
         next: null,
       },
-      checkCondition_16: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_18: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_16' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_17' },
           whenFalse: { $sequence: null },
         },
@@ -415,18 +387,11 @@ export const arclightChr_0007_ikut_attack5ActionGraph = {
         },
         next: null,
       },
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_4: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_3' },
           whenFalse: { $sequence: null },
         },
@@ -464,7 +429,7 @@ export const arclightChr_0007_ikut_attack5ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'startTimeDilation_7' },
           whenFalse: { $sequence: null },
         },
@@ -474,7 +439,7 @@ export const arclightChr_0007_ikut_attack5ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'ifElse_8' },
           whenFalse: { $sequence: null },
         },
@@ -493,6 +458,11 @@ export const arclightChr_0007_ikut_attack5ActionGraph = {
       data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_5: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_6: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
     },
   },
   macros: {},
@@ -646,19 +616,12 @@ export const arclightChr_0007_ikut_power_attack: SkillDefinition = {
 export const arclightChr_0007_ikut_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -673,7 +636,7 @@ export const arclightChr_0007_ikut_plunging_attack_endActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_3' },
           whenFalse: { $sequence: null },
         },
@@ -692,8 +655,8 @@ export const arclightChr_0007_ikut_plunging_attack_endActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -849,13 +812,6 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_14: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-        },
-        next: null,
-      },
       finishBuffsByTag_17: {
         action: {
           kind: 'finishBuffsByTag',
@@ -909,7 +865,7 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'electric',
-            attackScale: { kind: 'valueNode', nodeId: 'data_6' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalSkill'],
             features: ['canBreakWeakness'],
             stagger: { kind: 'valueNode', nodeId: 'data_3' },
@@ -922,7 +878,7 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_7' },
+            amount: { kind: 'valueNode', nodeId: 'data_5' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -936,24 +892,17 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_14' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'applyBuff_15' },
           whenFalse: { $sequence: null },
         },
         next: 'changeResource_22',
       },
-      checkCondition_16: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-        },
-        next: null,
-      },
       ifElse_27: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_16' },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
           whenTrue: { $sequence: 'ifElse_23' },
           whenFalse: { $sequence: 'dealDamage_26' },
         },
@@ -963,7 +912,7 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
           whenTrue: { $sequence: 'ifElse_27' },
           whenFalse: { $sequence: null },
         },
@@ -1040,18 +989,11 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_30: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
-        },
-        next: null,
-      },
       ifElse_32: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_30' },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
           whenTrue: { $sequence: 'startTimeDilation_31' },
           whenFalse: { $sequence: null },
         },
@@ -1076,16 +1018,9 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_16' },
+          condition: { kind: 'conditionNode', nodeId: 'data_12' },
           whenTrue: { $sequence: 'modifyActionValue_35' },
           whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      checkCondition_37: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
         },
         next: null,
       },
@@ -1093,7 +1028,7 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 96 },
-          condition: { $sequence: 'checkCondition_37' },
+          condition: { kind: 'conditionNode', nodeId: 'data_14' },
         },
         next: null,
       },
@@ -1101,7 +1036,7 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 204 },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_15' },
         },
         next: null,
       },
@@ -1110,18 +1045,18 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise1' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise2' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'talent_1', fallback: 0 } },
-      data_5: {
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'talent_1', fallback: 0 } },
+      data_7: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_4' },
+          left: { kind: 'valueNode', nodeId: 'data_6' },
           operator: 'greater',
           right: { kind: 'constant', value: 0 },
         },
       },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_8: {
         type: 'boolean',
         expression: {
@@ -1131,28 +1066,45 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
           tags: ['Skill/Character/Common/SpellStatus/Conduct'],
         },
       },
-      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'thirdhit', fallback: 0 } },
-      data_10: {
+      data_9: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'thirdhit', fallback: 0 } },
+      data_11: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_9' },
+          left: { kind: 'valueNode', nodeId: 'data_10' },
           operator: 'equal',
           right: { kind: 'constant', value: 1 },
         },
-      },
-      data_11: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'SpawnThird', fallback: 0 },
       },
       data_12: {
         type: 'boolean',
         expression: {
+          kind: 'entityTagMatch',
+          target: 'enemy',
+          tagQueryType: 'hasAny',
+          tags: ['Skill/Character/Common/SpellStatus/Conduct'],
+        },
+      },
+      data_13: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'SpawnThird', fallback: 0 },
+      },
+      data_14: {
+        type: 'boolean',
+        expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_11' },
+          left: { kind: 'valueNode', nodeId: 'data_13' },
           operator: 'equal',
           right: { kind: 'constant', value: 1 },
         },
+      },
+      data_15: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     },
   },
@@ -1320,18 +1272,11 @@ export const arclightChr_0007_ikut_combo_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_opt2: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: 'findTargets_opt1' },
         },
@@ -2110,18 +2055,11 @@ export const arclight: OperatorDefinition = {
                 },
                 next: 'forceSpellStatus_8',
               },
-              checkCondition_7: {
-                action: {
-                  kind: 'checkCondition',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-                },
-                next: null,
-              },
               ifElse_10: {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: 'checkCondition_7' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_6' },
                   whenTrue: { $sequence: 'readBuffStackCount_9' },
                   whenFalse: { $sequence: null },
                 },

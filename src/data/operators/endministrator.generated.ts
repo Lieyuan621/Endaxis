@@ -11,13 +11,6 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const endministratorChr_0003_endminf_attack1ActionGraph = {
   main: {
     nodes: {
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       startTimeDilation_3: {
         action: {
           kind: 'startTimeDilation',
@@ -38,7 +31,7 @@ export const endministratorChr_0003_endminf_attack1ActionGraph = {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -52,7 +45,7 @@ export const endministratorChr_0003_endminf_attack1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_4' },
           whenFalse: { $sequence: null },
         },
@@ -78,8 +71,8 @@ export const endministratorChr_0003_endminf_attack1ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -124,13 +117,6 @@ export const endministratorChr_0003_endminf_attack1: SkillDefinition = {
 export const endministratorChr_0003_endminf_attack2ActionGraph = {
   main: {
     nodes: {
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       startTimeDilation_3: {
         action: {
           kind: 'startTimeDilation',
@@ -151,7 +137,7 @@ export const endministratorChr_0003_endminf_attack2ActionGraph = {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -165,7 +151,7 @@ export const endministratorChr_0003_endminf_attack2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_4' },
           whenFalse: { $sequence: null },
         },
@@ -191,8 +177,8 @@ export const endministratorChr_0003_endminf_attack2ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -267,18 +253,11 @@ export const endministratorChr_0003_endminf_attack3ActionGraph = {
         },
         next: 'startTimeDilation_4',
       },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_6: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_5' },
           whenFalse: { $sequence: null },
         },
@@ -331,7 +310,7 @@ export const endministratorChr_0003_endminf_attack3ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'changeResource_10' },
           whenFalse: { $sequence: null },
         },
@@ -363,6 +342,7 @@ export const endministratorChr_0003_endminf_attack3ActionGraph = {
       data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_5: { type: 'boolean', expression: { kind: 'casterControlled' } },
     },
   },
   macros: {},
@@ -438,18 +418,11 @@ export const endministratorChr_0003_endminf_attack4ActionGraph = {
         },
         next: 'startTimeDilation_5',
       },
-      checkCondition_4: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_7: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_4' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_6' },
           whenFalse: { $sequence: null },
         },
@@ -500,7 +473,7 @@ export const endministratorChr_0003_endminf_attack4ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_4' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'changeResource_16' },
           whenFalse: { $sequence: null },
         },
@@ -551,7 +524,7 @@ export const endministratorChr_0003_endminf_attack4ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_4' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'changeResource_22' },
           whenFalse: { $sequence: null },
         },
@@ -580,6 +553,8 @@ export const endministratorChr_0003_endminf_attack4ActionGraph = {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_5: { type: 'boolean', expression: { kind: 'casterControlled' } },
     },
   },
   macros: {},
@@ -637,19 +612,12 @@ export const endministratorChr_0003_endminf_attack5ActionGraph = {
         },
         next: null,
       },
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       changeResource_5: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -663,24 +631,17 @@ export const endministratorChr_0003_endminf_attack5ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'modifyActionValue_3' },
           whenFalse: { $sequence: null },
         },
         next: 'changeResource_5',
       },
-      checkCondition_4: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: null,
-      },
       ifElse_7: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_4' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'ifElse_6' },
           whenFalse: { $sequence: null },
         },
@@ -714,18 +675,11 @@ export const endministratorChr_0003_endminf_attack5ActionGraph = {
         },
         next: null,
       },
-      checkCondition_10: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-        },
-        next: null,
-      },
       ifElse_12: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_10' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'startTimeDilation_11' },
           whenFalse: { $sequence: null },
         },
@@ -752,7 +706,8 @@ export const endministratorChr_0003_endminf_attack5ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -763,7 +718,6 @@ export const endministratorChr_0003_endminf_attack5ActionGraph = {
           value: 1,
         },
       },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
@@ -842,18 +796,11 @@ export const endministratorChr_0003_endminf_power_attack2ActionGraph = {
         },
         next: null,
       },
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_3: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'changeResource_2' },
           whenFalse: { $sequence: null },
         },
@@ -880,7 +827,7 @@ export const endministratorChr_0003_endminf_power_attack2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'gainFinisherSp_6' },
           whenFalse: { $sequence: null },
         },
@@ -917,14 +864,14 @@ export const endministratorChr_0003_endminf_power_attack2ActionGraph = {
       checkCondition_10: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
         },
         next: 'startTimeDilation_9',
       },
       checkCondition_11: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
         next: 'checkCondition_10',
       },
@@ -946,14 +893,14 @@ export const endministratorChr_0003_endminf_power_attack2ActionGraph = {
       checkCondition_13: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
         next: 'startTimeDilation_12',
       },
       checkCondition_14: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
         next: 'checkCondition_13',
       },
@@ -987,7 +934,8 @@ export const endministratorChr_0003_endminf_power_attack2ActionGraph = {
     dataNodes: {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_3: {
+      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -998,8 +946,8 @@ export const endministratorChr_0003_endminf_power_attack2ActionGraph = {
           value: 1,
         },
       },
-      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_5: {
+      data_5: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_6: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -1010,7 +958,7 @@ export const endministratorChr_0003_endminf_power_attack2ActionGraph = {
           value: 1,
         },
       },
-      data_6: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_7: { type: 'boolean', expression: { kind: 'casterControlled' } },
     },
   },
   macros: {},
@@ -1052,19 +1000,12 @@ export const endministratorChr_0003_endminf_power_attack2: SkillDefinition = {
 export const endministratorChr_0003_endminf_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -1078,7 +1019,7 @@ export const endministratorChr_0003_endminf_plunging_attack_endActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_3' },
           whenFalse: { $sequence: null },
         },
@@ -1097,8 +1038,8 @@ export const endministratorChr_0003_endminf_plunging_attack_endActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -1201,18 +1142,11 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
         },
         next: 'modifyActionValue_25',
       },
-      checkCondition_24: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_37: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_24' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'startTimeDilation_26' },
           whenFalse: { $sequence: null },
         },
@@ -1327,7 +1261,7 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_29' },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
           whenTrue: { $sequence: 'checkCondition_36' },
           whenFalse: { $sequence: 'applyPhysicalInfliction_39' },
         },
@@ -1366,7 +1300,7 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_12' },
           whenTrue: { $sequence: 'applyBuff_42' },
           whenFalse: { $sequence: null },
         },
@@ -1387,14 +1321,14 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
       checkCondition_44: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
         },
         next: null,
       },
       checkCondition_45: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_14' } },
         },
         next: 'checkCondition_44',
       },
@@ -1402,7 +1336,7 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_45' },
+          condition: { kind: 'conditionNode', nodeId: 'data_15' },
           whenTrue: { $sequence: 'applyBuff_46' },
           whenFalse: { $sequence: null },
         },
@@ -1411,7 +1345,7 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
       checkCondition_48: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_16' } },
         },
         next: 'ifElse_47',
       },
@@ -1475,6 +1409,14 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
       },
       data_11: {
         type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_29' } },
+      },
+      data_12: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_13: {
+        type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
           target: 'caster',
@@ -1483,7 +1425,7 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
           value: { kind: 'constant', value: 0 },
         },
       },
-      data_12: {
+      data_14: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -1493,7 +1435,11 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_13: {
+      data_15: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_45' } },
+      },
+      data_16: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -1562,13 +1508,6 @@ export const endministratorChr_0003_endminf_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       igniteBuffs_3: {
         action: {
           kind: 'igniteBuffs',
@@ -1581,7 +1520,7 @@ export const endministratorChr_0003_endminf_ultimate_skillActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['ultimateSkill'],
           },
         },
@@ -1591,7 +1530,7 @@ export const endministratorChr_0003_endminf_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'dealDamage_4' },
           whenFalse: { $sequence: null },
         },
@@ -1628,6 +1567,18 @@ export const endministratorChr_0003_endminf_ultimate_skillActionGraph = {
         },
         next: 'dealDamage_7',
       },
+      applyBuff_11: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0003_endminf_potential5_trigger' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
       checkCondition_9: {
         action: {
           kind: 'checkCondition',
@@ -1642,23 +1593,11 @@ export const endministratorChr_0003_endminf_ultimate_skillActionGraph = {
         },
         next: 'checkCondition_9',
       },
-      applyBuff_11: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0003_endminf_potential5_trigger' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
       ifElse_12: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_10' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'applyBuff_11' },
           whenFalse: { $sequence: null },
         },
@@ -1667,7 +1606,7 @@ export const endministratorChr_0003_endminf_ultimate_skillActionGraph = {
       checkCondition_13: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
         },
         next: 'ifElse_12',
       },
@@ -1699,6 +1638,10 @@ export const endministratorChr_0003_endminf_ultimate_skillActionGraph = {
     },
     dataNodes: {
       data_1: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'originum_ult_break_scale' },
+      },
+      data_2: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -1707,10 +1650,6 @@ export const endministratorChr_0003_endminf_ultimate_skillActionGraph = {
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
         },
-      },
-      data_2: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'originum_ult_break_scale' },
       },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
@@ -1735,6 +1674,10 @@ export const endministratorChr_0003_endminf_ultimate_skillActionGraph = {
         },
       },
       data_7: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_10' } },
+      },
+      data_8: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -1800,7 +1743,7 @@ export const endministratorChr_0003_endminf_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_1' },
           whenFalse: { $sequence: null },
         },
@@ -1826,10 +1769,10 @@ export const endministratorChr_0003_endminf_combo_skillActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_3' },
+            stagger: { kind: 'valueNode', nodeId: 'data_4' },
           },
         },
         next: 'startTimeDilation_3',
@@ -1871,7 +1814,7 @@ export const endministratorChr_0003_endminf_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'dealDamage_6' },
           whenFalse: { $sequence: null },
         },
@@ -1890,13 +1833,6 @@ export const endministratorChr_0003_endminf_combo_skillActionGraph = {
             ignoredTargets: ['caster'],
             ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
           },
-        },
-        next: null,
-      },
-      checkCondition_9: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
         },
         next: null,
       },
@@ -1950,7 +1886,7 @@ export const endministratorChr_0003_endminf_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_9' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: 'startTimeDilation_10' },
         },
@@ -1959,9 +1895,17 @@ export const endministratorChr_0003_endminf_combo_skillActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_5: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_6: { type: 'boolean', expression: { kind: 'casterControlled' } },
     },
   },
   macros: {},

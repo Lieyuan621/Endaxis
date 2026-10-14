@@ -39,18 +39,11 @@ export const snowshineChr_0014_aurora_attack1ActionGraph = {
         },
         next: 'changeResource_2',
       },
-      checkCondition_4: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_5: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'startTimeDilation_3' },
           whenFalse: { $sequence: null },
         },
@@ -60,7 +53,7 @@ export const snowshineChr_0014_aurora_attack1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_4' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'ifElse_5' },
           whenFalse: { $sequence: null },
         },
@@ -71,7 +64,7 @@ export const snowshineChr_0014_aurora_attack1ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack'],
           },
         },
@@ -87,8 +80,12 @@ export const snowshineChr_0014_aurora_attack1ActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
   macros: {},
@@ -162,18 +159,11 @@ export const snowshineChr_0014_aurora_attack2ActionGraph = {
         },
         next: 'changeResource_2',
       },
-      checkCondition_4: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_5: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'startTimeDilation_3' },
           whenFalse: { $sequence: null },
         },
@@ -183,7 +173,7 @@ export const snowshineChr_0014_aurora_attack2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_4' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'ifElse_5' },
           whenFalse: { $sequence: null },
         },
@@ -194,7 +184,7 @@ export const snowshineChr_0014_aurora_attack2ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack'],
           },
         },
@@ -210,8 +200,12 @@ export const snowshineChr_0014_aurora_attack2ActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
   macros: {},
@@ -270,27 +264,13 @@ export const snowshineChr_0014_aurora_attack3ActionGraph = {
         },
         next: null,
       },
-      checkCondition_11: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_14: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_11' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'startTimeDilation_12' },
           whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      checkCondition_13: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: null,
       },
@@ -298,7 +278,7 @@ export const snowshineChr_0014_aurora_attack3ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_13' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'ifElse_14' },
           whenFalse: { $sequence: null },
         },
@@ -382,7 +362,7 @@ export const snowshineChr_0014_aurora_attack3ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_11' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'startTimeDilation_22' },
           whenFalse: { $sequence: null },
         },
@@ -392,7 +372,7 @@ export const snowshineChr_0014_aurora_attack3ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_13' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'ifElse_24' },
           whenFalse: { $sequence: null },
         },
@@ -403,9 +383,9 @@ export const snowshineChr_0014_aurora_attack3ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_6' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_8' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
-            stagger: { kind: 'valueNode', nodeId: 'data_7' },
+            stagger: { kind: 'valueNode', nodeId: 'data_9' },
             staggerOnlyWhenCasterControlled: true,
           },
         },
@@ -464,8 +444,20 @@ export const snowshineChr_0014_aurora_attack3ActionGraph = {
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale1' } },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_6: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_7: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
+      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
     },
   },
   macros: {},
@@ -513,13 +505,6 @@ export const snowshineChr_0014_aurora_attack3: SkillDefinition = {
 export const snowshineChr_0014_aurora_power_attackActionGraph = {
   main: {
     nodes: {
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       startTimeDilation_2: {
         action: {
           kind: 'startTimeDilation',
@@ -535,18 +520,11 @@ export const snowshineChr_0014_aurora_power_attackActionGraph = {
         },
         next: null,
       },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_4: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'startTimeDilation_2' },
           whenFalse: { $sequence: null },
         },
@@ -556,7 +534,7 @@ export const snowshineChr_0014_aurora_power_attackActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'ifElse_4' },
           whenFalse: { $sequence: null },
         },
@@ -784,18 +762,11 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_12: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-        },
-        next: null,
-      },
       ifElse_14: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_12' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'changeResource_13' },
           whenFalse: { $sequence: null },
         },
@@ -836,13 +807,6 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_26: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-        },
-        next: null,
-      },
       aura_33: {
         action: {
           kind: 'aura',
@@ -857,18 +821,11 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_32: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-        },
-        next: null,
-      },
       ifElse_34: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_32' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'aura_33' },
           whenFalse: { $sequence: null },
         },
@@ -884,7 +841,7 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
             buffs: [
               {
                 buffId: 'buff_chr_0014_aurora_reduce_damage',
-                blackboardAssignments: { taken_dmg: { kind: 'valueNode', nodeId: 'data_8' } },
+                blackboardAssignments: { taken_dmg: { kind: 'valueNode', nodeId: 'data_7' } },
               },
             ],
           },
@@ -897,7 +854,7 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 107 },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
         },
         next: null,
       },
@@ -1008,18 +965,11 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_48: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
-        },
-        next: null,
-      },
       ifElse_50: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_48' },
+          condition: { kind: 'conditionNode', nodeId: 'data_13' },
           whenTrue: { $sequence: 'startTimeDilation_49' },
           whenFalse: { $sequence: null },
         },
@@ -1122,7 +1072,7 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
             buffs: [
               {
                 buffId: 'buff_chr_0014_aurora_reduce_damage',
-                blackboardAssignments: { taken_dmg: { kind: 'valueNode', nodeId: 'data_8' } },
+                blackboardAssignments: { taken_dmg: { kind: 'valueNode', nodeId: 'data_7' } },
                 stringBlackboardAssignments: {},
               },
             ],
@@ -1154,7 +1104,7 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_16' },
           whenTrue: { $sequence: 'copyContextTargets_25' },
           whenFalse: { $sequence: 'copyContextTargets_25' },
         },
@@ -1164,7 +1114,7 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_26' },
+          condition: { kind: 'conditionNode', nodeId: 'data_17' },
           whenTrue: { $sequence: 'findTargets_opt2' },
           whenFalse: { $sequence: 'ifElse_opt3' },
         },
@@ -1188,31 +1138,23 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
         },
       },
       data_5: {
-        type: 'boolean',
-        expression: {
-          kind: 'targetDistance',
-          source: { kind: 'owner' },
-          target: { kind: 'context', key: 'Attacker' },
-          distance: 3.5,
-          lessThan: false,
-          includeTargetRadius: false,
-          containsHittableObject: false,
-        },
-      },
-      data_6: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'potential_1', fallback: 0 },
       },
-      data_7: {
+      data_6: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_6' },
+          left: { kind: 'valueNode', nodeId: 'data_5' },
           operator: 'greaterOrEqual',
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'taken_dmg' } },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'taken_dmg' } },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
       data_9: {
         type: 'boolean',
         expression: {
@@ -1251,6 +1193,22 @@ export const snowshineChr_0014_aurora_normal_skillActionGraph = {
       },
       data_14: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_15: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_16: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_17: {
+        type: 'boolean',
+        expression: {
+          kind: 'targetDistance',
+          source: { kind: 'owner' },
+          target: { kind: 'context', key: 'Attacker' },
+          distance: 3.5,
+          lessThan: false,
+          includeTargetRadius: false,
+          containsHittableObject: false,
+        },
+      },
     },
   },
   macros: {},
@@ -1318,18 +1276,11 @@ export const snowshineChr_0014_aurora_combo_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_5: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'createSpatialPointTargets_3' },
           whenFalse: { $sequence: 'findCharacterTeamTargets_1' },
         },
@@ -1413,7 +1364,7 @@ export const snowshineChr_0014_aurora_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'createSpatialPointTargets_8' },
           whenFalse: { $sequence: 'findCharacterTeamTargets_10' },
         },
@@ -1424,7 +1375,7 @@ export const snowshineChr_0014_aurora_combo_skillActionGraph = {
           kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_3' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -1459,7 +1410,7 @@ export const snowshineChr_0014_aurora_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: 'findCharacterTeamTargets_16' },
         },
@@ -1468,7 +1419,9 @@ export const snowshineChr_0014_aurora_combo_skillActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
     },
   },
   macros: {},
@@ -1548,29 +1501,9 @@ export const snowshineChr_0014_aurora_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'dealDamage_3' },
           whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      checkCondition_5: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-        },
-        next: null,
-      },
-      spawnAbilityEntity_6: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            bornAt: { kind: 'context', key: 'ult_pos' },
-            abilityEntityId: 'abilityentity_chr_0014_aurora_ultimate_skill',
-            childSkillId: 'chr_0014_aurora_ultimate_skill_abilityrange_potential2',
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: false,
-          },
         },
         next: null,
       },
@@ -1587,11 +1520,24 @@ export const snowshineChr_0014_aurora_ultimate_skillActionGraph = {
         },
         next: null,
       },
+      spawnAbilityEntity_6: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'context', key: 'ult_pos' },
+            abilityEntityId: 'abilityentity_chr_0014_aurora_ultimate_skill',
+            childSkillId: 'chr_0014_aurora_ultimate_skill_abilityrange_potential2',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+          },
+        },
+        next: null,
+      },
       ifElse_8: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_5' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'spawnAbilityEntity_6' },
           whenFalse: { $sequence: 'spawnAbilityEntity_7' },
         },
@@ -1634,14 +1580,18 @@ export const snowshineChr_0014_aurora_ultimate_skillActionGraph = {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
       data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_4: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'potential_2', fallback: 0 },
       },
-      data_4: {
+      data_5: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_3' },
+          left: { kind: 'valueNode', nodeId: 'data_4' },
           operator: 'equal',
           right: { kind: 'constant', value: 1 },
         },

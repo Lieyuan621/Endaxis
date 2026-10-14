@@ -341,12 +341,6 @@ const schema_d95144895c9a = [
   'lowestHealthRatioOperatorExceptControlled',
   'contextTarget',
 ] as const;
-const schema_2b8eaa967c6c = {
-  valueSchema: schema_48e664ac4ce5,
-  path: ['condition'],
-  description: '',
-  control: 'sequence',
-} as const;
 const schema_5d6b40fb5d02 = {
   valueSchema: { kind: 'enum', options: ['equal', 'notEqual'], semantics: schema_4107b248d073 },
   path: ['operator'],
@@ -3861,7 +3855,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         description: '条件成立时跳到的宿主局部帧。',
         control: 'number',
       },
-      schema_2b8eaa967c6c,
+      { valueSchema: schema_4ef6f4abac78, path: ['condition'], description: '', control: 'json' },
     ],
   },
   reachSkillOperableBoundary: {
@@ -3898,7 +3892,12 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
         description: '',
         control: 'boolean',
       },
-      schema_2b8eaa967c6c,
+      {
+        valueSchema: schema_4ef6f4abac78,
+        path: ['condition'],
+        description: '消费布尔输入时求值；含行为的原生条件由 checkActionResult 显式转接。',
+        control: 'json',
+      },
       {
         valueSchema: schema_48e664ac4ce5,
         path: ['whenTrue'],
@@ -3916,16 +3915,7 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
   anyCondition: {
     fields: [
       schema_b5bd846f4492,
-      {
-        valueSchema: {
-          kind: 'array',
-          element: schema_48e664ac4ce5,
-          semantics: { arrayElement: { aliases: ['ActionGraphReference'] } },
-        },
-        path: ['conditions'],
-        description: '',
-        control: 'json',
-      },
+      { valueSchema: schema_f5cdfd7f29c0, path: ['conditions'], description: '', control: 'json' },
     ],
   },
   conditional: {
@@ -4760,6 +4750,11 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
     ],
   },
   'boolean:conditionNode': { fields: [schema_161c32df7f2a] },
+  'boolean:checkActionResult': {
+    fields: [
+      { valueSchema: schema_48e664ac4ce5, path: ['action'], description: '', control: 'sequence' },
+    ],
+  },
   'boolean:skillHasHit': { fields: [] },
   'boolean:entityCountCompare': {
     fields: [

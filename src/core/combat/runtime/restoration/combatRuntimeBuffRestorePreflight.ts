@@ -78,6 +78,8 @@ function collectRequiredActionSequenceReferences(
   references: BuffReference[],
 ): void {
   if (sequence === null) return;
+  for (const evaluation of sequence.evaluations?.values() ?? [])
+    collectRequiredActionSequenceReferences(evaluation, references);
   const dataItems = [...sequence.nodes.values()].map(node => node.data);
   for (const data of dataItems) {
     if (data === null) continue;
@@ -90,9 +92,6 @@ function collectRequiredActionSequenceReferences(
         collectRequiredActionSequenceReferences(branch, references);
     } else if (data.kind === 'channeling') {
       collectRequiredActionSequenceReferences(data.channeling.body, references);
-    } else if (data.kind === 'graphConditions') {
-      for (const sequence of data.sequences.values())
-        collectRequiredActionSequenceReferences(sequence, references);
     } else if (
       data.kind === 'graphGuard' ||
       data.kind === 'graphComboQte' ||
@@ -104,8 +103,6 @@ function collectRequiredActionSequenceReferences(
         collectRequiredActionSequenceReferences(influence.enter, references);
         collectRequiredActionSequenceReferences(influence.exit, references);
       }
-    } else if (data.kind === 'graphJump') {
-      collectRequiredActionSequenceReferences(data.condition, references);
     } else if (data.kind === 'graphTargets' || data.kind === 'graphOnce') {
       collectRequiredActionSequenceReferences(data.body, references);
     } else if (data.kind === 'repeat') {

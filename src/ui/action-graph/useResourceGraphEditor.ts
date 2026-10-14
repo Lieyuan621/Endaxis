@@ -18,7 +18,7 @@ import {
   type ActionGraphAddress,
   type ActionGraphResourceOwner,
 } from '../../application/editor/actionGraphResourceEditing';
-import { listGraphPorts } from '../../application/editor/actionGraphPorts';
+import { listGraphPorts, listDataActionPorts } from '../../application/editor/actionGraphPorts';
 import { listDataInputs, dataNodeInputs } from '../../core/action-graph/actionGraphDataNodes';
 import { useGraphVariables } from './useGraphVariables';
 import { blackboardScopeWarnings } from '../../application/editor/graphBlackboard';
@@ -344,9 +344,12 @@ export function useResourceGraphEditor(document: ResourceGraphDocument) {
     path: readonly string[],
     target: string | null,
     expectedGraph?: GraphInteractionSnapshot,
+    sourceOwner: 'action' | 'data' = 'action',
   ): boolean {
     if (!canUseGraphSnapshot(expectedGraph)) return false;
-    return edit(owner => connectResourceNode(owner, address.value, nodeId, path, target));
+    return edit(owner =>
+      connectResourceNode(owner, address.value, nodeId, path, target, sourceOwner),
+    );
   }
   function connectEntry(
     ids: readonly string[],
@@ -362,6 +365,17 @@ export function useResourceGraphEditor(document: ResourceGraphDocument) {
     if (!canUseGraphSnapshot(expectedGraph)) return;
     edit(owner => {
       let changed = owner;
+      for (const [sourceId, node] of Object.entries(graph.value.dataNodes ?? {}))
+        for (const port of listDataActionPorts(node))
+          if (port.target === id)
+            changed = connectResourceNode(
+              changed,
+              address.value,
+              sourceId,
+              port.path,
+              null,
+              'data',
+            );
       for (const [sourceId, node] of Object.entries(graph.value.nodes))
         for (const port of listGraphPorts(node))
           if (port.target === id)

@@ -1,4 +1,5 @@
 import { projectActionTargetQuery } from '../conditions/combatConditionProjection.ts';
+import { projectConditionInput } from './conditionInputProjection.ts';
 import type { ActionGraphReference } from '../../../../../packages/game-data-contract/src/actionGraph.ts';
 import type { NativeSequenceSource } from '../../source/controlFlow.ts';
 import type { NativeActionNodeSource } from '../../source/controlFlow.ts';
@@ -24,7 +25,7 @@ export function projectTimelineJump(
   return {
     kind: 'jumpTimeline',
     parameters: { destinationFrame },
-    condition: compileCondition(condition),
+    condition: projectConditionInput(compileCondition(condition), context.graph),
   };
 }
 

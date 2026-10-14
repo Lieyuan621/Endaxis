@@ -76,7 +76,7 @@ describe('黑板用途的读取对象', () => {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: 'check' },
+                  condition: { kind: 'checkActionResult', action: { $sequence: 'check' } },
                   whenTrue: { $sequence: null },
                   whenFalse: { $sequence: null },
                 },

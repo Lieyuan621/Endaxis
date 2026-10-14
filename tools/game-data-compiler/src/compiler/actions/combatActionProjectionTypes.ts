@@ -253,9 +253,9 @@ type HealParameters = (
 export type CompiledBuffStepSource =
   | Step<'checkCondition'>
   | Step<'invertNextResult'>
-  | (Step<'anyCondition'> & { readonly conditions: readonly CompiledBuffSequenceSource[] })
+  | (Step<'anyCondition'> & { readonly conditions: readonly CombatCondition[] })
   | (Step<'ifElse'> & {
-      readonly condition: CompiledBuffSequenceSource;
+      readonly condition: CombatCondition;
       readonly whenTrue: CompiledBuffSequenceSource;
       readonly whenFalse: CompiledBuffSequenceSource;
     })
@@ -309,7 +309,7 @@ export type CompiledBuffStepSource =
   | Step<'setAbilityEntityRemainingDuration'>
   | Step<'finishOwner'>
   | Step<'interruptCurrentSkill'>
-  | (Step<'jumpTimeline'> & { readonly condition: CompiledBuffSequenceSource })
+  | (Step<'jumpTimeline'> & { readonly condition: CombatCondition })
   | Step<'reachSkillOperableBoundary'>
   | Step<'markCurrentSkillCanDash'>
   | Step<'markCurrentSkillCanInterrupt'>

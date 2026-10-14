@@ -1,8 +1,9 @@
 /**
  * 定义技能、Buff、装备和事件响应共用的条件表达式。
  *
- * 每个条件只保存判断所需的数据，不执行代码。模拟器根据 `kind` 读取当前动作、事件、角色、
- * 敌人或 Buff 状态并返回真假；条件通过 `not`、`all` 和 `any` 节点的输入连线组合。
+ * 模拟器在消费输入时读取当前动作、事件、角色、敌人或 Buff 状态并返回真假。
+ * `checkActionResult` 显式表示在该求值位置调用行为；不得按纯计算重排或缓存。
+ * 条件通过 `not`、`all` 和 `any` 节点的输入连线组合。
  */
 export const SKILL_INTERRUPT_REASONS = [
   'default',
@@ -17,6 +18,7 @@ export const SKILL_INTERRUPT_REASONS = [
 export type SkillInterruptReason = (typeof SKILL_INTERRUPT_REASONS)[number];
 
 import type { GameplayTag, GameplayTagMatchType, GameplayTagQueryType } from './gameplayTags.ts';
+import type { ActionGraphReference } from './actionGraph.ts';
 import {
   type BuffSingleTarget,
   type CombatObjectTypeSelection,
@@ -94,6 +96,11 @@ export type CombatCondition =
 
 /** 布尔数据节点的操作。子条件通过输入引用连接，不能内嵌另一个条件操作。 */
 export type CombatConditionExpression =
+  | {
+      /** 在消费此输入的位置即时执行行为序列，读取其执行结果；不得提前求值或缓存结果。 */
+      kind: 'checkActionResult';
+      action: ActionGraphReference;
+    }
   | { /** 当前技能在本次施放中是否进入过战斗伤害处理。 */ readonly kind: 'skillHasHit' }
   | CombatCondition
   | {
@@ -665,6 +672,7 @@ export type CombatConditionExpression =
 
 /** 布尔数据节点的全部操作种类。 */
 export const COMBAT_CONDITION_KINDS = [
+  'checkActionResult',
   'constant',
   'combatActive',
   'skillHasHit',

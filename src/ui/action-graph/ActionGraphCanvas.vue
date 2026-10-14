@@ -23,6 +23,7 @@ import {
   compactDataSymbol,
 } from './nodePresentation';
 import { listGraphPorts } from '../../application/editor/actionGraphEditing';
+import { listDataActionPorts } from '../../application/editor/actionGraphPorts';
 import type { GraphPresentation } from '../../core/project/graphPresentation';
 import { type DataInput, dataNodeHasEffects } from '../../core/action-graph/actionGraphDataNodes';
 import { actionTypedInputs, dataTypedInputs } from './typedGraphInputs';
@@ -83,6 +84,7 @@ const emit = defineEmits<{
     path: readonly string[],
     targetId: string | null,
     graph: GraphInteractionSnapshot,
+    owner?: 'action' | 'data',
   ];
   selectEntry: [id: string];
   connectEntry: [
@@ -137,7 +139,13 @@ const layoutError = ref('');
 type GraphSnapshot = { readonly graph: GraphInteractionSnapshot };
 type OutputPin = GraphSnapshot &
   (
-    | { kind: 'action'; nodeId: string; path: readonly string[]; label: string }
+    | {
+        kind: 'action';
+        owner: 'action' | 'data';
+        nodeId: string;
+        path: readonly string[];
+        label: string;
+      }
     | { kind: 'entry'; groupId: string; entryIds: readonly string[]; label: string }
   );
 type DataPin = GraphSnapshot &
@@ -247,6 +255,8 @@ const nodeMetadata = computed(() =>
         graph: { value: toRaw(props.graph), scope: props.graphScope },
       })),
       ports,
+      owner: 'action' as const,
+      outputTop: HEADER_HEIGHT,
       height:
         HEADER_HEIGHT +
         Math.max(1, ports.length, actionTypedInputs(node.action).length + 1) * PORT_HEIGHT +
@@ -264,6 +274,11 @@ const dataMetadata = computed(() =>
       graph: { value: toRaw(props.graph), scope: props.graphScope },
     }));
     const expression = node.expression;
+    const ports = listDataActionPorts(node).map(port => ({
+      ...port,
+      label: '执行',
+      graph: { value: toRaw(props.graph), scope: props.graphScope },
+    }));
     const stringRead =
       node.type === 'string' && typeof expression === 'object' && 'blackboardKey' in expression
         ? expression.blackboardKey
@@ -276,7 +291,7 @@ const dataMetadata = computed(() =>
     const inputTop = symbol ? 8 : HEADER_HEIGHT;
     const height = variable
       ? VARIABLE_HEIGHT
-      : inputTop + Math.max(1, inputs.length) * PORT_HEIGHT + 12;
+      : inputTop + Math.max(1 + ports.length, inputs.length) * PORT_HEIGHT + 12;
     return {
       id,
       graph: { value: toRaw(props.graph), scope: props.graphScope },
@@ -299,6 +314,9 @@ const dataMetadata = computed(() =>
       variable,
       parameter: numeric?.kind === 'parameter',
       inputs,
+      ports,
+      owner: 'data' as const,
+      outputTop: HEADER_HEIGHT + PORT_HEIGHT,
       type: node.type,
       title,
       effects: dataNodeHasEffects(props.graph, id),
@@ -450,7 +468,7 @@ function pinKey(pin: PendingConnection): string {
   if (pin.kind === 'data-output') return JSON.stringify([pin.kind, pin.nodeId]);
   return JSON.stringify(
     pin.kind === 'action'
-      ? ['action', pin.nodeId, pin.path]
+      ? ['action', pin.owner, pin.nodeId, pin.path]
       : pin.kind === 'entry'
         ? ['entry', pin.groupId, pin.entryIds]
         : ['input', pin.nodeId],
@@ -459,8 +477,9 @@ function pinKey(pin: PendingConnection): string {
 function actionPin(
   nodeId: string,
   port: ReturnType<typeof listGraphPorts>[number] & GraphSnapshot,
+  owner: 'action' | 'data' = 'action',
 ): OutputPin {
-  return { graph: port.graph, kind: 'action', nodeId, path: port.path, label: port.label };
+  return { graph: port.graph, kind: 'action', owner, nodeId, path: port.path, label: port.label };
 }
 function entryPin(groupId: string, entryId: string, graph: GraphInteractionSnapshot): OutputPin {
   return { graph, kind: 'entry', groupId, entryIds: [entryId], label: '调度出口' };
@@ -471,6 +490,10 @@ function inputPin(nodeId: string, graph: GraphInteractionSnapshot): PendingConne
 const pins = computed(() => {
   const result = new Map<string, PendingConnection>();
   for (const node of dataMetadata.value) {
+    for (const port of node.ports) {
+      const output = actionPin(node.id, port, 'data');
+      result.set(pinKey(output), output);
+    }
     const output = dataOutputPin(node);
     result.set(pinKey(output), output);
     for (const input of node.inputs) {
@@ -558,26 +581,29 @@ function curve(fromX: number, fromY: number, toX: number, toY: number): string {
   const bend = Math.max(70, Math.abs(toX - fromX) * 0.46);
   return `M ${fromX} ${fromY} C ${fromX + bend} ${fromY}, ${toX - bend} ${toY}, ${toX} ${toY}`;
 }
-function outputPoint(node: (typeof nodeModels.value)[number], index: number) {
-  return { x: node.x + NODE_WIDTH, y: node.y + HEADER_HEIGHT + PORT_HEIGHT * (index + 0.5) };
+function outputPoint(
+  node: { x: number; y: number; width: number; outputTop: number },
+  index: number,
+) {
+  return { x: node.x + node.width, y: node.y + node.outputTop + PORT_HEIGHT * (index + 0.5) };
 }
 const edgeTopology = computed(() => [
-  ...nodeMetadata.value.flatMap(node =>
+  ...[...nodeMetadata.value, ...dataMetadata.value].flatMap(node =>
     node.ports.flatMap((port, index) => {
       if (port.target === null) return [];
       const target = actionLayoutIds.get(port.target);
       if (target === undefined || !Object.hasOwn(props.graph.nodes, port.target)) return [];
       return [
         {
-          id: JSON.stringify([node.id, port.path]),
+          id: JSON.stringify([node.owner, node.id, port.path]),
           from: node.layoutId,
           to: target,
-          fromAction: node.id,
+          fromAction: node.owner === 'action' ? node.id : null,
           toAction: port.target,
           entryIds: [] as readonly string[],
-          sourcePin: actionPin(node.id, port),
-          width: NODE_WIDTH,
-          outputY: HEADER_HEIGHT + PORT_HEIGHT * (index + 0.5),
+          sourcePin: actionPin(node.id, port, node.owner),
+          width: node.width,
+          outputY: node.outputTop + PORT_HEIGHT * (index + 0.5),
         },
       ];
     }),
@@ -677,7 +703,10 @@ const pendingCurve = computed(() => {
   }
   let from: { x: number; y: number };
   if (pending.kind === 'action') {
-    const node = nodeById.value.get(pending.nodeId);
+    const node =
+      pending.owner === 'action'
+        ? nodeById.value.get(pending.nodeId)
+        : dataModels.value.find(node => node.id === pending.nodeId);
     if (node === undefined) return null;
     const index = node.ports.findIndex(
       port => JSON.stringify(port.path) === JSON.stringify(pending.path),
@@ -838,80 +867,18 @@ function arrange(): void {
   for (const entry of entryMetadata.value)
     for (const node of dataMetadata.value)
       graph.setEdge(entry.layoutId, node.layoutId, { weight: 1, minlen: 1 });
-  // 最早调用某节点的调度决定整条后继分支的上下次序；共享后继只登记一次。
-  const scheduleOrder = new Map<string, number>();
-  const timeline = entryMetadata.value.find(group => group.isTimeline);
-  for (const [index, row] of (timeline?.rows ?? []).entries()) {
-    const target = row.targetId === null ? undefined : actionLayoutIds.get(row.targetId);
-    if (target === undefined || !graph.hasNode(target)) continue;
-    const pending = [target];
-    while (pending.length > 0) {
-      const id = pending.pop()!;
-      if (scheduleOrder.has(id)) continue;
-      scheduleOrder.set(id, index);
-      pending.push(...(graph.successors(id) ?? []));
-    }
-  }
-  // 数据依赖方向与执行方向相反：从消费者向输入追溯，使条件和黑板读取
-  // 跟随使用它们的最早调度排序，但数据连线仍保留来源 → 消费者的真实方向。
-  const inputsByConsumer = new Map<string, string[]>();
-  for (const edge of dataConnections.value) {
-    const inputs = inputsByConsumer.get(edge.to) ?? [];
-    inputs.push(edge.from);
-    inputsByConsumer.set(edge.to, inputs);
-  }
-  const consumers = [...scheduleOrder.entries()].sort((a, b) => a[1] - b[1]);
-  for (const [consumer, priority] of consumers) {
-    const pending = [...(inputsByConsumer.get(consumer) ?? [])];
-    while (pending.length) {
-      const id = pending.pop()!;
-      if (scheduleOrder.has(id) && scheduleOrder.get(id)! <= priority) continue;
-      scheduleOrder.set(id, priority);
-      pending.push(...(inputsByConsumer.get(id) ?? []));
-    }
-  }
   try {
-    dagre.layout(graph, {
-      customOrder(layoutGraph, order) {
-        order(layoutGraph);
-        // Dagre 只看到入口节点的中心，不知道各调度出口的上下位置。
-        // 在默认排序之后，按首次调度顺序交换同列动作的既有位置。
-        const layoutOrder = new Map(scheduleOrder);
-        for (const id of layoutGraph.nodes()) {
-          const node = layoutGraph.node(id);
-          if (node.dummy !== 'edge' && node.dummy !== 'edge-label') continue;
-          const edge = node.edgeObj;
-          if (edge === undefined) continue;
-          const priority = scheduleOrder.get(edge.v) ?? scheduleOrder.get(edge.w);
-          if (priority !== undefined) layoutOrder.set(id, priority);
-        }
-        const targetsByRank = new Map<number, string[]>();
-        for (const target of layoutOrder.keys()) {
-          const node = layoutGraph.node(target);
-          const rank = node?.rank;
-          if (rank === undefined || node.order === undefined) continue;
-          const targets = targetsByRank.get(rank) ?? [];
-          targets.push(target);
-          targetsByRank.set(rank, targets);
-        }
-        for (const targets of targetsByRank.values()) {
-          const slots = targets.map(id => layoutGraph.node(id).order!).sort((a, b) => a - b);
-          targets.sort(
-            (a, b) =>
-              layoutOrder.get(a)! - layoutOrder.get(b)! ||
-              layoutGraph.node(a).order! - layoutGraph.node(b).order!,
-          );
-          targets.forEach((id, index) => {
-            layoutGraph.node(id).order = slots[index]!;
-          });
-        }
-        // 长连线的辅助节点跟随其分支，避免它们留在反向位置把整张图撑开。
-        // 只置换既有位置，不创建执行边或复制共享节点。
-      },
-    });
+    dagre.layout(graph);
+    // Dagre 3.1.1 的平局排序倾向会反转按引脚顺序加入的简单分支。
+    // 仅镜像布局坐标以补偿这一倾向，不干预排序，也不翻转节点内部引脚。
+    // 这不是坐标系转换，复杂共享图仍允许局部交叉。
+    const graphHeight = graph.graph().height!;
     for (const node of layoutMetadata.value) {
       const placed = graph.node(node.layoutId);
-      positions.set(node.layoutId, { x: placed.x - node.width / 2, y: placed.y - node.height / 2 });
+      positions.set(node.layoutId, {
+        x: placed.x - node.width / 2,
+        y: graphHeight - placed.y - node.height / 2,
+      });
     }
   } catch (cause) {
     console.error('Action graph layout failed', cause);
@@ -1014,7 +981,13 @@ watch(
     }
     publishPositions(false);
     const pending = pendingConnection.value;
-    if (pending?.kind === 'action' && !Object.hasOwn(props.graph.nodes, pending.nodeId))
+    if (
+      pending?.kind === 'action' &&
+      !Object.hasOwn(
+        pending.owner === 'data' ? (props.graph.dataNodes ?? {}) : props.graph.nodes,
+        pending.nodeId,
+      )
+    )
       pendingConnection.value = null;
     if (
       pending?.kind === 'entry' &&
@@ -1209,7 +1182,7 @@ function connectPins(first: PendingConnection, second: PendingConnection): void 
   const output = first.kind !== 'input' ? first : second.kind !== 'input' ? second : null;
   if (!input || !output || !props.beforeInteraction()) return;
   if (output.kind === 'action')
-    emit('connect', output.nodeId, output.path, input.nodeId, output.graph);
+    emit('connect', output.nodeId, output.path, input.nodeId, output.graph, output.owner);
   else emit('connectEntry', output.entryIds, input.nodeId, output.graph);
   pendingConnection.value = null;
 }
@@ -1258,7 +1231,7 @@ function disconnectPin(pin: PendingConnection): void {
     return;
   }
   if (pin.kind === 'input') emit('disconnectInput', pin.nodeId, pin.graph);
-  else if (pin.kind === 'action') emit('connect', pin.nodeId, pin.path, null, pin.graph);
+  else if (pin.kind === 'action') emit('connect', pin.nodeId, pin.path, null, pin.graph, pin.owner);
   else emit('connectEntry', pin.entryIds, null, pin.graph);
   cancelConnection();
 }
@@ -1325,7 +1298,8 @@ function pinMenu(event: MouseEvent, pin: PendingConnection): void {
       label: '查看所属节点',
       run: () => {
         if (pin.kind === 'entry') focusEntry(pin.entryIds[0]!);
-        else if (pin.kind === 'data-input' && pin.owner === 'data') emit('selectData', pin.nodeId);
+        else if ((pin.kind === 'data-input' || pin.kind === 'action') && pin.owner === 'data')
+          emit('selectData', pin.nodeId);
         else emit('select', pin.nodeId);
       },
     },
@@ -1432,8 +1406,13 @@ function wireMenu(event: MouseEvent, edge: (typeof edges.value)[number]): void {
       label: '定位来源节点',
       run: () => {
         if (edge.sourcePin.kind === 'action') {
-          emit('select', edge.sourcePin.nodeId);
-          focusNode(edge.sourcePin.nodeId);
+          if (edge.sourcePin.owner === 'data') {
+            emit('selectData', edge.sourcePin.nodeId);
+            focusData(edge.sourcePin.nodeId);
+          } else {
+            emit('select', edge.sourcePin.nodeId);
+            focusNode(edge.sourcePin.nodeId);
+          }
         } else focusEntry(edge.sourcePin.entryIds[0]!);
       },
     },
@@ -1717,6 +1696,26 @@ defineExpose({
           node.symbol
         }}</span>
         <GraphNodeHeader v-else :title="node.title" :instance-id="node.id" />
+        <div
+          v-if="node.ports.length"
+          class="output-ports"
+          :style="{ position: 'absolute', right: '0', top: `${node.outputTop}px` }"
+        >
+          <button
+            v-for="port in node.ports"
+            :key="port.path.join('.')"
+            type="button"
+            class="output-port port-button"
+            :class="{ connected: port.target !== null }"
+            :data-graph-pin="pinKey(actionPin(node.id, port, 'data'))"
+            @pointerdown.stop="startPin($event, actionPin(node.id, port, 'data'))"
+            @click.stop="activatePin($event, actionPin(node.id, port, 'data'))"
+            @contextmenu.prevent.stop="pinMenu($event, actionPin(node.id, port, 'data'))"
+          >
+            <span class="port-label">{{ port.label }}</span
+            ><span class="port-pin" />
+          </button>
+        </div>
         <span
           v-if="!node.variable && !node.symbol"
           class="data-output-label"

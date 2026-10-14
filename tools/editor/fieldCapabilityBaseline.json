@@ -131,10 +131,7 @@
       "reason": "structured-editor-pending",
       "phase": "P4",
       "category": "structured-editor",
-      "keys": [
-        "action/anyCondition/conditions",
-        "action/launchProjectile/parameters/entityAssignments"
-      ]
+      "keys": ["action/launchProjectile/parameters/entityAssignments"]
     }
   ],
   "resolvedDefinitionDepthPositions": [
@@ -301,6 +298,7 @@
   ],
   "resolvedOwnedContainerPositions": ["action/spawnAbilityEntity/parameters/definition"],
   "resolvedFieldPositions": [
+    "action/anyCondition/conditions",
     "action/adjustSkillCooldown/parameters/skill",
     "action/applyBuff/parameters/iconDurationSource",
     "action/applyBuff/parameters/inheritToNextSkillIds",

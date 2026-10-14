@@ -165,7 +165,10 @@ describe('HideUI active source projection', () => {
     const compiled = optimizeResourceGraphs(compile(), 'apply').value;
     const equivalent = readResourceActions(compiled, compiled.scheduledSequences[0]!.sequence)[0]!;
     if (equivalent.kind !== 'ifElse') throw new Error('expected preserved native call boundary');
-    expect(equivalent.condition.$sequence).toBeNull();
+    expect(equivalent.condition).toEqual({
+      kind: 'checkActionResult',
+      action: { $sequence: null },
+    });
     expect(readResourceActions(compiled, equivalent.whenTrue)).toEqual([
       { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
     ]);
@@ -174,9 +177,7 @@ describe('HideUI active source projection', () => {
     const different = optimizeResourceGraphs(compile(), 'apply').value;
     const retained = readResourceActions(different, different.scheduledSequences[0]!.sequence)[0]!;
     if (retained.kind !== 'ifElse') throw new Error('expected retained angle branch');
-    expect(readResourceActions(different, retained.condition)).toMatchObject([
-      { kind: 'checkCondition', parameters: { condition: { kind: 'targetFacingAngle' } } },
-    ]);
+    expect(retained.condition).toMatchObject({ kind: 'targetFacingAngle' });
   });
 
   it('周期执行动作保留子序列生命周期，不编译成即时 TickInterval', () => {
@@ -970,11 +971,12 @@ describe('主动技能正式时间轴投影', () => {
     );
     expect(jump?.parameters).toEqual({ destinationFrame: 300 });
     if (jump?.kind !== 'jumpTimeline') throw new Error('missing jump');
-    expect(readResourceActions(result, jump.condition).map(action => action.kind)).toEqual([
+    if (jump.condition.kind !== 'checkActionResult') throw new Error('missing result adapter');
+    expect(readResourceActions(result, jump.condition.action).map(action => action.kind)).toEqual([
       'invertNextResult',
       'checkCondition',
     ]);
-    const check = readResourceActions(result, jump.condition)[1];
+    const check = readResourceActions(result, jump.condition.action)[1];
     if (check?.kind !== 'checkCondition') throw new Error('missing condition');
     expect(check.parameters).toMatchObject({
       condition: {
@@ -1277,16 +1279,9 @@ describe('主动技能正式时间轴投影', () => {
       withEvidence.scheduledSequences[0]!.sequence,
     )[0]!;
     if (replacementGuard.kind !== 'ifElse') throw new Error('expected native IfElse guard');
-    expect(readResourceActions(withEvidence, replacementGuard.condition)).toMatchObject([
-      {
-        kind: 'checkCondition',
-        parameters: {
-          condition: {
-            left: { kind: 'blackboard', key: 'EntityBB_Combo_QTE_Trigger' },
-          },
-        },
-      },
-    ]);
+    expect(replacementGuard.condition).toMatchObject({
+      left: { kind: 'blackboard', key: 'EntityBB_Combo_QTE_Trigger' },
+    });
   });
   it('移除无人消费的角度检查和后续变量写入', () => {
     const result = compileActiveSkillRuntimeProjectionSource({
@@ -1460,7 +1455,7 @@ describe('主动技能正式时间轴投影', () => {
       {
         kind: 'jumpTimeline',
         parameters: { destinationFrame: 107 },
-        condition: { $sequence: null },
+        condition: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     ]);
   });
@@ -1570,7 +1565,7 @@ describe('主动技能正式时间轴投影', () => {
     const branch = readResourceActions(result, result.scheduledSequences[0]!.sequence)[0]!;
     expect(branch.kind).toBe('ifElse');
     if (branch.kind !== 'ifElse') throw new Error('missing branch');
-    expect(readResourceActions(result, branch.condition)).toEqual([]);
+    expect(branch.condition).toEqual({ kind: 'checkActionResult', action: { $sequence: null } });
     expect(readResourceActions(result, branch.whenTrue)).toMatchObject([
       { kind: 'gainFinisherSp' },
     ]);
@@ -1619,7 +1614,7 @@ describe('主动技能正式时间轴投影', () => {
     ).toMatchObject([
       {
         kind: 'ifElse',
-        condition: { $sequence: null },
+        condition: { kind: 'checkActionResult', action: { $sequence: null } },
         whenFalse: { $sequence: null },
       },
       {

@@ -75,7 +75,7 @@ export const yvonneChr_0017_yvonne_attack1ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_2' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_4' },
                           whenTrue: { $sequence: 'changeResource_3' },
                           whenFalse: { $sequence: null },
                         },
@@ -86,7 +86,7 @@ export const yvonneChr_0017_yvonne_attack1ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
                           },
                         },
@@ -108,6 +108,13 @@ export const yvonneChr_0017_yvonne_attack1ActionGraph = {
                       },
                       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
                       data_4: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_2' },
+                        },
+                      },
+                      data_5: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -246,7 +253,7 @@ export const yvonneChr_0017_yvonne_attack2ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_2' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_4' },
                           whenTrue: { $sequence: 'changeResource_3' },
                           whenFalse: { $sequence: null },
                         },
@@ -257,7 +264,7 @@ export const yvonneChr_0017_yvonne_attack2ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
                           },
                         },
@@ -279,6 +286,13 @@ export const yvonneChr_0017_yvonne_attack2ActionGraph = {
                       },
                       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
                       data_4: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_2' },
+                        },
+                      },
+                      data_5: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -356,7 +370,7 @@ export const yvonneChr_0017_yvonne_attack2ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_2' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_4' },
                           whenTrue: { $sequence: 'changeResource_3' },
                           whenFalse: { $sequence: null },
                         },
@@ -367,7 +381,7 @@ export const yvonneChr_0017_yvonne_attack2ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
                           },
                         },
@@ -389,6 +403,13 @@ export const yvonneChr_0017_yvonne_attack2ActionGraph = {
                       },
                       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
                       data_4: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_2' },
+                        },
+                      },
+                      data_5: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -528,7 +549,7 @@ export const yvonneChr_0017_yvonne_attack3ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_2' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_4' },
                           whenTrue: { $sequence: 'changeResource_3' },
                           whenFalse: { $sequence: null },
                         },
@@ -539,7 +560,7 @@ export const yvonneChr_0017_yvonne_attack3ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
                           },
                         },
@@ -561,6 +582,13 @@ export const yvonneChr_0017_yvonne_attack3ActionGraph = {
                       },
                       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
                       data_4: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_2' },
+                        },
+                      },
+                      data_5: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -701,7 +729,7 @@ export const yvonneChr_0017_yvonne_attack4ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_2' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_4' },
                           whenTrue: { $sequence: 'changeResource_3' },
                           whenFalse: { $sequence: null },
                         },
@@ -712,7 +740,7 @@ export const yvonneChr_0017_yvonne_attack4ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
                           },
                         },
@@ -734,6 +762,13 @@ export const yvonneChr_0017_yvonne_attack4ActionGraph = {
                       },
                       data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
                       data_4: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_2' },
+                        },
+                      },
+                      data_5: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -834,18 +869,11 @@ export const yvonneChr_0017_yvonne_attack5ActionGraph = {
         },
         next: 'checkCondition_7',
       },
-      checkCondition_4: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-        },
-        next: null,
-      },
       ifElse_9: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_4' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'dealStagger_8' },
           whenFalse: { $sequence: null },
         },
@@ -891,13 +919,6 @@ export const yvonneChr_0017_yvonne_attack5ActionGraph = {
         },
         next: null,
       },
-      checkCondition_14: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-        },
-        next: null,
-      },
       reachSkillOperableBoundary_17: {
         action: {
           kind: 'reachSkillOperableBoundary',
@@ -905,18 +926,11 @@ export const yvonneChr_0017_yvonne_attack5ActionGraph = {
         },
         next: null,
       },
-      checkCondition_16: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-        },
-        next: null,
-      },
       ifElse_20: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_16' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'reachSkillOperableBoundary_17' },
           whenFalse: { $sequence: null },
         },
@@ -926,7 +940,7 @@ export const yvonneChr_0017_yvonne_attack5ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_14' },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
           whenTrue: { $sequence: 'reachSkillOperableBoundary_17' },
           whenFalse: { $sequence: 'ifElse_20' },
         },
@@ -943,7 +957,7 @@ export const yvonneChr_0017_yvonne_attack5ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_16' },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: 'reachSkillOperableBoundary_23' },
         },
@@ -953,7 +967,7 @@ export const yvonneChr_0017_yvonne_attack5ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_14' },
+          condition: { kind: 'conditionNode', nodeId: 'data_10' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: 'ifElse_25' },
         },
@@ -963,7 +977,7 @@ export const yvonneChr_0017_yvonne_attack5ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: null },
         },
@@ -990,7 +1004,7 @@ export const yvonneChr_0017_yvonne_attack5ActionGraph = {
         expression: {
           kind: 'buffIdStackCompare',
           target: 'caster',
-          buffIds: ['buff_chr_0017_yvonne_ultimate_skill'],
+          buffIds: ['buff_chr_0017_yvonne_ultimate_skill_end'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
         },
@@ -1000,10 +1014,34 @@ export const yvonneChr_0017_yvonne_attack5ActionGraph = {
         expression: {
           kind: 'buffIdStackCompare',
           target: 'caster',
+          buffIds: ['buff_chr_0017_yvonne_ultimate_skill'],
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+        },
+      },
+      data_9: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: 'caster',
           buffIds: ['buff_chr_0017_yvonne_ultimate_skill_end'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
         },
+      },
+      data_10: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: 'caster',
+          buffIds: ['buff_chr_0017_yvonne_ultimate_skill'],
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+        },
+      },
+      data_11: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     },
   },
@@ -1062,18 +1100,11 @@ export const yvonneChr_0017_yvonne_ult_attack1_1ActionGraph = {
         },
         next: null,
       },
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_3: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: 'applyBuff_2' },
         },
@@ -1152,7 +1183,7 @@ export const yvonneChr_0017_yvonne_ult_attack1_1ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_2' },
                           whenTrue: { $sequence: null },
                           whenFalse: { $sequence: null },
                         },
@@ -1163,7 +1194,7 @@ export const yvonneChr_0017_yvonne_ult_attack1_1ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
                             tags: ['normalAttack'],
                           },
                         },
@@ -1179,6 +1210,13 @@ export const yvonneChr_0017_yvonne_ult_attack1_1ActionGraph = {
                         },
                       },
                       data_2: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_1' },
+                        },
+                      },
+                      data_3: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -1332,18 +1370,11 @@ export const yvonneChr_0017_yvonne_ult_attack2_1ActionGraph = {
         },
         next: null,
       },
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_4: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'inheritBuffById_2' },
           whenFalse: { $sequence: 'applyBuff_3' },
         },
@@ -1459,7 +1490,7 @@ export const yvonneChr_0017_yvonne_ult_attack2_1ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_2' },
                           whenTrue: { $sequence: null },
                           whenFalse: { $sequence: null },
                         },
@@ -1470,7 +1501,7 @@ export const yvonneChr_0017_yvonne_ult_attack2_1ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
                             tags: ['normalAttack'],
                           },
                         },
@@ -1486,6 +1517,13 @@ export const yvonneChr_0017_yvonne_ult_attack2_1ActionGraph = {
                         },
                       },
                       data_2: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_1' },
+                        },
+                      },
+                      data_3: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -1510,18 +1548,11 @@ export const yvonneChr_0017_yvonne_ult_attack2_1ActionGraph = {
         },
         next: 'launchProjectile_36',
       },
-      checkCondition_34: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_38: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_34' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'launchProjectile_36' },
           whenFalse: { $sequence: 'findTargets_37' },
         },
@@ -1531,7 +1562,7 @@ export const yvonneChr_0017_yvonne_ult_attack2_1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'ifElse_38' },
           whenFalse: { $sequence: null },
         },
@@ -1578,7 +1609,7 @@ export const yvonneChr_0017_yvonne_ult_attack2_1ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_2' },
                           whenTrue: { $sequence: null },
                           whenFalse: { $sequence: null },
                         },
@@ -1589,7 +1620,7 @@ export const yvonneChr_0017_yvonne_ult_attack2_1ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
                             tags: ['normalAttack'],
                           },
                         },
@@ -1605,6 +1636,13 @@ export const yvonneChr_0017_yvonne_ult_attack2_1ActionGraph = {
                         },
                       },
                       data_2: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_1' },
+                        },
+                      },
+                      data_3: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -1633,7 +1671,7 @@ export const yvonneChr_0017_yvonne_ult_attack2_1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_34' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'launchProjectile_42' },
           whenFalse: { $sequence: 'findTargets_43' },
         },
@@ -1643,7 +1681,7 @@ export const yvonneChr_0017_yvonne_ult_attack2_1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'ifElse_44' },
           whenFalse: { $sequence: null },
         },
@@ -1662,18 +1700,11 @@ export const yvonneChr_0017_yvonne_ult_attack2_1ActionGraph = {
         },
         next: null,
       },
-      checkCondition_58: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: null,
-      },
       ifElse_60: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_58' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'inheritBuffById_59' },
           whenFalse: { $sequence: null },
         },
@@ -1699,7 +1730,7 @@ export const yvonneChr_0017_yvonne_ult_attack2_1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'applyBuff_12' },
           whenFalse: { $sequence: 'applyBuff_12' },
         },
@@ -1709,7 +1740,7 @@ export const yvonneChr_0017_yvonne_ult_attack2_1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
           whenTrue: { $sequence: 'applyBuff_32' },
           whenFalse: { $sequence: 'applyBuff_32' },
         },
@@ -1739,6 +1770,24 @@ export const yvonneChr_0017_yvonne_ult_attack2_1ActionGraph = {
       },
       data_3: {
         type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_4: {
+        type: 'boolean',
+        expression: {
+          kind: 'healthCompare',
+          target: 'enemy',
+          valueType: 'ratio',
+          operator: 'greater',
+          value: { kind: 'constant', value: 0 },
+        },
+      },
+      data_5: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_6: {
+        type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
           target: 'caster',
@@ -1746,6 +1795,14 @@ export const yvonneChr_0017_yvonne_ult_attack2_1ActionGraph = {
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
         },
+      },
+      data_7: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     },
   },
@@ -1916,7 +1973,7 @@ export const yvonneChr_0017_yvonne_ult_attack2_2ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_2' },
                           whenTrue: { $sequence: null },
                           whenFalse: { $sequence: null },
                         },
@@ -1927,7 +1984,7 @@ export const yvonneChr_0017_yvonne_ult_attack2_2ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
                             tags: ['normalAttack'],
                           },
                         },
@@ -1943,6 +2000,13 @@ export const yvonneChr_0017_yvonne_ult_attack2_2ActionGraph = {
                         },
                       },
                       data_2: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_1' },
+                        },
+                      },
+                      data_3: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -1967,18 +2031,11 @@ export const yvonneChr_0017_yvonne_ult_attack2_2ActionGraph = {
         },
         next: 'launchProjectile_23',
       },
-      checkCondition_21: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_25: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_21' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'launchProjectile_23' },
           whenFalse: { $sequence: 'findTargets_24' },
         },
@@ -1988,7 +2045,7 @@ export const yvonneChr_0017_yvonne_ult_attack2_2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'ifElse_25' },
           whenFalse: { $sequence: null },
         },
@@ -2027,18 +2084,11 @@ export const yvonneChr_0017_yvonne_ult_attack2_2ActionGraph = {
         },
         next: null,
       },
-      checkCondition_45: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_48: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_45' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'inheritBuffById_46' },
           whenFalse: { $sequence: 'applyBuff_47' },
         },
@@ -2069,18 +2119,11 @@ export const yvonneChr_0017_yvonne_ult_attack2_2ActionGraph = {
         },
         next: null,
       },
-      checkCondition_50: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: null,
-      },
       ifElse_52: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_50' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'inheritBuffById_51' },
           whenFalse: { $sequence: null },
         },
@@ -2106,7 +2149,7 @@ export const yvonneChr_0017_yvonne_ult_attack2_2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'applyBuff_7' },
           whenFalse: { $sequence: 'applyBuff_7' },
         },
@@ -2116,7 +2159,7 @@ export const yvonneChr_0017_yvonne_ult_attack2_2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'applyBuff_19' },
           whenFalse: { $sequence: 'applyBuff_19' },
         },
@@ -2136,6 +2179,10 @@ export const yvonneChr_0017_yvonne_ult_attack2_2ActionGraph = {
       },
       data_2: {
         type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_3: {
+        type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
           target: 'caster',
@@ -2144,7 +2191,7 @@ export const yvonneChr_0017_yvonne_ult_attack2_2ActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_3: {
+      data_4: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -2153,6 +2200,14 @@ export const yvonneChr_0017_yvonne_ult_attack2_2ActionGraph = {
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
         },
+      },
+      data_5: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_6: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     },
   },
@@ -2310,7 +2365,7 @@ export const yvonneChr_0017_yvonne_ult_attack3_1ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_2' },
                           whenTrue: { $sequence: null },
                           whenFalse: { $sequence: null },
                         },
@@ -2321,7 +2376,7 @@ export const yvonneChr_0017_yvonne_ult_attack3_1ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
                             tags: ['normalAttack'],
                           },
                         },
@@ -2337,6 +2392,13 @@ export const yvonneChr_0017_yvonne_ult_attack3_1ActionGraph = {
                         },
                       },
                       data_2: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_1' },
+                        },
+                      },
+                      data_3: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -2391,7 +2453,7 @@ export const yvonneChr_0017_yvonne_ult_attack3_1ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_2' },
                           whenTrue: { $sequence: null },
                           whenFalse: { $sequence: null },
                         },
@@ -2402,7 +2464,7 @@ export const yvonneChr_0017_yvonne_ult_attack3_1ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
                             tags: ['normalAttack'],
                           },
                         },
@@ -2418,6 +2480,13 @@ export const yvonneChr_0017_yvonne_ult_attack3_1ActionGraph = {
                         },
                       },
                       data_2: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_1' },
+                        },
+                      },
+                      data_3: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -2464,18 +2533,11 @@ export const yvonneChr_0017_yvonne_ult_attack3_1ActionGraph = {
         },
         next: null,
       },
-      checkCondition_49: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_52: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_49' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'inheritBuffById_50' },
           whenFalse: { $sequence: 'applyBuff_51' },
         },
@@ -2506,18 +2568,11 @@ export const yvonneChr_0017_yvonne_ult_attack3_1ActionGraph = {
         },
         next: null,
       },
-      checkCondition_54: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_56: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_54' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'inheritBuffById_55' },
           whenFalse: { $sequence: null },
         },
@@ -2550,18 +2605,11 @@ export const yvonneChr_0017_yvonne_ult_attack3_1ActionGraph = {
         },
         next: null,
       },
-      checkCondition_57: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: null,
-      },
       ifElse_62: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_57' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'applyBuff_58' },
           whenFalse: { $sequence: 'inheritBuffById_59' },
         },
@@ -2580,18 +2628,11 @@ export const yvonneChr_0017_yvonne_ult_attack3_1ActionGraph = {
         },
         next: null,
       },
-      checkCondition_60: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-        },
-        next: null,
-      },
       ifElse_68: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_60' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'inheritBuffById_61' },
           whenFalse: { $sequence: 'ifElse_62' },
         },
@@ -2624,17 +2665,24 @@ export const yvonneChr_0017_yvonne_ult_attack3_1ActionGraph = {
         },
         next: 'applyBuff_66',
       },
-      checkCondition_64: {
+      checkCondition_63: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
-        next: 'checkCondition_57',
+        next: null,
+      },
+      checkCondition_64: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+        },
+        next: 'checkCondition_63',
       },
       checkCondition_65: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
         next: 'checkCondition_64',
       },
@@ -2642,7 +2690,7 @@ export const yvonneChr_0017_yvonne_ult_attack3_1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_65' },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
           whenTrue: { $sequence: 'createTimedMarker_67' },
           whenFalse: { $sequence: 'ifElse_68' },
         },
@@ -2668,7 +2716,7 @@ export const yvonneChr_0017_yvonne_ult_attack3_1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
           whenTrue: { $sequence: 'applyBuff_11' },
           whenFalse: { $sequence: 'applyBuff_11' },
         },
@@ -2678,7 +2726,7 @@ export const yvonneChr_0017_yvonne_ult_attack3_1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_10' },
           whenTrue: { $sequence: 'applyBuff_39' },
           whenFalse: { $sequence: 'applyBuff_39' },
         },
@@ -2731,7 +2779,7 @@ export const yvonneChr_0017_yvonne_ult_attack3_1ActionGraph = {
         expression: {
           kind: 'buffIdStackCompare',
           target: 'caster',
-          buffIds: ['buff_chr_0017_yvonne_ultimate_skill_voice'],
+          buffIds: ['buff_chr_0017_yvonne_ultimate_skill_voice_short'],
           operator: 'equal',
           value: { kind: 'constant', value: 0 },
         },
@@ -2739,11 +2787,33 @@ export const yvonneChr_0017_yvonne_ult_attack3_1ActionGraph = {
       data_6: {
         type: 'boolean',
         expression: {
+          kind: 'buffIdStackCompare',
+          target: 'caster',
+          buffIds: ['buff_chr_0017_yvonne_ultimate_skill_voice'],
+          operator: 'equal',
+          value: { kind: 'constant', value: 0 },
+        },
+      },
+      data_7: {
+        type: 'boolean',
+        expression: {
           kind: 'timedMarkerPresent',
           returnTrueIfNotExists: true,
           target: 'caster',
           markerId: 'chr_0017_yvonne_voice_cd',
         },
+      },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_65' } },
+      },
+      data_9: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_10: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     },
   },
@@ -2880,7 +2950,7 @@ export const yvonneChr_0017_yvonne_ult_attack3_2ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_2' },
                           whenTrue: { $sequence: null },
                           whenFalse: { $sequence: null },
                         },
@@ -2891,7 +2961,7 @@ export const yvonneChr_0017_yvonne_ult_attack3_2ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
                             tags: ['normalAttack'],
                           },
                         },
@@ -2907,6 +2977,13 @@ export const yvonneChr_0017_yvonne_ult_attack3_2ActionGraph = {
                         },
                       },
                       data_2: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_1' },
+                        },
+                      },
+                      data_3: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -2961,7 +3038,7 @@ export const yvonneChr_0017_yvonne_ult_attack3_2ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_2' },
                           whenTrue: { $sequence: null },
                           whenFalse: { $sequence: null },
                         },
@@ -2972,7 +3049,7 @@ export const yvonneChr_0017_yvonne_ult_attack3_2ActionGraph = {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
                             tags: ['normalAttack'],
                           },
                         },
@@ -2988,6 +3065,13 @@ export const yvonneChr_0017_yvonne_ult_attack3_2ActionGraph = {
                         },
                       },
                       data_2: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_1' },
+                        },
+                      },
+                      data_3: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
                       },
@@ -3068,18 +3152,11 @@ export const yvonneChr_0017_yvonne_ult_attack3_2ActionGraph = {
         },
         next: null,
       },
-      checkCondition_49: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_52: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_49' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'inheritBuffById_50' },
           whenFalse: { $sequence: 'applyBuff_51' },
         },
@@ -3147,18 +3224,11 @@ export const yvonneChr_0017_yvonne_ult_attack3_2ActionGraph = {
         },
         next: null,
       },
-      checkCondition_57: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_62: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_57' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'applyBuff_58' },
           whenFalse: { $sequence: 'inheritBuffById_59' },
         },
@@ -3177,18 +3247,11 @@ export const yvonneChr_0017_yvonne_ult_attack3_2ActionGraph = {
         },
         next: null,
       },
-      checkCondition_60: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: null,
-      },
       ifElse_68: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_60' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'inheritBuffById_61' },
           whenFalse: { $sequence: 'ifElse_62' },
         },
@@ -3221,17 +3284,24 @@ export const yvonneChr_0017_yvonne_ult_attack3_2ActionGraph = {
         },
         next: 'applyBuff_66',
       },
-      checkCondition_64: {
+      checkCondition_63: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
         },
-        next: 'checkCondition_57',
+        next: null,
+      },
+      checkCondition_64: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+        },
+        next: 'checkCondition_63',
       },
       checkCondition_65: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
         next: 'checkCondition_64',
       },
@@ -3239,7 +3309,7 @@ export const yvonneChr_0017_yvonne_ult_attack3_2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_65' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'createTimedMarker_67' },
           whenFalse: { $sequence: 'ifElse_68' },
         },
@@ -3249,7 +3319,7 @@ export const yvonneChr_0017_yvonne_ult_attack3_2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
           whenTrue: { $sequence: 'applyBuff_19' },
           whenFalse: { $sequence: 'applyBuff_19' },
         },
@@ -3259,7 +3329,7 @@ export const yvonneChr_0017_yvonne_ult_attack3_2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
           whenTrue: { $sequence: 'applyBuff_47' },
           whenFalse: { $sequence: 'applyBuff_47' },
         },
@@ -3302,7 +3372,7 @@ export const yvonneChr_0017_yvonne_ult_attack3_2ActionGraph = {
         expression: {
           kind: 'buffIdStackCompare',
           target: 'caster',
-          buffIds: ['buff_chr_0017_yvonne_ultimate_skill_voice'],
+          buffIds: ['buff_chr_0017_yvonne_ultimate_skill_voice_short'],
           operator: 'equal',
           value: { kind: 'constant', value: 0 },
         },
@@ -3310,11 +3380,33 @@ export const yvonneChr_0017_yvonne_ult_attack3_2ActionGraph = {
       data_5: {
         type: 'boolean',
         expression: {
+          kind: 'buffIdStackCompare',
+          target: 'caster',
+          buffIds: ['buff_chr_0017_yvonne_ultimate_skill_voice'],
+          operator: 'equal',
+          value: { kind: 'constant', value: 0 },
+        },
+      },
+      data_6: {
+        type: 'boolean',
+        expression: {
           kind: 'timedMarkerPresent',
           returnTrueIfNotExists: true,
           target: 'caster',
           markerId: 'chr_0017_yvonne_voice_cd',
         },
+      },
+      data_7: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_65' } },
+      },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_9: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     },
   },
@@ -3395,13 +3487,6 @@ export const yvonneChr_0017_yvonne_ult_attack3_2: SkillDefinition = {
 export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
   main: {
     nodes: {
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       finishBuffsByTag_9: {
         action: {
           kind: 'finishBuffsByTag',
@@ -3420,35 +3505,35 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalAttack'],
             instantAttributeModifiers: [
               {
                 targetSide: 'attacker',
                 attribute: 'criticalRate',
                 slot: 'baseAddition',
-                value: { kind: 'valueNode', nodeId: 'data_3' },
+                value: { kind: 'valueNode', nodeId: 'data_2' },
                 attributeTiming: 'runtime',
               },
               {
                 targetSide: 'attacker',
                 attribute: 'criticalDamageIncrease',
                 slot: 'baseAddition',
-                value: { kind: 'valueNode', nodeId: 'data_4' },
+                value: { kind: 'valueNode', nodeId: 'data_3' },
                 attributeTiming: 'runtime',
               },
               {
                 targetSide: 'attacker',
                 attribute: 'Atk',
                 slot: 'baseMultiplier',
-                value: { kind: 'valueNode', nodeId: 'data_5' },
+                value: { kind: 'valueNode', nodeId: 'data_4' },
                 attributeTiming: 'runtime',
               },
               {
                 targetSide: 'attacker',
                 attribute: 'criticalDamageIncrease',
                 slot: 'baseAddition',
-                value: { kind: 'valueNode', nodeId: 'data_6' },
+                value: { kind: 'valueNode', nodeId: 'data_5' },
                 attributeTiming: 'runtime',
               },
             ],
@@ -3456,18 +3541,11 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
         },
         next: 'finishBuffsByTag_9',
       },
-      checkCondition_8: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-        },
-        next: null,
-      },
       ifElse_11: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_8' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'dealDamage_10' },
           whenFalse: { $sequence: null },
         },
@@ -3486,7 +3564,7 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_8' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_7' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
             features: ['canBreakWeakness'],
             instantAttributeModifiers: [
@@ -3494,32 +3572,32 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
                 targetSide: 'attacker',
                 attribute: 'criticalRate',
                 slot: 'baseAddition',
-                value: { kind: 'valueNode', nodeId: 'data_3' },
+                value: { kind: 'valueNode', nodeId: 'data_2' },
                 attributeTiming: 'runtime',
               },
               {
                 targetSide: 'attacker',
                 attribute: 'criticalDamageIncrease',
                 slot: 'baseAddition',
-                value: { kind: 'valueNode', nodeId: 'data_4' },
+                value: { kind: 'valueNode', nodeId: 'data_3' },
                 attributeTiming: 'runtime',
               },
               {
                 targetSide: 'attacker',
                 attribute: 'Atk',
                 slot: 'baseMultiplier',
-                value: { kind: 'valueNode', nodeId: 'data_5' },
+                value: { kind: 'valueNode', nodeId: 'data_4' },
                 attributeTiming: 'runtime',
               },
               {
                 targetSide: 'attacker',
                 attribute: 'criticalDamageIncrease',
                 slot: 'baseAddition',
-                value: { kind: 'valueNode', nodeId: 'data_6' },
+                value: { kind: 'valueNode', nodeId: 'data_5' },
                 attributeTiming: 'runtime',
               },
             ],
-            stagger: { kind: 'valueNode', nodeId: 'data_9' },
+            stagger: { kind: 'valueNode', nodeId: 'data_8' },
             staggerOnlyWhenCasterControlled: true,
           },
         },
@@ -3530,7 +3608,7 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalAttack'],
           },
         },
@@ -3540,7 +3618,7 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_8' },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
           whenTrue: { $sequence: 'dealDamage_6' },
           whenFalse: { $sequence: null },
         },
@@ -3559,27 +3637,20 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_8' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_7' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_9' },
+            stagger: { kind: 'valueNode', nodeId: 'data_8' },
             staggerOnlyWhenCasterControlled: true,
           },
         },
         next: 'forEachContextTarget_13',
       },
-      checkCondition_12: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
-        },
-        next: null,
-      },
       ifElse_17: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_12' },
+          condition: { kind: 'conditionNode', nodeId: 'data_10' },
           whenTrue: { $sequence: 'dealDamage_14' },
           whenFalse: { $sequence: 'dealDamage_16' },
         },
@@ -3677,18 +3748,11 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
         },
         next: 'calculateActionValue_25',
       },
-      checkCondition_24: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_14' } },
-        },
-        next: null,
-      },
       ifElse_27: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_24' },
+          condition: { kind: 'conditionNode', nodeId: 'data_14' },
           whenTrue: { $sequence: 'calculateActionValue_26' },
           whenFalse: { $sequence: null },
         },
@@ -3785,7 +3849,7 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_16' },
           whenTrue: { $sequence: 'applyBuff_39' },
           whenFalse: { $sequence: null },
         },
@@ -3804,18 +3868,11 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
         },
         next: null,
       },
-      checkCondition_40: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_16' } },
-        },
-        next: null,
-      },
       ifElse_43: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_40' },
+          condition: { kind: 'conditionNode', nodeId: 'data_17' },
           whenTrue: { $sequence: 'inheritBuffById_41' },
           whenFalse: { $sequence: 'ifElse_42' },
         },
@@ -3835,24 +3892,12 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
       },
     },
     dataNodes: {
-      data_1: {
-        type: 'boolean',
-        expression: {
-          kind: 'targetDistance',
-          source: { kind: 'owner' },
-          target: { kind: 'fixed', target: 'enemy' },
-          distance: 12,
-          lessThan: true,
-          includeTargetRadius: false,
-          containsHittableObject: false,
-        },
-      },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_extra' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'normal_dmg_up' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'crit_rate_up' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_up_true' } },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'crit_dmg_up_true' } },
-      data_7: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_extra' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'normal_dmg_up' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'crit_rate_up' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_up_true' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'crit_dmg_up_true' } },
+      data_6: {
         type: 'boolean',
         expression: {
           kind: 'buffStackCompare',
@@ -3863,8 +3908,19 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_9: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffStackCompare',
+          target: 'enemy',
+          tagQueryType: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellStatus/Frozen'],
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+        },
+      },
       data_10: {
         type: 'boolean',
         expression: {
@@ -3890,6 +3946,18 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
       },
       data_15: { type: 'number', expression: { kind: 'blackboard', key: 'stack' } },
       data_16: {
+        type: 'boolean',
+        expression: {
+          kind: 'targetDistance',
+          source: { kind: 'owner' },
+          target: { kind: 'fixed', target: 'enemy' },
+          distance: 12,
+          lessThan: true,
+          includeTargetRadius: false,
+          containsHittableObject: false,
+        },
+      },
+      data_17: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -4225,7 +4293,7 @@ export const yvonneChr_0017_yvonne_plunging_attack_endActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_17' },
           whenFalse: { $sequence: null },
         },
@@ -4236,7 +4304,7 @@ export const yvonneChr_0017_yvonne_plunging_attack_endActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'plungingAttack'],
           },
         },
@@ -4247,9 +4315,9 @@ export const yvonneChr_0017_yvonne_plunging_attack_endActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'plungingAttack'],
-            stagger: { kind: 'valueNode', nodeId: 'data_3' },
+            stagger: { kind: 'valueNode', nodeId: 'data_4' },
           },
         },
         next: 'ifElse_20',
@@ -4277,7 +4345,7 @@ export const yvonneChr_0017_yvonne_plunging_attack_endActionGraph = {
           parameters: {
             key: 'atk_scale',
             operation: 'multiply',
-            value: { kind: 'valueNode', nodeId: 'data_4' },
+            value: { kind: 'valueNode', nodeId: 'data_5' },
           },
         },
         next: 'applyBuff_5',
@@ -4286,16 +4354,9 @@ export const yvonneChr_0017_yvonne_plunging_attack_endActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'modifyActionValue_6' },
           whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      checkCondition_8: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
         next: null,
       },
@@ -4303,7 +4364,7 @@ export const yvonneChr_0017_yvonne_plunging_attack_endActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_8' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'ifElse_9' },
           whenFalse: { $sequence: 'dealDamage_21' },
         },
@@ -4312,7 +4373,7 @@ export const yvonneChr_0017_yvonne_plunging_attack_endActionGraph = {
       checkCondition_13: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
         },
         next: null,
       },
@@ -4320,16 +4381,9 @@ export const yvonneChr_0017_yvonne_plunging_attack_endActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_13' },
+          condition: { kind: 'conditionNode', nodeId: 'data_10' },
           whenTrue: { $sequence: 'ifElse_14' },
           whenFalse: { $sequence: 'dealDamage_21' },
-        },
-        next: null,
-      },
-      checkCondition_18: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
         },
         next: null,
       },
@@ -4337,7 +4391,7 @@ export const yvonneChr_0017_yvonne_plunging_attack_endActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_18' },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
           whenTrue: { $sequence: 'ifElse_19' },
           whenFalse: { $sequence: 'dealDamage_21' },
         },
@@ -4346,10 +4400,18 @@ export const yvonneChr_0017_yvonne_plunging_attack_endActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'dmg_scale' } },
-      data_5: {
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'dmg_scale' } },
+      data_6: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_7: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -4359,12 +4421,16 @@ export const yvonneChr_0017_yvonne_plunging_attack_endActionGraph = {
           value: { kind: 'constant', value: 0 },
         },
       },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'prob' } },
-      data_7: {
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'prob' } },
+      data_9: {
         type: 'boolean',
-        expression: { kind: 'probability', probability: { kind: 'valueNode', nodeId: 'data_6' } },
+        expression: { kind: 'probability', probability: { kind: 'valueNode', nodeId: 'data_8' } },
       },
-      data_8: {
+      data_10: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_13' } },
+      },
+      data_11: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -4457,7 +4523,7 @@ export const yvonneChr_0017_yvonne_normal_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'applyBuff_1' },
           whenFalse: { $sequence: null },
         },
@@ -4474,6 +4540,12 @@ export const yvonneChr_0017_yvonne_normal_skillActionGraph = {
           },
         },
         next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     },
   },
@@ -4653,11 +4725,17 @@ export const yvonneChr_0017_yvonne_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'applyBuff_6' },
           whenFalse: { $sequence: 'applyBuff_6' },
         },
         next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     },
   },
@@ -4759,11 +4837,17 @@ export const yvonneChr_0017_yvonne_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'createSpatialPointTargets_opt2' },
           whenFalse: { $sequence: null },
         },
         next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     },
   },
@@ -4993,19 +5077,12 @@ const yvonneBuff1ActionGraph = {
         },
         next: null,
       },
-      checkCondition_6: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       changeResource_12: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_3' },
+            amount: { kind: 'valueNode', nodeId: 'data_2' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -5027,14 +5104,14 @@ const yvonneBuff1ActionGraph = {
       checkCondition_10: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
         },
         next: null,
       },
       checkCondition_11: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
         next: 'checkCondition_10',
       },
@@ -5042,7 +5119,7 @@ const yvonneBuff1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_11' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'modifyActionValue_13' },
           whenFalse: { $sequence: null },
         },
@@ -5081,7 +5158,7 @@ const yvonneBuff1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'dealDamage_5' },
           whenFalse: { $sequence: 'dealDamage_5' },
         },
@@ -5091,7 +5168,7 @@ const yvonneBuff1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_6' },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
           whenTrue: { $sequence: 'dealDamage_5' },
           whenFalse: { $sequence: 'ifElse_opt1' },
         },
@@ -5109,7 +5186,7 @@ const yvonneBuff1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: null },
         },
@@ -5118,30 +5195,21 @@ const yvonneBuff1ActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_tick' } },
-      data_2: {
-        type: 'boolean',
-        expression: {
-          kind: 'entityTagMatch',
-          target: 'enemy',
-          tagQueryType: 'hasAny',
-          tags: ['Skill/Character/Common/SpellStatus/Frozen'],
-        },
-      },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_4: {
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_3: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'has_added_usp', fallback: 0 },
       },
-      data_5: {
+      data_4: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_4' },
+          left: { kind: 'valueNode', nodeId: 'data_3' },
           operator: 'less',
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_6: {
+      data_5: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -5151,6 +5219,27 @@ const yvonneBuff1ActionGraph = {
           operator: 'greaterOrEqual',
           value: 1,
         },
+      },
+      data_6: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_11' } },
+      },
+      data_7: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_8: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityTagMatch',
+          target: 'enemy',
+          tagQueryType: 'hasAny',
+          tags: ['Skill/Character/Common/SpellStatus/Frozen'],
+        },
+      },
+      data_9: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     },
   },
@@ -5224,7 +5313,7 @@ const yvonneBuff2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'changeResource_4' },
           whenFalse: { $sequence: null },
         },
@@ -5235,10 +5324,10 @@ const yvonneBuff2ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_6' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_6' },
+            stagger: { kind: 'valueNode', nodeId: 'data_7' },
           },
         },
         next: 'ifElse_5',
@@ -5301,8 +5390,12 @@ const yvonneBuff2ActionGraph = {
         },
       },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_boom' } },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_5: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_3' } },
+      },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_boom' } },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
     },
   },
   macros: {},
@@ -5414,13 +5507,6 @@ const yvonneBuff4: SkillBuffDefinition = {
 const yvonneBuff5ActionGraph = {
   main: {
     nodes: {
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       createSpatialPointTargets_2: {
         action: {
           kind: 'createSpatialPointTargets',
@@ -5432,7 +5518,7 @@ const yvonneBuff5ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'createSpatialPointTargets_2' },
           whenFalse: { $sequence: null },
         },
@@ -5616,27 +5702,13 @@ const yvonneBuff5ActionGraph = {
                         },
                         next: 'forceSpellStatus_39',
                       },
-                      checkCondition_32: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
-                        },
-                        next: null,
-                      },
                       ifElse_50: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_32' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_10' },
                           whenTrue: { $sequence: 'readBuffStackCount_40' },
                           whenFalse: { $sequence: 'readBuffStackCount_48' },
-                        },
-                        next: null,
-                      },
-                      checkCondition_49: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
                         },
                         next: null,
                       },
@@ -5644,7 +5716,7 @@ const yvonneBuff5ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_49' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_11' },
                           whenTrue: { $sequence: 'ifElse_50' },
                           whenFalse: { $sequence: 'modifyActionValue_54' },
                         },
@@ -5686,18 +5758,11 @@ const yvonneBuff5ActionGraph = {
                         },
                         next: 'modifyActionValue_58',
                       },
-                      checkCondition_56: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_16' } },
-                        },
-                        next: null,
-                      },
                       ifElse_65: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_56' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_16' },
                           whenTrue: { $sequence: 'calculateActionValue_59' },
                           whenFalse: { $sequence: null },
                         },
@@ -5845,7 +5910,7 @@ const yvonneBuff5ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_32' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_18' },
                           whenTrue: { $sequence: 'readBuffStackCount_10' },
                           whenFalse: { $sequence: 'readBuffStackCount_19' },
                         },
@@ -5855,7 +5920,7 @@ const yvonneBuff5ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_49' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_19' },
                           whenTrue: { $sequence: 'ifElse_21' },
                           whenFalse: { $sequence: 'modifyActionValue_26' },
                         },
@@ -5872,14 +5937,14 @@ const yvonneBuff5ActionGraph = {
                       checkCondition_60: {
                         action: {
                           kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_18' } },
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_20' } },
                         },
                         next: null,
                       },
                       checkCondition_61: {
                         action: {
                           kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_20' } },
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_22' } },
                         },
                         next: 'checkCondition_60',
                       },
@@ -5887,7 +5952,7 @@ const yvonneBuff5ActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_61' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_23' },
                           whenTrue: { $sequence: 'forEachContextTarget_64' },
                           whenFalse: { $sequence: 'forEachContextTarget_67' },
                         },
@@ -5997,6 +6062,31 @@ const yvonneBuff5ActionGraph = {
                       data_18: {
                         type: 'boolean',
                         expression: {
+                          kind: 'buffStackCompare',
+                          target: 'enemy',
+                          tagQueryType: 'hasAny',
+                          buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
+                          operator: 'greaterOrEqual',
+                          value: { kind: 'constant', value: 1 },
+                        },
+                      },
+                      data_19: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'buffStackCompare',
+                          target: 'enemy',
+                          tagQueryType: 'hasAny',
+                          buffTags: [
+                            'Skill/Character/Common/SpellInflict/CrystInflict',
+                            'Skill/Character/Common/SpellInflict/NaturalInflict',
+                          ],
+                          operator: 'greaterOrEqual',
+                          value: { kind: 'constant', value: 1 },
+                        },
+                      },
+                      data_20: {
+                        type: 'boolean',
+                        expression: {
                           kind: 'entityCountCompare',
                           target: { kind: 'fixed', target: 'enemy' },
                           containsHittableTarget: false,
@@ -6005,17 +6095,24 @@ const yvonneBuff5ActionGraph = {
                           value: 1,
                         },
                       },
-                      data_19: {
+                      data_21: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'has_potential2', fallback: 0 },
                       },
-                      data_20: {
+                      data_22: {
                         type: 'boolean',
                         expression: {
                           kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_19' },
+                          left: { kind: 'valueNode', nodeId: 'data_21' },
                           operator: 'greaterOrEqual',
                           right: { kind: 'constant', value: 1 },
+                        },
+                      },
+                      data_23: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_61' },
                         },
                       },
                     },
@@ -7490,19 +7587,12 @@ export const yvonne: OperatorDefinition = {
         actionGraph: {
           main: {
             nodes: {
-              checkCondition_1: {
-                action: {
-                  kind: 'checkCondition',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                },
-                next: null,
-              },
               changeResource_2: {
                 action: {
                   kind: 'changeResource',
                   parameters: {
                     resource: 'ultimateEnergy',
-                    amount: { kind: 'valueNode', nodeId: 'data_2' },
+                    amount: { kind: 'valueNode', nodeId: 'data_1' },
                     coefficient: { kind: 'constant', value: 1 },
                     source: { kind: 'source' },
                     targets: { kind: 'source' },
@@ -7539,7 +7629,7 @@ export const yvonne: OperatorDefinition = {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
-                  condition: { $sequence: 'checkCondition_1' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_2' },
                   whenTrue: { $sequence: 'changeResource_2' },
                   whenFalse: { $sequence: null },
                 },
@@ -7557,7 +7647,8 @@ export const yvonne: OperatorDefinition = {
               },
             },
             dataNodes: {
-              data_1: {
+              data_1: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+              data_2: {
                 type: 'boolean',
                 expression: {
                   kind: 'entityCountCompare',
@@ -7568,7 +7659,6 @@ export const yvonne: OperatorDefinition = {
                   value: 1,
                 },
               },
-              data_2: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
             },
           },
           macros: {},

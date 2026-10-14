@@ -494,10 +494,15 @@ export class CombatActionSequenceRuntime {
       targets: parameters => this.resolveLoopTargets(parameters, operationContext),
       bindOperation: action => this.#createLeafStep(action, operationContext),
       canExecute: () => operationContext.canExecuteAction?.() !== false,
+      ...(trace === undefined
+        ? {}
+        : {
+            observeCondition: (input: CompiledCondition, passed: boolean) =>
+              trace.recorder.observe('condition', conditionInputExpression(input), passed),
+          }),
       evaluate: input => {
         const condition = conditionInputExpression(input);
         const passed = this.operations.evaluate(condition, operationContext);
-        trace?.recorder.observe('condition', condition, passed);
         this.hooks.conditionEvaluated?.(condition, passed);
         return passed;
       },

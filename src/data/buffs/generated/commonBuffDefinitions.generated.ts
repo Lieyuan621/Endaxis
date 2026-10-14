@@ -562,11 +562,14 @@ const commonBuff12: SkillBuffDefinition = {
 const commonBuff13ActionGraph = {
   main: {
     nodes: {
-      skillAffix_1: { action: { kind: 'skillAffix', parameters: {} }, next: null },
-      checkCondition_2: {
+      modifyActionValue_4: {
         action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'real_imbue_scale',
+            operation: 'assign',
+            value: { kind: 'valueNode', nodeId: 'data_1' },
+          },
         },
         next: null,
       },
@@ -576,19 +579,8 @@ const commonBuff13ActionGraph = {
           parameters: {
             key: 'real_imbue_scale',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_2' },
+            left: { kind: 'valueNode', nodeId: 'data_1' },
             right: { kind: 'constant', value: 1.5 },
-          },
-        },
-        next: null,
-      },
-      modifyActionValue_4: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'real_imbue_scale',
-            operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_2' },
           },
         },
         next: null,
@@ -597,7 +589,7 @@ const commonBuff13ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'calculateActionValue_3' },
           whenFalse: { $sequence: 'modifyActionValue_4' },
         },
@@ -617,13 +609,14 @@ const commonBuff13ActionGraph = {
         },
         next: 'checkCondition_6',
       },
+      skillAffix_1: { action: { kind: 'skillAffix', parameters: {} }, next: null },
     },
     dataNodes: {
-      data_1: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'imbue_scale' } },
+      data_2: {
         type: 'boolean',
         expression: { kind: 'eventDamageTagsMatch', match: 'hasAny', tags: ['normalSkill'] },
       },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'imbue_scale' } },
       data_3: {
         type: 'boolean',
         expression: {
@@ -1961,7 +1954,7 @@ const commonBuff41ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'changeResource_7' },
           whenFalse: { $sequence: null },
         },
@@ -2101,7 +2094,7 @@ const commonBuff41ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
           whenTrue: { $sequence: 'changeResource_20' },
           whenFalse: { $sequence: null },
         },
@@ -2110,14 +2103,14 @@ const commonBuff41ActionGraph = {
       checkCondition_26: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
         next: 'ifElse_25',
       },
       checkCondition_27: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
         },
         next: 'checkCondition_26',
       },
@@ -2137,13 +2130,21 @@ const commonBuff41ActionGraph = {
       data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_5: {
         type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_2' } },
+      },
+      data_6: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_2' } },
+      },
+      data_7: {
+        type: 'boolean',
         expression: {
           kind: 'eventProjectileIgnoreImmuneLevelCompare',
           operator: 'lessOrEqual',
           value: 0,
         },
       },
-      data_6: {
+      data_8: {
         type: 'boolean',
         expression: { kind: 'eventProjectilePerfectDodgeCooldownEquals', value: false },
       },
@@ -2679,18 +2680,11 @@ const commonBuff52ActionGraph = {
         },
         next: null,
       },
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-        },
-        next: null,
-      },
       ifElse_5: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: 'modifyActionValue_3' },
         },
@@ -2850,13 +2844,6 @@ const commonBuff52: SkillBuffDefinition = {
 const commonBuff53ActionGraph = {
   main: {
     nodes: {
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       readBuffBlackboard_2: {
         action: {
           kind: 'readBuffBlackboard',
@@ -2901,7 +2888,7 @@ const commonBuff53ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'readBuffBlackboard_2' },
           whenFalse: { $sequence: null },
         },
@@ -3577,10 +3564,18 @@ const commonBuff60: SkillBuffDefinition = {
 const commonBuff61ActionGraph = {
   main: {
     nodes: {
-      checkCondition_1: {
+      readSkillSettingData_3: {
         action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          kind: 'readSkillSettingData',
+          parameters: {
+            items: [
+              {
+                values: [12, 18, 24, 30],
+                column: { kind: 'valueNode', nodeId: 'data_1' },
+                storeKey: 'real_duration',
+              },
+            ],
+          },
         },
         next: null,
       },
@@ -3590,22 +3585,7 @@ const commonBuff61ActionGraph = {
           parameters: {
             key: 'real_duration',
             operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_3' },
-          },
-        },
-        next: null,
-      },
-      readSkillSettingData_3: {
-        action: {
-          kind: 'readSkillSettingData',
-          parameters: {
-            items: [
-              {
-                values: [12, 18, 24, 30],
-                column: { kind: 'valueNode', nodeId: 'data_4' },
-                storeKey: 'real_duration',
-              },
-            ],
+            value: { kind: 'valueNode', nodeId: 'data_2' },
           },
         },
         next: null,
@@ -3635,7 +3615,7 @@ const commonBuff61ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'modifyActionValue_2' },
           whenFalse: { $sequence: 'readSkillSettingData_3' },
         },
@@ -3643,18 +3623,18 @@ const commonBuff61ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'duration', fallback: 0 } },
-      data_2: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'duration', fallback: 0 } },
+      data_4: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_1' },
+          left: { kind: 'valueNode', nodeId: 'data_3' },
           operator: 'greater',
           right: { kind: 'constant', value: 0 },
         },
       },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
     },
   },
   macros: {},

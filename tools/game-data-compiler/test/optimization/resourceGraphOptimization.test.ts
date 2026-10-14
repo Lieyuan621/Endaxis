@@ -334,7 +334,7 @@ describe('独立资源图构建与优化', () => {
     const emptyBranch: ActionGraphStep = {
       kind: 'ifElse',
       parameters: { alwaysNext: true },
-      condition: tail,
+      condition: { kind: 'checkActionResult', action: tail },
       whenTrue: { $sequence: null },
       whenFalse: { $sequence: null },
     };
@@ -429,7 +429,7 @@ describe('独立资源图构建与优化', () => {
         {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition,
+          condition: { kind: 'checkActionResult', action: condition },
           whenTrue: graph.sequence([assign('result', 7)]),
           whenFalse: graph.sequence([assign('result', 7)]),
         },

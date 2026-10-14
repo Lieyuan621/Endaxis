@@ -53,18 +53,11 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
                         },
                         next: null,
                       },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                        },
-                        next: null,
-                      },
                       ifElse_3: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_2' },
                           whenTrue: { $sequence: 'changeResource_2' },
                           whenFalse: { $sequence: null },
                         },
@@ -151,18 +144,11 @@ export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
                         },
                         next: null,
                       },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                        },
-                        next: null,
-                      },
                       ifElse_3: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_2' },
                           whenTrue: { $sequence: 'changeResource_2' },
                           whenFalse: { $sequence: null },
                         },
@@ -300,18 +286,11 @@ export const wulfgardChr_0006_wolfgd_attack2ActionGraph = {
                         },
                         next: null,
                       },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                        },
-                        next: null,
-                      },
                       ifElse_3: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_2' },
                           whenTrue: { $sequence: 'changeResource_2' },
                           whenFalse: { $sequence: null },
                         },
@@ -449,18 +428,11 @@ export const wulfgardChr_0006_wolfgd_attack3ActionGraph = {
                         },
                         next: null,
                       },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                        },
-                        next: null,
-                      },
                       ifElse_3: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_2' },
                           whenTrue: { $sequence: 'changeResource_2' },
                           whenFalse: { $sequence: null },
                         },
@@ -599,18 +571,11 @@ export const wulfgardChr_0006_wolfgd_attack4ActionGraph = {
                         },
                         next: null,
                       },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                        },
-                        next: null,
-                      },
                       ifElse_3: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_2' },
                           whenTrue: { $sequence: 'changeResource_2' },
                           whenFalse: { $sequence: null },
                         },
@@ -690,18 +655,11 @@ export const wulfgardChr_0006_wolfgd_power_attackActionGraph = {
         action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
         next: null,
       },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_5: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'gainFinisherSp_4' },
           whenFalse: { $sequence: null },
         },
@@ -739,7 +697,7 @@ export const wulfgardChr_0006_wolfgd_power_attackActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'startTimeDilation_8' },
           whenFalse: { $sequence: null },
         },
@@ -775,6 +733,7 @@ export const wulfgardChr_0006_wolfgd_power_attackActionGraph = {
     dataNodes: {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
     },
   },
   macros: {},
@@ -1054,13 +1013,6 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_6: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       applyBuff_9: {
         action: {
           kind: 'applyBuff',
@@ -1084,7 +1036,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_6' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'launchProjectile_7' },
           whenFalse: { $sequence: 'launchProjectile_8' },
         },
@@ -1188,7 +1140,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_13' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'readBuffBlackboard_19' },
           whenFalse: { $sequence: null },
         },
@@ -1264,19 +1216,12 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         },
                         next: null,
                       },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-                        },
-                        next: null,
-                      },
                       changeResource_4: {
                         action: {
                           kind: 'changeResource',
                           parameters: {
                             resource: 'sp',
-                            amount: { kind: 'valueNode', nodeId: 'data_6' },
+                            amount: { kind: 'valueNode', nodeId: 'data_4' },
                             coefficient: { kind: 'constant', value: 1 },
                             source: { kind: 'source' },
                             targets: { kind: 'source' },
@@ -1290,28 +1235,21 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_1' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_6' },
                           whenTrue: { $sequence: 'modifyActionValue_2' },
                           whenFalse: { $sequence: null },
                         },
                         next: 'changeResource_4',
-                      },
-                      checkCondition_3: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-                        },
-                        next: null,
                       },
                       dealDamage_7: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
                             damageType: 'heat',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_9' },
+                            attackScale: { kind: 'valueNode', nodeId: 'data_7' },
                             tags: ['normalSkill'],
                             features: ['canBreakWeakness'],
-                            stagger: { kind: 'valueNode', nodeId: 'data_10' },
+                            stagger: { kind: 'valueNode', nodeId: 'data_8' },
                           },
                         },
                         next: null,
@@ -1320,18 +1258,11 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_3' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_10' },
                           whenTrue: { $sequence: 'ifElse_5' },
                           whenFalse: { $sequence: null },
                         },
                         next: 'dealDamage_7',
-                      },
-                      checkCondition_6: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
-                        },
-                        next: null,
                       },
                       finishBuffsByTag_12: {
                         action: {
@@ -1346,18 +1277,11 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         },
                         next: null,
                       },
-                      checkCondition_11: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
-                        },
-                        next: null,
-                      },
                       ifElse_15: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_11' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_11' },
                           whenTrue: { $sequence: 'finishBuffsByTag_12' },
                           whenFalse: { $sequence: null },
                         },
@@ -1376,18 +1300,11 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         },
                         next: null,
                       },
-                      checkCondition_13: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
-                        },
-                        next: null,
-                      },
                       ifElse_16: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_13' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_12' },
                           whenTrue: { $sequence: 'finishBuffsByTag_14' },
                           whenFalse: { $sequence: 'ifElse_15' },
                         },
@@ -1397,7 +1314,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_6' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_13' },
                           whenTrue: { $sequence: 'ifElse_8' },
                           whenFalse: { $sequence: 'applyElementalInfliction_10' },
                         },
@@ -1419,43 +1336,61 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                       },
                       data_4: {
                         type: 'number',
-                        expression: { kind: 'blackboard', key: 'potential_2', fallback: 0 },
+                        expression: { kind: 'blackboard', key: 'returnskillpower' },
                       },
                       data_5: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'potential_2', fallback: 0 },
+                      },
+                      data_6: {
                         type: 'boolean',
                         expression: {
                           kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_4' },
+                          left: { kind: 'valueNode', nodeId: 'data_5' },
                           operator: 'greater',
                           right: { kind: 'constant', value: 0 },
                         },
-                      },
-                      data_6: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'returnskillpower' },
                       },
                       data_7: {
                         type: 'number',
-                        expression: { kind: 'blackboard', key: 'talent2', fallback: 0 },
+                        expression: { kind: 'blackboard', key: 'atk_scale_plus' },
                       },
                       data_8: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'poise_extra_bullet' },
+                      },
+                      data_9: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'talent2', fallback: 0 },
+                      },
+                      data_10: {
                         type: 'boolean',
                         expression: {
                           kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_7' },
+                          left: { kind: 'valueNode', nodeId: 'data_9' },
                           operator: 'greater',
                           right: { kind: 'constant', value: 0 },
                         },
                       },
-                      data_9: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale_plus' },
-                      },
-                      data_10: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'poise_extra_bullet' },
-                      },
                       data_11: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityTagMatch',
+                          target: 'enemy',
+                          tagQueryType: 'hasAny',
+                          tags: ['Skill/Character/Common/SpellStatus/Conduct'],
+                        },
+                      },
+                      data_12: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityTagMatch',
+                          target: 'enemy',
+                          tagQueryType: 'hasAny',
+                          tags: ['Skill/Character/Common/SpellStatus/Burning'],
+                        },
+                      },
+                      data_13: {
                         type: 'boolean',
                         expression: {
                           kind: 'entityTagMatch',
@@ -1465,24 +1400,6 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                             'Skill/Character/Common/SpellStatus/Burning',
                             'Skill/Character/Common/SpellStatus/Conduct',
                           ],
-                        },
-                      },
-                      data_12: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'entityTagMatch',
-                          target: 'enemy',
-                          tagQueryType: 'hasAny',
-                          tags: ['Skill/Character/Common/SpellStatus/Conduct'],
-                        },
-                      },
-                      data_13: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'entityTagMatch',
-                          target: 'enemy',
-                          tagQueryType: 'hasAny',
-                          tags: ['Skill/Character/Common/SpellStatus/Burning'],
                         },
                       },
                     },
@@ -1506,18 +1423,11 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_22: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-        },
-        next: null,
-      },
       ifElse_24: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_22' },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
           whenTrue: { $sequence: 'modifyActionValue_23' },
           whenFalse: { $sequence: null },
         },
@@ -1527,7 +1437,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 118 },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
         },
         next: null,
       },
@@ -1535,7 +1445,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_6' },
+          condition: { kind: 'conditionNode', nodeId: 'data_10' },
           whenTrue: { $sequence: 'jumpTimeline_26' },
           whenFalse: { $sequence: null },
         },
@@ -1549,7 +1459,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 247 },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
         },
         next: null,
       },
@@ -1594,6 +1504,10 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
       },
       data_7: {
         type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_13' } },
+      },
+      data_8: {
+        type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
           target: 'enemy',
@@ -1603,6 +1517,23 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
             'Skill/Character/Common/SpellStatus/Conduct',
           ],
         },
+      },
+      data_9: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_10: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_1' },
+          operator: 'greaterOrEqual',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_11: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
     },
   },
@@ -1737,13 +1668,6 @@ export const wulfgardChr_0006_wolfgd_combo_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_4: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       findCharacterTeamTargets_6: {
         action: {
           kind: 'findCharacterTeamTargets',
@@ -1755,7 +1679,7 @@ export const wulfgardChr_0006_wolfgd_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_4' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: 'findCharacterTeamTargets_6' },
         },
@@ -1815,18 +1739,11 @@ export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_3: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_1' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'adjustSkillCooldown_2' },
           whenFalse: { $sequence: null },
         },

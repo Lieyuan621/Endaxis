@@ -135,13 +135,6 @@ const definition = {
               },
               next: 'applyBuff_4',
             },
-            checkCondition_6: {
-              action: {
-                kind: 'checkCondition',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-              },
-              next: null,
-            },
             finishBuffsById_7: {
               action: {
                 kind: 'finishBuffsById',
@@ -158,7 +151,7 @@ const definition = {
               action: {
                 kind: 'ifElse',
                 parameters: { alwaysNext: true },
-                condition: { $sequence: 'checkCondition_6' },
+                condition: { kind: 'conditionNode', nodeId: 'data_3' },
                 whenTrue: { $sequence: null },
                 whenFalse: { $sequence: 'finishBuffsById_7' },
               },

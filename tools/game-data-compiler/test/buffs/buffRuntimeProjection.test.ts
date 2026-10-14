@@ -1078,7 +1078,7 @@ describe('公共 Buff 运行时投影', () => {
                 {
                   kind: 'jumpTimeline',
                   parameters: { destinationFrame: 540 },
-                  condition: { $sequence: null },
+                  condition: { kind: 'checkActionResult', action: { $sequence: null } },
                 },
               ]),
             },
@@ -1164,7 +1164,7 @@ describe('公共 Buff 运行时投影', () => {
                 {
                   kind: 'jumpTimeline',
                   parameters: { destinationFrame: 180 },
-                  condition: { $sequence: null },
+                  condition: { kind: 'checkActionResult', action: { $sequence: null } },
                 },
               ]),
             },
@@ -4472,49 +4472,23 @@ describe('公共 Buff 运行时投影', () => {
             {
               kind: 'ifElse',
               parameters: { alwaysNext: true },
-              condition: graphBranch(
-                compiledDefinition.actionGraph!.main,
-                [
-                  {
-                    kind: 'anyCondition',
-                    conditions: [
-                      graphBranch(
-                        compiledDefinition.actionGraph!.main,
-                        [
-                          {
-                            kind: 'checkCondition',
-                            parameters: { condition: { kind: 'buffStackCompare' } },
-                          },
-                        ],
-                        true,
-                      ),
-                      graphBranch(
-                        compiledDefinition.actionGraph!.main,
-                        [
-                          {
-                            kind: 'checkCondition',
-                            parameters: { condition: { kind: 'buffIdStackCompare' } },
-                          },
-                        ],
-                        true,
-                      ),
-                      graphBranch(
-                        compiledDefinition.actionGraph!.main,
-                        [
-                          {
-                            kind: 'checkCondition',
-                            parameters: {
-                              condition: { kind: 'poiseCompare', target: 'actionInputTarget' },
-                            },
-                          },
-                        ],
-                        true,
-                      ),
-                    ],
-                  },
-                ],
-                true,
-              ),
+              condition: {
+                kind: 'checkActionResult',
+                action: graphBranch(
+                  compiledDefinition.actionGraph!.main,
+                  [
+                    {
+                      kind: 'anyCondition',
+                      conditions: [
+                        { kind: 'buffStackCompare' },
+                        { kind: 'buffIdStackCompare' },
+                        { kind: 'poiseCompare', target: 'actionInputTarget' },
+                      ],
+                    },
+                  ],
+                  true,
+                ),
+              },
               whenTrue: graphBranch(
                 compiledDefinition.actionGraph!.main,
                 [

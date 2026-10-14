@@ -8,19 +8,12 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const avywennaChr_0012_avywen_attack1ActionGraph = {
   main: {
     nodes: {
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -50,7 +43,7 @@ export const avywennaChr_0012_avywen_attack1ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'startTimeDilation_4' },
           whenFalse: { $sequence: null },
         },
@@ -76,8 +69,8 @@ export const avywennaChr_0012_avywen_attack1ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -122,19 +115,12 @@ export const avywennaChr_0012_avywen_attack1: SkillDefinition = {
 export const avywennaChr_0012_avywen_attack2ActionGraph = {
   main: {
     nodes: {
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -164,7 +150,7 @@ export const avywennaChr_0012_avywen_attack2ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'startTimeDilation_4' },
           whenFalse: { $sequence: null },
         },
@@ -190,8 +176,8 @@ export const avywennaChr_0012_avywen_attack2ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -236,19 +222,12 @@ export const avywennaChr_0012_avywen_attack2: SkillDefinition = {
 export const avywennaChr_0012_avywen_attack3ActionGraph = {
   main: {
     nodes: {
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -263,7 +242,7 @@ export const avywennaChr_0012_avywen_attack3ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_3' },
           whenFalse: { $sequence: null },
         },
@@ -289,8 +268,8 @@ export const avywennaChr_0012_avywen_attack3ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -366,18 +345,11 @@ export const avywennaChr_0012_avywen_attack4ActionGraph = {
         },
         next: 'changeResource_4',
       },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_6: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'startTimeDilation_5' },
           whenFalse: { $sequence: null },
         },
@@ -413,7 +385,7 @@ export const avywennaChr_0012_avywen_attack4ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'startTimeDilation_10' },
           whenFalse: { $sequence: null },
         },
@@ -424,7 +396,7 @@ export const avywennaChr_0012_avywen_attack4ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
             tags: ['normalAttack'],
           },
         },
@@ -442,7 +414,8 @@ export const avywennaChr_0012_avywen_attack4ActionGraph = {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
+      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
     },
   },
   macros: {},
@@ -503,18 +476,11 @@ export const avywennaChr_0012_avywen_attack5ActionGraph = {
         },
         next: null,
       },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: null,
-      },
       ifElse_4: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_2' },
           whenFalse: { $sequence: null },
         },
@@ -539,7 +505,7 @@ export const avywennaChr_0012_avywen_attack5ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'startTimeDilation_5' },
           whenFalse: { $sequence: null },
         },
@@ -550,9 +516,9 @@ export const avywennaChr_0012_avywen_attack5ActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
-            stagger: { kind: 'valueNode', nodeId: 'data_4' },
+            stagger: { kind: 'valueNode', nodeId: 'data_5' },
             staggerOnlyWhenCasterControlled: true,
           },
         },
@@ -568,9 +534,13 @@ export const avywennaChr_0012_avywen_attack5ActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
     },
   },
   macros: {},
@@ -619,18 +589,11 @@ export const avywennaChr_0012_avywen_power_attackActionGraph = {
         action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
         next: null,
       },
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_4: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'gainFinisherSp_3' },
           whenFalse: { $sequence: null },
         },
@@ -683,7 +646,7 @@ export const avywennaChr_0012_avywen_power_attackActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'startTimeDilation_8' },
           whenFalse: { $sequence: null },
         },
@@ -721,7 +684,7 @@ export const avywennaChr_0012_avywen_power_attackActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'startTimeDilation_13' },
           whenFalse: { $sequence: null },
         },
@@ -770,6 +733,8 @@ export const avywennaChr_0012_avywen_power_attackActionGraph = {
     dataNodes: {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
     },
   },
   macros: {},
@@ -810,19 +775,12 @@ export const avywennaChr_0012_avywen_power_attack: SkillDefinition = {
 export const avywennaChr_0012_avywen_plunging_attack_endActionGraph = {
   main: {
     nodes: {
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -837,7 +795,7 @@ export const avywennaChr_0012_avywen_plunging_attack_endActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'changeResource_3' },
           whenFalse: { $sequence: null },
         },
@@ -856,8 +814,8 @@ export const avywennaChr_0012_avywen_plunging_attack_endActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -982,7 +940,7 @@ const avywennaChr_0012_avywen_normal_skillActionGraphCallback2 = {
           action: {
             kind: 'ifElse',
             parameters: { alwaysNext: true },
-            condition: { $sequence: null },
+            condition: { kind: 'conditionNode', nodeId: 'data_5' },
             whenTrue: { $sequence: 'startTimeDilation_3' },
             whenFalse: { $sequence: 'startTimeDilation_3' },
           },
@@ -1013,6 +971,10 @@ const avywennaChr_0012_avywen_normal_skillActionGraphCallback2 = {
             operator: 'greater',
             right: { kind: 'constant', value: 0 },
           },
+        },
+        data_5: {
+          type: 'boolean',
+          expression: { kind: 'checkActionResult', action: { $sequence: null } },
         },
       },
     },
@@ -1067,18 +1029,11 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_7: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       ifElse_9: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_7' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'startTimeDilation_8' },
           whenFalse: { $sequence: null },
         },
@@ -1088,7 +1043,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: null },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
           whenTrue: { $sequence: 'ifElse_9' },
           whenFalse: { $sequence: null },
         },
@@ -1099,10 +1054,10 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'electric',
-            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_3' },
+            stagger: { kind: 'valueNode', nodeId: 'data_4' },
           },
         },
         next: 'ifElse_10',
@@ -1118,7 +1073,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
       checkCondition_17: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
         next: 'forEachContextTarget_15',
       },
@@ -1213,7 +1168,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_2' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_7' },
                           whenTrue: { $sequence: 'modifyActionValue_4' },
                           whenFalse: { $sequence: 'dealDamage_5' },
                         },
@@ -1225,7 +1180,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                           parameters: {
                             key: 'EntityBB_talent0',
                             operation: 'assign',
-                            value: { kind: 'valueNode', nodeId: 'data_7' },
+                            value: { kind: 'valueNode', nodeId: 'data_8' },
                           },
                         },
                         next: 'ifElse_6',
@@ -1233,7 +1188,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                       checkCondition_8: {
                         action: {
                           kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
                         },
                         next: 'modifyActionValue_7',
                       },
@@ -1276,10 +1231,17 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                         },
                       },
                       data_7: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_2' },
+                        },
+                      },
+                      data_8: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'talent0_usp' },
                       },
-                      data_8: {
+                      data_9: {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
@@ -1323,7 +1285,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
       checkCondition_22: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
         next: 'applyBuff_21',
       },
@@ -1338,7 +1300,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
       checkCondition_25: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
         next: 'forEachContextTarget_23',
       },
@@ -1445,7 +1407,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
-                          condition: { $sequence: 'checkCondition_2' },
+                          condition: { kind: 'conditionNode', nodeId: 'data_7' },
                           whenTrue: { $sequence: 'modifyActionValue_5' },
                           whenFalse: { $sequence: 'dealDamage_7' },
                         },
@@ -1457,7 +1419,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                           parameters: {
                             key: 'EntityBB_talent0',
                             operation: 'assign',
-                            value: { kind: 'valueNode', nodeId: 'data_7' },
+                            value: { kind: 'valueNode', nodeId: 'data_8' },
                           },
                         },
                         next: 'ifElse_8',
@@ -1477,7 +1439,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                       checkCondition_11: {
                         action: {
                           kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
                         },
                         next: 'applyBuff_10',
                       },
@@ -1520,10 +1482,17 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                         },
                       },
                       data_7: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'checkActionResult',
+                          action: { $sequence: 'checkCondition_2' },
+                        },
+                      },
+                      data_8: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'talent0_usp' },
                       },
-                      data_8: {
+                      data_9: {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
@@ -1567,7 +1536,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
       checkCondition_30: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
         },
         next: 'applyBuff_29',
       },
@@ -1582,7 +1551,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
       checkCondition_33: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
         },
         next: 'forEachContextTarget_31',
       },
@@ -1614,9 +1583,13 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_4: {
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_5: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -1627,7 +1600,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
           value: 1,
         },
       },
-      data_5: {
+      data_6: {
         type: 'boolean',
         expression: {
           kind: 'targetDistance',
@@ -1639,7 +1612,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
           containsHittableObject: false,
         },
       },
-      data_6: {
+      data_7: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -1650,7 +1623,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
           value: 1,
         },
       },
-      data_7: {
+      data_8: {
         type: 'boolean',
         expression: {
           kind: 'targetDistance',
@@ -1662,7 +1635,7 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
           containsHittableObject: false,
         },
       },
-      data_8: {
+      data_9: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -1939,13 +1912,6 @@ export const avywennaChr_0012_avywen_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
       createSpatialPointTargets_3: {
         action: {
           kind: 'createSpatialPointTargets',
@@ -1957,7 +1923,7 @@ export const avywennaChr_0012_avywen_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: 'createSpatialPointTargets_3' },
         },
@@ -2066,13 +2032,6 @@ export const avywennaChr_0012_avywen_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      checkCondition_13: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: null,
-      },
       applyBuff_14: {
         action: {
           kind: 'applyBuff',
@@ -2098,7 +2057,7 @@ export const avywennaChr_0012_avywen_ultimate_skillActionGraph = {
           kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_4' },
+            amount: { kind: 'valueNode', nodeId: 'data_2' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -2117,7 +2076,7 @@ export const avywennaChr_0012_avywen_ultimate_skillActionGraph = {
       checkCondition_17: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
         next: 'forEachContextTarget_16',
       },
@@ -2126,10 +2085,10 @@ export const avywennaChr_0012_avywen_ultimate_skillActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'electric',
-            attackScale: { kind: 'valueNode', nodeId: 'data_6' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['ultimateSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_7' },
+            stagger: { kind: 'valueNode', nodeId: 'data_5' },
           },
         },
         next: 'checkCondition_17',
@@ -2138,7 +2097,7 @@ export const avywennaChr_0012_avywen_ultimate_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { $sequence: 'checkCondition_13' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'applyBuff_14' },
           whenFalse: { $sequence: null },
         },
@@ -2160,21 +2119,8 @@ export const avywennaChr_0012_avywen_ultimate_skillActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_2: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'pulse_vul_duration', fallback: 0 },
-      },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'talent0_usp' } },
       data_3: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_2' },
-          operator: 'greater',
-          right: { kind: 'constant', value: 0 },
-        },
-      },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'talent0_usp' } },
-      data_5: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -2184,8 +2130,21 @@ export const avywennaChr_0012_avywen_ultimate_skillActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_6: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'pulse_vul_duration', fallback: 0 },
+      },
+      data_7: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_6' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
     },
   },
   macros: {},
@@ -2705,18 +2664,11 @@ export const avywenna: OperatorDefinition = {
         actionGraph: {
           main: {
             nodes: {
-              checkCondition_1: {
-                action: {
-                  kind: 'checkCondition',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                },
-                next: null,
-              },
               jumpTimeline_2: {
                 action: {
                   kind: 'jumpTimeline',
                   parameters: { destinationFrame: 1500 },
-                  condition: { $sequence: 'checkCondition_1' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_1' },
                 },
                 next: null,
               },
@@ -2805,18 +2757,11 @@ export const avywenna: OperatorDefinition = {
         actionGraph: {
           main: {
             nodes: {
-              checkCondition_1: {
-                action: {
-                  kind: 'checkCondition',
-                  parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                },
-                next: null,
-              },
               jumpTimeline_2: {
                 action: {
                   kind: 'jumpTimeline',
                   parameters: { destinationFrame: 1500 },
-                  condition: { $sequence: 'checkCondition_1' },
+                  condition: { kind: 'conditionNode', nodeId: 'data_1' },
                 },
                 next: null,
               },

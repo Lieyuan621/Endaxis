@@ -843,6 +843,10 @@
     "scopeUnknown": "Not connected; scope unknown",
     "searchNodes": "Search nodes",
     "fields": {
+      "action": {
+        "name": "Execute Actions",
+        "help": "The behavior entry called during evaluation. Connect it using the behavior pin on the canvas."
+      },
       "variableKey": {
         "name": "Variable name",
         "help": "Choose a variable available in the current scope. Local variables can only be read and written within their own scope."
@@ -2042,13 +2046,17 @@
         "name": "Check Condition",
         "help": "Continue this sequence only when the check succeeds."
       },
+      "checkActionResult": {
+        "name": "Check Action Result",
+        "help": "Execute the connected action sequence when this input is read and return whether it allows continuation. Never evaluate early or cache the result."
+      },
       "ifElse": {
         "name": "If Else",
-        "help": "Execute the condition sequence, then the true or false branch. Condition actions may read and write variables."
+        "help": "Read the boolean condition, then execute the true or false branch. Connect Check Action Result to run actions when evaluating the condition."
       },
       "anyCondition": {
         "name": "Any Condition",
-        "help": "Execute each condition sequence in order until one succeeds. Fail if none succeeds."
+        "help": "Read boolean conditions in order until one is true. Fail if none is true. Connect Check Action Result to run actions when evaluating a condition."
       },
       "invertNextResult": {
         "name": "Invert Next Result",
