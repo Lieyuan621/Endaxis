@@ -24,7 +24,12 @@ export type ComboWindowConsumeFailure =
   'windowMissing' | 'releaseOrderMismatch' | 'skillStageMismatch';
 
 export type ComboWindowConsumeResult =
-  | { readonly consumed: true; readonly window: PendingComboWindow }
+  | {
+      readonly consumed: true;
+      readonly window: PendingComboWindow;
+      readonly reason?: 'releaseOrderMismatch';
+      readonly expected?: PendingComboWindow;
+    }
   | {
       readonly consumed: false;
       readonly reason: ComboWindowConsumeFailure;
@@ -197,14 +202,23 @@ export class ComboWindowRuntime implements FrameRuntime {
     nativeSkillSlotKey?: string,
     skillCastId?: number,
     sourceActionId?: string,
+    forceCast = false,
   ): T {
-    const active = this.#orderedRecords()[0];
+    const first = this.#orderedRecords()[0];
+    const expected = first?.candidates.at(-1);
+    const outOfOrder = first !== undefined && first.operatorId !== operatorId;
+    // 时间轴强制施放绕过队首门禁，但只消费施放者自己的匹配候选。
+    // 正常输入仍保留队首限制，不能因强制执行策略而提前消费其他干员。
+    if (outOfOrder && !forceCast)
+      return cast({ consumed: false, reason: 'releaseOrderMismatch', expected });
+    const active = forceCast ? this.runtimeState.records.get(operatorId) : first;
     const candidate = active?.candidates.at(-1);
     if (active === undefined || candidate === undefined) {
-      return cast({ consumed: false, reason: 'windowMissing' });
-    }
-    if (active.operatorId !== operatorId) {
-      return cast({ consumed: false, reason: 'releaseOrderMismatch', expected: candidate });
+      return cast({
+        consumed: false,
+        reason: outOfOrder ? 'releaseOrderMismatch' : 'windowMissing',
+        expected,
+      });
     }
     // 原生候选绑定连携槽，施法时才取当前技能；旧语义窗口仍按多段技能身份严格匹配。
     if (
@@ -253,7 +267,11 @@ export class ComboWindowRuntime implements FrameRuntime {
       this.#recordPerfectChanges(previous);
       return cast({ consumed: false, reason: 'windowMissing' });
     }
-    const result = cast({ consumed: true, window: selected });
+    const result = cast({
+      consumed: true,
+      window: selected,
+      ...(outOfOrder ? { reason: 'releaseOrderMismatch' as const, expected } : {}),
+    });
     // 清空原记录，让嵌套调用持有的引用也观察到消费；下一次触发仍复用它。
     active.candidates.length = 0;
     this.receipt.record({

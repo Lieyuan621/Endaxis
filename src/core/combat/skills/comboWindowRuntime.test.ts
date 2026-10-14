@@ -14,6 +14,37 @@ function advance(clock: CombatClock, runtime: ComboWindowRuntime, frames: number
 }
 
 describe('ComboWindowRuntime', () => {
+  it('强制越序施放保留诊断并消费自身候选，不消费队首干员', () => {
+    const receipt = new CombatReceiptCollector();
+    const runtime = new ComboWindowRuntime(new CombatClock(), receipt, 5);
+    const first = runtime.open('first', 'combo');
+    const own = runtime.open('second', 'combo', { stacks: 3 });
+    expect(runtime.tryConsume('second', 'combo')).toBe(false);
+    const result = runtime.consume(
+      'second',
+      'combo',
+      selected => {
+        expect(runtime.hasPending('second')).toBe(true);
+        return selected;
+      },
+      undefined,
+      1,
+      'cast:second',
+      true,
+    );
+    expect(result).toEqual({
+      consumed: true,
+      window: own,
+      reason: 'releaseOrderMismatch',
+      expected: first,
+    });
+    expect(runtime.hasPending('second')).toBe(false);
+    expect(runtime.first).toBe(first);
+    expect(receipt.entries.filter(entry => entry.event === 'ComboWindowConsumed')).toMatchObject([
+      { sourceId: 'second', data: { windowSequence: own.sequence } },
+    ]);
+  });
+
   it('QTE 同步重入消费后，不复活外层持有的旧候选', () => {
     const runtime = new ComboWindowRuntime(new CombatClock(), new CombatReceiptCollector(), 5);
     runtime.open('rossi', 'combo');

@@ -2374,7 +2374,8 @@ export class CombatRuntimeAssembly {
               resolveSkillSlot,
             );
           }
-        } else {
+        }
+        if (result.reason !== undefined) {
           this.receipt.record({
             frame: this.clock.frame,
             time: this.clock.time,
@@ -2451,6 +2452,7 @@ export class CombatRuntimeAssembly {
         ability.skillSlotKeyForSkill(resolvedSkillId),
         skillCastId,
         castId,
+        true,
       );
     return prepareAndStart();
   }
