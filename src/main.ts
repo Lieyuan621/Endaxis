@@ -25,13 +25,7 @@ async function bootstrap() {
   // an empty RouterView and remove the loader, leaving only the background.
   await router.isReady();
   app.mount('#app');
-
-  // 启动遮罩属于应用外壳；语言资源和首个路由完成挂载后再移除。
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      document.getElementById('boot-loader')?.remove();
-    });
-  });
+  // 启动遮罩由首个编辑器在完整模拟结果就绪后移除，避免露出半成品界面。
 }
 
 void bootstrap().catch(showBootstrapFailure);

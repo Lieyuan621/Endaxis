@@ -864,6 +864,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{
   projectChange: [project: EndaxisProjectDocument];
+  initialReady: [];
 }>();
 const gameDataRepository = props.gameDataRepository;
 const consumables = gameDataRepository.getConsumables();
@@ -1891,6 +1892,16 @@ const {
   scenario,
   service: simulationService,
 });
+let initialReadyEmitted = false;
+watch(
+  [simulationRun, simulationError],
+  ([run, error]) => {
+    if (initialReadyEmitted || (run === null && error === null)) return;
+    initialReadyEmitted = true;
+    emit('initialReady');
+  },
+  { immediate: true },
+);
 const {
   battleLogSnapshot,
   publishedOperators,
