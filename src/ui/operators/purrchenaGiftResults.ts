@@ -40,7 +40,7 @@ export function projectPurrchenaGiftResults(
       ...origin,
       frame: entry.frame,
       receiptSequence: entry.sequence,
-      iconPath: `/operators/purrchena/${reward.skill}.webp`,
+      iconPath: `/operators/purrchena/${reward.skill} 01.webp`,
       nameKey: `timeline.passiveUi.giftResults.${reward.reward}`,
       titleKey: `timeline.passiveUi.giftResults.${reward.skill}`,
       badge: rewardBadges[reward.reward],
