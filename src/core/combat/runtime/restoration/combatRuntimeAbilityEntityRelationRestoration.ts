@@ -155,6 +155,7 @@ export function bindRestoredCombatRuntimeAbilityEntityRelations(
             entityBlackboard,
             operations: runtimeBindings.operations,
             source: owner.source,
+            target: owner.target,
             skillHostGroup: options.entities.runtime.childSkillHosts(target),
             ownerOperatorId: owner.ownerId,
             semanticEvents: options.foundation.semanticEvents,

@@ -133,8 +133,10 @@ export function createProgramDefinitionCompiler(
   ): ResolvedAbilityEntityDefinition {
     return {
       ...(definition.bornTags === undefined ? {} : { bornTags: definition.bornTags }),
+      ...(definition.faction === undefined ? {} : { faction: definition.faction }),
       ...(definition.blackboard === undefined ? {} : { blackboard: definition.blackboard }),
       lifetime: definition.lifetime,
+      ...(definition.soul === undefined ? {} : { soul: definition.soul }),
       ...(definition.deathReleaseDelaySeconds === undefined
         ? {}
         : { deathReleaseDelaySeconds: definition.deathReleaseDelaySeconds }),
@@ -234,6 +236,9 @@ export function createProgramDefinitionCompiler(
       skillId: childSkill.skillId,
       skillLevel,
       nativeSkillType: childSkill.nativeSkillType,
+      ...(childSkill.normalSkillSubType === undefined
+        ? {}
+        : { normalSkillSubType: childSkill.normalSkillSubType }),
       naturalDurationFrames: childSkill.naturalDurationFrames,
       castResource: {
         ...childSkill.castResource,

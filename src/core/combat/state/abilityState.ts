@@ -160,6 +160,7 @@ export interface AbilitySystemState {
       readonly registrationId: number;
       readonly revertedSkillKey: string;
       readonly inheritOriginSkillCooldownProgress: boolean;
+      remainingSeconds?: number;
     }
   >;
   nextSkillSlotReplacementId: number;

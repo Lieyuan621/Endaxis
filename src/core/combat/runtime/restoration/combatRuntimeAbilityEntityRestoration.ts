@@ -71,6 +71,9 @@ export function bindRestoredCombatAbilityEntityDirectory(
       finished: (entity, reason) => {
         options.hooks?.finished?.(entity, reason);
         resolveEntityBuffs(entity.instanceId)?.releaseAll();
+        options.foundation.environment.runtimeOptions.clearPendingAbilityEvents?.(
+          logicalAbilityEntityRuntimeId(entity.instanceId),
+        );
         targets.delete(logicalAbilityEntityRuntimeId(entity.instanceId));
       },
     },

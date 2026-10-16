@@ -29,6 +29,8 @@ export class AbilityEntityChildSkillRuntime implements LogicalAbilityEntityChild
     program: CompiledAbilityEntityChildSkillProgram,
     dependencies: {
       readonly entity: AbilityEntityTargetRef;
+      /** 控制器传入的施法目标，与技能宿主实体身份分开。恢复时沿用技能状态中的输入目标。 */
+      readonly target?: RuntimeTargetRef;
       readonly source?: RuntimeTargetRef;
       readonly entityBlackboard: ActionBlackboard;
       readonly operations: CombatOperationExecutor;
@@ -90,6 +92,7 @@ export class AbilityEntityChildSkillRuntime implements LogicalAbilityEntityChild
       {
         blackboard,
         currentTarget: dependencies.entity,
+        actionInputTarget: dependencies.target,
         actionOwnerAbilityEntity: dependencies.entity,
         actionSourceId:
           dependencies.source?.kind === 'operator'

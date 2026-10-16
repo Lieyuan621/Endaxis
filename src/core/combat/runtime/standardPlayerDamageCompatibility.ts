@@ -130,6 +130,7 @@ function inspectCondition(
     case 'eventSourceMatchesBuffSourceEntitySource':
     case 'buffSourceMatchesOwner':
     case 'eventDamageTagsMatch':
+    case 'eventTransferredPartTagsMatch':
     case 'eventDamageGameplayTagsMatch':
     case 'eventDamageFeaturesMatch':
     case 'eventDamageTypeIn':
@@ -149,6 +150,7 @@ function inspectCondition(
     case 'eventTargetBuffCountCompare':
     case 'eventSpGainMatch':
     case 'eventConsumedBuffLayerCompare':
+    case 'eventBuffEnhanceLayerCompare':
     case 'eventOverheal':
     case 'eventBuffEndedEarly':
     case 'buffStackCompare':
@@ -346,6 +348,7 @@ function inspectSequence(
       case 'storeCurrentTimelineFrame':
       case 'storeEventSpGainAmount':
       case 'modifyActionValue':
+      case 'storeRandomInteger':
       case 'calculateActionValue':
       case 'createTimedMarker':
       case 'setGlobalCooldown':

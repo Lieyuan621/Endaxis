@@ -52,6 +52,14 @@ export function rootActionSteps(sequence: ResolvedActionSequence): readonly Reso
           sequence: bind(option.sequence.$sequence, `${id}:${index}`),
         })),
       });
+    } else if (action.kind === 'listenForTagQuery') {
+      result.push({
+        ...action,
+        parameters: {
+          ...action.parameters,
+          sequence: bind(action.parameters.sequence.$sequence, `${id}:tags`),
+        },
+      });
     } else if (action.kind === 'listenForCombatEvents') {
       result.push({
         ...action,

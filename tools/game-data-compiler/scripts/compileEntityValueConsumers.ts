@@ -18,6 +18,7 @@ import {
   type GraphSharedEntityValueUsageCollector,
 } from '../src/compiler/optimization/graphValueOptimization.ts';
 import { readGameplayTagPaths } from './readGameplayTagPaths.ts';
+import type { NativeJsonEncodingSchema } from '../src/source/nativeJsonEncoding.ts';
 
 export interface EntityValueConsumerSourceArguments {
   readonly sourceRoot: string;
@@ -27,6 +28,9 @@ export interface EntityValueConsumerSourceArguments {
   readonly globalBuffCatalog: string;
   readonly skillSettingCatalog: string;
   readonly mechanicScope?: string;
+  /** 保留现有合约产物，不重新读取合约来源；不为未参与编译的资源伪造变量访问。 */
+  readonly skipContingencyContract?: boolean;
+  readonly nativeJsonEncoding?: NativeJsonEncodingSchema;
 }
 
 /** 完整重建复用同一次编译的投影结果；单人入口只保留用途摘要。 */
@@ -50,7 +54,7 @@ export async function compileEntityValueConsumers(
   await weapons(args, usage, rendering);
   await gears(args, usage, rendering);
   await gearSets(args, usage, rendering);
-  await mechanics(args, usage, rendering);
+  if (!args.skipContingencyContract) await mechanics(args, usage, rendering);
   const consumables = compileConsumableDefinitionsFromFiles(args);
   usage.addBuffDefinitions(consumables.buffDefinitions);
   await rendering?.consumables(consumables);
@@ -67,6 +71,7 @@ async function weapons(
     skillData: path.join(args.sourceRoot, 'SkillData'),
     buffData: args.buffDataRoot,
     gameplayTagCatalog: args.gameplayTagCatalog,
+    nativeJsonEncoding: args.nativeJsonEncoding,
   });
   weapons.definitions.forEach(weapon => usage.addWeapon(weapon));
   await rendering?.weapons(weapons);
@@ -92,6 +97,7 @@ async function gearSets(
     skillDataDirectory: path.join(args.sourceRoot, 'SkillData'),
     buffDataDirectory: args.buffDataRoot,
     gameplayTagCatalog: args.gameplayTagCatalog,
+    nativeJsonEncoding: args.nativeJsonEncoding,
   });
   gearSets.definitions.forEach(gearSet => usage.addGearSet(gearSet));
   await rendering?.gearSets(gearSets);
@@ -103,6 +109,7 @@ async function mechanics(
   rendering: EntityValueConsumerRendering | undefined,
 ) {
   const mechanics = compileContingencyContractDefinitionsFromFiles({
+    nativeJsonEncoding: args.nativeJsonEncoding,
     tableRoot: args.tableRoot,
     buffDataRoot: args.buffDataRoot,
     globalBuffCatalog: args.globalBuffCatalog,

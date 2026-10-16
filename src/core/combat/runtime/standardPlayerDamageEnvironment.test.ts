@@ -17,6 +17,7 @@ import { AbilitySystemRuntime } from '../abilities/abilitySystemRuntime';
 import { resolveAbilityEventActionContextBinding } from '../events/abilityEventActionContext';
 import type { AbilityEventPayloadMap } from '../events/combatAbilityEvent';
 import { buffEnhanceAbilityEvent } from '../events/combatAbilityEvent';
+import { createEventBuff } from '../events/buffEventTestFixture';
 import { SimulationRandomSource } from '../random/simulationRandom';
 import { createSimulationRandomState } from '../state/environmentState';
 
@@ -28,6 +29,74 @@ function activeTimelineSegments(
     segment => segment.startFrame <= frame && frame < segment.endFrame,
   );
 }
+
+it('帧末吸收只合并同帧同实例同施法，并将同步重入留给下一批', () => {
+  const environment = createEnvironment();
+  const context = createContext();
+  const bound = bindBattleWithoutProjectiles(environment, context);
+  const buff = createEventBuff();
+  const emit = (layers: number, skillCastId = 1) =>
+    environment.runtimeOptions.emitBuffLifecycleAbilityEvent!('buffAbsorbed', {
+      sourceId: 'enemy',
+      targetId: 'enemy',
+      buff,
+      buffId: 'test',
+      buffTags: [],
+      layers,
+      skillCastInfo: { skillCastId, originSkillId: 'test', nonReturnedSpCost: 0 },
+    });
+  emit(99); // 注册前的事件不应被后来的监听者收到。
+  const received: number[] = [];
+  environment.eventsFor('enemy').registerCallback('buffAbsorbedFrameEnd', event => {
+    received.push(event.payload.layerCount);
+    if (received.length === 1) emit(5);
+  });
+  emit(1);
+  emit(2);
+  emit(4, 2);
+  expect(received).toEqual([]);
+  bound.frameEndEvents!.advanceFrame();
+  expect(received).toEqual([3, 4]);
+  bound.frameEndEvents!.advanceFrame();
+  expect(received).toEqual([3, 4, 5]);
+  bound.frameEndEvents!.advanceFrame();
+  expect(received).toEqual([3, 4, 5]);
+});
+
+it('帧末队列恢复使用复制后的 Buff 黑板，清理宿主中止当前批次', () => {
+  const original = createEnvironment();
+  bindBattleWithoutProjectiles(original, createContext());
+  original.eventsFor('enemy').registerCallback('buffConsumedFrameEnd', () => {});
+  const buff = createEventBuff({ value: 9 });
+  for (const skillCastId of [1, 2]) {
+    original.runtimeOptions.emitBuffLifecycleAbilityEvent!('buffConsumed', {
+      sourceId: 'enemy',
+      targetId: 'enemy',
+      buff,
+      buffId: 'test',
+      buffTags: [],
+      layers: 1,
+      skillCastInfo: { skillCastId, originSkillId: 'test', nonReturnedSpCost: 0 },
+    });
+  }
+  const saved = structuredClone(original.runtimeState);
+  buff.blackboard.assignDynamic('value', 20);
+  const restored = new StandardPlayerDamageEnvironment({
+    ...original.options,
+    enemyVitals: CombatVitals.bindRuntimeState(saved.enemyVitals),
+    restoredState: saved,
+  });
+  const bound = bindBattleWithoutProjectiles(restored, createContext());
+  const values: number[] = [];
+  restored.eventsFor('enemy').registerCallback('buffConsumedFrameEnd', event => {
+    values.push(event.payload.buff.blackboard.getNumber('value')!);
+    restored.runtimeOptions.clearPendingAbilityEvents!('enemy');
+  });
+  expect(values).toEqual([]);
+  bound.frameEndEvents!.advanceFrame();
+  expect(values).toEqual([9]);
+  expect(original.runtimeState.buffFrameEndEvents.get('enemy')!.pending.size).toBe(2);
+});
 
 it.each(['expected', 'sampled'] as const)('环境保存 %s 模式实际消费的随机位置', mode => {
   const state = createSimulationRandomState();

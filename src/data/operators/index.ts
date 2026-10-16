@@ -3,6 +3,7 @@
  * 新干员只有在结构校验和行为测试完成后才能加入导出列表。
  */
 import { perlica } from './perlica.generated';
+import { si } from './si.generated';
 import { arcane } from './arcane.generated';
 import { zhuangFangyi } from './zhuang-fangyi.generated';
 import { arclight } from './arclight.generated';
@@ -36,6 +37,7 @@ import { default as typhoeus } from './typhoeus.generated';
 import { purrchena } from './purrchena.generated';
 
 export {
+  si,
   perlica,
   arcane,
   zhuangFangyi,
@@ -72,6 +74,7 @@ export {
 
 /** 正式干员目录及显示顺序；完整加载与按需加载共用同一注册入口。 */
 export const operatorDefinitions = [
+  si,
   perlica,
   arcane,
   zhuangFangyi,

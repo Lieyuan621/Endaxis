@@ -4,6 +4,49 @@ import { parseSelectorSummarySource } from '../src/source/target.ts';
 import { scalarFixture, targetFixture } from './sourceFixtures.ts';
 
 describe('新版目标集合字段', () => {
+  it('命中盒保留不可选中筛选开关，缺失时不擅自补默认值', () => {
+    const finder = {
+      $type: 'Beyond.Gameplay.Core.Selector+HitBoxFinder+Data, Gameplay.Beyond',
+      factionTarget: 'Ally',
+      targetObjectType: 'Normal',
+      checkAlive: true,
+      autoSetTargetFaction: true,
+      targetFactionType: 0,
+    };
+    const read = (fields: Record<string, unknown>) =>
+      parseSelectorSummarySource(
+        { finderData: { ...finder, ...fields }, validatorData: [], postProcessorData: [] },
+        'hitbox',
+        true,
+      );
+    expect(read({ containsUnMarkable: false }).finderContainsUnMarkable).toBe(false);
+    expect(read({ containsUnMarkable: true }).finderContainsUnMarkable).toBe(true);
+    expect(read({}).finderContainsUnMarkable).toBeUndefined();
+    expect(() => read({ containsUnMarkable: 'false' })).toThrow('containsUnMarkable');
+  });
+  it('导航射线和 owner 挂点查询保留位置参数，不变成实体查询', () => {
+    const parsePoint = (finderData: unknown) =>
+      parseSelectorSummarySource(
+        { finderData, validatorData: [], postProcessorData: [] },
+        'point',
+        true,
+      );
+    const nav = parsePoint({
+      $type: 'Beyond.Gameplay.Core.Selector+NavMeshRaycastPointFinder+Data, Gameplay.Beyond',
+      distance: scalarFixture(2, 'range'),
+    });
+    expect(nav.finderSpatialPoint).toEqual({
+      kind: 'navMeshRaycast',
+      distance: { value: 2, blackboardKey: 'range', levelValues: null },
+    });
+    expect(nav.finderPointBlackboardKeys).toEqual(['range']);
+    const mount = parsePoint({
+      $type: 'Beyond.Gameplay.Core.Selector+OwnerMountPointPosFinder+Data, Gameplay.Beyond',
+      mountPoint: 'Head',
+    });
+    expect(mount.finderSpatialPoint).toEqual({ kind: 'ownerMountPoint', mountPoint: 'Head' });
+    expect(mount.finderType).toBe('OwnerMountPointPosFinder');
+  });
   const merge = {
     $type: 'Beyond.Gameplay.Core.MergeTargetAction+Data, Gameplay.Beyond',
     isEnable: true,
@@ -44,6 +87,33 @@ describe('新版目标集合字段', () => {
     snapToNavMesh: false,
   };
   const zeroExtent = { x: scalarFixture(0), y: scalarFixture(0) };
+  it('灵体查询保留自身生命值比例筛选和动态阈值，不改成召唤物查询', () => {
+    const result = parseSelectorSummarySource(
+      {
+        finderData: {
+          $type: 'Beyond.Gameplay.Core.Selector+OwnerSoulFinder+Data, Gameplay.Beyond',
+        },
+        validatorData: [
+          {
+            $type: 'Beyond.Gameplay.Core.Selector+CurHpRatioValidator+Data, Gameplay.Beyond',
+            compareType: 2,
+            value: scalarFixture(0.5, 'soul_threshold'),
+          },
+        ],
+        postProcessorData: [],
+      },
+      'soul',
+      true,
+    );
+    expect(result.finderType).toBe('OwnerSoulFinder');
+    expect(result.validatorTypes).toEqual(['CurHpRatioValidator']);
+    expect(result.hpRatioValidators).toEqual([
+      {
+        comparison: 'GT',
+        value: { value: 0.5, blackboardKey: 'soul_threshold', levelValues: null },
+      },
+    ]);
+  });
   const parse = (finderData: Record<string, unknown>) =>
     parseSelectorSummarySource(
       {

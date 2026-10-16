@@ -31,6 +31,15 @@ function entry(tagId: number) {
 }
 
 describe('Contingency Contract native source', () => {
+  it('rejects presentation-only tables rather than silently dropping contract effects', () => {
+    const presentation = Object.fromEntries(
+      Object.entries(tag(100003, 2, 'global_buff_party')).filter(([key]) => key !== 'tagTerms'),
+    );
+    expect(() => parseContingencyContractCatalogSource({ 100003: presentation }, {})).toThrow(
+      'Server-synchronized contingency contract Buff configuration is required',
+    );
+  });
+
   it('keeps native column order and recovers the three explicit term identities', () => {
     const result = parseContingencyContractCatalogSource(
       {

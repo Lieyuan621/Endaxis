@@ -451,6 +451,9 @@ export function pruneGraphValues<Value>(
       case 'forEachContextTarget':
         collectReference(action.body, `${path}.body`);
         return;
+      case 'listenForTagQuery':
+        collectReference(action.parameters.sequence, `${path}.parameters.sequence`, false);
+        return;
       case 'listenForCombatEvents':
         action.parameters.responses.forEach((response, responseIndex) => {
           if (response.condition !== undefined) observe(analyzeConditionUsage(response.condition));
@@ -982,9 +985,8 @@ export interface GraphSequenceSource {
 
 /** 跨资源用途保留对象查询，不能把同名的 Buff 键与实体后备板键混为同一变量。 */
 export interface GraphSharedEntityValueUsage {
-  /** Buff 执行可能访问宿主后备板，读写均保守保留。 */
-  readonly fallbackKeys: ReadonlySet<string>;
   readonly externalReads: readonly DefinitionExternalValueRead[];
+  /** 收集阶段的诊断摘要；不表示所有资源都可能访问当前黑板，不能用作全局裁剪门禁。 */
   readonly unknownAccess: boolean;
   readonly commonAbilityEntityDefinitions: OperatorAbilityEntityDefinitions;
 }
@@ -1044,7 +1046,6 @@ export function collectGraphSharedEntityValueUsage(
 export function createGraphSharedEntityValueUsageCollector(
   commonAbilityEntityDefinitions: OperatorAbilityEntityDefinitions,
 ): GraphSharedEntityValueUsageCollector {
-  const fallbackKeys = new Set<string>();
   const externalReads = new Map<string, DefinitionExternalValueRead>();
   const observeExternal = (read: DefinitionExternalValueRead) => {
     externalReads.set(JSON.stringify(read), read);
@@ -1057,19 +1058,7 @@ export function createGraphSharedEntityValueUsageCollector(
   const observedSequences = new WeakMap<ActionGraphDefinition, WeakSet<ActionGraphReference>>();
   const observedBuffs = new WeakSet<object>();
   const observedEntities = new WeakSet<object>();
-  const observe = (
-    usage: DefinitionValueUsage,
-    directValues?: Readonly<Record<string, unknown>>,
-  ) => {
-    if (directValues !== undefined) {
-      // Buff 自有初值遮蔽实体后备板；EntityBB_ 写入仍显式路由到实体板。
-      usage.reads.forEach(key => {
-        if (!Object.hasOwn(directValues, key)) fallbackKeys.add(key);
-      });
-      usage.writes.forEach(key => {
-        if (key.startsWith('EntityBB_') || !Object.hasOwn(directValues, key)) fallbackKeys.add(key);
-      });
-    }
+  const observe = (usage: DefinitionValueUsage) => {
     usage.externalReads.forEach(observeExternal);
     unknownAccess ||= usage.unknownAccess;
   };
@@ -1105,7 +1094,7 @@ export function createGraphSharedEntityValueUsageCollector(
   const buff = (value: OperatorBuffDefinitions[string]) => {
     if (observedBuffs.has(value)) return;
     observedBuffs.add(value);
-    observe(analyzeGraphBuffDefinitionUsage(value, fallbackContext), value.blackboard ?? {});
+    observe(analyzeGraphBuffDefinitionUsage(value, fallbackContext));
     const { graph, entries } = graphBuffPrograms(value);
     entries.forEach(entry => program(graph, entry));
   };
@@ -1214,13 +1203,11 @@ export function createGraphSharedEntityValueUsageCollector(
       requireOpen();
       if (usage.commonAbilityEntityDefinitions !== commonAbilityEntityDefinitions)
         throw new Error('entity value usage summaries must share the same common entity catalog');
-      usage.fallbackKeys.forEach(key => fallbackKeys.add(key));
       usage.externalReads.forEach(observeExternal);
       unknownAccess ||= usage.unknownAccess;
     },
     finish() {
       result ??= {
-        fallbackKeys,
         externalReads: [...externalReads]
           .sort(([left], [right]) => left.localeCompare(right))
           .map(([, read]) => read),
@@ -1239,16 +1226,11 @@ export function createGraphSharedEntityValueUsageCollector(
 export function createGraphEntityUsageContext(
   definitions: OperatorAbilityEntityDefinitions | undefined,
   shared: GraphSharedEntityValueUsage | undefined,
+  buffDefinitions: OperatorBuffDefinitions = {},
 ): DefinitionUsageContext | undefined {
   if (shared === undefined) return undefined;
   const cache = new WeakMap<AbilityEntityDefinition, DefinitionValueUsage>();
   const visiting = new WeakSet<AbilityEntityDefinition>();
-  const sharedUsage: DefinitionValueUsage = {
-    ...empty(),
-    // 实体传值仍保守保护全部对象读取；Buff 的精确用途不能反过来使用这个合并集合。
-    reads: new Set([...shared.fallbackKeys, ...shared.externalReads.map(read => read.key)]),
-    unknownAccess: shared.unknownAccess,
-  };
   const unresolved = (): DefinitionValueUsage => ({ ...empty(), unknownAccess: true });
   const context: DefinitionUsageContext = {
     inheritedAbilityEntityUsage(step) {
@@ -1260,7 +1242,14 @@ export function createGraphEntityUsageContext(
       if (previous !== undefined) return previous;
       visiting.add(definition);
       try {
-        const usages = [sharedUsage];
+        const usages: DefinitionValueUsage[] = [];
+        // 只保护明确指向这个能力实体的读取；Buff 自有键不能仅因同名保护实体键。
+        for (const read of shared.externalReads) {
+          if (read.kind !== 'abilityEntity') continue;
+          if (read.abilityEntityIds === undefined) return unresolved();
+          if (read.abilityEntityIds.includes(id))
+            usages.push({ ...empty(), reads: new Set([read.key]) });
+        }
         const number = (value: AbilityEntityDefinition['maxStackingCount']) => {
           if (typeof value === 'object')
             usages.push(
@@ -1273,10 +1262,65 @@ export function createGraphEntityUsageContext(
         };
         if (definition.lifetime.kind === 'limited') number(definition.lifetime.durationSeconds);
         number(definition.maxStackingCount);
+        const visitedBuffs = new Set<string>();
         const program = (
           graph: ActionGraphDefinition,
           reference: ActionGraphReference,
-        ): DefinitionValueUsage => analyzeGraphSequenceUsage(graph, reference, context);
+          stringBindings: Readonly<Record<string, unknown>> = {},
+        ): DefinitionValueUsage => {
+          const usage = analyzeGraphSequenceUsage(graph, reference, context);
+          const dependencies: DefinitionValueUsage[] = [usage];
+          walkGraphActions(graph, reference, action => {
+            if (action.kind === 'createGlobalBuff') dependencies.push(unresolved());
+            if (action.kind !== 'applyBuff' && action.kind !== 'aura') return;
+            for (const entry of action.parameters.buffs) {
+              const buffId =
+                typeof entry.buffId === 'string'
+                  ? entry.buffId
+                  : 'blackboardKey' in entry.buffId
+                    ? stringBindings[entry.buffId.blackboardKey]
+                    : undefined;
+              if (typeof buffId !== 'string') {
+                dependencies.push(unresolved());
+                continue;
+              }
+              const bindingKey = JSON.stringify([
+                buffId,
+                entry.stringBlackboardAssignments,
+                Object.keys(entry.blackboardAssignments ?? {}).sort(),
+                Object.keys(entry.copiedBlackboardAssignments ?? {}).sort(),
+              ]);
+              if (visitedBuffs.has(bindingKey)) continue;
+              visitedBuffs.add(bindingKey);
+              const buff = buffDefinitions[buffId];
+              if (buff === undefined) {
+                dependencies.push(unresolved());
+                continue;
+              }
+              // 仅沿实际施加的 Buff 闭包保护后备读取；保守保留其自有键，
+              // 但不让无关 Buff 或其他干员的同名键阻止当前实体裁剪。
+              const buffUsage = analyzeGraphBuffDefinitionUsage(buff, context);
+              dependencies.push(buffUsage);
+              // 只解析定义初值及本次显式字符串赋值。被动作写入或被其他赋值覆盖的键
+              // 不作为固定 ID 证明；不能把默认值当作所有运行实例的值。
+              const bindings: Record<string, unknown> = {
+                ...buff.blackboard,
+                ...entry.stringBlackboardAssignments,
+              };
+              for (const key of [
+                ...buffUsage.writes,
+                ...Object.keys(entry.blackboardAssignments ?? {}),
+                ...Object.keys(entry.copiedBlackboardAssignments ?? {}),
+              ])
+                delete bindings[key];
+              const body = graphBuffPrograms(buff);
+              if (body.graph !== undefined)
+                for (const entry of body.entries)
+                  dependencies.push(program(body.graph, entry, bindings));
+            }
+          });
+          return mergeDefinitionValueUsage(dependencies);
+        };
         definition.childSkill?.scheduledSequences.forEach(item =>
           usages.push(program(definition.childSkill!.actionGraph.main, item.sequence)),
         );

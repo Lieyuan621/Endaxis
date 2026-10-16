@@ -575,6 +575,12 @@
     "setName": "集成实训",
     "defense": 48
   },
+  "item_equip_t4_parts_wuling00_body_06": {
+    "name": "集成实训刃装护甲",
+    "slotType": "护甲",
+    "setName": "集成实训",
+    "defense": 48
+  },
   "item_equip_t4_parts_wuling00_edc_01": {
     "name": "集成实训排障刀",
     "slotType": "配件",
@@ -605,6 +611,12 @@
     "setName": "集成实训",
     "defense": 18
   },
+  "item_equip_t4_parts_wuling00_edc_06": {
+    "name": "集成实训刃装短锯",
+    "slotType": "配件",
+    "setName": "集成实训",
+    "defense": 18
+  },
   "item_equip_t4_parts_wuling00_hand_01": {
     "name": "集成实训手套",
     "slotType": "护手",
@@ -631,6 +643,12 @@
   },
   "item_equip_t4_parts_wuling00_hand_05": {
     "name": "集成实训医疗护手",
+    "slotType": "护手",
+    "setName": "集成实训",
+    "defense": 36
+  },
+  "item_equip_t4_parts_wuling00_hand_06": {
+    "name": "集成实训刃装护手",
     "slotType": "护手",
     "setName": "集成实训",
     "defense": 36
@@ -695,8 +713,26 @@
     "setName": "",
     "defense": 56
   },
+  "item_equip_t4_parts_wuling02_body_03": {
+    "name": "涉渊钢甲",
+    "slotType": "护甲",
+    "setName": "",
+    "defense": 56
+  },
+  "item_equip_t4_parts_wuling02_body_04": {
+    "name": "涉渊防护服",
+    "slotType": "护甲",
+    "setName": "",
+    "defense": 56
+  },
   "item_equip_t4_parts_wuling02_edc_01": {
     "name": "涉渊护甲板",
+    "slotType": "配件",
+    "setName": "",
+    "defense": 21
+  },
+  "item_equip_t4_parts_wuling02_edc_02": {
+    "name": "涉渊白刃",
     "slotType": "配件",
     "setName": "",
     "defense": 21
@@ -709,6 +745,18 @@
   },
   "item_equip_t4_parts_wuling02_hand_02": {
     "name": "涉渊手套",
+    "slotType": "护手",
+    "setName": "",
+    "defense": 42
+  },
+  "item_equip_t4_parts_wuling02_hand_03": {
+    "name": "涉渊裹手",
+    "slotType": "护手",
+    "setName": "",
+    "defense": 42
+  },
+  "item_equip_t4_parts_wuling02_hand_04": {
+    "name": "涉渊手甲",
     "slotType": "护手",
     "setName": "",
     "defense": 42
@@ -821,6 +869,12 @@
     "setName": "50式应龙",
     "defense": 56
   },
+  "item_equip_t4_suit_atk02_body_05": {
+    "name": "50式应龙软甲",
+    "slotType": "护甲",
+    "setName": "50式应龙",
+    "defense": 56
+  },
   "item_equip_t4_suit_atk02_edc_01": {
     "name": "50式应龙雷达",
     "slotType": "配件",
@@ -851,6 +905,12 @@
     "setName": "50式应龙",
     "defense": 21
   },
+  "item_equip_t4_suit_atk02_edc_06": {
+    "name": "50式应龙信标",
+    "slotType": "配件",
+    "setName": "50式应龙",
+    "defense": 21
+  },
   "item_equip_t4_suit_atk02_hand_01": {
     "name": "50式应龙护手",
     "slotType": "护手",
@@ -859,6 +919,12 @@
   },
   "item_equip_t4_suit_atk02_hand_02": {
     "name": "50式应龙护手·壹型",
+    "slotType": "护手",
+    "setName": "50式应龙",
+    "defense": 42
+  },
+  "item_equip_t4_suit_atk02_hand_03": {
+    "name": "50式应龙手套",
     "slotType": "护手",
     "setName": "50式应龙",
     "defense": 42
@@ -1427,6 +1493,12 @@
     "setName": "脉冲式",
     "defense": 56
   },
+  "item_equip_t4_suit_pulse_cryst01_body_02": {
+    "name": "脉冲式轻甲",
+    "slotType": "护甲",
+    "setName": "脉冲式",
+    "defense": 56
+  },
   "item_equip_t4_suit_pulse_cryst01_edc_01": {
     "name": "脉冲式探针",
     "slotType": "配件",
@@ -1445,8 +1517,20 @@
     "setName": "脉冲式",
     "defense": 21
   },
+  "item_equip_t4_suit_pulse_cryst01_edc_04": {
+    "name": "脉冲式护甲板",
+    "slotType": "配件",
+    "setName": "脉冲式",
+    "defense": 21
+  },
   "item_equip_t4_suit_pulse_cryst01_hand_01": {
     "name": "脉冲式手套",
+    "slotType": "护手",
+    "setName": "脉冲式",
+    "defense": 42
+  },
+  "item_equip_t4_suit_pulse_cryst01_hand_02": {
+    "name": "脉冲式轻护手",
     "slotType": "护手",
     "setName": "脉冲式",
     "defense": 42
@@ -1487,6 +1571,18 @@
     "setName": "长息",
     "defense": 56
   },
+  "item_equip_t4_suit_usp02_body_05": {
+    "name": "长息防护服",
+    "slotType": "护甲",
+    "setName": "长息",
+    "defense": 56
+  },
+  "item_equip_t4_suit_usp02_body_06": {
+    "name": "长息改装护甲",
+    "slotType": "护甲",
+    "setName": "长息",
+    "defense": 56
+  },
   "item_equip_t4_suit_usp02_edc_01": {
     "name": "长息蓄电核",
     "slotType": "配件",
@@ -1523,6 +1619,12 @@
     "setName": "长息",
     "defense": 21
   },
+  "item_equip_t4_suit_usp02_edc_07": {
+    "name": "长息测距仪",
+    "slotType": "配件",
+    "setName": "长息",
+    "defense": 21
+  },
   "item_equip_t4_suit_usp02_hand_01": {
     "name": "长息护手",
     "slotType": "护手",
@@ -1543,6 +1645,12 @@
   },
   "item_equip_t4_suit_usp02_hand_04": {
     "name": "长息手套",
+    "slotType": "护手",
+    "setName": "长息",
+    "defense": 42
+  },
+  "item_equip_t4_suit_usp02_hand_05": {
+    "name": "长息导能护手",
     "slotType": "护手",
     "setName": "长息",
     "defense": 42

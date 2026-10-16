@@ -640,6 +640,20 @@
     "noMatchingNodes": "No matching nodes",
     "addNode": "Add Node…",
     "options": {
+      "fixed": "Fixed damage",
+      "definite": "Definite",
+      "none": "None",
+      "final": "Final",
+      "real": "Actual",
+      "overflow": "Overflow",
+      "specificTime": "Specified time",
+      "lifetime": "Lifetime ended",
+      "stackEvicted": "Stack eviction",
+      "sourceDied": "Source died",
+      "targetDied": "Target died",
+      "soulMainBodyDied": "Soul main body died",
+      "normal": "Normal",
+      "additionalNormalSkill": "Additional battle skill",
       "first": "First target",
       "all": "All targets",
       "allOperators": "All operators",
@@ -843,6 +857,45 @@
     "scopeUnknown": "Not connected; scope unknown",
     "searchNodes": "Search nodes",
     "fields": {
+      "replacePartsWithMainBodies": {
+        "name": "Replace parts with main bodies"
+      },
+      "excludeTargets": {
+        "name": "Excluded targets"
+      },
+      "caster": {
+        "name": "Caster"
+      },
+      "calculationValue": {
+        "name": "Calculation value"
+      },
+      "calculationValueScale": {
+        "name": "Calculation value multiplier"
+      },
+      "slotIndex": {
+        "name": "Squad slot"
+      },
+      "defaultValue": {
+        "name": "Default value"
+      },
+      "minimum": {
+        "name": "Minimum (inclusive)"
+      },
+      "maximum": {
+        "name": "Maximum (exclusive)"
+      },
+      "emitters": {
+        "name": "Emitters"
+      },
+      "executeOnMatch": {
+        "name": "Execute on match"
+      },
+      "sequence": {
+        "name": "Action sequence"
+      },
+      "normalSkillSubType": {
+        "name": "Battle skill subtype"
+      },
       "action": {
         "name": "Execute Actions",
         "help": "The behavior entry called during evaluation. Connect it using the behavior pin on the canvas."
@@ -1782,6 +1835,38 @@
       "number": "Value"
     },
     "nodes": {
+      "saveTransferredSource": {
+        "name": "Save transferred source",
+        "help": "Save the transferred part of the first source target to a target group. Keep the original target when no transfer is recorded."
+      },
+      "findCharacterBySquadSlot": {
+        "name": "Find squad slot character",
+        "help": "Save the character in the specified squad slot to a target group."
+      },
+      "storeCharacterTypeBySquadSlot": {
+        "name": "Read squad slot element",
+        "help": "Write the element of the character in the specified squad slot to the blackboard."
+      },
+      "storeEventDamageValue": {
+        "name": "Read event damage",
+        "help": "Write the selected damage event value to the blackboard, or zero without context."
+      },
+      "storeRandomInteger": {
+        "name": "Store random integer",
+        "help": "Sample an integer from inclusive lower and exclusive upper bounds and write it to the blackboard."
+      },
+      "listenForTagQuery": {
+        "name": "Listen for tag matches",
+        "help": "Observe tag query changes and run callbacks for the matching state."
+      },
+      "eventAbilityEntityFinishReasonIn": {
+        "name": "Check ability entity finish reason",
+        "help": "Check whether the current ability entity finish reason matches."
+      },
+      "eventBuffEnhanceLayerCompare": {
+        "name": "Compare Buff enhancement layers",
+        "help": "Compare the layer count in the current Buff enhancement change event."
+      },
       "triggerSpellBurst": {
         "name": "Trigger Arts Burst",
         "help": "Trigger an Arts Burst of the selected element."
@@ -2297,6 +2382,10 @@
       "eventDamageGameplayTagsMatch": {
         "name": "Event Damage Tags Match?",
         "help": "Check effect tags carried by the event damage."
+      },
+      "eventTransferredPartTagsMatch": {
+        "name": "Transferred Part Tags Match?",
+        "help": "Check the part mapped to the current main body in the event. Save the part target only on success; otherwise preserve the existing target group."
       },
       "eventDamageFeaturesMatch": {
         "name": "Event Damage Features Match?",
@@ -3111,6 +3200,7 @@
       "sectionScenarioSettings": "Scenario settings",
       "sectionPrefs": "User preferences",
       "automaticControlSwitches": "Automatic control switching",
+      "comboSkillPriority": "Combo skill priority",
       "automaticControlSwitchesHelp": "Switch control to the acting operator when a basic attack, enhanced basic attack, plunging attack, or finisher needs it.",
       "sectionViewLayers": "Layers",
       "sectionViewBehavior": "View behavior",
@@ -5076,6 +5166,8 @@
       "speedup": "Haste",
       "barrageArray": "Barrage Array",
       "firefangVesperwings": "Firefang Vesperwings",
+      "artfulIntent": "Artful Intent",
+      "immobilization": "Immobilization",
       "sunderblades": "Sunderblades",
       "electrification": "Electrification",
       "ultEnergyGain": "Ultimate Energy Gain",
@@ -5091,6 +5183,7 @@
   },
   "hitEditor": {
     "elements": {
+      "fixed": "Fixed",
       "physical": "Physical",
       "heat": "Heat",
       "cryo": "Cryo",

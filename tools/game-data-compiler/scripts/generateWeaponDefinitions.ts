@@ -24,6 +24,10 @@ import type { BuildDefinitionDiagnosticSource } from '../src/compiler/build/form
 import type { DefinitionOptimizationMode } from '../src/compiler/optimization/definitionOptimization.ts';
 import type { DefinitionProgramOptimizationReport } from '../src/compiler/finalizeDefinitions.ts';
 import { finalizeWeaponDefinition } from '../src/compiler/finalizeDefinitions.ts';
+import {
+  createNativeJsonEncodingReader,
+  type NativeJsonEncodingSchema,
+} from '../src/source/nativeJsonEncoding.ts';
 
 export interface WeaponDefinitionSourceArguments {
   readonly tables: string;
@@ -31,6 +35,7 @@ export interface WeaponDefinitionSourceArguments {
   readonly buffData: string;
   /** 同版本路径目录；缺省不猜标签，遇到带标签行为时阻断。 */
   readonly gameplayTagCatalog?: string;
+  readonly nativeJsonEncoding?: NativeJsonEncodingSchema;
 }
 
 interface Arguments extends WeaponDefinitionSourceArguments {
@@ -47,8 +52,11 @@ export function compileWeaponDefinitionsFromFiles(args: WeaponDefinitionSourceAr
   const upgradeTable = readJson(path.join(args.tables, 'WeaponUpgradeTemplateTable.json'));
   const patchTable = readJson(path.join(args.tables, 'SkillPatchTable.json'));
   const itemTable = readJson(path.join(args.tables, 'ItemTable.json'));
-  const skillData = readDefinitionDirectory(args.skillData, 'skillId');
-  const buffData = readDefinitionDirectory(args.buffData, 'id');
+  const readNative = args.nativeJsonEncoding
+    ? createNativeJsonEncodingReader(args.nativeJsonEncoding)
+    : undefined;
+  const skillData = readDefinitionDirectory(args.skillData, 'skillId', readNative);
+  const buffData = readDefinitionDirectory(args.buffData, 'id', readNative);
   const staticBatch = compileWeaponStaticDefinitionsIndependently(
     weaponTable,
     upgradeTable,
@@ -181,9 +189,10 @@ export function compileWeaponStaticDefinitionsIndependently(
   skillData: unknown,
   patchTable: unknown,
 ): CompiledWeaponStaticDefinitionBatchSource {
-  const weaponIds = Object.keys(requireRecord(weaponTable, 'WeaponBasicTable')).sort(
-    (left, right) => left.localeCompare(right),
-  );
+  // _ink 是特定场景变体，不属于可配装的标准武器；不进入正式定义与本地化闭包。
+  const weaponIds = Object.keys(requireRecord(weaponTable, 'WeaponBasicTable'))
+    .filter(id => !id.endsWith('_ink'))
+    .sort((left, right) => left.localeCompare(right));
   const definitions: CompiledWeaponStaticDefinitionBatchSource['definitions'][number][] = [];
   const runtimeDependencies: CompiledWeaponStaticDefinitionBatchSource['runtimeDependencies'][number][] =
     [];
@@ -252,6 +261,7 @@ export function parseArguments(values: readonly string[]): Arguments {
 function readDefinitionDirectory(
   directory: string,
   identityField: 'skillId' | 'id',
+  readNative?: ReturnType<typeof createNativeJsonEncodingReader>,
 ): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   for (const name of fs
@@ -261,7 +271,15 @@ function readDefinitionDirectory(
     if (!/^[A-Za-z0-9._-]+\.json$/.test(name)) {
       throw new Error(`${directory}: unsafe definition filename ${JSON.stringify(name)}`);
     }
-    const value = readJson(path.join(directory, name));
+    const file = path.join(directory, name);
+    const raw = readJson(file);
+    const value = readNative
+      ? readNative(
+          raw,
+          `Beyond.Gameplay.Core.${identityField === 'skillId' ? 'SkillData' : 'BuffData'}`,
+          file,
+        )
+      : raw;
     const row = requireRecord(value, name);
     const identity = row[identityField];
     if (typeof identity !== 'string' || identity.length === 0) {

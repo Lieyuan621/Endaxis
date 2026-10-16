@@ -216,7 +216,6 @@ describe('独立资源图构建与优化', () => {
       },
     };
     const shared = {
-      fallbackKeys: new Set<string>(),
       externalReads: [{ kind: 'eventBuff' as const, key: 'external' }],
       unknownAccess: false,
       commonAbilityEntityDefinitions: {},
@@ -243,7 +242,7 @@ describe('独立资源图构建与优化', () => {
       optimizeResourceGraphs(input, 'apply', undefined, {
         sharedUsage: { ...shared, unknownAccess: true },
       }).value,
-    ).toEqual(input);
+    ).toEqual(result);
   });
 
   it.each(['mergeContextTargets', 'createSpatialPointTargets'] as const)(
@@ -852,7 +851,6 @@ it('Buff 裁剪保留跨生命周期、参数和外部查询读取，只删除�
     },
   };
   const shared = {
-    fallbackKeys: new Set<string>(),
     externalReads: [{ kind: 'eventBuff' as const, key: 'external' }],
     unknownAccess: false,
     commonAbilityEntityDefinitions: {},
@@ -871,10 +869,13 @@ it('Buff 裁剪保留跨生命周期、参数和外部查询读取，只删除�
   expect(
     finalizeCommonBuffDefinitions(definitions, 'apply').definitions.fixture!.blackboard,
   ).toEqual(definitions.fixture.blackboard);
-  expect(
-    finalizeCommonBuffDefinitions(definitions, 'apply', { ...shared, unknownAccess: true })
-      .definitions.fixture!.blackboard,
-  ).toEqual(definitions.fixture.blackboard);
+  const unresolved = finalizeCommonBuffDefinitions(definitions, 'apply', {
+    ...shared,
+    unknownAccess: true,
+  });
+  expect(unresolved.definitions.fixture!.blackboard).toEqual(
+    result.definitions.fixture!.blackboard,
+  );
 });
 
 it('被动技能跨启用和事件共用变量，保留养成补丁与实体共享值，裁掉无人读取初值', () => {
@@ -927,7 +928,6 @@ it('被动技能跨启用和事件共用变量，保留养成补丁与实体共�
   const result = optimizeResourceGraphs(owner, 'apply', undefined, {
     passiveInitialKeys: new Map([['passive', new Set(['patched'])]]),
     sharedUsage: {
-      fallbackKeys: new Set(),
       externalReads: [],
       unknownAccess: false,
       commonAbilityEntityDefinitions: {},
@@ -958,7 +958,6 @@ it('Buff 外部读取按资源 ID 和分类标签保护，扩展标签不参与�
     },
     'apply',
     {
-      fallbackKeys: new Set(),
       unknownAccess: false,
       commonAbilityEntityDefinitions: {},
       externalReads: [

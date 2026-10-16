@@ -119,7 +119,16 @@ function parseBuffActionGraphSource<TLeaf>(
   parseLeaf: (value: unknown, path: string, inherited: BlackboardLevelValues) => TLeaf,
 ): BuffActionGraphSource<TLeaf> {
   const root = requireRecord(value, sourcePath);
-  requireExactFields(root, BUFF_DATA_FIELDS, sourcePath);
+  const inflictionCache = '<isSpellInflictionRelated>k__BackingField';
+  if (inflictionCache in root) {
+    requireBoolean(root[inflictionCache], `${sourcePath}.${inflictionCache}`);
+  }
+  // AKEDB 可附带属性的运行时缓存；可执行行为仍由标签和动作定义决定。
+  requireExactFields(
+    root,
+    inflictionCache in root ? new Set([...BUFF_DATA_FIELDS, inflictionCache]) : BUFF_DATA_FIELDS,
+    sourcePath,
+  );
   const parseSequence = (sequence: unknown, path: string) =>
     parseNativeSequenceSource(sequence, path, inheritedBlackboard, (leaf, leafPath) =>
       parseLeaf(leaf, leafPath, inheritedBlackboard),

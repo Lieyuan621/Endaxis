@@ -1,4 +1,4 @@
-import { requireExactFields, requireRecord, requireString } from './primitives.ts';
+import { requireExactFields, requireRecord, readOptionalReferenceKey } from './primitives.ts';
 import {
   parseScalarSource,
   parseStringScalarSource,
@@ -71,6 +71,6 @@ export function parseCheckCustomAbilityEventSource(
   return {
     kind: 'customAbilityEvent',
     eventName: parseStringScalarSource(action.eventName, `${path}.eventName`),
-    savedParamKey: requireString(action.savedParamKey, `${path}.savedParamKey`),
+    savedParamKey: readOptionalReferenceKey(action.savedParamKey, `${path}.savedParamKey`),
   };
 }

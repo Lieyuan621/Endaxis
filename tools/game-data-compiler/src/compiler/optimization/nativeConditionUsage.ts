@@ -26,6 +26,9 @@ export function canOmitUnusedNativeCondition(
   // 普通引用、主目标读取及无过滤重叠查询无战斗写入；随机或其他处理器仍须保留。
   const readOnly = isReadOnlyNativeTarget;
   switch (condition.kind) {
+    case 'damageTransferredSource':
+      // 原生匹配成功可写部位目标组；只有未配置写入时才是可丢弃的纯查询。
+      return condition.contextKey === '';
     case 'entityCount':
       return condition.storeKey === '' && readOnly(condition.target);
     case 'twoDirectionAngle':

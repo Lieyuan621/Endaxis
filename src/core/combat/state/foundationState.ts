@@ -19,6 +19,12 @@ import type {
 } from '../../game-data/operatorDefinition';
 import type { ActionSequenceState } from './actionState';
 
+/** 原生事件携带的主体→部位转移表；只描述当前动作上下文，不是对象来源链。 */
+export interface EnemyPartTransferInfo {
+  readonly currentMainBodyId: string;
+  readonly mainBodyToPart: ReadonlyMap<string, string>;
+}
+
 /** 一项配装贡献的原始定义位置。 */
 export type EquipmentContributionSource =
   | { readonly kind: 'weaponTrait'; readonly slug: string; readonly traitKey: string }
@@ -396,4 +402,9 @@ export interface PostSkillCastRequest {
 }
 
 export type LogicalAbilityEntityFinishReason =
-  'durationExpired' | 'explicit' | 'ownerFinished' | 'sourceDied' | 'stackingLimit';
+  | 'durationExpired'
+  | 'explicit'
+  | 'ownerFinished'
+  | 'sourceDied'
+  | 'stackingLimit'
+  | 'soulMainBodyDied';

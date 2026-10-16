@@ -3,7 +3,7 @@ import {
   requireExactFields,
   requireNativeEnum,
   requireRecord,
-  requireString,
+  readOptionalReferenceKey,
 } from './primitives.ts';
 import { parseTagQuerySource, type TagQuerySource } from './tagQuery.ts';
 
@@ -41,7 +41,7 @@ export function parseBuffFindSettingsSource(value: unknown, path: string): BuffF
   return {
     checkType: readBuffFindCheckType(settings.checkType, `${path}.checkType`),
     buffIds: requireArray(settings.buffIdList, `${path}.buffIdList`).map((item, index) =>
-      requireString(item, `${path}.buffIdList[${index}]`),
+      readOptionalReferenceKey(item, `${path}.buffIdList[${index}]`),
     ),
     tagQuery: parseTagQuerySource(settings.tagQuery, `${path}.tagQuery`),
   };

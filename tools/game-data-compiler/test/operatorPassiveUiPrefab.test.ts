@@ -32,8 +32,15 @@ describe('operator passive UI prefab component projection', () => {
           stateCounts: [0, 1, 2],
         },
         'fixture.tangtang',
+        'tangtangDroplets',
       ),
     ).toEqual({ kind: 'numeric', appearance: 'tangtangDroplets', maximum: 2 });
+    expect(
+      compileOperatorPassiveUiPrefabComponent(
+        { componentType: 'UICharPassiveMultiStates', fullCount: 1000, stateCounts: [0, 1, 1000] },
+        'fixture.si',
+      ),
+    ).toBeUndefined();
 
     expect(
       compileOperatorPassiveUiPrefabComponent(

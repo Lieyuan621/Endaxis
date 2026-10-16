@@ -75,7 +75,7 @@ export async function generateOperatorDefinitionCandidates(
   return rendered.summary;
 }
 
-/** 写入多少名干员与分析多少名干员分开：选中一人时仍从完整 manifest 收集消费者。 */
+/** 单人生成只规划所选干员；全量生成收集本批次的明确对象引用。 */
 export interface OperatorDefinitionBatchArguments extends Omit<
   OperatorDefinitionCandidateArguments,
   'check' | 'commonBuffOutput'
@@ -91,11 +91,13 @@ export async function renderOperatorDefinitionBatch(
 ) {
   // 先完成外部领域并释放其原始数据，再读干员来源，避免两个大批次同时驻留。
   const externalUsage =
-    args.includeCommonBuffs && args.optimization !== 'off'
+    args.selectedSlug === undefined && args.includeCommonBuffs && args.optimization !== 'off'
       ? (equipmentUsage ?? (await compileEntityValueConsumers(args)))
       : undefined;
-  const usage = externalUsage
-    ? createGraphSharedEntityValueUsageCollector(externalUsage.commonAbilityEntityDefinitions)
+  const usage = args.includeCommonBuffs
+    ? createGraphSharedEntityValueUsageCollector(
+        externalUsage?.commonAbilityEntityDefinitions ?? {},
+      )
     : undefined;
   if (externalUsage) usage!.addUsage(externalUsage);
   const sources = new OperatorPlanningSources(args);
@@ -121,7 +123,9 @@ export async function renderOperatorDefinitionBatch(
     readonly audit: string;
   }[] = [];
   const commonBuffs = args.includeCommonBuffs ? createCommonBuffCollector() : undefined;
-  for (const slug of slugs) {
+  // 不提供 sharedEntityUsage 时，优化器保守保留跨资源写入。
+  const planningSlugs = args.selectedSlug !== undefined ? [args.selectedSlug] : slugs;
+  for (const slug of planningSlugs) {
     const plan = projectOperatorDefinition({
       ...args,
       sources,
@@ -169,6 +173,7 @@ export async function renderOperatorDefinitionBatch(
       item.operator,
       args.optimization ?? 'apply',
       sharedEntityUsage,
+      commonBuffs?.definitions,
     );
     const rendered = await renderOperatorDefinitionFiles(item.slug, optimized.operator, {
       ...requireRecord(JSON.parse(item.audit), `${item.slug}.audit`),
@@ -193,7 +198,6 @@ export async function renderOperatorDefinitionBatch(
       ...(sharedEntityUsage
         ? {
             entityValueConsumers: {
-              fallbackKeys: [...sharedEntityUsage.fallbackKeys].sort(),
               externalReads: sharedEntityUsage.externalReads,
               unknownAccess: sharedEntityUsage.unknownAccess,
             },

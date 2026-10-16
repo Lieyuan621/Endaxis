@@ -48,6 +48,7 @@ export interface AbilitySkillRuntime extends FrameRuntime {
   /** 玩家语义分类；实体内部技能只需 nativeSkillType，可以没有此字段。 */
   readonly skillType?: SkillType;
   readonly nativeSkillType?: NativeSkillType;
+  readonly normalSkillSubType?: SkillDefinition['normalSkillSubType'];
   /** 场景技能块在宿主局部时钟中的可操作宽度；非场景测试运行时可省略。 */
   readonly timelineBlockFrames?: number;
   readonly timelineBlockFollowUpSkillId?: string;
@@ -159,7 +160,7 @@ export interface AbilitySystemRuntimeOptions {
   /** 静态目录只登记类型身份，不创建可施放实例；换槽与类型动作也能寻址未放置技能。 */
   readonly skillDefinitions?: readonly Pick<
     AbilitySkillRuntime,
-    'skillId' | 'skillType' | 'nativeSkillType'
+    'skillId' | 'skillType' | 'nativeSkillType' | 'normalSkillSubType'
   >[];
   /** 完整技能目录的推进顺序；有冷却的身份先更新账本，再更新其放置实例。 */
   readonly skillTickPlan?: readonly {
@@ -180,6 +181,7 @@ export interface AbilitySystemRuntimeOptions {
   readonly playerActionModes?: readonly OperatorPlayerActionModeDefinition[];
   readonly actionRuntime?: FrameRuntime;
   readonly resolveTickDeltas?: () => AbilityTickDeltas;
+  readonly advanceSkillSlotReplacements?: (globalDeltaSeconds: number) => void;
   /** 帧末延迟施放在真正启动前回到装配根，复用施放前事件与运行时参数准备。 */
   readonly beforePostSkillCastStart?: (request: PostSkillCastRequest) => void;
   readonly onPostSkillCastResolved?: (request: PostSkillCastRequest, started: boolean) => void;
@@ -224,6 +226,10 @@ export class AbilitySystemRuntime implements FrameRuntime {
     { binding: ActiveSkillBinding; active: ActiveSkillBinding[] }
   >();
   readonly #skillsById = new Map<string, AbilitySkillRuntime>();
+  readonly #normalSkillSubTypes = new Map<
+    string,
+    NonNullable<SkillDefinition['normalSkillSubType']>
+  >();
   readonly #slotGroupByStableInputSkill = new Map<string, string>();
   readonly #slotGroupByAllowedSkill = new Map<string, string>();
   readonly #defaultSlotGroupByInput = new Map<PlayerSkillInput, string>();
@@ -232,6 +238,7 @@ export class AbilitySystemRuntime implements FrameRuntime {
   readonly #skillKeysByTransitionSkillId = new Map<string, Set<string>>();
   readonly #actionRuntime?: FrameRuntime;
   readonly #resolveTickDeltas: () => AbilityTickDeltas;
+  readonly #advanceSkillSlotReplacements?: (globalDeltaSeconds: number) => void;
   readonly #beforePostSkillCastStart?: (request: PostSkillCastRequest) => void;
   readonly #onPostSkillCastResolved: AbilitySystemRuntimeOptions['onPostSkillCastResolved'];
   readonly #operableBoundaries: SkillOperableBoundaryRuntime | null;
@@ -273,6 +280,7 @@ export class AbilitySystemRuntime implements FrameRuntime {
     this.#buffRuntime = options.buffRuntime;
     this.#skills = [...options.skills];
     this.#actionRuntime = options.actionRuntime;
+    this.#advanceSkillSlotReplacements = options.advanceSkillSlotReplacements;
     this.#playerActionRoutes = options.playerActionRoutes;
     const defaultModeLayers = new Set<string>();
     for (const mode of options.playerActionModes ?? []) {
@@ -329,6 +337,11 @@ export class AbilitySystemRuntime implements FrameRuntime {
         throw new Error(`ability skill '${skill.skillId}' has inconsistent native SkillType`);
       }
       definedNativeSkillTypes.set(skill.skillId, nativeSkillType);
+      const subtype = skill.normalSkillSubType ?? 'normal';
+      const previousSubtype = this.#normalSkillSubTypes.get(skill.skillId);
+      if (previousSubtype !== undefined && previousSubtype !== subtype)
+        throw new Error(`ability skill '${skill.skillId}' has inconsistent normal skill subtype`);
+      this.#normalSkillSubTypes.set(skill.skillId, subtype);
       // 定义之间必须一致；切面里的类型可能已被 ChangeSkillType 改过，应原样保留。
       if (restored === undefined)
         this.runtimeState.nativeSkillTypeBySkillId.set(skill.skillId, nativeSkillType);
@@ -557,6 +570,13 @@ export class AbilitySystemRuntime implements FrameRuntime {
     if (type === undefined)
       throw new Error(`unknown ability skill '${skillId}' for native SkillType query`);
     return type;
+  }
+
+  /** 原生 getter 同时读取可变 SkillType 与不可变 SkillData 子类型。 */
+  normalSkillSubTypeForSkill(skillId: string): SkillDefinition['normalSkillSubType'] {
+    return this.nativeSkillTypeForSkill(skillId) === 'normalSkill'
+      ? this.#normalSkillSubTypes.get(skillId)
+      : undefined;
   }
 
   /** ChangeSkillType 修改同一原生技能身份的运行时类型，不改变玩家操作槽位。 */
@@ -1241,6 +1261,7 @@ export class AbilitySystemRuntime implements FrameRuntime {
     this.#commitComboOffsetTargetAtRecordFrame();
     if (this.#currentSkill?.state !== 'casting') this.#currentSkill = null;
     this.#advanceComboOffset(deltas.globalScaledDeltaSeconds * COMBAT_FRAMES_PER_SECOND);
+    this.#advanceSkillSlotReplacements?.(deltas.globalScaledDeltaSeconds);
     this.#flushPostSkillCastRequest();
     this.#buffRuntime?.recycleFinishedBuffs?.();
     this.#actionRuntime?.advanceFrame();

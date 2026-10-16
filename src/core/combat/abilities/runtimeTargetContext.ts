@@ -1,10 +1,45 @@
 import type { RuntimeTargetGroup, RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+import type { EnemyPartTransferInfo } from '../state/foundationState';
+import type { CombatOperationContext } from '../skills/skillRuntime';
 import {
   createRuntimeTargetContextState,
   type RuntimeTargetContextState,
 } from '../state/abilityState';
 
-/** 复制目标身份，调用方之后修改原数组或目标对象不会改变已经选择的目标。 */
+/** 原生先复制 Buff 环境，再以当前事件覆盖同主体项；不用于只读事件的检查条件。 */
+export function resolveOperationPartTransferInfo(
+  context: CombatOperationContext | undefined,
+): EnemyPartTransferInfo | undefined {
+  const environment = context?.partTransferInfo;
+  const payload = context?.event?.payload;
+  const event = payload && 'partTransferInfo' in payload ? payload.partTransferInfo : undefined;
+  if (environment === undefined && event === undefined) return undefined;
+  return {
+    currentMainBodyId: (event ?? environment)!.currentMainBodyId,
+    mainBodyToPart: new Map([
+      ...(environment?.mainBodyToPart ?? []),
+      ...(event?.mainBodyToPart ?? []),
+    ]),
+  };
+}
+
+/** 为当前接收者复制转交上下文，嵌套事件不能改写外层仍在读取的映射。 */
+export function copyEnemyPartTransferInfo(
+  inherited: EnemyPartTransferInfo | undefined,
+  currentMainBodyId: string,
+  partId?: string,
+): EnemyPartTransferInfo | undefined {
+  if (inherited === undefined && partId === undefined) return undefined;
+  const mainBodyToPart = new Map(inherited?.mainBodyToPart);
+  if (partId !== undefined) mainBodyToPart.set(currentMainBodyId, partId);
+  return { currentMainBodyId, mainBodyToPart };
+}
+
+/**
+ * 复制目标身份，调用方之后修改原数组或目标对象不会改变已经选择的目标。
+ * 保留顺序和重复项：原生 TargetHandle 是列表，部位替换为主体后仍可能有重复目标；
+ * 去重只能由明确要求去重的集合操作执行，不能隐含在 Context 写入中。
+ */
 export function setRuntimeTargetGroup(
   state: RuntimeTargetContextState,
   key: string,

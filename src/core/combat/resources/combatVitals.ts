@@ -125,6 +125,15 @@ export class CombatVitals {
     if (result.currentHealth !== result.previousHealth) this.healthChanged?.();
     return result;
   }
+  /** 出生阶段的直接生命赋值，不伪装成治疗或产生治疗事件。 */
+  initializeHealth(maxHealth: number): void {
+    if (!Number.isFinite(maxHealth) || maxHealth <= 0)
+      throw new RangeError('initial maximum health must be positive and finite');
+    const previousHealth = this.runtimeState.health;
+    this.runtimeState.maxHealth = maxHealth;
+    this.runtimeState.health = maxHealth;
+    if (previousHealth !== maxHealth) this.healthChanged?.();
+  }
   heal(value: number): HealthHealResult {
     const result = healVitals(this.runtimeState, value);
     if (result.currentHealth !== result.previousHealth) this.healthChanged?.();

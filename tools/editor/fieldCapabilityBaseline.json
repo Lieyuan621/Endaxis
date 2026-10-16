@@ -21,6 +21,7 @@
         "definition/buff/<1>/lifecycleSequences/enable/[]",
         "definition/buff/<1>/lifecycleSequences/enhanceChanged/[]",
         "definition/buff/<1>/lifecycleSequences/finish/[]",
+        "definition/buff/<1>/lifecycleSequences/release/[]",
         "definition/buff/<1>/lifecycleSequences/start/[]",
         "definition/buff/<1>/lifecycleSequences/trigger/[]",
         "definition/buff/<1>/scheduledSequences/[]/sequence",

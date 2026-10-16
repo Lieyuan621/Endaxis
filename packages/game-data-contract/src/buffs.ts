@@ -33,6 +33,8 @@ export const BUFF_ABILITY_EVENTS = [
   'hpChanged',
   'abilityEntitySpawned',
   'abilityEntityFinished',
+  'abilityEntitySelfFinished',
+  'soulDisabled',
   'beforeTakeDamage',
   'beforeHitByProjectile',
   'beforeCalculateDamage',
@@ -112,6 +114,8 @@ export interface SkillBuffLifecycleSequences {
   finish?: readonly ActionGraphReference[];
   /** 被驱散时执行，早于普通结束；输入目标为驱散来源。 */
   dispelled?: readonly ActionGraphReference[];
+  /** 宿主释放时执行一次，早于释放清理；不等同于普通结束。 */
+  release?: readonly ActionGraphReference[];
 }
 
 /** Buff 启用期间注册在其所有者 AbilitySystem 上的一条同步事件响应。 */

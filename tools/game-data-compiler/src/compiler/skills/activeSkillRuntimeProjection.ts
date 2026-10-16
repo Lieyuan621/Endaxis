@@ -72,6 +72,7 @@ export type CompiledActiveSkillTimelineSequenceSource = Readonly<
  * 原生时长与技能块宽度仍分别保留；技能等级的具体取值由最终消费者选择。
  */
 export interface CompiledActiveSkillRuntimeProjectionSource {
+  readonly normalSkillSubType?: SkillDefinition['normalSkillSubType'];
   readonly actionGraph: ActionGraphResourceDefinition;
   readonly skillId: string;
   readonly durationFrame: number;
@@ -1353,6 +1354,9 @@ export function compileActiveSkillRuntimeProjectionSource(input: {
   );
   return {
     skillId: graph.skillId,
+    ...(graph.normalSkillSubType === 'AdditionalNormalSkill'
+      ? { normalSkillSubType: 'additionalNormalSkill' as const }
+      : {}),
     actionGraph: { main: program.finish(), macros: {} },
     durationFrame: graph.durationFrame,
     // 未模拟时只用当前技能自身的普通可中断边界作为保守预览。AllowNextSkillAction

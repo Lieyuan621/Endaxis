@@ -1,4 +1,49 @@
 import { describe, expect, it, vi } from 'vitest';
+import { CombatActionTagQueryListener } from './combatActionEventListener';
+import type { TagQueryListenerState } from '../state/actionState';
+
+it('标签监听恢复不重放首次回调，匹配跃迁先保存再允许同步重入', () => {
+  let matched = true;
+  let changed: (() => void) | undefined;
+  const state: TagQueryListenerState<{ executions: number }> = {
+    active: false,
+    matched: false,
+    body: null,
+  };
+  const create = (saved = { executions: 0 }) => ({
+    runtimeState: saved,
+    executeInstant: () => {
+      saved.executions++;
+      changed?.();
+      return true;
+    },
+    reset: () => {},
+    end: () => {
+      expect(changed).toBeUndefined();
+    },
+  });
+  const observe = (callback: () => void) => {
+    changed = callback;
+    return () => {
+      changed = undefined;
+    };
+  };
+  const original = new CombatActionTagQueryListener(state, true, () => matched, observe, create);
+  original.execute();
+  expect(state.body?.executions).toBe(1);
+  const saved = structuredClone(state);
+  original.end();
+  const restored = new CombatActionTagQueryListener(saved, true, () => matched, observe, create);
+  expect(saved.body?.executions).toBe(1);
+  changed?.();
+  expect(saved.body?.executions).toBe(1);
+  matched = false;
+  changed?.();
+  matched = true;
+  changed?.();
+  expect(saved.body?.executions).toBe(2);
+  restored.end();
+});
 import type {
   ActionGraphDefinition,
   ActionGraphNode,
@@ -60,6 +105,61 @@ function fixture(execute?: CombatOperationExecutor['execute']) {
 }
 
 describe('直接图执行', () => {
+  it('正式标签监听图在首次匹配和再次进入时执行子图，结束后停止响应', () => {
+    let matched = true;
+    let notify: (() => void) | undefined;
+    const execute = vi.fn(() => true);
+    const runtime = new CombatActionSequenceRuntime(
+      {
+        execute,
+        evaluate: () => true,
+        ownerTagQuery: () => ({
+          matches: () => matched,
+          observe: callback => {
+            notify = callback;
+            return () => {
+              notify = undefined;
+            };
+          },
+        }),
+      },
+      { blackboard: new ActionBlackboard(), actionOwnerId: 'owner' },
+    );
+    const compilation = createActionGraphCompilation(
+      {
+        nodes: {
+          listen: {
+            action: {
+              kind: 'listenForTagQuery',
+              parameters: {
+                tags: ['SelectCategory/Unmarkable'],
+                tagQueryType: 'hasAny',
+                executeOnMatch: true,
+                sequence: { $sequence: 'damage' },
+              },
+            },
+            next: null,
+          },
+          damage: graph.nodes.damage!,
+        },
+      },
+      1,
+    );
+    const sequence = runtime.createSequence(
+      compilation.compileEntry({ $sequence: 'listen' }, 'tags'),
+    );
+    sequence.execute({});
+    expect(execute).toHaveBeenCalledTimes(1);
+    notify?.();
+    expect(execute).toHaveBeenCalledTimes(1);
+    matched = false;
+    notify?.();
+    matched = true;
+    notify?.();
+    expect(execute).toHaveBeenCalledTimes(2);
+    sequence.end({});
+    expect(notify).toBeUndefined();
+  });
   it('不同子技能的局部调用路径相同时，匿名命中仍分别归属各自技能', () => {
     const resource = { main: graph, macros: {} };
     const compilation = createActionGraphCompilation(resource, 1);

@@ -7,8 +7,8 @@ import {
 import { OPERATOR_PASSIVE_UI_COMPONENT_BY_PREFAB } from '../../source/operatorPassiveUiPrefabCatalog.generated.ts';
 
 /**
- * 1.4.4 原生 prefab 中专用 UICharPassive 组件的窄字段投影。几何和动画不混入这里；
- * 后续资源导出入口会从同一 prefab 快照重新生成这份证据。
+ * 原生 prefab 中专用 UICharPassive 组件的窄字段投影。几何和动画不混入这里；
+ * 组件目录由 prefab 对象快照统一生成。
  * 未知非空 prefab 必须阻断生成，避免把遗留资源或视觉命名猜成行为。
  */
 export function compileOperatorPassiveUiDefinition(
@@ -24,7 +24,11 @@ export function compileOperatorPassiveUiDefinition(
   if (evidence === undefined) {
     throw new Error(`${sourcePath}: unsupported character passive UI prefab '${prefabName}'`);
   }
-  return compileOperatorPassiveUiPrefabComponent(evidence, sourcePath);
+  return compileOperatorPassiveUiPrefabComponent(
+    evidence,
+    sourcePath,
+    prefabName === 'OverlayInfoNodeTangTang' ? 'tangtangDroplets' : undefined,
+  );
 }
 
 /** 产品补充的实体数量指示器，经同一干员生成流程发布。 */

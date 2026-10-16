@@ -63,6 +63,50 @@
     "name": "Bamboo Sprouts and Meat",
     "description": "Use this to grant Ultimate Gain Efficiency +21% and Treatment Received Bonus +35%. Duration: 300s."
   },
+  "item_inkkirin_1_hscrane_1_1": {
+    "name": "Numbing Crispy Pupae",
+    "description": "Use this to grant ATK +12%, Critical Rate +6%, and All DMG Dealt +12%. Duration: 300s."
+  },
+  "item_inn_drink_1": {
+    "name": "Bowl of Tea",
+    "description": "Use this to grant All DMG Dealt +13%. Duration: 300s."
+  },
+  "item_inn_drink_10": {
+    "name": "Bottled Duskberry Juice",
+    "description": "Use this to grant ATK +29%. Duration: 300s."
+  },
+  "item_inn_drink_2": {
+    "name": "Bottled Milk",
+    "description": "Use this to grant DEF +19%. Duration: 300s."
+  },
+  "item_inn_drink_3": {
+    "name": "Corn Juice",
+    "description": "Use this to grant Critical Rate +9%. Duration: 300s."
+  },
+  "item_inn_drink_4": {
+    "name": "Bottled Canejuice",
+    "description": "Use this to grant Ultimate Gain Efficiency +21%. Duration: 300s."
+  },
+  "item_inn_drink_5": {
+    "name": "Pear Blossom Tea",
+    "description": "Use this to grant All Attributes +27. Duration: 300s."
+  },
+  "item_inn_drink_6": {
+    "name": "Seeker's Kohl",
+    "description": "Use this to grant Critical Rate +14%, but at the cost of DEF -3%. Duration: 300s."
+  },
+  "item_inn_drink_7": {
+    "name": "Bottled Milk [A]",
+    "description": "Use this to shorten Combo Skill CD by 18%. Duration: 300s."
+  },
+  "item_inn_drink_8": {
+    "name": "Vintage Grapedew",
+    "description": "Use this to grant Physical DMG Dealt +33%. Duration: 300s."
+  },
+  "item_inn_drink_9": {
+    "name": "Pre-Tide Lungjing",
+    "description": "Use this to grant DMG Reduction +23% against all forms of DMG. Duration: 300s."
+  },
   "item_jzmonk_1_hsmob_1_1": {
     "name": "Rind-Flavored Sprouts",
     "description": "Use this to grant Critical Rate +25%, but at the cost of DEF 5%. Duration: 300s."

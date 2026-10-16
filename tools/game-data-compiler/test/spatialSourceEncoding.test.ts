@@ -32,6 +32,17 @@ it('移动碰撞体保留挂点并归为空间动作，未知字段仍报错', (
     action: { kind: 'enableMoveCollider', mountPoint: 'Custom6' },
   });
   expect(() => parseKnownNativeActionLeafSource({ ...raw, damage: 1 }, 'collider', {})).toThrow();
+  for (const $type of [
+    'Beyond.Gameplay.Core.DisableMoveColliderAction+Data, Gameplay.Beyond',
+    'Beyond.Gameplay.Core.DisableMoveColliderAction.Data',
+  ]) {
+    expect(
+      parseKnownNativeActionLeafSource({ ...raw, $type, includeChildren: false }, 'collider', {}),
+    ).toEqual({
+      family: 'spatial',
+      action: { kind: 'disableMoveCollider', mountPoint: 'Custom6', includeChildren: false },
+    });
+  }
   expect(parseKnownNativeActionLeafSource({ ...raw, mountPoint: 156 }, 'collider', {})).toEqual(
     parseKnownNativeActionLeafSource(raw, 'collider', {}),
   );

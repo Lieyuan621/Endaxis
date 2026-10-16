@@ -117,6 +117,7 @@ describe('公共 Action 叶子分派', () => {
           $type: 'Beyond.Gameplay.Core.RecoverDashEnergy+Data, Gameplay.Beyond',
           energyNum: { useBlackboardKey: false, value: 0.5, blackboardKey: '' },
           canRecoverWhenOverdraft: true,
+          recoverTag: { tagId: 0 },
         },
         'fixture.recoverDashEnergy',
         {},
@@ -125,6 +126,7 @@ describe('公共 Action 叶子分派', () => {
       family: 'dashEnergyRecovery',
       action: {
         kind: 'dashEnergyRecovery',
+        recoverTagId: 0,
         amount: { value: 0.5, blackboardKey: null, levelValues: null },
         canRecoverWhenOverdraft: true,
       },
@@ -159,7 +161,15 @@ describe('公共 Action 叶子分派', () => {
     useFaction => {
       const sequence = parseKnownNativeActionSequenceSource(
         {
-          actionData: [rayCastEffectFixture({ useFaction })],
+          actionData: [
+            rayCastEffectFixture({
+              useFaction,
+              targetSettings: {
+                ...rayCastEffectFixture().targetSettings,
+                targetSource: 'Target',
+              },
+            }),
+          ],
           onlyExecuteWhenSourceIsMainChar: false,
           onlyExecuteWhenSourceIsGuard: false,
         },
@@ -173,6 +183,21 @@ describe('公共 Action 叶子分派', () => {
           actionTargetTarget: 'enemy',
         }),
       ).toEqual({ steps: [] });
+      expect(
+        projectSequence(sequence, {
+          actionOwnerTarget: 'caster',
+          actionSourceTarget: 'caster',
+          actionTargetTarget: 'actionInputTarget',
+          actionInputIsZeroSpace: true,
+        }),
+      ).toEqual({ steps: [] });
+      expect(() =>
+        projectSequence(sequence, {
+          actionOwnerTarget: 'caster',
+          actionSourceTarget: 'caster',
+          actionTargetTarget: 'actionInputTarget',
+        }),
+      ).toThrow('unsupported RayCastEffectAction stump projection');
       expect(() =>
         projectSequence(
           parseKnownNativeActionSequenceSource(
@@ -912,7 +937,7 @@ describe('公共 Action 叶子分派', () => {
       attacker: targetFixture('Source'),
       target: targetFixture('Owner'),
     };
-    expect(parseKnownNativeActionLeafSource(source, 'fixture.forceFight', {})).toEqual({
+    expect(parseKnownNativeActionLeafSource(source, 'fixture.forceFight', {})).toMatchObject({
       family: 'presentation',
       action: { kind: 'forceTargetInFightOmitted' },
     });
@@ -923,6 +948,29 @@ describe('公共 Action 叶子分派', () => {
         {},
       ),
     ).toThrow('unsupported ForceTargetInFight attacker/target projection');
+  });
+
+  it('隐藏头顶血条保留结束开关，不转换成屏蔽输入', () => {
+    const source = {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.ForceHideHeadBarAction+Data, Gameplay.Beyond',
+      target: targetFixture('Owner'),
+      finishByAction: false,
+    };
+    expect(parseKnownNativeActionLeafSource(source, 'headBar', {})).toMatchObject({
+      family: 'presentation',
+      action: { kind: 'hideHeadBar', finishByAction: false, target: { targetSource: 'Owner' } },
+    });
+    expect(
+      parseKnownNativeActionLeafSource({ ...source, finishByAction: true }, 'headBar', {}),
+    ).toMatchObject({ action: { finishByAction: true } });
+    expect(() =>
+      parseKnownNativeActionLeafSource(
+        { ...source, target: targetFixture('Target') },
+        'headBar',
+        {},
+      ),
+    ).toThrow('requires plain Owner');
   });
 
   it('严格保留 SkillAIMoveAction 的寻位参数，在固定零距离投影前不删除空间证据', () => {
@@ -1617,6 +1665,8 @@ describe('公共 Action 叶子分派', () => {
       ...action,
       owner: targetFixture('Owner'),
       target: targetFixture('Context', undefined, 'smart_target'),
+      // needTrigger 关闭时不读取该配置；洛茜内部连携使用 Owner。
+      trigger: targetFixture('Owner'),
     };
     expect(
       projectSequence(
@@ -2981,7 +3031,7 @@ describe('新版施法身份与移动轴动作', () => {
     ).toThrow('unexpected fields');
   });
 
-  it('保存夹角保留两组方向类型和目标', () => {
+  it.each([undefined, false, true])('保存夹角保留方向、目标及平面限制 %s', clampToXZ => {
     const source = {
       ...META,
       $type: 'Beyond.Gameplay.Core.SaveTwoDirectionAngle+Data, Gameplay.Beyond',
@@ -2992,6 +3042,7 @@ describe('新版施法身份与移动轴动作', () => {
       dir2Target: targetFixture('Target'),
       dir2DirectionType: 'SourceToTarget',
       key: 'angle',
+      ...(clampToXZ === undefined ? {} : { clampToXZ }),
     };
     expect(
       parseKnownNativeActionLeafSource(
@@ -3009,6 +3060,7 @@ describe('新版施法身份与移动轴动作', () => {
       action: {
         kind: 'saveTwoDirectionAngle',
         outputKey: 'angle',
+        ...(clampToXZ === undefined ? {} : { clampToXZ }),
         direction1Type: 'CameraForward',
         direction2Type: 'SourceToTarget',
         direction1Source: { targetSource: 'Source' },

@@ -13,6 +13,7 @@ export const COMBO_CAMERA_ALPHA_SETTINGS = ['Default', 'Strong', 'Weak'] as cons
 /** 仅供用途分析；必须在正式化前消除，不能发布为运行节点。 */
 interface AnalysisStepParameters {
   saveTwoDirectionAngle: {
+    clampToXZ?: boolean;
     direction1Source: Contract.ActionTargetQuery;
     direction1Target: Contract.ActionTargetQuery;
     direction1Type: ActionDirectionType;

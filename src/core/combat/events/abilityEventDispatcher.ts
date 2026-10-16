@@ -63,6 +63,9 @@ export class AbilityEventDispatcher<
   Event extends PropertyKey,
   Payloads extends Record<Event, unknown> = Record<Event, unknown>,
 > {
+  hasListeners(event: Event): boolean {
+    return Object.values(this.#state.phases).some(phase => (phase.get(event)?.length ?? 0) > 0);
+  }
   readonly #state: AbilityEventState<Event>;
   readonly #handlers = new Map<number, AbilityEventHandler<Event, Payloads>>();
 

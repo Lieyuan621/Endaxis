@@ -88,13 +88,14 @@ describe('resolveOperatorPanel', () => {
     expect(panel.attackBase!.rawValue).toBe(baseline.attackBase!.rawValue + 1);
     expect(panel.attackBase!.baseFinalAddition).toBe(baseline.attackBase!.baseFinalAddition + 20);
   });
-  it('applies Endministrator potential 4 health from the current native effect table', () => {
+  it('applies Endministrator potential 4 Arts Intensity without changing health', () => {
     const before = resolveOperatorPanel(resolvedBuild(endministrator, { potential: 3 }));
     const unlocked = resolveOperatorPanel(resolvedBuild(endministrator, { potential: 4 }));
 
     expect(unlocked.attributes.agility - before.attributes.agility).toBe(0);
     expect(unlocked.attack).toBe(before.attack);
-    expect(unlocked.health).toBeGreaterThan(before.health);
+    expect(unlocked.health).toBe(before.health);
+    expect(unlocked.artsIntensity - before.artsIntensity).toBe(16);
   });
 
   it('calculates the verified level-90 operator baseline and default trust nodes', () => {

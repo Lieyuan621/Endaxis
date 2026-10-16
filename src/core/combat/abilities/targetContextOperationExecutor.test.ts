@@ -1,9 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
+import { numberInput } from '../../../test/compiledGraphInputs';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatVitals } from '../resources/combatVitals';
 import { RuntimeTargetContext } from './runtimeTargetContext';
 import { TargetContextOperationExecutor } from './targetContextOperationExecutor';
 import { ProjectileLifecycleRuntime } from './projectileLifecycleRuntime';
+import { createKillEvent } from '../events/killEventTestFixture';
 
 const terminal = {
   execute: () => false,
@@ -24,6 +26,151 @@ function vitals(health: number): CombatVitals {
 }
 
 describe('TargetContextOperationExecutor', () => {
+  it('转移来源优先读取事件映射，回退 Buff 映射与原目标，并覆盖旧输出', () => {
+    const executor = new TargetContextOperationExecutor('caster', terminal);
+    const context = {
+      blackboard: new ActionBlackboard(),
+      targetContext: new RuntimeTargetContext(),
+      actionOwnerId: 'enemy',
+      partTransferInfo: {
+        currentMainBodyId: 'enemy',
+        mainBodyToPart: new Map([['enemy', 'ability-entity:7']]),
+      },
+    };
+    const step = {
+      kind: 'saveTransferredSource' as const,
+      parameters: {
+        source: { kind: 'owner' as const },
+        saveToContextKey: 'saved',
+      },
+    };
+    executor.execute(step, context);
+    expect(context.targetContext.getOptional('saved')).toEqual([
+      { kind: 'abilityEntity', instanceId: 7 },
+    ]);
+    executor.execute(step, {
+      ...context,
+      event: {
+        event: 'afterKillEntity',
+        payload: {
+          ...createKillEvent().payload,
+          partTransferInfo: {
+            currentMainBodyId: 'enemy',
+            mainBodyToPart: new Map([['enemy', 'ability-entity:8']]),
+          },
+        },
+      },
+    });
+    expect(context.targetContext.getOptional('saved')).toEqual([
+      { kind: 'abilityEntity', instanceId: 8 },
+    ]);
+    executor.execute(step, { ...context, partTransferInfo: undefined });
+    expect(context.targetContext.getOptional('saved')).toEqual([{ kind: 'enemy' }]);
+    executor.execute(step, { ...context, actionOwnerId: undefined });
+    expect(context.targetContext.getOptional('saved')).toEqual([]);
+  });
+  it('排除按归一化身份比较，原位覆盖时保留其余目标的身份、顺序和重复项', () => {
+    const executor = new TargetContextOperationExecutor(
+      'caster',
+      terminal,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      {
+        mainTarget: () => ({ kind: 'enemy' }),
+        ownerSpawned: () => [],
+        exclusionTarget: target =>
+          target.kind === 'abilityEntity' && target.instanceId === 7 ? { kind: 'enemy' } : target,
+      },
+    );
+    const context = {
+      blackboard: new ActionBlackboard(),
+      targetContext: new RuntimeTargetContext(),
+      actionInputTarget: { kind: 'abilityEntity' as const, instanceId: 7 },
+    };
+    const other = { kind: 'abilityEntity' as const, instanceId: 8 };
+    context.targetContext.set('tar', [{ kind: 'enemy' }, other, context.actionInputTarget, other]);
+    const step = {
+      kind: 'copyContextTargets',
+      parameters: {
+        source: { kind: 'context', key: 'tar' },
+        excludeTargets: { kind: 'inputTarget' },
+        saveToContextKey: 'tar',
+      },
+    } as const;
+    executor.execute(step, context);
+    expect(context.targetContext.get('tar')).toEqual([other, other]);
+    executor.execute(step, { ...context, actionInputTarget: undefined });
+    expect(context.targetContext.get('tar')).toEqual([other, other]);
+  });
+  it('能力实体目标查询读取控制器的新目标，保留墨影身份并覆盖旧目标组', () => {
+    let target: { kind: 'abilityEntity'; instanceId: number } | undefined = {
+      kind: 'abilityEntity',
+      instanceId: 19,
+    };
+    const executor = new TargetContextOperationExecutor(
+      'caster',
+      terminal,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      {
+        mainTarget: () => ({ kind: 'enemy' }),
+        ownerSpawned: () => [],
+        abilityEntityTarget: owner => {
+          expect(owner).toEqual({ kind: 'abilityEntity', instanceId: 7 });
+          return target;
+        },
+      },
+    );
+    const context = {
+      blackboard: new ActionBlackboard(),
+      targetContext: new RuntimeTargetContext(),
+      actionOwnerId: 'ability-entity:7',
+      actionInputTarget: { kind: 'enemy' as const },
+    };
+    const step = {
+      kind: 'findTargets',
+      parameters: {
+        owner: { kind: 'owner' },
+        query: { kind: 'abilityEntityTarget', owner: { kind: 'owner' } },
+        saveToContextKey: 'victim',
+      },
+    } as const;
+    executor.execute(step, context);
+    expect(context.targetContext.get('victim')).toEqual([target]);
+    target = { kind: 'abilityEntity', instanceId: 20 };
+    executor.execute(step, context);
+    expect(context.targetContext.get('victim')).toEqual([target]);
+    target = undefined;
+    executor.execute(step, context);
+    expect(context.targetContext.get('victim')).toEqual([]);
+  });
+  it('固定槽位不跳过空槽，失败保留原目标组', () => {
+    const executor = new TargetContextOperationExecutor('caster', terminal, id => id, {
+      listOperatorIds: () => ['caster', 'ally'],
+      isOperatorControlled: () => false,
+      resolveVitals: () => vitals(1000),
+      readSquadSlot: index => (index === 2 ? 'ally' : undefined),
+    });
+    const targetContext = new RuntimeTargetContext();
+    const blackboard = new ActionBlackboard({ slot: 2 });
+    const step = {
+      kind: 'findCharacterBySquadSlot',
+      parameters: {
+        slotIndex: numberInput({ kind: 'blackboard', key: 'slot' }),
+        saveToContextKey: 'selected',
+      },
+    } as const;
+    expect(executor.execute(step, { blackboard, targetContext })).toBe(true);
+    blackboard.assign({ slot: 1 });
+    expect(executor.execute(step, { blackboard, targetContext })).toBe(false);
+    expect(targetContext.get('selected')).toEqual([{ kind: 'operator', operatorId: 'ally' }]);
+  });
   it('事件和 Buff 来源写入 Context 时保留实体身份，不替换成宿主或敌人', () => {
     const executor = new TargetContextOperationExecutor('caster', terminal);
     const targetContext = new RuntimeTargetContext();

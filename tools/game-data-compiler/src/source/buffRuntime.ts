@@ -19,6 +19,7 @@ import { parseBuffDispelLevel } from './dispelActions.ts';
 import { readHealModifierSide, readModifierSide } from './nativeEnums.ts';
 import { parseEffectActionSource } from './presentationActions.ts';
 import {
+  readOptionalReferenceKey,
   requireArray,
   requireBoolean,
   requireExactFields,
@@ -91,6 +92,7 @@ export interface BuffPresentationSource {
   readonly onlyShowForMainCharacter: boolean;
   readonly blinkInMainCharHpBar: boolean;
   readonly showProgressInHpBar: boolean;
+  readonly showProgressInEnemyHeadBar?: boolean;
   readonly showProgressInNormalSkillButton: boolean;
   readonly useWeakProgressInNormalSkillButton: boolean;
   readonly showProgressInUltimateSkillButton: boolean;
@@ -295,7 +297,7 @@ export function parseBuffRuntimeSource(
         BUFF_STACKING_TYPES,
         `${sourcePath}.stackingSettings.stackingType`,
       ),
-      stackingKey: requireString(
+      stackingKey: (stacking.identifierType === 'Id' ? readOptionalReferenceKey : requireString)(
         stacking.stackingKey,
         `${sourcePath}.stackingSettings.stackingKey`,
       ),
@@ -649,6 +651,7 @@ function parsePresentation(
       'onlyShowForMainCharacter',
       'blinkInMainCharHpBar',
       'showProgressInHpBar',
+      ...('showProgressInEnemyHeadBar' in icon ? ['showProgressInEnemyHeadBar'] : []),
       'showProgressInNormalSkillButton',
       'useWeakProgressInNormalSkillButton',
       'showProgressInUltimateSkillButton',
@@ -687,7 +690,16 @@ function parsePresentation(
       : requireNonEmptyString(value, path);
   return {
     hasIcon: requireBoolean(root.hasIcon, `${sourcePath}.hasIcon`),
-    spritePath: requireString(icon._spritePath, `${sourcePath}.iconConfig._spritePath`),
+    ...('showProgressInEnemyHeadBar' in icon
+      ? {
+          showProgressInEnemyHeadBar: requireBoolean(
+            icon.showProgressInEnemyHeadBar,
+            `${sourcePath}.iconConfig.showProgressInEnemyHeadBar`,
+          ),
+        }
+      : {}),
+    // hasIcon 也启用技能按钮进度等表现；原始资源允许启用表现而没有独立图标。
+    spritePath: readOptionalReferenceKey(icon._spritePath, `${sourcePath}.iconConfig._spritePath`),
     showInHeadBarCommon: requireBoolean(
       icon.showInHeadBarCommon,
       `${sourcePath}.iconConfig.showInHeadBarCommon`,
@@ -792,7 +804,10 @@ function validatePassiveFlags(
   );
   requireBoolean(addingCooldown.useBlackboardKey, `${sourcePath}.addingCooldown.useBlackboardKey`);
   requireNumber(addingCooldown.value, `${sourcePath}.addingCooldown.value`);
-  requireString(addingCooldown.blackboardKey, `${sourcePath}.addingCooldown.blackboardKey`);
+  readOptionalReferenceKey(
+    addingCooldown.blackboardKey,
+    `${sourcePath}.addingCooldown.blackboardKey`,
+  );
   return parsedAddingCooldown;
 }
 
@@ -847,7 +862,7 @@ function scalarFromToggle(
   inheritedBlackboard: BlackboardLevelValues,
 ): ScalarSource {
   const useBlackboardKey = requireBoolean(rawUseKey, `${path}.useBlackboardKey`);
-  const blackboardKey = requireString(rawKey, `${path}.blackboardKey`);
+  const blackboardKey = readOptionalReferenceKey(rawKey, `${path}.blackboardKey`);
   const value = requireNumber(rawValue, `${path}.value`);
   return parseScalarSource({ useBlackboardKey, blackboardKey, value }, path, inheritedBlackboard);
 }

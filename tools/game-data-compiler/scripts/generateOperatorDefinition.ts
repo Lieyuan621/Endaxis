@@ -1,6 +1,6 @@
 /**
- * 正式单干员生成入口。读取整批来源以收齐跨干员、装备和机制对实体黑板的用途，
- * 然后只渲染并写入目标干员；公共定义参与分析，但这里不改公共目录或其他干员。
+ * 正式单干员生成入口。只编译目标干员及其引用的公共资源，
+ * 不改公共目录或其他干员，也不要求其他领域编译成功。
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -12,7 +12,9 @@ import {
 } from '../src/compiler/publication/writeGeneratedDefinitionFiles.ts';
 
 export async function generateOperatorDefinition(
-  args: Parameters<typeof planOperatorDefinition>[0] & { readonly check: boolean },
+  args: Parameters<typeof planOperatorDefinition>[0] & {
+    readonly check: boolean;
+  },
 ) {
   for (const [directory, expected] of [
     [args.output, path.resolve('src/data/operators')],

@@ -26,6 +26,7 @@ import {
   isControlledOperatorInstantSearch,
   isOwnerSpawnedAbilityEntityInstantSearch,
   isStaticSingleEnemyOwnerAllyTargetGroup,
+  isStaticExplicitBadFactionEnemyTargetGroup,
   isStaticSingleEnemyTargetGroup,
   isCurrentTargetRestrictedSingleEnemyTargetGroup,
   isZeroSpaceSingleEnemySmartTargetGroup,
@@ -73,6 +74,24 @@ export function compileBuffLeafNode(
   if (node.body.kind !== 'leaf') {
     throw new Error(`${node.sourcePath}: expected an action leaf`);
   }
+  if (node.body.value.family === 'saveTransferredSource') {
+    const action = node.body.value.action;
+    if (action.contextKey === '') return { steps: [], state: partyTargetGroups };
+    const nextGroups = new Map(partyTargetGroups);
+    nextGroups.set(action.contextKey, 'runtimeTargets');
+    return {
+      steps: [
+        {
+          kind: 'saveTransferredSource',
+          parameters: {
+            source: projectActionTargetQuery(action.source, context, node.sourcePath),
+            saveToContextKey: action.contextKey,
+          },
+        },
+      ],
+      state: nextGroups,
+    };
+  }
   if (node.body.value.family === 'skillSlotReplacement') {
     const compile = extensions.compileSkillSlotReplacement;
     if (compile !== undefined) {
@@ -104,7 +123,9 @@ export function compileBuffLeafNode(
       ((action.target.targetSource === 'Owner' && action.target.targetGroupKey === '') ||
         (action.target.targetSource === 'Target' &&
           action.target.targetGroupKey === '' &&
-          context.actionTargetTarget === 'enemy') ||
+          (context.actionTargetTarget === 'enemy' ||
+            (context.actionTargetTarget === 'actionInputTarget' &&
+              context.actionInputIsZeroSpace === true))) ||
         (action.target.targetSource === 'Context' &&
           action.target.targetGroupKey === action.source.targetGroupKey &&
           contextSpatialSource)) &&
@@ -278,6 +299,17 @@ export function compileBuffLeafNode(
   }
   if (node.body.value.family === 'abilityEntity') {
     const action = node.body.value.action;
+    // 当前 1.6.3 消费者均关闭这些新增分支；来源完整保留，启用时不能静默裁剪。
+    if (
+      action.dieWhenTargetDies ||
+      action.attachWeaponModel ||
+      action.readFullPotentialExtraEffect ||
+      (action.weaponIndex !== undefined && action.weaponIndex !== 0)
+    ) {
+      throw new Error(
+        `${node.sourcePath}: enabled target-death or weapon SpawnAbilityEntity options require native projection`,
+      );
+    }
     const bornAt = projectActionTargetQuery(action.bornAt, context, `${node.sourcePath}.bornAt`);
     const sourceIsCaster =
       action.sourceType === 'ActionSource' ||
@@ -290,21 +322,37 @@ export function compileBuffLeafNode(
       (requireActionOwnerProjection(context, node.sourcePath) === 'currentAbilityEntity' ||
         (context.actionOwnerTarget === 'buffOwner' &&
           context.fixedBuffOwnerTarget === 'currentAbilityEntity'));
+    const sourceContextKey =
+      action.sourceType === 'ContextTarget' && action.sourceContextKey !== ''
+        ? action.sourceContextKey
+        : undefined;
+    const sourceIsInput = action.sourceType === 'CurrentTarget';
     const targetIsEnemy =
       action.setTarget &&
       action.target.finderType === null &&
       action.target.validatorTypes.length === 0 &&
       action.target.postProcessorTypes.length === 0 &&
-      ((action.target.targetSource === 'Target' &&
-        action.target.targetGroupKey === '' &&
-        context.actionTargetTarget === 'enemy') ||
+      ((action.target.targetSource === 'Target' && context.actionTargetTarget === 'enemy') ||
         (action.target.targetSource === 'Owner' &&
           action.target.targetGroupKey === '' &&
           context.actionOwnerTarget === 'buffOwner' &&
           context.fixedBuffOwnerTarget === 'enemy') ||
         (action.target.targetSource === 'Context' &&
           action.target.targetGroupKey !== '' &&
-          partyTargetGroups.get(action.target.targetGroupKey) === 'enemy'));
+          (partyTargetGroups.get(action.target.targetGroupKey) === 'enemy' ||
+            (!partyTargetGroups.has(action.target.targetGroupKey) &&
+              context.staticEnemyTargetGroupKeys?.has(action.target.targetGroupKey) === true))));
+    const targetIsInput =
+      action.setTarget &&
+      action.target.targetSource === 'Target' &&
+      context.actionTargetTarget === 'actionInputTarget';
+    const contextTargetKey =
+      action.setTarget &&
+      action.target.targetSource === 'Context' &&
+      // Context 读取已有句柄；只有 InstantSearch 执行序列化的 selectorData。
+      action.target.targetGroupKey !== ''
+        ? action.target.targetGroupKey
+        : undefined;
     const targetIsCaster =
       action.setTarget &&
       action.target.finderType === null &&
@@ -334,6 +382,15 @@ export function compileBuffLeafNode(
       action.target.finderType === null &&
       action.target.validatorTypes.length === 0 &&
       action.target.postProcessorTypes.length === 0;
+    const targetQuery =
+      action.setTarget &&
+      contextTargetKey === undefined &&
+      !targetIsEnemy &&
+      !targetIsCaster &&
+      !targetIsInput &&
+      !targetIsCurrentAbilityEntity
+        ? projectActionTargetQuery(action.target, context, `${node.sourcePath}.abilityEntityTarget`)
+        : undefined;
     // SpawnAbilityEntity 的开关只决定子技能 SaveTarget 保存首项还是全部。
     // 无目标/无子技能时不产生差异；既有投影已证明的单一敌人、施术者或当前实体也等价。
     // 空间点组可能有多项，不能把“零空间”误当“只有一个输入目标”。
@@ -343,6 +400,7 @@ export function compileBuffLeafNode(
       action.skillId !== '' &&
       !targetIsEnemy &&
       !targetIsCaster &&
+      !targetIsInput &&
       !targetIsCurrentAbilityEntity
     ) {
       throw new Error(
@@ -368,11 +426,16 @@ export function compileBuffLeafNode(
     const stringAssignments = projectStringBuffAssignments(enabledAssignments);
     if (
       !action.setSource ||
-      (!sourceIsCaster && !sourceIsCurrentAbilityEntity) ||
-      action.sourceContextKey !== '' ||
+      (!sourceIsCaster &&
+        !sourceIsCurrentAbilityEntity &&
+        !sourceIsInput &&
+        sourceContextKey === undefined) ||
       (action.setTarget &&
         !targetIsEnemy &&
         !targetIsCaster &&
+        !targetIsInput &&
+        contextTargetKey === undefined &&
+        targetQuery === undefined &&
         !targetIsCurrentAbilityEntity &&
         !targetIsSpatialPoint) ||
       action.checkNavmeshAreaName ||
@@ -424,17 +487,27 @@ export function compileBuffLeafNode(
         abilityEntityId: action.abilityEntityId,
         ...(action.skillId.length === 0 ? {} : { childSkillId: action.skillId }),
         ...(sourceIsCurrentAbilityEntity ? { source: 'currentAbilityEntity' as const } : {}),
+        ...(sourceIsInput ? { source: { kind: 'inputTarget' as const } } : {}),
+        ...(sourceContextKey === undefined
+          ? {}
+          : { source: { kind: 'context' as const, key: sourceContextKey } }),
         inheritActionBlackboard: action.assignBlackboard,
         ...(action.inheritSourceSkillCastId ? {} : { inheritSourceSkillCastInfo: false }),
         dieWhenSourceDies: action.dieWhenSourceDies,
         ...(action.dieOnEnd ? { finishByAction: true } : {}),
-        ...(targetIsEnemy
-          ? { target: 'enemy' as const }
-          : targetIsCaster
-            ? { target: 'caster' as const }
-            : targetIsCurrentAbilityEntity
-              ? { target: 'currentAbilityEntity' as const }
-              : {}),
+        ...(contextTargetKey !== undefined
+          ? { target: { kind: 'context' as const, key: contextTargetKey } }
+          : targetQuery !== undefined
+            ? { target: targetQuery }
+            : targetIsInput
+              ? { target: 'actionInputTarget' as const }
+              : targetIsEnemy
+                ? { target: 'enemy' as const }
+                : targetIsCaster
+                  ? { target: 'caster' as const }
+                  : targetIsCurrentAbilityEntity
+                    ? { target: 'currentAbilityEntity' as const }
+                    : {}),
         ...(action.overrideDuration
           ? { overrideDurationSeconds: actionValueOperand(action.duration) }
           : {}),
@@ -523,6 +596,8 @@ export function compileBuffLeafNode(
     const defenderIsEnemy =
       (action.defender.targetSource === 'Target' &&
         (context.actionTargetTarget === 'enemy' ||
+          (context.actionTargetTarget === 'actionInputTarget' &&
+            action.overrideSuperArmorLimit === -1) ||
           (context.actionTargetTarget === 'buffOwner' &&
             context.fixedBuffOwnerTarget === 'enemy'))) ||
       (action.defender.targetSource === 'Context' &&
@@ -535,7 +610,10 @@ export function compileBuffLeafNode(
       !defenderIsEnemy
     )
       throw new Error(`${node.sourcePath}: unsupported InterruptAction stump projection`);
-    // 静态木桩没有正在执行的技能或主动行为；控制结果对可见伤害/资源账本无影响。
+    // 玩家伤害模型不模拟敌方主动行为及受击硬直。投射物命中输入保留真实身份，
+    // 不能为了省略敌方控制而把整个回调目标改成 enemy。当前墨魂模板初始霸体 50，
+    // 高于这里使用的默认中断门槛 20；不将 InterruptAction 映射为无条件结束子技能。
+    // 此省略不代表通用能力实体已实现受击硬直或完整的霸体判定。
     return { steps: [], state: partyTargetGroups };
   }
   if (node.body.value.family === 'stumpControl') {
@@ -666,6 +744,13 @@ export function compileBuffLeafNode(
       };
     }
     if (action.kind === 'targetHitStop' && action.affectType !== 'OnlyTarget') {
+      const attackerContextQuery =
+        action.source.targetSource === 'Context' ||
+        (action.source.targetSource === 'Owner' &&
+          context.actionOwnerTarget === 'buffOwner' &&
+          context.fixedBuffOwnerTarget === undefined)
+          ? projectActionTargetQuery(action.source, context, `${node.sourcePath}.attacker`)
+          : undefined;
       const attackerIsCaster =
         (action.source.targetSource === 'Source' && context.actionSourceTarget === 'caster') ||
         (action.source.targetSource === 'Owner' && context.actionOwnerTarget === 'caster');
@@ -693,6 +778,8 @@ export function compileBuffLeafNode(
         action.target.targetSource === 'Context' &&
         (partyTargetGroups.get(action.target.targetGroupKey) === 'abilityEntity' ||
           context.staticAbilityEntityTargetGroupKeys?.has(action.target.targetGroupKey) === true);
+      const targetIsRuntimeContext =
+        action.target.targetSource === 'Context' && !targetIsEnemy && !targetIsAbilityEntity;
       const priority = extensions.resolveTimeDilationPriority?.(
         action.priorityTagId,
         node.sourcePath,
@@ -706,8 +793,14 @@ export function compileBuffLeafNode(
         return { steps: [], state: partyTargetGroups };
       }
       if (
-        (!attackerIsCaster && !attackerIsMainCharacter && !attackerIsCurrentAbilityEntity) ||
-        (action.affectType === 'Both' && !targetIsEnemy && !targetIsAbilityEntity) ||
+        (!attackerIsCaster &&
+          !attackerIsMainCharacter &&
+          !attackerIsCurrentAbilityEntity &&
+          attackerContextQuery === undefined) ||
+        (action.affectType === 'Both' &&
+          !targetIsEnemy &&
+          !targetIsAbilityEntity &&
+          !targetIsRuntimeContext) ||
         priority === undefined ||
         !Number.isFinite(priority)
       )
@@ -743,7 +836,11 @@ export function compileBuffLeafNode(
                   : { kind: 'named', key: action.curveKey },
               finishByAction: false,
               targets: [
+                ...(attackerContextQuery === undefined ? [] : [attackerContextQuery]),
                 ...(action.affectType === 'Both' && targetIsEnemy ? ['enemy' as const] : []),
+                ...(action.affectType === 'Both' && targetIsRuntimeContext
+                  ? [{ kind: 'context' as const, key: action.target.targetGroupKey }]
+                  : []),
                 ...(attackerIsCaster ? ['caster' as const] : []),
                 ...(attackerIsMainCharacter ? ['controlled' as const] : []),
               ],
@@ -782,10 +879,19 @@ export function compileBuffLeafNode(
         (context.actionOwnerTarget === 'caster' ||
           context.actionOwnerTarget === 'currentAbilityEntity' ||
           context.fixedBuffOwnerTarget === 'currentAbilityEntity'));
+    // EnemyHurtAnimAction 只驱动敌方受击组件（部位会先取主体），不把动态目标组
+    // 改写为敌人。沿用木桩受击/位移裁剪；此豁免不适用于 HitStop 或其他控制动作。
+    const runtimeEnemyHurtAnimation =
+      action.kind === 'enemyHurtAnimation' &&
+      action.target.targetSource === 'Context' &&
+      partyTargetGroups.get(action.target.targetGroupKey) === 'runtimeTargets';
     // 受击表现、拉拽、推退和 BlowOffAction 只改变目标的动画/空间状态；固定木桩的距离恒为零，
     // 因而其空间来源点不进入任何可见账本。BlowOffEnemy 属于独立物理异常链，
     // 仍保留来源身份和死亡过滤的严格门槛。
-    if ((!sourceIsKnownStatic && action.kind === 'blowOffEnemy') || !targetIsEnemy)
+    if (
+      (!sourceIsKnownStatic && action.kind === 'blowOffEnemy') ||
+      (!targetIsEnemy && !runtimeEnemyHurtAnimation)
+    )
       throw new Error(`${node.sourcePath}: unsupported static-enemy control projection`);
     // Pull 的普通失败返回 alwaysNext；true 明确保留后继，false 沿用已证明唯一敌人的
     // 既有处理路径。这里只省略位移，不删除兄弟动作，也不把 Pull 当作可求值的条件。
@@ -827,6 +933,10 @@ export function compileBuffLeafNode(
       return { steps: [], state: partyTargetGroups };
     }
     if (action.kind === 'setIgnoreGlobalTimeScale') {
+      const currentTargets =
+        context.actionOwnerTarget === 'currentAbilityEntity' && isPlainOwnerTarget(action.target)
+          ? ([{ kind: 'current' as const }] as const)
+          : null;
       const contextTargets =
         action.target.targetSource !== 'Context' ||
         action.target.targetGroupKey === '' ||
@@ -867,7 +977,7 @@ export function compileBuffLeafNode(
               },
             ] as const)
           : null;
-      if (contextTargets === null && ownerSpawnedTargets === null) {
+      if (currentTargets === null && contextTargets === null && ownerSpawnedTargets === null) {
         throw new Error(`${node.sourcePath}: unsupported global-time-scale ignore target`);
       }
       return {
@@ -875,7 +985,7 @@ export function compileBuffLeafNode(
           {
             kind: 'setIgnoreGlobalTimeScale',
             parameters: {
-              abilityEntityTargets: contextTargets ?? ownerSpawnedTargets!,
+              abilityEntityTargets: currentTargets ?? contextTargets ?? ownerSpawnedTargets!,
               ignore: action.ignoreGlobalTimeScale,
               revertOnEnd: action.revertOnEnd,
             },
@@ -1270,6 +1380,20 @@ export function compileBuffLeafNode(
   if (node.body.value.family === 'targetGroup') {
     const queryInputs = context.abilityEntityQueries;
     const write = node.body.value.action;
+    if (write.producerType === 'MergeTargetAction' && write.inputTargets.length === 0) {
+      // 空合并仍覆盖命名目标组，不能作为无动作省略，否则旧目标会残留。
+      const nextGroups = new Map(partyTargetGroups);
+      nextGroups.set(write.targetGroupKey, 'empty');
+      return {
+        steps: [
+          {
+            kind: 'mergeContextTargets',
+            parameters: { saveToContextKey: write.targetGroupKey, sources: [] },
+          },
+        ],
+        state: nextGroups,
+      };
+    }
     if (
       context.presentationOnlyTargetGroupKeys?.has(write.targetGroupKey) &&
       !context.materializedTargetGroupKeys?.has(write.targetGroupKey)
@@ -1310,6 +1434,108 @@ export function compileBuffLeafNode(
         state: nextGroups,
       };
     }
+    if (
+      write.producerType === 'TargetPostProcessorAction' &&
+      write.postProcessorTypes.length === 1 &&
+      write.postProcessorTypes[0] === 'ReplacePartWithMainBody' &&
+      write.validatorTypes.length === 0
+    ) {
+      const input = write.inputTargets[0];
+      const detail = write.targetPostProcessor;
+      const inputTarget = input !== undefined && isPlainTargetGroupInput(input, 'Target');
+      const group = inputTarget
+        ? 'runtimeTargets'
+        : input && partyTargetGroups.get(input.targetGroupKey);
+      if (
+        detail !== undefined &&
+        isPlainTargetGroupInput(detail.source, 'Source') &&
+        isPlainTargetGroupInput(detail.center, 'Target') &&
+        !detail.direction.customSourceAndTarget &&
+        write.inputTargets.length === 1 &&
+        input !== undefined &&
+        (inputTarget || isPlainTargetGroupInput(input, 'Context')) &&
+        (group === 'enemy' ||
+          group === 'dynamicEnemy' ||
+          group === 'empty' ||
+          group === 'abilityEntity' ||
+          group === 'runtimeTargets')
+      ) {
+        // 原生原位替换部位，非部位原样保留。已证明仅含木桩的组无需替换，
+        // dynamicEnemy 必须复制实际集合（可能为空）；只有 enemy 证明才允许直接取木桩。
+        // 能力实体组和动作 Target 交给运行时逐项替换；普通能力实体保留，不能猜成敌人。
+        const nextGroups = new Map(partyTargetGroups);
+        const replace = group === 'abilityEntity' || group === 'runtimeTargets';
+        nextGroups.set(write.targetGroupKey, replace ? 'runtimeTargets' : group);
+        return {
+          steps: [
+            {
+              kind: 'copyContextTargets',
+              parameters: {
+                source: inputTarget
+                  ? { kind: 'inputTarget' }
+                  : group === 'enemy'
+                    ? { kind: 'fixed', target: 'enemy' }
+                    : { kind: 'context', key: input.targetGroupKey },
+                saveToContextKey: write.targetGroupKey,
+                ...(replace ? { replacePartsWithMainBodies: true } : {}),
+              },
+            },
+          ],
+          state: nextGroups,
+        };
+      }
+    }
+    if (
+      write.producerType === 'FindTargetAction' &&
+      (write.finderType === 'AllEnemyFinder' || write.finderType === 'InFightEnemyFinder') &&
+      write.postProcessorTypes[0] === 'ExcludeTarget' &&
+      write.excludeTargets?.length === 1 &&
+      write.excludeTargets[0]!.targetSource === 'Context' &&
+      write.excludeTargets[0]!.targetGroupKey !== '' &&
+      write.center === 'ActionSource' &&
+      write.centerContextKey === '' &&
+      write.selectorOwner === 'ActionOwner' &&
+      write.selectorOwnerContextKey === '' &&
+      (isStaticSingleEnemyTargetGroup({
+        ...write,
+        postProcessorTypes: write.postProcessorTypes.slice(1),
+      }) ||
+        isDynamicSingleEnemyTagTargetGroup({
+          ...write,
+          postProcessorTypes: write.postProcessorTypes.slice(1),
+        }))
+    ) {
+      // 单敌人目录的排序不改变结果，但排除的 Context 可能已被重设，必须运行时读取。
+      const nextGroups = new Map(partyTargetGroups);
+      nextGroups.set(write.targetGroupKey, 'dynamicEnemy');
+      return {
+        steps: [
+          {
+            kind: 'copyContextTargets',
+            parameters: {
+              source:
+                write.validatorTagQueries.length === 0
+                  ? { kind: 'fixed', target: 'enemy' }
+                  : {
+                      kind: 'enemyByTags',
+                      tagQueryType: projectNativeTagQueryType(
+                        write.validatorTagQueries[0]![0],
+                        node.sourcePath,
+                      ),
+                      tags: projectGameplayTags(
+                        write.validatorTagQueries[0]![1],
+                        context,
+                        node.sourcePath,
+                      ),
+                    },
+              excludeTargets: { kind: 'context', key: write.excludeTargets[0]!.targetGroupKey },
+              saveToContextKey: write.targetGroupKey,
+            },
+          },
+        ],
+        state: nextGroups,
+      };
+    }
     // A prior proof that a Context contains the enemy cannot erase a later exclusion write.
     if (
       write.producerType === 'TargetPostProcessorAction' &&
@@ -1327,12 +1553,6 @@ export function compileBuffLeafNode(
         write.inputTargets.length !== 1 ||
         input === undefined ||
         !isPlainTargetGroupInput(input, 'Context') ||
-        !(
-          partyTargetGroups.get(input.targetGroupKey) === 'enemy' ||
-          (!partyTargetGroups.has(input.targetGroupKey) &&
-            context.staticEnemyTargetGroupKeys?.has(input.targetGroupKey))
-        ) ||
-        context.actionTargetTarget !== 'enemy' ||
         !write.excludesCurrentTarget ||
         write.excludeTargets?.length !== 1 ||
         write.validatorTypes.length !== 0 ||
@@ -1343,12 +1563,16 @@ export function compileBuffLeafNode(
       )
         throw new Error(`${node.sourcePath}: unsupported target postprocessor exclusion`);
       const nextGroups = new Map(partyTargetGroups);
-      nextGroups.set(write.targetGroupKey, 'empty');
+      nextGroups.set(write.targetGroupKey, 'runtimeTargets');
       return {
         steps: [
           {
-            kind: 'mergeContextTargets',
-            parameters: { saveToContextKey: write.targetGroupKey, sources: [] },
+            kind: 'copyContextTargets',
+            parameters: {
+              source: { kind: 'context', key: input.targetGroupKey },
+              excludeTargets: { kind: 'inputTarget' },
+              saveToContextKey: write.targetGroupKey,
+            },
           },
         ],
         state: nextGroups,
@@ -1377,23 +1601,85 @@ export function compileBuffLeafNode(
       return { steps: [], state: partyTargetGroups };
     }
     if (
-      context.staticEnemyTargetGroupKeys?.has(write.targetGroupKey) &&
-      write.finderType !== 'OwnerSpawnedEntityFinder'
+      write.producerType === 'FindTargetAction' &&
+      write.finderType === 'HitBoxFinder' &&
+      write.finderAutoSetTargetFaction === true &&
+      write.finderFactionTarget === 'Ally' &&
+      write.finderTargetObjectType === 'Normal' &&
+      write.finderCheckAlive !== null &&
+      write.finderContainsUnMarkable !== undefined &&
+      write.validatorTypes.length === 0 &&
+      write.postProcessorTypes.every(type => type === 'ReplacePartWithMainBody') &&
+      write.postProcessorTypes.length <= 1 &&
+      write.priorityFilters.length === 0 &&
+      write.shuffleTargets.length === 0 &&
+      write.distanceValidators.length === 0 &&
+      write.selectorOwner === 'ActionOwner' &&
+      write.selectorOwnerContextKey === '' &&
+      write.center === 'ActionOwner' &&
+      write.centerContextKey === '' &&
+      context.actionOwnerTarget === 'currentAbilityEntity'
+    ) {
+      const nextGroups = new Map(partyTargetGroups);
+      nextGroups.set(write.targetGroupKey, 'runtimeTargets');
+      return {
+        steps: [
+          {
+            kind: 'findTargets',
+            parameters: {
+              owner: { kind: 'owner' },
+              query: {
+                kind: 'allyHitBox',
+                owner: { kind: 'owner' },
+                checkAlive: write.finderCheckAlive,
+                containsUnmarkable: write.finderContainsUnMarkable,
+                replacePartsWithMainBodies: write.postProcessorTypes.length !== 0,
+              },
+              saveToContextKey: write.targetGroupKey,
+            },
+          },
+        ],
+        state: nextGroups,
+      };
+    }
+    // 单次命中盒写入的证明不要求该 Context 在整个技能中保持不变。
+    // 后续排除或替换可以改写同一组，此时必须实际保存本次结果供后续动作读取。
+    const directEnemyHitBoxWrite =
+      write.producerType === 'FindTargetAction' &&
+      write.finderType === 'HitBoxFinder' &&
+      write.center === 'ActionOwner' &&
+      write.centerContextKey === '' &&
+      write.selectorOwnerContextKey === '' &&
+      (context.actionOwnerTarget === 'currentAbilityEntity' ||
+        context.actionOwnerTarget === 'buffOwner') &&
+      // 显式 Bad 阵营不依赖宿主身份；自动敌对阵营则必须证明选择器的基准为我方。
+      (isStaticExplicitBadFactionEnemyTargetGroup(write) ||
+        (write.finderAutoSetTargetFaction === true &&
+          isStaticSingleEnemyTargetGroup(write) &&
+          (context.actionSourceTarget === 'caster' || context.fixedBuffSourceTarget === 'caster') &&
+          ((write.selectorOwner === 'ActionOwner' &&
+            context.actionOwnerTarget === 'currentAbilityEntity') ||
+            write.selectorOwner === 'ActionSource')));
+    if (
+      (context.staticEnemyTargetGroupKeys?.has(write.targetGroupKey) || directEnemyHitBoxWrite) &&
+      write.finderType !== 'OwnerSpawnedEntityFinder' &&
+      write.finderType !== 'AbilityEntityTargetFinder'
     ) {
       const nextGroups = new Map(partyTargetGroups);
       nextGroups.set(write.targetGroupKey, 'enemy');
       return {
-        steps: context.materializedTargetGroupKeys?.has(write.targetGroupKey)
-          ? [
-              {
-                kind: 'mergeContextTargets' as const,
-                parameters: {
-                  saveToContextKey: write.targetGroupKey,
-                  sources: [{ kind: 'target' as const, target: 'enemy' as const }],
+        steps:
+          directEnemyHitBoxWrite || context.materializedTargetGroupKeys?.has(write.targetGroupKey)
+            ? [
+                {
+                  kind: 'mergeContextTargets' as const,
+                  parameters: {
+                    saveToContextKey: write.targetGroupKey,
+                    sources: [{ kind: 'target' as const, target: 'enemy' as const }],
+                  },
                 },
-              },
-            ]
-          : [],
+              ]
+            : [],
         state: nextGroups,
       };
     }
@@ -1403,24 +1689,46 @@ export function compileBuffLeafNode(
       return { steps: [], state: nextGroups };
     }
     if (
-      context.fixedBuffOwnerTarget === 'currentAbilityEntity' &&
+      (write.finderType === 'OwnerSoulFinder' ||
+        context.fixedBuffOwnerTarget === 'currentAbilityEntity') &&
       write.producerType === 'FindTargetAction' &&
-      write.finderType === 'AbilityEntityTargetFinder' &&
+      (write.finderType === 'AbilityEntityTargetFinder' ||
+        write.finderType === 'OwnerSoulFinder') &&
       write.validatorTypes.length === 0 &&
       write.postProcessorTypes.length === 0 &&
       write.priorityFilters.length === 0 &&
       write.shuffleTargets.length === 0 &&
       write.distanceValidators.length === 0 &&
-      write.centerContextKey === '' &&
-      write.selectorOwner === 'ActionOwner' &&
-      write.selectorOwnerContextKey === ''
+      ((write.selectorOwner === 'ActionOwner' && write.selectorOwnerContextKey === '') ||
+        (write.finderType === 'OwnerSoulFinder' &&
+          write.selectorOwner === 'ContextTarget' &&
+          write.selectorOwnerContextKey !== ''))
     ) {
-      // 该 Finder 复制 AbilityEntity 控制器保存的施法目标，
-      // 不是重新做空间搜索。当前能力实体由唯一敌人目标的技能链创建，因此句柄在木桩模型中
-      // 精确投影为同一个 enemy；缺宿主或非能力实体宿主仍保持失败关闭。
+      // 两种 finder 都在执行时读取关系槽，不能退化为敌人或技能启动时的输入快照。
+      // OwnerSoulFinder 读取主体关联；AbilityEntityTargetFinder 读取控制器目标。
+      // 关系查询不读取中心坐标，ContextTarget 则从既有目标组取得主体身份。
+      const owner =
+        write.selectorOwner === 'ContextTarget'
+          ? { kind: 'context' as const, key: write.selectorOwnerContextKey }
+          : { kind: 'owner' as const };
       const nextGroups = new Map(partyTargetGroups);
-      nextGroups.set(write.targetGroupKey, 'enemy');
-      return { steps: [], state: nextGroups };
+      nextGroups.set(write.targetGroupKey, 'runtimeTargets');
+      return {
+        steps: [
+          {
+            kind: 'findTargets',
+            parameters: {
+              owner,
+              query: {
+                kind: write.finderType === 'OwnerSoulFinder' ? 'ownerSoul' : 'abilityEntityTarget',
+                owner,
+              },
+              saveToContextKey: write.targetGroupKey,
+            },
+          },
+        ],
+        state: nextGroups,
+      };
     }
     if (
       context.actionTargetTarget === 'enemy' &&
@@ -1446,13 +1754,17 @@ export function compileBuffLeafNode(
       return { steps: [], state: partyTargetGroups };
     }
     if (
-      (context.actionTargetTarget === 'enemy' ||
-        (context.actionTargetTarget === 'eventSource' &&
+      (write.finderType === 'AllEnemyFinder' ||
+        write.finderType === 'InFightEnemyFinder' ||
+        context.actionTargetTarget === 'enemy' ||
+        ((context.actionTargetTarget === 'eventSource' ||
+          context.actionTargetTarget === 'actionInputTarget') &&
           context.actionOwnerTarget === 'currentAbilityEntity')) &&
       isDynamicSingleEnemyTagTargetGroup(write)
     ) {
       if (write.producerType === 'ContinuousFindTargetAction')
         throw new Error(`${node.sourcePath}: continuous target query requires a runtime lifecycle`);
+      // AllEnemyFinder 独立遍历 allEnemies，不依赖宿主或输入目标的类型。
       // 实体被动的接收侧事件 Target/Source 都是事件身份；InFightEnemyFinder 仍从战斗目录
       // 独立筛选敌人。固定木桩模型保留标签动态判定，不能把事件发送者冒充为敌人。
       const rawQuery = write.validatorTagQueries[0]!;
@@ -1465,9 +1777,11 @@ export function compileBuffLeafNode(
           ? { kind: 'owner' as const }
           : write.selectorOwner === 'ActionSource'
             ? { kind: 'source' as const }
-            : write.selectorOwner === 'ContextTarget'
-              ? { kind: 'context' as const, key: write.selectorOwnerContextKey }
-              : null;
+            : write.selectorOwner === 'MainCharacter'
+              ? { kind: 'mainCharacter' as const }
+              : write.selectorOwner === 'ContextTarget'
+                ? { kind: 'context' as const, key: write.selectorOwnerContextKey }
+                : null;
       if (owner === null) throw new Error(`${node.sourcePath}: unsupported selector owner`);
       const nextGroups = new Map(partyTargetGroups);
       nextGroups.set(write.targetGroupKey, 'dynamicEnemy');
@@ -1733,7 +2047,12 @@ export function compileBuffLeafNode(
     }
     if (
       write.producerType === 'FindTargetAction' &&
-      write.finderType === 'FixedPointFinder' &&
+      (write.finderType === 'FixedPointFinder' ||
+        (write.finderSpatialPoint !== undefined &&
+          write.validatorTypes.length === 0 &&
+          write.priorityFilters.length === 0 &&
+          write.shuffleTargets.length === 0 &&
+          write.distanceValidators.length === 0)) &&
       write.postProcessorTypes.length === 0
     ) {
       const nextGroups = new Map(partyTargetGroups);
@@ -1804,27 +2123,46 @@ export function compileBuffLeafNode(
       write.priorityFilters.length === 0 &&
       write.shuffleTargets.length === 0 &&
       write.distanceValidators.length === 0 &&
-      ((write.center === 'ActionSource' && write.centerContextKey === '') ||
+      (write.center === 'MainCharacter' ||
+        (write.center === 'ActionSource' && write.centerContextKey === '') ||
         (write.center === 'ContextTarget' &&
           write.centerContextKey !== '' &&
           (context.staticEnemyTargetGroupKeys?.has(write.centerContextKey) === true ||
             partyTargetGroups.get(write.centerContextKey) === 'enemy')) ||
         (write.center === 'CurrentTarget' && context.actionTargetTarget === 'enemy')) &&
-      ((write.selectorOwner === 'ActionOwner' && write.selectorOwnerContextKey === '') ||
+      (write.selectorOwner === 'MainCharacter' ||
+        (write.selectorOwner === 'ActionOwner' && write.selectorOwnerContextKey === '') ||
         (write.selectorOwner === 'ActionSource' && context.actionSourceTarget === 'caster')) &&
       ((write.directionTarget === 'ContextTarget' &&
         write.directionContextKey !== '' &&
         (context.staticEnemyTargetGroupKeys?.has(write.directionContextKey) === true ||
-          partyTargetGroups.get(write.directionContextKey) === 'enemy')) ||
+          context.guaranteedSingletonZeroSpaceTargetGroupKeys?.has(write.directionContextKey) ===
+            true ||
+          partyTargetGroups.get(write.directionContextKey) === 'enemy' ||
+          partyTargetGroups.get(write.directionContextKey) === 'dynamicEnemy')) ||
         (['InputTarget', 'CurrentTarget'].includes(write.directionTarget ?? '') &&
           context.actionTargetTarget === 'enemy'))
     ) {
-      // PointFinder 只把已保存的唯一敌人位置按来源方向和序列化偏移变成空间点；
-      // 零空间模型丢弃坐标，但仍要求 center 与方向引用都已证明为唯一敌人。
-      // ActionSource/ActionOwner 分支不读取各自序列化的 ContextKey；该边界由公共目标解析证据确认。
+      // PointFinder 始终输出一个空间点，不枚举方向目标。主控中心/Owner 不读取残留 ContextKey；
+      // 动态方向组为空也只改变几何方向，不改变点数。1.6.3 非 IFix 主干见 08F03B48，
+      // FindTargetAction 高级方向空目标回退见 0741163B..07411676；中心自身仍必须可解析。
       const nextGroups = new Map(partyTargetGroups);
       nextGroups.set(write.targetGroupKey, 'spatialPoint');
-      return { steps: [], state: nextGroups };
+      return {
+        steps:
+          context.materializedTargetGroupKeys?.has(write.targetGroupKey) === true
+            ? [
+                {
+                  kind: 'createSpatialPointTargets',
+                  parameters: {
+                    saveToContextKey: write.targetGroupKey,
+                    count: { kind: 'constant', value: 1 },
+                  },
+                },
+              ]
+            : [],
+        state: nextGroups,
+      };
     }
     if (
       write.producerType === 'ConvertToTargetContext' &&
@@ -2452,7 +2790,6 @@ function isPlainTargetGroupInput(
     target.targetSource === targetSource &&
     (targetSource !== 'Context' || target.targetGroupKey !== '') &&
     (targetSource !== 'Owner' || target.targetGroupKey === '') &&
-    (targetSource !== 'Target' || target.targetGroupKey === '') &&
     (targetSource !== 'Source' || target.targetGroupKey === '') &&
     target.finderType === null &&
     target.validatorTypes.length === 0 &&

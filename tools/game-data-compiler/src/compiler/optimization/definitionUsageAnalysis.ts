@@ -215,8 +215,14 @@ export function analyzeConditionUsage(
         mayThrow: true,
       };
     case 'abilityEntityRemainingDurationCompare':
-      return value(condition.value);
+      return {
+        ...value(condition.value, condition.outputKey === undefined ? [] : [condition.outputKey]),
+        observable:
+          condition.outputKey !== undefined ||
+          (condition.target !== undefined && !isReadOnlyTargetQuery(condition.target)),
+      };
     case 'eventConsumedBuffLayerCompare':
+    case 'eventBuffEnhanceLayerCompare':
       return value(condition.value, condition.outputKey === undefined ? [] : [condition.outputKey]);
     case 'targetContains':
       return {
@@ -274,6 +280,9 @@ export function analyzeConditionUsage(
     }
     case 'eventCustomAbilityNameMatch':
       return outputs(condition.outputKey === '' ? undefined : condition.outputKey);
+    case 'eventTransferredPartTagsMatch':
+      // 目标组写入不是黑板写入，但同样不允许随未使用的比较结果一起裁剪。
+      return { ...EMPTY, mayThrow: true, observable: condition.saveToContextKey !== undefined };
     case 'eventBuffIdMatch':
     case 'eventBuffTagsMatch':
       // Buff ID 是字符串，运行时 assign 直接覆盖，不经过数值 epsilon 检查。
@@ -325,6 +334,7 @@ export function analyzeConditionUsage(
     case 'ownerSpawnedAbilityEntityPresent':
     case 'deckAttributeCompare':
     case 'eventProjectilePerfectDodgeCooldownEquals':
+    case 'eventAbilityEntityFinishReasonIn':
     case 'eventProjectileIgnoreImmuneLevelCompare':
       return outputs();
     default: {
@@ -381,6 +391,8 @@ export function analyzeStepUsage(
       return effect([
         step.parameters.attackScale,
         step.parameters.calculationAddition,
+        step.parameters.calculationValue,
+        step.parameters.calculationValueScale,
         step.parameters.stagger,
         step.parameters.staggerMultiplier,
         ...(step.parameters.instantAttributeModifiers?.map(modifier => modifier.value) ?? []),
@@ -467,7 +479,12 @@ export function analyzeStepUsage(
     case 'storeCharacterTypeId':
     case 'storeCurrentTimelineFrame':
     case 'storeShieldValue':
+    case 'storeEventDamageValue':
       return effect([], [step.parameters.outputKey]);
+    case 'storeCharacterTypeBySquadSlot':
+      return effect([step.parameters.slotIndex], [step.parameters.outputKey]);
+    case 'findCharacterBySquadSlot':
+      return effect([step.parameters.slotIndex], []);
     case 'storeEventSpGainAmount':
       return effect([], [step.parameters.outputKey, step.parameters.realDeltaOutputKey]);
     case 'storeEventHealValues':
@@ -574,7 +591,12 @@ export function analyzeStepUsage(
       return effect();
     case 'overrideMultiDashLimit':
       return effect([step.parameters.dashCount]);
+    case 'changeSkillSlot':
+      return effect(
+        step.parameters.durationSeconds === undefined ? [] : [step.parameters.durationSeconds],
+      );
     case 'copyContextTargets':
+    case 'saveTransferredSource':
     case 'findTargets':
     case 'interruptCurrentSkill':
     case 'mergeContextTargets':
@@ -604,7 +626,6 @@ export function analyzeStepUsage(
     case 'reachSkillOperableBoundary':
     case 'markCurrentSkillCanDash':
     case 'openComboWindow':
-    case 'changeSkillSlot':
     case 'overrideBasicAttackMapping':
     case 'changePlayerActionMode':
     case 'changeNativeSkillType':

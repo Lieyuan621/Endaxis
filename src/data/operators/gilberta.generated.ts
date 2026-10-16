@@ -2473,6 +2473,7 @@ export const gilberta: OperatorDefinition = {
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0013_aglina_normal_skill: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',
@@ -2536,6 +2537,7 @@ export const gilberta: OperatorDefinition = {
       },
     },
     abilityentity_chr_0013_aglina_ultimate_skill: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',

@@ -408,6 +408,7 @@ function collectLeafReferences(
     }
     case 'buffFinish': {
       const action = leaf.action;
+      if (action.kind === 'finishCurrentBuff') return;
       if (action.kind === 'buffFinishById') {
         for (let index = 0; index < action.buffIds.length; index += 1) {
           output.push(
@@ -458,6 +459,7 @@ function collectLeafReferences(
           finish: 'skillIdOnFinish',
           hit: 'projectileSkillId',
           reach: 'skillIdOnReach',
+          launch: 'skillIdOnLaunch',
         }[callback.event];
         output.push(
           referenceFromIdentity(

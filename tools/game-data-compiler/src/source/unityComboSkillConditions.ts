@@ -21,6 +21,14 @@ import {
 import { readActionTarget, readDirectionType, readTargetSource } from './targetEnums.ts';
 const META = ['isEnable', 'priorityLevel', 'priorityOffset', 'serverActionIndex'];
 const LEAF_FIELDS: Readonly<Record<string, readonly string[]>> = {
+  'Beyond.Gameplay.Core.SetBuffDurationAction/Data': [
+    'targetSettings',
+    'buffSettings',
+    'operationType',
+    'value',
+    'isFinishedEarly',
+  ],
+  'Beyond.Gameplay.Core.CheckBuffEnhanceChangedLayer/Data': ['num', 'compareType', 'storeKey'],
   'Beyond.Gameplay.Core.CheckComboSkillPending/Data': ['owner'],
   'Beyond.Gameplay.Core.Conditions.CheckObjectTypeMatch/Data': ['target', 'objectTypeMask'],
   'Beyond.Gameplay.Core.Conditions.CheckSpellInflictionType/Data': ['mask', 'savedKey'],
@@ -205,7 +213,7 @@ function normalizeLeaf(
   ])
     if (key in data)
       result[key] = normalizeTarget(data[key], references, usedReferences, `${path}.${key}`);
-  for (const key of ['valueA', 'valueB', 'value'])
+  for (const key of ['valueA', 'valueB', 'value', 'num'])
     if (key in data) result[key] = normalizeScalar(data[key], `${path}.${key}`);
   for (const key of ['compare', 'compareType'])
     if (key in data) result[key] = readCompareType(data[key], `${path}.${key}`);
@@ -250,6 +258,13 @@ function normalizeLeaf(
       `${path}.operation`,
     );
     result.calculateType = enumName(data.calculateType, ['HpRatio'], `${path}.calculateType`);
+  }
+  if (type.endsWith('.SetBuffDurationAction/Data')) {
+    result.operationType = enumName(
+      data.operationType,
+      ['Assign', 'Add', 'Multiply', 'Divide', 'Floor', 'Ceil', 'RoundToInt'],
+      `${path}.operationType`,
+    );
   }
   if (type.endsWith('.CreateBuffAction/Data')) {
     result.count = normalizeScalar(data.count, `${path}.count`);

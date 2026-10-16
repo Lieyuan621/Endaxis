@@ -119,7 +119,12 @@ import {
   createSharedSpGainModifier,
   type SharedSpGainModifierSet,
 } from '../resources/sharedSpGainModifiers';
-import type { CombatSkillCastInfo, DamageModifierState } from '../state/foundationState';
+import type {
+  CombatSkillCastInfo,
+  DamageModifierState,
+  EnemyPartTransferInfo,
+} from '../state/foundationState';
+import { copyEnemyPartTransferInfo } from '../abilities/runtimeTargetContext';
 import {
   ATTRIBUTE_MODIFIER_SOURCES,
   type AttributeModifierSource,
@@ -198,6 +203,8 @@ export interface BuffLifecycleActions<Key extends string> {
   readonly disable?: (buff: CombatBuff<Key>) => void;
   readonly finish?: (buff: CombatBuff<Key>) => void;
   readonly dispelled?: (buff: CombatBuff<Key>, sourceId: string) => void;
+  /** 原生 OnBuffReleased：释放清理前执行，与执行器的 release 清理钩子分开。 */
+  readonly beforeRelease?: (buff: CombatBuff<Key>) => void;
   /** 宿主释放时清理局部执行器；不是普通结束动作或对外结束事件。 */
   readonly release?: (buff: CombatBuff<Key>) => void;
   readonly beforeEnhance?: (buff: CombatBuff<Key>, sourceId: string) => void;
@@ -276,6 +283,7 @@ export interface CombatBuffDefinition<Key extends string> {
 
 /** 添加 Buff 实例时由具体行为提供的初始黑板和层数。 */
 export interface CombatBuffAddOptions {
+  readonly partTransferInfo?: EnemyPartTransferInfo;
   readonly blackboardValueCalculations?: Readonly<Record<string, ActionValueCalculation>>;
   readonly producedBy?: CombatObjectRef;
   readonly blackboardValues?: Readonly<Record<string, ActionBlackboardValue>>;
@@ -423,11 +431,7 @@ export class CombatBuff<Key extends string> {
       }
       this.#state = restoredState;
       this.blackboard = ActionBlackboard.bindRuntimeState(restoredState.blackboard);
-      if (restoredState.blackboard.entity !== owner.entityBlackboard.runtimeState) {
-        throw new Error(
-          `restored Buff '${definition.id}' does not share its owner entity blackboard`,
-        );
-      }
+      // 切面保留与来源实体的黑板别名；来源可能已回收，不重新绑定到接收者。
       this.finishParentGlobalBuff = options?.finishParentGlobalBuff ?? null;
       this.getSourceAttributeValue = options?.getSourceAttributeValue ?? null;
       const sourceAttributeOwnerId =
@@ -499,11 +503,19 @@ export class CombatBuff<Key extends string> {
       this.#tickHost = this.#createTickHost();
       return;
     }
-    this.blackboard = new ActionBlackboard(definition.blackboard, owner.entityBlackboard);
+    this.blackboard = new ActionBlackboard(
+      definition.blackboard,
+      owner.sourceEntityBlackboard(sourceId),
+    );
     this.#state = createBuffInstanceState<Key>(
       { ownerId: owner.ownerId, instanceId, definitionId: definition.id, sourceId },
       this.blackboard.runtimeState,
     );
+    if (options?.partTransferInfo !== undefined)
+      this.#state.partTransferInfo = copyEnemyPartTransferInfo(
+        options.partTransferInfo,
+        options.partTransferInfo.currentMainBodyId,
+      )!;
     this.blackboard.assign(
       options?.blackboardValues,
       options?.blackboardArtsIntensityFactors,
@@ -841,6 +853,7 @@ export class CombatBuff<Key extends string> {
   release(): boolean {
     if (this.#state.lifecycle.released) return false;
     this.#state.lifecycle.released = true;
+    this.definition.actions?.beforeRelease?.(this);
     this.owner.unregisterDamageModifiers(this.damageModifiers);
     this.owner.unregisterHealModifiers(this.healModifiers);
     this.owner.unregisterPoiseModifiers(this.poiseModifiers);
@@ -988,10 +1001,12 @@ export class CombatBuff<Key extends string> {
     count: number,
     reason: BuffFinishReason,
     finishSkillCastInfo?: CombatSkillCastInfo | null,
+    finishSourceId?: string,
   ): boolean {
     const previousLayers = this.enhanceCount;
     return decreaseBuffEnhancements(this.#state.lifecycle, count, {
-      finish: () => this.finish(reason, finishSkillCastInfo),
+      // 扣尽走完整结束路径，保留结束来源及吸收/消费通知；部分扣层只通知层数变化。
+      finish: () => this.owner.finishInstance(this, reason, finishSourceId, finishSkillCastInfo),
       changed: () => {
         this.owner.onBuffStackChanged?.(this, previousLayers, undefined, finishSkillCastInfo);
         this.definition.actions?.enhanceChanged?.(this, this.sourceId);
@@ -1220,6 +1235,13 @@ export class CombatShield<Key extends string> {
 
 /** 按实体隔离的 Buff 存储与活动伤害修正注册表。 */
 export class CombatBuffContainer<Key extends string> {
+  resolveSourceEntityBlackboard?: (sourceId: string) => ActionBlackboard | undefined;
+
+  sourceEntityBlackboard(sourceId: string): ActionBlackboard | undefined {
+    return sourceId === this.ownerId
+      ? this.entityBlackboard
+      : this.resolveSourceEntityBlackboard?.(sourceId);
+  }
   readonly #memberBindings = new Map<number, CombatBuff<Key>>();
 
   #requireMember(id: number): CombatBuff<Key> {
@@ -1270,7 +1292,7 @@ export class CombatBuffContainer<Key extends string> {
     readonly tagRegistry = new GameplayTagRegistry([]),
     /** 一次战斗唯一的共享 SP 修正注册表；仅使用相应 Buff 的容器需要提供。 */
     readonly sharedSpGainModifiers: SharedSpGainModifierSet | null = null,
-    /** 该实体的技能与 Buff 共同回退读写的持久运行时黑板。 */
+    /** 该实体自己的持久黑板；来源为该实体的 Buff 共享此板。 */
     readonly entityBlackboard = new ActionBlackboard(),
     /** Buff 结束（到期、消费、驱散等）时通知，供回执记录结束事实。 */
     readonly onBuffFinished?: (
@@ -1535,7 +1557,10 @@ export class CombatBuffContainer<Key extends string> {
       if (!definition.ignoreAddingCooldown && active.some(value => value > BUFF_LIFETIME_EPSILON)) {
         return null;
       }
-      const blackboard = new ActionBlackboard(definition.blackboard, this.entityBlackboard);
+      const blackboard = new ActionBlackboard(
+        definition.blackboard,
+        this.sourceEntityBlackboard(sourceId),
+      );
       blackboard.assign(options?.blackboardValues);
       const duration =
         typeof definition.addingCooldownSeconds === 'number'
@@ -1652,7 +1677,7 @@ export class CombatBuffContainer<Key extends string> {
   finishInstance(
     buff: CombatBuff<Key>,
     reason: BuffFinishReason,
-    sourceId: string,
+    sourceId: string | undefined,
     finishSkillCastInfo?: CombatSkillCastInfo | null,
   ): boolean {
     if (
@@ -1708,7 +1733,7 @@ export class CombatBuffContainer<Key extends string> {
         if (
           !buff.isFinished &&
           accepted.has(buff.definition.id) &&
-          buff.decreaseEnhanceCount(count, reason, finishSkillCastInfo)
+          buff.decreaseEnhanceCount(count, reason, finishSkillCastInfo, sourceId)
         ) {
           changed += 1;
         }
@@ -1782,6 +1807,20 @@ export class CombatBuffContainer<Key extends string> {
   }
 
   #onEntityTagAdded?: (tag: GameplayTag) => void;
+  readonly #entityTagObservers = new Set<() => void>();
+
+  /** 订阅标签集合变化，不执行初始检查；恢复切面时可安全重建订阅。 */
+  observeEntityTags(observer: () => void): () => void {
+    this.#entityTagObservers.add(observer);
+    return () => this.#entityTagObservers.delete(observer);
+  }
+
+  #notifyEntityTagsChanged(): void {
+    // 同步回调可以退订、注册新监听或再次修改标签；新监听不参与当前轮通知。
+    for (const observer of [...this.#entityTagObservers]) {
+      if (this.#entityTagObservers.has(observer)) observer();
+    }
+  }
 
   configureEntityTagAdded(observer: (tag: GameplayTag) => void): void {
     this.#onEntityTagAdded = observer;
@@ -1789,13 +1828,19 @@ export class CombatBuffContainer<Key extends string> {
 
   addEntityTags(tags: readonly GameplayTag[]): void {
     for (const tag of tags) {
+      const existed = this.hasEntityTag(tag);
       addBuffEntityTags(this.#state, [tag]);
+      if (!existed) this.#notifyEntityTagsChanged();
       this.#onEntityTagAdded?.(tag);
     }
   }
 
   removeEntityTags(tags: readonly GameplayTag[]): void {
-    removeBuffEntityTags(this.#state, tags);
+    for (const tag of tags) {
+      const existed = this.hasEntityTag(tag);
+      removeBuffEntityTags(this.#state, [tag]);
+      if (existed && !this.hasEntityTag(tag)) this.#notifyEntityTagsChanged();
+    }
   }
 
   /** 按原生父级展开规则查询当前实体标签，不把 Buff 分类标签另行计数。 */

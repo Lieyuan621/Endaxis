@@ -12,10 +12,13 @@ import { compareCombatNumbers } from '../../math/combatNumbers.ts';
 
 export interface CombatVitalsConditionDependencies {
   readonly resolveTarget: (
-    target: Extract<
-      CompiledCondition,
-      { kind: 'healthCompare' | 'poiseCompare' | 'targetStaggered' }
-    >['target'],
+    target: Exclude<
+      Extract<
+        CompiledCondition,
+        { kind: 'healthCompare' | 'poiseCompare' | 'targetStaggered' }
+      >['target'],
+      'actionInputTarget'
+    >,
     buffSourceId?: string,
   ) => CombatVitals;
   /** Context 查询中的干员实例直接按身份读取；条件不得重新运行选择器。 */
@@ -55,7 +58,9 @@ export class CombatVitalsConditionExecutor implements CombatOperationExecutor {
           ? this.#resolveContextTarget(condition.contextKey, context)
           : condition.target === 'currentTarget'
             ? this.#resolveCurrentTarget(context)
-            : this.dependencies.resolveTarget(condition.target, context.buffSourceId);
+            : condition.target === 'actionInputTarget'
+              ? this.#resolveInputTarget(context)
+              : this.dependencies.resolveTarget(condition.target, context.buffSourceId);
       const threshold = resolveActionValueOperand(condition.value, context.blackboard);
       // 木桩模拟允许血量耗尽后继续执行：已有目标的「生命值 > 0」存活门禁始终放行。
       // 不修改生命账本、不放行空目标，也不改变其他阈值或比较方式。

@@ -29,6 +29,7 @@ import {
 } from '../state/actionState';
 import { deriveAnonymousDamageStepKey } from '../timeline/deriveHitId';
 import type { EventResponseExecution } from './combatActionEventListener';
+import { CombatActionTagQueryListener } from './combatActionEventListener';
 
 export type CombatActionExecution = ActionGraphExecution;
 
@@ -68,6 +69,8 @@ import {
 import { executeTimelineJump, resetTimelineJump, tickTimelineJump } from './sequenceControl';
 
 export interface ActionGraphExecutionHost {
+  observeOwnerTags?(changed: () => void): () => void;
+  ownerTagsMatch?(parameters: CompiledGraphStepForKind<'listenForTagQuery'>['parameters']): boolean;
   /** 只观察已经取得的结果，不参与求值或执行策略。 */
   readonly observeCondition?: (input: CompiledCondition, result: boolean) => void;
   readonly comboQte?: {
@@ -167,6 +170,8 @@ function wrapMacroHost(
   return {
     frame: host.frame,
     comboQte: host.comboQte,
+    observeOwnerTags: host.observeOwnerTags,
+    ownerTagsMatch: host.ownerTagsMatch,
     withSavedInput: target => wrapMacroHost(host.withSavedInput(target), args),
     get inputTarget() {
       return host.inputTarget;
@@ -590,6 +595,41 @@ export class ActionGraphExecution
           } else endBranchAction(data.selection, branchHost, context);
         },
       };
+    } else if (action.kind === 'listenForTagQuery') {
+      if (saved && saved.kind !== 'graphTagListener')
+        throw new Error(`expected tag listener state: ${id}`);
+      const data = saved ?? {
+        kind: 'graphTagListener' as const,
+        target: this.host.inputTarget ?? null,
+        listener: { active: false, matched: false, body: null },
+      };
+      const host = this.host;
+      if (!host.observeOwnerTags || !host.ownerTagsMatch)
+        throw new Error('tag query listener requires an owner tag container');
+      const listener = new CombatActionTagQueryListener(
+        data.listener,
+        action.parameters.executeOnMatch,
+        () => host.ownerTagsMatch!(action.parameters),
+        changed => host.observeOwnerTags!(changed),
+        state =>
+          this.#child(
+            id,
+            0,
+            action.parameters.sequence.$sequence,
+            state,
+            host.withSavedInput(data.target),
+          ),
+      );
+      binding = {
+        data,
+        execute: () => {
+          listener.execute();
+          return true;
+        },
+        end: () => listener.end(),
+        reset: () => listener.reset(),
+        tick() {},
+      };
     } else if (action.kind === 'listenForCombatEvents') {
       if (saved && saved.kind !== 'graphListener')
         throw new Error(`expected graph listener state: ${id}`);
@@ -1001,7 +1041,8 @@ export class ActionGraphExecution
         saved?.kind === 'channeling' ||
         saved?.kind === 'graphJump' ||
         saved?.kind === 'graphTargets' ||
-        saved?.kind === 'graphListener'
+        saved?.kind === 'graphListener' ||
+        saved?.kind === 'graphTagListener'
       )
         throw new Error(`expected operation state: ${id}`);
       // 程序节点可以共享，句柄目录中的操作身份不能跨调用位置共享；恢复复用同一身份。

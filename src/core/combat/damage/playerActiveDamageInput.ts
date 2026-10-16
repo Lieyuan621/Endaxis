@@ -75,6 +75,24 @@ export function resolvePlayerActiveDamageInput(
   { step, finalAttackValue, attacker, defender, runtime }: ResolvePlayerActiveDamageInput,
   recordAttribute?: (side: DamageModifierSide, attribute: string) => void,
 ): PlayerActiveDamageInput {
+  if (step.parameters.damageType === 'fixed')
+    return {
+      finalAttackValue,
+      damageType: 'fixed',
+      criticalRate: 0,
+      criticalDamageIncrease: 0,
+      criticalSample: 0,
+      defense: 0,
+      resistancePercent: 0,
+      damageTakenMultiplier: 1,
+      weaknessDamageMultiplier: 1,
+      shelterDamageMultiplier: 0,
+      runtimeExtensionMultiplier: 1,
+      igniteDamageMultiplier: 1,
+      appliesIgniteDamageMultiplier: false,
+      physicalInflictionDamageMultiplier: 1,
+      appliesPhysicalInflictionDamageMultiplier: false,
+    };
   if (step.parameters.damageType === 'lifeDrain') {
     throw new Error('life-drain damage uses a separate native calculation branch');
   }

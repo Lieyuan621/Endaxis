@@ -299,8 +299,12 @@ function compileOperatorInitializationProgramsWithEntry(
 ): readonly CompiledOperatorInitializationProgram[] {
   return upgrades.flatMap(upgrade => {
     const sequence = upgrade.definition.initializationSequence;
-    const attachedBuffs = upgrade.definition.attachedBuffs ?? [];
-    if (sequence !== undefined && attachedBuffs.length > 0) {
+    const attachedBuffs = (upgrade.definition.attachedBuffs ?? []).filter(
+      installation =>
+        installation.enabledLevels === undefined ||
+        installation.enabledLevels.includes(upgrade.level),
+    );
+    if (sequence !== undefined && (upgrade.definition.attachedBuffs?.length ?? 0) > 0) {
       throw new Error(
         `${upgrade.source} '${upgrade.index}' mixes direct Buff installations with an initialization program`,
       );

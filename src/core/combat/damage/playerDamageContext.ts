@@ -4,7 +4,7 @@ import type {
   DamageProcessTiming,
   DamageTargetHealthType,
 } from '../../../../packages/game-data-contract/src/modifiers.ts';
-import type { AttackReceiptSnapshot } from '../state/foundationState';
+import type { AttackReceiptSnapshot, EnemyPartTransferInfo } from '../state/foundationState';
 import type { AppliedDamageModifier } from './damageScale';
 export {
   DAMAGE_MODIFIER_SIDES,
@@ -75,6 +75,7 @@ export interface PlayerDamageContextPorts {
 }
 
 interface PlayerDamageContextInput {
+  readonly partTransferInfo?: EnemyPartTransferInfo;
   readonly sourceId: string;
   readonly targetId: string;
   readonly damageType: DamageType;
@@ -91,6 +92,7 @@ interface PlayerDamageContextInput {
 
 /** 遵循已还原原生伤害包生命周期的单次命中可变状态。 */
 export class PlayerDamageContext {
+  readonly partTransferInfo?: EnemyPartTransferInfo;
   readonly sourceId: string;
   readonly targetId: string;
   readonly damageType: DamageType;
@@ -114,6 +116,7 @@ export class PlayerDamageContext {
   #snapshots: PlayerDamageAttributeSnapshots;
 
   constructor(input: PlayerDamageContextInput) {
+    this.partTransferInfo = input.partTransferInfo;
     this.sourceId = input.sourceId;
     this.targetId = input.targetId;
     this.damageType = input.damageType;
@@ -215,7 +218,7 @@ export class PlayerDamageContext {
   }
 
   resolveFinalAttackValue(): number {
-    if (this.damageType === 'lifeDrain') return this.#value;
+    if (this.damageType === 'lifeDrain' || this.damageType === 'fixed') return this.#value;
     this.applyModifiers('afterCalculation');
     return this.#value * this.damageScales.getFinalValue();
   }

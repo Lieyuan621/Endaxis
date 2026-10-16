@@ -13,7 +13,10 @@ import type {
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import { ActionBlackboard, resolveActionValueOperand } from '../actions/actionBlackboard';
 import { compareCombatNumbers } from '../../math/combatNumbers.ts';
-import type { LogicalAbilityEntityRuntime } from './logicalAbilityEntityRuntime';
+import type {
+  LogicalAbilityEntityRuntime,
+  LogicalAbilityEntitySpawnRequest,
+} from './logicalAbilityEntityRuntime';
 import type {
   CombatOperationContext,
   CombatOperationExecutor,
@@ -31,9 +34,30 @@ import {
   createCombatOperationHostState,
   type CombatOperationHostState,
 } from '../state/actionState';
-import type { ActionValueCalculation } from '../state/foundationState';
+import type { ActionValueCalculation, PostSkillCastRequest } from '../state/foundationState';
 
 type RuntimeOperation = ResolvedCombatOperationStep;
+
+interface AbilityEntityRuntimeDependencies {
+  readonly resolveOperations: (state: CombatOperationHostState) => CombatOperationExecutor;
+  readonly semanticEvents?: CombatSemanticEventRuntime;
+  readonly launchProjectile?: LaunchProjectile;
+  readonly finishProjectile?: (target: RuntimeTargetRef) => boolean;
+  readonly createCallbackSkillHost?: CallbackSkillHostFactory;
+  readonly installPassiveSkills?: (
+    entity: RuntimeTargetRef,
+    definition: ResolvedAbilityEntityDefinition,
+  ) => void;
+  readonly prepareSoul?: (
+    target: RuntimeTargetRef,
+    definition: NonNullable<ResolvedAbilityEntityDefinition['soul']>,
+  ) => NonNullable<LogicalAbilityEntitySpawnRequest['soul']>;
+  readonly initializeSoul?: (
+    entity: RuntimeTargetRef,
+    definition: ResolvedAbilityEntityDefinition,
+  ) => void;
+  readonly programs?: AbilityEntityChildSkillPrograms;
+}
 
 /** 将能力实体 DSL 步骤接到本场战斗唯一的逻辑实例目录。 */
 export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
@@ -41,17 +65,7 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
   readonly #entities: LogicalAbilityEntityRuntime;
   readonly #delegate: CombatOperationExecutor &
     Pick<TargetContextOperationExecutor, 'queryTargets'>;
-  readonly #childRuntimeDependencies?: {
-    readonly resolveOperations: (state: CombatOperationHostState) => CombatOperationExecutor;
-    readonly semanticEvents?: CombatSemanticEventRuntime;
-    readonly launchProjectile?: LaunchProjectile;
-    readonly finishProjectile?: (target: RuntimeTargetRef) => boolean;
-    readonly createCallbackSkillHost?: CallbackSkillHostFactory;
-    readonly installPassiveSkills?: (
-      entity: RuntimeTargetRef,
-      definition: ResolvedAbilityEntityDefinition,
-    ) => void;
-  };
+  readonly #childRuntimeDependencies?: AbilityEntityRuntimeDependencies;
   readonly #resolveDefinition?: (
     abilityEntityId: string,
   ) => ResolvedAbilityEntityDefinition | undefined;
@@ -63,18 +77,7 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
     operatorId: string,
     entities: LogicalAbilityEntityRuntime,
     delegate: CombatOperationExecutor & Pick<TargetContextOperationExecutor, 'queryTargets'>,
-    childRuntimeDependencies?: {
-      readonly resolveOperations: (state: CombatOperationHostState) => CombatOperationExecutor;
-      readonly semanticEvents?: CombatSemanticEventRuntime;
-      readonly launchProjectile?: LaunchProjectile;
-      readonly finishProjectile?: (target: RuntimeTargetRef) => boolean;
-      readonly createCallbackSkillHost?: CallbackSkillHostFactory;
-      readonly installPassiveSkills?: (
-        entity: RuntimeTargetRef,
-        definition: ResolvedAbilityEntityDefinition,
-      ) => void;
-      readonly programs?: AbilityEntityChildSkillPrograms;
-    },
+    childRuntimeDependencies?: AbilityEntityRuntimeDependencies,
     resolveDefinition?: (abilityEntityId: string) => ResolvedAbilityEntityDefinition | undefined,
     restored?: {
       readonly state: AbilityEntityActionState;
@@ -90,6 +93,30 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
       childRuntimeDependencies?.programs ?? new AbilityEntityChildSkillPrograms();
     this.runtimeState = restored?.state ?? { actionDurationEntities: new Map() };
     this.programs = restored?.programs ?? new CombatOperationPrograms();
+  }
+
+  /** CastSkill 登记实体自己的技能并写公共请求槽，不在动作执行栈内启动技能。 */
+  requestSkillCast(
+    entity: RuntimeTargetRef,
+    request: Omit<PostSkillCastRequest, 'skillId'> & { readonly nativeSkillId: string },
+    context: CombatOperationContext,
+  ): void {
+    const snapshot = this.#entities.snapshot(entity);
+    const definition = this.#resolveDefinition?.(snapshot.abilityEntityId);
+    if (!definition)
+      throw new Error(`AbilityEntity definition '${snapshot.abilityEntityId}' does not exist`);
+    const program = this.#resolveSpawnChildSkill(definition, request.nativeSkillId);
+    if (!program)
+      throw new Error(`AbilityEntity child skill '${request.nativeSkillId}' does not exist`);
+    this.#entities.ensureChildSkill(entity, program.skillId, (owner, blackboard) =>
+      this.#createChildRuntime(program, owner, blackboard, context, false),
+    );
+    const { nativeSkillId: _, ...input } = request;
+    this.#entities.childSkillHosts(entity).ability.requestPostSkillCast({
+      ...input,
+      skillId: program.skillId,
+      resolveSkillSlot: false,
+    });
   }
 
   /** 按实体定义和保存的 skillId 重建子技能程序绑定，不执行 Start。 */
@@ -314,15 +341,19 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
     if (childSkill !== undefined && this.#childRuntimeDependencies === undefined) {
       throw new Error('spawnAbilityEntity child skill runtime is not configured');
     }
-    const target =
+    const resolveTarget = () =>
       parameters.target === undefined
         ? undefined
-        : parameters.target === 'enemy'
-          ? ({ kind: 'enemy' } as const)
-          : parameters.target === 'currentAbilityEntity'
-            ? context.currentTarget
-            : casterSource;
-    if (parameters.target === 'currentAbilityEntity' && target === undefined) {
+        : typeof parameters.target === 'object'
+          ? this.#delegate.queryTargets(parameters.target, context)[0]
+          : parameters.target === 'enemy'
+            ? ({ kind: 'enemy' } as const)
+            : parameters.target === 'actionInputTarget'
+              ? context.actionInputTarget
+              : parameters.target === 'currentAbilityEntity'
+                ? context.currentTarget
+                : casterSource;
+    if (parameters.target === 'currentAbilityEntity' && context.currentTarget === undefined) {
       throw new Error('spawnAbilityEntity currentAbilityEntity target requires a current target');
     }
     const overrideDurationSeconds =
@@ -332,7 +363,30 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
     const spawnedTargets: RuntimeTargetRef[] = [];
     // 出生目标在执行开始时确定；子技能修改同名目标组不改变本次遍历。
     for (let bornIndex = 0; bornIndex < bornTargets.length; bornIndex++) {
+      const resolvedSource =
+        typeof parameters.source === 'object'
+          ? this.#delegate.queryTargets(parameters.source, context)[0]
+          : source;
+      if (resolvedSource === undefined || resolvedSource.kind === 'spatialPoint')
+        throw new Error('spawnAbilityEntity requires a valid source ability system');
+      const target = resolveTarget();
+      let soul: LogicalAbilityEntitySpawnRequest['soul'];
+      if (definition.soul !== undefined) {
+        if (target === undefined) throw new Error('Soul spawn requires an explicit target');
+        if (
+          !this.#childRuntimeDependencies?.prepareSoul ||
+          !this.#childRuntimeDependencies.initializeSoul
+        )
+          throw new Error('Soul spawn requires ability-system initialization');
+        soul = this.#childRuntimeDependencies.prepareSoul(target, definition.soul);
+      }
       const entity = this.#entities.spawn({
+        ...(soul === undefined ? {} : { soul }),
+        initialize: entity => {
+          if (definition.soul !== undefined)
+            this.#childRuntimeDependencies!.initializeSoul!(entity, definition);
+          else this.#childRuntimeDependencies?.installPassiveSkills?.(entity, definition);
+        },
         definitionProgramId: this.programs.slot(definition),
         producedBy: operationProducer(context),
         ...(!inheritSourceSkillCastInfo
@@ -343,6 +397,7 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
         abilityEntityId: parameters.abilityEntityId,
         definition: {
           ...(definition.bornTags === undefined ? {} : { bornTags: definition.bornTags }),
+          ...(definition.faction === undefined ? {} : { faction: definition.faction }),
           ...(definition.blackboard === undefined ? {} : { blackboard: definition.blackboard }),
           lifetime:
             definition.lifetime.kind === 'infinite'
@@ -360,7 +415,7 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
           ...(childSkill === undefined ? {} : { childSkill: { skillId: childSkill.skillId } }),
         },
         ownerId: this.#operatorId,
-        source,
+        source: resolvedSource,
         ...(!inheritSourceSkillCastInfo || context.skillCastInfo === undefined
           ? {}
           : { sourceSkillCastId: context.skillCastInfo.skillCastId }),
@@ -384,19 +439,6 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
                 ),
             }),
       });
-      try {
-        this.#childRuntimeDependencies?.installPassiveSkills?.(entity, definition);
-      } catch (error) {
-        try {
-          if (this.#entities.isActive(entity)) this.#entities.finish(entity, 'explicit');
-        } catch (cleanupError) {
-          throw new AggregateError(
-            [error, cleanupError],
-            `AbilityEntity '${parameters.abilityEntityId}' passive installation and cleanup failed`,
-          );
-        }
-        throw error;
-      }
       if (parameters.saveToContextKey !== undefined) spawnedTargets.push(entity);
       if (parameters.finishByAction) {
         const slot = this.programs.slot(step);
@@ -422,7 +464,8 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
       if (definition.childSkill?.skillId === requestedSkillId) return definition.childSkill;
       const selected = definition.childSkills?.[requestedSkillId];
       if (selected !== undefined) return selected;
-      throw new Error(`AbilityEntity child skill '${requestedSkillId}' does not exist`);
+      // 原生 OnSpawn 的 TryCastSkill 失败不撤销实体出生，也不选择其他子技能。
+      return undefined;
     }
     if (definition.childSkill !== undefined) return definition.childSkill;
     const children = Object.values(definition.childSkills ?? {});
@@ -461,17 +504,25 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
       );
     }
     if (condition.kind === 'abilityEntityRemainingDurationCompare') {
-      if (context?.currentTarget === undefined) {
-        throw new Error('AbilityEntity duration comparison requires a current Context target');
-      }
-      const remaining = this.#entities.snapshot(context.currentTarget).remainingDurationSeconds;
-      return compareCombatNumbers(
+      if (context === undefined)
+        throw new Error('AbilityEntity duration comparison requires a context');
+      const target =
+        condition.target === undefined
+          ? context.currentTarget
+          : this.#delegate.queryTargets(condition.target, context)[0];
+      if (target === undefined || !this.#entities.isActive(target)) return false;
+      const remaining = this.#entities.snapshot(target).remainingDurationSeconds;
+      const seconds = Math.fround(remaining ?? -1);
+      const matches = compareCombatNumbers(
         // 原生无限期实体调用 PeriodicTimer.MarkInvalid，remainingTime 为 -1。
-        Math.fround(remaining ?? -1),
+        seconds,
         Math.fround(resolveActionValueOperand(condition.value, context.blackboard)),
         condition.operator,
         'double',
       );
+      if (matches && condition.outputKey !== undefined)
+        context.blackboard.assignDynamic(condition.outputKey, seconds);
+      return matches;
     }
     return this.#delegate.evaluate(condition, context);
   }
@@ -507,6 +558,7 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
         entityBlackboard,
         operations: this.#childRuntimeDependencies.resolveOperations(operationState),
         source: this.#entities.snapshot(entity).source,
+        target: this.#entities.snapshot(entity).target,
         skillHostGroup: this.#entities.childSkillHosts(entity),
         ownerOperatorId: this.#operatorId,
         ...(this.#childRuntimeDependencies.semanticEvents === undefined

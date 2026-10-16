@@ -12,6 +12,60 @@ const delegate = {
 };
 
 describe('ActionBlackboardOperationExecutor', () => {
+  it('随机整数在执行时读取上下界，保留原生容差、右开边界及等值区间的取样顺序', () => {
+    const executor = new ActionBlackboardOperationExecutor(
+      delegate,
+      new ExplicitProbabilitySampleSource([0, 0.999999, 0.5, 0]),
+    );
+    const blackboard = new ActionBlackboard({ min: 1.000001, max: 4.000001 });
+    const step = {
+      kind: 'storeRandomInteger',
+      parameters: {
+        key: 'choice',
+        minimum: numberInput({ kind: 'blackboard', key: 'min' }),
+        maximum: numberInput({ kind: 'blackboard', key: 'max' }),
+      },
+    } as const;
+    expect(executor.execute(step, { blackboard })).toBe(true);
+    expect(blackboard.getNumber('choice')).toBe(1);
+    executor.execute(step, { blackboard });
+    expect(blackboard.getNumber('choice')).toBe(3);
+    blackboard.assign({ min: 2, max: 2 });
+    executor.execute(step, { blackboard });
+    expect(blackboard.getNumber('choice')).toBe(2);
+    blackboard.assign({ min: -2.3, max: 1 });
+    executor.execute(step, { blackboard });
+    expect(blackboard.getNumber('choice')).toBe(-2);
+    expect(() => executor.execute(step, { blackboard })).toThrow('exhausted');
+  });
+  it('固定槽位读取元素编号，空槽写默认值且每次重新读取槽位变量', () => {
+    const executor = new ActionBlackboardOperationExecutor(
+      delegate,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      {
+        sourceId: 'caster',
+        resolve: () => 'electric',
+        readSquadSlot: index => (index === 2 ? 'ally' : undefined),
+      },
+    );
+    const blackboard = new ActionBlackboard({ slot: 2 });
+    const step = {
+      kind: 'storeCharacterTypeBySquadSlot',
+      parameters: {
+        slotIndex: numberInput({ kind: 'blackboard', key: 'slot' }),
+        defaultValue: -1,
+        outputKey: 'element',
+      },
+    } as const;
+    expect(executor.execute(step, { blackboard })).toBe(true);
+    expect(blackboard.getNumber('element')).toBe(1);
+    blackboard.assign({ slot: 1 });
+    expect(executor.execute(step, { blackboard })).toBe(true);
+    expect(blackboard.getNumber('element')).toBe(-1);
+  });
   it('读取角色原生类型，只写成功目标；重复执行和缺失目标不改写语义', () => {
     const executor = new ActionBlackboardOperationExecutor(
       delegate,
@@ -270,6 +324,10 @@ describe('ActionBlackboardOperationExecutor', () => {
   it('stores the action owner current entity property using the native formula order', () => {
     const blackboard = new ActionBlackboard({ multiplier: 3 });
     const reads: unknown[] = [];
+    const queryTargets = vi.fn(() => [
+      { kind: 'abilityEntity' as const, instanceId: 7 },
+      { kind: 'abilityEntity' as const, instanceId: 8 },
+    ]);
     const executor = new ActionBlackboardOperationExecutor(
       delegate,
       undefined,
@@ -279,6 +337,7 @@ describe('ActionBlackboardOperationExecutor', () => {
       undefined,
       undefined,
       {
+        queryTargets,
         read: (entityId, property) => {
           reads.push([entityId, property]);
           return 17;
@@ -305,6 +364,27 @@ describe('ActionBlackboardOperationExecutor', () => {
     ).toBe(true);
     expect(blackboard.getNumber('result')).toBe(14);
     expect(reads).toEqual([['enemy', 'currentHealth']]);
+    const targeted = {
+      kind: 'storeEntityPropertyValue' as const,
+      parameters: {
+        target: { kind: 'context' as const, key: 'soul_target' },
+        property: 'maxHealth' as const,
+        useFloor: false,
+        divisor: { kind: 'constant' as const, value: 0 },
+        multiplier: { kind: 'constant' as const, value: 2 },
+        base: { kind: 'constant' as const, value: 1 },
+        targetKey: 'result',
+      },
+    };
+    expect(executor.execute(targeted, { blackboard })).toBe(true);
+    expect(reads).toEqual([
+      ['enemy', 'currentHealth'],
+      ['ability-entity:7', 'maxHealth'],
+    ]);
+    expect(blackboard.getNumber('result')).toBe(35);
+    queryTargets.mockReturnValue([]);
+    expect(executor.execute(targeted, { blackboard })).toBe(false);
+    expect(blackboard.getNumber('result')).toBe(35);
   });
 
   it('registers and removes an action-lifetime health floor', () => {

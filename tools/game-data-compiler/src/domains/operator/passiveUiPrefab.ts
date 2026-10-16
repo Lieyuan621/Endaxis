@@ -50,12 +50,16 @@ function requireBuffId(value: string, sourcePath: string): string {
 export function compileOperatorPassiveUiPrefabComponent(
   evidence: OperatorPassiveUiPrefabComponentEvidence,
   sourcePath: string,
-): OperatorPassiveUiDefinition {
+  multiStatesAppearance?: 'tangtangDroplets',
+): OperatorPassiveUiDefinition | undefined {
   switch (evidence.componentType) {
     case 'UICharPassiveMultiStates': {
       const maximum = requirePositiveInteger(evidence.fullCount, `${sourcePath}.fullCount`);
       requireStateBounds(evidence.stateCounts, maximum, `${sourcePath}.states`);
-      return { kind: 'numeric', appearance: 'tangtangDroplets', maximum };
+      // 通用原生组件只确定计数规则，不决定产品显示名称或外观。
+      // 尚未适配的 prefab 不冒用其他干员的专属状态；数值通知仍正常执行。
+      if (multiStatesAppearance === undefined) return undefined;
+      return { kind: 'numeric', appearance: multiStatesAppearance, maximum };
     }
     case 'UICharPassiveCounter': {
       const maximum = requirePositiveInteger(evidence.layerCount, `${sourcePath}.layerImages`);

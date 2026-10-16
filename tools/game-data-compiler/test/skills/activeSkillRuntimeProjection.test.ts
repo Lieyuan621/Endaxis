@@ -40,6 +40,23 @@ const ACTIVE_CONTEXT = {
 } as const;
 
 describe('HideUI active source projection', () => {
+  it('保留原生追加战技身份，不改变技能执行图和时长', () => {
+    const source = activeWithActions([]);
+    const compile = (normalSkillSubType: string | number) =>
+      compileActiveSkillRuntimeProjectionSource({
+        value: { ...source, normalSkillSubType },
+        sourcePath: 'fixture',
+        patch: null,
+        context: ACTIVE_CONTEXT,
+      });
+    const ordinary = compile('Normal');
+    expect(compile('AdditionalNormalSkill')).toEqual({
+      ...ordinary,
+      normalSkillSubType: 'additionalNormalSkill',
+    });
+    expect(compile(1)).toEqual(compile('AdditionalNormalSkill'));
+    expect(() => compile(2)).toThrow();
+  });
   it('技能属性以等级补丁覆盖基础配置，拒绝等级间不一致', () => {
     const patch = parseSkillPatchSource(
       {
@@ -471,7 +488,14 @@ describe('主动技能正式时间轴投影', () => {
         kind: 'mergeContextTargets',
         parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
       },
-      { kind: 'mergeContextTargets', parameters: { saveToContextKey: 'tar', sources: [] } },
+      {
+        kind: 'copyContextTargets',
+        parameters: {
+          source: { kind: 'context', key: 'tar' },
+          excludeTargets: { kind: 'inputTarget' },
+          saveToContextKey: 'tar',
+        },
+      },
       {
         kind: 'checkCondition',
         parameters: {
@@ -1928,6 +1952,101 @@ describe('主动技能正式时间轴投影', () => {
     });
   });
 
+  it('主控为中心的 PointFinder 保留一个空间点，动态方向目标不冒充其实体身份', () => {
+    const enemyQuery = {
+      ...fixedPoint('selected'),
+      selectorData: {
+        finderData: { $type: 'Beyond.Gameplay.Core.Selector+AllEnemyFinder+Data, Gameplay.Beyond' },
+        validatorData: [
+          {
+            $type: 'Beyond.Gameplay.Core.Selector+TagValidator+Data, Gameplay.Beyond',
+            query: { queryType: 'HasAny', tags: [{ tagId: gameplayTagIdFromPath('Test/Tag123') }] },
+          },
+        ],
+        postProcessorData: [],
+      },
+    };
+    const point = {
+      ...fixedPoint('point'),
+      center: 'MainCharacter',
+      centerContextKey: 'selected',
+      selectorOwner: 'MainCharacter',
+      selectorOwnerContextKey: 'selected',
+      target: 'ContextTarget',
+      contextKey: 'selected',
+      selectorData: {
+        finderData: {
+          $type: 'Beyond.Gameplay.Core.Selector+PointFinder+Data, Gameplay.Beyond',
+          positionOffset: { x: scalarFixture(0), y: scalarFixture(0), z: scalarFixture(2.2) },
+          rotationOffset: { x: scalarFixture(0), y: scalarFixture(0), z: scalarFixture(0) },
+        },
+        validatorData: [],
+        postProcessorData: [],
+      },
+    };
+    const compile = () =>
+      compileActiveSkillRuntimeProjectionSource({
+        value: activeWithActions([enemyQuery, point, entityCount('point')]),
+        sourcePath: 'active.main-character-point',
+        patch: null,
+        context: ACTIVE_CONTEXT,
+      });
+    const result = compile();
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toContainEqual({
+      kind: 'createSpatialPointTargets',
+      parameters: { saveToContextKey: 'point', count: { kind: 'constant', value: 1 } },
+    });
+    // 动态组可以为空，所以不能同样归约为必定存在的中心。
+    point.center = 'ContextTarget';
+    expect(compile).toThrow('unaudited single-enemy action target group');
+  });
+
+  it.each(['enemy', 'actionInputTarget'] as const)(
+    '部位转主体保留动作输入，不受宿主的 %s 假定和 Target 残留组名影响',
+    actionTargetTarget => {
+      const result = compileActiveSkillRuntimeProjectionSource({
+        value: activeWithActions([
+          meta('TargetPostProcessorAction', {
+            target: targetFixture('Target', undefined, 'stale'),
+            source: targetFixture('Source'),
+            centerPos: targetFixture('Target'),
+            direction: {
+              directionType: 'SourceForward',
+              sourceMountPoint: 'None',
+              targetMountPoint: 'None',
+              customSourceAndTarget: false,
+              clampToXZ: true,
+              invertDirection: false,
+            },
+            validatorData: [],
+            postProcessorData: [
+              {
+                $type:
+                  'Beyond.Gameplay.Core.Selector+ReplacePartWithMainBody+Data, Gameplay.Beyond',
+              },
+            ],
+            targetGroupKey: 'main-body',
+          }),
+          meta('FinishOwnerAction', {
+            owner: targetFixture('Context', undefined, 'main-body'),
+            skipDieDisplay: false,
+          }),
+        ]),
+        sourcePath: 'active.input-main-body',
+        patch: null,
+        context: { ...ACTIVE_CONTEXT, actionTargetTarget },
+      });
+      expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toContainEqual({
+        kind: 'copyContextTargets',
+        parameters: {
+          source: { kind: 'inputTarget' },
+          saveToContextKey: 'main-body',
+          replacePartsWithMainBodies: true,
+        },
+      });
+    },
+  );
+
   it('能力实体未覆盖寿命时不读取 duration 的序列化残留黑板键', () => {
     const spawn = spawnAbilityEntity('default-duration-entity');
     spawn.duration = scalarFixture(0, 'attack_scale');
@@ -2111,7 +2230,7 @@ describe('主动技能正式时间轴投影', () => {
     ]);
   });
 
-  it('内联 hit-stop 恢复 Unity 序列化的无穷切线', () => {
+  it.each(['keys', 'curve'])('内联 hit-stop 恢复无穷切线，支持 %s 导出格式', format => {
     const curveKey = (time: number, value: number, inTangent: number | string) => ({
       time,
       value,
@@ -2121,13 +2240,14 @@ describe('主动技能正式时间轴投影', () => {
       outWeight: 0,
       weightedMode: 0,
     });
+    const keys = [curveKey(0, 1, 0), curveKey(1, 0.02, 'Infinity')];
     const result = compileActiveSkillRuntimeProjectionSource({
       value: activeWithActions([
         meta('HitStopAction', {
           affectType: 'OnlyAttacker',
           curveKey: 'unused',
           useDirectCurve: true,
-          directCurve: [curveKey(0, 1, 0), curveKey(1, 0.02, 'Infinity')],
+          directCurve: format === 'keys' ? keys : { keys, preWrapMode: 8, postWrapMode: 8 },
           duration: 0.4,
           timeDilationPriority: { tagId: -2059842104 },
           attacker: targetFixture('Source'),
@@ -2387,6 +2507,150 @@ describe('主动技能正式时间轴投影', () => {
         },
       },
     ]);
+  });
+
+  it('实体自身忽略全局时间流速使用当前宿主，不能误用于干员 Owner', () => {
+    const input = {
+      value: activeWithActions([
+        meta('SetIgnoreGlobalTimeScaleAction', {
+          targetSettings: targetFixture('Owner'),
+          ignoreGlobalTimeScale: true,
+          revertOnEnd: true,
+        }),
+      ]),
+      sourcePath: 'active.self-ignore',
+      patch: null,
+      extensions: {},
+    };
+    const result = compileActiveSkillRuntimeProjectionSource({
+      ...input,
+      context: { ...ACTIVE_CONTEXT, actionOwnerTarget: 'currentAbilityEntity' },
+    });
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toEqual([
+      {
+        kind: 'setIgnoreGlobalTimeScale',
+        parameters: {
+          abilityEntityTargets: [{ kind: 'current' }],
+          ignore: true,
+          revertOnEnd: true,
+        },
+      },
+    ]);
+    expect(() =>
+      compileActiveSkillRuntimeProjectionSource({ ...input, context: ACTIVE_CONTEXT }),
+    ).toThrow('unsupported global-time-scale ignore target');
+  });
+
+  it('空合并显式覆盖目标组，不因没有输入而省略写入', () => {
+    const result = compileActiveSkillRuntimeProjectionSource({
+      value: activeWithActions([
+        meta('MergeTargetAction', {
+          targets: [],
+          targetGroupKey: 'cleared',
+          mergeHittableTargets: false,
+        }),
+      ]),
+      sourcePath: 'active.empty-merge',
+      patch: null,
+      context: { ...ACTIVE_CONTEXT, actionOwnerTarget: 'currentAbilityEntity' },
+      extensions: {},
+    });
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toEqual([
+      { kind: 'mergeContextTargets', parameters: { saveToContextKey: 'cleared', sources: [] } },
+    ]);
+  });
+
+  it('敌人标签筛选保留动态查询，仅省略常量正生命门禁', () => {
+    const health = {
+      $type: 'Beyond.Gameplay.Core.Selector+CurHpRatioValidator+Data, Gameplay.Beyond',
+      compareType: 'GT',
+      value: scalarFixture(0),
+    };
+    const query = {
+      ...fixedPoint('selected'),
+      center: 'MainCharacter',
+      selectorOwner: 'MainCharacter',
+      selectorData: {
+        finderData: { $type: 'Beyond.Gameplay.Core.Selector+AllEnemyFinder+Data, Gameplay.Beyond' },
+        validatorData: [
+          {
+            $type: 'Beyond.Gameplay.Core.Selector+TagValidator+Data, Gameplay.Beyond',
+            query: { queryType: 'HasAny', tags: [{ tagId: gameplayTagIdFromPath('Test/Tag123') }] },
+          },
+          health,
+        ],
+        postProcessorData: [],
+      },
+    };
+    const compile = () =>
+      compileActiveSkillRuntimeProjectionSource({
+        value: activeWithActions([
+          query,
+          meta('TargetPostProcessorAction', {
+            target: targetFixture('Context', undefined, 'selected'),
+            source: targetFixture('Source'),
+            centerPos: targetFixture('Target'),
+            direction: {
+              directionType: 'SourceForward',
+              sourceMountPoint: 'None',
+              targetMountPoint: 'None',
+              customSourceAndTarget: false,
+              clampToXZ: true,
+              invertDirection: false,
+            },
+            validatorData: [],
+            postProcessorData: [
+              {
+                $type:
+                  'Beyond.Gameplay.Core.Selector+ReplacePartWithMainBody+Data, Gameplay.Beyond',
+              },
+            ],
+            targetGroupKey: 'selected',
+          }),
+          meta('SaveBuffLifeTime', {
+            buffOwner: targetFixture('Context', undefined, 'selected'),
+            buffSettings: {
+              checkType: 'Id',
+              buffIdList: ['buff_fixture'],
+              tagQuery: { queryType: 'HasAny', tags: [] },
+            },
+            key: 'remaining',
+          }),
+          meta('FinishOwnerAction', {
+            owner: targetFixture('Context', undefined, 'selected'),
+            skipDieDisplay: false,
+          }),
+        ]),
+        sourcePath: 'active.enemy-tag-health',
+        patch: null,
+        context: {
+          ...ACTIVE_CONTEXT,
+          gameplayTagRegistry: fixtureGameplayTagRegistry,
+        },
+      });
+    const result = compile();
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toContainEqual({
+      kind: 'findTargets',
+      parameters: {
+        owner: { kind: 'mainCharacter' },
+        query: { kind: 'enemyByTags', tagQueryType: 'hasAny', tags: ['Test/Tag123'] },
+        saveToContextKey: 'selected',
+      },
+    });
+    health.value = scalarFixture(0, 'threshold');
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toContainEqual({
+      kind: 'readBuffRemainingDuration',
+      parameters: {
+        target: { kind: 'context', key: 'selected' },
+        query: { kind: 'id', buffIds: ['buff_fixture'] },
+        outputKey: 'remaining',
+      },
+    });
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toContainEqual({
+      kind: 'copyContextTargets',
+      parameters: { source: { kind: 'context', key: 'selected' }, saveToContextKey: 'selected' },
+    });
+    expect(compile).toThrow();
   });
 
   it('当前调度改写目标组后，不能继续套用前序调度的敌人身份', () => {

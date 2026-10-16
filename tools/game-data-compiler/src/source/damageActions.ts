@@ -10,8 +10,9 @@ import {
   requireNonEmptyString,
   requireNonNegativeInteger,
   requireNumber,
+  requireNativeEnum,
   requireRecord,
-  requireString,
+  readOptionalReferenceKey,
 } from './primitives.ts';
 import {
   parseGameplayAttributeModifierEntrySource,
@@ -66,6 +67,34 @@ const DAMAGE_UNIT_BASE_FIELDS = [
 
 export type DamageCostSource = SkillCostSource;
 
+/** SaveDamageContext 读取当前伤害事件，而不是重新计算伤害或查询历史回执。 */
+export interface SaveDamageContextSource {
+  readonly kind: 'saveDamageContext';
+  readonly valueType: 'FinalValue' | 'RealValue' | 'OverflowingValue';
+  readonly saveTo: string;
+}
+
+export function parseSaveDamageContextSource(
+  value: unknown,
+  path: string,
+): SaveDamageContextSource {
+  const action = requireRecord(value, path);
+  requireExactFields(action, new Set([...ACTION_META_FIELDS, 'valueType', 'saveTo']), path);
+  return {
+    kind: 'saveDamageContext',
+    valueType: requireNativeEnum(
+      action.valueType,
+      new Map([
+        [0, 'FinalValue'],
+        [1, 'RealValue'],
+        [2, 'OverflowingValue'],
+      ] as const),
+      `${path}.valueType`,
+    ),
+    saveTo: requireNonEmptyString(action.saveTo, `${path}.saveTo`),
+  };
+}
+
 export type DamageProcessorSource =
   | {
       readonly kind: 'instantAttributeModifier';
@@ -89,6 +118,8 @@ export type DamageProcessorSource =
     };
 
 export interface DamageUnitSource {
+  /** 原生飘字跟随时长，仅保留来源表现配置，不参与伤害公式。 */
+  readonly damageTextFollowDuration?: number;
   readonly damageType: string;
   readonly attributeType: string;
   readonly simpleCalculation: boolean;
@@ -252,6 +283,7 @@ export function parseDamageUnitSource(
   if ('atkCalculation' in unit) expectedFields.add('atkCalculation');
   if ('poiseCalculation' in unit) expectedFields.add('poiseCalculation');
   if ('damageTags' in unit) expectedFields.add('damageTags');
+  if ('damageTextFollowDuration' in unit) expectedFields.add('damageTextFollowDuration');
   requireExactFields(unit, expectedFields, path);
   const gameplayTagIds =
     'damageTags' in unit ? parseTagIdsSource(unit.damageTags, `${path}.damageTags`) : [];
@@ -290,6 +322,14 @@ export function parseDamageUnitSource(
   }
   return {
     damageType: parseIndexedEnum(unit.damageType, DAMAGE_TYPES, `${path}.damageType`, 'DamageType'),
+    ...('damageTextFollowDuration' in unit
+      ? {
+          damageTextFollowDuration: requireNumber(
+            unit.damageTextFollowDuration,
+            `${path}.damageTextFollowDuration`,
+          ),
+        }
+      : {}),
     attributeType,
     simpleCalculation,
     attackScale: parseScalarSource(unit.atkScale, `${path}.atkScale`, inheritedBlackboard),
@@ -351,7 +391,7 @@ export function parseDamageUnitSource(
       unit.enableDamageVisualCoalition,
       `${path}.enableDamageVisualCoalition`,
     ),
-    visualCoalitionGroupKey: requireString(
+    visualCoalitionGroupKey: readOptionalReferenceKey(
       unit.damageVisualCoalitionGroupKey,
       `${path}.damageVisualCoalitionGroupKey`,
     ),

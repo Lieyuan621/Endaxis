@@ -1809,6 +1809,7 @@ export const purrchenaChr_0038_purrche_normal_skill: SkillDefinition = {
     dmg_taken_down_3: 0.7,
     dmg_taken_down_4: 0.6,
     potential_5_atb: 0,
+    talent_1_usp: 0,
   },
   timelineBlockFrames: 12,
   naturalDurationFrames: 184,
@@ -1914,7 +1915,7 @@ export const purrchenaChr_0038_purrche_normal_skill_counterActionGraph = {
         },
         next: 'finishBuffsById_4',
       },
-      changeResource_8: {
+      changeResource_9: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -1929,7 +1930,7 @@ export const purrchenaChr_0038_purrche_normal_skill_counterActionGraph = {
         },
         next: null,
       },
-      changeResource_9: {
+      changeResource_10: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -1942,9 +1943,9 @@ export const purrchenaChr_0038_purrche_normal_skill_counterActionGraph = {
             spGainSource: 'skill',
           },
         },
-        next: 'changeResource_8',
+        next: 'changeResource_9',
       },
-      startTimeDilation_12: {
+      startTimeDilation_13: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1959,7 +1960,7 @@ export const purrchenaChr_0038_purrche_normal_skill_counterActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_11: {
+      startTimeDilation_12: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1974,7 +1975,7 @@ export const purrchenaChr_0038_purrche_normal_skill_counterActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_10: {
+      startTimeDilation_11: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1989,52 +1990,52 @@ export const purrchenaChr_0038_purrche_normal_skill_counterActionGraph = {
         },
         next: null,
       },
-      switch_13: {
+      switch_14: {
         action: {
           kind: 'switch',
           parameters: { choice: { kind: 'valueNode', nodeId: 'data_3' }, alwaysNext: true },
           options: [
             {
               value: { kind: 'constant', value: 1 },
-              sequence: { $sequence: 'startTimeDilation_10' },
-            },
-            {
-              value: { kind: 'constant', value: 2 },
               sequence: { $sequence: 'startTimeDilation_11' },
             },
             {
-              value: { kind: 'constant', value: 3 },
+              value: { kind: 'constant', value: 2 },
               sequence: { $sequence: 'startTimeDilation_12' },
+            },
+            {
+              value: { kind: 'constant', value: 3 },
+              sequence: { $sequence: 'startTimeDilation_13' },
             },
           ],
         },
         next: null,
       },
-      once_15: {
-        action: { kind: 'once', parameters: {}, body: { $sequence: 'switch_13' } },
-        next: null,
-      },
-      ifElse_16: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_4' },
-          whenTrue: { $sequence: 'once_15' },
-          whenFalse: { $sequence: null },
-        },
+      once_16: {
+        action: { kind: 'once', parameters: {}, body: { $sequence: 'switch_14' } },
         next: null,
       },
       ifElse_17: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_6' },
-          whenTrue: { $sequence: 'changeResource_9' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
+          whenTrue: { $sequence: 'once_16' },
           whenFalse: { $sequence: null },
         },
-        next: 'ifElse_16',
+        next: null,
       },
-      dealDamage_18: {
+      ifElse_18: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
+          whenTrue: { $sequence: 'changeResource_10' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'ifElse_17',
+      },
+      dealDamage_19: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -2045,20 +2046,20 @@ export const purrchenaChr_0038_purrche_normal_skill_counterActionGraph = {
             stagger: { kind: 'valueNode', nodeId: 'data_8' },
           },
         },
-        next: 'ifElse_17',
+        next: 'ifElse_18',
       },
-      applyElementalInfliction_19: {
+      applyElementalInfliction_20: {
         action: {
           kind: 'applyElementalInfliction',
           parameters: { element: 'nature', isExtra: false },
         },
-        next: 'dealDamage_18',
+        next: 'dealDamage_19',
       },
-      once_20: {
+      once_21: {
         action: { kind: 'once', parameters: {}, body: { $sequence: null } },
-        next: 'applyElementalInfliction_19',
+        next: 'applyElementalInfliction_20',
       },
-      repeatEachTick_21: {
+      repeatEachTick_22: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
@@ -2071,11 +2072,11 @@ export const purrchenaChr_0038_purrche_normal_skill_counterActionGraph = {
               targetTriggerIntervalSeconds: 0,
             },
           },
-          body: { $sequence: 'once_20' },
+          body: { $sequence: 'once_21' },
         },
         next: null,
       },
-      finishBuffsById_22: {
+      finishBuffsById_23: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
@@ -2124,6 +2125,7 @@ export const purrchenaChr_0038_purrche_normal_skill_counterActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const purrchenaChr_0038_purrche_normal_skill_counter: SkillDefinition = {
+  normalSkillSubType: 'additionalNormalSkill',
   key: 'chr_0038_purrche_normal_skill_counter',
   element: 'nature',
   blackboard: {
@@ -2147,8 +2149,8 @@ export const purrchenaChr_0038_purrche_normal_skill_counter: SkillDefinition = {
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'readBuffStackCount_5' } },
-    { startFrame: 9, endFrame: 13, sequence: { $sequence: 'repeatEachTick_21' } },
-    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'finishBuffsById_22' } },
+    { startFrame: 9, endFrame: 13, sequence: { $sequence: 'repeatEachTick_22' } },
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'finishBuffsById_23' } },
   ],
   defaultTarget: 'enemy',
   icon: 'endaxis:operators/purrchena/battle_02',
@@ -2499,18 +2501,10 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
         },
         next: null,
       },
-      changeResource_26: {
+      checkCondition_26: {
         action: {
-          kind: 'changeResource',
-          parameters: {
-            resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_7' },
-            coefficient: { kind: 'constant', value: 1 },
-            source: { kind: 'source' },
-            targets: { kind: 'source' },
-            spGainKind: 'refund',
-            spGainSource: 'default',
-          },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
         },
         next: 'applyBuff_25',
       },
@@ -2519,7 +2513,7 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
           kind: 'changeResource',
           parameters: {
             resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_8' },
+            amount: { kind: 'valueNode', nodeId: 'data_9' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -2527,22 +2521,37 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
             spGainSource: 'default',
           },
         },
-        next: 'changeResource_26',
+        next: 'checkCondition_26',
       },
       changeResource_28: {
         action: {
           kind: 'changeResource',
           parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_10' },
+            coefficient: { kind: 'constant', value: 1 },
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+            spGainKind: 'refund',
+            spGainSource: 'default',
+          },
+        },
+        next: 'changeResource_27',
+      },
+      changeResource_29: {
+        action: {
+          kind: 'changeResource',
+          parameters: {
             resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_9' },
+            amount: { kind: 'valueNode', nodeId: 'data_11' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
           },
         },
-        next: 'changeResource_27',
+        next: 'changeResource_28',
       },
-      applyBuff_29: {
+      applyBuff_30: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2598,9 +2607,22 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'potential_5_atb' } },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'atb_return_2' } },
-      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'talent_1_usp' } },
+      data_7: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'talent_1_usp', fallback: 0 },
+      },
+      data_8: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_7' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'potential_5_atb' } },
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'atb_return_2' } },
+      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'talent_1_usp' } },
     },
   },
   macros: {},
@@ -2629,8 +2651,8 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1: SkillDefinition = {
     { startFrame: 9, endFrame: 9, sequence: { $sequence: 'applyBuff_21' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_23' } },
     { startFrame: 0, endFrame: 9, sequence: { $sequence: 'applyBuff_24' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'changeResource_28' } },
-    { startFrame: 0, endFrame: 21, sequence: { $sequence: 'applyBuff_29' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'changeResource_29' } },
+    { startFrame: 0, endFrame: 21, sequence: { $sequence: 'applyBuff_30' } },
   ],
   defaultTarget: 'enemy',
   icon: 'endaxis:operators/purrchena/battle_02',
@@ -4265,7 +4287,6 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
                   atk_scale_blackhole_end: 0.1,
                   atk_scale_boom: 1,
                   comboType: 0,
-                  duration: 0,
                   poise: 15,
                   usp: 0,
                 },
@@ -5636,12 +5657,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
                   maxChargeTime: 1,
                   cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                 },
-                blackboard: {
-                  atk_scale_blackhole_dot: 0,
-                  atk_scale_blackhole_end: 0,
-                  duration: 0,
-                  usp: 0,
-                },
+                blackboard: { atk_scale_blackhole_dot: 0, atk_scale_blackhole_end: 0 },
                 scheduledSequences: [
                   {
                     startFrame: 0,
@@ -6154,13 +6170,12 @@ export const purrchenaChr_0038_purrche_ultimate_skill: SkillDefinition = {
         endFrame: 180,
         skillIds: ['chr_0038_purrche_combo_skill', 'chr_0038_purrche_normal_skill'],
       },
-      { startFrame: 146, endFrame: 180, skillIds: ['chr_0038_purrche_normal_skill_counter'] },
     ],
   },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 1, endFrame: 143, sequence: { $sequence: 'applyBuff_1' } },
-    { startFrame: 69, endFrame: 143, sequence: { $sequence: 'applyBuff_1' } },
+    { startFrame: 0, endFrame: 146, sequence: { $sequence: 'applyBuff_1' } },
+    { startFrame: 68, endFrame: 146, sequence: { $sequence: 'applyBuff_1' } },
     { startFrame: 1, endFrame: 6, sequence: { $sequence: 'checkCondition_4' } },
     { startFrame: 68, endFrame: 71, sequence: { $sequence: 'checkCondition_15' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'readBuffStackCount_49' } },
@@ -7623,7 +7638,6 @@ const purrchenaBuff20: SkillBuffDefinition = {
     icon: 'endaxis:icons/icon_battle_buff_atk_up',
     showInHeadBarCommon: false,
     showInHeadBarAttached: false,
-    showInSquadIcon: true,
   },
   applyTags: [],
   extendTags: [],
@@ -8139,6 +8153,13 @@ export const purrchena: OperatorDefinition = {
       modifiers: [
         {
           kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0038_purrche_normal_skill',
+          blackboardKey: 'talent_1_usp',
+          operation: 'assign',
+          value: [6, 10],
+        },
+        {
+          kind: 'patchSkillBlackboard',
           skillKey: 'chr_0038_purrche_normal_skill_block_1',
           blackboardKey: 'talent_1_usp',
           operation: 'assign',
@@ -8217,7 +8238,7 @@ export const purrchena: OperatorDefinition = {
           kind: 'patchSkillBlackboard',
           skillKey: 'chr_0038_purrche_combo_skill',
           blackboardKey: 'radiusadd_display',
-          operation: 'multiply',
+          operation: 'assign',
           value: 0.2,
         },
       ],
@@ -8283,6 +8304,7 @@ export const purrchena: OperatorDefinition = {
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0038_purrche_combo: {
+      faction: 'good',
       bornTags: ['SelectCategory/Unmarkable', 'Immune/Damage'],
       lifetime: { kind: 'infinite' },
       maxStackingCount: 1,
@@ -8312,7 +8334,7 @@ export const purrchena: OperatorDefinition = {
           { startFrame: 64, endFrame: 67, sequence: { $sequence: 'finishOwner_1' } },
           { startFrame: 44, endFrame: 44, sequence: { $sequence: 'findTargets_2' } },
           { startFrame: 45, endFrame: 48, sequence: { $sequence: 'switch_opt3' } },
-          { startFrame: 44, endFrame: 45, sequence: { $sequence: 'findCharacterTeamTargets_36' } },
+          { startFrame: 44, endFrame: 45, sequence: { $sequence: 'findTargets_36' } },
           { startFrame: 44, endFrame: 45, sequence: { $sequence: 'repeatEachTick_38' } },
           { startFrame: 44, endFrame: 47, sequence: { $sequence: 'changeResource_39' } },
         ],
@@ -8703,12 +8725,7 @@ export const purrchena: OperatorDefinition = {
                           maxChargeTime: 1,
                           cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                         },
-                        blackboard: {
-                          atk_scale_blackhole_dot: 0,
-                          duration: 0,
-                          potential_3: 0,
-                          usp: 0,
-                        },
+                        blackboard: { atk_scale_blackhole_dot: 0, potential_3: 0 },
                         scheduledSequences: [
                           {
                             startFrame: 0,
@@ -8798,10 +8815,20 @@ export const purrchena: OperatorDefinition = {
                 },
                 next: 'launchProjectile_20',
               },
-              findCharacterTeamTargets_36: {
+              findTargets_36: {
                 action: {
-                  kind: 'findCharacterTeamTargets',
-                  parameters: { saveToContextKey: 'team', selection: { kind: 'allOperators' } },
+                  kind: 'findTargets',
+                  parameters: {
+                    owner: { kind: 'owner' },
+                    query: {
+                      kind: 'allyHitBox',
+                      owner: { kind: 'owner' },
+                      checkAlive: true,
+                      containsUnmarkable: false,
+                      replacePartsWithMainBodies: false,
+                    },
+                    saveToContextKey: 'team',
+                  },
                 },
                 next: null,
               },
@@ -8945,6 +8972,7 @@ export const purrchena: OperatorDefinition = {
       },
     },
     abilityentity_chr_0038_purrche_combo_item_1: {
+      faction: 'good',
       bornTags: ['SelectCategory/Unmarkable', 'Immune/Damage'],
       lifetime: { kind: 'infinite' },
       maxStackingCount: 1,

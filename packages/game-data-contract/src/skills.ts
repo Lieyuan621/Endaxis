@@ -11,6 +11,7 @@ import type { BuildCondition, CombatCondition } from './conditions.ts';
 import type { GameplayTag } from './gameplayTags.ts';
 import type {
   CombatResource,
+  CombatFaction,
   DamageElement,
   ImageRef,
   LevelValues,
@@ -71,6 +72,8 @@ export interface AbilityEntityChildSkillDefinition extends Readonly<SkillActionP
   readonly skillId: string;
   /** 实体注册表确定的原生技能类型。 */
   readonly nativeSkillType: NativeSkillType;
+  /** 原生战技子类型；省略表示普通战技，仅当前原生类型为 normalSkill 时生效。 */
+  readonly normalSkillSubType?: 'normal' | 'additionalNormalSkill';
   /** 没有提前结束时的自然持续帧数。 */
   readonly naturalDurationFrames: number;
   /** 该技能自己的扣费和冷却设置。 */
@@ -103,6 +106,23 @@ export type AbilityEntityDefinitionNumber =
 
 /** 可由干员级定义表复用的完整逻辑能力实体蓝图。 */
 export interface AbilityEntityDefinition {
+  /** 原生 Soul 的独立受击配置；其主体是生成目标，不是施法者。 */
+  readonly soul?: {
+    readonly useMainBodyHp: boolean;
+    readonly useMainBodyPoise: boolean;
+    readonly canBeHitIndividually: boolean;
+    readonly onlyHitByNormalAttack: boolean;
+    readonly canBeDirectlyBuffed: boolean;
+    /** 排除目标时保留部位自身身份；缺省为原生 false。 */
+    readonly asIndividualInExcludeTargetProcessor?: boolean;
+    readonly damageTransferType: 'partAttributes' | 'mainBodyAttributes' | 'sharedDamage';
+    readonly damageRatio: number;
+    readonly poiseRatio: number;
+    readonly soulHpBlackboardKey: string;
+    readonly soulDamageRatio: AbilityEntityDefinitionNumber;
+    readonly soulPoiseRatio: AbilityEntityDefinitionNumber;
+    readonly asPrimaryTarget: boolean;
+  };
   /** 实体存在期间的干员状态图标；直接由该实体造成的伤害显示在状态下方。 */
   readonly presentation?: {
     readonly icon: ImageRef;
@@ -113,6 +133,8 @@ export interface AbilityEntityDefinition {
   };
   /** AbilityEntityTemplateData.bornTags；实体创建时立即成为其 AbilitySystem 自身标签。 */
   readonly bornTags?: readonly GameplayTag[];
+  /** 模板的原生阵营；未配置不代表继承创建者阵营。 */
+  readonly faction?: CombatFaction;
   /** AbilitySystemData.entityBlackboard 的模板初值；生成动作的显式赋值可覆盖同名键。 */
   readonly blackboard?: Readonly<Record<string, number | string>>;
   /** 能力实体的寿命：限定秒数或无限持续。 */
@@ -300,6 +322,8 @@ export interface SkillDefinitionProperties extends SkillActionProgramDefinition 
   key: string;
   /** `_InitSkills` 创建实例时得到的原生初值；之后可由 ChangeSkillType 改写。 */
   nativeSkillType: NativeSkillType;
+  /** 原生战技子类型，不改变玩家操作类型；省略表示普通战技。 */
+  normalSkillSubType?: 'normal' | 'additionalNormalSkill';
   /**
    * 该次释放所创建的强化状态 Buff 身份。时间轴只按实际 Buff 回执投影生命周期；
    * 省略表示没有已取证的强化状态，不能把任意自身 Buff 猜成强化条。

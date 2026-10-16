@@ -478,6 +478,9 @@ export function compileScenarioRuntimeAssembly(
           ...(program.nativeSkillType === undefined
             ? {}
             : { nativeSkillType: program.nativeSkillType }),
+          ...(program.normalSkillSubType === undefined
+            ? {}
+            : { normalSkillSubType: program.normalSkillSubType }),
           ...(program.cooldownFrames === undefined
             ? {}
             : { cooldownFrames: program.cooldownFrames }),
@@ -485,6 +488,7 @@ export function compileScenarioRuntimeAssembly(
         })),
         element: build.operator.element,
         characterTypeId: build.operator.characterTypeId,
+        squadSlotIndex: scenario.tracks.findIndex(track => track?.id === operator.operatorId),
         operatorRole: build.operator.role,
         ...(Object.keys(equipmentBuffDefinitions).length === 0
           ? {}
@@ -537,6 +541,12 @@ export function compileScenarioRuntimeAssembly(
             }))
           : [],
     },
+    ...(scenario.battle.comboSkillPriority?.enabled ? {
+      comboSkillOrder: [...new Set([
+        ...scenario.battle.comboSkillPriority.operatorOrder.filter(id => operators.some(operator => operator.operatorId === id)),
+        ...operators.map(operator => operator.operatorId),
+      ])],
+    } : {}),
     ...(options.liveInputInitialFrame === undefined ? {} : { deferInitialInput: true }),
     resources,
     enemy: applyMechanicsToScenarioEnemy(compileScenarioEnemy(scenario.enemy), mechanics),

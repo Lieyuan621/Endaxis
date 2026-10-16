@@ -588,6 +588,9 @@ export function attachBuffLifecycleSequences<Key extends string>(
       ...(buff.skillCastInfo === null ? {} : { skillCastInfo: buff.skillCastInfo }),
       buffSourceId: buff.sourceId,
       buffOwnerId: buff.owner.ownerId,
+      ...(buff.runtimeState.partTransferInfo === null
+        ? {}
+        : { partTransferInfo: buff.runtimeState.partTransferInfo }),
       executingBuff: {
         buffId: buff.definition.id,
         buffOwnerId: buff.owner.ownerId,
@@ -643,6 +646,13 @@ export function attachBuffLifecycleSequences<Key extends string>(
     runtime = new CombatActionSequenceRuntime(
       {
         comboWindows: defaultOperations.comboWindows,
+        frame: defaultOperations.frame,
+        ownerTagQuery: callback => {
+          const operations = operationsFor(callback);
+          if (!operations.ownerTagQuery)
+            throw new Error('Buff owner tag queries are not configured');
+          return operations.ownerTagQuery(callback);
+        },
         aura: {
           targets: (parameters, callback) => {
             const aura = operationsFor(callback).aura;
@@ -744,6 +754,7 @@ export function attachBuffLifecycleSequences<Key extends string>(
     | 'disable'
     | 'finish'
     | 'dispelled'
+    | 'release'
     | 'beforeEnhance'
     | 'enhanceChanged'
     | 'afterEnhance';
@@ -920,6 +931,7 @@ export function attachBuffLifecycleSequences<Key extends string>(
       : {
           dispelled: (buff, sourceId) => execute('dispelled', buff, sourceId),
         }),
+    ...(sequences.release === undefined ? {} : { beforeRelease: buff => execute('release', buff) }),
     ...(sequences.beforeEnhance === undefined
       ? {}
       : {

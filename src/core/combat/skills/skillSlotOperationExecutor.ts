@@ -17,6 +17,7 @@ export interface SkillSlotOperationExecutorOptions {
     readonly skillSlotKey: string;
     readonly targetSkillKey: string;
     readonly revertedSkillKey?: string;
+    readonly durationSeconds?: number;
     readonly inheritOriginSkillCooldownProgress: boolean;
   }) => number;
   readonly finishSkillSlotReplacement?: (skillSlotKey: string, registrationId: number) => void;
@@ -82,11 +83,22 @@ export class SkillSlotOperationExecutor implements CombatOperationExecutor {
       const state = context?.actionRegistrationState;
       if (replace === undefined || finish === undefined || state === undefined)
         throw new Error('skill-slot replacement requires action state and lifecycle ports');
+      const duration = step.parameters.durationSeconds;
+      if (
+        step.parameters.lifetime === 'specificTime' &&
+        (duration === undefined || context === undefined)
+      )
+        throw new Error('timed skill-slot replacement requires duration and action context');
       for (const id of state.registrationIds) finish(step.parameters.skillSlotKey, id);
       state.registrationIds = [
         replace({
           skillSlotKey: step.parameters.skillSlotKey,
           targetSkillKey: step.parameters.targetSkillKey,
+          ...(step.parameters.lifetime === 'specificTime' &&
+          duration !== undefined &&
+          context !== undefined
+            ? { durationSeconds: resolveActionValueOperand(duration, context.blackboard) }
+            : {}),
           ...(step.parameters.revertedSkillKey === undefined
             ? {}
             : { revertedSkillKey: step.parameters.revertedSkillKey }),

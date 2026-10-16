@@ -3738,7 +3738,6 @@ export const zhuangFangyiChr_0030_zhuangfy_attack1_ult: SkillDefinition = {
   key: 'chr_0030_zhuangfy_attack1_ult',
   element: 'electric',
   blackboard: {
-    atb: 0,
     atk_scale: [0.67, 0.73, 0.8, 0.86, 0.93, 1, 1.06, 1.13, 1.2, 1.28, 1.38, 1.5],
     target_in_range: 0,
   },
@@ -5863,7 +5862,7 @@ const zhuangFangyiBuff13: SkillBuffDefinition = {
 const zhuangFangyiBuff14ActionGraph = {
   main: {
     nodes: {
-      applyBuff_10: {
+      applyBuff_12: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -5876,7 +5875,36 @@ const zhuangFangyiBuff14ActionGraph = {
         },
         next: null,
       },
-      restrictUltimateEnergyRecovery_1: {
+      finishBuffsById_1: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_chr_0030_zhuangfy_ult_base'],
+            reason: 'other',
+          },
+        },
+        next: null,
+      },
+      listenForTagQuery_2: {
+        action: {
+          kind: 'listenForTagQuery',
+          parameters: {
+            tags: [
+              '3C/Henshin/Interrupt',
+              'GameplayState/Interacting/OnVerticalRope',
+              'GameplayState/Interacting/TyphoeaArchery',
+              'GameplayState/PaintingScroll',
+            ],
+            tagQueryType: 'hasAny',
+            executeOnMatch: true,
+            sequence: { $sequence: 'finishBuffsById_1' },
+          },
+        },
+        next: null,
+      },
+      restrictUltimateEnergyRecovery_3: {
         action: {
           kind: 'restrictUltimateEnergyRecovery',
           parameters: {
@@ -5887,25 +5915,25 @@ const zhuangFangyiBuff14ActionGraph = {
         },
         next: null,
       },
-      overrideMultiDashLimit_2: {
+      overrideMultiDashLimit_4: {
         action: {
           kind: 'overrideMultiDashLimit',
           parameters: { dashCount: { kind: 'constant', value: -1 } },
         },
-        next: 'restrictUltimateEnergyRecovery_1',
+        next: 'restrictUltimateEnergyRecovery_3',
       },
-      changePlayerActionMode_3: {
+      changePlayerActionMode_5: {
         action: {
           kind: 'changePlayerActionMode',
           parameters: { modeId: 'UltMode', lifetime: 'finishByAction' },
         },
-        next: 'overrideMultiDashLimit_2',
+        next: 'overrideMultiDashLimit_4',
       },
-      interruptCurrentSkill_7: {
+      interruptCurrentSkill_9: {
         action: { kind: 'interruptCurrentSkill', parameters: { targets: { kind: 'owner' } } },
         next: null,
       },
-      castSkillDuringAction_5: {
+      castSkillDuringAction_7: {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
@@ -5917,7 +5945,7 @@ const zhuangFangyiBuff14ActionGraph = {
         },
         next: null,
       },
-      changeNativeSkillType_6: {
+      changeNativeSkillType_8: {
         action: {
           kind: 'changeNativeSkillType',
           parameters: {
@@ -5925,9 +5953,9 @@ const zhuangFangyiBuff14ActionGraph = {
             nativeSkillType: 'attachSkill',
           },
         },
-        next: 'castSkillDuringAction_5',
+        next: 'castSkillDuringAction_7',
       },
-      adjustSkillCooldown_8: {
+      adjustSkillCooldown_10: {
         action: {
           kind: 'adjustSkillCooldown',
           parameters: {
@@ -5940,15 +5968,15 @@ const zhuangFangyiBuff14ActionGraph = {
         },
         next: null,
       },
-      ifElse_9: {
+      ifElse_11: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_1' },
-          whenTrue: { $sequence: 'changeNativeSkillType_6' },
-          whenFalse: { $sequence: 'interruptCurrentSkill_7' },
+          whenTrue: { $sequence: 'changeNativeSkillType_8' },
+          whenFalse: { $sequence: 'interruptCurrentSkill_9' },
         },
-        next: 'adjustSkillCooldown_8',
+        next: 'adjustSkillCooldown_10',
       },
     },
     dataNodes: {
@@ -5988,9 +6016,9 @@ const zhuangFangyiBuff14: SkillBuffDefinition = {
     },
   ],
   lifecycleSequences: {
-    start: [{ $sequence: 'applyBuff_10' }],
-    enable: [{ $sequence: 'changePlayerActionMode_3' }],
-    finish: [{ $sequence: 'ifElse_9' }],
+    start: [{ $sequence: 'applyBuff_12' }],
+    enable: [{ $sequence: 'listenForTagQuery_2' }, { $sequence: 'changePlayerActionMode_5' }],
+    finish: [{ $sequence: 'ifElse_11' }],
   },
   skillSlotReplacements: [
     {
@@ -6293,6 +6321,7 @@ export const zhuangFangyi: OperatorDefinition = {
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0030_zhuangfy_attack2: {
+      faction: 'good',
       bornTags: ['SelectCategory/Unmarkable', 'Immune/Damage'],
       lifetime: { kind: 'limited', durationSeconds: 1 },
       maxStackingCount: 1,
@@ -6423,6 +6452,7 @@ export const zhuangFangyi: OperatorDefinition = {
       },
     },
     abilityentity_chr_0030_zhuangfy_attack5: {
+      faction: 'good',
       bornTags: ['SelectCategory/Unmarkable', 'Immune/Damage'],
       lifetime: { kind: 'limited', durationSeconds: 1 },
       maxStackingCount: 1,
@@ -6584,6 +6614,7 @@ export const zhuangFangyi: OperatorDefinition = {
       },
     },
     abilityentity_chr_0030_zhuangfy_attack_ult: {
+      faction: 'good',
       bornTags: ['SelectCategory/Unmarkable', 'Immune/Damage'],
       blackboard: { EntityBB_hitedMark: '#' },
       lifetime: { kind: 'limited', durationSeconds: 1.5 },
@@ -6911,6 +6942,7 @@ export const zhuangFangyi: OperatorDefinition = {
       },
     },
     abilityentity_chr_0030_zhuangfy_attack3_ult: {
+      faction: 'good',
       bornTags: ['SelectCategory/Unmarkable', 'Immune/Damage'],
       lifetime: { kind: 'limited', durationSeconds: 2 },
       childSkill: {
@@ -7007,6 +7039,7 @@ export const zhuangFangyi: OperatorDefinition = {
       },
     },
     abilityentity_chr_0030_zhuangfy_normal_skill_fake_target: {
+      faction: 'good',
       bornTags: [
         'SelectCategory/Unmarkable',
         'Immune/Damage',
@@ -7016,6 +7049,7 @@ export const zhuangFangyi: OperatorDefinition = {
       maxStackingCount: 10,
     },
     abilityentity_chr_0030_zhuangfy_normal_skill_sword: {
+      faction: 'good',
       bornTags: [
         'SelectCategory/Unmarkable',
         'Immune/Damage',
@@ -7081,6 +7115,7 @@ export const zhuangFangyi: OperatorDefinition = {
       },
     },
     abilityentity_chr_0030_zhuangfy_normal_skill_ult: {
+      faction: 'good',
       bornTags: ['SelectCategory/Unmarkable', 'Immune/Damage'],
       blackboard: { EntityBB_SwordNum: 0 },
       lifetime: { kind: 'limited', durationSeconds: 3 },
@@ -7442,11 +7477,13 @@ export const zhuangFangyi: OperatorDefinition = {
       },
     },
     abilityentity_chr_0030_zhuangfy_ult_mirror: {
+      faction: 'good',
       bornTags: ['SelectCategory/Unmarkable', 'Immune/Damage'],
       lifetime: { kind: 'limited', durationSeconds: 3 },
       maxStackingCount: 1,
     },
     abilityentity_chr_0030_zhuangfy_ult: {
+      faction: 'good',
       bornTags: ['SelectCategory/Unmarkable', 'Immune/Damage'],
       lifetime: { kind: 'limited', durationSeconds: 3 },
       maxStackingCount: 1,

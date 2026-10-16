@@ -4657,7 +4657,18 @@ export const yvonneChr_0017_yvonne_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      spawnAbilityEntity_8: {
+      restrictUltimateEnergyRecovery_8: {
+        action: {
+          kind: 'restrictUltimateEnergyRecovery',
+          parameters: {
+            target: 'caster',
+            allowedRecoveryTags: ['Skill/Character/chr_0017_yvonne/UltimateEndUsp'],
+            clearUltimateEnergyOnEnd: false,
+          },
+        },
+        next: null,
+      },
+      spawnAbilityEntity_9: {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
@@ -4670,7 +4681,7 @@ export const yvonneChr_0017_yvonne_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      spawnAbilityEntity_9: {
+      spawnAbilityEntity_10: {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
@@ -4681,9 +4692,9 @@ export const yvonneChr_0017_yvonne_ultimate_skillActionGraph = {
             dieWhenSourceDies: false,
           },
         },
-        next: 'spawnAbilityEntity_8',
+        next: 'spawnAbilityEntity_9',
       },
-      spawnAbilityEntity_10: {
+      spawnAbilityEntity_11: {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
@@ -4694,9 +4705,9 @@ export const yvonneChr_0017_yvonne_ultimate_skillActionGraph = {
             dieWhenSourceDies: false,
           },
         },
-        next: 'spawnAbilityEntity_9',
+        next: 'spawnAbilityEntity_10',
       },
-      applyBuff_11: {
+      applyBuff_12: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -4709,8 +4720,8 @@ export const yvonneChr_0017_yvonne_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      hideUi_12: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      startUltimateTimeDilation_13: {
+      hideUi_13: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      startUltimateTimeDilation_14: {
         action: {
           kind: 'startUltimateTimeDilation',
           parameters: {
@@ -4763,10 +4774,11 @@ export const yvonneChr_0017_yvonne_ultimate_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_2' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_3' } },
     { startFrame: 61, endFrame: 80, sequence: { $sequence: 'ifElse_opt1' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'spawnAbilityEntity_10' } },
-    { startFrame: 0, endFrame: 64, sequence: { $sequence: 'applyBuff_11' } },
-    { startFrame: 0, endFrame: 61, sequence: { $sequence: 'hideUi_12' } },
-    { startFrame: 0, endFrame: 61, sequence: { $sequence: 'startUltimateTimeDilation_13' } },
+    { startFrame: 0, endFrame: 61, sequence: { $sequence: 'restrictUltimateEnergyRecovery_8' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'spawnAbilityEntity_11' } },
+    { startFrame: 0, endFrame: 64, sequence: { $sequence: 'applyBuff_12' } },
+    { startFrame: 0, endFrame: 61, sequence: { $sequence: 'hideUi_13' } },
+    { startFrame: 0, endFrame: 61, sequence: { $sequence: 'startUltimateTimeDilation_14' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 300,
@@ -6149,7 +6161,6 @@ const yvonneBuff5ActionGraph = {
             'GameplayState/Interacting/Bomb/Create',
             'Status/InCommonInteractionCanMove',
             'Status/Silence',
-            'Status/DisableNormalSkill',
           ],
         },
       },
@@ -7381,18 +7392,6 @@ export const yvonne: OperatorDefinition = {
       ],
       commandMappings: { basicAttack: { skillId: 'chr_0017_yvonne_ult_attack1_1' } },
     },
-    {
-      modeId: 'ult_end',
-      modeLayer: 'default',
-      defaultEnabled: false,
-      commandMappings: { basicAttack: { skillId: 'chr_0017_yvonne_ult_attack3_2' } },
-    },
-    {
-      modeId: 'talent_1',
-      modeLayer: 'default',
-      defaultEnabled: false,
-      commandMappings: { basicAttack: { skillId: 'chr_0017_yvonne_attack5' } },
-    },
   ],
   comboSkillConditions: [yvonneComboCondition1],
   comboSkillPriority: 'default',
@@ -7554,6 +7553,7 @@ export const yvonne: OperatorDefinition = {
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0017_yvonne_combo_skill: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',
@@ -7666,6 +7666,7 @@ export const yvonne: OperatorDefinition = {
       },
     },
     abilityentity_chr_0017_yvonne_ultimate_skill: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',
@@ -7691,6 +7692,7 @@ export const yvonne: OperatorDefinition = {
       },
     },
     abilityentity_chr_0017_yvonne_ultimate_skill2: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',
@@ -7716,6 +7718,7 @@ export const yvonne: OperatorDefinition = {
       },
     },
     abilityentity_chr_0017_yvonne_ultimate_skill3: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',

@@ -20,7 +20,8 @@ const setup = () => {
 
 describe('能力实体直接来源读取', () => {
   it('直接读取原始目录，不需要旧生成文件补缺', () => {
-    const { directory } = setup();
+    const { directory, file } = setup();
+    fs.writeFileSync(file + '.provenance.json', JSON.stringify({ source: 'vfs' }));
     expect(readAbilityEntityTemplates(directory).templates).toHaveLength(1);
   });
   it('原始目录保留严格字段/文件身份校验，不剥离未知字段伪装成旧容器', () => {

@@ -77,6 +77,7 @@ export function requireString(
 }
 
 export const NATIVE_SKILL_TYPES_SET = new Set<string>(NATIVE_SKILL_TYPES);
+export const NORMAL_SKILL_SUB_TYPES_SET = new Set<string>(['normal', 'additionalNormalSkill']);
 export const COMBAT_RESOURCES_SET = new Set<string>(COMBAT_RESOURCES);
 
 export function requireFiniteNumber(

@@ -43,10 +43,10 @@ export function parseScalarSource(
   const rawValue = requireNumber(source.value, `${path}.value`);
   const useBlackboardKey = requireBoolean(source.useBlackboardKey, `${path}.useBlackboardKey`);
   const key = source.blackboardKey;
-  if (typeof key !== 'string') {
+  if (typeof key !== 'string' && !(key === null && !useBlackboardKey)) {
     throw new Error(`${path}.blackboardKey: expected string`);
   }
-  if (useBlackboardKey && key.length === 0) {
+  if (useBlackboardKey && (key === null || key.length === 0)) {
     throw new Error(`${path}: active scalar blackboard reference has no key`);
   }
 
@@ -60,18 +60,23 @@ export function parseScalarSource(
 }
 
 /** 读取与 BlackboardDouble 同形、但直接值为字符串的原生包装。 */
-export function parseStringScalarSource(value: unknown, path: string): StringScalarSource {
+export function parseStringScalarSource(
+  value: unknown,
+  path: string,
+  active = true,
+): StringScalarSource {
   const source = requireRecord(value, path);
-  const rawValue = source.value;
+  const useBlackboardKey = requireBoolean(source.useBlackboardKey, `${path}.useBlackboardKey`);
+  // 仅当前开关不会读取的直接值允许 null；实际字符串赋值仍不推断 null 的含义。
+  const rawValue = (!active || useBlackboardKey) && source.value === null ? '' : source.value;
   if (typeof rawValue !== 'string') {
     throw new Error(`${path}.value: expected string`);
   }
-  const useBlackboardKey = requireBoolean(source.useBlackboardKey, `${path}.useBlackboardKey`);
   const key = source.blackboardKey;
-  if (typeof key !== 'string') {
+  if (typeof key !== 'string' && !(key === null && !useBlackboardKey)) {
     throw new Error(`${path}.blackboardKey: expected string`);
   }
-  if (useBlackboardKey && key.length === 0) {
+  if (useBlackboardKey && (key === null || key.length === 0)) {
     throw new Error(`${path}: active string blackboard reference has no key`);
   }
   return { value: rawValue, blackboardKey: useBlackboardKey ? key : null };
@@ -82,8 +87,11 @@ export function parseIntegerScalarSource(value: unknown, path: string): IntegerS
   const source = requireRecord(value, path);
   requireExactFields(source, new Set(['useBlackboardKey', 'value', 'blackboardKey']), path);
   const useBlackboardKey = requireBoolean(source.useBlackboardKey, `${path}.useBlackboardKey`);
-  const blackboardKey = requireString(source.blackboardKey, `${path}.blackboardKey`);
-  if (useBlackboardKey && blackboardKey.length === 0) {
+  const blackboardKey =
+    source.blackboardKey === null && !useBlackboardKey
+      ? null
+      : requireString(source.blackboardKey, `${path}.blackboardKey`);
+  if (useBlackboardKey && (blackboardKey === null || blackboardKey.length === 0)) {
     throw new Error(`${path}: active integer blackboard reference has no key`);
   }
   return {

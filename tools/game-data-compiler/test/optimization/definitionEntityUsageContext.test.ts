@@ -228,7 +228,6 @@ describe('实体用途分阶段收集', () => {
       },
     });
     const result = collector.finish();
-    expect(result.fallbackKeys).toEqual(new Set(['fallback', 'EntityBB_shared']));
     expect(result.externalReads).toHaveLength(1);
     expect(result.externalReads[0]?.key).toBe('local');
   });
@@ -334,7 +333,6 @@ describe('实体用途分阶段收集', () => {
     collector.addBuffDefinitions(source.commonBuffDefinitions);
     const result = collector.finish();
     expect(result).toEqual(collectGraphSharedEntityValueUsage(source));
-    expect(result.fallbackKeys).toEqual(new Set(['commonBuff', 'mechanicBuff']));
     expect(new Set(result.externalReads.map(read => read.key))).toEqual(
       new Set(['operator', 'commonEntity', 'weapon', 'gearSet', 'mechanicSequence']),
     );
@@ -369,7 +367,6 @@ describe('实体用途分阶段收集', () => {
       ]),
     );
     const result = second.finish();
-    expect(result.fallbackKeys.size).toBe(0);
     expect(result.externalReads).toEqual([
       {
         kind: 'buff',
@@ -387,7 +384,7 @@ describe('实体用途分阶段收集', () => {
     ]);
   });
 
-  it('后加入来源或摘要中的未知访问仍阻止裁剪，不能被前一阶段的已知摘要掩盖', () => {
+  it('收集摘要保留未知访问诊断；实际实体接收方缺失时仍保守保留', () => {
     // 模拟外部反序列化后尚未登记的新动作，走真实用途分析的保守分支。
     const unknown: GraphSequenceSource = program([
       { kind: 'unregisteredAction', parameters: {} } as unknown as ActionGraphStep,
@@ -661,10 +658,6 @@ describe('跨技能黑板用途', () => {
         },
         shared(),
       ),
-      createGraphEntityUsageContext(
-        { loop: { lifetime: { kind: 'infinite' } } },
-        { ...shared(), unknownAccess: true },
-      ),
     ]) {
       const value = skill([callback(program([spawn('loop')]))], { unused: 99 });
       expect(pruneUnusedGraphSkillValues(value, new Set(), context).report.retainedReason).toBe(
@@ -721,7 +714,7 @@ describe('跨技能黑板用途', () => {
       new Set(),
       createGraphEntityUsageContext({}, collected),
     ).skill;
-    expect(pruned.blackboard).toEqual({ slot: 2 });
+    expect(pruned.blackboard).toEqual({ slot: 2, unused: 99 });
     const run = (source: SkillDefinition) => {
       const entities = new LogicalAbilityEntityRuntime({});
       const executor = new AbilityEntityOperationExecutor(
@@ -834,7 +827,6 @@ describe('跨技能黑板用途', () => {
     );
     expect(collected.unknownAccess).toBe(false);
     expect(collected.externalReads.map(read => read.key)).toEqual(['remote']);
-    expect(collected.fallbackKeys).toEqual(new Set(['mechanic', 'callbackRead']));
     const value = skill([spawn('empty', { lifetime: { kind: 'infinite' } })], {
       remote: 0,
       mechanic: 1,
@@ -845,7 +837,7 @@ describe('跨技能黑板用途', () => {
     expect(
       pruneUnusedGraphSkillValues(value, new Set(), createGraphEntityUsageContext({}, collected))
         .report.removedInitialKeys,
-    ).toEqual(['gearValue', 'unused']);
+    ).toEqual([]);
 
     const entityBoard = new ActionBlackboard({ remote: 7 });
     const buffBoard = new ActionBlackboard({ own: 1 }, entityBoard);

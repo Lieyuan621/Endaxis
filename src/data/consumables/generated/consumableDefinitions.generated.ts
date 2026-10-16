@@ -316,6 +316,214 @@ export const consumableDefinitions = Object.freeze([
     ],
   },
   {
+    id: 'item_inkkirin_1_hscrane_1_1',
+    icon: 'endaxis:consumables/item_inkkirin_1_hscrane_1',
+    rarity: 4,
+    kind: 'operatorBuff',
+    durationSeconds: 300,
+    exclusiveGroup: 'operatorConsumableBuff',
+    applications: [
+      {
+        buffId: 'buff_common_atk_buff_potion_1',
+        blackboardValues: {
+          value: 0.118163265,
+          duration: 300,
+        },
+      },
+      {
+        buffId: 'buff_common_ctr_buff_potion_1',
+        blackboardValues: {
+          value: 0.059081633,
+          duration: 300,
+        },
+      },
+      {
+        buffId: 'buff_common_dmg_up_potion_1',
+        blackboardValues: {
+          value: 0.118163265,
+          duration: 300,
+        },
+      },
+    ],
+  },
+  {
+    id: 'item_inn_drink_1',
+    icon: 'endaxis:consumables/item_inn_drink_1',
+    rarity: 2,
+    kind: 'operatorBuff',
+    durationSeconds: 300,
+    exclusiveGroup: 'operatorConsumableBuff',
+    applications: [
+      {
+        buffId: 'buff_common_dmg_up_potion_1',
+        blackboardValues: {
+          value: 0.12918368,
+          duration: 300,
+        },
+      },
+    ],
+  },
+  {
+    id: 'item_inn_drink_10',
+    icon: 'endaxis:consumables/item_inn_drink_10',
+    rarity: 5,
+    kind: 'operatorBuff',
+    durationSeconds: 300,
+    exclusiveGroup: 'operatorConsumableBuff',
+    applications: [
+      {
+        buffId: 'buff_common_atk_buff_potion_1',
+        blackboardValues: {
+          value: 0.2934694,
+          duration: 300,
+        },
+      },
+    ],
+  },
+  {
+    id: 'item_inn_drink_2',
+    icon: 'endaxis:consumables/item_inn_drink_2',
+    rarity: 2,
+    kind: 'operatorBuff',
+    durationSeconds: 300,
+    exclusiveGroup: 'operatorConsumableBuff',
+    applications: [
+      {
+        buffId: 'buff_common_def_buff_potion_1',
+        blackboardValues: {
+          value: 0.19281146,
+          duration: 300,
+        },
+      },
+    ],
+  },
+  {
+    id: 'item_inn_drink_3',
+    icon: 'endaxis:consumables/item_inn_drink_3',
+    rarity: 3,
+    kind: 'operatorBuff',
+    durationSeconds: 300,
+    exclusiveGroup: 'operatorConsumableBuff',
+    applications: [
+      {
+        buffId: 'buff_common_ctr_buff_potion_1',
+        blackboardValues: {
+          value: 0.08806122,
+          duration: 300,
+        },
+      },
+    ],
+  },
+  {
+    id: 'item_inn_drink_4',
+    icon: 'endaxis:consumables/item_inn_drink_4',
+    rarity: 3,
+    kind: 'operatorBuff',
+    durationSeconds: 300,
+    exclusiveGroup: 'operatorConsumableBuff',
+    applications: [
+      {
+        buffId: 'buff_common_usprt_buff_potion_1',
+        blackboardValues: {
+          value: 0.20966958,
+          duration: 300,
+        },
+      },
+    ],
+  },
+  {
+    id: 'item_inn_drink_5',
+    icon: 'endaxis:consumables/item_inn_drink_5',
+    rarity: 4,
+    kind: 'operatorBuff',
+    durationSeconds: 300,
+    exclusiveGroup: 'operatorConsumableBuff',
+    applications: [
+      {
+        buffId: 'buff_common_mainattri_up_potion_1',
+        blackboardValues: {
+          value: 27,
+          duration: 300,
+        },
+      },
+    ],
+  },
+  {
+    id: 'item_inn_drink_6',
+    icon: 'endaxis:consumables/item_inn_drink_6',
+    rarity: 4,
+    kind: 'operatorBuff',
+    durationSeconds: 300,
+    exclusiveGroup: 'operatorConsumableBuff',
+    applications: [
+      {
+        buffId: 'buff_common_ctr_buff_potion_1',
+        blackboardValues: {
+          value: 0.13829796,
+          duration: 300,
+        },
+      },
+      {
+        buffId: 'buff_common_def_buff_potion_3',
+        blackboardValues: {
+          value: -0.026767347,
+          duration: 300,
+        },
+      },
+    ],
+  },
+  {
+    id: 'item_inn_drink_7',
+    icon: 'endaxis:consumables/item_inn_drink_7',
+    rarity: 4,
+    kind: 'operatorBuff',
+    durationSeconds: 300,
+    exclusiveGroup: 'operatorConsumableBuff',
+    applications: [
+      {
+        buffId: 'buff_common_cdr_buff_potion_1',
+        blackboardValues: {
+          value: 0.8205549,
+          duration: 300,
+        },
+      },
+    ],
+  },
+  {
+    id: 'item_inn_drink_8',
+    icon: 'endaxis:consumables/item_inn_drink_8',
+    rarity: 5,
+    kind: 'operatorBuff',
+    durationSeconds: 300,
+    exclusiveGroup: 'operatorConsumableBuff',
+    applications: [
+      {
+        buffId: 'buff_common_phydmg_up_potion_1',
+        blackboardValues: {
+          value: 0.3260771,
+          duration: 300,
+        },
+      },
+    ],
+  },
+  {
+    id: 'item_inn_drink_9',
+    icon: 'endaxis:consumables/item_inn_drink_9',
+    rarity: 5,
+    kind: 'operatorBuff',
+    durationSeconds: 300,
+    exclusiveGroup: 'operatorConsumableBuff',
+    applications: [
+      {
+        buffId: 'buff_common_resis_up_potion_1',
+        blackboardValues: {
+          value: 0.77311456,
+          duration: 300,
+        },
+      },
+    ],
+  },
+  {
     id: 'item_jzmonk_1_hsmob_1_1',
     icon: 'endaxis:consumables/item_jzmonk_1_hsmob_1_1',
     rarity: 4,

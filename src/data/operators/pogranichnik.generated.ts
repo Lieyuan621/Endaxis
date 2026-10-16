@@ -1524,7 +1524,7 @@ export const pogranichnikChr_0029_pograni_combo_skillActionGraph = {
         action: {
           kind: 'finishBuffsById',
           parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'source' },
             finishSource: { kind: 'source' },
             buffIds: [
               'buff_chr_0029_pograni_combo_skill_count1',
@@ -2389,14 +2389,18 @@ export const pogranichnikChr_0029_pograni_ultimate_skill: SkillDefinition = {
   key: 'chr_0029_pograni_ultimate_skill',
   element: 'physical',
   blackboard: {
+    angle: 120,
     atb_final: [30, 30, 30, 30, 30, 30, 30, 30, 30, 40, 40, 40],
     atb_trigger: [7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 10, 10, 10],
     atk_scale_final: [2, 2.2, 2.4, 2.6, 2.8, 3, 3.2, 3.4, 3.6, 3.85, 4.15, 4.5],
     atk_scale_rush: [1.33, 1.47, 1.6, 1.73, 1.86, 2, 2.13, 2.26, 2.4, 2.56, 2.76, 3],
     atk_scale_trigger: [0.45, 0.49, 0.53, 0.58, 0.62, 0.67, 0.71, 0.76, 0.8, 0.86, 0.92, 1],
+    center_radius: 6,
     duration: 30,
+    height: 4,
     poise_final: 15,
     poise_rush: 10,
+    radius: 5,
   },
   timelineBlockFrames: 91,
   naturalDurationFrames: 210,
@@ -3622,6 +3626,7 @@ const pogranichnikBuff9: SkillBuffDefinition = {
     max_stack_team_temp: 0,
     physpell_up_temp: 0,
     poise_final: 0,
+    radius: 5,
   },
   attributeModifiers: [],
   abilityEventResponses: [
@@ -3915,6 +3920,7 @@ export const pogranichnik: OperatorDefinition = {
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0029_pograni_ultimate_skill: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',
@@ -4105,7 +4111,7 @@ export const pogranichnik: OperatorDefinition = {
                 interruptCurrentSkill_13: {
                   action: {
                     kind: 'interruptCurrentSkill',
-                    parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+                    parameters: { targets: { kind: 'inputTarget' } },
                   },
                   next: null,
                 },

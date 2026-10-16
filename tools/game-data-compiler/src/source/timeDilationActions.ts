@@ -149,7 +149,10 @@ export function parseTimeDilationActionSource(
     priorityTagId: parseTagId(action.timeDilationPriority, `${path}.timeDilationPriority`),
     duration: parseScalarSource(action.duration, `${path}.duration`, inheritedBlackboard),
     useCurveKey: requireBoolean(action.useCurveKey, `${path}.useCurveKey`),
-    curveKey: requireString(action.curveKey, `${path}.curveKey`),
+    curveKey:
+      action.useCurveKey === false && action.curveKey === null
+        ? ''
+        : requireString(action.curveKey, `${path}.curveKey`),
     inlineCurveKeys: parseTimeDilationCurveKeys(action.timeScaleCurve, `${path}.timeScaleCurve`),
     finishByAction: requireBoolean(action.finishByAction, `${path}.finishByAction`),
     ignoreTargets: parseTargets(action.ignoreTargets, `${path}.ignoreTargets`),
@@ -224,7 +227,28 @@ export function parseTimeDilationCurveKeys(
   }
   return serializedKeys.map((raw, index) => {
     const keyPath = `${keyPathPrefix}[${index}]`;
-    const key = requireRecord(raw, keyPath);
+    const serializedKey = requireRecord(raw, keyPath);
+    // AKEDB 的字段序列化保留 Unity Keyframe 的 m_* 名称，旧来源导出的是公开属性名。
+    // 两种完整编码分别校验，混用或额外字段不能在重命名时被丢弃。
+    const nativeFields = [
+      'm_Time',
+      'm_Value',
+      'm_InTangent',
+      'm_OutTangent',
+      'm_WeightedMode',
+      'm_InWeight',
+      'm_OutWeight',
+    ] as const;
+    let key = serializedKey;
+    if ('m_Time' in serializedKey) {
+      requireExactFields(serializedKey, new Set(nativeFields), keyPath);
+      key = Object.fromEntries(
+        nativeFields.map(name => {
+          const property = name.slice(2);
+          return [property[0]!.toLowerCase() + property.slice(1), serializedKey[name]];
+        }),
+      );
+    }
     requireExactFields(
       key,
       new Set([

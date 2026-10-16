@@ -4,7 +4,7 @@ import {
   parseReferenceAwareBuffActionGraphSource,
 } from '../../source/buffActionGraph.ts';
 import { parseBuffRuntimeSource } from '../../source/buffRuntime.ts';
-import { requireArray, requireRecord, requireString } from '../../source/primitives.ts';
+import { requireArray, requireRecord, readOptionalReferenceKey } from '../../source/primitives.ts';
 import { isCombatInvisiblePresentationLeaf } from '../optimization/nativePresentationUsage.ts';
 
 const PRESENTATION_PLUMBING_ACTIONS = new Set([
@@ -149,7 +149,7 @@ function hasNoVisibleIcon(root: Record<string, unknown>, id: string): boolean {
   const icon = requireRecord(root.iconConfig, `BuffData.${id}.iconConfig`);
   return (
     root.hasIcon === false &&
-    requireString(icon._spritePath, `BuffData.${id}.iconConfig._spritePath`) === ''
+    readOptionalReferenceKey(icon._spritePath, `BuffData.${id}.iconConfig._spritePath`) === ''
   );
 }
 

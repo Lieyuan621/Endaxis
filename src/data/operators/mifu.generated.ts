@@ -2067,6 +2067,7 @@ export const mifuChr_0031_mifu_normalskill_2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const mifuChr_0031_mifu_normalskill_2: SkillDefinition = {
+  normalSkillSubType: 'additionalNormalSkill',
   key: 'chr_0031_mifu_normalskill_2',
   element: 'physical',
   blackboard: {
@@ -2618,6 +2619,7 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const mifuChr_0031_mifu_normalskill_3: SkillDefinition = {
+  normalSkillSubType: 'additionalNormalSkill',
   key: 'chr_0031_mifu_normalskill_3',
   element: 'physical',
   blackboard: {

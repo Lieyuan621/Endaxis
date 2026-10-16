@@ -1,8 +1,12 @@
 import type { GameplayTag } from '../../../packages/game-data-contract/src/gameplayTags';
-import type { ActionBlackboardValue } from '../../../packages/game-data-contract/src/primitives';
+import type {
+  ActionBlackboardValue,
+  CombatFaction,
+} from '../../../packages/game-data-contract/src/primitives';
 
 /** 编译后生成步骤携带的自包含蓝图；运行时只依赖子技能身份。 */
 export interface LogicalAbilityEntityDefinition {
+  readonly faction?: CombatFaction;
   readonly bornTags?: readonly GameplayTag[];
   readonly blackboard?: Readonly<Record<string, ActionBlackboardValue>>;
   readonly lifetime:

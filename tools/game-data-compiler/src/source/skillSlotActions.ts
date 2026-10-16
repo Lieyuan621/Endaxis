@@ -79,6 +79,9 @@ export function parseSkillSlotReplacementActionSource(
       action.specificRevertedSkillId,
       `${path}.specificRevertedSkillId`,
     ),
-    revertedSkillId: requireString(action.revertedSkillId, `${path}.revertedSkillId`),
+    revertedSkillId:
+      action.specificRevertedSkillId === false && action.revertedSkillId === null
+        ? ''
+        : requireString(action.revertedSkillId, `${path}.revertedSkillId`),
   };
 }

@@ -104,6 +104,8 @@ export interface BuffApplicationEntry {
 
 /** 一次伤害步骤的完整声明；倍率使用小数，失衡与生命伤害同属该命中。 */
 export interface DealDamageParameters {
+  /** 缺省为转换时已证明的敌人；动态目标显式读取动作输入，不以动作宿主代替。 */
+  target?: 'enemy' | 'actionInputTarget' | Extract<ActionTargetQuery, { kind: 'context' }>;
   /** 本次生命伤害的类型。 */
   damageType: DamageType;
   /** 生成基础伤害所用的公式；标准攻击倍率路径可省略。 */
@@ -118,6 +120,10 @@ export interface DealDamageParameters {
   calculationAttribute?: string;
   /** MultiplyAttributeCalculation 在属性乘算后追加的固定或黑板值。 */
   calculationAddition?: LevelValues | ActionValueOperand;
+  /** DefiniteValueCalculation 的基础数值；启用该计算时必填。 */
+  calculationValue?: LevelValues | ActionValueOperand;
+  /** 定值计算的可选倍率；缺省时不读取倍率。 */
+  calculationValueScale?: LevelValues | ActionValueOperand;
   /** 本次伤害携带的技能和爆发分类标签。 */
   tags: readonly DamageTag[];
   /** DamageUnit.damageTags 携带的原生 GameplayTag；与 damageDecorateMask 分类位分开。 */
@@ -239,6 +245,10 @@ export interface CombatStepParameters {
   copyContextTargets: {
     source: ActionTargetQuery;
     saveToContextKey: string;
+    /** 原生 ReplacePartWithMainBody：逐项替换部位，保留顺序和重复主体。 */
+    replacePartsWithMainBodies?: boolean;
+    /** 原生普通目标排除；仅比较时归一化部位身份，保留未排除项的原始句柄。 */
+    excludeTargets?: ActionTargetQuery;
   };
   /** 查找目标并覆盖目标组；宿主不存在时失败且不改写旧组。 */
   findTargets: {
@@ -339,6 +349,11 @@ export interface CombatStepParameters {
     /** 要选取的数组下标。 */
     index: ActionValueOperand;
   };
+  /** 保存首个来源目标对应的转移部位；没有转移记录时保留原目标。 */
+  saveTransferredSource: {
+    source: ActionTargetQuery;
+    saveToContextKey: string;
+  };
   /**
    * 捕获目标列表后，用同一子序列逐目标即时执行；子序列失败不终止遍历。
    */
@@ -376,9 +391,9 @@ export interface CombatStepParameters {
      * 原生 setAbilityEntitySource 的来源身份。省略表示施术者；投射物/能力实体子技能中的
      * ActionOwner 必须显式保留为当前能力实体，不能在生成期压平成施术者。
      */
-    source?: 'caster' | 'currentAbilityEntity';
+    source?: 'caster' | 'currentAbilityEntity' | ActionTargetQuery;
     /** 传给生成实体及其子技能的输入目标，与出生位置查询分开。 */
-    target?: CombatTarget | 'currentAbilityEntity';
+    target?: CombatTarget | 'currentAbilityEntity' | 'actionInputTarget' | ActionTargetQuery;
     /** 用动作数值覆盖模板持续时间。 */
     overrideDurationSeconds?: ActionValueOperand;
     /** 保存新实体的动作环境键。 */
@@ -417,30 +432,34 @@ export interface CombatStepParameters {
     /** 是否作为额外附着传播到事件上下文。 */
     isExtra: boolean;
     /** 省略时沿用技能的固定敌人；Buff Owner 必须按生命周期身份校验，不能无条件视为敌人。 */
-    target?: 'enemy' | 'buffOwner';
+    target?: 'enemy' | 'buffOwner' | ActionTargetQuery;
+    /** 原生附着来源独立于技能定义宿主；省略时使用定义所属干员。 */
+    source?: ActionTargetQuery;
   };
   /** Buff 触发周期中的原生 TriggerSpellBurstEventAction。 */
   triggerSpellBurst: {
     /** 要触发的原生法术爆发类型。 */
     burstType: 'Fire' | 'Pulse' | 'Cryst' | 'Natural';
   };
-  /** 在施放者 AbilitySystem 上同步发布一个已命名的原生自定义事件。 */
+  /** 在目标 AbilitySystem 上同步发布一个已命名的原生自定义事件。 */
   triggerCustomAbilityEvent: {
     /** 发布的自定义事件名称。 */
     eventName: string;
     /** 随事件发送的浮点参数。 */
     eventParam: number;
-    /** 事件发布到施法者的能力系统。 */
-    target: 'caster';
-    /** 省略沿用旧定义的 caster；能力实体子技能可保留原生 ActionOwner 事件来源身份。 */
-    source?: 'caster' | 'currentAbilityEntity';
+    /** 逐个接收事件的目标；空集合不发布事件。 */
+    target: 'caster' | ActionTargetQuery;
+    /** 事件来源取查询的第一个目标；省略时使用施放者。 */
+    source?: 'caster' | 'currentAbilityEntity' | ActionTargetQuery;
   };
   /** 原生 CastSkill：动作栈返回后覆盖写入 AbilitySystem 的单槽延迟施放请求。 */
   castSkillDuringAction: {
-    /** 原生表内 Skill ID；可以直接给定，也可以从当前动作黑板读取。装配层必须映射到同干员的稳定技能键。 */
+    /** 实际接受延迟施法请求的宿主；省略时沿用定义所属干员。 */
+    caster?: ActionTargetQuery;
+    /** 原生表内 Skill ID；直接给定或读取当前动作黑板，由实际施法宿主解析自己的技能。 */
     skillId: ActionStringOperand;
     /** 延迟请求的目标；actionInputTarget 读取当前动作输入，事件回调中由事件绑定。 */
-    target: 'caster' | 'enemy' | 'actionInputTarget' | 'context';
+    target: 'caster' | 'enemy' | 'actionInputTarget' | 'context' | ActionTargetQuery;
     /** target=context 时读取保存的目标组；当前技能输入支持空组或单个实体。 */
     targetContextKey?: string;
     /** 是否跳过目标技能自己的资源消耗。 */
@@ -516,6 +535,8 @@ export interface CombatStepParameters {
   dealDamage: DealDamageParameters;
   /** 不伴随生命伤害的独立失衡单元；数值仍会经过来源与目标的失衡倍率。 */
   dealStagger: {
+    /** 与生命伤害相同的目标绑定，缺省为已证明的敌人。 */
+    target?: 'enemy' | 'actionInputTarget' | Extract<ActionTargetQuery, { kind: 'context' }>;
     /** 基础失衡伤害。 */
     value: LevelValues | ActionValueOperand;
     /** DefiniteValueCalculation.applyScale 启用时乘用的倍率。 */
@@ -805,8 +826,8 @@ export interface CombatStepParameters {
   finishCurrentBuff: {
     /** 记录到结束事件中的原因。 */
     reason: 'early' | 'absorbed' | 'other';
-    /** 原生 FinishSource；不使用事件来源替代动作来源。 */
-    finishSource: 'actionSource' | 'actionOwner';
+    /** 原生 FinishSource；none 同时清空结束施法信息，不以动作或事件来源补齐。 */
+    finishSource: 'actionSource' | 'actionOwner' | 'none';
   };
   /** 设置当前正在执行事件响应的 Buff 实例是否暂停计时。 */
   setCurrentBuffTimePaused: {
@@ -824,8 +845,8 @@ export interface CombatStepParameters {
   };
   /** 按原生技能筛选立即修改当前冷却；比例基数是配置的基础冷却时长，绝对值单位为秒。 */
   adjustSkillCooldown: {
-    /** 当前只修改施法者技能。 */
-    target: 'caster';
+    /** 施法者或在执行点解析的目标集合。 */
+    target: 'caster' | ActionTargetQuery;
     /** 按技能类型或原生技能 ID 选择技能。 */
     skill:
       | {
@@ -936,8 +957,8 @@ export interface CombatStepParameters {
         curve: TimeScaleCurveDefinition;
         /** 是否随当前动作结束。 */
         finishByAction: boolean;
-        /** 要影响的角色目标。 */
-        targets: readonly TimeDilationEntityTarget[];
+        /** 要影响的实体；每项查询取首个结果，对应原生 HitStop 的攻击者选择。 */
+        targets: readonly (TimeDilationEntityTarget | ActionTargetQuery)[];
         /** 要影响的能力实体。 */
         abilityEntityTargets?: readonly AbilityEntityTargetQuery[];
         /** 是否跳过同槽优先级检查并直接应用。 */
@@ -969,6 +990,17 @@ export interface CombatStepParameters {
     revertOnEnd: boolean;
   };
   /** 修改当前技能实例的动作黑板；不得用于跨技能持久状态。 */
+  /** 原生固定队伍槽位查询；空槽返回失败且保留原目标组。 */
+  findCharacterBySquadSlot: {
+    slotIndex: ActionValueOperand;
+    saveToContextKey: string;
+  };
+  /** 原生元素编号写入黑板：热、电、寒冷、自然、物理依次为 0..4。 */
+  storeCharacterTypeBySquadSlot: {
+    slotIndex: ActionValueOperand;
+    defaultValue: number;
+    outputKey: string;
+  };
   storeCharacterTypeId: {
     /** 读取首个角色目标的原生类型字符串。 */
     target: 'caster' | 'buffOwner' | 'buffSource' | 'currentTarget' | 'enemy';
@@ -992,6 +1024,11 @@ export interface CombatStepParameters {
     /** 保存生命账本实际增加值的动作黑板键。 */
     realHealOutputKey?: string;
   };
+  /** SaveDamageContext：读取当前伤害事件；没有对应上下文时写入零。 */
+  storeEventDamageValue: {
+    value: 'final' | 'real' | 'overflow';
+    outputKey: string;
+  };
   /** 先解析目标；新增值读取147事件，当前值读取目标实时有限护盾。缺目标/事件成功不写。 */
   storeShieldValue: {
     /** 当前只读取动作所有者身上的护盾。 */
@@ -1009,6 +1046,15 @@ export interface CombatStepParameters {
     operation: ActionValueOperation;
     /** 运算输入值。 */
     value: ActionValueOperand;
+  };
+  /** 执行时从左闭右开的整数范围取样并写入动作黑板；端点按原生容差向上取整。 */
+  storeRandomInteger: {
+    /** 保存随机结果的动作黑板键。 */
+    key: string;
+    /** 包含的下界。 */
+    minimum: ActionValueOperand;
+    /** 不包含的上界。 */
+    maximum: ActionValueOperand;
   };
   /** 计算两个动作黑板操作数，并将单精度结果写入当前技能实例。 */
   calculateActionValue: {
@@ -1050,8 +1096,8 @@ export interface CombatStepParameters {
   };
   /** 按原生 StoreEntityProperty 读取当前动作所有者的战斗生命/失衡账本。 */
   storeEntityPropertyValue: {
-    /** 当前只读取动作所有者。 */
-    target: 'actionOwner';
+    /** 读取动作所有者，或查询结果的首个目标；空查询不写入。 */
+    target: 'actionOwner' | ActionTargetQuery;
     /** 要读取的生命或失衡账本字段。 */
     property: 'currentHealth' | 'maxHealth' | 'currentPoise';
     /** 是否先对读取值向下取整。 */
@@ -1197,6 +1243,8 @@ export interface CombatStepParameters {
     onlyHitTargets?: ActionTargetQuery;
     /** 每个目标各发射一枚；count 用于已折算为数量的零空间目标。省略时发射一枚。 */
     targets?: { kind: 'context'; contextKey: string };
+    /** 发射点集合；先遍历发射点，再逐目标发射。省略时使用单个已证明的发射点。 */
+    emitters?: { kind: 'context'; contextKey: string };
     /** 发射时复制动作黑板的 direct 值，供本投射物回调使用。 */
     inheritActionBlackboard: boolean;
     /** 每个投射物独立的实体黑板初值。 */
@@ -1270,7 +1318,9 @@ export interface CombatStepParameters {
     /** 原生 ChangeSkillAction 在切换前把当前形态的归一化冷却进度传给目标形态。 */
     inheritOriginSkillCooldownProgress?: boolean;
     /** 省略时为旧的显式一次换槽；原生 ChangeSkillAction 必须声明句柄寿命。 */
-    lifetime?: 'infinite' | 'finishByAction';
+    lifetime?: 'infinite' | 'finishByAction' | 'specificTime';
+    /** 限时替换在执行时读取，按全局缩放时间计时，不随动作结束撤销。 */
+    durationSeconds?: ActionValueOperand;
     /** 原生指定还原技能；省略时由运行时快照替换前槽位。 */
     revertedSkillKey?: string;
   };
@@ -1315,6 +1365,14 @@ export interface CombatStepParameters {
     /** 当前区间内注册的事件响应。 */
     responses: readonly CombatEventResponseDefinition[];
   };
+  /** 原生 TagQueryListenerAction：监听动作宿主的标签查询结果变化。 */
+  listenForTagQuery: {
+    tags: readonly GameplayTag[];
+    tagQueryType: GameplayTagQueryType;
+    executeOnMatch: boolean;
+    /** 回调沿用注册时的动作输入目标。 */
+    sequence: ActionGraphReference;
+  };
 }
 
 /** `CombatStepParameters` 中全部动作种类，供编译、校验和运行时分派使用。 */
@@ -1326,6 +1384,7 @@ export const COMBAT_STEP_KINDS = [
   'createSpatialPointTargets',
   'findOwnerSpawnedAbilityEntities',
   'pickContextTarget',
+  'saveTransferredSource',
   'forEachContextTarget',
   'setAbilityEntityRemainingDuration',
   'finishOwner',
@@ -1373,12 +1432,16 @@ export const COMBAT_STEP_KINDS = [
   'startUltimateTimeDilation',
   'hideUi',
   'setIgnoreGlobalTimeScale',
+  'findCharacterBySquadSlot',
+  'storeCharacterTypeBySquadSlot',
   'storeCharacterTypeId',
   'storeCurrentTimelineFrame',
   'storeEventSpGainAmount',
   'storeEventHealValues',
+  'storeEventDamageValue',
   'storeShieldValue',
   'modifyActionValue',
+  'storeRandomInteger',
   'calculateActionValue',
   'storeSourceAttributeValue',
   'storeEntityPropertyValue',
@@ -1412,6 +1475,7 @@ export const COMBAT_STEP_KINDS = [
   'setCharacterPassiveUiValue',
   'inheritSkillCastInfoForBasicAttack',
   'listenForCombatEvents',
+  'listenForTagQuery',
 ] as const satisfies readonly (keyof CombatStepParameters)[];
 
 /** 步骤按 kind 区分类型，编译和执行靠它精确分支。 */
@@ -1466,7 +1530,7 @@ type CombatStepNode<K extends CombatStepKind> = {
                     ? {
                         /** 每项都是完整的原生回调技能，不并入发射技能的时间轴。 */
                         callbacks: readonly {
-                          event: 'hit' | 'block' | 'reach' | 'finish';
+                          event: 'launch' | 'hit' | 'block' | 'reach' | 'finish';
                           skill: AbilityEntityChildSkillDefinition;
                         }[];
                       }

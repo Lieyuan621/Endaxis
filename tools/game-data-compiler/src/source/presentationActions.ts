@@ -13,6 +13,7 @@ import {
   requireExactFields,
   requireInteger,
   requireNamedOrInteger,
+  readOptionalReferenceKey,
   requireNativeActionPriority,
   requireNonEmptyString,
   requireNumber,
@@ -99,6 +100,29 @@ export interface HideUiActionSource {
   readonly onlyBlockInput: boolean;
 }
 
+export interface HideHeadBarActionSource {
+  readonly kind: 'hideHeadBar';
+  readonly target: TargetReferenceSource;
+  readonly finishByAction: boolean;
+}
+
+/** HideHPBar 只控制头顶血条，不能当作 HideUI 的输入门禁。 */
+export function parseHideHeadBarActionSource(
+  value: unknown,
+  path: string,
+): HideHeadBarActionSource {
+  const action = requireRecord(value, path);
+  requireExactFields(action, new Set([...ACTION_META_FIELDS, 'target', 'finishByAction']), path);
+  const target = parseTargetReferenceSource(action.target, `${path}.target`);
+  if (!isPlainTargetReference(target, 'Owner'))
+    throw new Error(`${path}.target: head bar projection requires plain Owner`);
+  return {
+    kind: 'hideHeadBar',
+    target,
+    finishByAction: requireBoolean(action.finishByAction, `${path}.finishByAction`),
+  };
+}
+
 export type CameraPresentationActionSource =
   HideUiActionSource | OtherCameraPresentationActionSource;
 
@@ -140,6 +164,7 @@ export interface OtherCameraPresentationActionSource {
     | 'typhoeaHudHint';
   readonly readBlackboardKeys?: readonly string[];
   readonly target?: TargetReferenceSource;
+  readonly attacker?: TargetReferenceSource;
   readonly skillId?: string;
   readonly nativeSkillType?: NativeSkillType;
   readonly value?: ScalarSource;
@@ -316,7 +341,7 @@ export function parseNoopSpecificLayerChangeActionSource(
 
 /**
  * ForceTargetInFightAction 只改变敌方 AI/交战状态。Endaxis 的场景在技能执行前已经绑定战斗，
- * 且唯一木桩没有主动 AI；这里只接纳庄方宜已审计的施法者 Source -> Buff Owner 目标形状。
+ * 且唯一木桩没有主动 AI；仅接纳没有目标组写入、随机选择或后处理的目标读取。
  */
 export function parseForceTargetInFightActionSource(
   value: unknown,
@@ -338,10 +363,27 @@ export function parseForceTargetInFightActionSource(
   );
   const attacker = parseTargetReferenceSource(action.attacker, `${path}.attacker`);
   const target = parseTargetReferenceSource(action.target, `${path}.target`);
-  if (!isPlainTargetReference(attacker, 'Source') || !isPlainTargetReference(target, 'Owner')) {
+  const sourceToOwner =
+    isPlainTargetReference(attacker, 'Source') && isPlainTargetReference(target, 'Owner');
+  const contextToShape =
+    attacker.targetGroupKey.length > 0 &&
+    isPlainTargetReference({ ...attacker, targetGroupKey: '' }, 'Context') &&
+    target.targetSource === 'InstantSearch' &&
+    target.finderType === 'HitBoxFinder' &&
+    target.finderAutoSetTargetFaction === true &&
+    target.finderFactionTarget === 'Anti' &&
+    target.targetGroupKey === '' &&
+    !target.enableAdvancedDirection &&
+    target.validatorTypes.length === 0 &&
+    target.postProcessorTypes.length === 0 &&
+    target.priorityFilters.length === 0 &&
+    target.shuffleTargets.length === 0 &&
+    target.distanceValidators.length === 0 &&
+    target.validatorTagQueries.length === 0;
+  if (!sourceToOwner && !contextToShape) {
     throw new Error(`${path}: unsupported ForceTargetInFight attacker/target projection`);
   }
-  return { kind: 'forceTargetInFightOmitted' };
+  return { kind: 'forceTargetInFightOmitted', attacker, target };
 }
 
 /** 当前模拟不产生外部形态中断或受控标签；严格保留其唯一“结束自身形态 Buff”形状。 */
@@ -1024,11 +1066,12 @@ export function parseWeaponVisibilityActionSource(
     `${path}.vfxOverrideConfig`,
   );
   for (const field of fields) {
-    requireBoolean(
+    const enabled = requireBoolean(
       vfx[`enable${field[0]!.toUpperCase()}${field.slice(1)}`],
       `${path}.vfxOverrideConfig.enable${field[0]!.toUpperCase()}${field.slice(1)}`,
     );
-    requireString(vfx[field], `${path}.vfxOverrideConfig.${field}`);
+    if (enabled || vfx[field] !== null)
+      requireString(vfx[field], `${path}.vfxOverrideConfig.${field}`);
   }
   return { kind: 'weaponVisibility' };
 }
@@ -1069,7 +1112,7 @@ export function parseVoiceTriggerActionSource(
   // 原生把成功播放的句柄写回动作黑板；有写回时不能直接按纯语音省略。
   if (
     '_responseQuestIdKey' in action &&
-    requireString(action._responseQuestIdKey, `${path}._responseQuestIdKey`) !== ''
+    readOptionalReferenceKey(action._responseQuestIdKey, `${path}._responseQuestIdKey`) !== ''
   ) {
     throw new Error(
       `${path}._responseQuestIdKey: voice handle consumers require explicit projection`,
@@ -1641,10 +1684,22 @@ export function parseEffectActionSource(
       'saveEffectIdToBlackboard',
       'forceMainBody',
       'isCreateWithSourceModelActive',
+      ...('alignSpawnPhaseToTimeline' in action ? ['alignSpawnPhaseToTimeline'] : []),
+      ...('spawnPhaseAlignFrame' in action ? ['spawnPhaseAlignFrame'] : []),
     ]),
     path,
   );
   const config = requireRecord(action.effectActionCfg, `${path}.effectActionCfg`);
+  // 1.6.3 新增特效相位对齐；本批资源均未启用，不把开启形态默认为无影响。
+  if ('alignSpawnPhaseToTimeline' in action || 'spawnPhaseAlignFrame' in action) {
+    const align = requireBoolean(
+      action.alignSpawnPhaseToTimeline,
+      `${path}.alignSpawnPhaseToTimeline`,
+    );
+    const frame = requireInteger(action.spawnPhaseAlignFrame, `${path}.spawnPhaseAlignFrame`);
+    if (align || frame !== 0)
+      throw new Error(`${path}: effect spawn phase alignment requires explicit projection`);
+  }
   // 专用 stackEffects 槽与多态动作共用字段校验，区别仅在是否序列化类型标记。
   requireNativeActionPriority(action.priorityLevel, `${path}.priorityLevel`);
   requireNumber(action.priorityOffset, `${path}.priorityOffset`);
@@ -1662,13 +1717,19 @@ export function parseEffectActionSource(
     requireBoolean(action[key], `${path}.${key}`);
   }
   requireRecord(action.guardLodSource, `${path}.guardLodSource`);
-  requireString(action.bigEffectName, `${path}.bigEffectName`);
+  if (action.isShowBigEffect || action.bigEffectName !== null)
+    requireString(action.bigEffectName, `${path}.bigEffectName`);
   // 新版大特效目标仍是公共 TargetSettings，只服务于表现路由，不另造一种目标解析器。
   if ('bigEffectTarget' in action) {
     parseTargetReferenceSource(action.bigEffectTarget, `${path}.bigEffectTarget`);
   }
   // 句柄写回可能有后续消费者，不能按纯表现动作省略。
-  if (requireString(action.saveEffectIdToBlackboard, `${path}.saveEffectIdToBlackboard`) !== '') {
+  if (
+    readOptionalReferenceKey(
+      action.saveEffectIdToBlackboard,
+      `${path}.saveEffectIdToBlackboard`,
+    ) !== ''
+  ) {
     throw new Error(
       `${path}.saveEffectIdToBlackboard: effect handle consumers require explicit projection`,
     );
@@ -1677,7 +1738,7 @@ export function parseEffectActionSource(
     kind: 'effect',
     target: parseTargetReferenceSource(action.targetSettings, `${path}.targetSettings`),
     effectSource: parseTargetReferenceSource(action.effectSource, `${path}.effectSource`),
-    effectName: requireString(config.effectName, `${path}.effectActionCfg.effectName`),
+    effectName: readOptionalReferenceKey(config.effectName, `${path}.effectActionCfg.effectName`),
   };
 }
 
@@ -1800,7 +1861,7 @@ export function parseDebugPrintActionSource(value: unknown, path: string): Debug
       b: requireNumber(color.b, `${path}.color.b`),
       a: requireNumber(color.a, `${path}.color.a`),
     },
-    blackboardKey: requireString(action.bbKey, `${path}.bbKey`),
+    blackboardKey: readOptionalReferenceKey(action.bbKey, `${path}.bbKey`),
     identifier: requireString(action.identifier, `${path}.identifier`),
   };
 }

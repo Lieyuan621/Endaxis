@@ -30,6 +30,7 @@ export interface CombatSharedRuntimeOptions {
   readonly resources: CombatResourceSnapshot;
   readonly resourceResolvers?: CombatResourceRuntimeResolvers;
   readonly operatorOrder: readonly string[];
+  readonly comboSkillOrder?: readonly string[];
   readonly initialFrame?: number;
   readonly receipt?: CombatReceiptCollector;
   readonly timeDilation?: {
@@ -88,7 +89,7 @@ export class CombatSharedRuntime {
       this.clock,
       this.receipt,
       options.comboSkillPendingInterval,
-      options.operatorOrder,
+      options.comboSkillOrder ?? options.operatorOrder,
       state?.comboWindows,
     );
     this.timeDilation =

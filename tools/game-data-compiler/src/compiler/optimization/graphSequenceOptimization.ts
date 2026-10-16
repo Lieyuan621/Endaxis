@@ -498,6 +498,20 @@ function processAction(
       const onExit = processChain(action.onExit, `${path}.onExit`, context);
       return [{ ...action, onEnter, onExit }];
     }
+    case 'listenForTagQuery':
+      return [
+        {
+          ...action,
+          parameters: {
+            ...action.parameters,
+            sequence: processChain(
+              action.parameters.sequence,
+              `${path}.parameters.sequence`,
+              context,
+            ),
+          },
+        },
+      ];
     case 'listenForCombatEvents': {
       const responses = action.parameters.responses.map((response, index) => {
         const sequence = processChain(
@@ -884,6 +898,13 @@ function canDiscardUnexecutedGraphSequence(
 }
 
 /** 删除节点后，从新入口做可达性收集，未被任何入口或引用到达的节点从新 nodes 表剔除。 */
+export function retainActionGraphEntries(
+  graph: ActionGraphDefinition,
+  entries: readonly ActionGraphReference[],
+): ActionGraphDefinition {
+  return { nodes: pruneUnreachable(new Map(Object.entries(graph.nodes)), entries) };
+}
+
 function pruneUnreachable(
   nodes: ReadonlyMap<string, ActionGraphNode>,
   entries: readonly ActionGraphReference[],
@@ -895,7 +916,7 @@ function pruneUnreachable(
       if (reachable.has(cursor)) return;
       reachable.add(cursor);
       const node = nodes.get(cursor);
-      if (!node) return;
+      if (!node) throw new Error(`missing resource node: ${cursor}`);
       visitActionGraphReferences(node.action, visitReference);
       cursor = node.next;
     }
@@ -1011,7 +1032,7 @@ function graphStepUsage(
       };
     case 'conditional':
       return mergeDefinitionValueUsage([
-        analyzeConditionUsage(action.parameters.condition),
+        analyzeConditionUsage(action.parameters.condition, walkReference),
         walkReference(action.whenTrue),
         ...(action.whenFalse === undefined ? [] : [walkReference(action.whenFalse)]),
       ]);
@@ -1027,6 +1048,8 @@ function graphStepUsage(
     case 'repeatEachTick':
     case 'forEachContextTarget':
       return { ...walkReference(action.body), observable: true };
+    case 'listenForTagQuery':
+      return { ...walkReference(action.parameters.sequence), observable: true };
     case 'listenForCombatEvents':
       return {
         ...mergeDefinitionValueUsage(
@@ -1034,7 +1057,7 @@ function graphStepUsage(
             walkReference(response.sequence),
             ...(response.condition === undefined
               ? []
-              : [analyzeConditionUsage(response.condition)]),
+              : [analyzeConditionUsage(response.condition, walkReference)]),
           ]),
         ),
         observable: true,

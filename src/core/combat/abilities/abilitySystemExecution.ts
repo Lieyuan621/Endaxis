@@ -20,6 +20,7 @@ export function replaceAbilitySkillSlot(
     readonly skillSlotKey: string;
     readonly targetSkillKey: string;
     readonly revertedSkillKey?: string;
+    readonly durationSeconds?: number;
     readonly inheritOriginSkillCooldownProgress: boolean;
   },
   host: SkillSlotReplacementHost,
@@ -44,8 +45,29 @@ export function replaceAbilitySkillSlot(
     registrationId,
     revertedSkillKey,
     inheritOriginSkillCooldownProgress: parameters.inheritOriginSkillCooldownProgress,
+    ...(parameters.durationSeconds === undefined
+      ? {}
+      : { remainingSeconds: Math.fround(parameters.durationSeconds) }),
   });
   return registrationId;
+}
+
+/** ComboController 使用 TimeManager delta，非正初始时长不会自行撤销。 */
+export function advanceAbilitySkillSlotReplacements(
+  state: AbilitySystemState,
+  deltaSeconds: number,
+  host: SkillSlotReplacementHost,
+): void {
+  const epsilon = Math.fround(1e-5);
+  for (const [slot, replacement] of [...state.skillSlotReplacements].reverse()) {
+    if (replacement.remainingSeconds === undefined || replacement.remainingSeconds <= epsilon)
+      continue;
+    replacement.remainingSeconds = Math.fround(
+      replacement.remainingSeconds - Math.fround(deltaSeconds),
+    );
+    if (replacement.remainingSeconds <= epsilon)
+      finishAbilitySkillSlotReplacement(state, slot, replacement.registrationId, host);
+  }
 }
 
 /** 先解除登记再还原；已经被替代的编号不能撤销新替换。 */

@@ -15,6 +15,21 @@ const curve = [
 ];
 
 describe('时间膨胀动作来源', () => {
+  it('读取 Keyframe 原生字段名且拒绝两套字段混用', () => {
+    const native = {
+      m_Time: 0,
+      m_Value: 0.1,
+      m_InTangent: 0,
+      m_OutTangent: 1,
+      m_WeightedMode: 0,
+      m_InWeight: 0,
+      m_OutWeight: 1,
+    };
+    expect(parseTimeDilationCurveKeys([native], 'curve')).toEqual(curve);
+    expect(() => parseTimeDilationCurveKeys([{ ...native, time: 1 }], 'curve')).toThrow(
+      'unexpected fields',
+    );
+  });
   it('来源层保留未知整数权重模式，是否可输出由投影层决定', () => {
     expect(
       parseTimeDilationCurveKeys([{ ...curve[0], weightedMode: 4 }], 'curve')[0],

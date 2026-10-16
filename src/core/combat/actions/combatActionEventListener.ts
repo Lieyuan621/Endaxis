@@ -3,7 +3,7 @@ import type { CompiledInputs } from '../../compiler/compiledGraphData';
 import type { CombatEventResponseDefinition } from '../../../../packages/game-data-contract/src/actions';
 import type { ActionGraphReference } from '../../../../packages/game-data-contract/src/actionGraph';
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
-import type { CombatEventListenerState } from '../state/actionState';
+import type { CombatEventListenerState, TagQueryListenerState } from '../state/actionState';
 import type { AbilityEventRegistration } from '../events/abilityEventDispatcher';
 import type {
   CombatEventHandlerRegistration,
@@ -17,6 +17,57 @@ export interface EventResponseExecution<State> {
   readonly runtimeState: State;
   reset(context: CombatExecutionContext): void;
   executeInstant(context: CombatExecutionContext): boolean;
+}
+
+/** 原生 TagQueryListener：首次检查与后续匹配跃迁同步执行同一个子调用。 */
+export class CombatActionTagQueryListener<State> {
+  #unsubscribe: (() => void) | undefined;
+  readonly #execution: EventResponseExecution<State> & {
+    end(context: CombatExecutionContext): void;
+  };
+
+  constructor(
+    readonly runtimeState: TagQueryListenerState<State>,
+    readonly executeOnMatch: boolean,
+    readonly matches: () => boolean,
+    readonly observe: (changed: () => void) => () => void,
+    create: (
+      saved?: State,
+    ) => EventResponseExecution<State> & { end(context: CombatExecutionContext): void },
+  ) {
+    this.#execution = create(runtimeState.body ?? undefined);
+    runtimeState.body = this.#execution.runtimeState;
+    // 恢复只绑定订阅，不查询、不执行、不重置子调用。
+    if (runtimeState.active) this.#bind();
+  }
+
+  #bind(): void {
+    this.#unsubscribe = this.observe(() => {
+      const matched = this.matches();
+      if (matched === this.runtimeState.matched) return;
+      this.runtimeState.matched = matched;
+      if (matched === this.executeOnMatch) this.#execution.executeInstant({});
+    });
+  }
+
+  execute(): void {
+    if (this.runtimeState.active) return;
+    this.runtimeState.active = true;
+    this.#bind();
+    this.runtimeState.matched = this.matches();
+    if (this.runtimeState.matched === this.executeOnMatch) this.#execution.executeInstant({});
+  }
+
+  end(): void {
+    this.#unsubscribe?.();
+    this.#unsubscribe = undefined;
+    this.runtimeState.active = false;
+    this.#execution.end({});
+  }
+
+  reset(): void {
+    this.#execution.reset({});
+  }
 }
 
 export class CombatActionEventListener<State> {

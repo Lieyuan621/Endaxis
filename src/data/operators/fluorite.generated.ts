@@ -2585,6 +2585,7 @@ export const fluorite: OperatorDefinition = {
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0022_bounda_normal_skill: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',
@@ -2865,7 +2866,7 @@ export const fluorite: OperatorDefinition = {
                 type: 'boolean',
                 expression: {
                   kind: 'healthCompare',
-                  target: 'enemy',
+                  target: 'actionInputTarget',
                   valueType: 'ratio',
                   operator: 'lessOrEqual',
                   value: { kind: 'constant', value: 0 },
@@ -2875,7 +2876,7 @@ export const fluorite: OperatorDefinition = {
                 type: 'boolean',
                 expression: {
                   kind: 'buffIdStackCompare',
-                  target: 'enemy',
+                  target: 'actionInputTarget',
                   buffIds: ['buff_chr_0022_bounda_ultimate_skill'],
                   operator: 'greaterOrEqual',
                   value: { kind: 'constant', value: 1 },

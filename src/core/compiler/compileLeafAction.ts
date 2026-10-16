@@ -13,6 +13,7 @@ const LEAF_ACTION_KINDS = [
   'createSpatialPointTargets',
   'findOwnerSpawnedAbilityEntities',
   'pickContextTarget',
+  'saveTransferredSource',
   'setAbilityEntityRemainingDuration',
   'finishOwner',
   'interruptCurrentSkill',
@@ -48,11 +49,15 @@ const LEAF_ACTION_KINDS = [
   'hideUi',
   'setIgnoreGlobalTimeScale',
   'storeCharacterTypeId',
+  'findCharacterBySquadSlot',
+  'storeCharacterTypeBySquadSlot',
   'storeCurrentTimelineFrame',
   'storeEventSpGainAmount',
   'storeEventHealValues',
+  'storeEventDamageValue',
   'storeShieldValue',
   'modifyActionValue',
+  'storeRandomInteger',
   'calculateActionValue',
   'storeSourceAttributeValue',
   'storeEntityPropertyValue',
@@ -110,6 +115,8 @@ export function compileLeafAction(
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'pickContextTarget':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'saveTransferredSource':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'setAbilityEntityRemainingDuration':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'interruptCurrentSkill':
@@ -128,6 +135,7 @@ export function compileLeafAction(
         kind: step.kind,
         parameters: {
           damageType: step.parameters.damageType,
+          ...(step.parameters.target === undefined ? {} : { target: step.parameters.target }),
           ...(step.parameters.calculation === undefined
             ? {}
             : { calculation: step.parameters.calculation }),
@@ -159,6 +167,24 @@ export function compileLeafAction(
                 ),
               }),
           tags: step.parameters.tags,
+          ...(step.parameters.calculationValue === undefined
+            ? {}
+            : {
+                calculationValue: resolveLevelValueOrActionOperand(
+                  step.parameters.calculationValue,
+                  skillLevel,
+                  `${path}.parameters.calculationValue`,
+                ),
+              }),
+          ...(step.parameters.calculationValueScale === undefined
+            ? {}
+            : {
+                calculationValueScale: resolveLevelValueOrActionOperand(
+                  step.parameters.calculationValueScale,
+                  skillLevel,
+                  `${path}.parameters.calculationValueScale`,
+                ),
+              }),
           ...(step.parameters.gameplayTags === undefined
             ? {}
             : { gameplayTags: step.parameters.gameplayTags }),
@@ -197,6 +223,7 @@ export function compileLeafAction(
         ...keyed,
         kind: step.kind,
         parameters: {
+          ...(step.parameters.target === undefined ? {} : { target: step.parameters.target }),
           value: resolveLevelValueOrActionOperand(
             step.parameters.value,
             skillLevel,
@@ -371,15 +398,23 @@ export function compileLeafAction(
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'storeCharacterTypeId':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'findCharacterBySquadSlot':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'storeCharacterTypeBySquadSlot':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'storeCurrentTimelineFrame':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'storeEventSpGainAmount':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'storeEventHealValues':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'storeEventDamageValue':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'storeShieldValue':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'modifyActionValue':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'storeRandomInteger':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'calculateActionValue':
       return { ...keyed, kind: step.kind, parameters: step.parameters };

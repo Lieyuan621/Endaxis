@@ -8,6 +8,10 @@ import type { ActionValueCalculation } from '../state/foundationState';
  * 生命伤害与独立失衡步骤进入玩家主动伤害生命周期的装配点。
  * 调用方必须提供同一命中的属性快照和事件端口；此处顺序具有战斗语义，不能随意拆分或并行。
  */
+import {
+  copyEnemyPartTransferInfo,
+  resolveOperationPartTransferInfo,
+} from '../abilities/runtimeTargetContext';
 import type {
   PoiseModifierSide,
   PoiseProcessTiming,
@@ -25,6 +29,7 @@ import type { SimulationRandomMode } from '../random/simulationRandom';
 import { operationProducer } from '../receipt/combatObjectIdentity';
 import type { CombatReceiptSink } from '../receipt/combatReceipt';
 import type { CombatVitals } from '../resources/combatVitals';
+import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
 import type { CombatClock } from '../time/combatClock';
 import { deriveHitId } from '../timeline/deriveHitId';
@@ -40,7 +45,7 @@ import {
   type DamageScaleZone,
 } from './damageScale';
 import { classifyDamageTags, injectDamageScaleAttributes } from './damageScaleAttributes';
-import { executeHealthDamage } from './healthDamage';
+import { applyHealthDamageWithKillEvents, executeHealthDamage } from './healthDamage';
 import { calculatePlayerActiveDamage } from './playerActiveDamage';
 import {
   resolvePlayerActiveDamageInput,
@@ -104,7 +109,19 @@ export interface PoiseDamageMultipliers {
 }
 
 /** 玩家伤害执行节点需要由战斗装配层提供的全部状态与事件端口。 */
+export interface SharedDamageTransfer {
+  readonly partId: string;
+  readonly mainBodyId: string;
+  readonly damageRatio: number;
+  readonly poiseRatio: number;
+  readonly vitals: CombatVitals;
+  readonly isAlive: () => boolean;
+}
+
 export interface PlayerDamageOperationDependencies {
+  readonly resolveSharedDamageTransfer?: (
+    target: RuntimeTargetRef,
+  ) => SharedDamageTransfer | undefined;
   readonly sourceOperatorId: string;
   /** 独立 Buff 伤害保留创建时的技能身份，不伪造技能运行上下文或写入其黑板。 */
   readonly skillCastInfo?: CombatSkillCastInfo;
@@ -216,7 +233,26 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
   }
 
   execute(step: RuntimeOperation, operationContext?: CombatOperationContext): boolean {
+    if (
+      (step.kind === 'dealDamage' || step.kind === 'dealStagger') &&
+      typeof step.parameters.target === 'object'
+    ) {
+      if (!operationContext?.targetContext)
+        throw new Error('context damage requires a target context');
+      const targets = operationContext.targetContext.getOptional(step.parameters.target.key) ?? [];
+      for (const target of targets)
+        this.#executeTarget(step, { ...operationContext, actionInputTarget: target });
+      return true;
+    }
+    return this.#executeTarget(step, operationContext);
+  }
+
+  #executeTarget(step: RuntimeOperation, operationContext?: CombatOperationContext): boolean {
     const skillCastInfo = operationContext?.skillCastInfo ?? this.dependencies.skillCastInfo;
+    const transfer =
+      step.kind === 'dealDamage' || step.kind === 'dealStagger'
+        ? this.#resolveTransfer(step, operationContext)
+        : undefined;
     if (step.kind === 'dealStagger') {
       const value = this.#resolveActionValue(
         step.parameters.value,
@@ -233,7 +269,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
                 'dynamic stagger multiplier',
               ),
             );
-      this.#executePoise(step, value * multiplier);
+      this.#executePoise(step, value * multiplier, transfer?.poiseRatio);
       return true;
     }
     if (step.kind !== 'dealDamage') {
@@ -244,10 +280,16 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
     if (step.parameters.damageType === 'lifeDrain') {
       throw new Error('life-drain damage uses a separate native calculation branch');
     }
+    const inheritedTransfer = resolveOperationPartTransferInfo(operationContext);
+    const partTransferInfo =
+      transfer === undefined
+        ? inheritedTransfer
+        : copyEnemyPartTransferInfo(inheritedTransfer, transfer.mainBodyId, transfer.partId);
     // 目标已由宿主解析；原生在伤害前事件及各伤害单元计算前记录技能命中。
     if (operationContext?.skillExecution !== undefined)
       operationContext.skillExecution.hasOutputDamageBattle = true;
     const context = new PlayerDamageContext({
+      partTransferInfo,
       sourceId: this.dependencies.sourceOperatorId,
       targetId: this.dependencies.targetId,
       damageType: step.parameters.damageType,
@@ -390,7 +432,8 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
               stepKey: step.key,
               kind: reactionKind,
             });
-      const canCritical = this.dependencies.canCritical !== false;
+      const fixedDamage = step.parameters.damageType === 'fixed';
+      const canCritical = !fixedDamage && this.dependencies.canCritical !== false;
       const criticalOverride = !canCritical
         ? undefined
         : reactionKind === undefined
@@ -431,7 +474,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       const formulaInput = canCritical
         ? resolvedFormulaInput
         : { ...resolvedFormulaInput, criticalRate: 0, criticalSample: 0 };
-      const damageResult = calculatePlayerActiveDamage(
+      const formulaResult = calculatePlayerActiveDamage(
         criticalOverride === undefined
           ? formulaInput
           : {
@@ -440,9 +483,18 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
               criticalSample: criticalOverride ? 0 : 1,
             },
       );
+      // SharedDamage 先用主体属性完成公式，再乘部位倍率；不另外对部位计算一次公式。
+      const damageResult =
+        transfer === undefined
+          ? formulaResult
+          : {
+              ...formulaResult,
+              value: formulaResult.value * transfer.damageRatio,
+            };
       const nonCriticalDamage = damageResult.value / damageResult.criticalMultiplier;
       const criticalDamage =
-        nonCriticalDamage * (1 + context.attackerAttributes.criticalDamageIncrease);
+        nonCriticalDamage *
+        (1 + (fixedDamage ? 0 : context.attackerAttributes.criticalDamageIncrease));
       const criticalExpectationMultiplier =
         1 +
         Math.min(Math.max(formulaInput.criticalRate, 0), 1) *
@@ -464,7 +516,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
           (this.dependencies.randomMode === 'expected' || damageResult.isCritical));
       const standardCalculation =
         step.parameters.calculation === undefined || step.parameters.calculation === 'standard';
-      const damageScaleMultiplier = context.damageScales.getFinalValue();
+      const damageScaleMultiplier = fixedDamage ? 1 : context.damageScales.getFinalValue();
       const attackSnapshot =
         step.parameters.takeAttackSnapshot === true
           ? operationContext?.damageCalculationSnapshots?.get(step)
@@ -503,9 +555,10 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       const directDamageMultiplier =
         calculationMultiplier *
         damageResult.weaknessShelterMultiplier *
-        damageResult.runtimeExtensionMultiplier;
+        damageResult.runtimeExtensionMultiplier *
+        (transfer?.damageRatio ?? 1);
       const resistancePercentMultiplier =
-        step.parameters.damageType === 'true'
+        step.parameters.damageType === 'true' || fixedDamage
           ? 1
           : Math.max(0, 1 - formulaInput.resistancePercent / 100);
       const attackDetail =
@@ -518,6 +571,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
           ? undefined
           : deriveHitId(this.dependencies.castId, step.key));
       executeHealthDamage({
+        partTransferInfo,
         consumeFinisherEligibility: this.dependencies.consumeFinisherEligibility,
         ...(multiplierCalculation === undefined
           ? {}
@@ -531,10 +585,10 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
           // 属性来源在公式实际读取阶段收集，不把完整属性快照当成本次生效加成。
           ...context.appliedDamageModifiers.filter(item => item.kind !== 'attribute'),
           ...attributeDetails,
-          ...scaleAttributeDetails,
+          ...(fixedDamage ? [] : scaleAttributeDetails),
         ].filter(item =>
           item.kind === 'damageScale'
-            ? item.addition !== 0
+            ? !fixedDamage && item.addition !== 0
             : item.kind === 'multiplyValue'
               ? item.multiplier !== 1
               : item.value !==
@@ -551,6 +605,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
         result: appliedDamageResult,
         triggersCriticalEffects,
         detail: {
+          ...(transfer === undefined ? {} : { damageTransferMultiplier: transfer.damageRatio }),
           ...operationContext?.executingBuff,
           ...(this.dependencies.sourceActionId === undefined
             ? {}
@@ -558,8 +613,12 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
           ...(this.dependencies.skillType === undefined
             ? {}
             : { skillType: this.dependencies.skillType }),
-          attack: receiptAttack,
-          ...freezeAttackReceiptDetail(receiptAttack, attackDetail),
+          ...(step.parameters.calculation === 'definite'
+            ? {}
+            : {
+                attack: receiptAttack,
+                ...freezeAttackReceiptDetail(receiptAttack, attackDetail),
+              }),
           ...(attackSnapshot === undefined
             ? {}
             : {
@@ -604,18 +663,18 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
           ...Object.fromEntries(
             DAMAGE_SCALE_ZONES.map(zone => [
               `damageScale:${zone}`,
-              context.damageScales.getZoneValue(zone),
+              fixedDamage ? 1 : context.damageScales.getZoneValue(zone),
             ]),
           ),
           ...Object.fromEntries(
             DAMAGE_SCALE_ZONES.flatMap(zone =>
               (['attacker', 'defender'] as const).map(side => [
                 `damageScale:${zone}:${side}`,
-                context.damageScales.getSideValue(side, zone),
+                fixedDamage ? 1 : context.damageScales.getSideValue(side, zone),
               ]),
             ),
           ),
-          criticalRate: context.attackerAttributes.criticalRate,
+          criticalRate: canCritical ? context.attackerAttributes.criticalRate : 0,
           criticalDamageIncrease: context.attackerAttributes.criticalDamageIncrease,
           criticalExpectationMultiplier,
           nonCriticalDamage,
@@ -652,6 +711,26 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
           : { absorbDamage: this.dependencies.absorbHealthDamage }),
       });
 
+      // 原生主体 Apply 完成后、下一伤害单元前同步仍存活部位。使用公式最终值，
+      // 不使用主体护盾吸收后的值或 actualDamage，也不再发布一次普通命中回执/事件。
+      if (transfer?.isAlive()) {
+        applyHealthDamageWithKillEvents(
+          transfer.vitals,
+          {
+            sourceId: this.dependencies.sourceOperatorId,
+            targetId: transfer.partId,
+            damageType: step.parameters.damageType,
+            tags: step.parameters.tags,
+            gameplayTags: step.parameters.gameplayTags ?? [],
+            features: step.parameters.features ?? [],
+            result: appliedDamageResult,
+            skillCastInfo: skillCastInfo ?? null,
+            executingSkillId: this.dependencies.executingSkillId,
+          },
+          this.dependencies.emitHealthSourceEvent,
+        );
+      }
+
       if (
         step.parameters.stagger !== undefined &&
         (!step.parameters.staggerOnlyWhenCasterControlled ||
@@ -672,7 +751,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
                   'dynamic stagger multiplier',
                 ),
               );
-        this.#executePoise(step, stagger * staggerMultiplier);
+        this.#executePoise(step, stagger * staggerMultiplier, transfer?.poiseRatio);
       }
       return true;
     } finally {
@@ -693,6 +772,26 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
     readonly attackScaleSourceKey?: string;
     readonly attackScaleCalculation?: ActionValueCalculation;
   } {
+    if (step.parameters.calculation === 'definite') {
+      if (step.parameters.calculationValue === undefined)
+        throw new Error('definite damage requires calculationValue');
+      const value = this.#resolveActionValue(
+        step.parameters.calculationValue,
+        operationContext,
+        'definite damage value',
+      );
+      const scale =
+        step.parameters.calculationValueScale === undefined
+          ? 1
+          : Math.fround(
+              this.#resolveActionValue(
+                step.parameters.calculationValueScale,
+                operationContext,
+                'definite damage scale',
+              ),
+            );
+      return { value: value * scale };
+    }
     if (step.parameters.takeAttackSnapshot === true) {
       const snapshot = operationContext?.damageCalculationSnapshots?.get(step);
       if (snapshot === undefined) throw new Error('attack snapshot was not prepared');
@@ -756,7 +855,22 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
     };
   }
 
-  #executePoise(step: PoiseStep, calculationValue: number): void {
+  #resolveTransfer(
+    step: PoiseStep,
+    context: CombatOperationContext | undefined,
+  ): SharedDamageTransfer | undefined {
+    if (step.parameters.target === undefined || step.parameters.target === 'enemy')
+      return undefined;
+    const target = context?.actionInputTarget;
+    if (target === undefined) throw new Error('damage requires a current target');
+    if (target.kind === 'enemy') return undefined;
+    const transfer = this.dependencies.resolveSharedDamageTransfer?.(target);
+    if (transfer === undefined || transfer.mainBodyId !== this.dependencies.targetId)
+      throw new Error('damage target requires a supported main-body damage route');
+    return transfer;
+  }
+
+  #executePoise(step: PoiseStep, calculationValue: number, transferRatio?: number): void {
     const multipliers = this.dependencies.resolvePoiseMultipliers(step);
     const poiseContext = new PoiseCalculationContext(
       this.dependencies.sourceOperatorId,
@@ -775,6 +889,7 @@ export class PlayerDamageOperationExecutor implements CombatOperationExecutor {
       targetId: this.dependencies.targetId,
       target: this.dependencies.targetVitals,
       calculationValue,
+      ...(transferRatio === undefined ? {} : { partTransferMultiplier: transferRatio }),
       outputMultiplier: poiseContext.outputMultiplier,
       takenMultiplier: poiseContext.takenMultiplier,
       ignorePoiseImmune: multipliers.ignorePoiseImmune,

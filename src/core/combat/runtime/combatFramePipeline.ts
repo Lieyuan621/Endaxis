@@ -6,6 +6,7 @@ import type { ProjectileLifecycleRuntime } from '../abilities/projectileLifecycl
 import { COMBAT_FRAME_INTERVAL } from '../time/combatClock';
 
 export interface CombatFramePipeline {
+  readonly frameEndEvents?: FrameRuntime;
   readonly timeDilation: TimeDilationRuntime | null;
   readonly control: FrameRuntime;
   readonly enemyControl?: { advance(deltaSeconds: number): void } | null;
@@ -77,4 +78,5 @@ export function bindCombatFramePipeline(
   simulation.add({ advanceFrame: () => projectiles.advanceAbilityFrame() });
   // 外部事实晚于技能，允许本帧刚创建的监听器接收。
   if (systems.bindInputPhases) simulation.addInputPhase('externalEvents');
+  if (systems.frameEndEvents !== undefined) simulation.add(systems.frameEndEvents);
 }

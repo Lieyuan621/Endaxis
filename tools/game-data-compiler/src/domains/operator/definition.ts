@@ -14,7 +14,10 @@ import {
   compileStandardStumpBuffClosure,
   planStandardStumpBuffPruning,
 } from '../../compiler/buffs/standardStumpBuffClosure.ts';
-import type { CombatActionProjectionExtensionsSource } from '../../compiler/combatProjectionCommon.ts';
+import type {
+  CombatActionProjectionContextSource,
+  CombatActionProjectionExtensionsSource,
+} from '../../compiler/combatProjectionCommon.ts';
 import type {
   ComboSkillConditionDefinition,
   ComboSkillPriority,
@@ -63,6 +66,7 @@ import {
 import type { compileOperatorFoundationSource } from './sourceClosure.ts';
 
 export interface OperatorDefinitionAssemblyInput {
+  readonly simulationEquivalentNativeSkillIds?: readonly string[];
   readonly externalBuffBlackboardReads?: ReadonlySet<string>;
   readonly productPassiveUi?: unknown;
   readonly foundation: ReturnType<typeof compileOperatorFoundationSource>;
@@ -71,7 +75,7 @@ export interface OperatorDefinitionAssemblyInput {
     readonly runtimeBuffIds: readonly string[];
     readonly abilityEntitySpawns: readonly {
       readonly abilityEntityId: string;
-      readonly skillId: string;
+      readonly skillId?: string;
       readonly sourcePath: string;
     }[];
   }[];
@@ -81,7 +85,7 @@ export interface OperatorDefinitionAssemblyInput {
     readonly runtimeBuffIds: readonly string[];
     readonly abilityEntitySpawns: readonly {
       readonly abilityEntityId: string;
-      readonly skillId: string;
+      readonly skillId?: string;
       readonly sourcePath: string;
     }[];
   };
@@ -92,6 +96,7 @@ export interface OperatorDefinitionAssemblyInput {
   /** Buff 动作可能在主动技能规划之后才暴露实体；按发现的精确 ID 读取，不预载无关模板。 */
   readonly loadAbilityEntity?: (id: string) => unknown;
   readonly gameplayTagRegistry: GameplayTagRegistry;
+  readonly predefinedTagQueries?: CombatActionProjectionContextSource['predefinedTagQueries'];
   readonly loadSkill: (id: string) => unknown;
   readonly loadBuff: (id: string) => unknown;
   readonly globalBuffCatalog: unknown;
@@ -212,6 +217,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       input.passiveSkills.definitions,
       input.gameplayTagRegistry,
       input.loadBuff,
+      input.predefinedTagQueries,
     );
   });
   const potentialPassivePlans = input.potentialBindings.map(binding => {
@@ -224,6 +230,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       input.passiveSkills.definitions,
       input.gameplayTagRegistry,
       input.loadBuff,
+      input.predefinedTagQueries,
     );
   });
   const basePassivePlans = (input.basePassiveSkillRequests ?? []).map(request =>
@@ -233,6 +240,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       input.passiveSkills.definitions,
       input.gameplayTagRegistry,
       input.loadBuff,
+      input.predefinedTagQueries,
     ),
   );
   const installedPassiveSkillSourcePaths = new Set([
@@ -259,6 +267,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
   }
   const context = {
     skills: skillLibrary.activeSkills.entries,
+    simulationEquivalentNativeSkillIds: new Set(input.simulationEquivalentNativeSkillIds ?? []),
     costResources: new Map(
       input.activeSkills.flatMap(item =>
         item.definition.costs?.length === 1
@@ -295,12 +304,14 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
   const bindings = new Map<string, Set<string>>();
   const addEntityBinding = (spawn: {
     readonly abilityEntityId: string;
-    readonly skillId: string;
+    readonly skillId?: string;
     readonly sourcePath: string;
   }) => {
     const skillIds = bindings.get(spawn.abilityEntityId) ?? new Set<string>();
-    const added = !skillIds.has(spawn.skillId);
-    skillIds.add(spawn.skillId);
+    const added =
+      !bindings.has(spawn.abilityEntityId) ||
+      (spawn.skillId !== undefined && !skillIds.has(spawn.skillId));
+    if (spawn.skillId !== undefined) skillIds.add(spawn.skillId);
     bindings.set(spawn.abilityEntityId, skillIds);
     return added;
   };
@@ -365,6 +376,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
               ) ?? {},
             { catalog: entityCatalog, gameplayTagRegistry: input.gameplayTagRegistry },
             skillId => input.nativeMissingBlackboardZeroKeys?.get(skillId) ?? new Set(),
+            input.predefinedTagQueries,
           ),
         ];
       }),
@@ -561,6 +573,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
               ) ?? {},
             { catalog: entityCatalog, gameplayTagRegistry: input.gameplayTagRegistry },
             skillId => input.nativeMissingBlackboardZeroKeys?.get(skillId) ?? new Set(),
+            input.predefinedTagQueries,
           ),
           `${id}:${[...skillIds].join('|')}`,
         ),
@@ -634,8 +647,8 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
               application.target === 'casterAndLowestHealthRatioOperatorExceptCaster'
             ? ('caster' as const)
             : null;
-    if (target === null) continue;
-    registerRootBuffOwner(application.buffId, target);
+    // 动态目标不影响来源的确定性；两种绑定必须独立收集。
+    if (target !== null) registerRootBuffOwner(application.buffId, target);
     const source =
       application.source === 'enemy'
         ? ('enemy' as const)
@@ -670,21 +683,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       return {
         ...extensions,
         compileSkillSlotReplacement: (action, sourcePath, context) => {
-          // 无限期恢复基础连携槽是结束动作，不是随 Buff 生灭的临时替换。
-          // 必须留在原序列位置，否则后续连携门禁仍会读取二段技能的冷却。
-          if (slotActionOwners.get(sourcePath) === 'graph') {
-            return [
-              {
-                kind: 'changeSkillSlot',
-                parameters: {
-                  skillSlotKey: 'comboSkill',
-                  targetSkillKey: action.targetSkillId,
-                  inheritOriginSkillCooldownProgress: false,
-                  lifetime: 'infinite',
-                },
-              },
-            ];
-          }
+          // 动态替换保留原分支与执行位置，复用主动技能的同一动作投影。
           if (slotActionOwners.get(sourcePath) === 'buffLifecycle') return [];
           if (extensions.compileSkillSlotReplacement)
             return extensions.compileSkillSlotReplacement(action, sourcePath, context);
@@ -704,6 +703,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
     ]),
     new Map((input.dashBuffs ?? []).map(item => [item.buffId, item.blackboard] as const)),
     input.externalBuffBlackboardReads,
+    input.predefinedTagQueries,
   );
   const blocked = buffClosure.diagnostics.filter(item => item.status === 'blocked');
   if (blocked.length) throw new Error(`operator Buff closure blocked: ${JSON.stringify(blocked)}`);
@@ -944,13 +944,8 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
     }
     entityBlackboard.set(key, value);
   }
-  // 产品身份可与实际复用的角色资源身份不同（管理员统一使用女管理员动作数据）。
-  // 只从本次完整主动技能库的原生 skillId 建立额外归属，不按 Buff 名称反猜角色。
-  const privateBuffCharacterIds = new Set([sourceCharacterId]);
-  for (const { definition } of combatSkills) {
-    const match = /^(chr_\d+_[^_]+)_/.exec(definition.key);
-    if (match !== null) privateBuffCharacterIds.add(match[1]!);
-  }
+  // 角色 Buff 随引用它的干员闭包发布。原生会跨角色复用 Buff 资源，ID 中的
+  // 角色前缀不表示当前定义包的所有权；不能因此依赖另一干员的按需加载。
   for (const [id, definition] of Object.entries(buffClosure.definitions)) {
     const replacements = skillSlotReplacements.get(id);
     const keyedDefinition = assignGeneratedDamageStepKeys(
@@ -959,11 +954,8 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
         : { ...definition, skillSlotReplacements: replacements },
       id,
     );
-    if ([...privateBuffCharacterIds].some(characterId => id.startsWith(`buff_${characterId}_`)))
-      privateBuffs[id] = keyedDefinition;
-    else if (id.startsWith('buff_chr_')) {
-      throw new Error(`foreign operator Buff ownership is not established: ${id}`);
-    } else {
+    if (id.startsWith('buff_chr_')) privateBuffs[id] = keyedDefinition;
+    else {
       // 物理/元素反应等系统 Buff 不使用 buff_common_ 前缀，但与角色私有 Buff 一样
       // 由稳定身份决定归属；旧统一链接器也把所有非 buff_chr_* 定义放入共享目录。
       commonBuffs[id] = keyedDefinition;
@@ -988,7 +980,10 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
     skillGroups,
     ...(dodgeSkill === undefined ? {} : { dodgeSkill }),
     ...(input.dashBuffs === undefined ? {} : { dashBuffs: input.dashBuffs }),
-    ...compileOperatorPlayerActionRouting(input, definitions, skillSlotReplacements),
+    ...compileOperatorPlayerActionRouting(input, definitions, skillSlotReplacements, [
+      ...Object.values(privateBuffs),
+      ...Object.values(commonBuffs),
+    ]),
     ...(input.comboSkillConditions === undefined
       ? {}
       : { comboSkillConditions: input.comboSkillConditions }),
@@ -1263,6 +1258,7 @@ function compileOperatorPlayerActionRouting(
   input: OperatorDefinitionAssemblyInput,
   definitions: ReadonlyMap<string, SkillDefinition>,
   buffReplacements: ReadonlyMap<string, readonly SkillBuffSlotReplacement[]>,
+  buffDefinitions: readonly CompiledBuffDefinitionSource[],
 ): Pick<OperatorDefinition, 'skillSlots' | 'playerActionRoutes' | 'playerActionModes'> {
   const native = input.nativePlayerActionRouting;
   if (native === undefined) {
@@ -1304,6 +1300,8 @@ function compileOperatorPlayerActionRouting(
     for (const item of Object.values(value)) visit(item);
   };
   for (const definition of definitions.values()) visit(definition);
+  // 原生 ChangeSkillAction 也可位于 Buff 生命周期/事件图，不能只登记技能里的换槽动作。
+  for (const definition of buffDefinitions) visit(definition);
   for (const replacements of buffReplacements.values()) {
     for (const replacement of replacements) {
       const set = replacementKeysBySlot.get(replacement.skillSlotKey);
@@ -1363,30 +1361,13 @@ function compileOperatorBuffSkillSlotReplacements(
           // 不得把其配置的生命周期或目标技能当成实际替换关系。
           if (!node.metadata.enabled) continue;
           const action = node.body.value.action;
-          const restoredSkillKey = knownSkillIds.has(action.targetSkillId)
-            ? action.targetSkillId
-            : undefined;
-          const isDirectComboRestore =
-            event.event === 'OnBuffFinish' &&
-            directNodes.has(node) &&
-            isPlainBuffSkillSlotTarget(action.skillSource) &&
-            action.skillSlot === 'ComboSkill' &&
-            action.lifetime === 'Infinite' &&
-            !action.overrideCacheTime &&
-            !action.inheritOriginSkillCooldownProgress &&
-            !action.specificRevertedSkillId &&
-            action.revertedSkillId === '' &&
-            restoredSkillKey !== undefined &&
-            restoredSkillKey === baseSkillKeyBySlot?.comboSkill;
-          if (isDirectComboRestore) {
-            // 已作为结束序列中的 changeSkillSlot 编译，不再登记为 Buff 生存期替换。
+          if (
+            event.event !== 'DuringBuffEnable' ||
+            !directNodes.has(node) ||
+            action.lifetime !== 'FinishByAction'
+          ) {
             actionOwners.set(node.sourcePath, 'graph');
             continue;
-          }
-          if (event.event !== 'DuringBuffEnable' || !directNodes.has(node)) {
-            throw new Error(
-              `${node.sourcePath}: skill-slot replacement must be a direct DuringBuffEnable action`,
-            );
           }
           if (
             !isPlainBuffSkillSlotTarget(action.skillSource) ||

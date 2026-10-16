@@ -11,6 +11,7 @@ import {
   requireEnum,
   validateLevelValues,
   NATIVE_SKILL_TYPES_SET,
+  NORMAL_SKILL_SUB_TYPES_SET,
   COMBAT_RESOURCES_SET,
 } from './validation/definitionValues';
 import { validateCombatCondition } from './validation/combatConditions';
@@ -144,6 +145,8 @@ export function validateSkillDefinition(
   else if (record.levelSource !== undefined)
     push(out, `${path}.levelSource`, 'dodge does not use skill levels');
   requireEnum(record, 'nativeSkillType', NATIVE_SKILL_TYPES_SET, path, out);
+  if (record.normalSkillSubType !== undefined)
+    requireEnum(record, 'normalSkillSubType', NORMAL_SKILL_SUB_TYPES_SET, path, out);
   requireNonNegativeInteger(record, 'timelineBlockFrames', path, out);
   if (record.timelineBlockFollowUpSkillId !== undefined) {
     requireString(record, 'timelineBlockFollowUpSkillId', path, out);

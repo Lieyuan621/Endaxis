@@ -22,14 +22,18 @@ export interface SkillCastOperationExecutorDependencies {
     context: CombatOperationContext,
   ) => readonly RuntimeTargetRef[];
   readonly interruptCurrentSkill?: (target: RuntimeTargetRef) => void;
-  readonly request: (request: {
-    readonly nativeSkillId: string;
-    readonly inputTarget: RuntimeTargetRef | null;
-    readonly skipApplyCost: boolean;
-    readonly inheritedSkillCastInfo?: CombatSkillCastInfo;
-    readonly interruptCurrentSkillOnlyWhenTargetCastable?: boolean;
-    readonly producedBy?: CombatObjectRef;
-  }) => void;
+  readonly request: (
+    request: {
+      readonly nativeSkillId: string;
+      readonly inputTarget: RuntimeTargetRef | null;
+      readonly skipApplyCost: boolean;
+      readonly inheritedSkillCastInfo?: CombatSkillCastInfo;
+      readonly interruptCurrentSkillOnlyWhenTargetCastable?: boolean;
+      readonly producedBy?: CombatObjectRef;
+    },
+    caster?: RuntimeTargetRef,
+    context?: CombatOperationContext,
+  ) => void;
   readonly delegate: CombatOperationExecutor;
 }
 
@@ -49,8 +53,7 @@ export class SkillCastOperationExecutor implements CombatOperationExecutor {
     if (step.kind !== 'castSkillDuringAction') {
       return this.dependencies.delegate.execute(step, context);
     }
-    this.#request(step, context);
-    return true;
+    return this.#request(step, context);
   }
 
   end(step: ResolvedCombatOperationStep, context?: CombatOperationContext): void {
@@ -62,9 +65,25 @@ export class SkillCastOperationExecutor implements CombatOperationExecutor {
     return this.dependencies.delegate.evaluate(condition, context);
   }
 
-  #request(step: CastStep, context: CombatOperationContext | undefined): void {
+  #request(step: CastStep, context: CombatOperationContext | undefined): boolean {
+    let caster: RuntimeTargetRef | undefined;
+    if (step.parameters.caster !== undefined) {
+      if (!context || !this.dependencies.queryTargets)
+        throw new Error('deferred skill caster requires target bindings');
+      caster = this.dependencies.queryTargets(step.parameters.caster, context)[0];
+      if (caster === undefined) return false;
+      if (caster.kind !== 'operator' && caster.kind !== 'abilityEntity')
+        throw new Error('deferred skill caster requires a skill host');
+    }
     let contextTarget: RuntimeTargetRef | null = null;
-    if (step.parameters.target === 'context') {
+    if (typeof step.parameters.target === 'object') {
+      if (!context || !this.dependencies.queryTargets)
+        throw new Error('deferred skill target requires target bindings');
+      const targets = this.dependencies.queryTargets(step.parameters.target, context);
+      if (targets.length > 1)
+        throw new Error('deferred skill cast does not yet support a multi-entity input target');
+      contextTarget = targets[0] ?? null;
+    } else if (step.parameters.target === 'context') {
       const key = step.parameters.targetContextKey;
       if (!key || context?.targetContext === undefined)
         throw new Error('deferred skill cast requires its named target context');
@@ -74,7 +93,7 @@ export class SkillCastOperationExecutor implements CombatOperationExecutor {
       contextTarget = targets[0] ?? null;
     }
     const inputTarget =
-      step.parameters.target === 'context'
+      step.parameters.target === 'context' || typeof step.parameters.target === 'object'
         ? contextTarget
         : step.parameters.target === 'actionInputTarget'
           ? (context?.actionInputTarget ?? null)
@@ -88,7 +107,7 @@ export class SkillCastOperationExecutor implements CombatOperationExecutor {
       throw new Error('deferred skill cast requires source SkillCastInfo');
     }
     const nativeSkillId = resolveNativeSkillId(step.parameters.skillId, context);
-    this.dependencies.request({
+    const request = {
       nativeSkillId,
       inputTarget: inputTarget === null ? null : { ...inputTarget },
       skipApplyCost: step.parameters.skipApplyCost,
@@ -97,7 +116,10 @@ export class SkillCastOperationExecutor implements CombatOperationExecutor {
         ? { interruptCurrentSkillOnlyWhenTargetCastable: true }
         : {}),
       ...(inherited === undefined ? {} : { inheritedSkillCastInfo: inherited }),
-    });
+    };
+    if (caster === undefined) this.dependencies.request(request);
+    else this.dependencies.request(request, caster, context);
+    return true;
   }
 }
 

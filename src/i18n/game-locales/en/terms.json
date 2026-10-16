@@ -161,6 +161,12 @@
     "styleId": "ba.fire",
     "iconPath": "/icons/icon_term_ba_firevul.webp"
   },
+  "ba.fixeddamage": {
+    "name": "Fixed DMG",
+    "description": "Fixed DMG ignores the target's DEF and resistances. The amount of Fixed DMG is not changed by any increase or reduction effects.",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
   "ba.fracture": {
     "name": "Physical Status: Breach",
     "description": "Applies <#ba.noguard>Vulnerability</> on an enemy. If the enemy is already <#ba.noguard>Vulnerable</>, then <#ba.consume>consume</> all <#ba.noguard>Vulnerability</> stacks, deal <@ba.phy>Physical DMG</>, and temporarily increase the <@ba.pd>Physical DMG</> taken by the enemy.",
@@ -364,6 +370,12 @@
     "description": "Arts Susceptible targets temporarily take more <#ba.spelldmg>Arts DMG</>. The number represents the degree of increase. Effects of the same type can stack.",
     "styleId": "ba.key",
     "iconPath": "/icons/icon_term_ba_spellvul.webp"
+  },
+  "ba.static": {
+    "name": "Immobilization",
+    "description": "A target affected by Immobilization cannot perform any actions for the duration of this effect.",
+    "styleId": "ba.key",
+    "iconPath": ""
   },
   "ba.statuslevel": {
     "name": "Status Level",

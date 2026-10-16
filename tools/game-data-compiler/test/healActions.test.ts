@@ -47,6 +47,27 @@ const BASE = {
 } as const;
 
 describe('治疗动作公共载荷', () => {
+  it('未启用治疗特效时接受原始导出的空引用，启用时仍拒绝', () => {
+    const action = {
+      ...BASE,
+      playHealEffect: false,
+      effectData: { effectName: null },
+      healCalculation: {
+        $type: 'Example.DefiniteValueCalculation, Example',
+        value: scalarFixture(100),
+        applyScale: false,
+        valueScale: scalarFixture(1),
+      },
+    };
+    expect(parseHealActionSource(action, 'heal', {})).toMatchObject({
+      playHealEffect: false,
+      effectName: '',
+      calculation: { kind: 'definite', value: { value: 100 } },
+    });
+    expect(() => parseHealActionSource({ ...action, playHealEffect: true }, 'heal', {})).toThrow(
+      'heal.effectData.effectName',
+    );
+  });
   it('主动技能复用公共主控治疗投影，不因当前攻击目标为敌人而拒绝', () => {
     const target = targetFixture('InstantSearch');
     const action = {

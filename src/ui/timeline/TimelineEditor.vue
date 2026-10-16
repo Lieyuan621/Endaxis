@@ -3482,7 +3482,7 @@ function hitMarkerTitle(label: TimelineHitEffectLabel | undefined): string {
   const parts: string[] = [];
   for (const damage of label.damage) {
     parts.push(
-      `${Math.round(damage.value)}${publishedRandomMode.value === 'sampled' && damage.isCritical ? '!' : ''} ${damageElementLabel(damage.damageType)}`,
+      `${Math.floor(damage.value)}${publishedRandomMode.value === 'sampled' && damage.isCritical ? '!' : ''} ${damageElementLabel(damage.damageType)}`,
     );
   }
   for (const infliction of label.infliction) {
@@ -6116,6 +6116,42 @@ function setScenarioRandomMode(mode: 'expected' | 'sampled'): void {
   }));
 }
 
+const comboSkillPriorityOperators = computed(() => {
+  const tracks = viewModel.value.tracks;
+  const saved = scenario.value.battle.comboSkillPriority?.operatorOrder ?? [];
+  const occupied = tracks.filter(track => track.operatorInstanceId !== null);
+  const ordered = [
+    ...saved.flatMap(id => occupied.filter(track => track.operatorInstanceId === id)),
+    ...occupied.filter(track => !saved.includes(track.operatorInstanceId!)),
+    ...tracks.filter(track => track.operatorInstanceId === null),
+  ];
+  return ordered.map(track => ({
+    id: track.operatorInstanceId,
+    name: operatorName(track.operatorSlug),
+    avatar: track.operatorAssetSlug === null ? null : getOperatorAvatarPath(track.operatorAssetSlug),
+  }));
+});
+
+function toggleComboSkillPriority(): void {
+  commitScenario('toggleComboSkillPriority', current => ({
+    ...current,
+    battle: {
+      ...current.battle,
+      comboSkillPriority: {
+        enabled: !current.battle.comboSkillPriority?.enabled,
+        operatorOrder: current.battle.comboSkillPriority?.operatorOrder ?? current.tracks.flatMap(track => track ? [track.id] : []),
+      },
+    },
+  }));
+}
+
+function setComboSkillPriorityOrder(operatorOrder: string[]): void {
+  commitScenario('setComboSkillPriorityOrder', current => ({
+    ...current,
+    battle: { ...current.battle, comboSkillPriority: { enabled: true, operatorOrder } },
+  }));
+}
+
 function toggleAutomaticControlSwitches(): void {
   commitScenario('toggleAutomaticControlSwitches', current => ({
     ...current,
@@ -6584,6 +6620,8 @@ function setMobileGuideFrame(frame: number | null): void {
         :appearance="appearance"
         :random-mode="scenario.battle.random?.mode ?? 'expected'"
         :automatic-control-switches="scenario.battle.automaticControlSwitches !== false"
+        :combo-skill-priority-enabled="scenario.battle.comboSkillPriority?.enabled ?? false"
+        :combo-skill-priority-operators="comboSkillPriorityOperators"
         :global-random-seed="scenario.battle.random?.globalSeed ?? 0"
         :labels="{
           rename: t('timeline.scenario.renameTooltip'),
@@ -6643,6 +6681,8 @@ function setMobileGuideFrame(frame: number | null): void {
         @set-keycap-mode="keycapMode = $event"
         @set-random-mode="setScenarioRandomMode"
         @toggle-automatic-control-switches="toggleAutomaticControlSwitches"
+        @toggle-combo-skill-priority="toggleComboSkillPriority"
+        @set-combo-skill-priority-order="setComboSkillPriorityOrder"
         @set-global-random-seed="setGlobalRandomSeed"
         @roll-global-random-seed="rollGlobalRandomSeed"
         @clear-selection="clearTimelineSelection"

@@ -169,6 +169,7 @@ export function compileBuffRuntimeDefinitionSource(
     | 'fixedBuffOwnerTarget'
     | 'fixedBuffSourceTarget'
     | 'gameplayTagRegistry'
+    | 'predefinedTagQueries'
     | 'staticEnemyTargetGroupKeys'
     | 'staticEmptyTargetGroupKeys'
     | 'staticZeroSpaceTargetGroupKeys'
@@ -199,6 +200,7 @@ export function compileBuffRuntimeDefinitionSource(
   const beforeEnhanceSequences: CompiledBuffSequenceSource[] = [];
   const finishSequences: CompiledBuffSequenceSource[] = [];
   const dispelledSequences: CompiledBuffSequenceSource[] = [];
+  const releaseSequences: CompiledBuffSequenceSource[] = [];
   const timelineActions = buffShowsTimelineActions(source) ? source.graph.timelineActions : [];
   const allSequences = [
     ...timelineActions.map(item => item.sequence),
@@ -221,13 +223,11 @@ export function compileBuffRuntimeDefinitionSource(
           isStaticExplicitBadFactionEnemyTargetGroup(node.body.value.action) ||
           (contextOverrides.fixedBuffOwnerTarget === 'enemy' &&
             isStaticSingleEnemyOwnerAllyTargetGroup(node.body.value.action)) ||
-          (contextOverrides.fixedBuffOwnerTarget === 'currentAbilityEntity' &&
-            node.body.value.action.producerType === 'FindTargetAction' &&
-            node.body.value.action.finderType === 'AbilityEntityTargetFinder' &&
-            node.body.value.action.validatorTypes.length === 0 &&
-            node.body.value.action.postProcessorTypes.length === 0) ||
           isZeroSpaceSingleEnemySmartTargetGroup(node.body.value.action)) &&
-        (contextOverrides.fixedBuffOwnerTarget === 'caster' ||
+        (isStaticExplicitBadFactionEnemyTargetGroup(node.body.value.action) ||
+          (node.body.value.action.selectorOwner === 'ActionSource' &&
+            contextOverrides.fixedBuffSourceTarget === 'caster') ||
+          contextOverrides.fixedBuffOwnerTarget === 'caster' ||
           contextOverrides.fixedBuffOwnerTarget === 'enemy' ||
           contextOverrides.fixedBuffOwnerTarget === 'currentAbilityEntity')
           ? [node.body.value.action.targetGroupKey]
@@ -476,7 +476,9 @@ export function compileBuffRuntimeDefinitionSource(
                       ? dispelledSequences
                       : event.event === 'OnBuffFinish'
                         ? finishSequences
-                        : null;
+                        : event.event === 'OnBuffReleased'
+                          ? releaseSequences
+                          : null;
     if (target === null) {
       const isTrainingOnlyInterruptedEvent =
         event.event === 'OnBuffFinishedEarlyInterrupted' &&
@@ -504,6 +506,7 @@ export function compileBuffRuntimeDefinitionSource(
               event.event === 'OnBuffEnable' ||
               event.event === 'DuringBuffEnable' ||
               event.event === 'OnBuffFinish' ||
+              event.event === 'OnBuffReleased' ||
               event.event === 'OnBuffBeforeTryEnhanced' ||
               event.event === 'OnBuffAfterTryEnhanced'
             ? { ...BUFF_LIFECYCLE_CONTEXT, abilityEntityQueries, ...projectionContextOverrides }
@@ -733,6 +736,7 @@ export function compileBuffRuntimeDefinitionSource(
     afterEnhanceSequences.length === 0 &&
     beforeEnhanceSequences.length === 0 &&
     dispelledSequences.length === 0 &&
+    releaseSequences.length === 0 &&
     finishSequences.length === 0
       ? {}
       : {
@@ -745,6 +749,7 @@ export function compileBuffRuntimeDefinitionSource(
               : { enhanceChanged: enhanceChangedSequences }),
             ...(finishSequences.length === 0 ? {} : { finish: finishSequences }),
             ...(dispelledSequences.length === 0 ? {} : { dispelled: dispelledSequences }),
+            ...(releaseSequences.length === 0 ? {} : { release: releaseSequences }),
             ...(beforeEnhanceSequences.length === 0
               ? {}
               : { beforeEnhance: beforeEnhanceSequences }),
@@ -1175,6 +1180,36 @@ function createBuffSequenceProjection(
     node: NativeActionNodeSource<KnownNativeActionLeafSource>,
     partyTargetGroups: ReadonlyMap<string, BuffProjectionTargetGroup>,
   ) => {
+    if (node.body.kind === 'leaf' && node.body.value.family === 'tagQueryListener') {
+      const action = node.body.value.action;
+      const query =
+        'custom' in action.query
+          ? action.query.custom
+          : context.predefinedTagQueries?.[action.query.predefined];
+      if (!query)
+        throw new Error(
+          `${node.sourcePath}: missing predefined tag query ${'predefined' in action.query ? action.query.predefined : ''}`,
+        );
+      const sequence = compileActionSequenceProgram(action.sequence, {
+        ...createBuffSequenceProjection(visualOnlyIds, context, extensions),
+        initialState: () => partyTargetGroups,
+      });
+      return {
+        steps: [
+          {
+            kind: 'listenForTagQuery' as const,
+            parameters: {
+              tags: projectGameplayTags(query.tagIds, context, node.sourcePath),
+              tagQueryType: query.queryType,
+              executeOnMatch: action.executeOnMatch,
+              sequence,
+            },
+          },
+        ],
+        // 回调可延后执行，不能将其目标组写入提升到注册动作之后。
+        state: partyTargetGroups,
+      };
+    }
     if (
       node.body.kind === 'leaf' &&
       node.body.value.family === 'presentation' &&
@@ -1272,12 +1307,21 @@ function createBuffSequenceProjection(
     }
 
     const visibleTargetGroups = runtimeTargetGroups(partyTargetGroups);
+    const branchContext = {
+      ...context,
+      guaranteedSingletonZeroSpaceTargetGroupKeys: new Set([
+        ...(context.guaranteedSingletonZeroSpaceTargetGroupKeys ?? []),
+        ...[...partyTargetGroups]
+          .filter(([, value]) => value === 'guaranteedSingletonZeroSpace')
+          .map(([key]) => key),
+      ]),
+    };
     // 查询生产者使用其输出证明；消费者优先读取本段已改写的身份，不能沿用过期的敌人推断。
     const currentContext =
       node.body.kind === 'leaf' && node.body.value.family === 'targetGroup'
-        ? context
+        ? branchContext
         : {
-            ...context,
+            ...branchContext,
             staticEnemyTargetGroupKeys: new Set(
               [...(context.staticEnemyTargetGroupKeys ?? [])].filter(key => {
                 const current = visibleTargetGroups.get(key);
@@ -1738,8 +1782,10 @@ function createBuffSequenceProjection(
         target.validatorTypes.length === 0 &&
         target.postProcessorTypes.length === 0 &&
         (target.targetSource !== 'Context' || target.targetGroupKey === '')
-          ? target.targetSource === 'Target' && context.actionTargetTarget === 'enemy'
-            ? ('enemy' as const)
+          ? target.targetSource === 'Target' &&
+            (context.actionTargetTarget === 'enemy' ||
+              context.actionTargetTarget === 'actionInputTarget')
+            ? context.actionTargetTarget
             : target.targetSource === 'Owner' && context.actionOwnerTarget === 'caster'
               ? ('caster' as const)
               : target.targetSource === 'Source' && context.actionSourceTarget === 'caster'
@@ -1747,7 +1793,6 @@ function createBuffSequenceProjection(
                 : null
           : null;
       const groupedEnemy =
-        context.actionTargetTarget === 'enemy' &&
         target.targetSource === 'Context' &&
         target.targetGroupKey !== '' &&
         (context.staticEnemyTargetGroupKeys?.has(target.targetGroupKey) === true ||
@@ -1764,7 +1809,17 @@ function createBuffSequenceProjection(
         target.postProcessorTypes.length === 0;
       const channelTarget =
         directTarget ??
-        (groupedEnemy ? ('enemy' as const) : groupedParty ? ('currentOperator' as const) : null);
+        (groupedEnemy
+          ? ('enemy' as const)
+          : groupedParty
+            ? ('currentOperator' as const)
+            : target.targetSource === 'Context' &&
+                target.targetGroupKey !== '' &&
+                target.finderType === null &&
+                target.validatorTypes.length === 0 &&
+                target.postProcessorTypes.length === 0
+              ? ('actionInputTarget' as const)
+              : null);
       if (channelTarget === null) return null;
       const bodyContext: CombatActionProjectionContextSource = {
         ...context,

@@ -7905,9 +7905,10 @@ export const rossi: OperatorDefinition = {
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0028_wulfa_combo_qte_timing: {
+      faction: 'good',
       bornTags: ['Status/UnLockable', 'Status/NonAITarget'],
       lifetime: { kind: 'limited', durationSeconds: 10 },
-      deathReleaseDelaySeconds: 0.100000001490116,
+      deathReleaseDelaySeconds: 0.1,
       childSkills: {
         chr_0028_wulfa_absorb_entity_effect_1: {
           actionGraph: { main: { nodes: {} }, macros: {} },

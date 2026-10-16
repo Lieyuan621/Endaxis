@@ -46,6 +46,20 @@ export function setCombatAttributeRawValue<Key extends string>(
   state.rawValues.set(attribute, value);
 }
 
+/** 原生 Attributes.CloneTo：容器独立，修正对象共享；不是最终数值快照或 Buff 克隆。 */
+export function cloneCombatAttributes<Key extends string>(
+  source: CombatAttributeState<Key>,
+  target: CombatAttributeState<Key>,
+): void {
+  if (source === target) throw new Error('attribute clone requires a distinct target');
+  target.rawValues.clear();
+  for (const [key, value] of source.rawValues) target.rawValues.set(key, value);
+  target.definitions.clear();
+  for (const [key, definition] of source.definitions) target.definitions.set(key, definition);
+  target.modifiers.length = 0;
+  for (const modifier of source.modifiers) target.modifiers.push(modifier);
+}
+
 export function readCombatAttribute<Key extends string>(
   state: CombatAttributeState<Key>,
   attribute: Key,

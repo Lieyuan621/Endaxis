@@ -28,7 +28,7 @@ export function standardStumpBuffAbilityEventOmissionReason(
   event: string | number,
   owner?: 'caster' | 'enemy' | 'currentAbilityEntity',
 ): string | null {
-  if (event === 'OnTrulyExitFight')
+  if (event === 'OnExitFight' || event === 'OnTrulyExitFight')
     return 'fixed timeline does not leave combat before the simulation ends';
   if (typeof event !== 'string') return null;
   if (owner === 'caster') return OMITTED_CASTER_BUFF_ABILITY_EVENT_REASONS[event] ?? null;

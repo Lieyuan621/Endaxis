@@ -14,6 +14,7 @@ const DAMAGE_TYPE_USES_RESISTANCE = {
   ether: true,
   true: false,
   lifeDrain: false,
+  fixed: false,
 } as const satisfies Record<DamageType, boolean>;
 
 export type ResistibleDamageType = {
@@ -62,6 +63,19 @@ export interface PlayerActiveDamageResult {
 export function calculatePlayerActiveDamage(
   input: PlayerActiveDamageInput,
 ): PlayerActiveDamageResult {
+  // 1.6.3 BattleFormula.CalculateDamage 的 Fixed 提前返回路径。
+  if (input.damageType === 'fixed')
+    return {
+      value: input.finalAttackValue,
+      isCritical: false,
+      criticalMultiplier: 1,
+      defenseMultiplier: 1,
+      resistanceMultiplier: 1,
+      weaknessShelterMultiplier: 1,
+      runtimeExtensionMultiplier: 1,
+      igniteMultiplier: 1,
+      physicalInflictionMultiplier: 1,
+    };
   if (input.damageType === 'lifeDrain') {
     throw new Error('life-drain damage uses a separate native calculation branch');
   }

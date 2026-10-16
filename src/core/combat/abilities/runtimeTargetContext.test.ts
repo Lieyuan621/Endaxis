@@ -1,8 +1,51 @@
 /** 验证目标身份在选择时复制，并随技能状态一起保存、恢复。 */
 import { expect, it } from 'vitest';
-import { RuntimeTargetContext, setRuntimeTargetGroup } from './runtimeTargetContext';
+import {
+  RuntimeTargetContext,
+  setRuntimeTargetGroup,
+  resolveOperationPartTransferInfo,
+} from './runtimeTargetContext';
+import { ActionBlackboard } from '../actions/actionBlackboard';
 import { createSkillExecutionState } from '../state/abilityState';
 import { createStateTestSession } from '../../../test/stateTestSession';
+
+it('转交上下文由事件覆盖同主体项，保留 Buff 的其他项且不共享可变映射', () => {
+  const environment = {
+    currentMainBodyId: 'old',
+    mainBodyToPart: new Map([
+      ['enemy', 'old-part'],
+      ['old', 'other-part'],
+    ]),
+  };
+  const eventInfo = {
+    currentMainBodyId: 'enemy',
+    mainBodyToPart: new Map([['enemy', 'new-part']]),
+  };
+  const result = resolveOperationPartTransferInfo({
+    blackboard: new ActionBlackboard(),
+    partTransferInfo: environment,
+    event: {
+      event: 'beforeAddedBuff',
+      payload: {
+        sourceId: 'caster',
+        targetId: 'enemy',
+        buffId: 'buff',
+        buffTags: [],
+        partTransferInfo: eventInfo,
+      },
+    },
+  });
+  expect(result).toEqual({
+    currentMainBodyId: 'enemy',
+    mainBodyToPart: new Map([
+      ['enemy', 'new-part'],
+      ['old', 'other-part'],
+    ]),
+  });
+  eventInfo.mainBodyToPart.clear();
+  environment.mainBodyToPart.clear();
+  expect(result?.mainBodyToPart.size).toBe(2);
+});
 
 it('修改输入目标对象不会改写已选择的身份', () => {
   const context = new RuntimeTargetContext();

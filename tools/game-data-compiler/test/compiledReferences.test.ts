@@ -21,6 +21,10 @@ describe('compiled definition references', () => {
                             childSkillId: 'child_skill',
                           },
                         },
+                        {
+                          kind: 'spawnAbilityEntity',
+                          parameters: { abilityEntityId: 'abilityentity_passive_host' },
+                        },
                       ],
                     },
                   },
@@ -35,6 +39,10 @@ describe('compiled definition references', () => {
         abilityEntityId: 'abilityentity_child',
         skillId: 'child_skill',
         sourcePath: 'compiled.spawnAbilityEntity.abilityentity_child.child_skill',
+      },
+      {
+        abilityEntityId: 'abilityentity_passive_host',
+        sourcePath: 'compiled.spawnAbilityEntity.abilityentity_passive_host',
       },
     ]);
   });

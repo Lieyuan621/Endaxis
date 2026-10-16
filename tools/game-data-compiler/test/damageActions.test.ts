@@ -129,33 +129,40 @@ describe('伤害动作公共载荷', () => {
     ).toEqual([1208750764, -1]);
   });
 
-  it('将伤害 GameplayTag ID 投影为可读路径并与装饰分类分开', () => {
-    const unit = parseDamageUnitSource(
-      { ...BASE_UNIT, damageTags: [{ tagId: 1208750764 }] },
-      'unit',
-      { atk_scale: [0.9] },
-    );
-    const operation = compileEventTargetSimpleDamageOperationSource(
-      {
-        kind: 'damage',
-        alwaysNext: true,
-        attacker: 'ActionOwner',
-        target: parseTargetReferenceSource(targetFixture('Target'), 'target'),
-        effectSource: parseTargetReferenceSource(targetFixture('Owner'), 'effectSource'),
-        hitEnvironment: false,
-        units: [unit],
-      },
-      'damage',
-      {
-        actionOwnerTarget: 'caster',
-        actionSourceTarget: 'caster',
-        gameplayTagRegistry: new GameplayTagRegistry(['Damage/TyphoeaSkill/FloatingHit_Weak']),
-      },
-    );
+  it.each(['enemy', 'actionInputTarget'] as const)(
+    '保留伤害标签与实际目标绑定：%s',
+    actionTargetTarget => {
+      const unit = parseDamageUnitSource(
+        { ...BASE_UNIT, damageTags: [{ tagId: 1208750764 }] },
+        'unit',
+        { atk_scale: [0.9] },
+      );
+      const operation = compileEventTargetSimpleDamageOperationSource(
+        {
+          kind: 'damage',
+          alwaysNext: true,
+          attacker: 'ActionOwner',
+          target: parseTargetReferenceSource(targetFixture('Target'), 'target'),
+          effectSource: parseTargetReferenceSource(targetFixture('Owner'), 'effectSource'),
+          hitEnvironment: false,
+          units: [unit],
+        },
+        'damage',
+        {
+          actionOwnerTarget: 'caster',
+          actionSourceTarget: 'caster',
+          actionTargetTarget,
+          gameplayTagRegistry: new GameplayTagRegistry(['Damage/TyphoeaSkill/FloatingHit_Weak']),
+        },
+      );
 
-    expect(operation.parameters.gameplayTags).toEqual(['Damage/TyphoeaSkill/FloatingHit_Weak']);
-    expect(operation.parameters.tags).toEqual([]);
-  });
+      expect(operation.parameters.gameplayTags).toEqual(['Damage/TyphoeaSkill/FloatingHit_Weak']);
+      expect(operation.parameters.tags).toEqual([]);
+      expect(operation.parameters.target).toBe(
+        actionTargetTarget === 'actionInputTarget' ? 'actionInputTarget' : undefined,
+      );
+    },
+  );
 
   it.each([
     { damageTags: [{}] },

@@ -8,6 +8,8 @@ import type {
   ResolvedSkillBuffDefinition,
 } from '../../compiler/combatProgram';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+import type { ActionBlackboard } from '../actions/actionBlackboard';
+import { copyEnemyPartTransferInfo } from '../abilities/runtimeTargetContext';
 import type { AbilityOutputBuffPayload } from '../events/combatAbilityEvent';
 import type { FrameRuntime } from '../runtime/combatSimulation';
 import type {
@@ -61,6 +63,8 @@ export class BuffDefinitionOperationTarget<Key extends string>
   #resolveLifecycleOperations:
     ((source: BuffLifecycleOperationSource) => CombatOperationExecutor) | null = null;
   #bindRestoredSkillAffixObjectReference: BindRestoredSkillAffixObjectReference | undefined;
+  #resolveApplicationRecipient:
+    ((applyTags: readonly GameplayTag[]) => BuffOperationTarget | undefined) | undefined;
   constructor(
     readonly container: CombatBuffContainer<Key>,
     readonly definitions: CombatBuffDefinitionResolver<Key>,
@@ -94,6 +98,12 @@ export class BuffDefinitionOperationTarget<Key extends string>
 
   get entityBlackboard() {
     return this.container.entityBlackboard;
+  }
+
+  configureSourceEntityBlackboard(
+    resolve: (sourceId: string) => ActionBlackboard | undefined,
+  ): void {
+    this.container.resolveSourceEntityBlackboard = resolve;
   }
 
   /**
@@ -159,7 +169,13 @@ export class BuffDefinitionOperationTarget<Key extends string>
     return this.#apply(request) !== null;
   }
 
-  applyScoped(request: BuffApplicationRequest): CombatBuff<Key> | null {
+  configureBuffApplicationRecipient(
+    resolve: (applyTags: readonly GameplayTag[]) => BuffOperationTarget | undefined,
+  ): void {
+    this.#resolveApplicationRecipient = resolve;
+  }
+
+  applyScoped(request: BuffApplicationRequest): BuffApplicationHandle | null {
     // 返回稳定的实例句柄，使重复施加/刷新后的 Skill.AttachBuff 可以按身份去重。
     return this.#apply(request);
   }
@@ -170,7 +186,23 @@ export class BuffDefinitionOperationTarget<Key extends string>
         ? this.definitions.get(request.buffId)
         : this.#compileInlineDefinition(request.buffId, request.definition);
     if (definition === undefined) throw new Error(`unknown combat buff '${request.buffId}'`);
+    const recipient = this.#resolveApplicationRecipient?.(definition.applyTags ?? []);
+    if (recipient !== undefined && recipient !== this) {
+      if (recipient.applyScoped === undefined)
+        throw new Error(`Buff recipient '${recipient.ownerId}' cannot return an applied instance`);
+      return recipient.applyScoped({
+        ...request,
+        partTransferInfo: copyEnemyPartTransferInfo(
+          request.partTransferInfo,
+          recipient.ownerId,
+          this.ownerId,
+        ),
+      });
+    }
     const event: BuffAppliedEvent = {
+      ...(request.partTransferInfo === undefined
+        ? {}
+        : { partTransferInfo: request.partTransferInfo }),
       ...(request.physicalInflictionType === undefined
         ? {}
         : { physicalInflictionType: request.physicalInflictionType }),
@@ -190,6 +222,7 @@ export class BuffDefinitionOperationTarget<Key extends string>
         definition,
         request.sourceId,
         {
+          partTransferInfo: request.partTransferInfo,
           blackboardValues: request.blackboardValues,
           blackboardArtsIntensityFactors: request.blackboardArtsIntensityFactors,
           blackboardValueCalculations: request.blackboardValueCalculations,
@@ -231,6 +264,9 @@ export class BuffDefinitionOperationTarget<Key extends string>
 
   configureEntityTagAdded(observer: (tag: GameplayTag) => void): void {
     this.container.configureEntityTagAdded(observer);
+  }
+  observeEntityTags(observer: () => void): () => void {
+    return this.container.observeEntityTags(observer);
   }
 
   configureBuffConsumedObserver(observer: (event: BuffConsumedEvent) => void): void {

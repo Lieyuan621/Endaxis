@@ -5,6 +5,7 @@ import {
   requireNonEmptyString,
   requireRecord,
   requireString,
+  readOptionalReferenceKey,
 } from './primitives.ts';
 import { parseNativeCalculationSource, type NativeCalculationSource } from './calculation.ts';
 import type { BlackboardLevelValues } from './scalar.ts';
@@ -68,12 +69,13 @@ export function parseHealActionSource(
   );
   const effectData = requireRecord(action.effectData, `${path}.effectData`);
   const useHealTags = requireBoolean(action.useHealTags, `${path}.useHealTags`);
+  const playHealEffect = requireBoolean(action.playHealEffect, `${path}.playHealEffect`);
   return {
     kind: 'heal',
     alwaysNext: requireBoolean(action.alwaysNext, `${path}.alwaysNext`),
     healType: requireNonEmptyString(action.healType, `${path}.healType`),
     healer: requireNonEmptyString(action.healer, `${path}.healer`),
-    contextKey: requireString(action.contextKey, `${path}.contextKey`),
+    contextKey: readOptionalReferenceKey(action.contextKey, `${path}.contextKey`),
     target: parseTargetReferenceSource(action.target, `${path}.target`),
     calculation: parseNativeCalculationSource(
       action.healCalculation,
@@ -81,8 +83,12 @@ export function parseHealActionSource(
       inheritedBlackboard,
     ),
     showHealText: requireBoolean(action.showHealText, `${path}.showHealText`),
-    playHealEffect: requireBoolean(action.playHealEffect, `${path}.playHealEffect`),
-    effectName: requireString(effectData.effectName, `${path}.effectData.effectName`),
+    playHealEffect,
+    // 原始导出允许未启用的特效引用为 null；启用时仍按有效字符串校验。
+    effectName:
+      !playHealEffect && effectData.effectName === null
+        ? ''
+        : requireString(effectData.effectName, `${path}.effectData.effectName`),
     onlyPlayEffectOnActualHeal: requireBoolean(
       action.onlyPlayEffectOnActualHeal,
       `${path}.onlyPlayEffectOnActualHeal`,

@@ -4,6 +4,47 @@ import { CustomAbilityEventOperationExecutor } from './customAbilityEventOperati
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
 
 describe('CustomAbilityEventOperationExecutor', () => {
+  it('snapshots receivers before synchronous callbacks and skips source lookup for an empty group', () => {
+    const receivers = [
+      { kind: 'abilityEntity' as const, instanceId: 2 },
+      { kind: 'abilityEntity' as const, instanceId: 3 },
+    ];
+    const queryTargets = vi.fn((query: { kind: string }) =>
+      query.kind === 'context' ? receivers : [{ kind: 'operator' as const, operatorId: 'si' }],
+    );
+    const emit = vi.fn((_ownerId: string, _payload: unknown) => {
+      receivers.length = 0;
+    });
+    const executor = new CustomAbilityEventOperationExecutor({
+      sourceId: 'si',
+      queryTargets,
+      emit,
+      delegate: { execute: () => false, evaluate: () => false },
+    });
+    const step = {
+      kind: 'triggerCustomAbilityEvent' as const,
+      parameters: {
+        eventName: 'yichuline1',
+        eventParam: 0,
+        target: { kind: 'context' as const, key: 'moying1' },
+        source: { kind: 'source' as const },
+      },
+    };
+    const context = { blackboard: new ActionBlackboard() };
+    expect(executor.execute(step, context)).toBe(true);
+    expect(emit.mock.calls.map(args => args[0])).toEqual(['ability-entity:2', 'ability-entity:3']);
+    expect(emit).toHaveBeenLastCalledWith('ability-entity:3', {
+      sourceId: 'si',
+      targetId: 'ability-entity:3',
+      eventName: 'yichuline1',
+      eventParam: 0,
+    });
+    queryTargets.mockClear();
+    expect(executor.execute(step, context)).toBe(true);
+    expect(queryTargets).toHaveBeenCalledTimes(1);
+    expect(emit).toHaveBeenCalledTimes(2);
+  });
+
   it('publishes the strict caster-to-caster payload synchronously', () => {
     const emit = vi.fn();
     const delegate: CombatOperationExecutor = {

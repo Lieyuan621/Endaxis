@@ -109,23 +109,20 @@
     },
     {
       "id": "progeny",
-      "enemyIds": [
-        "eny_0125_fdcentur"
-      ]
+      "enemyIds": ["eny_0125_fdcentur"]
     },
     {
       "id": "witchcraftConstructs",
-      "enemyIds": [
-        "eny_0127_bigents",
-        "eny_0128_babyents",
-        "eny_0129_slwood"
-      ]
+      "enemyIds": ["eny_0127_bigents", "eny_0128_babyents", "eny_0129_slwood"]
     }
   ],
   "uncategorizedEnemyIds": [
-    "eny_0080_reaper"
+    "eny_0080_reaper",
+    "eny_0130_inkbiter",
+    "eny_0131_inkscroll",
+    "eny_0132_inkkirin",
+    "eny_0133_inklion",
+    "eny_0134_jsspsi"
   ],
-  "hiddenEnemyIds": [
-    "eny_0057_dog"
-  ]
+  "hiddenEnemyIds": ["eny_0057_dog"]
 }

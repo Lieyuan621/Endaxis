@@ -18,6 +18,11 @@ export const OPERATOR_PASSIVE_UI_COMPONENT_BY_PREFAB = {
     fullCount: 3,
     stateCounts: [0, 1, 2, 3],
   },
+  OverlayInfoNodeSi: {
+    componentType: 'UICharPassiveMultiStates',
+    fullCount: 1000,
+    stateCounts: [0, 1, 1000],
+  },
   OverlayInfoNodeTangTang: {
     componentType: 'UICharPassiveMultiStates',
     fullCount: 2,

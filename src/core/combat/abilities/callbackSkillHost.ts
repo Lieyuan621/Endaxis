@@ -13,7 +13,11 @@ import {
   type CombatOperationExecutor,
 } from '../skills/skillRuntime';
 import type { CallbackSkillHostState } from '../state/abilityState';
-import type { BuffReference } from '../state/foundationState';
+import type {
+  BuffReference,
+  CombatSkillCastInfo,
+  PostSkillCastRequest,
+} from '../state/foundationState';
 import { COMBAT_FRAMES_PER_SECOND, type CombatClock } from '../time/combatClock';
 import { uniformAbilityTickDeltas } from '../time/timeDilationRuntime';
 import { AbilitySystemRuntime } from './abilitySystemRuntime';
@@ -22,6 +26,7 @@ import type { ProjectileCallbackPrograms } from './projectileCallbackPrograms';
 /** 同一实体的技能共享当前技能和施放状态；技能本身仍各自保存时间轴与冷却。 */
 export class EntitySkillHostGroup {
   readonly #skills: SkillRuntime[] = [];
+  readonly #prepareDeferredCasts = new Map<string, (request: PostSkillCastRequest) => void>();
   #state?: CallbackSkillHostState['ability'];
   #ability?: AbilitySystemRuntime;
   #emitBeforeSkillCast?: (payload: AbilitySkillPayload) => void;
@@ -35,6 +40,7 @@ export class EntitySkillHostGroup {
     skill: SkillRuntime,
     restored: CallbackSkillHostState['ability'] | undefined,
     emitBeforeSkillCast: (payload: AbilitySkillPayload) => void,
+    prepareDeferredCast: (request: PostSkillCastRequest) => void,
   ): void {
     if (this.#skills.some(existing => existing.skillId === skill.skillId))
       throw new Error(`duplicate entity skill host '${skill.skillId}'`);
@@ -48,6 +54,7 @@ export class EntitySkillHostGroup {
     this.#state ??= restored;
     this.#emitBeforeSkillCast ??= emitBeforeSkillCast;
     this.#skills.push(skill);
+    this.#prepareDeferredCasts.set(skill.skillId, prepareDeferredCast);
     this.#ability = undefined;
   }
 
@@ -57,6 +64,11 @@ export class EntitySkillHostGroup {
       {
         skills: this.#skills,
         emitBeforeSkillCast: this.#emitBeforeSkillCast,
+        beforePostSkillCastStart: request => {
+          const prepare = this.#prepareDeferredCasts.get(request.skillId);
+          if (!prepare) throw new Error(`entity skill '${request.skillId}' has no cast binding`);
+          prepare(request);
+        },
         resolveTickDeltas: () => uniformAbilityTickDeltas(this.#delta),
       },
       this.#state,
@@ -151,6 +163,9 @@ export function createCallbackSkillHostFactory(dependencies: {
         skillId: program.skillId,
         ...(program.skillLevel === undefined ? {} : { skillLevel: program.skillLevel }),
         nativeSkillType: program.nativeSkillType,
+        ...(program.normalSkillSubType === undefined
+          ? {}
+          : { normalSkillSubType: program.normalSkillSubType }),
         naturalDurationFrames: program.naturalDurationFrames,
         initialBlackboard: program.initialBlackboard,
         timelineActions: program.timelineActions,
@@ -202,8 +217,39 @@ export function createCallbackSkillHostFactory(dependencies: {
           },
     );
     const group = binding?.group ?? new EntitySkillHostGroup();
-    group.register(skill, restored?.state.ability, payload =>
-      dependencies.emitEvent?.(ownerId, 'beforeCastSkill', payload),
+    const prepareStart = (inherited: CombatSkillCastInfo | undefined) => {
+      const castSource = inherited ?? {
+        skillCastId: dependencies.allocateSkillCastId(),
+        originSkillId: program.skillId,
+        nonReturnedSpCost: 0,
+      };
+      group.ability.prepareBeforeSkillCastStart(
+        program.skillId,
+        undefined,
+        {
+          sourceId: ownerId,
+          targetId: ownerId,
+          skillId: program.skillId,
+          skillCastId: castSource.skillCastId,
+          skillCastInfo: castSource,
+        },
+        false,
+      );
+      return castSource;
+    };
+    group.register(
+      skill,
+      restored?.state.ability,
+      payload => dependencies.emitEvent?.(ownerId, 'beforeCastSkill', payload),
+      request => {
+        const castSource = prepareStart(request.inheritedSkillCastInfo);
+        skill.prepareCastInput({
+          skipApplyCost: request.skipApplyCost ?? false,
+          inputTarget: request.inputTarget ?? null,
+          inheritedSkillCastInfo: castSource,
+          producedBy: request.producedBy,
+        });
+      },
     );
     return {
       runtimeState: restored?.state ?? {
@@ -221,21 +267,7 @@ export function createCallbackSkillHostFactory(dependencies: {
           source,
           inputTarget,
           binding?.interruptCurrentSkill ?? true,
-          () => {
-            const castSource = source ?? {
-              skillCastId: dependencies.allocateSkillCastId(),
-              originSkillId: program.skillId,
-              nonReturnedSpCost: 0,
-            };
-            ability.prepareBeforeSkillCastStart(program.skillId, undefined, {
-              sourceId: ownerId,
-              targetId: ownerId,
-              skillId: program.skillId,
-              skillCastId: castSource.skillCastId,
-              skillCastInfo: castSource,
-            });
-            return castSource;
-          },
+          () => prepareStart(source),
         );
       },
       end: () => skill.interrupt('default'),

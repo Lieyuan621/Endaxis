@@ -46,7 +46,8 @@ export function parseSetSuperArmorActionSource(
       `${path}.${field}.useBlackboardKey`,
     );
     // Unity 序列化会保留未启用分支的旧键名；只有开关本身决定当前数值来源。
-    requireString(scalar.blackboardKey, `${path}.${field}.blackboardKey`);
+    if (useBlackboardKey || scalar.blackboardKey !== null)
+      requireString(scalar.blackboardKey, `${path}.${field}.blackboardKey`);
     if (
       useBlackboardKey ||
       requireBoolean(scalar.useCustomValue, `${path}.${field}.useCustomValue`)

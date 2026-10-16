@@ -4,6 +4,7 @@ import { compileAbilityEntityTemplateCatalogSource } from '../src/compiler/abili
 import { compileAbilitySystemBlackboardsSource } from '../src/compiler/abilities/abilitySystemBlackboards.ts';
 import { readActionGraphChain } from '../src/compiler/actions/actionGraphBuilder.ts';
 import type { CombatActionProjectionContextSource } from '../src/compiler/combatProjectionCommon.ts';
+import { actionValueOperand } from '../src/compiler/combatProjectionCommon.ts';
 import {
   compileComboSkillConditionDefinitionSource,
   createOperatorComboActionProjectionContext,
@@ -69,6 +70,7 @@ export function projectOperatorDefinition(
     readonly skillSettingCatalog: string;
     /** 默认应用已验证的优化；report 仅报告候选，off 用于生成对照。 */
     readonly optimization?: DefinitionOptimizationMode;
+    readonly skipContingencyContract?: boolean;
   },
 ) {
   const args = { ...input, sources: input.sources ?? new OperatorPlanningSources(input) };
@@ -216,6 +218,10 @@ export function projectOperatorDefinition(
   const gameplayTagRegistry = new GameplayTagRegistry(
     args.sources.gameplayTags(args.gameplayTagCatalog),
   );
+  const predefinedTagQueries =
+    args.gameplayTagPredefineTable === undefined
+      ? undefined
+      : args.sources.predefinedTagQueries(args.gameplayTagPredefineTable);
   const runtimeTemplate = planOperatorRuntimeTemplate(
     row.runtimeTemplate,
     args.slug,
@@ -260,6 +266,9 @@ export function projectOperatorDefinition(
           },
         ]);
   const candidate = assembleOperatorDefinition({
+    simulationEquivalentNativeSkillIds:
+      skillGroupValidationOptions.simulationEquivalentNativeSkillIds,
+    predefinedTagQueries,
     externalBuffBlackboardReads: args.sources.externalBuffReads(args.sourceRoot),
     foundation,
     productPassiveUi: row.passiveUi,
@@ -333,9 +342,15 @@ export function projectOperatorDefinition(
           ),
         ),
       );
-      if (launches.length === 0) return { resolveTimeDilationPriority, compileSkillTypeMutation };
+      if (launches.length === 0)
+        return {
+          resolveTimeDilationPriority,
+          compileSkillTypeMutation,
+          compileSkillSlotReplacement,
+        };
       const prepared = prepareProjectileProjection(args, launches, visualOnlyIds, {
         gameplayTagRegistry,
+        predefinedTagQueries,
         actionOwnerTarget: 'unavailable',
         actionSourceTarget: 'caster',
         actionTargetTarget: 'enemy',
@@ -345,6 +360,7 @@ export function projectOperatorDefinition(
         compileProjectileLaunch: prepared.compileProjectileLaunch,
         resolveTimeDilationPriority,
         compileSkillTypeMutation,
+        compileSkillSlotReplacement,
       };
     },
     createAbilityEntityProjectionExtensions: (skillId, value, visualOnlyIds) => {
@@ -372,6 +388,7 @@ export function projectOperatorDefinition(
       if (launches.length === 0) return { resolveTimeDilationPriority };
       const projectile = prepareProjectileProjection(args, launches, visualOnlyIds, {
         gameplayTagRegistry,
+        predefinedTagQueries,
         actionOwnerTarget: 'unavailable',
         actionSourceTarget: 'caster',
         actionTargetTarget: 'enemy',
@@ -383,7 +400,40 @@ export function projectOperatorDefinition(
       };
     },
   });
-  return { ...candidate, activeSkills };
+  // 模板还登记外观等可选模式；仅发布默认开启或当前战斗闭包实际切入的模式。
+  const usedModes = new Set<string>();
+  const collectModes = (value: unknown): void => {
+    if (value === null || typeof value !== 'object') return;
+    if (Array.isArray(value)) {
+      value.forEach(collectModes);
+      return;
+    }
+    const record = value as Record<string, unknown>;
+    if (record.kind === 'changePlayerActionMode') {
+      const parameters = requireRecord(record.parameters, 'changePlayerActionMode.parameters');
+      usedModes.add(requireNonEmptyString(parameters.modeId, 'changePlayerActionMode.modeId'));
+    }
+    Object.values(record).forEach(collectModes);
+  };
+  collectModes(candidate.operator);
+  const modes = candidate.operator.playerActionModes?.filter(
+    mode => mode.defaultEnabled || usedModes.has(mode.modeId),
+  );
+  const availableSkills = new Set(activeSkills.map(skill => skill.definition.key));
+  for (const mode of modes ?? [])
+    for (const skillId of mode.normalAttackSkillKeys ?? [])
+      if (!availableSkills.has(skillId))
+        throw new Error(
+          `CharacterData.mode.${mode.modeId}: native skill '${skillId}' is not converted`,
+        );
+  return {
+    ...candidate,
+    operator: {
+      ...candidate.operator,
+      ...(modes === undefined ? {} : { playerActionModes: modes }),
+    },
+    activeSkills,
+  };
 }
 
 /** 独立规划在原始投影上完成优化，最后一次性转换为正式节点定义。 */
@@ -577,9 +627,7 @@ function compileNativePlayerActionRouting(
         ...(mode.normalAttackSkillIds === undefined
           ? {}
           : {
-              normalAttackSkillKeys: mode.normalAttackSkillIds.map(skillId =>
-                requireSkillKey(skillId, `CharacterData.mode.${mode.modeId}.normalAttackSkillIds`),
-              ),
+              normalAttackSkillKeys: mode.normalAttackSkillIds,
             }),
         ...(Object.keys(commandMappings).length === 0 ? {} : { commandMappings }),
       },
@@ -596,10 +644,15 @@ function compileNativePlayerActionRouting(
 
 function createActiveSkillSlotReplacementProjection(skills: readonly { readonly key: string }[]) {
   const availableSkillIds = new Set(skills.map(skill => skill.key));
-  return (action: SkillSlotReplacementActionSource, sourcePath: string) => {
+  return (
+    action: SkillSlotReplacementActionSource,
+    sourcePath: string,
+    context: CombatActionProjectionContextSource,
+  ) => {
+    // GetTargetsView 仅在 Context 来源读取 targetGroupKey；Owner/Source 中
+    // 序列化残留的组键不改变接收者（见 combat-spec 的 selector-pipeline）。
     if (
       !['Owner', 'Source'].includes(action.skillSource.targetSource) ||
-      action.skillSource.targetGroupKey !== '' ||
       action.skillSource.selectorOwner !== 'ActionOwner' ||
       action.skillSource.finderType !== null ||
       action.skillSource.validatorTypes.length !== 0 ||
@@ -612,8 +665,17 @@ function createActiveSkillSlotReplacementProjection(skills: readonly { readonly 
         `${sourcePath}: active skill replacement input-cache override is unsupported`,
       );
     }
-    if (action.lifetime === 'SpecificTime') {
-      throw new Error(`${sourcePath}: timed active skill replacement is unsupported`);
+    const receiver =
+      action.skillSource.targetSource === 'Source'
+        ? context.actionSourceTarget
+        : context.actionOwnerTarget;
+    if (
+      receiver !== 'caster' &&
+      !(receiver === 'buffOwner' && context.fixedBuffOwnerTarget === 'caster')
+    ) {
+      throw new Error(
+        `${sourcePath}: skill-slot replacement receiver is not the compiled operator`,
+      );
     }
     if (!availableSkillIds.has(action.targetSkillId)) {
       throw new Error(`${sourcePath}: unknown replacement target skill '${action.targetSkillId}'`);
@@ -638,7 +700,14 @@ function createActiveSkillSlotReplacementProjection(skills: readonly { readonly 
           targetSkillKey,
           inheritOriginSkillCooldownProgress: action.inheritOriginSkillCooldownProgress,
           lifetime:
-            action.lifetime === 'Infinite' ? ('infinite' as const) : ('finishByAction' as const),
+            action.lifetime === 'SpecificTime'
+              ? ('specificTime' as const)
+              : action.lifetime === 'Infinite'
+                ? ('infinite' as const)
+                : ('finishByAction' as const),
+          ...(action.lifetime === 'SpecificTime'
+            ? { durationSeconds: actionValueOperand(action.duration) }
+            : {}),
           ...(mappedRevertedSkillKey === undefined
             ? {}
             : { revertedSkillKey: mappedRevertedSkillKey }),

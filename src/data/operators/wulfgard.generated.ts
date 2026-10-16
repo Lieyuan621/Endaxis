@@ -1615,7 +1615,7 @@ export const wulfgardChr_0006_wolfgd_combo_skillActionGraph = {
                   maxChargeTime: 1,
                   cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                 },
-                blackboard: { atk_scale: 0, duration: 0, poise: 0, usp: 0 },
+                blackboard: { atk_scale: 0, poise: 0, usp: 0 },
                 scheduledSequences: [
                   { startFrame: 0, endFrame: 0, sequence: { $sequence: 'spawnAbilityEntity_1' } },
                 ],
@@ -1668,25 +1668,7 @@ export const wulfgardChr_0006_wolfgd_combo_skillActionGraph = {
         },
         next: null,
       },
-      findCharacterTeamTargets_6: {
-        action: {
-          kind: 'findCharacterTeamTargets',
-          parameters: { saveToContextKey: 'mainchar', selection: { kind: 'controlledOperator' } },
-        },
-        next: null,
-      },
-      ifElse_7: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_1' },
-          whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'findCharacterTeamTargets_6' },
-        },
-        next: null,
-      },
     },
-    dataNodes: { data_1: { type: 'boolean', expression: { kind: 'casterControlled' } } },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
@@ -1696,7 +1678,6 @@ export const wulfgardChr_0006_wolfgd_combo_skill: SkillDefinition = {
   element: 'heat',
   blackboard: {
     atk_scale: [0.6, 0.66, 0.72, 0.78, 0.84, 0.9, 0.96, 1.02, 1.08, 1.16, 1.25, 1.35],
-    count: 0,
     poise: 10,
     usp: 10,
   },
@@ -1713,7 +1694,6 @@ export const wulfgardChr_0006_wolfgd_combo_skill: SkillDefinition = {
   scheduledSequences: [
     { startFrame: 12, endFrame: 16, sequence: { $sequence: 'createSpatialPointTargets_2' } },
     { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_3' } },
-    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'ifElse_7' } },
   ],
   smartTarget: 'trigger',
   cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 570],
@@ -2303,6 +2283,7 @@ export const wulfgard: OperatorDefinition = {
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0006_wolfgd_combo_skill: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',

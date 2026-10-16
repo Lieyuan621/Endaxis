@@ -7,6 +7,7 @@ import type { PositionedOperatorPassiveUiTimelineSegment } from '../../../core/p
 import OperatorPassiveUiWidget from './OperatorPassiveUiWidget.vue';
 import TimelineStatusSegment from './TimelineStatusSegment.vue';
 import { passiveUiSkins } from '../../operators/passive-ui/registry';
+import { numericPassiveUiText } from '../../operators/passive-ui/state';
 import { frameToTimelinePx } from '../timelineGeometry';
 import { timelineUpperBuffTop } from './timelineTrackEffectLayout';
 
@@ -52,10 +53,7 @@ function segmentTitle(segment: PositionedOperatorPassiveUiTimelineSegment): stri
   const label = t(`timeline.passiveUi.appearances.${segment.appearance}`);
   const state =
     segment.kind === 'numeric'
-      ? t('timeline.passiveUi.numericState', {
-          value: segment.value,
-          maximum: segment.maximum,
-        })
+      ? numericPassiveUiText(segment, t)
       : segment.kind === 'buffProgress'
         ? t(`timeline.passiveUi.modes.${segment.mode}`)
         : t('timeline.passiveUi.counterState', {
@@ -73,39 +71,45 @@ function segmentName(segment: PositionedOperatorPassiveUiTimelineSegment): strin
 }
 
 const items = computed(() =>
-  props.segments.map(segment => {
-    const left = frameToTimelinePx(
-      segment.startFrame,
-      props.prepFrames,
-      props.pxPerFrame,
-      props.prepExpanded,
-      props.prepEndFrame,
-    );
-    const right = frameToTimelinePx(
-      segment.endFrame,
-      props.prepFrames,
-      props.pxPerFrame,
-      props.prepExpanded,
-      props.prepEndFrame,
-    );
-    const title = segmentTitle(segment);
-    const renderedIconWidth = iconWidth(segment);
-    return {
-      ...segment,
-      key:
-        segment.kind === 'numeric'
-          ? `${segment.operatorId}:numeric:${segment.startFrame}:${segment.value}`
-          : segment.kind === 'buffProgress'
-            ? `${segment.operatorId}:${segment.buffId}:${segment.instanceId}:${segment.startFrame}`
-            : `${segment.operatorId}:${segment.kind}:${segment.kind === 'abilityEntityCount' ? `${segment.abilityEntityId}:${segment.entities.map(entity => entity.instanceId).join(',')}` : ''}:${segment.startFrame}`,
-      title,
-      name: segmentName(segment),
-      left,
-      top: timelineUpperBuffTop(segment.lane),
-      iconWidth: renderedIconWidth,
-      width: Math.max(0, right - left - renderedIconWidth - BAR_GAP * 2),
-    };
-  }),
+  // 热更新时旧模拟结果可能仍引用已经移除的外观，不让失效展示阻断整条轨道。
+  props.segments
+    .filter(
+      segment =>
+        segment.kind === 'abilityEntityCount' || passiveUiSkins[segment.appearance] !== undefined,
+    )
+    .map(segment => {
+      const left = frameToTimelinePx(
+        segment.startFrame,
+        props.prepFrames,
+        props.pxPerFrame,
+        props.prepExpanded,
+        props.prepEndFrame,
+      );
+      const right = frameToTimelinePx(
+        segment.endFrame,
+        props.prepFrames,
+        props.pxPerFrame,
+        props.prepExpanded,
+        props.prepEndFrame,
+      );
+      const title = segmentTitle(segment);
+      const renderedIconWidth = iconWidth(segment);
+      return {
+        ...segment,
+        key:
+          segment.kind === 'numeric'
+            ? `${segment.operatorId}:numeric:${segment.startFrame}:${segment.value}`
+            : segment.kind === 'buffProgress'
+              ? `${segment.operatorId}:${segment.buffId}:${segment.instanceId}:${segment.startFrame}`
+              : `${segment.operatorId}:${segment.kind}:${segment.kind === 'abilityEntityCount' ? `${segment.abilityEntityId}:${segment.entities.map(entity => entity.instanceId).join(',')}` : ''}:${segment.startFrame}`,
+        title,
+        name: segmentName(segment),
+        left,
+        top: timelineUpperBuffTop(segment.lane),
+        iconWidth: renderedIconWidth,
+        width: Math.max(0, right - left - renderedIconWidth - BAR_GAP * 2),
+      };
+    }),
 );
 const hitItems = computed(() => {
   const counts = new Map<string, number>();

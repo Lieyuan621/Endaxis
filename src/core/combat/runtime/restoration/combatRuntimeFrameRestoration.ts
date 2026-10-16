@@ -48,6 +48,7 @@ export function bindRestoredCombatRuntimeFrame(
   const multiDash = new PlayerMultiDashRuntime();
   bindCombatFramePipeline(simulation, {
     timeDilation: shared.timeDilation,
+    frameEndEvents: options.foundation.boundEnvironment.frameEndEvents,
     control,
     enemyControl: options.foundation.boundEnvironment.enemyControlRuntime,
     resources: new CombatResourceRuntime(shared.resources, shared.clock, shared.receipt),

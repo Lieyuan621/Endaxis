@@ -59,7 +59,10 @@ export function parseBlackboardDataPairs(
     requireExactFields(entry, new Set(['key', 'valueDouble', 'valueStr', 'isDynamic']), path);
     const key = requireNonEmptyString(entry.key, `${path}.key`);
     const numericValue = requireNumber(entry.valueDouble, `${path}.valueDouble`);
-    const stringValue = requireString(entry.valueStr, `${path}.valueStr`);
+    // DataPair.isNumericValue 在 valueStr 为 null 或空串时均返回 true。
+    // 只归一此数值/字符串联合字段，不改写其他原生字符串的 null。
+    const stringValue =
+      entry.valueStr === null ? '' : requireString(entry.valueStr, `${path}.valueStr`);
     if (stringValue && numericValue !== 0) {
       throw new Error(`${path}: numeric and string values are both set`);
     }
@@ -70,10 +73,19 @@ export function parseBlackboardDataPairs(
     };
   });
 
-  if (new Set(result.map(item => item.key)).size !== result.length) {
-    throw new Error(`${sourcePath}: duplicate key`);
+  const unique = new Map<string, DeclaredBlackboardValueSource>();
+  for (const item of result) {
+    const previous = unique.get(item.key);
+    if (previous !== undefined) {
+      // 1.6.3 实体模板存在完全相同的重复声明。原生黑板按键读取/赋值，
+      // 声明次数不是叠加次数；仅合并值和动态标志均相同的项，不推测冲突覆盖规则。
+      if (!Object.is(previous.value, item.value) || previous.isDynamic !== item.isDynamic)
+        throw new Error(`${sourcePath}: duplicate key ${item.key} has conflicting declarations`);
+      continue;
+    }
+    unique.set(item.key, item);
   }
-  return result.sort((left, right) => left.key.localeCompare(right.key));
+  return [...unique.values()].sort((left, right) => left.key.localeCompare(right.key));
 }
 
 /**

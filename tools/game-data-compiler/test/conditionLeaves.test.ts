@@ -37,6 +37,73 @@ const TARGET_CONTEXT = {
 } as const;
 
 describe('公共条件叶子 IR', () => {
+  it('实体技能中的当前主控技能检查不读取来源干员或事件技能', () => {
+    const source = parseKnownNativeActionSequenceSource(
+      {
+        actionData: [
+          condition('CheckSkillType', {
+            checkTargetCurSkill: true,
+            skillOwner: targetFixture('MainCharacter'),
+            mustBeforeExclusiveTime: false,
+            attackTypeMask: 'All',
+            skillTypeList: ['BreakingAttack', 'Dodge'],
+            normalSkillSubTypeFilter: 'Any',
+          }),
+        ],
+        onlyExecuteWhenSourceIsMainChar: false,
+        onlyExecuteWhenSourceIsGuard: false,
+      },
+      'skill.main-character',
+      {},
+    );
+    expect(
+      compileEventCondition(
+        source.actions[0]!,
+        {
+          actionOwnerTarget: 'currentAbilityEntity',
+          actionSourceTarget: 'caster',
+          actionTargetTarget: 'enemy',
+          graph: createActionGraphBuilder(),
+        },
+        new Map(),
+      ),
+    ).toEqual({
+      kind: 'currentSkillTypeIn',
+      target: 'controlledOperator',
+      skillTypes: ['finisher', 'dodge'],
+    });
+  });
+
+  it('转移来源查询保留部位标签和写入目标组，不按施法来源折叠', () => {
+    const source = parseKnownNativeActionSequenceSource(
+      {
+        actionData: [
+          {
+            ...CONDITION_META,
+            $type: 'Beyond.Gameplay.Core.CheckDamageTransferredSource+Data, Gameplay.Beyond',
+            tagQuery: { queryType: 'HasAny', tags: [{ tagId: 123 }] },
+            contextKey: 'part',
+          },
+        ],
+        onlyExecuteWhenSourceIsMainChar: false,
+        onlyExecuteWhenSourceIsGuard: false,
+      },
+      'transfer',
+      {},
+    );
+    expect(source.actions[0]?.body).toMatchObject({
+      kind: 'leaf',
+      value: {
+        family: 'condition',
+        action: {
+          kind: 'damageTransferredSource',
+          tagQuery: { queryType: 'hasAny', tagIds: [123] },
+          contextKey: 'part',
+        },
+      },
+    });
+    expect(isPresentationOnlyActionSequence(source)).toBe(false);
+  });
   it('静态敌人证明用于公共目标查询，未证明的组仍在运行时读取', () => {
     const target = parseTargetReferenceSource(
       targetFixture('Context', undefined, 'targets'),
@@ -204,16 +271,25 @@ describe('公共条件叶子 IR', () => {
       attackTypeMask: 'All',
     };
     const numeric = parseConditionLeafSource(
-      condition('CheckSkillType', { ...payload, skillTypeList: [2, 6] }),
+      condition('CheckSkillType', {
+        ...payload,
+        skillTypeList: [2, 6],
+        normalSkillSubTypeFilter: 2,
+      }),
       'SkillData.native.condition',
       {},
     );
     const named = parseConditionLeafSource(
-      condition('CheckSkillType', { ...payload, skillTypeList: ['NormalSkill', 'ComboSkill'] }),
+      condition('CheckSkillType', {
+        ...payload,
+        skillTypeList: ['NormalSkill', 'ComboSkill'],
+        normalSkillSubTypeFilter: 'AdditionalNormalSkill',
+      }),
       'SkillData.named.condition',
       {},
     );
     expect(numeric).toEqual(named);
+    expect(named).toMatchObject({ normalSkillSubTypeFilter: 'AdditionalNormalSkill' });
   });
   it('原始 SkillData 的伤害分类比较枚举与已解码名称一致', () => {
     const numeric = parseConditionLeafSource(
@@ -351,10 +427,13 @@ describe('公共条件叶子 IR', () => {
     });
   });
 
-  it('严格保留 OnConsumeBuff 消费层数比较和值写回键', () => {
+  it.each([
+    ['CheckConsumeBuffLayer', 'consumeBuffLayer'],
+    ['CheckBuffEnhanceChangedLayer', 'buffEnhanceLayer'],
+  ])('%s 保留事件层数比较和值写回键', (sourceType, kind) => {
     expect(
       parseConditionLeafSource(
-        condition('CheckConsumeBuffLayer', {
+        condition(sourceType, {
           num: scalarFixture(0, 'minimum_layer'),
           compareType: 'GE',
           storeKey: 'consume_layer',
@@ -363,8 +442,8 @@ describe('公共条件叶子 IR', () => {
         { minimum_layer: [1, 2] },
       ),
     ).toEqual({
-      kind: 'consumeBuffLayer',
-      sourceType: 'CheckConsumeBuffLayer',
+      kind,
+      sourceType,
       comparison: 'GE',
       value: {
         value: 0,

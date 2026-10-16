@@ -1,4 +1,8 @@
 import { OperatorPlanningSources } from './operatorPlanningSources.ts';
+import {
+  parseNativeJsonEncodingSchema,
+  type NativeJsonEncodingSchema,
+} from '../src/source/nativeJsonEncoding.ts';
 import { requireRecord } from '../src/source/primitives.ts';
 export { readGameplayTagPaths } from './readGameplayTagPaths.ts';
 import fs from 'node:fs';
@@ -58,6 +62,8 @@ import { readGeneratedTimeDilationPriorities } from '../src/compiler/catalogs/ge
 export interface OperatorActiveSkillRuntimeArguments {
   /** 整名或整批规划共用当轮来源；单技能入口省略时创建独立实例。 */
   readonly sources?: OperatorPlanningSources;
+  /** 同版本原生字段类型目录；原始数字枚举在读取边界转换，不能使用旧版本目录补缺。 */
+  readonly nativeJsonEncoding?: NativeJsonEncodingSchema;
   readonly sourceRoot: string;
   readonly sourceFile: string;
   readonly skillPatchTable: string;
@@ -71,6 +77,7 @@ export interface OperatorActiveSkillRuntimeArguments {
   /** 仅供已显式审计的内部/替换技能；它们可能不在 SkillPatchTable 养成等级组中。 */
   readonly allowMissingSkillPatch?: boolean;
   readonly gameplayTagCatalog: string;
+  readonly gameplayTagPredefineTable?: string;
   readonly timeDilationCatalog: string;
   readonly slug: string;
   readonly key: string;
@@ -93,7 +100,7 @@ export interface PlannedOperatorActiveSkillRuntime {
   readonly runtimeBuffIds: readonly string[];
   readonly abilityEntitySpawns: readonly {
     readonly abilityEntityId: string;
-    readonly skillId: string;
+    readonly skillId?: string;
     readonly sourcePath: string;
   }[];
   readonly file: { readonly relativePath: string; readonly content: string };
@@ -305,6 +312,10 @@ export function planOperatorActiveSkillRuntime(
   const templateCatalog = collectDecodedProjectileBlackboards(runtimeCatalog);
   const abilityCatalog = sources.abilityEntities(path.join(args.sourceRoot, 'AbilityEntityData'));
   const registry = new GameplayTagRegistry(sources.gameplayTags(args.gameplayTagCatalog));
+  const predefinedTagQueries =
+    args.gameplayTagPredefineTable === undefined
+      ? undefined
+      : sources.predefinedTagQueries(args.gameplayTagPredefineTable);
   const priorities = sources.timeDilationPriorities(args.timeDilationCatalog);
   const resolveTimeDilationPriority = (tagId: number, actionPath: string) => {
     const value = priorities.get(tagId);
@@ -313,17 +324,27 @@ export function planOperatorActiveSkillRuntime(
     return value;
   };
   const abilityChildGraphs = new Map<string, ReturnType<typeof parseKnownSkillActionGraphSource>>();
-  const pendingAbilitySkillIds = [graph, ...callbackGraphs.values()].flatMap(skill =>
+  const registeredSpawnSkills = (skill: ReturnType<typeof parseKnownSkillActionGraphSource>) =>
     skill.actionGroup.timelineActions.flatMap(timeline =>
-      collectNativeActionNodes(timeline.sequence).flatMap(node =>
-        node.metadata.enabled &&
-        node.body.kind === 'leaf' &&
-        node.body.value.family === 'abilityEntity' &&
-        node.body.value.action.skillId.length > 0
-          ? [node.body.value.action.skillId]
-          : [],
-      ),
-    ),
+      collectNativeActionNodes(timeline.sequence).flatMap(node => {
+        if (
+          !node.metadata.enabled ||
+          node.body.kind !== 'leaf' ||
+          node.body.value.family !== 'abilityEntity'
+        )
+          return [];
+        const action = node.body.value.action;
+        if (!action.skillId) return [];
+        const template = abilityCatalog.byId.get(action.abilityEntityId);
+        if (template?.activeSkillTypes === undefined)
+          throw new Error(
+            `${node.sourcePath}: missing native skill registration for ${action.abilityEntityId}`,
+          );
+        return template.activeSkillTypes[action.skillId] === undefined ? [] : [action.skillId];
+      }),
+    );
+  const pendingAbilitySkillIds = [graph, ...callbackGraphs.values()].flatMap(skill =>
+    registeredSpawnSkills(skill),
   );
   while (pendingAbilitySkillIds.length > 0) {
     const id = pendingAbilitySkillIds.shift()!;
@@ -333,18 +354,7 @@ export function planOperatorActiveSkillRuntime(
     const childPrepared = prepareSkillDefinitionInputSource(value, id, childPatch);
     const child = parseKnownSkillActionGraphSource(value, id, childPrepared.blackboard.values);
     abilityChildGraphs.set(id, child);
-    pendingAbilitySkillIds.push(
-      ...child.actionGroup.timelineActions.flatMap(timeline =>
-        collectNativeActionNodes(timeline.sequence).flatMap(node =>
-          node.metadata.enabled &&
-          node.body.kind === 'leaf' &&
-          node.body.value.family === 'abilityEntity' &&
-          node.body.value.action.skillId.length > 0
-            ? [node.body.value.action.skillId]
-            : [],
-        ),
-      ),
-    );
+    pendingAbilitySkillIds.push(...registeredSpawnSkills(child));
   }
   const actionReferences = [graph, ...callbackGraphs.values()].flatMap(skill =>
     collectSkillActionReferences(skill),
@@ -501,6 +511,7 @@ export function planOperatorActiveSkillRuntime(
     },
     callbackContext: {
       gameplayTagRegistry: registry,
+      predefinedTagQueries,
       actionOwnerTarget: 'unavailable',
       actionSourceTarget: 'caster',
       actionTargetTarget: 'enemy',
@@ -521,6 +532,25 @@ export function planOperatorActiveSkillRuntime(
     'action' | 'entity',
     ReturnType<typeof inspectExternalBlackboardUsage>
   >();
+  const collectReceiverReferences = (
+    skill: ReturnType<typeof parseKnownSkillActionGraphSource>,
+  ) => {
+    const unregistered = new Set<string>();
+    for (const timeline of skill.actionGroup.timelineActions) {
+      for (const node of collectNativeActionNodes(timeline.sequence)) {
+        if (node.body.kind !== 'leaf' || node.body.value.family !== 'abilityEntity') continue;
+        const action = node.body.value.action;
+        const registered = abilityCatalog.byId.get(action.abilityEntityId)?.activeSkillTypes;
+        // 只有完整注册表证明不会启动时才排除；缺少模板/注册数据仍保持保守分析。
+        if (registered !== undefined && registered[action.skillId] === undefined)
+          unregistered.add(`${node.sourcePath}.abilityEntitySkillId`);
+      }
+    }
+    return collectSkillActionReferences(skill).filter(
+      reference =>
+        reference.usage !== 'abilityEntitySkill' || !unregistered.has(reference.sourcePath),
+    );
+  };
   const externalBuffProof = new ExternalBuffReferenceProof();
   const rememberExternalReceiver = (receiver: BlackboardReceiverSource | undefined) => {
     if (receiver !== undefined) externalBuffProof.addExternalReferences(receiver.references);
@@ -528,7 +558,7 @@ export function planOperatorActiveSkillRuntime(
   };
   const externalRoots = [
     ...collectSkillRootBuffReferences(source, sourceIdentity),
-    ...collectSkillActionReferences(graph),
+    ...collectReceiverReferences(graph),
   ];
   externalBuffProof.addExternalReferences(externalRoots);
   const isBlackboardKeyUnusedByExternalResources = (key: string): boolean => {
@@ -594,7 +624,7 @@ export function planOperatorActiveSkillRuntime(
           value,
           references: [
             ...collectSkillRootBuffReferences(value, file),
-            ...collectSkillActionReferences(receiver),
+            ...collectReceiverReferences(receiver),
           ],
         });
       },
@@ -617,6 +647,7 @@ export function planOperatorActiveSkillRuntime(
       patch,
       context: {
         gameplayTagRegistry: registry,
+        predefinedTagQueries,
         actionOwnerTarget: 'caster',
         actionSourceTarget: 'caster',
         actionTargetTarget: 'enemy',
@@ -695,6 +726,9 @@ export function planOperatorActiveSkillRuntime(
     new Map(buffClosureRoots.map(id => [id, 'caster'] as const)),
     new Set(),
     collectCompiledBuffCapturedTargetGroups(definition),
+    undefined,
+    undefined,
+    predefinedTagQueries,
   );
   const blockedBuffs = buffClosure.diagnostics.filter(item => item.status === 'blocked');
   if (blockedBuffs.length > 0)
@@ -838,7 +872,7 @@ function requireOwnedDirectory(directory: string, slug: string, expectedName: st
   const siblingPattern =
     suffix === null
       ? null
-      : new RegExp(`^${escapeRegExp(slug)}\\.[A-Za-z][A-Za-z0-9]*${escapeRegExp(suffix)}$`);
+      : new RegExp(`^${escapeRegExp(slug)}\\.[A-Za-z][A-Za-z0-9_]*${escapeRegExp(suffix)}$`);
   if (names.some(name => name !== expectedName && siblingPattern?.test(name) !== true))
     throw new Error(`refusing to replace unrelated files in ${directory}`);
 }
@@ -860,6 +894,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const values = new Map<string, string>();
   let check = false;
   const allowed = new Set([
+    '--native-json-schema',
     '--source-root',
     '--source-file',
     '--skill-patch-table',
@@ -903,6 +938,14 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (!supported.includes(skillType)) throw new Error(`unsupported --skill-type ${skillType}`);
   console.log(
     await generateOperatorActiveSkillRuntime({
+      ...(values.has('--native-json-schema')
+        ? {
+            nativeJsonEncoding: parseNativeJsonEncodingSchema(
+              JSON.parse(fs.readFileSync(required('--native-json-schema'), 'utf8')),
+              required('--native-json-schema'),
+            ),
+          }
+        : {}),
       sourceRoot: required('--source-root'),
       sourceFile: required('--source-file'),
       skillPatchTable: required('--skill-patch-table'),

@@ -187,7 +187,7 @@ async function setup(slugs: readonly string[] = ['one', 'two']) {
 }
 
 describe('干员与公共 Buff 共用规划', () => {
-  it('复用完整外部摘要时不重编译且文本不变，未提供摘要的下一轮重新编译来源', async () => {
+  it('外部 Buff 的同名变量不保护无引用实体的传入值', async () => {
     const args = { ...(await setup(['one'])), includeCommonBuffs: true };
     const skill: SkillDefinition = skillFixture({
       key: 'spawn',
@@ -234,21 +234,21 @@ describe('干员与公共 Buff 共用规划', () => {
     const original = equipment('equipmentValue');
     compileEntityValueConsumers.mockResolvedValue(original);
     const first = await renderOperatorDefinitionBatch(args);
-    expect(first.files[0]!.content).toContain('"equipmentValue":7');
+    expect(first.files[0]!.content).not.toContain('"equipmentValue":7');
     expect(first.files[0]!.content).not.toContain('"unused":99');
     expect(await renderOperatorDefinitionBatch(args, original)).toEqual(first);
     expect(compileEntityValueConsumers).toHaveBeenCalledTimes(1);
     compileEntityValueConsumers.mockImplementation(async () => equipment('changed'));
     const next = await renderOperatorDefinitionBatch(args);
     expect(compileEntityValueConsumers).toHaveBeenCalledTimes(2);
-    expect(next.files[0]!.content).toContain('"changed":8');
+    expect(next.files[0]!.content).not.toContain('"changed":8');
     expect(next.files[0]!.content).not.toContain('"equipmentValue":7');
     expect(projectOperatorDefinition).toHaveBeenCalledTimes(3);
     for (const result of [first, next])
       expect(result.summary.entityValueConsumers?.unknownAccess).toBe(false);
   });
 
-  it('正式单人生成与联合候选文本相同，复验重新收齐闭包且只写目标', async () => {
+  it('正式单人生成独立规划且只写目标，不受其他干员同名变量影响', async () => {
     const input = { ...(await setup()), optimization: 'apply' as const };
     const skill: SkillDefinition = skillFixture({
       key: 'spawn',
@@ -304,7 +304,7 @@ describe('干员与公共 Buff 共用规划', () => {
     await generateOperatorDefinitionCandidates(input);
     const candidate = await fs.readFile(path.join(input.outputRoot, 'one.generated.ts'), 'utf8');
     expect(candidate).not.toContain('"unused":99');
-    expect(candidate).toContain('"teammateValue":7');
+    expect(candidate).not.toContain('"teammateValue":7');
     const candidateAudit = await fs.readFile(
       path.join(input.auditRoot, 'one/operator.audit.json'),
       'utf8',
@@ -572,7 +572,6 @@ describe('干员与公共 Buff 共用规划', () => {
       expect(compileEntityValueConsumers).toHaveBeenCalledTimes(withCommonBuffs ? 1 : 0);
       if (withCommonBuffs)
         expect(result.entityValueConsumers).toEqual({
-          fallbackKeys: ['equipmentValue', 'mechanicValue'],
           externalReads: [],
           unknownAccess: false,
         });
@@ -583,9 +582,7 @@ describe('干员与公共 Buff 共用规划', () => {
           skillGroups: [
             expect.objectContaining({
               skills: expect.objectContaining({
-                blackboard: withCommonBuffs
-                  ? { equipmentValue: 7, mechanicValue: 9 }
-                  : skill.blackboard,
+                blackboard: withCommonBuffs ? {} : skill.blackboard,
               }),
             }),
           ],

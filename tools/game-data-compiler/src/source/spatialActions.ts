@@ -1,4 +1,5 @@
 import {
+  nativeActionName,
   requireBoolean,
   requireExactFields,
   requireInteger,
@@ -10,7 +11,12 @@ import {
   requireString,
 } from './primitives.ts';
 import { parseTargetReferenceSource, type TargetReferenceSource } from './target.ts';
-import { parseScalarSource, type ScalarSource } from './scalar.ts';
+import {
+  parseScalarSource,
+  parseIntegerScalarSource,
+  type IntegerScalarSource,
+  type ScalarSource,
+} from './scalar.ts';
 import { parseTimeDilationCurveKeys } from './timeDilationActions.ts';
 import type { BlackboardLevelValues } from './scalar.ts';
 import { gameplayTagId, type GameplayTagId } from './nativeGameplayTags.ts';
@@ -45,17 +51,21 @@ export interface DynamicBattleShapeActionSource {
   readonly intervalSeconds: number;
 }
 
-export interface EnableMoveColliderActionSource {
-  readonly kind: 'enableMoveCollider';
+export interface MoveColliderActionSource {
+  readonly kind: 'enableMoveCollider' | 'disableMoveCollider';
   readonly mountPoint: string;
+  readonly includeChildren?: boolean;
 }
 
-/** 原生动作启用挂点下非 trigger 的 Unity Collider，结束时关闭；不修改伤害或资源。 */
-export function parseEnableMoveColliderActionSource(
+/** 启用或关闭挂点下非 trigger 的 Unity Collider，结束时反向设置；不修改伤害或资源。 */
+export function parseMoveColliderActionSource(
   value: unknown,
   path: string,
-): EnableMoveColliderActionSource {
+): MoveColliderActionSource {
   const action = requireRecord(value, path);
+  const disables =
+    typeof action.$type === 'string' &&
+    nativeActionName(action.$type) === 'DisableMoveColliderAction';
   requireExactFields(
     action,
     new Set([
@@ -65,12 +75,16 @@ export function parseEnableMoveColliderActionSource(
       'priorityOffset',
       'serverActionIndex',
       'mountPoint',
+      ...(disables ? ['includeChildren'] : []),
     ]),
     path,
   );
   return {
-    kind: 'enableMoveCollider',
+    kind: disables ? 'disableMoveCollider' : 'enableMoveCollider',
     mountPoint: readMountPoint(action.mountPoint, `${path}.mountPoint`),
+    ...(disables
+      ? { includeChildren: requireBoolean(action.includeChildren, `${path}.includeChildren`) }
+      : {}),
   };
 }
 
@@ -158,6 +172,8 @@ export function parseAdditionalBattleShapeActionSource(
 }
 
 export interface SelfRotateActionSource {
+  /** 1.6.3：旋转目标每帧刷新；不改变零空间投影中的伤害目标。 */
+  readonly updateTargetPerFrame?: boolean;
   readonly kind: 'selfRotate';
   readonly rotateType: string;
   readonly target: TargetReferenceSource;
@@ -190,10 +206,22 @@ export interface ReceiveMoveInputActionSource {
   readonly kind: 'receiveMoveInput';
   readonly duration: ScalarSource;
   readonly inputDirection: string;
+  readonly movementConstraints?: {
+    readonly limitMoveDirRotateSpeed: boolean;
+    readonly moveDirRotateSpeed: ScalarSource;
+    readonly enableStopDistance: boolean;
+    readonly stopDistance: ScalarSource;
+    readonly stopLayerMask?: number;
+    readonly stopCheckSuperArmor: boolean;
+    readonly stopSuperArmorThreshold: IntegerScalarSource;
+  };
 }
 
 export interface MoveToActionSource {
   readonly kind: 'moveTo';
+  readonly useTargetMountPoint?: boolean;
+  readonly targetMountPoint?: string;
+  readonly ownerMountPoint?: string;
   readonly moveType: string;
   readonly totalTime: ScalarSource;
   readonly target: TargetReferenceSource;
@@ -204,6 +232,7 @@ export interface MoveToActionSource {
 
 export interface CustomRootMotionActionSource {
   readonly kind: 'customRootMotion';
+  readonly enableScaleZWithDistanceForRealPosition?: boolean;
   readonly target: TargetReferenceSource;
   readonly animationKey: string;
   readonly rootMotionCurveMask: string | number;
@@ -233,7 +262,7 @@ export interface BoneAttachActionSource {
   readonly anchorSlot: string;
   readonly subSlot: string;
   readonly isAddRotation: boolean;
-  readonly rotateAnchor: 'Owner' | 'Target' | 'AnchorSlot' | 'SubSlot';
+  readonly rotateAnchor: 'Owner' | 'Target' | 'AnchorSlot' | 'SubSlot' | 'SourceFacing';
   readonly rotateAngles: readonly [number, number, number];
   readonly isLerp: boolean;
   readonly lerpTimeSeconds: number;
@@ -284,12 +313,14 @@ export function parseSelfRotateActionSource(value: unknown, path: string): SelfR
       'rotateRate',
       'rotateDirType',
       'ignoreImmobilized',
+      ...('updateTargetPerFrame' in action ? ['updateTargetPerFrame'] : []),
     ]),
     path,
   );
   requireRecord(action.advancedDirectionSettings, `${path}.advancedDirectionSettings`);
   requireBoolean(action.useAdvancedDirectionSetting, `${path}.useAdvancedDirectionSetting`);
-  requireString(action.rootMotionAnimKey, `${path}.rootMotionAnimKey`);
+  if (action.rootMotionAnimKey !== null)
+    requireString(action.rootMotionAnimKey, `${path}.rootMotionAnimKey`);
   requireNumber(action.rootMotionStartFrame, `${path}.rootMotionStartFrame`);
   requireBoolean(action.isRootMotionScale, `${path}.isRootMotionScale`);
   readRootMotionDirectionType(action.rootMotionDirectionType, `${path}.rootMotionDirectionType`);
@@ -299,6 +330,14 @@ export function parseSelfRotateActionSource(value: unknown, path: string): SelfR
   requireBoolean(action.ignoreImmobilized, `${path}.ignoreImmobilized`);
   return {
     kind: 'selfRotate',
+    ...('updateTargetPerFrame' in action
+      ? {
+          updateTargetPerFrame: requireBoolean(
+            action.updateTargetPerFrame,
+            `${path}.updateTargetPerFrame`,
+          ),
+        }
+      : {}),
     rotateType: readSelfRotateType(action.rotateType, `${path}.rotateType`),
     target: parseTargetReferenceSource(action.targetSettings, `${path}.targetSettings`),
     rootMotion: requireBoolean(action.rootMotion, `${path}.rootMotion`),
@@ -456,6 +495,17 @@ export function parseReceiveMoveInputActionSource(
       'disableCliffCheck',
       'rotateSpeed',
       'recoverWhenLanding',
+      ...('limitMoveDirRotateSpeed' in action || 'enableStopDistance' in action
+        ? [
+            'limitMoveDirRotateSpeed',
+            'moveDirRotateSpeed',
+            'enableStopDistance',
+            'stopDistance',
+            'stopLayerMask',
+            'stopCheckSuperArmor',
+            'stopSuperArmorThreshold',
+          ]
+        : []),
       ...('combineRootMotion' in action ||
       'inputAlongRMScale' in action ||
       'rootMotionScale' in action
@@ -507,8 +557,52 @@ export function parseReceiveMoveInputActionSource(
   requireBoolean(teammate.overrideRotateSpeed, `${path}.teammateParam.overrideRotateSpeed`);
   parseScalarSource(teammate.rotateSpeed, `${path}.teammateParam.rotateSpeed`, inheritedBlackboard);
   requireBoolean(teammate.disableDynamicPush, `${path}.teammateParam.disableDynamicPush`);
+  let movementConstraints: ReceiveMoveInputActionSource['movementConstraints'];
+  if ('limitMoveDirRotateSpeed' in action || 'enableStopDistance' in action) {
+    const layer = requireRecord(action.stopLayerMask, `${path}.stopLayerMask`);
+    // AKEDB 的 LayerMask 可能序列化为空对象；不据此猜测碰撞掩码。
+    requireExactFields(
+      layer,
+      new Set('m_Mask' in layer ? ['m_Mask'] : []),
+      `${path}.stopLayerMask`,
+    );
+    movementConstraints = {
+      limitMoveDirRotateSpeed: requireBoolean(
+        action.limitMoveDirRotateSpeed,
+        `${path}.limitMoveDirRotateSpeed`,
+      ),
+      moveDirRotateSpeed: parseScalarSource(
+        action.moveDirRotateSpeed,
+        `${path}.moveDirRotateSpeed`,
+        inheritedBlackboard,
+      ),
+      enableStopDistance: requireBoolean(action.enableStopDistance, `${path}.enableStopDistance`),
+      stopDistance: parseScalarSource(
+        action.stopDistance,
+        `${path}.stopDistance`,
+        inheritedBlackboard,
+      ),
+      ...('m_Mask' in layer
+        ? { stopLayerMask: requireInteger(layer.m_Mask, `${path}.stopLayerMask.m_Mask`) }
+        : {}),
+      stopCheckSuperArmor: requireBoolean(
+        action.stopCheckSuperArmor,
+        `${path}.stopCheckSuperArmor`,
+      ),
+      stopSuperArmorThreshold: parseIntegerScalarSource(
+        action.stopSuperArmorThreshold,
+        `${path}.stopSuperArmorThreshold`,
+      ),
+    };
+    if (movementConstraints.enableStopDistance) {
+      throw new Error(
+        `${path}.enableStopDistance: movement stop behavior requires native projection`,
+      );
+    }
+  }
   return {
     kind: 'receiveMoveInput',
+    ...(movementConstraints ? { movementConstraints } : {}),
     duration: parseScalarSource(action.duration, `${path}.duration`, inheritedBlackboard),
     inputDirection: requireNonEmptyString(action.inputDirection, `${path}.inputDirection`),
   };
@@ -537,6 +631,11 @@ export function parseMoveToActionSource(
       ...('manualTick' in action ? ['manualTick'] : []),
       'updateMoveTarget',
       ...('updateLatestMainCharacter' in action ? ['updateLatestMainCharacter'] : []),
+      ...('useTargetMountPoint' in action ||
+      'targetMountPoint' in action ||
+      'ownerMountPoint' in action
+        ? ['useTargetMountPoint', 'targetMountPoint', 'ownerMountPoint']
+        : []),
       'directionType',
       'target',
       'fixAngle',
@@ -617,13 +716,24 @@ export function parseMoveToActionSource(
   ] as const)
     requireBoolean(action[key], `${path}.${key}`);
   requireNonEmptyString(action.fixDirectionType, `${path}.fixDirectionType`);
-  requireString(action.rootMotionAnimKey, `${path}.rootMotionAnimKey`);
+  if (action.rootMotionAnimKey !== null)
+    requireString(action.rootMotionAnimKey, `${path}.rootMotionAnimKey`);
   requireInteger(action.startOffsetFrame, `${path}.startOffsetFrame`);
   requireNumber(action.moveDirYRotateSpeed, `${path}.moveDirYRotateSpeed`);
   requireNumber(action.stepOffset, `${path}.stepOffset`);
   parseIgnoredCollisionLayer(action.ignoreCollisionLayer, `${path}.ignoreCollisionLayer`);
   return {
     kind: 'moveTo',
+    ...('useTargetMountPoint' in action
+      ? {
+          useTargetMountPoint: requireBoolean(
+            action.useTargetMountPoint,
+            `${path}.useTargetMountPoint`,
+          ),
+          targetMountPoint: readMountPoint(action.targetMountPoint, `${path}.targetMountPoint`),
+          ownerMountPoint: readMountPoint(action.ownerMountPoint, `${path}.ownerMountPoint`),
+        }
+      : {}),
     moveType: requireNonEmptyString(action.moveType, `${path}.moveType`),
     totalTime: parseScalarSource(action.totalTime, `${path}.totalTime`, inheritedBlackboard),
     target: parseTargetReferenceSource(action.target, `${path}.target`),
@@ -659,6 +769,9 @@ export function parseCustomRootMotionActionSource(
       'scaleX',
       'scaleY',
       'enableScaleZWithDistanceCurve',
+      ...('enableScaleZWithDistanceForRealPosition' in action
+        ? ['enableScaleZWithDistanceForRealPosition']
+        : []),
       'distance2ScaleZ',
       'scaleZ',
       'blockRadius',
@@ -700,6 +813,14 @@ export function parseCustomRootMotionActionSource(
   parseIgnoredCollisionLayer(action.ignoreCollisionLayer, `${path}.ignoreCollisionLayer`);
   return {
     kind: 'customRootMotion',
+    ...('enableScaleZWithDistanceForRealPosition' in action
+      ? {
+          enableScaleZWithDistanceForRealPosition: requireBoolean(
+            action.enableScaleZWithDistanceForRealPosition,
+            `${path}.enableScaleZWithDistanceForRealPosition`,
+          ),
+        }
+      : {}),
     target: parseTargetReferenceSource(action.moveTo, `${path}.moveTo`),
     animationKey: requireString(action.animKey, `${path}.animKey`),
     rootMotionCurveMask: requireNamedOrInteger(
@@ -752,7 +873,8 @@ export function parseSnapToTargetWithRangeActionSource(
   requireString(action.fixedSpeedCurveKey, `${path}.fixedSpeedCurveKey`);
   parseTimeDilationCurveKeys(action.speedCurve, `${path}.speedCurve`, true);
   parseTimeDilationCurveKeys(action.positionCurve, `${path}.positionCurve`, true);
-  requireString(action.rootMotionAnimKey, `${path}.rootMotionAnimKey`);
+  if (action.rootMotionAnimKey !== null)
+    requireString(action.rootMotionAnimKey, `${path}.rootMotionAnimKey`);
   requireNumber(action.rootMotionMaxDistance, `${path}.rootMotionMaxDistance`);
   requireNonEmptyString(action.chargePriority, `${path}.chargePriority`);
   return {
@@ -802,6 +924,36 @@ export function parseSaveTargetDistanceActionSource(
  */
 export function parseBoneAttachActionSource(value: unknown, path: string): BoneAttachActionSource {
   const action = requireRecord(value, path);
+  const extendedFields = [
+    'targetMoveIgnoreLayer',
+    'excludeColliderAnchor',
+    'constrainTargetToNavMesh',
+    'useEnhancedAttach',
+    'anchorSourceSettings',
+    'sourceUseWeaponMp',
+    'sourceWeaponIndex',
+    'sourceWeaponMp',
+    'targetUseWeaponMp',
+    'targetWeaponIndex',
+    'targetWeaponMp',
+    'useAnchorOffsetBB',
+    'anchorOffset',
+    'anchorOffsetBB',
+    'attachStopRatio',
+    'positionLerpTime',
+    'positionLerpCurve',
+    'ignoreEntityTimeScale',
+    'notAddUndeadableTag',
+    'checkAirborneOnEnd',
+    'airborneCheckStepDownOffset',
+  ];
+  if ('useEnhancedAttach' in action) {
+    // 当前木桩投影不执行挂点运动；新增的增强挂接、免死变更及结束落地检查不能静默省略。
+    for (const key of ['useEnhancedAttach', 'notAddUndeadableTag', 'checkAirborneOnEnd']) {
+      if (requireBoolean(action[key], `${path}.${key}`))
+        throw new Error(`${path}.${key}: requires native projection`);
+    }
+  }
   requireExactFields(
     action,
     new Set([
@@ -819,6 +971,7 @@ export function parseBoneAttachActionSource(value: unknown, path: string): BoneA
       'isLerp',
       'lerpTime',
       'alwaysFollowRotation',
+      ...('useEnhancedAttach' in action ? extendedFields : []),
     ]),
     path,
   );
@@ -827,7 +980,7 @@ export function parseBoneAttachActionSource(value: unknown, path: string): BoneA
   requireInteger(action.priorityOffset, `${path}.priorityOffset`);
   requireInteger(action.serverActionIndex, `${path}.serverActionIndex`);
   const rotateAnchor = requireNonEmptyString(action.rotateAnchor, `${path}.rotateAnchor`);
-  if (!['Owner', 'Target', 'AnchorSlot', 'SubSlot'].includes(rotateAnchor))
+  if (!['Owner', 'Target', 'AnchorSlot', 'SubSlot', 'SourceFacing'].includes(rotateAnchor))
     throw new Error(`${path}.rotateAnchor: unsupported value ${rotateAnchor}`);
   const rotateAngles = parseNumberVector3(action.rotateAngles, `${path}.rotateAngles`);
   const lerpTimeSeconds = requireNumber(action.lerpTime, `${path}.lerpTime`);
@@ -955,6 +1108,7 @@ function parseMoveSubSpeed(
   requireNonEmptyString(speed.speedType, `${path}.speedType`);
   parseScalarSource(speed.fixedSpeed, `${path}.fixedSpeed`, inheritedBlackboard);
   parseTimeDilationCurveKeys(speed.speedCurve, `${path}.speedCurve`, true);
-  requireString(speed.rootMotionAnimKey, `${path}.rootMotionAnimKey`);
+  if (speed.rootMotionAnimKey !== null)
+    requireString(speed.rootMotionAnimKey, `${path}.rootMotionAnimKey`);
   parseScalarSource(speed.rootMotionScale, `${path}.rootMotionScale`, inheritedBlackboard);
 }

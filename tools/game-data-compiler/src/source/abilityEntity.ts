@@ -18,13 +18,19 @@ import {
 export type { IntegerScalarSource } from './scalar.ts';
 import { gameplayTagId } from './nativeGameplayTags.ts';
 import { parseBlackboardDataPairs, type DeclaredBlackboardValueSource } from './blackboard.ts';
-import { parseActiveSkillTypesSource } from './activeSkillTypes.ts';
+import { parseActiveSkillTypesSource, parseSkillResourceId } from './activeSkillTypes.ts';
 import type { NativeSkillType } from '../../../../packages/game-data-contract/src/index.ts';
 import {
   parseAbilitySystemReferences,
   parseSkillBundleReferences,
 } from './abilitySystemReferences.ts';
 import type { DefinitionReferenceSource } from './referenceGraph.ts';
+
+const ABILITY_SYSTEM_COMPONENT_TYPES = new Set([
+  'Beyond.Gameplay.Core.AbilitySystemData',
+  'Beyond.Gameplay.Core.AbilitySystemForEnemyPartData',
+  'Beyond.Gameplay.Core.AbilitySystemForSoulData',
+]);
 
 const ABILITY_ENTITY_TEMPLATE_FIELDS = new Set([
   'gameId',
@@ -51,6 +57,7 @@ const ABILITY_ENTITY_TEMPLATE_OPTIONAL_FIELDS = new Set([
   'entityBlackboard',
   'nativeData',
   'skillRegistration',
+  'abilitySystemType',
 ]);
 
 export interface AbilityEntitySkillDataBundleSource {
@@ -102,7 +109,7 @@ export function parseAbilityEntityBlackboardReceiverSource(value: unknown, sourc
     const path = `${nativePath}.components.${rid}`;
     const component = requireRecord(raw, path);
     requireRecord(component.data, `${path}.data`);
-    if (component.type === 'Beyond.Gameplay.Core.AbilitySystemData') {
+    if (ABILITY_SYSTEM_COMPONENT_TYPES.has(requireString(component.type, `${path}.type`))) {
       const ability = parseAbilitySystemReferences(component.data, `${path}.data`);
       result.references.push(...ability.references);
       result.complete &&= ability.complete;
@@ -113,6 +120,10 @@ export function parseAbilityEntityBlackboardReceiverSource(value: unknown, sourc
         'Beyond.Gameplay.Core.CharacterMovementComponentData',
         'Beyond.Gameplay.Core.AbilityEntityControllerData',
         'Beyond.Gameplay.AbilityEntityTemplateData/EaseFollowMovementData',
+        'Beyond.Gameplay.AbilityEntityTemplateData/BasePositionMovementData',
+        'Beyond.Gameplay.AbilityEntityTemplateData/BaseRotationData',
+        'Beyond.Gameplay.View.ModelComponentData',
+        'Beyond.Gameplay.View.AbilityEntityAnimationComponentData',
       ].includes(requireString(component.type, `${path}.type`))
     ) {
       result.complete = false;
@@ -126,6 +137,10 @@ export function parseAbilityEntityBlackboardReceiverSource(value: unknown, sourc
  * 组件数量和 RID 只证明当前资产身份及解码边界，不代表组件行为已经完成转换。
  */
 export interface NativeAbilityEntityTemplateSource {
+  /** 原生组件类型；部位/灵体不能按普通能力实体执行。 */
+  readonly abilitySystemType?: string;
+  /** Soul 派生组件的战斗配置；仅完整组件导出可提供，不从模板名推断。 */
+  readonly soul?: NativeSoulAbilitySystemSource;
   readonly gameId: string;
   readonly factionNativeValue: number;
   readonly bornTagIds: readonly number[];
@@ -148,6 +163,64 @@ export interface NativeAbilityEntityTemplateSource {
   /** 实体技能包登记的类型；不能用 SkillData 的用途标签或来源技能类型代替。 */
   readonly activeSkillTypes?: Readonly<Record<string, NativeSkillType>>;
 }
+
+export interface NativeSoulAbilitySystemSource {
+  readonly useMainBodyHp: boolean;
+  readonly useMainBodyPoise: boolean;
+  readonly canBeHitIndividually: boolean;
+  readonly onlyHitByNormalAttack: boolean;
+  readonly canBeDirectlyBuffed: boolean;
+  readonly asIndividualInExcludeTargetProcessor: boolean;
+  readonly damageTransferType: 'partAttributes' | 'mainBodyAttributes' | 'sharedDamage';
+  readonly damageRatio: number;
+  readonly poiseRatio: number;
+  readonly soulHpBlackboardKey: string;
+  readonly soulDamageRatio: ScalarSource;
+  readonly soulPoiseRatio: ScalarSource;
+  readonly asPrimaryTarget: boolean;
+}
+
+function parseSoulAbilitySystemSource(value: unknown, path: string): NativeSoulAbilitySystemSource {
+  const data = requireRecord(value, path);
+  // EnemyPart.OnStart 在通用启动后应用部位属性并设置启用状态。
+  // 当前投影只支持启用且无部位属性覆盖的模板，不能静默丢弃这两项战斗配置。
+  if (!requireBoolean(data.defaultEnabled, `${path}.defaultEnabled`))
+    throw new Error(`${path}.defaultEnabled: disabled soul initialization is not supported`);
+  if (requireArray(data.partAttributes, `${path}.partAttributes`).length !== 0)
+    throw new Error(`${path}.partAttributes: soul attribute overrides are not supported`);
+  const transfer = requireInteger(data.damageTransferType, `${path}.damageTransferType`);
+  const damageTransferType =
+    transfer === 0
+      ? 'partAttributes'
+      : transfer === 1
+        ? 'mainBodyAttributes'
+        : transfer === 2
+          ? 'sharedDamage'
+          : undefined;
+  if (damageTransferType === undefined)
+    throw new Error(`${path}: unknown damage transfer type ${transfer}`);
+  return {
+    useMainBodyHp: requireBoolean(data.useMainBodyHp, `${path}.useMainBodyHp`),
+    useMainBodyPoise: requireBoolean(data.useMainBodyPoise, `${path}.useMainBodyPoise`),
+    canBeHitIndividually: requireBoolean(data.canBeHitIndividually, `${path}.canBeHitIndividually`),
+    onlyHitByNormalAttack: requireBoolean(
+      data.onlyHitByNormalAttack,
+      `${path}.onlyHitByNormalAttack`,
+    ),
+    canBeDirectlyBuffed: requireBoolean(data.canBeDirectlyBuffed, `${path}.canBeDirectlyBuffed`),
+    asIndividualInExcludeTargetProcessor: requireBoolean(
+      data.asIndividualInExcludeTargetProcessor,
+      `${path}.asIndividualInExcludeTargetProcessor`,
+    ),
+    damageTransferType,
+    damageRatio: requireNumber(data.damageRatio, `${path}.damageRatio`),
+    poiseRatio: requireNumber(data.poiseRatio, `${path}.poiseRatio`),
+    soulHpBlackboardKey: requireString(data.soulHpBlackboardKey, `${path}.soulHpBlackboardKey`),
+    soulDamageRatio: parseScalarSource(data.soulDamageRatioBB, `${path}.soulDamageRatioBB`, {}),
+    soulPoiseRatio: parseScalarSource(data.soulPoiseRatioBB, `${path}.soulPoiseRatioBB`, {}),
+    asPrimaryTarget: requireBoolean(data.asPrimaryTarget, `${path}.asPrimaryTarget`),
+  };
+}
 export function parseNativeAbilityEntityTemplateSource(
   value: unknown,
   sourcePath: string,
@@ -166,7 +239,10 @@ export function parseNativeAbilityEntityTemplateSource(
   // 不以 name 覆盖 gameId，也不把此标签当作应用层显示名称。
   if ('name' in root) requireString(root.name, `${sourcePath}.name`);
   const activeSkillTypes = parseEntityActiveSkillTypes(root, sourcePath);
+  const { abilitySystemType, soul } = parseEntityAbilitySystemType(root, sourcePath);
   return {
+    ...(abilitySystemType === undefined ? {} : { abilitySystemType }),
+    ...(soul === undefined ? {} : { soul }),
     ...(activeSkillTypes === undefined ? {} : { activeSkillTypes }),
     gameId: requireNonEmptyString(root.gameId, `${sourcePath}.gameId`),
     factionNativeValue: requireInteger(root.factionNativeValue, `${sourcePath}.factionNativeValue`),
@@ -268,11 +344,54 @@ function parseEntityActiveSkillTypes(
     const key = requireNonEmptyString(rid, `${nativePath}.template.componentList`);
     if (!(key in components)) throw new Error(`${nativePath}: missing component ${key}`);
     const component = requireRecord(components[key], `${nativePath}.components.${key}`);
-    if (component.type !== 'Beyond.Gameplay.Core.AbilitySystemData') continue;
+    if (
+      !ABILITY_SYSTEM_COMPONENT_TYPES.has(
+        requireString(component.type, `${nativePath}.components.${key}.type`),
+      )
+    )
+      continue;
     const data = requireRecord(component.data, `${nativePath}.components.${key}.data`);
     register(data.skillDataBundle, `${nativePath}.components.${key}.data.skillDataBundle`);
   }
   return result;
+}
+
+function parseEntityAbilitySystemType(
+  root: Record<string, unknown>,
+  path: string,
+): Pick<NativeAbilityEntityTemplateSource, 'abilitySystemType' | 'soul'> {
+  let type =
+    root.abilitySystemType === undefined
+      ? undefined
+      : requireNonEmptyString(root.abilitySystemType, `${path}.abilitySystemType`);
+  if (root.nativeData === undefined) return { abilitySystemType: type };
+  const native = requireRecord(root.nativeData, `${path}.nativeData`);
+  if (native.decodeStatus !== 'complete') return { abilitySystemType: type };
+  const template = requireRecord(native.template, `${path}.nativeData.template`);
+  const components = requireRecord(native.components, `${path}.nativeData.components`);
+  let found = false;
+  let soul: NativeSoulAbilitySystemSource | undefined;
+  for (const rid of requireArray(
+    template.componentList,
+    `${path}.nativeData.template.componentList`,
+  )) {
+    const key = requireNonEmptyString(rid, `${path}.nativeData.template.componentList`);
+    const component = requireRecord(components[key], `${path}.nativeData.components.${key}`);
+    const fullType = requireString(component.type, `${path}.nativeData.components.${key}.type`);
+    if (!ABILITY_SYSTEM_COMPONENT_TYPES.has(fullType)) continue;
+    const actualType = fullType.slice('Beyond.Gameplay.Core.'.length);
+    if (found || (type !== undefined && type !== actualType))
+      throw new Error(`${path}: conflicting ability system component type`);
+    found = true;
+    type = actualType;
+    if (actualType === 'AbilitySystemForSoulData') {
+      soul = parseSoulAbilitySystemSource(
+        component.data,
+        `${path}.nativeData.components.${key}.data`,
+      );
+    }
+  }
+  return { abilitySystemType: type, soul };
 }
 
 function parseSkillDataBundle(
@@ -287,7 +406,7 @@ function parseSkillDataBundle(
   );
   const readIds = (field: string) =>
     requireArray(bundle[field], `${sourcePath}.${field}`).map((id, index) =>
-      requireNonEmptyString(id, `${sourcePath}.${field}[${index}]`),
+      parseSkillResourceId(id, `${sourcePath}.${field}[${index}]`),
     );
   const allActiveSkillIds = readIds('allActiveSkillIds');
   const allPassiveSkillIds = readIds('allPassiveSkillIds');

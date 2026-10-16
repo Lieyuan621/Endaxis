@@ -13,6 +13,7 @@ import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import TimelineDurationBarColorControls from '../results/TimelineDurationBarColorControls.vue';
 import TimelineAppearanceIcon from './TimelineAppearanceIcon.vue';
+import ComboSkillPrioritySettings from './ComboSkillPrioritySettings.vue';
 import { resolveScenarioTabsScrollMask } from '../scenarioTabsScrollMask';
 import type { TimelineViewLayerId, TimelineViewLayers } from '../results/timelineViewLayers';
 import type { OperationKeycapMode } from '../timelineOperationMarkers';
@@ -43,6 +44,8 @@ const props = defineProps<{
   appearance: 'light' | 'dark';
   randomMode: 'expected' | 'sampled';
   automaticControlSwitches: boolean;
+  comboSkillPriorityEnabled: boolean;
+  comboSkillPriorityOperators: readonly { id: string | null; name: string; avatar: string | null }[];
   configurationReadOnly?: boolean;
   globalRandomSeed: number;
   labels: {
@@ -97,6 +100,8 @@ const emit = defineEmits<{
   setAppearance: [appearance: 'light' | 'dark'];
   setRandomMode: [mode: 'expected' | 'sampled'];
   toggleAutomaticControlSwitches: [];
+  toggleComboSkillPriority: [];
+  setComboSkillPriorityOrder: [order: string[]];
   setGlobalRandomSeed: [seed: number];
   rollGlobalRandomSeed: [];
   clearSelection: [];
@@ -680,6 +685,13 @@ onBeforeUnmount(() => {
                 </svg>
               </EaButton>
             </div>
+            <ComboSkillPrioritySettings
+              :enabled="comboSkillPriorityEnabled"
+              :operators="comboSkillPriorityOperators"
+              :read-only="configurationReadOnly"
+              @toggle="$emit('toggleComboSkillPriority')"
+              @reorder="$emit('setComboSkillPriorityOrder', $event)"
+            />
             <div class="header-more-mode-row">
               <span>{{ t('timeline.random.mode') }}</span>
               <div class="header-more-segment" role="group" :aria-label="t('timeline.random.mode')">

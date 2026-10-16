@@ -154,7 +154,7 @@ it('整场恢复基础阶段直接绑定共享账本、环境和全部基础 Buf
       buffs: saved.enemyBuffs,
     },
     instances: {
-      abilityEntities: { instances: new Map(), deadSources: [] },
+      abilityEntities: { instances: new Map(), deadSources: [], soulParts: new Map() },
       projectiles: createProjectileLifecycleState(),
       globalBuffs: createGlobalBuffState(),
     },

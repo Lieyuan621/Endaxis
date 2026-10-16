@@ -43,7 +43,7 @@ test('keeps contract optionality in the value schema, enum values and documentat
   const calculation = field('dealDamage', 'parameters', 'calculation');
   assert.equal(calculation.valueSchema.optional, true);
   assert.equal(calculation.control, 'select');
-  assert.deepEqual(calculation.options, ['standard', 'breakingAttack', 'attribute']);
+  assert.deepEqual(calculation.options, ['standard', 'breakingAttack', 'attribute', 'definite']);
   assert.ok(calculation.description.includes('可省略'));
   assert.equal(
     Boolean(field('dealDamage', 'parameters', 'damageType').valueSchema.optional),

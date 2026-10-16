@@ -11,6 +11,7 @@ import type { PositionedOperatorPassiveUiTimelineSegment } from '../../../core/p
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import CombatObjectOriginGraph from './CombatObjectOriginGraph.vue';
 import OperatorPassiveUiWidget from './OperatorPassiveUiWidget.vue';
+import { numericPassiveUiText } from '../../operators/passive-ui/state';
 
 const props = defineProps<{
   visible: boolean;
@@ -128,7 +129,7 @@ function seconds(frames: number): string {
           </template>
           <template v-else-if="segment.kind === 'numeric'">
             <dt>{{ numericValueLabel }}</dt>
-            <dd>{{ segment.value }} / {{ segment.maximum }}</dd>
+            <dd>{{ numericPassiveUiText(segment, t) }}</dd>
           </template>
           <template v-else-if="segment.kind === 'buffProgress'">
             <dt>{{ t('timeline.passiveUi.mode') }}</dt>

@@ -1455,8 +1455,6 @@ export const tangtangChr_0027_tangtang_normal_skill: SkillDefinition = {
     atk_scale_1: [0.16, 0.176, 0.192, 0.208, 0.224, 0.24, 0.256, 0.272, 0.288, 0.308, 0.332, 0.36],
     duration: 5,
     duration_spellvulnerable: 15,
-    hit_cntmax: 10,
-    max_stack: 0,
     normalskillwatermove_cnt: 0,
     poise_tornado: 0,
     poise1: 2,
@@ -1958,21 +1956,14 @@ const tangtangChr_0027_tangtang_combo_skillActionGraphCallback1 = {
 export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
   main: {
     nodes: {
-      findCharacterTeamTargets_1: {
-        action: {
-          kind: 'findCharacterTeamTargets',
-          parameters: { saveToContextKey: 'mainchar', selection: { kind: 'controlledOperator' } },
-        },
-        next: null,
-      },
-      mergeContextTargets_2: {
+      mergeContextTargets_1: {
         action: {
           kind: 'mergeContextTargets',
           parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
         },
         next: null,
       },
-      launchProjectile_15: {
+      launchProjectile_14: {
         action: {
           kind: 'launchProjectile',
           parameters: {
@@ -1988,13 +1979,113 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
         },
         next: null,
       },
+      modifyActionValue_20: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'tar_cnt',
+            operation: 'assign',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+        next: null,
+      },
+      changeResource_21: {
+        action: {
+          kind: 'changeResource',
+          parameters: {
+            resource: 'ultimateEnergy',
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            coefficient: { kind: 'constant', value: 1 },
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+          },
+        },
+        next: 'modifyActionValue_20',
+      },
+      startTimeDilation_22: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.1 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'char_normal_attack' },
+            finishByAction: false,
+            targets: ['caster'],
+          },
+        },
+        next: null,
+      },
+      ifElse_23: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          whenTrue: { $sequence: 'changeResource_21' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'startTimeDilation_22',
+      },
+      dealStagger_24: {
+        action: {
+          kind: 'dealStagger',
+          parameters: { value: { kind: 'valueNode', nodeId: 'data_4' } },
+        },
+        next: 'ifElse_23',
+      },
+      dealDamage_25: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'cryo',
+            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+            tags: ['comboSkill'],
+            features: ['canBreakWeakness'],
+          },
+        },
+        next: 'dealStagger_24',
+      },
+      startTimeDilation_32: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'global',
+            durationSeconds: { kind: 'constant', value: 0.867000043 },
+            slot: 'unassigned',
+            priority: 30,
+            curve: { kind: 'named', key: 'ComboSkill' },
+            finishByAction: false,
+            ignoredTargets: ['caster'],
+            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_33: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.15 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 30,
+            curve: { kind: 'named', key: 'ComboSkill' },
+            finishByAction: false,
+            targets: [],
+            abilityEntityTargets: [{ kind: 'ownerSpawned' }],
+          },
+        },
+        next: null,
+      },
       ifElse_opt1: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_1' },
-          whenTrue: { $sequence: 'launchProjectile_15' },
-          whenFalse: { $sequence: 'launchProjectile_15' },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
+          whenTrue: { $sequence: 'launchProjectile_14' },
+          whenFalse: { $sequence: 'launchProjectile_14' },
         },
         next: null,
       },
@@ -2002,7 +2093,7 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
           whenTrue: { $sequence: 'ifElse_opt1' },
           whenFalse: { $sequence: 'ifElse_opt1' },
         },
@@ -2023,9 +2114,9 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
           whenTrue: { $sequence: 'findOwnerSpawnedAbilityEntities_opt3' },
-          whenFalse: { $sequence: 'launchProjectile_15' },
+          whenFalse: { $sequence: 'launchProjectile_14' },
         },
         next: null,
       },
@@ -2047,74 +2138,6 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
         },
         next: 'mergeContextTargets_opt5',
       },
-      modifyActionValue_21: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'tar_cnt',
-            operation: 'assign',
-            value: { kind: 'constant', value: 1 },
-          },
-        },
-        next: null,
-      },
-      changeResource_22: {
-        action: {
-          kind: 'changeResource',
-          parameters: {
-            resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_4' },
-            coefficient: { kind: 'constant', value: 1 },
-            source: { kind: 'source' },
-            targets: { kind: 'source' },
-          },
-        },
-        next: 'modifyActionValue_21',
-      },
-      startTimeDilation_23: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['caster'],
-          },
-        },
-        next: null,
-      },
-      ifElse_24: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_6' },
-          whenTrue: { $sequence: 'changeResource_22' },
-          whenFalse: { $sequence: null },
-        },
-        next: 'startTimeDilation_23',
-      },
-      dealStagger_25: {
-        action: {
-          kind: 'dealStagger',
-          parameters: { value: { kind: 'valueNode', nodeId: 'data_7' } },
-        },
-        next: 'ifElse_24',
-      },
-      dealDamage_26: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_8' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
-          },
-        },
-        next: 'dealStagger_25',
-      },
       ifElse_opt7: {
         action: {
           kind: 'ifElse',
@@ -2123,7 +2146,7 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
           whenTrue: { $sequence: 'modifyActionValue_opt6' },
           whenFalse: { $sequence: null },
         },
-        next: 'dealDamage_26',
+        next: 'dealDamage_25',
       },
       checkCondition_opt8: {
         action: {
@@ -2132,59 +2155,30 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
         },
         next: 'ifElse_opt7',
       },
-      startTimeDilation_33: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'global',
-            durationSeconds: { kind: 'constant', value: 0.867000043 },
-            slot: 'unassigned',
-            priority: 30,
-            curve: { kind: 'named', key: 'ComboSkill' },
-            finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
-          },
-        },
-        next: null,
-      },
-      ifElse_37: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_12' },
-          whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'findCharacterTeamTargets_1' },
-        },
-        next: null,
-      },
-      startTimeDilation_38: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.15 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 30,
-            curve: { kind: 'named', key: 'ComboSkill' },
-            finishByAction: false,
-            targets: [],
-            abilityEntityTargets: [{ kind: 'ownerSpawned' }],
-          },
-        },
-        next: null,
-      },
     },
     dataNodes: {
-      data_1: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_2: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'tar_cnt', fallback: 0 } },
       data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_2' },
+          operator: 'lessOrEqual',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_6: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_7: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_8: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -2194,19 +2188,6 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
           value: { kind: 'constant', value: 0 },
         },
       },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'tar_cnt', fallback: 0 } },
-      data_6: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_5' },
-          operator: 'lessOrEqual',
-          right: { kind: 'constant', value: 0 },
-        },
-      },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_9: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'combowater_cnt', fallback: 0 },
@@ -2231,7 +2212,6 @@ export const tangtangChr_0027_tangtang_combo_skillActionGraph = {
           value: 1,
         },
       },
-      data_12: { type: 'boolean', expression: { kind: 'casterControlled' } },
     },
   },
   macros: {},
@@ -2247,7 +2227,6 @@ export const tangtangChr_0027_tangtang_combo_skill: SkillDefinition = {
     duration: 3,
     duration_talent1buff: 0,
     duration_water: 30,
-    max_stack: 0,
     poise: 10,
     potential1: 0,
     potential5: 0,
@@ -2270,12 +2249,10 @@ export const tangtangChr_0027_tangtang_combo_skill: SkillDefinition = {
   },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findCharacterTeamTargets_1' } },
-    { startFrame: 26, endFrame: 29, sequence: { $sequence: 'mergeContextTargets_2' } },
+    { startFrame: 26, endFrame: 29, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 26, endFrame: 29, sequence: { $sequence: 'checkCondition_opt8' } },
-    { startFrame: 0, endFrame: 23, sequence: { $sequence: 'startTimeDilation_33' } },
-    { startFrame: 0, endFrame: 22, sequence: { $sequence: 'ifElse_37' } },
-    { startFrame: 0, endFrame: 5, sequence: { $sequence: 'startTimeDilation_38' } },
+    { startFrame: 0, endFrame: 23, sequence: { $sequence: 'startTimeDilation_32' } },
+    { startFrame: 0, endFrame: 5, sequence: { $sequence: 'startTimeDilation_33' } },
   ],
   smartTarget: 'trigger',
   cooldownFrames: [420, 420, 420, 420, 420, 420, 420, 420, 390, 390, 390, 360],
@@ -3229,7 +3206,30 @@ const tangtangBuff14: SkillBuffDefinition = {
 };
 
 const tangtangBuff15ActionGraph = {
-  main: { nodes: {} },
+  main: {
+    nodes: {
+      checkCondition_1: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffStackCompare',
+          target: 'buffOwner',
+          tagQueryType: 'hasAny',
+          buffTags: ['Immune/Static'],
+          operator: 'less',
+          value: { kind: 'constant', value: 1 },
+        },
+      },
+    },
+  },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
@@ -3242,10 +3242,11 @@ const tangtangBuff15: SkillBuffDefinition = {
     icon: 'endaxis:icons/icon_battle_tangtang_ultskilldebuff',
     showInHeadBarCommon: true,
   },
-  applyTags: [],
+  applyTags: ['Skill/Character/Common/Affixes/static'],
   extendTags: [],
   blackboard: { ultskill_debuff_duration: 4 },
   attributeModifiers: [],
+  lifecycleSequences: { enable: [{ $sequence: 'checkCondition_1' }] },
   actionGraph: tangtangBuff15ActionGraph,
 };
 
@@ -3504,7 +3505,6 @@ const tangtangBuff16: SkillBuffDefinition = {
     dmg_up_water_ult: 0,
     duration: 5,
     duration_spellvulnerable: 0,
-    hit_cntmax: 10,
     rate_spellvulnerable: 0,
     rate_spellvulnerable_02: 0,
     talent2_ultskill: 0,
@@ -3771,27 +3771,7 @@ export const tangtang: OperatorDefinition = {
     comboSkill: { kind: 'skillSlot', skillSlotKey: 'comboSkill' },
     ultimate: { kind: 'skillSlot', skillSlotKey: 'ultimate' },
   },
-  playerActionModes: [
-    {
-      modeId: 'ult',
-      modeLayer: 'default',
-      defaultEnabled: false,
-      normalAttackSkillKeys: [
-        'chr_0027_tangtang_attack1',
-        'chr_0027_tangtang_attack2',
-        'chr_0027_tangtang_attack3',
-        'chr_0027_tangtang_attack4',
-        'chr_0027_tangtang_attack5',
-      ],
-      commandMappings: { basicAttack: { skillId: 'chr_0027_tangtang_ult_attack3' } },
-    },
-    {
-      modeId: 'ult_end',
-      modeLayer: 'default',
-      defaultEnabled: false,
-      commandMappings: { basicAttack: { skillId: 'chr_0027_tangtang_ult_attack5' } },
-    },
-  ],
+  playerActionModes: [],
   comboSkillConditions: [tangtangComboCondition1, tangtangComboCondition2],
   comboSkillPriority: 'default',
   talents: [
@@ -4058,6 +4038,7 @@ export const tangtang: OperatorDefinition = {
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0027_tangtang_normal_skill_move: {
+      faction: 'good',
       bornTags: [
         'Immune',
         'SelectCategory/Unmarkable',
@@ -4078,14 +4059,7 @@ export const tangtang: OperatorDefinition = {
             maxChargeTime: 1,
             cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
           },
-          blackboard: {
-            atk_scale: 0.1,
-            duration: 5,
-            hit_cntmax: 10,
-            poise: 5,
-            poise_tornado: 0,
-            water_cnt: 0,
-          },
+          blackboard: { atk_scale: 0.1, duration: 5, poise: 5, poise_tornado: 0, water_cnt: 0 },
           scheduledSequences: [
             { startFrame: 12, endFrame: 12, sequence: { $sequence: 'ifElse_13' } },
             { startFrame: 298, endFrame: 298, sequence: { $sequence: 'finishOwner_14' } },
@@ -4257,7 +4231,6 @@ export const tangtang: OperatorDefinition = {
             atk_scale: 0.1,
             dmg_up_water_ult: 0,
             duration: 5,
-            hit_cntmax: 10,
             poise: 5,
             poise_tornado: 0,
             talent2_ultskill: 0,
@@ -4410,6 +4383,7 @@ export const tangtang: OperatorDefinition = {
       },
     },
     abilityentity_chr_0027_tangtang_comboskill_water: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',
@@ -4849,6 +4823,7 @@ export const tangtang: OperatorDefinition = {
       },
     },
     abilityentity_chr_0027_tangtang_ultskill: {
+      faction: 'good',
       bornTags: [
         'SelectCategory/Unmarkable',
         'SelectCategory/UnSkillManualSelectable',
@@ -5195,6 +5170,7 @@ export const tangtang: OperatorDefinition = {
       },
     },
     abilityentity_chr_0027_tangtang_normal_skill_03_03: {
+      faction: 'good',
       bornTags: [
         'Immune',
         'SelectCategory/Unmarkable',
@@ -5271,21 +5247,6 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: null,
                 },
-                dealDamage_9: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                    },
-                    key: 'abilityentity_chr_0027_tangtang_normal_skill_03_03:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_9/action',
-                  },
-                  next: null,
-                },
                 dealDamage_8: {
                   action: {
                     kind: 'dealDamage',
@@ -5299,12 +5260,27 @@ export const tangtang: OperatorDefinition = {
                         {
                           side: 'attacker',
                           zone: 'normal',
-                          addition: { kind: 'valueNode', nodeId: 'data_3' },
+                          addition: { kind: 'valueNode', nodeId: 'data_2' },
                         },
                       ],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
                     },
                     key: 'abilityentity_chr_0027_tangtang_normal_skill_03_03:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_8/action',
+                  },
+                  next: null,
+                },
+                dealDamage_9: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                      takeAttackSnapshot: true,
+                      tags: ['normalSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
+                    },
+                    key: 'abilityentity_chr_0027_tangtang_normal_skill_03_03:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_9/action',
                   },
                   next: null,
                 },
@@ -5371,11 +5347,11 @@ export const tangtang: OperatorDefinition = {
                 },
                 data_2: {
                   type: 'number',
-                  expression: { kind: 'blackboard', key: 'poise_tornado' },
+                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
                 },
                 data_3: {
                   type: 'number',
-                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
+                  expression: { kind: 'blackboard', key: 'poise_tornado' },
                 },
                 data_4: {
                   type: 'number',
@@ -5532,6 +5508,7 @@ export const tangtang: OperatorDefinition = {
       },
     },
     abilityentity_chr_0027_tangtang_normal_skill_03_02: {
+      faction: 'good',
       bornTags: [
         'Immune',
         'SelectCategory/Unmarkable',
@@ -5608,21 +5585,6 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: null,
                 },
-                dealDamage_9: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                    },
-                    key: 'abilityentity_chr_0027_tangtang_normal_skill_03_02:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_9/action',
-                  },
-                  next: null,
-                },
                 dealDamage_8: {
                   action: {
                     kind: 'dealDamage',
@@ -5636,12 +5598,27 @@ export const tangtang: OperatorDefinition = {
                         {
                           side: 'attacker',
                           zone: 'normal',
-                          addition: { kind: 'valueNode', nodeId: 'data_3' },
+                          addition: { kind: 'valueNode', nodeId: 'data_2' },
                         },
                       ],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
                     },
                     key: 'abilityentity_chr_0027_tangtang_normal_skill_03_02:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_8/action',
+                  },
+                  next: null,
+                },
+                dealDamage_9: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                      takeAttackSnapshot: true,
+                      tags: ['normalSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
+                    },
+                    key: 'abilityentity_chr_0027_tangtang_normal_skill_03_02:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_9/action',
                   },
                   next: null,
                 },
@@ -5708,11 +5685,11 @@ export const tangtang: OperatorDefinition = {
                 },
                 data_2: {
                   type: 'number',
-                  expression: { kind: 'blackboard', key: 'poise_tornado' },
+                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
                 },
                 data_3: {
                   type: 'number',
-                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
+                  expression: { kind: 'blackboard', key: 'poise_tornado' },
                 },
                 data_4: {
                   type: 'number',
@@ -5869,6 +5846,7 @@ export const tangtang: OperatorDefinition = {
       },
     },
     abilityentity_chr_0027_tangtang_normal_skill_03: {
+      faction: 'good',
       bornTags: [
         'Immune',
         'SelectCategory/Unmarkable',
@@ -5945,21 +5923,6 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: null,
                 },
-                dealDamage_9: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                    },
-                    key: 'abilityentity_chr_0027_tangtang_normal_skill_03:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_9/action',
-                  },
-                  next: null,
-                },
                 dealDamage_8: {
                   action: {
                     kind: 'dealDamage',
@@ -5973,12 +5936,27 @@ export const tangtang: OperatorDefinition = {
                         {
                           side: 'attacker',
                           zone: 'normal',
-                          addition: { kind: 'valueNode', nodeId: 'data_3' },
+                          addition: { kind: 'valueNode', nodeId: 'data_2' },
                         },
                       ],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
                     },
                     key: 'abilityentity_chr_0027_tangtang_normal_skill_03:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_8/action',
+                  },
+                  next: null,
+                },
+                dealDamage_9: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                      takeAttackSnapshot: true,
+                      tags: ['normalSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
+                    },
+                    key: 'abilityentity_chr_0027_tangtang_normal_skill_03:chr_0027_tangtang_normal_skill_water_projhit_2|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_2/actionGraph/main/nodes/dealDamage_9/action',
                   },
                   next: null,
                 },
@@ -6045,11 +6023,11 @@ export const tangtang: OperatorDefinition = {
                 },
                 data_2: {
                   type: 'number',
-                  expression: { kind: 'blackboard', key: 'poise_tornado' },
+                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
                 },
                 data_3: {
                   type: 'number',
-                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
+                  expression: { kind: 'blackboard', key: 'poise_tornado' },
                 },
                 data_4: {
                   type: 'number',
@@ -6206,6 +6184,7 @@ export const tangtang: OperatorDefinition = {
       },
     },
     abilityentity_chr_0027_tangtang_normal_skill_02_02: {
+      faction: 'good',
       bornTags: [
         'Immune',
         'SelectCategory/Unmarkable',
@@ -6283,21 +6262,6 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: null,
                 },
-                dealDamage_9: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                    },
-                    key: 'abilityentity_chr_0027_tangtang_normal_skill_02_02:chr_0027_tangtang_normal_skill_water_projhit_1|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_1/actionGraph/main/nodes/dealDamage_9/action',
-                  },
-                  next: null,
-                },
                 dealDamage_8: {
                   action: {
                     kind: 'dealDamage',
@@ -6311,12 +6275,27 @@ export const tangtang: OperatorDefinition = {
                         {
                           side: 'attacker',
                           zone: 'normal',
-                          addition: { kind: 'valueNode', nodeId: 'data_3' },
+                          addition: { kind: 'valueNode', nodeId: 'data_2' },
                         },
                       ],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
                     },
                     key: 'abilityentity_chr_0027_tangtang_normal_skill_02_02:chr_0027_tangtang_normal_skill_water_projhit_1|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_1/actionGraph/main/nodes/dealDamage_8/action',
+                  },
+                  next: null,
+                },
+                dealDamage_9: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                      takeAttackSnapshot: true,
+                      tags: ['normalSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
+                    },
+                    key: 'abilityentity_chr_0027_tangtang_normal_skill_02_02:chr_0027_tangtang_normal_skill_water_projhit_1|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_1/actionGraph/main/nodes/dealDamage_9/action',
                   },
                   next: null,
                 },
@@ -6383,11 +6362,11 @@ export const tangtang: OperatorDefinition = {
                 },
                 data_2: {
                   type: 'number',
-                  expression: { kind: 'blackboard', key: 'poise_tornado' },
+                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
                 },
                 data_3: {
                   type: 'number',
-                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
+                  expression: { kind: 'blackboard', key: 'poise_tornado' },
                 },
                 data_4: {
                   type: 'number',
@@ -6544,6 +6523,7 @@ export const tangtang: OperatorDefinition = {
       },
     },
     abilityentity_chr_0027_tangtang_normal_skill_02: {
+      faction: 'good',
       bornTags: [
         'Immune',
         'SelectCategory/Unmarkable',
@@ -6620,21 +6600,6 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: null,
                 },
-                dealDamage_9: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                    },
-                    key: 'abilityentity_chr_0027_tangtang_normal_skill_02:chr_0027_tangtang_normal_skill_water_projhit_1|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_1/actionGraph/main/nodes/dealDamage_9/action',
-                  },
-                  next: null,
-                },
                 dealDamage_8: {
                   action: {
                     kind: 'dealDamage',
@@ -6648,12 +6613,27 @@ export const tangtang: OperatorDefinition = {
                         {
                           side: 'attacker',
                           zone: 'normal',
-                          addition: { kind: 'valueNode', nodeId: 'data_3' },
+                          addition: { kind: 'valueNode', nodeId: 'data_2' },
                         },
                       ],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
                     },
                     key: 'abilityentity_chr_0027_tangtang_normal_skill_02:chr_0027_tangtang_normal_skill_water_projhit_1|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_1/actionGraph/main/nodes/dealDamage_8/action',
+                  },
+                  next: null,
+                },
+                dealDamage_9: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                      takeAttackSnapshot: true,
+                      tags: ['normalSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
+                    },
+                    key: 'abilityentity_chr_0027_tangtang_normal_skill_02:chr_0027_tangtang_normal_skill_water_projhit_1|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit_1/actionGraph/main/nodes/dealDamage_9/action',
                   },
                   next: null,
                 },
@@ -6720,11 +6700,11 @@ export const tangtang: OperatorDefinition = {
                 },
                 data_2: {
                   type: 'number',
-                  expression: { kind: 'blackboard', key: 'poise_tornado' },
+                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
                 },
                 data_3: {
                   type: 'number',
-                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
+                  expression: { kind: 'blackboard', key: 'poise_tornado' },
                 },
                 data_4: {
                   type: 'number',
@@ -6881,6 +6861,7 @@ export const tangtang: OperatorDefinition = {
       },
     },
     abilityentity_chr_0027_tangtang_normal_skill: {
+      faction: 'good',
       bornTags: [
         'Immune',
         'SelectCategory/Unmarkable',
@@ -6934,21 +6915,6 @@ export const tangtang: OperatorDefinition = {
                   },
                   next: 'applyBuff_3',
                 },
-                dealDamage_7: {
-                  action: {
-                    kind: 'dealDamage',
-                    parameters: {
-                      damageType: 'cryo',
-                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                      takeAttackSnapshot: true,
-                      tags: ['normalSkill'],
-                      features: ['canBreakWeakness'],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
-                    },
-                    key: 'abilityentity_chr_0027_tangtang_normal_skill:chr_0027_tangtang_normal_skill_water_projhit|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit/actionGraph/main/nodes/dealDamage_7/action',
-                  },
-                  next: null,
-                },
                 dealDamage_6: {
                   action: {
                     kind: 'dealDamage',
@@ -6962,12 +6928,27 @@ export const tangtang: OperatorDefinition = {
                         {
                           side: 'attacker',
                           zone: 'normal',
-                          addition: { kind: 'valueNode', nodeId: 'data_3' },
+                          addition: { kind: 'valueNode', nodeId: 'data_2' },
                         },
                       ],
-                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
                     },
                     key: 'abilityentity_chr_0027_tangtang_normal_skill:chr_0027_tangtang_normal_skill_water_projhit|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit/actionGraph/main/nodes/dealDamage_6/action',
+                  },
+                  next: null,
+                },
+                dealDamage_7: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      damageType: 'cryo',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                      takeAttackSnapshot: true,
+                      tags: ['normalSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_3' },
+                    },
+                    key: 'abilityentity_chr_0027_tangtang_normal_skill:chr_0027_tangtang_normal_skill_water_projhit|chr_0027_tangtang_normal_skill_projhit:/childSkills/chr_0027_tangtang_normal_skill_water_projhit/actionGraph/main/nodes/dealDamage_7/action',
                   },
                   next: null,
                 },
@@ -7024,11 +7005,11 @@ export const tangtang: OperatorDefinition = {
                 },
                 data_2: {
                   type: 'number',
-                  expression: { kind: 'blackboard', key: 'poise_tornado' },
+                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
                 },
                 data_3: {
                   type: 'number',
-                  expression: { kind: 'blackboard', key: 'dmg_up_water_ult' },
+                  expression: { kind: 'blackboard', key: 'poise_tornado' },
                 },
                 data_4: {
                   type: 'number',

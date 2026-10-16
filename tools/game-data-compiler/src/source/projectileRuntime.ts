@@ -47,7 +47,7 @@ export interface ProjectileRuntimeSource {
   readonly finishDistance: ScalarSource;
   readonly finishOnReach: boolean;
   readonly finishOnBlock?: boolean;
-  /** 原生普通更新中，将 Reach 延后到碰撞之后；不能仅由“第几帧”推断顺序。 */
+  /** 普通更新先碰撞后 Reach；1.6.3 固定为 true，旧导出仍按其显式字段读取。 */
   readonly useHitBlockReachOrder: boolean;
   readonly hitOnReach: boolean;
   readonly allowHitSameTarget: boolean;
@@ -163,10 +163,12 @@ export function parseProjectileRuntimeSource(
   const moveModeTypes = parseProjectileMoveModeTypes(root.tail, `${path}.tail`);
   return {
     projectileId: requireNonEmptyString(root.id, `${path}.id`),
-    useHitBlockReachOrder: requireBoolean(
-      root.useHitBlockReachOrder,
-      `${path}.useHitBlockReachOrder`,
-    ),
+    // 1.6.3 移除该开关，OnTick(04FEB600) 固定在碰撞后触发 Reach。
+    // 旧来源保留显式开关；这不是缺失配置时假定旧版默认值。
+    useHitBlockReachOrder:
+      root.useHitBlockReachOrder === undefined
+        ? true
+        : requireBoolean(root.useHitBlockReachOrder, `${path}.useHitBlockReachOrder`),
     ...(root.abilitySystem === undefined
       ? {}
       : {

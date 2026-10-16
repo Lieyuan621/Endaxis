@@ -74,6 +74,87 @@ import { compileActionNode } from '../../src/compiler/actions/combatActionLeafPr
 import { parseComboCacheActionSource } from '../../src/source/inputControlActions.ts';
 
 describe('公共 Buff 运行时投影', () => {
+  it('SaveDamageContext 保持一个动作并保留实际伤害读取类型', () => {
+    const source = parseKnownNativeActionSequenceSource(
+      {
+        actionData: [
+          {
+            $type: 'Beyond.Gameplay.Core.SaveDamageContext+Data, Gameplay.Beyond',
+            isEnable: true,
+            priorityLevel: 0,
+            priorityOffset: 0,
+            serverActionIndex: 0,
+            valueType: 1,
+            saveTo: 'ink_damage',
+          },
+        ],
+        onlyExecuteWhenSourceIsMainChar: false,
+        onlyExecuteWhenSourceIsGuard: false,
+      },
+      'damage-context',
+      {},
+    );
+    expect(
+      projectSequence(source, {
+        actionOwnerTarget: 'buffOwner',
+        actionSourceTarget: 'caster',
+        actionTargetTarget: 'enemy',
+      }).steps,
+    ).toMatchObject([
+      { kind: 'storeEventDamageValue', parameters: { value: 'real', outputKey: 'ink_damage' } },
+    ]);
+  });
+  it('标签监听保留回调入口与匹配方向，预定义查询缺失时拒绝编译', () => {
+    const source = parseKnownNativeActionSequenceSource(
+      {
+        actionData: [
+          {
+            $type: 'Beyond.Gameplay.Core.TagQueryListenerAction+Data, Gameplay.Beyond',
+            isEnable: true,
+            priorityLevel: 0,
+            priorityOffset: 0,
+            serverActionIndex: 0,
+            listenerType: 'PredefinedQuery',
+            predefinedQuery: 'IsUnMarkable',
+            customQuery: { queryType: 'HasAny', tags: [] },
+            executeOnMatch: false,
+            executeAction: {
+              actionData: [],
+              onlyExecuteWhenSourceIsMainChar: false,
+              onlyExecuteWhenSourceIsGuard: false,
+            },
+          },
+        ],
+        onlyExecuteWhenSourceIsMainChar: false,
+        onlyExecuteWhenSourceIsGuard: false,
+      },
+      'listener',
+      {},
+    );
+    const context = {
+      actionOwnerTarget: 'buffOwner',
+      actionSourceTarget: 'buffSource',
+      actionTargetTarget: 'actionInputTarget',
+    } as const;
+    expect(() => projectSequence(source, context)).toThrow(
+      'missing predefined tag query IsUnMarkable',
+    );
+    const result = projectSequence(source, {
+      ...context,
+      predefinedTagQueries: { IsUnMarkable: { queryType: 'hasAny', tagIds: [] } },
+    });
+    expect(result.steps).toEqual([
+      {
+        kind: 'listenForTagQuery',
+        parameters: {
+          tags: [],
+          tagQueryType: 'hasAny',
+          executeOnMatch: false,
+          sequence: { $sequence: null },
+        },
+      },
+    ]);
+  });
   it('精简图标配置时保留显式隐藏、无图标显示及敌人状态栏排除语义', () => {
     const source = sourceFixture();
     const project = (overrides: Partial<BuffRuntimeSource['presentation']>) =>
@@ -116,7 +197,8 @@ describe('公共 Buff 运行时投影', () => {
       $type: 'Beyond.Gameplay.Core.InterruptAction+Data, Gameplay.Beyond',
       attacker: targetFixture('Source'),
       defender: targetFixture('Target'),
-      overrideSuperArmorLimit: -1,
+      // 显式门槛不适用默认中断的省略规则，仍必须证明目标是敌人。
+      overrideSuperArmorLimit: 20,
       immobilizedTime: 1,
     };
     const branch = {
@@ -335,7 +417,39 @@ describe('公共 Buff 运行时投影', () => {
     },
   );
 
-  it.each(['Source', 'Owner'])('当前实例结束保留原生来源：%s', finishSource => {
+  it('跨时间段的 Buff 接收者和来源保留 Context 查询，不猜测固定敌人或干员', () => {
+    const node = sourceFixture().graph.abilityEvents[0]!.actions[0]!.actions[1]!;
+    if (node.body.kind !== 'leaf' || node.body.value.family !== 'buffApplication')
+      throw new Error('missing Buff application fixture');
+    const action = {
+      ...node.body.value.action,
+      target: { ...fixedTarget('Context'), targetGroupKey: 'recipient' },
+      buffSource: 'ContextTarget' as const,
+      contextKey: 'source',
+    };
+    const steps = compileActionNode(
+      { ...node, body: { kind: 'leaf', value: { family: 'buffApplication', action } } },
+      new Set(),
+      new Map(),
+      {
+        actionOwnerTarget: 'currentAbilityEntity',
+        actionSourceTarget: 'caster',
+        actionTargetTarget: 'actionInputTarget',
+        graph: createActionGraphBuilder<CompiledBuffStepSource>(),
+      },
+    );
+    expect(steps).toEqual([
+      expect.objectContaining({
+        kind: 'applyBuff',
+        parameters: expect.objectContaining({
+          targets: { kind: 'context', key: 'recipient' },
+          source: { kind: 'context', key: 'source' },
+        }),
+      }),
+    ]);
+  });
+
+  it.each(['Source', 'Owner', 'None'])('当前实例结束保留原生来源：%s', finishSource => {
     const metadata = sourceFixture().graph.abilityEvents[0]!.actions[0]!.actions[0]!.metadata;
     const steps = compileActionNode(
       {
@@ -345,22 +459,25 @@ describe('公共 Buff 运行时投影', () => {
           kind: 'leaf',
           value: {
             family: 'buffFinish',
-            action: {
-              kind: 'buffFinishByQuery',
-              owner: fixedTarget('Owner'),
-              settings: {
-                checkType: 'Environment',
-                buffIds: [],
-                tagQuery: { queryType: 'hasAny', tagIds: [] },
-              },
-              finishAll: true,
-              finishLayerCount: { value: 1, blackboardKey: null, levelValues: null },
-              limitSource: false,
-              buffSource: fixedTarget('Source'),
-              isFinishedEarly: true,
-              isAbsorbed: false,
-              finishSource: fixedTarget(finishSource),
-            },
+            action:
+              finishSource === 'None'
+                ? { kind: 'finishCurrentBuff' }
+                : {
+                    kind: 'buffFinishByQuery',
+                    owner: fixedTarget('Owner'),
+                    settings: {
+                      checkType: 'Environment',
+                      buffIds: [],
+                      tagQuery: { queryType: 'hasAny', tagIds: [] },
+                    },
+                    finishAll: true,
+                    finishLayerCount: { value: 1, blackboardKey: null, levelValues: null },
+                    limitSource: false,
+                    buffSource: fixedTarget('Source'),
+                    isFinishedEarly: true,
+                    isAbsorbed: false,
+                    finishSource: fixedTarget(finishSource),
+                  },
           },
         },
       },
@@ -378,8 +495,13 @@ describe('公共 Buff 运行时投影', () => {
       {
         kind: 'finishCurrentBuff',
         parameters: {
-          reason: 'early',
-          finishSource: finishSource === 'Owner' ? 'actionOwner' : 'actionSource',
+          reason: finishSource === 'None' ? 'other' : 'early',
+          finishSource:
+            finishSource === 'None'
+              ? 'none'
+              : finishSource === 'Owner'
+                ? 'actionOwner'
+                : 'actionSource',
         },
       },
     ]);
@@ -1533,8 +1655,10 @@ describe('公共 Buff 运行时投影', () => {
         },
       },
     ]);
-    expect(() => project(knockdown)).toThrow('unsupported Buff damage source');
-    expect(() => project(knockdown, 'caster')).toThrow('unsupported Buff damage source');
+    expect(() => project(knockdown)).toThrow('unsupported damage source or target binding');
+    expect(() => project(knockdown, 'caster')).toThrow(
+      'unsupported damage source or target binding',
+    );
     expect(() => project({ ...knockdown, attacker: 'ActionOwner' }, 'enemy')).toThrow(
       'enemy Buff Owner',
     );
@@ -2970,7 +3094,7 @@ describe('公共 Buff 运行时投影', () => {
       parameters: {
         condition: {
           kind: 'healthCompare',
-          target: 'currentTarget',
+          target: 'actionInputTarget',
           operator: 'lessOrEqual',
           valueType: 'ratio',
         },
@@ -3762,7 +3886,7 @@ describe('公共 Buff 运行时投影', () => {
         },
         {
           kind: 'healthCompare',
-          target: 'currentTarget',
+          target: 'actionInputTarget',
           valueType: 'ratio',
           operator: 'less',
           value: { kind: 'blackboard', key: 'hp_remain' },

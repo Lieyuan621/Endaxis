@@ -16,6 +16,58 @@ const STEP: ResolvedCombatStepForKind<'applyElementalInfliction'> = {
 };
 
 describe('ElementalInflictionOperationExecutor', () => {
+  it('动态来源为空时不查目标；多个部位转交主体仍逐项附着并保留来源', () => {
+    let sourcePresent = false;
+    const applyOperation = vi.fn();
+    const record = vi.fn();
+    const queryTargets = vi.fn((query: { kind: string }) =>
+      query.kind === 'source'
+        ? sourcePresent
+          ? [{ kind: 'operator' as const, operatorId: 'actual-source' }]
+          : []
+        : [
+            { kind: 'abilityEntity' as const, instanceId: 1 },
+            { kind: 'abilityEntity' as const, instanceId: 2 },
+          ],
+    );
+    const executor = new ElementalInflictionOperationExecutor({
+      sourceOperatorId: 'definition-owner',
+      targetId: 'enemy',
+      skillId: 'skill',
+      clock: new CombatClock(),
+      receipt: { record },
+      queryTargets,
+      resolveInflictionTarget: () => ({ kind: 'enemy' }),
+      getExistingAttachment: () => null,
+      applyOperation,
+      emitSourceEvent: vi.fn(),
+      emitTargetEvent: vi.fn(),
+      delegate: { execute: () => true, evaluate: () => false },
+    });
+    const step: ResolvedCombatStepForKind<'applyElementalInfliction'> = {
+      ...STEP,
+      parameters: {
+        ...STEP.parameters,
+        source: { kind: 'source' },
+        target: { kind: 'inputTarget' },
+      },
+    };
+    const context = { blackboard: new ActionBlackboard() };
+    expect(executor.execute(step, context)).toBe(true);
+    expect(queryTargets).toHaveBeenCalledTimes(1);
+    expect(applyOperation).not.toHaveBeenCalled();
+    sourcePresent = true;
+    executor.execute(step, context);
+    expect(applyOperation).toHaveBeenCalledTimes(2);
+    expect(applyOperation.mock.calls.map(call => call[3])).toEqual([
+      'actual-source',
+      'actual-source',
+    ]);
+    expect(record.mock.calls.map(([entry]) => [entry.sourceId, entry.targetId])).toEqual([
+      ['actual-source', 'enemy'],
+      ['actual-source', 'enemy'],
+    ]);
+  });
   it.each([true, false])(
     'records exact conversion identities only when the output was added: %s',
     succeeds => {

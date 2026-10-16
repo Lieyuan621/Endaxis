@@ -214,6 +214,13 @@ export interface AuraInfluenceState {
   exit: ActionGraphExecutionState | null;
 }
 
+/** 标签监听保存查询结果和子调用进度；订阅函数由恢复阶段重新绑定。 */
+export interface TagQueryListenerState<State> {
+  active: boolean;
+  matched: boolean;
+  body: State | null;
+}
+
 export type ActionGraphNodeData =
   | {
       readonly kind: 'graphAnimation';
@@ -237,6 +244,11 @@ export type ActionGraphNodeData =
       readonly listener: CombatEventListenerState<ActionGraphExecutionState>;
     }
   | { readonly kind: 'graphTargets'; body: ActionGraphExecutionState | null }
+  | {
+      readonly kind: 'graphTagListener';
+      readonly target: RuntimeTargetRef | null;
+      readonly listener: TagQueryListenerState<ActionGraphExecutionState>;
+    }
   | {
       readonly kind: 'graphJump';
       readonly jump: TimelineJumpState;

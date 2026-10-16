@@ -71,6 +71,8 @@ import {
 } from './castingControlActions.ts';
 import {
   parseCharacterTypeIdReadActionSource,
+  parseSquadSlotActionSource,
+  type SquadSlotActionSource,
   type CharacterTypeIdReadActionSource,
 } from './characterIdentityActions.ts';
 import {
@@ -88,7 +90,12 @@ import {
   parseTriggerCustomAbilityEventSource,
   type TriggerCustomAbilityEventSource,
 } from './customAbilityEventActions.ts';
-import { parseDamageActionSource, type DamageActionSource } from './damageActions.ts';
+import {
+  parseDamageActionSource,
+  parseSaveDamageContextSource,
+  type DamageActionSource,
+  type SaveDamageContextSource,
+} from './damageActions.ts';
 import { parseDispelActionSource, type DispelActionSource } from './dispelActions.ts';
 import {
   parseCharacterInflictionEventSource,
@@ -189,11 +196,11 @@ import {
   parseEffectActionSource,
   parseForceTargetInFightActionSource,
   parseHideUiActionSource,
+  parseHideHeadBarActionSource,
   parseIgniteBuffTextActionSource,
   parseIgnoreModelIntervalCheckActionSource,
   parseImmuneTextActionSource,
   parseInheritedCameraControlStateActionSource,
-  parseInterruptHenshinTagListenerActionSource,
   parseLiinoUiEventActionSource,
   parseLockCameraAimActionSource,
   parseModifyWeaponMountPointActionSource,
@@ -221,6 +228,7 @@ import {
   type DebugPrintActionSource,
   type EffectActionSource,
   type HideUiActionSource,
+  type HideHeadBarActionSource,
   type PlayAnimationActionSource,
   type PlaySoundActionSource,
 } from './presentationActions.ts';
@@ -232,6 +240,7 @@ import {
   requireInteger,
   requireNativeEnum,
   requireNonEmptyString,
+  requireString,
   requireRecord,
 } from './primitives.ts';
 import {
@@ -289,7 +298,7 @@ import {
   parseCustomRootMotionActionSource,
   parseDisableRootMotionActionSource,
   parseDynamicBattleShapeActionSource,
-  parseEnableMoveColliderActionSource,
+  parseMoveColliderActionSource,
   parseMoveToActionSource,
   parseReceiveMoveInputActionSource,
   parseSaveTargetDistanceActionSource,
@@ -303,7 +312,7 @@ import {
   type CustomRootMotionActionSource,
   type DisableRootMotionActionSource,
   type DynamicBattleShapeActionSource,
-  type EnableMoveColliderActionSource,
+  type MoveColliderActionSource,
   type MoveToActionSource,
   type ReceiveMoveInputActionSource,
   type SaveTargetDistanceActionSource,
@@ -360,6 +369,7 @@ const CONDITION_ACTION_NAMES = new Set([
   'CheckBuffStackNumAdvanced',
   'CheckBuffStackNumByTag',
   'CheckTagMatch',
+  'CheckPartTagMatch',
   'CheckTimedMarkerCondition',
   'CheckHp',
   'Probablity',
@@ -386,6 +396,7 @@ const CONDITION_ACTION_NAMES = new Set([
   'CheckBuffIdInContext',
   'CheckBuffIdInContextAdvanced',
   'CheckConsumeBuffLayer',
+  'CheckBuffEnhanceChangedLayer',
   'CheckGlobalCDTimerAction',
   'CheckComboSkillPending',
   'CheckSkillHasHit',
@@ -403,6 +414,8 @@ const CONDITION_ACTION_NAMES = new Set([
   'CheckPerfectDodgeDirection',
   'CheckDamageIgnoreImmuneLevel',
   'CheckProjectileInPerfectDodgeCd',
+  'CheckAbilityEntityFinishReason',
+  'CheckDamageTransferredSource',
   'CheckProjectileIgnoreImmuneLevel',
   'CheckCustomAbilityEvent',
 ]);
@@ -425,6 +438,7 @@ const REFERENCE_CLOSURE_ACTION_NAMES = new Set([
   'AuraAction',
   'FinishBuffAction',
   'FinishBuffAdvanced',
+  'FinishCurBuff',
   'LaunchProjectile',
   'SpawnAbilityEntity',
   'CastSkill',
@@ -461,8 +475,15 @@ export type KnownNativeActionLeafSource =
       readonly action: EntityPropertySnapshotActionSource;
     }
   | { readonly family: 'healthFloor'; readonly action: HealthFloorActionSource }
-  | { readonly family: 'characterIdentity'; readonly action: CharacterTypeIdReadActionSource }
+  | {
+      readonly family: 'characterIdentity';
+      readonly action: CharacterTypeIdReadActionSource | SquadSlotActionSource;
+    }
   | { readonly family: 'targetGroup'; readonly action: TargetGroupActionSource }
+  | {
+      readonly family: 'saveTransferredSource';
+      readonly action: { readonly source: TargetReferenceSource; readonly contextKey: string };
+    }
   | { readonly family: 'rayCastTargetGroup'; readonly action: RayCastTargetGroupActionSource }
   | {
       readonly family: 'directionAngle';
@@ -477,7 +498,7 @@ export type KnownNativeActionLeafSource =
       readonly action:
         | AdditionalBattleShapeActionSource
         | DynamicBattleShapeActionSource
-        | EnableMoveColliderActionSource
+        | MoveColliderActionSource
         | SelfRotateActionSource
         | TeleportActionSource
         | ReceiveMoveInputActionSource
@@ -522,7 +543,10 @@ export type KnownNativeActionLeafSource =
   | {
       readonly family: 'eventPayload';
       readonly action:
-        SaveAtbObtainValueActionSource | SaveHealValueActionSource | SaveShieldValueActionSource;
+        | SaveAtbObtainValueActionSource
+        | SaveHealValueActionSource
+        | SaveShieldValueActionSource
+        | SaveDamageContextSource;
     }
   | { readonly family: 'globalBuff'; readonly action: GlobalBuffActionSource }
   | { readonly family: 'skillSetting'; readonly action: SkillSettingReadActionSource }
@@ -636,6 +660,7 @@ export type KnownNativeActionLeafSource =
       readonly family: 'presentation';
       readonly action:
         | PlaySoundActionSource
+        | HideHeadBarActionSource
         | DebugPrintActionSource
         | EffectActionSource
         | PlayAnimationActionSource
@@ -662,6 +687,15 @@ export type KnownNativeActionLeafSource =
   | {
       readonly family: 'modeAndResourcePolicy';
       readonly action: SwitchModeActionSource | RefrainUltimateEnergyRecoveryActionSource;
+    }
+  | {
+      readonly family: 'tagQueryListener';
+      readonly action: {
+        readonly kind: 'tagQueryListener';
+        readonly query: { readonly predefined: string } | { readonly custom: TagQuerySource };
+        readonly executeOnMatch: boolean;
+        readonly sequence: NativeSequenceSource<KnownNativeActionLeafSource>;
+      };
     }
   | {
       readonly family: 'eventListener';
@@ -763,6 +797,8 @@ export function tryParseKnownNativeActionLeafSource(
         family: 'customAbilityEvent',
         action: parseTriggerCustomAbilityEventSource(value, path, inheritedBlackboard),
       };
+    case 'SaveDamageContext':
+      return { family: 'eventPayload', action: parseSaveDamageContextSource(value, path) };
     case 'AddAIMarkerAction':
       return {
         family: 'aiMarker',
@@ -855,6 +891,7 @@ export function tryParseKnownNativeActionLeafSource(
         ),
       };
     case 'ShowHideActorAction':
+    case 'ShowHideActorData':
       return {
         family: 'presentation',
         action: parseShowHideActorActionSource(value, path),
@@ -935,7 +972,8 @@ export function tryParseKnownNativeActionLeafSource(
         action: parseSelfRotateActionSource(value, path),
       };
     case 'EnableMoveColliderAction':
-      return { family: 'spatial', action: parseEnableMoveColliderActionSource(value, path) };
+    case 'DisableMoveColliderAction':
+      return { family: 'spatial', action: parseMoveColliderActionSource(value, path) };
     case 'CreateAdditionalBattleShape':
       return {
         family: 'spatial',
@@ -1062,11 +1100,43 @@ export function tryParseKnownNativeActionLeafSource(
         family: 'presentation',
         action: parseForceTargetInFightActionSource(value, path),
       };
-    case 'TagQueryListenerAction':
+    case 'TagQueryListenerAction': {
+      const action = requireRecord(value, path);
+      requireExactFields(
+        action,
+        new Set([
+          '$type',
+          'isEnable',
+          'priorityLevel',
+          'priorityOffset',
+          'serverActionIndex',
+          'listenerType',
+          'predefinedQuery',
+          'customQuery',
+          'executeOnMatch',
+          'executeAction',
+        ]),
+        path,
+      );
+      const listenerType = requireString(action.listenerType, `${path}.listenerType`);
+      if (listenerType !== 'PredefinedQuery' && listenerType !== 'CustomQuery')
+        throw new Error(`${path}.listenerType: unsupported tag listener ${listenerType}`);
+      const predefined = requireString(action.predefinedQuery, `${path}.predefinedQuery`);
+      const custom = parseTagQuerySource(action.customQuery, `${path}.customQuery`);
       return {
-        family: 'presentation',
-        action: parseInterruptHenshinTagListenerActionSource(value, path, inheritedBlackboard),
+        family: 'tagQueryListener',
+        action: {
+          kind: 'tagQueryListener',
+          query: listenerType === 'PredefinedQuery' ? { predefined } : { custom },
+          executeOnMatch: requireBoolean(action.executeOnMatch, `${path}.executeOnMatch`),
+          sequence: parseKnownNativeActionSequenceSource(
+            action.executeAction,
+            `${path}.executeAction`,
+            inheritedBlackboard,
+          ),
+        },
       };
+    }
     case 'SetStrafeModeAction':
       return {
         family: 'presentation',
@@ -1168,6 +1238,7 @@ export function tryParseKnownNativeActionLeafSource(
         action: parseCurveEvaluateFloatActionSource(value, path, inheritedBlackboard),
       };
     case 'CameraRotateAction':
+    case 'CameraRotationActionData':
       return {
         family: 'presentation',
         action: parseCameraRotateActionSource(value, path, inheritedBlackboard),
@@ -1182,6 +1253,8 @@ export function tryParseKnownNativeActionLeafSource(
         family: 'uiVisibility',
         action: parseHideUiActionSource(value, path),
       };
+    case 'ForceHideHeadBarAction':
+      return { family: 'presentation', action: parseHideHeadBarActionSource(value, path) };
     case 'UltimateShowAction':
       return {
         family: 'presentation',
@@ -1282,6 +1355,12 @@ export function tryParseKnownNativeActionLeafSource(
         family: 'characterIdentity',
         action: parseCharacterTypeIdReadActionSource(value, path),
       };
+    case 'SaveCharTypeIdToIntBySquadSlot':
+    case 'GetCharBySquadSlot':
+      return {
+        family: 'characterIdentity',
+        action: parseSquadSlotActionSource(value, path, name === 'SaveCharTypeIdToIntBySquadSlot'),
+      };
     case 'FindTargetAction':
     case 'ContinuousFindTargetAction':
     case 'MergeTargetAction':
@@ -1290,6 +1369,28 @@ export function tryParseKnownNativeActionLeafSource(
       const targetGroup = parseTargetGroupActionSource(value, path, inheritedBlackboard);
       if (!targetGroup) throw new Error(`${path}: failed to parse target group action ${name}`);
       return { family: 'targetGroup', action: targetGroup };
+    }
+    case 'SaveTransferredSource': {
+      requireExactFields(
+        action,
+        new Set([
+          '$type',
+          'isEnable',
+          'priorityLevel',
+          'priorityOffset',
+          'serverActionIndex',
+          'checkSource',
+          'contextKey',
+        ]),
+        path,
+      );
+      return {
+        family: 'saveTransferredSource',
+        action: {
+          source: parseTargetReferenceSource(action.checkSource, `${path}.checkSource`),
+          contextKey: requireString(action.contextKey, `${path}.contextKey`),
+        },
+      };
     }
     case 'TargetPostProcessorAction': {
       const targetGroup = parseTargetGroupActionSource(value, path, inheritedBlackboard);
@@ -1526,6 +1627,13 @@ export function tryParseKnownNativeActionLeafSource(
         family: 'buffFinish',
         action: parseLegacyBuffFinishActionSource(value, path, inheritedBlackboard),
       };
+    case 'FinishCurBuff':
+      requireExactFields(
+        action,
+        new Set(['$type', 'isEnable', 'priorityLevel', 'priorityOffset', 'serverActionIndex']),
+        path,
+      );
+      return { family: 'buffFinish', action: { kind: 'finishCurrentBuff' } };
     case 'FinishBuffAdvanced':
       return {
         family: 'buffFinish',
@@ -1844,6 +1952,8 @@ export function collectEnabledNativeActionNodes(
 
 function leafActionSequences(leaf: KnownNativeActionLeafSource) {
   switch (leaf.family) {
+    case 'tagQueryListener':
+      return [leaf.action.sequence];
     case 'eventListener':
       return leaf.action.events.flatMap(event => event.actions);
     case 'animationEventListener':

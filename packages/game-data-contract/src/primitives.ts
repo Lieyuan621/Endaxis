@@ -7,6 +7,10 @@
 /** 图片资源 ID（例如 endaxis:operators/arcane/ultimate_02），不是文件路径。 */
 export type ImageRef = string;
 
+/** 原生阵营身份；由实体自身持有，不由其来源干员推断。 */
+export const COMBAT_FACTIONS = ['invalid', 'unknown', 'good', 'bad', 'neutral'] as const;
+export type CombatFaction = (typeof COMBAT_FACTIONS)[number];
+
 /** 干员的四项基础属性。 */
 export const OPERATOR_ATTRIBUTES = [
   /** 力量。 */
@@ -150,6 +154,8 @@ export const DAMAGE_TYPES = [
   'nature',
   /** 以太伤害。 */
   'ether',
+  /** 原生 Fixed：保留基础计算结果，不经过普通伤害乘区和暴击。 */
+  'fixed',
 ] as const;
 
 /** 生命伤害公式选择抗性和特殊路径时使用的伤害类型。 */
@@ -451,6 +457,8 @@ export const DAMAGE_CALCULATIONS = [
   'breakingAttack',
   /** 直接按指定属性计算。 */
   'attribute',
+  /** 读取定值基础伤害；不乘攻击力。 */
+  'definite',
 ] as const;
 
 /** 命中进入标准或破防专用公式前处理的计算路径。 */

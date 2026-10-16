@@ -161,6 +161,12 @@
     "styleId": "ba.fire",
     "iconPath": "/icons/icon_term_ba_firevul.webp"
   },
+  "ba.fixeddamage": {
+    "name": "固定伤害",
+    "description": "固定伤害无视目标的防御和抗性，伤害量不会受到伤害提高或降低效果的影响。",
+    "styleId": "ba.key",
+    "iconPath": ""
+  },
   "ba.fracture": {
     "name": "物理异常 - 碎甲",
     "description": "对敌人造成<#ba.noguard>破防</>，如果敌人已经<#ba.noguard>破防</>，则会<#ba.consume>消耗</>所有<#ba.noguard>破防</>层数，造成<@ba.phy>物理伤害</>，并使其在一段时间内受到的<@ba.pd>物理伤害</>提高。",
@@ -364,6 +370,12 @@
     "description": "一定时间内目标受到的<#ba.spelldmg>法术伤害</>提高（数值代表提高的幅度）。同类效果可以叠加。",
     "styleId": "ba.key",
     "iconPath": "/icons/icon_term_ba_spellvul.webp"
+  },
+  "ba.static": {
+    "name": "定身",
+    "description": "持续时间内，受影响的目标暂停行动。",
+    "styleId": "ba.key",
+    "iconPath": ""
   },
   "ba.statuslevel": {
     "name": "异常等级",

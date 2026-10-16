@@ -2425,6 +2425,7 @@ export const endministrator: OperatorDefinition = {
     comboSkill: { kind: 'skillSlot', skillSlotKey: 'comboSkill' },
     ultimate: { kind: 'skillSlot', skillSlotKey: 'ultimate' },
   },
+  playerActionModes: [],
   comboSkillConditions: [endministratorComboCondition1],
   comboSkillPriority: 'default',
   talents: [
@@ -2461,7 +2462,21 @@ export const endministrator: OperatorDefinition = {
     {
       levels: 1,
       modifiers: [
-        { kind: 'modifyBasePanelStat', stat: 'health', operation: 'percent', value: 0.1 },
+        { kind: 'modifyBasePanelStat', stat: 'artsIntensity', operation: 'flat', value: 16 },
+        {
+          kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0003_endminf_ultimate_skill',
+          blackboardKey: 'atk_scale',
+          operation: 'multiply',
+          value: 1.2,
+        },
+        {
+          kind: 'patchSkillBlackboard',
+          skillKey: 'chr_0003_endminf_ultimate_skill',
+          blackboardKey: 'originum_ult_break_scale',
+          operation: 'multiply',
+          value: 1.2,
+        },
       ],
     },
     {

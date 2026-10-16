@@ -151,9 +151,8 @@ const files = (domain: string) => [
   },
 ];
 const observedKeys = (usage: GraphSharedEntityValueUsage) =>
-  [...new Set([...usage.fallbackKeys, ...usage.externalReads.map(read => read.key)])].sort();
-const expectedReads = () =>
-  ['weapons', 'gearSets', 'mechanics', 'mechanicQuery', 'consumables'].map(readKey).sort();
+  [...new Set(usage.externalReads.map(read => read.key))].sort();
+const expectedReads = () => ['mechanicQuery'].map(readKey).sort();
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -224,7 +223,7 @@ beforeEach(() => {
         commonBuffs: { files: files('commonBuffs') },
         sharedEntityUsage: {
           ...usage,
-          fallbackKeys: new Set([...usage.fallbackKeys, 'operator-consumer']),
+          externalReads: [...usage.externalReads, { kind: 'eventBuff', key: 'operator-consumer' }],
         },
         summary: { operatorCount: 1 },
       };

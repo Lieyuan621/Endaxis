@@ -2382,6 +2382,7 @@ export const catcher: OperatorDefinition = {
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0020_meurs_talent_shockwave: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',
@@ -2390,7 +2391,7 @@ export const catcher: OperatorDefinition = {
         'SelectCategory/ProjectilePassThru',
       ],
       lifetime: { kind: 'limited', durationSeconds: 2 },
-      deathReleaseDelaySeconds: 0.100000001490116,
+      deathReleaseDelaySeconds: 0.1,
       childSkill: {
         skillId: 'chr_0020_meurs_talent_shockwave',
         nativeSkillType: 'normalSkill',

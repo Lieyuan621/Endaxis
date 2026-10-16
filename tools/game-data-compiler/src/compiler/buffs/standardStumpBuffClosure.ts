@@ -86,6 +86,7 @@ export function compileStandardStumpBuffClosure(
   > = new Map(),
   rootBuffBlackboards: ReadonlyMap<string, Readonly<Record<string, number | string>>> = new Map(),
   externalBuffBlackboardReads?: ReadonlySet<string>,
+  predefinedTagQueries?: CombatActionProjectionContextSource['predefinedTagQueries'],
 ): CompiledStandardStumpBuffClosure {
   const buffData =
     typeof buffDataValue === 'function'
@@ -241,6 +242,7 @@ export function compileStandardStumpBuffClosure(
             externalUsage.unresolved.length === 0 &&
             !externalUsage.mentionedKeys.has(key),
           gameplayTagRegistry: gameplayTagRegistry ?? abilityEntityQueries?.gameplayTagRegistry,
+          predefinedTagQueries,
           ...(combatInvisibleDynamicBuffBlackboardKeys.size === 0
             ? {}
             : { combatInvisibleDynamicBuffBlackboardKeys }),

@@ -35,6 +35,8 @@ export interface CalculatePoiseDamageInput {
 
 /** 计算并写入一次失衡伤害所需的完整运行时端口。 */
 export interface ExecutePoiseDamageInput extends CalculatePoiseDamageInput {
+  /** 原生部位转移在普通公式之后乘算，并绕过来源侧 BeforeOutput 事件。 */
+  readonly partTransferMultiplier?: number;
   readonly sourceId: string;
   readonly targetId: string;
   readonly target: CombatVitals;
@@ -65,7 +67,7 @@ export function calculatePoiseDamage(input: CalculatePoiseDamageInput): number {
 
 /** 按已还原的来源方与目标方事件顺序应用一个失衡单元。 */
 export function executePoiseDamage(input: ExecutePoiseDamageInput): PoiseDamageExecutionResult {
-  const calculatedDamage = calculatePoiseDamage(input);
+  const calculatedDamage = calculatePoiseDamage(input) * (input.partTransferMultiplier ?? 1);
   const modifier: PoiseDamageModifier = {
     sourceId: input.sourceId,
     targetId: input.targetId,
@@ -79,7 +81,8 @@ export function executePoiseDamage(input: ExecutePoiseDamageInput): PoiseDamageE
     return unchangedPoise(calculatedDamage, input.target, modifier.finalDelta);
   }
 
-  input.emitSourceEvent('beforeOutputPoiseDamage', modifier);
+  if (input.partTransferMultiplier === undefined)
+    input.emitSourceEvent('beforeOutputPoiseDamage', modifier);
   input.emitTargetEvent('beforeTakePoiseDamage', modifier);
 
   const previousPoise = input.target.poise;

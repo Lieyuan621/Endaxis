@@ -657,6 +657,20 @@
     "noMatchingNodes": "没有匹配的节点",
     "addNode": "添加节点…",
     "options": {
+      "fixed": "固定伤害",
+      "definite": "确定值",
+      "none": "无",
+      "final": "最终值",
+      "real": "实际值",
+      "overflow": "溢出值",
+      "specificTime": "指定时刻",
+      "lifetime": "生命周期结束",
+      "stackEvicted": "超出叠加上限",
+      "sourceDied": "来源死亡",
+      "targetDied": "目标死亡",
+      "soulMainBodyDied": "墨魂本体死亡",
+      "normal": "普通",
+      "additionalNormalSkill": "额外战技",
       "first": "首个目标",
       "all": "全部目标",
       "allOperators": "全队干员",
@@ -860,6 +874,45 @@
     "scopeUnknown": "尚未连接，作用域未确定",
     "searchNodes": "搜索节点",
     "fields": {
+      "replacePartsWithMainBodies": {
+        "name": "将部件替换为本体"
+      },
+      "excludeTargets": {
+        "name": "排除目标"
+      },
+      "caster": {
+        "name": "施放者"
+      },
+      "calculationValue": {
+        "name": "计算值"
+      },
+      "calculationValueScale": {
+        "name": "计算值倍率"
+      },
+      "slotIndex": {
+        "name": "队伍位置"
+      },
+      "defaultValue": {
+        "name": "默认值"
+      },
+      "minimum": {
+        "name": "下限（含）"
+      },
+      "maximum": {
+        "name": "上限（不含）"
+      },
+      "emitters": {
+        "name": "发射点"
+      },
+      "executeOnMatch": {
+        "name": "匹配时执行"
+      },
+      "sequence": {
+        "name": "动作序列"
+      },
+      "normalSkillSubType": {
+        "name": "战技子类型"
+      },
       "variableKey": {
         "name": "变量名",
         "help": "选择当前作用域内的变量。局部变量只能在所属作用域内读写。"
@@ -1799,6 +1852,38 @@
       "number": "数值"
     },
     "nodes": {
+      "saveTransferredSource": {
+        "name": "保存转移来源",
+        "help": "将首个来源目标对应的转移部位保存到目标组；没有转移记录时保留原目标。"
+      },
+      "findCharacterBySquadSlot": {
+        "name": "按队伍位置查找干员",
+        "help": "将指定队伍位置的干员保存到目标组。"
+      },
+      "storeCharacterTypeBySquadSlot": {
+        "name": "读取队伍位置属性",
+        "help": "读取指定队伍位置干员的属性并写入黑板。"
+      },
+      "storeEventDamageValue": {
+        "name": "读取事件伤害值",
+        "help": "读取当前伤害事件的数值并写入黑板；没有上下文时写入零。"
+      },
+      "storeRandomInteger": {
+        "name": "保存随机整数",
+        "help": "从包含下限、不含上限的整数范围取样并写入黑板。"
+      },
+      "listenForTagQuery": {
+        "name": "监听标签匹配",
+        "help": "监听标签查询结果变化，并按匹配状态执行回调。"
+      },
+      "eventAbilityEntityFinishReasonIn": {
+        "name": "检查能力实体结束原因",
+        "help": "检查当前事件中的能力实体结束原因是否匹配。"
+      },
+      "eventBuffEnhanceLayerCompare": {
+        "name": "比较 Buff 增强变化层数",
+        "help": "比较当前 Buff 增强变化事件中的层数。"
+      },
       "triggerSpellBurst": {
         "name": "触发法术爆发",
         "help": "触发指定元素的法术爆发。"
@@ -2314,6 +2399,10 @@
       "eventDamageGameplayTagsMatch": {
         "name": "本次伤害标签匹配？",
         "help": "检查触发事件的伤害所携带的效果标签。"
+      },
+      "eventTransferredPartTagsMatch": {
+        "name": "伤害转移部位标签匹配？",
+        "help": "读取当前事件中主体对应的转移部位，检查标签；成功时可保存部位目标，失败保留原目标组。"
       },
       "eventDamageFeaturesMatch": {
         "name": "本次伤害特征匹配？",
@@ -3128,6 +3217,7 @@
       "sectionScenarioSettings": "方案设置",
       "sectionPrefs": "用户偏好",
       "automaticControlSwitches": "自动切换主控",
+      "comboSkillPriority": "连携技优先级设置",
       "automaticControlSwitchesHelp": "普攻、强化普攻、下落攻击或处决时，按需切换到对应干员",
       "sectionViewLayers": "显示内容",
       "sectionViewBehavior": "视图行为",
@@ -5093,6 +5183,8 @@
       "speedup": "加速",
       "barrageArray": "箭阵",
       "firefangVesperwings": "衔火血翼",
+      "artfulIntent": "笔意",
+      "immobilization": "定身",
       "sunderblades": "青霆剑",
       "electrification": "导电",
       "ultEnergyGain": "终结技充能",
@@ -5108,6 +5200,7 @@
   },
   "hitEditor": {
     "elements": {
+      "fixed": "固定",
       "physical": "物理",
       "heat": "灼热",
       "cryo": "寒冷",

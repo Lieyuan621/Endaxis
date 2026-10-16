@@ -578,6 +578,7 @@ export const ardeliaChr_0025_ardelia_attack4ActionGraph = {
             childSkillId: 'chr_0025_ardelia_attack4_sheep',
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
+            target: { kind: 'context', key: 'sheepPos' },
           },
         },
         next: null,
@@ -685,6 +686,7 @@ export const ardeliaChr_0025_ardelia_attack4ActionGraph = {
             childSkillId: 'chr_0025_ardelia_attack4_sheep',
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
+            target: { kind: 'context', key: 'sheepPos' },
           },
         },
         next: null,
@@ -1272,7 +1274,7 @@ export const ardeliaChr_0025_ardelia_normal_skillActionGraph = {
                   maxChargeTime: 1,
                   cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
                 },
-                blackboard: { atb: 0, heal_scale: 0, heal_value: 0, potential2: 0 },
+                blackboard: { heal_scale: 0, heal_value: 0, potential2: 0 },
                 scheduledSequences: [
                   { startFrame: 0, endFrame: 3, sequence: { $sequence: 'spawnAbilityEntity_1' } },
                 ],
@@ -1607,7 +1609,6 @@ export const ardeliaChr_0025_ardelia_normal_skill: SkillDefinition = {
   element: 'nature',
   blackboard: {
     atk_scale: [1.42, 1.56, 1.71, 1.85, 1.99, 2.13, 2.28, 2.42, 2.56, 2.74, 2.95, 3.2],
-    def_decrease: 0,
     duration_vul: 30,
     heal_scale: 0,
     heal_value: 0,
@@ -1886,24 +1887,7 @@ export const ardeliaChr_0025_ardelia_combo_skillActionGraph = {
         },
         next: null,
       },
-      findCharacterTeamTargets_15: {
-        action: {
-          kind: 'findCharacterTeamTargets',
-          parameters: { saveToContextKey: 'mainchar', selection: { kind: 'controlledOperator' } },
-        },
-        next: null,
-      },
-      ifElse_16: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'findCharacterTeamTargets_15' },
-        },
-        next: null,
-      },
-      applyBuff_17: {
+      applyBuff_13: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1929,7 +1913,6 @@ export const ardeliaChr_0025_ardelia_combo_skillActionGraph = {
           value: 1,
         },
       },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
     },
   },
   macros: {},
@@ -1962,8 +1945,7 @@ export const ardeliaChr_0025_ardelia_combo_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'spawnAbilityEntity_1' } },
     { startFrame: 20, endFrame: 23, sequence: { $sequence: 'findTargets_11' } },
     { startFrame: 0, endFrame: 21, sequence: { $sequence: 'startTimeDilation_12' } },
-    { startFrame: 0, endFrame: 21, sequence: { $sequence: 'ifElse_16' } },
-    { startFrame: 0, endFrame: 160, sequence: { $sequence: 'applyBuff_17' } },
+    { startFrame: 0, endFrame: 160, sequence: { $sequence: 'applyBuff_13' } },
   ],
   smartTarget: 'input',
   cooldownFrames: [540, 540, 540, 540, 540, 540, 540, 540, 540, 540, 540, 510],
@@ -2220,7 +2202,6 @@ export const ardeliaChr_0025_ardelia_ultimate_skill: SkillDefinition = {
     poise: [2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3],
     potential2: 0,
     potential3_duration: 0,
-    duration: 3,
   },
   timelineBlockFrames: 224,
   naturalDurationFrames: 261,
@@ -2806,6 +2787,7 @@ export const ardelia: OperatorDefinition = {
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0025_ardelia_attack4: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',
@@ -2896,7 +2878,7 @@ export const ardelia: OperatorDefinition = {
                 type: 'boolean',
                 expression: {
                   kind: 'entityCountCompare',
-                  target: { kind: 'fixed', target: 'enemy' },
+                  target: { kind: 'inputTarget' },
                   containsHittableTarget: false,
                   excludeDeadEntity: false,
                   operator: 'greaterOrEqual',
@@ -2921,6 +2903,7 @@ export const ardelia: OperatorDefinition = {
       },
     },
     abilityentity_chr_0025_ardelia_attack4_end: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',
@@ -2957,6 +2940,7 @@ export const ardelia: OperatorDefinition = {
       },
     },
     abilityentity_chr_0025_ardelia_attack4_low: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',
@@ -3047,7 +3031,7 @@ export const ardelia: OperatorDefinition = {
                 type: 'boolean',
                 expression: {
                   kind: 'entityCountCompare',
-                  target: { kind: 'fixed', target: 'enemy' },
+                  target: { kind: 'inputTarget' },
                   containsHittableTarget: false,
                   excludeDeadEntity: false,
                   operator: 'greaterOrEqual',
@@ -3072,6 +3056,7 @@ export const ardelia: OperatorDefinition = {
       },
     },
     abilityentity_chr_0025_ardelia_normal_skill: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',
@@ -3108,6 +3093,7 @@ export const ardelia: OperatorDefinition = {
       },
     },
     abilityentity_chr_0025_ardelia_remain_loop: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',
@@ -3359,6 +3345,7 @@ export const ardelia: OperatorDefinition = {
       },
     },
     abilityentity_chr_0025_ardelia_combo_skill: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',
@@ -3395,6 +3382,7 @@ export const ardelia: OperatorDefinition = {
       },
     },
     abilityentity_chr_0025_ardelia_combo_skill_bomb: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',
@@ -3404,48 +3392,72 @@ export const ardelia: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 3 },
       childSkills: {
         chr_0025_ardelia_combo_skill_bomb: {
-          skillId: 'chr_0025_ardelia_combo_skill_bomb',
-          nativeSkillType: 'normalSkill',
-          naturalDurationFrames: 120,
-          castResource: {
-            costFrame: 0,
-            cooldownSeconds: 0,
-            maxChargeTime: 1,
-            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-          },
-          blackboard: {
-            atk_scale_boom: 0,
-            duration_corrupt: 0,
-            duration_corrupt_final: 0,
-            poise: 0,
-            potential5_duration: 0,
-          },
-          scheduledSequences: [
-            { startFrame: 52, endFrame: 55, sequence: { $sequence: 'calculateActionValue_opt3' } },
-            { startFrame: 119, endFrame: 120, sequence: { $sequence: 'finishOwner_7' } },
-          ],
           actionGraph: {
             main: {
               nodes: {
-                finishOwner_7: {
-                  action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
+                mergeContextTargets_1: {
+                  action: {
+                    kind: 'mergeContextTargets',
+                    parameters: {
+                      saveToContextKey: 'tar',
+                      sources: [{ kind: 'target', target: 'enemy' }],
+                    },
+                  },
                   next: null,
                 },
-                dealDamage_opt1: {
+                dealDamage_2: {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      target: { kind: 'context', key: 'tar' },
                       damageType: 'nature',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                       tags: ['comboSkill'],
                       features: ['canBreakWeakness'],
                       stagger: { kind: 'valueNode', nodeId: 'data_2' },
                     },
-                    key: 'abilityentity_chr_0025_ardelia_combo_skill_bomb:chr_0025_ardelia_combo_skill_bomb|chr_0025_ardelia_combo_skill_bomb_potential3:/childSkills/chr_0025_ardelia_combo_skill_bomb/actionGraph/main/nodes/dealDamage_4/action',
+                    key: 'abilityentity_chr_0025_ardelia_combo_skill_bomb:chr_0025_ardelia_combo_skill_bomb|chr_0025_ardelia_combo_skill_bomb_potential3:/childSkills/chr_0025_ardelia_combo_skill_bomb/actionGraph/main/nodes/dealDamage_2/action',
                   },
                   next: null,
                 },
-                applyBuff_opt2: {
+                modifyActionValue_3: {
+                  action: {
+                    kind: 'modifyActionValue',
+                    parameters: {
+                      key: 'atk_scale_boom',
+                      operation: 'multiply',
+                      value: { kind: 'constant', value: 0.5 },
+                    },
+                  },
+                  next: 'dealDamage_2',
+                },
+                copyContextTargets_4: {
+                  action: {
+                    kind: 'copyContextTargets',
+                    parameters: {
+                      source: { kind: 'context', key: 'tar' },
+                      excludeTargets: { kind: 'inputTarget' },
+                      saveToContextKey: 'tar',
+                    },
+                  },
+                  next: 'modifyActionValue_3',
+                },
+                dealDamage_5: {
+                  action: {
+                    kind: 'dealDamage',
+                    parameters: {
+                      target: 'actionInputTarget',
+                      damageType: 'nature',
+                      attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                      tags: ['comboSkill'],
+                      features: ['canBreakWeakness'],
+                      stagger: { kind: 'valueNode', nodeId: 'data_2' },
+                    },
+                    key: 'abilityentity_chr_0025_ardelia_combo_skill_bomb:chr_0025_ardelia_combo_skill_bomb|chr_0025_ardelia_combo_skill_bomb_potential3:/childSkills/chr_0025_ardelia_combo_skill_bomb/actionGraph/main/nodes/dealDamage_5/action',
+                  },
+                  next: 'copyContextTargets_4',
+                },
+                applyBuff_6: {
                   action: {
                     kind: 'applyBuff',
                     parameters: {
@@ -3460,9 +3472,9 @@ export const ardelia: OperatorDefinition = {
                       inheritSourceSkillCastInfo: true,
                     },
                   },
-                  next: 'dealDamage_opt1',
+                  next: 'dealDamage_5',
                 },
-                calculateActionValue_opt3: {
+                calculateActionValue_7: {
                   action: {
                     kind: 'calculateActionValue',
                     parameters: {
@@ -3472,7 +3484,11 @@ export const ardelia: OperatorDefinition = {
                       right: { kind: 'valueNode', nodeId: 'data_4' },
                     },
                   },
-                  next: 'applyBuff_opt2',
+                  next: 'applyBuff_6',
+                },
+                finishOwner_8: {
+                  action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
+                  next: null,
                 },
               },
               dataNodes: {
@@ -3493,6 +3509,27 @@ export const ardelia: OperatorDefinition = {
             },
             macros: {},
           },
+          skillId: 'chr_0025_ardelia_combo_skill_bomb',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 120,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
+          blackboard: {
+            atk_scale_boom: 0,
+            duration_corrupt: 0,
+            duration_corrupt_final: 0,
+            poise: 0,
+            potential5_duration: 0,
+          },
+          scheduledSequences: [
+            { startFrame: 52, endFrame: 55, sequence: { $sequence: 'mergeContextTargets_1' } },
+            { startFrame: 52, endFrame: 55, sequence: { $sequence: 'calculateActionValue_7' } },
+            { startFrame: 119, endFrame: 120, sequence: { $sequence: 'finishOwner_8' } },
+          ],
         },
         chr_0025_ardelia_combo_skill_bomb_potential3: {
           skillId: 'chr_0025_ardelia_combo_skill_bomb_potential3',

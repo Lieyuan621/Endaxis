@@ -124,6 +124,7 @@ const blackboardActionPaths = new Set([
   'storeEventSpGainAmount.realDeltaOutputKey',
   'storeEventHealValues.finalHealOutputKey',
   'storeEventHealValues.realHealOutputKey',
+  'storeEventDamageValue.outputKey',
   'storeShieldValue.outputKey',
   'modifyActionValue.key',
   'calculateActionValue.key',

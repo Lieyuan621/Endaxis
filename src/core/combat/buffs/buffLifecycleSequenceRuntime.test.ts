@@ -1073,13 +1073,13 @@ describe('attachBuffLifecycleSequences', () => {
     expect(
       abilityEventSkillCastInfo({
         event: 'abilityEntityFinished',
-        payload: { ...cast, skillCastInfo: explicit },
+        payload: { ...cast, skillCastInfo: explicit, finishReason: 'other' },
       }),
     ).toBe(explicit);
     expect(
       abilityEventSkillCastInfo({
         event: 'abilityEntityFinished',
-        payload: { ...cast, skillCastInfo: null },
+        payload: { ...cast, skillCastInfo: null, finishReason: 'other' },
       }),
     ).toBeNull();
   });

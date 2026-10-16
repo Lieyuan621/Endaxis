@@ -49,7 +49,7 @@ it('恢复清理列表只解析当前容器的实例，不结束旧分支或同 
     sourceId: 'other',
     blackboardValues: {},
   })!;
-  expect(restoredBuff.instanceId).toBe(oldBuff.instanceId);
+  expect(restoredBuff.reference.instanceId).toBe(oldBuff.instanceId);
   const restored = new PoiseBreakBuffRuntime(target, saved);
   restored.consumeFinisher();
   expect(restoredEligibility.isFinished).toBe(true);

@@ -30,6 +30,26 @@ import { createStateTestSession } from '../../../test/stateTestSession';
 
 type Attribute = 'attack';
 
+it('标签查询订阅只观察集合变化，支持同步退订且注册不重放状态', () => {
+  const container = new CombatBuffContainer('owner', new CombatAttributeSet<Attribute>());
+  container.addEntityTags(['SelectCategory/Unmarkable']);
+  const seen: boolean[] = [];
+  const stop = container.observeEntityTags(() => {
+    seen.push(container.matchesEntityTags(['SelectCategory'], 'hasAny'));
+  });
+  expect(seen).toEqual([]);
+  container.addEntityTags(['SelectCategory/Unmarkable']);
+  container.removeEntityTags(['SelectCategory/Unmarkable']);
+  expect(seen).toEqual([]);
+  container.removeEntityTags(['SelectCategory/Unmarkable']);
+  expect(seen).toEqual([false]);
+  const stopFirst = container.observeEntityTags(() => stop());
+  container.addEntityTags(['SelectCategory/Unmarkable']);
+  container.removeEntityTags(['SelectCategory/Unmarkable']);
+  expect(seen).toEqual([false, true]);
+  stopFirst();
+});
+
 it('驱散按配置、等级和实例标签筛选，先执行驱散回调再结束', () => {
   const events: string[] = [];
   const container = new CombatBuffContainer('owner', new CombatAttributeSet<Attribute>());
@@ -194,6 +214,8 @@ it('正式容器数据图保留 Buff 黑板与属性修正的共享关系', () =
   attributes.define('attack', 100, {});
   const sharedSp = new SharedSpGainModifierSet({ baseGainEfficiency: 1 });
   const container = new CombatBuffContainer('owner', attributes, undefined, sharedSp);
+  const sourceBlackboard = new ActionBlackboard({ EntityBB_count: 7 });
+  container.resolveSourceEntityBlackboard = id => (id === 'source' ? sourceBlackboard : undefined);
   const buff = requireAddedBuff(
     container.add(
       {
@@ -249,8 +271,12 @@ it('正式容器数据图保留 Buff 黑板与属性修正的共享关系', () =
       'source',
     ),
   );
-  const session = createStateTestSession(container.runtimeState, () => undefined);
-  const copied = session.read();
+  const session = createStateTestSession(
+    { container: container.runtimeState, source: sourceBlackboard.runtimeState },
+    () => undefined,
+  );
+  const saved = session.read();
+  const copied = saved.container;
   const instance = copied.instances.get(buff.instanceId)!;
   expect(instance.sharedSpGainModifiers[0]).toBe(copied.sharedSpGainModifiers!.modifiers[0]);
   expect(instance.identity).toEqual({
@@ -261,7 +287,9 @@ it('正式容器数据图保留 Buff 黑板与属性修正的共享关系', () =
   });
   expect(instance.sourceActionId).toBe('data-graph');
   expect(instance.definitionOwnerId).toBe('source');
-  expect(instance.blackboard.entity).toBe(copied.entityBlackboard);
+  expect(instance.blackboard.entity).toBe(saved.source);
+  expect(instance.blackboard.entity).not.toBe(copied.entityBlackboard);
+  expect(buff.blackboard.getNumber('EntityBB_count')).toBe(7);
   expect(instance.attributes.modifiers[0]).toBe(copied.attributes.modifiers[0]);
   expect(instance.damageModifiers[0]).toBe(copied.damageModifiers[0]);
   expect(copied.damageModifiers[0]!.condition).not.toBeNull();
@@ -473,6 +501,12 @@ it('宿主释放清理实例，但不执行普通结束动作或发布结束/减
         actions: {
           finish: () => seen.push('finish-action'),
           disable: () => seen.push('disable-action'),
+          beforeRelease: current => {
+            expect(current.isEnabled).toBe(true);
+            expect(current.isFinished).toBe(false);
+            expect(current.release()).toBe(false);
+            seen.push('released-event');
+          },
           release: () => seen.push('release-cleanup'),
         },
       },
@@ -485,7 +519,7 @@ it('宿主释放清理实例，但不执行普通结束动作或发布结束/减
   expect(buff.finishReason).toBeNull();
   expect(buff.release()).toBe(false);
   expect(buff.finish('other')).toBe(false);
-  expect(seen).toEqual(['release-cleanup']);
+  expect(seen).toEqual(['released-event', 'release-cleanup']);
 });
 
 it.each(['expiry', 'release', 'replacement', 'shieldValue', 'shieldCount'] as const)(
@@ -2843,8 +2877,14 @@ describe('CombatBuffContainer', () => {
       'original-source',
     );
 
-    expect(container.finishByTags([tag], 'hasAny', 'absorbed', false, 'camille')).toBe(1);
-    expect(observed).toEqual(['camille:enemy:fire-infliction:2']);
+    expect(container.finishCountByTags([tag], 'hasAny', 1, 'absorbed', false, 'camille')).toBe(1);
+    expect(container.getCountById('fire-infliction')).toBe(1);
+    expect(observed).toEqual([]);
+    expect(container.finishCountByTags([tag], 'hasAny', 1, 'absorbed', false, 'camille')).toBe(1);
+    expect(container.getCountById('fire-infliction')).toBe(0);
+    expect(observed).toEqual(['camille:enemy:fire-infliction:1']);
+    expect(container.finishCountByTags([tag], 'hasAny', 1, 'absorbed', false, 'camille')).toBe(0);
+    expect(observed).toHaveLength(1);
   });
 
   it('dispatches typed ignite events only to active matching Buff definitions', () => {

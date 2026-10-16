@@ -1,5 +1,8 @@
 import type { AbilityEvent } from '../../../../packages/game-data-contract/src/abilityEvents';
-import type { SkillInterruptReason } from '../../../../packages/game-data-contract/src/conditions';
+import type {
+  SkillInterruptReason,
+  AbilityEntityFinishReason,
+} from '../../../../packages/game-data-contract/src/conditions';
 import type { GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags';
 import type {
   DamageFeature,
@@ -24,6 +27,7 @@ import type {
   SkillCastEventData,
 } from '../state/foundationState';
 import type { AbilityEventFromMap } from './abilityEventDispatcher';
+import type { BuffFrameEndPayloadState } from '../state/environmentState';
 
 /** 已发布的强类型事件，或仅供兼容路由识别的手工语义标记；不是外部数据解析器。 */
 type AbilityEventCandidate = CombatAbilityEvent | { readonly kind: string; readonly event?: never };
@@ -86,6 +90,8 @@ export type LifecycleAbilityEvent = CombatAbilityEvent<
   | 'hpChanged'
   | 'abilityEntitySpawned'
   | 'abilityEntityFinished'
+  | 'abilityEntitySelfFinished'
+  | 'soulDisabled'
 > & { readonly kind?: never };
 /** 生命周期只识别原始发布身份，不合并事件或重建出生/结束时的实体关系。 */
 export function lifecycleAbilityEvent(
@@ -99,6 +105,8 @@ export function lifecycleAbilityEvent(
     case 'ownerHpZero':
     case 'hpChanged':
     case 'abilityEntitySpawned':
+    case 'abilityEntitySelfFinished':
+    case 'soulDisabled':
     case 'abilityEntityFinished': {
       return event;
     }
@@ -233,7 +241,7 @@ export interface AbilitySpellBurstPayload extends AbilityOriginPayload {
 /** 运行时实例的事件读取端口；仍传同一对象，不复制黑板或携带容器操作权限。 */
 export type EventBuffInstance = Pick<
   CombatBuff<string>,
-  'instanceId' | 'blackboard' | 'isFinished'
+  'instanceId' | 'blackboard' | 'isFinished' | 'runtimeState'
 >;
 
 /** 输出后携带实际实例；跟踪者只取得身份读取与回收订阅权限。 */
@@ -251,12 +259,20 @@ export interface AbilityFinishedBuffPayload extends AbilityOriginPayload {
   readonly reason: BuffFinishReason;
 }
 
-export interface AbilityConsumedBuffPayload extends AbilityOriginPayload {
+interface AbilityBuffLayerPayload extends AbilityOriginPayload {
   readonly buff: EventBuffInstance;
   readonly buffId: string;
   readonly buffTags: readonly GameplayTag[];
-  readonly layers: number;
   readonly blackboardValues?: Readonly<Record<string, string | number | null>>;
+}
+
+export interface AbilityConsumedBuffPayload extends AbilityBuffLayerPayload {
+  readonly layers: number;
+}
+
+/** 帧末事件保留首条上下文，只有本帧同 Buff、同施法的变化量累加。 */
+export interface AbilityBuffFrameEndPayload extends BuffFrameEndPayloadState {
+  readonly buff: EventBuffInstance;
 }
 
 /** OnBuffEnhanceChanged 在 Buff owner 上广播，不具有动作目标。 */
@@ -317,7 +333,13 @@ export interface AbilityEventPayloadMap {
   ownerHpZero: AbilityOriginPayload;
   hpChanged: AbilityOriginPayload;
   abilityEntitySpawned: AbilityEntitySpawnedPayload;
-  abilityEntityFinished: AbilityOriginPayload;
+  soulDisabled: AbilityOriginPayload;
+  abilityEntityFinished: AbilityOriginPayload & {
+    readonly finishReason: AbilityEntityFinishReason;
+  };
+  abilityEntitySelfFinished: AbilityOriginPayload & {
+    readonly finishReason: AbilityEntityFinishReason;
+  };
   // 准备阶段传递可变伤害包，结算阶段传递结算结果；不能裁成相似的只读字段集合。
   beforeTakeDamage: HealthDamageEventPayload | ExternalOperatorHitPayload;
   beforeCalculateDamage: PlayerDamageContext;
@@ -368,6 +390,9 @@ export interface AbilityEventPayloadMap {
   afterKillEntity: HealthDamageEventPayload;
   buffConsumed: AbilityConsumedBuffPayload;
   buffAbsorbed: AbilityConsumedBuffPayload;
+  /** 原生帧末载荷是 BuffEnhanceChangedContext；层数变化在入队时聚合。 */
+  buffAbsorbedFrameEnd: AbilityBuffFrameEndPayload;
+  buffConsumedFrameEnd: AbilityBuffFrameEndPayload;
   skillSpGained: AbilitySpGainPayload;
   perfectDodge: AbilityOriginPayload;
 }
@@ -412,7 +437,13 @@ export function buffApplicationEvent(
 export type BuffAbilityEvent =
   | BuffApplicationAbilityEvent
   | (CombatAbilityEvent<
-      'finishedBuff' | 'buffEndsEarly' | 'buffConsumed' | 'buffAbsorbed' | 'buffEnhanceChanged'
+      | 'finishedBuff'
+      | 'buffEndsEarly'
+      | 'buffConsumed'
+      | 'buffAbsorbed'
+      | 'buffEnhanceChanged'
+      | 'buffAbsorbedFrameEnd'
+      | 'buffConsumedFrameEnd'
     > & {
       readonly kind?: never;
     });
@@ -423,6 +454,8 @@ export function buffAbilityEvent(event: CombatAbilityEvent): BuffAbilityEvent | 
     case 'buffEndsEarly':
     case 'buffConsumed':
     case 'buffAbsorbed':
+    case 'buffAbsorbedFrameEnd':
+    case 'buffConsumedFrameEnd':
     case 'buffEnhanceChanged':
       return event;
     default:

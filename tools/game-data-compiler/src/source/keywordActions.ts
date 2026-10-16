@@ -201,7 +201,11 @@ function parseKeywordBuffActionSource(
     duration: parseScalarSource(action.duration, `${path}.duration`, inheritedBlackboard),
     rate: parseScalarSource(action.rate, `${path}.rate`, inheritedBlackboard),
     overrideChildBuffId: requireBoolean(action.overrideChildBuffId, `${path}.overrideChildBuffId`),
-    childBuffId: parseStringScalarSource(action.childBuffId, `${path}.childBuffId`),
+    childBuffId: parseStringScalarSource(
+      action.childBuffId,
+      `${path}.childBuffId`,
+      action.overrideChildBuffId !== false,
+    ),
     asChildBuff: requireBoolean(action.asChildBuff, `${path}.asChildBuff`),
     autoFinishByAction: requireBoolean(action.autoFinishByAction, `${path}.autoFinishByAction`),
     enhancements: requireArray(action.enhancingList, `${path}.enhancingList`).map((raw, index) => {

@@ -45,6 +45,26 @@ export function readSkillType(value: unknown, path: string) {
   return requireNativeEnum(value, SKILL_TYPES, path);
 }
 
+// CheckSkillType.NormalSkillSubTypeFilter；不是 SkillData.NormalSkillSubType 的编号。
+const NORMAL_SKILL_SUB_TYPE_FILTERS = new Map([
+  [0, 'Any'],
+  [1, 'Normal'],
+  [2, 'AdditionalNormalSkill'],
+] as const);
+
+export function readNormalSkillSubTypeFilter(value: unknown, path: string) {
+  return requireNativeEnum(value, NORMAL_SKILL_SUB_TYPE_FILTERS, path);
+}
+
+const NORMAL_SKILL_SUB_TYPES = new Map([
+  [0, 'Normal'],
+  [1, 'AdditionalNormalSkill'],
+] as const);
+
+export function readNormalSkillSubType(value: unknown, path: string) {
+  return requireNativeEnum(value, NORMAL_SKILL_SUB_TYPES, path);
+}
+
 // BuffData.buffEventAction 的原生生命周期事件。数字身份由原始与已解码 BuffData 逐项核对。
 const BUFF_EVENTS = new Map([
   [0, 'OnBuffStart'],
@@ -56,6 +76,7 @@ const BUFF_EVENTS = new Map([
   [7, 'OnBuffAfterTryEnhanced'],
   [8, 'OnBuffBeforeTryEnhanced'],
   [10, 'OnBuffFinishedEarlyInterrupted'],
+  [11, 'OnBuffReleased'],
 ] as const);
 
 export function readBuffEvent(value: unknown, path: string) {

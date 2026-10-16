@@ -1,4 +1,5 @@
 import {
+  readOptionalReferenceKey,
   requireArray,
   requireBoolean,
   requireExactFields,
@@ -80,7 +81,7 @@ export function parseBlackboardAssignmentsSource(
       assignment.useDirectValue,
       `${assignmentPath}.useDirectValue`,
     );
-    const inputValueKey = requireString(
+    const inputValueKey = readOptionalReferenceKey(
       assignment.inputValueKey,
       `${assignmentPath}.inputValueKey`,
     );
@@ -91,7 +92,10 @@ export function parseBlackboardAssignmentsSource(
       targetKey,
       valueType,
       numericValue: requireNumber(assignment.numericValue, `${assignmentPath}.numericValue`),
-      stringValue: requireString(assignment.stringValue, `${assignmentPath}.stringValue`),
+      stringValue:
+        assignment.stringValue === null && (!useDirectValue || valueType !== 'String')
+          ? ''
+          : requireString(assignment.stringValue, `${assignmentPath}.stringValue`),
       useDirectValue,
       inputValueKey,
     };

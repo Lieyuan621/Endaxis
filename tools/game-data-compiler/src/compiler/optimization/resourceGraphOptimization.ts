@@ -311,7 +311,9 @@ export function optimizeResourceGraphs<T>(
       const owner = simplified as SkillBuffDefinition | OperatorPassiveSkillDefinition;
       const shared = resourceValues.sharedUsage;
       const parameters = 'stackingType' in owner ? analyzeGraphBuffParameters(owner) : undefined;
-      if (!parameters?.unknownAccess && !shared.unknownAccess) {
+      // 未知读取属于产生它的程序；其他资源的未知局部访问不能冻结本资源。
+      // 本图及实际接收方的未知依赖由 pruneGraphValues / usageContext 保守处理。
+      if (!parameters?.unknownAccess) {
         const protectedKeys = new Set<string>();
         parameters?.reads.forEach(key => protectedKeys.add(key));
         if ('stackingType' in owner) {
@@ -349,6 +351,15 @@ export function optimizeResourceGraphs<T>(
           ...(pruned.scope.blackboard === undefined ? {} : { blackboard: pruned.scope.blackboard }),
         };
       }
+      if (owner.blackboard && Object.keys(owner.blackboard).length > 0) {
+        recordValueReport(path, {
+          resourceId: path,
+          removedWrites: [],
+          removedInitialKeys: [],
+          retainedLifetimePaths: [],
+          retainedReason: 'unresolved-blackboard-access',
+        });
+      }
     }
     // nativeSkillType 仅属于技能资源；Buff 和被动技能有不同的生命周期入口。
     // 复用资源遍历，目录内技能、投射物回调和内嵌实体均在自己的图中分析。
@@ -371,7 +382,7 @@ export function optimizeResourceGraphs<T>(
       ?.buffDefinitions;
     const shared = resourceValues?.sharedUsage;
     pruneBuffAssignments =
-      mode !== 'off' && definitions && shared && !shared.unknownAccess
+      mode !== 'off' && definitions && shared
         ? createBuffAssignmentPruner(
             definitions,
             shared.externalReads,

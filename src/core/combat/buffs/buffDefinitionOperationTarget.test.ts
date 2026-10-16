@@ -105,11 +105,10 @@ describe('BuffDefinitionOperationTarget', () => {
         timeClock: id as 'default' | 'global' | 'self',
       }),
     });
-    const buffs = ['default', 'global', 'self'].map(buffId =>
-      target.applyScoped({ buffId, sourceId: 'caster', blackboardValues: {} })!,
-    );
+    for (const buffId of ['default', 'global', 'self'])
+      target.applyScoped({ buffId, sourceId: 'caster', blackboardValues: {} });
     target.advanceWithDeltas(dilation.getAbilityTickDeltas('caster', 1));
-    expect(buffs.map(buff => buff.remainingDuration)).toEqual([10, 9, 10]);
+    expect(container.buffs.map(buff => buff.remainingDuration)).toEqual([10, 9, 10]);
   });
   it('records births before nested Start and publishes the actual instance, without recreating refreshed Buffs', () => {
     const order: string[] = [];

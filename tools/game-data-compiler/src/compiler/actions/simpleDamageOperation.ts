@@ -24,7 +24,8 @@ export type {
 } from './combatActionProjectionTypes.ts';
 
 /**
- * 投影固定单敌人场景中的标准攻击倍率伤害（Hp 后接可选的固定 Poise 单元）。
+ * 投影标准攻击倍率伤害（Hp 后接可选的固定 Poise 单元）。
+ * 直接 Target 保留宿主的输入目标绑定，运行时校验敌人或受支持的部位转移路径。
  * simpleCalculation 读取顶层 atkScale；普通 AtkScaleCalculation 读取嵌套倍率。
  * 两者都在执行时读黑板，不能在转换时冻结潜能等动作写入。处决的 BreakingAttackCalculation
  * 额外保留逐命中 multiplier；动态 multiplier 仍严格拒绝。
@@ -38,8 +39,10 @@ export function compileEventTargetSimpleDamageOperationSource(
   > & {
     readonly actionOwnerTarget: 'buffOwner' | 'caster' | 'unavailable';
     readonly actionSourceTarget: 'caster';
+    readonly actionTargetTarget?: CombatActionProjectionContextSource['actionTargetTarget'];
     readonly fixedBuffOwnerTarget?: 'caster' | 'enemy' | 'currentAbilityEntity';
     readonly staticEnemyTargetGroupKeys?: ReadonlySet<string>;
+    readonly runtimeTargetGroupKeys?: ReadonlySet<string>;
   } = { actionOwnerTarget: 'caster', actionSourceTarget: 'caster' },
 ): CompiledSimpleDamageOperationSource {
   requireDamageCasterOwner(action, context, sourcePath);
@@ -52,14 +55,15 @@ export function compileEventTargetSimpleDamageOperationSource(
   if (attackerTarget !== 'caster') {
     throw new Error(`${sourcePath}: unsupported simple damage action control flags`);
   }
-  // alwaysNext=false 只在原生伤害应用失败时截断后续序列。这里的目标已经严格证明为唯一、
-  // 存活且可受击的固定木桩，Endaxis 也不建模伤害免疫失败，因此两种取值的可见结果相同。
+  // alwaysNext=false 只在原生伤害应用失败时截断后续序列。固定木桩不建模伤害免疫失败；
+  // 动态输入不得在这里当成木桩，必须交给伤害执行器检查其实际身份和转移路径。
   // GetTargetsView 仅在 InstantSearch 执行 selectorData。
   // Context 读取已保存的组；残留选择器仍由来源层解析，但不能变成这次伤害的过滤条件。
   if (action.target.targetSource === 'Context') {
     if (
       !action.target.targetGroupKey ||
-      !context.staticEnemyTargetGroupKeys?.has(action.target.targetGroupKey)
+      (!context.staticEnemyTargetGroupKeys?.has(action.target.targetGroupKey) &&
+        !context.runtimeTargetGroupKeys?.has(action.target.targetGroupKey))
     )
       throw new Error(`${sourcePath}.target: unsupported simple event damage target`);
   } else if (action.target.targetSource === 'Owner' && context.fixedBuffOwnerTarget === 'enemy') {
@@ -92,10 +96,10 @@ export function compileEventTargetSimpleDamageOperationSource(
   }
   const unit = action.units[0]!;
   const poiseUnit = action.units[1];
-  const damageType = projectNativeDamageElement(
-    unit.damageType,
-    `${sourcePath}.units[0].damageType`,
-  );
+  const damageType =
+    unit.damageType === 'Fixed'
+      ? 'fixed'
+      : projectNativeDamageElement(unit.damageType, `${sourcePath}.units[0].damageType`);
   // 1.4.4 DamageAction._ProcessDamage (RVA 0x03540901..0x035409fb) 只在目标能力系统
   // 等于 BattleManager 当前 Guard 列表成员时乘 reduceDamageForGuardRatio。此入口的目标已由
   // 上方证明为唯一敌方木桩，不可能是玩家 Guard；保留字段校验，但不把玩家受击分支带入模拟。
@@ -125,6 +129,14 @@ export function compileEventTargetSimpleDamageOperationSource(
     unit.attackCalculation?.kind === 'attribute'
       ? unit.attackCalculation
       : null;
+  const definiteCalculation =
+    !unit.simpleCalculation &&
+    unit.serializedAttackCalculationPresent &&
+    unit.attackCalculation?.kind === 'definite'
+      ? unit.attackCalculation
+      : null;
+  if (definiteCalculation !== null && unit.takeAttackSnapshot)
+    throw new Error(`${sourcePath}: definite damage snapshot is not supported`);
   if (attributeCalculation !== null && attributeCalculation.valueSource !== 'AttackerOrHealer') {
     throw new Error(`${sourcePath}: unsupported event attack calculation source`);
   }
@@ -144,7 +156,9 @@ export function compileEventTargetSimpleDamageOperationSource(
       ? unit.attackCalculation.attackScale
       : attributeCalculation !== null
         ? attributeCalculation.multiplier
-        : null;
+        : definiteCalculation !== null
+          ? definiteCalculation.value
+          : null;
   if (attackScale === null) {
     throw new Error(`${sourcePath}: unsupported event attack calculation`);
   }
@@ -283,8 +297,26 @@ export function compileEventTargetSimpleDamageOperationSource(
   return {
     kind: 'dealDamage',
     parameters: {
+      ...(context.actionTargetTarget === 'actionInputTarget' &&
+      action.target.targetSource === 'Target'
+        ? { target: 'actionInputTarget' as const }
+        : {}),
+      ...(action.target.targetSource === 'Context' &&
+      context.runtimeTargetGroupKeys?.has(action.target.targetGroupKey)
+        ? { target: { kind: 'context' as const, key: action.target.targetGroupKey } }
+        : {}),
       damageType,
-      attackScale: scalarOperand(attackScale),
+      attackScale:
+        definiteCalculation === null ? scalarOperand(attackScale) : { kind: 'constant', value: 1 },
+      ...(definiteCalculation === null
+        ? {}
+        : {
+            calculation: 'definite' as const,
+            calculationValue: scalarOperand(definiteCalculation.value),
+            ...(definiteCalculation.applyScale
+              ? { calculationValueScale: scalarOperand(definiteCalculation.valueScale) }
+              : {}),
+          }),
       ...(unit.takeAttackSnapshot ? { takeAttackSnapshot: true } : {}),
       ...(breakingCalculation === null
         ? {}
@@ -357,8 +389,10 @@ export function compileEventTargetSimplePoiseOperationSource(
   context: {
     readonly actionOwnerTarget: 'buffOwner' | 'caster' | 'unavailable';
     readonly actionSourceTarget: 'caster';
+    readonly actionTargetTarget?: CombatActionProjectionContextSource['actionTargetTarget'];
     readonly fixedBuffOwnerTarget?: 'caster' | 'enemy' | 'currentAbilityEntity';
     readonly staticEnemyTargetGroupKeys?: ReadonlySet<string>;
+    readonly runtimeTargetGroupKeys?: ReadonlySet<string>;
   } = { actionOwnerTarget: 'caster', actionSourceTarget: 'caster' },
 ): CompiledSimplePoiseOperationSource {
   if (action.units.length !== 1 || action.units[0]!.attributeType !== 'Poise')
@@ -372,7 +406,8 @@ export function compileEventTargetSimplePoiseOperationSource(
   if (action.target.targetSource === 'Context') {
     if (
       !action.target.targetGroupKey ||
-      !context.staticEnemyTargetGroupKeys?.has(action.target.targetGroupKey)
+      (!context.staticEnemyTargetGroupKeys?.has(action.target.targetGroupKey) &&
+        !context.runtimeTargetGroupKeys?.has(action.target.targetGroupKey))
     )
       throw new Error(`${sourcePath}.target: unsupported poise damage target`);
   } else if (action.target.targetSource === 'Owner' && context.fixedBuffOwnerTarget === 'enemy') {
@@ -403,6 +438,14 @@ export function compileEventTargetSimplePoiseOperationSource(
   return {
     kind: 'dealStagger',
     parameters: {
+      ...(context.actionTargetTarget === 'actionInputTarget' &&
+      action.target.targetSource === 'Target'
+        ? { target: 'actionInputTarget' as const }
+        : {}),
+      ...(action.target.targetSource === 'Context' &&
+      context.runtimeTargetGroupKeys?.has(action.target.targetGroupKey)
+        ? { target: { kind: 'context' as const, key: action.target.targetGroupKey } }
+        : {}),
       value: calculation.value,
       ...(calculation.multiplier === undefined ? {} : { valueMultiplier: calculation.multiplier }),
       ...(features.length === 0 ? {} : { features }),

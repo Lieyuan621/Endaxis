@@ -3,6 +3,7 @@ import { parseAdvancedDirectionSource, type AdvancedDirectionSource } from './sp
 import { parseBuffFindSettingsSource } from './buffFindSettings.ts';
 import {
   nativeActionName,
+  readOptionalReferenceKey,
   requireArray,
   requireBoolean,
   requireExactFields,
@@ -17,9 +18,11 @@ import {
   parseSelectorSummarySource,
   parseSpawnedEntitySelectorIdentitySource,
   parseTargetReferenceSource,
+  type HpRatioValidatorSource,
   type ShapeFinderSource,
   type ColliderShapeSource,
   type TargetReferenceSource,
+  type SpatialPointFinderSource,
 } from './target.ts';
 import { parseTagQuerySource, type TagQuerySource } from './tagQuery.ts';
 import type { BlackboardLevelValues } from './scalar.ts';
@@ -46,6 +49,7 @@ export interface TargetGroupInputSource {
   readonly finderFactionTarget: string | null;
   readonly finderTargetObjectType: string | null;
   readonly finderCheckAlive: boolean | null;
+  readonly finderContainsUnMarkable?: boolean;
   readonly finderAutoSetTargetFaction?: boolean | null;
   readonly finderTargetFactionType?: string | number | null;
   readonly finderShape: ShapeFinderSource | null;
@@ -61,6 +65,7 @@ export interface TargetGroupInputSource {
   readonly priorityFilters: readonly PriorityFilterSource[];
   readonly shuffleTargets: readonly ShuffleTargetSource[];
   readonly distanceValidators: readonly DistanceValidatorSource[];
+  readonly hpRatioValidators?: readonly HpRatioValidatorSource[];
   readonly finderSpawnedObjectType: string | null;
   readonly validatorTagQueries: ReadonlyArray<readonly [string, readonly number[]]>;
   readonly targetContainsParents?: readonly {
@@ -91,6 +96,7 @@ export interface TargetGroupWriteSource {
   readonly finderFactionTarget: string | null;
   readonly finderTargetObjectType: string | null;
   readonly finderCheckAlive: boolean | null;
+  readonly finderContainsUnMarkable?: boolean;
   readonly finderAutoSetTargetFaction?: boolean | null;
   readonly finderTargetFactionType?: string | number | null;
   readonly finderShape: ShapeFinderSource | null;
@@ -117,6 +123,7 @@ export interface TargetGroupWriteSource {
     readonly targetGroupKey: string;
   }[];
   readonly finderFixedPointSnapToNavmesh: boolean | null;
+  readonly finderSpatialPoint?: SpatialPointFinderSource;
   readonly center: string | null;
   readonly centerContextKey: string;
   readonly selectorOwner: string | null;
@@ -135,6 +142,7 @@ export interface TargetGroupWriteSource {
   readonly priorityFilters: readonly PriorityFilterSource[];
   readonly shuffleTargets: readonly ShuffleTargetSource[];
   readonly distanceValidators: readonly DistanceValidatorSource[];
+  readonly hpRatioValidators?: readonly HpRatioValidatorSource[];
   readonly circularOrderIndexKey: string | null;
   readonly circularOrderDesiredCount: number | null;
   readonly circularOrderReverseFlag: number | null;
@@ -385,6 +393,7 @@ function parseTargetPostProcessorAction(
     priorityFilters: target.priorityFilters,
     shuffleTargets: target.shuffleTargets,
     distanceValidators: target.distanceValidators,
+    ...(target.hpRatioValidators ? { hpRatioValidators: target.hpRatioValidators } : {}),
     finderSpawnedObjectType: target.finderSpawnedObjectType,
     validatorTagQueries: target.validatorTagQueries,
   };
@@ -399,6 +408,7 @@ function parseTargetPostProcessorAction(
     priorityFilters: summary.priorityFilters,
     shuffleTargets: summary.shuffleTargets,
     distanceValidators: summary.distanceValidators,
+    ...(summary.hpRatioValidators ? { hpRatioValidators: summary.hpRatioValidators } : {}),
     center: center.targetSource,
     centerContextKey: center.targetGroupKey,
     selectorOwner: source.targetSource,
@@ -470,6 +480,9 @@ function parseConvertToTargetContextAction(
     finderFactionTarget: summary.finderFactionTarget,
     finderTargetObjectType: summary.finderTargetObjectType,
     finderCheckAlive: summary.finderCheckAlive,
+    ...(summary.finderContainsUnMarkable === undefined
+      ? {}
+      : { finderContainsUnMarkable: summary.finderContainsUnMarkable }),
     finderAutoSetTargetFaction: summary.finderAutoSetTargetFaction,
     finderTargetFactionType: summary.finderTargetFactionType,
     finderShape: summary.finderShape,
@@ -483,11 +496,13 @@ function parseConvertToTargetContextAction(
     ...(summary.finderRandomPointCount === null
       ? {}
       : { finderRandomPointCount: summary.finderRandomPointCount }),
+    ...(summary.finderSpatialPoint ? { finderSpatialPoint: summary.finderSpatialPoint } : {}),
     validatorTypes: summary.validatorTypes,
     postProcessorTypes: summary.postProcessorTypes,
     priorityFilters: summary.priorityFilters,
     shuffleTargets: summary.shuffleTargets,
     distanceValidators: summary.distanceValidators,
+    ...(summary.hpRatioValidators ? { hpRatioValidators: summary.hpRatioValidators } : {}),
     finderSpawnedObjectType: source.finderSpawnedObjectType,
     validatorTagQueries: source.validatorTagQueries,
     ...(summary.targetContainsParents.length === 0
@@ -511,7 +526,10 @@ function parseConvertToTargetContextAction(
         `${componentPath}.useBlackboardKey`,
       ),
       value: requireNumber(component.value, `${componentPath}.value`),
-      blackboardKey: requireString(component.blackboardKey, `${componentPath}.blackboardKey`),
+      blackboardKey:
+        component.useBlackboardKey === false && component.blackboardKey === null
+          ? ''
+          : requireString(component.blackboardKey, `${componentPath}.blackboardKey`),
     };
   };
   return {
@@ -524,6 +542,9 @@ function parseConvertToTargetContextAction(
     finderFactionTarget: summary.finderFactionTarget,
     finderTargetObjectType: summary.finderTargetObjectType,
     finderCheckAlive: summary.finderCheckAlive,
+    ...(summary.finderContainsUnMarkable === undefined
+      ? {}
+      : { finderContainsUnMarkable: summary.finderContainsUnMarkable }),
     finderAutoSetTargetFaction: summary.finderAutoSetTargetFaction,
     finderTargetFactionType: summary.finderTargetFactionType,
     finderShape: summary.finderShape,
@@ -542,6 +563,7 @@ function parseConvertToTargetContextAction(
     priorityFilters: summary.priorityFilters,
     shuffleTargets: summary.shuffleTargets,
     distanceValidators: summary.distanceValidators,
+    ...(summary.hpRatioValidators ? { hpRatioValidators: summary.hpRatioValidators } : {}),
     finderSpawnedObjectType: source.finderSpawnedObjectType,
     validatorTagQueries: source.validatorTagQueries,
     ...(summary.targetContainsParents.length === 0
@@ -601,6 +623,9 @@ function parseFindTargetAction(
     finderFactionTarget: summary.finderFactionTarget,
     finderTargetObjectType: summary.finderTargetObjectType,
     finderCheckAlive: summary.finderCheckAlive,
+    ...(summary.finderContainsUnMarkable === undefined
+      ? {}
+      : { finderContainsUnMarkable: summary.finderContainsUnMarkable }),
     finderAutoSetTargetFaction: summary.finderAutoSetTargetFaction,
     finderTargetFactionType: summary.finderTargetFactionType,
     finderShape: summary.finderShape,
@@ -624,15 +649,16 @@ function parseFindTargetAction(
       : { targetContainsParents: summary.targetContainsParents }),
     ...(summary.excludeTargets.length === 0 ? {} : { excludeTargets: summary.excludeTargets }),
     finderFixedPointSnapToNavmesh,
+    ...(summary.finderSpatialPoint ? { finderSpatialPoint: summary.finderSpatialPoint } : {}),
     center: readActionTarget(action.center, `${path}.center`),
-    centerContextKey: requireString(action.centerContextKey, `${path}.centerContextKey`),
+    centerContextKey: readOptionalReferenceKey(action.centerContextKey, `${path}.centerContextKey`),
     selectorOwner: readActionTarget(action.selectorOwner, `${path}.selectorOwner`),
-    selectorOwnerContextKey: requireString(
+    selectorOwnerContextKey: readOptionalReferenceKey(
       action.selectorOwnerContextKey,
       `${path}.selectorOwnerContextKey`,
     ),
     directionTarget: readActionTarget(action.target, `${path}.target`),
-    directionContextKey: requireString(action.contextKey, `${path}.contextKey`),
+    directionContextKey: readOptionalReferenceKey(action.contextKey, `${path}.contextKey`),
     characterTeamSelection: parseCharacterTeamSelection(selector, selectorPath),
     excludesCurrentTarget: selectorExcludesPlainCurrentTarget(selector, selectorPath),
     excludesOwner: selectorExcludesPlainOwner(selector, selectorPath),
@@ -643,6 +669,7 @@ function parseFindTargetAction(
     priorityFilters: summary.priorityFilters,
     shuffleTargets: summary.shuffleTargets,
     distanceValidators: summary.distanceValidators,
+    ...(summary.hpRatioValidators ? { hpRatioValidators: summary.hpRatioValidators } : {}),
     circularOrderIndexKey: circularOrder?.indexKey ?? null,
     circularOrderDesiredCount: circularOrder?.desiredCount ?? null,
     circularOrderReverseFlag: circularOrder?.reverseFlag ?? null,
@@ -688,6 +715,9 @@ function parseMergeTargetAction(
       finderFactionTarget: summary.finderFactionTarget,
       finderTargetObjectType: summary.finderTargetObjectType,
       finderCheckAlive: summary.finderCheckAlive,
+      ...(summary.finderContainsUnMarkable === undefined
+        ? {}
+        : { finderContainsUnMarkable: summary.finderContainsUnMarkable }),
       finderAutoSetTargetFaction: summary.finderAutoSetTargetFaction,
       finderTargetFactionType: summary.finderTargetFactionType,
       finderShape: summary.finderShape,
@@ -700,6 +730,7 @@ function parseMergeTargetAction(
       priorityFilters: summary.priorityFilters,
       shuffleTargets: summary.shuffleTargets,
       distanceValidators: summary.distanceValidators,
+      ...(summary.hpRatioValidators ? { hpRatioValidators: summary.hpRatioValidators } : {}),
       finderSpawnedObjectType: target.finderSpawnedObjectType,
       validatorTagQueries: target.validatorTagQueries,
       ...(summary.targetContainsParents.length === 0
@@ -742,6 +773,7 @@ function parsePickTargetAction(
     priorityFilters: target.priorityFilters,
     shuffleTargets: target.shuffleTargets,
     distanceValidators: target.distanceValidators,
+    ...(target.hpRatioValidators ? { hpRatioValidators: target.hpRatioValidators } : {}),
     finderSpawnedObjectType: null,
     validatorTagQueries: [],
   };

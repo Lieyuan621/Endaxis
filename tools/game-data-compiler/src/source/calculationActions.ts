@@ -14,6 +14,7 @@ import {
 
 export interface SaveTwoDirectionAngleActionSource {
   readonly kind: 'saveTwoDirectionAngle';
+  readonly clampToXZ?: boolean;
   readonly direction1Source: TargetReferenceSource;
   readonly direction1Target: TargetReferenceSource;
   readonly direction1Type: ReturnType<typeof readDirectionType>;
@@ -119,12 +120,16 @@ export function parseSaveTwoDirectionAngleActionSource(
       'dir2Source',
       'dir2Target',
       'dir2DirectionType',
+      ...(Object.hasOwn(action, 'clampToXZ') ? ['clampToXZ'] : []),
       'key',
     ]),
     path,
   );
   return {
     kind: 'saveTwoDirectionAngle',
+    ...(Object.hasOwn(action, 'clampToXZ')
+      ? { clampToXZ: requireBoolean(action.clampToXZ, `${path}.clampToXZ`) }
+      : {}),
     direction1Source: parseTargetReferenceSource(action.dir1Source, `${path}.dir1Source`),
     direction1Target: parseTargetReferenceSource(action.dir1Target, `${path}.dir1Target`),
     direction1Type: readDirectionType(action.dir1DirectionType, `${path}.dir1DirectionType`),

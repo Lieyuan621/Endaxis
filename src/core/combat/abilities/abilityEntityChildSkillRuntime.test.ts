@@ -119,15 +119,15 @@ describe('AbilityEntityChildSkillRuntime restore', () => {
     const originalEntity = new ActionBlackboard({ parent: 11 });
     const originalExecute = vi.fn(() => true);
     const clock = new CombatClock();
-    const original = new AbilityEntityChildSkillRuntime(
-      currentProgram,
-      dependencies(
+    const original = new AbilityEntityChildSkillRuntime(currentProgram, {
+      ...dependencies(
         originalEntity,
         originalExecute,
         new AbilityEntityChildSkillPrograms().register(currentProgram),
         clock,
       ),
-    );
+      target: { kind: 'abilityEntity', instanceId: 19 },
+    });
     original.start();
     expect(originalExecute).toHaveBeenCalledOnce();
     expect(originalExecute).toHaveBeenCalledWith(
@@ -135,6 +135,7 @@ describe('AbilityEntityChildSkillRuntime restore', () => {
       expect.objectContaining({
         actionOwnerId: 'ability-entity:7',
         actionSourceId: 'launcher',
+        actionInputTarget: { kind: 'abilityEntity', instanceId: 19 },
       }),
     );
     clock.advanceFrame();
@@ -174,6 +175,7 @@ describe('AbilityEntityChildSkillRuntime restore', () => {
       expect.objectContaining({
         actionOwnerId: 'ability-entity:7',
         actionSourceId: 'launcher',
+        actionInputTarget: { kind: 'abilityEntity', instanceId: 19 },
       }),
     );
     expect(restored.runtimeState).toEqual(original.runtimeState);

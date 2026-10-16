@@ -63,6 +63,50 @@
     "name": "竹笋炒肉",
     "description": "使用后，终结技充能效率增加21%，受治疗效率加成提高35%，持续300秒。"
   },
+  "item_inkkirin_1_hscrane_1_1": {
+    "name": "酥麻炸虫蛹",
+    "description": "使用后，增加12%攻击力，增加6%暴击率，造成的所有伤害增加12%，持续300秒。"
+  },
+  "item_inn_drink_1": {
+    "name": "大碗碎茶",
+    "description": "使用后，造成的所有伤害增加13%，持续300秒。"
+  },
+  "item_inn_drink_10": {
+    "name": "瓶装霞莓饮",
+    "description": "使用后，增加29%攻击力，持续300秒。"
+  },
+  "item_inn_drink_2": {
+    "name": "瓶装兽奶",
+    "description": "使用后，增加19%防御力，持续300秒。"
+  },
+  "item_inn_drink_3": {
+    "name": "玉米汁",
+    "description": "使用后，增加9%暴击率，持续300秒。"
+  },
+  "item_inn_drink_4": {
+    "name": "瓶装脆蔗汁",
+    "description": "使用后，终结技充能效率增加21%，持续300秒。"
+  },
+  "item_inn_drink_5": {
+    "name": "梨花香茶",
+    "description": "使用后，增加27点全能力，持续300秒。"
+  },
+  "item_inn_drink_6": {
+    "name": "游人酒",
+    "description": "使用后，增加14%暴击率，降低3%防御力，持续300秒。"
+  },
+  "item_inn_drink_7": {
+    "name": "瓶装优质兽奶",
+    "description": "使用后，连携技冷却时间缩减18%，持续300秒。"
+  },
+  "item_inn_drink_8": {
+    "name": "陈酿葡萄露",
+    "description": "使用后，造成的物理伤害增加33%，持续300秒。"
+  },
+  "item_inn_drink_9": {
+    "name": "潮前龙井",
+    "description": "使用后，受到所有类型的伤害降低23%，持续300秒。"
+  },
   "item_jzmonk_1_hsmob_1_1": {
     "name": "陈皮拌笋",
     "description": "使用后，增加25%暴击率，降低5%防御力，持续300秒。"

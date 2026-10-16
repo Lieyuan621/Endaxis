@@ -363,12 +363,12 @@ export const laevatainChr_0016_laevat_attack4ActionGraph = {
                 },
                 blackboard: { atk_scale: 0 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'checkCondition_2' } },
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'anyCondition_4' } },
                 ],
                 actionGraph: {
                   main: {
                     nodes: {
-                      dealDamage_1: {
+                      dealDamage_3: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
@@ -379,12 +379,16 @@ export const laevatainChr_0016_laevat_attack4ActionGraph = {
                         },
                         next: null,
                       },
-                      checkCondition_2: {
+                      anyCondition_4: {
                         action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+                          kind: 'anyCondition',
+                          parameters: {},
+                          conditions: [
+                            { kind: 'conditionNode', nodeId: 'data_2' },
+                            { kind: 'conditionNode', nodeId: 'data_3' },
+                          ],
                         },
-                        next: 'dealDamage_1',
+                        next: 'dealDamage_3',
                       },
                     },
                     dataNodes: {
@@ -397,6 +401,15 @@ export const laevatainChr_0016_laevat_attack4ActionGraph = {
                         expression: {
                           kind: 'actionInputTargetObjectTypeMatch',
                           objectTypes: ['enemy'],
+                        },
+                      },
+                      data_3: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityTagMatch',
+                          target: 'enemy',
+                          tagQueryType: 'hasAny',
+                          tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoul'],
                         },
                       },
                     },
@@ -3397,7 +3410,7 @@ const laevatainBuff1ActionGraph = {
             finishSource: { kind: 'source' },
             tagQueryType: 'hasAny',
             buffTags: ['Skill/Character/Common/SpellInflict/FireInflict'],
-            reason: 'early',
+            reason: 'absorbed',
             count: { kind: 'constant', value: 1 },
           },
         },
@@ -5362,6 +5375,7 @@ export const laevatain: OperatorDefinition = {
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0016_laevat_normal_skill: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',

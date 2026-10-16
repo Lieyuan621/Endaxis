@@ -1,4 +1,5 @@
 import type { GameplayTagRegistry } from '../../source/nativeGameplayTags.ts';
+import type { CombatFaction } from '../../../../../packages/game-data-contract/src/primitives.ts';
 import { COMPILED_BUFF_TARGET_KINDS } from '../buffs/compiledBuffMetadata.ts';
 import type {
   AbilityEntityDefinition,
@@ -19,6 +20,15 @@ import { projectGameplayTags } from '../combatProjectionCommon.ts';
 import { createActionGraphBuilder } from '../actions/actionGraphBuilder.ts';
 import type { CompiledBuffStepSource } from '../actions/combatActionProjectionTypes.ts';
 
+/** 原生 FactionIndex；数值仅在来源转换侧解释，不依赖公共枚举的排列顺序。 */
+const NATIVE_FACTIONS: Readonly<Record<number, CombatFaction>> = {
+  0: 'invalid',
+  1: 'unknown',
+  2: 'good',
+  3: 'bad',
+  4: 'neutral',
+};
+
 /** 只接入现有零空间运行时可表示的模板寿命；子技能身份来自 Spawn 动作，不从模板名称推导。 */
 export function compileAbilityEntityDefinitionSource(
   template: NativeAbilityEntityTemplateSource,
@@ -31,7 +41,21 @@ export function compileAbilityEntityDefinitionSource(
     | ((skillId: string) => CombatActionProjectionExtensionsSource),
   abilityEntityQueries?: CombatActionProjectionContextSource['abilityEntityQueries'],
   nativeMissingBlackboardZeroKeys?: (skillId: string) => ReadonlySet<string>,
+  predefinedTagQueries?: CombatActionProjectionContextSource['predefinedTagQueries'],
 ): AbilityEntityDefinition {
+  const faction = NATIVE_FACTIONS[template.factionNativeValue];
+  if (faction === undefined)
+    throw new Error(
+      `${template.gameId}: unsupported native faction ${template.factionNativeValue}`,
+    );
+  if (
+    template.abilitySystemType !== undefined &&
+    template.abilitySystemType !== 'AbilitySystemData' &&
+    !(template.abilitySystemType === 'AbilitySystemForSoulData' && template.soul !== undefined)
+  )
+    throw new Error(
+      `${template.gameId}: unsupported ability system ${template.abilitySystemType}; native part/soul damage routing is required`,
+    );
   if (
     template.maxStackingCount < -1 ||
     template.delayToRecycleSeconds >= 300 ||
@@ -58,25 +82,32 @@ export function compileAbilityEntityDefinitionSource(
         ? [skillIds]
         : []
       : [...skillIds].filter(skillId => skillId.length > 0);
-  const childSkills = ids.map(skillId => {
-    const nativeSkillType = template.activeSkillTypes?.[skillId];
-    if (nativeSkillType === undefined)
-      throw new Error(`${template.gameId}: missing native skill registration for ${skillId}`);
-    const childExtensions = typeof extensions === 'function' ? extensions(skillId) : extensions;
-    const childSkill = compileAbilityEntityChildSkillSource(
-      loadSkill(skillId),
-      `SkillData.${skillId}`,
-      visualOnlyIds,
-      gameplayTagRegistry,
-      childExtensions,
-      abilityEntityQueries,
-      nativeMissingBlackboardZeroKeys?.(skillId),
-      nativeSkillType,
-    );
-    if (childSkill.skillId !== skillId)
-      throw new Error(`${template.gameId}: child skill identity mismatch`);
-    return childSkill;
-  });
+  if (ids.length > 0 && template.activeSkillTypes === undefined)
+    throw new Error(`${template.gameId}: missing native skill registration`);
+  // 出生动作可以携带已经不在实体技能表中的旧引用；原生只会施法失败。
+  // 已登记技能仍必须加载并完整编译，不能把资源缺失当作未登记。
+  const childSkills = ids
+    .filter(skillId => template.activeSkillTypes?.[skillId] !== undefined)
+    .map(skillId => {
+      const nativeSkillType = template.activeSkillTypes?.[skillId];
+      if (nativeSkillType === undefined)
+        throw new Error(`${template.gameId}: missing native skill registration for ${skillId}`);
+      const childExtensions = typeof extensions === 'function' ? extensions(skillId) : extensions;
+      const childSkill = compileAbilityEntityChildSkillSource(
+        loadSkill(skillId),
+        `SkillData.${skillId}`,
+        visualOnlyIds,
+        gameplayTagRegistry,
+        childExtensions,
+        abilityEntityQueries,
+        nativeMissingBlackboardZeroKeys?.(skillId),
+        nativeSkillType,
+        predefinedTagQueries,
+      );
+      if (childSkill.skillId !== skillId)
+        throw new Error(`${template.gameId}: child skill identity mismatch`);
+      return childSkill;
+    });
   const passiveSkills = (template.skillDataBundle?.enabledPassiveSkillIds ?? []).map(skillId =>
     compileAbilityEntityPassiveSkill(
       skillId,
@@ -85,12 +116,35 @@ export function compileAbilityEntityDefinitionSource(
       gameplayTagRegistry,
       typeof extensions === 'function' ? extensions(skillId) : extensions,
       abilityEntityQueries,
+      predefinedTagQueries,
     ),
   );
   const entityBlackboard = Object.fromEntries(
     (template.entityBlackboard ?? []).map(entry => [entry.key, entry.value]),
   );
   return {
+    faction,
+    ...(template.soul === undefined
+      ? {}
+      : {
+          soul: {
+            ...template.soul,
+            soulDamageRatio:
+              template.soul.soulDamageRatio.blackboardKey === null
+                ? template.soul.soulDamageRatio.value
+                : {
+                    blackboardKey: template.soul.soulDamageRatio.blackboardKey,
+                    fallback: template.soul.soulDamageRatio.value,
+                  },
+            soulPoiseRatio:
+              template.soul.soulPoiseRatio.blackboardKey === null
+                ? template.soul.soulPoiseRatio.value
+                : {
+                    blackboardKey: template.soul.soulPoiseRatio.blackboardKey,
+                    fallback: template.soul.soulPoiseRatio.value,
+                  },
+          },
+        }),
     ...(template.bornTagIds.length === 0
       ? {}
       : {
@@ -148,6 +202,7 @@ function compileAbilityEntityPassiveSkill(
   gameplayTagRegistry?: GameplayTagRegistry,
   extensions?: CombatActionProjectionExtensionsSource,
   abilityEntityQueries?: CombatActionProjectionContextSource['abilityEntityQueries'],
+  predefinedTagQueries?: CombatActionProjectionContextSource['predefinedTagQueries'],
 ): AbilityEntityPassiveSkillDefinition {
   const graph = createActionGraphBuilder<CompiledBuffStepSource>();
   const sourcePath = `SkillData.${skillId}`;
@@ -188,7 +243,10 @@ function compileAbilityEntityPassiveSkill(
         ],
         targets: { kind: 'owner' as const },
         source: { kind: 'owner' as const },
-        [COMPILED_BUFF_TARGET_KINDS]: { target: 'currentAbilityEntity', source: 'currentAbilityEntity' },
+        [COMPILED_BUFF_TARGET_KINDS]: {
+          target: 'currentAbilityEntity',
+          source: 'currentAbilityEntity',
+        },
         inheritSourceSkillCastInfo: false,
       },
     };
@@ -196,6 +254,7 @@ function compileAbilityEntityPassiveSkill(
   const context = {
     graph,
     gameplayTagRegistry,
+    predefinedTagQueries,
     abilityEntityQueries,
     actionOwnerTarget: 'currentAbilityEntity' as const,
     // 投影层的 caster 表示当前 Ability 的 ActionSource；运行时上下文会把它绑定到实体实例。

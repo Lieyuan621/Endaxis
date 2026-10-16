@@ -7,6 +7,7 @@ import type { CombatOperationExecutor } from '../skills/skillRuntime';
 import { TimeDilationOperationExecutor } from './timeDilationOperationExecutor';
 import { TimeDilationRuntime } from './timeDilationRuntime';
 import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
+import { resolveDirectActionTargets } from '../abilities/targetContextOperationExecutor';
 import { createStateTestSession } from '../../../test/stateTestSession';
 
 const PRIORITY = 20;
@@ -22,6 +23,40 @@ function runtime() {
 }
 
 describe('TimeDilationOperationExecutor', () => {
+  it('Context 顿帧读取实际干员或实体，不替换成定义宿主', () => {
+    const timeDilation = runtime();
+    const executor = new TimeDilationOperationExecutor({
+      runtime: timeDilation,
+      delegate,
+      sourceId: 'definition-owner',
+      sourceActionId: 'skill',
+      resolveTargetIds: target => [target],
+      queryTargets: (query, context) => resolveDirectActionTargets(query, context)!,
+    });
+    const targetContext = new RuntimeTargetContext();
+    targetContext.set('attacker', [
+      { kind: 'operator', operatorId: 'actual-attacker' },
+      { kind: 'abilityEntity', instanceId: 9 },
+    ]);
+    executor.execute(
+      {
+        kind: 'startTimeDilation',
+        parameters: {
+          scope: 'entity',
+          durationSeconds: { kind: 'constant', value: 1 },
+          slot: 'Test/TimeSlot1',
+          priority: PRIORITY,
+          curve: { kind: 'named', key: 'constant-half' },
+          finishByAction: false,
+          targets: [{ kind: 'context', key: 'attacker' }],
+        },
+      },
+      { blackboard: new ActionBlackboard(), targetContext },
+    );
+    expect(timeDilation.getOperatorScale('actual-attacker')).toBe(0.5);
+    expect(timeDilation.getOperatorScale('ability-entity:9')).toBe(1);
+    expect(timeDilation.getOperatorScale('definition-owner')).toBe(1);
+  });
   it('实体自身顿帧作用于动作宿主，不依赖当前循环目标或技能输入目标', () => {
     const timeDilation = runtime();
     const executor = new TimeDilationOperationExecutor({

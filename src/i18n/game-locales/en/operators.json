@@ -3496,7 +3496,7 @@
       },
       "ultimate": {
         "name": "DA CHIEF SEES YOU!",
-        "description": "Tangtang opens her eyepatch and unleashes an <@ba.key>OLDEN STARE</> from her eye that temporarily locks down, immobilizes, and deals <@ba.cryst>Cryo DMG</> over time to enemies within its area of effect.\nWhen the <@ba.key>OLDEN STARE</> stops evolving, a rogue wave comes crashing down to deal massive <@ba.cryst>Cryo DMG</> to enemies in its area of effect.\nIf the controlled operator performs a dive attack in the <@ba.key>OLDEN STARE</> pattern, its evolution ends and the rogue wave is summoned immediately to deal even more <@ba.cryst>Cryo DMG</>.",
+        "description": "Tangtang opens her eyepatch and unleashes an <@ba.key>OLDEN STARE</> from her eye that applies temporary <#ba.static>Immobilization</> and deals <@ba.cryst>Cryo DMG</> over time to enemies within its area of effect (AOE).\nWhen the <@ba.key>OLDEN STARE</> stops evolving, a rogue wave comes crashing down to deal massive <@ba.cryst>Cryo DMG</> to enemies in its AOE.\nIf the controlled operator performs a dive attack in the <@ba.key>OLDEN STARE</> pattern, its evolution ends and the rogue wave is summoned immediately to deal even more <@ba.cryst>Cryo DMG</>.",
         "details": {
           "levels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
           "rows": [
@@ -4726,7 +4726,7 @@
     "potentials": [
       {
         "name": "Samifjod Fletching",
-        "description": "When <@ba.key>Hovering</>, ATK <@ba.vup>+18%</> and ABATK DMG Dealt is increased to <@ba.vup>1.2</> times the original. \nTalent <@ba.key>Huntress's Focus</> improved: <@ba.key>Protective Barrier</> reactivation time <@ba.vup>-3</>s."
+        "description": "When <@ba.key>Hovering</>, ATK <@ba.vup>+18%</> and ABATK DMG Dealt is increased to <@ba.vup>1.2</> times the original.\nTalent <@ba.key>Huntress's Focus</> improved: <@ba.key>Protective Barrier</> reactivation time <@ba.vup>-3</>s."
       },
       {
         "name": "Huntress's Stride",
@@ -4785,7 +4785,7 @@
       },
       "battleSkill": {
         "name": "Piercing Arrows of the Woods",
-        "description": "Typhoeus leaps into the air and enters a short <@ba.key>Hovering</> state, during which she can unleash 5 Aerial Basic Attacks (ABATK). Each ABATK can shoot arrows at up to 2 targets and deal <@ba.natur>Nature DMG</>.\nWhenever an ABATK hits an enemy with <#ba.naturalinflict>Nature Infliction</>, it consumes 1 stack of <#ba.naturalinflict>Nature Infliction</>, grants Typhoeus 1 <#ba.arrowenergy>Sign</>, and gives additional Ultimate Energy.\nIf Typhoeus has <#ba.arrownum>Hunting Arrow(s)</>, she consumes 1 <#ba.arrownum>Hunting Arrow</> and converts the ABATK into a <@ba.key>Power Shot</>.\n<@ba.key>Power Shot</>: After hitting an enemy, Power Shot forcibly applies 1 instance of <#ba.naturalburst>Nature Burst</>; if the target's <#ba.naturalinflict>Nature Infliction</> is consumed, then the DMG dealt by this <#ba.naturalburst>Nature Burst</> will be increased.\n<@ba.info>If Typhoeus is the controlled operator, her 5th ABATK is regarded as a Final Strike and a Power Shot, and does not consume Hunting Arrows.</>",
+        "description": "Typhoeus leaps into the air and enters a short <@ba.key>Hovering</> state, during which she can unleash 5 Aerial Basic Attacks (ABATK). Each ABATK can shoot arrows at up to 2 targets and deal <@ba.natur>Nature DMG</>.\nWhenever an ABATK hits an enemy with <#ba.naturalinflict>Nature Infliction</>, it consumes 1 stack of <#ba.naturalinflict>Nature Infliction</>, grants Typhoeus 1 <#ba.arrowenergy>Sign</>, and gives additional Ultimate Energy.\nIf Typhoeus has <#ba.arrownum>Hunting Arrow(s)</>, she consumes 1 <#ba.arrownum>Hunting Arrow</> and converts the ABATK into a <@ba.key>Power Shot</>.\n<@ba.key>Power Shot</>: After hitting an enemy, Power Shot forcibly applies 1 instance of <#ba.naturalburst>Nature Burst</>; if the Power Shot consumes the target's <#ba.naturalinflict>Nature Infliction</>, then increase the DMG dealt by this <#ba.naturalburst>Nature Burst</>.\n<@ba.info>If Typhoeus is the controlled operator, her 5th ABATK is regarded as a Final Strike and a Power Shot, and does not consume Hunting Arrows.</>",
         "details": {
           "levels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
           "rows": [
@@ -4963,7 +4963,7 @@
           "levels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
           "rows": [
             {
-              "label": "1st ATK Multiplier",
+              "label": "First ATK Multiplier",
               "values": ["107%", "117%", "128%", "139%", "149%", "160%", "170%", "181%", "192%", "205%", "221%", "240%"]
             },
             {
@@ -5093,6 +5093,171 @@
       }
     }
   },
+  "si": {
+    "name": "Si",
+    "talents": [
+      {
+        "name": "Proxy's Patronage",
+        "description": "Ultimate skill <@ba.key>No One Spoils the Fun</> improved: After casting, <@ba.key>Team Position 01</> operator's combo skill cooldown length <@ba.vup>-10</>s."
+      },
+      {
+        "name": "Proxy's Patronage",
+        "description": "Ultimate skill <@ba.key>No One Spoils the Fun</> improved: After casting, <@ba.key>Team Position 01</> operator's combo skill cooldown length <@ba.vup>-20</>s."
+      },
+      {
+        "name": "Unsoiled Brush",
+        "description": "When the <@ba.key>Inksoul</> disappears, allied operators gain <@ba.vup>15%</> <#ba.speedup>Haste</> for 5s."
+      },
+      {
+        "name": "Unsoiled Brush",
+        "description": "When the <@ba.key>Inksoul</> disappears, allied operators gain <@ba.vup>30%</> <#ba.speedup>Haste</> for 5s."
+      }
+    ],
+    "potentials": [
+      {
+        "name": "Spring and Autumn as Ink",
+        "description": "Battle skill <@ba.key>Brushwork Realm</> improved: Duration of <#ba.static>Immobilization</> applied <@ba.vup>+50%</>; <@ba.key>Artful Intent</> DMG Record Ratio <@ba.vup>+7%</> and burst radius <@ba.vup>+40%</>."
+      },
+      {
+        "name": "Three Marks Deep in Wood",
+        "description": "Combo skill <@ba.key>Fully Envisioned</> improved: When casting, Si gains ATK <@ba.vup>+[8% + 3%×(Highest stacks of Arts Infliction <#ba.consume>consumed</> or <#ba.absorb>absorbed</> from a single target)]</> for <@ba.vup>10</>s. This effect cannot stack."
+      },
+      {
+        "name": "Study of Muscles and Bones",
+        "description": "Ultimate <@ba.key>No One Spoils the Fun</> improved: DMG Dealt is increased to <@ba.vup>1.2</> times the original; <#ba.enhance>Amp</> effect is increased to <@ba.vup>1.2</> times the original."
+      },
+      {
+        "name": "Perfectly Composed in Spirit",
+        "description": "Ultimate <@ba.key>No One Spoils the Fun</> improved: Ultimate Energy cost <@ba.vup>-15%</>."
+      },
+      {
+        "name": "Brush Dab in Eye's White",
+        "description": "Combo skill <@ba.key>Fully Envisioned</> improved: Length of combo skill cooldown <@ba.vup>-2</>s and DMG Dealt is increased to <@ba.vup>1.15</> times the original. When triggered, treat the combo skill as having <#ba.consume>consumed</> or <#ba.absorb>absorbed</> 1 additional stack of infliction."
+      }
+    ],
+    "combatSkills": {
+      "basicAttack": {
+        "name": "Artistic Urge",
+        "description": "BASIC ATTACK: \nAn attack with up to 5 sequences that deals <@ba.cryst>Cryo DMG</>. As the controlled operator, <#ba.lastcombo>Final Strike</> also deals <@ba.poise>18</> Stagger. \n\nDIVE ATTACK: \nBasic attack performed in mid-air becomes a dive attack that deals <@ba.cryst>Cryo DMG</> to nearby enemies. \n\nFINISHER: \nBasic attack performed near a Staggered enemy becomes a finisher that deals massive <@ba.cryst>Cryo DMG</> and recovers some SP.",
+        "details": {
+          "levels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "rows": [
+            {
+              "label": "BATK SEQ 1 Multiplier",
+              "values": ["20%", "22%", "24%", "26%", "28%", "30%", "32%", "34%", "36%", "39%", "42%", "45%"]
+            },
+            {
+              "label": "BATK SEQ 2 Multiplier",
+              "values": ["32%", "35%", "38%", "42%", "45%", "48%", "51%", "54%", "58%", "62%", "66%", "72%"]
+            },
+            {
+              "label": "BATK SEQ 3 Multiplier",
+              "values": ["29%", "32%", "35%", "38%", "41%", "44%", "47%", "50%", "53%", "56%", "61%", "66%"]
+            },
+            {
+              "label": "BATK SEQ 4 Multiplier",
+              "values": ["24%", "26%", "29%", "31%", "34%", "36%", "38%", "41%", "43%", "46%", "50%", "54%"]
+            },
+            {
+              "label": "BATK SEQ 5 Multiplier",
+              "values": ["64%", "70%", "77%", "83%", "90%", "96%", "102%", "109%", "115%", "123%", "133%", "144%"]
+            },
+            {
+              "label": "Dive ATK Multiplier",
+              "values": ["80%", "88%", "96%", "104%", "112%", "120%", "128%", "136%", "144%", "154%", "166%", "180%"]
+            },
+            {
+              "label": "Finisher ATK Multiplier",
+              "values": ["400%", "440%", "480%", "520%", "560%", "600%", "640%", "680%", "720%", "770%", "830%", "900%"]
+            }
+          ]
+        }
+      },
+      "battleSkill": {
+        "name": "Brushwork Realm",
+        "description": "Si deals <@ba.cryst>Cryo DMG</> and applies <@ba.key>Artful Intent</>, <#ba.static>Immobilization</>, and <#ba.crystinflict>Cryo Infliction</> (or <#ba.fireinflict>Heat Infliction</> if a <@ba.fire>Heat</> element operator is in <@ba.key>Team Position 01</>) on the target. After a target with <@ba.key>Artful Intent</> takes DMG, part of the DMG taken is recorded. When the duration of <@ba.key>Artful Intent</> ends, it bursts and deals <#ba.fixeddamage>Fixed DMG</> equal to the DMG recorded. After casting the skill, Si's battle skill is temporarily changed to <@ba.key>Initial Stroke</>.\n<@ba.key>Initial Stroke</>: Costs <@ba.vup>15</> SP. Si pulls an <@ba.key>Inksoul</> from a target with <@ba.key>Artful Intent</>. All DMG dealt and effects applied to the <@ba.key>Inksoul</> will also be dealt to its host (the said target). The <@ba.key>Inksoul</> lasts as long as the remaining duration of <@ba.key>Artful Intent</>. After casting the skill, Si's battle skill is temporarily changed to <@ba.key>Final Stroke</>.\n<@ba.key>Final Stroke</>: Costs no SP. Makes the <@ba.key>Inksoul</> disappear early. When disappearing, the <@ba.key>Inksoul</> will move to its host and trigger a burst like the ending burst of <@ba.key>Artful Intent</>.\n<@ba.info>When dealing DMG or applying effects to both the Inksoul and the host, only 1 instance of the DMG or effect is dealt/applied. If the host is defeated during the Inksoul's duration, it will link to another enemy in combat and apply Artful Intent to it. This does not reset the duration of Artful Intent. If a target with Artful Intent is defeated without having its Inksoul drawn out of it, the defeated target will drop an Inksoul at its location.</>",
+        "details": {
+          "levels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "rows": [
+            {
+              "label": "DMG Multiplier",
+              "values": ["44%", "49%", "53%", "58%", "62%", "67%", "71%", "76%", "80%", "86%", "92%", "100%"]
+            },
+            {
+              "label": "Immobilization Duration (s)",
+              "values": ["1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1"]
+            },
+            {
+              "label": "Artful Intent Duration (s)",
+              "values": ["20", "20", "20", "20", "20", "20", "20", "20", "20", "20", "20", "20"]
+            },
+            {
+              "label": "DMG Record Ratio",
+              "values": ["8%", "8%", "8%", "9%", "9%", "9%", "10%", "10%", "10%", "11%", "12%", "13%"]
+            },
+            {
+              "label": "Stagger",
+              "values": ["5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5"]
+            },
+            {
+              "label": "Artful Intent Burst Stagger",
+              "values": ["5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5"]
+            }
+          ]
+        }
+      },
+      "comboSkill": {
+        "name": "Fully Envisioned",
+        "description": "COMBO TRIGGER: When an enemy's <#ba.crystinflict>Cryo Infliction</> or <#ba.fireinflict>Heat Infliction</> is <#ba.consume>consumed</> or <#ba.absorb>absorbed</>.\nSi summons an <@ba.key>Ink Lung</> that deals <@ba.cryst>Cryo DMG</>. This DMG is based on the highest stacks of Arts Infliction <#ba.consume>consumed</> or <#ba.absorb>absorbed</> from a single target.",
+        "details": {
+          "levels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "rows": [
+            {
+              "label": "DMG Multiplier",
+              "values": ["333%", "367%", "400%", "433%", "467%", "500%", "533%", "567%", "600%", "642%", "692%", "750%"]
+            },
+            {
+              "label": "Multiplier Increase per Stack Consumed or Absorbed",
+              "values": ["44%", "49%", "53%", "58%", "62%", "67%", "71%", "76%", "80%", "86%", "92%", "100%"]
+            },
+            {
+              "label": "Stagger",
+              "values": ["10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10"]
+            },
+            {
+              "label": "Ultimate Energy Gain",
+              "values": ["10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10", "10"]
+            }
+          ]
+        }
+      },
+      "ultimate": {
+        "name": "No One Spoils the Fun",
+        "description": "Si summons a <@ba.key>Giant Ink Lung</> from her painting that deals <@ba.cryst>Cryo DMG</> and grants temporary <#ba.crystenhance>Cryo Amp</> and <#ba.fireenhance>Heat Amp</> to the entire team.",
+        "details": {
+          "levels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "rows": [
+            {
+              "label": "DMG Multiplier",
+              "values": ["222%", "244%", "267%", "289%", "311%", "333%", "355%", "378%", "400%", "428%", "461%", "500%"]
+            },
+            {
+              "label": "Stagger",
+              "values": ["20", "20", "20", "20", "20", "20", "20", "20", "20", "20", "20", "20"]
+            },
+            {
+              "label": "Amp",
+              "values": ["20%", "21%", "22%", "24%", "25%", "26%", "28%", "29%", "30%", "32%", "34%", "36%"]
+            },
+            {
+              "label": "Amp Duration (s)",
+              "values": ["12", "12", "12", "12", "12", "12", "12", "12", "12", "12", "12", "12"]
+            }
+          ]
+        }
+      }
+    }
+  },
   "purrchena": {
     "name": "Purrchena",
     "talents": [
@@ -5132,7 +5297,7 @@
       },
       {
         "name": "Hot Like a BBQ Fire",
-        "description": "Ultimate <@ba.key>NAUGHTY IS BANNED!</> improved:\n<@ba.key>Ambassador's Special</> DMG Multiplier is increased to <@ba.vup>1.2</> times the original.\n<@ba.key>Ambassador's Special</>: <#ba.spellvul>Arts Susceptibility</> is increased to <@ba.vup>1.2</> times the original."
+        "description": "Ultimate <@ba.key>NAUGHTY IS BANNED!</> improved:\n<@ba.key>Ambassador's Special</>: DMG Multiplier is increased to <@ba.vup>1.2</> times the original.\n<@ba.key>Ambassador's Special</>: <#ba.spellvul>Arts Susceptibility</> is increased to <@ba.vup>1.2</> times the original."
       }
     ],
     "combatSkills": {
@@ -5320,8 +5485,8 @@
         "description": "Ultimate <@ba.key>Bombardment Sequence</> improved: After <#ba.consume>consuming</> <#ba.originium>Originium Crystals</>, the Endministrator gains <@ba.vup>15</> Ultimate Energy.\n<@ba.info>This effect does not benefit from other bonuses.</>"
       },
       {
-        "name": "???",
-        "description": "???"
+        "name": "Commander of Originium",
+        "description": "Arts Intensity <@ba.vup>+16</>. DMG dealt by Ultimate <@ba.key>Bombardment Sequence</> is increased to <@ba.vup>1.2</> times the original."
       },
       {
         "name": "???",

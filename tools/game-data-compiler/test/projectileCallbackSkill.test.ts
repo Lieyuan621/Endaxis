@@ -208,6 +208,29 @@ describe('独立到达回调的编译', () => {
     });
   });
 
+  it('发射回调保留独立程序与事件，不改成到达或命中回调', () => {
+    const input = reachInput();
+    input.launch = {
+      ...input.launch,
+      callbacks: [{ event: 'launch', enabled: true, skillId: input.reachGraph.skillId }],
+    };
+    // 原到达样本包含对输入目标的处决技力操作，不能错误地仍按敌人编译。
+    expect(() => projectFixture(input)).toThrow('unaudited AbilityEntity action finisherSpGain');
+    input.reachGraph = {
+      ...input.reachGraph,
+      actionGroup: {
+        ...input.reachGraph.actionGroup,
+        timelineActions: input.reachGraph.actionGroup.timelineActions.slice(0, 1),
+      },
+    };
+    expect(projectFixture(input).steps[0]!.callbacks).toEqual([
+      expect.objectContaining({
+        event: 'launch',
+        skill: expect.objectContaining({ skillId: input.reachGraph.skillId }),
+      }),
+    ]);
+  });
+
   it('独立落地回调编译成统一投射物程序，不展开进发射者技能', () => {
     const input = reachInput();
     input.launch = {

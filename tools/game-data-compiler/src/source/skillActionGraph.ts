@@ -20,6 +20,7 @@ import {
   requireString,
 } from './primitives.ts';
 import type { BlackboardLevelValues } from './scalar.ts';
+import { readNormalSkillSubType } from './nativeEnums.ts';
 
 const SKILL_DATA_FIELDS = new Set([
   'actionGroupData',
@@ -100,6 +101,7 @@ export interface SkillActionGroupSource<TLeaf> {
  * SkillData 的动作图切片。其余根字段只做版本签名校验，不表示施法、UI 与智能选敌已经解析。
  */
 export interface SkillActionGraphSource<TLeaf> {
+  readonly normalSkillSubType?: 'Normal' | 'AdditionalNormalSkill';
   readonly skillId: string;
   readonly level: number;
   readonly durationFrame: number;
@@ -119,8 +121,8 @@ export function parseSkillActionGraphSource<TLeaf>(
 ): SkillActionGraphSource<TLeaf> {
   const root = requireRecord(value, sourcePath);
   const expectedFields = new Set(SKILL_DATA_FIELDS);
-  // 只兼容已经核对的两项来源差异，其他缺失或新增字段继续严格失败。
-  for (const field of ['buffInputBase', 'canCastInWater']) {
+  // 新版字段逐项校验，不能忽略影响战技分型的非默认值。
+  for (const field of ['buffInputBase', 'canCastInWater', 'normalSkillSubType']) {
     if (Object.hasOwn(root, field)) expectedFields.add(field);
   }
   requireExactFields(root, expectedFields, sourcePath);
@@ -130,6 +132,14 @@ export function parseSkillActionGraphSource<TLeaf>(
     throw new Error(`${sourcePath}.buffInputBase: non-null payload is not supported`);
   }
   return {
+    ...('normalSkillSubType' in root
+      ? {
+          normalSkillSubType: readNormalSkillSubType(
+            root.normalSkillSubType,
+            `${sourcePath}.normalSkillSubType`,
+          ),
+        }
+      : {}),
     ...(Object.hasOwn(root, 'buffInputBase') ? { buffInputBase: null } : {}),
     ...(Object.hasOwn(root, 'canCastInWater')
       ? { canCastInWater: requireBoolean(root.canCastInWater, `${sourcePath}.canCastInWater`) }
@@ -224,7 +234,10 @@ function parseForceSyncAnimation(value: unknown, path: string): ForceSyncAnimati
   );
   return {
     forceSync: requireBoolean(source.forceSync, `${path}.forceSync`),
-    montageName: requireString(source.montageName, `${path}.montageName`),
+    montageName:
+      source.forceSync === false && source.montageName === null
+        ? ''
+        : requireString(source.montageName, `${path}.montageName`),
     targetFrame: requireNonNegativeInteger(source.targetFrame, `${path}.targetFrame`),
     playbackSpeed: requireNumber(source.playbackSpeed, `${path}.playbackSpeed`),
   };

@@ -58,7 +58,11 @@ describe('AbilitySystemRuntime', () => {
       skills: [],
       skillDefinitions: [
         { skillId: 'base', nativeSkillType: 'comboSkill' as const },
-        { skillId: 'variant', nativeSkillType: 'normalSkill' as const },
+        {
+          skillId: 'variant',
+          nativeSkillType: 'normalSkill' as const,
+          normalSkillSubType: 'additionalNormalSkill' as const,
+        },
       ],
       skillSlotGroups: [
         {
@@ -71,10 +75,14 @@ describe('AbilitySystemRuntime', () => {
     };
     const ability = new AbilitySystemRuntime(options);
     expect(ability.nativeSkillTypeForSkill('variant')).toBe('normalSkill');
+    expect(ability.normalSkillSubTypeForSkill('variant')).toBe('additionalNormalSkill');
     ability.changeSkillSlot('combo', 'variant');
     const restored = new AbilitySystemRuntime(options, structuredClone(ability.runtimeState));
     expect(restored.currentSkillKeyForSlot('combo')).toBe('variant');
     expect(restored.nativeSkillTypeForSkill('variant')).toBe('comboSkill');
+    expect(restored.normalSkillSubTypeForSkill('variant')).toBeUndefined();
+    restored.changeNativeSkillType('variant', 'normalSkill');
+    expect(restored.normalSkillSubTypeForSkill('variant')).toBe('additionalNormalSkill');
     expect(() => restored.tryStartSkill('variant')).toThrow("unknown ability skill 'variant'");
     expect(
       () => new AbilitySystemRuntime({ skills: [], skillDefinitions: [{ skillId: 'unknown' }] }),

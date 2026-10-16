@@ -46,6 +46,88 @@ import type {
 } from '../../../../packages/game-data-contract/src/actionGraph';
 
 import { createEditorSimulationService } from '../testSupport/editorSimulationService';
+import { si } from '../../../data/operators/si.generated';
+
+it('祀正式定义可放置全部技能并完成模拟', async () => {
+  const scenario = createEmptyScenario('si-release', 'si');
+  scenario.tracks[0] = {
+    id: 'si',
+    operator: {
+      operatorSlug: 'si',
+      level: 90,
+      promoted: true,
+      potential: 0,
+      trustLevel: 4,
+      skillLevels: { basicAttack: 12, battleSkill: 12, comboSkill: 12, ultimate: 12 },
+      talentStates: {},
+    },
+    weapon: null,
+    gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
+    initialState: { ultimateEnergy: 0 },
+    skillCasts: si.skillGroups
+      .flatMap(group =>
+        (Array.isArray(group.skills) ? group.skills : [group.skills]).map(skill => ({
+          id: skill.key,
+          source: { kind: 'operatorSkill' as const, skillGroupKey: group.key, skillKey: skill.key },
+          placement: { startFrame: 0 },
+        })),
+      )
+      .map((cast, index) => ({ ...cast, placement: { startFrame: index * 90 } })),
+  };
+  const result = await createEditorSimulationService().simulate(scenario, 1500);
+  // 不接第三段时，墨魂回返施加的 Buff 创建者是祀，施法身份仍属于实体子技能。
+  const returning = structuredClone(scenario);
+  returning.tracks[0]!.operator!.talentStates = { 0: 2, 1: 2 };
+  returning.tracks[0]!.skillCasts = scenario.tracks[0]!.skillCasts.filter(cast =>
+    ['chr_0036_jsspsi_normal_skill', 'chr_0036_jsspsi_normal_skill_1'].includes(cast.id),
+  ).map((cast, index) => ({ ...cast, placement: { startFrame: index * 60 } }));
+  const returningSession = createEditorSimulationService().createCombatSession(returning);
+  returningSession.advanceToFrame(90);
+  const returningFork = returningSession.fork(returningSession.runtime.save());
+  returningSession.advanceToFrame(900);
+  returningFork.advanceToFrame(900);
+  const returningResult = returningSession.collectResult();
+  expect(returningFork.collectResult()).toEqual(returningResult);
+  expect(returningResult.receiptEntries).toContainEqual(
+    expect.objectContaining({
+      event: 'BuffApplied',
+      data: expect.objectContaining({ buffId: 'buff_chr_0036_jsspsi_normal_skill_boomrevert' }),
+    }),
+  );
+  const soul = result.receiptEntries.find(
+    entry =>
+      entry.event === 'AbilityEntitySpawned' &&
+      entry.data?.abilityEntityId === 'abilityentity_chr_0036_jsspsi_combo_skill_inkphantom_2',
+  );
+  expect(soul).toBeDefined();
+  const burst = result.receiptEntries.find(
+    entry =>
+      entry.event === 'DamageApplied' &&
+      entry.data?.castId === 'chr_0036_jsspsi_normal_skill_2' &&
+      entry.data?.damageType === 'fixed',
+  );
+  expect(burst?.targetId).toBe('enemy');
+  expect(burst?.data?.value).toBeGreaterThan(0);
+  expect(burst?.producedBy).toEqual(soul!.subject);
+  const finished = result.receiptEntries.find(
+    entry => entry.event === 'AbilityEntityFinished' && entry.targetId === soul!.targetId,
+  );
+  expect(soul!.frame).toBeLessThan(780);
+  expect(burst!.frame).toBeGreaterThan(780);
+  expect(finished!.sequence).toBeGreaterThan(burst!.sequence);
+  const starts = result.receiptEntries
+    .filter(entry => entry.event === 'SkillStarted' || entry.event === 'SkillSwitchedToBuff')
+    .map(entry => entry.data);
+  for (const cast of scenario.tracks[0].skillCasts) {
+    expect(starts).toContainEqual(expect.objectContaining({ castId: cast.id }));
+  }
+  const original = createEditorSimulationService().createCombatSession(scenario);
+  original.advanceToFrame(780);
+  const restored = original.fork(original.runtime.save());
+  original.advanceToFrame(1500);
+  restored.advanceToFrame(1500);
+  expect(restored.collectResult()).toEqual(original.collectResult());
+});
 
 it('梨诺战技接连携保留演唱，转入终结技时结束演唱且导电不再开启连携', async () => {
   const scenario = createEmptyScenario('liino-stance', 'liino');

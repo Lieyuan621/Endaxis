@@ -47,12 +47,12 @@ export type BuffConditionTarget = BuffSingleTarget | 'actionInputTarget';
 /** 从动作环境读取首个实体；命名组为空时不产生目标。 */
 export type ActionEntitySelection =
   | { readonly kind: 'owner' | 'source' | 'inputTarget' }
+  | { readonly kind: 'mainCharacter' }
   | { readonly kind: 'context'; readonly key: string };
 
 /** 动作内部解析的目标配置，不增加图中的调用或临时目标组。 */
 export type ActionTargetQuery =
   | ActionEntitySelection
-  | { readonly kind: 'mainCharacter' }
   | { readonly kind: 'battleMainTarget' }
   /** 战斗全局机制对象，独立于主控和敌人。 */
   | { readonly kind: 'godEntity' }
@@ -72,6 +72,18 @@ export type ActionTargetQuery =
       readonly owner?: ActionEntitySelection;
     }
   | { readonly kind: 'mainTarget'; readonly owner: ActionEntitySelection }
+  /** 读取所选能力实体控制器当前保存的目标，不替换为主敌人或技能输入快照。 */
+  | { readonly kind: 'abilityEntityTarget'; readonly owner: ActionEntitySelection }
+  /** 读取所选对象主体的 soulPart，不按来源干员枚举召唤物。 */
+  | { readonly kind: 'ownerSoul'; readonly owner: ActionEntitySelection }
+  /** 零空间 Normal 命中盒的同阵营候选；查询时读取实体当前状态。 */
+  | {
+      readonly kind: 'allyHitBox';
+      readonly owner: ActionEntitySelection;
+      readonly checkAlive: boolean;
+      readonly containsUnmarkable: boolean;
+      readonly replacePartsWithMainBodies: boolean;
+    }
   | {
       readonly kind: 'fixedPoint';
       readonly owner: ActionEntitySelection;
@@ -90,6 +102,16 @@ export type ActionTargetQuery =
  * 技能可用性、条件动作、Buff 修正和事件响应使用的布尔输入。
  * 固定真假直接保存；其余判断通过本图的布尔数据节点连接。
  */
+export const ABILITY_ENTITY_FINISH_REASONS = [
+  'other',
+  'lifetime',
+  'stackEvicted',
+  'sourceDied',
+  'targetDied',
+  'soulMainBodyDied',
+] as const;
+export type AbilityEntityFinishReason = (typeof ABILITY_ENTITY_FINISH_REASONS)[number];
+
 export type CombatCondition =
   | { readonly kind: 'constant'; readonly value: boolean }
   | { readonly kind: 'conditionNode'; readonly nodeId: string };
@@ -186,7 +208,7 @@ export type CombatConditionExpression =
       /** 比较目标当前生命值或当前/最大生命比例。 */
       kind: 'healthCompare';
       /** 要检查的对象。 */
-      target: CombatTarget | HealTarget;
+      target: CombatTarget | HealTarget | 'actionInputTarget';
       /** target=contextTarget 时读取动作目标组中的首个对象。 */
       contextKey?: string;
       /** 比较当前生命值还是当前生命比例。 */
@@ -261,6 +283,11 @@ export type CombatConditionExpression =
       value: boolean;
     }
   | {
+      /** 检查当前能力实体事件中的原生结束原因。 */
+      kind: 'eventAbilityEntityFinishReasonIn';
+      reasons: readonly AbilityEntityFinishReason[];
+    }
+  | {
       /** 比较当前命中角色的投射物免疫忽略等级。 */
       kind: 'eventProjectileIgnoreImmuneLevelCompare';
       /** 原生 CheckProjectileIgnoreImmuneLevel.checkType。 */
@@ -298,7 +325,7 @@ export type CombatConditionExpression =
       /** 动作环境中的目标组名称。 */
       contextKey: string;
       /** 用于比较的对象身份。 */
-      other: 'actionSource' | 'actionOwner' | 'controlledOperator';
+      other: 'actionSource' | 'actionOwner' | 'controlledOperator' | 'actionInputTarget';
       /** 判断两者相同或不同。 */
       operator: 'equal' | 'notEqual';
     }
@@ -343,8 +370,12 @@ export type CombatConditionExpression =
       value: ActionValueOperand;
     }
   | {
-      /** 比较当前 Context 迭代目标的有限能力实体剩余时长。 */
+      /** 比较首个目标能力实体的剩余时长；无限寿命读取为 -1。 */
       kind: 'abilityEntityRemainingDurationCompare';
+      /** 省略时读取当前 Context 迭代目标。 */
+      target?: ActionTargetQuery;
+      /** 仅比较成功时写入剩余秒数，失败保留旧值。 */
+      outputKey?: string;
       /** 剩余秒数比较符。 */
       operator: ComparisonOperator;
       /** 与剩余时长比较的秒数。 */
@@ -453,6 +484,14 @@ export type CombatConditionExpression =
       tags: readonly DamageTag[];
     }
   | {
+      /** 检查当前事件中当前主体对应的转移部位标签，不回退到动作环境或施法来源。 */
+      kind: 'eventTransferredPartTagsMatch';
+      tagQueryType: GameplayTagQueryType;
+      tags: readonly GameplayTag[];
+      /** 匹配成功才保存部位目标；失败保留已有目标组。 */
+      saveToContextKey?: string;
+    }
+  | {
       /** 匹配伤害包 DamageUnit.damageTags 的原生 GameplayTag。 */
       kind: 'eventDamageGameplayTagsMatch';
       /** 标签集合匹配方式。 */
@@ -493,6 +532,8 @@ export type CombatConditionExpression =
   | {
       /** 匹配触发 Buff 响应的待施放技能类型。 */
       kind: 'eventSkillTypeIn';
+      /** 只限制原生战技；其他原生类型不受此字段影响。省略表示不限。 */
+      normalSkillSubType?: 'normal' | 'additionalNormalSkill';
       /** 任一匹配即可成立的技能分类。 */
       skillTypes: readonly SkillType[];
     }
@@ -512,8 +553,10 @@ export type CombatConditionExpression =
   | {
       /** 查询目标 AbilitySystem 当前仍在施放的技能类型；不读取事件载荷。 */
       kind: 'currentSkillTypeIn';
-      /** 检查施法者还是当前 Buff 持有者。 */
-      target: 'caster' | 'buffOwner';
+      /** 只限制原生战技；其他原生类型不受此字段影响。省略表示不限。 */
+      normalSkillSubType?: 'normal' | 'additionalNormalSkill';
+      /** 检查施法者、当前 Buff 持有者或当前主控；在求值时解析身份。 */
+      target: 'caster' | 'buffOwner' | 'controlledOperator';
       /** 任一匹配即可成立的当前技能分类。 */
       skillTypes: readonly SkillType[];
     }
@@ -597,6 +640,13 @@ export type CombatConditionExpression =
       sources?: readonly SpGainSource[];
       /** 允许的正常获取或返还类型；省略时不筛选类型。 */
       gainKinds?: readonly SpGainKind[];
+    }
+  | {
+      /** 比较 Buff 增强事件携带的层数（不是当前总层数）；成功后可写入黑板。 */
+      kind: 'eventBuffEnhanceLayerCompare';
+      operator: ComparisonOperator;
+      value: ActionValueOperand;
+      outputKey?: string;
     }
   | {
       /** 比较 OnConsumeBuff 事件快照中的实际消费层数；命中后可写入动作黑板。 */
@@ -709,12 +759,14 @@ export const COMBAT_CONDITION_KINDS = [
   'casterComboPending',
   'abilityEntityTimedMarkerPresent',
   'eventDamageTagsMatch',
+  'eventTransferredPartTagsMatch',
   'eventDamageGameplayTagsMatch',
   'eventDamageFeaturesMatch',
   'eventDamageTypeIn',
   'eventInflictionElementIn',
   'eventPhysicalInflictionTypeIn',
   'eventProjectilePerfectDodgeCooldownEquals',
+  'eventAbilityEntityFinishReasonIn',
   'eventProjectileIgnoreImmuneLevelCompare',
   'eventSkillTypeIn',
   'skillDamageTypeIn',
@@ -732,6 +784,7 @@ export const COMBAT_CONDITION_KINDS = [
   'eventHealTagsMatch',
   'eventSpGainMatch',
   'eventConsumedBuffLayerCompare',
+  'eventBuffEnhanceLayerCompare',
   'eventOverheal',
   'eventSourceMatchesBuffSource',
   'eventSourceMatchesBuffSourceEntitySource',

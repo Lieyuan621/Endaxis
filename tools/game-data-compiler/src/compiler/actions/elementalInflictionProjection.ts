@@ -2,6 +2,7 @@ import type { CombatStepParameters } from '../intermediateDefinitions.ts';
 import { projectNativeDamageElement } from '../../source/damageElement.ts';
 import type { ElementalInflictionActionSource } from '../../source/elementalInflictionActions.ts';
 import type { CombatActionProjectionContextSource } from '../combatProjectionCommon.ts';
+import { projectActionTargetQuery } from '../conditions/combatConditionProjection.ts';
 
 /** 法术异常的 Source 与 Owner 是独立身份，不因宿主类型改变目标。 */
 export function projectElementalInflictionAction(
@@ -23,12 +24,6 @@ export function projectElementalInflictionAction(
     action.target.targetSource === 'Owner' &&
     action.target.targetGroupKey === '' &&
     context.actionOwnerTarget === 'buffOwner';
-  if (
-    !sourceIsCaster ||
-    action.source.targetGroupKey !== '' ||
-    (!targetsFixedEnemy && !targetsBuffOwner)
-  )
-    throw new Error(`${path}: unsupported elemental infliction source/target`);
   const element = projectNativeDamageElement(action.element, `${path}.element`);
   if (element === 'physical') throw new Error(`${path}: physical is not an infliction element`);
   return {
@@ -38,6 +33,12 @@ export function projectElementalInflictionAction(
       isExtra: action.isExtra,
       ...(action.inverseReaction ? { inverseReaction: true as const } : {}),
       ...(targetsBuffOwner ? { target: 'buffOwner' as const } : {}),
+      ...(!sourceIsCaster || action.source.targetGroupKey !== ''
+        ? { source: projectActionTargetQuery(action.source, context, `${path}.source`) }
+        : {}),
+      ...(!targetsFixedEnemy && !targetsBuffOwner
+        ? { target: projectActionTargetQuery(action.target, context, `${path}.target`) }
+        : {}),
     },
   };
 }

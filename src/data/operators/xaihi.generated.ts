@@ -2742,6 +2742,7 @@ export const xaihi: OperatorDefinition = {
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0011_seraph_normal_skill: {
+      faction: 'good',
       bornTags: [
         'Immune',
         'SelectCategory/Unmarkable',

@@ -5,7 +5,11 @@
 import type { DamageFeature, DamageTag, DamageType } from '../../game-data/operatorDefinition';
 import type { CombatObjectRef, CombatReceiptSink } from '../receipt/combatReceipt';
 import type { CombatVitals, HealthDamageResult } from '../resources/combatVitals';
-import type { ActionValueCalculation, CombatSkillCastInfo } from '../state/foundationState';
+import type {
+  ActionValueCalculation,
+  CombatSkillCastInfo,
+  EnemyPartTransferInfo,
+} from '../state/foundationState';
 import type { GameplayTag } from '../tags/gameplayTags';
 import type { CombatClock } from '../time/combatClock';
 import type { AppliedDamageModifier } from './damageScale';
@@ -31,6 +35,8 @@ export type HealthDamageTargetEvent = Extract<HealthDamageEvent, 'beforeTakeDama
 
 /** 生命伤害事件共享的伤害包、请求值和实际值。 */
 export interface HealthDamageEventPayload {
+  /** 本次主体伤害由哪个部位转移；不改变攻击来源或回执目标身份。 */
+  readonly partTransferInfo?: EnemyPartTransferInfo;
   /** 当前执行技能身份；仅输出方携带，不以展示分组匹配事件。 */
   readonly executingSkillId?: string;
   /** 来源动作的施法身份；null 表示确实没有继承，undefined 表示生产端尚未接入。 */
@@ -42,12 +48,15 @@ export interface HealthDamageEventPayload {
   readonly gameplayTags?: readonly GameplayTag[];
   readonly features: readonly DamageFeature[];
   readonly result: PlayerActiveDamageResult;
+  /** 结算后 Take/OutputDamageContext 的实际扣血值；结算前事件尚无此值。 */
+  readonly actualDamage?: number;
   /** 本次伤害是否派发暴击后续事件；期望模式可为 true，而显示结果仍不是一次实际暴击。 */
   readonly triggersCriticalEffects?: boolean;
 }
 
 /** 旧版伤害详情能够直接显示、且已经由本次公式确定的冻结值。 */
 export interface HealthDamageReceiptDetail {
+  readonly damageTransferMultiplier?: number;
   readonly reactionDamageKind?: 'spellBurst' | 'physicalInfliction';
   readonly reactionCriticalKey?: string;
   readonly forcedCritical?: boolean;
@@ -129,6 +138,7 @@ export interface HealthDamageReceiptDetail {
 
 /** 在正确事件边界写入一次生命伤害所需的状态和端口。 */
 export interface ExecuteHealthDamageInput {
+  readonly partTransferInfo?: EnemyPartTransferInfo;
   /** 原生 HP/Minus 的 PowerAttack 清理先于 BeforeTakeDamage。 */
   readonly consumeFinisherEligibility?: () => void;
   readonly producedBy?: CombatObjectRef;
@@ -173,6 +183,7 @@ export function executeHealthDamage(input: ExecuteHealthDamageInput): HealthDama
   if (input.tags.includes('powerAttack')) input.consumeFinisherEligibility?.();
   const spellBurstType = spellBurstTypeFromDamageTags(input.tags);
   const beforePayload: HealthDamageEventPayload = {
+    ...(input.partTransferInfo === undefined ? {} : { partTransferInfo: input.partTransferInfo }),
     sourceId: input.sourceId,
     targetId: input.targetId,
     damageType: input.damageType,
@@ -196,12 +207,7 @@ export function executeHealthDamage(input: ExecuteHealthDamageInput): HealthDama
       ? input.result
       : { ...input.result, value: input.absorbDamage(input.damageType, input.result.value) };
   const payload: HealthDamageEventPayload = { ...beforePayload, result };
-  const mayKillTarget = input.target.health > 0 && result.value >= input.target.health;
-  if (mayKillTarget) input.emitSourceEvent('beforeKillEntity', payload);
-  const stateChange = input.target.takeDamage(result.value);
-  if (mayKillTarget && stateChange.currentHealth === 0) {
-    input.emitSourceEvent('afterKillEntity', payload);
-  }
+  const stateChange = applyHealthDamageWithKillEvents(input.target, payload, input.emitSourceEvent);
   input.receipt.record({
     ...(input.producedBy === undefined ? {} : { producedBy: input.producedBy }),
     frame: input.clock.frame,
@@ -216,6 +222,11 @@ export function executeHealthDamage(input: ExecuteHealthDamageInput): HealthDama
       ? {}
       : { skillMultiplierCalculation: input.skillMultiplierCalculation }),
     data: {
+      ...(input.partTransferInfo === undefined
+        ? {}
+        : {
+            transferredSourceId: input.partTransferInfo.mainBodyToPart.get(input.targetId),
+          }),
       damageType: input.damageType,
       value: result.value,
       damageBeforeAbsorption: input.result.value,
@@ -236,8 +247,28 @@ export function executeHealthDamage(input: ExecuteHealthDamageInput): HealthDama
       ...(input.hitId === undefined ? {} : { hitId: input.hitId }),
     },
   });
-  input.emitTargetEvent('takeDamage', payload);
-  input.emitSourceEvent('outputDamage', { ...sourceBeforePayload, result });
+  input.emitTargetEvent('takeDamage', { ...payload, actualDamage: stateChange.actualDamage });
+  input.emitSourceEvent('outputDamage', {
+    ...sourceBeforePayload,
+    result,
+    actualDamage: stateChange.actualDamage,
+  });
+  return stateChange;
+}
+
+/** 已通过伤害门禁后的生命写入；转移同步也保留击杀回调，但不重复普通命中事件和回执。 */
+export function applyHealthDamageWithKillEvents(
+  target: CombatVitals,
+  payload: HealthDamageEventPayload,
+  emitSourceEvent: ExecuteHealthDamageInput['emitSourceEvent'],
+): HealthDamageResult {
+  const mayKillTarget = target.health > 0 && payload.result.value >= target.health;
+  if (mayKillTarget) emitSourceEvent('beforeKillEntity', payload);
+  // takeDamage 同步触发生命观察者，包括能力实体的死亡与结束流程。
+  const stateChange = target.takeDamage(payload.result.value);
+  if (mayKillTarget && stateChange.currentHealth === 0) {
+    emitSourceEvent('afterKillEntity', payload);
+  }
   return stateChange;
 }
 

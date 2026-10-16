@@ -74,7 +74,11 @@ export function parseTrainingLevelEventActionSource(
     kind: 'trainingLevelEvent',
     eventKey: parseStringScalarSource(action.eventKey, `${path}.eventKey`),
     outputStringValue: requireBoolean(action.outputStringValue, `${path}.outputStringValue`),
-    stringValue: parseStringScalarSource(action.stringValue, `${path}.stringValue`),
+    stringValue: parseStringScalarSource(
+      action.stringValue,
+      `${path}.stringValue`,
+      action.outputStringValue !== false,
+    ),
     numericValue: parseScalarSource(
       action.numericValue,
       `${path}.numericValue`,

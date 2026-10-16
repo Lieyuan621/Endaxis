@@ -1,8 +1,10 @@
 import {
+  readOptionalReferenceKey,
   requireArray,
   requireBoolean,
   requireExactFields,
   requireInteger,
+  requireNamedOrInteger,
   requireNonEmptyString,
   requireNumber,
   requireRecord,
@@ -13,7 +15,14 @@ import {
   parseTagQuerySource,
   type TagQuerySource,
 } from './tagQuery.ts';
-import type { BlackboardLevelValues } from './scalar.ts';
+import { parseScalarSource, type ScalarSource, type BlackboardLevelValues } from './scalar.ts';
+import { readCompareType } from './nativeEnums.ts';
+
+/** 原生按目标自身 hp/maxHp 筛选；阈值在执行筛选时读取。 */
+export interface HpRatioValidatorSource {
+  readonly comparison: string;
+  readonly value: ScalarSource;
+}
 import {
   parsePriorityFilterSources,
   parseDistanceValidatorSources,
@@ -46,6 +55,7 @@ import {
 } from './targetEnums.ts';
 
 export interface TargetReferenceSource {
+  readonly hpRatioValidators?: readonly HpRatioValidatorSource[];
   readonly targetSource: string;
   readonly targetGroupKey: string;
   readonly selectorOwner: string;
@@ -62,6 +72,7 @@ export interface TargetReferenceSource {
   readonly finderFactionTarget?: string | null;
   readonly finderTargetObjectType?: string | null;
   readonly finderCheckAlive?: boolean | null;
+  readonly finderContainsUnMarkable?: boolean;
   readonly finderAutoSetTargetFaction?: boolean | null;
   readonly finderTargetFactionType?: string | number | null;
   readonly finderShape: ShapeFinderSource | null;
@@ -72,6 +83,7 @@ export interface TargetReferenceSource {
   readonly finderPointBlackboardKeys?: readonly string[];
   /** FixedPointFinder 的固定偏移证据；零空间投影可归约坐标，但不能在来源层丢掉。 */
   readonly finderFixedPoint?: FixedPointFinderSource;
+  readonly finderSpatialPoint?: SpatialPointFinderSource;
   readonly validatorTypes: readonly string[];
   readonly postProcessorTypes: readonly string[];
   readonly priorityFilters: readonly PriorityFilterSource[];
@@ -82,10 +94,14 @@ export interface TargetReferenceSource {
 }
 
 export interface SelectorSummarySource {
+  readonly finderSpatialPoint?: SpatialPointFinderSource;
+  readonly hpRatioValidators?: readonly HpRatioValidatorSource[];
   readonly finderType: string | null;
   readonly finderFactionTarget: string | null;
   readonly finderTargetObjectType: string | null;
   readonly finderCheckAlive: boolean | null;
+  /** 缺失表示来源未提供，不能视为允许包含或排除。 */
+  readonly finderContainsUnMarkable?: boolean;
   readonly finderAutoSetTargetFaction: boolean | null;
   readonly finderTargetFactionType: string | number | null;
   readonly finderShape: ShapeFinderSource | null;
@@ -124,6 +140,11 @@ export interface FixedPointFinderSource {
     readonly blackboardKey: string | null;
   };
 }
+
+/** 两种查询都写入位置句柄，不返回 owner 实体；空间参数保留在来源层。 */
+export type SpatialPointFinderSource =
+  | { readonly kind: 'navMeshRaycast'; readonly distance: ScalarSource }
+  | { readonly kind: 'ownerMountPoint'; readonly mountPoint: string | number };
 
 export interface SpawnedEntitySelectorIdentitySource {
   readonly spawnedObjectType: string | null;
@@ -176,6 +197,8 @@ const TARGET_FIELDS = new Set([
 ]);
 
 const KNOWN_FINDERS = new Set([
+  'NavMeshRaycastPointFinder',
+  'OwnerMountPointPosFinder',
   'AbilityEntityTargetFinder',
   'AllEnemyFinder',
   'CharacterTeamFinder',
@@ -187,6 +210,7 @@ const KNOWN_FINDERS = new Set([
   'MainTargetFinder',
   'OwnerSpawnedEntityFinder',
   'OwnerPartsFinder',
+  'OwnerSoulFinder',
   'PointFinder',
   'ProjectileFinder',
   'RandomPointFinder',
@@ -197,6 +221,7 @@ const KNOWN_FINDERS = new Set([
   'TyphoeaArcherySelectedFinder',
 ]);
 const KNOWN_VALIDATORS = new Set([
+  'CurHpRatioValidator',
   'DistanceValidator',
   'ExcludeOwnerValidator',
   'HittableObjectValidator',
@@ -207,6 +232,7 @@ const KNOWN_VALIDATORS = new Set([
   'TargetContainsValidator',
 ]);
 const KNOWN_POST_PROCESSORS = new Set([
+  'ReplacePartWithMainBody',
   'CircularOrderSort',
   'ConvertToPosition',
   'ConvertToSlot',
@@ -232,14 +258,14 @@ export function parseTargetReferenceSource(value: unknown, path: string): Target
 
   return {
     targetSource,
-    targetGroupKey: requireString(target.targetGroupKey, `${path}.targetGroupKey`),
+    targetGroupKey: readOptionalReferenceKey(target.targetGroupKey, `${path}.targetGroupKey`),
     selectorOwner: readActionTarget(target.selectorOwner, `${path}.selectorOwner`),
-    ownerContextKey: requireString(target.ownerContextKey, `${path}.ownerContextKey`),
+    ownerContextKey: readOptionalReferenceKey(target.ownerContextKey, `${path}.ownerContextKey`),
     centerType: readActionTarget(target.centerType, `${path}.centerType`),
-    centerContextKey: requireString(target.centerContextKey, `${path}.centerContextKey`),
+    centerContextKey: readOptionalReferenceKey(target.centerContextKey, `${path}.centerContextKey`),
     centerToGround: requireBoolean(target.centerToGround, `${path}.centerToGround`),
     target: readActionTarget(target.target, `${path}.target`),
-    targetContextKey: requireString(target.targetContextKey, `${path}.targetContextKey`),
+    targetContextKey: readOptionalReferenceKey(target.targetContextKey, `${path}.targetContextKey`),
     enableAdvancedDirection: requireBoolean(
       target.enableAdvancedDirection,
       `${path}.enableAdvancedDirection`,
@@ -253,6 +279,9 @@ export function parseTargetReferenceSource(value: unknown, path: string): Target
       ? {}
       : { finderTargetObjectType: summary.finderTargetObjectType }),
     ...(summary.finderCheckAlive === null ? {} : { finderCheckAlive: summary.finderCheckAlive }),
+    ...(summary.finderContainsUnMarkable === undefined
+      ? {}
+      : { finderContainsUnMarkable: summary.finderContainsUnMarkable }),
     ...(summary.finderAutoSetTargetFaction === null
       ? {}
       : { finderAutoSetTargetFaction: summary.finderAutoSetTargetFaction }),
@@ -268,11 +297,13 @@ export function parseTargetReferenceSource(value: unknown, path: string): Target
       ? {}
       : { finderPointBlackboardKeys: summary.finderPointBlackboardKeys }),
     ...(summary.finderFixedPoint === null ? {} : { finderFixedPoint: summary.finderFixedPoint }),
+    ...(summary.finderSpatialPoint ? { finderSpatialPoint: summary.finderSpatialPoint } : {}),
     validatorTypes: summary.validatorTypes,
     postProcessorTypes: summary.postProcessorTypes,
     priorityFilters: summary.priorityFilters,
     shuffleTargets: summary.shuffleTargets,
     distanceValidators: summary.distanceValidators,
+    ...(summary.hpRatioValidators ? { hpRatioValidators: summary.hpRatioValidators } : {}),
     finderSpawnedObjectType: spawnedIdentity.spawnedObjectType,
     validatorTagQueries: spawnedIdentity.tagQueries,
   };
@@ -293,6 +324,7 @@ export function parseSelectorSummarySource(
   let finderFactionTarget: string | null = null;
   let finderTargetObjectType: string | null = null;
   let finderCheckAlive: boolean | null = null;
+  let finderContainsUnMarkable: boolean | undefined;
   let finderAutoSetTargetFaction: boolean | null = null;
   let finderTargetFactionType: string | number | null = null;
   let finderShape: ShapeFinderSource | null = null;
@@ -301,6 +333,7 @@ export function parseSelectorSummarySource(
   let finderPointBlackboardKeys: string[] = [];
   let finderRandomPointCount: SelectorSummarySource['finderRandomPointCount'] = null;
   let finderFixedPoint: FixedPointFinderSource | null = null;
+  let finderSpatialPoint: SpatialPointFinderSource | undefined;
   // 非搜索来源不会执行 finder，VFS 的显式 null 与旧导出省略字段都表示没有配置。
   // finderRequired 为 true 时仍进入下方拒绝路径，不把空 finder 解释成零个目标。
   if ('finderData' in selector && selector.finderData !== null) {
@@ -311,13 +344,29 @@ export function parseSelectorSummarySource(
     }
     if (
       finderType === 'AllEnemyFinder' ||
+      finderType === 'OwnerSoulFinder' ||
       finderType === 'GodEntityFinder' ||
       finderType === 'AbilityEntityTargetFinder' ||
       finderType === 'TyphoeaArcherySelectedFinder'
     ) {
-      // 三类 Data 都没有配置字段：前两者分别读取全局 GodEntity 和
-      // AbilityEntity 控制器目标；Typhoea 分支复制 BattleManager 的屏幕选中目标集。
+      // 这些 Data 没有配置字段。OwnerSoulFinder 读取主体的 soulPart；
+      // 不能改成来源干员的召唤物查询，实际关联由运行时解释。
       requireExactFields(finder, new Set(['$type']), `${path}.finderData`);
+    } else if (finderType === 'NavMeshRaycastPointFinder') {
+      requireExactFields(finder, new Set(['$type', 'distance']), `${path}.finderData`);
+      const distance = parseScalarSource(
+        finder.distance,
+        `${path}.finderData.distance`,
+        inheritedBlackboard,
+      );
+      finderSpatialPoint = { kind: 'navMeshRaycast', distance };
+      if (distance.blackboardKey) finderPointBlackboardKeys.push(distance.blackboardKey);
+    } else if (finderType === 'OwnerMountPointPosFinder') {
+      requireExactFields(finder, new Set(['$type', 'mountPoint']), `${path}.finderData`);
+      finderSpatialPoint = {
+        kind: 'ownerMountPoint',
+        mountPoint: requireNamedOrInteger(finder.mountPoint, `${path}.finderData.mountPoint`),
+      };
     } else if (finderType === 'FixedPointFinder') {
       finderFixedPoint = parseFixedPointFinderSource(finder, `${path}.finderData`);
     } else if (finderType === 'HitBoxFinder') {
@@ -330,6 +379,11 @@ export function parseSelectorSummarySource(
         `${path}.finderData.targetObjectType`,
       );
       finderCheckAlive = requireBoolean(finder.checkAlive, `${path}.finderData.checkAlive`);
+      if ('containsUnMarkable' in finder)
+        finderContainsUnMarkable = requireBoolean(
+          finder.containsUnMarkable,
+          `${path}.finderData.containsUnMarkable`,
+        );
       finderAutoSetTargetFaction = requireBoolean(
         finder.autoSetTargetFaction,
         `${path}.finderData.autoSetTargetFaction`,
@@ -456,6 +510,20 @@ export function parseSelectorSummarySource(
   const priorityFilters = parsePriorityFilterSources(selector, path);
   const shuffleTargets = parseShuffleTargetSources(selector, path);
   const distanceValidators = parseDistanceValidatorSources(selector, path, inheritedBlackboard);
+  const hpRatioValidators = requireArray(selector.validatorData, `${path}.validatorData`).flatMap(
+    (rawValidator, index) => {
+      const validatorPath = `${path}.validatorData[${index}]`;
+      const validator = requireRecord(rawValidator, validatorPath);
+      if (selectorComponentName(validator, validatorPath) !== 'CurHpRatioValidator') return [];
+      requireExactFields(validator, new Set(['$type', 'compareType', 'value']), validatorPath);
+      return [
+        {
+          comparison: readCompareType(validator.compareType, `${validatorPath}.compareType`),
+          value: parseScalarSource(validator.value, `${validatorPath}.value`, inheritedBlackboard),
+        },
+      ];
+    },
+  );
   const targetContainsParents = requireArray(
     selector.validatorData,
     `${path}.validatorData`,
@@ -476,6 +544,11 @@ export function parseSelectorSummarySource(
   ).flatMap((rawProcessor, index) => {
     const processorPath = `${path}.postProcessorData[${index}]`;
     const processor = requireRecord(rawProcessor, processorPath);
+    if (selectorComponentName(processor, processorPath) === 'ReplacePartWithMainBody') {
+      // 原生原位替换部位目标的 wrapper；没有配置字段，也不是追加主体或清空其他目标。
+      requireExactFields(processor, new Set(['$type']), processorPath);
+      return [];
+    }
     if (selectorComponentName(processor, processorPath) !== 'ExcludeTarget') return [];
     const excluded = parseExcludeTargetSource(processor, processorPath);
     return [{ targetSource: excluded.targetSource, targetGroupKey: excluded.targetGroupKey }];
@@ -485,6 +558,7 @@ export function parseSelectorSummarySource(
     finderFactionTarget,
     finderTargetObjectType,
     finderCheckAlive,
+    ...(finderContainsUnMarkable === undefined ? {} : { finderContainsUnMarkable }),
     finderAutoSetTargetFaction,
     finderTargetFactionType,
     finderShape,
@@ -493,11 +567,13 @@ export function parseSelectorSummarySource(
     finderPointBlackboardKeys,
     finderRandomPointCount,
     finderFixedPoint,
+    ...(finderSpatialPoint ? { finderSpatialPoint } : {}),
     validatorTypes,
     postProcessorTypes,
     priorityFilters,
     shuffleTargets,
     distanceValidators,
+    ...(hpRatioValidators.length ? { hpRatioValidators } : {}),
     targetContainsParents,
     excludeTargets,
   };
@@ -526,7 +602,10 @@ function parseFixedPointFinderSource(
     radius.useBlackboardKey,
     `${path}.sampleRadius.useBlackboardKey`,
   );
-  const radiusKey = requireString(radius.blackboardKey, `${path}.sampleRadius.blackboardKey`);
+  const radiusKey = readOptionalReferenceKey(
+    radius.blackboardKey,
+    `${path}.sampleRadius.blackboardKey`,
+  );
   if (useRadiusBlackboard && radiusKey.length === 0) {
     throw new Error(`${path}.sampleRadius.blackboardKey: expected non-empty string`);
   }
@@ -567,7 +646,10 @@ function parsePointFinderVector(value: unknown, path: string): string[] {
       `${componentPath}.useBlackboardKey`,
     );
     requireNumber(component.value, `${componentPath}.value`);
-    const blackboardKey = requireString(component.blackboardKey, `${componentPath}.blackboardKey`);
+    const blackboardKey = readOptionalReferenceKey(
+      component.blackboardKey,
+      `${componentPath}.blackboardKey`,
+    );
     if (useBlackboardKey && blackboardKey.length === 0)
       throw new Error(`${componentPath}.blackboardKey: expected non-empty string`);
     if (useBlackboardKey) blackboardKeys.push(blackboardKey);

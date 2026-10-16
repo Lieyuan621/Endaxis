@@ -6,6 +6,38 @@ import { SkillCastOperationExecutor } from './skillCastOperationExecutor';
 import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
 
 describe('SkillCastOperationExecutor', () => {
+  it('先选实际施法宿主，空宿主不读取后续技能黑板或提交请求', () => {
+    const request = vi.fn();
+    const targetContext = new RuntimeTargetContext();
+    const context = { blackboard: new ActionBlackboard(), targetContext };
+    const executor = new SkillCastOperationExecutor({
+      casterId: 'definition-owner',
+      request,
+      queryTargets: query =>
+        query.kind === 'context' ? (targetContext.getOptional(query.key) ?? []) : [],
+      delegate: { execute: () => false, evaluate: () => false },
+    });
+    const step = {
+      kind: 'castSkillDuringAction',
+      parameters: {
+        caster: { kind: 'context', key: 'soul' },
+        skillId: stringInput('nextSkill'),
+        target: 'enemy',
+        skipApplyCost: false,
+        inheritSourceSkillCastInfo: false,
+      },
+    } satisfies ResolvedCombatOperationStep;
+    expect(executor.execute(step, context)).toBe(false);
+    expect(request).not.toHaveBeenCalled();
+    targetContext.set('soul', [{ kind: 'abilityEntity', instanceId: 7 }, { kind: 'enemy' }]);
+    context.blackboard.assign({ nextSkill: 'born' });
+    expect(executor.execute(step, context)).toBe(true);
+    expect(request).toHaveBeenCalledWith(
+      expect.objectContaining({ nativeSkillId: 'born', inputTarget: { kind: 'enemy' } }),
+      { kind: 'abilityEntity', instanceId: 7 },
+      context,
+    );
+  });
   it('延迟请求复制命名目标组中的实体，空组保留空输入，不改用主目标', () => {
     const request = vi.fn();
     const executor = new SkillCastOperationExecutor({
@@ -204,6 +236,44 @@ describe('SkillCastOperationExecutor', () => {
       ),
     ).toThrow("deferred skill id blackboard 'dodgeSkillId' is missing");
   });
+});
+
+it('延迟施法分别查询宿主与当前主控，保存当次目标而不绑定定义所属干员', () => {
+  const request = vi.fn();
+  let mainId = 'ally';
+  const executor = new SkillCastOperationExecutor({
+    casterId: 'si',
+    request,
+    queryTargets: query =>
+      query.kind === 'mainCharacter'
+        ? [{ kind: 'operator', operatorId: mainId }]
+        : [{ kind: 'abilityEntity', instanceId: 2 }],
+    delegate: { execute: () => false, evaluate: () => false },
+  });
+  const step = {
+    kind: 'castSkillDuringAction',
+    parameters: {
+      caster: { kind: 'context', key: 'moying2' },
+      target: { kind: 'mainCharacter' },
+      skillId: 'chr_0036_jsspsi_normal_skill_inkhurt_front',
+      skipApplyCost: false,
+      inheritSourceSkillCastInfo: false,
+    },
+  } satisfies ResolvedCombatOperationStep;
+  const context = { blackboard: new ActionBlackboard() };
+  expect(executor.execute(step, context)).toBe(true);
+  mainId = 'si';
+  expect(executor.execute(step, context)).toBe(true);
+  expect(request.mock.calls.map(args => [args[0].inputTarget, args[1]])).toEqual([
+    [
+      { kind: 'operator', operatorId: 'ally' },
+      { kind: 'abilityEntity', instanceId: 2 },
+    ],
+    [
+      { kind: 'operator', operatorId: 'si' },
+      { kind: 'abilityEntity', instanceId: 2 },
+    ],
+  ]);
 });
 
 it('中断动作只使用查询的第一个目标，空查询仍成功', () => {

@@ -191,6 +191,26 @@ export function validateBattle(value: unknown, path: string, issues: ValidationI
     });
   }
 
+  if (value.comboSkillPriority !== undefined) {
+    const priorityPath = `${path}.comboSkillPriority`;
+    const priority = value.comboSkillPriority;
+    if (!isObject(priority)) issues.push({ path: priorityPath, message: 'expected an object' });
+    else {
+      requireBoolean(priority.enabled, `${priorityPath}.enabled`, issues);
+      const order = priority.operatorOrder;
+      if (
+        !Array.isArray(order) ||
+        order.length > 4 ||
+        order.some(id => typeof id !== 'string' || id.length === 0) ||
+        new Set(order).size !== order.length
+      )
+        issues.push({
+          path: `${priorityPath}.operatorOrder`,
+          message: 'expected up to four distinct operator IDs',
+        });
+    }
+  }
+
   if (value.simulationRange !== undefined) {
     const rangePath = `${path}.simulationRange`;
     if (!isObject(value.simulationRange)) {

@@ -10,7 +10,7 @@ export function collectCompiledBuffIds(value: unknown): ReadonlySet<string> {
 
 export interface CompiledAbilityEntitySpawnReference {
   readonly abilityEntityId: string;
-  readonly skillId: string;
+  readonly skillId?: string;
   readonly sourcePath: string;
 }
 
@@ -38,12 +38,12 @@ export function collectCompiledAbilityEntitySpawns(
       const skillId = parameterRecord.childSkillId;
       if (typeof abilityEntityId !== 'string' || abilityEntityId.length === 0)
         throw new Error('compiled spawnAbilityEntity step has an invalid abilityEntityId');
-      if (typeof skillId !== 'string' || skillId.length === 0)
+      if (skillId !== undefined && (typeof skillId !== 'string' || skillId.length === 0))
         throw new Error('compiled spawnAbilityEntity step has an invalid childSkillId');
       spawns.push({
         abilityEntityId,
-        skillId,
-        sourcePath: `compiled.spawnAbilityEntity.${abilityEntityId}.${skillId}`,
+        ...(skillId === undefined ? {} : { skillId }),
+        sourcePath: `compiled.spawnAbilityEntity.${abilityEntityId}${skillId === undefined ? '' : `.${skillId}`}`,
       });
     }
     Object.values(record).forEach(visit);

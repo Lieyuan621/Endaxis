@@ -25,6 +25,8 @@ export const ABILITY_EVENTS = [
   'hpChanged',
   'abilityEntitySpawned',
   'abilityEntityFinished',
+  'abilityEntitySelfFinished',
+  'soulDisabled',
   'projectileLaunched',
   'beforeHitByProjectile',
   'beforeTakeDamage',
@@ -74,6 +76,8 @@ export const ABILITY_EVENTS = [
   'afterKillEntity',
   'buffConsumed',
   'buffAbsorbed',
+  'buffAbsorbedFrameEnd',
+  'buffConsumedFrameEnd',
   'skillSpGained',
   'perfectDodge',
 ] as const;
@@ -108,8 +112,11 @@ export const ABILITY_EVENT_ACTION_CONTEXT_BINDINGS = {
   beforeHitByProjectile: { inputTarget: 'eventSource', triggerTarget: 'eventTarget' },
   /** 新实体是输入目标，创建它的对象是事件来源和触发者。 */
   abilityEntitySpawned: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
+  /** 主体收到灵体禁用通知；输入目标仍是尚未回收的灵体。 */
+  soulDisabled: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
   /** 结束的实体是输入目标，结束它的对象是事件来源和触发者。 */
   abilityEntityFinished: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
+  abilityEntitySelfFinished: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
   /** Buff 来源是输入目标，接收者是事件来源和触发者。 */
   beforeAddedBuff: { inputTarget: 'eventSource', triggerTarget: 'eventTarget' },
   /** Buff 来源是输入目标，接收者是事件来源和触发者。 */
@@ -167,6 +174,8 @@ export const ABILITY_EVENT_ACTION_CONTEXT_BINDINGS = {
   buffConsumed: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
   /** 被吸收 Buff 的持有者是输入目标，吸收来源是事件来源和触发者。 */
   buffAbsorbed: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
+  buffAbsorbedFrameEnd: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
+  buffConsumedFrameEnd: { inputTarget: 'eventTarget', triggerTarget: 'eventSource' },
   /** 弱点所属对象是输入目标，设置弱点的对象是事件来源和触发者。 */
   weaknessSet: {
     inputTarget: 'eventSource',

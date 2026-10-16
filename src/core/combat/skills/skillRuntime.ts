@@ -1,4 +1,5 @@
 import type { ActionTargetQuery } from '../../../../packages/game-data-contract/src/conditions';
+import type { EnemyPartTransferInfo } from '../state/foundationState';
 import type { CompiledAbilityEntityChildSkillProgram } from '../../compiler/combatProgram';
 import type { CompiledCondition } from '../../compiler/compiledGraphData';
 import type { CompiledStepParameters } from '../../compiler/compiledGraphData.ts';
@@ -116,6 +117,8 @@ export interface RuntimeSkillTransition {
 
 /** 技能运行时把普通操作和条件判断委托给战斗装配层的端口。 */
 export interface CombatOperationContext {
+  /** 当前 Buff 环境保存的部件转交信息；事件信息在求值时优先合并。 */
+  readonly partTransferInfo?: EnemyPartTransferInfo;
   /** 执行动作的技能配置属性，不代表当前命中的属性。 */
   readonly executingSkillElement?: DamageElement;
   /** 当前执行程序/放置块；不能用继承的 originCastId 代替实际宿主。 */
@@ -186,7 +189,7 @@ export interface CombatOperationContext {
   /** 仅由 Buff 生命周期与事件响应提供；Environment 查询精确指向当前实例。 */
   readonly finishCurrentBuff?: (
     reason: BuffFinishReason,
-    sourceId: string,
+    sourceId: string | undefined,
     skillCastInfo: CombatSkillCastInfo | null,
   ) => boolean;
   /** 仅 Buff 环境提供；动作结束解除监听，不清除已记录的 affix 编号。 */
@@ -227,6 +230,12 @@ export interface CombatOperationContext {
 }
 
 export interface CombatOperationExecutor {
+  readonly ownerTagQuery?: (context: CombatOperationContext) => {
+    observe(changed: () => void): () => void;
+    matches(
+      parameters: Pick<CompiledStepParameters['listenForTagQuery'], 'tags' | 'tagQueryType'>,
+    ): boolean;
+  };
   readonly comboWindows?: ComboWindowRuntime;
   readonly queryTargets?: (
     query: ActionTargetQuery,
@@ -565,6 +574,10 @@ export class SkillRuntime {
 
   get nativeSkillType(): CompiledSkillExecutionProgram['nativeSkillType'] {
     return this.#program.nativeSkillType;
+  }
+
+  get normalSkillSubType(): CompiledSkillExecutionProgram['normalSkillSubType'] {
+    return this.#program.normalSkillSubType;
   }
 
   get timelineBlockFrames(): number | undefined {

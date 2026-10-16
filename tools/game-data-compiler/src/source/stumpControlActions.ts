@@ -14,7 +14,10 @@ import {
   type TimeDilationCurveKeySource,
 } from './timeDilationActions.ts';
 import { parseAdvancedDirectionSource, type AdvancedDirectionSource } from './spatial.ts';
-import { readControlledStateDeadOption, readAbilityActionReturnTrueMethod } from './controlEnums.ts';
+import {
+  readControlledStateDeadOption,
+  readAbilityActionReturnTrueMethod,
+} from './controlEnums.ts';
 
 export interface StaticEnemyControlActionSource {
   readonly kind: 'enemyHurtAnimation' | 'pushBack';
@@ -119,7 +122,10 @@ export function parseTakeDownActionSource(
     source: parseTargetReferenceSource(action.source, `${path}.source`),
     target: parseTargetReferenceSource(action.targetSettings, `${path}.targetSettings`),
     deadOption: readControlledStateDeadOption(action.deadOption, `${path}.deadOption`),
-    returnTrueWhen: readAbilityActionReturnTrueMethod(action.returnTrueWhen, `${path}.returnTrueWhen`),
+    returnTrueWhen: readAbilityActionReturnTrueMethod(
+      action.returnTrueWhen,
+      `${path}.returnTrueWhen`,
+    ),
   };
 }
 
@@ -174,7 +180,10 @@ export function parseLaunchUpwardActionSource(
     airborneEffect: requireRecord(action.airborneEffect, `${path}.airborneEffect`),
     immobilizedTime: requireNumber(action.immobilizedTime, `${path}.immobilizedTime`),
     deadOption: readControlledStateDeadOption(action.deadOption, `${path}.deadOption`),
-    returnTrueWhen: readAbilityActionReturnTrueMethod(action.returnTrueWhen, `${path}.returnTrueWhen`),
+    returnTrueWhen: readAbilityActionReturnTrueMethod(
+      action.returnTrueWhen,
+      `${path}.returnTrueWhen`,
+    ),
   };
 }
 
@@ -248,7 +257,8 @@ export function parsePullActionSource(value: unknown, path: string): StumpContro
   return {
     kind: 'pull',
     // 旧结构等价于默认关闭；来源层保留控制策略，不能按位移参数丢失。
-    alwaysNext: 'alwaysNext' in action ? requireBoolean(action.alwaysNext, `${path}.alwaysNext`) : false,
+    alwaysNext:
+      'alwaysNext' in action ? requireBoolean(action.alwaysNext, `${path}.alwaysNext`) : false,
     source: parseTargetReferenceSource(action.destination, `${path}.destination`),
     target: parseTargetReferenceSource(action.targetSettings, `${path}.targetSettings`),
   };
@@ -431,7 +441,16 @@ export function parseTargetHitStopActionSource(
   if (!['OnlyAttacker', 'OnlyTarget', 'Both'].includes(affectType))
     throw new Error(`${path}.affectType: unsupported hit-stop target set ${affectType}`);
   const useDirectCurve = requireBoolean(action.useDirectCurve, `${path}.useDirectCurve`);
-  const directCurve = requireArray(action.directCurve, `${path}.directCurve`);
+  // AKEDB 的键数组与 VFS 的完整 AnimationCurve 外壳共用同一解析器。
+  const directCurve = useDirectCurve
+    ? parseTimeDilationCurveKeys(action.directCurve, `${path}.directCurve`, true)
+    : [];
+  if (!useDirectCurve && !Array.isArray(action.directCurve)) {
+    // 未选槽位不解释键值；仍验证数组/曲线外壳，保持旧导出残值的准入语义。
+    const curve = requireRecord(action.directCurve, `${path}.directCurve`);
+    requireArray(curve.keys, `${path}.directCurve.keys`);
+    parseTimeDilationCurveKeys({ ...curve, keys: [] }, `${path}.directCurve`, true);
+  }
   const curveKey = requireString(action.curveKey, `${path}.curveKey`);
   // useDirectCurve 是真正的来源选择器；未选中的槽位允许保留序列化残值。
   // 全量 SkillData 同时存在 named+非空 direct 与 direct+非空 named 两类形状，
@@ -449,9 +468,7 @@ export function parseTargetHitStopActionSource(
     target: parseTargetReferenceSource(action.target, `${path}.target`),
     affectType,
     curveKey,
-    directCurveKeys: useDirectCurve
-      ? parseTimeDilationCurveKeys(directCurve, `${path}.directCurve`, true)
-      : [],
+    directCurveKeys: useDirectCurve ? directCurve : [],
     durationSeconds: duration,
     priorityTagId: requireInteger(priority.tagId, `${path}.timeDilationPriority.tagId`),
   };

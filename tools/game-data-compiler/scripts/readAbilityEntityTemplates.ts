@@ -17,6 +17,8 @@ export function readAbilityEntityTemplates(
   }
   const records: Record<string, unknown> = {};
   for (const entry of fs.readdirSync(input, { withFileTypes: true })) {
+    // 下载器的单资源导出在原文件旁保存来源记录；它不是能力实体定义。
+    if (entry.isFile() && /^[A-Za-z0-9_-]+\.json\.provenance\.json$/.test(entry.name)) continue;
     if (!entry.isFile() || !/^[A-Za-z0-9_-]+\.json$/.test(entry.name))
       throw new Error(`unexpected ability entity source entry: ${entry.name}`);
     records[entry.name.slice(0, -5)] = readJson(path.join(input, entry.name));

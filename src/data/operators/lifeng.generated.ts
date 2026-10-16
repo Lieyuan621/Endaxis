@@ -2082,6 +2082,7 @@ export const lifeng: OperatorDefinition = {
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0015_lifeng_ultimate_skill: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',
@@ -2090,7 +2091,7 @@ export const lifeng: OperatorDefinition = {
         'SelectCategory/ProjectilePassThru',
       ],
       lifetime: { kind: 'limited', durationSeconds: 5 },
-      deathReleaseDelaySeconds: 0.100000001490116,
+      deathReleaseDelaySeconds: 0.1,
       childSkill: {
         skillId: 'chr_0015_lifeng_ultimate_skill_abentity',
         nativeSkillType: 'normalSkill',

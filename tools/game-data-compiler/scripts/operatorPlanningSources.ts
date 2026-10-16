@@ -6,6 +6,10 @@ import { collectExternalBuffBlackboardReads } from '../src/compiler/references/e
  */
 import path from 'node:path';
 import { SourceFileCache } from '../src/source/sourceFileCache.ts';
+import {
+  createNativeJsonEncodingReader,
+  type NativeJsonEncodingSchema,
+} from '../src/source/nativeJsonEncoding.ts';
 import type { CompiledAbilityEntityTemplateCatalogSource } from '../src/compiler/abilities/abilityEntityCatalog.ts';
 import {
   parseGlobalBuffTemplateCatalogSource,
@@ -18,17 +22,23 @@ import {
 import { readGeneratedTimeDilationPriorities } from '../src/compiler/catalogs/generatedTimeDilationCatalog.ts';
 import { readAbilityEntityTemplates } from './readAbilityEntityTemplates.ts';
 import { readGameplayTagPaths } from './readGameplayTagPaths.ts';
+import {
+  parseGameplayTagPredefineTableSource,
+  type GameplayTagPredefineTableSource,
+} from '../src/source/gameplayTagPredefineTable.ts';
 
 export class OperatorPlanningSources {
   private readonly buffReads = new Map<string, ReadonlySet<string>>();
-  private readonly shared = new SourceFileCache(32 * 1024 * 1024);
-  private readonly currentOperator = new SourceFileCache(16 * 1024 * 1024);
+  private readonly shared: SourceFileCache;
+  private readonly currentOperator: SourceFileCache;
   private readonly sharedPaths: ReadonlySet<string>;
   private readonly entities = new Map<string, CompiledAbilityEntityTemplateCatalogSource>();
   private readonly globals = new Map<string, GlobalBuffTemplateCatalogSource>();
   private readonly settings = new Map<string, SkillSettingCatalogSource>();
   private readonly tags = new Map<string, readonly string[]>();
   private readonly priorities = new Map<string, ReadonlyMap<number, number>>();
+  private readonly predefinedTags = new Map<string, GameplayTagPredefineTableSource>();
+  private readonly readEncoding: (value: unknown, file: string) => unknown;
 
   constructor(paths: {
     readonly manifest?: string;
@@ -36,7 +46,22 @@ export class OperatorPlanningSources {
     readonly skillPatchTable: string;
     readonly globalBuffCatalog?: string;
     readonly skillSettingCatalog?: string;
+    /** 同版本类型目录；只为 SkillData/BuffData 解读数字枚举，原文与来源哈希不变。 */
+    readonly nativeJsonEncoding?: NativeJsonEncodingSchema;
   }) {
+    const readNative =
+      paths.nativeJsonEncoding && createNativeJsonEncodingReader(paths.nativeJsonEncoding);
+    const readEncoding =
+      readNative &&
+      ((value: unknown, file: string) => {
+        const collection = path.basename(path.dirname(file));
+        return collection === 'SkillData' || collection === 'BuffData'
+          ? readNative(value, `Beyond.Gameplay.Core.${collection}`, file)
+          : value;
+      });
+    this.readEncoding = readEncoding ?? (value => value);
+    this.shared = new SourceFileCache(32 * 1024 * 1024, readEncoding);
+    this.currentOperator = new SourceFileCache(16 * 1024 * 1024, readEncoding);
     this.sharedPaths = new Set(
       [
         paths.manifest,
@@ -80,6 +105,7 @@ export class OperatorPlanningSources {
     this.settings.clear();
     this.tags.clear();
     this.priorities.clear();
+    this.predefinedTags.clear();
     this.buffReads.clear();
   }
 
@@ -87,11 +113,16 @@ export class OperatorPlanningSources {
     const root = path.resolve(sourceRoot);
     let result = this.buffReads.get(root);
     if (result === undefined) {
+      const readEncoding = this.readEncoding;
       function* resources() {
         for (const file of readdirSync(root, { recursive: true, encoding: 'utf8' })) {
           if (!file.endsWith('.json')) continue;
           const sourcePath = path.join(root, file);
-          yield { sourcePath, value: JSON.parse(readFileSync(sourcePath, 'utf8')) as unknown };
+          // 扫描和正式编译使用相同的编码视图，但不把整个资源库塞进单干员缓存。
+          yield {
+            sourcePath,
+            value: readEncoding(JSON.parse(readFileSync(sourcePath, 'utf8')), sourcePath),
+          };
         }
       }
       result = collectExternalBuffBlackboardReads(resources());
@@ -140,6 +171,17 @@ export class OperatorPlanningSources {
     return value;
   }
 
+  /** 从本轮原始表读取查询，不反向加载应用中的已生成标签目录。 */
+  predefinedTagQueries(file: string): GameplayTagPredefineTableSource['predefinedQuery'] {
+    const key = path.resolve(file);
+    let value = this.predefinedTags.get(key);
+    if (value === undefined) {
+      value = parseGameplayTagPredefineTableSource(this.readJson(key), key);
+      this.predefinedTags.set(key, value);
+    }
+    return value.predefinedQuery;
+  }
+
   timeDilationPriorities(file: string): ReadonlyMap<number, number> {
     const key = path.resolve(file);
     let value = this.priorities.get(key);
@@ -159,6 +201,7 @@ export class OperatorPlanningSources {
         this.globals.size +
         this.settings.size +
         this.tags.size +
+        this.predefinedTags.size +
         this.priorities.size,
     };
   }

@@ -100,6 +100,9 @@ export function compileSkillProgram(
     ...(input.skill.nativeSkillType === undefined
       ? {}
       : { nativeSkillType: input.skill.nativeSkillType }),
+    ...(input.skill.normalSkillSubType === undefined
+      ? {}
+      : { normalSkillSubType: input.skill.normalSkillSubType }),
     skillLevel: input.skillLevel,
     ...(input.skill.skillType === 'dodge' ? {} : { element: input.skill.element ?? 'physical' }),
     initialBlackboard,

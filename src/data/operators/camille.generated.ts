@@ -3539,10 +3539,14 @@ const camilleBuff3ActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_5: {
+      findTargets_5: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'abilityEntityTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'tar',
+          },
         },
         next: 'ifElse_4',
       },
@@ -3565,7 +3569,7 @@ const camilleBuff3ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'tar' },
           containsHittableTarget: false,
           excludeDeadEntity: true,
           operator: 'lessOrEqual',
@@ -3592,7 +3596,7 @@ const camilleBuff3: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  lifecycleSequences: { trigger: [{ $sequence: 'mergeContextTargets_5' }] },
+  lifecycleSequences: { trigger: [{ $sequence: 'findTargets_5' }] },
   actionGraph: camilleBuff3ActionGraph,
 };
 
@@ -3672,7 +3676,22 @@ const camilleBuff6: SkillBuffDefinition = {
 };
 
 const camilleBuff7ActionGraph = {
-  main: { nodes: {} },
+  main: {
+    nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0033_camille_normal_skill_reset_target' }],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+    },
+  },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
@@ -3684,6 +3703,9 @@ const camilleBuff7: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
+  abilityEventResponses: [
+    { event: 'ownerHpZero', priority: 0, sequence: { $sequence: 'applyBuff_1' } },
+  ],
   actionGraph: camilleBuff7ActionGraph,
 };
 
@@ -3701,17 +3723,18 @@ const camilleBuff8ActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_2: {
+      findTargets_2: {
         action: {
-          kind: 'mergeContextTargets',
+          kind: 'findTargets',
           parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'abilityEntityTarget', owner: { kind: 'owner' } },
             saveToContextKey: 'lasttar',
-            sources: [{ kind: 'target', target: 'enemy' }],
           },
         },
         next: 'modifyActionValue_1',
       },
-      finishOwner_6: {
+      finishOwner_7: {
         action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
         next: null,
       },
@@ -3740,17 +3763,117 @@ const camilleBuff8ActionGraph = {
         },
         next: 'modifyActionValue_4',
       },
-      ifElse_7: {
+      launchProjectile_6: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
+            finish: 'firstTickReach',
+            source: 'actionOwner',
+            recycleDelaySeconds: 2.96666669845581,
+            hit: { onReach: true, finishOnHit: true },
+            targets: { kind: 'context', contextKey: 'resettar' },
+          },
+          callbacks: [
+            {
+              event: 'hit',
+              skill: {
+                skillId: 'chr_0033_camille_normal_skill_projhit_sub',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 89,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: {},
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_5' } },
+                ],
+                actionGraph: {
+                  main: {
+                    nodes: {
+                      applyBuff_4: {
+                        action: {
+                          kind: 'applyBuff',
+                          parameters: {
+                            buffs: [{ buffId: 'buff_chr_0033_camille_normal_skill_reset_target' }],
+                            targets: { kind: 'source' },
+                            source: { kind: 'source' },
+                            inheritSourceSkillCastInfo: true,
+                          },
+                        },
+                        next: null,
+                      },
+                      modifyActionValue_2: {
+                        action: {
+                          kind: 'modifyActionValue',
+                          parameters: {
+                            key: 'EntityBB_retargeting',
+                            operation: 'assign',
+                            value: { kind: 'constant', value: 0 },
+                          },
+                        },
+                        next: null,
+                      },
+                      castSkillDuringAction_3: {
+                        action: {
+                          kind: 'castSkillDuringAction',
+                          parameters: {
+                            skillId: 'chr_0033_camille_normal_skill_abilityrange',
+                            target: 'enemy',
+                            skipApplyCost: false,
+                            inheritSourceSkillCastInfo: false,
+                          },
+                        },
+                        next: 'modifyActionValue_2',
+                      },
+                      ifElse_5: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+                          whenTrue: { $sequence: 'castSkillDuringAction_3' },
+                          whenFalse: { $sequence: 'applyBuff_4' },
+                        },
+                        next: null,
+                      },
+                    },
+                    dataNodes: {
+                      data_1: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityCountCompare',
+                          target: { kind: 'fixed', target: 'enemy' },
+                          containsHittableTarget: false,
+                          excludeDeadEntity: true,
+                          operator: 'greaterOrEqual',
+                          value: 1,
+                        },
+                      },
+                    },
+                  },
+                  macros: {},
+                },
+              },
+            },
+          ],
+        },
+        next: 'readBuffRemainingDuration_5',
+      },
+      ifElse_8: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'readBuffRemainingDuration_5' },
-          whenFalse: { $sequence: 'finishOwner_6' },
+          whenTrue: { $sequence: 'launchProjectile_6' },
+          whenFalse: { $sequence: 'finishOwner_7' },
         },
         next: null,
       },
-      mergeContextTargets_8: {
+      mergeContextTargets_9: {
         action: {
           kind: 'mergeContextTargets',
           parameters: {
@@ -3758,7 +3881,22 @@ const camilleBuff8ActionGraph = {
             sources: [{ kind: 'abilitySystemSource', owner: 'actionOwner' }],
           },
         },
-        next: 'ifElse_7',
+        next: 'ifElse_8',
+      },
+      copyContextTargets_10: {
+        action: {
+          kind: 'copyContextTargets',
+          parameters: {
+            source: {
+              kind: 'enemyByTags',
+              tagQueryType: 'exceptAny',
+              tags: ['SelectCategory/Unmarkable'],
+            },
+            excludeTargets: { kind: 'context', key: 'lasttar' },
+            saveToContextKey: 'resettar',
+          },
+        },
+        next: 'mergeContextTargets_9',
       },
     },
     dataNodes: {
@@ -3789,8 +3927,8 @@ const camilleBuff8: SkillBuffDefinition = {
   blackboard: { remain_time: 0 },
   attributeModifiers: [],
   lifecycleSequences: {
-    start: [{ $sequence: 'mergeContextTargets_2' }],
-    finish: [{ $sequence: 'mergeContextTargets_8' }],
+    start: [{ $sequence: 'findTargets_2' }],
+    finish: [{ $sequence: 'copyContextTargets_10' }],
   },
   actionGraph: camilleBuff8ActionGraph,
 };
@@ -4327,6 +4465,7 @@ export const camille: OperatorDefinition = {
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0033_camille_normal_skill: {
+      faction: 'good',
       bornTags: [
         'Immune',
         'SelectCategory/Unmarkable',
@@ -4397,7 +4536,7 @@ export const camille: OperatorDefinition = {
                           },
                         },
                       ],
-                      targets: { kind: 'fixed', target: 'enemy' },
+                      targets: { kind: 'inputTarget' },
                       source: { kind: 'source' },
                       inheritSourceSkillCastInfo: true,
                       iconDurationSource: { kind: 'actionOwnerAbilityEntity' },
@@ -4412,7 +4551,7 @@ export const camille: OperatorDefinition = {
                     kind: 'applyBuff',
                     parameters: {
                       buffs: [{ buffId: 'buff_chr_0033_camille_normal_skill_listen_target_dead' }],
-                      targets: { kind: 'fixed', target: 'enemy' },
+                      targets: { kind: 'inputTarget' },
                       source: { kind: 'owner' },
                       inheritSourceSkillCastInfo: true,
                       finishByAction: true,
@@ -4505,7 +4644,7 @@ export const camille: OperatorDefinition = {
                           },
                         },
                       ],
-                      targets: { kind: 'fixed', target: 'enemy' },
+                      targets: { kind: 'inputTarget' },
                       source: { kind: 'source' },
                       inheritSourceSkillCastInfo: true,
                       iconDurationSource: { kind: 'actionOwnerAbilityEntity' },
@@ -4520,7 +4659,7 @@ export const camille: OperatorDefinition = {
                     kind: 'applyBuff',
                     parameters: {
                       buffs: [{ buffId: 'buff_chr_0033_camille_normal_skill_listen_target_dead' }],
-                      targets: { kind: 'fixed', target: 'enemy' },
+                      targets: { kind: 'inputTarget' },
                       source: { kind: 'owner' },
                       inheritSourceSkillCastInfo: true,
                       finishByAction: true,
@@ -4532,7 +4671,11 @@ export const camille: OperatorDefinition = {
                 applyElementalInfliction_4: {
                   action: {
                     kind: 'applyElementalInfliction',
-                    parameters: { element: 'heat', isExtra: false },
+                    parameters: {
+                      element: 'heat',
+                      isExtra: false,
+                      target: { kind: 'inputTarget' },
+                    },
                   },
                   next: null,
                 },
@@ -4540,6 +4683,7 @@ export const camille: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      target: 'actionInputTarget',
                       damageType: 'heat',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                       tags: ['normalSkill'],

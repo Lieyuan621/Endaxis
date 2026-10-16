@@ -26,6 +26,7 @@ import {
 } from '../../compiler/actions/actionGraphBuilder.ts';
 import { collectCompiledBuffIds } from '../../compiler/references/compiledReferences.ts';
 import type { GameplayTagRegistry } from '../../source/nativeGameplayTags.ts';
+import type { CombatActionProjectionContextSource } from '../../compiler/combatProjectionCommon.ts';
 import {
   nativeActionName,
   requireArray,
@@ -75,12 +76,21 @@ export function compileOperatorUpgradePassiveSkills(
   definitions: readonly CompiledPassiveSkillDefinitionSource[],
   gameplayTagRegistry?: GameplayTagRegistry,
   loadBuff?: (id: string) => unknown,
+  predefinedTagQueries?: CombatActionProjectionContextSource['predefinedTagQueries'],
 ): CompiledOperatorUpgradePassiveSkillsSource {
   const definitionById = new Map(definitions.map(item => [item.skillId, item]));
   const levelPlans = effectIds.map(effectId =>
     requests
       .filter(request => request.originId === effectId)
-      .map(request => planPassiveSkill(request, definitionById, gameplayTagRegistry, loadBuff)),
+      .map(request =>
+        planPassiveSkill(
+          request,
+          definitionById,
+          gameplayTagRegistry,
+          loadBuff,
+          predefinedTagQueries,
+        ),
+      ),
   );
   const identities = levelPlans.map(plan =>
     JSON.stringify(
@@ -286,6 +296,7 @@ function planPassiveSkill(
   definitions: ReadonlyMap<string, CompiledPassiveSkillDefinitionSource>,
   gameplayTagRegistry?: GameplayTagRegistry,
   loadBuff?: (id: string) => unknown,
+  predefinedTagQueries?: CombatActionProjectionContextSource['predefinedTagQueries'],
 ): PlannedPassiveSkill {
   const graph = createActionGraphBuilder<CompiledBuffStepSource>();
   if (request.activeConditionIds?.length) {
@@ -314,6 +325,7 @@ function planPassiveSkill(
   const passiveEventContext = {
     graph,
     gameplayTagRegistry,
+    predefinedTagQueries,
     actionOwnerTarget: 'caster' as const,
     actionSourceTarget: 'caster' as const,
     actionTargetTarget: 'eventTarget' as const,

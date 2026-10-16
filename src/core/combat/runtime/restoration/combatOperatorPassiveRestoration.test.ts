@@ -104,7 +104,7 @@ it('恢复干员被动时保留黑板、启用序列、订阅和子 Buff 所有�
   restoredDispatcher.dispatch(
     {
       event: 'abilityEntityFinished',
-      payload: { sourceId: 'operator', targetId: 'ability-entity:1' },
+      payload: { sourceId: 'operator', targetId: 'ability-entity:1', finishReason: 'other' },
     },
     [],
   );

@@ -98,7 +98,9 @@ describe('SkillCooldownOperationExecutor', () => {
     const reduceFrames = vi.fn(() => 1);
     const setRatio = vi.fn(() => 1);
     const setFrames = vi.fn(() => 1);
+    const queryTargets = vi.fn(() => [{ kind: 'operator' as const, operatorId: 'ally' }]);
     const executor = new SkillCooldownOperationExecutor({
+      queryTargets,
       reduceByBaseDurationRatio: reduce,
       reduceByAbsoluteFrames: reduceFrames,
       setByBaseDurationRatio: setRatio,
@@ -112,9 +114,47 @@ describe('SkillCooldownOperationExecutor', () => {
     executor.execute(cooldownStep('set', 'baseDurationRatio', 1), context);
     executor.execute(cooldownStep('set', 'absoluteSeconds', 2), context);
 
-    expect(reduce).toHaveBeenCalledWith({ kind: 'id', skillId: 'skill.target' }, 0.5);
-    expect(reduceFrames).toHaveBeenCalledWith({ kind: 'id', skillId: 'skill.target' }, 60);
-    expect(setRatio).toHaveBeenCalledWith({ kind: 'id', skillId: 'skill.target' }, 1);
-    expect(setFrames).toHaveBeenCalledWith({ kind: 'id', skillId: 'skill.target' }, 60);
+    expect(reduce).toHaveBeenCalledWith({ kind: 'id', skillId: 'skill.target' }, 0.5, undefined);
+    expect(reduceFrames).toHaveBeenCalledWith(
+      { kind: 'id', skillId: 'skill.target' },
+      60,
+      undefined,
+    );
+    expect(setRatio).toHaveBeenCalledWith({ kind: 'id', skillId: 'skill.target' }, 1, undefined);
+    expect(setFrames).toHaveBeenCalledWith({ kind: 'id', skillId: 'skill.target' }, 60, undefined);
+    executor.execute(
+      {
+        kind: 'adjustSkillCooldown',
+        parameters: {
+          target: { kind: 'context', key: 'chr1' },
+          skill: { kind: 'type', skillType: 'comboSkill' },
+          operation: 'reduce',
+          basis: 'absoluteSeconds',
+          value: { kind: 'constant', value: 10 },
+        },
+      },
+      context,
+    );
+    expect(reduceFrames).toHaveBeenLastCalledWith(
+      { kind: 'type', skillType: 'comboSkill' },
+      300,
+      'ally',
+    );
+    queryTargets.mockReturnValue([]);
+    const previousCalls = reduceFrames.mock.calls.length;
+    executor.execute(
+      {
+        kind: 'adjustSkillCooldown',
+        parameters: {
+          target: { kind: 'context', key: 'chr1' },
+          skill: { kind: 'type', skillType: 'comboSkill' },
+          operation: 'reduce',
+          basis: 'absoluteSeconds',
+          value: { kind: 'constant', value: 10 },
+        },
+      },
+      context,
+    );
+    expect(reduceFrames).toHaveBeenCalledTimes(previousCalls);
   });
 });

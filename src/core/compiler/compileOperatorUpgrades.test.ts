@@ -811,7 +811,10 @@ it('direct talent Buff installations resolve level values without an operator gr
         level: 2,
         definition: {
           levels: 2,
-          attachedBuffs: [{ buffId: 'native-buff', blackboardAssignments: { power: [3, 7] } }],
+          attachedBuffs: [
+            { buffId: 'level-one-buff', enabledLevels: [1] },
+            { buffId: 'native-buff', enabledLevels: [2], blackboardAssignments: { power: [3, 7] } },
+          ],
         },
       },
     ],

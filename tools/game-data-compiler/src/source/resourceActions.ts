@@ -40,6 +40,7 @@ export interface DashEnergyRecoveryActionSource {
   readonly kind: 'dashEnergyRecovery';
   readonly amount: ScalarSource;
   readonly canRecoverWhenOverdraft: boolean;
+  readonly recoverTagId?: number;
 }
 
 export interface BattleDetailRecordActionSource {
@@ -175,11 +176,23 @@ export function parseDashEnergyRecoveryActionSource(
   const action = requireRecord(value, path);
   requireExactFields(
     action,
-    new Set([...ACTION_META_FIELDS, 'energyNum', 'canRecoverWhenOverdraft']),
+    new Set([
+      ...ACTION_META_FIELDS,
+      'energyNum',
+      'canRecoverWhenOverdraft',
+      ...(Object.hasOwn(action, 'recoverTag') ? ['recoverTag'] : []),
+    ]),
     path,
   );
+  let recoverTagId: number | undefined;
+  if (Object.hasOwn(action, 'recoverTag')) {
+    const tag = requireRecord(action.recoverTag, `${path}.recoverTag`);
+    requireExactFields(tag, new Set(['tagId']), `${path}.recoverTag`);
+    recoverTagId = gameplayTagId(requireInteger(tag.tagId, `${path}.recoverTag.tagId`));
+  }
   return {
     kind: 'dashEnergyRecovery',
+    ...(recoverTagId === undefined ? {} : { recoverTagId }),
     amount: parseScalarSource(action.energyNum, `${path}.energyNum`, inheritedBlackboard),
     canRecoverWhenOverdraft: requireBoolean(
       action.canRecoverWhenOverdraft,

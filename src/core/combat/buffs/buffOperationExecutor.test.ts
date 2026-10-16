@@ -1808,7 +1808,7 @@ describe('BuffOperationExecutor', () => {
     expect(child.finish).not.toHaveBeenCalled();
   });
 
-  it.each(['actionSource', 'actionOwner'] as const)(
+  it.each(['actionSource', 'actionOwner', 'none'] as const)(
     '当前实例结束来源独立于触发事件：%s',
     finishSource => {
       const blackboard = new ActionBlackboard();
@@ -1829,6 +1829,16 @@ describe('BuffOperationExecutor', () => {
             buffSourceId: 'operator',
             actionSourceId: 'action-source',
             buffOwnerId: 'buff-owner',
+            ...(finishSource === 'none'
+              ? {
+                  skillCastInfo: {
+                    skillCastId: 42,
+                    originSkillId: 'own',
+                    originSkillType: 'battleSkill' as const,
+                    nonReturnedSpCost: 0,
+                  },
+                }
+              : {}),
             eventSkillCastInfo: {
               skillCastId: 99,
               originSkillId: 'event',
@@ -1837,7 +1847,11 @@ describe('BuffOperationExecutor', () => {
             },
             finishCurrentBuff: (reason, sourceId, cast) => {
               expect(sourceId).toBe(
-                finishSource === 'actionSource' ? 'action-source' : 'buff-owner',
+                finishSource === 'none'
+                  ? undefined
+                  : finishSource === 'actionSource'
+                    ? 'action-source'
+                    : 'buff-owner',
               );
               expect(cast).toBeNull();
               reasons.push(reason);

@@ -69,6 +69,10 @@ export class ComboSkillConditionRuntime {
   readonly #registrations = new Map<ComboConditionRegistration['event'], Registration[]>();
   disableTriggerComboSkill = false;
 
+  hasListeners(event: AbilityEvent): boolean {
+    return (this.#registrations.get(event)?.length ?? 0) > 0;
+  }
+
   registerPendingCondition(options: ComboConditionRegistration): AbilityEventRegistration {
     if (!hasAbilityEventActionContextBinding(options.event))
       throw new Error(`unaudited AbilityEvent action-context binding '${options.event}'`);

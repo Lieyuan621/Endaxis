@@ -60,21 +60,26 @@ export function adjustMatchingSkillCooldowns(
 }
 
 export interface SkillCooldownOperationExecutorOptions {
+  readonly queryTargets?: CombatOperationExecutor['queryTargets'];
   readonly reduceByBaseDurationRatio: (
     skill: CompiledStepParameters['adjustSkillCooldown']['skill'],
     ratio: number,
+    targetId?: string,
   ) => number;
   readonly reduceByAbsoluteFrames: (
     skill: CompiledStepParameters['adjustSkillCooldown']['skill'],
     frames: number,
+    targetId?: string,
   ) => number;
   readonly setByBaseDurationRatio: (
     skill: CompiledStepParameters['adjustSkillCooldown']['skill'],
     ratio: number,
+    targetId?: string,
   ) => number;
   readonly setByAbsoluteFrames: (
     skill: CompiledStepParameters['adjustSkillCooldown']['skill'],
     frames: number,
+    targetId?: string,
   ) => number;
   readonly delegate: CombatOperationExecutor;
 }
@@ -94,16 +99,26 @@ export class SkillCooldownOperationExecutor implements CombatOperationExecutor {
     }
     const value = resolveActionValueOperand(step.parameters.value, context.blackboard);
     const { operation, basis, skill } = step.parameters;
-    if (operation === 'reduce' && basis === 'baseDurationRatio') {
-      this.options.reduceByBaseDurationRatio(skill, value);
-    } else if (operation === 'reduce' && basis === 'absoluteSeconds') {
-      this.options.reduceByAbsoluteFrames(skill, value * COMBAT_FRAMES_PER_SECOND);
-    } else if (operation === 'set' && basis === 'baseDurationRatio') {
-      this.options.setByBaseDurationRatio(skill, value);
-    } else if (operation === 'set' && basis === 'absoluteSeconds') {
-      this.options.setByAbsoluteFrames(skill, value * COMBAT_FRAMES_PER_SECOND);
-    } else {
-      throw new Error(`unsupported skill cooldown adjustment '${operation}/${basis}'`);
+    const targets =
+      step.parameters.target === 'caster'
+        ? [undefined]
+        : this.options.queryTargets?.(step.parameters.target, context);
+    if (targets === undefined) throw new Error('adjustSkillCooldown requires target queries');
+    for (const target of targets) {
+      if (target !== undefined && target.kind !== 'operator')
+        throw new Error('adjustSkillCooldown target requires an operator skill ledger');
+      const targetId = target?.operatorId;
+      if (operation === 'reduce' && basis === 'baseDurationRatio') {
+        this.options.reduceByBaseDurationRatio(skill, value, targetId);
+      } else if (operation === 'reduce' && basis === 'absoluteSeconds') {
+        this.options.reduceByAbsoluteFrames(skill, value * COMBAT_FRAMES_PER_SECOND, targetId);
+      } else if (operation === 'set' && basis === 'baseDurationRatio') {
+        this.options.setByBaseDurationRatio(skill, value, targetId);
+      } else if (operation === 'set' && basis === 'absoluteSeconds') {
+        this.options.setByAbsoluteFrames(skill, value * COMBAT_FRAMES_PER_SECOND, targetId);
+      } else {
+        throw new Error(`unsupported skill cooldown adjustment '${operation}/${basis}'`);
+      }
     }
     return true;
   }

@@ -43,6 +43,7 @@ const DISPLAY_MODIFIER_FIELDS = new Set([
   'modifierType',
 ]);
 export type EquipmentItemIdentitySource = ItemIdentitySource;
+const PACKED_DISPLAY_MODIFIER_FIELDS = new Set([...DISPLAY_MODIFIER_FIELDS, 'packAttrType']);
 
 export const EQUIPMENT_PART_TYPES = ['Body', 'Hand', 'EDC', 'EndNum', 'Head', 'Ring'] as const;
 export type EquipmentPartTypeSource = (typeof EQUIPMENT_PART_TYPES)[number];
@@ -253,7 +254,16 @@ function parseDisplayModifier(
 ): EquipmentDisplayAttributeModifierSource | null {
   const modifier = requireRecord(value, path);
   if (allowEmpty && Object.keys(modifier).length === 0) return null;
-  requireExactFields(modifier, DISPLAY_MODIFIER_FIELDS, path);
+  requireExactFields(
+    modifier,
+    'packAttrType' in modifier ? PACKED_DISPLAY_MODIFIER_FIELDS : DISPLAY_MODIFIER_FIELDS,
+    path,
+  );
+  // 1.6.3 DisplayAttributeModifierData 的打包属性名称，仅属展示数据；
+  // 实际修正仍读取 EquipAttributeModifierData，不能用此名称替换其属性身份。
+  if (modifier.packAttrType !== undefined) {
+    requireString(modifier.packAttrType, `${path}.packAttrType`);
+  }
   const nativeAttributeType = requireNonNegativeInteger(modifier.attrType, `${path}.attrType`);
   const nativeModifierType = requireNonNegativeInteger(
     modifier.modifierType,

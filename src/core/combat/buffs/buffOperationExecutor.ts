@@ -1,4 +1,5 @@
 import type { ActionTargetQuery } from '../../../../packages/game-data-contract/src/conditions';
+import { resolveOperationPartTransferInfo } from '../abilities/runtimeTargetContext';
 import type { InflictionElement } from '../../../../packages/game-data-contract/src/primitives';
 import { stringInputExpression, valueInputBlackboardKey } from '../../compiler/compiledGraphData';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
@@ -20,7 +21,11 @@ import { CHARACTER_INFLICTION_BUFFS } from '../infliction/characterInfliction';
 import { NATIVE_ELEMENT_VALUES } from '../infliction/elementalInfliction';
 import type { CombatObjectRef } from '../receipt/combatReceipt';
 import type { CombatOperationHostState } from '../state/actionState';
-import type { ActionValueCalculation, ArtsIntensityFactor } from '../state/foundationState';
+import type {
+  ActionValueCalculation,
+  ArtsIntensityFactor,
+  EnemyPartTransferInfo,
+} from '../state/foundationState';
 import type { BuffContainerState, BuffInstanceState } from '../state/instanceState';
 import type { BindRestoredSkillAffixObjectReference } from './buffLifecycleSequenceRuntime';
 import type { CombatBuffAddOptions } from './combatBuffs';
@@ -116,6 +121,13 @@ export interface BuffOperationTarget {
   ): void;
   /** 只读原生属性值；技能费用等非 Buff 操作不得反向持有具体容器。 */
   getAttributeValue?(attribute: string): number;
+  /** 根据已解析定义的 applyTags 选择实际接收者；查询和结束操作不随之转发。 */
+  configureBuffApplicationRecipient?(
+    resolve: (applyTags: readonly GameplayTag[]) => BuffOperationTarget | undefined,
+  ): void;
+  configureSourceEntityBlackboard?(
+    resolve: (sourceId: string) => ActionBlackboard | undefined,
+  ): void;
   /** 支持内联生命周期行为的目标由场景装配根配置；普通查询目标可以不实现。 */
   configureLifecycleOperations?(
     resolveOperations: (source: BuffLifecycleOperationSource) => CombatOperationExecutor,
@@ -123,6 +135,7 @@ export interface BuffOperationTarget {
   /** 场景装配根把成功施加事实接入全场语义事件中心。 */
   configureBuffConsumedObserver?(observer: (event: BuffConsumedEvent) => void): void;
   configureEntityTagAdded?(observer: (tag: GameplayTag) => void): void;
+  observeEntityTags?(observer: () => void): () => void;
   configureBuffAbsorbedObserver?(observer: (event: BuffConsumedEvent) => void): void;
   /** 场景装配根把 Buff 存续期内的全场语义事件监听接入唯一事件中心。 */
   /** 完整对象目录建立后，为保存的 SkillAffix 实体与 Buff 引用提供当前分支绑定。 */
@@ -222,6 +235,7 @@ export interface BuffOperationTarget {
 }
 
 export interface BuffAppliedEvent {
+  readonly partTransferInfo?: EnemyPartTransferInfo;
   /** 本次物理异常输入；即便实际只施加破防，也保留动作类型供展示。 */
   readonly physicalInflictionType?: PhysicalInflictionType;
   readonly producedBy?: CombatObjectRef;
@@ -253,6 +267,7 @@ export type { BuffApplicationHandle } from './combatBuffs';
 
 /** 定义身份与本次施加覆盖值已经分离求值后的运行时请求。 */
 export interface BuffApplicationRequest {
+  readonly partTransferInfo?: EnemyPartTransferInfo;
   readonly blackboardValueCalculations?: Readonly<Record<string, ActionValueCalculation>>;
   readonly physicalInflictionType?: BuffAppliedEvent['physicalInflictionType'];
   readonly producedBy?: CombatObjectRef;
@@ -310,6 +325,8 @@ export interface BuffOperationDependencies {
   ) => string | undefined;
   /** Ability 事件响应中把原生 Target 解析为事件载荷的真实 targetId。 */
   readonly resolveEventTarget?: (targetId: string) => BuffOperationTarget;
+  /** CreateBuff 锁定实体句柄时检查是否已回收；死亡标记不代表句柄失效。 */
+  readonly isEntityAvailable?: (target: RuntimeTargetRef) => boolean;
   /** 解析既有实例引用；已回收返回空，不要求其宿主仍可作为新动作目标。 */
   readonly resolveBuffReference?: (reference: BuffReference) => BuffApplicationHandle | undefined;
   /** 从当前动作所属干员、原始技能等级对应的附属对象表解析定义。 */
@@ -337,6 +354,16 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
   /** 只缓存当前执行器创建过的对象；是否活动以及实例身份以动作数据为准。 */
   readonly #buffHandleBindings = new Map<string, BuffApplicationHandle>();
   constructor(readonly dependencies: BuffOperationDependencies) {}
+  readonly ownerTagQuery: NonNullable<CombatOperationExecutor['ownerTagQuery']> = context => {
+    const owner = context.actionOwnerId;
+    const target = owner === undefined ? undefined : this.dependencies.resolveEventTarget?.(owner);
+    if (!target?.observeEntityTags)
+      throw new Error('tag listener requires an observable action owner');
+    return {
+      observe: changed => target.observeEntityTags!(changed),
+      matches: parameters => target.matchesEntityTags(parameters.tags, parameters.tagQueryType),
+    };
+  };
 
   readonly aura: AuraInfluenceOperations = {
     targets: (parameters, context) => {
@@ -687,9 +714,6 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
       if (context === undefined || this.dependencies.queryTargets === undefined)
         throw new Error('applyBuff requires an action target query context');
       const receivers = [...this.dependencies.queryTargets(step.parameters.targets, context)];
-      const targets = receivers
-        .filter(target => runtimeTargetEntityId(target) !== undefined)
-        .map(target => this.#resolveContextTarget(target));
       const finishByAction = step.parameters.finishByAction === true;
       const asChildBuff = step.parameters.asChildBuff === true;
       const addOwnerChild =
@@ -698,20 +722,6 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
         context.attachBuffToCurrentSkill;
       if (asChildBuff && addOwnerChild === undefined) {
         throw new Error('asChildBuff applyBuff requires a Buff, Ability, or Skill owner context');
-      }
-      if (
-        targets.some(target =>
-          finishByAction || asChildBuff || attachToSkill
-            ? target.applyScoped === undefined
-            : target.apply === undefined,
-        )
-      ) {
-        // 已由本执行器解析接收者，缺少端口是装配错误，不能交给下游再次解释动作。
-        throw new Error(
-          finishByAction || asChildBuff || attachToSkill
-            ? 'applyBuff requires a scoped Buff application port'
-            : 'applyBuff requires a Buff application port',
-        );
       }
       const count =
         step.parameters.count === undefined
@@ -726,7 +736,20 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
       }
       const scoped: BuffApplicationHandle[] = [];
       // 原生用从 0 开始的整数计数器与 float 次数比较，正小数因此会多执行一次。
-      for (const target of targets) {
+      for (const receiver of receivers) {
+        // 前一个接收者的同步回调可能回收后一个实体，不能提前解析整组容器。
+        if (
+          runtimeTargetEntityId(receiver) === undefined ||
+          this.dependencies.isEntityAvailable?.(receiver) === false
+        )
+          continue;
+        const target = this.#resolveContextTarget(receiver);
+        if (finishByAction || asChildBuff || attachToSkill) {
+          if (target.applyScoped === undefined)
+            throw new Error('applyBuff requires a scoped Buff application port');
+        } else if (target.apply === undefined) {
+          throw new Error('applyBuff requires a Buff application port');
+        }
         // CreateBuffAction 在接收者循环内解析一次来源；空来源跳过该接收者，不读取 Buff ID 或赋值。
         const source = this.#resolveCreationSource(step.parameters, context);
         if (source === undefined) continue;
@@ -812,6 +835,8 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
         !('payload' in event) ||
         (event.event !== 'buffConsumed' &&
           event.event !== 'buffAbsorbed' &&
+          event.event !== 'buffAbsorbedFrameEnd' &&
+          event.event !== 'buffConsumedFrameEnd' &&
           event.event !== 'finishedBuff' &&
           event.event !== 'buffEndsEarly')
       ) {
@@ -1066,6 +1091,11 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
     if (step.kind === 'finishCurrentBuff') {
       if (context?.finishCurrentBuff === undefined) {
         throw new Error('finishCurrentBuff requires a Buff operation context');
+      }
+      // FinishCurBuff 原生传空 finishSource 和默认 SkillCastInfo，不继承当前动作的施法身份。
+      if (step.parameters.finishSource === 'none') {
+        context.finishCurrentBuff(step.parameters.reason, undefined, null);
+        return true;
       }
       const sourceId =
         step.parameters.finishSource === 'actionOwner'
@@ -1449,6 +1479,7 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
     }
     return {
       buffId,
+      partTransferInfo: resolveOperationPartTransferInfo(context),
       producedBy: operationProducer(context, {
         ownerId: this.dependencies.sourceId,
         actionId: this.dependencies.sourceActionId,

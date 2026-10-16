@@ -178,6 +178,7 @@ interface BuffFinishCommonSource {
 }
 
 export type BuffFinishActionSource =
+  | { readonly kind: 'finishCurrentBuff' }
   | (BuffFinishCommonSource & {
       readonly kind: 'buffFinishById';
       readonly buffIds: readonly string[];
@@ -224,7 +225,11 @@ export function parseBuffApplicationActionSource(
     count: parseScalarSource(action.count, `${path}.count`, inheritedBlackboard),
     target: parseTargetReferenceSource(action.targetSettings, `${path}.targetSettings`),
     buffSource: readActionTarget(action.buffSource, `${path}.buffSource`),
-    contextKey: requireString(action.contextKey, `${path}.contextKey`),
+    contextKey:
+      action.contextKey === null &&
+      readActionTarget(action.buffSource, `${path}.buffSource`) !== 'ContextTarget'
+        ? ''
+        : requireString(action.contextKey, `${path}.contextKey`),
     autoFinishByAction: requireBoolean(action.autoFinishByAction, `${path}.autoFinishByAction`),
     inheritSkillIds: requireArray(action.inheritSkillIdList, `${path}.inheritSkillIdList`).map(
       (item, index) => requireString(item, `${path}.inheritSkillIdList[${index}]`),
@@ -375,7 +380,10 @@ function parseBuffEntries(value: unknown, path: string): BuffApplicationEntrySou
         entry.readIdFromBlackboard,
         `${entryPath}.readIdFromBlackboard`,
       ),
-      buffIdKey: requireString(entry.buffIdKey, `${entryPath}.buffIdKey`),
+      buffIdKey:
+        entry.readIdFromBlackboard === false && entry.buffIdKey === null
+          ? ''
+          : requireString(entry.buffIdKey, `${entryPath}.buffIdKey`),
     };
   });
 }
@@ -410,7 +418,15 @@ export function parseBuffIconDuration(value: unknown, path: string): BuffIconDur
       BUFF_ICON_DURATION_SOURCES,
       `${path}.durationSourceType`,
     ),
-    timedMarkerId: requireString(source.timedMarkerId, `${path}.timedMarkerId`),
+    timedMarkerId:
+      source.timedMarkerId === null &&
+      requireNativeEnum(
+        source.durationSourceType,
+        BUFF_ICON_DURATION_SOURCES,
+        `${path}.durationSourceType`,
+      ) === 'AbilityEntity'
+        ? ''
+        : requireString(source.timedMarkerId, `${path}.timedMarkerId`),
   };
 }
 

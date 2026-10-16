@@ -40,7 +40,7 @@ const ACTION_META_FIELDS = [
 ];
 
 export interface ProjectileSkillCallbackSource {
-  readonly event: 'block' | 'finish' | 'hit' | 'reach';
+  readonly event: 'block' | 'finish' | 'hit' | 'reach' | 'launch';
   readonly enabled: boolean;
   /** 关闭的槽位也可能残留非空 ID；引用闭包不得因此跟随它。 */
   readonly skillId: string;
@@ -89,6 +89,7 @@ export interface ProjectileLaunchActionSource {
   readonly hitMountPoint: string;
   readonly hitBoneFixedOffset: Vector3Source;
   readonly hitBoneForwardMode: string;
+  readonly hitBoneProjectileOffsetDirectionMode?: 'FixedAtLaunch' | 'FollowTarget';
   readonly hitBoneRandomOffset: Vector3Source;
   readonly presetPoints: readonly ProjectilePresetPointSource[];
   readonly callbacks: readonly ProjectileSkillCallbackSource[];
@@ -130,6 +131,11 @@ export interface AbilityEntitySpawnActionSource {
   readonly pauseEffectOnEnd: boolean;
   readonly inheritSourceSkillCastId: boolean;
   readonly dieWhenSourceDies: boolean;
+  /** 1.6.3 新增的目标死亡联动；不能与来源死亡联动混为一谈。 */
+  readonly dieWhenTargetDies?: boolean;
+  readonly attachWeaponModel?: boolean;
+  readonly weaponIndex?: number;
+  readonly readFullPotentialExtraEffect?: boolean;
   readonly forceSyncInit: boolean;
   readonly dieOnEnd: boolean;
 }
@@ -282,6 +288,9 @@ export function parseProjectileLaunchActionSource(
       'hitMountPoint',
       'hitBoneFixedOffset',
       'hitBoneOffsetForward',
+      ...(Object.hasOwn(action, 'hitBoneProjectileOffsetDirectionMode')
+        ? ['hitBoneProjectileOffsetDirectionMode']
+        : []),
       'hitBoneRandomOffset',
       'presetPoints',
       'castSkillOnBlock',
@@ -291,6 +300,9 @@ export function parseProjectileLaunchActionSource(
       'castSkillOnHit',
       'castSkillOnReach',
       'skillIdOnReach',
+      ...(Object.hasOwn(action, 'castSkillOnLaunch') || Object.hasOwn(action, 'skillIdOnLaunch')
+        ? ['castSkillOnLaunch', 'skillIdOnLaunch']
+        : []),
     ]),
     path,
   );
@@ -298,7 +310,10 @@ export function parseProjectileLaunchActionSource(
     action.assignEntityBlackboard,
     `${path}.assignEntityBlackboard`,
   );
-  const projectileSkillId = requireString(action.projectileSkillId, `${path}.projectileSkillId`);
+  const projectileSkillId =
+    action.castSkillOnHit === false && action.projectileSkillId === null
+      ? ''
+      : requireString(action.projectileSkillId, `${path}.projectileSkillId`);
   const callbackFields = [
     ['block', 'castSkillOnBlock', 'skillIdOnBlock'],
     ['finish', 'castSkillOnFinish', 'skillIdOnFinish'],
@@ -310,9 +325,25 @@ export function parseProjectileLaunchActionSource(
     const skillId =
       skillField === 'projectileSkillId'
         ? projectileSkillId
-        : requireString(action[skillField], `${path}.${skillField}`);
+        : !enabled && action[skillField] === null
+          ? ''
+          : requireString(action[skillField], `${path}.${skillField}`);
     return { event, enabled, skillId };
   });
+  // 1.6.3 新增的槽位必须成对读取；关闭时的残留 ID 不参与依赖闭包。
+  const launchCallbacks: ProjectileSkillCallbackSource[] =
+    Object.hasOwn(action, 'castSkillOnLaunch') || Object.hasOwn(action, 'skillIdOnLaunch')
+      ? [
+          {
+            event: 'launch',
+            enabled: requireBoolean(action.castSkillOnLaunch, `${path}.castSkillOnLaunch`),
+            skillId:
+              action.castSkillOnLaunch === false && action.skillIdOnLaunch === null
+                ? ''
+                : requireString(action.skillIdOnLaunch, `${path}.skillIdOnLaunch`),
+          },
+        ]
+      : [];
   const targetFilterMode = hasTargetControls
     ? requireNativeEnum(
         action.targetFilterMode,
@@ -374,7 +405,19 @@ export function parseProjectileLaunchActionSource(
     presetPoints: requireArray(action.presetPoints, `${path}.presetPoints`).map(
       (rawPreset, index) => parseProjectilePresetPoint(rawPreset, `${path}.presetPoints[${index}]`),
     ),
-    callbacks,
+    ...(Object.hasOwn(action, 'hitBoneProjectileOffsetDirectionMode')
+      ? {
+          hitBoneProjectileOffsetDirectionMode: requireNativeEnum(
+            action.hitBoneProjectileOffsetDirectionMode,
+            new Map([
+              [0, 'FixedAtLaunch' as const],
+              [1, 'FollowTarget' as const],
+            ]),
+            `${path}.hitBoneProjectileOffsetDirectionMode`,
+          ),
+        }
+      : {}),
+    callbacks: [...callbacks, ...launchCallbacks],
   };
 }
 
@@ -426,6 +469,12 @@ export function parseAbilityEntitySpawnActionSource(
       'pauseEffectOnEnd',
       'inheritSourceSkillCastId',
       'dieWhenSourceDie',
+      ...[
+        'dieWhenTargetDie',
+        'attachWeaponModel',
+        'weaponIndex',
+        'readFullPotentialExtraEffect',
+      ].filter(field => Object.hasOwn(action, field)),
       'forceSyncInit',
       'dieOnEnd',
     ]),
@@ -441,7 +490,7 @@ export function parseAbilityEntitySpawnActionSource(
     setSource: requireBoolean(action.setAbilityEntitySource, `${path}.setAbilityEntitySource`),
     sourceType: requireNonEmptyString(action.abilityEntitySource, `${path}.abilityEntitySource`),
     sourceContextKey: requireString(
-      action.abilityEntitySourceContextKey,
+      action.abilityEntitySourceContextKey === null ? '' : action.abilityEntitySourceContextKey,
       `${path}.abilityEntitySourceContextKey`,
     ),
     setTarget: requireBoolean(action.setAbilityEntityTarget, `${path}.setAbilityEntityTarget`),
@@ -466,7 +515,7 @@ export function parseAbilityEntitySpawnActionSource(
     ),
     bornRotation: requireNonEmptyString(action.bornRotation, `${path}.bornRotation`),
     bornRotationContextTarget: requireString(
-      action.bornRotationContextTarget,
+      action.bornRotationContextTarget === null ? '' : action.bornRotationContextTarget,
       `${path}.bornRotationContextTarget`,
     ),
     useAdvancedDirection: requireBoolean(
@@ -491,7 +540,10 @@ export function parseAbilityEntitySpawnActionSource(
       enabled: assignEntityBlackboard,
     }),
     assignBlackboard: requireBoolean(action.assignBlackboard, `${path}.assignBlackboard`),
-    skillId: requireString(action.abilityEntitySkillId, `${path}.abilityEntitySkillId`),
+    skillId:
+      action.abilityEntitySkillId === null
+        ? ''
+        : requireString(action.abilityEntitySkillId, `${path}.abilityEntitySkillId`),
     // 旧结构没有此字段，沿用默认施法选项；新结构即使为 false 也严格校验类型。
     allowMultiInputTarget: Object.hasOwn(action, 'allowMultiInputTarget')
       ? requireBoolean(action.allowMultiInputTarget, `${path}.allowMultiInputTarget`)
@@ -499,13 +551,33 @@ export function parseAbilityEntitySpawnActionSource(
     overrideDuration: requireBoolean(action.overrideDuration, `${path}.overrideDuration`),
     duration: parseScalarSource(action.duration, `${path}.duration`, inheritedBlackboard),
     saveToContext: requireBoolean(action.saveToContext, `${path}.saveToContext`),
-    contextKey: requireString(action.contextKey, `${path}.contextKey`),
+    contextKey:
+      action.saveToContext === false && action.contextKey === null
+        ? ''
+        : requireString(action.contextKey, `${path}.contextKey`),
     pauseEffectOnEnd: requireBoolean(action.pauseEffectOnEnd, `${path}.pauseEffectOnEnd`),
     inheritSourceSkillCastId: requireBoolean(
       action.inheritSourceSkillCastId,
       `${path}.inheritSourceSkillCastId`,
     ),
     dieWhenSourceDies: requireBoolean(action.dieWhenSourceDie, `${path}.dieWhenSourceDie`),
+    ...('dieWhenTargetDie' in action
+      ? { dieWhenTargetDies: requireBoolean(action.dieWhenTargetDie, `${path}.dieWhenTargetDie`) }
+      : {}),
+    ...('attachWeaponModel' in action
+      ? { attachWeaponModel: requireBoolean(action.attachWeaponModel, `${path}.attachWeaponModel`) }
+      : {}),
+    ...('weaponIndex' in action
+      ? { weaponIndex: requireInteger(action.weaponIndex, `${path}.weaponIndex`) }
+      : {}),
+    ...('readFullPotentialExtraEffect' in action
+      ? {
+          readFullPotentialExtraEffect: requireBoolean(
+            action.readFullPotentialExtraEffect,
+            `${path}.readFullPotentialExtraEffect`,
+          ),
+        }
+      : {}),
     forceSyncInit: requireBoolean(action.forceSyncInit, `${path}.forceSyncInit`),
     dieOnEnd: requireBoolean(action.dieOnEnd, `${path}.dieOnEnd`),
   };

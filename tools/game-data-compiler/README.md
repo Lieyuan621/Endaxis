@@ -32,6 +32,13 @@ npm run rebuild:game-data -- --source-root '<冻结来源目录>' --version '<�
 
 `--tables-only` 仅检查表格和单件装备，不能完成版本更新，也不能与发布组合使用。
 
+SkillData/BuffData 使用数字枚举编码时，通过 `--native-json-schema '<同版本 schema-enums.json>'` 指定字段与枚举目录。干员、装备、消耗品、合约和技能库审计共用此读取规则；下载原文不变，未知字段及未知枚举值仍交给领域校验，不能按序号猜测。类型目录副本及 SHA-256 写入本轮临时输出与报告，版本一致性须由操作者核实。
+
+单干员完整生成入口 `generateOperatorActiveSkillRuntimeBatch.ts --complete` 支持
+`--skip-contingency-contract`：合约不在更新范围时，保留现有合约产物，不读取或重新编译
+合约来源。该模式将公共实体变量的外部读取视为未知，保守保留可能被合约读取的字段；
+不能据此声称已验证新版合约，统一完整重建仍默认包含合约。
+
 ### 2. 审阅范围与配置
 
 先看报告中的 `sources`、`source-coverage`、`content-inventory`、`operator-refresh-review` 及各领域 `comparison`。逐项核对新增、修改、删除与阻塞项；非玩家记录、表现变体和未知技能不能自动当作可用内容加入。

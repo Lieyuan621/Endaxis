@@ -73,7 +73,7 @@ it('动作结束投射物不施放结束技能，恢复后仍按同一延迟回�
 
 it.each(
   [0, 1, 3, 5].flatMap(saveFrame =>
-    (['finish', 'block'] as const).flatMap(event =>
+    (['finish', 'block', 'launch'] as const).flatMap(event =>
       [true, false].map(inheritCast => ({ saveFrame, event, inheritCast })),
     ),
   ),
@@ -140,34 +140,35 @@ it.each(
           throw new Error('callback must inherit its cast identity');
         },
       });
-      return bindProjectileCallbackLifecycle(
-        [
-          restoreProjectileCallback(
-            state,
-            1,
-            programs,
-            { execute, evaluate: () => true },
-            {
-              createCallbackSkillHost: create,
-              launchProjectile: () => {
-                throw new Error('no nested launch');
-              },
-            },
-            () => undefined,
-          ),
-        ],
-        () => COMBAT_FRAME_INTERVAL,
+      const callback = restoreProjectileCallback(
+        state,
+        1,
+        programs,
+        { execute, evaluate: () => true },
+        {
+          createCallbackSkillHost: create,
+          launchProjectile: () => {
+            throw new Error('no nested launch');
+          },
+        },
+        () => undefined,
       );
+      return {
+        ...bindProjectileCallbackLifecycle([callback], () => COMBAT_FRAME_INTERVAL),
+        startLaunch: () => callback.start({ kind: 'abilityEntity', instanceId: 1 }),
+      };
     };
     const oldExecute = vi.fn(() => true);
+    const originalPorts = bind(data, clock, receipt, oldExecute);
     original.launch({
       callbacks: [data],
       callbackPrograms: [program],
       finishDelaySeconds:
         event === 'block' ? 'firstTickBlock' : { reachAfterTicks: 2, maxDurationSeconds: 1 },
       recycleDelaySeconds: 0.1,
-      ...bind(data, clock, receipt, oldExecute),
+      ...originalPorts,
     });
+    if (event === 'launch') originalPorts.startLaunch();
     const advance = (runtime: ProjectileLifecycleRuntime, branchClock: CombatClock) => {
       runtime.beginAbilityFrame();
       runtime.advanceAbilityFrame();

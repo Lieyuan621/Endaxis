@@ -311,6 +311,7 @@ export function validateBuffDefinition(
             'enable',
             'disable',
             'dispelled',
+            'release',
             'beforeEnhance',
             'trigger',
             'enhanceChanged',

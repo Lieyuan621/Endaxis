@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseGlobalPartyAuraActionSource as parseAura } from '../src/source/auraActions.ts';
+import { parseDirectRangedAuraActionSource } from '../src/source/auraActions.ts';
 import { scalarFixture, targetFixture } from './sourceFixtures.ts';
 
 import { parseKnownNativeActionSequenceSource } from '../src/source/actionLeaf.ts';
@@ -141,6 +142,55 @@ describe('Aura 新版默认影响过滤', () => {
       inheritSourceSkillCastInfo: true,
       buffs: [{ buffId: 'buff_fixture' }],
     });
+  });
+
+  it('固定敌方 Aura 不依赖 Owner 阵营，空 Buff 列表仍保留进入和退出动作', () => {
+    const callback = (key: string) => ({
+      ...emptySequence,
+      actionData: [
+        {
+          $type: 'Beyond.Gameplay.Core.SaveDamageContext+Data, Gameplay.Beyond',
+          isEnable: true,
+          priorityLevel: 0,
+          priorityOffset: 0,
+          serverActionIndex: 0,
+          valueType: 1,
+          saveTo: key,
+        },
+      ],
+    });
+    const input = {
+      ...base,
+      ...defaults,
+      auraType: 'RangedAura',
+      targetObjectType: 0,
+      filterFactionSource: targetFixture('Owner'),
+      targetFilter: {
+        ...base.targetFilter,
+        autoSetTargetFaction: false,
+        factionTarget: 'Anti',
+        targetFactionType: 'Bad',
+      },
+      buffInput: [],
+      shapeData: { ...base.shapeData, _extentXKey: null, _radiusKey: null },
+      actionInAura: callback('entered'),
+      actionWhenExitAura: callback('exited'),
+    };
+    const parse = (value: unknown) =>
+      parseDirectRangedAuraActionSource(value, 'aura', (sequence, path) =>
+        parseKnownNativeActionSequenceSource(sequence, path, {}),
+      );
+    const result = parse(input);
+    expect(result).toMatchObject({
+      kind: 'globalPartyAura',
+      target: 'enemy',
+      buffs: [],
+      actionOnEnter: { actions: [{ body: { value: { action: { saveTo: 'entered' } } } }] },
+      actionOnExit: { actions: [{ body: { value: { action: { saveTo: 'exited' } } } }] },
+    });
+    expect(() =>
+      parse({ ...input, targetFilter: { ...input.targetFilter, autoSetTargetFaction: true } }),
+    ).toThrow('filterFactionSource');
   });
 
   it.each([

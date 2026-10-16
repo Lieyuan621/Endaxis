@@ -2,6 +2,7 @@ import { stringInputExpression, valueInputBlackboardKey } from '../../compiler/c
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import { abilityEventTargetId } from '../events/combatAbilityEvent';
+import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
 import { spGainAbilityEvent } from '../events/combatAbilityEvent';
 import { healAbilityEvent } from '../events/combatAbilityEvent';
 /**
@@ -56,6 +57,7 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       readonly sourceId: string;
       readonly resolve: (entityId: string) => DamageElement | undefined;
       readonly readTypeId?: (entityId: string) => string | undefined;
+      readonly readSquadSlot?: (index: number) => string | undefined;
     },
     /** CharacterTable.profession 的静态投影；仅职业条件实际执行时读取。 */
     readonly operatorRoles?: {
@@ -63,6 +65,7 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       readonly resolve: (entityId: string) => OperatorRole | undefined;
     },
     readonly entityProperties?: {
+      readonly queryTargets?: CombatOperationExecutor['queryTargets'];
       readonly read: (
         entityId: string,
         property: 'currentHealth' | 'maxHealth' | 'currentPoise',
@@ -84,6 +87,63 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
   }
 
   execute(step: ResolvedCombatOperationStep, context?: CombatOperationContext): boolean {
+    if (step.kind === 'storeRandomInteger') {
+      if (!context || !this.probabilitySamples)
+        throw new Error('storeRandomInteger requires an action context and random sample source');
+      const bound = (value: typeof step.parameters.minimum) =>
+        Math.ceil(
+          Math.fround(
+            Math.fround(resolveActionValueOperand(value, context.blackboard)) -
+              PROBABILITY_TOLERANCE,
+          ),
+        );
+      const minimum = bound(step.parameters.minimum);
+      const maximum = bound(step.parameters.maximum);
+      if (
+        !Number.isInteger(minimum) ||
+        !Number.isInteger(maximum) ||
+        minimum < -2147483648 ||
+        maximum > 2147483647 ||
+        minimum > maximum
+      )
+        throw new RangeError('storeRandomInteger requires ordered Int32 bounds');
+      const sample = this.probabilitySamples.nextProbabilitySample({
+        ...((context.buffSourceId ?? this.sourceAttributes?.sourceId) === undefined
+          ? {}
+          : { expectedSequenceId: context.buffSourceId ?? this.sourceAttributes?.sourceId }),
+        ...(context.skillCastInfo?.originCastId === undefined
+          ? {}
+          : { castId: context.skillCastInfo.originCastId }),
+      });
+      if (!Number.isFinite(sample) || sample < 0 || sample >= 1)
+        throw new RangeError('storeRandomInteger requires a sample in [0, 1)');
+      context.blackboard.assignDynamic(
+        step.parameters.key,
+        Math.fround(minimum + Math.trunc(sample * (maximum - minimum))),
+      );
+      return true;
+    }
+    if (step.kind === 'storeCharacterTypeBySquadSlot') {
+      if (!context || !step.parameters.outputKey) return false;
+      const index = Math.trunc(
+        resolveActionValueOperand(step.parameters.slotIndex, context.blackboard),
+      );
+      const entityId = this.characterTypes?.readSquadSlot?.(index);
+      const element = entityId === undefined ? undefined : this.characterTypes?.resolve(entityId);
+      // 原生 CharTypeIdToInt 的编号只作为动作黑板数值，不作为领域元素身份。
+      const codes: Record<DamageElement, number> = {
+        heat: 0,
+        electric: 1,
+        cryo: 2,
+        nature: 3,
+        physical: 4,
+      };
+      context.blackboard.assignDynamic(
+        step.parameters.outputKey,
+        element === undefined ? step.parameters.defaultValue : codes[element],
+      );
+      return true;
+    }
     if (step.kind === 'storeCharacterTypeId') {
       if (!context || !step.parameters.outputKey) return false;
       const target = step.parameters.target;
@@ -155,6 +215,36 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       if (realHealOutputKey !== undefined) {
         context.blackboard.assignDynamic(realHealOutputKey, heal.payload.actualHealing);
       }
+      return true;
+    }
+    if (step.kind === 'storeEventDamageValue') {
+      if (context === undefined)
+        throw new Error('storeEventDamageValue requires an action context');
+      const event = context.event;
+      let finalValue = 0;
+      let realValue = 0;
+      if (
+        event &&
+        'event' in event &&
+        (event.event === 'takeDamage' ||
+          event.event === 'takeCriticalDamage' ||
+          event.event === 'outputDamage' ||
+          event.event === 'outputCriticalDamage') &&
+        event.payload.result !== undefined
+      ) {
+        finalValue = event.payload.result.value;
+        if (event.payload.actualDamage === undefined)
+          throw new Error('damage event is missing its actual health change');
+        realValue = event.payload.actualDamage;
+      }
+      context.blackboard.assignDynamic(
+        step.parameters.outputKey,
+        step.parameters.value === 'final'
+          ? finalValue
+          : step.parameters.value === 'real'
+            ? realValue
+            : finalValue - realValue,
+      );
       return true;
     }
     if (step.kind === 'modifyActionValue') {
@@ -288,7 +378,16 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       if (this.entityProperties === undefined) {
         throw new Error('storeEntityPropertyValue requires an entity property reader');
       }
-      const ownerId = context.actionOwnerId ?? context.buffOwnerId;
+      const query = step.parameters.target;
+      let ownerId: string | undefined;
+      if (query === 'actionOwner') ownerId = context.actionOwnerId ?? context.buffOwnerId;
+      else {
+        if (this.entityProperties.queryTargets === undefined)
+          throw new Error('storeEntityPropertyValue requires target queries');
+        const target = this.entityProperties.queryTargets(query, context)[0];
+        if (target === undefined) return false;
+        ownerId = runtimeTargetEntityId(target);
+      }
       if (ownerId === undefined) {
         throw new Error('storeEntityPropertyValue actionOwner target requires an action owner');
       }

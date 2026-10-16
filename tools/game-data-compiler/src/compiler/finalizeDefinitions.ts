@@ -72,6 +72,7 @@ export function finalizeOperatorDefinition(
   operator: OperatorDefinition,
   mode: DefinitionOptimizationMode,
   sharedEntityUsage?: GraphSharedEntityValueUsage,
+  commonBuffDefinitions: OperatorBuffDefinitions = {},
 ): {
   readonly operator: Contract.OperatorDefinition;
   readonly report: DefinitionProgramOptimizationReport;
@@ -102,6 +103,7 @@ export function finalizeOperatorDefinition(
       usageContext: createGraphEntityUsageContext(
         operator.abilityEntityDefinitions,
         sharedEntityUsage,
+        { ...commonBuffDefinitions, ...operator.buffDefinitions },
       ),
     },
   );

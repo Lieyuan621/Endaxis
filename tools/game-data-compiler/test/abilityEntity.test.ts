@@ -185,6 +185,17 @@ describe('AbilityEntityTemplateData 来源', () => {
   });
 
   it('拒绝启用未在全部被动列表中声明的技能', () => {
+    const bundle = {
+      allActiveSkillIds: [],
+      allPassiveSkillIds: ['SkillData/Interactive/abilityentity_interact_bomb_passive.json'],
+      enabledPassiveSkillIds: ['abilityentity_interact_bomb_passive'],
+    };
+    expect(
+      parseNativeAbilityEntityTemplateSource(
+        { ...abilityEntityFixture(), skillDataBundle: bundle },
+        'AbilityEntityData.fixture',
+      ).skillDataBundle?.allPassiveSkillIds,
+    ).toEqual(bundle.enabledPassiveSkillIds);
     expect(() =>
       parseNativeAbilityEntityTemplateSource(
         {

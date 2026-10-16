@@ -5,6 +5,7 @@ import type { GameplayTagRegistry } from '../source/nativeGameplayTags.ts';
 import type { SkillTypeMutationActionSource } from '../source/presentationActions.ts';
 import type { ProjectileLaunchActionSource } from '../source/referenceActions.ts';
 import type { ScalarSource } from '../source/scalar.ts';
+import type { TagQuerySource } from '../source/tagQuery.ts';
 import type { SkillSettingReadActionSource } from '../source/skillSettingActions.ts';
 import type { SkillSlotReplacementActionSource } from '../source/skillSlotActions.ts';
 import type { TargetReferenceSource } from '../source/target.ts';
@@ -18,6 +19,8 @@ import type { CompiledBuffNumberSource } from './buffs/buffProjectionTypes.ts';
  * 条件、动作及 Buff 装配共用同一份实现；不得反向调用序列编排或具体动作投影。 */
 
 export type ProjectedTargetGroup =
+  /** 原位部位替换后可能混有主体和普通实体，不能再证明为纯能力实体或必定存在的敌人。 */
+  | 'runtimeTargets'
   | 'godEntity'
   | 'party'
   | 'partyExceptCaster'
@@ -102,6 +105,8 @@ export interface CombatActionProjectionContextSource {
   /** 回调宿主未投影时显式 unavailable；读取 Owner 必须失败，不能借用发射者。 */
   /** 来源侧标签解析；动作、条件、Buff 和时间槽共用，不依赖某个领域宿主。 */
   readonly gameplayTagRegistry?: GameplayTagRegistry;
+  /** 同版本预定义查询目录；缺少条目时阻断编译，不能猜测标签或当作恒假。 */
+  readonly predefinedTagQueries?: Readonly<Record<string, TagQuerySource>>;
   readonly actionOwnerTarget: 'buffOwner' | 'caster' | 'currentAbilityEntity' | 'unavailable';
   /** 接收侧 Buff 事件保留监听器创建者；其他路径沿用已审计的宿主投影。 */
   readonly actionSourceTarget: 'caster' | 'buffSource';
@@ -326,10 +331,27 @@ export function isCurrentTargetRestrictedSingleEnemyTargetGroup(
  * 但是否为空必须在动作执行时读取敌人当前 GameplayTag，不能升级成静态敌人证明。
  */
 export function isDynamicSingleEnemyTagTargetGroup(write: TargetGroupActionSource): boolean {
+  // AllEnemyFinder / InFightEnemyFinder 只遍历敌人目录，不包含 Soul 能力实体。木桩正生命门禁恒通过，
+  // 但标签仍动态读取；其他生命阈值及可选中墨影的 Finder 不得套用该简化。
+  const hpValidators = write.hpRatioValidators ?? [];
+  const positiveEnemyHealthOnly =
+    (write.finderType === 'AllEnemyFinder' || write.finderType === 'InFightEnemyFinder') &&
+    hpValidators.length > 0 &&
+    hpValidators.length ===
+      write.validatorTypes.filter(type => type === 'CurHpRatioValidator').length &&
+    hpValidators.every(
+      validator =>
+        validator.comparison === 'GT' &&
+        validator.value.blackboardKey === null &&
+        validator.value.value === 0,
+    );
   return (
     isSingleEnemyFinder(write) &&
-    write.validatorTypes.length === 1 &&
-    write.validatorTypes[0] === 'TagValidator' &&
+    write.validatorTypes.filter(type => type === 'TagValidator').length === 1 &&
+    write.validatorTypes.every(
+      type =>
+        type === 'TagValidator' || (type === 'CurHpRatioValidator' && positiveEnemyHealthOnly),
+    ) &&
     write.validatorTagQueries.length === 1 &&
     write.validatorTagQueries[0]![1].length > 0 &&
     postProcessingKeepsSingleEnemy(write)

@@ -16,6 +16,8 @@ import type { OperatorSkillIdentitySource } from './skillGroups.ts';
 export interface OperatorProgressionDefinitionContext {
   readonly skills: readonly OperatorSkillIdentitySource[];
   readonly costResources: ReadonlyMap<string, CombatResource>;
+  /** 已明确省略的等价角色变体技能；其专属养成修正不重复应用到保留的变体。 */
+  readonly simulationEquivalentNativeSkillIds?: ReadonlySet<string>;
   /** 已由公共被动编译器完整装配的 AddPassiveSkill 来源；未列出的条目仍严格失败。 */
   readonly installedPassiveSkillSourcePaths?: ReadonlySet<string>;
   /** 当前整名候选已安装的被动技能身份，供潜能黑板修正绑定。 */
@@ -96,7 +98,7 @@ function assembleUpgrade(
       return [{ buffId: entry.buffId, blackboardAssignments: entry.inputBlackboard }];
     }),
   );
-  const attachedBuffs = mergeAttachedBuffs(key, attachedByLevel);
+  const attachedBuffs = mergeAttachedBuffs(attachedByLevel);
   const first = modifiersByLevel[0]!;
   if (modifiersByLevel.some(modifiers => modifiers.length !== first.length))
     throw new Error(`${key}: level-dependent effect structure is not representable`);
@@ -160,26 +162,38 @@ function assembleUpgrade(
 
 /** 直接合并各等级的静态附着配置，不把配置绕成 applyBuff 动作再还原。 */
 function mergeAttachedBuffs(
-  key: string,
   levels: readonly (readonly {
     readonly buffId: string;
     readonly blackboardAssignments: Readonly<Record<string, number>>;
   }[])[],
 ): NonNullable<OperatorUpgradeDefinition['attachedBuffs']> {
   const first = levels[0] ?? [];
-  if (levels.some(items => items.length !== first.length))
-    throw new Error(`${key}: level-dependent attached Buff structure`);
+  const sameStructure = levels.every(
+    items =>
+      items.length === first.length &&
+      items.every(
+        (item, index) =>
+          item.buffId === first[index]!.buffId &&
+          isDeepStrictEqual(
+            Object.keys(item.blackboardAssignments).sort(),
+            Object.keys(first[index]!.blackboardAssignments).sort(),
+          ),
+      ),
+  );
+  // 不同等级可以替换整个 Buff 或安装列表；保持每一级原有顺序，不合并成累计附着。
+  if (!sameStructure)
+    return levels.flatMap((items, index) =>
+      items.map(item => ({
+        buffId: item.buffId,
+        enabledLevels: [index + 1],
+        ...(Object.keys(item.blackboardAssignments).length
+          ? { blackboardAssignments: item.blackboardAssignments }
+          : {}),
+      })),
+    );
   return first.map((item, index) => {
     const variants = levels.map(items => items[index]!);
     const keys = Object.keys(item.blackboardAssignments).sort();
-    if (
-      variants.some(
-        other =>
-          other.buffId !== item.buffId ||
-          !isDeepStrictEqual(Object.keys(other.blackboardAssignments).sort(), keys),
-      )
-    )
-      throw new Error(`${key}: level-dependent attached Buff structure`);
     const blackboardAssignments = Object.fromEntries(
       keys.map(name => {
         const values = variants.map(other => other.blackboardAssignments[name]!);
@@ -195,6 +209,11 @@ function compileModifier(
   context: OperatorProgressionDefinitionContext,
 ): UpgradeModifierDefinition[] {
   if (entry.kind === 'none') return [];
+  if (
+    (entry.kind === 'skillBlackboardModifier' || entry.kind === 'skillParameterModifier') &&
+    context.simulationEquivalentNativeSkillIds?.has(entry.skillId)
+  )
+    return [];
   const fail = (reason: string): never => {
     throw new Error(`${entry.sourcePath}: ${reason}`);
   };

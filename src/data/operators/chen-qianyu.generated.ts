@@ -1439,7 +1439,7 @@ const chenQianyuBuff1ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
-          target: 'currentTarget',
+          target: 'actionInputTarget',
           valueType: 'ratio',
           operator: 'less',
           value: { kind: 'valueNode', nodeId: 'data_1' },

@@ -81,11 +81,14 @@ describe('AbilitySystem 两层黑板来源', () => {
     );
   });
 
-  it.each(['entity', 'combo'] as const)('重复键在 %s 本层失败且保留源路径', scope => {
+  it.each(['entity', 'combo'] as const)('%s 合并等价声明，但拒绝冲突并保留源路径', scope => {
     const input = sample();
+    const expected = parseAbilitySystemBlackboardsSource(input, path);
     const entries =
       scope === 'entity' ? input.entityBlackboard : input.skillDataBundle.comboSkillBlackboard;
     entries.push({ ...entries[0]! });
+    expect(parseAbilitySystemBlackboardsSource(input, path)).toEqual(expected);
+    entries[entries.length - 1]!.valueDouble += 1;
     expect(() => parseAbilitySystemBlackboardsSource(input, path)).toThrow(
       `${path}.${scope === 'entity' ? 'entityBlackboard' : 'skillDataBundle.comboSkillBlackboard'}: duplicate key`,
     );

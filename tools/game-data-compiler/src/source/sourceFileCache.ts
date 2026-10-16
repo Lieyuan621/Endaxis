@@ -28,6 +28,7 @@ export interface SourceFileCacheStatistics {
 
 export class SourceFileCache {
   readonly #maxSourceBytes: number;
+  readonly #readEncoding: ((value: unknown, file: string) => unknown) | undefined;
   readonly #files = new Map<string, CachedSourceFile>();
   #fileReads = 0;
   #jsonParses = 0;
@@ -36,10 +37,11 @@ export class SourceFileCache {
   #peakRetainedSourceBytes = 0;
 
   /** 零表示不保留文件；容量必须是非负安全整数，单位为原文 UTF-8 字节。 */
-  constructor(maxSourceBytes: number) {
+  constructor(maxSourceBytes: number, readEncoding?: (value: unknown, file: string) => unknown) {
     if (!Number.isSafeInteger(maxSourceBytes) || maxSourceBytes < 0)
       throw new RangeError('maxSourceBytes must be a non-negative safe integer');
     this.#maxSourceBytes = maxSourceBytes;
+    this.#readEncoding = readEncoding;
   }
 
   /** 保留磁盘原文，不通过重新序列化 JSON 生成文本，来源哈希可以直接使用此返回值。 */
@@ -62,7 +64,8 @@ export class SourceFileCache {
     if (!entry.jsonParsed) {
       try {
         this.#jsonParses++;
-        entry.json = freezeJson(JSON.parse(entry.text));
+        const parsed: unknown = JSON.parse(entry.text);
+        entry.json = freezeJson(this.#readEncoding ? this.#readEncoding(parsed, resolved) : parsed);
         entry.jsonParsed = true;
       } catch (error) {
         this.#remove(resolved);

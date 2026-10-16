@@ -54,6 +54,7 @@ export interface CompiledActionGraphNode {
         | 'repeatEachTick'
         | 'forEachContextTarget'
         | 'listenForCombatEvents'
+        | 'listenForTagQuery'
         | 'playAnimation'
         | 'showComboRingQte'
       >
@@ -339,7 +340,10 @@ export function createActionGraphCompilation(
             ),
           },
         };
-      } else if (node.action.kind === 'listenForCombatEvents') {
+      } else if (
+        node.action.kind === 'listenForCombatEvents' ||
+        node.action.kind === 'listenForTagQuery'
+      ) {
         action = node.action;
       } else if (node.action.kind === 'callResource') {
         const target = node.action.resource;

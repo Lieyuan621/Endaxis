@@ -1399,29 +1399,11 @@ export const snowshineChr_0014_aurora_combo_skillActionGraph = {
         },
         next: null,
       },
-      findCharacterTeamTargets_16: {
-        action: {
-          kind: 'findCharacterTeamTargets',
-          parameters: { saveToContextKey: 'mainchar', selection: { kind: 'controlledOperator' } },
-        },
-        next: null,
-      },
-      ifElse_17: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_4' },
-          whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'findCharacterTeamTargets_16' },
-        },
-        next: null,
-      },
     },
     dataNodes: {
       data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
     },
   },
   macros: {},
@@ -1456,7 +1438,6 @@ export const snowshineChr_0014_aurora_combo_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 123, sequence: { $sequence: 'ifElse_5' } },
     { startFrame: 12, endFrame: 15, sequence: { $sequence: 'changeResource_12' } },
     { startFrame: 0, endFrame: 13, sequence: { $sequence: 'startTimeDilation_13' } },
-    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'ifElse_17' } },
   ],
   defaultTarget: 'owner',
   cooldownFrames: [750, 750, 750, 750, 750, 750, 750, 750, 720, 720, 720, 690],
@@ -1612,7 +1593,6 @@ export const snowshineChr_0014_aurora_ultimate_skill: SkillDefinition = {
     potential_2_range: 0,
     atk_scale_loop: [0.29, 0.32, 0.35, 0.37, 0.4, 0.43, 0.46, 0.49, 0.52, 0.55, 0.6, 0.65],
     duration: 5,
-    interval: 0.5,
   },
   timelineBlockFrames: 91,
   naturalDurationFrames: 142,
@@ -2013,7 +1993,7 @@ const snowshineBuff7ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
-          target: 'currentTarget',
+          target: 'actionInputTarget',
           valueType: 'ratio',
           operator: 'lessOrEqual',
           value: { kind: 'valueNode', nodeId: 'data_1' },
@@ -2363,6 +2343,7 @@ export const snowshine: OperatorDefinition = {
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0014_aurora_combo_skill: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',
@@ -2371,7 +2352,7 @@ export const snowshine: OperatorDefinition = {
         'SelectCategory/ProjectilePassThru',
       ],
       lifetime: { kind: 'limited', durationSeconds: 3 },
-      deathReleaseDelaySeconds: 0.100000001490116,
+      deathReleaseDelaySeconds: 0.1,
       childSkill: {
         skillId: 'chr_0014_aurora_combo_skill_abilityrange',
         nativeSkillType: 'normalSkill',
@@ -2474,6 +2455,7 @@ export const snowshine: OperatorDefinition = {
       },
     },
     abilityentity_chr_0014_aurora_ultimate_skill: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',
@@ -2482,7 +2464,7 @@ export const snowshine: OperatorDefinition = {
         'SelectCategory/ProjectilePassThru',
       ],
       lifetime: { kind: 'limited', durationSeconds: 8 },
-      deathReleaseDelaySeconds: 0.100000001490116,
+      deathReleaseDelaySeconds: 0.1,
       childSkills: {
         chr_0014_aurora_ultimate_skill_abilityrange_potential2: {
           skillId: 'chr_0014_aurora_ultimate_skill_abilityrange_potential2',

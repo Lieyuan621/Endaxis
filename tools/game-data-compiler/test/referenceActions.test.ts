@@ -26,7 +26,7 @@ const DIRECTION = {
 } as const;
 
 describe('引用闭包动作来源载荷', () => {
-  it('投射物保留关闭回调的残留 ID，且不会把它伪装成启用引用', () => {
+  it.each([false, true])('投射物保留关闭回调的残留 ID，以及新版发射槽位（%s）', withLaunch => {
     const source = parseProjectileLaunchActionSource(
       {
         ...META,
@@ -60,6 +60,13 @@ describe('引用闭包动作来源载荷', () => {
         castSkillOnHit: true,
         castSkillOnReach: false,
         skillIdOnReach: '',
+        ...(withLaunch
+          ? {
+              castSkillOnLaunch: true,
+              skillIdOnLaunch: 'launch_skill',
+              hitBoneProjectileOffsetDirectionMode: 'FixedAtLaunch',
+            }
+          : {}),
       },
       'fixture.launchProjectile',
     );
@@ -77,6 +84,7 @@ describe('引用闭包动作来源载荷', () => {
         { event: 'finish', enabled: false, skillId: '' },
         { event: 'hit', enabled: true, skillId: '' },
         { event: 'reach', enabled: false, skillId: '' },
+        ...(withLaunch ? [{ event: 'launch', enabled: true, skillId: 'launch_skill' }] : []),
       ],
       presetPoints: [{ key: 'first', point: { targetSource: 'Context' } }],
     });
@@ -121,6 +129,10 @@ describe('引用闭包动作来源载荷', () => {
             pauseEffectOnEnd: false,
             inheritSourceSkillCastId: true,
             dieWhenSourceDie: true,
+            dieWhenTargetDie: true,
+            attachWeaponModel: false,
+            weaponIndex: 0,
+            readFullPotentialExtraEffect: false,
             forceSyncInit: false,
             dieOnEnd: true,
           },
@@ -136,6 +148,10 @@ describe('引用闭包动作来源载荷', () => {
         allowMultiInputTarget: allowMultiInputTarget ?? false,
         setSource: false,
         setTarget: false,
+        dieWhenTargetDies: true,
+        attachWeaponModel: false,
+        weaponIndex: 0,
+        readFullPotentialExtraEffect: false,
         target: { targetSource: 'Target' },
         assignEntityBlackboard: false,
         assignments: [{ targetKey: '', inputValueKey: '' }],

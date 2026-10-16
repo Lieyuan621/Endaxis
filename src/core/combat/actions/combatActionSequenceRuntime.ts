@@ -212,30 +212,39 @@ class ProjectileLaunchStep extends StatelessCombatStep {
     const parent = this.operationContext;
     const launch = parent.launchProjectile;
     if (launch === undefined) throw new Error('projectile launch requires a runtime');
-    const prepared = parent.blackboard.createLocalScope(
-      {},
-      this.step.parameters.inheritActionBlackboard,
-      this.step.parameters.entityInitialValues ?? {},
-      this.step.parameters.entityAssignments,
-    );
     const targets = this.step.parameters.targets;
+    const emitters = this.step.parameters.emitters;
+    if ((targets || emitters) && !parent.targetContext)
+      throw new Error('projectile launch requires a target context');
+    // 原生先固定两组查询；同步 launch 回调修改 Context 不改变本次遍历。
+    const selected = targets
+      ? parent.targetContext!.get(targets.contextKey).map(target => ({ ...target }))
+      : undefined;
+    const emitterCount = emitters ? parent.targetContext!.get(emitters.contextKey).length : 1;
     const filter = this.step.parameters.onlyHitTargets;
     if (filter && !this.runtime.operations.queryTargets)
       throw new Error('projectile hit filter requires a target query');
     const onlyHitTargets = filter
       ? this.runtime.operations.queryTargets!(filter, parent).map(target => ({ ...target }))
       : undefined;
-    if (targets?.kind === 'context') {
-      if (!parent.targetContext) throw new Error('projectile launch requires a target context');
-      const selected = parent.targetContext.get(targets.contextKey).map(target => ({ ...target }));
-      for (const target of selected)
-        this.launchSingle(
-          { ...parent, currentTarget: target, actionInputTarget: target },
-          prepared.forkEntityScope(),
-          onlyHitTargets,
-        );
-    } else {
-      this.launchSingle(parent, prepared.forkEntityScope(), onlyHitTargets);
+    for (let emitterIndex = 0; emitterIndex < emitterCount; emitterIndex++) {
+      // _Launch 每个发射点准备一次黑板；同一点的每枚投射物持有独立副本。
+      const prepared = parent.blackboard.createLocalScope(
+        {},
+        this.step.parameters.inheritActionBlackboard,
+        this.step.parameters.entityInitialValues ?? {},
+        this.step.parameters.entityAssignments,
+      );
+      if (selected) {
+        for (const target of selected)
+          this.launchSingle(
+            { ...parent, currentTarget: target, actionInputTarget: target },
+            prepared.forkEntityScope(),
+            onlyHitTargets,
+          );
+      } else {
+        this.launchSingle(parent, prepared.forkEntityScope(), onlyHitTargets);
+      }
     }
     return true;
   }
@@ -320,6 +329,10 @@ class ProjectileLaunchStep extends StatelessCombatStep {
       hitTarget:
         this.step.parameters.hit?.target === 'currentTarget' ? parent.currentTarget : undefined,
     }).target;
+    // 原生在发射初始化末尾施放，目标为投射物自身。必须等 launch 返回后再执行：
+    // 此时实例、来源、回收绑定均已就绪；恢复切面不会重新执行发射动作。
+    for (const callback of callbacks)
+      if (callback.runtime.runtimeState.event === 'launch') callback.runtime.start(entity);
   }
 }
 
@@ -450,6 +463,14 @@ export class CombatActionSequenceRuntime {
           (reference, context, index, saved) =>
             create(reference, index, this.#graphHost(context), saved),
         ),
+      observeOwnerTags: changed => {
+        if (!this.operations.ownerTagQuery) throw new Error('owner tag query is not configured');
+        return this.operations.ownerTagQuery(operationContext).observe(changed);
+      },
+      ownerTagsMatch: parameters => {
+        if (!this.operations.ownerTagQuery) throw new Error('owner tag query is not configured');
+        return this.operations.ownerTagQuery(operationContext).matches(parameters);
+      },
       withTarget: (target, asInput) =>
         this.#graphHost({
           ...operationContext,

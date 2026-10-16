@@ -288,6 +288,24 @@ export function validateOperatorDefinition(
           const installationPath = `${upgradePath}.attachedBuffs[${installationIndex}]`;
           if (typeof installation.buffId !== 'string' || !installation.buffId)
             push(issues, `${installationPath}.buffId`, 'expected a non-empty Buff ID');
+          if (
+            installation.enabledLevels !== undefined &&
+            (!Array.isArray(installation.enabledLevels) ||
+              installation.enabledLevels.length === 0 ||
+              installation.enabledLevels.some(
+                (level: unknown) =>
+                  typeof level !== 'number' ||
+                  !Number.isInteger(level) ||
+                  level < 1 ||
+                  level > upgrade.levels,
+              ) ||
+              new Set(installation.enabledLevels).size !== installation.enabledLevels.length)
+          )
+            push(
+              issues,
+              `${installationPath}.enabledLevels`,
+              `expected unique levels within 1..${upgrade.levels}`,
+            );
           for (const [key, value] of Object.entries(installation.blackboardAssignments ?? {})) {
             const valuePath = `${installationPath}.blackboardAssignments.${key}`;
             issues.push(...validateLevelValuesDefinition(value, valuePath));

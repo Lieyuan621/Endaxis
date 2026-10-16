@@ -33,6 +33,10 @@ import { renderCommonBuffDefinitionsSource } from '../src/domains/operator/defin
 import { parseGlobalBuffTemplateCatalogSource } from '../src/source/globalBuffTemplate.ts';
 import { GameplayTagRegistry } from '../src/source/nativeGameplayTags.ts';
 import {
+  createNativeJsonEncodingReader,
+  type NativeJsonEncodingSchema,
+} from '../src/source/nativeJsonEncoding.ts';
+import {
   requireArray,
   requireInteger,
   requireNonEmptyString,
@@ -46,6 +50,7 @@ export interface ContingencyContractDefinitionSourceArguments {
   readonly skillSettingCatalog: string;
   readonly gameplayTagPaths: readonly string[];
   readonly scope: string;
+  readonly nativeJsonEncoding?: NativeJsonEncodingSchema;
 }
 
 interface Arguments extends ContingencyContractDefinitionSourceArguments {
@@ -196,7 +201,14 @@ export function compileContingencyContractDefinitionsFromFiles(
   const globalBuffCatalog = parseGlobalBuffTemplateCatalogSource(globalBuffCatalogValue);
   const skillSettingCatalog = readJson(args.skillSettingCatalog);
   const gameplayTagRegistry = new GameplayTagRegistry(args.gameplayTagPaths);
-  const loadBuff = (id: string) => readJson(path.join(args.buffDataRoot, `${id}.json`));
+  const readNative = args.nativeJsonEncoding
+    ? createNativeJsonEncodingReader(args.nativeJsonEncoding)
+    : undefined;
+  const loadBuff = (id: string) => {
+    const file = path.join(args.buffDataRoot, `${id}.json`);
+    const value = readJson(file);
+    return readNative ? readNative(value, 'Beyond.Gameplay.Core.BuffData', file) : value;
+  };
   const definitions: Record<string, CompiledBuffDefinitionSource> = {};
   const plans: ContingencyContractInitializationPlan[] = [];
   const enemyMaxHealthPlans: ContingencyContractEnemyMaxHealthPlan[] = [];

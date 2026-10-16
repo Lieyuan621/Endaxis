@@ -1,6 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  parseNativeJsonEncodingSchema,
+  type NativeJsonEncodingSchema,
+} from '../src/source/nativeJsonEncoding.ts';
 import { writeGeneratedDefinitionFiles } from '../src/compiler/publication/writeGeneratedDefinitionFiles.ts';
 import { parseOperatorActiveSkillEntries } from '../src/domains/operator/activeSkills.ts';
 import { requireArray, requireRecord } from '../src/source/primitives.ts';
@@ -11,13 +15,16 @@ import {
 } from './generateOperatorActiveSkillRuntime.ts';
 
 interface Arguments {
+  readonly nativeJsonEncoding?: NativeJsonEncodingSchema;
   readonly complete?: boolean;
+  readonly skipContingencyContract?: boolean;
   readonly tableRoot?: string;
   readonly manifest: string;
   readonly sourceRoot: string;
   readonly skillPatchTable: string;
   readonly buffDataRoot: string;
   readonly gameplayTagCatalog: string;
+  readonly gameplayTagPredefineTable?: string;
   readonly timeDilationCatalog: string;
   readonly globalBuffCatalog?: string;
   readonly skillSettingCatalog?: string;
@@ -80,6 +87,7 @@ export async function generateOperatorActiveSkillRuntimeBatch(args: Arguments) {
   }
 
   const shared = {
+    nativeJsonEncoding: args.nativeJsonEncoding,
     sourceRoot: args.sourceRoot,
     skillPatchTable: args.skillPatchTable,
     buffDataRoot: args.buffDataRoot,
@@ -191,13 +199,16 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const supplements = new Map<string, string[]>();
   let check = false;
   let complete = false;
+  let skipContingencyContract = false;
   const allowed = new Set([
     '--table-root',
+    '--native-json-schema',
     '--manifest',
     '--source-root',
     '--skill-patch-table',
     '--buff-data-root',
     '--gameplay-tag-catalog',
+    '--gameplay-tag-predefine-table',
     '--time-dilation-catalog',
     '--global-buff-catalog',
     '--skill-setting-catalog',
@@ -208,6 +219,10 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   ]);
   for (let index = 2; index < process.argv.length; index++) {
     const flag = process.argv[index]!;
+    if (flag === '--skip-contingency-contract') {
+      skipContingencyContract = true;
+      continue;
+    }
     if (flag === '--complete') {
       complete = true;
       continue;
@@ -235,13 +250,25 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     return value;
   };
   const runtimeArgs: Arguments = {
+    ...(values.has('--native-json-schema')
+      ? {
+          nativeJsonEncoding: parseNativeJsonEncodingSchema(
+            readJson(values.get('--native-json-schema')!),
+            values.get('--native-json-schema')!,
+          ),
+        }
+      : {}),
     complete,
+    skipContingencyContract,
     ...(complete ? { tableRoot: required('--table-root') } : {}),
     manifest: required('--manifest'),
     sourceRoot: required('--source-root'),
     skillPatchTable: required('--skill-patch-table'),
     buffDataRoot: required('--buff-data-root'),
     gameplayTagCatalog: required('--gameplay-tag-catalog'),
+    ...(values.has('--gameplay-tag-predefine-table')
+      ? { gameplayTagPredefineTable: values.get('--gameplay-tag-predefine-table')! }
+      : {}),
     timeDilationCatalog: required('--time-dilation-catalog'),
     ...(complete ? { globalBuffCatalog: required('--global-buff-catalog') } : {}),
     ...(complete ? { skillSettingCatalog: required('--skill-setting-catalog') } : {}),

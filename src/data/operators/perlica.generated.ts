@@ -1768,6 +1768,7 @@ export const perlica: OperatorDefinition = {
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0004_pelica_ultimate_skill: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',

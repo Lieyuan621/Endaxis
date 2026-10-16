@@ -17,6 +17,7 @@ import {
   type DamageScaleAttributeSnapshot,
 } from './damageScaleAttributes';
 import { PlayerDamageOperationExecutor } from './playerDamageOperationExecutor';
+import { LogicalAbilityEntityRuntime } from '../abilities/logicalAbilityEntityRuntime';
 
 const DAMAGE_STEP: ResolvedCombatStepForKind<'dealDamage'> = {
   kind: 'dealDamage',
@@ -61,6 +62,180 @@ function createAttributeSnapshots(attack = 100, defense = 0, criticalRate = 0) {
 }
 
 describe('PlayerDamageOperationExecutor', () => {
+  it('reads definite Fixed damage at execution without ordinary multipliers or critical sampling', () => {
+    const targetVitals = new CombatVitals({
+      health: 2000,
+      maxHealth: 2000,
+      maxPoise: 0,
+      poise: 0,
+      poiseRecoveryTime: 0,
+      poiseRecoveryTimeMultiplier: 1,
+      poiseBrokenEndTime: 0,
+      poiseImmune: false,
+    });
+    const receipt = new CombatReceiptCollector();
+    const nextCriticalSample = vi.fn(() => 0);
+    const events: string[] = [];
+    const executor = new PlayerDamageOperationExecutor({
+      sourceOperatorId: 'operator',
+      targetId: 'enemy',
+      targetVitals,
+      receipt,
+      clock: new CombatClock(),
+      captureAttributeSnapshots: () => createAttributeSnapshots(999, 999, 1),
+      resolveNonRandomRuntimeSnapshot: () => ({
+        runtimeExtensionMultiplier: 10,
+        appliesIgniteDamageMultiplier: false,
+        appliesPhysicalInflictionDamageMultiplier: false,
+      }),
+      criticalSamples: { nextCriticalSample },
+      applyDamageModifiers: () => {},
+      clearInstantAttributeModifiers: () => {},
+      addInstantAttributeModifier: () => {},
+      emitPreparationEvent: () => {},
+      resolvePoiseMultipliers: () => ({ output: 1, taken: 1 }),
+      emitHealthSourceEvent: event => {
+        events.push(event);
+      },
+      emitHealthTargetEvent: event => {
+        events.push(event);
+      },
+      emitPoiseSourceEvent: () => {},
+      emitPoiseTargetEvent: () => {},
+      delegate: { execute: () => false, evaluate: () => false },
+    });
+    const blackboard = new ActionBlackboard({ amount: 120 });
+    const step: ResolvedCombatStepForKind<'dealDamage'> = {
+      kind: 'dealDamage',
+      parameters: {
+        damageType: 'fixed',
+        calculation: 'definite',
+        attackScale: 1,
+        calculationValue: numberInput({ kind: 'blackboard', key: 'amount' }),
+        calculationValueScale: numberInput({ kind: 'constant', value: 0.5 }),
+        tags: ['normalSkill'],
+        instantDamageScaleModifiers: [
+          {
+            side: 'attacker',
+            zone: 'normal',
+            addition: numberInput({ kind: 'constant', value: 9 }),
+          },
+        ],
+      },
+    };
+    executor.execute(step, { blackboard });
+    blackboard.assign({ amount: 240 });
+    executor.execute(step, { blackboard });
+    expect(targetVitals.health).toBe(1820);
+    expect(nextCriticalSample).not.toHaveBeenCalled();
+    expect(events.filter(event => event === 'takeDamage')).toHaveLength(2);
+    expect(receipt.entries.at(-1)?.data).toMatchObject({
+      value: 120,
+      expectedDamage: 120,
+      criticalRate: 0,
+      damageScaleMultiplier: 1,
+      standardCalculation: false,
+    });
+    expect(receipt.entries.at(-1)?.data).not.toHaveProperty('attack');
+  });
+  it.each([false, true])(
+    'SharedDamage 只结算一次主体公式，并在主体事件后检查部位存活（提前结束=%s）',
+    finishDuringBodyEvent => {
+      const vitals = {
+        health: 2000,
+        maxHealth: 2000,
+        poise: 100,
+        maxPoise: 100,
+        poiseRecoveryTime: 0,
+        poiseRecoveryTimeMultiplier: 1,
+        poiseBrokenEndTime: 0,
+        poiseImmune: false,
+      };
+      const entities = new LogicalAbilityEntityRuntime({});
+      const part = entities.spawn({
+        abilityEntityId: 'soul',
+        ownerId: 'caster',
+        source: { kind: 'operator', operatorId: 'caster' },
+        definition: { lifetime: { kind: 'infinite' } },
+        soul: {
+          damageTransferType: 'sharedDamage',
+          mainBody: { kind: 'enemy' },
+          vitals: { ...vitals, health: 1000, maxHealth: 1000 },
+          damageRatio: 1.5,
+          poiseRatio: 2,
+        },
+      });
+      const targetVitals = new CombatVitals(vitals);
+      const receipt = new CombatReceiptCollector();
+      const events: string[] = [];
+      const executor = new PlayerDamageOperationExecutor({
+        sourceOperatorId: 'caster',
+        targetId: 'enemy',
+        targetVitals,
+        clock: new CombatClock(),
+        receipt,
+        resolveSharedDamageTransfer: target => entities.sharedDamageTransfer(target),
+        captureAttributeSnapshots: () => createAttributeSnapshots(),
+        criticalSamples: { nextCriticalSample: () => 1 },
+        resolveNonRandomRuntimeSnapshot: () => ({
+          runtimeExtensionMultiplier: 1,
+          appliesIgniteDamageMultiplier: false,
+          appliesPhysicalInflictionDamageMultiplier: false,
+        }),
+        applyDamageModifiers: () => {},
+        clearInstantAttributeModifiers: () => {},
+        addInstantAttributeModifier: () => {},
+        emitPreparationEvent: (event, context) => {
+          if (event === 'beforeCalculateDamage')
+            expect(context.partTransferInfo?.mainBodyToPart.get('enemy')).toBe(
+              `ability-entity:${part.instanceId}`,
+            );
+        },
+        resolvePoiseMultipliers: () => ({ output: 1, taken: 1 }),
+        emitHealthSourceEvent: event => events.push(event),
+        emitHealthTargetEvent: (event, payload) => {
+          events.push(event);
+          if (event === 'takeDamage') {
+            expect(payload.partTransferInfo?.currentMainBodyId).toBe('enemy');
+            expect(payload.partTransferInfo?.mainBodyToPart.get('enemy')).toBe(
+              `ability-entity:${part.instanceId}`,
+            );
+            expect(entities.soulVitals(part)!.health).toBe(1000);
+            if (finishDuringBodyEvent) entities.kill(part);
+          }
+        },
+        absorbHealthDamage: (_type, value) => value - 100,
+        emitPoiseSourceEvent: event => events.push(event),
+        emitPoiseTargetEvent: event => {
+          events.push(event);
+          expect(entities.soulVitals(part)!.health).toBe(finishDuringBodyEvent ? 1000 : 400);
+        },
+        delegate: { execute: () => false, evaluate: () => false },
+      });
+      executor.execute(
+        { ...DAMAGE_STEP, parameters: { ...DAMAGE_STEP.parameters, target: 'actionInputTarget' } },
+        {
+          blackboard: new ActionBlackboard(),
+          actionInputTarget: part,
+        },
+      );
+      expect(targetVitals.health).toBe(1500);
+      expect(targetVitals.poise).toBe(60);
+      expect(entities.soulVitals(part)!.poise).toBe(100);
+      expect(events).not.toContain('beforeOutputPoiseDamage');
+      expect(events).toContain('beforeTakePoiseDamage');
+      expect(events).toContain('takePoiseDamage');
+      expect(events.filter(event => event === 'takeDamage')).toHaveLength(1);
+      expect(events.filter(event => event === 'outputDamage')).toHaveLength(1);
+      expect(receipt.entries.filter(entry => entry.event === 'DamageApplied')).toHaveLength(1);
+      expect(receipt.entries.find(entry => entry.event === 'DamageApplied')?.data).toMatchObject({
+        damageBeforeAbsorption: 600,
+        value: 500,
+        damageTransferMultiplier: 1.5,
+        transferredSourceId: `ability-entity:${part.instanceId}`,
+      });
+    },
+  );
   it.each([
     ['electric', 'standard'],
     ['nature', 'standard'],

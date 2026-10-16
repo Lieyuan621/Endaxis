@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
@@ -37,6 +38,11 @@ import { exportReferencedGameIcons } from './exportReferencedGameIcons.ts';
 import { publishGameDataCandidate } from '../src/compiler/publication/gameDataCandidatePublisher.ts';
 import { OPERATOR_DEFINITION_OUTPUTS } from './operatorDefinitionOutputs.ts';
 import {
+  createNativeJsonEncodingReader,
+  parseNativeJsonEncodingSchema,
+  type NativeJsonEncodingSchema,
+} from '../src/source/nativeJsonEncoding.ts';
+import {
   generateGameLocaleCandidate,
   type GameLocaleCandidateInput,
 } from '../src/domains/locales/gameLocaleCandidate.ts';
@@ -57,6 +63,8 @@ const GAME_LOCALE_FILES = ['zh', 'en'].flatMap(locale =>
 const GAME_LOCALE_REBUILD_OUTPUTS = GAME_LOCALE_FILES.map(file => `src/i18n/game-locales/${file}`);
 
 export interface RebuildArguments {
+  /** 与来源同版本的字段/枚举目录；数字枚举只在读取视图中解码。 */
+  readonly nativeJsonSchema?: string;
   readonly sourceRoot?: string;
   readonly version?: string;
   readonly cdn: string;
@@ -198,6 +206,14 @@ export interface RebuildStage {
  * sourceRoot 是显式的离线重试输入，仍须逐文件复验，不寻找其他历史缓存。
  */
 export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJECT_ROOT) {
+  const schemaText =
+    args.nativeJsonSchema === undefined
+      ? undefined
+      : await fs.readFile(args.nativeJsonSchema, 'utf8');
+  const nativeJsonEncoding =
+    schemaText === undefined
+      ? undefined
+      : parseNativeJsonEncodingSchema(JSON.parse(schemaText), args.nativeJsonSchema!);
   const root = await fs.realpath(projectRoot);
   const runParent = path.join(root, 'tmp', 'game-data-rebuild');
   // 不允许 tmp 或其子目录是指向正式资源/外部工作树的 junction。
@@ -210,6 +226,8 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
     }
   }
   const runRoot = await fs.mkdtemp(path.join(runParent, 'run-'));
+  if (schemaText !== undefined)
+    await fs.writeFile(path.join(runRoot, 'native-json-schema.json'), schemaText, 'utf8');
   const candidateRoot = path.join(runRoot, 'candidate');
   const sourceRoot = args.sourceRoot
     ? path.resolve(args.sourceRoot)
@@ -534,6 +552,11 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
           };
         });
         const operatorCandidateInput = {
+          nativeJsonEncoding,
+          gameplayTagPredefineTable: path.join(
+            sourceRoot,
+            'GameplayConfig/GameplayTagPredefineTable.json',
+          ),
           manifest: path.join(root, 'tools/game-data-compiler/config/operators.json'),
           sourceRoot,
           tableRoot: path.join(sourceRoot, 'TableCfg-current'),
@@ -606,7 +629,7 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
         // GlobalBuff 模板只用于把本次来源编译进最终定义，不是运行时或发布产物。
         await fs.rm(path.dirname(globalBuffCatalog), { recursive: true, force: true });
         await stage('operator-refresh', async () => {
-          const detail = await inspectOperatorRefresh(sourceRoot, root, tags);
+          const detail = await inspectOperatorRefresh(sourceRoot, root, tags, nativeJsonEncoding);
           await writeAtomicJson(path.join(runRoot, 'audit', 'operator-refresh.json'), detail);
           // 保留完整逐项报告；编译前缀通过不能掩盖技能组阻塞或需要审阅的 pin/新增身份。
           if (
@@ -907,6 +930,14 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
     }
   }
   const report = {
+    ...(schemaText === undefined
+      ? {}
+      : {
+          nativeJsonSchema: {
+            file: path.join(runRoot, 'native-json-schema.json'),
+            sha256: createHash('sha256').update(schemaText).digest('hex'),
+          },
+        }),
     sourcePolicy: 'akedb-primary-vfs-fallback',
     fullRebuild: published,
     published,
@@ -1111,14 +1142,19 @@ export async function inspectOperatorRefresh(
   sourceRoot: string,
   projectRoot: string,
   tags: string,
+  nativeJsonEncoding?: NativeJsonEncodingSchema,
 ) {
+  const readNative = nativeJsonEncoding && createNativeJsonEncodingReader(nativeJsonEncoding);
   const collection = async (directory: string) => {
     const records: Record<string, unknown> = {};
     for (const file of await fs.readdir(path.join(sourceRoot, directory))) {
       if (!file.endsWith('.json')) continue;
-      records[directory === 'CharacterData' ? `${directory}/${file}` : file] = await readJson(
-        path.join(sourceRoot, directory, file),
-      );
+      const filePath = path.join(sourceRoot, directory, file);
+      const raw = await readJson(filePath);
+      records[directory === 'CharacterData' ? `${directory}/${file}` : file] =
+        directory === 'SkillData' && readNative
+          ? readNative(raw, 'Beyond.Gameplay.Core.SkillData', filePath)
+          : raw;
     }
     return records;
   };
@@ -1145,6 +1181,7 @@ export function parseRebuildArguments(values: readonly string[]): RebuildArgumen
   let tablesOnly = false;
   let publish = false;
   const allowed = new Set([
+    '--native-json-schema',
     '--source-root',
     '--version',
     '--cdn',
@@ -1173,6 +1210,9 @@ export function parseRebuildArguments(values: readonly string[]): RebuildArgumen
     throw new Error('--workers: expected positive integer');
   if (tablesOnly && publish) throw new Error('--publish cannot be combined with --tables-only');
   return {
+    ...(entries.has('--native-json-schema')
+      ? { nativeJsonSchema: path.resolve(entries.get('--native-json-schema')!) }
+      : {}),
     ...(entries.has('--source-root')
       ? { sourceRoot: path.resolve(entries.get('--source-root')!) }
       : {}),

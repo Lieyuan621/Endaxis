@@ -132,6 +132,7 @@ describe('compileSkill', () => {
           cost: { resource: 'sp' as const, value: 0, availabilityThreshold: 0 },
         },
         skillId: 'entity-child',
+        normalSkillSubType: 'additionalNormalSkill',
         scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'entry' } }],
         actionGraph: resource(2),
       },
@@ -139,6 +140,7 @@ describe('compileSkill', () => {
     const programs = new ActionGraphDefinitionRepository();
     const compiledBuff = compileIndependentBuffResource(buff, 'buff', programs);
     const compiledEntity = compileIndependentAbilityEntityResource(entity, 'entity', 1, programs);
+    expect(compiledEntity.childSkill?.normalSkillSubType).toBe('additionalNormalSkill');
     const buffEntry = compiledBuff.lifecycleSequences?.start?.[0];
     const entityEntry = compiledEntity.childSkill?.timelineActions[0]?.sequence;
     expect(buffEntry?.entry).not.toBeNull();
@@ -340,6 +342,7 @@ describe('compileSkill', () => {
               attackScale: [1, 2],
               tags: [],
               features: ['shatter', 'dot'],
+              target: 'actionInputTarget',
               instantAttributeModifiers,
             },
           },
@@ -364,6 +367,7 @@ describe('compileSkill', () => {
         attackScale: 2,
         tags: [],
         features: ['shatter', 'dot'],
+        target: 'actionInputTarget',
         instantAttributeModifiers: [
           expect.objectContaining({
             ...instantAttributeModifiers[0],

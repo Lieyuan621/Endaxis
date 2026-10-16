@@ -742,7 +742,7 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
         },
         next: null,
       },
-      launchProjectile_28: {
+      launchProjectile_29: {
         action: {
           kind: 'launchProjectile',
           parameters: {
@@ -918,17 +918,24 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_29: {
+      createSpatialPointTargets_30: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'tar_behind', count: { kind: 'constant', value: 1 } },
+        },
+        next: 'launchProjectile_29',
+      },
+      ifElse_31: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'launchProjectile_28' },
-          whenFalse: { $sequence: 'launchProjectile_28' },
+          whenTrue: { $sequence: 'createSpatialPointTargets_30' },
+          whenFalse: { $sequence: 'createSpatialPointTargets_30' },
         },
         next: null,
       },
-      findTargets_30: {
+      findTargets_32: {
         action: {
           kind: 'findTargets',
           parameters: {
@@ -937,9 +944,9 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
             saveToContextKey: 'maintar',
           },
         },
-        next: 'ifElse_29',
+        next: 'ifElse_31',
       },
-      finishBuffsById_31: {
+      finishBuffsById_33: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
@@ -951,7 +958,7 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
         },
         next: null,
       },
-      changeResource_32: {
+      changeResource_34: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -964,9 +971,9 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
             spGainSource: 'default',
           },
         },
-        next: 'finishBuffsById_31',
+        next: 'finishBuffsById_33',
       },
-      readBuffBlackboard_33: {
+      readBuffBlackboard_35: {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
@@ -976,14 +983,14 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
             outputKey: 'atb',
           },
         },
-        next: 'changeResource_32',
+        next: 'changeResource_34',
       },
-      checkCondition_34: {
+      checkCondition_36: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
-        next: 'readBuffBlackboard_33',
+        next: 'readBuffBlackboard_35',
       },
     },
     dataNodes: {
@@ -1041,8 +1048,8 @@ export const estellaChr_0021_whiten_normal_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_5' } },
     { startFrame: 0, endFrame: 7, sequence: { $sequence: 'findCharacterTeamTargets_8' } },
     { startFrame: 0, endFrame: 90, sequence: { $sequence: 'findTargets_9' } },
-    { startFrame: 21, endFrame: 24, sequence: { $sequence: 'findTargets_30' } },
-    { startFrame: 21, endFrame: 24, sequence: { $sequence: 'checkCondition_34' } },
+    { startFrame: 21, endFrame: 24, sequence: { $sequence: 'findTargets_32' } },
+    { startFrame: 21, endFrame: 24, sequence: { $sequence: 'checkCondition_36' } },
   ],
   defaultTarget: 'owner',
   costs: [{ resource: 'sp', value: 100 }],

@@ -17,10 +17,12 @@ import type { TimeDilationRuntime } from './timeDilationRuntime';
 import { createTimeDilationActionState, type TimeDilationActionState } from '../state/actionState';
 import { CombatOperationPrograms } from '../actions/combatOperationPrograms';
 import { operationProducer } from '../receipt/combatObjectIdentity';
+import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
 
 type RuntimeOperation = ResolvedCombatOperationStep;
 
 export interface TimeDilationOperationDependencies {
+  readonly queryTargets?: CombatOperationExecutor['queryTargets'];
   readonly runtime: TimeDilationRuntime;
   readonly resolveTargetIds: (target: TimeDilationIgnoreTarget) => readonly string[];
   readonly resolveAbilityEntityTargetIds?: (query: AbilityEntityTargetQuery) => readonly string[];
@@ -137,9 +139,20 @@ export class TimeDilationOperationExecutor implements CombatOperationExecutor {
             }),
           ]
         : [
-            ...parameters.targets.map(target =>
-              resolveSingleTargetId(this.dependencies, target, context),
-            ),
+            ...parameters.targets.flatMap(target => {
+              if (typeof target === 'string')
+                return [resolveSingleTargetId(this.dependencies, target, context)];
+              if (!this.dependencies.queryTargets)
+                throw new Error('time dilation requires target query bindings');
+              return this.dependencies
+                .queryTargets(target, context)
+                .slice(0, 1)
+                .map(entity => {
+                  const id = runtimeTargetEntityId(entity);
+                  if (id === undefined) throw new Error('time dilation target must be an entity');
+                  return id;
+                });
+            }),
             ...this.#resolveAbilityEntityTargetIds(parameters.abilityEntityTargets ?? [], context),
           ].map(entityId =>
             this.dependencies.runtime.startEntity({

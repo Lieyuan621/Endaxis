@@ -28,7 +28,8 @@ import type {
   CombatOperationHostState,
   TimelineRuntimeState,
 } from './actionState';
-import type { TimedMarkerState } from './environmentState';
+import type { CombatVitalsState, TimedMarkerState } from './environmentState';
+import type { EnemyPartTransferInfo } from './foundationState';
 import {
   createActionBlackboardState,
   createCombatAttributeState,
@@ -123,6 +124,16 @@ export function createGlobalBuffState(): GlobalBuffState {
   return { nextInstanceId: 1, groups: new Map() };
 }
 
+/** Soul 的主体绑定与独立生命账本；主体不是施法来源，也不随控制器重设目标改变。 */
+export interface AbilityEntitySoulState {
+  readonly damageTransferType: 'sharedDamage';
+  readonly useMainBodyPoise: boolean;
+  readonly mainBody: RuntimeTargetRef;
+  readonly vitals: CombatVitalsState;
+  damageRatio: number;
+  poiseRatio: number;
+}
+
 /** 能力实体的身份、寿命、标记、子技能与黑板数据。 */
 export interface LogicalAbilityEntityState {
   /** 创建时实际使用的固定定义槽位；与是否继承伤害施法来源无关。 */
@@ -139,6 +150,7 @@ export interface LogicalAbilityEntityState {
   readonly instanceId: number;
   readonly abilityEntityId: string;
   readonly definition: LogicalAbilityEntityDefinition;
+  readonly soul?: AbilityEntitySoulState;
   readonly ownerId: string;
   readonly source: RuntimeTargetRef;
   readonly sourceSkillCastId?: number;
@@ -158,16 +170,18 @@ export interface LogicalAbilityEntityState {
 export interface LogicalAbilityEntityDirectoryState {
   readonly instances: Map<number, LogicalAbilityEntityState>;
   readonly deadSources: RuntimeTargetRef[];
+  /** 原生主体 soulPart 槽；死亡不清空，释放才清空，恢复不能由存活实例重建。 */
+  readonly soulParts: Map<string, RuntimeTargetRef>;
 }
 
 /** 发射时确定的投射物回调输入，以及命中后创建的技能宿主数据。 */
 export interface ProjectileCallbackState {
-  /** 发射时保存的命中输入目标，不能在回调执行时重新选择主控。 */
+  /** 回调输入目标；launch 为投射物自身，hit 不得在执行时重新选择主控。 */
   inputTarget?: RuntimeTargetRef;
   /** 同一投射物依次命中的友方目标；回调复用同一技能宿主及其冷却。 */
   inputTargets?: readonly RuntimeTargetRef[];
   /** 启动本程序的原生事件；恢复沿用该字段，不根据是否已有宿主猜测。 */
-  readonly event: 'hit' | 'block' | 'reach' | 'finish';
+  readonly event: 'launch' | 'hit' | 'block' | 'reach' | 'finish';
   /** 本次发射的碰撞标签条件；只保存纯数据，恢复时重新绑定当前分支的判断逻辑。 */
   readonly hitTagFilter?: NonNullable<
     CombatStepParameters['launchProjectile']['hit']
@@ -310,6 +324,7 @@ export interface BuffInstanceState<Key extends string> {
   readonly identity: BuffInstanceIdentity;
   sourceActionId: string;
   definitionOwnerId: string;
+  partTransferInfo: EnemyPartTransferInfo | null;
   /** null 表示创建时没有显式的来源属性读取目标；否则恢复时必须按实体身份接回读取端口。 */
   sourceAttributeOwnerId: string | null;
   skillCastInfo: CombatSkillCastInfo | null;
@@ -338,6 +353,7 @@ export function createBuffInstanceState<Key extends string>(
     identity,
     sourceActionId: identity.definitionId,
     definitionOwnerId: identity.sourceId,
+    partTransferInfo: null,
     sourceAttributeOwnerId: null,
     skillCastInfo: null,
     priority: 0,

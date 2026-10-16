@@ -1,4 +1,4 @@
-/** 绑定一个投射物的回调宿主。飞行期间不创建技能，恢复已有宿主时不再次施放。 */
+/** 绑定投射物回调宿主；对应事件发生时才施放，恢复已有宿主时不再次施放。 */
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import type { BuffApplicationHandle } from '../buffs/buffOperationExecutor';
 import type {
@@ -102,11 +102,12 @@ export class ProjectileCallbackRuntime {
   ) {
     if (
       runtimeState.event !== 'hit' &&
+      runtimeState.event !== 'launch' &&
       runtimeState.event !== 'reach' &&
       runtimeState.event !== 'finish' &&
       runtimeState.event !== 'block'
     )
-      throw new Error('projectile callback requires a hit, block, reach or finish event');
+      throw new Error('projectile callback requires a launch, hit, block, reach or finish event');
     this.#host = runtimeState.host === null ? null : createHost(runtimeState.host);
     if (this.#host !== null && this.#host.runtimeState !== runtimeState.host)
       throw new Error('restored projectile callback must bind the saved host data');
@@ -114,6 +115,7 @@ export class ProjectileCallbackRuntime {
 
   start(inputTarget = this.runtimeState.inputTarget): void {
     if (this.#host !== null) throw new Error('projectile callback has already started');
+    this.runtimeState.inputTarget = inputTarget;
     this.#startHost(inputTarget);
   }
 

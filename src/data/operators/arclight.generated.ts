@@ -1954,6 +1954,7 @@ export const arclight: OperatorDefinition = {
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0007_ikut_ultimate_skill: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',
@@ -1962,7 +1963,7 @@ export const arclight: OperatorDefinition = {
         'SelectCategory/ProjectilePassThru',
       ],
       lifetime: { kind: 'limited', durationSeconds: 5 },
-      deathReleaseDelaySeconds: 0.100000001490116,
+      deathReleaseDelaySeconds: 0.1,
       childSkill: {
         skillId: 'chr_0007_ikut_ultimate_skill_abentity',
         nativeSkillType: 'normalSkill',

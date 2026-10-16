@@ -1,4 +1,5 @@
 import type { SkillInterruptReason } from '../../../../../packages/game-data-contract/src/conditions.ts';
+import type { SkillType } from '../../../../../packages/game-data-contract/src/primitives.ts';
 import { COMBO_CAMERA_ALPHA_SETTINGS } from '../intermediateDefinitions.ts';
 
 import type { TargetReferenceSource } from '../../source/target.ts';
@@ -59,6 +60,14 @@ function compileConditionLeaf(
   context: CombatActionProjectionContextSource,
   targetGroups: ReadonlyMap<string, ProjectedTargetGroup> = new Map(),
 ): CompiledBuffConditionSource {
+  if (condition.kind === 'damageTransferredSource') {
+    return {
+      kind: 'eventTransferredPartTagsMatch',
+      tagQueryType: condition.tagQuery.queryType,
+      tags: projectGameplayTags(condition.tagQuery.tagIds, context, sourcePath),
+      ...(condition.contextKey === '' ? {} : { saveToContextKey: condition.contextKey }),
+    };
+  }
   if (condition.kind === 'comboCameraAlphaSetting') {
     const setting = COMBO_CAMERA_ALPHA_SETTINGS.find(value => value === condition.desiredSetting);
     if (setting === undefined)
@@ -148,6 +157,9 @@ function compileConditionLeaf(
       throw new Error(`${sourcePath}: unsupported damage ignore-immune-level comparison`);
     return { kind: 'constant', value: true };
   }
+  if (condition.kind === 'abilityEntityFinishReason') {
+    return { kind: 'eventAbilityEntityFinishReasonIn', reasons: condition.reasons };
+  }
   if (condition.kind === 'projectilePerfectDodgeCooldown') {
     if (context.nativeAbilityEvent !== 'OnBeforeHitByProjectile') {
       throw new Error(`${sourcePath}: projectile cooldown check requires OnBeforeHitByProjectile`);
@@ -200,6 +212,7 @@ function compileConditionLeaf(
   // 主动动作/命中回调没有 Buff 事件环境；只有已验收的条件可使用显式木桩 Target。
   if (
     context.actionTargetTarget === 'enemy' &&
+    !(condition.kind === 'skillType' && condition.checkTargetCurrentSkill) &&
     !(
       context.modifierContext === 'damage' &&
       ['damageType', 'damageTypeMask', 'skillCastId'].includes(condition.kind)
@@ -238,6 +251,7 @@ function compileConditionLeaf(
     throw new Error(`${sourcePath}: unaudited single-enemy action condition ${condition.kind}`);
   if (
     context.actionTargetTarget === 'currentAbilityEntity' &&
+    !(condition.kind === 'skillType' && condition.checkTargetCurrentSkill) &&
     ![
       'floatCompare',
       'buffStack',
@@ -259,16 +273,21 @@ function compileConditionLeaf(
       condition.target.targetGroupKey === '' &&
       context.actionTargetTarget === 'currentAbilityEntity';
     const operator = COMPARISON_OPERATORS[condition.comparison];
-    if (!targetsCurrentEntity || operator === undefined) {
+    if (operator === undefined) {
       throw new Error(`${sourcePath}: unsupported AbilityEntity duration target or comparison`);
-    }
-    if (condition.saveCurrentDuration) {
-      throw new Error(
-        `${sourcePath}: AbilityEntity duration output has no audited runtime consumer`,
-      );
     }
     return {
       kind: 'abilityEntityRemainingDurationCompare',
+      ...(targetsCurrentEntity
+        ? {}
+        : {
+            target: projectActionTargetQuery(
+              condition.target,
+              context,
+              `${sourcePath}.abilityEntity`,
+            ),
+          }),
+      ...(condition.saveCurrentDuration ? { outputKey: condition.outputKey } : {}),
       operator,
       value: actionValueOperand(condition.value),
     };
@@ -322,6 +341,8 @@ function compileConditionLeaf(
       'contextBuff',
       'buffStack',
       'targetIdentity',
+      // 受击事件的 Target 已绑定伤害来源；仍由公共输入目标类型条件动态判断。
+      'objectTypeMatch',
       // 接收事件不会改变固定 Buff Owner 的身份。极限闪避监听器检查 Owner 是否为
       // 当前主控，仍由场景控制时间线在执行帧求值，不能在生成阶段折叠。
       'mainOperator',
@@ -481,28 +502,31 @@ function compileConditionLeaf(
         : condition.targetSource === 'Target' && context.actionTargetTarget === 'enemy'
           ? ('enemy' as const)
           : condition.targetSource === 'Target' &&
-              (context.actionTargetTarget === 'currentOperator' ||
-                context.actionTargetTarget === 'actionInputTarget')
-            ? ('currentTarget' as const)
-            : condition.targetSource === 'Owner' &&
-                condition.targetGroupKey === '' &&
-                context.fixedBuffOwnerTarget === 'caster'
-              ? ('caster' as const)
-              : condition.targetSource === 'Source' &&
+              context.actionTargetTarget === 'actionInputTarget'
+            ? ('actionInputTarget' as const)
+            : condition.targetSource === 'Target' &&
+                context.actionTargetTarget === 'currentOperator'
+              ? ('currentTarget' as const)
+              : condition.targetSource === 'Owner' &&
                   condition.targetGroupKey === '' &&
-                  context.fixedBuffSourceTarget === 'caster'
+                  context.fixedBuffOwnerTarget === 'caster'
                 ? ('caster' as const)
                 : condition.targetSource === 'Source' &&
                     condition.targetGroupKey === '' &&
-                    context.fixedBuffSourceTarget === 'enemy'
-                  ? ('enemy' as const)
-                  : condition.targetSource === 'Context' &&
-                      (targetGroups.get(condition.targetGroupKey) === 'enemy' ||
-                        context.staticEnemyTargetGroupKeys?.has(condition.targetGroupKey) === true)
+                    context.fixedBuffSourceTarget === 'caster'
+                  ? ('caster' as const)
+                  : condition.targetSource === 'Source' &&
+                      condition.targetGroupKey === '' &&
+                      context.fixedBuffSourceTarget === 'enemy'
                     ? ('enemy' as const)
-                    : condition.targetSource === 'Context' && condition.targetGroupKey !== ''
-                      ? ('contextTarget' as const)
-                      : null;
+                    : condition.targetSource === 'Context' &&
+                        (targetGroups.get(condition.targetGroupKey) === 'enemy' ||
+                          context.staticEnemyTargetGroupKeys?.has(condition.targetGroupKey) ===
+                            true)
+                      ? ('enemy' as const)
+                      : condition.targetSource === 'Context' && condition.targetGroupKey !== ''
+                        ? ('contextTarget' as const)
+                        : null;
     if (target === null || operator === undefined) {
       throw new Error(`${sourcePath}: unsupported health condition target`);
     }
@@ -538,6 +562,14 @@ function compileConditionLeaf(
     return { kind: 'skillDamageTypeIn', damageTypes: condition.damageTypes };
   }
   if (condition.kind === 'skillType') {
+    const subtype = condition.normalSkillSubTypeFilter;
+    const subtypeFilter =
+      subtype === undefined || subtype === 'Any'
+        ? {}
+        : {
+            normalSkillSubType:
+              subtype === 'Normal' ? ('normal' as const) : ('additionalNormalSkill' as const),
+          };
     const skillTypes = mapNativeSkillTypes(condition.skillTypes, condition.attackTypeMask);
     if (condition.checkTargetCurrentSkill) {
       const skillOwner = condition.skillOwner;
@@ -546,7 +578,9 @@ function compileConditionLeaf(
           ? ('buffOwner' as const)
           : skillOwner?.targetSource === 'Source' && context.actionSourceTarget === 'caster'
             ? ('caster' as const)
-            : null;
+            : skillOwner?.targetSource === 'MainCharacter'
+              ? ('controlledOperator' as const)
+              : null;
       if (
         skillOwner === undefined ||
         target === null ||
@@ -555,11 +589,12 @@ function compileConditionLeaf(
       ) {
         throw new Error(`${sourcePath}: unsupported current skill type condition`);
       }
-      return { kind: 'currentSkillTypeIn', target, skillTypes };
+      return { kind: 'currentSkillTypeIn', target, skillTypes, ...subtypeFilter };
     }
     return {
       kind: 'eventSkillTypeIn',
       skillTypes,
+      ...subtypeFilter,
     };
   }
   if (condition.kind === 'customAbilityEvent') {
@@ -750,13 +785,16 @@ function compileConditionLeaf(
       tags: projectGameplayTags(condition.tagIds, context, sourcePath),
     };
   }
-  if (condition.kind === 'consumeBuffLayer') {
+  if (condition.kind === 'consumeBuffLayer' || condition.kind === 'buffEnhanceLayer') {
     const operator = COMPARISON_OPERATORS[condition.comparison];
     if (operator === undefined) {
       throw new Error(`${sourcePath}: unsupported consumed Buff layer comparison`);
     }
     return {
-      kind: 'eventConsumedBuffLayerCompare',
+      kind:
+        condition.kind === 'buffEnhanceLayer'
+          ? 'eventBuffEnhanceLayerCompare'
+          : 'eventConsumedBuffLayerCompare',
       operator,
       value: actionValueOperand(condition.value),
       ...(condition.outputKey === '' ? {} : { outputKey: condition.outputKey }),
@@ -927,7 +965,7 @@ function compileConditionLeaf(
     const contextIdentityOther = (
       target: typeof first,
       other: typeof first,
-    ): 'actionSource' | 'actionOwner' | 'controlledOperator' | null => {
+    ): 'actionSource' | 'actionOwner' | 'controlledOperator' | 'actionInputTarget' | null => {
       if (
         target.targetSource !== 'Context' ||
         target.targetGroupKey === '' ||
@@ -938,6 +976,7 @@ function compileConditionLeaf(
       if (other.targetSource === 'Source') return 'actionSource';
       if (other.targetSource === 'Owner') return 'actionOwner';
       if (other.targetSource === 'MainCharacter') return 'controlledOperator';
+      if (other.targetSource === 'Target') return 'actionInputTarget';
       return null;
     };
     const contextOther = contextIdentityOther(first, second) ?? contextIdentityOther(second, first);
@@ -1495,19 +1534,19 @@ function buffConditionOwner(context: CombatActionProjectionContextSource, source
     : requireActionOwnerProjection(context, sourcePath);
 }
 
-const SKILL_TYPES: Readonly<Record<string, 'battleSkill' | 'comboSkill' | 'ultimate'>> = {
+const SKILL_TYPES: Readonly<Record<string, SkillType>> = {
   NormalSkill: 'battleSkill',
   ComboSkill: 'comboSkill',
   UltimateSkill: 'ultimate',
+  BreakingAttack: 'finisher',
+  Dodge: 'dodge',
 };
 
 function mapNativeSkillTypes(
   nativeSkillTypes: readonly string[],
   attackTypeMask: string | number | undefined,
-): readonly ('basicAttack' | 'plungingAttack' | 'battleSkill' | 'comboSkill' | 'ultimate')[] {
-  const output = new Set<
-    'basicAttack' | 'plungingAttack' | 'battleSkill' | 'comboSkill' | 'ultimate'
-  >();
+): readonly SkillType[] {
+  const output = new Set<SkillType>();
   for (const skillType of nativeSkillTypes) {
     // Next 不把原生 ExtraActiveSkill 猜成处决技；没有该原生类型的运行时实例可命中。
     if (skillType === 'ExtraActiveSkill') continue;

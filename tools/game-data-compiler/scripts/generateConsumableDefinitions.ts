@@ -8,26 +8,38 @@ import { renderCommonBuffDefinitionsSource } from '../src/domains/operator/defin
 import { compileConsumableCatalog } from '../src/domains/consumable/definition.ts';
 import { finalizeCommonBuffDefinitions } from '../src/compiler/finalizeDefinitions.ts';
 import type { DefinitionOptimizationMode } from '../src/compiler/optimization/definitionOptimization.ts';
+import {
+  createNativeJsonEncodingReader,
+  type NativeJsonEncodingSchema,
+} from '../src/source/nativeJsonEncoding.ts';
 
 interface Arguments {
   tableRoot: string;
   buffDataRoot: string;
   definitionOutput: string;
   buffOutput: string;
+  nativeJsonEncoding?: NativeJsonEncodingSchema;
 }
 
 const read = (file: string): unknown => JSON.parse(fs.readFileSync(file, 'utf8'));
 
 export function compileConsumableDefinitionsFromFiles(
-  args: Pick<Arguments, 'tableRoot' | 'buffDataRoot'>,
+  args: Pick<Arguments, 'tableRoot' | 'buffDataRoot' | 'nativeJsonEncoding'>,
 ) {
+  const readNative = args.nativeJsonEncoding
+    ? createNativeJsonEncodingReader(args.nativeJsonEncoding)
+    : undefined;
   const useItems = read(path.join(args.tableRoot, 'UseItemTable.json'));
   const items = read(path.join(args.tableRoot, 'ItemTable.json'));
   const catalog = compileConsumableCatalog(useItems, items);
   const ownerTargets = new Map(catalog.buffIds.map(id => [id, 'caster'] as const));
   const closure = compileStandardStumpBuffClosure(
     catalog.buffIds,
-    (id: string) => read(path.join(args.buffDataRoot, `${id}.json`)),
+    (id: string) => {
+      const file = path.join(args.buffDataRoot, `${id}.json`);
+      const value = read(file);
+      return readNative ? readNative(value, 'Beyond.Gameplay.Core.BuffData', file) : value;
+    },
     undefined,
     undefined,
     undefined,

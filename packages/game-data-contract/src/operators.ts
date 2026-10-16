@@ -370,6 +370,8 @@ export interface OperatorUpgradeDefinition {
   /** 原生 CharMiscFeature 直接附着的 Buff；数值按这一天赋或潜能的等级解析。 */
   attachedBuffs?: readonly {
     readonly buffId: string;
+    /** 仅在列出的养成等级安装；省略表示每个已启用等级均安装，不累计低等级配置。 */
+    readonly enabledLevels?: readonly number[];
     readonly blackboardAssignments?: Readonly<Record<string, LevelValues>>;
   }[];
   /** 仅在这个养成项启用时安装；每个被动在一场战斗中只启用一次。 */

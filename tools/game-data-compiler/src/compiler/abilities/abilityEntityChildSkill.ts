@@ -7,6 +7,7 @@ import { projectSkillCastResourceDefinitionSource } from '../../source/skillCost
 import { requireArray, requireRecord } from '../../source/primitives.ts';
 import { parseSkillCastResourceMetadataSource } from '../../source/activeSkill.ts';
 import { compileActiveSkillRuntimeProjectionSource } from '../skills/activeSkillRuntimeProjection.ts';
+import { retainActionGraphEntries } from '../optimization/graphSequenceOptimization.ts';
 import type {
   CombatActionProjectionContextSource,
   CombatActionProjectionExtensionsSource,
@@ -25,6 +26,7 @@ export function compileAbilityEntityChildSkillSource(
   abilityEntityQueries?: CombatActionProjectionContextSource['abilityEntityQueries'],
   nativeMissingBlackboardZeroKeys: ReadonlySet<string> = new Set(),
   nativeSkillType: NativeSkillType = 'normalSkill',
+  predefinedTagQueries?: CombatActionProjectionContextSource['predefinedTagQueries'],
 ): AbilityEntityChildSkillDefinition {
   const root = requireRecord(value, sourcePath);
   const cast = parseSkillCastResourceMetadataSource(value, sourcePath);
@@ -43,9 +45,12 @@ export function compileAbilityEntityChildSkillSource(
     patch: null,
     context: {
       gameplayTagRegistry,
+      predefinedTagQueries,
       actionOwnerTarget: 'currentAbilityEntity',
       actionSourceTarget: 'caster',
-      actionTargetTarget: 'enemy',
+      actionTargetTarget: 'actionInputTarget',
+      // 单敌人零空间模拟中仍保留真实目标身份；坐标简化不等于把目标替换成敌人。
+      actionInputIsZeroSpace: true,
       // SpawnAbilityEntity 装配器只会把
       // inheritSourceSkillCastId=true 的 Spawn 绑定为子技能。原生 OnSpawn
       // 把该 SkillCastInfo 保存到控制器，并用同一份值 TryCast 实体技能。
@@ -64,10 +69,21 @@ export function compileAbilityEntityChildSkillSource(
     }
   }
   const definition = {
-    actionGraph: runtime.actionGraph,
+    // 子技能只保留定时入口；共用编译器生成的玩家输入旁路不是该宿主的执行入口。
+    // 在依赖闭包之前裁剪孤立节点，避免引入无法执行的 Buff/实体依赖。
+    actionGraph: {
+      ...runtime.actionGraph,
+      main: retainActionGraphEntries(
+        runtime.actionGraph.main,
+        runtime.scheduledSequences.map(item => item.sequence),
+      ),
+    },
     skillId: runtime.skillId,
     nativeSkillType,
     naturalDurationFrames: Math.max(1, runtime.durationFrame),
+    ...(runtime.normalSkillSubType === undefined
+      ? {}
+      : { normalSkillSubType: runtime.normalSkillSubType }),
     castResource: projectSkillCastResourceDefinitionSource(cast, `${sourcePath}.castData`),
     blackboard: {
       ...runtime.blackboard,

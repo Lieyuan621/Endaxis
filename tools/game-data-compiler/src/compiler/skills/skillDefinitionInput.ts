@@ -29,12 +29,14 @@ import type { CompiledBuffConditionSource } from '../actions/combatActionProject
 
 const SWITCH_SKILL_TYPES: Readonly<Record<string, SkillType>> = {
   Attack: 'basicAttack',
+  BreakingAttack: 'finisher',
+  Dodge: 'dodge',
   NormalSkill: 'battleSkill',
   ComboSkill: 'comboSkill',
   UltimateSkill: 'ultimate',
 };
 
-/** 当前正式运行时只接收弭弗样本所代表的零费用 Owner→Owner 同步旁路。 */
+/** 零费用 Owner→Owner 同步旁路；当前技能类型来自原生类型列表，不依赖技能库分组。 */
 export function compileStrictSwitchToBuffCastSource(
   value: unknown,
   sourcePath: string,
@@ -101,6 +103,20 @@ export function compileStrictSwitchToBuffCastSource(
       if (currentSkillTypes.length === 0)
         throw new Error(`${sourcePath}: SwitchToAddBuff skill types must not be empty`);
       requiresCurrentSkillNotInterruptible = nativeCondition.mustBeforeExclusiveTime === true;
+      if (
+        nativeCondition.normalSkillSubTypeFilter &&
+        nativeCondition.normalSkillSubTypeFilter !== 'Any'
+      ) {
+        projectedConditions.push({
+          kind: 'currentSkillTypeIn',
+          target: 'caster',
+          skillTypes: currentSkillTypes,
+          normalSkillSubType:
+            nativeCondition.normalSkillSubTypeFilter === 'Normal'
+              ? 'normal'
+              : 'additionalNormalSkill',
+        });
+      }
       continue;
     }
     const condition = compileEventCondition(node, context, new Map());

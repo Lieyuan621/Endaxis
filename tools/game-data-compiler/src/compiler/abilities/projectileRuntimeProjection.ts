@@ -127,6 +127,18 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
       };
     const template = input.catalog.templates.get(launch.projectileId) ?? null;
     const enabled = launch.callbacks.filter(callback => callback.enabled);
+    // 只开放回调输入不依赖飞行目标的 launch-only 路线。目标集合可能为空或有多个，
+    // 必须交给运行时逐发射点×目标枚举，不能当成静态单点消掉。
+    const enumeratedEntityPoints =
+      enabled.length === 1 &&
+      enabled[0]!.event === 'launch' &&
+      launch.emitPosition.targetSource === 'Context' &&
+      launch.target.targetSource === 'Context' &&
+      projectionContext.staticAbilityEntityTargetGroupKeys?.has(
+        launch.emitPosition.targetGroupKey,
+      ) === true &&
+      projectionContext.staticAbilityEntityTargetGroupKeys?.has(launch.target.targetGroupKey) ===
+        true;
     // 关闭槽位中的 skillId 不参与调用，但发射/reset 仍能被 SkillAffix 观察。
     // 未投影对象寿命前必须报告缺口，不能把“没有回调程序”当作“没有发射”。
     if (enabled.length === 0) {
@@ -197,7 +209,7 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
         },
       ];
     }
-    const callback = (event: 'block' | 'finish' | 'hit' | 'reach') => {
+    const callback = (event: 'launch' | 'block' | 'finish' | 'hit' | 'reach') => {
       const routes = enabled.filter(item => item.event === event);
       if (routes.length !== 1 || !routes[0]!.skillId)
         throw new Error(`${sourcePath}: expected one enabled projectile ${event} callback`);
@@ -277,7 +289,9 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
     // 不应使落地退化为等待寿命耗尽。同时有 hit/reach 的路线不套用此近似。
     const landsOnFirstTick =
       enabled.some(route => route.event === 'block') &&
-      enabled.every(route => route.event === 'block' || route.event === 'finish');
+      enabled.every(
+        route => route.event === 'launch' || route.event === 'block' || route.event === 'finish',
+      );
     if (landsOnFirstTick) assertSupportedFirstTickBlockShape(runtime, sourcePath);
     const routes = enabled.flatMap(route =>
       route.event === 'block' && !landsOnFirstTick
@@ -311,7 +325,10 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
       });
     }
     if (hasReach || runtime.finishOnReach || runtime.hitOnReach) {
-      if (!isPlainZeroSpaceFixedPoint(launch.target, projectionContext, sourcePath))
+      if (
+        !enumeratedEntityPoints &&
+        !isPlainZeroSpaceFixedPoint(launch.target, projectionContext, sourcePath)
+      )
         throw new Error(
           `${sourcePath}: projectile reach target is not a proven zero-space point ` +
             JSON.stringify({
@@ -350,7 +367,14 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
       const graph = callback(route.event);
       const compiled = compileProjectileCallbackSkillSource({
         graph,
-        context: callbackContext,
+        context:
+          route.event === 'launch'
+            ? {
+                ...callbackContext,
+                actionTargetTarget: 'currentAbilityEntity',
+                actionInputIsOperator: false,
+              }
+            : callbackContext,
         visualOnlyIds: input.visualOnlyIds,
         extensions: input.callbackExtensions,
         castResource: input.catalog.callbackCastResources?.get(graph.skillId),
@@ -366,6 +390,9 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
         skill: {
           skillId: compiled.skillId,
           nativeSkillType,
+          ...(graph.normalSkillSubType === 'AdditionalNormalSkill'
+            ? { normalSkillSubType: 'additionalNormalSkill' as const }
+            : {}),
           naturalDurationFrames: compiled.naturalDurationFrames,
           castResource: compiled.castResource,
           blackboard: numericInitialValues(compiled.declaredBlackboard, sourcePath),
@@ -432,6 +459,15 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
         kind: 'launchProjectile',
         parameters: {
           ...blackboard,
+          ...(enumeratedEntityPoints
+            ? {
+                emitters: {
+                  kind: 'context' as const,
+                  contextKey: launch.emitPosition.targetGroupKey,
+                },
+                targets: { kind: 'context' as const, contextKey: launch.target.targetGroupKey },
+              }
+            : {}),
           ...(onlyHitTargets === undefined ? {} : { onlyHitTargets }),
           finish,
           ...(launch.projectileSource.targetSource === 'Owner'

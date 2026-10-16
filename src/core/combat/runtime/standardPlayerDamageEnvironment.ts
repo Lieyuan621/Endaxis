@@ -264,6 +264,7 @@ type EnvironmentOptions = Pick<
   | 'probabilitySamples'
   | 'readSourceAttributeValue'
   | 'emitOperatorEnterFight'
+  | 'clearPendingAbilityEvents'
   | 'emitBuffLifecycleAbilityEvent'
 >;
 
@@ -393,6 +394,7 @@ export class StandardPlayerDamageEnvironment {
     NonNullable<CombatOperatorProgram['reactionModifiers']>
   >();
   #resolveAbilitySystemSourceId: (entityId: string) => string = entityId => entityId;
+  #resolveSharedDamageTransfer: PlayerDamageOperationDependencies['resolveSharedDamageTransfer'];
   #resolveProjectileRuntimeDependencies:
     ((definitionOperatorId: string) => ProjectileRuntimeDependencies) | null = null;
   readonly #operatorPanels = new Map<string, ResolvedOperatorPanel>();
@@ -534,6 +536,7 @@ export class StandardPlayerDamageEnvironment {
       restored?.poiseBreakBuffs,
     );
     this.runtimeState = restored ?? {
+      buffFrameEndEvents: new Map(),
       reactionDamageCounts: new Map(),
       random: options.randomState ?? null,
       enemyVitals: this.#enemyVitals.runtimeState,
@@ -575,6 +578,7 @@ export class StandardPlayerDamageEnvironment {
         return {
           eventStates: this.#eventStates,
           environmentState: this.runtimeState,
+          frameEndEvents: { advanceFrame: () => this.#flushBuffFrameEndEvents() },
           bindNativeEventSubscription: (reference, receive) => {
             const owner = [...this.#eventStates].find(([, state]) => state === reference.state);
             if (owner === undefined) {
@@ -689,6 +693,9 @@ export class StandardPlayerDamageEnvironment {
         }),
       emitBuffLifecycleAbilityEvent: (event, payload) =>
         this.#emit(payload.sourceId, event, payload),
+      clearPendingAbilityEvents: entityId => {
+        this.runtimeState.buffFrameEndEvents.delete(entityId);
+      },
       createEquipmentEventOperationExecutor: context => this.#createOperationExecutor(context),
       registerEquipmentAbilityEventAction: (operatorId, event, priority, handle, subscriptions) => {
         const receive = (context: CombatAbilityEvent<typeof event>) =>
@@ -831,6 +838,9 @@ export class StandardPlayerDamageEnvironment {
     if ('program' in context && context.resolveAbilitySystemSourceId !== undefined) {
       this.#resolveAbilitySystemSourceId = context.resolveAbilitySystemSourceId;
     }
+    // 主动、被动和恢复后的宿主都从同一装配根取得目录；独立 Buff 伤害复用此端口。
+    if (context.resolveSharedDamageTransfer !== undefined)
+      this.#resolveSharedDamageTransfer = context.resolveSharedDamageTransfer;
     this.#bindBattleRuntime(context);
     if (context.buffDefinitions?.[POISE_BREAK_BUFF_ID] !== undefined)
       this.#poiseBreakDefinitions.set(operatorId, context.buffDefinitions);
@@ -841,6 +851,7 @@ export class StandardPlayerDamageEnvironment {
     const operatorBuffs = this.#operatorBuffRuntime(operatorId, context.panel).container;
     const damage = new PlayerDamageOperationExecutor({
       sourceOperatorId: operatorId,
+      resolveSharedDamageTransfer: context.resolveSharedDamageTransfer,
       castId: 'program' in context ? context.castId : undefined,
       skillId: program?.skillId,
       executingSkillId: program?.executionSkillId ?? program?.skillId,
@@ -999,16 +1010,23 @@ export class StandardPlayerDamageEnvironment {
 
   #createInflictionExecutor(context: CombatOperationExecutorContext): CombatOperationExecutor {
     if (this.options.elementalInflictionDocument === undefined) return strictTerminal;
-    const adapter = this.#inflictionAdapter(context.program.operatorId);
     return new ElementalInflictionOperationExecutor({
+      queryTargets: context.queryTargets,
+      resolveInflictionTarget: context.resolveInflictionTarget,
       sourceOperatorId: context.program.operatorId,
       castId: context.castId,
       targetId: 'enemy',
       skillId: context.program.skillId,
       clock: context.clock,
       receipt: context.receipt,
-      getExistingAttachment: () => adapter.getExistingAttachment(),
-      applyOperation: (operation: ElementalInflictionOperation, skillCastInfo, producedBy) => {
+      getExistingAttachment: (sourceId = context.program.operatorId) =>
+        this.#inflictionAdapter(sourceId).getExistingAttachment(),
+      applyOperation: (
+        operation: ElementalInflictionOperation,
+        skillCastInfo,
+        producedBy,
+        sourceId = context.program.operatorId,
+      ) => {
         if (operation.kind === 'triggerBurst') {
           // 元素目录只提供系统身份；已生成的完整定义必须独占执行，不能再叠加旧聚合回调。
           const buffId = this.#ensureElementalDefinitions().getBurst(operation.element).id;
@@ -1017,23 +1035,22 @@ export class StandardPlayerDamageEnvironment {
             const buff = this.#enemyBuffRuntime.applyScoped({
               buffId,
               definition,
-              sourceId: context.program.operatorId,
+              sourceId,
               definitionOwnerId: context.program.operatorId,
               sourceActionId: context.program.skillId,
               blackboardValues: {},
               skillCastInfo,
               producedBy,
             });
-            return buff === null ? undefined : { buffId, instanceId: buff.instanceId };
+            return buff === null ? undefined : { buffId, instanceId: buff.reference.instanceId };
           }
         }
         // 未迁移的定义继续走兼容目录；定义存在但无效时直接失败，不回退掩盖错误。
-        return adapter.apply(operation, { skillCastInfo, producedBy });
+        return this.#inflictionAdapter(sourceId).apply(operation, { skillCastInfo, producedBy });
       },
       // 原生 TriggerSpellBurstEventAction 只发布事件；后续 DamageAction 自己结算伤害。
       triggerSpellBurst: payload => this.#emitSpellBurstEvents(payload),
-      emitSourceEvent: (event, payload) =>
-        this.#emitInfliction(context.program.operatorId, event, payload),
+      emitSourceEvent: (event, payload) => this.#emitInfliction(payload.sourceId, event, payload),
       emitTargetEvent: (event, payload) => this.#emitInfliction('enemy', event, payload),
       delegate: strictTerminal,
     });
@@ -1571,6 +1588,7 @@ export class StandardPlayerDamageEnvironment {
     return {
       ...this.#damagePreparationPorts(sourceId, operatorBuffs),
       sourceOperatorId: sourceId,
+      resolveSharedDamageTransfer: this.#resolveSharedDamageTransfer,
       resolveReactionCriticalOverride: identity => this.#resolveReactionCriticalOverride(identity),
       ...(skillCastInfo === undefined
         ? {}
@@ -2146,6 +2164,35 @@ export class StandardPlayerDamageEnvironment {
     entityId: string,
     published: AbilityEventFromMap<StandardPlayerDamageEvent, StandardPlayerDamagePayloadMap>,
   ): void {
+    if (published.event === 'buffConsumed' || published.event === 'buffAbsorbed') {
+      const event =
+        published.event === 'buffConsumed' ? 'buffConsumedFrameEnd' : 'buffAbsorbedFrameEnd';
+      if (this.#needsBuffFrameEndEvent(entityId, event)) {
+        const states = this.runtimeState.buffFrameEndEvents;
+        let state = states.get(entityId);
+        if (state === undefined) {
+          state = { pending: new Map() };
+          states.set(entityId, state);
+        }
+        const { layers, buff, ...payload } = published.payload;
+        const key = JSON.stringify([
+          event,
+          buff.instanceId,
+          payload.skillCastInfo?.skillCastId ?? 0,
+          this.#requireClock().frame,
+        ]);
+        const previous = state.pending.get(key);
+        state.pending.set(
+          key,
+          previous === undefined
+            ? { event, buff: buff.runtimeState, payload: { ...payload, layerCount: layers } }
+            : {
+                ...previous,
+                payload: { ...previous.payload, layerCount: previous.payload.layerCount + layers },
+              },
+        );
+      }
+    }
     const { event, payload } = published;
     this.eventsFor(entityId).dispatch(
       published,
@@ -2171,6 +2218,8 @@ export class StandardPlayerDamageEnvironment {
                 case 'poiseKnotBreak':
                 case 'buffConsumed':
                 case 'buffAbsorbed':
+                case 'buffAbsorbedFrameEnd':
+                case 'buffConsumedFrameEnd':
                 case 'weaknessSet':
                   this.comboConditions.onAbilityEvent(context);
               }
@@ -2183,6 +2232,45 @@ export class StandardPlayerDamageEnvironment {
     }
     if (event === 'outputDamage' && isCriticalDamagePayload(payload)) {
       this.eventsFor(entityId).dispatch({ event: 'outputCriticalDamage', payload }, []);
+    }
+  }
+
+  #needsBuffFrameEndEvent(
+    entityId: string,
+    event: 'buffAbsorbedFrameEnd' | 'buffConsumedFrameEnd',
+  ): boolean {
+    return (
+      this.eventsFor(entityId).hasListeners(event) ||
+      (entityId !== 'battle' && this.comboConditions.hasListeners(event))
+    );
+  }
+
+  #flushBuffFrameEndEvents(): void {
+    // 取走当前批次后再调用监听器；同步回调入队不能扩展正在遍历的批次。
+    for (const [ownerId, state] of [...this.runtimeState.buffFrameEndEvents]) {
+      if (this.runtimeState.buffFrameEndEvents.get(ownerId) !== state) continue;
+      const pending = state.pending;
+      state.pending = new Map();
+      for (const event of pending.values()) {
+        if (this.runtimeState.buffFrameEndEvents.get(ownerId) !== state) break;
+        if (this.#needsBuffFrameEndEvent(ownerId, event.event)) {
+          const state = event.buff;
+          this.#publish(ownerId, {
+            event: event.event,
+            payload: {
+              ...event.payload,
+              buff: {
+                runtimeState: state,
+                instanceId: state.identity.instanceId,
+                blackboard: ActionBlackboard.bindRuntimeState(state.blackboard),
+                get isFinished() {
+                  return state.lifecycle.finished;
+                },
+              },
+            },
+          });
+        }
+      }
     }
   }
 }

@@ -11,6 +11,10 @@ import { projectEquipmentIcon } from '../src/domains/equipment/formalDefinition.
 import type { CompiledEquipmentSuitRuntimeBatchSource } from '../src/domains/equipment/suitRuntimeDefinition.ts';
 import type { DefinitionOptimizationMode } from '../src/compiler/optimization/definitionOptimization.ts';
 import { finalizeGearSetDefinition } from '../src/compiler/finalizeDefinitions.ts';
+import {
+  createNativeJsonEncodingReader,
+  type NativeJsonEncodingSchema,
+} from '../src/source/nativeJsonEncoding.ts';
 
 import {
   checkEquipmentDefinitionFiles,
@@ -25,6 +29,7 @@ export interface GearSetDefinitionSourceArguments {
   readonly skillDataDirectory: string;
   readonly buffDataDirectory: string;
   readonly gameplayTagCatalog: string;
+  readonly nativeJsonEncoding?: NativeJsonEncodingSchema;
 }
 
 export interface GearSetGenerationArguments extends GearSetDefinitionSourceArguments {
@@ -38,8 +43,11 @@ export interface GearSetGenerationArguments extends GearSetDefinitionSourceArgum
 export async function compileGearSetDefinitionsFromFiles(input: GearSetDefinitionSourceArguments) {
   const table = async (name: string) =>
     JSON.parse(await readFile(resolve(input.tablesDirectory, `${name}.json`), 'utf8')) as unknown;
-  const skillData = await readJsonDirectory(input.skillDataDirectory);
-  const buffData = await readJsonDirectory(input.buffDataDirectory);
+  const readNative = input.nativeJsonEncoding
+    ? createNativeJsonEncodingReader(input.nativeJsonEncoding)
+    : undefined;
+  const skillData = await readJsonDirectory(input.skillDataDirectory, 'SkillData', readNative);
+  const buffData = await readJsonDirectory(input.buffDataDirectory, 'BuffData', readNative);
   const gameplayTagRegistry = new GameplayTagRegistry(
     readGameplayTagPaths(input.gameplayTagCatalog),
   );
@@ -184,13 +192,19 @@ export function compileAllGearSetDefinitions(
   return { definitions, diagnostics };
 }
 
-async function readJsonDirectory(directory: string): Promise<Record<string, unknown>> {
+async function readJsonDirectory(
+  directory: string,
+  collection: 'SkillData' | 'BuffData',
+  readNative?: ReturnType<typeof createNativeJsonEncodingReader>,
+): Promise<Record<string, unknown>> {
   const result: Record<string, unknown> = {};
   for (const file of (await readdir(directory)).sort()) {
     if (!file.endsWith('.json') || file.endsWith('.audit.json')) continue;
-    result[basename(file, '.json')] = JSON.parse(
-      await readFile(resolve(directory, file), 'utf8'),
-    ) as unknown;
+    const sourcePath = resolve(directory, file);
+    const raw: unknown = JSON.parse(await readFile(sourcePath, 'utf8'));
+    result[basename(file, '.json')] = readNative
+      ? readNative(raw, `Beyond.Gameplay.Core.${collection}`, sourcePath)
+      : raw;
   }
   return result;
 }

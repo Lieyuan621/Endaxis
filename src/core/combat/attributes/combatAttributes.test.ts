@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { cloneCombatAttributes } from './combatAttributeExecution';
 import { ATTRIBUTE_MODIFIER_SOURCES, type CombatAttributeModifier } from '../state/foundationState';
 import {
   createCombatAttributeModifier,
@@ -25,6 +26,28 @@ function addModifier(
 }
 
 describe('CombatAttributeSet', () => {
+  it('属性克隆保留槽位与修正对象身份，但后续登记、移除和原始值写入相互独立', () => {
+    const source = new CombatAttributeSet<Attribute>();
+    const target = new CombatAttributeSet<Attribute>();
+    source.define('attack', 100, { minimum: 0, maximum: 1000 });
+    target.define('attack', 1, {});
+    addModifier(target, 'addition', 999, ATTRIBUTE_MODIFIER_SOURCES.buff);
+    const modifier = addModifier(source, 'multiplier', 0.5, ATTRIBUTE_MODIFIER_SOURCES.buff);
+    cloneCombatAttributes(source.runtimeState, target.runtimeState);
+    expect(target.get('attack')).toBe(150);
+    expect(target.runtimeState.modifiers).toEqual([modifier]);
+    expect(target.runtimeState.modifiers[0]).toBe(modifier);
+    const restored = structuredClone({ source: source.runtimeState, target: target.runtimeState });
+    expect(restored.source.modifiers[0]).toBe(restored.target.modifiers[0]);
+    expect(restored.source.modifiers).not.toBe(restored.target.modifiers);
+    source.removeModifier(modifier);
+    source.setRawValue('attack', 200);
+    addModifier(source, 'addition', 10, ATTRIBUTE_MODIFIER_SOURCES.buff);
+    expect(source.get('attack')).toBe(210);
+    expect(target.get('attack')).toBe(150);
+    expect(new CombatAttributeSet(restored.target).get('attack')).toBe(150);
+  });
+
   it('当前命中附加修正复用八槽与边界，不改变属性集或来源过滤结果', () => {
     const attributes = new CombatAttributeSet<Attribute>();
     attributes.define('attack', 100, { minimum: 0, maximum: 1000 });

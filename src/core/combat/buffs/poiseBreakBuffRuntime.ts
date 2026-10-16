@@ -26,7 +26,7 @@ export class PoiseBreakBuffRuntime {
       sourceActionId: 'poise-break',
       blackboardValues: {},
     });
-    if (buff !== null) this.runtimeState.add(buff.instanceId);
+    if (buff !== null) this.runtimeState.add(buff.reference.instanceId);
   }
 
   /** 原生 HP/Minus + PowerAttack 在 BeforeTakeDamage 前消费资格，不结束失衡承伤。 */

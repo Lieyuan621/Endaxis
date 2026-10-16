@@ -8,6 +8,8 @@ export const buffPresentationNames: Readonly<Record<string, string>> = {
   buff_chr_0032_lizhiyan_combo_skill_seal2: 'effects.name.imprisonment',
   buff_chr_0033_camille_normal_skill_bat_duration_icon: 'effects.name.firefangVesperwings',
   buff_chr_0033_camille_normal_skill_weak: 'effects.name.firefangVesperwings',
+  buff_chr_0036_jsspsi_normal_skill_hitstop: 'effects.name.immobilization',
+  buff_chr_0036_jsspsi_normal_skill_soul_timedisplay: 'effects.name.artfulIntent',
   buff_common_affixes_combo_trigger: 'effects.name.link',
   buff_common_affixes_slow_default_child: 'effects.name.slow',
   buff_common_affixes_speedup: 'effects.name.speedup',
@@ -43,5 +45,6 @@ export const buffPresentationNames: Readonly<Record<string, string>> = {
 
 /** 原生无图标的效果在时间轴上的补充展示，不改变 Buff 行为。 */
 export const buffPresentationIcons: Readonly<Record<string, ImageRef>> = {
+  buff_chr_0036_jsspsi_normal_skill_hitstop: 'endaxis:operators/si/battle_01',
   buff_common_affixes_combo_trigger: 'endaxis:icons/icon_term_ba_combo',
 };

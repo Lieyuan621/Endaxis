@@ -47,6 +47,7 @@ const canvasStyle = computed(() => ({
 </script>
 <template>
   <span
+    v-if="skin"
     class="operator-passive-widget"
     :class="[`is-${appearance}`, { 'is-active': active }]"
     :style="rootStyle"

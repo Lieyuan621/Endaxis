@@ -177,6 +177,14 @@ export function parseContingencyContractCatalogSource(
   const tags = orderedNumericEntries(tagTable, 'CcTagTable').map(([key, raw]) => {
     const path = `CcTagTable.${key}`;
     const tag = requireRecord(raw, path);
+    // 1.6.3 的客户端表仅保留展示信息；效果由 ServerSyncClientConfigSystem
+    // 按词条 ID 提供。缺少效果来源不能解释为空列表，否则会静默删除合约效果。
+    if (!Object.hasOwn(tag, 'tagTerms')) {
+      throw new Error(
+        `${path}: missing combat effect source; this CcTagTable has no tagTerms. ` +
+          'Server-synchronized contingency contract Buff configuration is required.',
+      );
+    }
     requireExactFields(tag, TAG_FIELDS, path);
     const tagId = requireInteger(tag.tagId, `${path}.tagId`);
     if (String(tagId) !== key) throw new Error(`${path}.tagId: does not match table key`);

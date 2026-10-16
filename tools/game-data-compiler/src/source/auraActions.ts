@@ -11,6 +11,7 @@ import {
   requireNumber,
   requireRecord,
   requireString,
+  readOptionalReferenceKey,
 } from './primitives.ts';
 import { parseTagQuerySource } from './tagQuery.ts';
 import { parseTargetReferenceSource } from './target.ts';
@@ -133,10 +134,18 @@ function parseAuraRecord(value: unknown, path: string): Record<string, unknown> 
     path,
   );
   if (hasInfluenceFilters) {
-    // 新来源配置默认解析 Action Source 的阵营。
+    const factionSource = parseTargetReferenceSource(
+      action.filterFactionSource,
+      `${path}.filterFactionSource`,
+    );
+    const filter = requireRecord(action.targetFilter, `${path}.targetFilter`);
+    // TargetFilter.Filter 在 autoSetTargetFaction=false 时只使用显式阵营。
+    // 普通 Owner 读取没有目标组写入；不据此放行自动阵营或带查询副作用的来源。
     requirePlainAuraTarget(
-      parseTargetReferenceSource(action.filterFactionSource, `${path}.filterFactionSource`),
-      'Source',
+      factionSource,
+      filter.autoSetTargetFaction === false && factionSource.targetSource === 'Owner'
+        ? 'Owner'
+        : 'Source',
       `${path}.filterFactionSource`,
     );
     for (const field of ['limitInfluenceHeight', 'limitInfluenceAngle'] as const) {
@@ -244,7 +253,10 @@ export function parseDirectRangedAuraActionSource<TLeaf>(
   const autoEnemyTarget = filter.autoSetTargetFaction === true && filter.factionTarget === 'Anti';
   const autoPartyTarget = filter.autoSetTargetFaction === true && filter.factionTarget === 'Ally';
   if (
-    rangedBuffs.length > 0 &&
+    (rangedBuffs.length > 0 ||
+      (filter.autoSetTargetFaction === false &&
+        filter.targetFactionType === 'Bad' &&
+        action.excludeOwner === false)) &&
     (autoEnemyTarget ||
       autoPartyTarget ||
       (filter.autoSetTargetFaction === false &&
@@ -322,7 +334,9 @@ export function parseDirectRangedAuraActionSource<TLeaf>(
   }
   requireExpected(action.overrideBuffIconDuration, false, `${path}.overrideBuffIconDuration`);
   parseIconDurationSource(action.buffIconDurationSource, `${path}.buffIconDurationSource`, false);
-  requireExpected(action.inheritSourceSkillCastId, false, `${path}.inheritSourceSkillCastId`);
+  // 原生开关只影响 buffInput 的 AddBuff 参数；上方已证明列表为空。
+  // actionInAura.ExecuteInstant 不读取该字段，不能据此改写进入动作的施法身份。
+  requireBoolean(action.inheritSourceSkillCastId, `${path}.inheritSourceSkillCastId`);
   const actionOnEnter = parseSequence(action.actionInAura, `${path}.actionInAura`);
   parseEmptySequence(action.actionWhenExitAura, `${path}.actionWhenExitAura`);
   const targetGroupKeys = collectDirectTargetGroupKeys(actionOnEnter);
@@ -695,14 +709,14 @@ export function parseFiniteRangedShape(value: unknown, path: string): string[] {
   parseFiniteVector(shape._extent, `${path}._extent`);
   const blackboardKeys: string[] = [];
   for (const key of ['_extentXKey', '_extentYKey', '_extentZKey']) {
-    const value = requireString(shape[key], `${path}.${key}`);
+    const value = readOptionalReferenceKey(shape[key], `${path}.${key}`);
     if (value.length > 0) blackboardKeys.push(value);
   }
   requireExpected(shape._useCenterKey, false, `${path}._useCenterKey`);
   parseFiniteVector(shape._center, `${path}._center`);
   const dimensionKeys = new Map<string, string>();
   for (const key of ['_centerXKey', '_centerYKey', '_centerZKey', '_heightKey', '_radiusKey']) {
-    const value = requireString(shape[key], `${path}.${key}`);
+    const value = readOptionalReferenceKey(shape[key], `${path}.${key}`);
     if (value.length > 0) blackboardKeys.push(value);
     dimensionKeys.set(key, value);
   }
@@ -771,7 +785,7 @@ function parseIconDurationSource(
     source.durationSourceType,
     `${path}.durationSourceType`,
   );
-  const timedMarkerId = requireString(source.timedMarkerId, `${path}.timedMarkerId`);
+  const timedMarkerId = readOptionalReferenceKey(source.timedMarkerId, `${path}.timedMarkerId`);
   // overrideBuffIconDuration=false 时原生不会读取这份编辑器配置；导出样本可能保留
   // TimedMarker + 空 id 的默认组合。字段形状仍校验，但仅对启用分支施加语义约束。
   if (active && durationSourceType === 'TimedMarker' && timedMarkerId.length === 0)

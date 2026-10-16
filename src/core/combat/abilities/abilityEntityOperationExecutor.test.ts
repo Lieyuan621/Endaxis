@@ -191,7 +191,10 @@ describe('AbilityEntityOperationExecutor', () => {
       { kind: 'spatialPoint', pointId: 1 },
       { kind: 'spatialPoint', pointId: 2 },
     ]);
-    const queryTargets = vi.fn(() => targetContext.get('birth'));
+    targetContext.setSingle('victim', { kind: 'enemy' });
+    const queryTargets = vi.fn((query: { readonly kind: string; readonly key?: string }) =>
+      targetContext.get(query.key!),
+    );
     const delegate = { execute: () => false, evaluate: () => false, queryTargets };
     const executor = new AbilityEntityOperationExecutor('owner', entities, delegate, {
       resolveOperations: () => delegate,
@@ -200,12 +203,14 @@ describe('AbilityEntityOperationExecutor', () => {
           true,
         );
         blackboard.assignDynamic('duration', 100);
+        targetContext.setSingle('victim', { kind: 'operator', operatorId: 'ally' });
       },
     });
     const step: ResolvedCombatOperationStep = {
       kind: 'spawnAbilityEntity',
       parameters: {
         bornAt: { kind: 'context', key: 'birth' },
+        target: { kind: 'context', key: 'victim' },
         abilityEntityId: 'spawned',
         definition: { lifetime: { kind: 'limited', durationSeconds: 12 } },
         overrideDurationSeconds: numberInput({ kind: 'blackboard', key: 'duration' }),
@@ -216,10 +221,14 @@ describe('AbilityEntityOperationExecutor', () => {
     };
     const context = { blackboard, targetContext };
     expect(executor.execute(step, context)).toBe(true);
-    expect(queryTargets).toHaveBeenCalledTimes(1);
+    expect(queryTargets).toHaveBeenCalledTimes(3);
     expect(targetContext.get('birth')).toHaveLength(2);
     const created = entities.findOwnerSpawned({ ownerId: 'owner' });
     expect(created).toHaveLength(2);
+    expect(created.map(entity => entities.snapshot(entity).target)).toEqual([
+      { kind: 'enemy' },
+      { kind: 'operator', operatorId: 'ally' },
+    ]);
     for (const entity of created)
       expect(entities.snapshot(entity).remainingDurationSeconds).toBe(2);
     expect([...executor.runtimeState.actionDurationEntities.values()][0]).toHaveLength(2);
@@ -315,7 +324,7 @@ describe('AbilityEntityOperationExecutor', () => {
     expect(() => programs.resolve(first.programId + 1)).toThrow('does not exist');
   });
 
-  it('按保存的子技能身份恢复实体时间轴，不重复加入子技能状态', () => {
+  it.each(['running', 'queued'] as const)('恢复 %s 实体技能，不重放初始化或丢失请求', mode => {
     const definition = {
       lifetime: { kind: 'limited' as const, durationSeconds: 10 },
       childSkill: {
@@ -357,18 +366,35 @@ describe('AbilityEntityOperationExecutor', () => {
       { createCallbackSkillHost, resolveOperations: () => originalExecutor, programs },
       id => (id === 'entity' ? definition : undefined),
     );
-    originalExecutor.execute(
-      {
-        kind: 'spawnAbilityEntity',
-        parameters: {
-          bornAt: { kind: 'owner' as const },
-          abilityEntityId: 'entity',
-          dieWhenSourceDies: false,
+    if (mode === 'queued') {
+      const entity = originalEntities.spawn({
+        abilityEntityId: 'entity',
+        definition: { lifetime: definition.lifetime },
+        ownerId: 'owner',
+        source: { kind: 'operator', operatorId: 'owner' },
+      });
+      originalExecutor.requestSkillCast(
+        entity,
+        {
+          nativeSkillId: 'restored-child',
+          inputTarget: { kind: 'abilityEntity', instanceId: 21 },
         },
-      },
-      { blackboard: new ActionBlackboard() },
-    );
-    advance(originalEntities);
+        { blackboard: new ActionBlackboard() },
+      );
+      expect(originalExecute).not.toHaveBeenCalled();
+    } else
+      originalExecutor.execute(
+        {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'owner' as const },
+            abilityEntityId: 'entity',
+            dieWhenSourceDies: false,
+          },
+        },
+        { blackboard: new ActionBlackboard() },
+      );
+    if (mode === 'running') advance(originalEntities);
     const saved = structuredClone(originalEntities.runtimeState);
     expect([...saved.instances.values()][0]!.childSkills[0]!.skillId).toBe('restored-child');
 
@@ -396,6 +422,17 @@ describe('AbilityEntityOperationExecutor', () => {
     expect(restoredExecute).not.toHaveBeenCalled();
     expect([...saved.instances.values()][0]!.childSkills).toHaveLength(1);
     advance(restoredEntities);
+    if (mode === 'queued') {
+      expect(restoredExecute.mock.calls.map(call => call[0].parameters)).toEqual([
+        expect.objectContaining({ eventName: 'first' }),
+      ]);
+      expect(
+        [...saved.instances.values()][0]!.childSkills[0]!.host.ability.postSkillCastRequest,
+      ).toBeNull();
+      restoredExecute.mockClear();
+      advance(restoredEntities);
+      advance(restoredEntities);
+    }
     expect(restoredExecute).toHaveBeenCalledOnce();
     expect(restoredExecute.mock.calls[0]![0]).toMatchObject({
       parameters: { eventName: 'second' },
@@ -932,6 +969,40 @@ describe('AbilityEntityOperationExecutor', () => {
     expect(entities.findOwnerSpawned({ ownerId: 'typhoeus' })).toEqual([]);
   });
 
+  it('takes the first Context source without substituting the definition owner', () => {
+    const entities = new LogicalAbilityEntityRuntime({});
+    const targetContext = new RuntimeTargetContext();
+    targetContext.set('source', [
+      { kind: 'operator', operatorId: 'actual-source' },
+      { kind: 'enemy' },
+    ]);
+    const executor = new AbilityEntityOperationExecutor(
+      'definition-owner',
+      entities,
+      new TargetContextOperationExecutor('definition-owner', {
+        execute: () => false,
+        evaluate: () => false,
+      }),
+    );
+    const step = {
+      kind: 'spawnAbilityEntity' as const,
+      parameters: {
+        bornAt: { kind: 'fixed' as const, target: 'enemy' as const },
+        source: { kind: 'context' as const, key: 'source' },
+        abilityEntityId: 'child',
+        definition: { lifetime: { kind: 'infinite' as const } },
+        dieWhenSourceDies: true,
+      },
+    };
+    const context = { blackboard: new ActionBlackboard(), targetContext };
+    expect(executor.execute(step, context)).toBe(true);
+    expect(entities.findOwnerSpawned({ ownerId: 'actual-source' })).toHaveLength(1);
+    expect(entities.findOwnerSpawned({ ownerId: 'definition-owner' })).toHaveLength(0);
+    targetContext.set('source', []);
+    expect(() => executor.execute(step, context)).toThrow('requires a valid source ability system');
+    expect(entities.activeCount).toBe(1);
+  });
+
   it('finds matching entities belonging only to the queried owner', () => {
     const entities = new LogicalAbilityEntityRuntime({});
     entities.spawn({
@@ -1226,6 +1297,29 @@ describe('AbilityEntityOperationExecutor', () => {
       ),
     ).toBe(true);
 
+    const durationCheck = {
+      kind: 'abilityEntityRemainingDurationCompare' as const,
+      target: { kind: 'source' as const },
+      outputKey: 'curduration',
+      operator: 'greater' as const,
+      value: { kind: 'constant' as const, value: 0 },
+    };
+    const sourceContext = { blackboard, actionSourceId: `ability-entity:${entity.instanceId}` };
+    expect(executor.evaluate(durationCheck, sourceContext)).toBe(true);
+    expect(blackboard.getNumber('curduration')).toBe(12);
+    blackboard.assignDynamic('curduration', 99);
+    expect(
+      executor.evaluate(
+        { ...durationCheck, value: { kind: 'constant', value: 20 } },
+        sourceContext,
+      ),
+    ).toBe(false);
+    expect(blackboard.getNumber('curduration')).toBe(99);
+    expect(executor.evaluate(durationCheck, { blackboard, actionSourceId: 'tangtang' })).toBe(
+      false,
+    );
+    expect(blackboard.getNumber('curduration')).toBe(99);
+
     expect(
       executor.execute(
         {
@@ -1474,6 +1568,34 @@ describe('AbilityEntityOperationExecutor', () => {
     expect(entities.snapshot(entities.findAll()[0]!).childSkillId).toBe('child-b');
   });
 
+  it('keeps the spawned entity alive when its requested child skill is unregistered', () => {
+    const entities = new LogicalAbilityEntityRuntime({});
+    const execute = vi.fn(() => true);
+    const executor = new AbilityEntityOperationExecutor('fixture', entities, {
+      execute,
+      queryTargets: () => [{ kind: 'operator' as const, operatorId: 'owner' }],
+      evaluate: () => false,
+    });
+    expect(
+      executor.execute(
+        {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'owner' },
+            abilityEntityId: 'host',
+            childSkillId: 'obsolete',
+            definition: { lifetime: { kind: 'limited', durationSeconds: 10 } },
+            dieWhenSourceDies: false,
+          },
+        },
+        { blackboard: new ActionBlackboard() },
+      ),
+    ).toBe(true);
+    expect(entities.findAll()).toHaveLength(1);
+    expect(entities.snapshot(entities.findAll()[0]!).childSkillId).toBeUndefined();
+    expect(execute).not.toHaveBeenCalled();
+  });
+
   it('applies child-skill timeline jumps on the ability entity local clock', () => {
     const entities = new LogicalAbilityEntityRuntime({
       resolveDeltaSeconds: () => 1 / 60,
@@ -1608,7 +1730,7 @@ describe('AbilityEntityOperationExecutor', () => {
     expect(entities.activeCount).toBe(0);
   });
 
-  it('starts a hidden child timeline on an existing iterated entity', () => {
+  it.each(['immediate', 'deferred'] as const)('starts an entity child through %s casting', mode => {
     const entities = new LogicalAbilityEntityRuntime({});
     const entity = entities.spawn({
       abilityEntityId: 'seal',
@@ -1652,22 +1774,51 @@ describe('AbilityEntityOperationExecutor', () => {
       }),
     );
 
-    expect(
-      executor.execute(
+    if (mode === 'deferred') {
+      const request = { nativeSkillId: 'seal-end', skipApplyCost: false };
+      const context = { blackboard: new ActionBlackboard() };
+      executor.requestSkillCast(entity, { ...request, inputTarget: { kind: 'enemy' } }, context);
+      executor.requestSkillCast(
+        entity,
         {
-          kind: 'startCurrentAbilityEntityChildSkillById',
-          parameters: { childSkillId: 'seal-end' },
+          ...request,
+          inputTarget: { kind: 'abilityEntity', instanceId: 21 },
         },
-        { blackboard: new ActionBlackboard(), currentTarget: entity },
-      ),
-    ).toBe(true);
+        context,
+      );
+      expect(entities.runtimeState.instances.get(entity.instanceId)!.childSkills).toHaveLength(1);
+      expect(
+        entities.childSkillHosts(entity).ability.runtimeState.postSkillCastRequest?.inputTarget,
+      ).toEqual({ kind: 'abilityEntity', instanceId: 21 });
+    } else
+      expect(
+        executor.execute(
+          {
+            kind: 'startCurrentAbilityEntityChildSkillById',
+            parameters: { childSkillId: 'seal-end' },
+          },
+          { blackboard: new ActionBlackboard(), currentTarget: entity },
+        ),
+      ).toBe(true);
     expect(execute).not.toHaveBeenCalled();
 
     advance(entities);
+    if (mode === 'deferred') advance(entities);
 
     expect(execute).toHaveBeenCalledWith(
       expect.objectContaining({ kind: 'triggerCustomAbilityEvent' }),
       expect.objectContaining({ currentTarget: entity }),
     );
+    if (mode === 'deferred') {
+      expect(execute).toHaveBeenCalledTimes(1);
+      expect(execute).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          actionInputTarget: { kind: 'abilityEntity', instanceId: 21 },
+          actionOwnerAbilityEntity: entity,
+        }),
+      );
+      expect(entities.childSkillHosts(entity).ability.runtimeState.postSkillCastRequest).toBeNull();
+    }
   });
 });

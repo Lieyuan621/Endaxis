@@ -1,4 +1,6 @@
 import type { CombatObjectRef } from '../receipt/combatReceipt';
+import type { CombatFaction } from '../../../../packages/game-data-contract/src/primitives';
+import { CombatVitals, type CombatVitalsSnapshot } from '../resources/combatVitals';
 import type { LogicalAbilityEntityFinishReason } from '../state/foundationState';
 /**
  * 零空间、单敌人模型中的逻辑能力实体目录。
@@ -41,6 +43,15 @@ import {
 } from './logicalAbilityEntityExecution';
 
 export interface LogicalAbilityEntitySpawnRequest {
+  /** 已按原生 OnStart 初始化的生命属性；目录不猜测 HP 默认值或再次求值黑板。 */
+  readonly soul?: {
+    readonly damageTransferType: 'sharedDamage';
+    readonly useMainBodyPoise?: boolean;
+    readonly mainBody: RuntimeTargetRef;
+    readonly vitals: CombatVitalsSnapshot;
+    readonly damageRatio: number;
+    readonly poiseRatio: number;
+  };
   /** 固定程序目录中的实体定义；独立使用实体目录时可不提供。 */
   readonly definitionProgramId?: number;
   readonly producedBy?: CombatObjectRef;
@@ -56,6 +67,8 @@ export interface LogicalAbilityEntitySpawnRequest {
   readonly blackboardAssignments?: Readonly<Record<string, ActionBlackboardValue>>;
   readonly blackboardValueCalculations?: Readonly<Record<string, ActionValueCalculation>>;
   readonly sourceSkillCastId?: number;
+  /** 实例登记后、控制器子技能施放前完成能力系统初始化；恢复不会调用。 */
+  readonly initialize?: (entity: AbilityEntityTargetRef, blackboard: ActionBlackboard) => void;
   /** 由操作解释链创建；目录只负责用实体局部时间推进和对称结束。 */
   readonly createChildRuntime?: (
     entity: RuntimeTargetRef,
@@ -101,12 +114,14 @@ export interface LogicalAbilityEntityRuntimeHooks {
   spawned?(snapshot: LogicalAbilityEntitySnapshot, producedBy?: CombatObjectRef): void;
   childSkillRequested?(snapshot: LogicalAbilityEntitySnapshot, skillId: string): void;
   killed?(snapshot: LogicalAbilityEntitySnapshot, reason: LogicalAbilityEntityFinishReason): void;
+  soulDisabled?(entity: AbilityEntityTargetRef, mainBody: RuntimeTargetRef): void;
   finished?(snapshot: LogicalAbilityEntitySnapshot, reason: LogicalAbilityEntityFinishReason): void;
   timedMarkerCreated?(snapshot: TimedMarkerSnapshot): void;
   timedMarkerFinished?(snapshot: TimedMarkerSnapshot, reason: TimedMarkerFinishReason): void;
 }
 
 interface LogicalAbilityEntityInstance {
+  readonly soulVitals?: CombatVitals;
   readonly skillHosts: EntitySkillHostGroup;
   readonly state: LogicalAbilityEntityState;
   readonly identity: LogicalAbilityEntityIdentity;
@@ -147,7 +162,11 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
     const instanceIds = new AbilityEntityInstanceIdAllocator();
     this.#allocateInstanceId = options.allocateInstanceId ?? (() => instanceIds.allocate());
     this.#timedMarkerClocks = options.timedMarkerClocks ?? {};
-    this.runtimeState = options.restoredState ?? { instances: new Map(), deadSources: [] };
+    this.runtimeState = options.restoredState ?? {
+      instances: new Map(),
+      deadSources: [],
+      soulParts: new Map(),
+    };
     for (const [instanceId, state] of this.runtimeState.instances) {
       if (instanceId !== state.instanceId) {
         throw new Error(
@@ -225,6 +244,18 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
   }
 
   spawn(request: LogicalAbilityEntitySpawnRequest): AbilityEntityTargetRef {
+    const soulMainBody =
+      request.soul === undefined ? undefined : this.mainBody(request.soul.mainBody);
+    if (soulMainBody !== undefined && soulMainBody.kind !== 'enemy')
+      throw new Error('Soul requires an enemy main body');
+    if (
+      request.soul !== undefined &&
+      (!Number.isFinite(request.soul.damageRatio) || !Number.isFinite(request.soul.poiseRatio))
+    )
+      throw new Error('Soul transfer ratios must be finite');
+    // 验证和创建独立账本先于叠层替换；失败不能回收已有实例。
+    const soulVitals =
+      request.soul === undefined ? undefined : new CombatVitals(request.soul.vitals);
     if (request.abilityEntityId.length === 0) throw new Error('AbilityEntity id must not be empty');
     if (
       request.sourceSkillCastId !== undefined &&
@@ -284,8 +315,21 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
     let instance!: LogicalAbilityEntityInstance;
     const timedMarkers = createTimedMarkerState();
     instance = {
+      ...(soulVitals === undefined ? {} : { soulVitals }),
       identity: Object.freeze({ instanceId, abilityEntityId: request.abilityEntityId }),
       state: {
+        ...(request.soul === undefined
+          ? {}
+          : {
+              soul: {
+                damageTransferType: request.soul.damageTransferType,
+                useMainBodyPoise: request.soul.useMainBodyPoise ?? false,
+                mainBody: soulMainBody!,
+                vitals: soulVitals!.runtimeState,
+                damageRatio: request.soul.damageRatio,
+                poiseRatio: request.soul.poiseRatio,
+              },
+            }),
         ...(request.definitionProgramId === undefined
           ? {}
           : { definitionProgramId: request.definitionProgramId }),
@@ -338,17 +382,37 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
     };
     this.#instances.set(instance.state.instanceId, instance);
     this.runtimeState.instances.set(instance.state.instanceId, instance.state);
+    if (soulMainBody !== undefined) {
+      this.runtimeState.soulParts.set(runtimeTargetEntityId(soulMainBody)!, {
+        kind: 'abilityEntity',
+        instanceId,
+      });
+    }
+    this.#bindSoulHealth(instance);
     const snapshot = this.#snapshot(instance);
     this.#hooks.spawned?.(snapshot, request.producedBy);
     const target = { kind: 'abilityEntity' as const, instanceId: instance.state.instanceId };
-    if (request.createChildRuntime !== undefined) {
-      this.startChildSkill(
-        target,
-        instance.state.definition.childSkill?.skillId ?? '<spawn-child>',
-        request.createChildRuntime,
-      );
-    } else if (instance.state.definition.childSkill !== undefined) {
-      this.#hooks.childSkillRequested?.(snapshot, instance.state.definition.childSkill.skillId);
+    try {
+      request.initialize?.(target, instance.blackboard);
+      if (request.createChildRuntime !== undefined) {
+        this.startChildSkill(
+          target,
+          instance.state.definition.childSkill?.skillId ?? '<spawn-child>',
+          request.createChildRuntime,
+        );
+      } else if (instance.state.definition.childSkill !== undefined) {
+        this.#hooks.childSkillRequested?.(snapshot, instance.state.definition.childSkill.skillId);
+      }
+    } catch (error) {
+      try {
+        if (this.isActive(target)) this.finish(target, 'explicit');
+      } catch (cleanupError) {
+        throw new AggregateError(
+          [error, cleanupError],
+          `AbilityEntity '${request.abilityEntityId}' startup and cleanup failed`,
+        );
+      }
+      throw error;
     }
     return target;
   }
@@ -362,15 +426,27 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
       blackboard: ActionBlackboard,
     ) => LogicalAbilityEntityChildRuntime,
   ): void {
+    this.#hooks.childSkillRequested?.(this.#snapshot(this.#requireInstance(entity)), skillId);
+    this.ensureChildSkill(entity, skillId, createRuntime).start();
+  }
+
+  /** 仅登记子技能宿主；延迟施法和恢复不得借登记执行 Start。 */
+  ensureChildSkill(
+    entity: RuntimeTargetRef,
+    skillId: string,
+    createRuntime: (
+      entity: RuntimeTargetRef,
+      blackboard: ActionBlackboard,
+    ) => LogicalAbilityEntityChildRuntime,
+  ): LogicalAbilityEntityChildRuntime {
     if (skillId.length === 0) throw new Error('AbilityEntity child skill id must not be empty');
     const instance = this.#requireInstance(entity);
-    this.#hooks.childSkillRequested?.(this.#snapshot(instance), skillId);
     let runtime = instance.childRuntimes.find(child => child.skillId === skillId);
     if (runtime === undefined) {
       runtime = createRuntime(entity, instance.blackboard);
       instance.childRuntimes.push(runtime);
     }
-    runtime.start();
+    return runtime;
   }
 
   childSkillHosts(entity: RuntimeTargetRef): EntitySkillHostGroup {
@@ -465,6 +541,9 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
       instance.childBuffs[index]!.finish('other', null);
     }
     instance.timedMarkers.finishAll();
+    // Soul.OnRelease 无条件清空主体槽；不是按存活实例回退到另一只灵体。
+    if (instance.state.soul !== undefined)
+      this.runtimeState.soulParts.delete(runtimeTargetEntityId(instance.state.soul.mainBody)!);
     this.#hooks.finished?.(this.#snapshot(instance), reason);
     this.#instances.delete(instance.state.instanceId);
     this.runtimeState.instances.delete(instance.state.instanceId);
@@ -522,6 +601,11 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
   kill(entity: RuntimeTargetRef, reason: LogicalAbilityEntityFinishReason = 'explicit'): void {
     const instance = this.#requireInstance(entity);
     if (!killLogicalAbilityEntity(instance.state, reason)) return;
+    if (instance.state.soul !== undefined)
+      this.#hooks.soulDisabled?.(
+        { kind: 'abilityEntity', instanceId: instance.state.instanceId },
+        instance.state.soul.mainBody,
+      );
     this.#hooks.killed?.(this.#snapshot(instance), reason);
   }
 
@@ -533,11 +617,20 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
       .filter(
         instance =>
           instance.state.isAlive &&
-          instance.state.dieWhenSourceDies &&
-          this.#sameTarget(instance.state.source, source),
+          ((instance.state.soul !== undefined &&
+            this.#sameTarget(instance.state.soul.mainBody, source)) ||
+            (instance.state.dieWhenSourceDies && this.#sameTarget(instance.state.source, source))),
       )
-      .map(instance => ({ kind: 'abilityEntity' as const, instanceId: instance.state.instanceId }));
-    for (const target of targets) this.kill(target, 'sourceDied');
+      .map(instance => ({
+        target: { kind: 'abilityEntity' as const, instanceId: instance.state.instanceId },
+        reason:
+          instance.state.soul !== undefined &&
+          this.#sameTarget(instance.state.soul.mainBody, source)
+            ? ('soulMainBodyDied' as const)
+            : ('sourceDied' as const),
+      }));
+    // 死亡回调可同步回收其他实例；快照不保证轮到时它仍存在。
+    for (const { target, reason } of targets) if (this.isActive(target)) this.kill(target, reason);
     return targets.length;
   }
 
@@ -576,6 +669,56 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
     }
   }
 
+  /** 读取实例定义中的阵营；不沿来源或主体关系推断，恢复时直接复用定义。 */
+  faction(target: RuntimeTargetRef): CombatFaction | undefined {
+    return target.kind === 'abilityEntity'
+      ? this.#instances.get(target.instanceId)?.state.definition.faction
+      : undefined;
+  }
+
+  /** 原生部位主体解析；普通能力实体保持自身身份，不能退化为施法者或敌人。 */
+  mainBody(target: RuntimeTargetRef): RuntimeTargetRef {
+    return target.kind === 'abilityEntity'
+      ? (this.#instances.get(target.instanceId)?.state.soul?.mainBody ?? target)
+      : target;
+  }
+
+  /** OwnerSoulFinder 读取主体当前关联；停用但尚未释放的灵体仍保留身份。 */
+  ownerSoul(target: RuntimeTargetRef): RuntimeTargetRef | undefined {
+    const bodyId = runtimeTargetEntityId(this.mainBody(target));
+    return bodyId === undefined ? undefined : this.runtimeState.soulParts.get(bodyId);
+  }
+
+  /** 独立生命账本；失衡是否转给主体由伤害路由决定，不能在此替换整个账本。 */
+  soulVitals(target: RuntimeTargetRef): CombatVitals | undefined {
+    return target.kind === 'abilityEntity' ? this.#requireInstance(target).soulVitals : undefined;
+  }
+
+  /** SharedDamage 只提供主体公式所需的部位身份和账本，结算仍由公共伤害执行器负责。 */
+  sharedDamageTransfer(target: RuntimeTargetRef) {
+    if (target.kind !== 'abilityEntity') return undefined;
+    const instance = this.#instances.get(target.instanceId);
+    const soul = instance?.state.soul;
+    if (soul === undefined || instance?.soulVitals === undefined) return undefined;
+    const mainBodyId = runtimeTargetEntityId(soul.mainBody);
+    if (mainBodyId === undefined) throw new Error('Soul main body must be an entity');
+    return {
+      partId: logicalAbilityEntityRuntimeId(target.instanceId),
+      mainBodyId,
+      damageRatio: soul.damageRatio,
+      poiseRatio: soul.poiseRatio,
+      vitals: instance.soulVitals,
+      isAlive: () => this.isAlive(target) === true,
+    };
+  }
+
+  #bindSoulHealth(instance: LogicalAbilityEntityInstance): void {
+    instance.soulVitals?.bindHealthChangeObserver(() => {
+      if (instance.soulVitals!.health <= 0 && this.#instances.has(instance.state.instanceId))
+        this.kill({ kind: 'abilityEntity', instanceId: instance.state.instanceId });
+    });
+  }
+
   #requireInstance(target: RuntimeTargetRef): LogicalAbilityEntityInstance {
     if (target.kind !== 'abilityEntity') {
       throw new Error(`target '${target.kind}' is not an AbilityEntity`);
@@ -591,6 +734,9 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
     const blackboard = ActionBlackboard.bindRuntimeState(state.blackboard);
     let instance!: LogicalAbilityEntityInstance;
     instance = {
+      ...(state.soul === undefined
+        ? {}
+        : { soulVitals: CombatVitals.bindRuntimeState(state.soul.vitals) }),
       identity: Object.freeze({
         instanceId: state.instanceId,
         abilityEntityId: state.abilityEntityId,
@@ -616,6 +762,7 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
       childBuffs: [],
       resetCallbacks: new Map(),
     };
+    this.#bindSoulHealth(instance);
     return instance;
   }
 

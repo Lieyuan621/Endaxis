@@ -56,6 +56,11 @@ export function requireNonEmptyString(value: unknown, path: string): string {
   return result;
 }
 
+/** 仅用于以 null/空串表示“未配置引用”的键字段；不适用于字符串值或必填身份。 */
+export function readOptionalReferenceKey(value: unknown, path: string): string {
+  return value === null ? '' : requireString(value, path);
+}
+
 /** 当前 VFS 用整数 0 表示 Default，命名来源直接使用枚举名。 */
 export function requireNativeActionPriority(value: unknown, path: string): string {
   return value === 0 ? 'Default' : requireNonEmptyString(value, path);

@@ -575,6 +575,12 @@
     "setName": "AIC Fieldwork",
     "defense": 48
   },
+  "item_equip_t4_parts_wuling00_body_06": {
+    "name": "AIC Fieldwork CQB Armor",
+    "slotType": "Armor",
+    "setName": "AIC Fieldwork",
+    "defense": 48
+  },
   "item_equip_t4_parts_wuling00_edc_01": {
     "name": "AIC Fieldwork Machete",
     "slotType": "Accessory",
@@ -605,6 +611,12 @@
     "setName": "AIC Fieldwork",
     "defense": 18
   },
+  "item_equip_t4_parts_wuling00_edc_06": {
+    "name": "AIC Fieldwork CQB Hacksaw",
+    "slotType": "Accessory",
+    "setName": "AIC Fieldwork",
+    "defense": 18
+  },
   "item_equip_t4_parts_wuling00_hand_01": {
     "name": "AIC Fieldwork Gloves",
     "slotType": "Gloves",
@@ -631,6 +643,12 @@
   },
   "item_equip_t4_parts_wuling00_hand_05": {
     "name": "AIC Fieldwork Medic Gloves",
+    "slotType": "Gloves",
+    "setName": "AIC Fieldwork",
+    "defense": 36
+  },
+  "item_equip_t4_parts_wuling00_hand_06": {
+    "name": "AIC Fieldwork CQB Gloves",
     "slotType": "Gloves",
     "setName": "AIC Fieldwork",
     "defense": 36
@@ -695,8 +713,26 @@
     "setName": "",
     "defense": 56
   },
+  "item_equip_t4_parts_wuling02_body_03": {
+    "name": "Rift Trekker Steel Armor",
+    "slotType": "Armor",
+    "setName": "",
+    "defense": 56
+  },
+  "item_equip_t4_parts_wuling02_body_04": {
+    "name": "Rift Trekker Overalls",
+    "slotType": "Armor",
+    "setName": "",
+    "defense": 56
+  },
   "item_equip_t4_parts_wuling02_edc_01": {
     "name": "Rift Trekker Armor Slab",
+    "slotType": "Accessory",
+    "setName": "",
+    "defense": 21
+  },
+  "item_equip_t4_parts_wuling02_edc_02": {
+    "name": "Rift Trekker Silver Blade",
     "slotType": "Accessory",
     "setName": "",
     "defense": 21
@@ -709,6 +745,18 @@
   },
   "item_equip_t4_parts_wuling02_hand_02": {
     "name": "Rift Trekker Hands",
+    "slotType": "Gloves",
+    "setName": "",
+    "defense": 42
+  },
+  "item_equip_t4_parts_wuling02_hand_03": {
+    "name": "Rift Trekker Wraps",
+    "slotType": "Gloves",
+    "setName": "",
+    "defense": 42
+  },
+  "item_equip_t4_parts_wuling02_hand_04": {
+    "name": "Rift Trekker Gauntlets",
     "slotType": "Gloves",
     "setName": "",
     "defense": 42
@@ -821,6 +869,12 @@
     "setName": "Type 50 Yinglung",
     "defense": 56
   },
+  "item_equip_t4_suit_atk02_body_05": {
+    "name": "Type 50 Yinglung Soft Armor",
+    "slotType": "Armor",
+    "setName": "Type 50 Yinglung",
+    "defense": 56
+  },
   "item_equip_t4_suit_atk02_edc_01": {
     "name": "Type 50 Yinglung Radar",
     "slotType": "Accessory",
@@ -851,6 +905,12 @@
     "setName": "Type 50 Yinglung",
     "defense": 21
   },
+  "item_equip_t4_suit_atk02_edc_06": {
+    "name": "Type 50 Yinglung Beacon",
+    "slotType": "Accessory",
+    "setName": "Type 50 Yinglung",
+    "defense": 21
+  },
   "item_equip_t4_suit_atk02_hand_01": {
     "name": "Type 50 Yinglung Gloves",
     "slotType": "Gloves",
@@ -859,6 +919,12 @@
   },
   "item_equip_t4_suit_atk02_hand_02": {
     "name": "Type 50 Yinglung Gloves T1",
+    "slotType": "Gloves",
+    "setName": "Type 50 Yinglung",
+    "defense": 42
+  },
+  "item_equip_t4_suit_atk02_hand_03": {
+    "name": "Type 50 Yinglung Gloves",
     "slotType": "Gloves",
     "setName": "Type 50 Yinglung",
     "defense": 42
@@ -1427,6 +1493,12 @@
     "setName": "Pulser Labs",
     "defense": 56
   },
+  "item_equip_t4_suit_pulse_cryst01_body_02": {
+    "name": "Pulser Labs Light Armor",
+    "slotType": "Armor",
+    "setName": "Pulser Labs",
+    "defense": 56
+  },
   "item_equip_t4_suit_pulse_cryst01_edc_01": {
     "name": "Pulser Labs Probe",
     "slotType": "Accessory",
@@ -1445,8 +1517,20 @@
     "setName": "Pulser Labs",
     "defense": 21
   },
+  "item_equip_t4_suit_pulse_cryst01_edc_04": {
+    "name": "Pulser Labs Armor Slab",
+    "slotType": "Accessory",
+    "setName": "Pulser Labs",
+    "defense": 21
+  },
   "item_equip_t4_suit_pulse_cryst01_hand_01": {
     "name": "Pulser Labs Gloves",
+    "slotType": "Gloves",
+    "setName": "Pulser Labs",
+    "defense": 42
+  },
+  "item_equip_t4_suit_pulse_cryst01_hand_02": {
+    "name": "Pulser Labs Light Gauntlets",
     "slotType": "Gloves",
     "setName": "Pulser Labs",
     "defense": 42
@@ -1487,6 +1571,18 @@
     "setName": "Eternal Xiranite",
     "defense": 56
   },
+  "item_equip_t4_suit_usp02_body_05": {
+    "name": "Eternal Xiranite Overalls",
+    "slotType": "Armor",
+    "setName": "Eternal Xiranite",
+    "defense": 56
+  },
+  "item_equip_t4_suit_usp02_body_06": {
+    "name": "Eternal Xiranite MOD Armor",
+    "slotType": "Armor",
+    "setName": "Eternal Xiranite",
+    "defense": 56
+  },
   "item_equip_t4_suit_usp02_edc_01": {
     "name": "Eternal Xiranite Power Core",
     "slotType": "Accessory",
@@ -1523,6 +1619,12 @@
     "setName": "Eternal Xiranite",
     "defense": 21
   },
+  "item_equip_t4_suit_usp02_edc_07": {
+    "name": "Eternal Xiranite Rangefinder",
+    "slotType": "Accessory",
+    "setName": "Eternal Xiranite",
+    "defense": 21
+  },
   "item_equip_t4_suit_usp02_hand_01": {
     "name": "Eternal Xiranite Gloves",
     "slotType": "Gloves",
@@ -1543,6 +1645,12 @@
   },
   "item_equip_t4_suit_usp02_hand_04": {
     "name": "Eternal Xiranite Hands",
+    "slotType": "Gloves",
+    "setName": "Eternal Xiranite",
+    "defense": 42
+  },
+  "item_equip_t4_suit_usp02_hand_05": {
+    "name": "Eternal Xiranite Channeling Gloves",
     "slotType": "Gloves",
     "setName": "Eternal Xiranite",
     "defense": 42

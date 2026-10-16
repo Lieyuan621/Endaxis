@@ -116,7 +116,7 @@ it.each(['dispose', 'ownerPermission'] as const)(
     dispatcher.dispatch(
       {
         event: 'abilityEntityFinished',
-        payload: { sourceId: 'owner', targetId: 'entity' },
+        payload: { sourceId: 'owner', targetId: 'entity', finishReason: 'other' },
       },
       [],
     );
@@ -213,7 +213,7 @@ it('初始化只屏蔽当前未启用宿主，不改变已启用监听者及同�
     dispatcher.dispatch(
       {
         event: 'abilityEntityFinished',
-        payload: { sourceId: 'owner', targetId: 'entity' },
+        payload: { sourceId: 'owner', targetId: 'entity', finishReason: 'other' },
       },
       [],
     );
@@ -310,7 +310,7 @@ it('复用被动黑板与所有权，事件目标独立，并在注销后停止�
     dispatcher.dispatch(
       {
         event: 'abilityEntityFinished',
-        payload: { sourceId: 'owner', targetId: 'ability-entity:7' },
+        payload: { sourceId: 'owner', targetId: 'ability-entity:7', finishReason: 'other' },
       },
       [],
     );
@@ -383,7 +383,7 @@ it('恢复时按保存订阅重绑响应，不重新注册或改写原分支黑�
   restoredDispatcher.dispatch(
     {
       event: 'abilityEntityFinished',
-      payload: { sourceId: 'owner', targetId: 'entity' },
+      payload: { sourceId: 'owner', targetId: 'entity', finishReason: 'other' },
     },
     [],
   );
@@ -430,7 +430,7 @@ it('当前响应步骤已进入时不重启本序列，仍恢复外层事件目�
           nested = true;
           callbacks[0]!({
             event: 'abilityEntityFinished',
-            payload: { sourceId: 'owner', targetId: 'inner' },
+            payload: { sourceId: 'owner', targetId: 'inner', finishReason: 'other' },
           });
           expect(context!.event).toMatchObject({ payload: { targetId: 'outer' } });
         }
@@ -447,11 +447,11 @@ it('当前响应步骤已进入时不重启本序列，仍恢复外层事件目�
   runtime.enable();
   callbacks[0]!({
     event: 'abilityEntityFinished',
-    payload: { sourceId: 'owner', targetId: 'outer' },
+    payload: { sourceId: 'owner', targetId: 'outer', finishReason: 'other' },
   });
   callbacks[0]!({
     event: 'abilityEntityFinished',
-    payload: { sourceId: 'owner', targetId: 'next' },
+    payload: { sourceId: 'owner', targetId: 'next', finishReason: 'other' },
   });
   expect(seen).toEqual(['outer', 'next']);
   runtime.dispose();

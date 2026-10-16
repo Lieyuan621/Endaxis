@@ -1868,7 +1868,6 @@ export const avywennaChr_0012_avywen_combo_skill: SkillDefinition = {
     poise: 10,
     potential_2: 0,
     talent0_usp: 0,
-    usp: 10,
   },
   timelineBlockFrames: 41,
   naturalDurationFrames: 254,
@@ -2635,6 +2634,7 @@ export const avywenna: OperatorDefinition = {
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0012_avywen_combo_skill_lance: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',
@@ -2720,6 +2720,7 @@ export const avywenna: OperatorDefinition = {
       },
     },
     abilityentity_chr_0012_avywen_ultimate_skill_lance: {
+      faction: 'good',
       bornTags: [
         'Immune/Damage',
         'SelectCategory/Unmarkable',

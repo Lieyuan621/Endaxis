@@ -10,6 +10,7 @@ import { withAbilityEventResponseContext } from './abilityEventResponseContext';
 import { abilityEventSkillCastInfo } from './combatAbilityEvent';
 
 const payload = {
+  finishReason: 'other' as const,
   sourceId: 'owner',
   targetId: 'entity',
   entity: {

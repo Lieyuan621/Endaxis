@@ -119,7 +119,7 @@ it('恢复能力实体被动时保留实体动作身份和子 Buff 所有权', (
   restoredDispatcher.dispatch(
     {
       event: 'abilityEntityFinished',
-      payload: { sourceId: 'ability-entity:7', targetId: 'enemy' },
+      payload: { sourceId: 'ability-entity:7', targetId: 'enemy', finishReason: 'other' },
     },
     [],
   );

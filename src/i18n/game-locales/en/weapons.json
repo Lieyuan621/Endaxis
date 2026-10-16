@@ -356,6 +356,62 @@
       ]
     }
   },
+  "wpn_claym_0018": {
+    "name": "Jade Vessel",
+    "skill1": {
+      "name": "Intellect [L]",
+      "description": "Intellect <@ba.vup>+{0}</>",
+      "values": [20, 36, 52, 68, 84, 100, 116, 132, 156]
+    },
+    "skill2": {
+      "name": "Cryo DMG [L]",
+      "description": "Cryo DMG Dealt <@ba.vup>+{0}%</>",
+      "values": [5.6, 10, 14.4, 18.9, 23.3, 27.8, 32.2, 36.7, 43.3]
+    },
+    "skill3": {
+      "name": "Efficacy: Dabbles of Ink",
+      "description": "ATK <@ba.vup>+{0}%</>.\nWhen the wielder applies <#ba.static>Immobilization</> on the enemy, the target enemy suffers DMG Taken <@ba.vup>+{1}%</> for 30s.\nWhen the wielder applies <#ba.static>Immobilization</> on the enemy or after the wielder casts an ultimate, the next combo skill cast within 20s gains DMG Dealt <@ba.vup>+{2}%</>.\n<@ba.info>The two effects apply separately and do not stack with themselves.</>",
+      "values": [
+        [16, 7.5, 25],
+        [19.2, 9, 30],
+        [22.4, 10.5, 35],
+        [25.6, 12, 40],
+        [28.8, 13.5, 45],
+        [32, 15, 50],
+        [35.2, 16.5, 55],
+        [38.4, 18, 60],
+        [44.8, 21, 70]
+      ]
+    }
+  },
+  "wpn_claym_0019": {
+    "name": "Long Heritage",
+    "skill1": {
+      "name": "Intellect [L]",
+      "description": "Intellect <@ba.vup>+{0}</>",
+      "values": [20, 36, 52, 68, 84, 100, 116, 132, 156]
+    },
+    "skill2": {
+      "name": "Cryo DMG [L]",
+      "description": "Cryo DMG Dealt <@ba.vup>+{0}%</>",
+      "values": [5.6, 10, 14.4, 18.9, 23.3, 27.8, 32.2, 36.7, 43.3]
+    },
+    "skill3": {
+      "name": "Efficacy: Secret History",
+      "description": "Main attribute <@ba.vup>+{0}%</>.\nWhen the wielder's battle skill applies <#ba.crystinflict>Cryo Infliction</> or <#ba.fireinflict>Heat Infliction</>, the wielder gains Cryo DMG Dealt <@ba.vup>+{1}%</> for 20s.\nWhen the wielder grants <#ba.spellenhance>Arts Amp</> to another operator in the team, the entire team gains Arts DMG Dealt <@ba.vup>+{2}%</> for 20s.\n<@ba.info>The two effects apply separately and do not stack with themselves.</>",
+      "values": [
+        [7, 6, 4],
+        [8.4, 7.2, 4.8],
+        [9.8, 8.4, 5.6],
+        [11.2, 9.6, 6.4],
+        [12.6, 10.8, 7.2],
+        [14, 12, 8],
+        [15.4, 13.2, 8.8],
+        [16.8, 14.4, 9.6],
+        [19.6, 16.8, 11.2]
+      ]
+    }
+  },
   "wpn_funnel_0001": {
     "name": "Hypernova Auto",
     "skill1": {
@@ -2033,6 +2089,34 @@
         [22, 11, 7.7],
         [24, 12, 8.4],
         [28, 14, 9.8]
+      ]
+    }
+  },
+  "wpn_sword_0024": {
+    "name": "Complexed Industry",
+    "skill1": {
+      "name": "Will [L]",
+      "description": "Will <@ba.vup>+{0}</>",
+      "values": [20, 36, 52, 68, 84, 100, 116, 132, 156]
+    },
+    "skill2": {
+      "name": "Electric DMG [L]",
+      "description": "Electric DMG Dealt <@ba.vup>+{0}%</>",
+      "values": [5.6, 10, 14.4, 18.9, 23.3, 27.8, 32.2, 36.7, 43.3]
+    },
+    "skill3": {
+      "name": "Detonate: Complexed Advantage",
+      "description": "ATK <@ba.vup>+{0}%</>.\nWhen the wielder's combo skill applies <#ba.pulseinflict>Electric Infliction</>, the wielder gains Arts Intensity <@ba.vup>+{1}</> and Electric DMG Dealt <@ba.vup>+{2}%</> for 15s.\n<@ba.info>Effects of the same name cannot stack.</>",
+      "values": [
+        [7, 15, 8],
+        [8.4, 18, 9.6],
+        [9.8, 21, 11.2],
+        [11.2, 24, 12.8],
+        [12.6, 27, 14.4],
+        [14, 30, 16],
+        [15.4, 33, 17.6],
+        [16.8, 36, 19.2],
+        [19.6, 42, 22.4]
       ]
     }
   },

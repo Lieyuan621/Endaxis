@@ -1536,14 +1536,17 @@ describe('CombatActionSequenceRuntime', () => {
       );
   });
 
-  it('投射物白名单在发射时读取一次，并保留空间点身份而不当成敌人', () => {
+  it('投射物固定发射点与目标集合后逐对发射，白名单保留空间点身份', () => {
     const selected = [{ kind: 'spatialPoint' as const, pointId: 7 }];
     const queryTargets = vi.fn(() => selected);
-    const launchProjectile = vi.fn(() => ({
-      target: { kind: 'abilityEntity' as const, instanceId: 1 },
-      instanceId: 1,
-      onReset: () => ({ registrationId: 0, dispose: () => {} }),
-    }));
+    const launchProjectile = vi.fn(() => {
+      targetContext.set('points', []);
+      return {
+        target: { kind: 'abilityEntity' as const, instanceId: 1 },
+        instanceId: 1,
+        onReset: () => ({ registrationId: 0, dispose: () => {} }),
+      };
+    });
     const targetContext = new RuntimeTargetContext();
     targetContext.set('points', [
       { kind: 'spatialPoint', pointId: 8 },
@@ -1563,6 +1566,7 @@ describe('CombatActionSequenceRuntime', () => {
                 inheritActionBlackboard: false,
                 finish: 1,
                 targets: { kind: 'context', contextKey: 'points' },
+                emitters: { kind: 'context', contextKey: 'points' },
                 onlyHitTargets: { kind: 'inputTarget' },
               },
               callbacks: [],
@@ -1574,7 +1578,7 @@ describe('CombatActionSequenceRuntime', () => {
       .executeInstant({});
     selected.length = 0;
     expect(queryTargets).toHaveBeenCalledOnce();
-    expect(launchProjectile).toHaveBeenCalledTimes(2);
+    expect(launchProjectile).toHaveBeenCalledTimes(4);
     expect(launchProjectile).toHaveBeenLastCalledWith(
       expect.objectContaining({
         onlyHitTargets: [{ kind: 'spatialPoint', pointId: 7 }],

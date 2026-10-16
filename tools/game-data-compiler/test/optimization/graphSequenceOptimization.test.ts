@@ -10,7 +10,10 @@ import type {
   ActionGraphStep,
 } from '../../src/compiler/intermediateDefinitions.ts';
 import type { CombatCondition } from '../../src/compiler/intermediateDefinitions.ts';
-import { optimizeActionGraphDefinition } from '../../src/compiler/optimization/graphSequenceOptimization.ts';
+import {
+  optimizeActionGraphDefinition,
+  retainActionGraphEntries,
+} from '../../src/compiler/optimization/graphSequenceOptimization.ts';
 
 const literal = (value: number) => ({ kind: 'constant' as const, value });
 const constant = (value: boolean): CombatCondition => ({ kind: 'constant', value });
@@ -62,6 +65,18 @@ function optimize(graph: ActionGraphDefinition, entry: ActionGraphReference) {
 }
 
 describe('图侧序列优化', () => {
+  it('按宿主入口删除孤立依赖，但保留条件求值和未选分支的生命周期', () => {
+    const f = fixture();
+    const condition = f.chain(assign('checked', 1));
+    const selected = f.chain(damage());
+    const unselected = f.chain(assign('resetRequired', 1));
+    const entry = f.chain(guard(actionResult(condition), selected, unselected));
+    const retained = Object.keys(f.nodes).sort();
+    f.chain(assign('orphanInputRoute', 1));
+    const result = retainActionGraphEntries({ nodes: f.nodes }, [entry]);
+    expect(Object.keys(result.nodes).sort()).toEqual(retained);
+  });
+
   it('简化图检查表达式但不将常量操作数当作条件序列的最终返回值', () => {
     for (const passed of [true, false]) {
       for (const unusedAction of [assign('unused', 1), damage()]) {

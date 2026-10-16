@@ -159,10 +159,17 @@ function delayedProbe(): ResolvedActionSequence {
 }
 
 describe('projectile callback action lifecycle', () => {
-  it('投射物目录保存命中前输入和命中后宿主，旧切面保持未命中', () => {
+  it.each(['finish', 'launch'] as const)('%s 回调按对应时点启动，并保存宿主与输入目标', event => {
     const projectiles = new ProjectileLifecycleRuntime();
+    let calls = 0;
     const runtime = new CombatActionSequenceRuntime(
-      { execute: () => true, evaluate: () => true },
+      {
+        execute: () => {
+          calls++;
+          return true;
+        },
+        evaluate: () => true,
+      },
       {
         blackboard: new ActionBlackboard({ launchValue: 7 }),
         skillCastInfo: {
@@ -189,19 +196,37 @@ describe('projectile callback action lifecycle', () => {
       undefined,
       'source',
     );
-    runtime.createSequence(delayedProbe()).executeInstant({});
+    const nodes = delayedProbeNodes();
+    const action = nodes.launch!.action;
+    if (action.kind !== 'launchProjectile') throw new Error('expected launch');
+    const entry = compileGraphEntry(`probe-${event}`, 'launch', {
+      ...nodes,
+      launch: {
+        ...nodes.launch!,
+        action: {
+          ...action,
+          callbacks: action.callbacks.map(callback => ({ ...callback, event })),
+        },
+      },
+    });
+    runtime.createSequence(entry).executeInstant({});
     const data = [...projectiles.runtimeState.instances.values()][0]!.callbacks[0]!;
     expect(data.skillId).toBe('callback');
     expect(projectiles.callbackPrograms.resolve(data.programId!).skillId).toBe('callback');
     expect(data.skillCastInfo?.skillCastId).toBe(42);
-    expect(data.host).toBeNull();
+    if (event === 'launch') {
+      expect(calls).toBe(1);
+      expect(data.host).not.toBeNull();
+      expect(data.inputTarget).toEqual({ kind: 'abilityEntity', instanceId: 1 });
+    } else expect(data.host).toBeNull();
     expect(ActionBlackboard.bindRuntimeState(data.blackboard).snapshot().launchValue).toBe(7);
     const saved = structuredClone(projectiles.runtimeState);
     projectiles.advanceFrame();
     projectiles.advanceFrame();
     projectiles.advanceFrame();
     expect(data.host).not.toBeNull();
-    expect([...saved.instances.values()][0]!.callbacks[0]!.host).toBeNull();
+    expect(calls).toBe(1);
+    expect([...saved.instances.values()][0]!.callbacks[0]!.host === null).toBe(event !== 'launch');
   });
 
   it('uses the same synchronous out-of-duration jump cleanup as an ordinary skill', () => {
