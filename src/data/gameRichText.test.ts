@@ -1,4 +1,5 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
+import terms from '../i18n/game-locales/zh/terms.json';
 import { getRichTextStyle, parseGameRichText, resolveRichTextImage } from './gameRichText';
 
 describe('game rich text', () => {
@@ -21,6 +22,27 @@ describe('game rich text', () => {
       '/icons/icon_energy_fusion_fire.webp',
     );
     expect(resolveRichTextImage('/images/../private.webp')).toBeNull();
+  });
+
+  test('resolves images embedded in generated terms under a deployment subdirectory', () => {
+    vi.stubEnv('BASE_URL', '/Endaxis/');
+    try {
+      const images = parseGameRichText(terms['ba.burning'].description).filter(
+        node => node.type === 'image',
+      );
+      expect(images).toHaveLength(3);
+      expect(images.map(node => resolveRichTextImage(node.path))).toEqual([
+        '/Endaxis/icons/icon_energy_fusion_pulse.webp',
+        '/Endaxis/icons/icon_energy_fusion_cryst.webp',
+        '/Endaxis/icons/icon_infliction_nature.webp',
+      ]);
+      expect(resolveRichTextImage('/Endaxis/icons/icon_energy_fusion_fire.webp')).toBe(
+        '/Endaxis/icons/icon_energy_fusion_fire.webp',
+      );
+      expect(resolveRichTextImage('/icons/../private.webp')).toBeNull();
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   test('preserves contract colors, nested terms and text after closing tags', () => {

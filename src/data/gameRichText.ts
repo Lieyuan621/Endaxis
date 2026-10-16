@@ -69,9 +69,11 @@ export function resolveRichTextImage(path: string) {
   const normalized = String(path || '')
     .replace(/\\/g, '/')
     .trim();
-  if (normalized.startsWith('/icons/')) return normalized;
-  if (normalized.startsWith('icons/')) return `/${normalized}`;
-  return null;
+  const base = import.meta.env.BASE_URL;
+  const relative = normalized.startsWith(base) ? normalized.slice(base.length) : normalized;
+  // 富文本中的路径位于句子内部，不能依赖构建时改写独立路径字符串。
+  const icon = /^\/?icons\/([a-zA-Z0-9_-]+\.webp)$/.exec(relative);
+  return icon ? `${base}icons/${icon[1]}` : null;
 }
 
 export function getRichTextStyle(id: string): ResolvedRichTextStyle {

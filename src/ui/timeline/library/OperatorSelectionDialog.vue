@@ -143,6 +143,7 @@ function clear(): void {
       width="600px"
       align-center
       class="char-selector-dialog"
+      scroll-mode="body"
       append-to-body
       @closed="emit('close')"
     >

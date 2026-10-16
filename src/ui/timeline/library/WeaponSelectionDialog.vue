@@ -135,6 +135,7 @@ function handleDialogVisibility(value: boolean): void {
     width="600px"
     align-center
     class="char-selector-dialog"
+    scroll-mode="body"
     append-to-body
     @update:model-value="handleDialogVisibility"
   >
