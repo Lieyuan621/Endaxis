@@ -1785,7 +1785,12 @@ const commonBuff42ActionGraph = {
         next: 'applyBuff_1',
       },
     },
-    dataNodes: { data_1: { type: 'boolean', expression: { kind: 'casterControlled' } } },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
+    },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
@@ -2173,7 +2178,10 @@ const commonBuff43ActionGraph = {
           markerId: 'DodgeSucceedMarker',
         },
       },
-      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_5: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_2' } },
@@ -2273,7 +2281,10 @@ const commonBuff44ActionGraph = {
           tags: ['Status/CanNotPerfectDodge'],
         },
       },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
     },
   },
   macros: {},

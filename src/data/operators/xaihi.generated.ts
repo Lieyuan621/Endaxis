@@ -102,7 +102,10 @@ export const xaihiChr_0011_seraph_attack1ActionGraph = {
                           value: 1,
                         },
                       },
-                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_3: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_4: {
                         type: 'boolean',
                         expression: {
@@ -269,7 +272,10 @@ export const xaihiChr_0011_seraph_attack2ActionGraph = {
                           value: 1,
                         },
                       },
-                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_3: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_4: {
                         type: 'boolean',
                         expression: {
@@ -436,7 +442,10 @@ export const xaihiChr_0011_seraph_attack3ActionGraph = {
                           value: 1,
                         },
                       },
-                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_3: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_4: {
                         type: 'boolean',
                         expression: {
@@ -603,7 +612,10 @@ export const xaihiChr_0011_seraph_attack4ActionGraph = {
                           value: 1,
                         },
                       },
-                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_3: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_4: {
                         type: 'boolean',
                         expression: {
@@ -787,7 +799,10 @@ export const xaihiChr_0011_seraph_attack5ActionGraph = {
           value: 1,
         },
       },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_4: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_12' } },
@@ -932,7 +947,10 @@ export const xaihiChr_0011_seraph_power_attackActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -1611,7 +1629,7 @@ export const xaihiChr_0011_seraph_ultimate_skillActionGraph = {
             priority: 10,
             curve: { kind: 'named', key: 'RESETto1' },
             finishByAction: false,
-            targets: ['caster'],
+            targets: [{ kind: 'owner' }],
           },
         },
         next: null,
@@ -2299,7 +2317,10 @@ const xaihiBuff6ActionGraph = {
           tags: ['normalAttackLastCombo'],
         },
       },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_3: {
         type: 'boolean',
         expression: {

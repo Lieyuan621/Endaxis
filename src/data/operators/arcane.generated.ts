@@ -213,7 +213,10 @@ export const arcaneChr_0032_lizhiyan_attack2ActionGraph = {
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_4: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
@@ -328,7 +331,10 @@ export const arcaneChr_0032_lizhiyan_attack3ActionGraph = {
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_4: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
@@ -699,7 +705,10 @@ export const arcaneChr_0032_lizhiyan_attack5ActionGraph = {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
       data_6: {
@@ -1010,7 +1019,10 @@ export const arcaneChr_0032_lizhiyan_plunging_attack_endActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -1629,7 +1641,10 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
         },
       },
       data_13: { type: 'number', expression: { kind: 'blackboard', key: 'duration_final' } },
-      data_14: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_14: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_15: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
@@ -1736,7 +1751,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
             priority: 10,
             curve: { kind: 'named', key: 'RESETto1' },
             finishByAction: false,
-            targets: ['caster'],
+            targets: [{ kind: 'owner' }],
           },
         },
         next: null,
@@ -2700,7 +2715,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
             priority: 10,
             curve: { kind: 'named', key: 'RESETto1' },
             finishByAction: false,
-            targets: ['caster'],
+            targets: [{ kind: 'owner' }],
           },
         },
         next: null,

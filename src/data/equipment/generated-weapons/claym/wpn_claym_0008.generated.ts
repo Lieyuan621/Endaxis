@@ -140,7 +140,10 @@ const definition = {
             },
           },
           dataNodes: {
-            data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+            },
             data_2: {
               type: 'boolean',
               expression: {
@@ -151,7 +154,10 @@ const definition = {
             },
             data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_up' } },
             data_4: { type: 'number', expression: { kind: 'blackboard', key: 'multi' } },
-            data_5: { type: 'boolean', expression: { kind: 'casterControlled' } },
+            data_5: {
+              type: 'boolean',
+              expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+            },
             data_6: {
               type: 'boolean',
               expression: {
@@ -240,7 +246,10 @@ const definition = {
             },
           },
           dataNodes: {
-            data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+            data_1: {
+              type: 'boolean',
+              expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+            },
             data_2: {
               type: 'boolean',
               expression: {

@@ -964,7 +964,7 @@ describe('主动技能正式时间轴投影', () => {
     expect(result.switchToBuffCast).toMatchObject({
       currentSkillTypes: ['basicAttack'],
       requiresCurrentSkillNotInterruptible: true,
-      condition: { kind: 'casterControlled' },
+      condition: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
     });
   });
 
@@ -1004,10 +1004,8 @@ describe('主动技能正式时间轴投影', () => {
     if (check?.kind !== 'checkCondition') throw new Error('missing condition');
     expect(check.parameters).toMatchObject({
       condition: {
-        kind: 'contextTargetIdentityMatch',
-        selection: 'first',
-        contextKey: 'selected',
-        other: 'controlledOperator',
+        kind: 'checkMainCharacter',
+        target: { kind: 'context', key: 'selected' },
       },
     });
   });
@@ -2796,7 +2794,7 @@ describe('主动技能正式时间轴投影', () => {
       {
         kind: 'startTimeDilation',
         parameters: {
-          targets: ['caster'],
+          targets: [{ kind: 'owner' }],
           curve: {
             kind: 'inline',
             keys: [

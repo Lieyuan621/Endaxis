@@ -1993,16 +1993,18 @@ const selectedLibraryInspectorModel = computed(() => {
     segments: skillSegments(entry).map(segment => segment.label),
   };
 });
-const gearSetNames = computed<Readonly<Record<string, string>>>(() =>
-  Object.fromEntries(
+const gearSetNames = computed<Readonly<Record<string, string>>>(() => {
+  // 装备目录按需加载后，仓库查询结果会变化，需要同步刷新套装名称。
+  void operatorDefinitionRevision.value;
+  return Object.fromEntries(
     editorGameDataRepository
       .getGearSets()
       .map(definition => [
         definition.slug,
         definition.displayName ?? getGearSetGameName(definition.slug, locale.value),
       ]),
-  ),
-);
+  );
+});
 const gearSetTextSlugs = computed<Readonly<Record<string, string>>>(() =>
   Object.fromEntries(
     Object.values(projectDefinitionLibrary.value.gearSets).map(template => [
@@ -6139,7 +6141,8 @@ const comboSkillPriorityOperators = computed(() => {
   return ordered.map(track => ({
     id: track.operatorInstanceId,
     name: operatorName(track.operatorSlug),
-    avatar: track.operatorAssetSlug === null ? null : getOperatorAvatarPath(track.operatorAssetSlug),
+    avatar:
+      track.operatorAssetSlug === null ? null : getOperatorAvatarPath(track.operatorAssetSlug),
   }));
 });
 
@@ -6150,7 +6153,9 @@ function toggleComboSkillPriority(): void {
       ...current.battle,
       comboSkillPriority: {
         enabled: !current.battle.comboSkillPriority?.enabled,
-        operatorOrder: current.battle.comboSkillPriority?.operatorOrder ?? current.tracks.flatMap(track => track ? [track.id] : []),
+        operatorOrder:
+          current.battle.comboSkillPriority?.operatorOrder ??
+          current.tracks.flatMap(track => (track ? [track.id] : [])),
       },
     },
   }));
@@ -8467,7 +8472,6 @@ function setMobileGuideFrame(frame: number | null): void {
       totalDamage: t('timeline.analysis.totalDamage'),
       expectedTotalDamage: t('timeline.analysis.expectedTotalDamage'),
       sampledTotalDamage: t('timeline.analysis.sampledTotalDamage'),
-      expectedModeDescription: t('timeline.analysis.expectedModeDescription'),
       sampledModeDescription: (seed: string) =>
         t('timeline.analysis.sampledModeDescription', { seed }),
       rotationTime: t('timeline.analysis.rotationTime'),
@@ -8480,6 +8484,7 @@ function setMobileGuideFrame(frame: number | null): void {
         [t('timeline.analysis.faq2Q'), t('timeline.analysis.faq2A')],
         [t('timeline.analysis.faq3Q'), t('timeline.analysis.faq3A')],
         [t('timeline.analysis.faq4Q'), t('timeline.analysis.faq4A')],
+        [t('timeline.analysis.faq6Q'), t('timeline.analysis.faq6A')],
       ],
     }"
     @update:visible="showDamageAnalysis = $event"

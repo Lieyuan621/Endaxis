@@ -330,7 +330,10 @@ export const fluoriteChr_0022_bounda_attack3ActionGraph = {
                           value: 1,
                         },
                       },
-                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_3: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_4: {
                         type: 'boolean',
                         expression: {
@@ -523,7 +526,10 @@ export const fluoriteChr_0022_bounda_attack4ActionGraph = {
                           value: 1,
                         },
                       },
-                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_3: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_4: {
                         type: 'boolean',
                         expression: {
@@ -719,7 +725,10 @@ export const fluoriteChr_0022_bounda_attack4_1ActionGraph = {
                           value: 1,
                         },
                       },
-                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_3: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_4: {
                         type: 'boolean',
                         expression: {
@@ -909,8 +918,14 @@ export const fluoriteChr_0022_bounda_power_attackActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
     },
   },
   macros: {},
@@ -1198,7 +1213,7 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
             priority: 10,
             curve: { kind: 'named', key: 'RESETto1' },
             finishByAction: false,
-            targets: ['caster'],
+            targets: [{ kind: 'owner' }],
           },
         },
         next: null,
@@ -1788,7 +1803,10 @@ export const fluoriteChr_0022_bounda_combo_skillActionGraph = {
           value: 1,
         },
       },
-      data_7: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_7: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
     },
   },
   macros: {},

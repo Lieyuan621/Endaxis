@@ -178,7 +178,10 @@ export const siChr_0036_jsspsi_attack1ActionGraph = {
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale1' } },
       data_5: {
         type: 'number',
@@ -193,7 +196,10 @@ export const siChr_0036_jsspsi_attack1ActionGraph = {
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_7: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_7: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_8: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
     },
   },
@@ -337,7 +343,10 @@ export const siChr_0036_jsspsi_attack2ActionGraph = {
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -478,7 +487,10 @@ export const siChr_0036_jsspsi_attack3ActionGraph = {
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -704,7 +716,10 @@ export const siChr_0036_jsspsi_attack5ActionGraph = {
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
       data_7: {
@@ -866,7 +881,10 @@ export const siChr_0036_jsspsi_power_attackActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
     },
   },
   macros: {},
@@ -1885,7 +1903,10 @@ export const siChr_0036_jsspsi_ultimate_skillActionGraph = {
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
       data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise_2' } },
-      data_7: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_7: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
     },
   },
   macros: {},
@@ -3041,7 +3062,7 @@ const siBuff9ActionGraph = {
               ],
             },
             finishByAction: true,
-            targets: ['caster'],
+            targets: [{ kind: 'owner' }],
           },
         },
         next: null,
@@ -8087,7 +8108,10 @@ export const si: OperatorDefinition = {
                 type: 'number',
                 expression: { kind: 'blackboard', key: 'EntityBB_atk_scale' },
               },
-              data_11: { type: 'boolean', expression: { kind: 'casterControlled' } },
+              data_11: {
+                type: 'boolean',
+                expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+              },
               data_12: {
                 type: 'number',
                 expression: { kind: 'blackboard', key: 'atk_scale_count' },

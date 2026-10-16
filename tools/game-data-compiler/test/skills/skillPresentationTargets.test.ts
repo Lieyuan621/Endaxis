@@ -387,8 +387,7 @@ describe('来源裁剪的跨入口消费者', () => {
           action: {
             kind: 'mainOperator',
             sourceType: 'CheckMainCharacterCondition',
-            targetSource: 'Source',
-            targetGroupKey: '',
+            target: parseTargetReferenceSource(targetFixture('Source'), 'checkTarget'),
           },
         }),
         whenTrue: branch,

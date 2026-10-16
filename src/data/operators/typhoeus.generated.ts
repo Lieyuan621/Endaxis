@@ -1026,7 +1026,10 @@ export const typhoeusChr_0034_typhoea_attack5ActionGraph = {
                           right: { kind: 'constant', value: 0 },
                         },
                       },
-                      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_4: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_5: {
                         type: 'number',
                         expression: { kind: 'blackboard', key: 'atk_scale' },
@@ -2075,9 +2078,15 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
           value: 1,
         },
       },
-      data_6: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_6: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_7: { type: 'number', expression: { kind: 'blackboard', key: 'have_move_input' } },
-      data_8: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_9: { type: 'number', expression: { kind: 'blackboard', key: 'arrow_num' } },
       data_10: {
         type: 'boolean',
@@ -2107,7 +2116,10 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_14: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_14: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_15: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
@@ -2138,7 +2150,10 @@ export const typhoeusChr_0034_typhoea_floating_attack1ActionGraph = {
           value: 1,
         },
       },
-      data_19: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_19: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_20: {
         type: 'boolean',
         expression: {
@@ -3234,9 +3249,15 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
           value: 1,
         },
       },
-      data_6: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_6: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_7: { type: 'number', expression: { kind: 'blackboard', key: 'have_move_input' } },
-      data_8: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_9: { type: 'number', expression: { kind: 'blackboard', key: 'arrow_num' } },
       data_10: {
         type: 'boolean',
@@ -3266,7 +3287,10 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_14: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_14: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_15: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
@@ -3297,7 +3321,10 @@ export const typhoeusChr_0034_typhoea_floating_attack2ActionGraph = {
           value: 1,
         },
       },
-      data_19: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_19: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_20: {
         type: 'boolean',
         expression: {
@@ -4301,9 +4328,15 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
           value: 1,
         },
       },
-      data_6: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_6: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_7: { type: 'number', expression: { kind: 'blackboard', key: 'have_move_input' } },
-      data_8: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_9: {
         type: 'boolean',
         expression: {
@@ -4322,7 +4355,10 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_12: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_12: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_13: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
@@ -4353,7 +4389,10 @@ export const typhoeusChr_0034_typhoea_floating_attack3ActionGraph = {
           value: 1,
         },
       },
-      data_17: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_17: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_18: {
         type: 'boolean',
         expression: {
@@ -5426,14 +5465,32 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
           value: 1,
         },
       },
-      data_6: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_6: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_7: { type: 'number', expression: { kind: 'blackboard', key: 'have_move_input' } },
-      data_8: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_9: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_10: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_11: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
+      data_9: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
+      data_10: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
+      data_11: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_12: { type: 'boolean', expression: { kind: 'enemyRankIn', ranks: ['boss'] } },
-      data_13: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_13: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_14: {
         type: 'boolean',
         expression: {
@@ -5474,7 +5531,10 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
           value: 1,
         },
       },
-      data_19: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_19: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_20: {
         type: 'boolean',
         expression: {
@@ -5503,7 +5563,10 @@ export const typhoeusChr_0034_typhoea_floating_attack4ActionGraph = {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_24: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_24: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_25: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
@@ -6517,7 +6580,10 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
                           right: { kind: 'constant', value: 1 },
                         },
                       },
-                      data_11: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_11: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_12: {
                         type: 'boolean',
                         expression: {
@@ -6545,7 +6611,10 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
                           value: { kind: 'constant', value: 0 },
                         },
                       },
-                      data_16: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_16: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                     },
                   },
                   macros: {},
@@ -6970,7 +7039,10 @@ export const typhoeusChr_0034_typhoea_floating_attack5ActionGraph = {
           value: 1,
         },
       },
-      data_14: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_14: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_15: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
@@ -8044,7 +8116,10 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
           value: 1,
         },
       },
-      data_5: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_5: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_6: {
         type: 'boolean',
         expression: {
@@ -8067,7 +8142,10 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
           value: 1,
         },
       },
-      data_8: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_9: {
         type: 'boolean',
         expression: {
@@ -8090,7 +8168,10 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
           value: 1,
         },
       },
-      data_11: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_11: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_12: {
         type: 'boolean',
         expression: {
@@ -8105,7 +8186,10 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_startActionGraph = {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_14: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_14: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
     },
   },
   macros: {},
@@ -9384,7 +9468,10 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
           value: 1,
         },
       },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_4: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'EntityBB_floating_attack_index' },
@@ -9398,7 +9485,10 @@ export const typhoeusChr_0034_typhoea_combo_skillfloatingActionGraph = {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_8: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_9: {
         type: 'boolean',
         expression: {
@@ -9557,7 +9647,7 @@ export const typhoeusChr_0034_typhoea_ultimate_skillfloatingActionGraph = {
             priority: 10,
             curve: { kind: 'named', key: 'RESETto1' },
             finishByAction: false,
-            targets: ['caster'],
+            targets: [{ kind: 'owner' }],
           },
         },
         next: null,
@@ -9965,7 +10055,10 @@ export const typhoeusChr_0034_typhoea_ultimate_skillfloatingActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_8: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_9: {
         type: 'boolean',
         expression: {
@@ -10841,7 +10934,10 @@ const typhoeusBuff11ActionGraph = {
         type: 'boolean',
         expression: { kind: 'eventDamageFeaturesMatch', match: 'hasAll', features: ['remainArea'] },
       },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_3: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'potential_atkup', fallback: 0 },

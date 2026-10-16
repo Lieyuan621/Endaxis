@@ -52,7 +52,7 @@ export type CompiledBuffConditionSource =
   | Condition<'globalCooldownPresent'>
   | Condition<'casterComboPending'>
   | Condition<
-      | 'casterControlled'
+      | 'checkMainCharacter'
       | 'characterTypeIn'
       | 'operatorRoleIn'
       | 'currentBuffStackCompare'

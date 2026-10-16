@@ -83,7 +83,10 @@ export const camilleChr_0033_camille_attack1ActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
     },
@@ -203,7 +206,10 @@ export const camilleChr_0033_camille_attack2ActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
     },
@@ -329,7 +335,10 @@ export const camilleChr_0033_camille_attack3ActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -497,7 +506,10 @@ export const camilleChr_0033_camille_attack4ActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
     },
   },
@@ -631,7 +643,7 @@ export const camilleChr_0033_camille_attack5ActionGraph = {
               ],
             },
             finishByAction: false,
-            targets: ['caster'],
+            targets: [{ kind: 'owner' }],
           },
         },
         next: null,
@@ -639,7 +651,10 @@ export const camilleChr_0033_camille_attack5ActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
     },
@@ -978,10 +993,19 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
     },
   },
   macros: {},
@@ -1072,7 +1096,10 @@ export const camilleChr_0033_camille_plunging_attack_endActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -1726,10 +1753,16 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_1' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_2' } },
       data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
       data_7: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_3' } },
@@ -2185,9 +2218,15 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1_1' } },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1_2' } },
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'imbue_scale' } },
       data_6: { type: 'number', expression: { kind: 'blackboard', key: 'combo_duration' } },
@@ -2227,7 +2266,10 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
           right: { kind: 'constant', value: 0 },
         },
       },
-      data_16: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_16: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_17: {
         type: 'boolean',
         expression: {
@@ -2727,10 +2769,16 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_1' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_2' } },
       data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
       data_7: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_3' } },

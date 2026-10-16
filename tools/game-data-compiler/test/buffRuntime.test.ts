@@ -294,7 +294,13 @@ describe('Buff 运行时公共来源', () => {
         condition: {
           actions: [
             { body: { value: { action: { kind: 'damageDecorateMask', mask: 2097152 } } } },
-            { body: { value: { action: { kind: 'mainOperator', targetSource: 'Source' } } } },
+            {
+              body: {
+                value: {
+                  action: { kind: 'mainOperator', target: { targetSource: 'Source' } },
+                },
+              },
+            },
           ],
         },
         processors: [

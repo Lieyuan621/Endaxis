@@ -4439,11 +4439,12 @@ export class CombatRuntimeAssembly {
       delegate: rankConditions,
     });
     const controlConditions = new OperatorControlConditionExecutor({
-      isCasterControlled: () => {
+      queryTargets: (query, context) => targetContextOperations.queryTargets(query, context),
+      isOperatorControlled: targetId => {
         if (isOperatorControlled === undefined) {
           throw new Error(`skill '${program.skillId}' requires the current controlled operator`);
         }
-        return isOperatorControlled(operatorId, this.clock.frame);
+        return isOperatorControlled(targetId, this.clock.frame);
       },
       delegate: vitalsConditions,
     });
@@ -4797,11 +4798,12 @@ export class CombatRuntimeAssembly {
       delegate: rankConditions,
     });
     const controlConditions = new OperatorControlConditionExecutor({
-      isCasterControlled: () => {
+      queryTargets: (query, context) => targetContextOperations.queryTargets(query, context),
+      isOperatorControlled: targetId => {
         if (options.isOperatorControlled === undefined) {
           throw new Error(`reactive event '${sourceActionId}' requires control state`);
         }
-        return options.isOperatorControlled(operatorId, this.clock.frame);
+        return options.isOperatorControlled(targetId, this.clock.frame);
       },
       delegate: vitalsConditions,
     });

@@ -102,7 +102,10 @@ export const antalChr_0023_antal_attack1ActionGraph = {
                           value: 1,
                         },
                       },
-                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_3: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_4: {
                         type: 'boolean',
                         expression: {
@@ -268,7 +271,10 @@ export const antalChr_0023_antal_attack2ActionGraph = {
                           value: 1,
                         },
                       },
-                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_3: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_4: {
                         type: 'boolean',
                         expression: {
@@ -434,7 +440,10 @@ export const antalChr_0023_antal_attack3ActionGraph = {
                           value: 1,
                         },
                       },
-                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_3: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_4: {
                         type: 'boolean',
                         expression: {
@@ -631,7 +640,10 @@ const antalChr_0023_antal_attack4ActionGraphCallback1 = {
             value: 1,
           },
         },
-        data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+        data_4: {
+          type: 'boolean',
+          expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+        },
         data_5: {
           type: 'boolean',
           expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_2' } },
@@ -841,7 +853,10 @@ export const antalChr_0023_antal_power_attackActionGraph = {
                           value: 1,
                         },
                       },
-                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_3: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_4: {
                         type: 'boolean',
                         expression: {
@@ -1482,7 +1497,7 @@ export const antalChr_0023_antal_ultimate_skillActionGraph = {
             priority: 10,
             curve: { kind: 'named', key: 'RESETto1' },
             finishByAction: false,
-            targets: ['caster'],
+            targets: [{ kind: 'owner' }],
           },
         },
         next: null,

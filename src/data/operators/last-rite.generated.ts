@@ -87,7 +87,10 @@ export const lastRiteChr_0026_lastrite_attack1ActionGraph = {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -207,7 +210,10 @@ export const lastRiteChr_0026_lastrite_attack2ActionGraph = {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -414,13 +420,19 @@ export const lastRiteChr_0026_lastrite_attack3ActionGraph = {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_5: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_6: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_6: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
     },
   },
   macros: {},
@@ -594,14 +606,20 @@ export const lastRiteChr_0026_lastrite_attack4ActionGraph = {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
       data_6: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_7: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_7: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
     },
   },
   macros: {},
@@ -717,7 +735,10 @@ export const lastRiteChr_0026_lastrite_power_attackActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -1068,7 +1089,10 @@ export const lastRiteChr_0026_lastrite_normal_skillActionGraph = {
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
       data_6: { type: 'number', expression: { kind: 'blackboard', key: 'potential_1' } },
       data_7: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_8: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_9: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: 'invertNextResult_7' } },
@@ -1077,7 +1101,10 @@ export const lastRiteChr_0026_lastrite_normal_skillActionGraph = {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_11: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_11: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
     },
   },
   macros: {},
@@ -1152,7 +1179,7 @@ export const lastRiteChr_0026_lastrite_ultimate_skillActionGraph = {
             priority: 10,
             curve: { kind: 'named', key: 'RESETto1' },
             finishByAction: false,
-            targets: ['caster'],
+            targets: [{ kind: 'owner' }],
           },
         },
         next: null,
@@ -1305,7 +1332,7 @@ export const lastRiteChr_0026_lastrite_ultimate_skillActionGraph = {
             priority: 50,
             curve: { kind: 'named', key: 'RESETto1' },
             finishByAction: false,
-            targets: ['caster'],
+            targets: [{ kind: 'owner' }],
           },
         },
         next: null,
@@ -2160,7 +2187,10 @@ const lastRiteBuff2ActionGraph = {
           tags: ['normalAttackLastCombo'],
         },
       },
-      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
       data_6: {
         type: 'boolean',
@@ -2171,7 +2201,10 @@ const lastRiteBuff2ActionGraph = {
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_7: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_7: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_8: {
         type: 'boolean',
         expression: {
@@ -2199,7 +2232,10 @@ const lastRiteBuff2ActionGraph = {
           tags: ['Skill/Character/chr_0026_lastrite'],
         },
       },
-      data_11: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_11: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_12: {
         type: 'boolean',
         expression: {

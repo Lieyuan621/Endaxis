@@ -222,7 +222,6 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
         throw new Error('storeEventDamageValue requires an action context');
       const event = context.event;
       let finalValue = 0;
-      let realValue = 0;
       if (
         event &&
         'event' in event &&
@@ -233,17 +232,11 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
         event.payload.result !== undefined
       ) {
         finalValue = event.payload.result.value;
-        if (event.payload.actualDamage === undefined)
-          throw new Error('damage event is missing its actual health change');
-        realValue = event.payload.actualDamage;
       }
+      // 木桩模拟不因剩余生命值截断存储伤害：最终值与实际扣血均读最终值，损失值为零。
       context.blackboard.assignDynamic(
         step.parameters.outputKey,
-        step.parameters.value === 'final'
-          ? finalValue
-          : step.parameters.value === 'real'
-            ? realValue
-            : finalValue - realValue,
+        step.parameters.value === 'overflow' ? 0 : finalValue,
       );
       return true;
     }

@@ -135,8 +135,7 @@ export type NativeConditionSource =
     })
   | (ConditionIdentity & {
       readonly kind: 'mainOperator';
-      readonly targetSource: string;
-      readonly targetGroupKey: string;
+      readonly target: TargetReferenceSource;
     })
   | (ConditionIdentity & {
       readonly kind: 'profession';
@@ -1228,15 +1227,10 @@ function parseMainOperator(
   path: string,
   sourceType: string,
 ): NativeConditionSource {
-  const target = requireRecord(condition.checkTarget, `${path}.checkTarget`);
   return {
     kind: 'mainOperator',
     sourceType,
-    targetSource: readTargetSource(target.targetSource, `${path}.checkTarget.targetSource`),
-    targetGroupKey: readOptionalReferenceKey(
-      target.targetGroupKey,
-      `${path}.checkTarget.targetGroupKey`,
-    ),
+    target: parseTargetReferenceSource(condition.checkTarget, `${path}.checkTarget`),
   };
 }
 

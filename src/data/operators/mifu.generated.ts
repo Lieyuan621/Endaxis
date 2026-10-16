@@ -180,7 +180,10 @@ export const mifuChr_0031_mifu_attack1ActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'hitstop_times' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_4: {
         type: 'number',
@@ -374,9 +377,15 @@ export const mifuChr_0031_mifu_attack2ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale1' } },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
     },
   },
@@ -766,8 +775,14 @@ export const mifuChr_0031_mifu_attack3ActionGraph = {
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale1' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'hitstop_times' } },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
-      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
       data_6: {
         type: 'number',
@@ -971,10 +986,16 @@ export const mifuChr_0031_mifu_attack4ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale1' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
       data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
     },
@@ -1058,7 +1079,10 @@ export const mifuChr_0031_mifu_plunging_attack_endActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -1973,7 +1997,7 @@ export const mifuChr_0031_mifu_normalskill_2ActionGraph = {
               ],
             },
             finishByAction: true,
-            targets: ['caster'],
+            targets: [{ kind: 'owner' }],
           },
         },
         next: null,
@@ -2049,7 +2073,10 @@ export const mifuChr_0031_mifu_normalskill_2ActionGraph = {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_7: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_7: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_8: {
         type: 'boolean',
         expression: {
@@ -2601,7 +2628,10 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_17: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_17: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_18: {
         type: 'boolean',
         expression: {

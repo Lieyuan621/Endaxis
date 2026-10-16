@@ -297,11 +297,12 @@ export function analyzeConditionUsage(
         ),
         reads: new Set(),
       };
+    case 'checkMainCharacter':
+      return { ...EMPTY, mayThrow: true, observable: !isReadOnlyTargetQuery(condition.target) };
     case 'skillHasHit':
     case 'combatActive':
     case 'singleEnemyPresent':
     case 'comboCameraAlphaSetting':
-    case 'casterControlled':
     case 'characterTypeIn':
     case 'operatorRoleIn':
     case 'enemyRankIn':

@@ -14,7 +14,8 @@ export function summarizeModifierCondition(sequence: ResolvedActionSequence): Bu
   function condition(input: CompiledConditionInput) {
     const value = conditionInputExpression(input);
     if (value.kind === 'all') value.conditions.forEach(condition);
-    else if (value.kind === 'casterControlled') requirements.add('casterControlled');
+    else if (value.kind === 'checkMainCharacter' && value.target.kind === 'owner')
+      requirements.add('casterControlled');
     else if (value.kind === 'eventSkillCastMatchesBuffSource') requirements.add('sameSkillCast');
     else if (
       value.kind === 'eventDamageTagsMatch' &&

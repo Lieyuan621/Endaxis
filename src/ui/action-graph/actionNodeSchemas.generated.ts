@@ -5217,7 +5217,16 @@ export const dataNodeSchemas: Readonly<Record<string, NodeSchema>> = {
   },
   'boolean:combatActive': { fields: [] },
   'boolean:singleEnemyPresent': { fields: [] },
-  'boolean:casterControlled': { fields: [] },
+  'boolean:checkMainCharacter': {
+    fields: [
+      {
+        valueSchema: schema_b34626bb7a77,
+        path: ['target'],
+        description: '对应原生 checkTarget；Owner 和 Source 不可互换。',
+        control: 'json',
+      },
+    ],
+  },
   'boolean:characterTypeIn': {
     fields: [
       {

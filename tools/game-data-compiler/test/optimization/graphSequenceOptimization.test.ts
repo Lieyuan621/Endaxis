@@ -117,7 +117,7 @@ describe('图侧序列优化', () => {
     const f = fixture();
     const check = f.chain({
       kind: 'checkCondition',
-      parameters: { condition: { kind: 'casterControlled' } },
+      parameters: { condition: { kind: 'checkMainCharacter', target: { kind: 'owner' } } },
     });
     const entry = f.chain(
       {
@@ -203,7 +203,10 @@ describe('图侧序列优化', () => {
         condition: actionResult(
           f.chain(
             { kind: 'invertNextResult', parameters: {} },
-            { kind: 'checkCondition', parameters: { condition: { kind: 'casterControlled' } } },
+            {
+              kind: 'checkCondition',
+              parameters: { condition: { kind: 'checkMainCharacter', target: { kind: 'owner' } } },
+            },
           ),
         ),
         whenTrue: { $sequence: null },

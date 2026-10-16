@@ -2247,9 +2247,9 @@
         "name": "Single Enemy?",
         "help": "Check whether a single enemy is present."
       },
-      "casterControlled": {
-        "name": "Caster Controlled?",
-        "help": "Check whether the caster is the controlled operator."
+      "checkMainCharacter": {
+        "name": "Check Main Character",
+        "help": "Check whether the specified target is the currently controlled operator."
       },
       "characterTypeIn": {
         "name": "Element Type Matches?",
@@ -3124,14 +3124,11 @@
       "totalDamage": "Total Damage",
       "expectedTotalDamage": "Expected-basis Total Damage",
       "sampledTotalDamage": "This Run's Total Damage",
-      "expectedModeDescription": "Expected mode: each hit uses its mathematical expectation; discrete Buff, resource, and trigger events follow a fixed frequency sequence.",
       "sampledModeDescription": "Random mode: this run uses global seed {seed}; skill blocks with an independent seed use their own seed.",
       "rotationTime": "Rotation Time",
       "dps": "DPS",
       "noData": "No damage data available. Add actions to the timeline first.",
       "contributionByOperator": "Contribution by Operator",
-      "contributionDetails": "View contribution breakdown",
-      "contributionTotal": "Total",
       "lmdiModeStacks": "By Stacks",
       "lmdiModeStacksTip": "Breach, electrification, and corrosion contribution are split between the trigger and the infliction stack providers.",
       "lmdiModeApplier": "By Applier",
@@ -3141,14 +3138,16 @@
       "warning": "Damage analysis is for team optimization only. Please do not use it to attack others.",
       "unattributedDamage": "Unattributed damage {value}: the receipt has no skill-block or track source.",
       "faqTitle": "FAQ",
-      "faq1Q": "Why is the damage different from the game?",
-      "faq1A": "The analysis uses current game data and compiled combat rules. Missing mechanics, spatial simplifications, version differences, and UI rounding can all cause differences. Check native evidence and simulation diagnostics for the rule involved.",
-      "faq2Q": "What are the limitations of the damage calculation?",
-      "faq2A": "The analysis only counts damage receipts produced by the formal simulation. It does not invent uncompiled behavior or missing conditions such as distance and target count. Reported simulation diagnostics can prevent some skills from executing.",
-      "faq3Q": "How is contribution calculated?",
-      "faq3A": "The inner ring shows total contribution; the outer ring separates own damage from bonuses provided to teammates. Logarithmic-mean decomposition assigns damage gains from effective direct modifiers to their providers, without tracing upstream causes. Supported factors include damage zones, direct multipliers, additive resistance reduction, and reconcilable percentage and flat ATK bonuses. Undecomposed damage stays with the attacker. Status stack sources are not redistributed. Negative contributions are shown in a table rather than a misleading pie chart.",
+      "faq1Q": "How do damage and contribution by operator differ?",
+      "faq1A": "Damage shows who dealt each hit. Contribution assigns the portion gained from a teammate's buffs to that teammate. The inner ring shows each operator's total contribution; the outer ring separates their own damage from bonuses provided to teammates. Hover over a slice to see its value and share.",
+      "faq2Q": "Are overlapping buffs counted more than once?",
+      "faq2A": "No. Each hit's damage is allocated once, then added to each operator's total. When several buffs apply together, their providers share the damage gain rather than each receiving the entire gain.",
+      "faq3Q": "Why is a support operator's contribution lower than I expected?",
+      "faq3A": "The chart mainly measures effects that directly increase damage when a hit lands. Providing energy, enabling combo skills, or applying infliction in advance may not receive credit. Status gains are not currently redistributed by infliction stacks. Damage that cannot be allocated stays with the attacker, so this chart alone cannot measure an operator's value.",
       "faq4Q": "How is the analysis range chosen?",
-      "faq4A": "Counting starts at the scenario's simulation start and ignores earlier preparation damage. Rotation time ends at the last valid damage event. DPS is zero when there is no valid damage."
+      "faq4A": "Only damage within the simulation range is counted; preparation damage is excluded. Rotation time runs from the simulation start to the last hit, and DPS is total damage divided by that duration. Empty time after the last hit is excluded.",
+      "faq6Q": "Why does the result differ from actual combat?",
+      "faq6A": "First check that builds, enemy resistances, the controlled operator, and skill order match. The simulation uses one enemy with no active behavior, ignores distance, and assumes attacks hit. Movement, missed hits, and multiple targets can change real combat results. Expected mode averages critical damage, so it will not match a single actual run. If a large discrepancy remains, include the scenario file and the relevant hit details when reporting it."
     },
     "export": {
       "copyCode": "Copy Data Code",
@@ -3990,7 +3989,7 @@
         "currentSkillTypeIn": "Current skill type matches",
         "combatActive": "Combat active",
         "singleEnemyPresent": "Single enemy present",
-        "casterControlled": "Caster controlled",
+        "checkMainCharacter": "Target is the controlled operator",
         "enemySuperArmorCompare": "Enemy super armor comparison",
         "targetStaggered": "Target staggered",
         "healthCompare": "Health comparison",

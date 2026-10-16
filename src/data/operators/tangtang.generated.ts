@@ -269,7 +269,10 @@ export const tangtangChr_0027_tangtang_attack2ActionGraph = {
                           value: 1,
                         },
                       },
-                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_3: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_4: {
                         type: 'boolean',
                         expression: {
@@ -550,7 +553,10 @@ export const tangtangChr_0027_tangtang_attack4ActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2' } },
     },
   },
@@ -730,7 +736,10 @@ export const tangtangChr_0027_tangtang_attack5ActionGraph = {
                           value: 1,
                         },
                       },
-                      data_6: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_6: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_7: {
                         type: 'boolean',
                         expression: {
@@ -1508,7 +1517,7 @@ export const tangtangChr_0027_tangtang_ultimate_skillActionGraph = {
             priority: 10,
             curve: { kind: 'named', key: 'RESETto1' },
             finishByAction: false,
-            targets: ['caster'],
+            targets: [{ kind: 'owner' }],
           },
         },
         next: null,

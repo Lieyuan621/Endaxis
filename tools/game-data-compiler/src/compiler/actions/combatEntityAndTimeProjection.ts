@@ -1063,10 +1063,13 @@ export function compileBuffLeafNode(
         action.effectTargets.length === 1 && target?.targetSource === 'Owner'
           ? context.fixedBuffOwnerTarget === 'enemy'
             ? (['enemy'] as const)
-            : context.fixedBuffOwnerTarget === undefined ||
-                context.fixedBuffOwnerTarget === 'caster'
-              ? (['caster'] as const)
-              : null
+            : context.fixedBuffOwnerTarget === undefined
+              ? currentAbilityEntity
+                ? ([] as const)
+                : ([{ kind: 'owner' }] as const)
+              : context.fixedBuffOwnerTarget === 'caster'
+                ? (['caster'] as const)
+                : null
           : action.effectTargets.length === 1 &&
               target?.targetSource === 'Target' &&
               context.actionTargetTarget === 'enemy'

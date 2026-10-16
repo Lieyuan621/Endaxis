@@ -25,7 +25,7 @@ function createDamageResult(value: number): PlayerActiveDamageResult {
 }
 
 describe('executeHealthDamage', () => {
-  it('伤害事件分别保存公式值、实际扣血与溢出，离开事件后不读取旧值', () => {
+  it('存储伤害不受木桩剩余生命限制、损失为零，事件实际扣血仍保持原值', () => {
     const blackboard = new ActionBlackboard();
     const executor = new ActionBlackboardOperationExecutor({
       execute: () => false,
@@ -63,7 +63,7 @@ describe('executeHealthDamage', () => {
       },
     });
     expect(['final', 'real', 'overflow'].map(key => blackboard.getNumber(key))).toEqual([
-      150, 100, 50,
+      150, 150, 0,
     ]);
     executor.execute(
       { kind: 'storeEventDamageValue', parameters: { value: 'real', outputKey: 'real' } },

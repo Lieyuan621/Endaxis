@@ -1,4 +1,5 @@
 import { targetFixture } from '../sourceFixtures.ts';
+import { parseTargetReferenceSource } from '../../src/source/target.ts';
 import { compileGraphSequence } from '../support/graphSequence.ts';
 import {
   TargetContextOperationExecutor,
@@ -3155,8 +3156,10 @@ describe('公共 Buff 运行时投影', () => {
                         action: {
                           kind: 'mainOperator',
                           sourceType: 'CheckMainCharacterCondition',
-                          targetSource: 'Source',
-                          targetGroupKey: '',
+                          target: parseTargetReferenceSource(
+                            targetFixture('Source'),
+                            'checkTarget',
+                          ),
                         },
                       },
                     },
@@ -3201,7 +3204,7 @@ describe('公共 Buff 运行时投影', () => {
       readResourceActions(definition, definition.poiseModifiers![0]!.condition!)[1],
     ).toMatchObject({
       kind: 'checkCondition',
-      parameters: { condition: { kind: 'casterControlled' } },
+      parameters: { condition: { kind: 'checkMainCharacter', target: { kind: 'source' } } },
     });
     expect(definition.poiseModifiers).toEqual([
       {

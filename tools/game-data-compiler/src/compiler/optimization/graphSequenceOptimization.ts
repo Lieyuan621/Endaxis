@@ -815,7 +815,7 @@ function isDiscardableCheck(action: ActionGraphStep): boolean {
       'constant',
       'actionValueCompare',
       'comboCameraAlphaSetting',
-      'casterControlled',
+      'checkMainCharacter',
       'buffIdStackCompare',
       'entityCountCompare',
       'targetFacingAngle',

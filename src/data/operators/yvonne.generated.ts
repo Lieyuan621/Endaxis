@@ -106,7 +106,10 @@ export const yvonneChr_0017_yvonne_attack1ActionGraph = {
                           value: 1,
                         },
                       },
-                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_3: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_4: {
                         type: 'boolean',
                         expression: {
@@ -284,7 +287,10 @@ export const yvonneChr_0017_yvonne_attack2ActionGraph = {
                           value: 1,
                         },
                       },
-                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_3: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_4: {
                         type: 'boolean',
                         expression: {
@@ -401,7 +407,10 @@ export const yvonneChr_0017_yvonne_attack2ActionGraph = {
                           value: 1,
                         },
                       },
-                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_3: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_4: {
                         type: 'boolean',
                         expression: {
@@ -580,7 +589,10 @@ export const yvonneChr_0017_yvonne_attack3ActionGraph = {
                           value: 1,
                         },
                       },
-                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_3: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_4: {
                         type: 'boolean',
                         expression: {
@@ -760,7 +772,10 @@ export const yvonneChr_0017_yvonne_attack4ActionGraph = {
                           value: 1,
                         },
                       },
-                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_3: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_4: {
                         type: 'boolean',
                         expression: {
@@ -997,7 +1012,10 @@ export const yvonneChr_0017_yvonne_attack5ActionGraph = {
         },
       },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_5: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_5: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_7: {
         type: 'boolean',
@@ -3931,7 +3949,10 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_11: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_11: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_12: { type: 'number', expression: { kind: 'blackboard', key: 'atk_up' } },
       data_13: { type: 'number', expression: { kind: 'blackboard', key: 'crit_dmg_up' } },
       data_14: {
@@ -4232,7 +4253,10 @@ export const yvonneChr_0017_yvonne_power_attackActionGraph = {
           value: 1,
         },
       },
-      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
     },
   },
   macros: {},
@@ -4616,7 +4640,7 @@ export const yvonneChr_0017_yvonne_ultimate_skillActionGraph = {
             priority: 10,
             curve: { kind: 'named', key: 'RESETto1' },
             finishByAction: false,
-            targets: ['caster'],
+            targets: [{ kind: 'owner' }],
           },
         },
         next: null,

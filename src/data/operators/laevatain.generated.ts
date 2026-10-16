@@ -53,7 +53,10 @@ export const laevatainChr_0016_laevat_attack1ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -187,7 +190,10 @@ export const laevatainChr_0016_laevat_attack2ActionGraph = {
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
     },
   },
   macros: {},
@@ -293,7 +299,10 @@ export const laevatainChr_0016_laevat_attack3ActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -505,7 +514,10 @@ export const laevatainChr_0016_laevat_attack4ActionGraph = {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -694,7 +706,10 @@ export const laevatainChr_0016_laevat_attack5ActionGraph = {
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'count', fallback: 0 } },
       data_5: {
         type: 'boolean',
@@ -899,7 +914,10 @@ export const laevatainChr_0016_laevat_ult_attack1ActionGraph = {
           value: 1,
         },
       },
-      data_5: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_5: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_7: { type: 'number', expression: { kind: 'blackboard', key: 'ratio' } },
     },
@@ -1145,7 +1163,10 @@ export const laevatainChr_0016_laevat_ult_attack2ActionGraph = {
           value: 1,
         },
       },
-      data_5: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_5: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_7: { type: 'number', expression: { kind: 'blackboard', key: 'ratio' } },
       data_8: { type: 'number', expression: { kind: 'blackboard', key: 'stopped2', fallback: 0 } },
@@ -1169,7 +1190,10 @@ export const laevatainChr_0016_laevat_ult_attack2ActionGraph = {
           value: 1,
         },
       },
-      data_11: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_11: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
     },
   },
   macros: {},
@@ -1363,7 +1387,10 @@ export const laevatainChr_0016_laevat_ult_attack3ActionGraph = {
           value: 1,
         },
       },
-      data_5: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_5: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_7: { type: 'number', expression: { kind: 'blackboard', key: 'ratio' } },
     },
@@ -1567,7 +1594,10 @@ export const laevatainChr_0016_laevat_ult_attack4ActionGraph = {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'ratio' } },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'stopped', fallback: 0 } },
       data_6: {
         type: 'boolean',
@@ -1589,7 +1619,10 @@ export const laevatainChr_0016_laevat_ult_attack4ActionGraph = {
           value: 1,
         },
       },
-      data_8: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_9: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
     },
   },
@@ -1818,13 +1851,19 @@ export const laevatainChr_0016_laevat_power_attackActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_3: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
-      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
     },
   },
   macros: {},
@@ -1904,7 +1943,10 @@ export const laevatainChr_0016_laevat_plunging_attack_endActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -2835,7 +2877,7 @@ export const laevatainChr_0016_laevat_ultimate_skillActionGraph = {
             priority: 10,
             curve: { kind: 'named', key: 'RESETto1' },
             finishByAction: false,
-            targets: ['caster'],
+            targets: [{ kind: 'owner' }],
           },
         },
         next: null,
@@ -4575,7 +4617,10 @@ const laevatainBuff13ActionGraph = {
           value: { kind: 'valueNode', nodeId: 'data_1' },
         },
       },
-      data_12: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_12: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_13: {
         type: 'boolean',
         expression: {

@@ -64,12 +64,9 @@ let resizeObserver: ResizeObserver | null = null;
 const sectionLayout = computed(() =>
   resolveMonitorSectionLayout(rootHeight.value, collapsed, sectionWeights),
 );
-const compact = computed(() =>
-  sectionKeys.some(
-    key =>
-      !collapsed[key] && sectionLayout.value.rects[key].bodyHeight < compactBodyThresholds[key],
-  ),
-);
+function isSectionCompact(key: SectionKey): boolean {
+  return sectionLayout.value.rects[key].bodyHeight < compactBodyThresholds[key];
+}
 
 const resizePairs = computed(() => {
   const expanded = sectionKeys.filter(key => !collapsed[key]);
@@ -270,7 +267,7 @@ watch(
           <strong>{{ props.labels[key] }}</strong>
         </EaButton>
         <div v-show="!collapsed[key]" class="section-content">
-          <slot :name="key" :compact="compact" />
+          <slot :name="key" :compact="isSectionCompact(key)" />
         </div>
       </section>
     </template>

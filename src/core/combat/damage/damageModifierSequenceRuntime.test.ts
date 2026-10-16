@@ -46,7 +46,7 @@ it('别礼正式战技条件：潜能、主控、重击缺一不可，连续命�
             throw new Error('条件不应执行外部操作');
           },
           evaluate(check) {
-            if (check.kind !== 'casterControlled')
+            if (check.kind !== 'checkMainCharacter')
               throw new Error(`unexpected condition ${check.kind}`);
             return controlled;
           },

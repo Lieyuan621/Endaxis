@@ -118,7 +118,7 @@ function inspectCondition(
     case 'globalCooldownPresent':
     case 'casterComboPending':
     case 'abilityEntityTimedMarkerPresent':
-    case 'casterControlled':
+    case 'checkMainCharacter':
     case 'characterTypeIn':
     case 'operatorRoleIn':
     case 'enemyRankIn':

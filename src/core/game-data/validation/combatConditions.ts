@@ -99,12 +99,14 @@ export function validateCombatCondition(
     case 'skillHasHit':
     case 'combatActive':
     case 'singleEnemyPresent':
-    case 'casterControlled':
     case 'casterComboPending':
     case 'eventSourceMatchesBuffSource':
     case 'eventSourceMatchesBuffSourceEntitySource':
     case 'buffSourceMatchesOwner':
     case 'eventSkillCastMatchesBuffSource':
+      break;
+    case 'checkMainCharacter':
+      validateTargetQuery(record.target, `${path}.target`, out);
       break;
     case 'ownerSpawnedAbilityEntityPresent':
       if (

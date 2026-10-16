@@ -38,7 +38,10 @@ describe('工作区资产草稿', () => {
           ...owner.actionGraph.main,
           dataNodes: {
             ...owner.actionGraph.main.dataNodes,
-            available: { type: 'boolean', expression: { kind: 'casterControlled' } },
+            available: {
+              type: 'boolean',
+              expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+            },
             amount: { type: 'number', expression: { kind: 'constant', value: 1 } },
           },
         },

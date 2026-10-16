@@ -169,7 +169,7 @@ function pruneUnobservedConditionComputations<Value>(
           ![
             'constant',
             'actionValueCompare',
-            'casterControlled',
+            'checkMainCharacter',
             'comboCameraAlphaSetting',
             'entityCountCompare',
             'targetDistance',

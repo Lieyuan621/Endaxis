@@ -75,6 +75,26 @@ it('祀正式定义可放置全部技能并完成模拟', async () => {
       .map((cast, index) => ({ ...cast, placement: { startFrame: index * 90 } })),
   };
   const result = await createEditorSimulationService().simulate(scenario, 1500);
+  // 敌方定身不能暂停施法者，否则紧接终结技会与全局暂停互相等待。
+  const battleThenUltimate = structuredClone(scenario);
+  battleThenUltimate.tracks[0]!.skillCasts = scenario.tracks[0]!.skillCasts.filter(cast =>
+    ['chr_0036_jsspsi_normal_skill', 'chr_0036_jsspsi_ultimate_skill'].includes(cast.id),
+  ).map((cast, index) => ({ ...cast, placement: { startFrame: index === 0 ? -1 : 40 } }));
+  const followUp = await createEditorSimulationService().simulate(battleThenUltimate, 600);
+  expect(followUp.receiptEntries).toContainEqual(
+    expect.objectContaining({
+      event: 'TimeDilationStarted',
+      targetId: 'enemy',
+      data: expect.objectContaining({ priority: 100, kind: 'entity', currentScale: 0 }),
+    }),
+  );
+  expect(followUp.receiptEntries).toContainEqual(
+    expect.objectContaining({
+      event: 'SkillOperableBoundaryReached',
+      frame: 126,
+      data: expect.objectContaining({ castId: 'chr_0036_jsspsi_ultimate_skill' }),
+    }),
+  );
   // 不接第三段时，墨魂回返施加的 Buff 创建者是祀，施法身份仍属于实体子技能。
   const returning = structuredClone(scenario);
   returning.tracks[0]!.operator!.talentStates = { 0: 2, 1: 2 };
@@ -1482,7 +1502,7 @@ describe('registered generated operators', () => {
   });
 
   it('activates Laevatain fire-resistance ignore after absorbing four heat attachments', () => {
-    const run = (talentLevel: 1 | 3) => {
+    const run = (talentLevel: 1 | 3, allyControlled = false) => {
       const scenario = createEmptyScenario(
         `scenario:laevatain:talent1:${talentLevel}`,
         '莱万汀天赋一默认仓库回归',
@@ -1578,6 +1598,24 @@ describe('registered generated operators', () => {
         customDefinition: probe,
       });
 
+      if (allyControlled) {
+        placed.tracks[1] = {
+          ...structuredClone(track),
+          id: 'track:ally',
+          operator: { ...track.operator!, operatorSlug: 'perlica', talentStates: {} },
+          skillCasts: track.skillCasts.slice(0, -1).map(cast => ({
+            ...cast,
+            source: {
+              kind: 'operatorSkill',
+              skillGroupKey: 'basicAttack',
+              skillKey: 'chr_0004_pelica_attack1',
+            },
+            customDefinition: { ...cast.customDefinition!, key: 'chr_0004_pelica_attack1' },
+          })),
+        };
+        track.skillCasts = track.skillCasts.slice(-1);
+        placed.battle.controlSwitches = [{ id: 'switch:ally', frame: 0, trackIndex: 1 }];
+      }
       const result = runStandardPlayerDamageScenarioSimulation({
         scenario: placed,
         endFrame: 180,
@@ -1609,6 +1647,7 @@ describe('registered generated operators', () => {
     expect(level1).toBeTypeOf('number');
     expect(level3).toBeTypeOf('number');
     expect(level3!).toBeGreaterThan(level1!);
+    expect(run(3, true)).toBe(level3);
   });
 
   it('reduces Fluorite combo cooldown once when her nature infliction reaches the enemy', () => {

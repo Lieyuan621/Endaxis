@@ -43,7 +43,10 @@ describe('poise modifiers', () => {
                     },
                   ],
                   {
-                    controlled: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                    controlled: {
+                      type: 'boolean',
+                      expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+                    },
                     feature: {
                       type: 'boolean',
                       expression: {
@@ -64,7 +67,8 @@ describe('poise modifiers', () => {
                 ),
                 new CombatActionSequenceRuntime(
                   new OperatorControlConditionExecutor({
-                    isCasterControlled: () => controlled,
+                    isOperatorControlled: () => controlled,
+                    queryTargets: () => [{ kind: 'operator', operatorId: 'caster' }],
                     delegate: new EventContextConditionExecutor({
                       execute: () => true,
                       evaluate: () => {

@@ -1635,7 +1635,10 @@ export const zhuangFangyiChr_0030_zhuangfy_normal_skillActionGraph = {
           value: 1,
         },
       },
-      data_21: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_21: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_22: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
@@ -3223,7 +3226,7 @@ export const zhuangFangyiChr_0030_zhuangfy_ultimate_skillActionGraph = {
             priority: 10,
             curve: { kind: 'named', key: 'RESETto1' },
             finishByAction: false,
-            targets: ['caster'],
+            targets: [{ kind: 'owner' }],
           },
         },
         next: null,
@@ -3638,7 +3641,10 @@ export const zhuangFangyiChr_0030_zhuangfy_attack1_ultActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_2: {
         type: 'boolean',
         expression: {
@@ -3662,7 +3668,10 @@ export const zhuangFangyiChr_0030_zhuangfy_attack1_ultActionGraph = {
           value: 1,
         },
       },
-      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_5: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'target_in_range', fallback: 0 },
@@ -3687,7 +3696,10 @@ export const zhuangFangyiChr_0030_zhuangfy_attack1_ultActionGraph = {
           value: 1,
         },
       },
-      data_8: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_9: {
         type: 'boolean',
         expression: {
@@ -3708,7 +3720,10 @@ export const zhuangFangyiChr_0030_zhuangfy_attack1_ultActionGraph = {
           value: 1,
         },
       },
-      data_11: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_11: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_12: {
         type: 'boolean',
         expression: {
@@ -4074,7 +4089,10 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2_ultActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_2: {
         type: 'boolean',
         expression: {
@@ -4098,7 +4116,10 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2_ultActionGraph = {
           value: 1,
         },
       },
-      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_5: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'target_in_range', fallback: 0 },
@@ -4123,7 +4144,10 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2_ultActionGraph = {
           value: 1,
         },
       },
-      data_8: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_9: {
         type: 'boolean',
         expression: {
@@ -4144,7 +4168,10 @@ export const zhuangFangyiChr_0030_zhuangfy_attack2_ultActionGraph = {
           value: 1,
         },
       },
-      data_11: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_11: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_12: {
         type: 'boolean',
         expression: {
@@ -4311,7 +4338,10 @@ export const zhuangFangyiChr_0030_zhuangfy_attack3_ultActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_2: {
         type: 'boolean',
         expression: {
@@ -4642,13 +4672,7 @@ const zhuangFangyiComboCondition2ActionGraph = {
       },
       data_5: {
         type: 'boolean',
-        expression: {
-          kind: 'contextTargetIdentityMatch',
-          selection: 'first',
-          contextKey: 'trigger',
-          other: 'controlledOperator',
-          operator: 'equal',
-        },
+        expression: { kind: 'checkMainCharacter', target: { kind: 'context', key: 'trigger' } },
       },
     },
   },
@@ -6579,7 +6603,10 @@ export const zhuangFangyi: OperatorDefinition = {
               },
             },
             dataNodes: {
-              data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+              data_1: {
+                type: 'boolean',
+                expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+              },
               data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
               data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
               data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },

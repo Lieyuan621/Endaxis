@@ -360,78 +360,10 @@ function compileConditionLeaf(
   )
     throw new Error(`${sourcePath}: unaudited receiving Buff event condition ${condition.kind}`);
   if (condition.kind === 'mainOperator') {
-    if (condition.targetSource === 'Context' && condition.targetGroupKey !== '') {
-      return {
-        kind: 'contextTargetIdentityMatch',
-        selection: 'first',
-        contextKey: condition.targetGroupKey,
-        other: 'controlledOperator',
-        operator: 'equal',
-      };
-    }
-    if (
-      condition.targetSource === 'Owner' &&
-      context.actionOwnerTarget === 'currentAbilityEntity'
-    ) {
-      // 投射物/能力实体自己的 AbilitySystem 不可能是玩家主控角色。
-      return {
-        kind: 'actionValueCompare',
-        left: { kind: 'constant', value: 0 },
-        operator: 'equal',
-        right: { kind: 'constant', value: 1 },
-      };
-    }
-    if (
-      condition.targetSource === 'Target' &&
-      condition.targetGroupKey === '' &&
-      context.actionTargetTarget === 'enemy'
-    ) {
-      // 静态敌方木桩不可能是玩家主控；用显式假条件保留 alwaysNext/fail 分支结构。
-      return {
-        kind: 'actionValueCompare',
-        left: { kind: 'constant', value: 0 },
-        operator: 'equal',
-        right: { kind: 'constant', value: 1 },
-      };
-    }
-    if (
-      condition.targetSource === 'Target' &&
-      condition.targetGroupKey === '' &&
-      context.actionTargetTarget === 'buffOwner' &&
-      (context.fixedBuffOwnerTarget === 'caster' || context.fixedBuffOwnerTarget === 'enemy')
-    ) {
-      return context.fixedBuffOwnerTarget === 'caster'
-        ? { kind: 'casterControlled' }
-        : {
-            kind: 'actionValueCompare',
-            left: { kind: 'constant', value: 0 },
-            operator: 'equal',
-            right: { kind: 'constant', value: 1 },
-          };
-    }
-    if (
-      condition.targetSource === 'Target' &&
-      condition.targetGroupKey === '' &&
-      (context.actionTargetTarget === 'eventSource' ||
-        context.actionTargetTarget === 'eventTarget' ||
-        context.actionTargetTarget === 'actionInputTarget' ||
-        context.actionTargetTarget === 'currentOperator')
-    ) {
-      return {
-        kind: 'actionInputTargetIdentityMatch',
-        other: 'controlledOperator',
-        operator: 'equal',
-      };
-    }
-    const projectsCaster =
-      (condition.targetSource === 'Owner' &&
-        (context.actionOwnerTarget === 'caster' || context.fixedBuffOwnerTarget === 'caster')) ||
-      (condition.targetSource === 'Source' && context.actionSourceTarget === 'caster');
-    // 固定 Owner/Source 不读取 targetGroupKey；部分原始技能保留了上一个 Context 目标组名。
-    if (!projectsCaster) {
-      throw new Error(`${sourcePath}: unsupported main-character condition target`);
-    }
-    return { kind: 'casterControlled' };
+    return {
+      kind: 'checkMainCharacter',
+      target: projectActionTargetQuery(condition.target, context, `${sourcePath}.checkTarget`),
+    };
   }
   if (condition.kind === 'profession') {
     if (condition.target.targetGroupKey !== '') {
@@ -958,7 +890,7 @@ function compileConditionLeaf(
       (context.actionOwnerTarget === 'caster' || context.fixedBuffOwnerTarget === 'caster')
     ) {
       // 宿主是干员不代表当前由玩家主控；每次调用都读取当前主控身份。
-      return { kind: 'casterControlled' };
+      return { kind: 'checkMainCharacter', target: { kind: 'owner' } };
     }
     const isEventInputReference = (target: typeof first) =>
       target.targetSource === 'Target' && isPlainReference(target);

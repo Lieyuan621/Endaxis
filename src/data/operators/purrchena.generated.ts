@@ -178,7 +178,10 @@ export const purrchenaChr_0038_purrche_attack1ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_2: {
         type: 'boolean',
         expression: {
@@ -192,7 +195,10 @@ export const purrchenaChr_0038_purrche_attack1ActionGraph = {
       },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_5: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_5: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_6: {
         type: 'boolean',
         expression: {
@@ -560,7 +566,10 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_4: {
         type: 'boolean',
         expression: {
@@ -587,7 +596,10 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_9: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_9: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_10: {
         type: 'boolean',
         expression: {
@@ -613,7 +625,10 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_14: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_14: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_15: {
         type: 'boolean',
         expression: {
@@ -876,7 +891,10 @@ export const purrchenaChr_0038_purrche_attack3ActionGraph = {
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_3: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_4: {
         type: 'boolean',
         expression: {
@@ -891,7 +909,10 @@ export const purrchenaChr_0038_purrche_attack3ActionGraph = {
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
       data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_7: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_8: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_9: {
         type: 'boolean',
         expression: {
@@ -1160,7 +1181,10 @@ export const purrchenaChr_0038_purrche_plunging_attack_endActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -3147,7 +3171,10 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_8: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
     },
   },
   macros: {},
@@ -5273,7 +5300,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
             priority: 10,
             curve: { kind: 'named', key: 'RESETto1' },
             finishByAction: false,
-            targets: ['caster'],
+            targets: [{ kind: 'owner' }],
           },
         },
         next: null,
@@ -5975,7 +6002,10 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
           containsHittableObject: false,
         },
       },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'prob' } },
       data_4: {
         type: 'boolean',
@@ -6271,13 +6301,7 @@ const purrchenaComboCondition1ActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
-        expression: {
-          kind: 'contextTargetIdentityMatch',
-          selection: 'first',
-          contextKey: 'trigger',
-          other: 'controlledOperator',
-          operator: 'equal',
-        },
+        expression: { kind: 'checkMainCharacter', target: { kind: 'context', key: 'trigger' } },
       },
     },
   },

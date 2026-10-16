@@ -33,7 +33,6 @@ const props = defineProps<{
     totalDamage: string;
     expectedTotalDamage: string;
     sampledTotalDamage: string;
-    expectedModeDescription: string;
     sampledModeDescription: (seed: string) => string;
     rotationTime: string;
     dps: string;
@@ -185,12 +184,8 @@ const damageTypeChartOption = computed(() => pieOption(props.analysis.byDamageTy
           <span class="warning-text">{{ labels.warning }}</span>
         </div>
 
-        <div class="analysis-mode">
-          {{
-            randomMode === 'expected'
-              ? labels.expectedModeDescription
-              : labels.sampledModeDescription(String(globalRandomSeed))
-          }}
+        <div v-if="randomMode === 'sampled'" class="analysis-mode">
+          {{ labels.sampledModeDescription(String(globalRandomSeed)) }}
         </div>
 
         <div v-if="!hasData" class="empty-state">
@@ -227,49 +222,6 @@ const damageTypeChartOption = computed(() => pieOption(props.analysis.byDamageTy
                   </tr>
                 </tbody>
               </table>
-              <el-collapse class="contribution-details">
-                <el-collapse-item
-                  :title="t('timeline.analysis.contributionDetails')"
-                  name="contribution"
-                >
-                  <table class="contribution-values">
-                    <thead>
-                      <tr>
-                        <th>{{ labels.contributionByOperator }}</th>
-                        <th>{{ t('objectOrigins.contributionParts.self') }}</th>
-                        <th>{{ t('objectOrigins.contributionParts.external') }}</th>
-                        <th>{{ t('timeline.analysis.contributionTotal') }}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="entry in analysis.byContribution" :key="entry.key">
-                        <th>{{ entry.label }}</th>
-                        <td>
-                          {{
-                            formatNumber(
-                              analysis.contributionParts.find(
-                                part => part.key === entry.key && part.kind === 'self',
-                              )?.value ?? 0,
-                            )
-                          }}
-                        </td>
-                        <td>
-                          {{
-                            formatNumber(
-                              analysis.contributionParts.find(
-                                part => part.key === entry.key && part.kind === 'external',
-                              )?.value ?? 0,
-                            )
-                          }}
-                        </td>
-                        <td>
-                          {{ formatNumber(entry.value) }} ({{ (entry.ratio * 100).toFixed(1) }}%)
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </el-collapse-item>
-              </el-collapse>
             </section>
             <section class="chart-card">
               <h3 class="chart-title">{{ labels.damageByElement }}</h3>

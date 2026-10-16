@@ -618,7 +618,10 @@ const commonBuff9ActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_3: {
         type: 'boolean',
         expression: {
@@ -900,7 +903,10 @@ const commonBuff11ActionGraph = {
           right: { kind: 'constant', value: 0 },
         },
       },
-      data_6: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_6: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_7: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'heal_times', fallback: 0 },
@@ -916,7 +922,10 @@ const commonBuff11ActionGraph = {
       },
       data_9: { type: 'number', expression: { kind: 'blackboard', key: 'heal_ratio_total' } },
       data_10: { type: 'number', expression: { kind: 'blackboard', key: 'max_hp' } },
-      data_11: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_11: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
     },
   },
   macros: {},
@@ -1154,7 +1163,10 @@ const commonBuff12ActionGraph = {
           right: { kind: 'constant', value: 0 },
         },
       },
-      data_6: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_6: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
       data_7: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'heal_times', fallback: 0 },
@@ -1170,7 +1182,10 @@ const commonBuff12ActionGraph = {
       },
       data_9: { type: 'number', expression: { kind: 'blackboard', key: 'heal_ratio_total' } },
       data_10: { type: 'number', expression: { kind: 'blackboard', key: 'max_hp' } },
-      data_11: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_11: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
     },
   },
   macros: {},
@@ -1547,7 +1562,10 @@ const commonBuff19ActionGraph = {
           tags: ['powerAttack', 'normalAttackLastCombo'],
         },
       },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
     },
   },
   macros: {},
@@ -1607,7 +1625,10 @@ const commonBuff20ActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'ratio' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
     },
   },
   macros: {},
@@ -2347,7 +2368,7 @@ const commonBuff33: SkillBuffDefinition = {
   maxStackCount: 1,
   applyTags: [],
   extendTags: [],
-  blackboard: { dmg_scale: 0.25 },
+  blackboard: { dmg_scale: 0.25, speedup_scale: 2 },
   attributeModifiers: [],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
   actionGraph: commonBuff33ActionGraph,
@@ -2940,7 +2961,7 @@ const commonBuff36: SkillBuffDefinition = {
   maxStackCount: 1,
   applyTags: [],
   extendTags: [],
-  blackboard: { hp_ratio: 0.05 },
+  blackboard: { hp_ratio: 0.05, stack: 0 },
   attributeModifiers: [],
   abilityEventResponses: [
     { event: 'addedBuff', priority: 0, sequence: { $sequence: 'checkCondition_3' } },
@@ -4462,7 +4483,7 @@ const commonBuff55: SkillBuffDefinition = {
   },
   applyTags: ['Skill/Enemy/Common/SpellInflictOnChar/CrystInflictOnChar'],
   extendTags: [],
-  blackboard: { cd: 1, count: 0, duration: 10 },
+  blackboard: { atk_scale: 0, cd: 1, count: 0, duration: 10 },
   attributeModifiers: [],
   lifecycleSequences: {
     enable: [{ $sequence: 'triggerCharacterInflictionEvent_6' }],
@@ -5868,7 +5889,10 @@ export const contingencyContractInitializationPlans = Object.freeze<
                 buffs: [
                   {
                     buffId: 'buff_cc_enemy_common_movespeedup',
-                    blackboardAssignments: { dmg_scale: { kind: 'constant', value: 0.25 } },
+                    blackboardAssignments: {
+                      speedup_scale: { kind: 'constant', value: 2 },
+                      dmg_scale: { kind: 'constant', value: 0.25 },
+                    },
                   },
                 ],
                 targets: { kind: 'fixed', target: 'enemy' },

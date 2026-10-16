@@ -134,7 +134,7 @@ describe('Unity RID 条件适配', () => {
       },
     });
     expect(chainOf(compiled[2]!)[0]).toMatchObject({
-      parameters: { condition: { kind: 'casterControlled' } },
+      parameters: { condition: { kind: 'checkMainCharacter', target: { kind: 'source' } } },
     });
     for (const controlled of [false, true]) {
       const result = compiled[3]!;

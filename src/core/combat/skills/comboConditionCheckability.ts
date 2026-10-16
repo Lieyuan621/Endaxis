@@ -18,6 +18,11 @@ export function hasUnmodeledIncomingAttackTrigger(
       if (action.kind !== 'checkCondition') return false;
       const condition = conditionInputExpression(action.parameters.condition);
       switch (condition.kind) {
+        case 'checkMainCharacter':
+          if (condition.target.kind !== 'context' || condition.target.key !== 'trigger')
+            return false;
+          requiresControlledTarget = true;
+          break;
         case 'contextTargetIdentityMatch':
           if (
             condition.contextKey !== 'trigger' ||

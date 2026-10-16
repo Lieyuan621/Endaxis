@@ -379,7 +379,7 @@ describe('跨时间段的目标组读写', () => {
           'operator',
           {
             evaluate: condition => {
-              if (condition.kind === 'casterControlled') return controlled;
+              if (condition.kind === 'checkMainCharacter') return controlled;
               throw new Error(`unexpected ${condition.kind}`);
             },
             execute: (step, context) => {

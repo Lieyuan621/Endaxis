@@ -103,7 +103,10 @@ export const ardeliaChr_0025_ardelia_attack1ActionGraph = {
                           value: 1,
                         },
                       },
-                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_3: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_4: {
                         type: 'boolean',
                         expression: {
@@ -270,7 +273,10 @@ export const ardeliaChr_0025_ardelia_attack2ActionGraph = {
                           value: 1,
                         },
                       },
-                      data_3: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_3: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_4: {
                         type: 'boolean',
                         expression: {
@@ -462,7 +468,10 @@ export const ardeliaChr_0025_ardelia_attack3ActionGraph = {
                           value: 1,
                         },
                       },
-                      data_4: { type: 'boolean', expression: { kind: 'casterControlled' } },
+                      data_4: {
+                        type: 'boolean',
+                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+                      },
                       data_5: {
                         type: 'boolean',
                         expression: {
@@ -805,7 +814,10 @@ export const ardeliaChr_0025_ardelia_attack4ActionGraph = {
           containsHittableObject: false,
         },
       },
-      data_5: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_5: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_6: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_4' } },
@@ -826,7 +838,10 @@ export const ardeliaChr_0025_ardelia_attack4ActionGraph = {
           containsHittableObject: false,
         },
       },
-      data_9: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_9: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
     },
   },
   macros: {},
@@ -1185,7 +1200,10 @@ export const ardeliaChr_0025_ardelia_plunging_attack_endActionGraph = {
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
     },
   },
@@ -1968,7 +1986,7 @@ export const ardeliaChr_0025_ardelia_ultimate_skillActionGraph = {
             priority: 10,
             curve: { kind: 'named', key: 'RESETto1' },
             finishByAction: false,
-            targets: ['caster'],
+            targets: [{ kind: 'owner' }],
           },
         },
         next: null,
@@ -2302,13 +2320,7 @@ const ardeliaComboCondition1ActionGraph = {
       },
       data_3: {
         type: 'boolean',
-        expression: {
-          kind: 'contextTargetIdentityMatch',
-          selection: 'first',
-          contextKey: 'trigger',
-          other: 'controlledOperator',
-          operator: 'equal',
-        },
+        expression: { kind: 'checkMainCharacter', target: { kind: 'context', key: 'trigger' } },
       },
     },
   },
@@ -2885,7 +2897,10 @@ export const ardelia: OperatorDefinition = {
                   value: 1,
                 },
               },
-              data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+              data_2: {
+                type: 'boolean',
+                expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+              },
               data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
               data_4: {
                 type: 'boolean',
@@ -3038,7 +3053,10 @@ export const ardelia: OperatorDefinition = {
                   value: 1,
                 },
               },
-              data_2: { type: 'boolean', expression: { kind: 'casterControlled' } },
+              data_2: {
+                type: 'boolean',
+                expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+              },
               data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
               data_4: {
                 type: 'boolean',
@@ -3332,11 +3350,7 @@ export const ardelia: OperatorDefinition = {
               },
               data_10: {
                 type: 'boolean',
-                expression: {
-                  kind: 'actionInputTargetIdentityMatch',
-                  other: 'controlledOperator',
-                  operator: 'equal',
-                },
+                expression: { kind: 'checkMainCharacter', target: { kind: 'inputTarget' } },
               },
             },
           },

@@ -1128,7 +1128,8 @@ describe('施法输入限制与木桩物理控制投影', () => {
         new Map(),
       ),
     ).toEqual({
-      kind: 'casterControlled',
+      kind: 'checkMainCharacter',
+      target: { kind: 'owner' },
     });
   });
 

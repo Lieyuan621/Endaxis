@@ -160,10 +160,12 @@ export type CombatConditionExpression =
       /** 条件种类判别值。 */
       kind: 'singleEnemyPresent';
     }
-  /** 当前技能所属干员是否为该帧的主控干员；必须由场景运行时提供主控身份。 */
+  /** 原生 CheckMainCharacterCondition：查询指定对象是否为当前主控。 */
   | {
       /** 条件种类判别值。 */
-      kind: 'casterControlled';
+      kind: 'checkMainCharacter';
+      /** 对应原生 checkTarget；Owner 和 Source 不可互换。 */
+      target: ActionTargetQuery;
     }
   /** 按 CharacterTable.charTypeId 的一一元素投影筛选施法者或 Buff 持有者。 */
   | {
@@ -727,7 +729,7 @@ export const COMBAT_CONDITION_KINDS = [
   'combatActive',
   'skillHasHit',
   'singleEnemyPresent',
-  'casterControlled',
+  'checkMainCharacter',
   'characterTypeIn',
   'operatorRoleIn',
   'enemyRankIn',

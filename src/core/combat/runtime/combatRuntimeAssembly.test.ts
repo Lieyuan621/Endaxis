@@ -5143,7 +5143,12 @@ describe('CombatRuntimeAssembly', () => {
                   next: null,
                 },
               },
-              { input_1: { type: 'boolean', expression: { kind: 'casterControlled' } } },
+              {
+                input_1: {
+                  type: 'boolean',
+                  expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+                },
+              },
             ),
           },
         ],
@@ -5176,7 +5181,12 @@ describe('CombatRuntimeAssembly', () => {
                 next: null,
               },
             },
-            { input_1: { type: 'boolean', expression: { kind: 'casterControlled' } } },
+            {
+              input_1: {
+                type: 'boolean',
+                expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+              },
+            },
           ),
         },
       ],
