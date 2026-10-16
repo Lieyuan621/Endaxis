@@ -50,7 +50,7 @@ export type CompiledBuffConditionSource =
   | Condition<'skillHasHit'>
   | Condition<'comboCameraAlphaSetting'>
   | Condition<'globalCooldownPresent'>
-  | Condition<'casterComboPending'>
+  | Condition<'comboSkillPending'>
   | Condition<
       | 'checkMainCharacter'
       | 'characterTypeIn'
@@ -60,13 +60,7 @@ export type CompiledBuffConditionSource =
       | 'eventInflictionElementIn'
       | 'eventCustomAbilityNameMatch'
       | 'entityCountCompare'
-      | 'contextTargetObjectTypeMatch'
-      | 'actionInputTargetObjectTypeMatch'
-      | 'actionInputTargetIdentityMatch'
-      | 'contextTargetIdentityMatch'
-      | 'contextTargetEntityTagMatch'
-      | 'contextTargetBuffStackCompare'
-      | 'contextTargetBuffIdStackCompare'
+      | 'targetObjectTypeMatch'
       | 'abilityEntityRemainingDurationCompare'
       | 'actionValueCompare'
       | 'stringEquals'
@@ -74,9 +68,6 @@ export type CompiledBuffConditionSource =
       | 'eventSkillCastMatchesBuffSource'
       | 'eventSkillIdIn'
       | 'eventBuffIdMatch'
-      | 'eventSourceMatchesBuffSource'
-      | 'eventSourceMatchesBuffSourceEntitySource'
-      | 'buffSourceMatchesOwner'
       | 'ownerSpawnedAbilityEntityPresent'
       | 'eventPhysicalInflictionTypeIn'
       | 'eventDamageTypeIn'
@@ -85,8 +76,8 @@ export type CompiledBuffConditionSource =
       | 'eventConsumedBuffLayerCompare'
       | 'eventBuffEnhanceLayerCompare'
       | 'targetContains'
+      | 'targetsEqual'
       | 'eventBuffTagsMatch'
-      | 'eventTargetBuffCountCompare'
       | 'enemySuperArmorCompare'
       | 'twoDirectionAngleCompare'
       | 'targetFacingAngle'
@@ -94,20 +85,11 @@ export type CompiledBuffConditionSource =
       | 'enemyRankIn'
       | 'targetStaggered'
       | 'probability'
-      | 'abilityEntityTimedMarkerPresent'
       | 'eventProjectilePerfectDodgeCooldownEquals'
       | 'eventAbilityEntityFinishReasonIn'
       | 'eventProjectileIgnoreImmuneLevelCompare'
     >
-  | (Condition<'healthCompare'> & {
-      readonly target:
-        | 'caster'
-        | 'controlledOperator'
-        | 'contextTarget'
-        | 'currentTarget'
-        | 'actionInputTarget'
-        | 'enemy';
-    })
+  | Condition<'healthCompare'>
   | Condition<'eventDamageTagsMatch' | 'eventDamageGameplayTagsMatch' | 'eventDamageFeaturesMatch'>
   | Condition<'eventSpGainMatch'>
   | Condition<'skillDamageTypeIn'>
@@ -115,21 +97,14 @@ export type CompiledBuffConditionSource =
   | Condition<'eventSkillTypeIn'>
   | Condition<'currentSkillTypeIn'>
   | Condition<'originSkillTypeIn'>
-  | (Condition<'timedMarkerPresent'> & { readonly target: MarkerTarget })
-  | (Omit<Condition<'buffStackCompare'>, 'target'> & {
-      readonly target: BuffQueryTarget;
-    })
-  | (Omit<Condition<'buffTagIdCountCompare'>, 'target'> & {
-      readonly target: BuffQueryTarget;
-    })
+  | Condition<'timedMarkerPresent' | 'buffStackCompare' | 'buffTagIdCountCompare'>
   | (Omit<Condition<'buffBlackboardValueCompare'>, 'target'> & {
       readonly target: BuffQueryTarget | 'eventSource';
     })
-  | (Omit<Condition<'buffIdStackCompare'>, 'target' | 'value'> & {
-      readonly target: BuffQueryTarget;
+  | (Omit<Condition<'buffIdStackCompare'>, 'value'> & {
       readonly value: CompiledActionValueOperandSource;
     })
-  | (Condition<'entityTagMatch'> & { readonly target: BuffQueryTarget })
+  | Condition<'entityTagMatch'>
   | Condition<'poiseCompare'>
   | (Pick<Condition<'all' | 'any'>, 'kind'> & {
       readonly conditions: readonly CompiledBuffConditionSource[];

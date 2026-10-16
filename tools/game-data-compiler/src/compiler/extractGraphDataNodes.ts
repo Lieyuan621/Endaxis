@@ -23,7 +23,6 @@ function stringFields(kind: unknown): readonly string[] {
       return ['skillId'];
     case 'createTimedMarker':
     case 'timedMarkerPresent':
-    case 'abilityEntityTimedMarkerPresent':
       return ['markerId'];
     case 'stringEquals':
       return ['left', 'right'];

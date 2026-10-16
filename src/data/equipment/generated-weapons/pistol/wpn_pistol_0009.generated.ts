@@ -184,14 +184,14 @@ const definition = {
             checkCondition_4: {
               action: {
                 kind: 'checkCondition',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
               },
               next: 'applyBuff_3',
             },
             checkCondition_5: {
               action: {
                 kind: 'checkCondition',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
               },
               next: 'checkCondition_4',
             },
@@ -236,14 +236,14 @@ const definition = {
             checkCondition_9: {
               action: {
                 kind: 'checkCondition',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
               },
               next: 'applyBuff_8',
             },
             checkCondition_10: {
               action: {
                 kind: 'checkCondition',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
               },
               next: 'checkCondition_9',
             },
@@ -288,14 +288,14 @@ const definition = {
             checkCondition_14: {
               action: {
                 kind: 'checkCondition',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
               },
               next: 'applyBuff_13',
             },
             checkCondition_15: {
               action: {
                 kind: 'checkCondition',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
               },
               next: 'checkCondition_14',
             },
@@ -340,14 +340,14 @@ const definition = {
             checkCondition_19: {
               action: {
                 kind: 'checkCondition',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
               },
               next: 'applyBuff_18',
             },
             checkCondition_20: {
               action: {
                 kind: 'checkCondition',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
               },
               next: 'checkCondition_19',
             },
@@ -358,15 +358,12 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'globalCooldownPresent',
-                target: 'caster',
+                target: { kind: 'source' },
+                returnTrueIfNotExists: true,
                 markerId: 'buff_wpn_pistol_0009_cd',
               },
             },
             data_3: {
-              type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-            },
-            data_4: {
               type: 'boolean',
               expression: {
                 kind: 'eventBuffTagsMatch',
@@ -374,19 +371,16 @@ const definition = {
                 buffTags: ['Skill/Character/Common/SpellStatus/Burning'],
               },
             },
-            data_5: {
+            data_4: {
               type: 'boolean',
               expression: {
                 kind: 'globalCooldownPresent',
-                target: 'caster',
+                target: { kind: 'source' },
+                returnTrueIfNotExists: true,
                 markerId: 'buff_wpn_pistol_0009_cd',
               },
             },
-            data_6: {
-              type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-            },
-            data_7: {
+            data_5: {
               type: 'boolean',
               expression: {
                 kind: 'eventBuffTagsMatch',
@@ -394,19 +388,16 @@ const definition = {
                 buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
               },
             },
-            data_8: {
+            data_6: {
               type: 'boolean',
               expression: {
                 kind: 'globalCooldownPresent',
-                target: 'caster',
+                target: { kind: 'source' },
+                returnTrueIfNotExists: true,
                 markerId: 'buff_wpn_pistol_0009_cd',
               },
             },
-            data_9: {
-              type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-            },
-            data_10: {
+            data_7: {
               type: 'boolean',
               expression: {
                 kind: 'eventBuffTagsMatch',
@@ -414,19 +405,16 @@ const definition = {
                 buffTags: ['Skill/Character/Common/SpellStatus/Frozen'],
               },
             },
-            data_11: {
+            data_8: {
               type: 'boolean',
               expression: {
                 kind: 'globalCooldownPresent',
-                target: 'caster',
+                target: { kind: 'source' },
+                returnTrueIfNotExists: true,
                 markerId: 'buff_wpn_pistol_0009_cd',
               },
             },
-            data_12: {
-              type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_11' } },
-            },
-            data_13: {
+            data_9: {
               type: 'boolean',
               expression: {
                 kind: 'eventBuffTagsMatch',

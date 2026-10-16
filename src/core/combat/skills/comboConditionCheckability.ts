@@ -18,28 +18,34 @@ export function hasUnmodeledIncomingAttackTrigger(
       if (action.kind !== 'checkCondition') return false;
       const condition = conditionInputExpression(action.parameters.condition);
       switch (condition.kind) {
+        case 'targetsEqual': {
+          const { first, second } = condition;
+          if (!(
+            (first.kind === 'context' &&
+              first.key === 'trigger' &&
+              second.kind === 'mainCharacter') ||
+            (second.kind === 'context' &&
+              second.key === 'trigger' &&
+              first.kind === 'mainCharacter')
+          ))
+            return false;
+          requiresControlledTarget = true;
+          break;
+        }
         case 'checkMainCharacter':
           if (condition.target.kind !== 'context' || condition.target.key !== 'trigger')
             return false;
           requiresControlledTarget = true;
           break;
-        case 'contextTargetIdentityMatch':
-          if (
-            condition.contextKey !== 'trigger' ||
-            condition.other !== 'controlledOperator' ||
-            condition.operator !== 'equal'
-          )
-            return false;
-          requiresControlledTarget = true;
-          break;
         case 'healthCompare':
-          if (condition.target !== 'contextTarget' || condition.contextKey !== 'trigger')
+          if (condition.target.kind !== 'context' || condition.target.key !== 'trigger')
             return false;
           break;
         case 'eventDamageFeaturesMatch':
           break;
-        case 'actionInputTargetObjectTypeMatch':
+        case 'targetObjectTypeMatch':
           if (
+            condition.target.kind !== 'inputTarget' ||
             condition.objectTypes === 'all' ||
             condition.objectTypes.length !== 1 ||
             condition.objectTypes[0] !== 'enemy'

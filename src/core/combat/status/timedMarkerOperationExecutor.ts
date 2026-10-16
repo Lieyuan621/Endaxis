@@ -2,13 +2,11 @@ import { stringInputExpression } from '../../compiler/compiledGraphData';
 import type { CompiledStringInput, CompiledCondition } from '../../compiler/compiledGraphData.ts';
 
 import type { CombatOperationContext } from '../skills/skillRuntime';
-import { healAbilityEvent } from '../events/combatAbilityEvent';
 /**
  * 执行定时标记的创建、条件查询与动作结束清理。
  * 目标到实体容器的映射由装配层提供；动态时长只读取当前技能实例黑板。
  */
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
-import type { CombatTarget, TimedMarkerTarget } from '../../game-data/operatorDefinition';
 import { runtimeTargetEntityId, type RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import type { ActionTargetQuery } from '../../../../packages/game-data-contract/src/conditions';
 import type { GlobalCooldownTarget } from '../../game-data/operatorDefinition';
@@ -22,7 +20,6 @@ import type { TimedMarkerActionState, TimedMarkerActionReference } from '../stat
 type RuntimeOperation = ResolvedCombatOperationStep;
 
 export interface TimedMarkerOperationDependencies {
-  readonly resolveTarget: (target: CombatTarget) => TimedMarkerContainer;
   readonly resolveEventTarget: (targetId: string) => TimedMarkerContainer;
   readonly queryTargets: (
     query: ActionTargetQuery,
@@ -128,35 +125,20 @@ export class TimedMarkerOperationExecutor implements CombatOperationExecutor {
 
   evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     if (condition.kind === 'globalCooldownPresent') {
-      const { cooldowns, characterId } = this.#resolveCooldown(condition.target, context);
-      return cooldowns.has(characterId, condition.markerId);
-    }
-    if (condition.kind === 'timedMarkerPresent') {
-      const exists = this.#resolveTarget(condition.target, context).has(
-        resolveMarkerId(condition.markerId, context),
-      );
+      if (!context) throw new Error('globalCooldownPresent requires an action context');
+      const target = this.dependencies.queryTargets(condition.target, context)[0];
+      if (target?.kind !== 'operator') return false;
+      const cooldowns = this.dependencies.globalCooldowns;
+      if (!cooldowns) throw new Error('global cooldown runtime is not configured');
+      const exists = cooldowns.has(target.operatorId, condition.markerId);
       return condition.returnTrueIfNotExists ? !exists : exists;
     }
-    if (condition.kind === 'abilityEntityTimedMarkerPresent') {
-      if (context === undefined) {
-        throw new Error('abilityEntityTimedMarkerPresent requires a combat operation context');
-      }
-      if (condition.contextKey !== undefined) {
-        if (context.targetContext === undefined) {
-          throw new Error('context ability entity timed marker requires a target context');
-        }
-        // 原生条件使用 GetActionTarget 的首目标，不是组内任一对象匹配。
-        const target = context.targetContext.getOptional(condition.contextKey)?.[0];
-        if (target === undefined) return false;
-        const exists = this.#resolveCurrentAbilityEntity(target).has(
-          resolveMarkerId(condition.markerId, context),
-        );
-        return condition.returnTrueIfNotExists ? !exists : exists;
-      }
-      if (context.currentTarget === undefined) return false;
-      const exists = this.#resolveCurrentAbilityEntity(context.currentTarget).has(
-        resolveMarkerId(condition.markerId, context),
-      );
+    if (condition.kind === 'timedMarkerPresent') {
+      if (!context) throw new Error('timedMarkerPresent requires an action context');
+      const target = this.dependencies.queryTargets(condition.target, context)[0];
+      const id = target === undefined ? undefined : runtimeTargetEntityId(target);
+      if (id === undefined) return false;
+      const exists = this.#resolveOwner(id).has(resolveMarkerId(condition.markerId, context));
       return condition.returnTrueIfNotExists ? !exists : exists;
     }
     return context === undefined
@@ -172,38 +154,8 @@ export class TimedMarkerOperationExecutor implements CombatOperationExecutor {
     return { cooldowns, characterId: resolve(target, context) };
   }
 
-  #resolveCurrentAbilityEntity(target: RuntimeTargetRef | undefined): TimedMarkerContainer {
-    if (target?.kind !== 'abilityEntity') {
-      throw new Error('ability entity timed marker requires a current AbilityEntity target');
-    }
-    return this.#resolveOwner(runtimeTargetEntityId(target)!);
-  }
-
   #resolveOwner(ownerId: string): TimedMarkerContainer {
     return this.dependencies.resolveEventTarget(ownerId);
-  }
-
-  #resolveTarget(
-    target: TimedMarkerTarget,
-    context: CombatOperationContext | undefined,
-  ): TimedMarkerContainer {
-    if (target === 'buffOwner' || target === 'buffSource') {
-      const id = target === 'buffOwner' ? context?.buffOwnerId : context?.buffSourceId;
-      if (id === undefined) {
-        throw new Error(`${target} timed marker requires a Buff identity and entity resolver`);
-      }
-      return this.dependencies.resolveEventTarget(id);
-    }
-    if (target !== 'eventTarget') return this.dependencies.resolveTarget(target);
-    if (context === undefined) {
-      throw new Error('eventTarget timed marker requires a combat operation context');
-    }
-    const event = context.event;
-    const targetId = event === undefined ? undefined : healAbilityEvent(event)?.payload.targetId;
-    if (targetId === undefined) {
-      throw new Error('eventTarget timed marker requires a healing event target');
-    }
-    return this.#resolveOwner(targetId);
   }
 }
 

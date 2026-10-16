@@ -216,8 +216,8 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                target: { kind: 'source' },
                 returnTrueIfNotExists: true,
-                target: 'buffSource',
                 markerId: 'wpn_sword_0010',
               },
             },

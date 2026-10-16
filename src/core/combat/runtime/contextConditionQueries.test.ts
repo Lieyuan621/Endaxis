@@ -62,11 +62,9 @@ describe('Context 条件查询', () => {
     expect(
       executor.evaluate(
         {
-          kind: 'contextTargetIdentityMatch',
-          selection: 'all',
-          contextKey: 'trigger',
-          other: 'controlledOperator',
-          operator: 'equal',
+          kind: 'targetsEqual',
+          first: { kind: 'context', key: 'trigger' },
+          second: { kind: 'mainCharacter' },
         },
         context,
       ),
@@ -74,31 +72,28 @@ describe('Context 条件查询', () => {
     expect(
       executor.evaluate(
         {
-          kind: 'contextTargetIdentityMatch',
-          selection: 'all',
-          contextKey: 'trigger',
-          other: 'actionSource',
-          operator: 'equal',
+          kind: 'targetsEqual',
+          first: { kind: 'context', key: 'trigger' },
+          second: { kind: 'source' },
         },
         context,
       ),
     ).toBe(true);
     const controlled = { kind: 'operator', operatorId: 'source' } as const;
     const enemy = { kind: 'enemy' } as const;
-    for (const [targets, firstMatches, allMatch] of [
-      [[], false, false],
-      [[controlled, enemy], true, false],
-      [[enemy, controlled], false, false],
+    for (const [targets, allMatch] of [
+      [[], false],
+      [[controlled], true],
+      [[controlled, enemy], false],
+      [[enemy, controlled], false],
     ] as const) {
       context.targetContext.set('trigger', targets);
       const condition = {
-        kind: 'contextTargetIdentityMatch',
-        contextKey: 'trigger',
-        other: 'controlledOperator',
-        operator: 'equal',
+        kind: 'targetsEqual',
+        first: { kind: 'context', key: 'trigger' },
+        second: { kind: 'mainCharacter' },
       } as const;
-      expect(executor.evaluate({ ...condition, selection: 'first' }, context)).toBe(firstMatches);
-      expect(executor.evaluate({ ...condition, selection: 'all' }, context)).toBe(allMatch);
+      expect(executor.evaluate(condition, context)).toBe(allMatch);
     }
   });
 
@@ -107,11 +102,9 @@ describe('Context 条件查询', () => {
     const executor = new TargetContextOperationExecutor('owner', terminal);
     const context = { blackboard: new ActionBlackboard(), targetContext, actionSourceId: 'source' };
     const condition = {
-      kind: 'contextTargetIdentityMatch',
-      selection: 'all',
-      contextKey: 'targets',
-      other: 'actionSource',
-      operator: 'equal',
+      kind: 'targetsEqual',
+      first: { kind: 'context', key: 'targets' },
+      second: { kind: 'source' },
     } as const;
     const source = { kind: 'operator', operatorId: 'source' } as const;
     for (const [targets, expected] of [
@@ -123,7 +116,6 @@ describe('Context 条件查询', () => {
     ] as const) {
       targetContext.set('targets', targets);
       expect(executor.evaluate(condition, context)).toBe(expected);
-      expect(executor.evaluate({ ...condition, operator: 'notEqual' }, context)).toBe(!expected);
     }
     expect(executor.evaluate(condition, { blackboard: context.blackboard, targetContext })).toBe(
       false,
@@ -156,7 +148,11 @@ describe('Context 条件查询', () => {
         undefined,
         () => 'abilityEntity',
       ).evaluate(
-        { kind: 'contextTargetObjectTypeMatch', contextKey: 'trigger', objectTypes: mask },
+        {
+          kind: 'targetObjectTypeMatch',
+          target: { kind: 'context' as const, key: 'trigger' },
+          objectTypes: mask,
+        },
         context,
       ),
     ).toBe(expected);
@@ -168,8 +164,8 @@ describe('Context 条件查询', () => {
       targetContext: new RuntimeTargetContext(),
     };
     const condition = {
-      kind: 'contextTargetObjectTypeMatch' as const,
-      contextKey: 'trigger',
+      kind: 'targetObjectTypeMatch' as const,
+      target: { kind: 'context' as const, key: 'trigger' },
       objectTypes: ['enemy'] as const,
     };
     expect(executor.evaluate(condition, context)).toBe(false);
@@ -200,15 +196,17 @@ describe('Context 条件查询', () => {
       resolveTarget: () => buffs,
       resolveEventTarget: resolve,
       delegate: terminal,
+      queryTargets: (query, context) =>
+        new TargetContextOperationExecutor('owner', terminal).queryTargets(query, context),
     });
     const context = {
       blackboard: new ActionBlackboard(),
       targetContext: new RuntimeTargetContext(),
     };
     const condition = {
-      kind: 'contextTargetBuffStackCompare' as const,
+      kind: 'buffStackCompare' as const,
       compareZeroWhenTargetMissing: false,
-      contextKey: 'trigger',
+      target: { kind: 'context' as const, key: 'trigger' },
       tagQueryType: 'hasAny' as const,
       buffTags: [tag],
       operator: 'equal' as const,
@@ -255,15 +253,17 @@ describe('Context 条件查询', () => {
         return buffs;
       },
       delegate: terminal,
+      queryTargets: (query, context) =>
+        new TargetContextOperationExecutor('owner', terminal).queryTargets(query, context),
     });
     const context = {
       blackboard: new ActionBlackboard(),
       targetContext: new RuntimeTargetContext(),
     };
     const condition = {
-      kind: 'contextTargetBuffIdStackCompare' as const,
+      kind: 'buffIdStackCompare' as const,
       compareZeroWhenTargetMissing: true,
-      contextKey: 'trigger',
+      target: { kind: 'context' as const, key: 'trigger' },
       buffIds: ['buff-a'],
       operator: 'equal' as const,
       value: { kind: 'constant' as const, value: 2 },
@@ -295,8 +295,8 @@ describe('Context 条件查询', () => {
                   kind: 'conditional',
                   parameters: {
                     condition: {
-                      kind: 'contextTargetObjectTypeMatch',
-                      contextKey: 'trigger',
+                      kind: 'targetObjectTypeMatch',
+                      target: { kind: 'context' as const, key: 'trigger' },
                       objectTypes,
                     },
                   },

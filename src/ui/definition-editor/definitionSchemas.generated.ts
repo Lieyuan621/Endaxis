@@ -12,7 +12,6 @@ const schema_bc6e5aef9dfe = { unionVariants: [{}, {}, {}, {}, {}, {}, {}] } as c
 const schema_d056c7fa0b76 = { kind: 'string', referenceKind: 'buff' } as const;
 const schema_c7288b42bef0 = { recordValue: schema_4107b248d073 } as const;
 const schema_eb26b72c4713 = { kind: 'string', referenceKind: 'skill' } as const;
-const schema_ebe2ee1f84c5 = ['strength', 'agility', 'intellect', 'will'] as const;
 const schema_140af2d9bf58 = { arrayElement: schema_4107b248d073 } as const;
 const schema_3a45612f7fc2 = { recordValue: schema_f27fc5f4f63d } as const;
 const schema_bbff0d28079e = { kind: 'number', readonlyDeclaration: true } as const;
@@ -123,6 +122,11 @@ const schema_5f503bc75d0e = {
   semantics: { aliases: ['CombatCondition'] },
   optional: true,
   description: '事件发生后还需满足的条件。',
+} as const;
+const schema_d05567ea48ad = {
+  kind: 'enum',
+  options: ['strength', 'agility', 'intellect', 'will'],
+  semantics: schema_36938d66df11,
 } as const;
 const schema_11661fe69962 =
   '原生 `SkillData.durationFrame` 的运行时自然结束周期，已按原生 getter 钳制为至少 1 帧。\n它不决定技能块宽度，也不能用 `exclusiveFrame` 或最后一个可见战斗动作代替。';
@@ -546,6 +550,20 @@ const schema_123ad80e4366 = {
   optional: true,
   description: '技能释放时消耗的资源。',
 } as const;
+const schema_bc69b4196c34 = {
+  kind: {
+    kind: 'enum',
+    options: ['deckAttributeCompare'],
+    description: '构筑条件只比较当前干员最终面板中的两项四维，不进行战斗目标查询。',
+  },
+  left: schema_d05567ea48ad,
+  operator: {
+    kind: 'enum',
+    options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+    semantics: schema_43d88f577f05,
+  },
+  right: schema_d05567ea48ad,
+} as const;
 const schema_1ff0b8a1d665 = {
   kind: 'array',
   element: {
@@ -575,31 +593,6 @@ const schema_1ff0b8a1d665 = {
   semantics: { arrayElement: {} },
   optional: true,
   description: '每次启用时换入、停用或结束时还原；生命周期归当前 Buff 实例所有。',
-} as const;
-const schema_8b37c2981f22 = {
-  kind: {
-    kind: 'enum',
-    options: ['deckAttributeCompare'],
-    description: '在构筑阶段比较两项干员四维。',
-  },
-  left: {
-    kind: 'enum',
-    options: schema_ebe2ee1f84c5,
-    semantics: schema_36938d66df11,
-    description: '左侧属性。',
-  },
-  operator: {
-    kind: 'enum',
-    options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
-    semantics: schema_43d88f577f05,
-    description: '数值比较符。',
-  },
-  right: {
-    kind: 'enum',
-    options: schema_ebe2ee1f84c5,
-    semantics: schema_36938d66df11,
-    description: '右侧属性。',
-  },
 } as const;
 const schema_cfeca66fd8de = {
   kind: 'array',
@@ -1923,7 +1916,7 @@ const schema_879701005051 = {
   optional: true,
   description: '构筑阶段持续生效的属性修正。',
 } as const;
-const schema_6f66b7366478 = {
+const schema_291c8169d3e3 = {
   placementPolicy: {
     kind: 'object',
     fields: schema_f29775915ce0,
@@ -2022,7 +2015,7 @@ const schema_6f66b7366478 = {
         key: { kind: 'string', description: '展示形态在技能组中的唯一名称。' },
         condition: {
           kind: 'object',
-          fields: schema_8b37c2981f22,
+          fields: schema_bc69b4196c34,
           semantics: { aliases: ['BuildCondition'] },
           description: '最终构筑满足此条件时选用该展示形态。',
         },
@@ -2219,13 +2212,13 @@ export const definitionSchemas = {
       },
       mainAttribute: {
         kind: 'enum',
-        options: schema_ebe2ee1f84c5,
+        options: ['strength', 'agility', 'intellect', 'will'],
         semantics: schema_36938d66df11,
         description: '干员主属性。',
       },
       secondaryAttribute: {
         kind: 'enum',
-        options: schema_ebe2ee1f84c5,
+        options: ['strength', 'agility', 'intellect', 'will'],
         semantics: schema_36938d66df11,
         description: '干员副属性。',
       },
@@ -2276,7 +2269,7 @@ export const definitionSchemas = {
       },
       skillGroups: {
         kind: 'array',
-        element: { kind: 'object', fields: schema_6f66b7366478 },
+        element: { kind: 'object', fields: schema_291c8169d3e3 },
         semantics: { arrayElement: {} },
         description: '干员技能库的操作组集合；不包含切人、闪避、跳跃。组成员配置操作段的目标技能。',
       },
@@ -2553,7 +2546,7 @@ export const definitionSchemas = {
             key: { kind: 'string', description: '要初始化的实体黑板键。' },
             condition: {
               kind: 'object',
-              fields: schema_8b37c2981f22,
+              fields: schema_bc69b4196c34,
               semantics: { aliases: ['BuildCondition'] },
               description: '根据最终构筑判断写入哪个值。',
             },
@@ -3020,7 +3013,7 @@ export const definitionSchemas = {
     ],
     semantics: schema_4107b248d073,
   },
-  skillGroup: { kind: 'object', fields: schema_6f66b7366478 },
+  skillGroup: { kind: 'object', fields: schema_291c8169d3e3 },
   skillGroupVariant: { kind: 'object', fields: schema_59ae2ded5e63 },
   buff: {
     kind: 'union',
@@ -3761,7 +3754,7 @@ export const definitionSchemas = {
                 },
                 condition: {
                   kind: 'object',
-                  fields: schema_8b37c2981f22,
+                  fields: schema_bc69b4196c34,
                   semantics: { aliases: ['BuildCondition'] },
                   optional: true,
                   description: '原生 activeCondition；按最终构筑属性选择是否应用。',
@@ -3837,7 +3830,7 @@ export const definitionSchemas = {
                 frames: { kind: 'number', description: '增加的冷却帧数。' },
                 condition: {
                   kind: 'object',
-                  fields: schema_8b37c2981f22,
+                  fields: schema_bc69b4196c34,
                   semantics: { aliases: ['BuildCondition'] },
                   optional: true,
                   description: '构筑满足该条件时才应用。',
@@ -3854,11 +3847,7 @@ export const definitionSchemas = {
                 },
                 attributes: {
                   kind: 'array',
-                  element: {
-                    kind: 'enum',
-                    options: schema_ebe2ee1f84c5,
-                    semantics: schema_36938d66df11,
-                  },
+                  element: schema_d05567ea48ad,
                   semantics: { arrayElement: schema_36938d66df11 },
                   description: '要增加的四维属性。',
                 },

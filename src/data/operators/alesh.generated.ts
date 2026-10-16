@@ -1380,11 +1380,12 @@ export const aleshChr_0024_deepfin_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffStackCompare',
-          target: 'enemy',
-          tagQueryType: 'hasAny',
-          buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
+          target: { kind: 'fixed', target: 'enemy' },
+          compareZeroWhenTargetMissing: false,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          tagQueryType: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
         },
       },
     },
@@ -2142,7 +2143,7 @@ export const aleshChr_0024_deepfin_ultimate_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
-          target: 'enemy',
+          target: { kind: 'fixed', target: 'enemy' },
           valueType: 'ratio',
           operator: 'lessOrEqual',
           value: { kind: 'valueNode', nodeId: 'data_4' },
@@ -2307,7 +2308,11 @@ const aleshComboCondition1ActionGraph = {
       },
       data_2: {
         type: 'boolean',
-        expression: { kind: 'actionInputTargetObjectTypeMatch', objectTypes: ['enemy'] },
+        expression: {
+          kind: 'targetObjectTypeMatch',
+          target: { kind: 'inputTarget' },
+          objectTypes: ['enemy'],
+        },
       },
     },
   },
@@ -2349,7 +2354,11 @@ const aleshComboCondition2ActionGraph = {
       },
       data_2: {
         type: 'boolean',
-        expression: { kind: 'actionInputTargetObjectTypeMatch', objectTypes: ['enemy'] },
+        expression: {
+          kind: 'targetObjectTypeMatch',
+          target: { kind: 'inputTarget' },
+          objectTypes: ['enemy'],
+        },
       },
     },
   },
@@ -2500,8 +2509,8 @@ const aleshBuff3ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'timedMarkerPresent',
+          target: { kind: 'source' },
           returnTrueIfNotExists: true,
-          target: 'caster',
           markerId: 'talent',
         },
       },
@@ -2517,8 +2526,8 @@ const aleshBuff3ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'timedMarkerPresent',
+          target: { kind: 'source' },
           returnTrueIfNotExists: true,
-          target: 'caster',
           markerId: 'talent',
         },
       },
@@ -2638,8 +2647,8 @@ const aleshBuff4ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'timedMarkerPresent',
+          target: { kind: 'source' },
           returnTrueIfNotExists: true,
-          target: 'caster',
           markerId: 'talent',
         },
       },

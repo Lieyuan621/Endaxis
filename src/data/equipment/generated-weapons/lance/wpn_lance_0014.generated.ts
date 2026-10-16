@@ -116,17 +116,17 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                target: { kind: 'inputTarget' },
                 returnTrueIfNotExists: true,
-                target: 'eventTarget',
                 markerId: 'sk_wpn_lance_0014',
               },
             },
             data_2: {
               type: 'boolean',
               expression: {
-                kind: 'actionInputTargetIdentityMatch',
-                other: 'actionOwner',
-                operator: 'equal',
+                kind: 'targetsEqual',
+                first: { kind: 'owner' },
+                second: { kind: 'inputTarget' },
               },
             },
             data_3: {

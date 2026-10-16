@@ -1805,7 +1805,7 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: 'enemy',
+          target: { kind: 'fixed', target: 'enemy' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/chr_0033_camille/NormalSkillBatTarget'],
         },
@@ -2274,7 +2274,7 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: 'enemy',
+          target: { kind: 'fixed', target: 'enemy' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/chr_0033_camille/NormalSkillBatTarget'],
         },
@@ -2289,7 +2289,7 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: 'enemy',
+          target: { kind: 'fixed', target: 'enemy' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/chr_0033_camille/NormalSkillBatTarget'],
         },
@@ -2821,7 +2821,7 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: 'enemy',
+          target: { kind: 'fixed', target: 'enemy' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/chr_0033_camille/NormalSkillBatTarget'],
         },
@@ -3145,10 +3145,11 @@ export const camilleChr_0033_camille_ultimate_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'enemy',
-          buffIds: ['buff_chr_0033_camille_ult_hit'],
+          target: { kind: 'fixed', target: 'enemy' },
+          compareZeroWhenTargetMissing: true,
           operator: 'lessOrEqual',
           value: { kind: 'constant', value: 0 },
+          buffIds: ['buff_chr_0033_camille_ult_hit'],
         },
       },
     },
@@ -3275,7 +3276,7 @@ const camillePassive1ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: 'actionInputTarget',
+          target: { kind: 'inputTarget' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/chr_0033_camille/NormalSkillBat'],
         },
@@ -4863,10 +4864,11 @@ export const camille: OperatorDefinition = {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: 'currentAbilityEntity',
-                    buffIds: ['buff_chr_0033_camille_normal_skill_bateffect'],
+                    target: { kind: 'owner' },
+                    compareZeroWhenTargetMissing: true,
                     operator: 'greaterOrEqual',
                     value: { kind: 'constant', value: 2 },
+                    buffIds: ['buff_chr_0033_camille_normal_skill_bateffect'],
                   },
                 },
                 data_2: {

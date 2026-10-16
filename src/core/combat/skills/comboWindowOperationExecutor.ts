@@ -15,6 +15,9 @@ export class ComboWindowOperationExecutor implements CombatOperationExecutor {
     ) => string = () => {
       throw new Error('current combo skill slot resolver is unavailable');
     },
+    readonly queryTargets: NonNullable<CombatOperationExecutor['queryTargets']> = () => {
+      throw new Error('combo condition target query is unavailable');
+    },
   ) {}
 
   execute(step: ResolvedCombatOperationStep, context?: CombatOperationContext): boolean {
@@ -48,7 +51,11 @@ export class ComboWindowOperationExecutor implements CombatOperationExecutor {
   }
 
   evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
-    if (condition.kind === 'casterComboPending') return this.windows.hasPending(this.operatorId);
+    if (condition.kind === 'comboSkillPending') {
+      if (context === undefined) throw new Error('comboSkillPending requires a combat operation context');
+      const target = this.queryTargets(condition.target, context)[0];
+      return target?.kind === 'operator' && this.windows.hasPending(target.operatorId);
+    }
     return context === undefined
       ? this.delegate.evaluate(condition)
       : this.delegate.evaluate(condition, context);

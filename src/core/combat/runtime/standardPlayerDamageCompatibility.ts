@@ -105,19 +105,12 @@ function inspectCondition(
     case 'deckAttributeCompare':
     case 'probability':
     case 'entityCountCompare':
-    case 'contextTargetObjectTypeMatch':
-    case 'actionInputTargetObjectTypeMatch':
-    case 'actionInputTargetIdentityMatch':
-    case 'contextTargetIdentityMatch':
-    case 'contextTargetEntityTagMatch':
-    case 'contextTargetBuffStackCompare':
-    case 'contextTargetBuffIdStackCompare':
+    case 'targetObjectTypeMatch':
     case 'abilityEntityRemainingDurationCompare':
     case 'ownerSpawnedAbilityEntityPresent':
     case 'timedMarkerPresent':
     case 'globalCooldownPresent':
-    case 'casterComboPending':
-    case 'abilityEntityTimedMarkerPresent':
+    case 'comboSkillPending':
     case 'checkMainCharacter':
     case 'characterTypeIn':
     case 'operatorRoleIn':
@@ -126,9 +119,6 @@ function inspectCondition(
     case 'targetDistance':
     case 'poiseCompare':
     case 'targetStaggered':
-    case 'eventSourceMatchesBuffSource':
-    case 'eventSourceMatchesBuffSourceEntitySource':
-    case 'buffSourceMatchesOwner':
     case 'eventDamageTagsMatch':
     case 'eventTransferredPartTagsMatch':
     case 'eventDamageGameplayTagsMatch':
@@ -143,11 +133,11 @@ function inspectCondition(
     case 'originSkillTypeIn':
     case 'skillInterruptReasonIn':
     case 'targetContains':
+    case 'targetsEqual':
     case 'eventSkillIdIn':
     case 'eventSkillCastMatchesBuffSource':
     case 'eventBuffIdMatch':
     case 'eventBuffTagsMatch':
-    case 'eventTargetBuffCountCompare':
     case 'eventSpGainMatch':
     case 'eventConsumedBuffLayerCompare':
     case 'eventBuffEnhanceLayerCompare':
@@ -161,12 +151,12 @@ function inspectCondition(
     case 'entityTagMatch':
       return;
     case 'healthCompare':
-      if (condition.target !== 'enemy' && !flags.operatorVitals) {
+      if (!(condition.target.kind === 'fixed' && condition.target.target === 'enemy') && !flags.operatorVitals) {
         report(
           collect,
           'unsupported-condition',
           path,
-          `healthCompare for '${condition.target}' requires operator vitals`,
+          `healthCompare for '${condition.target.kind}' requires operator vitals`,
         );
       }
       return;

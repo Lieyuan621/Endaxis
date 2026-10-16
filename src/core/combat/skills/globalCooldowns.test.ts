@@ -74,9 +74,8 @@ describe('战斗级全局冷却', () => {
       const executor = new TimedMarkerOperationExecutor({
         globalCooldowns,
         resolveCooldownCharacter: value => ids[value],
-        resolveTarget: () => ordinary,
         resolveEventTarget: () => ordinary,
-        queryTargets: () => [],
+        queryTargets: () => [{ kind: 'operator', operatorId: ids[target] }],
         globalScaledClock: localClock,
         delegate: {
           execute: () => {
@@ -86,8 +85,15 @@ describe('战斗级全局冷却', () => {
         },
       });
       ordinary.add('x', 100);
-      const condition = { kind: 'globalCooldownPresent' as const, target, markerId: 'x' };
+      const condition = {
+        kind: 'globalCooldownPresent',
+        target: { kind: 'owner' },
+        returnTrueIfNotExists: false,
+        markerId: 'x',
+      } as const;
       expect(executor.evaluate(condition, context)).toBe(false);
+      const absent = { ...condition, returnTrueIfNotExists: true };
+      expect(executor.evaluate(absent, context)).toBe(true);
       const step: ResolvedCombatOperationStep = {
         kind: 'setGlobalCooldown',
         parameters: {
@@ -108,6 +114,11 @@ describe('战斗级全局冷却', () => {
       globalCooldowns.set(ids[target], 'only-global', 1);
       expect(ordinary.has('only-global')).toBe(false);
       expect(() => executor.execute(step)).toThrow('context');
+      const noTarget = new TimedMarkerOperationExecutor({
+        ...executor.dependencies,
+        queryTargets: () => [],
+      });
+      expect(noTarget.evaluate(absent, context)).toBe(false);
     },
   );
 });

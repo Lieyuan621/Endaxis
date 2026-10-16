@@ -82,11 +82,12 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'buffStackCompare',
-                target: 'actionInputTarget',
-                tagQueryType: 'hasAny',
-                buffTags: ['Skill/Character/Common/NoGuard'],
+                target: { kind: 'inputTarget' },
+                compareZeroWhenTargetMissing: true,
                 operator: 'greaterOrEqual',
                 value: { kind: 'valueNode', nodeId: 'data_1' },
+                tagQueryType: 'hasAny',
+                buffTags: ['Skill/Character/Common/NoGuard'],
               },
             },
             data_3: {

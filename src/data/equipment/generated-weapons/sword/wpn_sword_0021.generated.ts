@@ -145,10 +145,11 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'buffIdStackCompare',
-                target: 'caster',
-                buffIds: ['buff_wpn_sword_0021_exist'],
+                target: { kind: 'source' },
+                compareZeroWhenTargetMissing: true,
                 operator: 'greaterOrEqual',
                 value: { kind: 'constant', value: 1 },
+                buffIds: ['buff_wpn_sword_0021_exist'],
               },
             },
             data_4: {

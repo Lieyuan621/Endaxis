@@ -1167,7 +1167,7 @@ export const perlicaChr_0004_pelica_combo_skillActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityTagMatch',
-                          target: 'enemy',
+                          target: { kind: 'fixed', target: 'enemy' },
                           tagQueryType: 'hasAny',
                           tags: ['Skill/Character/Common/NoGuard'],
                         },
@@ -1455,17 +1455,17 @@ const perlicaComboCondition1ActionGraph = {
       data_1: {
         type: 'boolean',
         expression: {
-          kind: 'contextTargetObjectTypeMatch',
-          contextKey: 'trigger',
+          kind: 'targetObjectTypeMatch',
+          target: { kind: 'context', key: 'trigger' },
           objectTypes: ['enemy'],
         },
       },
       data_2: {
         type: 'boolean',
         expression: {
-          kind: 'actionInputTargetIdentityMatch',
-          other: 'controlledOperator',
-          operator: 'equal',
+          kind: 'targetsEqual',
+          first: { kind: 'inputTarget' },
+          second: { kind: 'mainCharacter' },
         },
       },
       data_3: {
@@ -1588,7 +1588,7 @@ const perlicaBuff3ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'poiseCompare',
-          target: 'currentTarget',
+          target: { kind: 'inputTarget' },
           returnValueIfMissing: false,
           operator: 'equal',
           value: { kind: 'constant', value: 0 },

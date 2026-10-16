@@ -39,7 +39,6 @@ function compile(types: string[], methods: string[], checkType = true, checkMeth
       actionSourceTarget: 'caster',
       actionTargetTarget: 'eventTarget',
     }),
-    new Map(),
   );
   if (result?.kind !== 'eventSpGainMatch') throw new Error('expected SP condition');
   return result;

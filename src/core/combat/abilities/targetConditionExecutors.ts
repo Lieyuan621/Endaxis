@@ -12,6 +12,7 @@ export class EnemyRankConditionExecutor implements CombatOperationExecutor {
   constructor(
     private readonly rank: EnemyRank,
     private readonly delegate: CombatOperationExecutor,
+    readonly queryTargets: NonNullable<CombatOperationExecutor['queryTargets']>,
   ) {}
 
   execute: CombatOperationExecutor['execute'] = (step, context) =>
@@ -21,7 +22,11 @@ export class EnemyRankConditionExecutor implements CombatOperationExecutor {
     this.delegate.end?.(step, context);
 
   evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
-    if (condition.kind === 'enemyRankIn') return condition.ranks.includes(this.rank);
+    if (condition.kind === 'enemyRankIn') {
+      if (context === undefined) throw new Error('enemyRankIn requires a combat operation context');
+      const target = this.queryTargets(condition.target, context)[0];
+      return target?.kind === 'enemy' && condition.ranks.includes(this.rank);
+    }
     return this.delegate.evaluate(condition, context);
   }
 }
@@ -31,6 +36,7 @@ export class EnemySuperArmorConditionExecutor implements CombatOperationExecutor
   constructor(
     private readonly superArmor: number,
     private readonly delegate: CombatOperationExecutor,
+    readonly queryTargets: NonNullable<CombatOperationExecutor['queryTargets']>,
   ) {}
 
   execute: CombatOperationExecutor['execute'] = (step, context) =>
@@ -46,6 +52,10 @@ export class EnemySuperArmorConditionExecutor implements CombatOperationExecutor
     if (context === undefined) {
       throw new Error('enemySuperArmorCompare requires a combat operation context');
     }
+    const target = this.queryTargets(condition.target, context)[0];
+    if (target === undefined) return false;
+    if (target.kind !== 'enemy')
+      throw new Error(`super armor attribute is not modeled for '${target.kind}'`);
     return compareCombatNumbers(
       this.superArmor,
       resolveActionValueOperand(condition.value, context.blackboard),

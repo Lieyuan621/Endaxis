@@ -109,7 +109,7 @@ export function compileStrictSwitchToBuffCastSource(
       ) {
         projectedConditions.push({
           kind: 'currentSkillTypeIn',
-          target: 'caster',
+          target: { kind: 'owner' },
           skillTypes: currentSkillTypes,
           normalSkillSubType:
             nativeCondition.normalSkillSubTypeFilter === 'Normal'
@@ -119,7 +119,7 @@ export function compileStrictSwitchToBuffCastSource(
       }
       continue;
     }
-    const condition = compileEventCondition(node, context, new Map());
+    const condition = compileEventCondition(node, context);
     if (condition === null) throw new Error(`${sourcePath}: unsupported SwitchToAddBuff condition`);
     projectedConditions.push(condition);
   }

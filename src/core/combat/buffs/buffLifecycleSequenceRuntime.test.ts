@@ -950,6 +950,11 @@ describe('attachBuffLifecycleSequences', () => {
           sourceId: 'operator',
           resolveTarget: () => container,
           resolveEventTarget: () => container,
+          queryTargets: (query, context) =>
+            new TargetContextOperationExecutor('operator', {
+              execute: () => false,
+              evaluate: () => false,
+            }).queryTargets(query, context),
           delegate: {
             execute: () => {
               reached++;
@@ -990,7 +995,8 @@ describe('attachBuffLifecycleSequences', () => {
                 type: 'boolean',
                 expression: {
                   kind: 'buffIdStackCompare',
-                  target: 'buffOwner',
+                  target: { kind: 'owner' },
+                  compareZeroWhenTargetMissing: false,
                   buffIds: ['seal'],
                   sameSourceSkillCast: true,
                   operator: 'equal',
@@ -1541,7 +1547,7 @@ describe('attachBuffLifecycleSequences', () => {
     const definition = attachBuffLifecycleSequences<never>(
       { id: 'damage-listener', stackingType: 'unique' },
       {},
-      () => new EventContextConditionExecutor(terminal),
+      () => new EventContextConditionExecutor(new TargetContextOperationExecutor('enemy', terminal)),
       undefined,
       [
         {
@@ -1586,14 +1592,26 @@ describe('attachBuffLifecycleSequences', () => {
                   tags: ['normalSkill'],
                 },
               },
-              input_2: { type: 'boolean', expression: { kind: 'eventSourceMatchesBuffSource' } },
+              input_2: {
+                type: 'boolean',
+                expression: {
+                  kind: 'targetsEqual',
+                  first: { kind: 'inputTarget' },
+                  second: { kind: 'source' },
+                },
+              },
             },
           ),
         },
       ],
       (event, priority, handle) => {
         if (event !== 'beforeTakeDamage') throw new Error(`unexpected event '${event}'`);
-        return dispatcher.registerAction(event, priority, context => handle(context));
+        return dispatcher.registerAction(event, priority, context =>
+          handle(context, {
+            inputTarget: { kind: 'operator', operatorId: context.payload.sourceId! },
+            triggerTarget: { kind: 'enemy' },
+          }),
+        );
       },
     );
     const container = new CombatBuffContainer<never>('enemy', new CombatAttributeSet<never>());
@@ -2488,3 +2506,4 @@ it('物理后置 Buff 监听使用原始注册口并随启停注销，保留挂�
   expect(received[0]).toBe(published);
   expect(received[1]).toBe(published);
 });
+import { TargetContextOperationExecutor } from '../abilities/targetContextOperationExecutor';

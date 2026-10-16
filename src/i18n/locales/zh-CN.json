@@ -1713,6 +1713,8 @@
         "name": "父目标组",
         "help": "在此目标组中查找子目标。"
       },
+      "first": { "name": "第一组目标", "help": "参与相等比较的第一组查询结果。" },
+      "second": { "name": "第二组目标", "help": "参与相等比较的第二组查询结果。" },
       "child": {
         "name": "查找对象",
         "help": "在目标组中查找的对象。"
@@ -2324,33 +2326,13 @@
         "name": "检查实体数量",
         "help": "统计查询结果中的实体。可排除死亡实体，并在比较成功时把数量写入变量。"
       },
-      "contextTargetObjectTypeMatch": {
-        "name": "目标组对象类型匹配？",
-        "help": "目标组中有对象属于指定类型时通过。"
+      "targetObjectTypeMatch": {
+        "name": "目标对象类型匹配？",
+        "help": "查询结果中任一目标属于指定类型时通过。"
       },
-      "actionInputTargetObjectTypeMatch": {
-        "name": "输入目标类型匹配？",
-        "help": "检查当前动作收到的目标类型。"
-      },
-      "actionInputTargetIdentityMatch": {
-        "name": "输入目标是指定对象？",
-        "help": "比较输入目标与指定对象是否相同。"
-      },
-      "contextTargetIdentityMatch": {
-        "name": "目标组身份匹配？",
-        "help": "选择比较首个目标或全部目标。首目标缺失时不匹配；全组比较要求两组互相包含。"
-      },
-      "contextTargetEntityTagMatch": {
-        "name": "全部目标标签匹配？",
-        "help": "检查目标组中所有实体的标签。没有有效实体时不通过。"
-      },
-      "contextTargetBuffStackCompare": {
-        "name": "比较首个目标的 Buff 层数",
-        "help": "按标签统计目标组首个对象的 Buff 层数。空组不通过。"
-      },
-      "contextTargetBuffIdStackCompare": {
-        "name": "比较首个目标的指定 Buff",
-        "help": "按 Buff 编号统计目标组首个对象的层数。空组不通过。"
+      "targetsEqual": {
+        "name": "两组目标相同？",
+        "help": "比较两组目标是否互相包含，不考虑顺序和重复次数；两组都为空时通过。"
       },
       "abilityEntityRemainingDurationCompare": {
         "name": "比较召唤物剩余时间",
@@ -2380,17 +2362,13 @@
         "name": "公共冷却中？",
         "help": "检查指定公共冷却是否尚未结束。"
       },
-      "casterComboPending": {
+      "comboSkillPending": {
         "name": "存在连携候选？",
-        "help": "检查施放者是否已有连携候选；不代表冷却等其他施放条件满足。"
+        "help": "检查首个目标是否已有连携候选；不代表冷却等其他施放条件满足。"
       },
       "timedMarkerPresent": {
         "name": "存在限时标记？",
         "help": "检查目标上指定标记是否仍有效。"
-      },
-      "abilityEntityTimedMarkerPresent": {
-        "name": "召唤物存在标记？",
-        "help": "检查当前召唤物或目标组中的召唤物是否有指定有效标记。"
       },
       "eventDamageTagsMatch": {
         "name": "本次伤害分类匹配？",
@@ -2464,10 +2442,6 @@
         "name": "本次 Buff 标签匹配？",
         "help": "检查事件中新施加 Buff 的标签。"
       },
-      "eventTargetBuffCountCompare": {
-        "name": "比较事件目标的 Buff 数量",
-        "help": "统计事件目标上符合标签的 Buff 实例数，不是层数。"
-      },
       "eventHealTagsMatch": {
         "name": "本次治疗标签匹配？",
         "help": "检查触发事件的治疗标签。"
@@ -2483,18 +2457,6 @@
       "eventOverheal": {
         "name": "本次治疗溢出？",
         "help": "检查治疗是否超过缺失生命，可保存溢出量、治疗量和实际恢复量。"
-      },
-      "eventSourceMatchesBuffSource": {
-        "name": "事件来源是 Buff 来源？",
-        "help": "比较事件来源与当前 Buff 的来源对象。"
-      },
-      "eventSourceMatchesBuffSourceEntitySource": {
-        "name": "事件来源是召唤者？",
-        "help": "当前 Buff 来自召唤物时，检查事件来源是否为该召唤物的来源。"
-      },
-      "buffSourceMatchesOwner": {
-        "name": "Buff 来源是持有者？",
-        "help": "检查当前 Buff 的来源和持有者是否为同一个对象。"
       },
       "ownerSpawnedAbilityEntityPresent": {
         "name": "存在指定召唤物？",
@@ -4017,18 +3979,13 @@
         "abilityEntityRemainingDurationCompare": "能力实体剩余时长比较",
         "buffStackCompare": "按标签比较 Buff 层数",
         "currentBuffStackCompare": "当前 Buff 实例增强层数比较",
-        "contextTargetObjectTypeMatch": "目标组对象类型匹配",
-        "actionInputTargetObjectTypeMatch": "事件输入目标对象类型匹配",
-        "actionInputTargetIdentityMatch": "事件输入目标身份匹配",
-        "contextTargetIdentityMatch": "目标组身份匹配",
-        "contextTargetEntityTagMatch": "目标组全体实体标签匹配",
-        "contextTargetBuffStackCompare": "目标组首目标 Buff 层数比较",
-        "eventTargetBuffCountCompare": "比较事件目标的 Buff 实例数",
+        "targetObjectTypeMatch": "目标对象类型匹配",
+        "targetsEqual": "两组目标相同",
         "entityTagMatch": "实体标签匹配",
         "buffIdStackCompare": "按身份比较 Buff 层数",
         "timedMarkerPresent": "存在定时标记",
         "globalCooldownPresent": "全局冷却尚未结束",
-        "casterComboPending": "施放者存在待释放连携候选（不检查能否释放）",
+        "comboSkillPending": "目标存在待释放连携候选（不检查能否释放）",
         "eventDamageTagsMatch": "事件伤害标签匹配",
         "eventDamageFeaturesMatch": "事件伤害特征匹配",
         "not": "条件取反",

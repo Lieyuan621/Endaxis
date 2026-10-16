@@ -201,7 +201,7 @@ it.each(['hit', 'reach', 'finish', 'filteredHit', 'emptyHitTargets'] as const)(
       expect(restored.getUnfinishedTargets()).toEqual([{ kind: 'abilityEntity', instanceId: 4 }]);
       expect(evaluate.mock.calls[0]?.[0]).toMatchObject({
         kind: 'entityTagMatch',
-        target: 'enemy',
+        target: { kind: 'inputTarget' },
         tags: ['Immune/Physical'],
       });
       acceptsHit = true;

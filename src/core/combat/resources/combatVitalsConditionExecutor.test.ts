@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatVitals } from './combatVitals';
 import { CombatVitalsConditionExecutor } from './combatVitalsConditionExecutor';
+import { resolveDirectActionTargets } from '../abilities/targetContextOperationExecutor';
 import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
 
 describe('CombatVitalsConditionExecutor', () => {
@@ -18,7 +19,9 @@ describe('CombatVitalsConditionExecutor', () => {
       poiseImmune: false,
     });
     const executor = new CombatVitalsConditionExecutor({
+      queryTargets: (query, context) => resolveDirectActionTargets(query, context) ?? [],
       resolveTarget: () => vitals,
+      resolveVitals: () => vitals,
       delegate: { execute: vi.fn(() => false), evaluate: vi.fn(() => false) },
     });
     const context = { blackboard: new ActionBlackboard({ threshold: 0.5 }) };
@@ -27,7 +30,7 @@ describe('CombatVitalsConditionExecutor', () => {
       executor.evaluate(
         {
           kind: 'healthCompare',
-          target: 'enemy',
+          target: { kind: 'fixed', target: 'enemy' },
           valueType: 'ratio',
           operator: 'less',
           value: numberInput({ kind: 'blackboard', key: 'threshold' }),
@@ -39,7 +42,7 @@ describe('CombatVitalsConditionExecutor', () => {
       executor.evaluate(
         {
           kind: 'healthCompare',
-          target: 'enemy',
+          target: { kind: 'fixed', target: 'enemy' },
           valueType: 'current',
           operator: 'greater',
           value: { kind: 'constant', value: 500 },
@@ -62,7 +65,9 @@ describe('CombatVitalsConditionExecutor', () => {
     });
     const resolveTarget = vi.fn(() => vitals);
     const executor = new CombatVitalsConditionExecutor({
+      queryTargets: (query, context) => resolveDirectActionTargets(query, context) ?? [],
       resolveTarget,
+      resolveVitals: resolveTarget,
       delegate: { execute: vi.fn(() => false), evaluate: vi.fn(() => false) },
     });
 
@@ -70,15 +75,15 @@ describe('CombatVitalsConditionExecutor', () => {
       executor.evaluate(
         {
           kind: 'healthCompare',
-          target: 'buffSource',
+          target: { kind: 'source' },
           valueType: 'ratio',
           operator: 'less',
           value: { kind: 'constant', value: 0.5 },
         },
-        { blackboard: new ActionBlackboard(), buffSourceId: 'operator:source' },
+        { blackboard: new ActionBlackboard(), actionSourceId: 'operator:source' },
       ),
     ).toBe(true);
-    expect(resolveTarget).toHaveBeenCalledWith('buffSource', 'operator:source');
+    expect(resolveTarget).toHaveBeenCalledWith({ kind: 'operator', operatorId: 'operator:source' }, 'currentHealth');
   });
 
   it('resolves a saved character-team target without rerunning selection', () => {
@@ -94,8 +99,9 @@ describe('CombatVitalsConditionExecutor', () => {
     });
     const resolveContextTarget = vi.fn(() => vitals);
     const executor = new CombatVitalsConditionExecutor({
+      queryTargets: (query, context) => resolveDirectActionTargets(query, context) ?? [],
       resolveTarget: vi.fn(),
-      resolveContextTarget,
+      resolveVitals: resolveContextTarget,
       delegate: { execute: vi.fn(() => false), evaluate: vi.fn(() => false) },
     });
     const targetContext = new RuntimeTargetContext();
@@ -105,8 +111,7 @@ describe('CombatVitalsConditionExecutor', () => {
       executor.evaluate(
         {
           kind: 'healthCompare',
-          target: 'contextTarget',
-          contextKey: 'CureTarget',
+          target: { kind: 'context', key: 'CureTarget' },
           valueType: 'ratio',
           operator: 'less',
           value: { kind: 'constant', value: 0.99 },
@@ -114,12 +119,11 @@ describe('CombatVitalsConditionExecutor', () => {
         { blackboard: new ActionBlackboard(), targetContext },
       ),
     ).toBe(true);
-    expect(resolveContextTarget).toHaveBeenCalledWith('ally');
+    expect(resolveContextTarget).toHaveBeenCalledWith({ kind: 'operator', operatorId: 'ally' }, 'currentHealth');
     targetContext.set('CureTarget', []);
     const emptyTargetCondition = {
       kind: 'healthCompare' as const,
-      target: 'contextTarget' as const,
-      contextKey: 'CureTarget',
+      target: { kind: 'context' as const, key: 'CureTarget' },
       valueType: 'current' as const,
       operator: 'equal' as const,
       value: { kind: 'constant' as const, value: 0 },
@@ -151,8 +155,9 @@ describe('CombatVitalsConditionExecutor', () => {
     });
     const resolveTarget = vi.fn(() => enemyVitals);
     const executor = new CombatVitalsConditionExecutor({
+      queryTargets: (query, context) => resolveDirectActionTargets(query, context) ?? [],
       resolveTarget,
-      resolveContextTarget: vi.fn(),
+      resolveVitals: resolveTarget,
       delegate: { execute: vi.fn(() => false), evaluate: vi.fn(() => false) },
     });
     const targetContext = new RuntimeTargetContext();
@@ -162,8 +167,7 @@ describe('CombatVitalsConditionExecutor', () => {
       executor.evaluate(
         {
           kind: 'healthCompare',
-          target: 'contextTarget',
-          contextKey: 'smart_target',
+          target: { kind: 'context', key: 'smart_target' },
           valueType: 'current',
           operator: 'lessOrEqual',
           value: { kind: 'constant', value: 0 },
@@ -171,11 +175,10 @@ describe('CombatVitalsConditionExecutor', () => {
         { blackboard: new ActionBlackboard(), targetContext },
       ),
     ).toBe(true);
-    expect(resolveTarget).toHaveBeenCalledWith('enemy', undefined);
+    expect(resolveTarget).toHaveBeenCalledWith({ kind: 'enemy' }, 'currentHealth');
     const positiveHealthCondition = {
       kind: 'healthCompare' as const,
-      target: 'contextTarget' as const,
-      contextKey: 'smart_target',
+      target: { kind: 'context' as const, key: 'smart_target' },
       valueType: 'current' as const,
       operator: 'greater' as const,
       value: { kind: 'constant' as const, value: 0 },
@@ -209,8 +212,9 @@ describe('CombatVitalsConditionExecutor', () => {
     });
     const resolveContextTarget = vi.fn(() => vitals);
     const executor = new CombatVitalsConditionExecutor({
+      queryTargets: (query, context) => resolveDirectActionTargets(query, context) ?? [],
       resolveTarget: vi.fn(),
-      resolveContextTarget,
+      resolveVitals: resolveContextTarget,
       delegate: { execute: vi.fn(() => false), evaluate: vi.fn(() => false) },
     });
 
@@ -218,18 +222,18 @@ describe('CombatVitalsConditionExecutor', () => {
       executor.evaluate(
         {
           kind: 'healthCompare',
-          target: 'currentTarget',
+          target: { kind: 'inputTarget' },
           valueType: 'ratio',
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 0.99 },
         },
         {
           blackboard: new ActionBlackboard(),
-          currentTarget: { kind: 'operator', operatorId: 'controlled' },
+          actionInputTarget: { kind: 'operator', operatorId: 'controlled' },
         },
       ),
     ).toBe(true);
-    expect(resolveContextTarget).toHaveBeenCalledWith('controlled');
+    expect(resolveContextTarget).toHaveBeenCalledWith({ kind: 'operator', operatorId: 'controlled' }, 'currentHealth');
   });
 
   it('compares current poise and preserves the native missing-poise fallback', () => {
@@ -255,13 +259,14 @@ describe('CombatVitalsConditionExecutor', () => {
     });
     let current = withPoise;
     const executor = new CombatVitalsConditionExecutor({
+      queryTargets: (query, context) => resolveDirectActionTargets(query, context) ?? [],
       resolveTarget: () => current,
-      resolveContextTarget: () => withoutPoise,
+      resolveVitals: target => target.kind === 'enemy' ? current : withoutPoise,
       delegate: { execute: vi.fn(() => false), evaluate: vi.fn(() => false) },
     });
     const condition = {
       kind: 'poiseCompare' as const,
-      target: 'enemy' as const,
+      target: { kind: 'fixed' as const, target: 'enemy' as const },
       returnValueIfMissing: false,
       operator: 'equal' as const,
       value: { kind: 'constant' as const, value: 0 },
@@ -271,25 +276,7 @@ describe('CombatVitalsConditionExecutor', () => {
     // 修正器的 Target 是本次计算的对方；对干员检查时不能误读敌人的失衡值。
     expect(
       executor.evaluate(
-        { ...condition, target: 'currentTarget' },
-        {
-          blackboard: new ActionBlackboard(),
-          currentTarget: { kind: 'operator', operatorId: 'attacker' },
-        },
-      ),
-    ).toBe(false);
-    expect(
-      executor.evaluate(
-        { ...condition, target: 'currentTarget' },
-        {
-          blackboard: new ActionBlackboard(),
-          currentTarget: { kind: 'enemy' },
-        },
-      ),
-    ).toBe(true);
-    expect(
-      executor.evaluate(
-        { ...condition, target: 'actionInputTarget' },
+        { ...condition, target: { kind: 'inputTarget' } },
         {
           blackboard: new ActionBlackboard(),
           actionInputTarget: { kind: 'operator', operatorId: 'attacker' },
@@ -298,7 +285,25 @@ describe('CombatVitalsConditionExecutor', () => {
     ).toBe(false);
     expect(
       executor.evaluate(
-        { ...condition, target: 'actionInputTarget' },
+        { ...condition, target: { kind: 'inputTarget' } },
+        {
+          blackboard: new ActionBlackboard(),
+          actionInputTarget: { kind: 'enemy' },
+        },
+      ),
+    ).toBe(true);
+    expect(
+      executor.evaluate(
+        { ...condition, target: { kind: 'inputTarget' } },
+        {
+          blackboard: new ActionBlackboard(),
+          actionInputTarget: { kind: 'operator', operatorId: 'attacker' },
+        },
+      ),
+    ).toBe(false);
+    expect(
+      executor.evaluate(
+        { ...condition, target: { kind: 'inputTarget' } },
         {
           blackboard: new ActionBlackboard(),
         },
@@ -326,7 +331,9 @@ describe('CombatVitalsConditionExecutor', () => {
       poiseImmune: false,
     });
     const executor = new CombatVitalsConditionExecutor({
+      queryTargets: (query, context) => resolveDirectActionTargets(query, context) ?? [],
       resolveTarget: () => vitals,
+      resolveVitals: () => vitals,
       delegate: { execute: vi.fn(() => false), evaluate: vi.fn(() => false) },
     });
     const condition = { kind: 'targetStaggered' as const, target: 'enemy' as const };

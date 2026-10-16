@@ -50,24 +50,40 @@ describe('公共连携条件来源与 Pending 编译', () => {
     ];
     const source = parse([entry])[0]!;
     expect(chainOf(compilePendingComboConditionSource(source, context))[0]).toMatchObject({
-      parameters: { condition: { kind: 'casterComboPending' } },
+      parameters: { condition: { kind: 'comboSkillPending' } },
     });
-    expect(() =>
-      compilePendingComboConditionSource(source, {
-        ...context,
-        actionOwnerTarget: 'buffOwner',
-        actionSourceTarget: 'buffSource',
-      }),
-    ).toThrow('proven plain caster target');
+    expect(
+      chainOf(
+        compilePendingComboConditionSource(source, {
+          ...context,
+          actionOwnerTarget: 'buffOwner',
+          actionSourceTarget: 'buffSource',
+        }),
+      )[0],
+    ).toMatchObject({
+      parameters: {
+        condition: {
+          kind: 'comboSkillPending',
+          target: { kind: targetSource === 'Owner' ? 'owner' : 'source' },
+        },
+      },
+    });
     entry.comboSkillCheckAction.actionData = [
       {
         ...(entry.comboSkillCheckAction.actionData[0] as object),
         owner: targetFixture('Context', undefined, 'trigger'),
       },
     ];
-    expect(() => compilePendingComboConditionSource(parse([entry])[0]!, context)).toThrow(
-      'proven plain caster target',
-    );
+    expect(
+      chainOf(compilePendingComboConditionSource(parse([entry])[0]!, context))[0],
+    ).toMatchObject({
+      parameters: {
+        condition: {
+          kind: 'comboSkillPending',
+          target: { kind: 'context', key: 'trigger' },
+        },
+      },
+    });
   });
   it.each([true, false])('定义投影从已审计初值安装局部板（启用=%s），来源单独保留', enabled => {
     const pair = (key: string, valueDouble: number) => ({
@@ -159,7 +175,11 @@ describe('公共连携条件来源与 Pending 编译', () => {
     expect(compiled.event).toBe('beforeTakeInfliction');
     expect(chainOf(compiled)[0]).toMatchObject({
       parameters: {
-        condition: { kind: 'actionInputTargetObjectTypeMatch', objectTypes: ['enemy'] },
+        condition: {
+          kind: 'targetObjectTypeMatch',
+          target: { kind: 'inputTarget' },
+          objectTypes: ['enemy'],
+        },
       },
     });
   });
@@ -184,8 +204,7 @@ describe('公共连携条件来源与 Pending 编译', () => {
       parameters: {
         condition: {
           kind: 'healthCompare',
-          target: 'contextTarget',
-          contextKey: 'trigger',
+          target: { kind: 'context', key: 'trigger' },
           valueType: 'ratio',
           operator: 'less',
           value: { kind: 'constant', value: 0.4 },
@@ -213,8 +232,9 @@ describe('公共连携条件来源与 Pending 编译', () => {
     ).toMatchObject({
       parameters: {
         condition: {
-          kind: 'contextTargetBuffIdStackCompare',
-          contextKey: 'trigger',
+          kind: 'buffIdStackCompare',
+          target: { kind: 'context', key: 'trigger' },
+          compareZeroWhenTargetMissing: false,
           buffIds: ['buff_physical_no_guard'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 3 },

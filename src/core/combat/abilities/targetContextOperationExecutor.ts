@@ -312,44 +312,21 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
         ? distance <= Math.fround(condition.distance)
         : distance > Math.fround(condition.distance);
     }
-    if (condition.kind === 'contextTargetObjectTypeMatch') {
-      if (context?.targetContext === undefined)
-        throw new Error('object type check requires a combat target context');
-      return (context.targetContext.getOptional(condition.contextKey) ?? []).some(target => {
+    if (condition.kind === 'targetObjectTypeMatch') {
+      if (!context) throw new Error('object type check requires an action context');
+      return this.queryTargets(condition.target, context).some(target => {
         return matchesCombatObjectType(
           condition.objectTypes,
           resolveCombatObjectType(target, this.resolveAbilityEntityObjectType),
         );
       });
     }
-    if (condition.kind === 'contextTargetIdentityMatch') {
-      if (context?.targetContext === undefined) {
-        throw new Error('context target identity check requires a combat target context');
-      }
-      const targets = context.targetContext.getOptional(condition.contextKey) ?? [];
-      let others: readonly RuntimeTargetRef[];
-      if (condition.other === 'actionInputTarget') {
-        others = context.actionInputTarget ? [context.actionInputTarget] : [];
-      } else if (condition.other === 'controlledOperator') {
-        const team = this.characterTeam;
-        if (team === undefined)
-          throw new Error('context target identity check requires character team');
-        others = team
-          .listOperatorIds()
-          .filter(id => team.isOperatorControlled(id))
-          .map(operatorId => ({ kind: 'operator', operatorId }));
-      } else {
-        const id =
-          condition.other === 'actionSource' ? context.actionSourceId : context.actionOwnerId;
-        others = id === undefined ? [] : [runtimeTargetFromEntityId(id)];
-      }
-      // 主控检查取首目标；CheckTargetsEqual 则要求两组互相包含。
-      const matches =
-        condition.selection === 'first'
-          ? targets[0] !== undefined && others[0] !== undefined && sameTarget(targets[0], others[0])
-          : targets.every(target => others.some(other => sameTarget(target, other))) &&
-            others.every(other => targets.some(target => sameTarget(target, other)));
-      return condition.operator === 'equal' ? matches : !matches;
+    if (condition.kind === 'targetsEqual') {
+      if (!context) throw new Error('targetsEqual requires an action context');
+      const first = this.queryTargets(condition.first, context);
+      const second = this.queryTargets(condition.second, context);
+      return first.every(target => second.some(other => sameTarget(target, other))) &&
+        second.every(target => first.some(other => sameTarget(target, other)));
     }
     if (condition.kind !== 'targetContains') {
       return context === undefined
@@ -398,6 +375,14 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
   ): readonly RuntimeTargetRef[] {
     const direct = resolveDirectActionTargets(query, context, this.operatorId);
     if (direct !== undefined) return direct;
+    if (query.kind === 'abilitySystemSource') {
+      const owner = this.queryTargets(query.owner, context)[0];
+      const id = owner === undefined ? undefined : runtimeTargetEntityId(owner);
+      if (id === undefined) return [];
+      if (!this.findAbilitySystemSource)
+        throw new Error('SourceFinder requires a single-level AbilitySystem source query');
+      return [this.findAbilitySystemSource(id)];
+    }
     if (query.kind === 'allyHitBox') {
       const owner = this.queryTargets(query.owner, context)[0];
       if (!owner || owner.kind === 'spatialPoint') return [];

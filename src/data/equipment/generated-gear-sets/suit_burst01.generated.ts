@@ -115,11 +115,12 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'buffStackCompare',
-                target: 'actionInputTarget',
-                tagQueryType: 'hasAny',
-                buffTags: ['Skill/Character/Common/SpellInflict/FireInflict'],
+                target: { kind: 'inputTarget' },
+                compareZeroWhenTargetMissing: true,
                 operator: 'greaterOrEqual',
                 value: { kind: 'valueNode', nodeId: 'data_1' },
+                tagQueryType: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellInflict/FireInflict'],
               },
             },
             data_3: {
@@ -134,11 +135,12 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'buffStackCompare',
-                target: 'actionInputTarget',
-                tagQueryType: 'hasAny',
-                buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
+                target: { kind: 'inputTarget' },
+                compareZeroWhenTargetMissing: true,
                 operator: 'greaterOrEqual',
                 value: { kind: 'valueNode', nodeId: 'data_1' },
+                tagQueryType: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellInflict/NaturalInflict'],
               },
             },
             data_5: {
@@ -153,11 +155,12 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'buffStackCompare',
-                target: 'actionInputTarget',
-                tagQueryType: 'hasAny',
-                buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
+                target: { kind: 'inputTarget' },
+                compareZeroWhenTargetMissing: true,
                 operator: 'greaterOrEqual',
                 value: { kind: 'valueNode', nodeId: 'data_1' },
+                tagQueryType: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
               },
             },
             data_7: {
@@ -172,11 +175,12 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'buffStackCompare',
-                target: 'actionInputTarget',
-                tagQueryType: 'hasAny',
-                buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
+                target: { kind: 'inputTarget' },
+                compareZeroWhenTargetMissing: true,
                 operator: 'greaterOrEqual',
                 value: { kind: 'valueNode', nodeId: 'data_1' },
+                tagQueryType: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
               },
             },
             data_9: {

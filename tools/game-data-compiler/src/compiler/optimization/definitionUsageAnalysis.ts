@@ -18,7 +18,7 @@ import type { ActionStringOperand, LevelValues } from '../intermediateDefinition
 
 /** 这些查询只读取已有目标身份，不创建位置或修改目标组。 */
 export function isReadOnlyTargetQuery(query: ActionTargetQuery): boolean {
-  if (query.kind === 'mainTarget') return isReadOnlyTargetQuery(query.owner);
+  if (query.kind === 'mainTarget' || query.kind === 'abilitySystemSource') return isReadOnlyTargetQuery(query.owner);
   return [
     'owner',
     'source',
@@ -217,9 +217,7 @@ export function analyzeConditionUsage(
     case 'abilityEntityRemainingDurationCompare':
       return {
         ...value(condition.value, condition.outputKey === undefined ? [] : [condition.outputKey]),
-        observable:
-          condition.outputKey !== undefined ||
-          (condition.target !== undefined && !isReadOnlyTargetQuery(condition.target)),
+        observable: condition.outputKey !== undefined || !isReadOnlyTargetQuery(condition.target),
       };
     case 'eventConsumedBuffLayerCompare':
     case 'eventBuffEnhanceLayerCompare':
@@ -233,15 +231,21 @@ export function analyzeConditionUsage(
         ),
       };
     case 'targetDistance':
+    case 'targetsEqual':
       return {
         ...EMPTY,
         mayThrow: true,
-        observable: [condition.source, condition.target].some(
+        observable: (condition.kind === 'targetsEqual'
+          ? [condition.first, condition.second]
+          : [condition.source, condition.target]).some(
           query => !isReadOnlyTargetQuery(query),
         ),
       };
     case 'targetFacingAngle':
-      return actionValueUsage(condition.angle);
+      return {
+        ...actionValueUsage(condition.angle),
+        observable: [condition.origin, condition.target].some(query => !isReadOnlyTargetQuery(query)),
+      };
     case 'twoDirectionAngleCompare':
       return {
         ...value(condition.value),
@@ -252,20 +256,20 @@ export function analyzeConditionUsage(
           condition.direction2Target,
         ].some(query => !isReadOnlyTargetQuery(query)),
       };
-    case 'enemySuperArmorCompare':
     case 'healthCompare':
     case 'poiseCompare':
-    case 'contextTargetBuffStackCompare':
-    case 'contextTargetBuffIdStackCompare':
-    case 'currentBuffStackCompare':
+    case 'enemySuperArmorCompare':
     case 'buffStackCompare':
     case 'buffTagIdCountCompare':
     case 'buffIdStackCompare':
-    case 'eventTargetBuffCountCompare':
+      return { ...value(condition.value), mayThrow: true, observable: !isReadOnlyTargetQuery(condition.target) };
+    case 'currentBuffStackCompare':
       return value(condition.value);
     case 'timedMarkerPresent':
-    case 'abilityEntityTimedMarkerPresent':
-      return mergeDefinitionValueUsage([outputs(), actionStringUsage(condition.markerId)]);
+      return mergeDefinitionValueUsage([
+        { ...outputs(), mayThrow: true, observable: !isReadOnlyTargetQuery(condition.target) },
+        actionStringUsage(condition.markerId),
+      ]);
     case 'eventInflictionElementIn':
     case 'eventPhysicalInflictionTypeIn': {
       // 两类原生检查先严格读取旧值，再比较 float32 epsilon；Spell 的空键不启用保存。
@@ -297,31 +301,33 @@ export function analyzeConditionUsage(
         ),
         reads: new Set(),
       };
+    case 'deckAttributeCompare':
+      return mergeDefinitionValueUsage([
+        { ...EMPTY, mayThrow: true, observable: !isReadOnlyTargetQuery(condition.target) },
+        typeof condition.left === 'string' ? EMPTY : value(condition.left),
+        typeof condition.right === 'string' ? EMPTY : value(condition.right),
+      ]);
     case 'checkMainCharacter':
+    case 'operatorRoleIn':
+    case 'currentSkillTypeIn':
+    case 'entityTagMatch':
+    case 'targetObjectTypeMatch':
+    case 'globalCooldownPresent':
+    case 'comboSkillPending':
+    case 'enemyRankIn':
       return { ...EMPTY, mayThrow: true, observable: !isReadOnlyTargetQuery(condition.target) };
     case 'skillHasHit':
     case 'combatActive':
     case 'singleEnemyPresent':
     case 'comboCameraAlphaSetting':
     case 'characterTypeIn':
-    case 'operatorRoleIn':
-    case 'enemyRankIn':
     case 'targetStaggered':
-    case 'contextTargetObjectTypeMatch':
-    case 'actionInputTargetObjectTypeMatch':
-    case 'actionInputTargetIdentityMatch':
-    case 'contextTargetIdentityMatch':
-    case 'contextTargetEntityTagMatch':
-    case 'entityTagMatch':
-    case 'globalCooldownPresent':
-    case 'casterComboPending':
     case 'eventDamageTagsMatch':
     case 'eventDamageGameplayTagsMatch':
     case 'eventDamageFeaturesMatch':
     case 'eventDamageTypeIn':
     case 'skillDamageTypeIn':
     case 'eventSkillTypeIn':
-    case 'currentSkillTypeIn':
     case 'originSkillTypeIn':
     case 'skillInterruptReasonIn':
     case 'eventSkillIdIn':
@@ -329,11 +335,7 @@ export function analyzeConditionUsage(
     case 'eventBuffEndedEarly':
     case 'eventHealTagsMatch':
     case 'eventSpGainMatch':
-    case 'eventSourceMatchesBuffSource':
-    case 'eventSourceMatchesBuffSourceEntitySource':
-    case 'buffSourceMatchesOwner':
     case 'ownerSpawnedAbilityEntityPresent':
-    case 'deckAttributeCompare':
     case 'eventProjectilePerfectDodgeCooldownEquals':
     case 'eventAbilityEntityFinishReasonIn':
     case 'eventProjectileIgnoreImmuneLevelCompare':

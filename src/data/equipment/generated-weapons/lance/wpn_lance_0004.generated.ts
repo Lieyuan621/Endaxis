@@ -95,10 +95,11 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'buffIdStackCompare',
-                target: 'actionInputTarget',
-                buffIds: ['buff_physical_no_guard'],
+                target: { kind: 'inputTarget' },
+                compareZeroWhenTargetMissing: true,
                 operator: 'lessOrEqual',
                 value: { kind: 'constant', value: 0 },
+                buffIds: ['buff_physical_no_guard'],
               },
             },
           },

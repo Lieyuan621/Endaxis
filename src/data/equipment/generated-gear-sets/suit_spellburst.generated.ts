@@ -76,7 +76,7 @@ const definition = {
             checkCondition_4: {
               action: {
                 kind: 'checkCondition',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
               },
               next: 'checkCondition_3',
             },
@@ -90,13 +90,10 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'globalCooldownPresent',
-                target: 'buffOwner',
+                target: { kind: 'owner' },
+                returnTrueIfNotExists: true,
                 markerId: 'buff_equipsuit_spellburst_01',
               },
-            },
-            data_3: {
-              type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
             },
           },
         },

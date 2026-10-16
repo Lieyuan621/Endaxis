@@ -10,12 +10,13 @@ const delegate = {
 
 describe('EnemySuperArmorConditionExecutor', () => {
   it('compares the captured enemy value with a dynamic action operand', () => {
-    const executor = new EnemySuperArmorConditionExecutor(30, delegate);
+    const executor = new EnemySuperArmorConditionExecutor(30, delegate, () => [{ kind: 'enemy' }]);
 
     expect(
       executor.evaluate(
         {
           kind: 'enemySuperArmorCompare',
+          target: { kind: 'inputTarget' },
           operator: 'greaterOrEqual',
           value: numberInput({ kind: 'blackboard', key: 'limit' }),
         },
@@ -25,14 +26,21 @@ describe('EnemySuperArmorConditionExecutor', () => {
   });
 
   it('requires the skill action blackboard for operand resolution', () => {
-    const executor = new EnemySuperArmorConditionExecutor(30, delegate);
+    const executor = new EnemySuperArmorConditionExecutor(30, delegate, () => []);
 
     expect(() =>
       executor.evaluate({
         kind: 'enemySuperArmorCompare',
+        target: { kind: 'inputTarget' },
         operator: 'equal',
         value: { kind: 'constant', value: 30 },
       }),
     ).toThrow('enemySuperArmorCompare requires a combat operation context');
+    expect(executor.evaluate({
+      kind: 'enemySuperArmorCompare',
+      target: { kind: 'inputTarget' },
+      operator: 'equal',
+      value: numberInput({ kind: 'blackboard', key: 'missing' }),
+    }, { blackboard: new ActionBlackboard() })).toBe(false);
   });
 });

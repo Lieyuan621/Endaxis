@@ -145,7 +145,7 @@ describe('validateSkillDefinition', () => {
   it('validates operator profession conditions as a closed role list', () => {
     const condition: Record<string, unknown> = {
       kind: 'operatorRoleIn',
-      target: 'buffOwner',
+      target: { kind: 'owner' },
       roles: ['guard', 'supporter'],
     };
     const skill = skillWithSteps([
@@ -254,8 +254,9 @@ describe('validateSkillDefinition', () => {
   });
 
   it('只接受已知的敌人原生 rank，并允许原生空集合表达永不匹配', () => {
-    const condition: { kind: string; ranks: string[] } = {
+    const condition = {
       kind: 'enemyRankIn',
+      target: { kind: 'fixed', target: 'enemy' },
       ranks: ['elite', 'boss'],
     };
     const definition = skillWithSteps([

@@ -2625,10 +2625,11 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_enter_normal_skill_end'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0038_purrche_enter_normal_skill_end'],
         },
       },
       data_7: {
@@ -3139,10 +3140,11 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_aura_block'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0038_purrche_aura_block'],
         },
       },
       data_4: {
@@ -3165,10 +3167,11 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_enter_normal_skill_end'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0038_purrche_enter_normal_skill_end'],
         },
       },
       data_8: {
@@ -3438,20 +3441,22 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_aura_block'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0038_purrche_aura_block'],
         },
       },
       data_3: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_enter_normal_skill_end'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0038_purrche_enter_normal_skill_end'],
         },
       },
       data_4: {
@@ -3757,20 +3762,22 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_aura_block'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0038_purrche_aura_block'],
         },
       },
       data_3: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_enter_normal_skill_end'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0038_purrche_enter_normal_skill_end'],
         },
       },
       data_4: {
@@ -4719,20 +4726,22 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_block_counter'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 2 },
+          buffIds: ['buff_chr_0038_purrche_block_counter'],
         },
       },
       data_4: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_aura_block'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0038_purrche_aura_block'],
         },
       },
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'comboType' } },
@@ -4800,40 +4809,44 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_combo_lasttype'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0038_purrche_combo_lasttype'],
         },
       },
       data_19: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_combo_always_fish'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0038_purrche_combo_always_fish'],
         },
       },
       data_20: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_combo_always_bomb'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0038_purrche_combo_always_bomb'],
         },
       },
       data_21: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_combo_always_black_hole'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0038_purrche_combo_always_black_hole'],
         },
       },
       data_22: {
@@ -6015,60 +6028,66 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_perform_test_always2r1h'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0038_purrche_perform_test_always2r1h'],
         },
       },
       data_6: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_perform_test_always1r1b1h'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0038_purrche_perform_test_always1r1b1h'],
         },
       },
       data_7: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_perform_test_always3boom'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0038_purrche_perform_test_always3boom'],
         },
       },
       data_8: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_perform_test_always3r'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0038_purrche_perform_test_always3r'],
         },
       },
       data_9: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_train_ult_always2y1r'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0038_purrche_train_ult_always2y1r'],
         },
       },
       data_10: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0038_purrche_train_ult_always3y'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0038_purrche_train_ult_always3y'],
         },
       },
       data_11: {
@@ -6516,10 +6535,11 @@ const purrchenaBuff1ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'buffOwner',
-          buffIds: ['buff_chr_0038_purrche_block_change_skill'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'less',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0038_purrche_block_change_skill'],
         },
       },
       data_2: {
@@ -6559,10 +6579,11 @@ const purrchenaBuff1ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'actionInputTarget',
-          buffIds: ['buff_chr_0038_purrche_block_counter'],
+          target: { kind: 'inputTarget' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 2 },
+          buffIds: ['buff_chr_0038_purrche_block_counter'],
         },
       },
       data_9: {
@@ -6573,10 +6594,11 @@ const purrchenaBuff1ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'buffOwner',
-          buffIds: ['buff_chr_0038_purrche_block_counter'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 2 },
+          buffIds: ['buff_chr_0038_purrche_block_counter'],
         },
       },
       data_11: {
@@ -6782,10 +6804,11 @@ const purrchenaBuff2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'buffOwner',
-          buffIds: ['buff_chr_0038_purrche_aura_block'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0038_purrche_aura_block'],
         },
       },
       data_7: {
@@ -7225,20 +7248,22 @@ const purrchenaBuff10ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'buffOwner',
-          buffIds: ['buff_chr_0038_purrche_block_shelter_down_count'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'less',
           value: { kind: 'constant', value: 3 },
+          buffIds: ['buff_chr_0038_purrche_block_shelter_down_count'],
         },
       },
       data_2: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'buffOwner',
-          buffIds: ['buff_chr_0038_purrche_aura_block'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0038_purrche_aura_block'],
         },
       },
       data_3: {
@@ -7760,21 +7785,21 @@ const purrchenaBuff22ActionGraph = {
       checkCondition_4: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
         next: 'checkCondition_3',
       },
       checkCondition_11: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
         },
         next: 'calculateActionValue_2',
       },
       checkCondition_12: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
         next: 'checkCondition_11',
       },
@@ -7805,7 +7830,7 @@ const purrchenaBuff22ActionGraph = {
       checkCondition_15: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
         next: 'calculateActionValue_14',
       },
@@ -7815,7 +7840,7 @@ const purrchenaBuff22ActionGraph = {
           parameters: {
             target: 'buffOwner',
             markerId: 'buff_chr_0038_purrche_talent_2_effectbuff',
-            durationSeconds: { kind: 'valueNode', nodeId: 'data_9' },
+            durationSeconds: { kind: 'valueNode', nodeId: 'data_7' },
           },
         },
         next: null,
@@ -7823,7 +7848,7 @@ const purrchenaBuff22ActionGraph = {
       checkCondition_17: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
         },
         next: 'setGlobalCooldown_16',
       },
@@ -7834,7 +7859,7 @@ const purrchenaBuff22ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
-          target: 'caster',
+          target: { kind: 'owner' },
           valueType: 'ratio',
           operator: 'equal',
           value: { kind: 'constant', value: 1 },
@@ -7844,55 +7869,50 @@ const purrchenaBuff22ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'globalCooldownPresent',
-          target: 'buffOwner',
+          target: { kind: 'owner' },
+          returnTrueIfNotExists: true,
           markerId: 'buff_chr_0038_purrche_talent_2_effectbuff',
         },
       },
       data_4: {
         type: 'boolean',
-        expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+        expression: {
+          kind: 'globalCooldownPresent',
+          target: { kind: 'owner' },
+          returnTrueIfNotExists: true,
+          markerId: 'buff_chr_0038_purrche_talent_2_effectbuff',
+        },
       },
       data_5: {
         type: 'boolean',
         expression: {
-          kind: 'globalCooldownPresent',
-          target: 'buffOwner',
-          markerId: 'buff_chr_0038_purrche_talent_2_effectbuff',
-        },
-      },
-      data_6: {
-        type: 'boolean',
-        expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-      },
-      data_7: {
-        type: 'boolean',
-        expression: {
           kind: 'healthCompare',
-          target: 'caster',
+          target: { kind: 'owner' },
           valueType: 'ratio',
           operator: 'equal',
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_8: {
+      data_6: {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
-          target: 'caster',
+          target: { kind: 'owner' },
           valueType: 'ratio',
           operator: 'less',
           value: { kind: 'constant', value: 1 },
         },
       },
-      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'cd' } },
-      data_10: {
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'cd' } },
+      data_8: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'buffOwner',
-          buffIds: ['buff_chr_0038_purrche_talent_2_effectbuff_Add'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0038_purrche_talent_2_effectbuff_Add'],
         },
       },
     },

@@ -292,7 +292,7 @@ describe('标准入口普通倒地装配', () => {
           type: 'boolean',
           expression: {
             kind: 'entityTagMatch' as const,
-            target: 'enemy' as const,
+            target: { kind: 'fixed' as const, target: 'enemy' as const },
             tagQueryType: 'hasAny' as const,
             tags: ['Status/Immobilized/Getup'],
           },

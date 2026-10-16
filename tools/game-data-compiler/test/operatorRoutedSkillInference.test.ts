@@ -50,7 +50,8 @@ function fixture(overrides: Record<string, unknown> = {}) {
       asSkillCast: false,
       condition: {
         kind: 'buffIdStackCompare',
-        target: 'caster',
+        target: { kind: 'owner' },
+        compareZeroWhenTargetMissing: false,
         buffIds: ['activation'],
         operator: 'greaterOrEqual',
         value: 1,

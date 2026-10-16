@@ -1397,7 +1397,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityTagMatch',
-                          target: 'enemy',
+                          target: { kind: 'fixed', target: 'enemy' },
                           tagQueryType: 'hasAny',
                           tags: ['Skill/Character/Common/SpellStatus/Conduct'],
                         },
@@ -1406,7 +1406,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityTagMatch',
-                          target: 'enemy',
+                          target: { kind: 'fixed', target: 'enemy' },
                           tagQueryType: 'hasAny',
                           tags: ['Skill/Character/Common/SpellStatus/Burning'],
                         },
@@ -1415,7 +1415,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityTagMatch',
-                          target: 'enemy',
+                          target: { kind: 'fixed', target: 'enemy' },
                           tagQueryType: 'hasAny',
                           tags: [
                             'Skill/Character/Common/SpellStatus/Burning',
@@ -1504,10 +1504,11 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0006_wolfgd_talent_0_effectbuff'],
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0006_wolfgd_talent_0_effectbuff'],
         },
       },
       data_5: {
@@ -1531,7 +1532,7 @@ export const wulfgardChr_0006_wolfgd_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: 'enemy',
+          target: { kind: 'fixed', target: 'enemy' },
           tagQueryType: 'hasAny',
           tags: [
             'Skill/Character/Common/SpellStatus/Burning',
@@ -2014,8 +2015,8 @@ const wulfgardComboCondition1ActionGraph = {
       data_1: {
         type: 'boolean',
         expression: {
-          kind: 'contextTargetObjectTypeMatch',
-          contextKey: 'trigger',
+          kind: 'targetObjectTypeMatch',
+          target: { kind: 'context', key: 'trigger' },
           objectTypes: ['enemy'],
         },
       },

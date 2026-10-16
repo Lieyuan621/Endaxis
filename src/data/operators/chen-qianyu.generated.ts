@@ -1420,12 +1420,12 @@ const chenQianyuComboCondition1ActionGraph = {
       data_1: {
         type: 'boolean',
         expression: {
-          kind: 'contextTargetBuffIdStackCompare',
+          kind: 'buffIdStackCompare',
+          target: { kind: 'context', key: 'trigger' },
           compareZeroWhenTargetMissing: false,
-          contextKey: 'trigger',
-          buffIds: ['buff_physical_no_guard'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_physical_no_guard'],
         },
       },
       data_2: {
@@ -1435,8 +1435,8 @@ const chenQianyuComboCondition1ActionGraph = {
       data_3: {
         type: 'boolean',
         expression: {
-          kind: 'contextTargetObjectTypeMatch',
-          contextKey: 'trigger',
+          kind: 'targetObjectTypeMatch',
+          target: { kind: 'context', key: 'trigger' },
           objectTypes: ['enemy'],
         },
       },
@@ -1472,7 +1472,7 @@ const chenQianyuBuff1ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
-          target: 'actionInputTarget',
+          target: { kind: 'inputTarget' },
           valueType: 'ratio',
           operator: 'less',
           value: { kind: 'valueNode', nodeId: 'data_1' },

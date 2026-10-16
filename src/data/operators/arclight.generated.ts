@@ -1082,7 +1082,7 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: 'enemy',
+          target: { kind: 'fixed', target: 'enemy' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/Common/SpellStatus/Conduct'],
         },
@@ -1105,7 +1105,7 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: 'enemy',
+          target: { kind: 'fixed', target: 'enemy' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/Common/SpellStatus/Conduct'],
         },
@@ -1688,10 +1688,11 @@ const arclightBuff3ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'buffOwner',
-          buffIds: ['buff_chr_0007_ikut_normal_skill_extra_count'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'valueNode', nodeId: 'data_2' },
+          buffIds: ['buff_chr_0007_ikut_normal_skill_extra_count'],
         },
       },
     },
@@ -2109,7 +2110,7 @@ export const arclight: OperatorDefinition = {
                 type: 'boolean',
                 expression: {
                   kind: 'entityTagMatch',
-                  target: 'enemy',
+                  target: { kind: 'fixed', target: 'enemy' },
                   tagQueryType: 'hasAny',
                   tags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
                 },

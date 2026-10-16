@@ -1260,10 +1260,11 @@ describe('AbilityEntityOperationExecutor', () => {
       executor.evaluate(
         {
           kind: 'abilityEntityRemainingDurationCompare',
+          target: { kind: 'inputTarget' },
           operator: 'greater',
           value: { kind: 'constant', value: 255.99998474121094 },
         },
-        { blackboard, currentTarget: precisionTarget },
+        { blackboard, currentTarget: precisionTarget, actionInputTarget: precisionTarget },
       ),
     ).toBe(true);
     entities.finish(precisionTarget);
@@ -1278,10 +1279,11 @@ describe('AbilityEntityOperationExecutor', () => {
       executor.evaluate(
         {
           kind: 'abilityEntityRemainingDurationCompare',
+          target: { kind: 'inputTarget' },
           operator: 'equal',
           value: { kind: 'constant', value: -1 },
         },
-        { blackboard, currentTarget: infiniteTarget },
+        { blackboard, currentTarget: infiniteTarget, actionInputTarget: infiniteTarget },
       ),
     ).toBe(true);
     entities.finish(infiniteTarget);
@@ -1290,6 +1292,7 @@ describe('AbilityEntityOperationExecutor', () => {
       executor.evaluate(
         {
           kind: 'abilityEntityRemainingDurationCompare',
+          target: { kind: 'inputTarget' },
           operator: 'less',
           value: { kind: 'constant', value: 13 },
         },

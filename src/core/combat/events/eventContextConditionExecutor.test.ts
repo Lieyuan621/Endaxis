@@ -22,7 +22,7 @@ describe('EventContextConditionExecutor', () => {
       evaluate: (condition, context) => {
         expect(condition).toEqual({
           kind: 'entityTagMatch',
-          target: 'actionInputTarget',
+          target: { kind: 'inputTarget' },
           tagQueryType: 'hasAny',
           tags: ['Soul'],
         });
@@ -101,14 +101,12 @@ describe('EventContextConditionExecutor', () => {
     const executor = new EventContextConditionExecutor(
       terminal,
       undefined,
-      undefined,
-      undefined,
       () => 'battleSkill',
-      undefined,
       target => {
         reads.push(target);
         return subtype;
       },
+      query => [{ kind: 'operator', operatorId: query.kind === 'owner' ? 'owner' : 'controlled' }],
     );
     const context = {
       blackboard: new ActionBlackboard(),
@@ -127,12 +125,12 @@ describe('EventContextConditionExecutor', () => {
       { kind: 'eventSkillTypeIn' as const, skillTypes: ['battleSkill' as const] },
       {
         kind: 'currentSkillTypeIn' as const,
-        target: 'buffOwner' as const,
+        target: { kind: 'owner' as const },
         skillTypes: ['battleSkill' as const],
       },
       {
         kind: 'currentSkillTypeIn' as const,
-        target: 'controlledOperator' as const,
+        target: { kind: 'mainCharacter' as const },
         skillTypes: ['battleSkill' as const],
       },
     ]) {
@@ -153,7 +151,7 @@ describe('EventContextConditionExecutor', () => {
         executor.evaluate({ ...condition, normalSkillSubType: 'additionalNormalSkill' }, context),
       ).toBe(true);
     }
-    expect(new Set(reads)).toEqual(new Set(['event', 'buffOwner', 'controlledOperator']));
+    expect(new Set(reads)).toEqual(new Set(['event', 'owner', 'controlled']));
   });
   it('中断原因只读取当前事件载荷，切换技能与闪避分别判断', () => {
     const executor = new EventContextConditionExecutor(terminal);
@@ -243,33 +241,6 @@ describe('EventContextConditionExecutor', () => {
     expect(executor.evaluate(check, context)).toBe(false);
     input.gameplayTags = ['Damage/Other'];
     expect(executor.evaluate(check, context)).toBe(true);
-  });
-
-  it('输入目标检查不要求事件回调，修正条件按当前输入目标判断', () => {
-    const executor = new EventContextConditionExecutor(terminal, id => id === 'controlled');
-    const context = {
-      blackboard: new ActionBlackboard(),
-      actionInputTarget: { kind: 'operator' as const, operatorId: 'controlled' },
-      actionSourceId: 'caster',
-    };
-    expect(
-      executor.evaluate(
-        { kind: 'actionInputTargetIdentityMatch', other: 'controlledOperator', operator: 'equal' },
-        context,
-      ),
-    ).toBe(true);
-    expect(
-      executor.evaluate(
-        { kind: 'actionInputTargetIdentityMatch', other: 'actionSource', operator: 'equal' },
-        context,
-      ),
-    ).toBe(false);
-    expect(
-      executor.evaluate(
-        { kind: 'actionInputTargetObjectTypeMatch', objectTypes: ['character'] },
-        context,
-      ),
-    ).toBe(true);
   });
 
   it('伤害检查不能读取治疗修正上下文，也不能导致模拟失败', () => {
@@ -470,90 +441,6 @@ describe('EventContextConditionExecutor', () => {
     ).toBe(true);
   });
 
-  it('按公共 Action Context 查询 InputTarget 的对象类型与主控身份', () => {
-    const executor = new EventContextConditionExecutor(
-      terminal,
-      operatorId => operatorId === 'controlled',
-    );
-    const context = {
-      blackboard: new ActionBlackboard(),
-      actionInputTarget: { kind: 'operator' as const, operatorId: 'controlled' },
-      actionSourceId: 'listener',
-      actionOwnerId: 'listener',
-      event: {
-        event: 'takeDamage' as const,
-        payload: {
-          ...createKillEvent().payload,
-          sourceId: 'controlled',
-          targetId: 'listener',
-          tags: [] as const,
-          features: [] as const,
-        },
-      },
-    };
-    expect(
-      executor.evaluate(
-        { kind: 'actionInputTargetObjectTypeMatch', objectTypes: ['character'] },
-        context,
-      ),
-    ).toBe(true);
-    expect(
-      executor.evaluate(
-        {
-          kind: 'actionInputTargetIdentityMatch',
-          other: 'controlledOperator',
-          operator: 'equal',
-        },
-        context,
-      ),
-    ).toBe(true);
-    expect(
-      executor.evaluate(
-        {
-          kind: 'actionInputTargetIdentityMatch',
-          other: 'actionSource',
-          operator: 'equal',
-        },
-        context,
-      ),
-    ).toBe(false);
-  });
-
-  it('输入目标与来源、宿主比较保留实体身份，位置不等于敌人', () => {
-    const executor = new EventContextConditionExecutor(terminal);
-    const targets: readonly [RuntimeTargetRef, string | undefined][] = [
-      [{ kind: 'operator', operatorId: 'caster' }, 'caster'],
-      [{ kind: 'enemy' }, 'enemy'],
-      [{ kind: 'godEntity' }, 'god-entity'],
-      [{ kind: 'abilityEntity', instanceId: 7 }, 'ability-entity:7'],
-      [{ kind: 'spatialPoint', pointId: 1 }, undefined],
-    ];
-    for (const [actionInputTarget, identity] of targets) {
-      for (const other of ['actionSource', 'actionOwner'] as const) {
-        for (const entityId of ['caster', 'enemy', 'god-entity', 'ability-entity:7']) {
-          const context = {
-            blackboard: new ActionBlackboard(),
-            actionInputTarget,
-            actionSourceId: entityId,
-            actionOwnerId: entityId,
-          };
-          expect(
-            executor.evaluate(
-              { kind: 'actionInputTargetIdentityMatch', other, operator: 'equal' },
-              context,
-            ),
-          ).toBe(identity === entityId);
-          expect(
-            executor.evaluate(
-              { kind: 'actionInputTargetIdentityMatch', other, operator: 'notEqual' },
-              context,
-            ),
-          ).toBe(identity !== entityId);
-        }
-      }
-    }
-  });
-
   it('matches a custom ability event name exactly', () => {
     const executor = new EventContextConditionExecutor(terminal);
     const context = {
@@ -620,57 +507,26 @@ describe('EventContextConditionExecutor', () => {
     const executor = new EventContextConditionExecutor(
       terminal,
       undefined,
+      target => (target === 'liino' ? 'battleSkill' : undefined),
       undefined,
-      undefined,
-      (target, context) =>
-        target === 'buffOwner' && context?.buffOwnerId === 'liino' ? 'battleSkill' : undefined,
+      (_query, context) =>
+        context.actionOwnerId === undefined
+          ? []
+          : [{ kind: 'operator', operatorId: context.actionOwnerId }],
     );
 
     expect(
       executor.evaluate(
         {
           kind: 'currentSkillTypeIn',
-          target: 'buffOwner',
+          target: { kind: 'owner' },
           skillTypes: ['battleSkill'],
         },
-        { blackboard: new ActionBlackboard(), buffOwnerId: 'liino' },
+        { blackboard: new ActionBlackboard(), actionOwnerId: 'liino' },
       ),
     ).toBe(true);
   });
 
-  it('比较新 Buff 施加者与监听 Buff 来源，不比较接收敌人与施加者', () => {
-    const executor = new EventContextConditionExecutor(terminal);
-    const context = {
-      blackboard: new ActionBlackboard(),
-      buffSourceId: 'holder',
-      buffOwnerId: 'enemy',
-      event: {
-        event: 'addedBuff' as const,
-        payload: {
-          sourceId: 'holder',
-          targetId: 'enemy',
-          buffId: 'freeze',
-          buffTags: [],
-        },
-      },
-    };
-    expect(executor.evaluate({ kind: 'eventSourceMatchesBuffSource' }, context)).toBe(true);
-    expect(
-      executor.evaluate(
-        { kind: 'eventSourceMatchesBuffSource' },
-        {
-          ...context,
-          event: { ...context.event, payload: { ...context.event.payload, sourceId: 'teammate' } },
-        },
-      ),
-    ).toBe(false);
-    expect(() =>
-      executor.evaluate(
-        { kind: 'eventSourceMatchesBuffSource' },
-        { ...context, buffSourceId: undefined },
-      ),
-    ).toThrow('Buff source');
-  });
   it('matches the event origin, never the listening Buff origin or damage tags', () => {
     const executor = new EventContextConditionExecutor(terminal);
     const context = {
@@ -934,34 +790,6 @@ describe('EventContextConditionExecutor', () => {
       }),
     ).toBe(false);
   });
-  it('resolves SourceFinder through the Buff-source AbilityEntity provenance', () => {
-    const executor = new EventContextConditionExecutor(terminal, undefined, entityId =>
-      entityId === 'ability-entity:7' ? 'ability-entity:8' : 'pogranichnik',
-    );
-    const condition = { kind: 'eventSourceMatchesBuffSourceEntitySource' } as const;
-    const context = {
-      blackboard: new ActionBlackboard(),
-      buffSourceId: 'ability-entity:7',
-      event: {
-        event: 'beforeTakePhysicalInfliction' as const,
-        payload: {
-          sourceId: 'ability-entity:8',
-          targetId: 'ability-entity:7',
-        },
-      },
-    };
-
-    expect(executor.evaluate(condition, context)).toBe(true);
-    expect(
-      executor.evaluate(condition, {
-        ...context,
-        event: {
-          ...context.event,
-          payload: { ...context.event.payload, sourceId: 'pogranichnik' },
-        },
-      }),
-    ).toBe(false);
-  });
 
   it('matches the Buff identity carried by an application event', () => {
     const executor = new EventContextConditionExecutor(terminal);
@@ -998,8 +826,6 @@ describe('EventContextConditionExecutor', () => {
     const registry = new GameplayTagRegistry([parentPath, childPath]);
     const executor = new EventContextConditionExecutor(
       terminal,
-      undefined,
-      undefined,
       (_targetId, ownedTags, requiredTags, match) => registry.query(ownedTags, requiredTags, match),
     );
 

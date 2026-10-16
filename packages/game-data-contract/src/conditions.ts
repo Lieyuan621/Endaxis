@@ -29,15 +29,12 @@ import {
   type DamageTag,
   type DamageType,
   type EnemyRank,
-  type HealTarget,
   type InflictionElement,
   type OperatorAttribute,
   type OperatorRole,
   type SkillType,
   type SpGainKind,
   type SpGainSource,
-  type TimedMarkerTarget,
-  type GlobalCooldownTarget,
   type ActionStringOperand,
 } from './primitives.ts';
 
@@ -72,6 +69,8 @@ export type ActionTargetQuery =
       readonly owner?: ActionEntitySelection;
     }
   | { readonly kind: 'mainTarget'; readonly owner: ActionEntitySelection }
+  /** SourceFinder 只读取所选对象的一层 AbilitySystem.source，不递归追溯干员。 */
+  | { readonly kind: 'abilitySystemSource'; readonly owner: ActionEntitySelection }
   /** 读取所选能力实体控制器当前保存的目标，不替换为主敌人或技能输入快照。 */
   | { readonly kind: 'abilityEntityTarget'; readonly owner: ActionEntitySelection }
   /** 读取所选对象主体的 soulPart，不按来源干员枚举召唤物。 */
@@ -176,25 +175,27 @@ export type CombatConditionExpression =
       /** 任一匹配即可成立的角色元素类型。 */
       characterTypes: readonly DamageElement[];
     }
-  /** 按 CharacterTable.profession 检查已确定身份的干员；不适用于敌人或能力实体。 */
+  /** 原生 CheckProfession：查询首目标，非角色或没有职业时返回 false。 */
   | {
       /** 条件种类判别值。 */
       kind: 'operatorRoleIn';
       /** 要检查的干员身份。 */
-      target: 'caster' | 'buffOwner' | 'eventTarget';
+      target: ActionTargetQuery;
       /** 任一匹配即可成立的职业。 */
       roles: readonly OperatorRole[];
     }
-  /** 当前单敌人是否属于任一原生 EnemyTemplateData.rank。 */
+  /** 查询首个目标是否为指定原生 EnemyTemplateData.rank 的敌人。 */
   | {
       /** 条件种类判别值。 */
       kind: 'enemyRankIn';
+      target: ActionTargetQuery;
       /** 任一匹配即可成立的敌人强度分级。 */
       ranks: readonly EnemyRank[];
     }
   | {
       /** 比较当前单敌人的原生整数超级护甲值。 */
       kind: 'enemySuperArmorCompare';
+      target: ActionTargetQuery;
       /** 数值比较符。 */
       operator: ComparisonOperator;
       /** 与敌人超级护甲比较的值。 */
@@ -210,9 +211,7 @@ export type CombatConditionExpression =
       /** 比较目标当前生命值或当前/最大生命比例。 */
       kind: 'healthCompare';
       /** 要检查的对象。 */
-      target: CombatTarget | HealTarget | 'actionInputTarget';
-      /** target=contextTarget 时读取动作目标组中的首个对象。 */
-      contextKey?: string;
+      target: ActionTargetQuery;
       /** 比较当前生命值还是当前生命比例。 */
       valueType: 'current' | 'ratio';
       /** 数值比较符。 */
@@ -223,8 +222,8 @@ export type CombatConditionExpression =
   | {
       /** 比较目标当前失衡值；目标没有失衡系统时返回原生配置值。 */
       kind: 'poiseCompare';
-      /** 要检查的对象；currentTarget 读取当前动作输入目标。 */
-      target: CombatTarget | 'currentTarget' | 'actionInputTarget';
+      /** 原生 poiseOwner 查询，读取首个目标。 */
+      target: ActionTargetQuery;
       /** 目标没有失衡系统时直接采用的结果。 */
       returnValueIfMissing: boolean;
       /** 数值比较符。 */
@@ -299,83 +298,17 @@ export type CombatConditionExpression =
     }
   | {
       /** 命名组中任一对象匹配可读类型集合；enemy 同时接受 enemyPart。 */
-      kind: 'contextTargetObjectTypeMatch';
-      /** 动作环境中的目标组名称。 */
-      contextKey: string;
+      kind: 'targetObjectTypeMatch';
+      /** 原生查询结果中任一对象匹配即成立。 */
+      target: ActionTargetQuery;
       /** 允许匹配的对象类型。 */
       objectTypes: CombatObjectTypeSelection;
-    }
-  | {
-      /** 原生事件动作的 InputTarget 对象类型；与物理 eventTarget 方向可能相反。 */
-      kind: 'actionInputTargetObjectTypeMatch';
-      /** 允许匹配的对象类型。 */
-      objectTypes: CombatObjectTypeSelection;
-    }
-  | {
-      /** 比较原生事件动作 InputTarget 与 ActionSource/ActionOwner/当前主控身份。 */
-      kind: 'actionInputTargetIdentityMatch';
-      /** 与输入目标比较的另一个对象身份。 */
-      other: 'actionSource' | 'actionOwner' | 'controlledOperator';
-      /** 判断两者相同或不同。 */
-      operator: 'equal' | 'notEqual';
-    }
-  | {
-      /** 比较命名 Context 中目标与指定对象的身份。 */
-      kind: 'contextTargetIdentityMatch';
-      /** 首目标为空时不匹配；全组比较要求两组互相包含。 */
-      selection: 'first' | 'all';
-      /** 动作环境中的目标组名称。 */
-      contextKey: string;
-      /** 用于比较的对象身份。 */
-      other: 'actionSource' | 'actionOwner' | 'controlledOperator' | 'actionInputTarget';
-      /** 判断两者相同或不同。 */
-      operator: 'equal' | 'notEqual';
-    }
-  | {
-      /** 命名 Context 的全部有效实体均须满足标签查询，空组失败。 */
-      kind: 'contextTargetEntityTagMatch';
-      /** 动作环境中的目标组名称。 */
-      contextKey: string;
-      /** 标签集合匹配方式。 */
-      tagQueryType: GameplayTagQueryType;
-      /** 参与匹配的实体标签。 */
-      tags: readonly GameplayTag[];
-    }
-  | {
-      /** 按标签查询命名组首目标的增强层数。 */
-      kind: 'contextTargetBuffStackCompare';
-      /** 高级检查无目标时比较零；普通检查直接失败，不读取阈值。 */
-      compareZeroWhenTargetMissing: boolean;
-      /** 动作环境中的目标组名称。 */
-      contextKey: string;
-      /** 标签集合匹配方式。 */
-      tagQueryType: GameplayTagQueryType;
-      /** 用于查找 Buff 的标签。 */
-      buffTags: readonly GameplayTag[];
-      /** 层数比较符。 */
-      operator: ComparisonOperator;
-      /** 与累计强化层数比较的值。 */
-      value: ActionValueOperand;
-    }
-  | {
-      /** 按 ID 查询命名组首目标的增强层数。 */
-      kind: 'contextTargetBuffIdStackCompare';
-      /** 高级检查无目标时比较零；普通检查直接失败，不读取阈值。 */
-      compareZeroWhenTargetMissing: boolean;
-      /** 动作环境中的目标组名称。 */
-      contextKey: string;
-      /** 任一匹配即可选中的 Buff ID。 */
-      buffIds: readonly string[];
-      /** 层数比较符。 */
-      operator: ComparisonOperator;
-      /** 与累计强化层数比较的值。 */
-      value: ActionValueOperand;
     }
   | {
       /** 比较首个目标能力实体的剩余时长；无限寿命读取为 -1。 */
       kind: 'abilityEntityRemainingDurationCompare';
-      /** 省略时读取当前 Context 迭代目标。 */
-      target?: ActionTargetQuery;
+      /** 对应原生 abilityEntity 目标查询。 */
+      target: ActionTargetQuery;
       /** 仅比较成功时写入剩余秒数，失败保留旧值。 */
       outputKey?: string;
       /** 剩余秒数比较符。 */
@@ -395,7 +328,8 @@ export type CombatConditionExpression =
       /** 按原生 Buff 标签查询累计强化层数，并使用原生容差比较。 */
       kind: 'buffStackCompare';
       /** 要统计 Buff 的对象。 */
-      target: BuffConditionTarget;
+      target: ActionTargetQuery;
+      compareZeroWhenTargetMissing: boolean;
       /** 标签集合匹配方式。 */
       tagQueryType: GameplayTagQueryType;
       /** 用于查找 Buff 的标签。 */
@@ -411,7 +345,8 @@ export type CombatConditionExpression =
       /** 按原生 Buff 标签查询未结束 Buff 的不同定义 ID 数，不累计实例数或强化层数。 */
       kind: 'buffTagIdCountCompare';
       /** 要统计 Buff 的对象。 */
-      target: BuffConditionTarget;
+      target: ActionTargetQuery;
+      compareZeroWhenTargetMissing: boolean;
       /** 标签集合匹配方式。 */
       tagQueryType: GameplayTagQueryType;
       /** 用于查找 Buff 的标签。 */
@@ -425,7 +360,7 @@ export type CombatConditionExpression =
       /** 查询目标实体当前持有的 GameplayTag；它与 Buff 身份、数量和层数无关。 */
       kind: 'entityTagMatch';
       /** 要检查的对象。 */
-      target: BuffConditionTarget;
+      target: ActionTargetQuery;
       /** 标签集合匹配方式。 */
       tagQueryType: GameplayTagQueryType;
       /** 参与匹配的实体标签。 */
@@ -435,7 +370,8 @@ export type CombatConditionExpression =
       /** 按Buff 定义 身份查询累计强化层数；ID 列表按“任一匹配”处理。 */
       kind: 'buffIdStackCompare';
       /** 要统计 Buff 的对象。 */
-      target: BuffConditionTarget;
+      target: ActionTargetQuery;
+      compareZeroWhenTargetMissing: boolean;
       /** 任一匹配即可计入的 Buff ID。 */
       buffIds: readonly string[];
       /** 是否只统计和当前 Buff 来自同一次技能施放的实例。 */
@@ -449,13 +385,16 @@ export type CombatConditionExpression =
       /** 查询角色的战斗级冷却；与能力系统上的同名普通标记相互隔离。 */
       kind: 'globalCooldownPresent';
       /** 全局冷却所属对象。 */
-      target: GlobalCooldownTarget;
+      target: ActionTargetQuery;
+      /** 有目标时检查冷却不存在；空目标始终返回 false。 */
+      returnTrueIfNotExists: boolean;
       /** 全局冷却标记 ID。 */
       markerId: string;
     }
   | {
-      /** 施放者的原生连携候选列表非空；不检查冷却、队首、当前技能或可释放性。 */
-      kind: 'casterComboPending';
+      /** 首个目标的原生连携候选列表非空；不检查冷却、队首、当前技能或可释放性。 */
+      kind: 'comboSkillPending';
+      target: ActionTargetQuery;
     }
   | {
       /** 检查目标能力系统中是否存在仍有效的原生定时标记。 */
@@ -463,19 +402,9 @@ export type CombatConditionExpression =
       /** 有目标时，改为检查标记不存在；无目标始终不通过。 */
       returnTrueIfNotExists: boolean;
       /** 定时标记所属对象。 */
-      target: TimedMarkerTarget;
+      target: ActionTargetQuery;
       /** 标记 ID 或动作黑板中的标记 ID。 */
       markerId: ActionStringOperand;
-    }
-  | {
-      /** 检查当前能力实体或 Context 能力实体集合中仍有效的定时标记。 */
-      kind: 'abilityEntityTimedMarkerPresent';
-      /** 有目标时，改为检查标记不存在；无目标始终不通过。 */
-      returnTrueIfNotExists: boolean;
-      /** 标记 ID 或动作黑板中的标记 ID。 */
-      markerId: ActionStringOperand;
-      /** 指定时检查该动作目标组中的能力实体；省略时检查当前能力实体。 */
-      contextKey?: string;
     }
   | {
       /** 匹配触发当前响应的伤害事件标签；普通技能步骤没有事件上下文。 */
@@ -557,8 +486,8 @@ export type CombatConditionExpression =
       kind: 'currentSkillTypeIn';
       /** 只限制原生战技；其他原生类型不受此字段影响。省略表示不限。 */
       normalSkillSubType?: 'normal' | 'additionalNormalSkill';
-      /** 检查施法者、当前 Buff 持有者或当前主控；在求值时解析身份。 */
-      target: 'caster' | 'buffOwner' | 'controlledOperator';
+      /** 查询首个目标当前执行的技能。 */
+      target: ActionTargetQuery;
       /** 任一匹配即可成立的当前技能分类。 */
       skillTypes: readonly SkillType[];
     }
@@ -580,6 +509,12 @@ export type CombatConditionExpression =
       parent: ActionTargetQuery;
       /** 要检查的子目标组。 */
       child: ActionTargetQuery;
+    }
+  | {
+      /** 原生 CheckTargetsEqual：两组互相包含，忽略顺序和重复项；两组皆空返回真。 */
+      kind: 'targetsEqual';
+      first: ActionTargetQuery;
+      second: ActionTargetQuery;
     }
   | {
       /** 匹配触发 Buff 响应的待施放技能稳定身份。 */
@@ -614,18 +549,6 @@ export type CombatConditionExpression =
       buffTags: readonly GameplayTag[];
       /** Advanced 条件命中后把事件 Buff ID 写入当前动作黑板。 */
       buffIdOutputKey?: string;
-    }
-  | {
-      /** 按当前事件真实目标统计匹配标签的 Buff 实例数；不累计 Buff 增强层数。 */
-      kind: 'eventTargetBuffCountCompare';
-      /** 标签集合匹配方式。 */
-      tagQueryType: GameplayTagQueryType;
-      /** 用于查找 Buff 的标签。 */
-      buffTags: readonly GameplayTag[];
-      /** 数量比较符。 */
-      operator: ComparisonOperator;
-      /** 与 Buff 实例数比较的值。 */
-      value: ActionValueOperand;
     }
   | {
       /** 匹配当前治疗事件携带的原生治疗标签。 */
@@ -671,20 +594,8 @@ export type CombatConditionExpression =
       realHealKey?: string;
     }
   /** 承伤/加 Buff 事件的物理来源是否等于创建监听 Buff 的实体。 */
-  | {
-      /** 条件种类判别值。 */
-      kind: 'eventSourceMatchesBuffSource';
-    }
   /** 事件来源是否等于 Buff 来源能力实体的原生 AbilitySystem.source。 */
-  | {
-      /** 条件种类判别值。 */
-      kind: 'eventSourceMatchesBuffSourceEntitySource';
-    }
   /** 当前 Buff 的创建来源实体是否也是其宿主。 */
-  | {
-      /** 条件种类判别值。 */
-      kind: 'buffSourceMatchesOwner';
-    }
   | {
       /** 当前施术者生成的活动能力实体中是否存在匹配模板（零空间不再做距离裁剪）。 */
       kind: 'ownerSpawnedAbilityEntityPresent';
@@ -714,12 +625,13 @@ export type CombatConditionExpression =
   | {
       /** 在构筑阶段比较两项干员四维。 */
       kind: 'deckAttributeCompare';
+      target: ActionTargetQuery;
       /** 左侧属性。 */
-      left: OperatorAttribute;
+      left: OperatorAttribute | ActionValueOperand;
       /** 数值比较符。 */
       operator: ComparisonOperator;
       /** 右侧属性。 */
-      right: OperatorAttribute;
+      right: OperatorAttribute | ActionValueOperand;
     };
 
 /** 布尔数据节点的全部操作种类。 */
@@ -743,13 +655,7 @@ export const COMBAT_CONDITION_KINDS = [
   'buffBlackboardValueCompare',
   'probability',
   'entityCountCompare',
-  'contextTargetObjectTypeMatch',
-  'actionInputTargetObjectTypeMatch',
-  'actionInputTargetIdentityMatch',
-  'contextTargetIdentityMatch',
-  'contextTargetEntityTagMatch',
-  'contextTargetBuffStackCompare',
-  'contextTargetBuffIdStackCompare',
+  'targetObjectTypeMatch',
   'abilityEntityRemainingDurationCompare',
   'buffStackCompare',
   'buffTagIdCountCompare',
@@ -758,8 +664,7 @@ export const COMBAT_CONDITION_KINDS = [
   'buffIdStackCompare',
   'timedMarkerPresent',
   'globalCooldownPresent',
-  'casterComboPending',
-  'abilityEntityTimedMarkerPresent',
+  'comboSkillPending',
   'eventDamageTagsMatch',
   'eventTransferredPartTagsMatch',
   'eventDamageGameplayTagsMatch',
@@ -777,20 +682,17 @@ export const COMBAT_CONDITION_KINDS = [
   'originSkillTypeIn',
   'skillInterruptReasonIn',
   'targetContains',
+  'targetsEqual',
   'eventSkillIdIn',
   'eventSkillCastMatchesBuffSource',
   'eventBuffIdMatch',
   'eventBuffEndedEarly',
   'eventBuffTagsMatch',
-  'eventTargetBuffCountCompare',
   'eventHealTagsMatch',
   'eventSpGainMatch',
   'eventConsumedBuffLayerCompare',
   'eventBuffEnhanceLayerCompare',
   'eventOverheal',
-  'eventSourceMatchesBuffSource',
-  'eventSourceMatchesBuffSourceEntitySource',
-  'buffSourceMatchesOwner',
   'ownerSpawnedAbilityEntityPresent',
   'not',
   'all',
@@ -883,10 +785,10 @@ export const ACTION_VALUE_CALCULATION_OPERATIONS = ['add', 'multiply', 'divide']
 export type ActionValueCalculationOperation = (typeof ACTION_VALUE_CALCULATION_OPERATIONS)[number];
 
 /** 只依赖养成面板、可在战斗开始前决定的条件子集。 */
-export type BuildCondition = Extract<
-  CombatConditionExpression,
-  {
-    /** 构筑条件目前只比较最终面板中的两项四维。 */
-    kind: 'deckAttributeCompare';
-  }
->;
+export interface BuildCondition {
+  /** 构筑条件只比较当前干员最终面板中的两项四维，不进行战斗目标查询。 */
+  kind: 'deckAttributeCompare';
+  left: OperatorAttribute;
+  operator: ComparisonOperator;
+  right: OperatorAttribute;
+}

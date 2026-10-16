@@ -120,10 +120,11 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'buffIdStackCompare',
-                target: 'buffOwner',
-                buffIds: ['buff_equipsuit_critsuitatk_01'],
+                target: { kind: 'owner' },
+                compareZeroWhenTargetMissing: false,
                 operator: 'greaterOrEqual',
                 value: { kind: 'valueNode', nodeId: 'data_1' },
+                buffIds: ['buff_equipsuit_critsuitatk_01'],
               },
             },
           },

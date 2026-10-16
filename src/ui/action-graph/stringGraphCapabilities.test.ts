@@ -45,7 +45,6 @@ it('keeps schema string pin eligibility aligned with the runtime consumption all
   expect(slots.sort()).toEqual([
     'action/castSkillDuringAction/parameters.skillId',
     'action/createTimedMarker/parameters.markerId',
-    'data/boolean:abilityEntityTimedMarkerPresent/markerId',
     'data/boolean:stringEquals/left',
     'data/boolean:stringEquals/right',
     'data/boolean:timedMarkerPresent/markerId',

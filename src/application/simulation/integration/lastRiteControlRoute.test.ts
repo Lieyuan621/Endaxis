@@ -62,6 +62,11 @@ it.each([null, 0])('别礼开场普攻夹战技：切入帧 %s 决定旁路，�
   const before = structuredClone(scenario);
   const run = await createEditorSimulationService().simulate(scenario, 60);
   const controlled = switchFrame !== null;
+  expect(
+    run.receiptEntries.filter(e => e.event === 'UltimateEnergyChanged' && e.targetId === 'arcane'),
+  ).toContainEqual(
+    expect.objectContaining({ data: expect.objectContaining({ actualValue: 6.5 }) }),
+  );
   expect(run.executionDiagnostics).toEqual([]);
   expect(
     run.receiptEntries.some(e => e.event === 'SkillSwitchedToBuff' && e.data?.castId === 'battle'),

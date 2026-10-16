@@ -844,8 +844,13 @@ export class SkillRuntime {
         beforeCastStart?.();
         this.#applyCost(true);
       }
+      // 施法旁路的 Buff 必须继承扣费后的施法快照；条件检查时尚未支付费用。
+      // 非施法旁路仍沿用当前技能的身份与消耗，不能换成候选技能。
+      const executionContext = route.asSkillCast
+        ? { ...routeContext, skillCastInfo: this.skillCastInfo }
+        : routeContext;
       this.#sequenceRuntime
-        .createSequence(route.sequence, routeContext)
+        .createSequence(route.sequence, executionContext)
         .executeInstant(this.#context);
       this.record('SkillSwitchedToBuff', { asSkillCast: route.asSkillCast });
       if (route.asSkillCast) this.#emitSkillEnd();

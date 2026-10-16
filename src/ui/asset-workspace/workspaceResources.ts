@@ -99,7 +99,6 @@ function conditionReferences(
 ): readonly { kind: string; id: string }[] {
   switch (condition.kind) {
     case 'buffIdStackCompare':
-    case 'contextTargetBuffIdStackCompare':
     case 'eventBuffIdMatch':
       return condition.buffIds.map(id => ({ kind: 'buff', id }));
     case 'buffBlackboardValueCompare':

@@ -121,8 +121,8 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                target: { kind: 'source' },
                 returnTrueIfNotExists: true,
-                target: 'caster',
                 markerId: 'wpn_claym_0015',
               },
             },

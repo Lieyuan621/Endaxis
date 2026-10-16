@@ -309,8 +309,8 @@ class ProjectileLaunchStep extends StatelessCombatStep {
           () =>
             state.hitTagFilter === undefined ||
             this.runtime.operations.evaluate(
-              { kind: 'entityTagMatch', target: 'enemy', ...state.hitTagFilter },
-              context,
+              { kind: 'entityTagMatch', target: { kind: 'inputTarget' }, ...state.hitTagFilter },
+              { ...context, actionInputTarget: state.inputTarget },
             ),
         ),
       };

@@ -90,14 +90,14 @@ const definition = {
             checkCondition_4: {
               action: {
                 kind: 'checkCondition',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
               },
               next: 'storeSourceAttributeValue_3',
             },
             checkCondition_5: {
               action: {
                 kind: 'checkCondition',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
               },
               next: 'checkCondition_4',
             },
@@ -109,15 +109,12 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'globalCooldownPresent',
-                target: 'caster',
+                target: { kind: 'owner' },
+                returnTrueIfNotExists: true,
                 markerId: 'buff_wpn_claym_0007_valid',
               },
             },
             data_4: {
-              type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-            },
-            data_5: {
               type: 'boolean',
               expression: {
                 kind: 'eventHealTagsMatch',

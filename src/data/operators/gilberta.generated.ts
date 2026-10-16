@@ -1169,8 +1169,7 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
-          target: 'contextTarget',
-          contextKey: 'CureTarget',
+          target: { kind: 'context', key: 'CureTarget' },
           valueType: 'ratio',
           operator: 'less',
           value: { kind: 'constant', value: 0.99 },
@@ -1180,7 +1179,7 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
-          target: 'controlledOperator',
+          target: { kind: 'mainCharacter' },
           valueType: 'ratio',
           operator: 'less',
           value: { kind: 'constant', value: 0.99 },
@@ -1657,8 +1656,7 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
-          target: 'contextTarget',
-          contextKey: 'CureTarget',
+          target: { kind: 'context', key: 'CureTarget' },
           valueType: 'ratio',
           operator: 'less',
           value: { kind: 'constant', value: 0.99 },
@@ -1668,7 +1666,7 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
-          target: 'controlledOperator',
+          target: { kind: 'mainCharacter' },
           valueType: 'ratio',
           operator: 'less',
           value: { kind: 'constant', value: 0.99 },
@@ -1822,8 +1820,8 @@ const gilbertaComboCondition1ActionGraph = {
       data_1: {
         type: 'boolean',
         expression: {
-          kind: 'contextTargetObjectTypeMatch',
-          contextKey: 'trigger',
+          kind: 'targetObjectTypeMatch',
+          target: { kind: 'context', key: 'trigger' },
           objectTypes: ['enemy'],
         },
       },
@@ -1870,7 +1868,7 @@ const gilbertaBuff1ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
-          target: 'caster',
+          target: { kind: 'source' },
           valueType: 'ratio',
           operator: 'lessOrEqual',
           value: { kind: 'constant', value: 0 },
@@ -1971,7 +1969,7 @@ const gilbertaBuff3ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'operatorRoleIn',
-          target: 'buffOwner',
+          target: { kind: 'owner' },
           roles: ['guard', 'supporter', 'caster'],
         },
       },
@@ -2200,11 +2198,12 @@ const gilbertaBuff5ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffStackCompare',
-          target: 'buffOwner',
-          tagQueryType: 'hasAny',
-          buffTags: ['Skill/Character/Common/NoGuard'],
+          target: { kind: 'inputTarget' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greater',
           value: { kind: 'constant', value: 0 },
+          tagQueryType: 'hasAny',
+          buffTags: ['Skill/Character/Common/NoGuard'],
         },
       },
       data_8: { type: 'number', expression: { kind: 'blackboard', key: 'spell_vulnerable_rate' } },

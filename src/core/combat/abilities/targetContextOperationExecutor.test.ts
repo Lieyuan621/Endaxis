@@ -213,15 +213,43 @@ describe('TargetContextOperationExecutor', () => {
     expect(
       executor.evaluate(
         {
-          kind: 'contextTargetIdentityMatch',
-          selection: 'all',
-          contextKey: 'point',
-          other: 'actionSource',
-          operator: 'equal',
+          kind: 'targetsEqual',
+          first: { kind: 'context', key: 'point' },
+          second: { kind: 'source' },
         },
         { blackboard: new ActionBlackboard(), targetContext, actionSourceId: 'enemy' },
       ),
     ).toBe(false);
+    const equals = {
+      kind: 'targetsEqual',
+      first: { kind: 'context', key: 'left' },
+      second: { kind: 'context', key: 'right' },
+    } as const;
+    const context = { blackboard: new ActionBlackboard(), targetContext };
+    targetContext.set('left', []);
+    targetContext.set('right', []);
+    expect(executor.evaluate(equals, context)).toBe(true);
+    targetContext.setSingle('left', { kind: 'enemy' });
+    expect(executor.evaluate(equals, context)).toBe(false);
+    targetContext.set('right', [{ kind: 'enemy' }, { kind: 'enemy' }]);
+    expect(executor.evaluate(equals, context)).toBe(true);
+    // 动作绑定决定 Owner/Source，不偷用外层 Buff 或事件的身份。
+    expect(
+      executor.evaluate(
+        {
+          kind: 'targetsEqual',
+          first: { kind: 'owner' },
+          second: { kind: 'source' },
+        },
+        {
+          ...context,
+          actionOwnerId: 'ability-entity:7',
+          actionSourceId: 'ability-entity:7',
+          buffOwnerId: 'enemy',
+          buffSourceId: 'caster',
+        },
+      ),
+    ).toBe(true);
   });
 
   it('全局机制查询保持独立身份，并能从目标组状态恢复', () => {
@@ -340,6 +368,10 @@ describe('TargetContextOperationExecutor', () => {
       buffSourceId: 'ability-entity:3',
       actionSourceId: 'ability-entity:2',
     };
+    expect(executor.queryTargets({ kind: 'abilitySystemSource', owner: { kind: 'source' } }, context))
+      .toEqual([{ kind: 'abilityEntity', instanceId: 1 }]);
+    expect(executor.queryTargets({ kind: 'abilitySystemSource', owner: { kind: 'inputTarget' } }, context))
+      .toEqual([]);
     for (const owner of ['actionSource', 'actionOwner'] as const) {
       executor.execute(
         {
@@ -356,7 +388,7 @@ describe('TargetContextOperationExecutor', () => {
     expect(targetContext.get('actionOwner')).toEqual([
       { kind: 'operator', operatorId: 'operator:recipient' },
     ]);
-    expect(query.mock.calls).toEqual([['ability-entity:2'], ['operator:recipient']]);
+    expect(query.mock.calls).toEqual([['ability-entity:2'], ['ability-entity:2'], ['operator:recipient']]);
     expect(recursive).not.toHaveBeenCalled();
     expect(context.buffSourceId).toBe('ability-entity:3');
   });

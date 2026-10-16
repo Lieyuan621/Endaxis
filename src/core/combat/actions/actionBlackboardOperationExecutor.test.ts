@@ -119,7 +119,7 @@ describe('ActionBlackboardOperationExecutor', () => {
     ).toThrow("missing string variable 'missing'");
   });
 
-  it('checks an exact Buff owner profession through the runtime operator registry', () => {
+  it('checks the queried character profession and rejects non-character or missing targets', () => {
     const executor = new ActionBlackboardOperationExecutor(
       delegate,
       undefined,
@@ -128,26 +128,27 @@ describe('ActionBlackboardOperationExecutor', () => {
       undefined,
       undefined,
       {
-        sourceId: 'caster',
+        queryTargets: (_query, context) =>
+          context.actionInputTarget ? [context.actionInputTarget] : [],
         resolve: entityId => (entityId === 'gilberta-target' ? 'guard' : undefined),
       },
     );
     const condition = {
       kind: 'operatorRoleIn',
-      target: 'buffOwner',
+      target: { kind: 'inputTarget' },
       roles: ['guard', 'supporter', 'caster'],
     } as const;
 
     expect(
       executor.evaluate(condition, {
         blackboard: new ActionBlackboard(),
-        buffOwnerId: 'gilberta-target',
+        actionInputTarget: { kind: 'operator', operatorId: 'gilberta-target' },
       }),
     ).toBe(true);
     expect(
       executor.evaluate(condition, {
         blackboard: new ActionBlackboard(),
-        buffOwnerId: 'enemy',
+        actionInputTarget: { kind: 'enemy' },
       }),
     ).toBe(false);
     expect(executor.evaluate(condition, { blackboard: new ActionBlackboard() })).toBe(false);
@@ -242,24 +243,6 @@ describe('ActionBlackboardOperationExecutor', () => {
       expect(executor.evaluate({ kind })).toBe(true);
     },
   );
-
-  it('compares the current Buff source and owner identities', () => {
-    const executor = new ActionBlackboardOperationExecutor(delegate);
-    const blackboard = new ActionBlackboard();
-
-    expect(
-      executor.evaluate(
-        { kind: 'buffSourceMatchesOwner' },
-        { blackboard, buffSourceId: 'operator', buffOwnerId: 'operator' },
-      ),
-    ).toBe(true);
-    expect(
-      executor.evaluate(
-        { kind: 'buffSourceMatchesOwner' },
-        { blackboard, buffSourceId: 'operator', buffOwnerId: 'abilityEntity:1' },
-      ),
-    ).toBe(false);
-  });
 
   it('stores a non-converted Buff-source attribute with the native scaling order', () => {
     const reads: unknown[] = [];
@@ -1106,7 +1089,8 @@ describe('ActionBlackboardOperationExecutor', () => {
             }),
             conditionInput({
               kind: 'buffStackCompare',
-              target: 'enemy',
+              target: { kind: 'fixed', target: 'enemy' },
+              compareZeroWhenTargetMissing: false,
               tagQueryType: 'hasAny',
               buffTags: ['Test/Tag1'],
               operator: 'greaterOrEqual',
@@ -1120,68 +1104,28 @@ describe('ActionBlackboardOperationExecutor', () => {
     expect(evaluate).toHaveBeenCalledOnce();
   });
 
-  it('compares the immutable Deck attribute snapshot', () => {
+  it('Deck 查询取首角色快照，属性保留 double 而黑板按 float 读取', () => {
     const executor = new ActionBlackboardOperationExecutor(
-      delegate,
-      undefined,
-      undefined,
-      undefined,
+      delegate, undefined, undefined, undefined,
       {
-        sourceId: 'caster',
-        resolve: id =>
-          id === 'caster'
-            ? { strength: 1000, agility: 1000.00002, intellect: 100, will: 100 }
-            : id === 'recipient'
-              ? { strength: 20, agility: 10, intellect: 50, will: 100 }
-              : undefined,
+        queryTargets: (query, context) => resolveDirectActionTargets(query, context) ?? [],
+        resolve: id => id === 'caster'
+          ? { strength: 1000, agility: 1000.00002, intellect: 100, will: 100 }
+          : { strength: 20, agility: 10, intellect: 50, will: 100 },
       },
     );
-
-    expect(
-      executor.evaluate({
-        kind: 'deckAttributeCompare',
-        left: 'intellect',
-        operator: 'greaterOrEqual',
-        right: 'will',
-      }),
-    ).toBe(true);
-    expect(
-      executor.evaluate({
-        kind: 'deckAttributeCompare',
-        left: 'strength',
-        operator: 'less',
-        right: 'agility',
-      }),
-    ).toBe(true);
-    const condition = {
-      kind: 'deckAttributeCompare' as const,
-      left: 'intellect' as const,
-      operator: 'greaterOrEqual' as const,
-      right: 'will' as const,
-    };
-    expect(
-      executor.evaluate(condition, {
-        blackboard: new ActionBlackboard(),
-        buffOwnerId: 'recipient',
-        buffSourceId: 'caster',
-      }),
-    ).toBe(false);
-    expect(
-      executor.evaluate(condition, {
-        blackboard: new ActionBlackboard(),
-        actionOwnerId: 'enemy',
-      }),
-    ).toBe(false);
-  });
-
-  it('rejects Deck comparisons without a build snapshot', () => {
-    expect(() =>
-      new ActionBlackboardOperationExecutor(delegate).evaluate({
-        kind: 'deckAttributeCompare',
-        left: 'intellect',
-        operator: 'greaterOrEqual',
-        right: 'will',
-      }),
-    ).toThrow('deckAttributeCompare requires an operator registry');
+    const context = { blackboard: new ActionBlackboard({ value: 1000.00002 }),
+      actionInputTarget: { kind: 'operator' as const, operatorId: 'caster' } };
+    const condition = { kind: 'deckAttributeCompare' as const,
+      target: { kind: 'inputTarget' as const },
+      left: 'strength' as const, operator: 'less' as const, right: 'agility' as const };
+    expect(executor.evaluate(condition, context)).toBe(true);
+    expect(executor.evaluate({ ...condition,
+      right: numberInput({ kind: 'blackboard', key: 'value' }) }, context)).toBe(false);
+    expect(executor.evaluate(condition, {
+      ...context, actionInputTarget: { kind: 'enemy' },
+    })).toBe(false);
+    expect(executor.evaluate(condition, { blackboard: context.blackboard })).toBe(false);
   });
 });
+import { resolveDirectActionTargets } from '../abilities/targetContextOperationExecutor';

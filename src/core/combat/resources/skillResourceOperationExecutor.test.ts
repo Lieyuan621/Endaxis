@@ -46,7 +46,7 @@ describe('SkillResourceOperationExecutor', () => {
       onSpGained: event => gainedBy.push(event.sourceId),
       delegate: {
         execute: () => false,
-        evaluate: condition => condition.kind === 'actionInputTargetIdentityMatch' && controlled,
+        evaluate: condition => condition.kind === 'checkMainCharacter' && controlled,
         queryTargets: () =>
           Array.from({ length: targetCount }, () => ({
             kind: 'operator' as const,

@@ -24,7 +24,7 @@ describe('条件共享原生枚举读取', () => {
     name => {
       const query = { queryType: 'HasAny', tags: [{ tagId: 123 }] };
       const fields = {
-        checkTarget: { targetSource: 'Target', targetGroupKey: '' },
+        checkTarget: targetFixture('Target'),
         buffStackNumType: 'BuffCount',
         compareType: 'GE',
         value: scalarFixture(2),
@@ -38,7 +38,7 @@ describe('条件共享原生枚举读取', () => {
       expect(
         parse(name, {
           ...fields,
-          checkTarget: { targetSource: 0, targetGroupKey: '' },
+          checkTarget: { ...targetFixture('Target'), targetSource: 0 },
           buffStackNumType: 0,
           compareType: 3,
         }),

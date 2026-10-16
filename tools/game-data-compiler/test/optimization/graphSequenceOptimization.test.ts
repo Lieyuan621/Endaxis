@@ -452,7 +452,8 @@ describe('图侧序列优化', () => {
       parameters: {
         condition: {
           kind: 'buffIdStackCompare',
-          target: 'enemy',
+          target: { kind: 'fixed', target: 'enemy' },
+          compareZeroWhenTargetMissing: false,
           buffIds: ['bleed'],
           operator: 'greaterOrEqual',
           value: literal(1),
@@ -468,7 +469,7 @@ describe('图侧序列优化', () => {
       parameters: {
         condition: {
           kind: 'entityTagMatch',
-          target: 'enemy',
+          target: { kind: 'fixed', target: 'enemy' },
           tagQueryType: 'hasAny',
           tags: ['Status/Immobilized/Frozen'],
         },
@@ -502,7 +503,8 @@ describe('图侧序列优化', () => {
   it('不把显式伤害身份、随机条件或可能短路的 alwaysNext 分支误合并', () => {
     const buffCondition: CombatCondition = {
       kind: 'buffIdStackCompare',
-      target: 'enemy',
+      target: { kind: 'fixed', target: 'enemy' },
+      compareZeroWhenTargetMissing: false,
       buffIds: ['bleed'],
       operator: 'greaterOrEqual',
       value: literal(1),
@@ -691,7 +693,7 @@ describe('图侧序列优化', () => {
     f.node('damageA', damage(), 'tail');
     const tagCondition: CombatCondition = {
       kind: 'entityTagMatch',
-      target: 'enemy',
+      target: { kind: 'fixed', target: 'enemy' },
       tagQueryType: 'hasAny',
       tags: ['Status/Immobilized/Frozen'],
     };
@@ -730,7 +732,7 @@ describe('图侧序列优化', () => {
     const g = fixture();
     const tagCondition: CombatCondition = {
       kind: 'entityTagMatch',
-      target: 'enemy',
+      target: { kind: 'fixed', target: 'enemy' },
       tagQueryType: 'hasAny',
       tags: ['Status/Immobilized/Frozen'],
     };

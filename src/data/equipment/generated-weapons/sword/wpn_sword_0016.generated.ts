@@ -153,8 +153,8 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                target: { kind: 'owner' },
                 returnTrueIfNotExists: true,
-                target: 'caster',
                 markerId: 'wpn_sword_0016',
               },
             },

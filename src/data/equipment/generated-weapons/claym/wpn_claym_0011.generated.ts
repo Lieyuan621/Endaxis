@@ -99,8 +99,8 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                target: { kind: 'owner' },
                 returnTrueIfNotExists: true,
-                target: 'caster',
                 markerId: 'sk_wpn_claym_0011',
               },
             },

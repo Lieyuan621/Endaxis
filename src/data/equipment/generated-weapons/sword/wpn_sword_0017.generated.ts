@@ -160,8 +160,8 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                target: { kind: 'owner' },
                 returnTrueIfNotExists: true,
-                target: 'caster',
                 markerId: 'wpn_sword_0017',
               },
             },
@@ -186,10 +186,11 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'buffIdStackCompare',
-                target: 'caster',
-                buffIds: ['buff_wpn_sword_0017_exist'],
+                target: { kind: 'source' },
+                compareZeroWhenTargetMissing: true,
                 operator: 'greaterOrEqual',
                 value: { kind: 'constant', value: 1 },
+                buffIds: ['buff_wpn_sword_0017_exist'],
               },
             },
             data_8: {

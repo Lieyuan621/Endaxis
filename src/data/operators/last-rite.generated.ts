@@ -1762,7 +1762,7 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
-          target: 'enemy',
+          target: { kind: 'fixed', target: 'enemy' },
           valueType: 'current',
           operator: 'lessOrEqual',
           value: { kind: 'constant', value: 0 },
@@ -1922,13 +1922,13 @@ const lastRiteComboCondition1ActionGraph = {
       data_1: {
         type: 'boolean',
         expression: {
-          kind: 'contextTargetBuffStackCompare',
+          kind: 'buffStackCompare',
+          target: { kind: 'context', key: 'trigger' },
           compareZeroWhenTargetMissing: false,
-          contextKey: 'trigger',
-          tagQueryType: 'hasAny',
-          buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 2 },
+          tagQueryType: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
         },
       },
       data_2: {
@@ -2217,7 +2217,7 @@ const lastRiteBuff2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
-          target: 'enemy',
+          target: { kind: 'fixed', target: 'enemy' },
           valueType: 'current',
           operator: 'greater',
           value: { kind: 'constant', value: 0 },
@@ -2227,7 +2227,7 @@ const lastRiteBuff2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: 'buffOwner',
+          target: { kind: 'owner' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/chr_0026_lastrite'],
         },
@@ -2248,8 +2248,8 @@ const lastRiteBuff2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'timedMarkerPresent',
+          target: { kind: 'owner' },
           returnTrueIfNotExists: true,
-          target: 'buffOwner',
           markerId: 'buff_chr_0026_lastrite_normal_skill_marker',
         },
       },
@@ -2257,7 +2257,7 @@ const lastRiteBuff2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
-          target: 'enemy',
+          target: { kind: 'fixed', target: 'enemy' },
           valueType: 'current',
           operator: 'greater',
           value: { kind: 'constant', value: 0 },
@@ -2773,10 +2773,11 @@ const lastRiteBuff8ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'buffOwner',
-          buffIds: ['buff_chr_0026_lastrite_normal_skill_tag'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: false,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0026_lastrite_normal_skill_tag'],
         },
       },
     },

@@ -231,7 +231,8 @@ it('projects only formal string operand slots, including string references and m
     dataTypedInputs({
       type: 'boolean',
       expression: {
-        kind: 'abilityEntityTimedMarkerPresent',
+        kind: 'timedMarkerPresent',
+        target: { kind: 'owner' },
         returnTrueIfNotExists: false,
         markerId: linked,
       },

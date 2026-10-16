@@ -276,9 +276,9 @@ const definition = {
             data_4: {
               type: 'boolean',
               expression: {
-                kind: 'actionInputTargetIdentityMatch',
-                other: 'actionSource',
-                operator: 'equal',
+                kind: 'targetsEqual',
+                first: { kind: 'inputTarget' },
+                second: { kind: 'source' },
               },
             },
             data_5: {
@@ -295,9 +295,9 @@ const definition = {
             data_6: {
               type: 'boolean',
               expression: {
-                kind: 'actionInputTargetIdentityMatch',
-                other: 'actionSource',
-                operator: 'equal',
+                kind: 'targetsEqual',
+                first: { kind: 'inputTarget' },
+                second: { kind: 'source' },
               },
             },
             data_7: {

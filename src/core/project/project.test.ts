@@ -482,6 +482,7 @@ describe('current project document', () => {
                 type: 'boolean',
                 expression: {
                   kind: 'deckAttributeCompare',
+                  target: { kind: 'owner' },
                   left: 'intellect',
                   operator: 'greaterOrEqual',
                   right: 'will',

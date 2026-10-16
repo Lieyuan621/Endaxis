@@ -236,7 +236,7 @@ describe('assembly 原生常驻连携条件', () => {
             },
           },
           {
-            input_1: { type: 'boolean', expression: { kind: 'casterComboPending' } },
+            input_1: { type: 'boolean', expression: { kind: 'comboSkillPending', target: { kind: 'owner' } } },
             input_2: {
               type: 'boolean',
               expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'input_1' } },

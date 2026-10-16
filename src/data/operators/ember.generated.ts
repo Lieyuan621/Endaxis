@@ -1047,10 +1047,11 @@ export const emberChr_0009_azrila_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0009_azrila_normal_skill_gpsuccess'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0009_azrila_normal_skill_gpsuccess'],
         },
       },
       data_14: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
@@ -1775,7 +1776,11 @@ const emberComboCondition1ActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
-        expression: { kind: 'actionInputTargetObjectTypeMatch', objectTypes: ['enemy'] },
+        expression: {
+          kind: 'targetObjectTypeMatch',
+          target: { kind: 'inputTarget' },
+          objectTypes: ['enemy'],
+        },
       },
       data_2: {
         type: 'boolean',

@@ -33,7 +33,9 @@ it.each([zh, en])('节点、参数和枚举都有完整的用户文案', locale 
 it('only the verified role vocabulary disambiguates caster', () => {
   const fields = dataNodeSchemas['boolean:operatorRoleIn']!.fields;
   const roles = fields.find(field => field.path.at(-1) === 'roles')!;
-  const target = fields.find(field => field.path.at(-1) === 'target')!;
+  const target = dataNodeSchemas['boolean:characterTypeIn']!.fields.find(
+    field => field.path.at(-1) === 'target',
+  )!;
   expect(roles.options).toContain('caster');
   expect(target.options).toContain('caster');
   expect(roles.optionLabels).toBe('operatorRole');

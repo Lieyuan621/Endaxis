@@ -2,7 +2,6 @@ import type {
   GameplayTag,
   GameplayTagMatchType,
 } from '../../../../packages/game-data-contract/src/gameplayTags';
-import type { CombatObjectType } from '../../../../packages/game-data-contract/src/primitives';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import {
@@ -10,13 +9,10 @@ import {
   runtimeTargetFromEntityId,
 } from '../../game-data/logicalAbilityEntity';
 import type { DamageType, SkillType, SkillDefinition } from '../../game-data/operatorDefinition';
-import { matchesCombatObjectType, resolveCombatObjectType } from '../abilities/combatObjectType';
 import { readRequiredActionNumber } from '../actions/actionBlackboard';
 import {
   abilityEventSkillCastInfo,
-  abilityEventSourceId,
   buffAbilityEvent,
-  buffApplicationEvent,
   characterInflictionAbilityEvent,
   customAbilityEvent,
   damageAbilityEvent,
@@ -43,9 +39,6 @@ import type { GameplayTagQueryType } from '../tags/gameplayTags';
 export class EventContextConditionExecutor implements CombatOperationExecutor {
   constructor(
     readonly delegate: CombatOperationExecutor,
-    readonly isOperatorControlled?: (operatorId: string) => boolean,
-    /** SourceFinder 只读取一层 AbilitySystem.source，不追溯到最终干员。 */
-    readonly findEntitySourceId?: (entityId: string) => string | undefined,
     readonly matchBuffTags?: (
       targetId: string,
       ownedTags: readonly GameplayTag[],
@@ -53,20 +46,20 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
       match: GameplayTagQueryType,
     ) => boolean,
     readonly resolveCurrentSkillType?: (
-      target: 'caster' | 'buffOwner' | 'controlledOperator',
+      target: string,
       context?: CombatOperationContext,
     ) => SkillType | undefined,
-    readonly resolveAbilityEntityObjectType?: (instanceId: number) => CombatObjectType,
     /** 按当前技能身份读取定义子类型；非原生战技返回 undefined，不增加事件载荷。 */
     readonly resolveNormalSkillSubType?: (
-      target: 'caster' | 'buffOwner' | 'controlledOperator' | 'event',
+      target: string,
       context?: CombatOperationContext,
     ) => SkillDefinition['normalSkillSubType'],
+    readonly queryTargets?: NonNullable<CombatOperationExecutor['queryTargets']>,
   ) {}
 
   #matchesNormalSkillSubType(
     expected: SkillDefinition['normalSkillSubType'],
-    target: 'caster' | 'buffOwner' | 'controlledOperator' | 'event',
+    target: string,
     context?: CombatOperationContext,
   ): boolean {
     if (expected === undefined) return true;
@@ -98,7 +91,7 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
       const matched = this.delegate.evaluate(
         {
           kind: 'entityTagMatch',
-          target: 'actionInputTarget',
+          target: { kind: 'inputTarget' },
           tagQueryType: condition.tagQueryType,
           tags: condition.tags,
         },
@@ -200,10 +193,6 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
       condition.kind !== 'eventConsumedBuffLayerCompare' &&
       condition.kind !== 'eventBuffEnhanceLayerCompare' &&
       condition.kind !== 'eventOverheal' &&
-      condition.kind !== 'eventSourceMatchesBuffSource' &&
-      condition.kind !== 'eventSourceMatchesBuffSourceEntitySource' &&
-      condition.kind !== 'actionInputTargetObjectTypeMatch' &&
-      condition.kind !== 'actionInputTargetIdentityMatch' &&
       condition.kind !== 'eventProjectilePerfectDodgeCooldownEquals' &&
       condition.kind !== 'eventProjectileIgnoreImmuneLevelCompare'
     ) {
@@ -224,11 +213,16 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
       if (this.resolveCurrentSkillType === undefined) {
         throw new Error('currentSkillTypeIn requires an AbilitySystem resolver');
       }
-      const skillType = this.resolveCurrentSkillType(condition.target, context);
+      if (!context || !this.queryTargets)
+        throw new Error('current skill query requires action targets');
+      const target = this.queryTargets(condition.target, context)[0];
+      const id = target === undefined ? undefined : runtimeTargetEntityId(target);
+      if (id === undefined) return false;
+      const skillType = this.resolveCurrentSkillType(id, context);
       return (
         skillType !== undefined &&
         condition.skillTypes.includes(skillType) &&
-        this.#matchesNormalSkillSubType(condition.normalSkillSubType, condition.target, context)
+        this.#matchesNormalSkillSubType(condition.normalSkillSubType, id, context)
       );
     }
     if (condition.kind === 'originSkillTypeIn') {
@@ -264,37 +258,6 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
         condition.skillTypes.includes(skillCastInfo.originSkillType)
       );
     }
-    if (condition.kind === 'actionInputTargetObjectTypeMatch') {
-      const target = context?.actionInputTarget;
-      if (context === undefined || target === undefined) {
-        throw new Error('actionInputTargetObjectTypeMatch requires an action InputTarget');
-      }
-      if (target.kind === 'spatialPoint') return false;
-      return matchesCombatObjectType(
-        condition.objectTypes,
-        resolveCombatObjectType(target, this.resolveAbilityEntityObjectType),
-      );
-    }
-    if (condition.kind === 'actionInputTargetIdentityMatch') {
-      const target = context?.actionInputTarget;
-      if (context === undefined || target === undefined) {
-        throw new Error('actionInputTargetIdentityMatch requires an action InputTarget');
-      }
-      const targetId = runtimeTargetEntityId(target);
-      const matches =
-        condition.other === 'controlledOperator'
-          ? (() => {
-              if (target.kind !== 'operator') return false;
-              if (this.isOperatorControlled === undefined) {
-                throw new Error('actionInputTargetIdentityMatch requires control state');
-              }
-              return this.isOperatorControlled(target.operatorId);
-            })()
-          : condition.other === 'actionSource'
-            ? context.actionSourceId !== undefined && targetId === context.actionSourceId
-            : context.actionOwnerId !== undefined && targetId === context.actionOwnerId;
-      return condition.operator === 'equal' ? matches : !matches;
-    }
     if (context?.event === undefined) {
       throw new Error(`${condition.kind} requires a combat event context`);
     }
@@ -315,28 +278,6 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
           condition.operator,
         )
       );
-    }
-    const damage = damageAbilityEvent(context.event);
-    if (condition.kind === 'eventSourceMatchesBuffSource') {
-      if (context.buffSourceId === undefined) {
-        throw new Error('eventSourceMatchesBuffSource requires a Buff source identity');
-      }
-      if ('payload' in context.event && buffApplicationEvent(context.event) !== undefined)
-        return abilityEventSourceId(context.event) === context.buffSourceId;
-      if (damage !== undefined) return damage.payload.sourceId === context.buffSourceId;
-      return physicalAbilityEvent(context.event)?.payload.sourceId === context.buffSourceId;
-    }
-    if (condition.kind === 'eventSourceMatchesBuffSourceEntitySource') {
-      if (context.buffSourceId === undefined) {
-        throw new Error('eventSourceMatchesBuffSourceEntitySource requires a Buff source identity');
-      }
-      if (this.findEntitySourceId === undefined) {
-        throw new Error('eventSourceMatchesBuffSourceEntitySource requires entity provenance');
-      }
-      const source = this.findEntitySourceId(context.buffSourceId);
-      if (source === undefined) throw new Error('SourceFinder requires an entity identity');
-      if (damage !== undefined) return damage.payload.sourceId === source;
-      return physicalAbilityEvent(context.event)?.payload.sourceId === source;
     }
     if (condition.kind === 'eventSkillTypeIn') {
       const skill = skillAbilityEvent(context.event);

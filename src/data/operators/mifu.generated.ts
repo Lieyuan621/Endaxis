@@ -1397,19 +1397,17 @@ export const mifuChr_0031_mifu_powerattackActionGraph = {
       data_2: {
         type: 'boolean',
         expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'constant', value: 1 },
-          operator: 'equal',
-          right: { kind: 'constant', value: 1 },
+          kind: 'targetContains',
+          parent: { kind: 'fixed', target: 'enemy' },
+          child: { kind: 'fixed', target: 'enemy' },
         },
       },
       data_3: {
         type: 'boolean',
         expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'constant', value: 1 },
-          operator: 'equal',
-          right: { kind: 'constant', value: 1 },
+          kind: 'targetContains',
+          parent: { kind: 'fixed', target: 'enemy' },
+          child: { kind: 'fixed', target: 'enemy' },
         },
       },
       data_4: {
@@ -1625,6 +1623,7 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'enemySuperArmorCompare',
+          target: { kind: 'fixed', target: 'enemy' },
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 30 },
         },
@@ -2556,6 +2555,7 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'enemySuperArmorCompare',
+          target: { kind: 'fixed', target: 'enemy' },
           operator: 'greater',
           value: { kind: 'constant', value: 10 },
         },
@@ -2576,6 +2576,7 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'enemySuperArmorCompare',
+          target: { kind: 'fixed', target: 'enemy' },
           operator: 'greater',
           value: { kind: 'constant', value: 10 },
         },
@@ -2590,7 +2591,7 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'poiseCompare',
-          target: 'enemy',
+          target: { kind: 'fixed', target: 'enemy' },
           returnValueIfMissing: false,
           operator: 'equal',
           value: { kind: 'constant', value: 0 },
@@ -2600,11 +2601,12 @@ export const mifuChr_0031_mifu_normalskill_3ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffStackCompare',
-          target: 'enemy',
-          tagQueryType: 'hasAny',
-          buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerablePhysic'],
+          target: { kind: 'fixed', target: 'enemy' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          tagQueryType: 'hasAny',
+          buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerablePhysic'],
         },
       },
       data_10: { type: 'number', expression: { kind: 'blackboard', key: 'talent', fallback: 0 } },
@@ -3170,14 +3172,14 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
       checkCondition_5: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
         next: null,
       },
       checkCondition_6: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
         next: 'checkCondition_5',
       },
@@ -3185,7 +3187,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_9' },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
           whenTrue: { $sequence: 'ifElse_11' },
           whenFalse: { $sequence: null },
         },
@@ -3240,7 +3242,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
       checkCondition_21: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
         },
         next: 'startTimeDilation_20',
       },
@@ -3249,7 +3251,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_11' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_10' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
           },
@@ -3296,7 +3298,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
       checkCondition_24: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
         },
         next: 'startTimeDilation_23',
       },
@@ -3305,7 +3307,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_11' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_10' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
           },
@@ -3361,7 +3363,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
       checkCondition_27: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
         },
         next: 'startTimeDilation_26',
       },
@@ -3371,7 +3373,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
           parameters: {
             key: 'final_time',
             operation: 'add',
-            value: { kind: 'valueNode', nodeId: 'data_14' },
+            value: { kind: 'valueNode', nodeId: 'data_13' },
           },
         },
         next: null,
@@ -3382,7 +3384,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
           parameters: {
             key: 'final_effect',
             operation: 'add',
-            value: { kind: 'valueNode', nodeId: 'data_15' },
+            value: { kind: 'valueNode', nodeId: 'data_14' },
           },
         },
         next: 'modifyActionValue_29',
@@ -3392,7 +3394,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
           kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_16' },
+            amount: { kind: 'valueNode', nodeId: 'data_15' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -3404,7 +3406,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_17' },
+          condition: { kind: 'conditionNode', nodeId: 'data_16' },
           whenTrue: { $sequence: 'changeResource_32' },
           whenFalse: { $sequence: null },
         },
@@ -3415,10 +3417,10 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
           kind: 'dealDamage',
           parameters: {
             damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_18' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_17' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_19' },
+            stagger: { kind: 'valueNode', nodeId: 'data_18' },
           },
         },
         next: 'ifElse_33',
@@ -3444,7 +3446,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_20' },
+          condition: { kind: 'conditionNode', nodeId: 'data_19' },
           whenTrue: { $sequence: 'modifyActionValue_30' },
           whenFalse: { $sequence: null },
         },
@@ -3456,7 +3458,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
           parameters: {
             key: 'final_time',
             operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_21' },
+            value: { kind: 'valueNode', nodeId: 'data_20' },
           },
         },
         next: 'ifElse_36',
@@ -3467,7 +3469,7 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
           parameters: {
             key: 'final_effect',
             operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_22' },
+            value: { kind: 'valueNode', nodeId: 'data_21' },
           },
         },
         next: 'modifyActionValue_37',
@@ -3509,29 +3511,26 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'globalCooldownPresent',
-          target: 'caster',
+          target: { kind: 'owner' },
+          returnTrueIfNotExists: true,
           markerId: 'buff_chr_0031_mifu_shield',
         },
       },
-      data_6: {
-        type: 'boolean',
-        expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-      },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'talent', fallback: 0 } },
-      data_8: {
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'talent', fallback: 0 } },
+      data_7: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_7' },
+          left: { kind: 'valueNode', nodeId: 'data_6' },
           operator: 'greater',
           right: { kind: 'constant', value: 0 },
         },
       },
-      data_9: {
+      data_8: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_6' } },
       },
-      data_10: {
+      data_9: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -3542,7 +3541,18 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
           value: 1,
         },
       },
-      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale1' } },
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale1' } },
+      data_11: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
       data_12: {
         type: 'boolean',
         expression: {
@@ -3554,24 +3564,13 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
           value: 1,
         },
       },
-      data_13: {
-        type: 'boolean',
-        expression: {
-          kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          containsHittableTarget: false,
-          excludeDeadEntity: false,
-          operator: 'greaterOrEqual',
-          value: 1,
-        },
-      },
-      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'extra_time' } },
-      data_15: { type: 'number', expression: { kind: 'blackboard', key: 'extra_effect' } },
-      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_17: { type: 'boolean', expression: { kind: 'skillHasHit' } },
-      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
-      data_19: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_20: {
+      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'extra_time' } },
+      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'extra_effect' } },
+      data_15: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_16: { type: 'boolean', expression: { kind: 'skillHasHit' } },
+      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
+      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_19: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
@@ -3580,8 +3579,8 @@ export const mifuChr_0031_mifu_combo_skillActionGraph = {
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_21: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
-      data_22: { type: 'number', expression: { kind: 'blackboard', key: 'rate' } },
+      data_20: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
+      data_21: { type: 'number', expression: { kind: 'blackboard', key: 'rate' } },
     },
   },
   macros: {},
@@ -3702,19 +3701,19 @@ const mifuComboCondition1ActionGraph = {
       data_1: {
         type: 'boolean',
         expression: {
-          kind: 'contextTargetBuffIdStackCompare',
+          kind: 'buffIdStackCompare',
+          target: { kind: 'context', key: 'trigger' },
           compareZeroWhenTargetMissing: false,
-          contextKey: 'trigger',
-          buffIds: ['buff_physical_no_guard'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 3 },
+          buffIds: ['buff_physical_no_guard'],
         },
       },
       data_2: {
         type: 'boolean',
         expression: {
-          kind: 'contextTargetObjectTypeMatch',
-          contextKey: 'trigger',
+          kind: 'targetObjectTypeMatch',
+          target: { kind: 'context', key: 'trigger' },
           objectTypes: ['enemy'],
         },
       },
@@ -3814,21 +3813,21 @@ const mifuBuff3ActionGraph = {
       checkCondition_4: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: 'checkCondition_3',
       },
       checkCondition_5: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
         next: 'checkCondition_4',
       },
       checkCondition_6: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
         },
         next: 'checkCondition_5',
       },
@@ -3838,30 +3837,28 @@ const mifuBuff3ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffStackCompare',
-          target: 'actionInputTarget',
-          tagQueryType: 'hasAny',
-          buffTags: ['Skill/Character/Common/NoGuard'],
+          target: { kind: 'inputTarget' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 3 },
+          tagQueryType: 'hasAny',
+          buffTags: ['Skill/Character/Common/NoGuard'],
         },
       },
       data_2: {
         type: 'boolean',
         expression: {
           kind: 'globalCooldownPresent',
-          target: 'buffOwner',
+          target: { kind: 'owner' },
+          returnTrueIfNotExists: true,
           markerId: 'buff_chr_0031_mifu_listen_crush',
         },
       },
       data_3: {
         type: 'boolean',
-        expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-      },
-      data_4: {
-        type: 'boolean',
         expression: { kind: 'originSkillTypeIn', skillTypes: ['battleSkill'] },
       },
-      data_5: {
+      data_4: {
         type: 'boolean',
         expression: { kind: 'eventPhysicalInflictionTypeIn', types: ['crush'] },
       },

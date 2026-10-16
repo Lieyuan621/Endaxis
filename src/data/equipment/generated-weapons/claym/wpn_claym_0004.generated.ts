@@ -106,10 +106,11 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'buffIdStackCompare',
-                target: 'caster',
-                buffIds: ['buff_wpn_claym_0004_cd'],
+                target: { kind: 'source' },
+                compareZeroWhenTargetMissing: true,
                 operator: 'lessOrEqual',
                 value: { kind: 'constant', value: 0 },
+                buffIds: ['buff_wpn_claym_0004_cd'],
               },
             },
             data_2: {

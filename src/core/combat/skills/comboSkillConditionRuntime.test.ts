@@ -256,18 +256,17 @@ describe('原生连携条件注册环境', () => {
             input_1: {
               type: 'boolean',
               expression: {
-                kind: 'actionInputTargetObjectTypeMatch',
+                kind: 'targetObjectTypeMatch',
+                target: { kind: 'inputTarget' },
                 objectTypes: ['enemy'],
               },
             },
             input_2: {
               type: 'boolean',
               expression: {
-                kind: 'contextTargetIdentityMatch',
-                selection: 'all',
-                contextKey: 'trigger',
-                other: 'controlledOperator',
-                operator: 'equal',
+                kind: 'targetsEqual',
+                first: { kind: 'context', key: 'trigger' },
+                second: { kind: 'mainCharacter' },
               },
             },
           },

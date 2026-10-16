@@ -1599,60 +1599,47 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
   evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
     if (condition.kind === 'checkActionResult')
       throw new Error('checkActionResult must be evaluated by its action graph invocation');
-    if (condition.kind === 'contextTargetBuffStackCompare') {
-      if (context?.targetContext === undefined)
-        throw new Error('context Buff count requires a combat target context');
-      const first = context.targetContext.getOptional(condition.contextKey)?.[0];
-      if (first === undefined || first.kind === 'spatialPoint')
-        return (
-          condition.compareZeroWhenTargetMissing &&
-          compareCombatNumbers(
-            0,
-            resolveActionValueOperand(condition.value, context.blackboard),
-            condition.operator,
-          )
-        );
-      const target =
-        first.kind === 'abilityEntity'
-          ? this.dependencies.resolveCurrentAbilityEntityTarget?.(first)
-          : this.dependencies.resolveEventTarget?.(runtimeTargetEntityId(first)!);
-      if (target === undefined) throw new Error('context Buff count requires a target resolver');
-      const count = target.getCountByTags(condition.buffTags, condition.tagQueryType);
-      return compareCombatNumbers(
-        count,
-        resolveActionValueOperand(condition.value, context.blackboard),
-        condition.operator,
-      );
-    }
-    if (condition.kind === 'contextTargetBuffIdStackCompare') {
-      if (context?.targetContext === undefined)
-        throw new Error('context Buff count requires a combat target context');
-      const first = context.targetContext.getOptional(condition.contextKey)?.[0];
-      if (first === undefined || first.kind === 'spatialPoint')
-        return (
-          condition.compareZeroWhenTargetMissing &&
-          compareCombatNumbers(
-            0,
-            resolveActionValueOperand(condition.value, context.blackboard),
-            condition.operator,
-          )
-        );
-      const target =
-        first.kind === 'abilityEntity'
-          ? this.dependencies.resolveCurrentAbilityEntityTarget?.(first)
-          : this.dependencies.resolveEventTarget?.(runtimeTargetEntityId(first)!);
-      if (target === undefined) throw new Error('context Buff count requires a target resolver');
-      return compareCombatNumbers(
-        target.getCountByIds(condition.buffIds),
-        resolveActionValueOperand(condition.value, context.blackboard),
-        condition.operator,
-      );
-    }
-    if (condition.kind === 'contextTargetEntityTagMatch') {
-      if (context?.targetContext === undefined) {
-        throw new Error('context entity tag check requires a combat target context');
+    if (
+      condition.kind === 'buffStackCompare' ||
+      condition.kind === 'buffTagIdCountCompare' ||
+      condition.kind === 'buffIdStackCompare'
+    ) {
+      if (!context || !this.dependencies.queryTargets)
+        throw new Error('Buff count requires an action target query');
+      const first = this.dependencies.queryTargets(condition.target, context)[0];
+      let count = 0;
+      if (first === undefined || first.kind === 'spatialPoint') {
+        if (!condition.compareZeroWhenTargetMissing) return false;
+      } else {
+        const target =
+          first.kind === 'abilityEntity'
+            ? this.dependencies.resolveCurrentAbilityEntityTarget?.(first)
+            : this.dependencies.resolveEventTarget?.(runtimeTargetEntityId(first)!);
+        if (!target) throw new Error('Buff count requires a target resolver');
+        const castId =
+          'sameSourceSkillCast' in condition && condition.sameSourceSkillCast
+            ? this.#requireSkillCastId(context, condition.kind)
+            : undefined;
+        if (condition.kind === 'buffIdStackCompare')
+          count = target.getCountByIds(condition.buffIds, castId);
+        else if (condition.kind === 'buffStackCompare')
+          count = target.getCountByTags(condition.buffTags, condition.tagQueryType, false, castId);
+        else {
+          if (!target.getDistinctIdCountByTags)
+            throw new Error('distinct Buff ID counting is unavailable');
+          count = target.getDistinctIdCountByTags(condition.buffTags, condition.tagQueryType);
+        }
       }
-      const targets = context.targetContext.getOptional(condition.contextKey) ?? [];
+      const value =
+        typeof condition.value === 'number'
+          ? condition.value
+          : resolveActionValueOperand(condition.value, context.blackboard);
+      return compareCombatNumbers(count, value, condition.operator);
+    }
+    if (condition.kind === 'entityTagMatch') {
+      if (!context || !this.dependencies.queryTargets)
+        throw new Error('entity tag check requires an action target query');
+      const targets = this.dependencies.queryTargets(condition.target, context);
       let found = false;
       for (let index = targets.length - 1; index >= 0; index -= 1) {
         const reference = targets[index]!;
@@ -1661,104 +1648,20 @@ export class BuffOperationExecutor implements CombatOperationExecutor {
           reference.kind === 'abilityEntity'
             ? this.dependencies.resolveCurrentAbilityEntityTarget?.(reference)
             : this.dependencies.resolveEventTarget?.(runtimeTargetEntityId(reference)!);
-        if (target === undefined)
-          throw new Error('context entity tag check requires a target resolver');
+        if (!target) throw new Error('entity tag check requires a target resolver');
         found = true;
         if (!target.matchesEntityTags(condition.tags, condition.tagQueryType)) return false;
       }
       return found;
     }
-    if (condition.kind === 'eventTargetBuffCountCompare') {
-      const event = context?.event;
-      if (
-        context === undefined ||
-        event === undefined ||
-        (!('targetId' in event) && !('payload' in event))
-      ) {
-        throw new Error('eventTargetBuffCountCompare requires an event target identity');
-      }
-      const resolveTarget = this.dependencies.resolveEventTarget;
-      if (resolveTarget === undefined) {
-        throw new Error('eventTargetBuffCountCompare requires an event target resolver');
-      }
-      const targetId = abilityEventTargetId(event);
-      if (targetId === undefined)
-        throw new Error('eventTargetBuffCountCompare requires an event target identity');
-      const target = resolveTarget(targetId);
-      if (target.getInstanceCountByTags === undefined) {
-        throw new Error('eventTargetBuffCountCompare requires Buff instance counting');
-      }
-      const count = target.getInstanceCountByTags(condition.buffTags, condition.tagQueryType);
-      return compareCombatNumbers(
-        count,
-        resolveActionValueOperand(condition.value, context.blackboard),
-        condition.operator,
-      );
-    }
-    if (condition.kind === 'buffStackCompare') {
-      if (context === undefined) {
-        throw new Error('buffStackCompare requires a combat operation context');
-      }
-      const count = this.#resolveSingleTarget(condition.target, context).getCountByTags(
-        condition.buffTags,
-        condition.tagQueryType,
-        false,
-        condition.sameSourceSkillCast
-          ? this.#requireSkillCastId(context, 'buffStackCompare')
-          : undefined,
-      );
-      return compareCombatNumbers(
-        count,
-        resolveActionValueOperand(condition.value, context.blackboard),
-        condition.operator,
-      );
-    }
-    if (condition.kind === 'buffTagIdCountCompare') {
-      if (context === undefined) {
-        throw new Error('buffTagIdCountCompare requires a combat operation context');
-      }
-      const target = this.#resolveSingleTarget(condition.target, context);
-      if (target.getDistinctIdCountByTags === undefined) {
-        throw new Error('buffTagIdCountCompare requires distinct Buff ID counting');
-      }
-      const count = target.getDistinctIdCountByTags(condition.buffTags, condition.tagQueryType);
-      return compareCombatNumbers(
-        count,
-        resolveActionValueOperand(condition.value, context.blackboard),
-        condition.operator,
-      );
-    }
     if (condition.kind === 'currentBuffStackCompare') {
-      if (context?.getCurrentBuffEnhanceCount === undefined) {
+      if (!context?.getCurrentBuffEnhanceCount)
         throw new Error('currentBuffStackCompare requires a Buff operation context');
-      }
       return compareCombatNumbers(
         context.getCurrentBuffEnhanceCount(),
         resolveActionValueOperand(condition.value, context.blackboard),
         condition.operator,
       );
-    }
-    if (condition.kind === 'entityTagMatch') {
-      return this.#resolveSingleTarget(condition.target, context).matchesEntityTags(
-        condition.tags,
-        condition.tagQueryType,
-      );
-    }
-    if (condition.kind === 'buffIdStackCompare') {
-      const count = this.#resolveSingleTarget(condition.target, context).getCountByIds(
-        condition.buffIds,
-        condition.sameSourceSkillCast
-          ? this.#requireSkillCastId(context, 'buffIdStackCompare')
-          : undefined,
-      );
-      if (typeof condition.value === 'number') {
-        return compareCombatNumbers(count, condition.value, condition.operator);
-      }
-      if (context === undefined) {
-        throw new Error('dynamic buffIdStackCompare requires a combat operation context');
-      }
-      const value = resolveActionValueOperand(condition.value, context.blackboard);
-      return compareCombatNumbers(count, value, condition.operator);
     }
     if (condition.kind === 'buffBlackboardValueCompare') {
       if (context === undefined) {

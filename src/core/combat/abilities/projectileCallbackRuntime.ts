@@ -86,7 +86,7 @@ export function restoreProjectileCallback(
     () =>
       state.hitTagFilter === undefined ||
       operations.evaluate(
-        { kind: 'entityTagMatch', target: 'enemy', ...state.hitTagFilter },
+        { kind: 'entityTagMatch', target: { kind: 'inputTarget' }, ...state.hitTagFilter },
         context,
       ),
   );

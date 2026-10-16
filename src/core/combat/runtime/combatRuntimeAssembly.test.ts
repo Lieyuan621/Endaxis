@@ -400,7 +400,10 @@ function createAssembly(
       : { createOperatorBuffRuntime: resolvedCreateOperatorBuffRuntime }),
     ...(createAbilityEntityBuffRuntime === undefined ? {} : { createAbilityEntityBuffRuntime }),
     ...(isOperatorControlled === undefined ? {} : { isOperatorControlled }),
-    ...(resolveVitals === undefined ? {} : { resolveVitals }),
+    ...(resolveVitals === undefined ? {} : {
+      resolveVitals,
+      resolveOperatorVitals: (operatorId: string) => resolveVitals('caster', operatorId),
+    }),
     ...(emitAbilityEvent === undefined ? {} : { emitAbilityEvent }),
   });
 }
@@ -1204,8 +1207,8 @@ describe('CombatRuntimeAssembly', () => {
           [`${prefix}-type`]: {
             type: 'boolean' as const,
             expression: {
-              kind: 'contextTargetObjectTypeMatch' as const,
-              contextKey: 'source',
+              kind: 'targetObjectTypeMatch' as const,
+              target: { kind: 'context' as const, key: 'source' },
               objectTypes: [objectType],
             },
           },
@@ -5035,7 +5038,7 @@ describe('CombatRuntimeAssembly', () => {
                 type: 'boolean',
                 expression: {
                   kind: 'healthCompare',
-                  target: 'enemy',
+                  target: { kind: 'fixed', target: 'enemy' },
                   valueType: 'ratio',
                   operator: 'less',
                   value: { kind: 'constant', value: 0.5 },
@@ -5089,7 +5092,7 @@ describe('CombatRuntimeAssembly', () => {
             {
               input_1: {
                 type: 'boolean',
-                expression: { kind: 'enemyRankIn', ranks: ['elite', 'boss'] },
+                expression: { kind: 'enemyRankIn', target: { kind: 'fixed', target: 'enemy' }, ranks: ['elite', 'boss'] },
               },
             },
           ),
@@ -5884,7 +5887,8 @@ describe('CombatRuntimeAssembly', () => {
                 type: 'boolean',
                 expression: {
                   kind: 'buffIdStackCompare',
-                  target: 'caster',
+                  target: { kind: 'fixed', target: 'caster' },
+                  compareZeroWhenTargetMissing: false,
                   buffIds: ['sword-trigger'],
                   operator: 'greaterOrEqual',
                   value: 1,

@@ -130,7 +130,7 @@ describe('heal modifiers', () => {
                       type: 'boolean',
                       expression: {
                         kind: 'healthCompare',
-                        target: 'currentTarget',
+                        target: { kind: 'inputTarget' },
                         valueType: 'ratio',
                         operator: 'lessOrEqual',
                         value: { kind: 'valueNode', nodeId: 'threshold' },
@@ -144,8 +144,9 @@ describe('heal modifiers', () => {
                     resolveTarget: () => {
                       throw new Error('expected explicit target');
                     },
-                    resolveContextTarget: id => {
-                      expect(id).toBe('ally');
+                    queryTargets: (_query, context) => context.actionInputTarget ? [context.actionInputTarget] : [],
+                    resolveVitals: target => {
+                      expect(target).toEqual({ kind: 'operator', operatorId: 'ally' });
                       return allyVitals;
                     },
                     delegate: {

@@ -50,14 +50,14 @@ const definition = {
             checkCondition_3: {
               action: {
                 kind: 'checkCondition',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
               },
               next: 'dealDamage_2',
             },
             checkCondition_4: {
               action: {
                 kind: 'checkCondition',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
               },
               next: 'checkCondition_3',
             },
@@ -70,15 +70,12 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'globalCooldownPresent',
-                target: 'buffOwner',
+                target: { kind: 'owner' },
+                returnTrueIfNotExists: true,
                 markerId: 'buff_equipsuit_physuit_01',
               },
             },
             data_5: {
-              type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-            },
-            data_6: {
               type: 'boolean',
               expression: {
                 kind: 'eventBuffTagsMatch',

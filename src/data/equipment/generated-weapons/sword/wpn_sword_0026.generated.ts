@@ -175,8 +175,8 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                target: { kind: 'owner' },
                 returnTrueIfNotExists: true,
-                target: 'buffOwner',
                 markerId: 'wpn_sword_0026_heal',
               },
             },

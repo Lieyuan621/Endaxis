@@ -121,9 +121,9 @@ const definition = {
             data_3: {
               type: 'boolean',
               expression: {
-                kind: 'actionInputTargetIdentityMatch',
-                other: 'actionOwner',
-                operator: 'equal',
+                kind: 'targetsEqual',
+                first: { kind: 'owner' },
+                second: { kind: 'inputTarget' },
               },
             },
           },

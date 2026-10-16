@@ -1440,7 +1440,8 @@ describe('CombatActionSequenceRuntime', () => {
             type: 'boolean',
             expression: {
               kind: 'buffIdStackCompare',
-              target: 'caster',
+              target: { kind: 'fixed', target: 'caster' },
+              compareZeroWhenTargetMissing: false,
               buffIds: ['signal'],
               operator: 'greaterOrEqual',
               value: { kind: 'constant', value: 1 },

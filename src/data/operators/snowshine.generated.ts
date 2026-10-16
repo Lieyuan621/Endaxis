@@ -1689,8 +1689,7 @@ const snowshineComboCondition1ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
-          target: 'contextTarget',
-          contextKey: 'trigger',
+          target: { kind: 'context', key: 'trigger' },
           valueType: 'ratio',
           operator: 'less',
           value: { kind: 'constant', value: 0.6 },
@@ -1735,7 +1734,7 @@ const snowshineBuff1ActionGraph = {
       checkCondition_2: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'constant', value: true } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
         next: 'heal_1',
       },
@@ -1743,6 +1742,14 @@ const snowshineBuff1ActionGraph = {
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'heal_scale' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'heal_static_value' } },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'targetObjectTypeMatch',
+          target: { kind: 'owner' },
+          objectTypes: ['character'],
+        },
+      },
     },
   },
   macros: {},
@@ -1781,7 +1788,7 @@ const snowshineBuff2ActionGraph = {
       checkCondition_2: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'constant', value: true } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
         next: 'heal_1',
       },
@@ -1789,6 +1796,14 @@ const snowshineBuff2ActionGraph = {
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'heal_scale_loop' } },
       data_2: { type: 'number', expression: { kind: 'blackboard', key: 'heal_static_value_loop' } },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'targetObjectTypeMatch',
+          target: { kind: 'owner' },
+          objectTypes: ['character'],
+        },
+      },
     },
   },
   macros: {},
@@ -1855,7 +1870,7 @@ const snowshineBuff4ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: 'buffOwner',
+          target: { kind: 'owner' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/Common/Affixes/Shelter'],
         },
@@ -2008,7 +2023,7 @@ const snowshineBuff7ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
-          target: 'actionInputTarget',
+          target: { kind: 'inputTarget' },
           valueType: 'ratio',
           operator: 'lessOrEqual',
           value: { kind: 'valueNode', nodeId: 'data_1' },
@@ -2152,6 +2167,7 @@ const snowshineBuff9ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'enemySuperArmorCompare',
+          target: { kind: 'owner' },
           operator: 'less',
           value: { kind: 'constant', value: 30 },
         },

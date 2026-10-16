@@ -307,7 +307,8 @@ describe('独立资源图构建与优化', () => {
       parameters: {
         condition: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: false,
           buffIds: ['required'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },

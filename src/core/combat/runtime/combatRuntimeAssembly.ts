@@ -4407,10 +4407,6 @@ export class CombatRuntimeAssembly {
         globalCooldowns: this.#globalCooldowns,
         resolveCooldownCharacter: (target, context) =>
           this.#requireCooldownCharacter(target, operatorId, context),
-        resolveTarget: target =>
-          target === 'enemy'
-            ? this.#enemyTimedMarkers
-            : this.#requireTimedMarkerContainer(operatorId),
         queryTargets: (query, context) => targetContextOperations.queryTargets(query, context),
         resolveEventTarget: targetId => this.#resolveTimedMarkerContainerById(targetId),
         globalScaledClock: this.timeDilation ?? this.clock,
@@ -4421,8 +4417,13 @@ export class CombatRuntimeAssembly {
     const superArmorConditions = new EnemySuperArmorConditionExecutor(
       enemy.superArmor,
       timedMarkerOperations,
+      (query, context) => targetContextOperations.queryTargets(query, context),
     );
-    const rankConditions = new EnemyRankConditionExecutor(enemy.rank, superArmorConditions);
+    const rankConditions = new EnemyRankConditionExecutor(
+      enemy.rank,
+      superArmorConditions,
+      (query, context) => targetContextOperations.queryTargets(query, context),
+    );
     const vitalsConditions = new CombatVitalsConditionExecutor({
       resolveTarget: (target, buffSourceId) => {
         if (resolveVitals === undefined) {
@@ -4430,11 +4431,15 @@ export class CombatRuntimeAssembly {
         }
         return resolveVitals(target, operatorId, buffSourceId);
       },
-      resolveContextTarget: candidate => {
-        if (resolveOperatorVitals === undefined) {
-          throw new Error(`skill '${program.skillId}' requires operator vitals`);
-        }
-        return resolveOperatorVitals(candidate);
+      queryTargets: (query, context) => targetContextOperations.queryTargets(query, context),
+      resolveVitals: (target, property) => {
+        if (
+          target.kind !== 'enemy' &&
+          target.kind !== 'operator' &&
+          target.kind !== 'abilityEntity'
+        )
+          return undefined;
+        return this.#readTargetVitals(runtimeTargetEntityId(target)!, operatorId, property);
       },
       delegate: rankConditions,
     });
@@ -4454,23 +4459,15 @@ export class CombatRuntimeAssembly {
       controlConditions,
       (skillSlotKey, ownerId) =>
         this.#requireAbilitySystem(ownerId).currentSkillKeyForSlot(skillSlotKey),
+      (query, context) => targetContextOperations.queryTargets(query, context),
     );
     const eventConditions = new EventContextConditionExecutor(
       comboWindowOperations,
-      isOperatorControlled === undefined
-        ? undefined
-        : sourceId => isOperatorControlled(sourceId, this.clock.frame),
-      sourceId => runtimeTargetEntityId(this.#findAbilitySystemSource(sourceId)),
       (targetId, ownedTags, requiredTags, match) =>
         this.#resolveBuffTargetById(targetId).matchesTags!(ownedTags, requiredTags, match),
-      (target, context) => {
-        const targetId = this.#resolveCurrentSkillOwnerId(operatorId, target, context);
-        return targetId === undefined
-          ? undefined
-          : this.#abilitySystems.get(targetId)?.currentSkillType;
-      },
-      id => this.#resolveAbilityEntityObjectType(id),
-      (target, context) => this.#resolveNormalSkillSubType(operatorId, target, context),
+      targetId => this.#abilitySystems.get(targetId)?.currentSkillType,
+      (target, context) => this.#resolveNormalSkillSubType(target, context),
+      (query, context) => targetContextOperations.queryTargets(query, context),
     );
     const skillCastInheritance = new SkillCastInheritanceOperationExecutor(
       definitionOperator.operatorId,
@@ -4493,7 +4490,7 @@ export class CombatRuntimeAssembly {
           },
       ownerId => this.#abilitySystems.get(ownerId)?.currentSkillTimelineFrame,
       {
-        sourceId: operatorId,
+        queryTargets: (query, context) => targetContextOperations.queryTargets(query, context),
         resolve: ownerId => this.#resolveOwnerDeckAttributes(ownerId),
       },
       {
@@ -4503,7 +4500,7 @@ export class CombatRuntimeAssembly {
         readTypeId: entityId => this.#operators.get(entityId)?.characterTypeId,
       },
       {
-        sourceId: operatorId,
+        queryTargets: (query, context) => targetContextOperations.queryTargets(query, context),
         resolve: entityId => this.#operators.get(entityId)?.operatorRole,
       },
       {
@@ -4766,10 +4763,6 @@ export class CombatRuntimeAssembly {
         globalCooldowns: this.#globalCooldowns,
         resolveCooldownCharacter: (target, context) =>
           this.#requireCooldownCharacter(target, operatorId, context),
-        resolveTarget: target =>
-          target === 'enemy'
-            ? this.#enemyTimedMarkers
-            : this.#requireTimedMarkerContainer(operatorId),
         queryTargets: (query, context) => targetContextOperations.queryTargets(query, context),
         resolveEventTarget: targetId => this.#resolveTimedMarkerContainerById(targetId),
         globalScaledClock: this.timeDilation ?? this.clock,
@@ -4780,8 +4773,13 @@ export class CombatRuntimeAssembly {
     const superArmorConditions = new EnemySuperArmorConditionExecutor(
       options.enemy.superArmor,
       markerOperations,
+      (query, context) => targetContextOperations.queryTargets(query, context),
     );
-    const rankConditions = new EnemyRankConditionExecutor(options.enemy.rank, superArmorConditions);
+    const rankConditions = new EnemyRankConditionExecutor(
+      options.enemy.rank,
+      superArmorConditions,
+      (query, context) => targetContextOperations.queryTargets(query, context),
+    );
     const vitalsConditions = new CombatVitalsConditionExecutor({
       resolveTarget: (target, buffSourceId) => {
         if (options.resolveVitals === undefined) {
@@ -4789,11 +4787,15 @@ export class CombatRuntimeAssembly {
         }
         return options.resolveVitals(target, operatorId, buffSourceId);
       },
-      resolveContextTarget: candidate => {
-        if (options.resolveOperatorVitals === undefined) {
-          throw new Error(`reactive event '${sourceActionId}' requires operator vitals`);
-        }
-        return options.resolveOperatorVitals(candidate);
+      queryTargets: (query, context) => targetContextOperations.queryTargets(query, context),
+      resolveVitals: (target, property) => {
+        if (
+          target.kind !== 'enemy' &&
+          target.kind !== 'operator' &&
+          target.kind !== 'abilityEntity'
+        )
+          return undefined;
+        return this.#readTargetVitals(runtimeTargetEntityId(target)!, operatorId, property);
       },
       delegate: rankConditions,
     });
@@ -4813,23 +4815,15 @@ export class CombatRuntimeAssembly {
       controlConditions,
       (skillSlotKey, ownerId) =>
         this.#requireAbilitySystem(ownerId).currentSkillKeyForSlot(skillSlotKey),
+      (query, context) => targetContextOperations.queryTargets(query, context),
     );
     const eventConditions = new EventContextConditionExecutor(
       comboWindowOperations,
-      options.isOperatorControlled === undefined
-        ? undefined
-        : sourceId => options.isOperatorControlled!(sourceId, this.clock.frame),
-      sourceId => runtimeTargetEntityId(this.#findAbilitySystemSource(sourceId)),
       (targetId, ownedTags, requiredTags, match) =>
         this.#resolveBuffTargetById(targetId).matchesTags!(ownedTags, requiredTags, match),
-      (target, context) => {
-        const targetId = this.#resolveCurrentSkillOwnerId(operatorId, target, context);
-        return targetId === undefined
-          ? undefined
-          : this.#abilitySystems.get(targetId)?.currentSkillType;
-      },
-      id => this.#resolveAbilityEntityObjectType(id),
-      (target, context) => this.#resolveNormalSkillSubType(operatorId, target, context),
+      targetId => this.#abilitySystems.get(targetId)?.currentSkillType,
+      (target, context) => this.#resolveNormalSkillSubType(target, context),
+      (query, context) => targetContextOperations.queryTargets(query, context),
     );
     const skillCastInheritance = new SkillCastInheritanceOperationExecutor(
       operatorId,
@@ -4852,7 +4846,7 @@ export class CombatRuntimeAssembly {
           },
       undefined,
       {
-        sourceId: operatorId,
+        queryTargets: (query, context) => targetContextOperations.queryTargets(query, context),
         resolve: ownerId => this.#resolveOwnerDeckAttributes(ownerId),
       },
       {
@@ -4862,7 +4856,7 @@ export class CombatRuntimeAssembly {
         readSquadSlot: index => this.#readSquadSlot(index),
       },
       {
-        sourceId: operatorId,
+        queryTargets: (query, context) => targetContextOperations.queryTargets(query, context),
         resolve: entityId => this.#operators.get(entityId)?.operatorRole,
       },
       {
@@ -5736,24 +5730,7 @@ export class CombatRuntimeAssembly {
     return runtime;
   }
 
-  #resolveCurrentSkillOwnerId(
-    operatorId: string,
-    target: 'caster' | 'buffOwner' | 'controlledOperator',
-    context?: CombatOperationContext,
-  ): string | undefined {
-    if (target === 'caster') return operatorId;
-    if (target === 'buffOwner') return context?.buffOwnerId;
-    const isControlled = this.#options.isOperatorControlled;
-    if (isControlled === undefined)
-      throw new Error('current skill query requires operator control');
-    return this.#operatorOrder.find(id => isControlled(id, this.clock.frame));
-  }
-
-  #resolveNormalSkillSubType(
-    operatorId: string,
-    target: 'caster' | 'buffOwner' | 'controlledOperator' | 'event',
-    context?: CombatOperationContext,
-  ) {
+  #resolveNormalSkillSubType(target: string, context?: CombatOperationContext) {
     if (target === 'event') {
       const event = context?.event === undefined ? undefined : skillAbilityEvent(context.event);
       if (event === undefined) throw new Error('skill subtype query requires a skill event');
@@ -5761,9 +5738,7 @@ export class CombatRuntimeAssembly {
         event.payload.skillId,
       );
     }
-    const ownerId = this.#resolveCurrentSkillOwnerId(operatorId, target, context);
-    if (ownerId === undefined) throw new Error('skill subtype query requires a skill owner');
-    const ability = this.#requireAbilitySystem(ownerId);
+    const ability = this.#requireAbilitySystem(target);
     const skillId = ability.currentSkillId;
     if (skillId === null) throw new Error('skill subtype query requires a current skill');
     return ability.normalSkillSubTypeForSkill(skillId);

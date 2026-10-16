@@ -1132,11 +1132,12 @@ export const catcherChr_0020_meurs_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffStackCompare',
-          target: 'caster',
-          tagQueryType: 'hasAny',
-          buffTags: ['Skill/Character/Common/HpShield'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          tagQueryType: 'hasAny',
+          buffTags: ['Skill/Character/Common/HpShield'],
         },
       },
       data_10: {
@@ -1825,7 +1826,11 @@ const catcherComboCondition1ActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
-        expression: { kind: 'actionInputTargetObjectTypeMatch', objectTypes: ['enemy'] },
+        expression: {
+          kind: 'targetObjectTypeMatch',
+          target: { kind: 'inputTarget' },
+          objectTypes: ['enemy'],
+        },
       },
       data_2: {
         type: 'boolean',
@@ -1839,8 +1844,7 @@ const catcherComboCondition1ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
-          target: 'contextTarget',
-          contextKey: 'trigger',
+          target: { kind: 'context', key: 'trigger' },
           valueType: 'ratio',
           operator: 'less',
           value: { kind: 'constant', value: 0.4 },

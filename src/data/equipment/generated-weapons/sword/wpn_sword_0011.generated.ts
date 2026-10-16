@@ -164,7 +164,7 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'poiseCompare',
-                target: 'currentTarget',
+                target: { kind: 'inputTarget' },
                 returnValueIfMissing: false,
                 operator: 'lessOrEqual',
                 value: { kind: 'constant', value: 0 },

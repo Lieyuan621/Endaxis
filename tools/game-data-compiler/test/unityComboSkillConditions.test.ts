@@ -45,7 +45,7 @@ describe('Unity RID 条件适配', () => {
     fixture.conditions[0]!.comboSkillCheckAction.actionData = [rid];
     const source = parse(fixture).conditions[0]!;
     expect(chainOf(compilePendingComboConditionSource(source, projection))[0]).toMatchObject({
-      parameters: { condition: { kind: 'casterComboPending' } },
+      parameters: { condition: { kind: 'comboSkillPending' } },
     });
   });
   it('新增四类 RID 叶子只规范化序列化形状，并统一进入公共 Condition 编译', () => {
@@ -127,7 +127,7 @@ describe('Unity RID 条件适配', () => {
       parameters: {
         condition: {
           kind: 'entityTagMatch',
-          target: 'caster',
+          target: { kind: 'source' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/Common/SpellBurst'],
         },
@@ -346,10 +346,6 @@ describe('Unity RID 条件适配', () => {
       ...projection,
       contextTargetGroupTargets: new Map([['trigger', 'eventTarget'] as const]),
     };
-    if (targetSource === 2)
-      expect(() => compilePendingComboConditionSource(source.conditions[0]!, projection)).toThrow(
-        'target identity sources',
-      );
     const boundCompiled = compilePendingComboConditionSource(
       source.conditions[0]!,
       boundProjection,
@@ -357,20 +353,11 @@ describe('Unity RID 条件适配', () => {
     expect(boundCompiled.event).toBe('beforeTakeDamage');
     expect(chainOf(boundCompiled)[0]).toMatchObject({
       parameters: {
-        condition:
-          targetSource === 0
-            ? {
-                kind: 'actionInputTargetIdentityMatch',
-                other: 'controlledOperator',
-                operator: 'equal',
-              }
-            : {
-                kind: 'contextTargetIdentityMatch',
-                selection: 'all',
-                contextKey: 'trigger',
-                other: 'controlledOperator',
-                operator: 'equal',
-              },
+        condition: {
+          kind: 'targetsEqual',
+          first: targetSource === 0 ? { kind: 'inputTarget' } : { kind: 'context', key: 'trigger' },
+          second: { kind: 'mainCharacter' },
+        },
       },
     });
   });
@@ -386,8 +373,8 @@ describe('Unity RID 条件适配', () => {
     expect(chainOf(compiled[1]!)[0]).toMatchObject({
       parameters: {
         condition: {
-          kind: 'contextTargetObjectTypeMatch',
-          contextKey: 'trigger',
+          kind: 'targetObjectTypeMatch',
+          target: { kind: 'context', key: 'trigger' },
           objectTypes: ['enemy'],
         },
       },
@@ -453,7 +440,7 @@ describe('Unity RID 条件适配', () => {
     target.targetGroupKey = '';
     expect(
       JSON.stringify(compilePendingComboConditionSource(parse(f).conditions[0]!, projection)),
-    ).toContain('actionInputTargetObjectTypeMatch');
+    ).toContain('targetObjectTypeMatch');
     data.isEnable = false;
     expect(() =>
       compilePendingComboConditionSource(parse(f).conditions[0]!, projection),
@@ -462,9 +449,8 @@ describe('Unity RID 条件适配', () => {
   it('BuffIdCount 保留来源但不错误降级成实例数或增强层数', () => {
     const f = unityComboConditionFixture();
     f.references['2708501211437859826']!.data.buffStackNumType = 1;
-    expect(() => compilePendingComboConditionSource(parse(f).conditions[1]!, projection)).toThrow(
-      'unsupported',
-    );
+    const compiled = compilePendingComboConditionSource(parse(f).conditions[1]!, projection);
+    expect(chainOf(compiled).some(step => step.kind === 'checkCondition' && step.parameters.condition.kind === 'buffTagIdCountCompare')).toBe(true);
   });
   it.each([
     [16, 16],

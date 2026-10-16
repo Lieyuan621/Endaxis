@@ -659,8 +659,7 @@ describe('公共 Buff 运行时投影', () => {
                         action: {
                           kind: 'buffStack',
                           sourceType: 'CheckBuffStackNumAdvanced',
-                          targetSource: 'Owner',
-                          targetGroupKey: '',
+                          target: { ...fixedTarget('Owner'), targetGroupKey: '' },
                           buffCheckType: 'Id',
                           buffIds: ['buff_seal'],
                           tagQueryType: 'hasAny',
@@ -711,7 +710,7 @@ describe('公共 Buff 运行时投影', () => {
     };
     expect(buffHasNoAffixIdentityWriter(withWriter)).toBe(false);
     expect(() => compileBuffRuntimeDefinitionSource(withWriter)).toThrow(
-      'unsupported event target Buff count condition',
+      'Buff count requires source skill cast identity',
     );
   });
 
@@ -761,7 +760,7 @@ describe('公共 Buff 运行时投影', () => {
       readResourceActions(definition, definition.damageModifiers![0]!.condition!)[0],
     ).toMatchObject({
       kind: 'checkCondition',
-      parameters: { condition: { kind: 'poiseCompare', target: 'currentTarget' } },
+      parameters: { condition: { kind: 'poiseCompare', target: { kind: 'inputTarget' } } },
     });
   });
 
@@ -1078,8 +1077,7 @@ describe('公共 Buff 运行时投影', () => {
           action: {
             kind: 'buffStack' as const,
             sourceType: 'CheckBuffStackNumAdvanced',
-            targetSource: 'Owner',
-            targetGroupKey: 'stale_tar',
+            target: { ...fixedTarget('Owner'), targetGroupKey: 'stale_tar' },
             buffCheckType: 'Id',
             buffIds: ['buff.skill.end'],
             buffTagIds: [],
@@ -1181,7 +1179,8 @@ describe('公共 Buff 运行时投影', () => {
                   parameters: {
                     condition: {
                       kind: 'buffIdStackCompare',
-                      target: 'caster',
+                      target: { kind: 'owner' },
+                      compareZeroWhenTargetMissing: true,
                       buffIds: ['buff.skill.end'],
                       operator: 'greaterOrEqual',
                       value: { kind: 'constant', value: 1 },
@@ -1560,7 +1559,7 @@ describe('公共 Buff 运行时投影', () => {
           { fixedBuffOwnerTarget: 'caster', gameplayTagRegistry: fixtureGameplayTagRegistry },
         ),
       ),
-    ).toContain('actionInputTargetObjectTypeMatch');
+    ).toContain('targetObjectTypeMatch');
   });
 
   it.each([
@@ -2283,8 +2282,7 @@ describe('公共 Buff 运行时投影', () => {
                     conditionNode(
                       {
                         kind: 'entityTag',
-                        targetSource: 'Owner',
-                        targetGroupKey: '',
+                        target: { ...fixedTarget('Owner'), targetGroupKey: '' },
                         tagQueryType: 'exceptAny',
                         tagIds: [1570888476],
                       },
@@ -2326,7 +2324,7 @@ describe('公共 Buff 运行时投影', () => {
       parameters: {
         condition: {
           kind: 'entityTagMatch',
-          target: 'buffOwner',
+          target: { kind: 'owner' },
           tagQueryType: 'exceptAny',
         },
       },
@@ -2405,9 +2403,9 @@ describe('公共 Buff 运行时投影', () => {
           kind: 'checkCondition',
           parameters: {
             condition: {
-              kind: 'actionInputTargetIdentityMatch',
-              other: 'actionSource',
-              operator: 'equal',
+              kind: 'targetsEqual',
+              first: { kind: 'source' },
+              second: { kind: 'inputTarget' },
             },
           },
         },
@@ -3065,8 +3063,7 @@ describe('公共 Buff 运行时投影', () => {
                     action: {
                       kind: 'health',
                       sourceType: 'CheckHp',
-                      targetSource: 'Target',
-                      targetGroupKey: '',
+                      target: { ...fixedTarget('Target'), targetGroupKey: '' },
                       comparison: 'LE',
                       isRatio: true,
                       value: { value: 0.5, blackboardKey: 'rate', levelValues: null },
@@ -3095,7 +3092,7 @@ describe('公共 Buff 运行时投影', () => {
       parameters: {
         condition: {
           kind: 'healthCompare',
-          target: 'actionInputTarget',
+          target: { kind: 'inputTarget' },
           operator: 'lessOrEqual',
           valueType: 'ratio',
         },
@@ -3499,7 +3496,7 @@ describe('公共 Buff 运行时投影', () => {
       parameters: {
         condition: {
           kind: 'currentSkillTypeIn',
-          target: 'caster',
+          target: { kind: 'source' },
           skillTypes: ['battleSkill'],
         },
       },
@@ -3814,15 +3811,13 @@ describe('公共 Buff 运行时投影', () => {
           modifier({ kind: 'damageDecorateMask', checkType: 'HasAny', mask: 768 }),
           modifier({
             kind: 'entityTag',
-            targetSource: 'Target',
-            targetGroupKey: 'inactive-residual-group',
+            target: { ...fixedTarget('Target'), targetGroupKey: 'inactive-residual-group' },
             tagQueryType: 'hasAny',
             tagIds: [1570888476],
           }),
           modifier({
             kind: 'buffStack',
-            targetSource: 'Target',
-            targetGroupKey: '',
+            target: { ...fixedTarget('Target'), targetGroupKey: '' },
             buffCheckType: 'Id',
             buffIds: ['buff_physical_no_guard'],
             tagQueryType: 'hasAny',
@@ -3841,8 +3836,7 @@ describe('公共 Buff 运行时投影', () => {
           }),
           modifier({
             kind: 'health',
-            targetSource: 'Target',
-            targetGroupKey: '',
+            target: { ...fixedTarget('Target'), targetGroupKey: '' },
             comparison: 'LT',
             isRatio: true,
             value: { value: 0, blackboardKey: 'hp_remain', levelValues: [0.5] },
@@ -3869,27 +3863,27 @@ describe('公共 Buff 运行时投影', () => {
         },
         {
           kind: 'entityTagMatch',
-          target: 'actionInputTarget',
+          target: { kind: 'inputTarget' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
         },
         {
           kind: 'buffIdStackCompare',
-          target: 'actionInputTarget',
+          target: { kind: 'inputTarget' },
           buffIds: ['buff_physical_no_guard'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
         },
         {
           kind: 'poiseCompare',
-          target: 'currentTarget',
+          target: { kind: 'inputTarget' },
           returnValueIfMissing: false,
           operator: 'lessOrEqual',
           value: { kind: 'constant', value: 0 },
         },
         {
           kind: 'healthCompare',
-          target: 'actionInputTarget',
+          target: { kind: 'inputTarget' },
           valueType: 'ratio',
           operator: 'less',
           value: { kind: 'blackboard', key: 'hp_remain' },
@@ -4183,9 +4177,9 @@ describe('公共 Buff 运行时投影', () => {
   });
 
   it.each([
-    ['Target', 'actionInputTarget'],
-    ['Owner', 'buffOwner'],
-    ['Source', 'caster'],
+    ['Target', 'inputTarget'],
+    ['Owner', 'owner'],
+    ['Source', 'source'],
   ])('按原生 BuffCount 保留 %s 的增强层数守卫，不统一指向事件目标', (targetSource, target) => {
     const source = sourceFixture();
     const nativeEvent = source.graph.abilityEvents[0]!;
@@ -4201,8 +4195,7 @@ describe('公共 Buff 运行时投影', () => {
           action: {
             kind: 'buffStack' as const,
             sourceType: 'CheckBuffStackNumAdvanced',
-            targetSource,
-            targetGroupKey: '',
+            target: fixedTarget(targetSource),
             buffCheckType: 'Tag',
             buffIds: [],
             tagQueryType: 'hasAny' as const,
@@ -4266,7 +4259,8 @@ describe('公共 Buff 运行时投影', () => {
         parameters: {
           condition: {
             kind: 'buffStackCompare',
-            target,
+            target: { kind: target },
+            compareZeroWhenTargetMissing: true,
             tagQueryType: 'hasAny',
             buffTags: ['Skill/Character/Common/NoGuard'],
             operator: 'greaterOrEqual',
@@ -4291,8 +4285,10 @@ describe('公共 Buff 运行时投影', () => {
           action: {
             kind: 'buffStack' as const,
             sourceType: 'CheckBuffStackNumAdvanced',
-            targetSource,
-            targetGroupKey: targetSource === 'Context' ? 'smart_target' : '',
+            target: {
+              ...fixedTarget(targetSource),
+              targetGroupKey: targetSource === 'Context' ? 'smart_target' : '',
+            },
             buffCheckType: 'Tag',
             buffIds: [],
             tagQueryType: 'hasAny' as const,
@@ -4322,7 +4318,7 @@ describe('公共 Buff 运行时投影', () => {
       parameters: {
         condition: {
           kind: 'buffStackCompare',
-          target: 'enemy',
+          target: { kind: 'fixed', target: 'enemy' },
           tagQueryType: 'hasAny',
           buffTags: ['Skill/Character/Common/NoGuard'],
           operator: 'greaterOrEqual',
@@ -4345,8 +4341,7 @@ describe('公共 Buff 运行时投影', () => {
           action: {
             kind: 'buffStack' as const,
             sourceType: 'CheckBuffStackNumAdvanced',
-            targetSource: 'Target',
-            targetGroupKey: '',
+            target: { ...fixedTarget('Target'), targetGroupKey: '' },
             buffCheckType: 'Tag',
             buffIds: [],
             tagQueryType: 'hasAny' as const,
@@ -4375,7 +4370,7 @@ describe('公共 Buff 运行时投影', () => {
       parameters: {
         condition: {
           kind: 'buffTagIdCountCompare',
-          target: 'currentTarget',
+          target: { kind: 'inputTarget' },
           tagQueryType: 'hasAny',
           buffTags: ['Skill/Character/Common/NoGuard'],
           operator: 'greaterOrEqual',
@@ -4428,8 +4423,7 @@ describe('公共 Buff 运行时投影', () => {
     const buffStack = (checkType: 'Tag' | 'Id', buffIds: readonly string[], tagIds: number[]) => ({
       kind: 'buffStack' as const,
       sourceType: 'CheckBuffStackNumAdvanced',
-      targetSource: 'Target',
-      targetGroupKey: '',
+      target: { ...fixedTarget('Target'), targetGroupKey: '' },
       buffCheckType: checkType,
       buffIds,
       tagQueryType: 'hasAny' as const,
@@ -4609,7 +4603,7 @@ describe('公共 Buff 运行时投影', () => {
                       conditions: [
                         { kind: 'buffStackCompare' },
                         { kind: 'buffIdStackCompare' },
-                        { kind: 'poiseCompare', target: 'actionInputTarget' },
+                        { kind: 'poiseCompare', target: { kind: 'inputTarget' } },
                       ],
                     },
                   ],
@@ -4667,8 +4661,7 @@ describe('公共 Buff 运行时投影', () => {
           action: {
             kind: 'globalCooldown' as const,
             sourceType: 'CheckGlobalCDTimerAction',
-            targetSource: 'Owner',
-            targetGroupKey: '',
+            target: { ...fixedTarget('Owner'), targetGroupKey: '' },
             buffId: 'buff_equipsuit_physuit_01',
           },
         },
@@ -4750,12 +4743,10 @@ describe('公共 Buff 运行时投影', () => {
         kind: 'checkCondition',
         parameters: {
           condition: {
-            kind: 'not',
-            condition: {
-              kind: 'globalCooldownPresent',
-              target: 'buffOwner',
-              markerId: 'buff_equipsuit_physuit_01',
-            },
+            kind: 'globalCooldownPresent',
+            target: { kind: 'owner' },
+            returnTrueIfNotExists: true,
+            markerId: 'buff_equipsuit_physuit_01',
           },
         },
       },

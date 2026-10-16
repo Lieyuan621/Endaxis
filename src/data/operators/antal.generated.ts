@@ -653,8 +653,8 @@ const antalChr_0023_antal_attack4ActionGraphCallback1 = {
           type: 'boolean',
           expression: {
             kind: 'timedMarkerPresent',
+            target: { kind: 'source' },
             returnTrueIfNotExists: true,
-            target: 'caster',
             markerId: 'have_recovered',
           },
         },
@@ -1670,12 +1670,12 @@ const antalComboCondition1ActionGraph = {
       data_2: {
         type: 'boolean',
         expression: {
-          kind: 'contextTargetBuffIdStackCompare',
+          kind: 'buffIdStackCompare',
+          target: { kind: 'context', key: 'trigger' },
           compareZeroWhenTargetMissing: true,
-          contextKey: 'trigger',
-          buffIds: ['buff_chr_0023_antal_tageffect'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0023_antal_tageffect'],
         },
       },
     },
@@ -1734,12 +1734,12 @@ const antalComboCondition2ActionGraph = {
       data_2: {
         type: 'boolean',
         expression: {
-          kind: 'contextTargetBuffIdStackCompare',
+          kind: 'buffIdStackCompare',
+          target: { kind: 'context', key: 'trigger' },
           compareZeroWhenTargetMissing: true,
-          contextKey: 'trigger',
-          buffIds: ['buff_chr_0023_antal_tageffect'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0023_antal_tageffect'],
         },
       },
     },
@@ -2087,7 +2087,7 @@ const antalBuff7ActionGraph = {
       checkCondition_5: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
         next: 'checkCondition_4',
       },
@@ -2108,7 +2108,7 @@ const antalBuff7ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: 'buffOwner',
+          target: { kind: 'owner' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/Common/Affixes/Enhance'],
         },
@@ -2117,13 +2117,10 @@ const antalBuff7ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'globalCooldownPresent',
-          target: 'buffOwner',
+          target: { kind: 'owner' },
+          returnTrueIfNotExists: true,
           markerId: 'buff_chr_0023_antal_talent_1_heal_trigger',
         },
-      },
-      data_7: {
-        type: 'boolean',
-        expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_6' } },
       },
     },
   },
@@ -2216,10 +2213,11 @@ const antalBuff8ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'buffOwner',
-          buffIds: ['buff_common_dash'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'lessOrEqual',
           value: { kind: 'constant', value: 0 },
+          buffIds: ['buff_common_dash'],
         },
       },
     },

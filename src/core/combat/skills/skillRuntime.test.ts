@@ -2065,7 +2065,8 @@ describe('SkillRuntime', () => {
             type: 'boolean',
             expression: {
               kind: 'buffIdStackCompare',
-              target: 'caster',
+              target: { kind: 'fixed', target: 'caster' },
+              compareZeroWhenTargetMissing: false,
               buffIds: ['buff.skill.end'],
               operator: 'greaterOrEqual',
               value: { kind: 'constant', value: 1 },

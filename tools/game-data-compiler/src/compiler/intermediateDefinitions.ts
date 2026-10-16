@@ -56,8 +56,8 @@ export type CombatCondition =
     }
   | {
       kind: 'targetFacingAngle';
-      origin: Contract.ActionEntitySelection;
-      target: Contract.ActionEntitySelection;
+      origin: Contract.ActionTargetQuery;
+      target: Contract.ActionTargetQuery;
       angleType: 'forward' | 'backward';
       angle: ActionValueOperand;
     }

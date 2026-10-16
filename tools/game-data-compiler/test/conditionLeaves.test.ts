@@ -65,11 +65,10 @@ describe('公共条件叶子 IR', () => {
           actionTargetTarget: 'enemy',
           graph: createActionGraphBuilder(),
         },
-        new Map(),
       ),
     ).toEqual({
       kind: 'currentSkillTypeIn',
-      target: 'controlledOperator',
+      target: { kind: 'mainCharacter' },
       skillTypes: ['finisher', 'dodge'],
     });
   });
@@ -146,7 +145,7 @@ describe('公共条件叶子 IR', () => {
     }
   });
 
-  it('Target 对象类型检查读取实际输入，不按外围编译上下文折成常量', () => {
+  it('对象类型检查保留目标查询，固定敌人输入和动态输入不折成真假常量', () => {
     const source = parseKnownNativeActionSequenceSource(
       {
         actionData: [
@@ -172,9 +171,8 @@ describe('公共条件叶子 IR', () => {
             actionTargetTarget,
             graph: createActionGraphBuilder<CompiledBuffStepSource>(),
           },
-          new Map(),
         ),
-      ).toEqual({ kind: 'actionInputTargetObjectTypeMatch', objectTypes: ['character'] });
+      ).toEqual({ kind: 'targetObjectTypeMatch', target: actionTargetTarget === 'enemy' ? { kind: 'fixed', target: 'enemy' } : { kind: 'inputTarget' }, objectTypes: ['character'] });
     }
   });
   it('查找主目标：缺宿主保留旧组，空结果覆盖旧组，敌方宿主仍查询全局主目标', () => {

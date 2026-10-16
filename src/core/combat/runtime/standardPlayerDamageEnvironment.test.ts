@@ -2254,6 +2254,8 @@ describe('StandardPlayerDamageEnvironment', () => {
           sourceId: 'operator',
           resolveTarget: target =>
             target === 'enemy' ? environment.runtimeOptions.enemyBuffRuntime! : operatorBuffs,
+          queryTargets: (query, context) => new TargetContextOperationExecutor('operator', executor).queryTargets(query, context),
+          resolveEventTarget: id => id === 'enemy' ? environment.runtimeOptions.enemyBuffRuntime! : operatorBuffs,
           delegate: executor,
         }),
     );
@@ -2285,7 +2287,7 @@ describe('StandardPlayerDamageEnvironment', () => {
                   type: 'boolean',
                   expression: {
                     kind: 'entityTagMatch',
-                    target: 'enemy',
+                    target: { kind: 'fixed', target: 'enemy' },
                     tagQueryType: 'hasAny',
                     tags: ['Skill/Character/Common/Affixes/Slow'],
                   },
@@ -2502,6 +2504,8 @@ describe('StandardPlayerDamageEnvironment', () => {
       () =>
         new CombatVitalsConditionExecutor({
           resolveTarget: target => environment.runtimeOptions.resolveVitals!(target, 'operator'),
+          queryTargets: (query, context) => new TargetContextOperationExecutor('operator', executor).queryTargets(query, context),
+          resolveVitals: target => environment.runtimeOptions.resolveVitals!(target.kind === 'enemy' ? 'enemy' : 'caster', 'operator'),
           delegate: executor,
         }),
     );
@@ -2533,7 +2537,7 @@ describe('StandardPlayerDamageEnvironment', () => {
                   type: 'boolean',
                   expression: {
                     kind: 'healthCompare',
-                    target: 'enemy',
+                    target: { kind: 'fixed', target: 'enemy' },
                     valueType: 'ratio',
                     operator: 'less',
                     value: { kind: 'valueNode', nodeId: 'threshold' },
@@ -2735,6 +2739,8 @@ describe('StandardPlayerDamageEnvironment', () => {
 
     const conditions = new CombatVitalsConditionExecutor({
       resolveTarget: target => environment.runtimeOptions.resolveVitals!(target, 'operator'),
+      queryTargets: (query, context) => new TargetContextOperationExecutor('operator', executor).queryTargets(query, context),
+      resolveVitals: target => environment.runtimeOptions.resolveVitals!(target.kind === 'enemy' ? 'enemy' : 'caster', 'operator'),
       delegate: { execute: () => true, evaluate: () => true },
     });
     // 生命比例已低于 1，证明条件读取的是伤害写入后的同一账本。
@@ -2742,7 +2748,7 @@ describe('StandardPlayerDamageEnvironment', () => {
       conditions.evaluate(
         {
           kind: 'healthCompare',
-          target: 'enemy',
+          target: { kind: 'fixed', target: 'enemy' },
           valueType: 'ratio',
           operator: 'less',
           value: { kind: 'constant', value: 1 },
@@ -3857,14 +3863,14 @@ describe('StandardPlayerDamageEnvironment', () => {
           input_1: {
             type: 'boolean',
             expression: {
-              kind: 'actionInputTargetIdentityMatch',
-              other: 'controlledOperator',
-              operator: 'equal',
+              kind: 'targetsEqual',
+              first: { kind: 'inputTarget' },
+              second: { kind: 'fixed', target: 'caster' },
             },
           },
         },
       ),
-      operations: new EventContextConditionExecutor(
+      operations: new TargetContextOperationExecutor('operator',
         {
           execute: () => {
             throw new Error('unexpected combo condition operation');
@@ -3873,7 +3879,6 @@ describe('StandardPlayerDamageEnvironment', () => {
             throw new Error('unexpected delegated combo condition');
           },
         },
-        operatorId => operatorId === 'operator',
       ),
       isOwnerAlive: () => true,
       isOwnerSilenced: () => false,

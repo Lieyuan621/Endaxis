@@ -983,10 +983,11 @@ const avywennaChr_0012_avywen_normal_skillActionGraphCallback2 = {
           type: 'boolean',
           expression: {
             kind: 'buffIdStackCompare',
-            target: 'caster',
-            buffIds: ['buff_chr_0012_avywen_talent_0'],
+            target: { kind: 'source' },
+            compareZeroWhenTargetMissing: true,
             operator: 'greaterOrEqual',
             value: { kind: 'constant', value: 1 },
+            buffIds: ['buff_chr_0012_avywen_talent_0'],
           },
         },
         data_3: {
@@ -1240,11 +1241,12 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'buffStackCompare',
-                          target: 'enemy',
-                          tagQueryType: 'hasAny',
-                          buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerablePulse'],
+                          target: { kind: 'fixed', target: 'enemy' },
+                          compareZeroWhenTargetMissing: true,
                           operator: 'greaterOrEqual',
                           value: { kind: 'constant', value: 1 },
+                          tagQueryType: 'hasAny',
+                          buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerablePulse'],
                         },
                       },
                       data_5: {
@@ -1491,11 +1493,12 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'buffStackCompare',
-                          target: 'enemy',
-                          tagQueryType: 'hasAny',
-                          buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerablePulse'],
+                          target: { kind: 'fixed', target: 'enemy' },
+                          compareZeroWhenTargetMissing: true,
                           operator: 'greaterOrEqual',
                           value: { kind: 'constant', value: 1 },
+                          tagQueryType: 'hasAny',
+                          buffTags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerablePulse'],
                         },
                       },
                       data_5: {
@@ -1880,10 +1883,11 @@ export const avywennaChr_0012_avywen_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0012_avywen_talent_0'],
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0012_avywen_talent_0'],
         },
       },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
@@ -2159,10 +2163,11 @@ export const avywennaChr_0012_avywen_ultimate_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0012_avywen_talent_0'],
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0012_avywen_talent_0'],
         },
       },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
@@ -2284,13 +2289,17 @@ const avywennaComboCondition1ActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
-        expression: { kind: 'actionInputTargetObjectTypeMatch', objectTypes: ['enemy'] },
+        expression: {
+          kind: 'targetObjectTypeMatch',
+          target: { kind: 'inputTarget' },
+          objectTypes: ['enemy'],
+        },
       },
       data_2: {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: 'actionInputTarget',
+          target: { kind: 'inputTarget' },
           tagQueryType: 'hasAny',
           tags: [
             'Skill/Character/Common/SpellStatus/Conduct',
@@ -2365,10 +2374,11 @@ const avywennaBuff2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'buffOwner',
-          buffIds: ['buff_chr_0012_avywen_lance_pulse_check'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: false,
           operator: 'lessOrEqual',
           value: { kind: 'constant', value: 0 },
+          buffIds: ['buff_chr_0012_avywen_lance_pulse_check'],
         },
       },
     },
@@ -2719,10 +2729,11 @@ export const avywenna: OperatorDefinition = {
                 type: 'boolean',
                 expression: {
                   kind: 'buffIdStackCompare',
-                  target: 'currentAbilityEntity',
-                  buffIds: ['buff_chr_0012_avywen_lance_becalled'],
+                  target: { kind: 'owner' },
+                  compareZeroWhenTargetMissing: false,
                   operator: 'greaterOrEqual',
                   value: { kind: 'constant', value: 1 },
+                  buffIds: ['buff_chr_0012_avywen_lance_becalled'],
                 },
               },
               data_2: {
@@ -2813,10 +2824,11 @@ export const avywenna: OperatorDefinition = {
                 type: 'boolean',
                 expression: {
                   kind: 'buffIdStackCompare',
-                  target: 'currentAbilityEntity',
-                  buffIds: ['buff_chr_0012_avywen_lance_becalled'],
+                  target: { kind: 'owner' },
+                  compareZeroWhenTargetMissing: false,
                   operator: 'greaterOrEqual',
                   value: { kind: 'constant', value: 1 },
+                  buffIds: ['buff_chr_0012_avywen_lance_becalled'],
                 },
               },
               data_2: {

@@ -128,10 +128,11 @@ const commonBuff2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'controlledOperator',
-          buffIds: ['buff_cc_chr_combo_skill_cryst_inflict_stack'],
+          target: { kind: 'mainCharacter' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'valueNode', nodeId: 'data_2' },
+          buffIds: ['buff_cc_chr_combo_skill_cryst_inflict_stack'],
         },
       },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'times' } },
@@ -139,8 +140,8 @@ const commonBuff2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'timedMarkerPresent',
+          target: { kind: 'owner' },
           returnTrueIfNotExists: true,
-          target: 'buffOwner',
           markerId: 'buff_cc_chr_combo_skill_cryst_inflict',
         },
       },
@@ -1564,7 +1565,11 @@ const commonBuff19ActionGraph = {
       },
       data_2: {
         type: 'boolean',
-        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+        expression: {
+          kind: 'targetsEqual',
+          first: { kind: 'owner' },
+          second: { kind: 'mainCharacter' },
+        },
       },
     },
   },
@@ -1837,10 +1842,11 @@ const commonBuff23ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'controlledOperator',
-          buffIds: ['buff_cc_chr_normal_skill_cryst_inflict_stack'],
+          target: { kind: 'mainCharacter' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'valueNode', nodeId: 'data_2' },
+          buffIds: ['buff_cc_chr_normal_skill_cryst_inflict_stack'],
         },
       },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'times' } },
@@ -1848,8 +1854,8 @@ const commonBuff23ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'timedMarkerPresent',
+          target: { kind: 'owner' },
           returnTrueIfNotExists: true,
-          target: 'buffOwner',
           markerId: 'buff_cc_chr_normal_skill_cryst_inflict',
         },
       },
@@ -2222,7 +2228,11 @@ const commonBuff30ActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
-        expression: { kind: 'currentSkillTypeIn', target: 'buffOwner', skillTypes: ['ultimate'] },
+        expression: {
+          kind: 'currentSkillTypeIn',
+          target: { kind: 'owner' },
+          skillTypes: ['ultimate'],
+        },
       },
     },
   },
@@ -2828,6 +2838,7 @@ const commonBuff36ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'enemySuperArmorCompare',
+          target: { kind: 'owner' },
           operator: 'lessOrEqual',
           value: { kind: 'constant', value: 20 },
         },
@@ -2844,6 +2855,7 @@ const commonBuff36ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'enemySuperArmorCompare',
+          target: { kind: 'owner' },
           operator: 'less',
           value: { kind: 'constant', value: 30 },
         },
@@ -2874,6 +2886,7 @@ const commonBuff36ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'enemySuperArmorCompare',
+          target: { kind: 'owner' },
           operator: 'lessOrEqual',
           value: { kind: 'constant', value: 20 },
         },
@@ -2890,6 +2903,7 @@ const commonBuff36ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'enemySuperArmorCompare',
+          target: { kind: 'owner' },
           operator: 'less',
           value: { kind: 'constant', value: 30 },
         },
@@ -2920,10 +2934,11 @@ const commonBuff36ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'buffOwner',
-          buffIds: ['buff_cc_enemy_heal_under_control_stack'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'equal',
           value: { kind: 'constant', value: 0 },
+          buffIds: ['buff_cc_enemy_heal_under_control_stack'],
         },
       },
       data_14: {
@@ -2937,10 +2952,11 @@ const commonBuff36ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'buffOwner',
-          buffIds: ['buff_cc_enemy_heal_under_control_stack'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'equal',
           value: { kind: 'constant', value: 0 },
+          buffIds: ['buff_cc_enemy_heal_under_control_stack'],
         },
       },
       data_16: {
@@ -3011,10 +3027,11 @@ const commonBuff37ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'buffOwner',
-          buffIds: ['buff_cc_enemy_heal_under_control_timer'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'equal',
           value: { kind: 'constant', value: 0 },
+          buffIds: ['buff_cc_enemy_heal_under_control_timer'],
         },
       },
     },
@@ -3096,10 +3113,11 @@ const commonBuff39ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'buffOwner',
-          buffIds: ['buff_cc_enemy_heal_under_control_instance'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_cc_enemy_heal_under_control_instance'],
         },
       },
     },
@@ -4456,10 +4474,11 @@ const commonBuff55ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'buffOwner',
-          buffIds: ['buff_common_enemy_spell_cryst_attached'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: false,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 3 },
+          buffIds: ['buff_common_enemy_spell_cryst_attached'],
         },
       },
     },

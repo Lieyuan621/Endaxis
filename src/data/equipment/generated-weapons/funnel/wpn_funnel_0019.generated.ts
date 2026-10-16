@@ -173,18 +173,19 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'buffIdStackCompare',
-                target: 'caster',
-                buffIds: ['buff_wpn_funnel_0019_burstup_layer'],
+                target: { kind: 'owner' },
+                compareZeroWhenTargetMissing: true,
                 operator: 'greaterOrEqual',
                 value: { kind: 'constant', value: 1 },
+                buffIds: ['buff_wpn_funnel_0019_burstup_layer'],
               },
             },
             data_4: {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                target: { kind: 'owner' },
                 returnTrueIfNotExists: true,
-                target: 'caster',
                 markerId: 'sk_wpn_funnel_0019',
               },
             },

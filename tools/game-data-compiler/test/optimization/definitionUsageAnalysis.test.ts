@@ -524,11 +524,12 @@ it('keeps unresolved string graphs as conservative usage barriers without invent
     analyzeConditionUsage({
       kind: 'timedMarkerPresent',
       returnTrueIfNotExists: false,
-      target: 'caster',
+      target: { kind: 'owner' },
       markerId: stringNode,
     }),
     analyzeConditionUsage({
-      kind: 'abilityEntityTimedMarkerPresent',
+      kind: 'timedMarkerPresent',
+      target: { kind: 'owner' },
       returnTrueIfNotExists: false,
       markerId: stringNode,
     }),
@@ -543,14 +544,15 @@ it('keeps unresolved string graphs as conservative usage barriers without invent
   const dynamic = analyzeConditionUsage({
     kind: 'timedMarkerPresent',
     returnTrueIfNotExists: false,
-    target: 'caster',
+    target: { kind: 'owner' },
     markerId: { blackboardKey: '  exact  ' },
   });
   expect(dynamic.reads).toEqual(new Set(['  exact  ']));
   expect(dynamic.unknownAccess).toBe(false);
   expect(
     analyzeConditionUsage({
-      kind: 'abilityEntityTimedMarkerPresent',
+      kind: 'timedMarkerPresent',
+      target: { kind: 'owner' },
       returnTrueIfNotExists: false,
       markerId: 'inline',
     }).reads.size,

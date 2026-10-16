@@ -397,7 +397,7 @@ describe('standardPlayerDamageCompatibility', () => {
           type: 'boolean',
           expression: {
             kind: 'healthCompare',
-            target: 'buffSource',
+            target: { kind: 'source' },
             valueType: 'ratio',
             operator: 'less',
             value: { kind: 'constant', value: 1 },

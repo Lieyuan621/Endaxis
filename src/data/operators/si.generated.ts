@@ -2111,10 +2111,11 @@ const siComboCondition1ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0036_jsspsi_combo_skill_layercount'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0036_jsspsi_combo_skill_layercount'],
         },
       },
       data_8: {
@@ -2282,10 +2283,11 @@ const siComboCondition2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0036_jsspsi_combo_skill_layercount'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0036_jsspsi_combo_skill_layercount'],
         },
       },
       data_8: {
@@ -3080,11 +3082,12 @@ const siBuff9ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffStackCompare',
-          target: 'buffOwner',
-          tagQueryType: 'hasAny',
-          buffTags: ['Immune/Static'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'less',
           value: { kind: 'constant', value: 1 },
+          tagQueryType: 'hasAny',
+          buffTags: ['Immune/Static'],
         },
       },
     },
@@ -3930,31 +3933,33 @@ const siBuff23ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0036_jsspsi_talent1_2'],
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0036_jsspsi_talent1_2'],
         },
       },
       data_4: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0036_jsspsi_talent1_1'],
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0036_jsspsi_talent1_1'],
         },
       },
       data_5: {
         type: 'boolean',
         expression: {
-          kind: 'contextTargetBuffIdStackCompare',
+          kind: 'buffIdStackCompare',
+          target: { kind: 'context', key: 'benti' },
           compareZeroWhenTargetMissing: true,
-          contextKey: 'benti',
-          buffIds: ['buff_chr_0036_jsspsi_xianjing_inkhurteffect'],
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0036_jsspsi_xianjing_inkhurteffect'],
         },
       },
       data_6: {
@@ -4642,14 +4647,14 @@ const siBuff25ActionGraph = {
       checkCondition_49: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_24' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_23' } },
         },
         next: 'triggerCustomAbilityEvent_48',
       },
       checkCondition_50: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_25' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_24' } },
         },
         next: 'checkCondition_49',
       },
@@ -4747,8 +4752,8 @@ const siBuff25ActionGraph = {
             target: { kind: 'owner' },
             saveToContextKey: 'moying',
             blackboardAssignments: {
-              EntityBB_soul_hp: { kind: 'valueNode', nodeId: 'data_26' },
-              EntityBB_duration: { kind: 'valueNode', nodeId: 'data_27' },
+              EntityBB_soul_hp: { kind: 'valueNode', nodeId: 'data_25' },
+              EntityBB_duration: { kind: 'valueNode', nodeId: 'data_26' },
             },
           },
         },
@@ -4767,7 +4772,7 @@ const siBuff25ActionGraph = {
           parameters: {
             key: 'soulbufftime',
             operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_28' },
+            left: { kind: 'valueNode', nodeId: 'data_27' },
             right: { kind: 'constant', value: 1 },
           },
         },
@@ -4788,7 +4793,7 @@ const siBuff25ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_29' },
+          condition: { kind: 'conditionNode', nodeId: 'data_28' },
           whenTrue: { $sequence: 'modifyActionValue_62' },
           whenFalse: { $sequence: null },
         },
@@ -4798,7 +4803,7 @@ const siBuff25ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_30' },
+          condition: { kind: 'conditionNode', nodeId: 'data_29' },
           whenTrue: { $sequence: 'setCharacterPassiveUiValue_20' },
           whenFalse: { $sequence: 'ifElse_66' },
         },
@@ -4836,7 +4841,7 @@ const siBuff25ActionGraph = {
       checkCondition_71: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_31' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_30' } },
         },
         next: 'createSpatialPointTargets_70',
       },
@@ -4847,7 +4852,7 @@ const siBuff25ActionGraph = {
             key: 'EntityBB_ink_damage',
             operation: 'add',
             left: { kind: 'valueNode', nodeId: 'data_5' },
-            right: { kind: 'valueNode', nodeId: 'data_32' },
+            right: { kind: 'valueNode', nodeId: 'data_31' },
           },
         },
         next: 'checkCondition_71',
@@ -4859,7 +4864,7 @@ const siBuff25ActionGraph = {
             key: 'kill_damage',
             operation: 'multiply',
             left: { kind: 'valueNode', nodeId: 'data_17' },
-            right: { kind: 'valueNode', nodeId: 'data_32' },
+            right: { kind: 'valueNode', nodeId: 'data_31' },
           },
         },
         next: 'calculateActionValue_72',
@@ -4870,7 +4875,7 @@ const siBuff25ActionGraph = {
           parameters: {
             key: 'EntityBB_soulbufftime',
             operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_27' },
+            value: { kind: 'valueNode', nodeId: 'data_26' },
           },
         },
         next: 'calculateActionValue_73',
@@ -4931,7 +4936,7 @@ const siBuff25ActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_33' },
+          condition: { kind: 'conditionNode', nodeId: 'data_32' },
           whenTrue: { $sequence: 'storeEntityPropertyValue_79' },
           whenFalse: { $sequence: 'modifyActionValue_80' },
         },
@@ -5021,7 +5026,11 @@ const siBuff25ActionGraph = {
       data_17: { type: 'number', expression: { kind: 'blackboard', key: 'ink_damage_rate' } },
       data_18: {
         type: 'boolean',
-        expression: { kind: 'actionInputTargetObjectTypeMatch', objectTypes: ['character'] },
+        expression: {
+          kind: 'targetObjectTypeMatch',
+          target: { kind: 'inputTarget' },
+          objectTypes: ['character'],
+        },
       },
       data_19: { type: 'number', expression: { kind: 'blackboard', key: 'ink_hitcd' } },
       data_20: {
@@ -5040,27 +5049,24 @@ const siBuff25ActionGraph = {
       data_22: {
         type: 'boolean',
         expression: {
-          kind: 'contextTargetBuffIdStackCompare',
+          kind: 'buffIdStackCompare',
+          target: { kind: 'context', key: 'moying1' },
           compareZeroWhenTargetMissing: true,
-          contextKey: 'moying1',
-          buffIds: ['buff_chr_0036_jsspsi_xianjing_linkline_2'],
           operator: 'less',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0036_jsspsi_xianjing_linkline_2'],
         },
       },
       data_23: {
         type: 'boolean',
         expression: {
           kind: 'globalCooldownPresent',
-          target: 'buffOwner',
+          target: { kind: 'owner' },
+          returnTrueIfNotExists: true,
           markerId: 'buff_chr_0036_jsspsi_xianjing_inkhurteffect',
         },
       },
       data_24: {
-        type: 'boolean',
-        expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_23' } },
-      },
-      data_25: {
         type: 'boolean',
         expression: {
           kind: 'eventTransferredPartTagsMatch',
@@ -5069,10 +5075,10 @@ const siBuff25ActionGraph = {
           saveToContextKey: 'moying1',
         },
       },
-      data_26: { type: 'number', expression: { kind: 'blackboard', key: 'soul_hp' } },
-      data_27: { type: 'number', expression: { kind: 'blackboard', key: 'soulbufftime' } },
-      data_28: { type: 'number', expression: { kind: 'blackboard', key: 'EntityBB_soulbufftime' } },
-      data_29: {
+      data_25: { type: 'number', expression: { kind: 'blackboard', key: 'soul_hp' } },
+      data_26: { type: 'number', expression: { kind: 'blackboard', key: 'soulbufftime' } },
+      data_27: { type: 'number', expression: { kind: 'blackboard', key: 'EntityBB_soulbufftime' } },
+      data_28: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
@@ -5081,7 +5087,7 @@ const siBuff25ActionGraph = {
           right: { kind: 'constant', value: 999 },
         },
       },
-      data_30: {
+      data_29: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
@@ -5090,7 +5096,7 @@ const siBuff25ActionGraph = {
           right: { kind: 'constant', value: 1 },
         },
       },
-      data_31: {
+      data_30: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
@@ -5099,10 +5105,14 @@ const siBuff25ActionGraph = {
           right: { kind: 'constant', value: 0 },
         },
       },
-      data_32: { type: 'number', expression: { kind: 'blackboard', key: 'kill_damage' } },
-      data_33: {
+      data_31: { type: 'number', expression: { kind: 'blackboard', key: 'kill_damage' } },
+      data_32: {
         type: 'boolean',
-        expression: { kind: 'actionInputTargetObjectTypeMatch', objectTypes: ['character'] },
+        expression: {
+          kind: 'targetObjectTypeMatch',
+          target: { kind: 'inputTarget' },
+          objectTypes: ['character'],
+        },
       },
     },
   },
@@ -5178,7 +5188,7 @@ const siBuff26ActionGraph = {
       checkCondition_3: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: 'checkCondition_2',
       },
@@ -5196,13 +5206,10 @@ const siBuff26ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'globalCooldownPresent',
-          target: 'buffOwner',
+          target: { kind: 'owner' },
+          returnTrueIfNotExists: true,
           markerId: 'buff_chr_0036_jsspsi_xianjing_inkhurteffect_1',
         },
-      },
-      data_3: {
-        type: 'boolean',
-        expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_2' } },
       },
     },
   },
@@ -6191,20 +6198,22 @@ const siBuff27ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0036_jsspsi_talent1_2'],
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0036_jsspsi_talent1_2'],
         },
       },
       data_11: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0036_jsspsi_talent1_1'],
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0036_jsspsi_talent1_1'],
         },
       },
       data_12: {
@@ -6264,12 +6273,12 @@ const siBuff27ActionGraph = {
       data_19: {
         type: 'boolean',
         expression: {
-          kind: 'contextTargetBuffIdStackCompare',
+          kind: 'buffIdStackCompare',
+          target: { kind: 'context', key: 'zhuren' },
           compareZeroWhenTargetMissing: true,
-          contextKey: 'zhuren',
-          buffIds: ['buff_chr_0036_jsspsi_xianjing_inkboom'],
           operator: 'less',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0036_jsspsi_xianjing_inkboom'],
         },
       },
       data_20: {
@@ -7109,8 +7118,8 @@ export const si: OperatorDefinition = {
               data_2: {
                 type: 'boolean',
                 expression: {
-                  kind: 'contextTargetObjectTypeMatch',
-                  contextKey: 'soul_target',
+                  kind: 'targetObjectTypeMatch',
+                  target: { kind: 'context', key: 'soul_target' },
                   objectTypes: ['enemy'],
                 },
               },
@@ -7552,8 +7561,8 @@ export const si: OperatorDefinition = {
               data_4: {
                 type: 'boolean',
                 expression: {
-                  kind: 'contextTargetObjectTypeMatch',
-                  contextKey: 'soul_target',
+                  kind: 'targetObjectTypeMatch',
+                  target: { kind: 'context', key: 'soul_target' },
                   objectTypes: ['enemy'],
                 },
               },
@@ -8579,20 +8588,22 @@ export const si: OperatorDefinition = {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: 'caster',
-                    buffIds: ['buff_chr_0036_jsspsi_talent2_2'],
+                    target: { kind: 'source' },
+                    compareZeroWhenTargetMissing: true,
                     operator: 'greaterOrEqual',
                     value: { kind: 'constant', value: 1 },
+                    buffIds: ['buff_chr_0036_jsspsi_talent2_2'],
                   },
                 },
                 data_7: {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: 'caster',
-                    buffIds: ['buff_chr_0036_jsspsi_talent2_1'],
+                    target: { kind: 'source' },
+                    compareZeroWhenTargetMissing: true,
                     operator: 'greaterOrEqual',
                     value: { kind: 'constant', value: 1 },
+                    buffIds: ['buff_chr_0036_jsspsi_talent2_1'],
                   },
                 },
                 data_8: {
@@ -9005,20 +9016,22 @@ export const si: OperatorDefinition = {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: 'caster',
-                    buffIds: ['buff_chr_0036_jsspsi_talent2_2'],
+                    target: { kind: 'source' },
+                    compareZeroWhenTargetMissing: true,
                     operator: 'greaterOrEqual',
                     value: { kind: 'constant', value: 1 },
+                    buffIds: ['buff_chr_0036_jsspsi_talent2_2'],
                   },
                 },
                 data_7: {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: 'caster',
-                    buffIds: ['buff_chr_0036_jsspsi_talent2_1'],
+                    target: { kind: 'source' },
+                    compareZeroWhenTargetMissing: true,
                     operator: 'greaterOrEqual',
                     value: { kind: 'constant', value: 1 },
+                    buffIds: ['buff_chr_0036_jsspsi_talent2_1'],
                   },
                 },
                 data_8: {

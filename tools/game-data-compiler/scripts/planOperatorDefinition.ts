@@ -1008,7 +1008,7 @@ export function planRoutedSkills(
       route?.asSkillCast !== false ||
       routeSteps.length !== 1 ||
       condition?.kind !== 'buffIdStackCompare' ||
-      condition.target !== 'caster' ||
+      condition.target.kind !== 'owner' ||
       condition.operator !== 'greaterOrEqual' ||
       condition.buffIds.length !== 1 ||
       condition.buffIds[0] !== activationBuffId ||

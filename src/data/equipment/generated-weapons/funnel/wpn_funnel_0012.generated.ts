@@ -78,21 +78,21 @@ const definition = {
             checkCondition_3: {
               action: {
                 kind: 'checkCondition',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
               },
               next: 'heal_2',
             },
             checkCondition_4: {
               action: {
                 kind: 'checkCondition',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
               },
               next: 'checkCondition_3',
             },
             checkCondition_5: {
               action: {
                 kind: 'checkCondition',
-                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+                parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
               },
               next: 'checkCondition_4',
             },
@@ -105,25 +105,22 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'globalCooldownPresent',
-                target: 'caster',
+                target: { kind: 'source' },
+                returnTrueIfNotExists: true,
                 markerId: 'buff_wpn_funnel_0012',
               },
             },
             data_5: {
               type: 'boolean',
-              expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-            },
-            data_6: {
-              type: 'boolean',
               expression: {
                 kind: 'healthCompare',
-                target: 'controlledOperator',
+                target: { kind: 'mainCharacter' },
                 valueType: 'ratio',
                 operator: 'less',
                 value: { kind: 'constant', value: 0.99 },
               },
             },
-            data_7: {
+            data_6: {
               type: 'boolean',
               expression: {
                 kind: 'eventHealTagsMatch',

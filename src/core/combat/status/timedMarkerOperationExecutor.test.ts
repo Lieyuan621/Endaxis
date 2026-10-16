@@ -32,7 +32,6 @@ describe('TimedMarkerOperationExecutor', () => {
     });
     const markers = new TimedMarkerContainer('caster', dilation.getEntityClock('caster'));
     const executor = new TimedMarkerOperationExecutor({
-      resolveTarget: () => markers,
       resolveEventTarget: () => markers,
       queryTargets,
       globalScaledClock: dilation,
@@ -82,9 +81,6 @@ describe('TimedMarkerOperationExecutor', () => {
       const owner = new TimedMarkerContainer('receiver', clock);
       const source = new TimedMarkerContainer('sender', clock);
       const executor = new TimedMarkerOperationExecutor({
-        resolveTarget: () => {
-          throw new Error('must not fall back to caster');
-        },
         resolveEventTarget: id => (id === 'receiver' ? owner : source),
         queryTargets,
         globalScaledClock: clock,
@@ -115,7 +111,7 @@ describe('TimedMarkerOperationExecutor', () => {
           {
             kind: 'timedMarkerPresent',
             returnTrueIfNotExists: false,
-            target,
+            target: { kind: target === 'buffOwner' ? 'owner' : 'source' },
             markerId: 'heal-icd',
           },
           context,
@@ -126,10 +122,10 @@ describe('TimedMarkerOperationExecutor', () => {
         executor.evaluate({
           kind: 'timedMarkerPresent',
           returnTrueIfNotExists: false,
-          target,
+          target: { kind: target === 'buffOwner' ? 'owner' : 'source' },
           markerId: 'heal-icd',
         }),
-      ).toThrow('Buff identity');
+      ).toThrow('action context');
     },
   );
   it('重复非空执行替换动作的清理句柄，不误删前一次创建的标记', () => {
@@ -137,7 +133,6 @@ describe('TimedMarkerOperationExecutor', () => {
     const caster = new TimedMarkerContainer('operator', clock);
     const enemy = new TimedMarkerContainer('enemy', clock);
     const executor = new TimedMarkerOperationExecutor({
-      resolveTarget: target => (target === 'caster' ? caster : enemy),
       resolveEventTarget: id => (id === 'enemy' ? enemy : caster),
       queryTargets,
       globalScaledClock: clock,
@@ -163,21 +158,27 @@ describe('TimedMarkerOperationExecutor', () => {
     context.blackboard.assign({ marker: 'second' });
     expect(executor.execute(step, context)).toBe(true);
     expect(
-      executor.evaluate({
-        kind: 'timedMarkerPresent',
-        returnTrueIfNotExists: false,
-        target: 'caster',
-        markerId: 'voice',
-      }),
+      executor.evaluate(
+        {
+          kind: 'timedMarkerPresent',
+          returnTrueIfNotExists: false,
+          target: { kind: 'fixed', target: 'caster' },
+          markerId: 'voice',
+        },
+        context,
+      ),
     ).toBe(true);
     executor.end(step, context);
     expect(
-      executor.evaluate({
-        kind: 'timedMarkerPresent',
-        returnTrueIfNotExists: false,
-        target: 'caster',
-        markerId: 'voice',
-      }),
+      executor.evaluate(
+        {
+          kind: 'timedMarkerPresent',
+          returnTrueIfNotExists: false,
+          target: { kind: 'fixed', target: 'caster' },
+          markerId: 'voice',
+        },
+        context,
+      ),
     ).toBe(true);
     expect(caster.has('second')).toBe(false);
   });
@@ -191,7 +192,6 @@ describe('TimedMarkerOperationExecutor', () => {
     });
     const second = new TimedMarkerContainer('second', clock);
     const executor = new TimedMarkerOperationExecutor({
-      resolveTarget: () => first,
       resolveEventTarget: id => (id === 'first' ? first : second),
       queryTargets,
       globalScaledClock: clock,
@@ -231,7 +231,6 @@ describe('TimedMarkerOperationExecutor', () => {
     const originalClock = new CombatClock();
     const originalContainer = new TimedMarkerContainer('operator', originalClock);
     const originalExecutor = new TimedMarkerOperationExecutor({
-      resolveTarget: () => originalContainer,
       resolveEventTarget: () => originalContainer,
       queryTargets,
       globalScaledClock: originalClock,
@@ -266,7 +265,6 @@ describe('TimedMarkerOperationExecutor', () => {
     );
     const restoredExecutor = new TimedMarkerOperationExecutor(
       {
-        resolveTarget: () => restoredContainer,
         resolveEventTarget: () => restoredContainer,
         queryTargets,
         globalScaledClock: restoredClock,
@@ -285,7 +283,6 @@ describe('TimedMarkerOperationExecutor', () => {
     const clock = new CombatClock();
     const receiver = new TimedMarkerContainer('operator:receiver', clock);
     const executor = new TimedMarkerOperationExecutor({
-      resolveTarget: () => new TimedMarkerContainer('unused', clock),
       queryTargets,
       globalScaledClock: clock,
       resolveEventTarget: targetId => {
@@ -326,7 +323,7 @@ describe('TimedMarkerOperationExecutor', () => {
         {
           kind: 'timedMarkerPresent',
           returnTrueIfNotExists: false,
-          target: 'eventTarget',
+          target: { kind: 'inputTarget' },
           markerId: 'heal-icd',
         },
         context,
@@ -343,7 +340,6 @@ describe('TimedMarkerOperationExecutor', () => {
       source: { kind: 'operator', operatorId: 'operator' },
     });
     const executor = new TimedMarkerOperationExecutor({
-      resolveTarget: () => new TimedMarkerContainer('unused', new CombatClock()),
       resolveEventTarget: id => entities.timedMarkers(runtimeTargetFromEntityId(id)),
       queryTargets,
       globalScaledClock: new CombatClock(),
@@ -369,14 +365,24 @@ describe('TimedMarkerOperationExecutor', () => {
     for (let frame = 0; frame < 30; frame += 1) entities.advanceFrame();
     expect(
       executor.evaluate(
-        { kind: 'abilityEntityTimedMarkerPresent', returnTrueIfNotExists: false, markerId: 'end' },
+        {
+          kind: 'timedMarkerPresent',
+          target: { kind: 'inputTarget' },
+          returnTrueIfNotExists: false,
+          markerId: 'end',
+        },
         context,
       ),
     ).toBe(true);
     for (let frame = 0; frame < 31; frame += 1) entities.advanceFrame();
     expect(
       executor.evaluate(
-        { kind: 'abilityEntityTimedMarkerPresent', returnTrueIfNotExists: false, markerId: 'end' },
+        {
+          kind: 'timedMarkerPresent',
+          target: { kind: 'inputTarget' },
+          returnTrueIfNotExists: false,
+          markerId: 'end',
+        },
         context,
       ),
     ).toBe(false);
@@ -392,7 +398,6 @@ describe('TimedMarkerOperationExecutor', () => {
       source: { kind: 'operator', operatorId: 'operator' },
     });
     const executor = new TimedMarkerOperationExecutor({
-      resolveTarget: () => new TimedMarkerContainer('unused', globalClock),
       resolveEventTarget: id => entities.timedMarkers(runtimeTargetFromEntityId(id)),
       queryTargets,
       globalScaledClock: globalClock,
@@ -439,10 +444,10 @@ describe('TimedMarkerOperationExecutor', () => {
     expect(
       executor.evaluate(
         {
-          kind: 'abilityEntityTimedMarkerPresent',
+          kind: 'timedMarkerPresent',
           returnTrueIfNotExists: false,
           markerId: 'self',
-          contextKey: 'water_group',
+          target: { kind: 'context', key: 'water_group' },
         },
         context,
       ),
@@ -450,10 +455,10 @@ describe('TimedMarkerOperationExecutor', () => {
     expect(
       executor.evaluate(
         {
-          kind: 'abilityEntityTimedMarkerPresent',
+          kind: 'timedMarkerPresent',
           returnTrueIfNotExists: true,
           markerId: 'self',
-          contextKey: 'water_group',
+          target: { kind: 'context', key: 'water_group' },
         },
         context,
       ),
@@ -462,10 +467,10 @@ describe('TimedMarkerOperationExecutor', () => {
     expect(
       executor.evaluate(
         {
-          kind: 'abilityEntityTimedMarkerPresent',
+          kind: 'timedMarkerPresent',
           returnTrueIfNotExists: true,
           markerId: stringInput('missing'),
-          contextKey: 'water_group',
+          target: { kind: 'context', key: 'water_group' },
         },
         context,
       ),
@@ -479,10 +484,10 @@ describe('TimedMarkerOperationExecutor', () => {
     expect(
       executor.evaluate(
         {
-          kind: 'abilityEntityTimedMarkerPresent',
+          kind: 'timedMarkerPresent',
           returnTrueIfNotExists: false,
           markerId: 'global',
-          contextKey: 'water_group',
+          target: { kind: 'context', key: 'water_group' },
         },
         context,
       ),
@@ -490,10 +495,10 @@ describe('TimedMarkerOperationExecutor', () => {
     expect(
       executor.evaluate(
         {
-          kind: 'abilityEntityTimedMarkerPresent',
+          kind: 'timedMarkerPresent',
           returnTrueIfNotExists: false,
           markerId: 'self',
-          contextKey: 'water_group',
+          target: { kind: 'context', key: 'water_group' },
         },
         context,
       ),

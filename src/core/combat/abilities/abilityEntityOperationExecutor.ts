@@ -506,10 +506,7 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
     if (condition.kind === 'abilityEntityRemainingDurationCompare') {
       if (context === undefined)
         throw new Error('AbilityEntity duration comparison requires a context');
-      const target =
-        condition.target === undefined
-          ? context.currentTarget
-          : this.#delegate.queryTargets(condition.target, context)[0];
+      const target = this.#delegate.queryTargets(condition.target, context)[0];
       if (target === undefined || !this.#entities.isActive(target)) return false;
       const remaining = this.#entities.snapshot(target).remainingDurationSeconds;
       const seconds = Math.fround(remaining ?? -1);

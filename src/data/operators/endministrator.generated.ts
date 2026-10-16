@@ -1407,10 +1407,11 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'enemy',
-          buffIds: ['buff_common_originum_frozen'],
+          target: { kind: 'fixed', target: 'enemy' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_common_originum_frozen'],
         },
       },
       data_7: {
@@ -1430,20 +1431,22 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'enemy',
-          buffIds: ['buff_common_originum_frozen'],
+          target: { kind: 'fixed', target: 'enemy' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_common_originum_frozen'],
         },
       },
       data_10: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0003_endminf_potential1'],
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0003_endminf_potential1'],
         },
       },
       data_11: {
@@ -1458,20 +1461,22 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0003_endminf_potential5_trigger'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'lessOrEqual',
           value: { kind: 'constant', value: 0 },
+          buffIds: ['buff_chr_0003_endminf_potential5_trigger'],
         },
       },
       data_14: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0003_endminf_potential5'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0003_endminf_potential5'],
         },
       },
       data_15: {
@@ -1684,10 +1689,11 @@ export const endministratorChr_0003_endminf_ultimate_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'enemy',
-          buffIds: ['buff_common_originum_frozen'],
+          target: { kind: 'fixed', target: 'enemy' },
+          compareZeroWhenTargetMissing: false,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_common_originum_frozen'],
         },
       },
       data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
@@ -1696,20 +1702,22 @@ export const endministratorChr_0003_endminf_ultimate_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0003_endminf_potential5_trigger'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'lessOrEqual',
           value: { kind: 'constant', value: 0 },
+          buffIds: ['buff_chr_0003_endminf_potential5_trigger'],
         },
       },
       data_6: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0003_endminf_potential5'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0003_endminf_potential5'],
         },
       },
       data_7: {
@@ -2071,16 +2079,18 @@ const endministratorComboCondition1ActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
-        expression: { kind: 'actionInputTargetObjectTypeMatch', objectTypes: ['enemy'] },
+        expression: {
+          kind: 'targetObjectTypeMatch',
+          target: { kind: 'inputTarget' },
+          objectTypes: ['enemy'],
+        },
       },
       data_2: {
         type: 'boolean',
         expression: {
-          kind: 'contextTargetIdentityMatch',
-          selection: 'all',
-          contextKey: 'trigger',
-          other: 'actionSource',
-          operator: 'equal',
+          kind: 'targetsEqual',
+          first: { kind: 'context', key: 'trigger' },
+          second: { kind: 'source' },
         },
       },
       data_3: {
@@ -2259,10 +2269,11 @@ const endministratorBuff6ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'actionInputTarget',
-          buffIds: ['buff_common_originum_frozen'],
+          target: { kind: 'inputTarget' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_common_originum_frozen'],
         },
       },
     },

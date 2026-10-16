@@ -173,8 +173,8 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                target: { kind: 'owner' },
                 returnTrueIfNotExists: true,
-                target: 'caster',
                 markerId: 'wpn_claym_0013_1',
               },
             },
@@ -190,8 +190,8 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                target: { kind: 'owner' },
                 returnTrueIfNotExists: true,
-                target: 'caster',
                 markerId: 'wpn_claym_0013_2',
               },
             },
@@ -199,11 +199,12 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'buffStackCompare',
-                target: 'actionInputTarget',
-                tagQueryType: 'hasAny',
-                buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
+                target: { kind: 'inputTarget' },
+                compareZeroWhenTargetMissing: true,
                 operator: 'greaterOrEqual',
                 value: { kind: 'constant', value: 1 },
+                tagQueryType: 'hasAny',
+                buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
               },
             },
             data_6: {

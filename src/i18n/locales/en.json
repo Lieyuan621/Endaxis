@@ -1696,6 +1696,8 @@
         "name": "Parent Targets",
         "help": "Look for the child targets in this group."
       },
+      "first": { "name": "First Targets", "help": "First query result used in the equality comparison." },
+      "second": { "name": "Second Targets", "help": "Second query result used in the equality comparison." },
       "child": {
         "name": "Object to Find",
         "help": "Object to find in the group."
@@ -2307,33 +2309,13 @@
         "name": "Check Entity Count",
         "help": "Count entities selected by the query. Optionally exclude dead entities and store the count when the comparison succeeds."
       },
-      "contextTargetObjectTypeMatch": {
-        "name": "Target Group Type Matches?",
-        "help": "Pass if any object in the group has a listed type."
+      "targetObjectTypeMatch": {
+        "name": "Target Object Type Matches?",
+        "help": "Pass when any queried target matches the specified object type."
       },
-      "actionInputTargetObjectTypeMatch": {
-        "name": "Input Target Type Matches?",
-        "help": "Check the type of the target received by this action."
-      },
-      "actionInputTargetIdentityMatch": {
-        "name": "Input Target Matches?",
-        "help": "Compare the input target’s identity with the selected object."
-      },
-      "contextTargetIdentityMatch": {
-        "name": "Target Group Matches?",
-        "help": "Compare the first target or all targets. A missing first target does not match; all-target comparison requires both groups to contain each other."
-      },
-      "contextTargetEntityTagMatch": {
-        "name": "All Target Tags Match?",
-        "help": "Check tags on every entity in the group. A group without valid entities fails."
-      },
-      "contextTargetBuffStackCompare": {
-        "name": "Compare First Target Buff Stacks",
-        "help": "Count tagged Buff stacks on the first target. An empty group fails."
-      },
-      "contextTargetBuffIdStackCompare": {
-        "name": "Compare First Target Named Buff",
-        "help": "Count selected Buff stacks on the first target. An empty group fails."
+      "targetsEqual": {
+        "name": "Target Sets Match?",
+        "help": "Check that both target sets contain each other, ignoring order and duplicates. Two empty sets match."
       },
       "abilityEntityRemainingDurationCompare": {
         "name": "Compare Entity Time Remaining",
@@ -2363,17 +2345,13 @@
         "name": "Global Cooldown Active?",
         "help": "Check whether the named global cooldown is still active."
       },
-      "casterComboPending": {
+      "comboSkillPending": {
         "name": "Combo Pending?",
         "help": "Check for a pending combo. Other cast requirements may still fail."
       },
       "timedMarkerPresent": {
         "name": "Timed Marker Present?",
         "help": "Check for an active named marker on the target."
-      },
-      "abilityEntityTimedMarkerPresent": {
-        "name": "Entity Marker Present?",
-        "help": "Check the current entity or selected entity group for an active marker."
       },
       "eventDamageTagsMatch": {
         "name": "Event Damage Categories Match?",
@@ -2447,10 +2425,6 @@
         "name": "Event Buff Tags Match?",
         "help": "Check tags on the newly applied event Buff."
       },
-      "eventTargetBuffCountCompare": {
-        "name": "Compare Event Target Buff Count",
-        "help": "Count matching Buff instances on the event target, not stacks."
-      },
       "eventHealTagsMatch": {
         "name": "Event Healing Tags Match?",
         "help": "Check tags carried by the healing event."
@@ -2466,18 +2440,6 @@
       "eventOverheal": {
         "name": "Overhealing?",
         "help": "Check whether healing exceeds missing health. Optionally store requested, actual and excess healing."
-      },
-      "eventSourceMatchesBuffSource": {
-        "name": "Event Source Matches Buff Source?",
-        "help": "Compare the event source with the current Buff’s source."
-      },
-      "eventSourceMatchesBuffSourceEntitySource": {
-        "name": "Event Source Is Summoner?",
-        "help": "If the Buff came from an entity, compare the event source with that entity’s source."
-      },
-      "buffSourceMatchesOwner": {
-        "name": "Buff Source Is Owner?",
-        "help": "Check whether this Buff’s source and owner are the same object."
       },
       "ownerSpawnedAbilityEntityPresent": {
         "name": "Spawned Entity Present?",
@@ -4000,18 +3962,13 @@
         "abilityEntityRemainingDurationCompare": "Ability entity remaining duration",
         "buffStackCompare": "Buff tag stack comparison",
         "currentBuffStackCompare": "Current Buff enhancement count comparison",
-        "contextTargetObjectTypeMatch": "Context target object type match",
-        "actionInputTargetObjectTypeMatch": "Action input target object type match",
-        "actionInputTargetIdentityMatch": "Action input target identity match",
-        "contextTargetIdentityMatch": "Context target identity match",
-        "contextTargetEntityTagMatch": "Context target entity-tag match",
-        "contextTargetBuffStackCompare": "First context target Buff stack comparison",
-        "eventTargetBuffCountCompare": "Event target Buff instance count",
+        "targetObjectTypeMatch": "Target object type match",
+        "targetsEqual": "Target sets match",
         "entityTagMatch": "Entity tag match",
         "buffIdStackCompare": "Buff identity stack comparison",
         "timedMarkerPresent": "Timed marker present",
         "globalCooldownPresent": "Global cooldown active",
-        "casterComboPending": "Caster has a pending combo candidate (not a castability check)",
+        "comboSkillPending": "Target has a pending combo candidate (not a castability check)",
         "eventDamageTagsMatch": "Event damage tags match",
         "eventDamageFeaturesMatch": "Event damage features match",
         "not": "Not",

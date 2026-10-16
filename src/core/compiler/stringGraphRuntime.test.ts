@@ -227,17 +227,14 @@ describe('字符串数据图实际消费与切面恢复', () => {
       whenTrue: { $sequence: null },
       whenFalse: { $sequence: null },
     });
-    for (const kind of ['timedMarkerPresent', 'abilityEntityTimedMarkerPresent'] as const) {
+    for (const target of [{ kind: 'owner' }, { kind: 'inputTarget' }] as const) {
       const configured: ActionGraphDefinition = {
         ...source,
         dataNodes: {
           ...source.dataNodes,
           condition: {
             type: 'boolean',
-            expression:
-              kind === 'timedMarkerPresent'
-                ? { kind, markerId: reference, target: 'caster', returnTrueIfNotExists: false }
-                : { kind, markerId: reference, returnTrueIfNotExists: false },
+            expression: { kind: 'timedMarkerPresent', markerId: reference, target, returnTrueIfNotExists: false },
           },
         },
       };
@@ -326,7 +323,6 @@ describe('字符串数据图实际消费与切面恢复', () => {
     const clock = new CombatClock();
     const markers = new TimedMarkerContainer('caster', clock);
     const executor = new TimedMarkerOperationExecutor({
-      resolveTarget: () => markers,
       resolveEventTarget: () => markers,
       queryTargets: () => [{ kind: 'operator', operatorId: 'caster' }],
       globalScaledClock: clock,
@@ -351,7 +347,6 @@ describe('字符串数据图实际消费与切面恢复', () => {
     const restoredMarkers = new TimedMarkerContainer('caster', restoredClock, {}, saved.markers);
     const restoredExecutor = new TimedMarkerOperationExecutor(
       {
-        resolveTarget: () => restoredMarkers,
         resolveEventTarget: () => restoredMarkers,
         queryTargets: () => [{ kind: 'operator', operatorId: 'caster' }],
         globalScaledClock: restoredClock,

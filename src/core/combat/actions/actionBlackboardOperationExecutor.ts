@@ -1,7 +1,6 @@
 import { stringInputExpression, valueInputBlackboardKey } from '../../compiler/compiledGraphData';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
-import { abilityEventTargetId } from '../events/combatAbilityEvent';
 import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
 import { spGainAbilityEvent } from '../events/combatAbilityEvent';
 import { healAbilityEvent } from '../events/combatAbilityEvent';
@@ -47,7 +46,7 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
     readonly resolveOwnerCurrentSkillTimelineFrame?: (ownerId: string) => number | undefined,
     /** 原生 Deck 快照来自构筑完成时的静态四维，不随战斗内 Modifier 改变。 */
     readonly deckAttributes?: {
-      readonly sourceId: string;
+      readonly queryTargets: NonNullable<CombatOperationExecutor['queryTargets']>;
       readonly resolve: (
         ownerId: string,
       ) => Readonly<Record<OperatorAttribute, number>> | undefined;
@@ -61,7 +60,7 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
     },
     /** CharacterTable.profession 的静态投影；仅职业条件实际执行时读取。 */
     readonly operatorRoles?: {
-      readonly sourceId: string;
+      readonly queryTargets: NonNullable<CombatOperationExecutor['queryTargets']>;
       readonly resolve: (entityId: string) => OperatorRole | undefined;
     },
     readonly entityProperties?: {
@@ -540,23 +539,11 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       if (this.operatorRoles === undefined) {
         throw new Error('operatorRoleIn requires an operator registry');
       }
-      const entityId =
-        condition.target === 'caster'
-          ? this.operatorRoles.sourceId
-          : condition.target === 'buffOwner'
-            ? context?.buffOwnerId
-            : context?.event !== undefined
-              ? abilityEventTargetId(context.event)
-              : undefined;
-      if (entityId === undefined) return false;
-      const role = this.operatorRoles.resolve(entityId);
+      if (!context) throw new Error('operatorRoleIn requires an action context');
+      const target = this.operatorRoles.queryTargets(condition.target, context)[0];
+      if (target?.kind !== 'operator') return false;
+      const role = this.operatorRoles.resolve(target.operatorId);
       return role !== undefined && condition.roles.includes(role);
-    }
-    if (condition.kind === 'buffSourceMatchesOwner') {
-      if (context?.buffSourceId === undefined || context.buffOwnerId === undefined) {
-        throw new Error('buffSourceMatchesOwner requires Buff source and owner identities');
-      }
-      return context.buffSourceId === context.buffOwnerId;
     }
     if (condition.kind === 'not') return !this.evaluate(condition.condition, context);
     if (condition.kind === 'all') {
@@ -579,13 +566,16 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       if (this.deckAttributes === undefined) {
         throw new Error('deckAttributeCompare requires an operator registry');
       }
-      const ownerId =
-        context?.actionOwnerId ?? context?.buffOwnerId ?? this.deckAttributes.sourceId;
-      const attributes = this.deckAttributes.resolve(ownerId);
+      if (!context) throw new Error('deckAttributeCompare requires an action context');
+      const target = this.deckAttributes.queryTargets(condition.target, context)[0];
+      if (target?.kind !== 'operator') return false;
+      const attributes = this.deckAttributes.resolve(target.operatorId);
       if (attributes === undefined) return false;
       return compareCombatNumbers(
-        attributes[condition.left],
-        attributes[condition.right],
+        typeof condition.left === 'string' ? attributes[condition.left]
+          : Math.fround(resolveActionValueOperand(condition.left, context.blackboard)),
+        typeof condition.right === 'string' ? attributes[condition.right]
+          : Math.fround(resolveActionValueOperand(condition.right, context.blackboard)),
         condition.operator,
         'double',
       );

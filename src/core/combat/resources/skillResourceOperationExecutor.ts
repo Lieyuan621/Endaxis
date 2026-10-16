@@ -118,9 +118,8 @@ export class SkillResourceOperationExecutor implements CombatOperationExecutor {
         (source.kind !== 'operator' ||
           !this.dependencies.delegate.evaluate(
             {
-              kind: 'actionInputTargetIdentityMatch',
-              other: 'controlledOperator',
-              operator: 'equal',
+              kind: 'checkMainCharacter',
+              target: { kind: 'inputTarget' },
             },
             { ...context, actionInputTarget: source },
           ))

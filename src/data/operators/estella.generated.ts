@@ -1042,10 +1042,11 @@ export const estellaChr_0021_whiten_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: 'caster',
-          buffIds: ['buff_chr_0021_whiten_talent_0_active'],
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0021_whiten_talent_0_active'],
         },
       },
     },
@@ -1199,7 +1200,7 @@ export const estellaChr_0021_whiten_ultimate_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: 'enemy',
+          target: { kind: 'fixed', target: 'enemy' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerablePhysic'],
         },
@@ -1492,7 +1493,7 @@ export const estellaChr_0021_whiten_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: 'enemy',
+          target: { kind: 'fixed', target: 'enemy' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/Common/SpellStatus/Frozen'],
         },
@@ -1600,8 +1601,8 @@ const estellaComboCondition1ActionGraph = {
       data_1: {
         type: 'boolean',
         expression: {
-          kind: 'contextTargetObjectTypeMatch',
-          contextKey: 'trigger',
+          kind: 'targetObjectTypeMatch',
+          target: { kind: 'context', key: 'trigger' },
           objectTypes: ['enemy'],
         },
       },
@@ -1772,8 +1773,8 @@ const estellaBuff3ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'timedMarkerPresent',
+          target: { kind: 'source' },
           returnTrueIfNotExists: true,
-          target: 'caster',
           markerId: 'buff_chr_0021_whiten_potential_5_cd',
         },
       },

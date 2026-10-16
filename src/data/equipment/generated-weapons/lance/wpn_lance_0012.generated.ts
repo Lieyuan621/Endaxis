@@ -176,8 +176,8 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                target: { kind: 'source' },
                 returnTrueIfNotExists: true,
-                target: 'caster',
                 markerId: 'wpn_lance_0012_2',
               },
             },
@@ -197,8 +197,8 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'timedMarkerPresent',
+                target: { kind: 'source' },
                 returnTrueIfNotExists: true,
-                target: 'caster',
                 markerId: 'wpn_lance_0012',
               },
             },
@@ -333,10 +333,11 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'buffIdStackCompare',
-                target: 'actionInputTarget',
-                buffIds: ['buff_physical_no_guard'],
+                target: { kind: 'inputTarget' },
+                compareZeroWhenTargetMissing: true,
                 operator: 'greaterOrEqual',
                 value: { kind: 'constant', value: 1 },
+                buffIds: ['buff_physical_no_guard'],
               },
             },
           },

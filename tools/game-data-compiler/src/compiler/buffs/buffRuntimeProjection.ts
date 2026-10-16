@@ -1382,8 +1382,7 @@ function createBuffSequenceProjection(
           key => [key, 'spatialPoint'] as const,
         ),
       ]),
-    compileCondition: (node, targetGroups) =>
-      compileEventCondition(node, context, runtimeTargetGroups(targetGroups)),
+    compileCondition: node => compileEventCondition(node, context),
     createConditionCheckStep: condition => ({ kind: 'checkCondition', parameters: { condition } }),
     createInvertNextResultStep: () => ({ kind: 'invertNextResult', parameters: {} }),
     createAnyConditionStep: conditions => ({

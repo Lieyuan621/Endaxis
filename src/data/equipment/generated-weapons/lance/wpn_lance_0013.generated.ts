@@ -197,7 +197,7 @@ const definition = {
               type: 'boolean',
               expression: {
                 kind: 'entityTagMatch',
-                target: 'actionInputTarget',
+                target: { kind: 'inputTarget' },
                 tagQueryType: 'hasAny',
                 tags: [
                   'Skill/Character/Common/SpellInflict/CrystInflict',

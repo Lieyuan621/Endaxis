@@ -256,6 +256,14 @@ function projectEntityBlackboardInitializer(
   const branch = steps[0];
   if (branch?.kind !== 'conditional' || branch.parameters.condition.kind !== 'deckAttributeCompare')
     return null;
+  const condition = branch.parameters.condition;
+  // 仅当前干员的静态面板比较可提前计算；其他目标或动作黑板输入必须留在运行时。
+  if (
+    condition.target.kind !== 'owner' ||
+    typeof condition.left !== 'string' ||
+    typeof condition.right !== 'string'
+  )
+    return null;
   const assigned = (body: CompiledBuffSequenceSource | undefined) => {
     const steps = body === undefined ? [] : graph.actions(body);
     const step = steps[0];
@@ -272,7 +280,12 @@ function projectEntityBlackboardInitializer(
   if (whenTrue === null || whenFalse === null || whenTrue.key !== whenFalse.key) return null;
   return {
     key: whenTrue.key as `EntityBB_${string}`,
-    condition: branch.parameters.condition,
+    condition: {
+      kind: 'deckAttributeCompare',
+      left: condition.left,
+      right: condition.right,
+      operator: condition.operator,
+    },
     trueValue: whenTrue.value,
     falseValue: whenFalse.value,
   };
