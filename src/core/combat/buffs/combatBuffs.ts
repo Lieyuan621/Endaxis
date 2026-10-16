@@ -1005,7 +1005,7 @@ export class CombatBuff<Key extends string> {
   ): boolean {
     const previousLayers = this.enhanceCount;
     return decreaseBuffEnhancements(this.#state.lifecycle, count, {
-      // 扣尽走完整结束路径，保留结束来源及吸收/消费通知；部分扣层只通知层数变化。
+      // 扣尽走完整结束路径；部分扣层也发布吸收/消费，且早于层数变化事件。
       finish: () => this.owner.finishInstance(this, reason, finishSourceId, finishSkillCastInfo),
       changed: () => {
         this.owner.onBuffStackChanged?.(this, previousLayers, undefined, finishSkillCastInfo);
@@ -1013,7 +1013,10 @@ export class CombatBuff<Key extends string> {
       },
       refreshAttributes: () => this.replaceAttributeModifiers(this.createAttributeModifiers()),
       refreshStacking: () => this.#stackingGroup?.refreshAfterEnhanceDecrease(),
-      notify: () => this.owner.handleBuffEnhanced(this, -count, reason, finishSkillCastInfo),
+      notify: () => {
+        this.owner.notifyBuffConsumption(this, reason, finishSourceId, count, finishSkillCastInfo);
+        this.owner.handleBuffEnhanced(this, -count, reason, finishSkillCastInfo);
+      },
     });
   }
 
@@ -1698,13 +1701,24 @@ export class CombatBuffContainer<Key extends string> {
   ): boolean {
     const layers = buff.enhanceCount;
     if (!buff.finish(reason, finishSkillCastInfo)) return false;
+    this.notifyBuffConsumption(buff, reason, sourceId, layers, finishSkillCastInfo);
+    return true;
+  }
+
+  /** 完整结束与部分扣层共用来源通知；layers 是本次扣除量，不是剩余层数。 */
+  notifyBuffConsumption(
+    buff: CombatBuff<Key>,
+    reason: BuffFinishReason,
+    sourceId: string | undefined,
+    layers: number,
+    finishSkillCastInfo?: CombatSkillCastInfo | null,
+  ): void {
     if (sourceId !== undefined) {
       if (reason === 'early' || reason === 'ignite')
         this.#onBuffConsumed?.(buff, sourceId, layers, finishSkillCastInfo);
       else if (reason === 'absorbed')
         this.#onBuffAbsorbed?.(buff, sourceId, layers, finishSkillCastInfo);
     }
-    return true;
   }
 
   /** 按容器插入顺序结束最多 count 个 ID 匹配的 Buff 实例。 */

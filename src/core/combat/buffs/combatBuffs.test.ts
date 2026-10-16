@@ -2879,12 +2879,15 @@ describe('CombatBuffContainer', () => {
 
     expect(container.finishCountByTags([tag], 'hasAny', 1, 'absorbed', false, 'camille')).toBe(1);
     expect(container.getCountById('fire-infliction')).toBe(1);
-    expect(observed).toEqual([]);
+    expect(observed).toEqual(['camille:enemy:fire-infliction:1']);
     expect(container.finishCountByTags([tag], 'hasAny', 1, 'absorbed', false, 'camille')).toBe(1);
     expect(container.getCountById('fire-infliction')).toBe(0);
-    expect(observed).toEqual(['camille:enemy:fire-infliction:1']);
+    expect(observed).toEqual([
+      'camille:enemy:fire-infliction:1',
+      'camille:enemy:fire-infliction:1',
+    ]);
     expect(container.finishCountByTags([tag], 'hasAny', 1, 'absorbed', false, 'camille')).toBe(0);
-    expect(observed).toHaveLength(1);
+    expect(observed).toHaveLength(2);
   });
 
   it('dispatches typed ignite events only to active matching Buff definitions', () => {
