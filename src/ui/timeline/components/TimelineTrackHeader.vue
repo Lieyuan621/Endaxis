@@ -30,7 +30,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   select: [];
-  operator: [];
+  operator: [event?: MouseEvent];
   moveUp: [];
   moveDown: [];
   reorderDragStart: [event: DragEvent];
@@ -169,7 +169,7 @@ function startReorder(event: DragEvent): void {
           :disabled="readOnly"
           :title="labels.operator"
           :aria-label="labels.operator"
-          @click.stop="$emit('operator')"
+          @click.stop="$emit('operator', $event)"
         >
           <OperatorAvatar
             class="avatar"
@@ -191,7 +191,7 @@ function startReorder(event: DragEvent): void {
           :disabled="readOnly"
           :title="labels.operator"
           :aria-label="labels.operator"
-          @click.stop="$emit('operator')"
+          @click.stop="$emit('operator', $event)"
         >
           <span class="empty-avatar" aria-hidden="true"></span>
         </button>

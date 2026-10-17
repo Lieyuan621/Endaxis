@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SelectionIconFrame from './SelectionIconFrame.vue';
 import { resolveImage } from '../../imageResources';
 import { EaTooltip } from '@/design-system';
 /**
@@ -383,12 +384,9 @@ function clearGear(): void {
                   />
                 </template>
                 <div class="selection-card-tooltip-target">
-                  <div
-                    class="card-avatar-wrapper"
+                  <SelectionIconFrame
+                    :equipment-level="gear.definition.levelRequirement"
                     :class="{ 'is-ability-match-both': gear.matchesOperatorAttributes }"
-                    :style="{
-                      borderColor: getEquipmentLevelColor(gear.definition.levelRequirement),
-                    }"
                   >
                     <div class="eq-affix-icon-stack">
                       <div
@@ -440,7 +438,7 @@ function clearGear(): void {
                       :alt="gear.name"
                       loading="lazy"
                     />
-                  </div>
+                  </SelectionIconFrame>
                   <div class="card-name">{{ gear.name }}</div>
                 </div>
               </EaTooltip>

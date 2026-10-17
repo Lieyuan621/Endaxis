@@ -4,6 +4,7 @@ import { createScenarioEditorSession } from '../../../test/scenarioEditorSession
 import { createEmptyScenario } from '../../../core/project/createProject';
 import type { ScenarioDocument, TrackIndex } from '../../../core/project/schema';
 import { gameDataRepository } from '../../../data/gameDataRepository';
+import { captureOperatorBuild } from '../../../application/editor/operatorBuildPreset';
 import { perlica } from '../../../data/operators/index';
 import {
   projectOperatorProgressionChange,
@@ -19,6 +20,7 @@ function createEditor() {
     scenario.value = snapshot.scenario;
   });
   const selectedTrack = ref<TrackIndex>(0);
+  let nextId = 0;
   const clearTimelineSelection = vi.fn();
   return {
     scenario,
@@ -31,12 +33,27 @@ function createEditor() {
       selectedTrack,
       clearTimelineSelection,
       gameData: gameDataRepository,
-      ids: { allocate: kind => `${kind}:1` },
+      ids: { allocate: kind => `${kind}:${++nextId}` },
     }),
   };
 }
 
 describe('useTimelineLoadoutEditor', () => {
+  it('预设直接填充空轨道，统一选择干员与配装，并可一次撤销', () => {
+    const { editor, scenario, session } = createEditor();
+    editor.openOperatorDialog(0);
+    editor.selectOperator(perlica.slug);
+    const build = captureOperatorBuild(scenario.value.tracks[0]!);
+    editor.selectTrack(1);
+    editor.applyBuildPreset({ id: 'preset', name: 'Preset', build });
+    expect(scenario.value.tracks[1]?.operator).toEqual(build.operator);
+    expect(scenario.value.tracks[1]?.operator).not.toBe(build.operator);
+    expect(session.snapshot.lastCommand).toBe('applyOperatorBuildPreset');
+    session.undo();
+    expect(scenario.value.tracks[1]).toBeNull();
+    expect(scenario.value.tracks[0]?.operator?.operatorSlug).toBe(perlica.slug);
+  });
+
   it('空轨道切换只改变选中轨道并清除技能选择，不打开面板或写入历史', () => {
     const { editor, clearTimelineSelection, selectedTrack, session } = createEditor();
 

@@ -1,5 +1,4 @@
-import type { TrackLoadoutInstanceViewModel } from './loadoutBuildViewModel';
-
+import type { LoadoutGearSlot } from './loadoutBuildViewModel';
 const ACTIVE_GEAR_SET_PIECES = 3;
 
 /**
@@ -7,7 +6,11 @@ const ACTIVE_GEAR_SET_PIECES = 3;
  * 只接受已经由当前项目数据仓库解析出的名称；未知套装不伪装成已生效。
  */
 export function projectActiveGearSetLabels(
-  loadout: TrackLoadoutInstanceViewModel,
+  loadout: {
+    gears: Readonly<
+      Partial<Record<LoadoutGearSlot, { definition: { gearSetSlug?: string } } | null>>
+    >;
+  },
   gearSetNames: Readonly<Record<string, string>>,
 ): readonly string[] {
   const counts = new Map<string, number>();

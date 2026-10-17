@@ -16,6 +16,7 @@ import {
   type Component,
 } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { primaryModifier } from '../keyboard/primaryModifier';
 import {
   ActiveScenarioEditorSession,
   ProjectEditorSession,
@@ -505,6 +506,8 @@ const GearLoadoutBuildDialog = defineLazyDialog(
   () => import('./library/GearLoadoutBuildDialog.vue'),
 );
 const OperatorPanelDialog = defineLazyDialog(() => import('./library/OperatorPanelDialog.vue'));
+const OperatorPresetsDialog = defineLazyDialog(() => import('./library/OperatorPresetsDialog.vue'));
+const showOperatorPresets = ref(false);
 const OperatorBuildDialog = defineLazyDialog(() => import('./library/OperatorBuildDialog.vue'));
 const WeaponBuildDialog = defineLazyDialog(() => import('./library/WeaponBuildDialog.vue'));
 const OperatorSelectionDialog = defineLazyDialog(
@@ -1387,6 +1390,7 @@ const {
   updateWeaponBuild,
   updateOperatorBuild,
   updateGearBuild,
+  applyBuildPreset,
 } = useTimelineLoadoutEditor({
   scenario,
   session: scenarioSession,
@@ -1407,18 +1411,19 @@ async function ensureAllGameData(): Promise<void> {
 
 let gameDataDialogOpening = false;
 async function openAfterGameDataLoad(
-  kind: 'operators' | 'weapons' | 'gears',
+  kind: 'operators' | 'weapons' | 'gears' | readonly ('operators' | 'weapons' | 'gears')[],
   open: () => void,
 ): Promise<void> {
   if (gameDataDialogOpening) return;
-  if (gameDataRepository.hasDefinitions(kind)) {
+  const kinds = typeof kind === 'string' ? [kind] : kind;
+  if (kinds.every(entry => gameDataRepository.hasDefinitions(entry))) {
     open();
     return;
   }
   gameDataDialogOpening = true;
   const loading = ElLoading.service({ lock: true, text: t('timeline.loading') });
   try {
-    await gameDataRepository.ensureDefinitions(kind);
+    await Promise.all(kinds.map(entry => gameDataRepository.ensureDefinitions(entry)));
     operatorDefinitionRevision.value += 1;
     open();
     await nextTick();
@@ -1427,6 +1432,21 @@ async function openAfterGameDataLoad(
   } finally {
     loading.close();
     gameDataDialogOpening = false;
+  }
+}
+
+async function openOperatorPresets(trackIndex?: TrackIndex): Promise<void> {
+  await openAfterGameDataLoad(['operators', 'weapons', 'gears'], () => {
+    if (trackIndex !== undefined) selectTrack(trackIndex);
+    showOperatorPresets.value = true;
+  });
+}
+
+function openTrackOperator(trackIndex: TrackIndex, event?: MouseEvent): void {
+  if (event?.[primaryModifier().key]) {
+    void openOperatorPresets(trackIndex);
+  } else {
+    void openOperatorDialog(trackIndex);
   }
 }
 
@@ -7105,7 +7125,9 @@ function setMobileGuideFrame(frame: number | null): void {
                 }"
                 :active-gear-set-label="activeGearSetLabelsByTrack[track.trackIndex] ?? ''"
                 :labels="{
-                  operator: t('timelineGrid.track.changeOperatorTooltip'),
+                  operator: t('timelineGrid.track.changeOperatorTooltip', {
+                    key: primaryModifier().label,
+                  }),
                   weapon: t('timelineGrid.track.selectWeaponTooltip'),
                   armor: t('timelineGrid.equipmentSlot.armor'),
                   gloves: t('timelineGrid.equipmentSlot.gloves'),
@@ -7113,7 +7135,7 @@ function setMobileGuideFrame(frame: number | null): void {
                   accessory2: t('timelineGrid.equipmentSlot.accessory2'),
                 }"
                 @select="selectTrack(track.trackIndex)"
-                @operator="openOperatorDialog(track.trackIndex)"
+                @operator="openTrackOperator(track.trackIndex, $event)"
                 @move-up="moveTrack(track.trackIndex, -1)"
                 @move-down="moveTrack(track.trackIndex, 1)"
                 @reorder-drag-start="beginTrackOrderDrag($event, track.trackIndex)"
@@ -8199,6 +8221,14 @@ function setMobileGuideFrame(frame: number | null): void {
     :weapon="selectedLoadoutModel.weapon"
     @update:visible="showWeaponBuildDialog = $event"
     @change="updateWeaponBuild"
+  />
+  <OperatorPresetsDialog
+    v-if="showOperatorPresets"
+    :track="scenario.tracks[selectedTrack]"
+    :game-data="editorGameDataRepository"
+    :read-only="configurationReadOnly"
+    :apply="applyBuildPreset"
+    @close="showOperatorPresets = false"
   />
   <OperatorBuildDialog
     v-if="showOperatorBuildDialog"

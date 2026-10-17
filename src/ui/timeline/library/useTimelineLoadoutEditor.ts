@@ -4,6 +4,10 @@
  */
 import { computed, ref, type Ref } from 'vue';
 import {
+  applyOperatorBuildPreset,
+  type OperatorBuildPreset,
+} from '../../../application/editor/operatorBuildPreset';
+import {
   createDefaultGearInstance,
   createDefaultOperatorInstance,
   createDefaultWeaponInstance,
@@ -264,6 +268,18 @@ export function useTimelineLoadoutEditor(options: TimelineLoadoutEditorOptions) 
     });
   }
 
+  function applyBuildPreset(preset: OperatorBuildPreset): void {
+    commit('applyOperatorBuildPreset', current => {
+      const index = options.selectedTrack.value;
+      const prepared =
+        current.tracks[index]?.operator?.operatorSlug === preset.build.operator.operatorSlug
+          ? current
+          : setTrackOperator(current, index, preset.build.operator, options.ids.allocate('track'));
+      return applyOperatorBuildPreset(prepared, index, preset, options.gameData);
+    });
+    options.clearTimelineSelection();
+  }
+
   function updateGearBuild(slot: TrackGearSlot, artificingLevels: readonly number[]): void {
     commit('updateTrackGearInstance', current =>
       updateTrackGearInstance(current, options.selectedTrack.value, slot, artificingLevels),
@@ -302,5 +318,6 @@ export function useTimelineLoadoutEditor(options: TimelineLoadoutEditorOptions) 
     updateWeaponBuild,
     updateOperatorBuild,
     updateGearBuild,
+    applyBuildPreset,
   };
 }

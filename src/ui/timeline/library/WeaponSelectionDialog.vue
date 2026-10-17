@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SelectionIconFrame from './SelectionIconFrame.vue';
 import { resolveImage } from '../../imageResources';
 import { EaTooltip } from '@/design-system';
 /**
@@ -194,20 +195,13 @@ function handleDialogVisibility(value: boolean): void {
                 />
               </template>
               <div class="selection-card-tooltip-target">
-                <div
-                  class="card-avatar-wrapper"
-                  :style="
-                    weapon.definition.rarity === 6
-                      ? {}
-                      : { borderColor: rarityColor(weapon.definition.rarity) }
-                  "
-                >
+                <SelectionIconFrame :rarity="weapon.definition.rarity">
                   <img
                     :src="resolveImage(weapon.definition.icon) || DEFAULT_WEAPON_ICON_PATH"
                     alt=""
                     loading="lazy"
                   />
-                </div>
+                </SelectionIconFrame>
                 <div class="card-name">{{ weapon.name }}</div>
               </div>
             </EaTooltip>

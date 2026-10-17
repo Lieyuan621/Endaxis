@@ -347,7 +347,8 @@
   text-align: center;
 }
 
-.rarity-6-style .card-avatar-wrapper {
+.rarity-6-style .card-avatar-wrapper,
+.card-avatar-wrapper.is-six-star {
   border: 1px solid transparent;
   background:
     linear-gradient(var(--ea-keycap-bg, #111), var(--ea-keycap-bg, #111)) padding-box,
@@ -365,7 +366,8 @@ html[data-theme='light'] .card-avatar-wrapper {
   border-color: rgba(26, 27, 30, 0.14);
 }
 
-html[data-theme='light'] .rarity-6-style .card-avatar-wrapper {
+html[data-theme='light'] .rarity-6-style .card-avatar-wrapper,
+html[data-theme='light'] .card-avatar-wrapper.is-six-star {
   background:
     linear-gradient(var(--ea-chip-fill), var(--ea-chip-fill)) padding-box,
     linear-gradient(135deg, var(--ea-gold), #ff8c00, #ff4500) border-box !important;

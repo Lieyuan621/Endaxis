@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SelectionIconFrame from './SelectionIconFrame.vue';
 /**
  * Next 时间轴的干员定义选择器。
  *
@@ -209,10 +210,7 @@ function clear(): void {
               variant="ghost"
               :pressed="selectedSlugs.includes(operator.slug)"
             >
-              <div
-                class="card-avatar-wrapper"
-                :style="operator.rarity === 6 ? {} : { borderColor: rarityColor(operator.rarity) }"
-              >
+              <SelectionIconFrame :rarity="operator.rarity">
                 <OperatorSupportNotice :support="operator.support" compact />
                 <OperatorAvatar :src="operator.avatar" loading="lazy" />
                 <div
@@ -223,7 +221,7 @@ function clear(): void {
                 >
                   <img :src="getElementIconPath(operator.element)" alt="" loading="lazy" />
                 </div>
-              </div>
+              </SelectionIconFrame>
               <div class="card-name">{{ operator.name }}</div>
               <div v-if="selectedSlugs.includes(operator.slug)" class="in-team-tag">
                 {{ t('timelineGrid.operatorDialog.inTeam') }}
