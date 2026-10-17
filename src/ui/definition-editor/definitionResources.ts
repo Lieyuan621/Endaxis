@@ -73,56 +73,18 @@ export function listDefinitionResources(
       const path = ['skillGroups', index] as const;
       add(result, 'skillGroup', path, group, `${index + 1}`);
       const groupData = record(group);
-      const skills = Array.isArray(groupData.skills) ? groupData.skills : [groupData.skills];
-      for (const [skillIndex, skill] of skills.entries()) {
-        if (skill !== undefined)
-          add(
-            result,
-            'skill',
-            [...path, 'skills', ...(Array.isArray(groupData.skills) ? [skillIndex] : [])],
-            skill,
-            `${skillIndex + 1}`,
-          );
-      }
       for (const [variantIndex, variant] of array(groupData.variants).entries()) {
-        const variantPath = [...path, 'variants', variantIndex] as const;
-        add(result, 'skillGroupVariant', variantPath, variant, `${variantIndex + 1}`);
-        const variantSkills = record(variant).skills;
-        for (const [skillIndex, skill] of (Array.isArray(variantSkills)
-          ? variantSkills
-          : [variantSkills]
-        ).entries()) {
-          if (skill !== undefined)
-            add(
-              result,
-              'skill',
-              [...variantPath, 'skills', ...(Array.isArray(variantSkills) ? [skillIndex] : [])],
-              skill,
-              `${skillIndex + 1}`,
-            );
-        }
-      }
-      for (const [skillIndex, skill] of array(groupData.replacementSkills).entries())
         add(
           result,
-          'skill',
-          [...path, 'replacementSkills', skillIndex],
-          skill,
-          `${skillIndex + 1}`,
+          'skillGroupVariant',
+          [...path, 'variants', variantIndex],
+          variant,
+          `${variantIndex + 1}`,
         );
-      for (const [skillIndex, route] of array(groupData.routedReplacementSkills).entries()) {
-        const skill = record(route).skill;
-        if (skill)
-          add(
-            result,
-            'skill',
-            [...path, 'routedReplacementSkills', skillIndex, 'skill'],
-            skill,
-            `${skillIndex + 1}`,
-          );
       }
     }
-    if (root.dodgeSkill) add(result, 'skill', ['dodgeSkill'], root.dodgeSkill, 'dodge');
+    for (const [index, skill] of array(root.skills).entries())
+      add(result, 'skill', ['skills', index], skill, `${index + 1}`);
     for (const [id, value] of Object.entries(record(root.abilityEntityDefinitions))) {
       const path = ['abilityEntityDefinitions', id] as const;
       add(result, 'abilityEntity', path, value, id);

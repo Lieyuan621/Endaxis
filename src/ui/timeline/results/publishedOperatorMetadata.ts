@@ -42,7 +42,7 @@ export function capturePublishedOperatorMetadata(
     const definition = index.getOperator(slug);
     if (definition === null) continue;
     const bindings = listOperatorSkillDefinitionBindings(definition);
-    const skills = bindings.map(binding => binding.skill);
+    const skills = definition.skills;
     const panel = panels.find(panel => panel.operatorId === track.id);
     const formKey = panel ? resolveOperatorPresentationFormKey(definition, panel.attributes) : null;
     result.set(slug, {

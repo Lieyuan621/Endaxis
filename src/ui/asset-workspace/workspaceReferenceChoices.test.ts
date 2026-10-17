@@ -24,9 +24,10 @@ const buff = perlica.buffDefinitions!.buff_chr_0004_pelica_potential_3!;
 const entity = perlica.abilityEntityDefinitions!.abilityentity_chr_0004_pelica_ultimate_skill!;
 const definition = (keys: string[] = ['same']): OperatorDefinition => ({
   ...perlica,
-  skillGroups: [{ ...perlica.skillGroups[0]!, skills: keys.map(skill) }],
+  skillGroups: [{ ...perlica.skillGroups[0]!, skillIds: keys }],
+  skills: keys.map(skill),
   skillSlots: [],
-  dodgeSkill: undefined,
+  dodgeSkillId: undefined,
   buffDefinitions: {},
   abilityEntityDefinitions: {},
 });
@@ -66,7 +67,7 @@ describe('workspace reference catalogs with asset ownership and navigation', () 
         owner: current.id,
         source: { id: current.id, kind: current.custom ? 'project' : 'builtin' },
         writable: current.custom,
-        target: { assetId: current.id, resourcePath: ['skillGroups', 0, 'skills', 0] },
+        target: { assetId: current.id, resourcePath: ['skills', 0] },
       });
       expect(choices.skill!.candidates.filter(choice => choice.value === 'same')).toHaveLength(3);
       expect(new Set(choices.skill!.candidates.map(choice => choice.identity)).size).toBe(4);
@@ -275,7 +276,7 @@ describe('reference catalog transactions use the real asset session', () => {
     });
     const catalog = () => workspaceReferenceChoices(current(), [source, current()], []).skill;
     const initial = catalog();
-    const path = ['skillGroups', 0, 'skills', 0, 'timelineContinuationSkillId'] as const;
+    const path = ['skills', 0, 'timelineContinuationSkillId'] as const;
     const beforeReference = fieldValueAt(session.current.edit.definition, path);
     session.editOperatorResources({ kind: 'addSkill', group: 0 });
     const added = catalog()!.candidates.find(
@@ -284,7 +285,9 @@ describe('reference catalog transactions use the real asset session', () => {
     expect(resolveReference('skill', added.value, catalog()).state).toBe('valid');
     session.change(path, added.value);
     expect(fieldValueAt(session.current.edit.definition, path)).toBe(added.value);
-    const index = added.target!.resourcePath.at(-1) as number;
+    const edited = session.current.edit;
+    if (edited.kind !== 'operator') throw new Error('expected operator draft');
+    const index = edited.definition.skillGroups[0]!.skillIds.indexOf(added.value);
     const referencedSnapshot = session.current;
     expect(() => session.editOperatorResources({ kind: 'removeSkill', group: 0, index })).toThrow(
       'skillReferenced',

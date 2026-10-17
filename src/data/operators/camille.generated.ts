@@ -1019,6 +1019,7 @@ export const camilleChr_0033_camille_power_attack: SkillDefinition = {
   naturalDurationFrames: 230,
   exclusiveFrame: 50,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -1310,6 +1311,7 @@ export const camilleChr_0033_camille_normal_skill: SkillDefinition = {
   naturalDurationFrames: 192,
   exclusiveFrame: 26,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 18, endFrame: 34, skillIds: ['chr_0033_camille_combo_skill'] },
@@ -1325,553 +1327,6 @@ export const camilleChr_0033_camille_normal_skill: SkillDefinition = {
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
   actionGraph: camilleChr_0033_camille_normal_skillActionGraph,
-};
-
-export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
-  main: {
-    nodes: {
-      finishBuffsById_1: {
-        action: {
-          kind: 'finishBuffsById',
-          parameters: {
-            targets: { kind: 'source' },
-            finishSource: { kind: 'source' },
-            buffIds: ['buff_chr_0033_camille_ult_henshin_state'],
-            reason: 'early',
-          },
-        },
-        next: null,
-      },
-      startTimeDilation_2: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'global',
-            durationSeconds: { kind: 'constant', value: 0.900000036 },
-            slot: 'unassigned',
-            priority: 30,
-            curve: { kind: 'named', key: 'ComboSkill' },
-            finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
-          },
-        },
-        next: null,
-      },
-      startTimeDilation_3: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'global',
-            durationSeconds: { kind: 'constant', value: 0.5 },
-            slot: 'unassigned',
-            priority: 100,
-            curve: { kind: 'named', key: 'ComboSkill' },
-            finishByAction: false,
-            ignoredTargets: ['caster'],
-          },
-        },
-        next: null,
-      },
-      startTimeDilation_16: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.06 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: { kind: 'named', key: 'common' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
-          },
-        },
-        next: null,
-      },
-      ifElse_17: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_1' },
-          whenTrue: { $sequence: 'startTimeDilation_16' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      dealDamage_18: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'heat',
-            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
-          },
-        },
-        next: 'ifElse_17',
-      },
-      repeatEachTick_19: {
-        action: {
-          kind: 'repeatEachTick',
-          parameters: {
-            nativeChanneling: {
-              catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
-              executeEachFrame: true,
-              triggerIntervalSeconds: 0.033,
-              maxCountPerTarget: 1,
-              targetTriggerIntervalSeconds: 0.033,
-            },
-          },
-          body: { $sequence: 'dealDamage_18' },
-        },
-        next: null,
-      },
-      changeResource_20: {
-        action: {
-          kind: 'changeResource',
-          parameters: {
-            resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_3' },
-            coefficient: { kind: 'constant', value: 1 },
-            source: { kind: 'source' },
-            targets: { kind: 'source' },
-            spGainKind: 'gain',
-            spGainSource: 'skill',
-          },
-        },
-        next: null,
-      },
-      startTimeDilation_22: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: { kind: 'named', key: 'common' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
-          },
-        },
-        next: null,
-      },
-      ifElse_23: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_4' },
-          whenTrue: { $sequence: 'startTimeDilation_22' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      dealDamage_24: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'heat',
-            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_6' },
-          },
-        },
-        next: 'ifElse_23',
-      },
-      once_25: {
-        action: { kind: 'once', parameters: {}, body: { $sequence: 'changeResource_20' } },
-        next: 'dealDamage_24',
-      },
-      repeatEachTick_26: {
-        action: {
-          kind: 'repeatEachTick',
-          parameters: {
-            nativeChanneling: {
-              catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
-              executeEachFrame: true,
-              triggerIntervalSeconds: 0.033,
-              maxCountPerTarget: 1,
-              targetTriggerIntervalSeconds: 0.033,
-            },
-          },
-          body: { $sequence: 'once_25' },
-        },
-        next: null,
-      },
-      dealDamage_30: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'heat',
-            attackScale: { kind: 'valueNode', nodeId: 'data_7' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
-          },
-        },
-        next: 'ifElse_23',
-      },
-      repeatEachTick_31: {
-        action: {
-          kind: 'repeatEachTick',
-          parameters: {
-            nativeChanneling: {
-              catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
-              executeEachFrame: true,
-              triggerIntervalSeconds: 0.033,
-              maxCountPerTarget: 1,
-              targetTriggerIntervalSeconds: 0.033,
-            },
-          },
-          body: { $sequence: 'dealDamage_30' },
-        },
-        next: null,
-      },
-      createGlobalBuff_32: {
-        action: {
-          kind: 'createGlobalBuff',
-          parameters: {
-            globalBuffId: 'global_buff_combo_trigger',
-            definition: {
-              stackingType: 'stack',
-              maxStackCount: 4,
-              durationSeconds: { blackboardKey: 'duration' },
-              blackboard: { duration: 0, imbue_scale: 0 },
-              children: [
-                {
-                  buffId: 'buff_common_affixes_combo_trigger',
-                  blackboardAssignments: { imbue_scale: { kind: 'valueNode', nodeId: 'data_8' } },
-                },
-              ],
-            },
-            source: 'caster',
-            blackboardAssignments: { duration: { kind: 'valueNode', nodeId: 'data_9' } },
-          },
-        },
-        next: null,
-      },
-      once_34: {
-        action: { kind: 'once', parameters: {}, body: { $sequence: 'createGlobalBuff_32' } },
-        next: null,
-      },
-      applyBuff_36: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0033_camille_normal_skill_bateffect' }],
-            targets: { kind: 'context', key: 'Camille_Bat' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-      findOwnerSpawnedAbilityEntities_37: {
-        action: {
-          kind: 'findOwnerSpawnedAbilityEntities',
-          parameters: {
-            saveToContextKey: 'Camille_Bat',
-            abilityEntityIds: ['abilityentity_chr_0033_camille_normal_skill'],
-            owner: { kind: 'owner' },
-          },
-        },
-        next: 'applyBuff_36',
-      },
-      changeResource_38: {
-        action: {
-          kind: 'changeResource',
-          parameters: {
-            resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_10' },
-            coefficient: { kind: 'constant', value: 1 },
-            source: { kind: 'source' },
-            targets: { kind: 'source' },
-            spGainKind: 'gain',
-            spGainSource: 'skill',
-          },
-        },
-        next: null,
-      },
-      heal_42: {
-        action: {
-          kind: 'heal',
-          parameters: {
-            target: 'caster',
-            alwaysNext: true,
-            tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
-            attribute: 'intellect',
-            multiplier: { kind: 'valueNode', nodeId: 'data_11' },
-            addition: { kind: 'valueNode', nodeId: 'data_12' },
-          },
-        },
-        next: null,
-      },
-      modifyActionValue_50: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'usp_gained',
-            operation: 'assign',
-            value: { kind: 'constant', value: 1 },
-          },
-        },
-        next: null,
-      },
-      changeResource_51: {
-        action: {
-          kind: 'changeResource',
-          parameters: {
-            resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_13' },
-            coefficient: { kind: 'constant', value: 1 },
-            source: { kind: 'source' },
-            targets: { kind: 'source' },
-          },
-        },
-        next: 'modifyActionValue_50',
-      },
-      checkCondition_52: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_15' } },
-        },
-        next: 'changeResource_51',
-      },
-      startTimeDilation_53: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.4 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: {
-              kind: 'inline',
-              keys: [
-                {
-                  time: -0.000869751,
-                  value: 0.2992066,
-                  inTangent: 0.02832832,
-                  outTangent: 0.02832832,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 2.332526,
-                  outTangent: 2.332526,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-            },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
-          },
-        },
-        next: 'checkCondition_52',
-      },
-      ifElse_54: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_17' },
-          whenTrue: { $sequence: 'heal_42' },
-          whenFalse: { $sequence: null },
-        },
-        next: 'startTimeDilation_53',
-      },
-      dealDamage_55: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'heat',
-            attackScale: { kind: 'valueNode', nodeId: 'data_18' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_19' },
-          },
-        },
-        next: 'ifElse_54',
-      },
-      ifElse_opt1: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_20' },
-          whenTrue: { $sequence: 'dealDamage_55' },
-          whenFalse: { $sequence: 'dealDamage_55' },
-        },
-        next: null,
-      },
-      once_opt2: {
-        action: { kind: 'once', parameters: {}, body: { $sequence: 'changeResource_38' } },
-        next: 'ifElse_opt1',
-      },
-      ifElse_opt3: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_21' },
-          whenTrue: { $sequence: 'findOwnerSpawnedAbilityEntities_37' },
-          whenFalse: { $sequence: null },
-        },
-        next: 'once_opt2',
-      },
-      ifElse_opt4: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_22' },
-          whenTrue: { $sequence: 'once_34' },
-          whenFalse: { $sequence: null },
-        },
-        next: 'ifElse_opt3',
-      },
-      repeatEachTick_opt5: {
-        action: {
-          kind: 'repeatEachTick',
-          parameters: {
-            nativeChanneling: {
-              catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
-              executeEachFrame: true,
-              triggerIntervalSeconds: 0.033,
-              maxCountPerTarget: 1,
-              targetTriggerIntervalSeconds: 0.033,
-            },
-          },
-          body: { $sequence: 'ifElse_opt4' },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: {
-        type: 'boolean',
-        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
-      },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_1' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_4: {
-        type: 'boolean',
-        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
-      },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_2' } },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_3' } },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'imbue_scale' } },
-      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'combo_duration' } },
-      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'atb_ex' } },
-      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'heal_sub_multi' } },
-      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'heal_base' } },
-      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_14: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'usp_gained', fallback: 0 },
-      },
-      data_15: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_14' },
-          operator: 'lessOrEqual',
-          right: { kind: 'constant', value: 0 },
-        },
-      },
-      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'talent_0', fallback: 0 } },
-      data_17: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_16' },
-          operator: 'greaterOrEqual',
-          right: { kind: 'constant', value: 1 },
-        },
-      },
-      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_4' } },
-      data_19: { type: 'number', expression: { kind: 'blackboard', key: 'poise_2' } },
-      data_20: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_21: {
-        type: 'boolean',
-        expression: {
-          kind: 'entityTagMatch',
-          target: { kind: 'fixed', target: 'enemy' },
-          tagQueryType: 'hasAny',
-          tags: ['Skill/Character/chr_0033_camille/NormalSkillBatTarget'],
-        },
-      },
-      data_22: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_16' },
-          operator: 'greaterOrEqual',
-          right: { kind: 'constant', value: 1 },
-        },
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const camilleChr_0033_camille_normal_skill_2: SkillDefinition = {
-  key: 'chr_0033_camille_normal_skill_2',
-  element: 'heat',
-  blackboard: {
-    atb: [16, 16, 16, 16, 16, 16, 18, 18, 18, 20, 20, 20],
-    atb_ex: [16, 16, 16, 16, 16, 16, 18, 18, 18, 20, 20, 20],
-    atk_scale_2_1: [0.27, 0.29, 0.32, 0.35, 0.37, 0.4, 0.43, 0.45, 0.48, 0.51, 0.55, 0.6],
-    atk_scale_2_2: [0.27, 0.29, 0.32, 0.35, 0.37, 0.4, 0.43, 0.45, 0.48, 0.51, 0.55, 0.6],
-    atk_scale_2_3: [0.27, 0.29, 0.32, 0.35, 0.37, 0.4, 0.43, 0.45, 0.48, 0.51, 0.55, 0.6],
-    atk_scale_2_4: [1.42, 1.57, 1.71, 1.85, 1.99, 2.14, 2.28, 2.42, 2.56, 2.74, 2.95, 3.2],
-    combo_duration: 15,
-    heal_base: 0,
-    heal_sub_multi: 0,
-    poise: 10,
-    poise_2: 10,
-    talent_0: 0,
-    usp: 10,
-    usp_gained: 0,
-  },
-  timelineBlockFrames: 87,
-  naturalDurationFrames: 213,
-  exclusiveFrame: 86,
-  offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 79,
-        endFrame: 127,
-        skillIds: ['chr_0033_camille_normal_skill', 'chr_0033_camille_normal_skill_2'],
-      },
-    ],
-  },
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'finishBuffsById_1' } },
-    { startFrame: 0, endFrame: 24, sequence: { $sequence: 'startTimeDilation_2' } },
-    { startFrame: 52, endFrame: 67, sequence: { $sequence: 'startTimeDilation_3' } },
-    { startFrame: 20, endFrame: 23, sequence: { $sequence: 'repeatEachTick_19' } },
-    { startFrame: 33, endFrame: 36, sequence: { $sequence: 'repeatEachTick_26' } },
-    { startFrame: 49, endFrame: 51, sequence: { $sequence: 'repeatEachTick_31' } },
-    { startFrame: 70, endFrame: 73, sequence: { $sequence: 'repeatEachTick_opt5' } },
-  ],
-  defaultTarget: 'enemy',
-  costs: [],
-  skillType: 'comboSkill',
-  levelSource: 'comboSkill',
-  nativeSkillType: 'normalSkill',
-  actionGraph: camilleChr_0033_camille_normal_skill_2ActionGraph,
 };
 
 export const camilleChr_0033_camille_combo_skillActionGraph = {
@@ -2319,6 +1774,7 @@ export const camilleChr_0033_camille_combo_skill: SkillDefinition = {
   naturalDurationFrames: 191,
   exclusiveFrame: 63,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -2863,6 +2319,7 @@ export const camilleChr_0033_camille_combo_skill_2: SkillDefinition = {
   naturalDurationFrames: 213,
   exclusiveFrame: 86,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -2887,6 +2344,554 @@ export const camilleChr_0033_camille_combo_skill_2: SkillDefinition = {
   levelSource: 'comboSkill',
   nativeSkillType: 'normalSkill',
   actionGraph: camilleChr_0033_camille_combo_skill_2ActionGraph,
+};
+
+export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
+  main: {
+    nodes: {
+      finishBuffsById_1: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'source' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_chr_0033_camille_ult_henshin_state'],
+            reason: 'early',
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_2: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'global',
+            durationSeconds: { kind: 'constant', value: 0.900000036 },
+            slot: 'unassigned',
+            priority: 30,
+            curve: { kind: 'named', key: 'ComboSkill' },
+            finishByAction: false,
+            ignoredTargets: ['caster'],
+            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_3: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'global',
+            durationSeconds: { kind: 'constant', value: 0.5 },
+            slot: 'unassigned',
+            priority: 100,
+            curve: { kind: 'named', key: 'ComboSkill' },
+            finishByAction: false,
+            ignoredTargets: ['caster'],
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_16: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.06 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'common' },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: null,
+      },
+      ifElse_17: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: 'startTimeDilation_16' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_18: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'heat',
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            tags: ['comboSkill'],
+            features: ['canBreakWeakness'],
+          },
+        },
+        next: 'ifElse_17',
+      },
+      repeatEachTick_19: {
+        action: {
+          kind: 'repeatEachTick',
+          parameters: {
+            nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'fixed', target: 'enemy' },
+              executeEachFrame: true,
+              triggerIntervalSeconds: 0.033,
+              maxCountPerTarget: 1,
+              targetTriggerIntervalSeconds: 0.033,
+            },
+          },
+          body: { $sequence: 'dealDamage_18' },
+        },
+        next: null,
+      },
+      changeResource_20: {
+        action: {
+          kind: 'changeResource',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_3' },
+            coefficient: { kind: 'constant', value: 1 },
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+            spGainKind: 'gain',
+            spGainSource: 'skill',
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_22: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.1 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'common' },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: null,
+      },
+      ifElse_23: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
+          whenTrue: { $sequence: 'startTimeDilation_22' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_24: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'heat',
+            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+            tags: ['comboSkill'],
+            features: ['canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_6' },
+          },
+        },
+        next: 'ifElse_23',
+      },
+      once_25: {
+        action: { kind: 'once', parameters: {}, body: { $sequence: 'changeResource_20' } },
+        next: 'dealDamage_24',
+      },
+      repeatEachTick_26: {
+        action: {
+          kind: 'repeatEachTick',
+          parameters: {
+            nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'fixed', target: 'enemy' },
+              executeEachFrame: true,
+              triggerIntervalSeconds: 0.033,
+              maxCountPerTarget: 1,
+              targetTriggerIntervalSeconds: 0.033,
+            },
+          },
+          body: { $sequence: 'once_25' },
+        },
+        next: null,
+      },
+      dealDamage_30: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'heat',
+            attackScale: { kind: 'valueNode', nodeId: 'data_7' },
+            tags: ['comboSkill'],
+            features: ['canBreakWeakness'],
+          },
+        },
+        next: 'ifElse_23',
+      },
+      repeatEachTick_31: {
+        action: {
+          kind: 'repeatEachTick',
+          parameters: {
+            nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'fixed', target: 'enemy' },
+              executeEachFrame: true,
+              triggerIntervalSeconds: 0.033,
+              maxCountPerTarget: 1,
+              targetTriggerIntervalSeconds: 0.033,
+            },
+          },
+          body: { $sequence: 'dealDamage_30' },
+        },
+        next: null,
+      },
+      createGlobalBuff_32: {
+        action: {
+          kind: 'createGlobalBuff',
+          parameters: {
+            globalBuffId: 'global_buff_combo_trigger',
+            definition: {
+              stackingType: 'stack',
+              maxStackCount: 4,
+              durationSeconds: { blackboardKey: 'duration' },
+              blackboard: { duration: 0, imbue_scale: 0 },
+              children: [
+                {
+                  buffId: 'buff_common_affixes_combo_trigger',
+                  blackboardAssignments: { imbue_scale: { kind: 'valueNode', nodeId: 'data_8' } },
+                },
+              ],
+            },
+            source: 'caster',
+            blackboardAssignments: { duration: { kind: 'valueNode', nodeId: 'data_9' } },
+          },
+        },
+        next: null,
+      },
+      once_34: {
+        action: { kind: 'once', parameters: {}, body: { $sequence: 'createGlobalBuff_32' } },
+        next: null,
+      },
+      applyBuff_36: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0033_camille_normal_skill_bateffect' }],
+            targets: { kind: 'context', key: 'Camille_Bat' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      findOwnerSpawnedAbilityEntities_37: {
+        action: {
+          kind: 'findOwnerSpawnedAbilityEntities',
+          parameters: {
+            saveToContextKey: 'Camille_Bat',
+            abilityEntityIds: ['abilityentity_chr_0033_camille_normal_skill'],
+            owner: { kind: 'owner' },
+          },
+        },
+        next: 'applyBuff_36',
+      },
+      changeResource_38: {
+        action: {
+          kind: 'changeResource',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_10' },
+            coefficient: { kind: 'constant', value: 1 },
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+            spGainKind: 'gain',
+            spGainSource: 'skill',
+          },
+        },
+        next: null,
+      },
+      heal_42: {
+        action: {
+          kind: 'heal',
+          parameters: {
+            target: 'caster',
+            alwaysNext: true,
+            tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
+            attribute: 'intellect',
+            multiplier: { kind: 'valueNode', nodeId: 'data_11' },
+            addition: { kind: 'valueNode', nodeId: 'data_12' },
+          },
+        },
+        next: null,
+      },
+      modifyActionValue_50: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'usp_gained',
+            operation: 'assign',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+        next: null,
+      },
+      changeResource_51: {
+        action: {
+          kind: 'changeResource',
+          parameters: {
+            resource: 'ultimateEnergy',
+            amount: { kind: 'valueNode', nodeId: 'data_13' },
+            coefficient: { kind: 'constant', value: 1 },
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+          },
+        },
+        next: 'modifyActionValue_50',
+      },
+      checkCondition_52: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_15' } },
+        },
+        next: 'changeResource_51',
+      },
+      startTimeDilation_53: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.4 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: {
+              kind: 'inline',
+              keys: [
+                {
+                  time: -0.000869751,
+                  value: 0.2992066,
+                  inTangent: 0.02832832,
+                  outTangent: 0.02832832,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 2.332526,
+                  outTangent: 2.332526,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+            },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: 'checkCondition_52',
+      },
+      ifElse_54: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_17' },
+          whenTrue: { $sequence: 'heal_42' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'startTimeDilation_53',
+      },
+      dealDamage_55: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'heat',
+            attackScale: { kind: 'valueNode', nodeId: 'data_18' },
+            tags: ['comboSkill'],
+            features: ['canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_19' },
+          },
+        },
+        next: 'ifElse_54',
+      },
+      ifElse_opt1: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_20' },
+          whenTrue: { $sequence: 'dealDamage_55' },
+          whenFalse: { $sequence: 'dealDamage_55' },
+        },
+        next: null,
+      },
+      once_opt2: {
+        action: { kind: 'once', parameters: {}, body: { $sequence: 'changeResource_38' } },
+        next: 'ifElse_opt1',
+      },
+      ifElse_opt3: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_21' },
+          whenTrue: { $sequence: 'findOwnerSpawnedAbilityEntities_37' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'once_opt2',
+      },
+      ifElse_opt4: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_22' },
+          whenTrue: { $sequence: 'once_34' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'ifElse_opt3',
+      },
+      repeatEachTick_opt5: {
+        action: {
+          kind: 'repeatEachTick',
+          parameters: {
+            nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'fixed', target: 'enemy' },
+              executeEachFrame: true,
+              triggerIntervalSeconds: 0.033,
+              maxCountPerTarget: 1,
+              targetTriggerIntervalSeconds: 0.033,
+            },
+          },
+          body: { $sequence: 'ifElse_opt4' },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_1' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_2' } },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_3' } },
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'imbue_scale' } },
+      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'combo_duration' } },
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'atb_ex' } },
+      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'heal_sub_multi' } },
+      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'heal_base' } },
+      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_14: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'usp_gained', fallback: 0 },
+      },
+      data_15: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_14' },
+          operator: 'lessOrEqual',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'talent_0', fallback: 0 } },
+      data_17: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_16' },
+          operator: 'greaterOrEqual',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_2_4' } },
+      data_19: { type: 'number', expression: { kind: 'blackboard', key: 'poise_2' } },
+      data_20: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_21: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityTagMatch',
+          target: { kind: 'fixed', target: 'enemy' },
+          tagQueryType: 'hasAny',
+          tags: ['Skill/Character/chr_0033_camille/NormalSkillBatTarget'],
+        },
+      },
+      data_22: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_16' },
+          operator: 'greaterOrEqual',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const camilleChr_0033_camille_normal_skill_2: SkillDefinition = {
+  key: 'chr_0033_camille_normal_skill_2',
+  element: 'heat',
+  blackboard: {
+    atb: [16, 16, 16, 16, 16, 16, 18, 18, 18, 20, 20, 20],
+    atb_ex: [16, 16, 16, 16, 16, 16, 18, 18, 18, 20, 20, 20],
+    atk_scale_2_1: [0.27, 0.29, 0.32, 0.35, 0.37, 0.4, 0.43, 0.45, 0.48, 0.51, 0.55, 0.6],
+    atk_scale_2_2: [0.27, 0.29, 0.32, 0.35, 0.37, 0.4, 0.43, 0.45, 0.48, 0.51, 0.55, 0.6],
+    atk_scale_2_3: [0.27, 0.29, 0.32, 0.35, 0.37, 0.4, 0.43, 0.45, 0.48, 0.51, 0.55, 0.6],
+    atk_scale_2_4: [1.42, 1.57, 1.71, 1.85, 1.99, 2.14, 2.28, 2.42, 2.56, 2.74, 2.95, 3.2],
+    combo_duration: 15,
+    heal_base: 0,
+    heal_sub_multi: 0,
+    poise: 10,
+    poise_2: 10,
+    talent_0: 0,
+    usp: 10,
+    usp_gained: 0,
+  },
+  timelineBlockFrames: 87,
+  naturalDurationFrames: 213,
+  exclusiveFrame: 86,
+  offsetRecordFrame: 0,
+  dontInterruptCombo: true,
+  inputWindows: {
+    allowedNextSkills: [
+      {
+        startFrame: 79,
+        endFrame: 127,
+        skillIds: ['chr_0033_camille_normal_skill', 'chr_0033_camille_normal_skill_2'],
+      },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'finishBuffsById_1' } },
+    { startFrame: 0, endFrame: 24, sequence: { $sequence: 'startTimeDilation_2' } },
+    { startFrame: 52, endFrame: 67, sequence: { $sequence: 'startTimeDilation_3' } },
+    { startFrame: 20, endFrame: 23, sequence: { $sequence: 'repeatEachTick_19' } },
+    { startFrame: 33, endFrame: 36, sequence: { $sequence: 'repeatEachTick_26' } },
+    { startFrame: 49, endFrame: 51, sequence: { $sequence: 'repeatEachTick_31' } },
+    { startFrame: 70, endFrame: 73, sequence: { $sequence: 'repeatEachTick_opt5' } },
+  ],
+  defaultTarget: 'enemy',
+  costs: [],
+  skillType: 'comboSkill',
+  levelSource: 'comboSkill',
+  nativeSkillType: 'normalSkill',
+  actionGraph: camilleChr_0033_camille_normal_skill_2ActionGraph,
 };
 
 export const camilleChr_0033_camille_ultimate_skillActionGraph = {
@@ -3224,6 +3229,28 @@ export const camilleCommon_character_perfect_dodge: SkillDefinition = {
   defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
+};
+
+export const camilleChr_0033_camille_plunging_attack_startActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const camilleChr_0033_camille_plunging_attack_start: SkillDefinition = {
+  actionGraph: camilleChr_0033_camille_plunging_attack_startActionGraph,
+  key: 'chr_0033_camille_plunging_attack_start',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1513,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
 };
 
 const camillePassive1ActionGraph = {
@@ -4208,51 +4235,67 @@ export const camille: OperatorDefinition = {
     baseAttack: [30, 91, 155, 219, 283, 315],
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },
+  skills: [
+    camilleChr_0033_camille_attack1,
+    camilleChr_0033_camille_attack2,
+    camilleChr_0033_camille_attack3,
+    camilleChr_0033_camille_attack4,
+    camilleChr_0033_camille_attack5,
+    camilleChr_0033_camille_power_attack,
+    camilleChr_0033_camille_plunging_attack_end,
+    camilleChr_0033_camille_normal_skill,
+    camilleChr_0033_camille_combo_skill,
+    camilleChr_0033_camille_combo_skill_2,
+    camilleChr_0033_camille_normal_skill_2,
+    camilleChr_0033_camille_ultimate_skill,
+    camilleCommon_character_perfect_dodge,
+    camilleChr_0033_camille_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        camilleChr_0033_camille_attack1,
-        camilleChr_0033_camille_attack2,
-        camilleChr_0033_camille_attack3,
-        camilleChr_0033_camille_attack4,
-        camilleChr_0033_camille_attack5,
+      skillIds: [
+        'chr_0033_camille_attack1',
+        'chr_0033_camille_attack2',
+        'chr_0033_camille_attack3',
+        'chr_0033_camille_attack4',
+        'chr_0033_camille_attack5',
       ],
     },
-    { key: 'finisher', operationType: 'finisher', skills: camilleChr_0033_camille_power_attack },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0033_camille_power_attack'] },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: camilleChr_0033_camille_plunging_attack_end,
+      skillIds: ['chr_0033_camille_plunging_attack_end'],
     },
     {
       key: 'battleSkill',
       operationType: 'battleSkill',
-      skills: camilleChr_0033_camille_normal_skill,
+      skillIds: ['chr_0033_camille_normal_skill'],
     },
     {
       key: 'replacementBattleSkill',
       operationType: 'battleSkill',
       nameKey: 'skillNames.replacement',
-      skills: [],
-      routedReplacementSkills: [
-        {
-          skill: camilleChr_0033_camille_normal_skill_2,
-          executionSkillKey: 'chr_0033_camille_combo_skill_2',
-        },
-      ],
+      skillIds: ['chr_0033_camille_normal_skill_2'],
     },
-    {
-      key: 'comboSkill',
-      operationType: 'comboSkill',
-      skills: camilleChr_0033_camille_combo_skill,
-      replacementSkills: [camilleChr_0033_camille_combo_skill_2],
-      replacementSkillPlacements: { chr_0033_camille_combo_skill_2: 'internal' },
-    },
-    { key: 'ultimate', operationType: 'ultimate', skills: camilleChr_0033_camille_ultimate_skill },
+    { key: 'comboSkill', operationType: 'comboSkill', skillIds: ['chr_0033_camille_combo_skill'] },
+    { key: 'ultimate', operationType: 'ultimate', skillIds: ['chr_0033_camille_ultimate_skill'] },
   ],
-  dodgeSkill: camilleCommon_character_perfect_dodge,
+  routedReplacementSkills: [
+    {
+      skillId: 'chr_0033_camille_normal_skill_2',
+      executionSkillKey: 'chr_0033_camille_combo_skill_2',
+    },
+  ],
+  dodgeSkillId: 'common_character_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0033_camille_plunging_attack_start',
+    endSkillId: 'chr_0033_camille_plunging_attack_end',
+    startDurationSeconds: 0.633,
+    endDurationSeconds: 1.267,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
   ],

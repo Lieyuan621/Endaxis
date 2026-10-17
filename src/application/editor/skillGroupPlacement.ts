@@ -4,10 +4,11 @@
  */
 import type {
   SkillDefinition,
+  OperatorDefinition,
   SkillGroupDefinition,
 } from '../../core/game-data/operatorDefinition';
 
-import { asSkillDefinitions } from '../../core/game-data/operatorSkillDefinitions';
+import { requireOperatorSkill } from '../../core/game-data/operatorSkillDefinitions';
 import type { OperationType } from '../../../packages/game-data-contract/src/primitives';
 
 export interface SkillGroupLibraryPlacement {
@@ -41,50 +42,24 @@ export function layoutSkillGroupPlacement(
   return { offsets, durationFrames };
 }
 
-function placeableReplacementSkills(group: SkillGroupDefinition): readonly SkillDefinition[] {
-  return [
-    ...(group.replacementSkills ?? []),
-    ...(group.routedReplacementSkills ?? []).map(replacement => replacement.skill),
-  ].filter(skill => group.replacementSkillPlacements?.[skill.key] !== 'internal');
-}
-
-function skillIndex(group: SkillGroupDefinition): ReadonlyMap<string, SkillDefinition> {
-  return new Map([
-    ...asSkillDefinitions(group.skills).map(skill => [skill.key, skill] as const),
-    ...(group.replacementSkills ?? []).map(skill => [skill.key, skill] as const),
-    ...(group.routedReplacementSkills ?? []).map(
-      replacement => [replacement.skill.key, replacement.skill] as const,
-    ),
-  ]);
-}
-
-function resolvePlacementSequence(group: SkillGroupDefinition): readonly SkillDefinition[] {
-  if (group.placementSequenceSkillKeys === undefined) {
-    return [
-      ...asSkillDefinitions(group.skills),
-      ...(group.routedReplacementSkills ?? []).map(route => route.skill),
-    ];
-  }
-  const byKey = skillIndex(group);
-  return group.placementSequenceSkillKeys.map(skillKey => {
-    const skill = byKey.get(skillKey);
-    if (skill === undefined) {
+function resolvePlacementSequence(
+  group: SkillGroupDefinition,
+  operator: OperatorDefinition,
+): readonly SkillDefinition[] {
+  return (group.placementSequenceSkillKeys ?? group.skillIds).map(skillKey => {
+    if (!group.skillIds.includes(skillKey)) {
       throw new Error(`skill group '${group.key}' placement sequence has no skill '${skillKey}'`);
     }
-    if (group.replacementSkillPlacements?.[skillKey] === 'internal') {
-      throw new Error(
-        `skill group '${group.key}' placement sequence contains internal skill '${skillKey}'`,
-      );
-    }
-    return skill;
+    return requireOperatorSkill(operator, skillKey);
   });
 }
 
 /** 枚举技能库中可见的卡片；有序换槽技能只进入基础链，不重复生成独立卡片。 */
 export function listSkillGroupLibraryPlacements(
   group: SkillGroupDefinition,
+  operator: OperatorDefinition,
 ): readonly SkillGroupLibraryPlacement[] {
-  const baseSkills = resolvePlacementSequence(group);
+  const baseSkills = resolvePlacementSequence(group, operator);
   return [
     {
       entryKey: `${group.key}:base`,
@@ -93,7 +68,7 @@ export function listSkillGroupLibraryPlacements(
       ...(group.nameKey === undefined ? {} : { nameKey: group.nameKey }),
     },
     ...(group.variants ?? []).map(variant => {
-      const skills = asSkillDefinitions(variant.skills);
+      const skills = variant.skillIds.map(id => requireOperatorSkill(operator, id));
       return {
         entryKey: `${group.key}:variant:${variant.key}`,
         variantKey: variant.key,
@@ -110,6 +85,7 @@ export function listSkillGroupLibraryPlacements(
 /** 解析一次技能库放置实际写入时间轴的技能链。 */
 export function resolveSkillGroupPlacementSkills(
   group: SkillGroupDefinition,
+  operator: OperatorDefinition,
   variantKey?: string,
   skillKey?: string,
 ): readonly SkillDefinition[] {
@@ -122,15 +98,14 @@ export function resolveSkillGroupPlacementSkills(
   }
 
   const defaultSkills =
-    variant === undefined ? resolvePlacementSequence(group) : asSkillDefinitions(variant.skills);
+    variant === undefined
+      ? resolvePlacementSequence(group, operator)
+      : variant.skillIds.map(id => requireOperatorSkill(operator, id));
   if (skillKey === undefined) return defaultSkills;
 
-  const candidates = [
-    ...(variant === undefined
-      ? asSkillDefinitions(group.skills)
-      : asSkillDefinitions(variant.skills)),
-    ...placeableReplacementSkills(group),
-  ];
+  const candidates = (variant?.skillIds ?? group.skillIds).map(id =>
+    requireOperatorSkill(operator, id),
+  );
   const selected = candidates.filter(skill => skill.key === skillKey);
   if (selected.length === 0) {
     throw new Error(`skill group '${group.key}' has no skill '${skillKey}'`);

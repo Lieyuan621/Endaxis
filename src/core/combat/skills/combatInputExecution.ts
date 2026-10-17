@@ -9,6 +9,7 @@ export type TryStartCombatSkill = (
   castId?: string,
   action?: CombatSkillInput['action'],
   simulationInputs?: CombatSkillInput['simulationInputs'],
+  operationType?: CombatSkillInput['operationType'],
 ) => boolean;
 
 /** 排程器可提交的事实只限于当前输入和组阻断，不接触活动战斗对象。 */
@@ -49,13 +50,14 @@ export function processCombatSkillInput(
   receipt: CombatReceiptSink,
 ): boolean {
   const accepted =
-    input.simulationInputs !== undefined
+    input.simulationInputs !== undefined || input.operationType !== undefined
       ? tryStartSkill(
           input.operatorId,
           input.skillId,
           input.castId,
           input.action,
           input.simulationInputs,
+          input.operationType,
         )
       : input.action === undefined
         ? tryStartSkill(input.operatorId, input.skillId, input.castId)

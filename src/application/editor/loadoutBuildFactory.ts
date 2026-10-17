@@ -4,7 +4,6 @@
  */
 import type { GearDefinition, WeaponDefinition } from '../../core/game-data/equipmentDefinition';
 import type { OperatorDefinition } from '../../core/game-data/operatorDefinition';
-import { listOperatorSkillDefinitionBindings } from '../../core/game-data/operatorSkillDefinitions';
 import type {
   GearInstanceDocument,
   OperatorInstanceDocument,
@@ -17,7 +16,7 @@ export function createDefaultOperatorInstance(
   const skillLevels = Object.fromEntries(
     [
       ...new Set(
-        listOperatorSkillDefinitionBindings(operator).flatMap(({ skill }) =>
+        operator.skills.flatMap(skill =>
           skill.levelSource === undefined ? [] : [skill.levelSource],
         ),
       ),

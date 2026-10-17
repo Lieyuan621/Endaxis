@@ -7416,6 +7416,7 @@ export const typhoeusChr_0034_typhoea_power_attack: SkillDefinition = {
   naturalDurationFrames: 180,
   exclusiveFrame: 72,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -8440,6 +8441,7 @@ export const typhoeusChr_0034_typhoea_normal_skill_floating_loop: SkillDefinitio
   naturalDurationFrames: 30,
   exclusiveFrame: 30,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: { hasConditionalActions: true },
   costFrame: 0,
   scheduledSequences: [
@@ -8921,6 +8923,7 @@ export const typhoeusChr_0034_typhoea_combo_skill: SkillDefinition = {
   naturalDurationFrames: 241,
   exclusiveFrame: 60,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 48, endFrame: 99, skillIds: ['chr_0034_typhoea_normal_skill_floating_start'] },
@@ -9578,6 +9581,7 @@ export const typhoeusChr_0034_typhoea_combo_skillfloating: SkillDefinition = {
   naturalDurationFrames: 70,
   exclusiveFrame: 999,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     commandMappings: [
       {
@@ -10207,6 +10211,246 @@ export const typhoeusCommon_character_perfect_dodge: SkillDefinition = {
   nativeSkillType: 'dodge',
 };
 
+export const typhoeusChr_0034_typhoea_plunging_attack_startActionGraph = {
+  main: {
+    nodes: {
+      createSpatialPointTargets_5: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'pos4', count: { kind: 'constant', value: 1 } },
+        },
+        next: null,
+      },
+      createSpatialPointTargets_6: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'pos3', count: { kind: 'constant', value: 1 } },
+        },
+        next: 'createSpatialPointTargets_5',
+      },
+      createSpatialPointTargets_7: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'pos2', count: { kind: 'constant', value: 1 } },
+        },
+        next: 'createSpatialPointTargets_6',
+      },
+      createSpatialPointTargets_8: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'pos1', count: { kind: 'constant', value: 1 } },
+        },
+        next: 'createSpatialPointTargets_7',
+      },
+      physicsCast_9: {
+        action: {
+          kind: 'physicsCast',
+          parameters: {
+            source: { kind: 'source' },
+            startHeightOffset: 0,
+            maxDistance: 150,
+            saveToContextKey: 'hitPos',
+          },
+          whenHit: { $sequence: 'createSpatialPointTargets_8' },
+          whenMiss: { $sequence: 'createSpatialPointTargets_8' },
+        },
+        next: null,
+      },
+      finishBuffsById_10: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_chr_0034_typhoea_attack_plunging_onground'],
+            reason: 'other',
+          },
+        },
+        next: 'physicsCast_9',
+      },
+      launchProjectile_11: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
+            finish: 'firstTickReach',
+            recycleDelaySeconds: 0.16666667163372,
+          },
+          callbacks: [
+            {
+              event: 'reach',
+              skill: {
+                skillId: 'chr_0034_typhoea_plunging_attack_start_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 5,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: {},
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'spawnAbilityEntity_4' } },
+                ],
+                actionGraph: {
+                  main: {
+                    nodes: {
+                      applyBuff_2: {
+                        action: {
+                          kind: 'applyBuff',
+                          parameters: {
+                            buffs: [{ buffId: 'buff_chr_0034_typhoea_attack_plunging_onground' }],
+                            targets: { kind: 'source' },
+                            source: { kind: 'source' },
+                            inheritSourceSkillCastInfo: true,
+                          },
+                        },
+                        next: null,
+                      },
+                      ifElse_3: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+                          whenTrue: { $sequence: 'applyBuff_2' },
+                          whenFalse: { $sequence: null },
+                        },
+                        next: null,
+                      },
+                      spawnAbilityEntity_4: {
+                        action: {
+                          kind: 'spawnAbilityEntity',
+                          parameters: {
+                            bornAt: { kind: 'fixed', target: 'enemy' },
+                            abilityEntityId: 'abilityentity_chr_0034_typhoea_arrow_onground',
+                            inheritActionBlackboard: false,
+                            inheritSourceSkillCastInfo: false,
+                            dieWhenSourceDies: false,
+                          },
+                        },
+                        next: 'ifElse_3',
+                      },
+                    },
+                    dataNodes: {
+                      data_1: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'buffIdStackCompare',
+                          target: { kind: 'source' },
+                          compareZeroWhenTargetMissing: true,
+                          operator: 'equal',
+                          value: { kind: 'constant', value: 0 },
+                          buffIds: ['buff_chr_0034_typhoea_attack_plunging_onground'],
+                        },
+                      },
+                    },
+                  },
+                  macros: {},
+                },
+              },
+            },
+          ],
+        },
+        next: null,
+      },
+      spawnAbilityEntity_15: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'context', key: 'pos' },
+            abilityEntityId: 'abilityentity_chr_0034_typhoea_rune_1_onground',
+            inheritActionBlackboard: false,
+            inheritSourceSkillCastInfo: false,
+            dieWhenSourceDies: false,
+          },
+        },
+        next: null,
+      },
+      createSpatialPointTargets_16: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'pos', count: { kind: 'constant', value: 1 } },
+        },
+        next: 'spawnAbilityEntity_15',
+      },
+      checkCondition_17: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: 'createSpatialPointTargets_16',
+      },
+      listenForCombatEvents_18: {
+        action: {
+          kind: 'listenForCombatEvents',
+          parameters: {
+            responses: [
+              {
+                key: 'SkillData.chr_0034_typhoea_plunging_attack_start.actionGroupData.timelineActions[9]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
+                event: { kind: 'abilityEvent', event: 'addedBuff' },
+                phase: 'dataAction',
+                priority: 0,
+                sequence: { $sequence: 'checkCondition_17' },
+              },
+            ],
+          },
+        },
+        next: null,
+      },
+      applyBuff_19: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0034_typhoea_attack_plunging_listeninterrput' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventBuffIdMatch',
+          buffIds: ['buff_chr_0034_typhoea_attack_plunging_onground'],
+        },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const typhoeusChr_0034_typhoea_plunging_attack_start: SkillDefinition = {
+  key: 'chr_0034_typhoea_plunging_attack_start',
+  element: 'physical',
+  blackboard: { atk_scale: 0.25, side_length: 3, target_find: 0 },
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'finishBuffsById_10' } },
+    { startFrame: 1, endFrame: 2, sequence: { $sequence: 'launchProjectile_11' } },
+    { startFrame: 3, endFrame: 4, sequence: { $sequence: 'launchProjectile_11' } },
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'launchProjectile_11' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'launchProjectile_11' } },
+    { startFrame: 1, endFrame: 1500, sequence: { $sequence: 'listenForCombatEvents_18' } },
+    { startFrame: 1, endFrame: 1500, sequence: { $sequence: 'applyBuff_19' } },
+  ],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
+  actionGraph: typhoeusChr_0034_typhoea_plunging_attack_startActionGraph,
+};
+
 const typhoeusPassive1ActionGraph = {
   main: {
     nodes: {
@@ -10488,6 +10732,62 @@ const typhoeusBuff4: SkillBuffDefinition = {
 const typhoeusBuff5ActionGraph = {
   main: {
     nodes: {
+      finishOwner_1: {
+        action: { kind: 'finishOwner', parameters: { targets: { kind: 'context', key: 'rune' } } },
+        next: null,
+      },
+      findOwnerSpawnedAbilityEntities_2: {
+        action: {
+          kind: 'findOwnerSpawnedAbilityEntities',
+          parameters: {
+            saveToContextKey: 'rune',
+            abilityEntityIds: [
+              'abilityentity_chr_0034_typhoea_arrow_onground',
+              'abilityentity_chr_0034_typhoea_rune_1_onground',
+            ],
+            owner: { kind: 'source' },
+          },
+        },
+        next: 'finishOwner_1',
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const typhoeusBuff5: SkillBuffDefinition = {
+  stackingType: 'refresh',
+  priority: 0,
+  maxStackCount: 999,
+  durationSeconds: 5,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { count: 0 },
+  attributeModifiers: [],
+  lifecycleSequences: { finish: [{ $sequence: 'findOwnerSpawnedAbilityEntities_2' }] },
+  actionGraph: typhoeusBuff5ActionGraph,
+};
+
+const typhoeusBuff6ActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const typhoeusBuff6: SkillBuffDefinition = {
+  stackingType: 'refresh',
+  priority: 0,
+  maxStackCount: 999,
+  durationSeconds: 5,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { count: 0 },
+  attributeModifiers: [],
+  actionGraph: typhoeusBuff6ActionGraph,
+};
+
+const typhoeusBuff7ActionGraph = {
+  main: {
+    nodes: {
       applyBuff_1: {
         action: {
           kind: 'applyBuff',
@@ -10529,7 +10829,7 @@ const typhoeusBuff5ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff5: SkillBuffDefinition = {
+const typhoeusBuff7: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -10552,15 +10852,15 @@ const typhoeusBuff5: SkillBuffDefinition = {
     },
   ],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: typhoeusBuff5ActionGraph,
+  actionGraph: typhoeusBuff7ActionGraph,
 };
 
-const typhoeusBuff6ActionGraph = {
+const typhoeusBuff8ActionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff6: SkillBuffDefinition = {
+const typhoeusBuff8: SkillBuffDefinition = {
   stackingType: 'enhanceAndRefresh',
   priority: 0,
   maxStackCount: 5,
@@ -10569,15 +10869,15 @@ const typhoeusBuff6: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  actionGraph: typhoeusBuff6ActionGraph,
+  actionGraph: typhoeusBuff8ActionGraph,
 };
 
-const typhoeusBuff7ActionGraph = {
+const typhoeusBuff9ActionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff7: SkillBuffDefinition = {
+const typhoeusBuff9: SkillBuffDefinition = {
   stackingType: 'refresh',
   priority: 0,
   maxStackCount: 1,
@@ -10586,10 +10886,10 @@ const typhoeusBuff7: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  actionGraph: typhoeusBuff7ActionGraph,
+  actionGraph: typhoeusBuff9ActionGraph,
 };
 
-const typhoeusBuff8ActionGraph = {
+const typhoeusBuff10ActionGraph = {
   main: {
     nodes: {
       finishBuffsById_1: {
@@ -10629,7 +10929,7 @@ const typhoeusBuff8ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff8: SkillBuffDefinition = {
+const typhoeusBuff10: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -10641,10 +10941,10 @@ const typhoeusBuff8: SkillBuffDefinition = {
   blackboard: {},
   attributeModifiers: [],
   lifecycleSequences: { trigger: [{ $sequence: 'checkCondition_2' }] },
-  actionGraph: typhoeusBuff8ActionGraph,
+  actionGraph: typhoeusBuff10ActionGraph,
 };
 
-const typhoeusBuff9ActionGraph = {
+const typhoeusBuff11ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -10716,7 +11016,7 @@ const typhoeusBuff9ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff9: SkillBuffDefinition = {
+const typhoeusBuff11: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 1,
@@ -10728,15 +11028,15 @@ const typhoeusBuff9: SkillBuffDefinition = {
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'readBuffStackCount_5' } },
   ],
-  actionGraph: typhoeusBuff9ActionGraph,
+  actionGraph: typhoeusBuff11ActionGraph,
 };
 
-const typhoeusBuff10ActionGraph = {
+const typhoeusBuff12ActionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff10: SkillBuffDefinition = {
+const typhoeusBuff12: SkillBuffDefinition = {
   stackingType: 'refresh',
   priority: 0,
   maxStackCount: 999,
@@ -10745,10 +11045,10 @@ const typhoeusBuff10: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { count: 0 },
   attributeModifiers: [],
-  actionGraph: typhoeusBuff10ActionGraph,
+  actionGraph: typhoeusBuff12ActionGraph,
 };
 
-const typhoeusBuff11ActionGraph = {
+const typhoeusBuff13ActionGraph = {
   main: {
     nodes: {
       checkCondition_27: {
@@ -11048,7 +11348,7 @@ const typhoeusBuff11ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff11: SkillBuffDefinition = {
+const typhoeusBuff13: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -11102,15 +11402,15 @@ const typhoeusBuff11: SkillBuffDefinition = {
       inheritOriginSkillCooldownProgress: false,
     },
   ],
-  actionGraph: typhoeusBuff11ActionGraph,
+  actionGraph: typhoeusBuff13ActionGraph,
 };
 
-const typhoeusBuff12ActionGraph = {
+const typhoeusBuff14ActionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff12: SkillBuffDefinition = {
+const typhoeusBuff14: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -11126,10 +11426,10 @@ const typhoeusBuff12: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  actionGraph: typhoeusBuff12ActionGraph,
+  actionGraph: typhoeusBuff14ActionGraph,
 };
 
-const typhoeusBuff13ActionGraph = {
+const typhoeusBuff15ActionGraph = {
   main: {
     nodes: {
       changeResource_1: {
@@ -11153,7 +11453,7 @@ const typhoeusBuff13ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff13: SkillBuffDefinition = {
+const typhoeusBuff15: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 999,
@@ -11163,15 +11463,15 @@ const typhoeusBuff13: SkillBuffDefinition = {
   blackboard: { atb: 0, count: 0 },
   attributeModifiers: [],
   lifecycleSequences: { start: [{ $sequence: 'changeResource_1' }] },
-  actionGraph: typhoeusBuff13ActionGraph,
+  actionGraph: typhoeusBuff15ActionGraph,
 };
 
-const typhoeusBuff14ActionGraph = {
+const typhoeusBuff16ActionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff14: SkillBuffDefinition = {
+const typhoeusBuff16: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -11179,15 +11479,15 @@ const typhoeusBuff14: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  actionGraph: typhoeusBuff14ActionGraph,
+  actionGraph: typhoeusBuff16ActionGraph,
 };
 
-const typhoeusBuff15ActionGraph = {
+const typhoeusBuff17ActionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff15: SkillBuffDefinition = {
+const typhoeusBuff17: SkillBuffDefinition = {
   stackingType: 'enhance',
   priority: 0,
   maxStackCount: 8,
@@ -11197,74 +11497,6 @@ const typhoeusBuff15: SkillBuffDefinition = {
   blackboard: { count: 0 },
   attributeModifiers: [],
   lifecycleSequences: { start: [{ $sequence: null }] },
-  actionGraph: typhoeusBuff15ActionGraph,
-};
-
-const typhoeusBuff16ActionGraph = {
-  main: {
-    nodes: {
-      applyBuff_1: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0034_typhoea_normal_skill_arrow_energy' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-const typhoeusBuff16: SkillBuffDefinition = {
-  stackingType: 'unlimited',
-  priority: 0,
-  maxStackCount: 10,
-  addingCooldownSeconds: 0.2,
-  durationSeconds: 3,
-  applyTags: [],
-  extendTags: [],
-  blackboard: { count: 0 },
-  attributeModifiers: [],
-  lifecycleSequences: { start: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: typhoeusBuff16ActionGraph,
-};
-
-const typhoeusBuff17ActionGraph = {
-  main: {
-    nodes: {
-      applyBuff_1: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0034_typhoea_normal_skill_arrow_energy' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-const typhoeusBuff17: SkillBuffDefinition = {
-  stackingType: 'unlimited',
-  priority: 0,
-  maxStackCount: 10,
-  addingCooldownSeconds: 0.2,
-  durationSeconds: 3,
-  applyTags: [],
-  extendTags: [],
-  blackboard: { count: 0 },
-  attributeModifiers: [],
-  lifecycleSequences: { start: [{ $sequence: 'applyBuff_1' }] },
   actionGraph: typhoeusBuff17ActionGraph,
 };
 
@@ -11305,6 +11537,74 @@ const typhoeusBuff18: SkillBuffDefinition = {
 const typhoeusBuff19ActionGraph = {
   main: {
     nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0034_typhoea_normal_skill_arrow_energy' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const typhoeusBuff19: SkillBuffDefinition = {
+  stackingType: 'unlimited',
+  priority: 0,
+  maxStackCount: 10,
+  addingCooldownSeconds: 0.2,
+  durationSeconds: 3,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { count: 0 },
+  attributeModifiers: [],
+  lifecycleSequences: { start: [{ $sequence: 'applyBuff_1' }] },
+  actionGraph: typhoeusBuff19ActionGraph,
+};
+
+const typhoeusBuff20ActionGraph = {
+  main: {
+    nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0034_typhoea_normal_skill_arrow_energy' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const typhoeusBuff20: SkillBuffDefinition = {
+  stackingType: 'unlimited',
+  priority: 0,
+  maxStackCount: 10,
+  addingCooldownSeconds: 0.2,
+  durationSeconds: 3,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { count: 0 },
+  attributeModifiers: [],
+  lifecycleSequences: { start: [{ $sequence: 'applyBuff_1' }] },
+  actionGraph: typhoeusBuff20ActionGraph,
+};
+
+const typhoeusBuff21ActionGraph = {
+  main: {
+    nodes: {
       checkCondition_1: {
         action: {
           kind: 'checkCondition',
@@ -11327,7 +11627,7 @@ const typhoeusBuff19ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff19: SkillBuffDefinition = {
+const typhoeusBuff21: SkillBuffDefinition = {
   stackingType: 'enhance',
   priority: 0,
   maxStackCount: 4,
@@ -11339,10 +11639,10 @@ const typhoeusBuff19: SkillBuffDefinition = {
   abilityEventResponses: [
     { event: 'customAbilityEvent', priority: 0, sequence: { $sequence: 'checkCondition_1' } },
   ],
-  actionGraph: typhoeusBuff19ActionGraph,
+  actionGraph: typhoeusBuff21ActionGraph,
 };
 
-const typhoeusBuff20ActionGraph = {
+const typhoeusBuff22ActionGraph = {
   main: {
     nodes: {
       startTimeDilation_1: {
@@ -11405,7 +11705,7 @@ const typhoeusBuff20ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff20: SkillBuffDefinition = {
+const typhoeusBuff22: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -11415,15 +11715,15 @@ const typhoeusBuff20: SkillBuffDefinition = {
   blackboard: {},
   attributeModifiers: [],
   lifecycleSequences: { enable: [{ $sequence: 'startTimeDilation_1' }] },
-  actionGraph: typhoeusBuff20ActionGraph,
+  actionGraph: typhoeusBuff22ActionGraph,
 };
 
-const typhoeusBuff21ActionGraph = {
+const typhoeusBuff23ActionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff21: SkillBuffDefinition = {
+const typhoeusBuff23: SkillBuffDefinition = {
   stackingType: 'highPriority',
   priority: 0,
   maxStackCount: 1,
@@ -11431,15 +11731,15 @@ const typhoeusBuff21: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  actionGraph: typhoeusBuff21ActionGraph,
+  actionGraph: typhoeusBuff23ActionGraph,
 };
 
-const typhoeusBuff22ActionGraph = {
+const typhoeusBuff24ActionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff22: SkillBuffDefinition = {
+const typhoeusBuff24: SkillBuffDefinition = {
   stackingType: 'enhance',
   priority: 0,
   maxStackCount: 4,
@@ -11448,10 +11748,10 @@ const typhoeusBuff22: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  actionGraph: typhoeusBuff22ActionGraph,
+  actionGraph: typhoeusBuff24ActionGraph,
 };
 
-const typhoeusBuff23ActionGraph = {
+const typhoeusBuff25ActionGraph = {
   main: {
     nodes: {
       applyBuff_3: {
@@ -11519,7 +11819,7 @@ const typhoeusBuff23ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff23: SkillBuffDefinition = {
+const typhoeusBuff25: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 10,
@@ -11530,15 +11830,15 @@ const typhoeusBuff23: SkillBuffDefinition = {
   abilityEventResponses: [
     { event: 'addedBuff', priority: 0, sequence: { $sequence: 'checkCondition_5' } },
   ],
-  actionGraph: typhoeusBuff23ActionGraph,
+  actionGraph: typhoeusBuff25ActionGraph,
 };
 
-const typhoeusBuff24ActionGraph = {
+const typhoeusBuff26ActionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff24: SkillBuffDefinition = {
+const typhoeusBuff26: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 999,
@@ -11546,10 +11846,10 @@ const typhoeusBuff24: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  actionGraph: typhoeusBuff24ActionGraph,
+  actionGraph: typhoeusBuff26ActionGraph,
 };
 
-const typhoeusBuff25ActionGraph = {
+const typhoeusBuff27ActionGraph = {
   main: {
     nodes: {
       applyBuff_6: {
@@ -11790,7 +12090,7 @@ const typhoeusBuff25ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff25: SkillBuffDefinition = {
+const typhoeusBuff27: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 999,
@@ -11803,40 +12103,6 @@ const typhoeusBuff25: SkillBuffDefinition = {
     { event: 'enterFight', priority: 0, sequence: { $sequence: 'checkCondition_21' } },
     { event: 'ownerSwitchToGuard', priority: 0, sequence: { $sequence: 'finishBuffsById_22' } },
   ],
-  actionGraph: typhoeusBuff25ActionGraph,
-};
-
-const typhoeusBuff26ActionGraph = {
-  main: { nodes: {} },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-const typhoeusBuff26: SkillBuffDefinition = {
-  stackingType: 'timedGrowingEnhance',
-  priority: 0,
-  maxStackCount: 4,
-  durationSeconds: { blackboardKey: 'arrow_recover_time' },
-  presentation: { visible: true, showInHeadBarCommon: false, showInHeadBarAttached: false },
-  applyTags: [],
-  extendTags: [],
-  blackboard: { arrow_recover_time: 3 },
-  attributeModifiers: [],
-  actionGraph: typhoeusBuff26ActionGraph,
-};
-
-const typhoeusBuff27ActionGraph = {
-  main: { nodes: {} },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-const typhoeusBuff27: SkillBuffDefinition = {
-  stackingType: 'stack',
-  priority: 0,
-  maxStackCount: 1,
-  applyTags: [],
-  extendTags: [],
-  blackboard: { count: 0 },
-  attributeModifiers: [],
   actionGraph: typhoeusBuff27ActionGraph,
 };
 
@@ -11846,15 +12112,15 @@ const typhoeusBuff28ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 const typhoeusBuff28: SkillBuffDefinition = {
-  stackingType: 'unique',
+  stackingType: 'timedGrowingEnhance',
   priority: 0,
-  maxStackCount: 1,
+  maxStackCount: 4,
+  durationSeconds: { blackboardKey: 'arrow_recover_time' },
+  presentation: { visible: true, showInHeadBarCommon: false, showInHeadBarAttached: false },
   applyTags: [],
   extendTags: [],
-  blackboard: { atk_up: 0.08 },
-  attributeModifiers: [
-    { attribute: 'Atk', slot: 'baseMultiplier', value: { blackboardKey: 'atk_up' } },
-  ],
+  blackboard: { arrow_recover_time: 3 },
+  attributeModifiers: [],
   actionGraph: typhoeusBuff28ActionGraph,
 };
 
@@ -11864,12 +12130,12 @@ const typhoeusBuff29ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 const typhoeusBuff29: SkillBuffDefinition = {
-  stackingType: 'unique',
+  stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
   applyTags: [],
   extendTags: [],
-  blackboard: { decrease_cd: -3 },
+  blackboard: { count: 0 },
   attributeModifiers: [],
   actionGraph: typhoeusBuff29ActionGraph,
 };
@@ -11880,6 +12146,40 @@ const typhoeusBuff30ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 const typhoeusBuff30: SkillBuffDefinition = {
+  stackingType: 'unique',
+  priority: 0,
+  maxStackCount: 1,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { atk_up: 0.08 },
+  attributeModifiers: [
+    { attribute: 'Atk', slot: 'baseMultiplier', value: { blackboardKey: 'atk_up' } },
+  ],
+  actionGraph: typhoeusBuff30ActionGraph,
+};
+
+const typhoeusBuff31ActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const typhoeusBuff31: SkillBuffDefinition = {
+  stackingType: 'unique',
+  priority: 0,
+  maxStackCount: 1,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { decrease_cd: -3 },
+  attributeModifiers: [],
+  actionGraph: typhoeusBuff31ActionGraph,
+};
+
+const typhoeusBuff32ActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const typhoeusBuff32: SkillBuffDefinition = {
   stackingType: 'refresh',
   priority: 0,
   maxStackCount: 10,
@@ -11888,10 +12188,10 @@ const typhoeusBuff30: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { count: 0 },
   attributeModifiers: [],
-  actionGraph: typhoeusBuff30ActionGraph,
+  actionGraph: typhoeusBuff32ActionGraph,
 };
 
-const typhoeusBuff31ActionGraph = {
+const typhoeusBuff33ActionGraph = {
   main: {
     nodes: {
       calculateActionValue_1: {
@@ -12090,7 +12390,7 @@ const typhoeusBuff31ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff31: SkillBuffDefinition = {
+const typhoeusBuff33: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -12111,15 +12411,15 @@ const typhoeusBuff31: SkillBuffDefinition = {
     { event: 'finishedBuff', priority: 0, sequence: { $sequence: 'checkCondition_7' } },
     { event: 'customAbilityEvent', priority: 0, sequence: { $sequence: 'checkCondition_14' } },
   ],
-  actionGraph: typhoeusBuff31ActionGraph,
+  actionGraph: typhoeusBuff33ActionGraph,
 };
 
-const typhoeusBuff32ActionGraph = {
+const typhoeusBuff34ActionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff32: SkillBuffDefinition = {
+const typhoeusBuff34: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -12134,15 +12434,15 @@ const typhoeusBuff32: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { sheild_cd: 18 },
   attributeModifiers: [],
-  actionGraph: typhoeusBuff32ActionGraph,
+  actionGraph: typhoeusBuff34ActionGraph,
 };
 
-const typhoeusBuff33ActionGraph = {
+const typhoeusBuff35ActionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff33: SkillBuffDefinition = {
+const typhoeusBuff35: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 5,
@@ -12169,10 +12469,10 @@ const typhoeusBuff33: SkillBuffDefinition = {
       ],
     },
   ],
-  actionGraph: typhoeusBuff33ActionGraph,
+  actionGraph: typhoeusBuff35ActionGraph,
 };
 
-const typhoeusBuff34ActionGraph = {
+const typhoeusBuff36ActionGraph = {
   main: {
     nodes: {
       startTimeDilation_1: {
@@ -12226,7 +12526,7 @@ const typhoeusBuff34ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff34: SkillBuffDefinition = {
+const typhoeusBuff36: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 5,
@@ -12236,10 +12536,10 @@ const typhoeusBuff34: SkillBuffDefinition = {
   blackboard: {},
   attributeModifiers: [],
   lifecycleSequences: { start: [{ $sequence: 'startTimeDilation_1' }] },
-  actionGraph: typhoeusBuff34ActionGraph,
+  actionGraph: typhoeusBuff36ActionGraph,
 };
 
-const typhoeusBuff35ActionGraph = {
+const typhoeusBuff37ActionGraph = {
   main: {
     nodes: {
       spawnAbilityEntity_17: {
@@ -12429,7 +12729,7 @@ const typhoeusBuff35ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff35: SkillBuffDefinition = {
+const typhoeusBuff37: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 999,
@@ -12443,15 +12743,15 @@ const typhoeusBuff35: SkillBuffDefinition = {
   abilityEventResponses: [
     { event: 'beforeOutputDamage', priority: 0, sequence: { $sequence: 'ifElse_31' } },
   ],
-  actionGraph: typhoeusBuff35ActionGraph,
+  actionGraph: typhoeusBuff37ActionGraph,
 };
 
-const typhoeusBuff36ActionGraph = {
+const typhoeusBuff38ActionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const typhoeusBuff36: SkillBuffDefinition = {
+const typhoeusBuff38: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 999,
@@ -12460,7 +12760,7 @@ const typhoeusBuff36: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  actionGraph: typhoeusBuff36ActionGraph,
+  actionGraph: typhoeusBuff38ActionGraph,
 };
 
 export const typhoeus: OperatorDefinition = {
@@ -12490,67 +12790,83 @@ export const typhoeus: OperatorDefinition = {
     maximumArrows: 4,
     maximumPoints: 8,
   },
+  skills: [
+    typhoeusChr_0034_typhoea_attack1,
+    typhoeusChr_0034_typhoea_attack2,
+    typhoeusChr_0034_typhoea_attack3,
+    typhoeusChr_0034_typhoea_attack4,
+    typhoeusChr_0034_typhoea_attack5,
+    typhoeusChr_0034_typhoea_floating_attack1,
+    typhoeusChr_0034_typhoea_floating_attack2,
+    typhoeusChr_0034_typhoea_floating_attack3,
+    typhoeusChr_0034_typhoea_floating_attack4,
+    typhoeusChr_0034_typhoea_floating_attack5,
+    typhoeusChr_0034_typhoea_power_attack,
+    typhoeusChr_0034_typhoea_plunging_attack_end,
+    typhoeusChr_0034_typhoea_normal_skill_floating_start,
+    typhoeusChr_0034_typhoea_normal_skill_floating_loop,
+    typhoeusChr_0034_typhoea_normal_skill_floating_end,
+    typhoeusChr_0034_typhoea_combo_skill,
+    typhoeusChr_0034_typhoea_combo_skillfloating,
+    typhoeusChr_0034_typhoea_ultimate_skillfloating,
+    typhoeusCommon_character_perfect_dodge,
+    typhoeusChr_0034_typhoea_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        typhoeusChr_0034_typhoea_attack1,
-        typhoeusChr_0034_typhoea_attack2,
-        typhoeusChr_0034_typhoea_attack3,
-        typhoeusChr_0034_typhoea_attack4,
-        typhoeusChr_0034_typhoea_attack5,
+      skillIds: [
+        'chr_0034_typhoea_attack1',
+        'chr_0034_typhoea_attack2',
+        'chr_0034_typhoea_attack3',
+        'chr_0034_typhoea_attack4',
+        'chr_0034_typhoea_attack5',
       ],
     },
     {
       key: 'enhancedBasicAttack',
       operationType: 'basicAttack',
       nameKey: 'skillNames.floating',
-      skills: [
-        typhoeusChr_0034_typhoea_floating_attack1,
-        typhoeusChr_0034_typhoea_floating_attack2,
-        typhoeusChr_0034_typhoea_floating_attack3,
-        typhoeusChr_0034_typhoea_floating_attack4,
-        typhoeusChr_0034_typhoea_floating_attack5,
+      skillIds: [
+        'chr_0034_typhoea_floating_attack1',
+        'chr_0034_typhoea_floating_attack2',
+        'chr_0034_typhoea_floating_attack3',
+        'chr_0034_typhoea_floating_attack4',
+        'chr_0034_typhoea_floating_attack5',
       ],
     },
-    { key: 'finisher', operationType: 'finisher', skills: typhoeusChr_0034_typhoea_power_attack },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0034_typhoea_power_attack'] },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: typhoeusChr_0034_typhoea_plunging_attack_end,
+      skillIds: ['chr_0034_typhoea_plunging_attack_end'],
     },
     {
       key: 'battleSkill',
       operationType: 'battleSkill',
-      skills: typhoeusChr_0034_typhoea_normal_skill_floating_start,
-      replacementSkills: [
-        typhoeusChr_0034_typhoea_normal_skill_floating_loop,
-        typhoeusChr_0034_typhoea_normal_skill_floating_end,
-      ],
-      replacementSkillPlacements: {
-        chr_0034_typhoea_normal_skill_floating_loop: 'internal',
-        chr_0034_typhoea_normal_skill_floating_end: 'internal',
-      },
+      skillIds: ['chr_0034_typhoea_normal_skill_floating_start'],
     },
-    {
-      key: 'comboSkill',
-      operationType: 'comboSkill',
-      skills: typhoeusChr_0034_typhoea_combo_skill,
-    },
+    { key: 'comboSkill', operationType: 'comboSkill', skillIds: ['chr_0034_typhoea_combo_skill'] },
     {
       key: 'floatingComboSkill',
       operationType: 'comboSkill',
       nameKey: 'skillNames.floating',
-      skills: typhoeusChr_0034_typhoea_combo_skillfloating,
+      skillIds: ['chr_0034_typhoea_combo_skillfloating'],
     },
     {
       key: 'ultimate',
       operationType: 'ultimate',
-      skills: typhoeusChr_0034_typhoea_ultimate_skillfloating,
+      skillIds: ['chr_0034_typhoea_ultimate_skillfloating'],
     },
   ],
-  dodgeSkill: typhoeusCommon_character_perfect_dodge,
+  dodgeSkillId: 'common_character_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0034_typhoea_plunging_attack_start',
+    endSkillId: 'chr_0034_typhoea_plunging_attack_end',
+    startDurationSeconds: 0.633,
+    endDurationSeconds: 2,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
   ],
@@ -12866,38 +13182,40 @@ export const typhoeus: OperatorDefinition = {
     buff_chr_0034_typhoea_attack_3_2_damagetaken: typhoeusBuff2,
     buff_chr_0034_typhoea_attack_4_addtionalbattleshape_onenemy: typhoeusBuff3,
     buff_chr_0034_typhoea_attack_5_damagetaken: typhoeusBuff4,
-    buff_chr_0034_typhoea_combo_enemy_debuff: typhoeusBuff5,
-    buff_chr_0034_typhoea_combo_skill_arrow_hittimes: typhoeusBuff6,
-    buff_chr_0034_typhoea_combo_skill_canusefloatingskill: typhoeusBuff7,
-    buff_chr_0034_typhoea_common_arrowshow: typhoeusBuff8,
-    buff_chr_0034_typhoea_common_func_arrowreload: typhoeusBuff9,
-    buff_chr_0034_typhoea_floatingattack_damagetaken: typhoeusBuff10,
-    buff_chr_0034_typhoea_floatingmode: typhoeusBuff11,
-    buff_chr_0034_typhoea_floatingmode_blowoff_ccs: typhoeusBuff12,
-    buff_chr_0034_typhoea_normal_attack5_atb_recovered: typhoeusBuff13,
-    buff_chr_0034_typhoea_normal_skill_aimmedenemy_all: typhoeusBuff14,
-    buff_chr_0034_typhoea_normal_skill_arrow_energy: typhoeusBuff15,
-    buff_chr_0034_typhoea_normal_skill_arrow_energy_buffer_1: typhoeusBuff16,
-    buff_chr_0034_typhoea_normal_skill_arrow_energy_buffer_2: typhoeusBuff17,
-    buff_chr_0034_typhoea_normal_skill_arrow_energy_buffer_3: typhoeusBuff18,
-    buff_chr_0034_typhoea_normal_skill_arrow_num: typhoeusBuff19,
-    buff_chr_0034_typhoea_normal_skill_hitstop: typhoeusBuff20,
-    buff_chr_0034_typhoea_normal_skill_targetfind: typhoeusBuff21,
-    buff_chr_0034_typhoea_normal_start_hittimes: typhoeusBuff22,
-    buff_chr_0034_typhoea_passitive_enemy_listennaturalspellbrust: typhoeusBuff23,
-    buff_chr_0034_typhoea_passive: typhoeusBuff24,
-    buff_chr_0034_typhoea_passive_arrowrecover: typhoeusBuff25,
-    buff_chr_0034_typhoea_passive_arrowrecover_exitfight: typhoeusBuff26,
-    buff_chr_0034_typhoea_passive_increase_attackrange: typhoeusBuff27,
-    buff_chr_0034_typhoea_potential_atkup: typhoeusBuff28,
-    buff_chr_0034_typhoea_potential_decrease_sheildcd: typhoeusBuff29,
-    buff_chr_0034_typhoea_power_attack_maintarget: typhoeusBuff30,
-    buff_chr_0034_typhoea_talent_linken_sphere: typhoeusBuff31,
-    buff_chr_0034_typhoea_talent_linken_sphere_cd: typhoeusBuff32,
-    buff_chr_0034_typhoea_talent_linken_sphere_enable: typhoeusBuff33,
-    buff_chr_0034_typhoea_talent_linken_sphere_superarmour: typhoeusBuff34,
-    buff_chr_0034_typhoea_ultimate_skill_cause_subarrowrain: typhoeusBuff35,
-    buff_chr_0034_typhoea_ultimate_skill_cause_subarrowrain_timer: typhoeusBuff36,
+    buff_chr_0034_typhoea_attack_plunging_listeninterrput: typhoeusBuff5,
+    buff_chr_0034_typhoea_attack_plunging_onground: typhoeusBuff6,
+    buff_chr_0034_typhoea_combo_enemy_debuff: typhoeusBuff7,
+    buff_chr_0034_typhoea_combo_skill_arrow_hittimes: typhoeusBuff8,
+    buff_chr_0034_typhoea_combo_skill_canusefloatingskill: typhoeusBuff9,
+    buff_chr_0034_typhoea_common_arrowshow: typhoeusBuff10,
+    buff_chr_0034_typhoea_common_func_arrowreload: typhoeusBuff11,
+    buff_chr_0034_typhoea_floatingattack_damagetaken: typhoeusBuff12,
+    buff_chr_0034_typhoea_floatingmode: typhoeusBuff13,
+    buff_chr_0034_typhoea_floatingmode_blowoff_ccs: typhoeusBuff14,
+    buff_chr_0034_typhoea_normal_attack5_atb_recovered: typhoeusBuff15,
+    buff_chr_0034_typhoea_normal_skill_aimmedenemy_all: typhoeusBuff16,
+    buff_chr_0034_typhoea_normal_skill_arrow_energy: typhoeusBuff17,
+    buff_chr_0034_typhoea_normal_skill_arrow_energy_buffer_1: typhoeusBuff18,
+    buff_chr_0034_typhoea_normal_skill_arrow_energy_buffer_2: typhoeusBuff19,
+    buff_chr_0034_typhoea_normal_skill_arrow_energy_buffer_3: typhoeusBuff20,
+    buff_chr_0034_typhoea_normal_skill_arrow_num: typhoeusBuff21,
+    buff_chr_0034_typhoea_normal_skill_hitstop: typhoeusBuff22,
+    buff_chr_0034_typhoea_normal_skill_targetfind: typhoeusBuff23,
+    buff_chr_0034_typhoea_normal_start_hittimes: typhoeusBuff24,
+    buff_chr_0034_typhoea_passitive_enemy_listennaturalspellbrust: typhoeusBuff25,
+    buff_chr_0034_typhoea_passive: typhoeusBuff26,
+    buff_chr_0034_typhoea_passive_arrowrecover: typhoeusBuff27,
+    buff_chr_0034_typhoea_passive_arrowrecover_exitfight: typhoeusBuff28,
+    buff_chr_0034_typhoea_passive_increase_attackrange: typhoeusBuff29,
+    buff_chr_0034_typhoea_potential_atkup: typhoeusBuff30,
+    buff_chr_0034_typhoea_potential_decrease_sheildcd: typhoeusBuff31,
+    buff_chr_0034_typhoea_power_attack_maintarget: typhoeusBuff32,
+    buff_chr_0034_typhoea_talent_linken_sphere: typhoeusBuff33,
+    buff_chr_0034_typhoea_talent_linken_sphere_cd: typhoeusBuff34,
+    buff_chr_0034_typhoea_talent_linken_sphere_enable: typhoeusBuff35,
+    buff_chr_0034_typhoea_talent_linken_sphere_superarmour: typhoeusBuff36,
+    buff_chr_0034_typhoea_ultimate_skill_cause_subarrowrain: typhoeusBuff37,
+    buff_chr_0034_typhoea_ultimate_skill_cause_subarrowrain_timer: typhoeusBuff38,
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0034_typhoea_arrow: {
@@ -13181,6 +13499,26 @@ export const typhoeus: OperatorDefinition = {
           macros: {},
         },
       },
+    },
+    abilityentity_chr_0034_typhoea_arrow_onground: {
+      faction: 'good',
+      bornTags: [
+        'SelectCategory/Unmarkable',
+        'Immune/Damage',
+        'Skill/Character/chr_0034_typhoea/plunging_attack_rune',
+      ],
+      lifetime: { kind: 'limited', durationSeconds: 5 },
+      maxStackingCount: 1,
+    },
+    abilityentity_chr_0034_typhoea_rune_1_onground: {
+      faction: 'good',
+      bornTags: [
+        'SelectCategory/Unmarkable',
+        'Immune/Damage',
+        'Skill/Character/chr_0034_typhoea/plunging_attack_rune',
+      ],
+      lifetime: { kind: 'limited', durationSeconds: 5 },
+      maxStackingCount: 1,
     },
     abilityentity_chr_0034_typhoea_ultimateskill_arrowrain_sub: {
       faction: 'good',

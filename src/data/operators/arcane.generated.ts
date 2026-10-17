@@ -8,6 +8,625 @@ import type {
   ComboSkillConditionDefinition,
 } from '../../../packages/game-data-contract/src/operators';
 import type { OperatorDefinition } from '../../../packages/game-data-contract/src/operators';
+export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
+  main: {
+    nodes: {
+      calculateActionValue_15: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'rate_final',
+            operation: 'add',
+            left: { kind: 'valueNode', nodeId: 'data_1' },
+            right: { kind: 'valueNode', nodeId: 'data_2' },
+          },
+        },
+        next: null,
+      },
+      calculateActionValue_16: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'rate_final',
+            operation: 'multiply',
+            left: { kind: 'valueNode', nodeId: 'data_3' },
+            right: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'calculateActionValue_15',
+      },
+      ifElse_19: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
+          whenTrue: { $sequence: 'calculateActionValue_15' },
+          whenFalse: { $sequence: 'calculateActionValue_16' },
+        },
+        next: null,
+      },
+      calculateActionValue_20: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'rate_final',
+            operation: 'multiply',
+            left: { kind: 'valueNode', nodeId: 'data_7' },
+            right: { kind: 'valueNode', nodeId: 'data_8' },
+          },
+        },
+        next: 'ifElse_19',
+      },
+      storeSourceAttributeValue_21: {
+        action: {
+          kind: 'storeSourceAttributeValue',
+          parameters: {
+            attribute: { kind: 'specific', key: 'will' },
+            stage: 'armedNonConverted',
+            useFloor: false,
+            divisor: { kind: 'constant', value: 1 },
+            multiplier: { kind: 'constant', value: 1 },
+            base: { kind: 'constant', value: 0 },
+            targetKey: 'will',
+          },
+        },
+        next: 'calculateActionValue_20',
+      },
+      modifyActionValue_18: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'rate_final',
+            operation: 'assign',
+            value: { kind: 'valueNode', nodeId: 'data_2' },
+          },
+        },
+        next: null,
+      },
+      mergeContextTargets_32: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: {
+            saveToContextKey: 'trigger',
+            sources: [{ kind: 'target', target: 'enemy' }],
+          },
+        },
+        next: null,
+      },
+      ifElse_33: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
+          whenTrue: { $sequence: 'mergeContextTargets_32' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      startTimeDilation_34: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'global',
+            durationSeconds: { kind: 'constant', value: 0.033 },
+            slot: 'unassigned',
+            priority: 30,
+            curve: { kind: 'named', key: 'RESETto1' },
+            finishByAction: false,
+            ignoredTargets: [],
+            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+          },
+        },
+        next: null,
+      },
+      setAbilityEntityRemainingDuration_35: {
+        action: {
+          kind: 'setAbilityEntityRemainingDuration',
+          parameters: {
+            target: { kind: 'context', key: 'bunshin4' },
+            value: { kind: 'constant', value: 0.5 },
+          },
+        },
+        next: null,
+      },
+      setAbilityEntityRemainingDuration_36: {
+        action: {
+          kind: 'setAbilityEntityRemainingDuration',
+          parameters: {
+            target: { kind: 'context', key: 'bunshin3' },
+            value: { kind: 'constant', value: 0.5 },
+          },
+        },
+        next: 'setAbilityEntityRemainingDuration_35',
+      },
+      setAbilityEntityRemainingDuration_37: {
+        action: {
+          kind: 'setAbilityEntityRemainingDuration',
+          parameters: {
+            target: { kind: 'context', key: 'bunshin2' },
+            value: { kind: 'constant', value: 0.5 },
+          },
+        },
+        next: 'setAbilityEntityRemainingDuration_36',
+      },
+      setAbilityEntityRemainingDuration_38: {
+        action: {
+          kind: 'setAbilityEntityRemainingDuration',
+          parameters: {
+            target: { kind: 'context', key: 'bunshin1' },
+            value: { kind: 'constant', value: 0.5 },
+          },
+        },
+        next: 'setAbilityEntityRemainingDuration_37',
+      },
+      spawnAbilityEntity_39: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'fixed', target: 'enemy' },
+            abilityEntityId: 'abilityentity_chr_0032_lizhiyan_combo_skill',
+            childSkillId: 'chr_032_lizhiyan_combo_skill_abilityentity_seal',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+            target: { kind: 'context', key: 'FR' },
+            overrideDurationSeconds: { kind: 'constant', value: 40 },
+            saveToContextKey: 'bunshin4',
+            blackboardAssignments: {
+              EntityBB_wisd_greater_will: { kind: 'valueNode', nodeId: 'data_10' },
+            },
+          },
+        },
+        next: 'setAbilityEntityRemainingDuration_38',
+      },
+      spawnAbilityEntity_40: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'fixed', target: 'enemy' },
+            abilityEntityId: 'abilityentity_chr_0032_lizhiyan_combo_skill',
+            childSkillId: 'chr_032_lizhiyan_combo_skill_abilityentity_seal',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+            target: { kind: 'context', key: 'FL' },
+            overrideDurationSeconds: { kind: 'constant', value: 40 },
+            saveToContextKey: 'bunshin3',
+            blackboardAssignments: {
+              EntityBB_wisd_greater_will: { kind: 'valueNode', nodeId: 'data_10' },
+            },
+          },
+        },
+        next: 'spawnAbilityEntity_39',
+      },
+      spawnAbilityEntity_41: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'fixed', target: 'enemy' },
+            abilityEntityId: 'abilityentity_chr_0032_lizhiyan_combo_skill',
+            childSkillId: 'chr_032_lizhiyan_combo_skill_abilityentity_seal',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+            target: { kind: 'context', key: 'BR' },
+            overrideDurationSeconds: { kind: 'constant', value: 40 },
+            saveToContextKey: 'bunshin2',
+            blackboardAssignments: {
+              EntityBB_wisd_greater_will: { kind: 'valueNode', nodeId: 'data_10' },
+            },
+          },
+        },
+        next: 'spawnAbilityEntity_40',
+      },
+      spawnAbilityEntity_42: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'fixed', target: 'enemy' },
+            abilityEntityId: 'abilityentity_chr_0032_lizhiyan_combo_skill',
+            childSkillId: 'chr_032_lizhiyan_combo_skill_abilityentity_seal',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+            target: { kind: 'context', key: 'BL' },
+            overrideDurationSeconds: { kind: 'constant', value: 40 },
+            saveToContextKey: 'bunshin1',
+            blackboardAssignments: {
+              EntityBB_wisd_greater_will: { kind: 'valueNode', nodeId: 'data_10' },
+            },
+          },
+        },
+        next: 'spawnAbilityEntity_41',
+      },
+      createSpatialPointTargets_43: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'FR', count: { kind: 'constant', value: 1 } },
+        },
+        next: 'spawnAbilityEntity_42',
+      },
+      createSpatialPointTargets_44: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'FL', count: { kind: 'constant', value: 1 } },
+        },
+        next: 'createSpatialPointTargets_43',
+      },
+      createSpatialPointTargets_45: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'BR', count: { kind: 'constant', value: 1 } },
+        },
+        next: 'createSpatialPointTargets_44',
+      },
+      createSpatialPointTargets_46: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'BL', count: { kind: 'constant', value: 1 } },
+        },
+        next: 'createSpatialPointTargets_45',
+      },
+      checkCondition_47: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
+        },
+        next: 'createSpatialPointTargets_46',
+      },
+      setAbilityEntityRemainingDuration_49: {
+        action: {
+          kind: 'setAbilityEntityRemainingDuration',
+          parameters: {
+            target: { kind: 'context', key: 'bunshin4' },
+            value: { kind: 'constant', value: 30 },
+          },
+        },
+        next: null,
+      },
+      setAbilityEntityRemainingDuration_50: {
+        action: {
+          kind: 'setAbilityEntityRemainingDuration',
+          parameters: {
+            target: { kind: 'context', key: 'bunshin3' },
+            value: { kind: 'constant', value: 30 },
+          },
+        },
+        next: 'setAbilityEntityRemainingDuration_49',
+      },
+      setAbilityEntityRemainingDuration_51: {
+        action: {
+          kind: 'setAbilityEntityRemainingDuration',
+          parameters: {
+            target: { kind: 'context', key: 'bunshin2' },
+            value: { kind: 'constant', value: 30 },
+          },
+        },
+        next: 'setAbilityEntityRemainingDuration_50',
+      },
+      setAbilityEntityRemainingDuration_52: {
+        action: {
+          kind: 'setAbilityEntityRemainingDuration',
+          parameters: {
+            target: { kind: 'context', key: 'bunshin1' },
+            value: { kind: 'constant', value: 30 },
+          },
+        },
+        next: 'setAbilityEntityRemainingDuration_51',
+      },
+      ifElse_53: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_12' },
+          whenTrue: { $sequence: 'setAbilityEntityRemainingDuration_52' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      applyBuff_54: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0032_lizhiyan_combo_skill_precheck' }],
+            targets: { kind: 'fixed', target: 'enemy' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          },
+        },
+        next: null,
+      },
+      calculateActionValue_55: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'duration_total',
+            operation: 'add',
+            left: { kind: 'valueNode', nodeId: 'data_13' },
+            right: { kind: 'constant', value: 0.067 },
+          },
+        },
+        next: null,
+      },
+      applyBuff_56: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_chr_0032_lizhiyan_combo_skill_seal_total',
+                copiedBlackboardAssignments: {
+                  duration_total: 'duration_total',
+                  duration_final: 'duration_final',
+                  rate_final: 'rate_final',
+                  trigger_time: 'trigger_time',
+                  isWisd: 'EntityBB_wisd_greater_will',
+                  atk_scale_boom: 'atk_scale_boom',
+                  poise_boom: 'poise_boom',
+                  duration_seal2: 'duration',
+                  atk_scale_touch: 'atk_scale_touch',
+                  poise_touch: 'poise_touch',
+                  usp: 'usp',
+                  atb_return_wisd: 'atb_return_wisd',
+                },
+              },
+            ],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_57: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'global',
+            durationSeconds: { kind: 'constant', value: 0.6 },
+            slot: 'unassigned',
+            priority: 30,
+            curve: { kind: 'named', key: 'ComboSkill' },
+            finishByAction: false,
+            ignoredTargets: ['caster'],
+            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+          },
+        },
+        next: null,
+      },
+      findCharacterTeamTargets_60: {
+        action: {
+          kind: 'findCharacterTeamTargets',
+          parameters: { saveToContextKey: 'mainchar', selection: { kind: 'controlledOperator' } },
+        },
+        next: null,
+      },
+      ifElse_61: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_14' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: 'findCharacterTeamTargets_60' },
+        },
+        next: null,
+      },
+      ifElse_opt1: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_15' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: null },
+        },
+        next: 'storeSourceAttributeValue_21',
+      },
+      ifElse_opt2: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_17' },
+          whenTrue: { $sequence: 'modifyActionValue_18' },
+          whenFalse: { $sequence: 'ifElse_opt1' },
+        },
+        next: null,
+      },
+      calculateActionValue_opt3: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'trigger_time',
+            operation: 'add',
+            left: { kind: 'valueNode', nodeId: 'data_13' },
+            right: { kind: 'constant', value: -0.5 },
+          },
+        },
+        next: 'ifElse_opt2',
+      },
+      calculateActionValue_opt4: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'duration_final',
+            operation: 'add',
+            left: { kind: 'valueNode', nodeId: 'data_18' },
+            right: { kind: 'valueNode', nodeId: 'data_19' },
+          },
+        },
+        next: 'calculateActionValue_opt3',
+      },
+      calculateActionValue_opt5: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'duration',
+            operation: 'add',
+            left: { kind: 'constant', value: 0 },
+            right: { kind: 'valueNode', nodeId: 'data_20' },
+          },
+        },
+        next: 'calculateActionValue_opt4',
+      },
+      ifElse_opt6: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_21' },
+          whenTrue: { $sequence: 'calculateActionValue_opt4' },
+          whenFalse: { $sequence: 'calculateActionValue_opt5' },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'rate_final' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'rate_pre' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'max_spell_vul_will' } },
+      data_4: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'rate_final', fallback: 0 },
+      },
+      data_5: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'max_spell_vul_will', fallback: 0 },
+      },
+      data_6: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_4' },
+          operator: 'lessOrEqual',
+          right: { kind: 'valueNode', nodeId: 'data_5' },
+        },
+      },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'spell_vul_per_will' } },
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'will' } },
+      data_9: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_10: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'EntityBB_wisd_greater_will' },
+      },
+      data_11: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: true,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_12: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: true,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'duration_final' } },
+      data_14: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
+      },
+      data_15: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_16: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'EntityBB_wisd_greater_will', fallback: 0 },
+      },
+      data_17: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_16' },
+          operator: 'greaterOrEqual',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'duration_pre' } },
+      data_19: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
+      data_20: { type: 'number', expression: { kind: 'blackboard', key: 'duration_will' } },
+      data_21: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_16' },
+          operator: 'greaterOrEqual',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const arcaneChr_0032_lizhiyan_combo_skill: SkillDefinition = {
+  key: 'chr_0032_lizhiyan_combo_skill',
+  useSkillGroupIcon: true,
+  element: 'nature',
+  blackboard: {
+    atb_return_wisd: [28, 28, 28, 28, 28, 28, 28, 28, 28, 30, 30, 30],
+    atk_scale_boom: [0.53, 0.59, 0.64, 0.69, 0.75, 0.8, 0.85, 0.91, 0.96, 1.03, 1.11, 1.2],
+    atk_scale_laser1: [0.27, 0.29, 0.32, 0.35, 0.37, 0.4, 0.43, 0.45, 0.48, 0.51, 0.55, 0.6],
+    atk_scale_laser2: [1.15, 1.27, 1.38, 1.5, 1.62, 1.73, 1.85, 1.96, 2.08, 2.22, 2.39, 2.6],
+    atk_scale_touch: [0.35, 0.39, 0.42, 0.46, 0.5, 0.53, 0.57, 0.6, 0.64, 0.68, 0.73, 0.8],
+    cd_reduce: 0,
+    duration: 4,
+    duration_extra: 6,
+    duration_final: 0,
+    duration_pre: 0.633,
+    duration_total: 0,
+    duration_will: 6,
+    max_spell_vul_will: [0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.075, 0.075, 0.075, 0.08],
+    poise_boom: 5,
+    poise_laser: 0,
+    poise_touch: 5,
+    rate: 0.4,
+    rate_final: 0,
+    rate_pre: 0.04,
+    spell_vul_per_will: 0.000125,
+    trigger_time: 0,
+    usp: 10,
+    will: 0,
+  },
+  timelineBlockFrames: 24,
+  naturalDurationFrames: 122,
+  exclusiveFrame: 23,
+  offsetRecordFrame: 0,
+  dontInterruptCombo: true,
+  inputWindows: {
+    allowedNextSkills: [
+      { startFrame: 16, endFrame: 39, skillIds: ['chr_0032_lizhiyan_normal_skill'] },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_opt6' } },
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'ifElse_33' } },
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'startTimeDilation_34' } },
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'checkCondition_47' } },
+    { startFrame: 9, endFrame: 12, sequence: { $sequence: 'ifElse_53' } },
+    { startFrame: 0, endFrame: 11, sequence: { $sequence: 'applyBuff_54' } },
+    { startFrame: 9, endFrame: 12, sequence: { $sequence: 'calculateActionValue_55' } },
+    { startFrame: 9, endFrame: 30, sequence: { $sequence: 'applyBuff_56' } },
+    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_57' } },
+    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'ifElse_61' } },
+  ],
+  smartTarget: 'trigger',
+  cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 570, 570, 570, 540],
+  skillType: 'comboSkill',
+  levelSource: 'comboSkill',
+  nativeSkillType: 'comboSkill',
+  actionGraph: arcaneChr_0032_lizhiyan_combo_skillActionGraph,
+};
+
 export const arcaneChr_0032_lizhiyan_attack1ActionGraph = {
   main: {
     nodes: {
@@ -951,6 +1570,7 @@ export const arcaneChr_0032_lizhiyan_power_attack: SkillDefinition = {
   naturalDurationFrames: 163,
   exclusiveFrame: 51,
   offsetRecordFrame: 21,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -1104,6 +1724,7 @@ export const arcaneChr_0032_lizhiyan_normal_skill: SkillDefinition = {
   naturalDurationFrames: 225,
   exclusiveFrame: 32,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 24, endFrame: 56, skillIds: ['chr_0032_lizhiyan_combo_skill'] },
@@ -1120,624 +1741,6 @@ export const arcaneChr_0032_lizhiyan_normal_skill: SkillDefinition = {
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
   actionGraph: arcaneChr_0032_lizhiyan_normal_skillActionGraph,
-};
-
-export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
-  main: {
-    nodes: {
-      calculateActionValue_15: {
-        action: {
-          kind: 'calculateActionValue',
-          parameters: {
-            key: 'rate_final',
-            operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_1' },
-            right: { kind: 'valueNode', nodeId: 'data_2' },
-          },
-        },
-        next: null,
-      },
-      calculateActionValue_16: {
-        action: {
-          kind: 'calculateActionValue',
-          parameters: {
-            key: 'rate_final',
-            operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_3' },
-            right: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'calculateActionValue_15',
-      },
-      ifElse_19: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_6' },
-          whenTrue: { $sequence: 'calculateActionValue_15' },
-          whenFalse: { $sequence: 'calculateActionValue_16' },
-        },
-        next: null,
-      },
-      calculateActionValue_20: {
-        action: {
-          kind: 'calculateActionValue',
-          parameters: {
-            key: 'rate_final',
-            operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_7' },
-            right: { kind: 'valueNode', nodeId: 'data_8' },
-          },
-        },
-        next: 'ifElse_19',
-      },
-      storeSourceAttributeValue_21: {
-        action: {
-          kind: 'storeSourceAttributeValue',
-          parameters: {
-            attribute: { kind: 'specific', key: 'will' },
-            stage: 'armedNonConverted',
-            useFloor: false,
-            divisor: { kind: 'constant', value: 1 },
-            multiplier: { kind: 'constant', value: 1 },
-            base: { kind: 'constant', value: 0 },
-            targetKey: 'will',
-          },
-        },
-        next: 'calculateActionValue_20',
-      },
-      modifyActionValue_18: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'rate_final',
-            operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_2' },
-          },
-        },
-        next: null,
-      },
-      mergeContextTargets_32: {
-        action: {
-          kind: 'mergeContextTargets',
-          parameters: {
-            saveToContextKey: 'trigger',
-            sources: [{ kind: 'target', target: 'enemy' }],
-          },
-        },
-        next: null,
-      },
-      ifElse_33: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_9' },
-          whenTrue: { $sequence: 'mergeContextTargets_32' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      startTimeDilation_34: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'global',
-            durationSeconds: { kind: 'constant', value: 0.033 },
-            slot: 'unassigned',
-            priority: 30,
-            curve: { kind: 'named', key: 'RESETto1' },
-            finishByAction: false,
-            ignoredTargets: [],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
-          },
-        },
-        next: null,
-      },
-      setAbilityEntityRemainingDuration_35: {
-        action: {
-          kind: 'setAbilityEntityRemainingDuration',
-          parameters: {
-            target: { kind: 'context', key: 'bunshin4' },
-            value: { kind: 'constant', value: 0.5 },
-          },
-        },
-        next: null,
-      },
-      setAbilityEntityRemainingDuration_36: {
-        action: {
-          kind: 'setAbilityEntityRemainingDuration',
-          parameters: {
-            target: { kind: 'context', key: 'bunshin3' },
-            value: { kind: 'constant', value: 0.5 },
-          },
-        },
-        next: 'setAbilityEntityRemainingDuration_35',
-      },
-      setAbilityEntityRemainingDuration_37: {
-        action: {
-          kind: 'setAbilityEntityRemainingDuration',
-          parameters: {
-            target: { kind: 'context', key: 'bunshin2' },
-            value: { kind: 'constant', value: 0.5 },
-          },
-        },
-        next: 'setAbilityEntityRemainingDuration_36',
-      },
-      setAbilityEntityRemainingDuration_38: {
-        action: {
-          kind: 'setAbilityEntityRemainingDuration',
-          parameters: {
-            target: { kind: 'context', key: 'bunshin1' },
-            value: { kind: 'constant', value: 0.5 },
-          },
-        },
-        next: 'setAbilityEntityRemainingDuration_37',
-      },
-      spawnAbilityEntity_39: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            bornAt: { kind: 'fixed', target: 'enemy' },
-            abilityEntityId: 'abilityentity_chr_0032_lizhiyan_combo_skill',
-            childSkillId: 'chr_032_lizhiyan_combo_skill_abilityentity_seal',
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: false,
-            target: { kind: 'context', key: 'FR' },
-            overrideDurationSeconds: { kind: 'constant', value: 40 },
-            saveToContextKey: 'bunshin4',
-            blackboardAssignments: {
-              EntityBB_wisd_greater_will: { kind: 'valueNode', nodeId: 'data_10' },
-            },
-          },
-        },
-        next: 'setAbilityEntityRemainingDuration_38',
-      },
-      spawnAbilityEntity_40: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            bornAt: { kind: 'fixed', target: 'enemy' },
-            abilityEntityId: 'abilityentity_chr_0032_lizhiyan_combo_skill',
-            childSkillId: 'chr_032_lizhiyan_combo_skill_abilityentity_seal',
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: false,
-            target: { kind: 'context', key: 'FL' },
-            overrideDurationSeconds: { kind: 'constant', value: 40 },
-            saveToContextKey: 'bunshin3',
-            blackboardAssignments: {
-              EntityBB_wisd_greater_will: { kind: 'valueNode', nodeId: 'data_10' },
-            },
-          },
-        },
-        next: 'spawnAbilityEntity_39',
-      },
-      spawnAbilityEntity_41: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            bornAt: { kind: 'fixed', target: 'enemy' },
-            abilityEntityId: 'abilityentity_chr_0032_lizhiyan_combo_skill',
-            childSkillId: 'chr_032_lizhiyan_combo_skill_abilityentity_seal',
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: false,
-            target: { kind: 'context', key: 'BR' },
-            overrideDurationSeconds: { kind: 'constant', value: 40 },
-            saveToContextKey: 'bunshin2',
-            blackboardAssignments: {
-              EntityBB_wisd_greater_will: { kind: 'valueNode', nodeId: 'data_10' },
-            },
-          },
-        },
-        next: 'spawnAbilityEntity_40',
-      },
-      spawnAbilityEntity_42: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            bornAt: { kind: 'fixed', target: 'enemy' },
-            abilityEntityId: 'abilityentity_chr_0032_lizhiyan_combo_skill',
-            childSkillId: 'chr_032_lizhiyan_combo_skill_abilityentity_seal',
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: false,
-            target: { kind: 'context', key: 'BL' },
-            overrideDurationSeconds: { kind: 'constant', value: 40 },
-            saveToContextKey: 'bunshin1',
-            blackboardAssignments: {
-              EntityBB_wisd_greater_will: { kind: 'valueNode', nodeId: 'data_10' },
-            },
-          },
-        },
-        next: 'spawnAbilityEntity_41',
-      },
-      createSpatialPointTargets_43: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'FR', count: { kind: 'constant', value: 1 } },
-        },
-        next: 'spawnAbilityEntity_42',
-      },
-      createSpatialPointTargets_44: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'FL', count: { kind: 'constant', value: 1 } },
-        },
-        next: 'createSpatialPointTargets_43',
-      },
-      createSpatialPointTargets_45: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'BR', count: { kind: 'constant', value: 1 } },
-        },
-        next: 'createSpatialPointTargets_44',
-      },
-      createSpatialPointTargets_46: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'BL', count: { kind: 'constant', value: 1 } },
-        },
-        next: 'createSpatialPointTargets_45',
-      },
-      checkCondition_47: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
-        },
-        next: 'createSpatialPointTargets_46',
-      },
-      setAbilityEntityRemainingDuration_49: {
-        action: {
-          kind: 'setAbilityEntityRemainingDuration',
-          parameters: {
-            target: { kind: 'context', key: 'bunshin4' },
-            value: { kind: 'constant', value: 30 },
-          },
-        },
-        next: null,
-      },
-      setAbilityEntityRemainingDuration_50: {
-        action: {
-          kind: 'setAbilityEntityRemainingDuration',
-          parameters: {
-            target: { kind: 'context', key: 'bunshin3' },
-            value: { kind: 'constant', value: 30 },
-          },
-        },
-        next: 'setAbilityEntityRemainingDuration_49',
-      },
-      setAbilityEntityRemainingDuration_51: {
-        action: {
-          kind: 'setAbilityEntityRemainingDuration',
-          parameters: {
-            target: { kind: 'context', key: 'bunshin2' },
-            value: { kind: 'constant', value: 30 },
-          },
-        },
-        next: 'setAbilityEntityRemainingDuration_50',
-      },
-      setAbilityEntityRemainingDuration_52: {
-        action: {
-          kind: 'setAbilityEntityRemainingDuration',
-          parameters: {
-            target: { kind: 'context', key: 'bunshin1' },
-            value: { kind: 'constant', value: 30 },
-          },
-        },
-        next: 'setAbilityEntityRemainingDuration_51',
-      },
-      ifElse_53: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_12' },
-          whenTrue: { $sequence: 'setAbilityEntityRemainingDuration_52' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      applyBuff_54: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0032_lizhiyan_combo_skill_precheck' }],
-            targets: { kind: 'fixed', target: 'enemy' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-            finishByAction: true,
-          },
-        },
-        next: null,
-      },
-      calculateActionValue_55: {
-        action: {
-          kind: 'calculateActionValue',
-          parameters: {
-            key: 'duration_total',
-            operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_13' },
-            right: { kind: 'constant', value: 0.067 },
-          },
-        },
-        next: null,
-      },
-      applyBuff_56: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [
-              {
-                buffId: 'buff_chr_0032_lizhiyan_combo_skill_seal_total',
-                copiedBlackboardAssignments: {
-                  duration_total: 'duration_total',
-                  duration_final: 'duration_final',
-                  rate_final: 'rate_final',
-                  trigger_time: 'trigger_time',
-                  isWisd: 'EntityBB_wisd_greater_will',
-                  atk_scale_boom: 'atk_scale_boom',
-                  poise_boom: 'poise_boom',
-                  duration_seal2: 'duration',
-                  atk_scale_touch: 'atk_scale_touch',
-                  poise_touch: 'poise_touch',
-                  usp: 'usp',
-                  atb_return_wisd: 'atb_return_wisd',
-                },
-              },
-            ],
-            targets: { kind: 'source' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-      startTimeDilation_57: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'global',
-            durationSeconds: { kind: 'constant', value: 0.6 },
-            slot: 'unassigned',
-            priority: 30,
-            curve: { kind: 'named', key: 'ComboSkill' },
-            finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
-          },
-        },
-        next: null,
-      },
-      findCharacterTeamTargets_60: {
-        action: {
-          kind: 'findCharacterTeamTargets',
-          parameters: { saveToContextKey: 'mainchar', selection: { kind: 'controlledOperator' } },
-        },
-        next: null,
-      },
-      ifElse_61: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_14' },
-          whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'findCharacterTeamTargets_60' },
-        },
-        next: null,
-      },
-      ifElse_opt1: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_15' },
-          whenTrue: { $sequence: null },
-          whenFalse: { $sequence: null },
-        },
-        next: 'storeSourceAttributeValue_21',
-      },
-      ifElse_opt2: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_17' },
-          whenTrue: { $sequence: 'modifyActionValue_18' },
-          whenFalse: { $sequence: 'ifElse_opt1' },
-        },
-        next: null,
-      },
-      calculateActionValue_opt3: {
-        action: {
-          kind: 'calculateActionValue',
-          parameters: {
-            key: 'trigger_time',
-            operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_13' },
-            right: { kind: 'constant', value: -0.5 },
-          },
-        },
-        next: 'ifElse_opt2',
-      },
-      calculateActionValue_opt4: {
-        action: {
-          kind: 'calculateActionValue',
-          parameters: {
-            key: 'duration_final',
-            operation: 'add',
-            left: { kind: 'valueNode', nodeId: 'data_18' },
-            right: { kind: 'valueNode', nodeId: 'data_19' },
-          },
-        },
-        next: 'calculateActionValue_opt3',
-      },
-      calculateActionValue_opt5: {
-        action: {
-          kind: 'calculateActionValue',
-          parameters: {
-            key: 'duration',
-            operation: 'add',
-            left: { kind: 'constant', value: 0 },
-            right: { kind: 'valueNode', nodeId: 'data_20' },
-          },
-        },
-        next: 'calculateActionValue_opt4',
-      },
-      ifElse_opt6: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_21' },
-          whenTrue: { $sequence: 'calculateActionValue_opt4' },
-          whenFalse: { $sequence: 'calculateActionValue_opt5' },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'rate_final' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'rate_pre' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'max_spell_vul_will' } },
-      data_4: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'rate_final', fallback: 0 },
-      },
-      data_5: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'max_spell_vul_will', fallback: 0 },
-      },
-      data_6: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_4' },
-          operator: 'lessOrEqual',
-          right: { kind: 'valueNode', nodeId: 'data_5' },
-        },
-      },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'spell_vul_per_will' } },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'will' } },
-      data_9: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_10: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'EntityBB_wisd_greater_will' },
-      },
-      data_11: {
-        type: 'boolean',
-        expression: {
-          kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          containsHittableTarget: false,
-          excludeDeadEntity: true,
-          operator: 'greaterOrEqual',
-          value: 1,
-        },
-      },
-      data_12: {
-        type: 'boolean',
-        expression: {
-          kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          containsHittableTarget: false,
-          excludeDeadEntity: true,
-          operator: 'greaterOrEqual',
-          value: 1,
-        },
-      },
-      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'duration_final' } },
-      data_14: {
-        type: 'boolean',
-        expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
-      },
-      data_15: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_16: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'EntityBB_wisd_greater_will', fallback: 0 },
-      },
-      data_17: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_16' },
-          operator: 'greaterOrEqual',
-          right: { kind: 'constant', value: 1 },
-        },
-      },
-      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'duration_pre' } },
-      data_19: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
-      data_20: { type: 'number', expression: { kind: 'blackboard', key: 'duration_will' } },
-      data_21: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_16' },
-          operator: 'greaterOrEqual',
-          right: { kind: 'constant', value: 1 },
-        },
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const arcaneChr_0032_lizhiyan_combo_skill: SkillDefinition = {
-  key: 'chr_0032_lizhiyan_combo_skill',
-  useSkillGroupIcon: true,
-  element: 'nature',
-  blackboard: {
-    atb_return_wisd: [28, 28, 28, 28, 28, 28, 28, 28, 28, 30, 30, 30],
-    atk_scale_boom: [0.53, 0.59, 0.64, 0.69, 0.75, 0.8, 0.85, 0.91, 0.96, 1.03, 1.11, 1.2],
-    atk_scale_laser1: [0.27, 0.29, 0.32, 0.35, 0.37, 0.4, 0.43, 0.45, 0.48, 0.51, 0.55, 0.6],
-    atk_scale_laser2: [1.15, 1.27, 1.38, 1.5, 1.62, 1.73, 1.85, 1.96, 2.08, 2.22, 2.39, 2.6],
-    atk_scale_touch: [0.35, 0.39, 0.42, 0.46, 0.5, 0.53, 0.57, 0.6, 0.64, 0.68, 0.73, 0.8],
-    cd_reduce: 0,
-    duration: 4,
-    duration_extra: 6,
-    duration_final: 0,
-    duration_pre: 0.633,
-    duration_total: 0,
-    duration_will: 6,
-    max_spell_vul_will: [0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.07, 0.075, 0.075, 0.075, 0.08],
-    poise_boom: 5,
-    poise_laser: 0,
-    poise_touch: 5,
-    rate: 0.4,
-    rate_final: 0,
-    rate_pre: 0.04,
-    spell_vul_per_will: 0.000125,
-    trigger_time: 0,
-    usp: 10,
-    will: 0,
-  },
-  timelineBlockFrames: 24,
-  naturalDurationFrames: 122,
-  exclusiveFrame: 23,
-  offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 16, endFrame: 39, skillIds: ['chr_0032_lizhiyan_normal_skill'] },
-    ],
-  },
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_opt6' } },
-    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'ifElse_33' } },
-    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'startTimeDilation_34' } },
-    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'checkCondition_47' } },
-    { startFrame: 9, endFrame: 12, sequence: { $sequence: 'ifElse_53' } },
-    { startFrame: 0, endFrame: 11, sequence: { $sequence: 'applyBuff_54' } },
-    { startFrame: 9, endFrame: 12, sequence: { $sequence: 'calculateActionValue_55' } },
-    { startFrame: 9, endFrame: 30, sequence: { $sequence: 'applyBuff_56' } },
-    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_57' } },
-    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'ifElse_61' } },
-  ],
-  smartTarget: 'trigger',
-  cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 570, 570, 570, 540],
-  skillType: 'comboSkill',
-  levelSource: 'comboSkill',
-  nativeSkillType: 'comboSkill',
-  actionGraph: arcaneChr_0032_lizhiyan_combo_skillActionGraph,
 };
 
 export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
@@ -3226,6 +3229,28 @@ export const arcaneCommon_character_perfect_dodge: SkillDefinition = {
   defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
+};
+
+export const arcaneChr_0032_lizhiyan_plunging_attack_startActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const arcaneChr_0032_lizhiyan_plunging_attack_start: SkillDefinition = {
+  actionGraph: arcaneChr_0032_lizhiyan_plunging_attack_startActionGraph,
+  key: 'chr_0032_lizhiyan_plunging_attack_start',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
 };
 
 const arcanePassive1ActionGraph = {
@@ -7255,16 +7280,31 @@ export const arcane: OperatorDefinition = {
   },
   trustAttributeBonus: { values: [8, 10, 10, 15], attributes: ['intellect', 'will'] },
   passiveUi: { kind: 'numeric', appearance: 'arcaneSigils', maximum: 3 },
+  skills: [
+    arcaneChr_0032_lizhiyan_combo_skill,
+    arcaneChr_0032_lizhiyan_attack1,
+    arcaneChr_0032_lizhiyan_attack2,
+    arcaneChr_0032_lizhiyan_attack3,
+    arcaneChr_0032_lizhiyan_attack4,
+    arcaneChr_0032_lizhiyan_attack5,
+    arcaneChr_0032_lizhiyan_power_attack,
+    arcaneChr_0032_lizhiyan_plunging_attack_end,
+    arcaneChr_0032_lizhiyan_normal_skill,
+    arcaneChr_0032_lizhiyan_ultimate_skill,
+    arcaneChr_0032_lizhiyan_ultimate_skill2,
+    arcaneCommon_character_perfect_dodge,
+    arcaneChr_0032_lizhiyan_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        arcaneChr_0032_lizhiyan_attack1,
-        arcaneChr_0032_lizhiyan_attack2,
-        arcaneChr_0032_lizhiyan_attack3,
-        arcaneChr_0032_lizhiyan_attack4,
-        arcaneChr_0032_lizhiyan_attack5,
+      skillIds: [
+        'chr_0032_lizhiyan_attack1',
+        'chr_0032_lizhiyan_attack2',
+        'chr_0032_lizhiyan_attack3',
+        'chr_0032_lizhiyan_attack4',
+        'chr_0032_lizhiyan_attack5',
       ],
       presentationVariants: [
         {
@@ -7290,7 +7330,7 @@ export const arcane: OperatorDefinition = {
     {
       key: 'finisher',
       operationType: 'finisher',
-      skills: arcaneChr_0032_lizhiyan_power_attack,
+      skillIds: ['chr_0032_lizhiyan_power_attack'],
       presentationVariants: [
         {
           key: 'int',
@@ -7315,7 +7355,7 @@ export const arcane: OperatorDefinition = {
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: arcaneChr_0032_lizhiyan_plunging_attack_end,
+      skillIds: ['chr_0032_lizhiyan_plunging_attack_end'],
       presentationVariants: [
         {
           key: 'int',
@@ -7340,7 +7380,7 @@ export const arcane: OperatorDefinition = {
     {
       key: 'battleSkill',
       operationType: 'battleSkill',
-      skills: arcaneChr_0032_lizhiyan_normal_skill,
+      skillIds: ['chr_0032_lizhiyan_normal_skill'],
       presentationVariants: [
         {
           key: 'int',
@@ -7367,7 +7407,7 @@ export const arcane: OperatorDefinition = {
     {
       key: 'comboSkill',
       operationType: 'comboSkill',
-      skills: arcaneChr_0032_lizhiyan_combo_skill,
+      skillIds: ['chr_0032_lizhiyan_combo_skill'],
       presentationVariants: [
         {
           key: 'int',
@@ -7394,12 +7434,11 @@ export const arcane: OperatorDefinition = {
     {
       key: 'ultimate',
       operationType: 'ultimate',
-      skills: arcaneChr_0032_lizhiyan_ultimate_skill,
+      skillIds: ['chr_0032_lizhiyan_ultimate_skill', 'chr_0032_lizhiyan_ultimate_skill2'],
       placementSequenceSkillKeys: [
         'chr_0032_lizhiyan_ultimate_skill',
         'chr_0032_lizhiyan_ultimate_skill2',
       ],
-      replacementSkills: [arcaneChr_0032_lizhiyan_ultimate_skill2],
       presentationVariants: [
         {
           key: 'int',
@@ -7424,7 +7463,13 @@ export const arcane: OperatorDefinition = {
       ],
     },
   ],
-  dodgeSkill: arcaneCommon_character_perfect_dodge,
+  dodgeSkillId: 'common_character_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0032_lizhiyan_plunging_attack_start',
+    endSkillId: 'chr_0032_lizhiyan_plunging_attack_end',
+    startDurationSeconds: 0.633,
+    endDurationSeconds: 1.267,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
   ],

@@ -29,6 +29,7 @@ function graphOperator(overrides: Partial<OperatorDefinition> = {}): OperatorDef
       baseAttack: [1],
       baseHealth: [1],
     },
+    skills: [],
     skillGroups: [],
     talents: [{ levels: 1 }, { levels: 1 }],
     potentials: [{ levels: 1 }, { levels: 1 }, { levels: 1 }, { levels: 1 }, { levels: 1 }],
@@ -140,33 +141,18 @@ describe('validateOperatorDefinition', () => {
   });
   it('reports missing routed execution identities without inferring them from the display group', () => {
     const definition = graphOperator({
-      skillGroups: [
-        {
-          key: 'basicAttack',
-          operationType: 'basicAttack' as const,
-          skills: skillFixture({
-            key: 'basic-route',
-            timelineBlockFrames: 0,
-            scheduledSequences: [],
-            actionGraph: { main: { nodes: {} }, macros: {} },
-          }),
-          routedReplacementSkills: [
-            {
-              skill: skillFixture({
-                key: 'custom-route',
-                timelineBlockFrames: 0,
-                scheduledSequences: [],
-                actionGraph: { main: { nodes: {} }, macros: {} },
-              }),
-
-              executionSkillKey: '',
-            },
-          ],
-        },
+      skills: [
+        skillFixture({
+          key: 'custom-route',
+          timelineBlockFrames: 0,
+          scheduledSequences: [],
+          actionGraph: { main: { nodes: {} }, macros: {} },
+        }),
       ],
+      routedReplacementSkills: [{ skillId: 'custom-route', executionSkillKey: '' }],
     });
     const paths = validateOperatorDefinition(definition).map(issue => issue.path);
-    expect(paths).toEqual(['$.skillGroups[0].routedReplacementSkills[0].executionSkillKey']);
+    expect(paths).toEqual(['$.routedReplacementSkills[0].executionSkillKey']);
   });
   it('reports incomplete status presentation without rewriting the draft', () => {
     const passiveUi = {

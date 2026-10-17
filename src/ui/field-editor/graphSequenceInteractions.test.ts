@@ -198,7 +198,7 @@ async function mountCanvas(hostKind: 'resource' | 'skill', listener = false, con
         options: rows,
       };
   const initial = {
-    ...perlica.dodgeSkill!,
+    ...perlica.skills.find(skill => skill.key === perlica.dodgeSkillId)!,
     actionGraph: {
       main: {
         nodes: {

@@ -112,6 +112,7 @@ export type RuntimeSkillInterruptReason = 'default' | 'dash' | 'castNextSkill';
 /** CastEnd 在结束时间轴动作期间暴露的唯一技能转场输入。 */
 export interface RuntimeSkillTransition {
   readonly nextSkillId: string;
+  readonly nextCastId?: string;
   readonly attachBuffToNextSkill: (buff: BuffApplicationHandle) => void;
 }
 
@@ -300,6 +301,7 @@ type SkillRuntimeDependencies = {
   readonly advancesCooldown?: boolean;
   /** 原生 CastEnd 清理完成后向所有者 AbilitySystem 同步发布 OnSkillEnd。 */
   readonly emitSkillEnd?: (payload: AbilitySkillPayload) => void;
+  readonly onSkillExclusiveTimeExecuted?: (skillId: string) => void;
   readonly emitSkillInterrupted?: (
     payload: AbilitySkillPayload & { reason: RuntimeSkillInterruptReason },
   ) => void;
@@ -570,6 +572,10 @@ export class SkillRuntime {
   /** 普攻执行到此帧后，连段接续目标才更新为下一段。 */
   get offsetRecordFrame(): number | undefined {
     return this.#program.offsetRecordFrame;
+  }
+
+  get dontInterruptCombo(): boolean {
+    return this.#program.dontInterruptCombo === true;
   }
 
   get nativeSkillType(): CompiledSkillExecutionProgram['nativeSkillType'] {
@@ -926,7 +932,18 @@ export class SkillRuntime {
 
   readonly #executionHost: SkillAdvanceHost & SkillTickHost = {
     applyCost: () => this.#applyCost(true),
-    tickTimeline: (frame, delta) => this.#timeline?.tick(frame, delta, this.#context),
+    tickTimeline: (frame, delta) => {
+      // 原生在扣费之后、时间轴之前通知一次可中断边界；与显示块尾无关。
+      if (
+        !this.#execution.executedExclusiveCallback &&
+        this.#program.exclusiveFrame !== undefined &&
+        this.canInterrupt
+      ) {
+        this.#execution.executedExclusiveCallback = true;
+        this.#dependencies.onSkillExclusiveTimeExecuted?.(this.transitionSkillId);
+      }
+      this.#timeline?.tick(frame, delta, this.#context);
+    },
     advanceCooldown: delta => this.#cooldown.advance(delta),
     cooldownReady: () => this.record('SkillCooldownReady'),
     tick: delta => this.#tick(delta),
@@ -969,7 +986,11 @@ export class SkillRuntime {
         finishAttached: () => this.#finishAttachedBuffs(attachedAtEnd),
         finishCooldown: () => this.#cooldown.finishCast(),
         cooldownRefunded: () => this.record('SkillCooldownRefunded'),
-        recordEnded: () => this.record('SkillInterrupted', { reason }),
+        recordEnded: () =>
+          this.record('SkillInterrupted', {
+            reason,
+            ...(transition?.nextCastId === undefined ? {} : { nextCastId: transition.nextCastId }),
+          }),
         emitEnded: () => {
           this.#dependencies.emitSkillInterrupted?.({ ...this.#skillEventPayload(), reason });
           this.#emitSkillEnd();

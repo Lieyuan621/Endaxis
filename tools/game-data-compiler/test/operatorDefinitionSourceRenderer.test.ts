@@ -85,7 +85,8 @@ describe('independent operator resource renderer', () => {
     const source = renderOperatorDefinitionSource({
       operator: {
         slug: 'sample',
-        skillGroups: [{ key: 'battleSkill', operationType: 'battleSkill', skills: skill }],
+        skills: [skill],
+        skillGroups: [{ key: 'battleSkill', operationType: 'battleSkill', skillIds: [skill.key] }],
       },
     });
     const generated = evaluate(source).sampleBattleSkill as typeof skill;
@@ -117,7 +118,8 @@ describe('independent operator resource renderer', () => {
     };
     const operator = {
       slug: 'sample',
-      skillGroups: [{ key: 'battleSkill', operationType: 'battleSkill', skills: skill }],
+      skills: [skill],
+      skillGroups: [{ key: 'battleSkill', operationType: 'battleSkill', skillIds: [skill.key] }],
     };
     const source = renderOperatorDefinitionSource({ operator });
     const exported = evaluate(source);
@@ -130,7 +132,7 @@ describe('independent operator resource renderer', () => {
     expect(Object.keys(definition.actionGraph.main.nodes)).toHaveLength(1);
     expect(exported.default).toEqual({
       ...operator,
-      skillGroups: [{ ...operator.skillGroups[0], skills: definition }],
+      skills: [definition],
     });
     const program = compileSkill({
       operatorId: 'sample',
@@ -181,9 +183,10 @@ it('同名作用域只在各自技能内判断共享，不跨干员目录合并'
     renderOperatorDefinitionSource({
       operator: {
         slug: 'sample',
+        skills: [skill('first'), skill('second')],
         skillGroups: [
-          { key: 'first', skills: skill('first') },
-          { key: 'second', skills: skill('second') },
+          { key: 'first', skillIds: ['first'] },
+          { key: 'second', skillIds: ['second'] },
         ],
       },
     }),
@@ -210,6 +213,7 @@ it('原生常驻被动各自拥有完整图，不借用干员总图', () => {
     renderOperatorDefinitionSource({
       operator: {
         slug: 'sample',
+        skills: [],
         skillGroups: [],
         passiveSkills: [passive('native-passive-a')],
         talents: [{ levels: 1, passiveSkills: [passive('native-passive-b')] }],
@@ -276,6 +280,7 @@ it('干员私有 Buff 也保存自己的图，不进入干员过渡图', () => {
   const source = renderOperatorDefinitionSource({
     operator: {
       slug: 'sample',
+      skills: [],
       skillGroups: [],
       buffDefinitions: {
         owned: {
@@ -310,6 +315,7 @@ it('原生连携条件各自保存完整图，不占用干员图', () => {
   const source = renderOperatorDefinitionSource({
     operator: {
       slug: 'sample',
+      skills: [],
       skillGroups: [],
       comboSkillConditions: [
         {
@@ -338,6 +344,7 @@ it('干员能力实体保存自己的图，不进入干员过渡图', () => {
   const source = renderOperatorDefinitionSource({
     operator: {
       slug: 'sample',
+      skills: [],
       skillGroups: [],
       abilityEntityDefinitions: {
         owned: {
@@ -384,8 +391,8 @@ it('真实佩丽卡生成定义直接编译战技，不重新当作来源树渲�
   expect('actionGraph' in operator).toBe(false);
   const group = operator.skillGroups.find(item => item.key === 'battleSkill');
   expect(group).toBeDefined();
-  if (group === undefined || Array.isArray(group.skills)) throw new Error('missing battle skill');
-  const skill = group.skills as SkillDefinition;
+  if (group === undefined || group.skillIds.length !== 1) throw new Error('missing battle skill');
+  const skill = operator.skills.find(skill => skill.key === group.skillIds[0])!;
   expect(Object.keys(skill.actionGraph.main.nodes).length).toBeGreaterThan(0);
   const compiled = compileSkill({
     operatorId: operator.slug,
@@ -411,6 +418,7 @@ it('养成初始化和事件响应属于养成局部图，未归属程序阻止�
   const source = renderOperatorDefinitionSource({
     operator: {
       slug: 'sample',
+      skills: [],
       skillGroups: [],
       talents: [
         {
@@ -437,6 +445,7 @@ it('养成初始化和事件响应属于养成局部图，未归属程序阻止�
   const unowned = renderOperatorDefinitionSource({
     operator: {
       slug: 'sample',
+      skills: [],
       skillGroups: [],
       eventHandlers: [
         { key: 'unowned', event: 'deckAttributesChanged', sequence: entryOf('write') },

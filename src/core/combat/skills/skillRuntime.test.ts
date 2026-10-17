@@ -32,11 +32,8 @@ import { SkillCooldown } from './skillCooldown';
 const skillPrograms = new ActionGraphDefinitionRepository();
 
 function findGraphSkill(operator: OperatorDefinition, key: string): SkillDefinition {
-  for (const group of operator.skillGroups) {
-    const skills = Array.isArray(group.skills) ? group.skills : [group.skills];
-    const skill = skills.find(candidate => candidate.key === key);
-    if (skill !== undefined) return skill as SkillDefinition;
-  }
+  const skill = operator.skills.find(candidate => candidate.key === key);
+  if (skill !== undefined) return skill;
   throw new Error(`missing skill '${key}'`);
 }
 

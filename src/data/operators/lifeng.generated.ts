@@ -781,6 +781,7 @@ export const lifengChr_0015_lifeng_power_attack: SkillDefinition = {
   naturalDurationFrames: 194,
   exclusiveFrame: 68,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -1021,6 +1022,7 @@ export const lifengChr_0015_lifeng_normal_skill: SkillDefinition = {
   naturalDurationFrames: 216,
   exclusiveFrame: 70,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 67, endFrame: 89, skillIds: ['chr_0015_lifeng_normal_skill'] },
@@ -1039,6 +1041,162 @@ export const lifengChr_0015_lifeng_normal_skill: SkillDefinition = {
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
   actionGraph: lifengChr_0015_lifeng_normal_skillActionGraph,
+};
+
+export const lifengChr_0015_lifeng_combo_skillActionGraph = {
+  main: {
+    nodes: {
+      dealDamage_11: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            tags: ['comboSkill'],
+            features: ['canBreakWeakness'],
+          },
+        },
+        next: null,
+      },
+      changeResource_19: {
+        action: {
+          kind: 'changeResource',
+          parameters: {
+            resource: 'ultimateEnergy',
+            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            coefficient: { kind: 'constant', value: 1 },
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+          },
+        },
+        next: null,
+      },
+      dealDamage_20: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            tags: ['comboSkill'],
+            features: ['canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_4' },
+          },
+        },
+        next: 'changeResource_19',
+      },
+      createGlobalBuff_22: {
+        action: {
+          kind: 'createGlobalBuff',
+          parameters: {
+            globalBuffId: 'global_buff_combo_trigger',
+            definition: {
+              stackingType: 'stack',
+              maxStackCount: 4,
+              durationSeconds: { blackboardKey: 'duration' },
+              blackboard: { duration: 0, imbue_scale: 0 },
+              children: [
+                {
+                  buffId: 'buff_common_affixes_combo_trigger',
+                  blackboardAssignments: { imbue_scale: { kind: 'valueNode', nodeId: 'data_5' } },
+                },
+              ],
+            },
+            source: 'caster',
+            blackboardAssignments: { duration: { kind: 'valueNode', nodeId: 'data_6' } },
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_23: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'global',
+            durationSeconds: { kind: 'constant', value: 0.933 },
+            slot: 'unassigned',
+            priority: 30,
+            curve: { kind: 'named', key: 'ComboSkill' },
+            finishByAction: false,
+            ignoredTargets: ['caster'],
+            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+          },
+        },
+        next: null,
+      },
+      ifElse_opt1: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: null },
+        },
+        next: 'dealDamage_11',
+      },
+      ifElse_opt2: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: null },
+        },
+        next: 'dealDamage_20',
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'imbue_scale' } },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
+      data_7: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const lifengChr_0015_lifeng_combo_skill: SkillDefinition = {
+  key: 'chr_0015_lifeng_combo_skill',
+  element: 'physical',
+  blackboard: {
+    atk_scale: [0.47, 0.51, 0.56, 0.61, 0.65, 0.7, 0.75, 0.79, 0.84, 0.9, 0.97, 1.05],
+    atk_scale2: [1.67, 1.83, 2, 2.17, 2.33, 2.5, 2.67, 2.83, 3, 3.21, 3.46, 3.75],
+    duration: 20,
+    poise: 10,
+    usp: 10,
+  },
+  timelineBlockFrames: 65,
+  naturalDurationFrames: 168,
+  exclusiveFrame: 64,
+  offsetRecordFrame: 0,
+  dontInterruptCombo: true,
+  inputWindows: {
+    allowedNextSkills: [
+      { startFrame: 50, endFrame: 89, skillIds: ['chr_0015_lifeng_normal_skill'] },
+    ],
+  },
+  costFrame: 9,
+  scheduledSequences: [
+    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'ifElse_opt1' } },
+    { startFrame: 48, endFrame: 49, sequence: { $sequence: 'ifElse_opt2' } },
+    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'createGlobalBuff_22' } },
+    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'startTimeDilation_23' } },
+  ],
+  smartTarget: 'trigger',
+  cooldownFrames: [480, 480, 480, 480, 480, 480, 480, 480, 480, 480, 480, 450],
+  skillType: 'comboSkill',
+  levelSource: 'comboSkill',
+  nativeSkillType: 'comboSkill',
+  actionGraph: lifengChr_0015_lifeng_combo_skillActionGraph,
 };
 
 export const lifengChr_0015_lifeng_ultimate_skillActionGraph = {
@@ -1212,161 +1370,6 @@ export const lifengChr_0015_lifeng_ultimate_skill: SkillDefinition = {
   actionGraph: lifengChr_0015_lifeng_ultimate_skillActionGraph,
 };
 
-export const lifengChr_0015_lifeng_combo_skillActionGraph = {
-  main: {
-    nodes: {
-      dealDamage_11: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
-          },
-        },
-        next: null,
-      },
-      changeResource_19: {
-        action: {
-          kind: 'changeResource',
-          parameters: {
-            resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
-            coefficient: { kind: 'constant', value: 1 },
-            source: { kind: 'source' },
-            targets: { kind: 'source' },
-          },
-        },
-        next: null,
-      },
-      dealDamage_20: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_4' },
-          },
-        },
-        next: 'changeResource_19',
-      },
-      createGlobalBuff_22: {
-        action: {
-          kind: 'createGlobalBuff',
-          parameters: {
-            globalBuffId: 'global_buff_combo_trigger',
-            definition: {
-              stackingType: 'stack',
-              maxStackCount: 4,
-              durationSeconds: { blackboardKey: 'duration' },
-              blackboard: { duration: 0, imbue_scale: 0 },
-              children: [
-                {
-                  buffId: 'buff_common_affixes_combo_trigger',
-                  blackboardAssignments: { imbue_scale: { kind: 'valueNode', nodeId: 'data_5' } },
-                },
-              ],
-            },
-            source: 'caster',
-            blackboardAssignments: { duration: { kind: 'valueNode', nodeId: 'data_6' } },
-          },
-        },
-        next: null,
-      },
-      startTimeDilation_23: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'global',
-            durationSeconds: { kind: 'constant', value: 0.933 },
-            slot: 'unassigned',
-            priority: 30,
-            curve: { kind: 'named', key: 'ComboSkill' },
-            finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
-          },
-        },
-        next: null,
-      },
-      ifElse_opt1: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_7' },
-          whenTrue: { $sequence: null },
-          whenFalse: { $sequence: null },
-        },
-        next: 'dealDamage_11',
-      },
-      ifElse_opt2: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_8' },
-          whenTrue: { $sequence: null },
-          whenFalse: { $sequence: null },
-        },
-        next: 'dealDamage_20',
-      },
-    },
-    dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'imbue_scale' } },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
-      data_7: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_8: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const lifengChr_0015_lifeng_combo_skill: SkillDefinition = {
-  key: 'chr_0015_lifeng_combo_skill',
-  element: 'physical',
-  blackboard: {
-    atk_scale: [0.47, 0.51, 0.56, 0.61, 0.65, 0.7, 0.75, 0.79, 0.84, 0.9, 0.97, 1.05],
-    atk_scale2: [1.67, 1.83, 2, 2.17, 2.33, 2.5, 2.67, 2.83, 3, 3.21, 3.46, 3.75],
-    duration: 20,
-    poise: 10,
-    usp: 10,
-  },
-  timelineBlockFrames: 65,
-  naturalDurationFrames: 168,
-  exclusiveFrame: 64,
-  offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 50, endFrame: 89, skillIds: ['chr_0015_lifeng_normal_skill'] },
-    ],
-  },
-  costFrame: 9,
-  scheduledSequences: [
-    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'ifElse_opt1' } },
-    { startFrame: 48, endFrame: 49, sequence: { $sequence: 'ifElse_opt2' } },
-    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'createGlobalBuff_22' } },
-    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'startTimeDilation_23' } },
-  ],
-  smartTarget: 'trigger',
-  cooldownFrames: [480, 480, 480, 480, 480, 480, 480, 480, 480, 480, 480, 450],
-  skillType: 'comboSkill',
-  levelSource: 'comboSkill',
-  nativeSkillType: 'comboSkill',
-  actionGraph: lifengChr_0015_lifeng_combo_skillActionGraph,
-};
-
 export const lifengCommon_character_perfect_dodgeActionGraph = {
   main: { nodes: {} },
   macros: {},
@@ -1385,6 +1388,28 @@ export const lifengCommon_character_perfect_dodge: SkillDefinition = {
   defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
+};
+
+export const lifengChr_0015_lifeng_plunging_attack_startActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const lifengChr_0015_lifeng_plunging_attack_start: SkillDefinition = {
+  actionGraph: lifengChr_0015_lifeng_plunging_attack_startActionGraph,
+  key: 'chr_0015_lifeng_plunging_attack_start',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
 };
 
 const lifengPassive1ActionGraph = {
@@ -1950,32 +1975,51 @@ export const lifeng: OperatorDefinition = {
     baseAttack: [30, 90, 153, 217, 280, 312],
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },
+  skills: [
+    lifengChr_0015_lifeng_attack1,
+    lifengChr_0015_lifeng_attack2,
+    lifengChr_0015_lifeng_attack3,
+    lifengChr_0015_lifeng_attack5,
+    lifengChr_0015_lifeng_power_attack,
+    lifengChr_0015_lifeng_plunging_attack_end,
+    lifengChr_0015_lifeng_normal_skill,
+    lifengChr_0015_lifeng_combo_skill,
+    lifengChr_0015_lifeng_ultimate_skill,
+    lifengCommon_character_perfect_dodge,
+    lifengChr_0015_lifeng_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        lifengChr_0015_lifeng_attack1,
-        lifengChr_0015_lifeng_attack2,
-        lifengChr_0015_lifeng_attack3,
-        lifengChr_0015_lifeng_attack5,
+      skillIds: [
+        'chr_0015_lifeng_attack1',
+        'chr_0015_lifeng_attack2',
+        'chr_0015_lifeng_attack3',
+        'chr_0015_lifeng_attack5',
       ],
     },
-    { key: 'finisher', operationType: 'finisher', skills: lifengChr_0015_lifeng_power_attack },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0015_lifeng_power_attack'] },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: lifengChr_0015_lifeng_plunging_attack_end,
+      skillIds: ['chr_0015_lifeng_plunging_attack_end'],
     },
     {
       key: 'battleSkill',
       operationType: 'battleSkill',
-      skills: lifengChr_0015_lifeng_normal_skill,
+      skillIds: ['chr_0015_lifeng_normal_skill'],
     },
-    { key: 'ultimate', operationType: 'ultimate', skills: lifengChr_0015_lifeng_ultimate_skill },
-    { key: 'comboSkill', operationType: 'comboSkill', skills: lifengChr_0015_lifeng_combo_skill },
+    { key: 'ultimate', operationType: 'ultimate', skillIds: ['chr_0015_lifeng_ultimate_skill'] },
+    { key: 'comboSkill', operationType: 'comboSkill', skillIds: ['chr_0015_lifeng_combo_skill'] },
   ],
-  dodgeSkill: lifengCommon_character_perfect_dodge,
+  dodgeSkillId: 'common_character_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0015_lifeng_plunging_attack_start',
+    endSkillId: 'chr_0015_lifeng_plunging_attack_end',
+    startDurationSeconds: 0.633,
+    endDurationSeconds: 2,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
   ],

@@ -134,6 +134,7 @@ describe('正式原生连携条件结构与绑定', () => {
         baseHealth: [1],
       },
       skillGroups: [],
+      skills: [],
       talents: [{ levels: 1 }],
       potentials: [{ levels: 1 }, { levels: 1 }, { levels: 1 }, { levels: 1 }, { levels: 1 }],
       comboSkillConditions: [
@@ -172,10 +173,10 @@ describe('正式原生连携条件结构与绑定', () => {
     ).toThrow('requires a positive integer level');
   });
   it('重复技能身份不能悄悄绑定第一项', () => {
-    const combo = perlica.skillGroups.find(group => group.key === 'comboSkill')!;
+    const combo = perlica.skills.find(skill => skill.key === entry.skillKey)!;
     expect(() =>
       compileOperatorComboSkillConditions(
-        { ...perlica, skillGroups: [combo, combo], comboSkillConditions: [entry] },
+        { ...perlica, skills: [...perlica.skills, combo], comboSkillConditions: [entry] },
         build,
         { programs: new ActionGraphDefinitionRepository() },
       ),

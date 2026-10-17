@@ -7,7 +7,6 @@ import type { CompiledComboSkillConditionProgram } from './combatProgram';
 import type { OperatorDefinition } from '../game-data/operatorDefinition';
 import type { OperatorInstanceDocument } from '../project/schema';
 import { validateComboSkillConditions } from '../game-data/validateComboSkillConditions';
-import { listOperatorSkillDefinitionBindings } from '../game-data/operatorSkillDefinitions';
 
 /** 正式定义进入编译程序；引用在这里严格解析，不依赖是否存在技能块。 */
 interface ComboGraphContext {
@@ -46,12 +45,10 @@ export function compileOperatorComboSkillConditions(
     const p = `${path}[${index}]`;
     if (condition.actionGraph === undefined)
       throw new Error(`${p}: condition requires its own action graph`);
-    const matches = listOperatorSkillDefinitionBindings(operator).filter(
-      ({ skill }) => skill.key === condition.skillKey,
-    );
-    if (matches.length !== 1 || matches[0]!.skill.skillType !== 'comboSkill')
+    const matches = operator.skills.filter(skill => skill.key === condition.skillKey);
+    if (matches.length !== 1 || matches[0]!.skillType !== 'comboSkill')
       throw new Error(`${p}.skillKey must resolve to exactly one combo skill`);
-    const { skill } = matches[0]!;
+    const skill = matches[0]!;
     const slots =
       operator.skillSlots?.filter(
         slot =>

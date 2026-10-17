@@ -398,7 +398,7 @@ it('listener authoring keeps the original event and end-frame validation contrac
   const f = fixtures[1]!,
     main = graph(f),
     original = {
-      ...perlica.dodgeSkill!,
+      ...perlica.skills.find(skill => skill.key === perlica.dodgeSkillId)!,
       actionGraph: { main, macros: {} },
       scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'source' } }],
     };

@@ -102,18 +102,24 @@ it('rendered field opens an existing independent child graph, shares editor hist
         kind: 'operator',
         definition: {
           ...arclight,
-          dodgeSkill: {
-            ...arclight.dodgeSkill!,
-            actionGraph: { main: { nodes: { spawn: { action: spawn, next: null } } }, macros: {} },
-            scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'spawn' } }],
-          },
+          skills: [
+            {
+              ...arclight.skills.find(skill => skill.key === arclight.dodgeSkillId)!,
+              actionGraph: {
+                main: { nodes: { spawn: { action: spawn, next: null } } },
+                macros: {},
+              },
+              scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'spawn' } }],
+            },
+            ...arclight.skills.filter(skill => skill.key !== arclight.dodgeSkillId),
+          ],
         },
       },
     },
     'project:operator:field-jump',
   );
   const revision = shallowRef(0),
-    path = shallowRef<readonly (string | number)[]>(['dodgeSkill']);
+    path = shallowRef<readonly (string | number)[]>(['skills', 0]);
   const views = createWorkspaceDocumentViews(),
     navigation = new WorkspaceNavigation();
   const record = () =>
@@ -186,7 +192,7 @@ it('rendered field opens an existing independent child graph, shares editor hist
         ),
       );
       return () =>
-        path.value.length === 1
+        path.value.length === 2
           ? h(StructuredValueField, {
               schema: field.valueSchema!,
               value: (editor.resource.graph.nodes.spawn!.action as any).parameters.definition,
@@ -227,7 +233,7 @@ it('rendered field opens an existing independent child graph, shares editor hist
   expect(open.props.disabled).toBe(true);
   open.props.onClick();
   await nextTick();
-  expect(path.value).toEqual(['dodgeSkill']);
+  expect(path.value).toEqual(['skills', 0]);
   expect(text(root)).toContain('Stage or cancel');
   await click(root, i18n.global.t('common.cancel'));
   await click(root, i18n.global.t('definitionEditor.openGraph'));
@@ -264,7 +270,7 @@ it('rendered field opens an existing independent child graph, shares editor hist
   revision.value++;
   await nextTick();
   await click(root, 'Back');
-  expect(path.value).toEqual(['dodgeSkill']);
+  expect(path.value).toEqual(['skills', 0]);
   expect(
     (editor.resource.graph.nodes.spawn!.action as any).parameters.definition.childSkill.actionGraph
       .main.nodes[id].action.key,

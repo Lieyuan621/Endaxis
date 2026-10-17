@@ -151,7 +151,7 @@ const availableSkillSources = computed(() => {
   const sources = new Set(
     definition.value === null
       ? []
-      : listOperatorSkillDefinitionBindings(definition.value).flatMap(({ skill }) =>
+      : definition.value.skills.flatMap(skill =>
           skill.levelSource === undefined ? [] : [skill.levelSource],
         ),
   );

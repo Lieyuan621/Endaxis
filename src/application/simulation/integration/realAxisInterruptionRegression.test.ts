@@ -14,6 +14,29 @@ const resources = {
   normalSkillUltimateEnergy: { selfGainPerSp: 0.065, otherGainPerSp: 0.065 },
 };
 
+it('莱万汀终结技清除提前中断连携留下的普通攻击缓存', async () => {
+  const scenario = createEmptyScenario('laevatain-mode-offset', '强化普攻接续');
+  scenario.tracks[0] = track('laevatain', [
+    ['basicAttack', 'basicAttack5', 100],
+    ['comboSkill', 'comboSkill', 146],
+    ['ultimate', 'ultimate', 208],
+    ['enhancedBasicAttack', 'basicAttack1', 300],
+  ]);
+  const result = await createEditorSimulationService().simulate(scenario, 400);
+  expect(result.receiptEntries).toContainEqual(
+    expect.objectContaining({
+      event: 'SkillStarted',
+      frame: 300,
+      data: expect.objectContaining({ skillId: 'chr_0016_laevat_ult_attack1' }),
+    }),
+  );
+  expect(
+    result.receiptEntries.filter(
+      entry => entry.event === 'SkillInputResolvedToDifferentSkill' && entry.frame === 300,
+    ),
+  ).toEqual([]);
+});
+
 it('正式编辑器装配从导出SkillSetting读取技力恢复暂停', async () => {
   const scenario = createEmptyScenario('native-resource-settings', '导出恢复暂停');
   scenario.tracks[0] = track('xaihi', [['battleSkill', 'battleSkill', 3]]);
@@ -988,16 +1011,16 @@ function track(slug: string, casts: readonly (readonly [string, string, number])
   const resolveSkillId = (groupKey: string, selection: string): string => {
     const group = operator.skillGroups.find(item => item.key === groupKey);
     if (!group) throw new Error(`missing fixture skill group '${slug}/${groupKey}'`);
-    const skills = Array.isArray(group.skills) ? group.skills : [group.skills];
+    const skills = group.skillIds;
     if (selection === 'arcana') {
-      const replacement = group.replacementSkills?.[0];
+      const replacement = skills[1];
       if (!replacement) throw new Error(`missing fixture replacement '${slug}/${selection}'`);
-      return replacement.key;
+      return replacement;
     }
     const ordinal = selection.match(/^basicAttack([1-9][0-9]*)$/);
     const skill = ordinal ? skills[Number(ordinal[1]) - 1] : skills[0];
     if (!skill) throw new Error(`missing fixture skill '${slug}/${selection}'`);
-    return skill.key;
+    return skill;
   };
   return {
     id: slug,

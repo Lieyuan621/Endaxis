@@ -8,6 +8,380 @@ import type {
   ComboSkillConditionDefinition,
 } from '../../../packages/game-data-contract/src/operators';
 import type { OperatorDefinition } from '../../../packages/game-data-contract/src/operators';
+export const emberChr_0009_azrila_combo_skillActionGraph = {
+  main: {
+    nodes: {
+      modifyActionValue_2: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'shelterrate',
+            operation: 'add',
+            value: { kind: 'valueNode', nodeId: 'data_1' },
+          },
+        },
+        next: null,
+      },
+      applyBuff_4: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_chr_0009_azrila_normal_skill_shelter',
+                blackboardAssignments: { duration: { kind: 'constant', value: -1 } },
+                copiedBlackboardAssignments: { rate: 'shelterrate' },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          },
+        },
+        next: null,
+      },
+      ifElse_5: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          whenTrue: { $sequence: 'modifyActionValue_2' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'applyBuff_4',
+      },
+      ifElse_6: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
+          whenTrue: { $sequence: 'ifElse_5' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      applyBuff_14: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_chr_0009_azrila_normal_skill_shelter',
+                copiedBlackboardAssignments: { rate: 'shelterrate', duration: 'extratime' },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      checkCondition_11: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+        },
+        next: null,
+      },
+      checkCondition_12: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+        },
+        next: 'checkCondition_11',
+      },
+      checkCondition_13: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+        },
+        next: 'checkCondition_12',
+      },
+      heal_16: {
+        action: {
+          kind: 'heal',
+          parameters: {
+            target: 'contextTarget',
+            contextKey: 'CureTarget',
+            alwaysNext: true,
+            tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
+            attribute: 'will',
+            multiplier: { kind: 'valueNode', nodeId: 'data_9' },
+            addition: { kind: 'valueNode', nodeId: 'data_10' },
+          },
+        },
+        next: null,
+      },
+      modifyActionValue_17: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'heal_base',
+            operation: 'multiply',
+            value: { kind: 'valueNode', nodeId: 'data_11' },
+          },
+        },
+        next: 'heal_16',
+      },
+      modifyActionValue_18: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'will_additive',
+            operation: 'multiply',
+            value: { kind: 'valueNode', nodeId: 'data_11' },
+          },
+        },
+        next: 'modifyActionValue_17',
+      },
+      findCharacterTeamTargets_19: {
+        action: {
+          kind: 'findCharacterTeamTargets',
+          parameters: {
+            saveToContextKey: 'CureTarget',
+            selection: { kind: 'lowestHealthRatioOperator', excludedContextKey: 'Main' },
+          },
+        },
+        next: 'modifyActionValue_18',
+      },
+      findCharacterTeamTargets_20: {
+        action: {
+          kind: 'findCharacterTeamTargets',
+          parameters: { saveToContextKey: 'Main', selection: { kind: 'controlledOperator' } },
+        },
+        next: 'findCharacterTeamTargets_19',
+      },
+      changeResource_21: {
+        action: {
+          kind: 'changeResource',
+          parameters: {
+            resource: 'ultimateEnergy',
+            amount: { kind: 'valueNode', nodeId: 'data_12' },
+            coefficient: { kind: 'constant', value: 1 },
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+          },
+        },
+        next: null,
+      },
+      ifElse_22: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_13' },
+          whenTrue: { $sequence: 'changeResource_21' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      ifElse_23: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_15' },
+          whenTrue: { $sequence: 'findCharacterTeamTargets_20' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'ifElse_22',
+      },
+      heal_24: {
+        action: {
+          kind: 'heal',
+          parameters: {
+            target: 'controlledOperator',
+            alwaysNext: true,
+            tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
+            attribute: 'will',
+            multiplier: { kind: 'valueNode', nodeId: 'data_9' },
+            addition: { kind: 'valueNode', nodeId: 'data_10' },
+          },
+        },
+        next: 'ifElse_23',
+      },
+      dealDamage_25: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_16' },
+            tags: ['comboSkill'],
+            features: ['canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_17' },
+          },
+        },
+        next: 'heal_24',
+      },
+      applyPhysicalInfliction_26: {
+        action: {
+          kind: 'applyPhysicalInfliction',
+          parameters: {
+            type: 'knockDown',
+            target: 'enemy',
+            duration: { kind: 'constant', value: 1.5 },
+            force: false,
+            isExtra: false,
+            targetFilter: 'aliveOnly',
+            returnWhen: 'always',
+          },
+        },
+        next: 'dealDamage_25',
+      },
+      ifElse_27: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_18' },
+          whenTrue: { $sequence: 'applyBuff_14' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'applyPhysicalInfliction_26',
+      },
+      startTimeDilation_28: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'global',
+            durationSeconds: { kind: 'constant', value: 0.5 },
+            slot: 'unassigned',
+            priority: 30,
+            curve: { kind: 'named', key: 'ComboSkill' },
+            finishByAction: false,
+            ignoredTargets: ['caster'],
+            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+          },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'extrashelter' } },
+      data_2: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'potential_1', fallback: 0 },
+      },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_2' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'talent1', fallback: 0 } },
+      data_5: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_4' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_6: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_7: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_4' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_8: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_2' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'will_additive' } },
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'heal_base' } },
+      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'extracure' } },
+      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_13: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_14: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'potential_3', fallback: 0 },
+      },
+      data_15: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_14' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_18: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_13' } },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const emberChr_0009_azrila_combo_skill: SkillDefinition = {
+  key: 'chr_0009_azrila_combo_skill',
+  element: 'physical',
+  blackboard: {
+    atk_scale: [1.02, 1.12, 1.22, 1.33, 1.43, 1.53, 1.63, 1.73, 1.84, 1.96, 2.12, 2.3],
+    extracure: 0,
+    extrashelter: 0,
+    extratime: 0,
+    heal_base: [300, 360, 420, 480, 510, 540, 570, 600, 630, 645, 660, 675],
+    poise: 10,
+    potential_1: 0,
+    potential_3: 0,
+    shelterrate: 0,
+    talent1: 0,
+    usp: 10,
+    will_additive: [0.7, 0.84, 0.98, 1.12, 1.19, 1.26, 1.33, 1.4, 1.47, 1.51, 1.54, 1.58],
+  },
+  timelineBlockFrames: 39,
+  naturalDurationFrames: 161,
+  exclusiveFrame: 38,
+  offsetRecordFrame: 0,
+  dontInterruptCombo: true,
+  inputWindows: {
+    allowedNextSkills: [
+      { startFrame: 40, endFrame: 60, skillIds: ['chr_0009_azrila_normal_skill'] },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 26, sequence: { $sequence: 'ifElse_6' } },
+    { startFrame: 26, endFrame: 27, sequence: { $sequence: 'ifElse_27' } },
+    { startFrame: 0, endFrame: 12, sequence: { $sequence: 'startTimeDilation_28' } },
+  ],
+  smartTarget: 'input',
+  cooldownFrames: [570, 570, 570, 570, 570, 570, 570, 570, 570, 570, 570, 540],
+  skillType: 'comboSkill',
+  levelSource: 'comboSkill',
+  nativeSkillType: 'comboSkill',
+  actionGraph: emberChr_0009_azrila_combo_skillActionGraph,
+};
+
 export const emberChr_0009_azrila_attack1ActionGraph = {
   main: {
     nodes: {
@@ -583,6 +957,7 @@ export const emberChr_0009_azrila_power_attack: SkillDefinition = {
   naturalDurationFrames: 222,
   exclusiveFrame: 50,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -1083,6 +1458,7 @@ export const emberChr_0009_azrila_normal_skill: SkillDefinition = {
   naturalDurationFrames: 162,
   exclusiveFrame: 55,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 51, endFrame: 60, skillIds: ['chr_0009_azrila_normal_skill'] },
@@ -1317,379 +1693,6 @@ export const emberChr_0009_azrila_ultimate_skill: SkillDefinition = {
   actionGraph: emberChr_0009_azrila_ultimate_skillActionGraph,
 };
 
-export const emberChr_0009_azrila_combo_skillActionGraph = {
-  main: {
-    nodes: {
-      modifyActionValue_2: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'shelterrate',
-            operation: 'add',
-            value: { kind: 'valueNode', nodeId: 'data_1' },
-          },
-        },
-        next: null,
-      },
-      applyBuff_4: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [
-              {
-                buffId: 'buff_chr_0009_azrila_normal_skill_shelter',
-                blackboardAssignments: { duration: { kind: 'constant', value: -1 } },
-                copiedBlackboardAssignments: { rate: 'shelterrate' },
-              },
-            ],
-            targets: { kind: 'owner' },
-            source: { kind: 'owner' },
-            inheritSourceSkillCastInfo: true,
-            finishByAction: true,
-          },
-        },
-        next: null,
-      },
-      ifElse_5: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'modifyActionValue_2' },
-          whenFalse: { $sequence: null },
-        },
-        next: 'applyBuff_4',
-      },
-      ifElse_6: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_5' },
-          whenTrue: { $sequence: 'ifElse_5' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      applyBuff_14: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [
-              {
-                buffId: 'buff_chr_0009_azrila_normal_skill_shelter',
-                copiedBlackboardAssignments: { rate: 'shelterrate', duration: 'extratime' },
-              },
-            ],
-            targets: { kind: 'owner' },
-            source: { kind: 'owner' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-      checkCondition_11: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
-        },
-        next: null,
-      },
-      checkCondition_12: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-        },
-        next: 'checkCondition_11',
-      },
-      checkCondition_13: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
-        },
-        next: 'checkCondition_12',
-      },
-      heal_16: {
-        action: {
-          kind: 'heal',
-          parameters: {
-            target: 'contextTarget',
-            contextKey: 'CureTarget',
-            alwaysNext: true,
-            tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
-            attribute: 'will',
-            multiplier: { kind: 'valueNode', nodeId: 'data_9' },
-            addition: { kind: 'valueNode', nodeId: 'data_10' },
-          },
-        },
-        next: null,
-      },
-      modifyActionValue_17: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'heal_base',
-            operation: 'multiply',
-            value: { kind: 'valueNode', nodeId: 'data_11' },
-          },
-        },
-        next: 'heal_16',
-      },
-      modifyActionValue_18: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'will_additive',
-            operation: 'multiply',
-            value: { kind: 'valueNode', nodeId: 'data_11' },
-          },
-        },
-        next: 'modifyActionValue_17',
-      },
-      findCharacterTeamTargets_19: {
-        action: {
-          kind: 'findCharacterTeamTargets',
-          parameters: {
-            saveToContextKey: 'CureTarget',
-            selection: { kind: 'lowestHealthRatioOperator', excludedContextKey: 'Main' },
-          },
-        },
-        next: 'modifyActionValue_18',
-      },
-      findCharacterTeamTargets_20: {
-        action: {
-          kind: 'findCharacterTeamTargets',
-          parameters: { saveToContextKey: 'Main', selection: { kind: 'controlledOperator' } },
-        },
-        next: 'findCharacterTeamTargets_19',
-      },
-      changeResource_21: {
-        action: {
-          kind: 'changeResource',
-          parameters: {
-            resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_12' },
-            coefficient: { kind: 'constant', value: 1 },
-            source: { kind: 'source' },
-            targets: { kind: 'source' },
-          },
-        },
-        next: null,
-      },
-      ifElse_22: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_13' },
-          whenTrue: { $sequence: 'changeResource_21' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      ifElse_23: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_15' },
-          whenTrue: { $sequence: 'findCharacterTeamTargets_20' },
-          whenFalse: { $sequence: null },
-        },
-        next: 'ifElse_22',
-      },
-      heal_24: {
-        action: {
-          kind: 'heal',
-          parameters: {
-            target: 'controlledOperator',
-            alwaysNext: true,
-            tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
-            attribute: 'will',
-            multiplier: { kind: 'valueNode', nodeId: 'data_9' },
-            addition: { kind: 'valueNode', nodeId: 'data_10' },
-          },
-        },
-        next: 'ifElse_23',
-      },
-      dealDamage_25: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_16' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_17' },
-          },
-        },
-        next: 'heal_24',
-      },
-      applyPhysicalInfliction_26: {
-        action: {
-          kind: 'applyPhysicalInfliction',
-          parameters: {
-            type: 'knockDown',
-            target: 'enemy',
-            duration: { kind: 'constant', value: 1.5 },
-            force: false,
-            isExtra: false,
-            targetFilter: 'aliveOnly',
-            returnWhen: 'always',
-          },
-        },
-        next: 'dealDamage_25',
-      },
-      ifElse_27: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_18' },
-          whenTrue: { $sequence: 'applyBuff_14' },
-          whenFalse: { $sequence: null },
-        },
-        next: 'applyPhysicalInfliction_26',
-      },
-      startTimeDilation_28: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'global',
-            durationSeconds: { kind: 'constant', value: 0.5 },
-            slot: 'unassigned',
-            priority: 30,
-            curve: { kind: 'named', key: 'ComboSkill' },
-            finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
-          },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'extrashelter' } },
-      data_2: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'potential_1', fallback: 0 },
-      },
-      data_3: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_2' },
-          operator: 'greater',
-          right: { kind: 'constant', value: 0 },
-        },
-      },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'talent1', fallback: 0 } },
-      data_5: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_4' },
-          operator: 'greater',
-          right: { kind: 'constant', value: 0 },
-        },
-      },
-      data_6: {
-        type: 'boolean',
-        expression: {
-          kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          containsHittableTarget: false,
-          excludeDeadEntity: false,
-          operator: 'greaterOrEqual',
-          value: 1,
-        },
-      },
-      data_7: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_4' },
-          operator: 'greater',
-          right: { kind: 'constant', value: 0 },
-        },
-      },
-      data_8: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_2' },
-          operator: 'greater',
-          right: { kind: 'constant', value: 0 },
-        },
-      },
-      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'will_additive' } },
-      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'heal_base' } },
-      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'extracure' } },
-      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_13: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_14: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'potential_3', fallback: 0 },
-      },
-      data_15: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_14' },
-          operator: 'greater',
-          right: { kind: 'constant', value: 0 },
-        },
-      },
-      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_18: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_13' } },
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const emberChr_0009_azrila_combo_skill: SkillDefinition = {
-  key: 'chr_0009_azrila_combo_skill',
-  element: 'physical',
-  blackboard: {
-    atk_scale: [1.02, 1.12, 1.22, 1.33, 1.43, 1.53, 1.63, 1.73, 1.84, 1.96, 2.12, 2.3],
-    extracure: 0,
-    extrashelter: 0,
-    extratime: 0,
-    heal_base: [300, 360, 420, 480, 510, 540, 570, 600, 630, 645, 660, 675],
-    poise: 10,
-    potential_1: 0,
-    potential_3: 0,
-    shelterrate: 0,
-    talent1: 0,
-    usp: 10,
-    will_additive: [0.7, 0.84, 0.98, 1.12, 1.19, 1.26, 1.33, 1.4, 1.47, 1.51, 1.54, 1.58],
-  },
-  timelineBlockFrames: 39,
-  naturalDurationFrames: 161,
-  exclusiveFrame: 38,
-  offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 40, endFrame: 60, skillIds: ['chr_0009_azrila_normal_skill'] },
-    ],
-  },
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 0, endFrame: 26, sequence: { $sequence: 'ifElse_6' } },
-    { startFrame: 26, endFrame: 27, sequence: { $sequence: 'ifElse_27' } },
-    { startFrame: 0, endFrame: 12, sequence: { $sequence: 'startTimeDilation_28' } },
-  ],
-  smartTarget: 'input',
-  cooldownFrames: [570, 570, 570, 570, 570, 570, 570, 570, 570, 570, 570, 540],
-  skillType: 'comboSkill',
-  levelSource: 'comboSkill',
-  nativeSkillType: 'comboSkill',
-  actionGraph: emberChr_0009_azrila_combo_skillActionGraph,
-};
-
 export const emberCommon_character_perfect_dodgeActionGraph = {
   main: { nodes: {} },
   macros: {},
@@ -1708,6 +1711,28 @@ export const emberCommon_character_perfect_dodge: SkillDefinition = {
   defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
+};
+
+export const emberChr_0009_azrila_plunging_attack_startActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const emberChr_0009_azrila_plunging_attack_start: SkillDefinition = {
+  actionGraph: emberChr_0009_azrila_plunging_attack_startActionGraph,
+  key: 'chr_0009_azrila_plunging_attack_start',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
 };
 
 const emberPassive1ActionGraph = {
@@ -2107,28 +2132,51 @@ export const ember: OperatorDefinition = {
     baseAttack: [30, 93, 159, 225, 291, 323],
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },
+  skills: [
+    emberChr_0009_azrila_combo_skill,
+    emberChr_0009_azrila_attack1,
+    emberChr_0009_azrila_attack2,
+    emberChr_0009_azrila_attack3,
+    emberChr_0009_azrila_attack4,
+    emberChr_0009_azrila_power_attack,
+    emberChr_0009_azrila_plunging_attack_end,
+    emberChr_0009_azrila_normal_skill,
+    emberChr_0009_azrila_ultimate_skill,
+    emberCommon_character_perfect_dodge,
+    emberChr_0009_azrila_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        emberChr_0009_azrila_attack1,
-        emberChr_0009_azrila_attack2,
-        emberChr_0009_azrila_attack3,
-        emberChr_0009_azrila_attack4,
+      skillIds: [
+        'chr_0009_azrila_attack1',
+        'chr_0009_azrila_attack2',
+        'chr_0009_azrila_attack3',
+        'chr_0009_azrila_attack4',
       ],
     },
-    { key: 'finisher', operationType: 'finisher', skills: emberChr_0009_azrila_power_attack },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0009_azrila_power_attack'] },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: emberChr_0009_azrila_plunging_attack_end,
+      skillIds: ['chr_0009_azrila_plunging_attack_end'],
     },
-    { key: 'battleSkill', operationType: 'battleSkill', skills: emberChr_0009_azrila_normal_skill },
-    { key: 'ultimate', operationType: 'ultimate', skills: emberChr_0009_azrila_ultimate_skill },
-    { key: 'comboSkill', operationType: 'comboSkill', skills: emberChr_0009_azrila_combo_skill },
+    {
+      key: 'battleSkill',
+      operationType: 'battleSkill',
+      skillIds: ['chr_0009_azrila_normal_skill'],
+    },
+    { key: 'ultimate', operationType: 'ultimate', skillIds: ['chr_0009_azrila_ultimate_skill'] },
+    { key: 'comboSkill', operationType: 'comboSkill', skillIds: ['chr_0009_azrila_combo_skill'] },
   ],
-  dodgeSkill: emberCommon_character_perfect_dodge,
+  dodgeSkillId: 'common_character_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0009_azrila_plunging_attack_start',
+    endSkillId: 'chr_0009_azrila_plunging_attack_end',
+    startDurationSeconds: 0.633,
+    endDurationSeconds: 1.267,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
   ],

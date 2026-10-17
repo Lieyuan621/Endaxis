@@ -753,6 +753,7 @@ export const lastRiteChr_0026_lastrite_power_attack: SkillDefinition = {
   naturalDurationFrames: 176,
   exclusiveFrame: 58,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -1126,6 +1127,7 @@ export const lastRiteChr_0026_lastrite_normal_skill: SkillDefinition = {
   naturalDurationFrames: 429,
   exclusiveFrame: 373,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -1164,314 +1166,6 @@ export const lastRiteChr_0026_lastrite_normal_skill: SkillDefinition = {
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
   actionGraph: lastRiteChr_0026_lastrite_normal_skillActionGraph,
-};
-
-export const lastRiteChr_0026_lastrite_ultimate_skillActionGraph = {
-  main: {
-    nodes: {
-      startTimeDilation_1: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: { kind: 'named', key: 'RESETto1' },
-            finishByAction: false,
-            targets: [{ kind: 'owner' }],
-          },
-        },
-        next: null,
-      },
-      startUltimateTimeDilation_11: {
-        action: {
-          kind: 'startUltimateTimeDilation',
-          parameters: {
-            priority: 100,
-            targetScale: { kind: 'constant', value: 0 },
-            ignoredTargets: [],
-          },
-        },
-        next: null,
-      },
-      hideUi_12: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      applyBuff_13: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_common_damage_immune_ult_skill' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'owner' },
-            inheritSourceSkillCastInfo: true,
-            finishByAction: true,
-          },
-        },
-        next: null,
-      },
-      dealDamage_25: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-            tags: ['ultimateSkill'],
-            features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_2' },
-          },
-        },
-        next: null,
-      },
-      dealDamage_24: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-            tags: ['ultimateSkill'],
-            features: ['canBreakWeakness'],
-            instantAttributeModifiers: [
-              {
-                targetSide: 'defender',
-                attribute: 'cryoVulnerabilityIncrease',
-                slot: 'baseFinalMultiplier',
-                value: { kind: 'valueNode', nodeId: 'data_3' },
-                attributeTiming: 'runtime',
-              },
-            ],
-            stagger: { kind: 'valueNode', nodeId: 'data_2' },
-          },
-        },
-        next: null,
-      },
-      dealDamage_39: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
-            tags: ['ultimateSkill'],
-            features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_5' },
-          },
-        },
-        next: null,
-      },
-      dealDamage_38: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
-            tags: ['ultimateSkill'],
-            features: ['canBreakWeakness'],
-            instantAttributeModifiers: [
-              {
-                targetSide: 'defender',
-                attribute: 'cryoVulnerabilityIncrease',
-                slot: 'baseFinalMultiplier',
-                value: { kind: 'valueNode', nodeId: 'data_3' },
-                attributeTiming: 'runtime',
-              },
-            ],
-            stagger: { kind: 'valueNode', nodeId: 'data_5' },
-          },
-        },
-        next: null,
-      },
-      ifElse_40: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_7' },
-          whenTrue: { $sequence: 'dealDamage_38' },
-          whenFalse: { $sequence: 'dealDamage_39' },
-        },
-        next: null,
-      },
-      repeatEachTick_41: {
-        action: {
-          kind: 'repeatEachTick',
-          parameters: {
-            nativeChanneling: {
-              catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
-              executeEachFrame: true,
-              triggerIntervalSeconds: 0.033,
-              maxCountPerTarget: 1,
-              targetTriggerIntervalSeconds: 0.033,
-            },
-          },
-          body: { $sequence: 'ifElse_40' },
-        },
-        next: null,
-      },
-      startTimeDilation_42: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'global',
-            durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'unassigned',
-            priority: 30,
-            curve: { kind: 'named', key: 'ComboSkill' },
-            finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
-          },
-        },
-        next: null,
-      },
-      startTimeDilation_43: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 50,
-            curve: { kind: 'named', key: 'RESETto1' },
-            finishByAction: false,
-            targets: [{ kind: 'owner' }],
-          },
-        },
-        next: null,
-      },
-      findTargets_opt1: {
-        action: {
-          kind: 'findTargets',
-          parameters: {
-            owner: { kind: 'owner' },
-            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
-            saveToContextKey: 'maintar',
-          },
-        },
-        next: null,
-      },
-      ifElse_opt2: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_8' },
-          whenTrue: { $sequence: null },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      ifElse_opt3: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_9' },
-          whenTrue: { $sequence: 'dealDamage_24' },
-          whenFalse: { $sequence: 'dealDamage_25' },
-        },
-        next: 'ifElse_opt2',
-      },
-      repeatEachTick_opt4: {
-        action: {
-          kind: 'repeatEachTick',
-          parameters: {
-            nativeChanneling: {
-              catchUpMissedTicks: false,
-              target: { kind: 'fixed', target: 'enemy' },
-              executeEachFrame: true,
-              triggerIntervalSeconds: 0.033,
-              maxCountPerTarget: 1,
-              targetTriggerIntervalSeconds: 0.033,
-            },
-          },
-          body: { $sequence: 'ifElse_opt3' },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise1' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'rate' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise2' } },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'talent_2', fallback: 0 } },
-      data_7: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_6' },
-          operator: 'equal',
-          right: { kind: 'constant', value: 1 },
-        },
-      },
-      data_8: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_9: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_6' },
-          operator: 'equal',
-          right: { kind: 'constant', value: 1 },
-        },
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const lastRiteChr_0026_lastrite_ultimate_skill: SkillDefinition = {
-  key: 'chr_0026_lastrite_ultimate_skill',
-  element: 'cryo',
-  blackboard: {
-    atk_scale: [1.78, 1.96, 2.13, 2.31, 2.49, 2.67, 2.84, 3.02, 3.2, 3.42, 3.69, 4],
-    atk_scale2: [3.56, 3.91, 4.27, 4.62, 4.98, 5.33, 5.69, 6.04, 6.4, 6.84, 7.38, 8],
-    poise1: 5,
-    poise2: 10,
-    rate: 0,
-    talent_2: 0,
-  },
-  timelineBlockFrames: 171,
-  naturalDurationFrames: 360,
-  exclusiveFrame: 170,
-  offsetRecordFrame: 0,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 86,
-        endFrame: 170,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0026_lastrite_combo_skill',
-      },
-    ],
-    allowedNextSkills: [
-      {
-        startFrame: 140,
-        endFrame: 170,
-        skillIds: ['chr_0026_lastrite_normal_skill', 'chr_0026_lastrite_combo_skill'],
-      },
-    ],
-  },
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
-    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findTargets_opt1' } },
-    { startFrame: 0, endFrame: 85, sequence: { $sequence: 'startUltimateTimeDilation_11' } },
-    { startFrame: 0, endFrame: 85, sequence: { $sequence: 'hideUi_12' } },
-    { startFrame: 0, endFrame: 172, sequence: { $sequence: 'applyBuff_13' } },
-    { startFrame: 86, endFrame: 89, sequence: { $sequence: 'repeatEachTick_opt4' } },
-    { startFrame: 105, endFrame: 108, sequence: { $sequence: 'repeatEachTick_opt4' } },
-    { startFrame: 134, endFrame: 137, sequence: { $sequence: 'repeatEachTick_41' } },
-    { startFrame: 86, endFrame: 86, sequence: { $sequence: 'startTimeDilation_42' } },
-    { startFrame: 85, endFrame: 145, sequence: { $sequence: 'startTimeDilation_43' } },
-  ],
-  defaultTarget: 'enemy',
-  cooldownFrames: 600,
-  costs: [{ resource: 'ultimateEnergy', value: 240 }],
-  skillType: 'ultimate',
-  levelSource: 'ultimate',
-  nativeSkillType: 'ultimateSkill',
-  actionGraph: lastRiteChr_0026_lastrite_ultimate_skillActionGraph,
 };
 
 export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
@@ -1833,6 +1527,7 @@ export const lastRiteChr_0026_lastrite_combo_skill: SkillDefinition = {
   naturalDurationFrames: 216,
   exclusiveFrame: 90,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 65, endFrame: 91, skillIds: ['chr_0026_lastrite_normal_skill'] },
@@ -1855,6 +1550,314 @@ export const lastRiteChr_0026_lastrite_combo_skill: SkillDefinition = {
   actionGraph: lastRiteChr_0026_lastrite_combo_skillActionGraph,
 };
 
+export const lastRiteChr_0026_lastrite_ultimate_skillActionGraph = {
+  main: {
+    nodes: {
+      startTimeDilation_1: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 1 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'RESETto1' },
+            finishByAction: false,
+            targets: [{ kind: 'owner' }],
+          },
+        },
+        next: null,
+      },
+      startUltimateTimeDilation_11: {
+        action: {
+          kind: 'startUltimateTimeDilation',
+          parameters: {
+            priority: 100,
+            targetScale: { kind: 'constant', value: 0 },
+            ignoredTargets: [],
+          },
+        },
+        next: null,
+      },
+      hideUi_12: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      applyBuff_13: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_common_damage_immune_ult_skill' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          },
+        },
+        next: null,
+      },
+      dealDamage_25: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'cryo',
+            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            tags: ['ultimateSkill'],
+            features: ['canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_2' },
+          },
+        },
+        next: null,
+      },
+      dealDamage_24: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'cryo',
+            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            tags: ['ultimateSkill'],
+            features: ['canBreakWeakness'],
+            instantAttributeModifiers: [
+              {
+                targetSide: 'defender',
+                attribute: 'cryoVulnerabilityIncrease',
+                slot: 'baseFinalMultiplier',
+                value: { kind: 'valueNode', nodeId: 'data_3' },
+                attributeTiming: 'runtime',
+              },
+            ],
+            stagger: { kind: 'valueNode', nodeId: 'data_2' },
+          },
+        },
+        next: null,
+      },
+      dealDamage_39: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'cryo',
+            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            tags: ['ultimateSkill'],
+            features: ['canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_5' },
+          },
+        },
+        next: null,
+      },
+      dealDamage_38: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'cryo',
+            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
+            tags: ['ultimateSkill'],
+            features: ['canBreakWeakness'],
+            instantAttributeModifiers: [
+              {
+                targetSide: 'defender',
+                attribute: 'cryoVulnerabilityIncrease',
+                slot: 'baseFinalMultiplier',
+                value: { kind: 'valueNode', nodeId: 'data_3' },
+                attributeTiming: 'runtime',
+              },
+            ],
+            stagger: { kind: 'valueNode', nodeId: 'data_5' },
+          },
+        },
+        next: null,
+      },
+      ifElse_40: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
+          whenTrue: { $sequence: 'dealDamage_38' },
+          whenFalse: { $sequence: 'dealDamage_39' },
+        },
+        next: null,
+      },
+      repeatEachTick_41: {
+        action: {
+          kind: 'repeatEachTick',
+          parameters: {
+            nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'fixed', target: 'enemy' },
+              executeEachFrame: true,
+              triggerIntervalSeconds: 0.033,
+              maxCountPerTarget: 1,
+              targetTriggerIntervalSeconds: 0.033,
+            },
+          },
+          body: { $sequence: 'ifElse_40' },
+        },
+        next: null,
+      },
+      startTimeDilation_42: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'global',
+            durationSeconds: { kind: 'constant', value: 0.1 },
+            slot: 'unassigned',
+            priority: 30,
+            curve: { kind: 'named', key: 'ComboSkill' },
+            finishByAction: false,
+            ignoredTargets: ['caster'],
+            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_43: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 2 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 50,
+            curve: { kind: 'named', key: 'RESETto1' },
+            finishByAction: false,
+            targets: [{ kind: 'owner' }],
+          },
+        },
+        next: null,
+      },
+      findTargets_opt1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'maintar',
+          },
+        },
+        next: null,
+      },
+      ifElse_opt2: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      ifElse_opt3: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_9' },
+          whenTrue: { $sequence: 'dealDamage_24' },
+          whenFalse: { $sequence: 'dealDamage_25' },
+        },
+        next: 'ifElse_opt2',
+      },
+      repeatEachTick_opt4: {
+        action: {
+          kind: 'repeatEachTick',
+          parameters: {
+            nativeChanneling: {
+              catchUpMissedTicks: false,
+              target: { kind: 'fixed', target: 'enemy' },
+              executeEachFrame: true,
+              triggerIntervalSeconds: 0.033,
+              maxCountPerTarget: 1,
+              targetTriggerIntervalSeconds: 0.033,
+            },
+          },
+          body: { $sequence: 'ifElse_opt3' },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'poise1' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'rate' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise2' } },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'talent_2', fallback: 0 } },
+      data_7: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_6' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_9: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_6' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const lastRiteChr_0026_lastrite_ultimate_skill: SkillDefinition = {
+  key: 'chr_0026_lastrite_ultimate_skill',
+  element: 'cryo',
+  blackboard: {
+    atk_scale: [1.78, 1.96, 2.13, 2.31, 2.49, 2.67, 2.84, 3.02, 3.2, 3.42, 3.69, 4],
+    atk_scale2: [3.56, 3.91, 4.27, 4.62, 4.98, 5.33, 5.69, 6.04, 6.4, 6.84, 7.38, 8],
+    poise1: 5,
+    poise2: 10,
+    rate: 0,
+    talent_2: 0,
+  },
+  timelineBlockFrames: 171,
+  naturalDurationFrames: 360,
+  exclusiveFrame: 170,
+  offsetRecordFrame: 0,
+  inputWindows: {
+    commandMappings: [
+      {
+        startFrame: 86,
+        endFrame: 170,
+        input: 'basicAttack',
+        targetSkillId: 'chr_0026_lastrite_combo_skill',
+      },
+    ],
+    allowedNextSkills: [
+      {
+        startFrame: 140,
+        endFrame: 170,
+        skillIds: ['chr_0026_lastrite_normal_skill', 'chr_0026_lastrite_combo_skill'],
+      },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
+    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findTargets_opt1' } },
+    { startFrame: 0, endFrame: 85, sequence: { $sequence: 'startUltimateTimeDilation_11' } },
+    { startFrame: 0, endFrame: 85, sequence: { $sequence: 'hideUi_12' } },
+    { startFrame: 0, endFrame: 172, sequence: { $sequence: 'applyBuff_13' } },
+    { startFrame: 86, endFrame: 89, sequence: { $sequence: 'repeatEachTick_opt4' } },
+    { startFrame: 105, endFrame: 108, sequence: { $sequence: 'repeatEachTick_opt4' } },
+    { startFrame: 134, endFrame: 137, sequence: { $sequence: 'repeatEachTick_41' } },
+    { startFrame: 86, endFrame: 86, sequence: { $sequence: 'startTimeDilation_42' } },
+    { startFrame: 85, endFrame: 145, sequence: { $sequence: 'startTimeDilation_43' } },
+  ],
+  defaultTarget: 'enemy',
+  cooldownFrames: 600,
+  costs: [{ resource: 'ultimateEnergy', value: 240 }],
+  skillType: 'ultimate',
+  levelSource: 'ultimate',
+  nativeSkillType: 'ultimateSkill',
+  actionGraph: lastRiteChr_0026_lastrite_ultimate_skillActionGraph,
+};
+
 export const lastRiteCommon_character_perfect_dodgeActionGraph = {
   main: { nodes: {} },
   macros: {},
@@ -1873,6 +1876,28 @@ export const lastRiteCommon_character_perfect_dodge: SkillDefinition = {
   defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
+};
+
+export const lastRiteChr_0026_lastrite_plunging_attack_startActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const lastRiteChr_0026_lastrite_plunging_attack_start: SkillDefinition = {
+  actionGraph: lastRiteChr_0026_lastrite_plunging_attack_startActionGraph,
+  key: 'chr_0026_lastrite_plunging_attack_start',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 9,
+  scheduledSequences: [],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
 };
 
 const lastRitePassive1ActionGraph = {
@@ -2992,40 +3017,51 @@ export const lastRite: OperatorDefinition = {
     baseAttack: [30, 95, 162, 230, 298, 332],
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },
+  skills: [
+    lastRiteChr_0026_lastrite_attack1,
+    lastRiteChr_0026_lastrite_attack2,
+    lastRiteChr_0026_lastrite_attack3,
+    lastRiteChr_0026_lastrite_attack4,
+    lastRiteChr_0026_lastrite_power_attack,
+    lastRiteChr_0026_lastrite_plunging_attack_end,
+    lastRiteChr_0026_lastrite_normal_skill,
+    lastRiteChr_0026_lastrite_combo_skill,
+    lastRiteChr_0026_lastrite_ultimate_skill,
+    lastRiteCommon_character_perfect_dodge,
+    lastRiteChr_0026_lastrite_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        lastRiteChr_0026_lastrite_attack1,
-        lastRiteChr_0026_lastrite_attack2,
-        lastRiteChr_0026_lastrite_attack3,
-        lastRiteChr_0026_lastrite_attack4,
+      skillIds: [
+        'chr_0026_lastrite_attack1',
+        'chr_0026_lastrite_attack2',
+        'chr_0026_lastrite_attack3',
+        'chr_0026_lastrite_attack4',
       ],
     },
-    { key: 'finisher', operationType: 'finisher', skills: lastRiteChr_0026_lastrite_power_attack },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0026_lastrite_power_attack'] },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: lastRiteChr_0026_lastrite_plunging_attack_end,
+      skillIds: ['chr_0026_lastrite_plunging_attack_end'],
     },
     {
       key: 'battleSkill',
       operationType: 'battleSkill',
-      skills: lastRiteChr_0026_lastrite_normal_skill,
+      skillIds: ['chr_0026_lastrite_normal_skill'],
     },
-    {
-      key: 'ultimate',
-      operationType: 'ultimate',
-      skills: lastRiteChr_0026_lastrite_ultimate_skill,
-    },
-    {
-      key: 'comboSkill',
-      operationType: 'comboSkill',
-      skills: lastRiteChr_0026_lastrite_combo_skill,
-    },
+    { key: 'ultimate', operationType: 'ultimate', skillIds: ['chr_0026_lastrite_ultimate_skill'] },
+    { key: 'comboSkill', operationType: 'comboSkill', skillIds: ['chr_0026_lastrite_combo_skill'] },
   ],
-  dodgeSkill: lastRiteCommon_character_perfect_dodge,
+  dodgeSkillId: 'common_character_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0026_lastrite_plunging_attack_start',
+    endSkillId: 'chr_0026_lastrite_plunging_attack_end',
+    startDurationSeconds: 0.633,
+    endDurationSeconds: 2,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
   ],

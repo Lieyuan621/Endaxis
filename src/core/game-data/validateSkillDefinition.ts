@@ -196,6 +196,8 @@ export function validateSkillDefinition(
   }
   requireNonNegativeInteger(record, 'exclusiveFrame', path, out);
   requireNonNegativeInteger(record, 'offsetRecordFrame', path, out);
+  if (record.dontInterruptCombo !== undefined)
+    requireBoolean(record, 'dontInterruptCombo', path, out);
   if (record.inputWindows !== undefined) {
     const windows = asRecord(record.inputWindows, `${path}.inputWindows`, out);
     if (windows !== null) {

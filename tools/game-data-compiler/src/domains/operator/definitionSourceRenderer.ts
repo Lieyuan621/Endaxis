@@ -39,67 +39,9 @@ export function renderOperatorDefinitionSource(input: { readonly operator: objec
     );
     return raw(identifier);
   };
-  const registerSkills = (value: unknown, path: string): RawExpression | RawExpression[] =>
-    Array.isArray(value)
-      ? value.map((skill, index) => registerSkill(skill, `${path}[${index}]`))
-      : registerSkill(value, path);
-  const skillGroups = requireArray(operator.skillGroups, 'operator.skillGroups').map(
-    (groupValue, groupIndex) => {
-      const group = requireRecord(groupValue, `operator.skillGroups[${groupIndex}]`);
-      const groupPath = `operator.skillGroups[${groupIndex}]`;
-      return {
-        ...group,
-        skills: registerSkills(group.skills, `${groupPath}.skills`),
-        ...(Array.isArray(group.variants)
-          ? {
-              variants: group.variants.map((variantValue, variantIndex) => {
-                const variant = requireRecord(
-                  variantValue,
-                  `${groupPath}.variants[${variantIndex}]`,
-                );
-                return {
-                  ...variant,
-                  skills: registerSkills(
-                    variant.skills,
-                    `${groupPath}.variants[${variantIndex}].skills`,
-                  ),
-                };
-              }),
-            }
-          : {}),
-        ...(Array.isArray(group.replacementSkills)
-          ? {
-              replacementSkills: group.replacementSkills.map((skill, index) =>
-                registerSkill(skill, `${groupPath}.replacementSkills[${index}]`),
-              ),
-            }
-          : {}),
-        ...(Array.isArray(group.routedReplacementSkills)
-          ? {
-              routedReplacementSkills: group.routedReplacementSkills.map(
-                (routeValue, routeIndex) => {
-                  const route = requireRecord(
-                    routeValue,
-                    `${groupPath}.routedReplacementSkills[${routeIndex}]`,
-                  );
-                  return {
-                    ...route,
-                    skill: registerSkill(
-                      route.skill,
-                      `${groupPath}.routedReplacementSkills[${routeIndex}].skill`,
-                    ),
-                  };
-                },
-              ),
-            }
-          : {}),
-      };
-    },
+  operator.skills = requireArray(operator.skills, 'operator.skills').map((skill, index) =>
+    registerSkill(skill, `operator.skills[${index}]`),
   );
-  operator.skillGroups = skillGroups;
-  if (operator.dodgeSkill !== undefined) {
-    operator.dodgeSkill = registerSkill(operator.dodgeSkill, 'operator.dodgeSkill');
-  }
   const renderedPassives = new Map<string, { signature: string; identifier: string }>();
   const registerPassive = (value: unknown, path: string): RawExpression => {
     const passive = requireRecord(prepareActionGraphIdentities(value), path);

@@ -1101,6 +1101,7 @@ export const ardeliaChr_0025_ardelia_power_attack: SkillDefinition = {
   naturalDurationFrames: 215,
   exclusiveFrame: 65,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -1641,6 +1642,7 @@ export const ardeliaChr_0025_ardelia_normal_skill: SkillDefinition = {
   naturalDurationFrames: 378,
   exclusiveFrame: 239,
   offsetRecordFrame: 7,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 47, endFrame: 52, skillIds: ['chr_0025_ardelia_attack1'] },
@@ -1954,6 +1956,7 @@ export const ardeliaChr_0025_ardelia_combo_skill: SkillDefinition = {
   naturalDurationFrames: 160,
   exclusiveFrame: 40,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 23, endFrame: 40, skillIds: ['chr_0025_ardelia_normal_skill'] },
@@ -2274,6 +2277,62 @@ export const ardeliaCommon_character_perfect_dodge: SkillDefinition = {
   nativeSkillType: 'dodge',
 };
 
+export const ardeliaChr_0025_ardelia_plunging_attack_startActionGraph = {
+  main: {
+    nodes: {
+      spawnAbilityEntity_1: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'owner' },
+            abilityEntityId: 'abilityentity_chr_0025_ardelia_air_attack',
+            childSkillId: 'chr_0025_ardelia_air_attack_sheep',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+            saveToContextKey: 'Sheep',
+          },
+        },
+        next: null,
+      },
+      applyBuff_2: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0025_ardelia_air_attack_interrupt_listener' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+            inheritToNextSkillIds: ['chr_0025_ardelia_plunging_attack_end'],
+          },
+        },
+        next: null,
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const ardeliaChr_0025_ardelia_plunging_attack_start: SkillDefinition = {
+  actionGraph: ardeliaChr_0025_ardelia_plunging_attack_startActionGraph,
+  key: 'chr_0025_ardelia_plunging_attack_start',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 2, sequence: { $sequence: 'spawnAbilityEntity_1' } },
+    { startFrame: 0, endFrame: 1500, sequence: { $sequence: 'applyBuff_2' } },
+  ],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
+};
+
 const ardeliaComboCondition1ActionGraph = {
   main: {
     nodes: {
@@ -2382,22 +2441,15 @@ const ardeliaBuff3ActionGraph = {
   main: {
     nodes: {
       finishOwner_1: {
-        action: {
-          kind: 'finishOwner',
-          parameters: { targets: { kind: 'context', key: 'attack4_sheep' } },
-        },
+        action: { kind: 'finishOwner', parameters: { targets: { kind: 'context', key: 'Sheep' } } },
         next: null,
       },
       findOwnerSpawnedAbilityEntities_2: {
         action: {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
-            saveToContextKey: 'attack4_sheep',
-            abilityEntityIds: [
-              'abilityentity_chr_0025_ardelia_attack4',
-              'abilityentity_chr_0025_ardelia_attack4_end',
-              'abilityentity_chr_0025_ardelia_attack4_low',
-            ],
+            saveToContextKey: 'Sheep',
+            abilityEntityIds: ['abilityentity_chr_0025_ardelia_air_attack'],
             owner: { kind: 'owner' },
           },
         },
@@ -2426,7 +2478,7 @@ const ardeliaBuff4ActionGraph = {
       finishOwner_1: {
         action: {
           kind: 'finishOwner',
-          parameters: { targets: { kind: 'context', key: 'combo_skill_sheep' } },
+          parameters: { targets: { kind: 'context', key: 'attack4_sheep' } },
         },
         next: null,
       },
@@ -2434,8 +2486,12 @@ const ardeliaBuff4ActionGraph = {
         action: {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
-            saveToContextKey: 'combo_skill_sheep',
-            abilityEntityIds: ['abilityentity_chr_0025_ardelia_combo_skill'],
+            saveToContextKey: 'attack4_sheep',
+            abilityEntityIds: [
+              'abilityentity_chr_0025_ardelia_attack4',
+              'abilityentity_chr_0025_ardelia_attack4_end',
+              'abilityentity_chr_0025_ardelia_attack4_low',
+            ],
             owner: { kind: 'owner' },
           },
         },
@@ -2464,7 +2520,7 @@ const ardeliaBuff5ActionGraph = {
       finishOwner_1: {
         action: {
           kind: 'finishOwner',
-          parameters: { targets: { kind: 'context', key: 'normal_skill_sheep' } },
+          parameters: { targets: { kind: 'context', key: 'combo_skill_sheep' } },
         },
         next: null,
       },
@@ -2472,8 +2528,8 @@ const ardeliaBuff5ActionGraph = {
         action: {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
-            saveToContextKey: 'normal_skill_sheep',
-            abilityEntityIds: ['abilityentity_chr_0025_ardelia_normal_skill'],
+            saveToContextKey: 'combo_skill_sheep',
+            abilityEntityIds: ['abilityentity_chr_0025_ardelia_combo_skill'],
             owner: { kind: 'owner' },
           },
         },
@@ -2497,6 +2553,44 @@ const ardeliaBuff5: SkillBuffDefinition = {
 };
 
 const ardeliaBuff6ActionGraph = {
+  main: {
+    nodes: {
+      finishOwner_1: {
+        action: {
+          kind: 'finishOwner',
+          parameters: { targets: { kind: 'context', key: 'normal_skill_sheep' } },
+        },
+        next: null,
+      },
+      findOwnerSpawnedAbilityEntities_2: {
+        action: {
+          kind: 'findOwnerSpawnedAbilityEntities',
+          parameters: {
+            saveToContextKey: 'normal_skill_sheep',
+            abilityEntityIds: ['abilityentity_chr_0025_ardelia_normal_skill'],
+            owner: { kind: 'owner' },
+          },
+        },
+        next: 'finishOwner_1',
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const ardeliaBuff6: SkillBuffDefinition = {
+  stackingType: 'unique',
+  priority: 0,
+  maxStackCount: 1,
+  applyTags: [],
+  extendTags: [],
+  blackboard: {},
+  attributeModifiers: [],
+  lifecycleSequences: { finish: [{ $sequence: 'findOwnerSpawnedAbilityEntities_2' }] },
+  actionGraph: ardeliaBuff6ActionGraph,
+};
+
+const ardeliaBuff7ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -2556,7 +2650,7 @@ const ardeliaBuff6ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const ardeliaBuff6: SkillBuffDefinition = {
+const ardeliaBuff7: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -2566,7 +2660,7 @@ const ardeliaBuff6: SkillBuffDefinition = {
   blackboard: { duration: 7, rate: 0 },
   attributeModifiers: [],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_2' }] },
-  actionGraph: ardeliaBuff6ActionGraph,
+  actionGraph: ardeliaBuff7ActionGraph,
 };
 
 export const ardelia: OperatorDefinition = {
@@ -2587,32 +2681,51 @@ export const ardelia: OperatorDefinition = {
     baseAttack: [30, 93, 159, 225, 291, 323],
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },
+  skills: [
+    ardeliaChr_0025_ardelia_attack1,
+    ardeliaChr_0025_ardelia_attack2,
+    ardeliaChr_0025_ardelia_attack3,
+    ardeliaChr_0025_ardelia_attack4,
+    ardeliaChr_0025_ardelia_power_attack,
+    ardeliaChr_0025_ardelia_plunging_attack_end,
+    ardeliaChr_0025_ardelia_normal_skill,
+    ardeliaChr_0025_ardelia_combo_skill,
+    ardeliaChr_0025_ardelia_ultimate_skill,
+    ardeliaCommon_character_perfect_dodge,
+    ardeliaChr_0025_ardelia_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        ardeliaChr_0025_ardelia_attack1,
-        ardeliaChr_0025_ardelia_attack2,
-        ardeliaChr_0025_ardelia_attack3,
-        ardeliaChr_0025_ardelia_attack4,
+      skillIds: [
+        'chr_0025_ardelia_attack1',
+        'chr_0025_ardelia_attack2',
+        'chr_0025_ardelia_attack3',
+        'chr_0025_ardelia_attack4',
       ],
     },
-    { key: 'finisher', operationType: 'finisher', skills: ardeliaChr_0025_ardelia_power_attack },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0025_ardelia_power_attack'] },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: ardeliaChr_0025_ardelia_plunging_attack_end,
+      skillIds: ['chr_0025_ardelia_plunging_attack_end'],
     },
     {
       key: 'battleSkill',
       operationType: 'battleSkill',
-      skills: ardeliaChr_0025_ardelia_normal_skill,
+      skillIds: ['chr_0025_ardelia_normal_skill'],
     },
-    { key: 'comboSkill', operationType: 'comboSkill', skills: ardeliaChr_0025_ardelia_combo_skill },
-    { key: 'ultimate', operationType: 'ultimate', skills: ardeliaChr_0025_ardelia_ultimate_skill },
+    { key: 'comboSkill', operationType: 'comboSkill', skillIds: ['chr_0025_ardelia_combo_skill'] },
+    { key: 'ultimate', operationType: 'ultimate', skillIds: ['chr_0025_ardelia_ultimate_skill'] },
   ],
-  dodgeSkill: ardeliaCommon_character_perfect_dodge,
+  dodgeSkillId: 'common_character_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0025_ardelia_plunging_attack_start',
+    endSkillId: 'chr_0025_ardelia_plunging_attack_end',
+    startDurationSeconds: 0.633,
+    endDurationSeconds: 2,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
   ],
@@ -2794,10 +2907,11 @@ export const ardelia: OperatorDefinition = {
   buffDefinitions: {
     buff_chr_0025_ardelia_affixes_vulnerable_physic_child: ardeliaBuff1,
     buff_chr_0025_ardelia_affixes_vulnerable_spell_child: ardeliaBuff2,
-    buff_chr_0025_ardelia_attack4_kill_sheep: ardeliaBuff3,
-    buff_chr_0025_ardelia_combo_skill_kill_sheep: ardeliaBuff4,
-    buff_chr_0025_ardelia_normal_skill_kill_sheep: ardeliaBuff5,
-    buff_chr_0025_ardelia_normal_skill_vulnerable: ardeliaBuff6,
+    buff_chr_0025_ardelia_air_attack_interrupt_listener: ardeliaBuff3,
+    buff_chr_0025_ardelia_attack4_kill_sheep: ardeliaBuff4,
+    buff_chr_0025_ardelia_combo_skill_kill_sheep: ardeliaBuff5,
+    buff_chr_0025_ardelia_normal_skill_kill_sheep: ardeliaBuff6,
+    buff_chr_0025_ardelia_normal_skill_vulnerable: ardeliaBuff7,
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0025_ardelia_attack4: {
@@ -3637,6 +3751,43 @@ export const ardelia: OperatorDefinition = {
             macros: {},
           },
         },
+      },
+    },
+    abilityentity_chr_0025_ardelia_air_attack: {
+      faction: 'good',
+      bornTags: [
+        'Immune/Damage',
+        'SelectCategory/Unmarkable',
+        'SelectCategory/UnSkillManualSelectable',
+        'SelectCategory/UnSkillAutoSelectable',
+        'Skill/Character/chr_0025_ardelia/AirAttackSheep',
+      ],
+      lifetime: { kind: 'limited', durationSeconds: 100 },
+      childSkill: {
+        actionGraph: {
+          main: {
+            nodes: {
+              finishOwner_1: {
+                action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
+                next: null,
+              },
+            },
+          },
+          macros: {},
+        },
+        skillId: 'chr_0025_ardelia_air_attack_sheep',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 3000,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: {},
+        scheduledSequences: [
+          { startFrame: 2999, endFrame: 3000, sequence: { $sequence: 'finishOwner_1' } },
+        ],
       },
     },
   },

@@ -18,6 +18,7 @@ export interface CenterDashTiming {
 export interface DashTimingProgram extends CenterDashTiming {
   /** ComboController 的 Dash offset 缓存；不参与中心状态计时。 */
   readonly dashOffsetFrames: number;
+  readonly skillOffsetFrames: number;
   readonly dashInputCooldownFrames: number;
   readonly dashSecondDashIntervalFrames: number;
 }

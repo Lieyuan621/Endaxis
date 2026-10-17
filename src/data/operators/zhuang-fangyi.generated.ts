@@ -667,2700 +667,6 @@ export const zhuangFangyiChr_0030_zhuangfy_attack5: SkillDefinition = {
   actionGraph: zhuangFangyiChr_0030_zhuangfy_attack5ActionGraph,
 };
 
-export const zhuangFangyiChr_0030_zhuangfy_power_attackActionGraph = {
-  main: {
-    nodes: {
-      dealDamage_1: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'electric',
-            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-            calculation: 'breakingAttack',
-            calculationMultiplier: 0.1,
-            tags: ['normalAttack', 'powerAttack'],
-          },
-        },
-        next: null,
-      },
-      startTimeDilation_2: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.4 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
-          },
-        },
-        next: null,
-      },
-      gainFinisherSp_3: {
-        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
-        next: 'startTimeDilation_2',
-      },
-      dealDamage_4: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'electric',
-            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-            calculation: 'breakingAttack',
-            calculationMultiplier: 0.9,
-            tags: ['normalAttack', 'powerAttack'],
-          },
-        },
-        next: 'gainFinisherSp_3',
-      },
-      applyBuff_5: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_common_full_immune_medium' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'owner' },
-            inheritSourceSkillCastInfo: true,
-            finishByAction: true,
-          },
-        },
-        next: null,
-      },
-      applyBuff_6: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_common_power_attack_disable_cast_skill' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'owner' },
-            inheritSourceSkillCastInfo: true,
-            finishByAction: true,
-          },
-        },
-        next: null,
-      },
-    },
-    dataNodes: { data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } } },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const zhuangFangyiChr_0030_zhuangfy_power_attack: SkillDefinition = {
-  actionGraph: zhuangFangyiChr_0030_zhuangfy_power_attackActionGraph,
-  key: 'chr_0030_zhuangfy_power_attack',
-  element: 'electric',
-  blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-  timelineBlockFrames: 41,
-  naturalDurationFrames: 153,
-  exclusiveFrame: 45,
-  offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 41,
-        endFrame: 45,
-        skillIds: [
-          'chr_0030_zhuangfy_attack1',
-          'chr_0030_zhuangfy_combo_skill',
-          'chr_0030_zhuangfy_normal_skill',
-        ],
-      },
-    ],
-  },
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 11, endFrame: 14, sequence: { $sequence: 'dealDamage_1' } },
-    { startFrame: 40, endFrame: 43, sequence: { $sequence: 'dealDamage_4' } },
-    { startFrame: 0, endFrame: 45, sequence: { $sequence: 'applyBuff_5' } },
-    { startFrame: 0, endFrame: 41, sequence: { $sequence: 'applyBuff_6' } },
-  ],
-  defaultTarget: 'enemy',
-  skillType: 'finisher',
-  levelSource: 'basicAttack',
-  nativeSkillType: 'breakingAttack',
-};
-
-export const zhuangFangyiChr_0030_zhuangfy_plunging_attack_endActionGraph = {
-  main: {
-    nodes: {
-      interruptCurrentSkill_4: {
-        action: { kind: 'interruptCurrentSkill', parameters: { targets: { kind: 'owner' } } },
-        next: null,
-      },
-      ifElse_5: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_1' },
-          whenTrue: { $sequence: 'interruptCurrentSkill_4' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      changeResource_9: {
-        action: {
-          kind: 'changeResource',
-          parameters: {
-            resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
-            coefficient: { kind: 'constant', value: 1 },
-            source: { kind: 'source' },
-            targets: { kind: 'source' },
-            onlyMainOperator: true,
-            spGainKind: 'gain',
-            spGainSource: 'normalAttack',
-          },
-        },
-        next: null,
-      },
-      dealDamage_10: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'electric',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
-            tags: ['normalAttack', 'plungingAttack'],
-          },
-        },
-        next: 'changeResource_9',
-      },
-      finishOwner_12: {
-        action: {
-          kind: 'finishOwner',
-          parameters: { targets: { kind: 'context', key: 'airSword' } },
-        },
-        next: null,
-      },
-      findOwnerSpawnedAbilityEntities_13: {
-        action: {
-          kind: 'findOwnerSpawnedAbilityEntities',
-          parameters: {
-            saveToContextKey: 'airSword',
-            abilityEntityIds: ['abilityentity_chr_0030_zhuangfy_air_attack'],
-            owner: { kind: 'owner' },
-          },
-        },
-        next: 'finishOwner_12',
-      },
-      ifElse_14: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_4' },
-          whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'findOwnerSpawnedAbilityEntities_13' },
-        },
-        next: null,
-      },
-      inheritBuffById_15: {
-        action: {
-          kind: 'inheritBuffById',
-          parameters: {
-            target: 'caster',
-            buffId: 'buff_chr_0030_zhuangfy_air_attack_ult_extend_buff',
-            inheritToNextSkillIds: [],
-            finishByAction: true,
-            finishWithNextSkillIfNotInherited: true,
-          },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'source' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-          buffIds: ['buff_chr_0030_zhuangfy_ult_base'],
-        },
-      },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_4: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'source' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-          buffIds: ['buff_chr_0030_zhuangfy_ult_base'],
-        },
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const zhuangFangyiChr_0030_zhuangfy_plunging_attack_end: SkillDefinition = {
-  key: 'chr_0030_zhuangfy_plunging_attack_end',
-  element: 'electric',
-  blackboard: {
-    atb: 0,
-    atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
-  },
-  timelineBlockFrames: 21,
-  naturalDurationFrames: 170,
-  exclusiveFrame: 20,
-  offsetRecordFrame: 0,
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 125, endFrame: 128, sequence: { $sequence: 'ifElse_5' } },
-    { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_10' } },
-    { startFrame: 0, endFrame: 5, sequence: { $sequence: 'ifElse_14' } },
-    { startFrame: 0, endFrame: 6, sequence: { $sequence: 'inheritBuffById_15' } },
-  ],
-  defaultTarget: 'enemy',
-  skillType: 'plungingAttack',
-  levelSource: 'basicAttack',
-  nativeSkillType: 'attack',
-  actionGraph: zhuangFangyiChr_0030_zhuangfy_plunging_attack_endActionGraph,
-};
-
-export const zhuangFangyiChr_0030_zhuangfy_normal_skillActionGraph = {
-  main: {
-    nodes: {
-      setAbilityEntityRemainingDuration_6: {
-        action: {
-          kind: 'setAbilityEntityRemainingDuration',
-          parameters: { target: { kind: 'inputTarget' }, value: { kind: 'constant', value: 3 } },
-        },
-        next: null,
-      },
-      checkCondition_7: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: 'setAbilityEntityRemainingDuration_6',
-      },
-      forEachContextTarget_8: {
-        action: {
-          kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'context', key: 'swordsForExtend' } },
-          body: { $sequence: 'checkCondition_7' },
-        },
-        next: null,
-      },
-      findOwnerSpawnedAbilityEntities_9: {
-        action: {
-          kind: 'findOwnerSpawnedAbilityEntities',
-          parameters: {
-            saveToContextKey: 'swordsForExtend',
-            abilityEntityIds: [
-              'abilityentity_chr_0030_zhuangfy_normal_skill_sword',
-              'abilityentity_chr_0030_zhuangfy_normal_skill_sword_ult',
-            ],
-            owner: { kind: 'owner' },
-          },
-        },
-        next: 'forEachContextTarget_8',
-      },
-      finishBuffsById_11: {
-        action: {
-          kind: 'finishBuffsById',
-          parameters: {
-            targets: { kind: 'source' },
-            finishSource: { kind: 'source' },
-            buffIds: ['buff_chr_0030_zhuangfy_normal_skill_trigger_sword'],
-            reason: 'other',
-          },
-        },
-        next: null,
-      },
-      spawnAbilityEntity_39: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            bornAt: { kind: 'source' },
-            abilityEntityId: 'abilityentity_chr_0030_zhuangfy_normal_skill_fake_target',
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: true,
-          },
-        },
-        next: null,
-      },
-      modifyActionValue_17: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'sword_gene_num',
-            operation: 'add',
-            value: { kind: 'constant', value: 1 },
-          },
-        },
-        next: null,
-      },
-      applyBuff_31: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_common_obtain_ultimate_sp' }],
-            targets: { kind: 'source' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-      launchProjectile_32: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: { reachAfterTicks: 1, maxDurationSeconds: 2, finishOnReach: false },
-            recycleDelaySeconds: 0.0333333350718021,
-            targets: { kind: 'context', contextKey: 'swordPos' },
-          },
-          callbacks: [
-            {
-              event: 'reach',
-              skill: {
-                skillId: 'chr_0030_zhuangfy_normal_skill_gene_sword_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { remain_sword_limit: 0, sword_duration: 0, swordsForLimit: 0 },
-                scheduledSequences: [
-                  {
-                    startFrame: 0,
-                    endFrame: 1,
-                    sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_opt6' },
-                  },
-                ],
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      spawnAbilityEntity_6: {
-                        action: {
-                          kind: 'spawnAbilityEntity',
-                          parameters: {
-                            bornAt: { kind: 'fixed', target: 'enemy' },
-                            abilityEntityId: 'abilityentity_chr_0030_zhuangfy_normal_skill_sword',
-                            childSkillId: 'chr_0030_zhuangfy_normal_skill_sword',
-                            inheritActionBlackboard: true,
-                            dieWhenSourceDies: true,
-                            blackboardAssignments: {
-                              EntityBB_swordDuration: { kind: 'valueNode', nodeId: 'data_1' },
-                              EntityBB_swordLimit: { kind: 'valueNode', nodeId: 'data_2' },
-                            },
-                          },
-                        },
-                        next: null,
-                      },
-                      ifElse_opt1: {
-                        action: {
-                          kind: 'ifElse',
-                          parameters: { alwaysNext: true },
-                          condition: { kind: 'conditionNode', nodeId: 'data_3' },
-                          whenTrue: { $sequence: 'spawnAbilityEntity_6' },
-                          whenFalse: { $sequence: 'spawnAbilityEntity_6' },
-                        },
-                        next: null,
-                      },
-                      finishOwner_opt2: {
-                        action: {
-                          kind: 'finishOwner',
-                          parameters: { targets: { kind: 'context', key: 'swordToDie' } },
-                        },
-                        next: 'ifElse_opt1',
-                      },
-                      pickContextTarget_opt3: {
-                        action: {
-                          kind: 'pickContextTarget',
-                          parameters: {
-                            sourceContextKey: 'swords',
-                            saveToContextKey: 'swordToDie',
-                            index: { kind: 'constant', value: 0 },
-                          },
-                        },
-                        next: 'finishOwner_opt2',
-                      },
-                      ifElse_opt4: {
-                        action: {
-                          kind: 'ifElse',
-                          parameters: { alwaysNext: true },
-                          condition: { kind: 'conditionNode', nodeId: 'data_6' },
-                          whenTrue: { $sequence: 'pickContextTarget_opt3' },
-                          whenFalse: { $sequence: 'ifElse_opt1' },
-                        },
-                        next: null,
-                      },
-                      checkCondition_opt5: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-                        },
-                        next: 'ifElse_opt4',
-                      },
-                      findOwnerSpawnedAbilityEntities_opt6: {
-                        action: {
-                          kind: 'findOwnerSpawnedAbilityEntities',
-                          parameters: {
-                            saveToContextKey: 'swords',
-                            abilityEntityIds: [
-                              'abilityentity_chr_0030_zhuangfy_normal_skill_sword',
-                              'abilityentity_chr_0030_zhuangfy_normal_skill_sword_ult',
-                            ],
-                            owner: { kind: 'source' },
-                          },
-                        },
-                        next: 'checkCondition_opt5',
-                      },
-                    },
-                    dataNodes: {
-                      data_1: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'sword_duration' },
-                      },
-                      data_2: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'remain_sword_limit' },
-                      },
-                      data_3: {
-                        type: 'boolean',
-                        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-                      },
-                      data_4: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'swordsForLimit', fallback: 0 },
-                      },
-                      data_5: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'remain_sword_limit', fallback: 0 },
-                      },
-                      data_6: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_4' },
-                          operator: 'greaterOrEqual',
-                          right: { kind: 'valueNode', nodeId: 'data_5' },
-                        },
-                      },
-                      data_7: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'entityCountCompare',
-                          target: { kind: 'context', key: 'swords' },
-                          containsHittableTarget: false,
-                          excludeDeadEntity: false,
-                          operator: 'greaterOrEqual',
-                          value: 0,
-                          outputKey: 'swordsForLimit',
-                        },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-              },
-            },
-          ],
-        },
-        next: 'applyBuff_31',
-      },
-      createSpatialPointTargets_33: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: {
-            saveToContextKey: 'swordPos',
-            count: { kind: 'valueNode', nodeId: 'data_2' },
-          },
-        },
-        next: 'launchProjectile_32',
-      },
-      ifElse_34: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'modifyActionValue_17' },
-          whenFalse: { $sequence: null },
-        },
-        next: 'createSpatialPointTargets_33',
-      },
-      ifElse_35: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_6' },
-          whenTrue: { $sequence: 'modifyActionValue_17' },
-          whenFalse: { $sequence: null },
-        },
-        next: 'ifElse_34',
-      },
-      modifyActionValue_13: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'sword_gene_num',
-            operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_7' },
-          },
-        },
-        next: null,
-      },
-      changeResource_25: {
-        action: {
-          kind: 'changeResource',
-          parameters: {
-            resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_8' },
-            coefficient: { kind: 'constant', value: 1 },
-            source: { kind: 'source' },
-            targets: { kind: 'source' },
-            spGainKind: 'refund',
-            spGainSource: 'default',
-          },
-        },
-        next: 'ifElse_34',
-      },
-      ifElse_26: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_11' },
-          whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'modifyActionValue_13' },
-        },
-        next: 'changeResource_25',
-      },
-      modifyActionValue_27: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'sword_gene_num',
-            operation: 'add',
-            value: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'ifElse_26',
-      },
-      modifyActionValue_28: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'sword_gene_num',
-            operation: 'add',
-            value: { kind: 'valueNode', nodeId: 'data_12' },
-          },
-        },
-        next: 'modifyActionValue_27',
-      },
-      finishBuffsByTag_29: {
-        action: {
-          kind: 'finishBuffsByTag',
-          parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
-            finishSource: { kind: 'source' },
-            tagQueryType: 'hasAny',
-            buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
-            reason: 'early',
-          },
-        },
-        next: 'modifyActionValue_28',
-      },
-      readBuffBlackboard_30: {
-        action: {
-          kind: 'readBuffBlackboard',
-          parameters: {
-            target: 'enemy',
-            query: {
-              kind: 'tag',
-              tagQueryType: 'hasAny',
-              buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
-            },
-            desiredKey: 'count',
-            outputKey: 'conductCnt',
-          },
-        },
-        next: 'finishBuffsByTag_29',
-      },
-      ifElse_37: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_13' },
-          whenTrue: { $sequence: 'readBuffBlackboard_30' },
-          whenFalse: { $sequence: 'ifElse_35' },
-        },
-        next: null,
-      },
-      applyBuff_38: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0030_zhuangfy_normal_skill_trigger_sword_tar' }],
-            targets: { kind: 'fixed', target: 'enemy' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: 'ifElse_37',
-      },
-      ifElse_40: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_14' },
-          whenTrue: { $sequence: 'applyBuff_38' },
-          whenFalse: { $sequence: 'spawnAbilityEntity_39' },
-        },
-        next: null,
-      },
-      ifElse_41: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_15' },
-          whenTrue: { $sequence: 'finishBuffsById_11' },
-          whenFalse: { $sequence: null },
-        },
-        next: 'ifElse_40',
-      },
-      applyBuff_43: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [
-              {
-                buffId: 'buff_chr_0030_zhuangfy_normal_skill_trigger_sword',
-                copiedBlackboardAssignments: {
-                  interval: 'swordTriggerInterval',
-                  atk_scale: 'atk_scale',
-                  poise: 'poise',
-                  usp_extra: 'usp_extra',
-                  atk_up_final: 'atk_up_final',
-                  remain_sword_limit: 'remain_sword_limit',
-                  final_rate: 'final_rate',
-                },
-              },
-            ],
-            targets: { kind: 'source' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-      calculateActionValue_44: {
-        action: {
-          kind: 'calculateActionValue',
-          parameters: {
-            key: 'atk_up_final',
-            operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_16' },
-            right: { kind: 'valueNode', nodeId: 'data_12' },
-          },
-        },
-        next: 'applyBuff_43',
-      },
-      calculateActionValue_45: {
-        action: {
-          kind: 'calculateActionValue',
-          parameters: {
-            key: 'swordTriggerInterval',
-            operation: 'add',
-            left: { kind: 'constant', value: 0.3 },
-            right: { kind: 'valueNode', nodeId: 'data_17' },
-          },
-        },
-        next: 'calculateActionValue_44',
-      },
-      modifyActionValue_46: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'swordTriggerInterval',
-            operation: 'multiply',
-            value: { kind: 'constant', value: -1 },
-          },
-        },
-        next: 'calculateActionValue_45',
-      },
-      calculateActionValue_47: {
-        action: {
-          kind: 'calculateActionValue',
-          parameters: {
-            key: 'swordTriggerInterval',
-            operation: 'divide',
-            left: { kind: 'valueNode', nodeId: 'data_18' },
-            right: { kind: 'constant', value: 90 },
-          },
-        },
-        next: 'modifyActionValue_46',
-      },
-      ifElse_48: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_19' },
-          whenTrue: { $sequence: 'calculateActionValue_47' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      startTimeDilation_49: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.25 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: {
-              kind: 'inline',
-              keys: [
-                {
-                  time: 0,
-                  value: 0.01,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 0.7704785,
-                  value: 0.01,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 4.313321,
-                  outTangent: 4.313321,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-            },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
-          },
-        },
-        next: null,
-      },
-      checkCondition_50: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_20' } },
-        },
-        next: 'startTimeDilation_49',
-      },
-      checkCondition_51: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_21' } },
-        },
-        next: 'checkCondition_50',
-      },
-      applyBuff_52: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0030_zhuangfy_talent1' }],
-            targets: { kind: 'source' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-      ifElse_55: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_22' },
-          whenTrue: { $sequence: 'applyBuff_52' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      ifElse_56: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'constant', value: true },
-          whenTrue: { $sequence: 'applyBuff_52' },
-          whenFalse: { $sequence: 'ifElse_55' },
-        },
-        next: null,
-      },
-      anyCondition_65: {
-        action: {
-          kind: 'anyCondition',
-          parameters: {},
-          conditions: [
-            { kind: 'conditionNode', nodeId: 'data_23' },
-            { kind: 'conditionNode', nodeId: 'data_24' },
-          ],
-        },
-        next: null,
-      },
-      jumpTimeline_66: {
-        action: {
-          kind: 'jumpTimeline',
-          parameters: { destinationFrame: 116 },
-          condition: { kind: 'conditionNode', nodeId: 'data_25' },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: {
-        type: 'boolean',
-        expression: {
-          kind: 'abilityEntityRemainingDurationCompare',
-          target: { kind: 'inputTarget' },
-          operator: 'less',
-          value: { kind: 'constant', value: 3 },
-        },
-      },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'sword_gene_num' } },
-      data_3: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'source' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-          buffIds: ['buff_chr_0030_zhuangfy_potential1_more_sword'],
-        },
-      },
-      data_4: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'EntityBB_SwordNum', fallback: 0 },
-      },
-      data_5: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'free_sword_limit', fallback: 0 },
-      },
-      data_6: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_4' },
-          operator: 'less',
-          right: { kind: 'valueNode', nodeId: 'data_5' },
-        },
-      },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'max_conduct_sword' } },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'atb_return' } },
-      data_9: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'sword_gene_num', fallback: 0 },
-      },
-      data_10: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'max_conduct_sword', fallback: 0 },
-      },
-      data_11: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_9' },
-          operator: 'lessOrEqual',
-          right: { kind: 'valueNode', nodeId: 'data_10' },
-        },
-      },
-      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'conductCnt' } },
-      data_13: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffStackCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-          tagQueryType: 'hasAny',
-          buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
-        },
-      },
-      data_14: {
-        type: 'boolean',
-        expression: {
-          kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          containsHittableTarget: false,
-          excludeDeadEntity: true,
-          operator: 'greaterOrEqual',
-          value: 1,
-        },
-      },
-      data_15: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'source' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-          buffIds: ['buff_chr_0030_zhuangfy_normal_skill_trigger_sword'],
-        },
-      },
-      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'atk_up_per_conduct' } },
-      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'swordTriggerInterval' } },
-      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'EntityBB_SwordNum' } },
-      data_19: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_4' },
-          operator: 'greaterOrEqual',
-          right: { kind: 'constant', value: 1 },
-        },
-      },
-      data_20: {
-        type: 'boolean',
-        expression: {
-          kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          containsHittableTarget: false,
-          excludeDeadEntity: false,
-          operator: 'greaterOrEqual',
-          value: 1,
-        },
-      },
-      data_21: {
-        type: 'boolean',
-        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
-      },
-      data_22: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_23: {
-        type: 'boolean',
-        expression: {
-          kind: 'timedMarkerPresent',
-          target: { kind: 'owner' },
-          returnTrueIfNotExists: false,
-          markerId: 'skillEnd',
-        },
-      },
-      data_24: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_4' },
-          operator: 'equal',
-          right: { kind: 'constant', value: 0 },
-        },
-      },
-      data_25: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: 'anyCondition_65' } },
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const zhuangFangyiChr_0030_zhuangfy_normal_skill: SkillDefinition = {
-  key: 'chr_0030_zhuangfy_normal_skill',
-  element: 'electric',
-  blackboard: {
-    atb_return: 0,
-    atk_scale: [0.2, 0.22, 0.24, 0.26, 0.28, 0.3, 0.32, 0.34, 0.36, 0.39, 0.42, 0.45],
-    atk_up_final: 0,
-    atk_up_per_conduct: [0.03, 0.04, 0.04, 0.04, 0.05, 0.05, 0.05, 0.06, 0.06, 0.07, 0.08, 0.09],
-    conductCnt: 0,
-    final_rate: 6,
-    free_sword_limit: 3,
-    max_conduct_sword: 3,
-    poise: 15,
-    remain_sword_limit: 9,
-    sword_duration: 36,
-    sword_gene_num: 0,
-    swordTriggerInterval: 0,
-    usp_extra: 6,
-  },
-  timelineBlockFrames: 45,
-  naturalDurationFrames: 290,
-  exclusiveFrame: 135,
-  offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 45,
-        endFrame: 116,
-        skillIds: [
-          'chr_0030_zhuangfy_attack1',
-          'chr_0030_zhuangfy_attack2',
-          'chr_0030_zhuangfy_attack3',
-          'chr_0030_zhuangfy_attack4',
-          'chr_0030_zhuangfy_attack5',
-          'chr_0030_zhuangfy_normal_skill',
-          'chr_0030_zhuangfy_power_attack',
-        ],
-      },
-      {
-        startFrame: 120,
-        endFrame: 147,
-        skillIds: [
-          'chr_0030_zhuangfy_attack1',
-          'chr_0030_zhuangfy_attack2',
-          'chr_0030_zhuangfy_attack3',
-          'chr_0030_zhuangfy_attack4',
-          'chr_0030_zhuangfy_attack5',
-          'chr_0030_zhuangfy_normal_skill',
-          'chr_0030_zhuangfy_power_attack',
-        ],
-      },
-    ],
-  },
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_9' } },
-    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'ifElse_41' } },
-    { startFrame: 13, endFrame: 16, sequence: { $sequence: 'ifElse_48' } },
-    { startFrame: 123, endFrame: 126, sequence: { $sequence: 'checkCondition_51' } },
-    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'ifElse_56' } },
-    { startFrame: 123, endFrame: 126, sequence: { $sequence: 'checkCondition_51' } },
-    { startFrame: 16, endFrame: 116, sequence: { $sequence: 'jumpTimeline_66' } },
-  ],
-  smartTarget: 'enemy',
-  costs: [{ resource: 'sp', value: 100 }],
-  skillType: 'battleSkill',
-  levelSource: 'battleSkill',
-  nativeSkillType: 'normalSkill',
-  actionGraph: zhuangFangyiChr_0030_zhuangfy_normal_skillActionGraph,
-};
-
-const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraphCallback1 = {
-  skillId: 'chr_0030_zhuangfy_normal_skill_gene_sword_projhit',
-  nativeSkillType: 'normalSkill',
-  naturalDurationFrames: 1,
-  castResource: {
-    costFrame: 0,
-    cooldownSeconds: 0,
-    maxChargeTime: 1,
-    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-  },
-  blackboard: { remain_sword_limit: 0, sword_duration: 0, swordsForLimit: 0 },
-  scheduledSequences: [
-    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_opt6' } },
-  ],
-  actionGraph: {
-    main: {
-      nodes: {
-        spawnAbilityEntity_6: {
-          action: {
-            kind: 'spawnAbilityEntity',
-            parameters: {
-              bornAt: { kind: 'fixed', target: 'enemy' },
-              abilityEntityId: 'abilityentity_chr_0030_zhuangfy_normal_skill_sword',
-              childSkillId: 'chr_0030_zhuangfy_normal_skill_sword',
-              inheritActionBlackboard: true,
-              dieWhenSourceDies: true,
-              blackboardAssignments: {
-                EntityBB_swordDuration: { kind: 'valueNode', nodeId: 'data_1' },
-                EntityBB_swordLimit: { kind: 'valueNode', nodeId: 'data_2' },
-              },
-            },
-          },
-          next: null,
-        },
-        ifElse_opt1: {
-          action: {
-            kind: 'ifElse',
-            parameters: { alwaysNext: true },
-            condition: { kind: 'conditionNode', nodeId: 'data_3' },
-            whenTrue: { $sequence: 'spawnAbilityEntity_6' },
-            whenFalse: { $sequence: 'spawnAbilityEntity_6' },
-          },
-          next: null,
-        },
-        finishOwner_opt2: {
-          action: {
-            kind: 'finishOwner',
-            parameters: { targets: { kind: 'context', key: 'swordToDie' } },
-          },
-          next: 'ifElse_opt1',
-        },
-        pickContextTarget_opt3: {
-          action: {
-            kind: 'pickContextTarget',
-            parameters: {
-              sourceContextKey: 'swords',
-              saveToContextKey: 'swordToDie',
-              index: { kind: 'constant', value: 0 },
-            },
-          },
-          next: 'finishOwner_opt2',
-        },
-        ifElse_opt4: {
-          action: {
-            kind: 'ifElse',
-            parameters: { alwaysNext: true },
-            condition: { kind: 'conditionNode', nodeId: 'data_6' },
-            whenTrue: { $sequence: 'pickContextTarget_opt3' },
-            whenFalse: { $sequence: 'ifElse_opt1' },
-          },
-          next: null,
-        },
-        checkCondition_opt5: {
-          action: {
-            kind: 'checkCondition',
-            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-          },
-          next: 'ifElse_opt4',
-        },
-        findOwnerSpawnedAbilityEntities_opt6: {
-          action: {
-            kind: 'findOwnerSpawnedAbilityEntities',
-            parameters: {
-              saveToContextKey: 'swords',
-              abilityEntityIds: [
-                'abilityentity_chr_0030_zhuangfy_normal_skill_sword',
-                'abilityentity_chr_0030_zhuangfy_normal_skill_sword_ult',
-              ],
-              owner: { kind: 'source' },
-            },
-          },
-          next: 'checkCondition_opt5',
-        },
-      },
-      dataNodes: {
-        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'sword_duration' } },
-        data_2: { type: 'number', expression: { kind: 'blackboard', key: 'remain_sword_limit' } },
-        data_3: {
-          type: 'boolean',
-          expression: { kind: 'checkActionResult', action: { $sequence: null } },
-        },
-        data_4: {
-          type: 'number',
-          expression: { kind: 'blackboard', key: 'swordsForLimit', fallback: 0 },
-        },
-        data_5: {
-          type: 'number',
-          expression: { kind: 'blackboard', key: 'remain_sword_limit', fallback: 0 },
-        },
-        data_6: {
-          type: 'boolean',
-          expression: {
-            kind: 'actionValueCompare',
-            left: { kind: 'valueNode', nodeId: 'data_4' },
-            operator: 'greaterOrEqual',
-            right: { kind: 'valueNode', nodeId: 'data_5' },
-          },
-        },
-        data_7: {
-          type: 'boolean',
-          expression: {
-            kind: 'entityCountCompare',
-            target: { kind: 'context', key: 'swords' },
-            containsHittableTarget: false,
-            excludeDeadEntity: false,
-            operator: 'greaterOrEqual',
-            value: 0,
-            outputKey: 'swordsForLimit',
-          },
-        },
-      },
-    },
-    macros: {},
-  },
-} as const;
-
-export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
-  main: {
-    nodes: {
-      setAbilityEntityRemainingDuration_6: {
-        action: {
-          kind: 'setAbilityEntityRemainingDuration',
-          parameters: { target: { kind: 'inputTarget' }, value: { kind: 'constant', value: 3 } },
-        },
-        next: null,
-      },
-      checkCondition_7: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: 'setAbilityEntityRemainingDuration_6',
-      },
-      forEachContextTarget_8: {
-        action: {
-          kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'context', key: 'swordsForExtend' } },
-          body: { $sequence: 'checkCondition_7' },
-        },
-        next: null,
-      },
-      findOwnerSpawnedAbilityEntities_9: {
-        action: {
-          kind: 'findOwnerSpawnedAbilityEntities',
-          parameters: {
-            saveToContextKey: 'swordsForExtend',
-            abilityEntityIds: [
-              'abilityentity_chr_0030_zhuangfy_normal_skill_sword',
-              'abilityentity_chr_0030_zhuangfy_normal_skill_sword_ult',
-            ],
-            owner: { kind: 'owner' },
-          },
-        },
-        next: 'forEachContextTarget_8',
-      },
-      spawnAbilityEntity_47: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            bornAt: { kind: 'source' },
-            abilityEntityId: 'abilityentity_chr_0030_zhuangfy_normal_skill_fake_target',
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: true,
-          },
-        },
-        next: null,
-      },
-      modifyActionValue_22: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'sword_gene_num',
-            operation: 'add',
-            value: { kind: 'constant', value: 1 },
-          },
-        },
-        next: null,
-      },
-      applyBuff_36: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_common_obtain_ultimate_sp' }],
-            targets: { kind: 'source' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-      launchProjectile_37: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: { reachAfterTicks: 1, maxDurationSeconds: 2, finishOnReach: false },
-            recycleDelaySeconds: 0.0333333350718021,
-            targets: { kind: 'context', contextKey: 'swordPos' },
-          },
-          callbacks: [
-            {
-              event: 'reach',
-              skill: zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraphCallback1,
-            },
-          ],
-        },
-        next: 'applyBuff_36',
-      },
-      createSpatialPointTargets_38: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: {
-            saveToContextKey: 'swordPos',
-            count: { kind: 'valueNode', nodeId: 'data_2' },
-          },
-        },
-        next: 'launchProjectile_37',
-      },
-      ifElse_39: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'modifyActionValue_22' },
-          whenFalse: { $sequence: null },
-        },
-        next: 'createSpatialPointTargets_38',
-      },
-      ifElse_40: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_6' },
-          whenTrue: { $sequence: 'modifyActionValue_22' },
-          whenFalse: { $sequence: null },
-        },
-        next: 'ifElse_39',
-      },
-      modifyActionValue_18: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'sword_gene_num',
-            operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_7' },
-          },
-        },
-        next: null,
-      },
-      changeResource_30: {
-        action: {
-          kind: 'changeResource',
-          parameters: {
-            resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_8' },
-            coefficient: { kind: 'constant', value: 1 },
-            source: { kind: 'source' },
-            targets: { kind: 'source' },
-            spGainKind: 'refund',
-            spGainSource: 'default',
-          },
-        },
-        next: 'ifElse_39',
-      },
-      ifElse_31: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_11' },
-          whenTrue: { $sequence: null },
-          whenFalse: { $sequence: 'modifyActionValue_18' },
-        },
-        next: 'changeResource_30',
-      },
-      modifyActionValue_32: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'sword_gene_num',
-            operation: 'add',
-            value: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'ifElse_31',
-      },
-      modifyActionValue_33: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'sword_gene_num',
-            operation: 'add',
-            value: { kind: 'valueNode', nodeId: 'data_12' },
-          },
-        },
-        next: 'modifyActionValue_32',
-      },
-      finishBuffsByTag_34: {
-        action: {
-          kind: 'finishBuffsByTag',
-          parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
-            finishSource: { kind: 'source' },
-            tagQueryType: 'hasAny',
-            buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
-            reason: 'early',
-          },
-        },
-        next: 'modifyActionValue_33',
-      },
-      readBuffBlackboard_35: {
-        action: {
-          kind: 'readBuffBlackboard',
-          parameters: {
-            target: 'enemy',
-            query: {
-              kind: 'tag',
-              tagQueryType: 'hasAny',
-              buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
-            },
-            desiredKey: 'count',
-            outputKey: 'conductCnt',
-          },
-        },
-        next: 'finishBuffsByTag_34',
-      },
-      ifElse_43: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_13' },
-          whenTrue: { $sequence: 'readBuffBlackboard_35' },
-          whenFalse: { $sequence: 'ifElse_40' },
-        },
-        next: null,
-      },
-      finishBuffsById_14: {
-        action: {
-          kind: 'finishBuffsById',
-          parameters: {
-            targets: { kind: 'source' },
-            finishSource: { kind: 'source' },
-            buffIds: ['buff_chr_0030_zhuangfy_ult_skill_free'],
-            reason: 'other',
-          },
-        },
-        next: null,
-      },
-      launchProjectile_15: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: { reachAfterTicks: 1, maxDurationSeconds: 2, finishOnReach: false },
-            recycleDelaySeconds: 0.0333333350718021,
-            targets: { kind: 'context', contextKey: 'swordPos' },
-          },
-          callbacks: [
-            {
-              event: 'reach',
-              skill: zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraphCallback1,
-            },
-          ],
-        },
-        next: 'finishBuffsById_14',
-      },
-      createSpatialPointTargets_16: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'swordPos', count: { kind: 'constant', value: 3 } },
-        },
-        next: 'launchProjectile_15',
-      },
-      createSpatialPointTargets_13: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'swordPos', count: { kind: 'constant', value: 4 } },
-        },
-        next: 'launchProjectile_15',
-      },
-      ifElse_42: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_14' },
-          whenTrue: { $sequence: 'createSpatialPointTargets_13' },
-          whenFalse: { $sequence: 'createSpatialPointTargets_16' },
-        },
-        next: null,
-      },
-      ifElse_45: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_15' },
-          whenTrue: { $sequence: 'ifElse_42' },
-          whenFalse: { $sequence: 'ifElse_43' },
-        },
-        next: null,
-      },
-      applyBuff_46: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0030_zhuangfy_normal_skill_trigger_sword_tar' }],
-            targets: { kind: 'fixed', target: 'enemy' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: 'ifElse_45',
-      },
-      ifElse_48: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_16' },
-          whenTrue: { $sequence: 'applyBuff_46' },
-          whenFalse: { $sequence: 'spawnAbilityEntity_47' },
-        },
-        next: null,
-      },
-      applyBuff_49: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0030_zhuangfy_talent1' }],
-            targets: { kind: 'source' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-      ifElse_52: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_17' },
-          whenTrue: { $sequence: 'applyBuff_49' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      ifElse_53: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'constant', value: true },
-          whenTrue: { $sequence: 'applyBuff_49' },
-          whenFalse: { $sequence: 'ifElse_52' },
-        },
-        next: null,
-      },
-      spawnAbilityEntity_54: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            bornAt: { kind: 'context', key: 'thunderPos' },
-            abilityEntityId: 'abilityentity_chr_0030_zhuangfy_normal_skill_ult',
-            childSkillId: 'chr_0030_zhuangfy_normal_skill_ult_abilityrange',
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: true,
-            blackboardAssignments: { EntityBB_SwordNum: { kind: 'valueNode', nodeId: 'data_18' } },
-          },
-        },
-        next: null,
-      },
-      createSpatialPointTargets_55: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'thunderPos', count: { kind: 'constant', value: 1 } },
-        },
-        next: 'spawnAbilityEntity_54',
-      },
-      calculateActionValue_56: {
-        action: {
-          kind: 'calculateActionValue',
-          parameters: {
-            key: 'atk_up_final',
-            operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_12' },
-            right: { kind: 'valueNode', nodeId: 'data_19' },
-          },
-        },
-        next: 'createSpatialPointTargets_55',
-      },
-      checkCondition_58: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_20' } },
-        },
-        next: 'finishBuffsById_14',
-      },
-      anyCondition_61: {
-        action: {
-          kind: 'anyCondition',
-          parameters: {},
-          conditions: [
-            { kind: 'conditionNode', nodeId: 'data_21' },
-            { kind: 'conditionNode', nodeId: 'data_22' },
-          ],
-        },
-        next: null,
-      },
-      jumpTimeline_62: {
-        action: {
-          kind: 'jumpTimeline',
-          parameters: { destinationFrame: 100 },
-          condition: { kind: 'conditionNode', nodeId: 'data_23' },
-        },
-        next: null,
-      },
-      holdBuffsById_70: {
-        action: {
-          kind: 'holdBuffsById',
-          parameters: { target: 'caster', buffIds: ['buff_chr_0030_zhuangfy_ult_base'] },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: {
-        type: 'boolean',
-        expression: {
-          kind: 'abilityEntityRemainingDurationCompare',
-          target: { kind: 'inputTarget' },
-          operator: 'less',
-          value: { kind: 'constant', value: 3 },
-        },
-      },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'sword_gene_num' } },
-      data_3: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'source' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-          buffIds: ['buff_chr_0030_zhuangfy_potential1_more_sword'],
-        },
-      },
-      data_4: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'EntityBB_SwordNum', fallback: 0 },
-      },
-      data_5: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'free_sword_limit', fallback: 0 },
-      },
-      data_6: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_4' },
-          operator: 'less',
-          right: { kind: 'valueNode', nodeId: 'data_5' },
-        },
-      },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'max_conduct_sword' } },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'atb_return' } },
-      data_9: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'sword_gene_num', fallback: 0 },
-      },
-      data_10: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'max_conduct_sword', fallback: 0 },
-      },
-      data_11: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_9' },
-          operator: 'lessOrEqual',
-          right: { kind: 'valueNode', nodeId: 'data_10' },
-        },
-      },
-      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'conductCnt' } },
-      data_13: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffStackCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-          tagQueryType: 'hasAny',
-          buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
-        },
-      },
-      data_14: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'source' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-          buffIds: ['buff_chr_0030_zhuangfy_potential1_more_sword'],
-        },
-      },
-      data_15: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'source' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-          buffIds: ['buff_chr_0030_zhuangfy_ult_skill_free'],
-        },
-      },
-      data_16: {
-        type: 'boolean',
-        expression: {
-          kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          containsHittableTarget: false,
-          excludeDeadEntity: true,
-          operator: 'greaterOrEqual',
-          value: 1,
-        },
-      },
-      data_17: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'EntityBB_SwordNum' } },
-      data_19: { type: 'number', expression: { kind: 'blackboard', key: 'atk_up_per_conduct' } },
-      data_20: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'source' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-          buffIds: ['buff_chr_0030_zhuangfy_ult_skill_free'],
-        },
-      },
-      data_21: {
-        type: 'boolean',
-        expression: {
-          kind: 'timedMarkerPresent',
-          target: { kind: 'owner' },
-          returnTrueIfNotExists: false,
-          markerId: 'skillEnd',
-        },
-      },
-      data_22: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_4' },
-          operator: 'equal',
-          right: { kind: 'constant', value: 0 },
-        },
-      },
-      data_23: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: 'anyCondition_61' } },
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ult: SkillDefinition = {
-  key: 'chr_0030_zhuangfy_normal_skill_ult',
-  element: 'electric',
-  blackboard: {
-    atb_return: 0,
-    atk_scale: [0.36, 0.4, 0.43, 0.47, 0.5, 0.54, 0.58, 0.61, 0.65, 0.69, 0.75, 0.81],
-    atk_up_final: 0,
-    atk_up_per_conduct: [0.08, 0.09, 0.1, 0.11, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18],
-    conductCnt: 0,
-    final_rate: 6,
-    free_sword_limit: 3,
-    max_conduct_sword: 3,
-    poise: 15,
-    remain_sword_limit: 9,
-    sword_duration: 36,
-    sword_gene_num: 0,
-  },
-  timelineBlockFrames: 30,
-  naturalDurationFrames: 210,
-  exclusiveFrame: 143,
-  offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 30,
-        endFrame: 143,
-        skillIds: [
-          'chr_0030_zhuangfy_attack1_ult',
-          'chr_0030_zhuangfy_attack2_ult',
-          'chr_0030_zhuangfy_attack3_ult',
-          'chr_0030_zhuangfy_normal_skill_ult',
-        ],
-      },
-    ],
-  },
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_9' } },
-    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'ifElse_48' } },
-    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'ifElse_53' } },
-    { startFrame: 15, endFrame: 18, sequence: { $sequence: 'calculateActionValue_56' } },
-    { startFrame: 100, endFrame: 103, sequence: { $sequence: 'checkCondition_58' } },
-    { startFrame: 16, endFrame: 100, sequence: { $sequence: 'jumpTimeline_62' } },
-    { startFrame: 0, endFrame: 18, sequence: { $sequence: 'holdBuffsById_70' } },
-  ],
-  smartTarget: 'enemy',
-  costs: [{ resource: 'sp', value: 100 }],
-  skillType: 'battleSkill',
-  levelSource: 'battleSkill',
-  nativeSkillType: 'normalSkill',
-  actionGraph: zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph,
-};
-
-export const zhuangFangyiChr_0030_zhuangfy_combo_skillActionGraph = {
-  main: {
-    nodes: {
-      startTimeDilation_1: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'global',
-            durationSeconds: { kind: 'constant', value: 0.6 },
-            slot: 'unassigned',
-            priority: 30,
-            curve: { kind: 'named', key: 'ComboSkill' },
-            finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
-          },
-        },
-        next: null,
-      },
-      modifyActionValue_3: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'conductCnt',
-            operation: 'add',
-            value: { kind: 'constant', value: 1 },
-          },
-        },
-        next: null,
-      },
-      modifyActionValue_5: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'conductCnt',
-            operation: 'assign',
-            value: { kind: 'constant', value: 4 },
-          },
-        },
-        next: null,
-      },
-      applyBuff_7: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [
-              {
-                buffId: 'buff_common_pulse_pulse_conduct_triggered',
-                copiedBlackboardAssignments: { count: 'conductCnt' },
-              },
-            ],
-            targets: { kind: 'fixed', target: 'enemy' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-      ifElse_8: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'modifyActionValue_5' },
-          whenFalse: { $sequence: null },
-        },
-        next: 'applyBuff_7',
-      },
-      ifElse_9: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'modifyActionValue_3' },
-          whenFalse: { $sequence: null },
-        },
-        next: 'ifElse_8',
-      },
-      modifyActionValue_10: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'conductCnt',
-            operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_4' },
-          },
-        },
-        next: 'ifElse_9',
-      },
-      readBuffStackCount_11: {
-        action: {
-          kind: 'readBuffStackCount',
-          parameters: {
-            target: 'enemy',
-            outputKey: 'inflictCnt',
-            query: {
-              kind: 'tag',
-              tagQueryType: 'hasAny',
-              buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
-            },
-          },
-        },
-        next: 'modifyActionValue_10',
-      },
-      ifElse_12: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_5' },
-          whenTrue: { $sequence: 'readBuffStackCount_11' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      changeResource_13: {
-        action: {
-          kind: 'changeResource',
-          parameters: {
-            resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_6' },
-            coefficient: { kind: 'constant', value: 1 },
-            source: { kind: 'source' },
-            targets: { kind: 'source' },
-          },
-        },
-        next: null,
-      },
-      calculateActionValue_14: {
-        action: {
-          kind: 'calculateActionValue',
-          parameters: {
-            key: 'usp_extra',
-            operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_6' },
-            right: { kind: 'valueNode', nodeId: 'data_4' },
-          },
-        },
-        next: 'changeResource_13',
-      },
-      changeResource_15: {
-        action: {
-          kind: 'changeResource',
-          parameters: {
-            resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_7' },
-            coefficient: { kind: 'constant', value: 1 },
-            source: { kind: 'source' },
-            targets: { kind: 'source' },
-          },
-        },
-        next: 'calculateActionValue_14',
-      },
-      ifElse_16: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_8' },
-          whenTrue: { $sequence: 'changeResource_15' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      startTimeDilation_17: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.3 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
-          },
-        },
-        next: 'ifElse_16',
-      },
-      finishBuffsByTag_18: {
-        action: {
-          kind: 'finishBuffsByTag',
-          parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
-            finishSource: { kind: 'source' },
-            tagQueryType: 'hasAny',
-            buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
-            reason: 'early',
-          },
-        },
-        next: 'startTimeDilation_17',
-      },
-      dealDamage_19: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'electric',
-            attackScale: { kind: 'valueNode', nodeId: 'data_9' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_10' },
-          },
-        },
-        next: 'finishBuffsByTag_18',
-      },
-    },
-    dataNodes: {
-      data_1: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'conductCnt', fallback: 0 },
-      },
-      data_2: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_1' },
-          operator: 'greater',
-          right: { kind: 'constant', value: 4 },
-        },
-      },
-      data_3: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffStackCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-          tagQueryType: 'hasAny',
-          buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
-        },
-      },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'inflictCnt' } },
-      data_5: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffStackCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-          tagQueryType: 'hasAny',
-          buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
-        },
-      },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'usp_extra' } },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_8: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const zhuangFangyiChr_0030_zhuangfy_combo_skill: SkillDefinition = {
-  key: 'chr_0030_zhuangfy_combo_skill',
-  element: 'electric',
-  blackboard: {
-    atk_scale: [1.6, 1.76, 1.92, 2.08, 2.24, 2.4, 2.56, 2.72, 2.88, 3.08, 3.32, 3.6],
-    conductCnt: 0,
-    inflictCnt: 0,
-    poise: 10,
-    usp: 10,
-    usp_extra: 10,
-  },
-  timelineBlockFrames: 25,
-  naturalDurationFrames: 210,
-  exclusiveFrame: 60,
-  offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 25,
-        endFrame: 60,
-        skillIds: [
-          'chr_0030_zhuangfy_normal_skill',
-          'chr_0030_zhuangfy_power_attack',
-          'chr_0030_zhuangfy_attack1',
-          'chr_0030_zhuangfy_attack2',
-          'chr_0030_zhuangfy_attack3',
-          'chr_0030_zhuangfy_attack4',
-          'chr_0030_zhuangfy_attack5',
-        ],
-      },
-    ],
-  },
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_1' } },
-    { startFrame: 24, endFrame: 27, sequence: { $sequence: 'ifElse_12' } },
-    { startFrame: 24, endFrame: 27, sequence: { $sequence: 'dealDamage_19' } },
-  ],
-  smartTarget: 'enemy',
-  cooldownFrames: [540, 540, 540, 540, 540, 540, 540, 540, 540, 540, 540, 510],
-  skillType: 'comboSkill',
-  levelSource: 'comboSkill',
-  nativeSkillType: 'comboSkill',
-  actionGraph: zhuangFangyiChr_0030_zhuangfy_combo_skillActionGraph,
-};
-
-export const zhuangFangyiChr_0030_zhuangfy_combo_skill_ultActionGraph = {
-  main: {
-    nodes: {
-      startTimeDilation_1: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'global',
-            durationSeconds: { kind: 'constant', value: 0.6 },
-            slot: 'unassigned',
-            priority: 30,
-            curve: { kind: 'named', key: 'ComboSkill' },
-            finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
-          },
-        },
-        next: null,
-      },
-      modifyActionValue_3: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'conductCnt',
-            operation: 'add',
-            value: { kind: 'constant', value: 1 },
-          },
-        },
-        next: null,
-      },
-      modifyActionValue_5: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'conductCnt',
-            operation: 'assign',
-            value: { kind: 'constant', value: 4 },
-          },
-        },
-        next: null,
-      },
-      applyBuff_7: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [
-              {
-                buffId: 'buff_common_pulse_pulse_conduct_triggered',
-                copiedBlackboardAssignments: { count: 'conductCnt' },
-              },
-            ],
-            targets: { kind: 'fixed', target: 'enemy' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-      ifElse_8: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'modifyActionValue_5' },
-          whenFalse: { $sequence: null },
-        },
-        next: 'applyBuff_7',
-      },
-      ifElse_9: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_3' },
-          whenTrue: { $sequence: 'modifyActionValue_3' },
-          whenFalse: { $sequence: null },
-        },
-        next: 'ifElse_8',
-      },
-      modifyActionValue_10: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'conductCnt',
-            operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_4' },
-          },
-        },
-        next: 'ifElse_9',
-      },
-      readBuffStackCount_11: {
-        action: {
-          kind: 'readBuffStackCount',
-          parameters: {
-            target: 'enemy',
-            outputKey: 'inflictCnt',
-            query: {
-              kind: 'tag',
-              tagQueryType: 'hasAny',
-              buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
-            },
-          },
-        },
-        next: 'modifyActionValue_10',
-      },
-      ifElse_12: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_5' },
-          whenTrue: { $sequence: 'readBuffStackCount_11' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      createTimedMarker_13: {
-        action: {
-          kind: 'createTimedMarker',
-          parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
-            markerId: 'zhuangfy_combo_ult_tar',
-            durationSeconds: { kind: 'constant', value: 0.5 },
-            autoFinishByAction: false,
-            timeDomain: 'globalScaled',
-          },
-        },
-        next: null,
-      },
-      startTimeDilation_14: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.3 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: { kind: 'named', key: 'char_normal_attack' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
-          },
-        },
-        next: 'createTimedMarker_13',
-      },
-      finishBuffsByTag_15: {
-        action: {
-          kind: 'finishBuffsByTag',
-          parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
-            finishSource: { kind: 'source' },
-            tagQueryType: 'hasAny',
-            buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
-            reason: 'early',
-          },
-        },
-        next: 'startTimeDilation_14',
-      },
-      dealDamage_16: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'electric',
-            attackScale: { kind: 'valueNode', nodeId: 'data_6' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_7' },
-          },
-        },
-        next: 'finishBuffsByTag_15',
-      },
-      launchProjectile_17: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 0.5,
-            recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: false },
-          },
-          callbacks: [
-            {
-              event: 'hit',
-              skill: {
-                skillId: 'chr_0030_zhuangfy_combo_skill_ring_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale: 1.43, poise: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'forEachContextTarget_3' } },
-                ],
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      applyBuff_1: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffs: [
-                              {
-                                buffId: 'buff_chr_0030_zhuangfy_combo_skill_ring_hit',
-                                copiedBlackboardAssignments: {
-                                  atk_scale: 'atk_scale',
-                                  poise: 'poise',
-                                },
-                              },
-                            ],
-                            targets: { kind: 'fixed', target: 'enemy' },
-                            source: { kind: 'source' },
-                            inheritSourceSkillCastInfo: true,
-                          },
-                        },
-                        next: null,
-                      },
-                      checkCondition_2: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-                        },
-                        next: 'applyBuff_1',
-                      },
-                      forEachContextTarget_3: {
-                        action: {
-                          kind: 'forEachContextTarget',
-                          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
-                          body: { $sequence: 'checkCondition_2' },
-                        },
-                        next: null,
-                      },
-                    },
-                    dataNodes: {
-                      data_1: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'timedMarkerPresent',
-                          target: { kind: 'fixed', target: 'enemy' },
-                          returnTrueIfNotExists: true,
-                          markerId: 'zhuangfy_combo_ult_tar',
-                        },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-              },
-            },
-          ],
-        },
-        next: null,
-      },
-      holdBuffsById_18: {
-        action: {
-          kind: 'holdBuffsById',
-          parameters: { target: 'caster', buffIds: ['buff_chr_0030_zhuangfy_ult_base'] },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'conductCnt', fallback: 0 },
-      },
-      data_2: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_1' },
-          operator: 'greater',
-          right: { kind: 'constant', value: 4 },
-        },
-      },
-      data_3: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffStackCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-          tagQueryType: 'hasAny',
-          buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
-        },
-      },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'inflictCnt' } },
-      data_5: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffStackCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-          tagQueryType: 'hasAny',
-          buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
-        },
-      },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const zhuangFangyiChr_0030_zhuangfy_combo_skill_ult: SkillDefinition = {
-  key: 'chr_0030_zhuangfy_combo_skill_ult',
-  element: 'electric',
-  blackboard: {
-    atk_scale: [2.4, 2.64, 2.88, 3.12, 3.36, 3.6, 3.84, 4.08, 4.32, 4.62, 4.98, 5.4],
-    conductCnt: 0,
-    inflictCnt: 0,
-    poise: 10,
-  },
-  timelineBlockFrames: 25,
-  naturalDurationFrames: 197,
-  exclusiveFrame: 30,
-  offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 25,
-        endFrame: 54,
-        skillIds: [
-          'chr_0030_zhuangfy_normal_skill_ult',
-          'chr_0030_zhuangfy_attack1_ult',
-          'chr_0030_zhuangfy_attack2_ult',
-          'chr_0030_zhuangfy_attack3_ult',
-        ],
-      },
-    ],
-  },
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_1' } },
-    { startFrame: 24, endFrame: 27, sequence: { $sequence: 'ifElse_12' } },
-    { startFrame: 24, endFrame: 27, sequence: { $sequence: 'dealDamage_16' } },
-    { startFrame: 24, endFrame: 27, sequence: { $sequence: 'launchProjectile_17' } },
-    { startFrame: 0, endFrame: 28, sequence: { $sequence: 'holdBuffsById_18' } },
-  ],
-  smartTarget: 'enemy',
-  cooldownFrames: [540, 540, 540, 540, 540, 540, 540, 540, 540, 540, 540, 510],
-  skillType: 'comboSkill',
-  levelSource: 'comboSkill',
-  nativeSkillType: 'normalSkill',
-  actionGraph: zhuangFangyiChr_0030_zhuangfy_combo_skill_ultActionGraph,
-};
-
-export const zhuangFangyiChr_0030_zhuangfy_ultimate_skillActionGraph = {
-  main: {
-    nodes: {
-      applyBuff_2: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0030_zhuangfy_potential5_vfx' }],
-            targets: { kind: 'context', key: 'ult_postmodel_mirror' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-      ifElse_3: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_1' },
-          whenTrue: { $sequence: 'applyBuff_2' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      spawnAbilityEntity_4: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            bornAt: { kind: 'context', key: 'abPosMirror' },
-            abilityEntityId: 'abilityentity_chr_0030_zhuangfy_ult_mirror',
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: true,
-            finishByAction: true,
-            overrideDurationSeconds: { kind: 'constant', value: 0.83 },
-            saveToContextKey: 'ult_postmodel_mirror',
-          },
-        },
-        next: 'ifElse_3',
-      },
-      createSpatialPointTargets_5: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'abPosMirror', count: { kind: 'constant', value: 1 } },
-        },
-        next: 'spawnAbilityEntity_4',
-      },
-      spawnAbilityEntity_6: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            bornAt: { kind: 'context', key: 'abPosMirror' },
-            abilityEntityId: 'abilityentity_chr_0030_zhuangfy_ult',
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: true,
-            finishByAction: true,
-            overrideDurationSeconds: { kind: 'constant', value: 2.7 },
-            saveToContextKey: 'ult_postmodel',
-          },
-        },
-        next: null,
-      },
-      createSpatialPointTargets_7: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'abPosMirror', count: { kind: 'constant', value: 1 } },
-        },
-        next: 'spawnAbilityEntity_6',
-      },
-      applyBuff_8: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [
-              {
-                buffId: 'buff_chr_0030_zhuangfy_ult_base',
-                copiedBlackboardAssignments: {
-                  duration: 'duration',
-                  combo_cd_rate: 'combo_cd_rate',
-                },
-              },
-            ],
-            targets: { kind: 'source' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-      startTimeDilation_9: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: { kind: 'named', key: 'RESETto1' },
-            finishByAction: false,
-            targets: [{ kind: 'owner' }],
-          },
-        },
-        next: null,
-      },
-      startUltimateTimeDilation_10: {
-        action: {
-          kind: 'startUltimateTimeDilation',
-          parameters: {
-            priority: 100,
-            targetScale: { kind: 'constant', value: 0 },
-            ignoredTargets: [],
-            ignoredAbilityEntityTargets: [
-              { kind: 'context', contextKey: 'ult_postmodel_mirror' },
-              { kind: 'context', contextKey: 'ult_postmodel' },
-            ],
-          },
-        },
-        next: null,
-      },
-      hideUi_11: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      applyBuff_12: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_common_damage_immune_ult_skill' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-            finishByAction: true,
-          },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'source' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-          buffIds: ['buff_chr_0030_zhuangfy_potential5_vfx'],
-        },
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const zhuangFangyiChr_0030_zhuangfy_ultimate_skill: SkillDefinition = {
-  key: 'chr_0030_zhuangfy_ultimate_skill',
-  element: 'electric',
-  blackboard: { combo_cd_rate: 4, duration: 25 },
-  timelineBlockFrames: 91,
-  naturalDurationFrames: 208,
-  exclusiveFrame: 90,
-  offsetRecordFrame: 0,
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 0, endFrame: 17, sequence: { $sequence: 'createSpatialPointTargets_5' } },
-    { startFrame: 0, endFrame: 78, sequence: { $sequence: 'createSpatialPointTargets_7' } },
-    { startFrame: 78, endFrame: 81, sequence: { $sequence: 'applyBuff_8' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_9' } },
-    { startFrame: 0, endFrame: 78, sequence: { $sequence: 'startUltimateTimeDilation_10' } },
-    { startFrame: 0, endFrame: 78, sequence: { $sequence: 'hideUi_11' } },
-    { startFrame: 0, endFrame: 90, sequence: { $sequence: 'applyBuff_12' } },
-  ],
-  defaultTarget: 'enemy',
-  cooldownFrames: 450,
-  costs: [{ resource: 'ultimateEnergy', value: 240 }],
-  enhancementStateBuffId: 'buff_chr_0030_zhuangfy_ult_base',
-  skillType: 'ultimate',
-  levelSource: 'ultimate',
-  nativeSkillType: 'ultimateSkill',
-  actionGraph: zhuangFangyiChr_0030_zhuangfy_ultimate_skillActionGraph,
-};
-
-export const zhuangFangyiChr_0030_zhuangfy_ultimate_skill_endActionGraph = {
-  main: {
-    nodes: {
-      finishBuffsById_1: {
-        action: {
-          kind: 'finishBuffsById',
-          parameters: {
-            targets: { kind: 'owner' },
-            finishSource: { kind: 'source' },
-            buffIds: ['buff_chr_0030_zhuangfy_ult_hide_model'],
-            reason: 'other',
-          },
-        },
-        next: null,
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const zhuangFangyiChr_0030_zhuangfy_ultimate_skill_end: SkillDefinition = {
-  actionGraph: zhuangFangyiChr_0030_zhuangfy_ultimate_skill_endActionGraph,
-  key: 'chr_0030_zhuangfy_ultimate_skill_end',
-  element: 'physical',
-  blackboard: {},
-  timelineBlockFrames: 21,
-  naturalDurationFrames: 189,
-  exclusiveFrame: 20,
-  offsetRecordFrame: 0,
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_1' } },
-  ],
-  defaultTarget: 'owner',
-  skillType: 'ultimate',
-  levelSource: 'ultimate',
-  nativeSkillType: 'normalSkill',
-};
-
 export const zhuangFangyiChr_0030_zhuangfy_attack1_ultActionGraph = {
   main: {
     nodes: {
@@ -4427,6 +1733,2705 @@ export const zhuangFangyiChr_0030_zhuangfy_attack3_ult: SkillDefinition = {
   actionGraph: zhuangFangyiChr_0030_zhuangfy_attack3_ultActionGraph,
 };
 
+export const zhuangFangyiChr_0030_zhuangfy_power_attackActionGraph = {
+  main: {
+    nodes: {
+      dealDamage_1: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'electric',
+            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            calculation: 'breakingAttack',
+            calculationMultiplier: 0.1,
+            tags: ['normalAttack', 'powerAttack'],
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_2: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.4 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: null,
+      },
+      gainFinisherSp_3: {
+        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+        next: 'startTimeDilation_2',
+      },
+      dealDamage_4: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'electric',
+            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            calculation: 'breakingAttack',
+            calculationMultiplier: 0.9,
+            tags: ['normalAttack', 'powerAttack'],
+          },
+        },
+        next: 'gainFinisherSp_3',
+      },
+      applyBuff_5: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_common_full_immune_medium' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          },
+        },
+        next: null,
+      },
+      applyBuff_6: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_common_power_attack_disable_cast_skill' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          },
+        },
+        next: null,
+      },
+    },
+    dataNodes: { data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } } },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const zhuangFangyiChr_0030_zhuangfy_power_attack: SkillDefinition = {
+  actionGraph: zhuangFangyiChr_0030_zhuangfy_power_attackActionGraph,
+  key: 'chr_0030_zhuangfy_power_attack',
+  element: 'electric',
+  blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
+  timelineBlockFrames: 41,
+  naturalDurationFrames: 153,
+  exclusiveFrame: 45,
+  offsetRecordFrame: 0,
+  dontInterruptCombo: true,
+  inputWindows: {
+    allowedNextSkills: [
+      {
+        startFrame: 41,
+        endFrame: 45,
+        skillIds: [
+          'chr_0030_zhuangfy_attack1',
+          'chr_0030_zhuangfy_combo_skill',
+          'chr_0030_zhuangfy_normal_skill',
+        ],
+      },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 11, endFrame: 14, sequence: { $sequence: 'dealDamage_1' } },
+    { startFrame: 40, endFrame: 43, sequence: { $sequence: 'dealDamage_4' } },
+    { startFrame: 0, endFrame: 45, sequence: { $sequence: 'applyBuff_5' } },
+    { startFrame: 0, endFrame: 41, sequence: { $sequence: 'applyBuff_6' } },
+  ],
+  defaultTarget: 'enemy',
+  skillType: 'finisher',
+  levelSource: 'basicAttack',
+  nativeSkillType: 'breakingAttack',
+};
+
+export const zhuangFangyiChr_0030_zhuangfy_plunging_attack_endActionGraph = {
+  main: {
+    nodes: {
+      interruptCurrentSkill_4: {
+        action: { kind: 'interruptCurrentSkill', parameters: { targets: { kind: 'owner' } } },
+        next: null,
+      },
+      ifElse_5: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: 'interruptCurrentSkill_4' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      changeResource_9: {
+        action: {
+          kind: 'changeResource',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            coefficient: { kind: 'constant', value: 1 },
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+            onlyMainOperator: true,
+            spGainKind: 'gain',
+            spGainSource: 'normalAttack',
+          },
+        },
+        next: null,
+      },
+      dealDamage_10: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'electric',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            tags: ['normalAttack', 'plungingAttack'],
+          },
+        },
+        next: 'changeResource_9',
+      },
+      finishOwner_12: {
+        action: {
+          kind: 'finishOwner',
+          parameters: { targets: { kind: 'context', key: 'airSword' } },
+        },
+        next: null,
+      },
+      findOwnerSpawnedAbilityEntities_13: {
+        action: {
+          kind: 'findOwnerSpawnedAbilityEntities',
+          parameters: {
+            saveToContextKey: 'airSword',
+            abilityEntityIds: ['abilityentity_chr_0030_zhuangfy_air_attack'],
+            owner: { kind: 'owner' },
+          },
+        },
+        next: 'finishOwner_12',
+      },
+      ifElse_14: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: 'findOwnerSpawnedAbilityEntities_13' },
+        },
+        next: null,
+      },
+      inheritBuffById_15: {
+        action: {
+          kind: 'inheritBuffById',
+          parameters: {
+            target: 'caster',
+            buffId: 'buff_chr_0030_zhuangfy_air_attack_ult_extend_buff',
+            inheritToNextSkillIds: [],
+            finishByAction: true,
+            finishWithNextSkillIfNotInherited: true,
+          },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0030_zhuangfy_ult_base'],
+        },
+      },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_4: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0030_zhuangfy_ult_base'],
+        },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const zhuangFangyiChr_0030_zhuangfy_plunging_attack_end: SkillDefinition = {
+  key: 'chr_0030_zhuangfy_plunging_attack_end',
+  element: 'electric',
+  blackboard: {
+    atb: 0,
+    atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
+  },
+  timelineBlockFrames: 21,
+  naturalDurationFrames: 170,
+  exclusiveFrame: 20,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 125, endFrame: 128, sequence: { $sequence: 'ifElse_5' } },
+    { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_10' } },
+    { startFrame: 0, endFrame: 5, sequence: { $sequence: 'ifElse_14' } },
+    { startFrame: 0, endFrame: 6, sequence: { $sequence: 'inheritBuffById_15' } },
+  ],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  levelSource: 'basicAttack',
+  nativeSkillType: 'attack',
+  actionGraph: zhuangFangyiChr_0030_zhuangfy_plunging_attack_endActionGraph,
+};
+
+export const zhuangFangyiChr_0030_zhuangfy_normal_skillActionGraph = {
+  main: {
+    nodes: {
+      setAbilityEntityRemainingDuration_6: {
+        action: {
+          kind: 'setAbilityEntityRemainingDuration',
+          parameters: { target: { kind: 'inputTarget' }, value: { kind: 'constant', value: 3 } },
+        },
+        next: null,
+      },
+      checkCondition_7: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: 'setAbilityEntityRemainingDuration_6',
+      },
+      forEachContextTarget_8: {
+        action: {
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'context', key: 'swordsForExtend' } },
+          body: { $sequence: 'checkCondition_7' },
+        },
+        next: null,
+      },
+      findOwnerSpawnedAbilityEntities_9: {
+        action: {
+          kind: 'findOwnerSpawnedAbilityEntities',
+          parameters: {
+            saveToContextKey: 'swordsForExtend',
+            abilityEntityIds: [
+              'abilityentity_chr_0030_zhuangfy_normal_skill_sword',
+              'abilityentity_chr_0030_zhuangfy_normal_skill_sword_ult',
+            ],
+            owner: { kind: 'owner' },
+          },
+        },
+        next: 'forEachContextTarget_8',
+      },
+      finishBuffsById_11: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'source' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_chr_0030_zhuangfy_normal_skill_trigger_sword'],
+            reason: 'other',
+          },
+        },
+        next: null,
+      },
+      spawnAbilityEntity_39: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'source' },
+            abilityEntityId: 'abilityentity_chr_0030_zhuangfy_normal_skill_fake_target',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: true,
+          },
+        },
+        next: null,
+      },
+      modifyActionValue_17: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'sword_gene_num',
+            operation: 'add',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+        next: null,
+      },
+      applyBuff_31: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_common_obtain_ultimate_sp' }],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      launchProjectile_32: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
+            finish: { reachAfterTicks: 1, maxDurationSeconds: 2, finishOnReach: false },
+            recycleDelaySeconds: 0.0333333350718021,
+            targets: { kind: 'context', contextKey: 'swordPos' },
+          },
+          callbacks: [
+            {
+              event: 'reach',
+              skill: {
+                skillId: 'chr_0030_zhuangfy_normal_skill_gene_sword_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { remain_sword_limit: 0, sword_duration: 0, swordsForLimit: 0 },
+                scheduledSequences: [
+                  {
+                    startFrame: 0,
+                    endFrame: 1,
+                    sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_opt6' },
+                  },
+                ],
+                actionGraph: {
+                  main: {
+                    nodes: {
+                      spawnAbilityEntity_6: {
+                        action: {
+                          kind: 'spawnAbilityEntity',
+                          parameters: {
+                            bornAt: { kind: 'fixed', target: 'enemy' },
+                            abilityEntityId: 'abilityentity_chr_0030_zhuangfy_normal_skill_sword',
+                            childSkillId: 'chr_0030_zhuangfy_normal_skill_sword',
+                            inheritActionBlackboard: true,
+                            dieWhenSourceDies: true,
+                            blackboardAssignments: {
+                              EntityBB_swordDuration: { kind: 'valueNode', nodeId: 'data_1' },
+                              EntityBB_swordLimit: { kind: 'valueNode', nodeId: 'data_2' },
+                            },
+                          },
+                        },
+                        next: null,
+                      },
+                      ifElse_opt1: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+                          whenTrue: { $sequence: 'spawnAbilityEntity_6' },
+                          whenFalse: { $sequence: 'spawnAbilityEntity_6' },
+                        },
+                        next: null,
+                      },
+                      finishOwner_opt2: {
+                        action: {
+                          kind: 'finishOwner',
+                          parameters: { targets: { kind: 'context', key: 'swordToDie' } },
+                        },
+                        next: 'ifElse_opt1',
+                      },
+                      pickContextTarget_opt3: {
+                        action: {
+                          kind: 'pickContextTarget',
+                          parameters: {
+                            sourceContextKey: 'swords',
+                            saveToContextKey: 'swordToDie',
+                            index: { kind: 'constant', value: 0 },
+                          },
+                        },
+                        next: 'finishOwner_opt2',
+                      },
+                      ifElse_opt4: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { kind: 'conditionNode', nodeId: 'data_6' },
+                          whenTrue: { $sequence: 'pickContextTarget_opt3' },
+                          whenFalse: { $sequence: 'ifElse_opt1' },
+                        },
+                        next: null,
+                      },
+                      checkCondition_opt5: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+                        },
+                        next: 'ifElse_opt4',
+                      },
+                      findOwnerSpawnedAbilityEntities_opt6: {
+                        action: {
+                          kind: 'findOwnerSpawnedAbilityEntities',
+                          parameters: {
+                            saveToContextKey: 'swords',
+                            abilityEntityIds: [
+                              'abilityentity_chr_0030_zhuangfy_normal_skill_sword',
+                              'abilityentity_chr_0030_zhuangfy_normal_skill_sword_ult',
+                            ],
+                            owner: { kind: 'source' },
+                          },
+                        },
+                        next: 'checkCondition_opt5',
+                      },
+                    },
+                    dataNodes: {
+                      data_1: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'sword_duration' },
+                      },
+                      data_2: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'remain_sword_limit' },
+                      },
+                      data_3: {
+                        type: 'boolean',
+                        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+                      },
+                      data_4: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'swordsForLimit', fallback: 0 },
+                      },
+                      data_5: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'remain_sword_limit', fallback: 0 },
+                      },
+                      data_6: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'actionValueCompare',
+                          left: { kind: 'valueNode', nodeId: 'data_4' },
+                          operator: 'greaterOrEqual',
+                          right: { kind: 'valueNode', nodeId: 'data_5' },
+                        },
+                      },
+                      data_7: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityCountCompare',
+                          target: { kind: 'context', key: 'swords' },
+                          containsHittableTarget: false,
+                          excludeDeadEntity: false,
+                          operator: 'greaterOrEqual',
+                          value: 0,
+                          outputKey: 'swordsForLimit',
+                        },
+                      },
+                    },
+                  },
+                  macros: {},
+                },
+              },
+            },
+          ],
+        },
+        next: 'applyBuff_31',
+      },
+      createSpatialPointTargets_33: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'swordPos',
+            count: { kind: 'valueNode', nodeId: 'data_2' },
+          },
+        },
+        next: 'launchProjectile_32',
+      },
+      ifElse_34: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          whenTrue: { $sequence: 'modifyActionValue_17' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'createSpatialPointTargets_33',
+      },
+      ifElse_35: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
+          whenTrue: { $sequence: 'modifyActionValue_17' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'ifElse_34',
+      },
+      modifyActionValue_13: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'sword_gene_num',
+            operation: 'assign',
+            value: { kind: 'valueNode', nodeId: 'data_7' },
+          },
+        },
+        next: null,
+      },
+      changeResource_25: {
+        action: {
+          kind: 'changeResource',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_8' },
+            coefficient: { kind: 'constant', value: 1 },
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+            spGainKind: 'refund',
+            spGainSource: 'default',
+          },
+        },
+        next: 'ifElse_34',
+      },
+      ifElse_26: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: 'modifyActionValue_13' },
+        },
+        next: 'changeResource_25',
+      },
+      modifyActionValue_27: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'sword_gene_num',
+            operation: 'add',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'ifElse_26',
+      },
+      modifyActionValue_28: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'sword_gene_num',
+            operation: 'add',
+            value: { kind: 'valueNode', nodeId: 'data_12' },
+          },
+        },
+        next: 'modifyActionValue_27',
+      },
+      finishBuffsByTag_29: {
+        action: {
+          kind: 'finishBuffsByTag',
+          parameters: {
+            targets: { kind: 'fixed', target: 'enemy' },
+            finishSource: { kind: 'source' },
+            tagQueryType: 'hasAny',
+            buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
+            reason: 'early',
+          },
+        },
+        next: 'modifyActionValue_28',
+      },
+      readBuffBlackboard_30: {
+        action: {
+          kind: 'readBuffBlackboard',
+          parameters: {
+            target: 'enemy',
+            query: {
+              kind: 'tag',
+              tagQueryType: 'hasAny',
+              buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
+            },
+            desiredKey: 'count',
+            outputKey: 'conductCnt',
+          },
+        },
+        next: 'finishBuffsByTag_29',
+      },
+      ifElse_37: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_13' },
+          whenTrue: { $sequence: 'readBuffBlackboard_30' },
+          whenFalse: { $sequence: 'ifElse_35' },
+        },
+        next: null,
+      },
+      applyBuff_38: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0030_zhuangfy_normal_skill_trigger_sword_tar' }],
+            targets: { kind: 'fixed', target: 'enemy' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: 'ifElse_37',
+      },
+      ifElse_40: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_14' },
+          whenTrue: { $sequence: 'applyBuff_38' },
+          whenFalse: { $sequence: 'spawnAbilityEntity_39' },
+        },
+        next: null,
+      },
+      ifElse_41: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_15' },
+          whenTrue: { $sequence: 'finishBuffsById_11' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'ifElse_40',
+      },
+      applyBuff_43: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_chr_0030_zhuangfy_normal_skill_trigger_sword',
+                copiedBlackboardAssignments: {
+                  interval: 'swordTriggerInterval',
+                  atk_scale: 'atk_scale',
+                  poise: 'poise',
+                  usp_extra: 'usp_extra',
+                  atk_up_final: 'atk_up_final',
+                  remain_sword_limit: 'remain_sword_limit',
+                  final_rate: 'final_rate',
+                },
+              },
+            ],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      calculateActionValue_44: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'atk_up_final',
+            operation: 'multiply',
+            left: { kind: 'valueNode', nodeId: 'data_16' },
+            right: { kind: 'valueNode', nodeId: 'data_12' },
+          },
+        },
+        next: 'applyBuff_43',
+      },
+      calculateActionValue_45: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'swordTriggerInterval',
+            operation: 'add',
+            left: { kind: 'constant', value: 0.3 },
+            right: { kind: 'valueNode', nodeId: 'data_17' },
+          },
+        },
+        next: 'calculateActionValue_44',
+      },
+      modifyActionValue_46: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'swordTriggerInterval',
+            operation: 'multiply',
+            value: { kind: 'constant', value: -1 },
+          },
+        },
+        next: 'calculateActionValue_45',
+      },
+      calculateActionValue_47: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'swordTriggerInterval',
+            operation: 'divide',
+            left: { kind: 'valueNode', nodeId: 'data_18' },
+            right: { kind: 'constant', value: 90 },
+          },
+        },
+        next: 'modifyActionValue_46',
+      },
+      ifElse_48: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_19' },
+          whenTrue: { $sequence: 'calculateActionValue_47' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      startTimeDilation_49: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.25 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: {
+              kind: 'inline',
+              keys: [
+                {
+                  time: 0,
+                  value: 0.01,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 0.7704785,
+                  value: 0.01,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 4.313321,
+                  outTangent: 4.313321,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+            },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: null,
+      },
+      checkCondition_50: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_20' } },
+        },
+        next: 'startTimeDilation_49',
+      },
+      checkCondition_51: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_21' } },
+        },
+        next: 'checkCondition_50',
+      },
+      applyBuff_52: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0030_zhuangfy_talent1' }],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      ifElse_55: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_22' },
+          whenTrue: { $sequence: 'applyBuff_52' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      ifElse_56: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'constant', value: true },
+          whenTrue: { $sequence: 'applyBuff_52' },
+          whenFalse: { $sequence: 'ifElse_55' },
+        },
+        next: null,
+      },
+      anyCondition_65: {
+        action: {
+          kind: 'anyCondition',
+          parameters: {},
+          conditions: [
+            { kind: 'conditionNode', nodeId: 'data_23' },
+            { kind: 'conditionNode', nodeId: 'data_24' },
+          ],
+        },
+        next: null,
+      },
+      jumpTimeline_66: {
+        action: {
+          kind: 'jumpTimeline',
+          parameters: { destinationFrame: 116 },
+          condition: { kind: 'conditionNode', nodeId: 'data_25' },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'abilityEntityRemainingDurationCompare',
+          target: { kind: 'inputTarget' },
+          operator: 'less',
+          value: { kind: 'constant', value: 3 },
+        },
+      },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'sword_gene_num' } },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0030_zhuangfy_potential1_more_sword'],
+        },
+      },
+      data_4: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'EntityBB_SwordNum', fallback: 0 },
+      },
+      data_5: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'free_sword_limit', fallback: 0 },
+      },
+      data_6: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_4' },
+          operator: 'less',
+          right: { kind: 'valueNode', nodeId: 'data_5' },
+        },
+      },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'max_conduct_sword' } },
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'atb_return' } },
+      data_9: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'sword_gene_num', fallback: 0 },
+      },
+      data_10: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'max_conduct_sword', fallback: 0 },
+      },
+      data_11: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_9' },
+          operator: 'lessOrEqual',
+          right: { kind: 'valueNode', nodeId: 'data_10' },
+        },
+      },
+      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'conductCnt' } },
+      data_13: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffStackCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          tagQueryType: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
+        },
+      },
+      data_14: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: true,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_15: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0030_zhuangfy_normal_skill_trigger_sword'],
+        },
+      },
+      data_16: { type: 'number', expression: { kind: 'blackboard', key: 'atk_up_per_conduct' } },
+      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'swordTriggerInterval' } },
+      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'EntityBB_SwordNum' } },
+      data_19: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_4' },
+          operator: 'greaterOrEqual',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_20: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_21: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
+      data_22: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_23: {
+        type: 'boolean',
+        expression: {
+          kind: 'timedMarkerPresent',
+          target: { kind: 'owner' },
+          returnTrueIfNotExists: false,
+          markerId: 'skillEnd',
+        },
+      },
+      data_24: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_4' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_25: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'anyCondition_65' } },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const zhuangFangyiChr_0030_zhuangfy_normal_skill: SkillDefinition = {
+  key: 'chr_0030_zhuangfy_normal_skill',
+  element: 'electric',
+  blackboard: {
+    atb_return: 0,
+    atk_scale: [0.2, 0.22, 0.24, 0.26, 0.28, 0.3, 0.32, 0.34, 0.36, 0.39, 0.42, 0.45],
+    atk_up_final: 0,
+    atk_up_per_conduct: [0.03, 0.04, 0.04, 0.04, 0.05, 0.05, 0.05, 0.06, 0.06, 0.07, 0.08, 0.09],
+    conductCnt: 0,
+    final_rate: 6,
+    free_sword_limit: 3,
+    max_conduct_sword: 3,
+    poise: 15,
+    remain_sword_limit: 9,
+    sword_duration: 36,
+    sword_gene_num: 0,
+    swordTriggerInterval: 0,
+    usp_extra: 6,
+  },
+  timelineBlockFrames: 45,
+  naturalDurationFrames: 290,
+  exclusiveFrame: 135,
+  offsetRecordFrame: 0,
+  dontInterruptCombo: true,
+  inputWindows: {
+    allowedNextSkills: [
+      {
+        startFrame: 45,
+        endFrame: 116,
+        skillIds: [
+          'chr_0030_zhuangfy_attack1',
+          'chr_0030_zhuangfy_attack2',
+          'chr_0030_zhuangfy_attack3',
+          'chr_0030_zhuangfy_attack4',
+          'chr_0030_zhuangfy_attack5',
+          'chr_0030_zhuangfy_normal_skill',
+          'chr_0030_zhuangfy_power_attack',
+        ],
+      },
+      {
+        startFrame: 120,
+        endFrame: 147,
+        skillIds: [
+          'chr_0030_zhuangfy_attack1',
+          'chr_0030_zhuangfy_attack2',
+          'chr_0030_zhuangfy_attack3',
+          'chr_0030_zhuangfy_attack4',
+          'chr_0030_zhuangfy_attack5',
+          'chr_0030_zhuangfy_normal_skill',
+          'chr_0030_zhuangfy_power_attack',
+        ],
+      },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_9' } },
+    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'ifElse_41' } },
+    { startFrame: 13, endFrame: 16, sequence: { $sequence: 'ifElse_48' } },
+    { startFrame: 123, endFrame: 126, sequence: { $sequence: 'checkCondition_51' } },
+    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'ifElse_56' } },
+    { startFrame: 123, endFrame: 126, sequence: { $sequence: 'checkCondition_51' } },
+    { startFrame: 16, endFrame: 116, sequence: { $sequence: 'jumpTimeline_66' } },
+  ],
+  smartTarget: 'enemy',
+  costs: [{ resource: 'sp', value: 100 }],
+  skillType: 'battleSkill',
+  levelSource: 'battleSkill',
+  nativeSkillType: 'normalSkill',
+  actionGraph: zhuangFangyiChr_0030_zhuangfy_normal_skillActionGraph,
+};
+
+const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraphCallback1 = {
+  skillId: 'chr_0030_zhuangfy_normal_skill_gene_sword_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 1,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: { remain_sword_limit: 0, sword_duration: 0, swordsForLimit: 0 },
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_opt6' } },
+  ],
+  actionGraph: {
+    main: {
+      nodes: {
+        spawnAbilityEntity_6: {
+          action: {
+            kind: 'spawnAbilityEntity',
+            parameters: {
+              bornAt: { kind: 'fixed', target: 'enemy' },
+              abilityEntityId: 'abilityentity_chr_0030_zhuangfy_normal_skill_sword',
+              childSkillId: 'chr_0030_zhuangfy_normal_skill_sword',
+              inheritActionBlackboard: true,
+              dieWhenSourceDies: true,
+              blackboardAssignments: {
+                EntityBB_swordDuration: { kind: 'valueNode', nodeId: 'data_1' },
+                EntityBB_swordLimit: { kind: 'valueNode', nodeId: 'data_2' },
+              },
+            },
+          },
+          next: null,
+        },
+        ifElse_opt1: {
+          action: {
+            kind: 'ifElse',
+            parameters: { alwaysNext: true },
+            condition: { kind: 'conditionNode', nodeId: 'data_3' },
+            whenTrue: { $sequence: 'spawnAbilityEntity_6' },
+            whenFalse: { $sequence: 'spawnAbilityEntity_6' },
+          },
+          next: null,
+        },
+        finishOwner_opt2: {
+          action: {
+            kind: 'finishOwner',
+            parameters: { targets: { kind: 'context', key: 'swordToDie' } },
+          },
+          next: 'ifElse_opt1',
+        },
+        pickContextTarget_opt3: {
+          action: {
+            kind: 'pickContextTarget',
+            parameters: {
+              sourceContextKey: 'swords',
+              saveToContextKey: 'swordToDie',
+              index: { kind: 'constant', value: 0 },
+            },
+          },
+          next: 'finishOwner_opt2',
+        },
+        ifElse_opt4: {
+          action: {
+            kind: 'ifElse',
+            parameters: { alwaysNext: true },
+            condition: { kind: 'conditionNode', nodeId: 'data_6' },
+            whenTrue: { $sequence: 'pickContextTarget_opt3' },
+            whenFalse: { $sequence: 'ifElse_opt1' },
+          },
+          next: null,
+        },
+        checkCondition_opt5: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+          },
+          next: 'ifElse_opt4',
+        },
+        findOwnerSpawnedAbilityEntities_opt6: {
+          action: {
+            kind: 'findOwnerSpawnedAbilityEntities',
+            parameters: {
+              saveToContextKey: 'swords',
+              abilityEntityIds: [
+                'abilityentity_chr_0030_zhuangfy_normal_skill_sword',
+                'abilityentity_chr_0030_zhuangfy_normal_skill_sword_ult',
+              ],
+              owner: { kind: 'source' },
+            },
+          },
+          next: 'checkCondition_opt5',
+        },
+      },
+      dataNodes: {
+        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'sword_duration' } },
+        data_2: { type: 'number', expression: { kind: 'blackboard', key: 'remain_sword_limit' } },
+        data_3: {
+          type: 'boolean',
+          expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        },
+        data_4: {
+          type: 'number',
+          expression: { kind: 'blackboard', key: 'swordsForLimit', fallback: 0 },
+        },
+        data_5: {
+          type: 'number',
+          expression: { kind: 'blackboard', key: 'remain_sword_limit', fallback: 0 },
+        },
+        data_6: {
+          type: 'boolean',
+          expression: {
+            kind: 'actionValueCompare',
+            left: { kind: 'valueNode', nodeId: 'data_4' },
+            operator: 'greaterOrEqual',
+            right: { kind: 'valueNode', nodeId: 'data_5' },
+          },
+        },
+        data_7: {
+          type: 'boolean',
+          expression: {
+            kind: 'entityCountCompare',
+            target: { kind: 'context', key: 'swords' },
+            containsHittableTarget: false,
+            excludeDeadEntity: false,
+            operator: 'greaterOrEqual',
+            value: 0,
+            outputKey: 'swordsForLimit',
+          },
+        },
+      },
+    },
+    macros: {},
+  },
+} as const;
+
+export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph = {
+  main: {
+    nodes: {
+      setAbilityEntityRemainingDuration_6: {
+        action: {
+          kind: 'setAbilityEntityRemainingDuration',
+          parameters: { target: { kind: 'inputTarget' }, value: { kind: 'constant', value: 3 } },
+        },
+        next: null,
+      },
+      checkCondition_7: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: 'setAbilityEntityRemainingDuration_6',
+      },
+      forEachContextTarget_8: {
+        action: {
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'context', key: 'swordsForExtend' } },
+          body: { $sequence: 'checkCondition_7' },
+        },
+        next: null,
+      },
+      findOwnerSpawnedAbilityEntities_9: {
+        action: {
+          kind: 'findOwnerSpawnedAbilityEntities',
+          parameters: {
+            saveToContextKey: 'swordsForExtend',
+            abilityEntityIds: [
+              'abilityentity_chr_0030_zhuangfy_normal_skill_sword',
+              'abilityentity_chr_0030_zhuangfy_normal_skill_sword_ult',
+            ],
+            owner: { kind: 'owner' },
+          },
+        },
+        next: 'forEachContextTarget_8',
+      },
+      spawnAbilityEntity_47: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'source' },
+            abilityEntityId: 'abilityentity_chr_0030_zhuangfy_normal_skill_fake_target',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: true,
+          },
+        },
+        next: null,
+      },
+      modifyActionValue_22: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'sword_gene_num',
+            operation: 'add',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+        next: null,
+      },
+      applyBuff_36: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_common_obtain_ultimate_sp' }],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      launchProjectile_37: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
+            finish: { reachAfterTicks: 1, maxDurationSeconds: 2, finishOnReach: false },
+            recycleDelaySeconds: 0.0333333350718021,
+            targets: { kind: 'context', contextKey: 'swordPos' },
+          },
+          callbacks: [
+            {
+              event: 'reach',
+              skill: zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraphCallback1,
+            },
+          ],
+        },
+        next: 'applyBuff_36',
+      },
+      createSpatialPointTargets_38: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'swordPos',
+            count: { kind: 'valueNode', nodeId: 'data_2' },
+          },
+        },
+        next: 'launchProjectile_37',
+      },
+      ifElse_39: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          whenTrue: { $sequence: 'modifyActionValue_22' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'createSpatialPointTargets_38',
+      },
+      ifElse_40: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
+          whenTrue: { $sequence: 'modifyActionValue_22' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'ifElse_39',
+      },
+      modifyActionValue_18: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'sword_gene_num',
+            operation: 'assign',
+            value: { kind: 'valueNode', nodeId: 'data_7' },
+          },
+        },
+        next: null,
+      },
+      changeResource_30: {
+        action: {
+          kind: 'changeResource',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_8' },
+            coefficient: { kind: 'constant', value: 1 },
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+            spGainKind: 'refund',
+            spGainSource: 'default',
+          },
+        },
+        next: 'ifElse_39',
+      },
+      ifElse_31: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: 'modifyActionValue_18' },
+        },
+        next: 'changeResource_30',
+      },
+      modifyActionValue_32: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'sword_gene_num',
+            operation: 'add',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'ifElse_31',
+      },
+      modifyActionValue_33: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'sword_gene_num',
+            operation: 'add',
+            value: { kind: 'valueNode', nodeId: 'data_12' },
+          },
+        },
+        next: 'modifyActionValue_32',
+      },
+      finishBuffsByTag_34: {
+        action: {
+          kind: 'finishBuffsByTag',
+          parameters: {
+            targets: { kind: 'fixed', target: 'enemy' },
+            finishSource: { kind: 'source' },
+            tagQueryType: 'hasAny',
+            buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
+            reason: 'early',
+          },
+        },
+        next: 'modifyActionValue_33',
+      },
+      readBuffBlackboard_35: {
+        action: {
+          kind: 'readBuffBlackboard',
+          parameters: {
+            target: 'enemy',
+            query: {
+              kind: 'tag',
+              tagQueryType: 'hasAny',
+              buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
+            },
+            desiredKey: 'count',
+            outputKey: 'conductCnt',
+          },
+        },
+        next: 'finishBuffsByTag_34',
+      },
+      ifElse_43: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_13' },
+          whenTrue: { $sequence: 'readBuffBlackboard_35' },
+          whenFalse: { $sequence: 'ifElse_40' },
+        },
+        next: null,
+      },
+      finishBuffsById_14: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'source' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_chr_0030_zhuangfy_ult_skill_free'],
+            reason: 'other',
+          },
+        },
+        next: null,
+      },
+      launchProjectile_15: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
+            finish: { reachAfterTicks: 1, maxDurationSeconds: 2, finishOnReach: false },
+            recycleDelaySeconds: 0.0333333350718021,
+            targets: { kind: 'context', contextKey: 'swordPos' },
+          },
+          callbacks: [
+            {
+              event: 'reach',
+              skill: zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraphCallback1,
+            },
+          ],
+        },
+        next: 'finishBuffsById_14',
+      },
+      createSpatialPointTargets_16: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'swordPos', count: { kind: 'constant', value: 3 } },
+        },
+        next: 'launchProjectile_15',
+      },
+      createSpatialPointTargets_13: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'swordPos', count: { kind: 'constant', value: 4 } },
+        },
+        next: 'launchProjectile_15',
+      },
+      ifElse_42: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_14' },
+          whenTrue: { $sequence: 'createSpatialPointTargets_13' },
+          whenFalse: { $sequence: 'createSpatialPointTargets_16' },
+        },
+        next: null,
+      },
+      ifElse_45: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_15' },
+          whenTrue: { $sequence: 'ifElse_42' },
+          whenFalse: { $sequence: 'ifElse_43' },
+        },
+        next: null,
+      },
+      applyBuff_46: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0030_zhuangfy_normal_skill_trigger_sword_tar' }],
+            targets: { kind: 'fixed', target: 'enemy' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: 'ifElse_45',
+      },
+      ifElse_48: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_16' },
+          whenTrue: { $sequence: 'applyBuff_46' },
+          whenFalse: { $sequence: 'spawnAbilityEntity_47' },
+        },
+        next: null,
+      },
+      applyBuff_49: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0030_zhuangfy_talent1' }],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      ifElse_52: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_17' },
+          whenTrue: { $sequence: 'applyBuff_49' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      ifElse_53: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'constant', value: true },
+          whenTrue: { $sequence: 'applyBuff_49' },
+          whenFalse: { $sequence: 'ifElse_52' },
+        },
+        next: null,
+      },
+      spawnAbilityEntity_54: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'context', key: 'thunderPos' },
+            abilityEntityId: 'abilityentity_chr_0030_zhuangfy_normal_skill_ult',
+            childSkillId: 'chr_0030_zhuangfy_normal_skill_ult_abilityrange',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: true,
+            blackboardAssignments: { EntityBB_SwordNum: { kind: 'valueNode', nodeId: 'data_18' } },
+          },
+        },
+        next: null,
+      },
+      createSpatialPointTargets_55: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'thunderPos', count: { kind: 'constant', value: 1 } },
+        },
+        next: 'spawnAbilityEntity_54',
+      },
+      calculateActionValue_56: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'atk_up_final',
+            operation: 'multiply',
+            left: { kind: 'valueNode', nodeId: 'data_12' },
+            right: { kind: 'valueNode', nodeId: 'data_19' },
+          },
+        },
+        next: 'createSpatialPointTargets_55',
+      },
+      checkCondition_58: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_20' } },
+        },
+        next: 'finishBuffsById_14',
+      },
+      anyCondition_61: {
+        action: {
+          kind: 'anyCondition',
+          parameters: {},
+          conditions: [
+            { kind: 'conditionNode', nodeId: 'data_21' },
+            { kind: 'conditionNode', nodeId: 'data_22' },
+          ],
+        },
+        next: null,
+      },
+      jumpTimeline_62: {
+        action: {
+          kind: 'jumpTimeline',
+          parameters: { destinationFrame: 100 },
+          condition: { kind: 'conditionNode', nodeId: 'data_23' },
+        },
+        next: null,
+      },
+      holdBuffsById_70: {
+        action: {
+          kind: 'holdBuffsById',
+          parameters: { target: 'caster', buffIds: ['buff_chr_0030_zhuangfy_ult_base'] },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'abilityEntityRemainingDurationCompare',
+          target: { kind: 'inputTarget' },
+          operator: 'less',
+          value: { kind: 'constant', value: 3 },
+        },
+      },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'sword_gene_num' } },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0030_zhuangfy_potential1_more_sword'],
+        },
+      },
+      data_4: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'EntityBB_SwordNum', fallback: 0 },
+      },
+      data_5: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'free_sword_limit', fallback: 0 },
+      },
+      data_6: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_4' },
+          operator: 'less',
+          right: { kind: 'valueNode', nodeId: 'data_5' },
+        },
+      },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'max_conduct_sword' } },
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'atb_return' } },
+      data_9: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'sword_gene_num', fallback: 0 },
+      },
+      data_10: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'max_conduct_sword', fallback: 0 },
+      },
+      data_11: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_9' },
+          operator: 'lessOrEqual',
+          right: { kind: 'valueNode', nodeId: 'data_10' },
+        },
+      },
+      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'conductCnt' } },
+      data_13: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffStackCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          tagQueryType: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
+        },
+      },
+      data_14: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0030_zhuangfy_potential1_more_sword'],
+        },
+      },
+      data_15: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0030_zhuangfy_ult_skill_free'],
+        },
+      },
+      data_16: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: true,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_17: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'EntityBB_SwordNum' } },
+      data_19: { type: 'number', expression: { kind: 'blackboard', key: 'atk_up_per_conduct' } },
+      data_20: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0030_zhuangfy_ult_skill_free'],
+        },
+      },
+      data_21: {
+        type: 'boolean',
+        expression: {
+          kind: 'timedMarkerPresent',
+          target: { kind: 'owner' },
+          returnTrueIfNotExists: false,
+          markerId: 'skillEnd',
+        },
+      },
+      data_22: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_4' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_23: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'anyCondition_61' } },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const zhuangFangyiChr_0030_zhuangfy_normal_skill_ult: SkillDefinition = {
+  key: 'chr_0030_zhuangfy_normal_skill_ult',
+  element: 'electric',
+  blackboard: {
+    atb_return: 0,
+    atk_scale: [0.36, 0.4, 0.43, 0.47, 0.5, 0.54, 0.58, 0.61, 0.65, 0.69, 0.75, 0.81],
+    atk_up_final: 0,
+    atk_up_per_conduct: [0.08, 0.09, 0.1, 0.11, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18],
+    conductCnt: 0,
+    final_rate: 6,
+    free_sword_limit: 3,
+    max_conduct_sword: 3,
+    poise: 15,
+    remain_sword_limit: 9,
+    sword_duration: 36,
+    sword_gene_num: 0,
+  },
+  timelineBlockFrames: 30,
+  naturalDurationFrames: 210,
+  exclusiveFrame: 143,
+  offsetRecordFrame: 0,
+  dontInterruptCombo: true,
+  inputWindows: {
+    allowedNextSkills: [
+      {
+        startFrame: 30,
+        endFrame: 143,
+        skillIds: [
+          'chr_0030_zhuangfy_attack1_ult',
+          'chr_0030_zhuangfy_attack2_ult',
+          'chr_0030_zhuangfy_attack3_ult',
+          'chr_0030_zhuangfy_normal_skill_ult',
+        ],
+      },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_9' } },
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'ifElse_48' } },
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'ifElse_53' } },
+    { startFrame: 15, endFrame: 18, sequence: { $sequence: 'calculateActionValue_56' } },
+    { startFrame: 100, endFrame: 103, sequence: { $sequence: 'checkCondition_58' } },
+    { startFrame: 16, endFrame: 100, sequence: { $sequence: 'jumpTimeline_62' } },
+    { startFrame: 0, endFrame: 18, sequence: { $sequence: 'holdBuffsById_70' } },
+  ],
+  smartTarget: 'enemy',
+  costs: [{ resource: 'sp', value: 100 }],
+  skillType: 'battleSkill',
+  levelSource: 'battleSkill',
+  nativeSkillType: 'normalSkill',
+  actionGraph: zhuangFangyiChr_0030_zhuangfy_normal_skill_ultActionGraph,
+};
+
+export const zhuangFangyiChr_0030_zhuangfy_combo_skillActionGraph = {
+  main: {
+    nodes: {
+      startTimeDilation_1: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'global',
+            durationSeconds: { kind: 'constant', value: 0.6 },
+            slot: 'unassigned',
+            priority: 30,
+            curve: { kind: 'named', key: 'ComboSkill' },
+            finishByAction: false,
+            ignoredTargets: ['caster'],
+            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+          },
+        },
+        next: null,
+      },
+      modifyActionValue_3: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'conductCnt',
+            operation: 'add',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+        next: null,
+      },
+      modifyActionValue_5: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'conductCnt',
+            operation: 'assign',
+            value: { kind: 'constant', value: 4 },
+          },
+        },
+        next: null,
+      },
+      applyBuff_7: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_common_pulse_pulse_conduct_triggered',
+                copiedBlackboardAssignments: { count: 'conductCnt' },
+              },
+            ],
+            targets: { kind: 'fixed', target: 'enemy' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      ifElse_8: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+          whenTrue: { $sequence: 'modifyActionValue_5' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'applyBuff_7',
+      },
+      ifElse_9: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          whenTrue: { $sequence: 'modifyActionValue_3' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'ifElse_8',
+      },
+      modifyActionValue_10: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'conductCnt',
+            operation: 'assign',
+            value: { kind: 'valueNode', nodeId: 'data_4' },
+          },
+        },
+        next: 'ifElse_9',
+      },
+      readBuffStackCount_11: {
+        action: {
+          kind: 'readBuffStackCount',
+          parameters: {
+            target: 'enemy',
+            outputKey: 'inflictCnt',
+            query: {
+              kind: 'tag',
+              tagQueryType: 'hasAny',
+              buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
+            },
+          },
+        },
+        next: 'modifyActionValue_10',
+      },
+      ifElse_12: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
+          whenTrue: { $sequence: 'readBuffStackCount_11' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      changeResource_13: {
+        action: {
+          kind: 'changeResource',
+          parameters: {
+            resource: 'ultimateEnergy',
+            amount: { kind: 'valueNode', nodeId: 'data_6' },
+            coefficient: { kind: 'constant', value: 1 },
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+          },
+        },
+        next: null,
+      },
+      calculateActionValue_14: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'usp_extra',
+            operation: 'multiply',
+            left: { kind: 'valueNode', nodeId: 'data_6' },
+            right: { kind: 'valueNode', nodeId: 'data_4' },
+          },
+        },
+        next: 'changeResource_13',
+      },
+      changeResource_15: {
+        action: {
+          kind: 'changeResource',
+          parameters: {
+            resource: 'ultimateEnergy',
+            amount: { kind: 'valueNode', nodeId: 'data_7' },
+            coefficient: { kind: 'constant', value: 1 },
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+          },
+        },
+        next: 'calculateActionValue_14',
+      },
+      ifElse_16: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
+          whenTrue: { $sequence: 'changeResource_15' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      startTimeDilation_17: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.3 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'char_normal_attack' },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: 'ifElse_16',
+      },
+      finishBuffsByTag_18: {
+        action: {
+          kind: 'finishBuffsByTag',
+          parameters: {
+            targets: { kind: 'fixed', target: 'enemy' },
+            finishSource: { kind: 'source' },
+            tagQueryType: 'hasAny',
+            buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
+            reason: 'early',
+          },
+        },
+        next: 'startTimeDilation_17',
+      },
+      dealDamage_19: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'electric',
+            attackScale: { kind: 'valueNode', nodeId: 'data_9' },
+            tags: ['comboSkill'],
+            features: ['canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_10' },
+          },
+        },
+        next: 'finishBuffsByTag_18',
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'conductCnt', fallback: 0 },
+      },
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_1' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 4 },
+        },
+      },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffStackCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          tagQueryType: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
+        },
+      },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'inflictCnt' } },
+      data_5: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffStackCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          tagQueryType: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
+        },
+      },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'usp_extra' } },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const zhuangFangyiChr_0030_zhuangfy_combo_skill: SkillDefinition = {
+  key: 'chr_0030_zhuangfy_combo_skill',
+  element: 'electric',
+  blackboard: {
+    atk_scale: [1.6, 1.76, 1.92, 2.08, 2.24, 2.4, 2.56, 2.72, 2.88, 3.08, 3.32, 3.6],
+    conductCnt: 0,
+    inflictCnt: 0,
+    poise: 10,
+    usp: 10,
+    usp_extra: 10,
+  },
+  timelineBlockFrames: 25,
+  naturalDurationFrames: 210,
+  exclusiveFrame: 60,
+  offsetRecordFrame: 0,
+  dontInterruptCombo: true,
+  inputWindows: {
+    allowedNextSkills: [
+      {
+        startFrame: 25,
+        endFrame: 60,
+        skillIds: [
+          'chr_0030_zhuangfy_normal_skill',
+          'chr_0030_zhuangfy_power_attack',
+          'chr_0030_zhuangfy_attack1',
+          'chr_0030_zhuangfy_attack2',
+          'chr_0030_zhuangfy_attack3',
+          'chr_0030_zhuangfy_attack4',
+          'chr_0030_zhuangfy_attack5',
+        ],
+      },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_1' } },
+    { startFrame: 24, endFrame: 27, sequence: { $sequence: 'ifElse_12' } },
+    { startFrame: 24, endFrame: 27, sequence: { $sequence: 'dealDamage_19' } },
+  ],
+  smartTarget: 'enemy',
+  cooldownFrames: [540, 540, 540, 540, 540, 540, 540, 540, 540, 540, 540, 510],
+  skillType: 'comboSkill',
+  levelSource: 'comboSkill',
+  nativeSkillType: 'comboSkill',
+  actionGraph: zhuangFangyiChr_0030_zhuangfy_combo_skillActionGraph,
+};
+
+export const zhuangFangyiChr_0030_zhuangfy_combo_skill_ultActionGraph = {
+  main: {
+    nodes: {
+      startTimeDilation_1: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'global',
+            durationSeconds: { kind: 'constant', value: 0.6 },
+            slot: 'unassigned',
+            priority: 30,
+            curve: { kind: 'named', key: 'ComboSkill' },
+            finishByAction: false,
+            ignoredTargets: ['caster'],
+            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+          },
+        },
+        next: null,
+      },
+      modifyActionValue_3: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'conductCnt',
+            operation: 'add',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+        next: null,
+      },
+      modifyActionValue_5: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'conductCnt',
+            operation: 'assign',
+            value: { kind: 'constant', value: 4 },
+          },
+        },
+        next: null,
+      },
+      applyBuff_7: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_common_pulse_pulse_conduct_triggered',
+                copiedBlackboardAssignments: { count: 'conductCnt' },
+              },
+            ],
+            targets: { kind: 'fixed', target: 'enemy' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      ifElse_8: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+          whenTrue: { $sequence: 'modifyActionValue_5' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'applyBuff_7',
+      },
+      ifElse_9: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          whenTrue: { $sequence: 'modifyActionValue_3' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'ifElse_8',
+      },
+      modifyActionValue_10: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'conductCnt',
+            operation: 'assign',
+            value: { kind: 'valueNode', nodeId: 'data_4' },
+          },
+        },
+        next: 'ifElse_9',
+      },
+      readBuffStackCount_11: {
+        action: {
+          kind: 'readBuffStackCount',
+          parameters: {
+            target: 'enemy',
+            outputKey: 'inflictCnt',
+            query: {
+              kind: 'tag',
+              tagQueryType: 'hasAny',
+              buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
+            },
+          },
+        },
+        next: 'modifyActionValue_10',
+      },
+      ifElse_12: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
+          whenTrue: { $sequence: 'readBuffStackCount_11' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      createTimedMarker_13: {
+        action: {
+          kind: 'createTimedMarker',
+          parameters: {
+            targets: { kind: 'fixed', target: 'enemy' },
+            markerId: 'zhuangfy_combo_ult_tar',
+            durationSeconds: { kind: 'constant', value: 0.5 },
+            autoFinishByAction: false,
+            timeDomain: 'globalScaled',
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_14: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.3 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'char_normal_attack' },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: 'createTimedMarker_13',
+      },
+      finishBuffsByTag_15: {
+        action: {
+          kind: 'finishBuffsByTag',
+          parameters: {
+            targets: { kind: 'fixed', target: 'enemy' },
+            finishSource: { kind: 'source' },
+            tagQueryType: 'hasAny',
+            buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
+            reason: 'early',
+          },
+        },
+        next: 'startTimeDilation_14',
+      },
+      dealDamage_16: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'electric',
+            attackScale: { kind: 'valueNode', nodeId: 'data_6' },
+            tags: ['comboSkill'],
+            features: ['canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_7' },
+          },
+        },
+        next: 'finishBuffsByTag_15',
+      },
+      launchProjectile_17: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
+            finish: 0.5,
+            recycleDelaySeconds: 0.0333333350718021,
+            hit: { finishOnHit: false },
+          },
+          callbacks: [
+            {
+              event: 'hit',
+              skill: {
+                skillId: 'chr_0030_zhuangfy_combo_skill_ring_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale: 1.43, poise: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'forEachContextTarget_3' } },
+                ],
+                actionGraph: {
+                  main: {
+                    nodes: {
+                      applyBuff_1: {
+                        action: {
+                          kind: 'applyBuff',
+                          parameters: {
+                            buffs: [
+                              {
+                                buffId: 'buff_chr_0030_zhuangfy_combo_skill_ring_hit',
+                                copiedBlackboardAssignments: {
+                                  atk_scale: 'atk_scale',
+                                  poise: 'poise',
+                                },
+                              },
+                            ],
+                            targets: { kind: 'fixed', target: 'enemy' },
+                            source: { kind: 'source' },
+                            inheritSourceSkillCastInfo: true,
+                          },
+                        },
+                        next: null,
+                      },
+                      checkCondition_2: {
+                        action: {
+                          kind: 'checkCondition',
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+                        },
+                        next: 'applyBuff_1',
+                      },
+                      forEachContextTarget_3: {
+                        action: {
+                          kind: 'forEachContextTarget',
+                          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+                          body: { $sequence: 'checkCondition_2' },
+                        },
+                        next: null,
+                      },
+                    },
+                    dataNodes: {
+                      data_1: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'timedMarkerPresent',
+                          target: { kind: 'fixed', target: 'enemy' },
+                          returnTrueIfNotExists: true,
+                          markerId: 'zhuangfy_combo_ult_tar',
+                        },
+                      },
+                    },
+                  },
+                  macros: {},
+                },
+              },
+            },
+          ],
+        },
+        next: null,
+      },
+      holdBuffsById_18: {
+        action: {
+          kind: 'holdBuffsById',
+          parameters: { target: 'caster', buffIds: ['buff_chr_0030_zhuangfy_ult_base'] },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'conductCnt', fallback: 0 },
+      },
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_1' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 4 },
+        },
+      },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffStackCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          tagQueryType: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
+        },
+      },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'inflictCnt' } },
+      data_5: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffStackCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          tagQueryType: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
+        },
+      },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const zhuangFangyiChr_0030_zhuangfy_combo_skill_ult: SkillDefinition = {
+  key: 'chr_0030_zhuangfy_combo_skill_ult',
+  element: 'electric',
+  blackboard: {
+    atk_scale: [2.4, 2.64, 2.88, 3.12, 3.36, 3.6, 3.84, 4.08, 4.32, 4.62, 4.98, 5.4],
+    conductCnt: 0,
+    inflictCnt: 0,
+    poise: 10,
+  },
+  timelineBlockFrames: 25,
+  naturalDurationFrames: 197,
+  exclusiveFrame: 30,
+  offsetRecordFrame: 0,
+  dontInterruptCombo: true,
+  inputWindows: {
+    allowedNextSkills: [
+      {
+        startFrame: 25,
+        endFrame: 54,
+        skillIds: [
+          'chr_0030_zhuangfy_normal_skill_ult',
+          'chr_0030_zhuangfy_attack1_ult',
+          'chr_0030_zhuangfy_attack2_ult',
+          'chr_0030_zhuangfy_attack3_ult',
+        ],
+      },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_1' } },
+    { startFrame: 24, endFrame: 27, sequence: { $sequence: 'ifElse_12' } },
+    { startFrame: 24, endFrame: 27, sequence: { $sequence: 'dealDamage_16' } },
+    { startFrame: 24, endFrame: 27, sequence: { $sequence: 'launchProjectile_17' } },
+    { startFrame: 0, endFrame: 28, sequence: { $sequence: 'holdBuffsById_18' } },
+  ],
+  smartTarget: 'enemy',
+  cooldownFrames: [540, 540, 540, 540, 540, 540, 540, 540, 540, 540, 540, 510],
+  skillType: 'comboSkill',
+  levelSource: 'comboSkill',
+  nativeSkillType: 'normalSkill',
+  actionGraph: zhuangFangyiChr_0030_zhuangfy_combo_skill_ultActionGraph,
+};
+
+export const zhuangFangyiChr_0030_zhuangfy_ultimate_skillActionGraph = {
+  main: {
+    nodes: {
+      applyBuff_2: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0030_zhuangfy_potential5_vfx' }],
+            targets: { kind: 'context', key: 'ult_postmodel_mirror' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      ifElse_3: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: 'applyBuff_2' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      spawnAbilityEntity_4: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'context', key: 'abPosMirror' },
+            abilityEntityId: 'abilityentity_chr_0030_zhuangfy_ult_mirror',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: true,
+            finishByAction: true,
+            overrideDurationSeconds: { kind: 'constant', value: 0.83 },
+            saveToContextKey: 'ult_postmodel_mirror',
+          },
+        },
+        next: 'ifElse_3',
+      },
+      createSpatialPointTargets_5: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'abPosMirror', count: { kind: 'constant', value: 1 } },
+        },
+        next: 'spawnAbilityEntity_4',
+      },
+      spawnAbilityEntity_6: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'context', key: 'abPosMirror' },
+            abilityEntityId: 'abilityentity_chr_0030_zhuangfy_ult',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: true,
+            finishByAction: true,
+            overrideDurationSeconds: { kind: 'constant', value: 2.7 },
+            saveToContextKey: 'ult_postmodel',
+          },
+        },
+        next: null,
+      },
+      createSpatialPointTargets_7: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'abPosMirror', count: { kind: 'constant', value: 1 } },
+        },
+        next: 'spawnAbilityEntity_6',
+      },
+      applyBuff_8: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_chr_0030_zhuangfy_ult_base',
+                copiedBlackboardAssignments: {
+                  duration: 'duration',
+                  combo_cd_rate: 'combo_cd_rate',
+                },
+              },
+            ],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_9: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 1 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'RESETto1' },
+            finishByAction: false,
+            targets: [{ kind: 'owner' }],
+          },
+        },
+        next: null,
+      },
+      startUltimateTimeDilation_10: {
+        action: {
+          kind: 'startUltimateTimeDilation',
+          parameters: {
+            priority: 100,
+            targetScale: { kind: 'constant', value: 0 },
+            ignoredTargets: [],
+            ignoredAbilityEntityTargets: [
+              { kind: 'context', contextKey: 'ult_postmodel_mirror' },
+              { kind: 'context', contextKey: 'ult_postmodel' },
+            ],
+          },
+        },
+        next: null,
+      },
+      hideUi_11: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      applyBuff_12: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_common_damage_immune_ult_skill' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0030_zhuangfy_potential5_vfx'],
+        },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const zhuangFangyiChr_0030_zhuangfy_ultimate_skill: SkillDefinition = {
+  key: 'chr_0030_zhuangfy_ultimate_skill',
+  element: 'electric',
+  blackboard: { combo_cd_rate: 4, duration: 25 },
+  timelineBlockFrames: 91,
+  naturalDurationFrames: 208,
+  exclusiveFrame: 90,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 17, sequence: { $sequence: 'createSpatialPointTargets_5' } },
+    { startFrame: 0, endFrame: 78, sequence: { $sequence: 'createSpatialPointTargets_7' } },
+    { startFrame: 78, endFrame: 81, sequence: { $sequence: 'applyBuff_8' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_9' } },
+    { startFrame: 0, endFrame: 78, sequence: { $sequence: 'startUltimateTimeDilation_10' } },
+    { startFrame: 0, endFrame: 78, sequence: { $sequence: 'hideUi_11' } },
+    { startFrame: 0, endFrame: 90, sequence: { $sequence: 'applyBuff_12' } },
+  ],
+  defaultTarget: 'enemy',
+  cooldownFrames: 450,
+  costs: [{ resource: 'ultimateEnergy', value: 240 }],
+  enhancementStateBuffId: 'buff_chr_0030_zhuangfy_ult_base',
+  skillType: 'ultimate',
+  levelSource: 'ultimate',
+  nativeSkillType: 'ultimateSkill',
+  actionGraph: zhuangFangyiChr_0030_zhuangfy_ultimate_skillActionGraph,
+};
+
+export const zhuangFangyiChr_0030_zhuangfy_ultimate_skill_endActionGraph = {
+  main: {
+    nodes: {
+      finishBuffsById_1: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_chr_0030_zhuangfy_ult_hide_model'],
+            reason: 'other',
+          },
+        },
+        next: null,
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const zhuangFangyiChr_0030_zhuangfy_ultimate_skill_end: SkillDefinition = {
+  actionGraph: zhuangFangyiChr_0030_zhuangfy_ultimate_skill_endActionGraph,
+  key: 'chr_0030_zhuangfy_ultimate_skill_end',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 21,
+  naturalDurationFrames: 189,
+  exclusiveFrame: 20,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_1' } },
+  ],
+  defaultTarget: 'owner',
+  skillType: 'ultimate',
+  levelSource: 'ultimate',
+  nativeSkillType: 'normalSkill',
+};
+
 export const zhuangFangyiChr_0030_zhuangfy_perfect_dodgeActionGraph = {
   main: { nodes: {} },
   macros: {},
@@ -4445,6 +4450,93 @@ export const zhuangFangyiChr_0030_zhuangfy_perfect_dodge: SkillDefinition = {
   skillType: 'dodge',
   nativeSkillType: 'dodge',
   actionGraph: zhuangFangyiChr_0030_zhuangfy_perfect_dodgeActionGraph,
+};
+
+export const zhuangFangyiChr_0030_zhuangfy_plunging_attack_startActionGraph = {
+  main: {
+    nodes: {
+      launchProjectile_1: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: { inheritActionBlackboard: true, finish: 'firstTickBlock' },
+          callbacks: [],
+        },
+        next: null,
+      },
+      physicsCast_3: {
+        action: {
+          kind: 'physicsCast',
+          parameters: {
+            source: { kind: 'source' },
+            startHeightOffset: 0,
+            maxDistance: 100,
+            saveToContextKey: 'hitPos',
+          },
+          whenHit: { $sequence: 'launchProjectile_1' },
+          whenMiss: { $sequence: null },
+        },
+        next: null,
+      },
+      ifElse_4: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: null },
+          whenFalse: { $sequence: 'physicsCast_3' },
+        },
+        next: null,
+      },
+      applyBuff_13: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0030_zhuangfy_air_attack_ult_extend_buff' }],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+            inheritToNextSkillIds: ['chr_0030_zhuangfy_plunging_attack_end'],
+          },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0030_zhuangfy_ult_base'],
+        },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const zhuangFangyiChr_0030_zhuangfy_plunging_attack_start: SkillDefinition = {
+  key: 'chr_0030_zhuangfy_plunging_attack_start',
+  element: 'physical',
+  blackboard: { atk_scale: 0.25 },
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 10, endFrame: 13, sequence: { $sequence: 'ifElse_4' } },
+    { startFrame: 0, endFrame: 1500, sequence: { $sequence: 'applyBuff_13' } },
+  ],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
+  actionGraph: zhuangFangyiChr_0030_zhuangfy_plunging_attack_startActionGraph,
 };
 
 const zhuangFangyiPassive1ActionGraph = {
@@ -4715,6 +4807,33 @@ const zhuangFangyiComboCondition2: ComboSkillConditionDefinition = {
 const zhuangFangyiBuff1ActionGraph = {
   main: {
     nodes: {
+      holdBuffsById_1: {
+        action: {
+          kind: 'holdBuffsById',
+          parameters: { target: 'caster', buffIds: ['buff_chr_0030_zhuangfy_ult_base'] },
+        },
+        next: null,
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const zhuangFangyiBuff1: SkillBuffDefinition = {
+  stackingType: 'unique',
+  priority: 1,
+  maxStackCount: 1,
+  applyTags: [],
+  extendTags: [],
+  blackboard: {},
+  attributeModifiers: [],
+  lifecycleSequences: { enable: [{ $sequence: 'holdBuffsById_1' }] },
+  actionGraph: zhuangFangyiBuff1ActionGraph,
+};
+
+const zhuangFangyiBuff2ActionGraph = {
+  main: {
+    nodes: {
       finishOwner_1: {
         action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
         next: null,
@@ -4724,7 +4843,7 @@ const zhuangFangyiBuff1ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const zhuangFangyiBuff1: SkillBuffDefinition = {
+const zhuangFangyiBuff2: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 1,
   maxStackCount: 1,
@@ -4739,10 +4858,10 @@ const zhuangFangyiBuff1: SkillBuffDefinition = {
   blackboard: {},
   attributeModifiers: [],
   lifecycleSequences: { finish: [{ $sequence: 'finishOwner_1' }] },
-  actionGraph: zhuangFangyiBuff1ActionGraph,
+  actionGraph: zhuangFangyiBuff2ActionGraph,
 };
 
-const zhuangFangyiBuff2ActionGraph = {
+const zhuangFangyiBuff3ActionGraph = {
   main: {
     nodes: {
       modifyActionValue_2: {
@@ -4928,7 +5047,7 @@ const zhuangFangyiBuff2ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const zhuangFangyiBuff2: SkillBuffDefinition = {
+const zhuangFangyiBuff3: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 5,
@@ -4941,10 +5060,10 @@ const zhuangFangyiBuff2: SkillBuffDefinition = {
     { startFrame: 12, endFrame: 15, sequence: { $sequence: 'ifElse_11' } },
     { startFrame: 12, endFrame: 15, sequence: { $sequence: 'dealDamage_14' } },
   ],
-  actionGraph: zhuangFangyiBuff2ActionGraph,
+  actionGraph: zhuangFangyiBuff3ActionGraph,
 };
 
-const zhuangFangyiBuff3ActionGraph = {
+const zhuangFangyiBuff4ActionGraph = {
   main: {
     nodes: {
       findOwnerSpawnedAbilityEntities_2: {
@@ -5117,7 +5236,7 @@ const zhuangFangyiBuff3ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const zhuangFangyiBuff3: SkillBuffDefinition = {
+const zhuangFangyiBuff4: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -5143,10 +5262,10 @@ const zhuangFangyiBuff3: SkillBuffDefinition = {
     trigger: [{ $sequence: 'checkCondition_10' }],
     finish: [{ $sequence: 'mergeContextTargets_12' }],
   },
-  actionGraph: zhuangFangyiBuff3ActionGraph,
+  actionGraph: zhuangFangyiBuff4ActionGraph,
 };
 
-const zhuangFangyiBuff4ActionGraph = {
+const zhuangFangyiBuff5ActionGraph = {
   main: {
     nodes: {
       spawnAbilityEntity_1: {
@@ -5173,7 +5292,7 @@ const zhuangFangyiBuff4ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const zhuangFangyiBuff4: SkillBuffDefinition = {
+const zhuangFangyiBuff5: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -5183,10 +5302,10 @@ const zhuangFangyiBuff4: SkillBuffDefinition = {
   blackboard: {},
   attributeModifiers: [],
   lifecycleSequences: { start: [{ $sequence: 'createSpatialPointTargets_2' }] },
-  actionGraph: zhuangFangyiBuff4ActionGraph,
+  actionGraph: zhuangFangyiBuff5ActionGraph,
 };
 
-const zhuangFangyiBuff5ActionGraph = {
+const zhuangFangyiBuff6ActionGraph = {
   main: {
     nodes: {
       modifyActionValue_1: {
@@ -5245,7 +5364,7 @@ const zhuangFangyiBuff5ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const zhuangFangyiBuff5: SkillBuffDefinition = {
+const zhuangFangyiBuff6: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -5257,10 +5376,10 @@ const zhuangFangyiBuff5: SkillBuffDefinition = {
   blackboard: { swordsNum: 0 },
   attributeModifiers: [],
   lifecycleSequences: { trigger: [{ $sequence: 'findOwnerSpawnedAbilityEntities_4' }] },
-  actionGraph: zhuangFangyiBuff5ActionGraph,
+  actionGraph: zhuangFangyiBuff6ActionGraph,
 };
 
-const zhuangFangyiBuff6ActionGraph = {
+const zhuangFangyiBuff7ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -5280,7 +5399,7 @@ const zhuangFangyiBuff6ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const zhuangFangyiBuff6: SkillBuffDefinition = {
+const zhuangFangyiBuff7: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 1,
   maxStackCount: 1,
@@ -5291,10 +5410,10 @@ const zhuangFangyiBuff6: SkillBuffDefinition = {
   abilityEventResponses: [
     { event: 'enterFight', priority: 0, sequence: { $sequence: 'applyBuff_1' } },
   ],
-  actionGraph: zhuangFangyiBuff6ActionGraph,
+  actionGraph: zhuangFangyiBuff7ActionGraph,
 };
 
-const zhuangFangyiBuff7ActionGraph = {
+const zhuangFangyiBuff8ActionGraph = {
   main: {
     nodes: {
       finishBuffsById_1: {
@@ -5327,7 +5446,7 @@ const zhuangFangyiBuff7ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const zhuangFangyiBuff7: SkillBuffDefinition = {
+const zhuangFangyiBuff8: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 1,
   maxStackCount: 9,
@@ -5338,10 +5457,10 @@ const zhuangFangyiBuff7: SkillBuffDefinition = {
   abilityEventResponses: [
     { event: 'skillEnd', priority: 0, sequence: { $sequence: 'checkCondition_2' } },
   ],
-  actionGraph: zhuangFangyiBuff7ActionGraph,
+  actionGraph: zhuangFangyiBuff8ActionGraph,
 };
 
-const zhuangFangyiBuff8ActionGraph = {
+const zhuangFangyiBuff9ActionGraph = {
   main: {
     nodes: {
       checkCondition_1: {
@@ -5369,7 +5488,7 @@ const zhuangFangyiBuff8ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const zhuangFangyiBuff8: SkillBuffDefinition = {
+const zhuangFangyiBuff9: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -5392,15 +5511,15 @@ const zhuangFangyiBuff8: SkillBuffDefinition = {
       ],
     },
   ],
-  actionGraph: zhuangFangyiBuff8ActionGraph,
+  actionGraph: zhuangFangyiBuff9ActionGraph,
 };
 
-const zhuangFangyiBuff9ActionGraph = {
+const zhuangFangyiBuff10ActionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const zhuangFangyiBuff9: SkillBuffDefinition = {
+const zhuangFangyiBuff10: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -5408,10 +5527,10 @@ const zhuangFangyiBuff9: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  actionGraph: zhuangFangyiBuff9ActionGraph,
+  actionGraph: zhuangFangyiBuff10ActionGraph,
 };
 
-const zhuangFangyiBuff10ActionGraph = {
+const zhuangFangyiBuff11ActionGraph = {
   main: {
     nodes: {
       findOwnerSpawnedAbilityEntities_2: {
@@ -5797,7 +5916,7 @@ const zhuangFangyiBuff10ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const zhuangFangyiBuff10: SkillBuffDefinition = {
+const zhuangFangyiBuff11: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -5822,15 +5941,15 @@ const zhuangFangyiBuff10: SkillBuffDefinition = {
     { startFrame: 3, endFrame: 6, sequence: { $sequence: 'checkCondition_23' } },
     { startFrame: 6, endFrame: 9, sequence: { $sequence: 'checkCondition_35' } },
   ],
-  actionGraph: zhuangFangyiBuff10ActionGraph,
+  actionGraph: zhuangFangyiBuff11ActionGraph,
 };
 
-const zhuangFangyiBuff11ActionGraph = {
+const zhuangFangyiBuff12ActionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const zhuangFangyiBuff11: SkillBuffDefinition = {
+const zhuangFangyiBuff12: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 1,
   maxStackCount: { blackboardKey: 'max_stack' },
@@ -5839,10 +5958,10 @@ const zhuangFangyiBuff11: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  actionGraph: zhuangFangyiBuff11ActionGraph,
+  actionGraph: zhuangFangyiBuff12ActionGraph,
 };
 
-const zhuangFangyiBuff12ActionGraph = {
+const zhuangFangyiBuff13ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -5883,7 +6002,7 @@ const zhuangFangyiBuff12ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const zhuangFangyiBuff12: SkillBuffDefinition = {
+const zhuangFangyiBuff13: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 1,
   maxStackCount: 1,
@@ -5893,15 +6012,15 @@ const zhuangFangyiBuff12: SkillBuffDefinition = {
   blackboard: { base_rate: 0, duration: 0, enhance_rate: 0 },
   attributeModifiers: [],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: zhuangFangyiBuff12ActionGraph,
+  actionGraph: zhuangFangyiBuff13ActionGraph,
 };
 
-const zhuangFangyiBuff13ActionGraph = {
+const zhuangFangyiBuff14ActionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const zhuangFangyiBuff13: SkillBuffDefinition = {
+const zhuangFangyiBuff14: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 1,
   maxStackCount: { blackboardKey: 'max_stack' },
@@ -5910,10 +6029,10 @@ const zhuangFangyiBuff13: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  actionGraph: zhuangFangyiBuff13ActionGraph,
+  actionGraph: zhuangFangyiBuff14ActionGraph,
 };
 
-const zhuangFangyiBuff14ActionGraph = {
+const zhuangFangyiBuff15ActionGraph = {
   main: {
     nodes: {
       applyBuff_12: {
@@ -6050,7 +6169,7 @@ const zhuangFangyiBuff14ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const zhuangFangyiBuff14: SkillBuffDefinition = {
+const zhuangFangyiBuff15: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 1,
   maxStackCount: 1,
@@ -6089,15 +6208,15 @@ const zhuangFangyiBuff14: SkillBuffDefinition = {
       inheritOriginSkillCooldownProgress: true,
     },
   ],
-  actionGraph: zhuangFangyiBuff14ActionGraph,
+  actionGraph: zhuangFangyiBuff15ActionGraph,
 };
 
-const zhuangFangyiBuff15ActionGraph = {
+const zhuangFangyiBuff16ActionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const zhuangFangyiBuff15: SkillBuffDefinition = {
+const zhuangFangyiBuff16: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 1,
   maxStackCount: 0,
@@ -6111,7 +6230,7 @@ const zhuangFangyiBuff15: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [{ attribute: 'AtbCostAddition', slot: 'baseAddition', value: -100 }],
-  actionGraph: zhuangFangyiBuff15ActionGraph,
+  actionGraph: zhuangFangyiBuff16ActionGraph,
 };
 
 export const zhuangFangyi: OperatorDefinition = {
@@ -6133,69 +6252,82 @@ export const zhuangFangyi: OperatorDefinition = {
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },
   passiveUi: { kind: 'numeric', appearance: 'zhuangFangyiThunder', maximum: 9, activeAt: 9 },
+  skills: [
+    zhuangFangyiChr_0030_zhuangfy_attack1,
+    zhuangFangyiChr_0030_zhuangfy_attack2,
+    zhuangFangyiChr_0030_zhuangfy_attack3,
+    zhuangFangyiChr_0030_zhuangfy_attack4,
+    zhuangFangyiChr_0030_zhuangfy_attack5,
+    zhuangFangyiChr_0030_zhuangfy_attack1_ult,
+    zhuangFangyiChr_0030_zhuangfy_attack2_ult,
+    zhuangFangyiChr_0030_zhuangfy_attack3_ult,
+    zhuangFangyiChr_0030_zhuangfy_power_attack,
+    zhuangFangyiChr_0030_zhuangfy_plunging_attack_end,
+    zhuangFangyiChr_0030_zhuangfy_normal_skill,
+    zhuangFangyiChr_0030_zhuangfy_normal_skill_ult,
+    zhuangFangyiChr_0030_zhuangfy_combo_skill,
+    zhuangFangyiChr_0030_zhuangfy_combo_skill_ult,
+    zhuangFangyiChr_0030_zhuangfy_ultimate_skill,
+    zhuangFangyiChr_0030_zhuangfy_ultimate_skill_end,
+    zhuangFangyiChr_0030_zhuangfy_perfect_dodge,
+    zhuangFangyiChr_0030_zhuangfy_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        zhuangFangyiChr_0030_zhuangfy_attack1,
-        zhuangFangyiChr_0030_zhuangfy_attack2,
-        zhuangFangyiChr_0030_zhuangfy_attack3,
-        zhuangFangyiChr_0030_zhuangfy_attack4,
-        zhuangFangyiChr_0030_zhuangfy_attack5,
+      skillIds: [
+        'chr_0030_zhuangfy_attack1',
+        'chr_0030_zhuangfy_attack2',
+        'chr_0030_zhuangfy_attack3',
+        'chr_0030_zhuangfy_attack4',
+        'chr_0030_zhuangfy_attack5',
       ],
     },
-    {
-      key: 'finisher',
-      operationType: 'finisher',
-      skills: zhuangFangyiChr_0030_zhuangfy_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0030_zhuangfy_power_attack'] },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: zhuangFangyiChr_0030_zhuangfy_plunging_attack_end,
+      skillIds: ['chr_0030_zhuangfy_plunging_attack_end'],
     },
     {
       key: 'battleSkill',
       operationType: 'battleSkill',
-      skills: zhuangFangyiChr_0030_zhuangfy_normal_skill,
+      skillIds: ['chr_0030_zhuangfy_normal_skill'],
     },
     {
       key: 'enhancedBattleSkill',
       operationType: 'battleSkill',
       nameKey: 'skillNames.enhanced',
-      skills: zhuangFangyiChr_0030_zhuangfy_normal_skill_ult,
+      skillIds: ['chr_0030_zhuangfy_normal_skill_ult'],
     },
-    {
-      key: 'comboSkill',
-      operationType: 'comboSkill',
-      skills: zhuangFangyiChr_0030_zhuangfy_combo_skill,
-    },
+    { key: 'comboSkill', operationType: 'comboSkill', skillIds: ['chr_0030_zhuangfy_combo_skill'] },
     {
       key: 'enhancedComboSkill',
       operationType: 'comboSkill',
       nameKey: 'skillNames.enhanced',
-      skills: zhuangFangyiChr_0030_zhuangfy_combo_skill_ult,
+      skillIds: ['chr_0030_zhuangfy_combo_skill_ult'],
     },
-    {
-      key: 'ultimate',
-      operationType: 'ultimate',
-      skills: zhuangFangyiChr_0030_zhuangfy_ultimate_skill,
-      replacementSkills: [zhuangFangyiChr_0030_zhuangfy_ultimate_skill_end],
-      replacementSkillPlacements: { chr_0030_zhuangfy_ultimate_skill_end: 'internal' },
-    },
+    { key: 'ultimate', operationType: 'ultimate', skillIds: ['chr_0030_zhuangfy_ultimate_skill'] },
     {
       key: 'enhancedBasicAttack',
       operationType: 'basicAttack',
       nameKey: 'skillNames.enhanced',
-      skills: [
-        zhuangFangyiChr_0030_zhuangfy_attack1_ult,
-        zhuangFangyiChr_0030_zhuangfy_attack2_ult,
-        zhuangFangyiChr_0030_zhuangfy_attack3_ult,
+      skillIds: [
+        'chr_0030_zhuangfy_attack1_ult',
+        'chr_0030_zhuangfy_attack2_ult',
+        'chr_0030_zhuangfy_attack3_ult',
       ],
     },
   ],
-  dodgeSkill: zhuangFangyiChr_0030_zhuangfy_perfect_dodge,
+  dodgeSkillId: 'chr_0030_zhuangfy_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0030_zhuangfy_plunging_attack_start',
+    endSkillId: 'chr_0030_zhuangfy_plunging_attack_end',
+    startDurationSeconds: 0.73,
+    endDurationSeconds: 1.267,
+    downSpeed: 200,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'chr_0030_zhuangfy_perfect_dodge' } },
   ],
@@ -6358,21 +6490,22 @@ export const zhuangFangyi: OperatorDefinition = {
   entityBlackboard: { EntityBB_SwordNum: 0 },
   passiveSkills: [zhuangFangyiPassive1],
   buffDefinitions: {
-    buff_chr_0030_zhuangfy_attack3_ult_cancel: zhuangFangyiBuff1,
-    buff_chr_0030_zhuangfy_combo_skill_ring_hit: zhuangFangyiBuff2,
-    buff_chr_0030_zhuangfy_normal_skill_trigger_sword: zhuangFangyiBuff3,
-    buff_chr_0030_zhuangfy_normal_skill_trigger_sword_tar: zhuangFangyiBuff4,
-    buff_chr_0030_zhuangfy_passive_check_sword: zhuangFangyiBuff5,
-    buff_chr_0030_zhuangfy_potential1: zhuangFangyiBuff6,
-    buff_chr_0030_zhuangfy_potential1_more_sword: zhuangFangyiBuff7,
-    buff_chr_0030_zhuangfy_potential5: zhuangFangyiBuff8,
-    buff_chr_0030_zhuangfy_potential5_vfx: zhuangFangyiBuff9,
-    buff_chr_0030_zhuangfy_sword_triggerd: zhuangFangyiBuff10,
-    buff_chr_0030_zhuangfy_talent1: zhuangFangyiBuff11,
-    buff_chr_0030_zhuangfy_talent1_base: zhuangFangyiBuff12,
-    buff_chr_0030_zhuangfy_talent1_mark: zhuangFangyiBuff13,
-    buff_chr_0030_zhuangfy_ult_base: zhuangFangyiBuff14,
-    buff_chr_0030_zhuangfy_ult_skill_free: zhuangFangyiBuff15,
+    buff_chr_0030_zhuangfy_air_attack_ult_extend_buff: zhuangFangyiBuff1,
+    buff_chr_0030_zhuangfy_attack3_ult_cancel: zhuangFangyiBuff2,
+    buff_chr_0030_zhuangfy_combo_skill_ring_hit: zhuangFangyiBuff3,
+    buff_chr_0030_zhuangfy_normal_skill_trigger_sword: zhuangFangyiBuff4,
+    buff_chr_0030_zhuangfy_normal_skill_trigger_sword_tar: zhuangFangyiBuff5,
+    buff_chr_0030_zhuangfy_passive_check_sword: zhuangFangyiBuff6,
+    buff_chr_0030_zhuangfy_potential1: zhuangFangyiBuff7,
+    buff_chr_0030_zhuangfy_potential1_more_sword: zhuangFangyiBuff8,
+    buff_chr_0030_zhuangfy_potential5: zhuangFangyiBuff9,
+    buff_chr_0030_zhuangfy_potential5_vfx: zhuangFangyiBuff10,
+    buff_chr_0030_zhuangfy_sword_triggerd: zhuangFangyiBuff11,
+    buff_chr_0030_zhuangfy_talent1: zhuangFangyiBuff12,
+    buff_chr_0030_zhuangfy_talent1_base: zhuangFangyiBuff13,
+    buff_chr_0030_zhuangfy_talent1_mark: zhuangFangyiBuff14,
+    buff_chr_0030_zhuangfy_ult_base: zhuangFangyiBuff15,
+    buff_chr_0030_zhuangfy_ult_skill_free: zhuangFangyiBuff16,
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0030_zhuangfy_attack2: {

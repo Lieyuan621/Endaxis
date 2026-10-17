@@ -226,6 +226,10 @@ type HealParameters = (
   );
 
 export type CompiledBuffStepSource =
+  | (Step<'physicsCast'> & {
+      readonly whenHit: CompiledBuffSequenceSource;
+      readonly whenMiss: CompiledBuffSequenceSource;
+    })
   | Step<'checkCondition'>
   | Step<'invertNextResult'>
   | (Step<'anyCondition'> & { readonly conditions: readonly CombatCondition[] })

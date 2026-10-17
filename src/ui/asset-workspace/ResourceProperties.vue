@@ -35,6 +35,7 @@ const sections = computed(() => {
           'naturalDurationFrames',
           'exclusiveFrame',
           'offsetRecordFrame',
+          'dontInterruptCombo',
           'timelineContinuationSkillId',
           'timelineBlockFollowUpSkillId',
         ],

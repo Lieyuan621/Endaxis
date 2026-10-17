@@ -39,6 +39,8 @@ export class SkillInputGroupTiming {
     for (const entry of next.entries) {
       const castId = entry.data?.castId;
       if (typeof castId !== 'string') continue;
+      // 同一次输入内部的技能阶段切换不结束技能块，也不能提前放行紧凑排列。
+      if (entry.event === 'SkillInterrupted' && entry.data?.nextCastId === castId) continue;
       let facts = this.#facts.get(castId);
       if (facts === undefined) {
         facts = new Map();
@@ -55,5 +57,6 @@ const INPUT_FACTS = new Set([
   'SkillOperableBoundaryReached',
   'SkillSwitchedToBuff',
   'SkillInterrupted',
+  'SkillInputInterrupted',
   'SkillInputProcessed',
 ]);

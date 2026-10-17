@@ -26,7 +26,6 @@ describe('camille generated operator', () => {
     ).find(skill => skill.skillId === 'chr_0033_camille_normal_skill_2');
 
     expect(program).toMatchObject({
-      skillGroupKey: 'replacementBattleSkill',
       skillType: 'comboSkill',
       skillLevel: 7,
       skillId: 'chr_0033_camille_normal_skill_2',

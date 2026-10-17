@@ -33,25 +33,11 @@ describe('definition resource navigation', () => {
     expect(key).not.toContain('/0/');
   });
 
-  it('includes skill definitions inside named and routed replacements', () => {
+  it('lists owned skills once even when multiple library entries reference them', () => {
     const group = perlica.skillGroups[0]!;
-    const skill = Array.isArray(group.skills) ? group.skills[0]! : group.skills;
     const definition = {
       ...perlica,
-      skillGroups: [
-        {
-          ...group,
-          replacementSkills: [skill],
-          routedReplacementSkills: [
-            {
-              skill,
-
-              executionSkillKey: skill.key,
-            },
-          ],
-          variants: [{ key: 'alternate', skills: skill }],
-        },
-      ],
+      skillGroups: [{ ...group, variants: [{ key: 'alternate', skillIds: group.skillIds }] }],
     };
     const resources = listDefinitionResources('operator', definition);
     expect(resources.find(item => item.kind === 'skillGroupVariant')?.path).toEqual([
@@ -60,13 +46,13 @@ describe('definition resource navigation', () => {
       'variants',
       0,
     ]);
-    expect(
-      resources.some(item => item.path.join('/') === 'skillGroups/0/replacementSkills/0'),
-    ).toBe(true);
-    expect(
-      resources.some(
-        item => item.path.join('/') === 'skillGroups/0/routedReplacementSkills/0/skill',
-      ),
-    ).toBe(true);
+    const skills = resources.filter(item => item.kind === 'skill');
+    expect(skills.map(item => item.identity)).toEqual(perlica.skills.map(skill => skill.key));
+    for (const resource of skills) {
+      expect(resource.path[0]).toBe('skills');
+      expect(fieldValueAt(definition, resource.path)).toBe(
+        perlica.skills.find(skill => skill.key === resource.identity),
+      );
+    }
   });
 });

@@ -98,11 +98,8 @@ function requireSingleSkill(skillGroupKey: string): SkillDefinition {
   if (group === undefined) {
     throw new Error(`expected single-skill group '${skillGroupKey}'`);
   }
-  const skills = group.skills;
-  if (Array.isArray(skills)) {
-    throw new Error(`expected single-skill group '${skillGroupKey}'`);
-  }
-  return skills as SkillDefinition;
+  if (group.skillIds.length !== 1) throw new Error('expected one skill');
+  return perlica.skills.find(skill => skill.key === group.skillIds[0])!;
 }
 
 describe('compileResolvedScenarioTimeline', () => {
@@ -269,7 +266,7 @@ describe('compileResolvedScenarioTimeline', () => {
     });
   });
 
-  it('does not compile a hidden replacement until that concrete skill is placed', () => {
+  it('keeps runtime catalog skills separate from placed casts', () => {
     const baseScenario = place(createScenario(), 'battleSkill', 60);
     const base = requireSingleSkill('battleSkill');
     const operator = {
@@ -279,9 +276,10 @@ describe('compileResolvedScenarioTimeline', () => {
           ? { ...slot, replacementSkillKeys: ['battleSkillVariant'] }
           : slot,
       ),
+      skills: [...perlica.skills, { ...base, key: 'battleSkillVariant' }],
       skillGroups: perlica.skillGroups.map(group =>
         group.key === 'battleSkill'
-          ? { ...group, replacementSkills: [{ ...base, key: 'battleSkillVariant' }] }
+          ? { ...group, skillIds: [...group.skillIds, 'battleSkillVariant'] }
           : group,
       ),
     };
@@ -299,6 +297,7 @@ describe('compileResolvedScenarioTimeline', () => {
         skillId: 'chr_0004_pelica_normal_skill',
         castId: 'skillCast:1',
         action: 'battleSkill',
+        operationType: 'battleSkill',
       },
     ]);
     expect(
@@ -332,6 +331,7 @@ describe('compileResolvedScenarioTimeline', () => {
       skillId: 'battleSkillVariant',
       castId: 'skillCast:replacement',
       action: 'battleSkill',
+      operationType: 'battleSkill',
     });
     expect(explicitCompiled.operators[0]!.skillCasts).toContainEqual(
       expect.objectContaining({
@@ -347,6 +347,7 @@ describe('compileResolvedScenarioTimeline', () => {
     const comboInput = { ...base, key: 'battleSkillCombo' };
     const operator = {
       ...perlica,
+      skills: [...perlica.skills, comboInput, { ...base, key: 'battleSkillEnd' }],
       skillSlots: perlica.skillSlots?.map(slot =>
         slot.key === 'battleSkill' ? { ...slot, replacementSkillKeys: ['battleSkillEnd'] } : slot,
       ),
@@ -354,8 +355,7 @@ describe('compileResolvedScenarioTimeline', () => {
         group.key === 'battleSkill'
           ? {
               ...group,
-              skills: [base, comboInput],
-              replacementSkills: [{ ...base, key: 'battleSkillEnd' }],
+              skillIds: [base.key, comboInput.key],
             }
           : group,
       ),
@@ -379,16 +379,17 @@ describe('compileResolvedScenarioTimeline', () => {
   it('does not infer native default input slots from library presentation groups', () => {
     const scenario = createScenario();
     const basicGroup = perlica.skillGroups.find(group => group.operationType === 'basicAttack')!;
-    const baseSkill = Array.isArray(basicGroup.skills) ? basicGroup.skills[0]! : basicGroup.skills;
+    const baseSkill = perlica.skills.find(skill => skill.key === basicGroup.skillIds[0])!;
     const operator = {
       ...perlica,
+      skills: [...perlica.skills, { ...baseSkill, key: 'enhancedBasicAttack1' }],
       skillGroups: [
         ...perlica.skillGroups,
         {
           key: 'enhancedBasicAttack',
           operationType: 'basicAttack' as const,
           nameKey: 'skillNames.enhanced' as const,
-          skills: [{ ...baseSkill, key: 'enhancedBasicAttack1' }],
+          skillIds: ['enhancedBasicAttack1'],
         },
       ],
     };
@@ -445,26 +446,12 @@ describe('compileResolvedScenarioTimeline', () => {
           ? { ...slot, replacementSkillKeys: ['battleSkillRoutedToCombo'] }
           : slot,
       ),
+      skills: [...perlica.skills, routed, { ...routed, key: 'comboSkill' }],
+      routedReplacementSkills: [{ skillId: routed.key, executionSkillKey: 'comboSkill' }],
       skillGroups: perlica.skillGroups.map(group =>
         group.key === 'battleSkill'
-          ? {
-              ...group,
-              routedReplacementSkills: [
-                {
-                  skill: routed,
-                  executionSkillKey: 'comboSkill',
-                },
-              ],
-            }
-          : group.key === 'comboSkill'
-            ? {
-                ...group,
-                replacementSkills: [
-                  ...(group.replacementSkills ?? []),
-                  { ...routed, key: 'comboSkill' },
-                ],
-              }
-            : group,
+          ? { ...group, skillIds: [...group.skillIds, routed.key] }
+          : group,
       ),
     };
 
@@ -517,6 +504,7 @@ describe('compileResolvedScenarioTimeline', () => {
         skillId: 'chr_0004_pelica_normal_skill',
         castId: 'skillCast:1',
         action: 'battleSkill',
+        operationType: 'battleSkill',
       },
       {
         frame: 60,
@@ -524,6 +512,7 @@ describe('compileResolvedScenarioTimeline', () => {
         skillId: 'chr_0004_pelica_ultimate_skill',
         castId: 'skillCast:2',
         action: 'ultimate',
+        operationType: 'ultimate',
       },
     ]);
   });
@@ -539,6 +528,7 @@ describe('compileResolvedScenarioTimeline', () => {
         skillId: cast.source.kind === 'operatorSkill' ? cast.source.skillKey : '',
         castId: cast.id,
         action: 'basicAttack',
+        operationType: 'basicAttack',
       })),
     );
   });
@@ -867,8 +857,8 @@ it('场景中的技能、Buff 和实体各自编译自己的图', () => {
         },
       },
     },
-    skillGroups: perlica.skillGroups.map(group =>
-      group.key === 'battleSkill' ? { ...group, skills: independentSkill } : group,
+    skills: perlica.skills.map(skill =>
+      skill.key === independentSkill.key ? independentSkill : skill,
     ),
   };
   const compiled = compileTimeline(scenario, {
@@ -913,7 +903,9 @@ it('不含过渡总图的干员能分别编译主动技能与常驻被动', () =
   };
   const graphlessOperator: OperatorDefinition = {
     ...perlica,
-    skillGroups: [{ ...battleGroup, skills: skill }],
+    skillGroups: [battleGroup],
+    skills: [skill],
+    plungingAttack: undefined,
     buffDefinitions: {},
     abilityEntityDefinitions: {},
     comboSkillConditions: [],
@@ -926,7 +918,7 @@ it('不含过渡总图的干员能分别编译主动技能与常驻被动', () =
       },
     ],
     potentials: [],
-    dodgeSkill: undefined,
+    dodgeSkillId: undefined,
     entityBlackboardInitializers: [],
     skillSlots: perlica.skillSlots!.filter(slot => slot.key === 'battleSkill'),
   };
@@ -996,14 +988,13 @@ it('keeps a routed cast custom graph and blackboard instead of substituting the 
   const wrapper = { ...requireSingleSkill('battleSkill'), key: 'routed-battle' };
   const operator: OperatorDefinition = {
     ...perlica,
+    skills: [...perlica.skills, wrapper],
+    routedReplacementSkills: [
+      { skillId: wrapper.key, executionSkillKey: requireSingleSkill('comboSkill').key },
+    ],
     skillGroups: perlica.skillGroups.map(group =>
       group.key === 'battleSkill'
-        ? {
-            ...group,
-            routedReplacementSkills: [
-              { skill: wrapper, executionSkillKey: requireSingleSkill('comboSkill').key },
-            ],
-          }
+        ? { ...group, skillIds: [...group.skillIds, wrapper.key] }
         : group,
     ),
   };
@@ -1059,34 +1050,31 @@ it('keeps common ability entity child programs in their own graph across ID coll
   const skill = requireSingleSkill('battleSkill');
   const graphOperator: OperatorDefinition = {
     ...perlica,
-    skillGroups: perlica.skillGroups.map(group =>
-      group.key === 'battleSkill'
+    skills: perlica.skills.map(candidate =>
+      candidate.key === skill.key
         ? {
-            ...group,
-            skills: {
-              ...skill,
-              scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'shared-id' } }],
-              actionGraph: {
-                main: {
-                  nodes: {
-                    'shared-id': {
-                      action: {
-                        kind: 'spawnAbilityEntity' as const,
-                        parameters: {
-                          bornAt: { kind: 'owner' as const },
-                          abilityEntityId: 'external',
-                          dieWhenSourceDies: false,
-                        },
+            ...skill,
+            scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'shared-id' } }],
+            actionGraph: {
+              main: {
+                nodes: {
+                  'shared-id': {
+                    action: {
+                      kind: 'spawnAbilityEntity' as const,
+                      parameters: {
+                        bornAt: { kind: 'owner' as const },
+                        abilityEntityId: 'external',
+                        dieWhenSourceDies: false,
                       },
-                      next: null,
                     },
+                    next: null,
                   },
                 },
-                macros: {},
               },
+              macros: {},
             },
           }
-        : group,
+        : candidate,
     ),
   };
   const externalEntity: Record<string, AbilityEntityDefinition> = {

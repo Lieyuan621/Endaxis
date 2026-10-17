@@ -315,6 +315,7 @@ function sameScheduledSkillInput(
       left.operatorId === right.operatorId &&
       left.skillId === right.skillId &&
       left.action === right.action &&
+      left.operationType === right.operationType &&
       left.castId === right.castId &&
       sameSkillSimulationInputs(left.simulationInputs, right.simulationInputs) &&
       left.declarationOrder === right.declarationOrder)
@@ -374,6 +375,7 @@ function sameInputIdentity(left: ScheduledSkillInput, right: ScheduledSkillInput
     left.skillId === right.skillId &&
     left.castId === right.castId &&
     left.action === right.action &&
+    left.operationType === right.operationType &&
     left.declarationOrder === right.declarationOrder
   );
 }

@@ -132,6 +132,12 @@ function validateProjectTemplateRecord(
       if (!Array.isArray(template.definition.skillGroups)) {
         issues.push({ path: `${definitionPath}.skillGroups`, message: 'expected an array' });
       } else {
+        if (!Array.isArray(template.definition.skills)) {
+          issues.push({ path: `${definitionPath}.skills`, message: 'expected skill definitions' });
+        } else
+          template.definition.skills.forEach((skill, index) =>
+            issues.push(...validateSkillDefinition(skill, `${definitionPath}.skills[${index}]`)),
+          );
         template.definition.skillGroups.forEach((group, groupIndex) => {
           const groupPath = `${definitionPath}.skillGroups[${groupIndex}]`;
           if (!isObject(group)) {
@@ -144,10 +150,8 @@ function validateProjectTemplateRecord(
               path: `${groupPath}.operationType`,
               message: 'expected a player operation type',
             });
-          const skills = Array.isArray(group.skills) ? group.skills : [group.skills];
-          skills.forEach((skill, skillIndex) => {
-            issues.push(...validateSkillDefinition(skill, `${groupPath}.skills[${skillIndex}]`));
-          });
+          if (!Array.isArray(group.skillIds) || group.skillIds.some(id => typeof id !== 'string'))
+            issues.push({ path: `${groupPath}.skillIds`, message: 'expected skill ID array' });
           if (Array.isArray(group.variants)) {
             group.variants.forEach((variant, variantIndex) => {
               if (!isObject(variant)) {
@@ -159,14 +163,14 @@ function validateProjectTemplateRecord(
               }
               const variantPath = `${groupPath}.variants[${variantIndex}]`;
               requireString(variant, 'key', variantPath, issues);
-              const variantSkills = Array.isArray(variant.skills)
-                ? variant.skills
-                : [variant.skills];
-              variantSkills.forEach((skill, skillIndex) => {
-                issues.push(
-                  ...validateSkillDefinition(skill, `${variantPath}.skills[${skillIndex}]`),
-                );
-              });
+              if (
+                !Array.isArray(variant.skillIds) ||
+                variant.skillIds.some(id => typeof id !== 'string')
+              )
+                issues.push({
+                  path: `${variantPath}.skillIds`,
+                  message: 'expected skill ID array',
+                });
             });
           }
         });

@@ -1110,6 +1110,7 @@ export const rossiChr_0028_wulfa_power_attack: SkillDefinition = {
   naturalDurationFrames: 216,
   exclusiveFrame: 65,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   costFrame: 4,
   scheduledSequences: [
     { startFrame: 6, endFrame: 8, sequence: { $sequence: 'repeatEachTick_13' } },
@@ -3434,6 +3435,7 @@ export const rossiChr_0028_wulfa_normal_skill: SkillDefinition = {
   naturalDurationFrames: 475,
   exclusiveFrame: 272,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -4126,6 +4128,7 @@ export const rossiChr_0028_wulfa_combo_2_skill: SkillDefinition = {
   naturalDurationFrames: 198,
   exclusiveFrame: 65,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -5591,6 +5594,7 @@ export const rossiChr_0028_wulfa_combo_3_skill: SkillDefinition = {
   naturalDurationFrames: 409,
   exclusiveFrame: 259,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 52, endFrame: 72, skillIds: ['chr_0028_wulfa_normal_skill'] },
@@ -6366,6 +6370,28 @@ export const rossiCommon_character_perfect_dodge: SkillDefinition = {
   defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
+};
+
+export const rossiChr_0028_wulfa_plunging_attack_startActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const rossiChr_0028_wulfa_plunging_attack_start: SkillDefinition = {
+  actionGraph: rossiChr_0028_wulfa_plunging_attack_startActionGraph,
+  key: 'chr_0028_wulfa_plunging_attack_start',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
 };
 
 const rossiComboCondition1ActionGraph = {
@@ -7674,35 +7700,55 @@ export const rossi: OperatorDefinition = {
     baseAttack: [30, 93, 159, 225, 291, 323],
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },
+  skills: [
+    rossiChr_0028_wulfa_attack1,
+    rossiChr_0028_wulfa_attack2,
+    rossiChr_0028_wulfa_attack3,
+    rossiChr_0028_wulfa_attack4,
+    rossiChr_0028_wulfa_attack5,
+    rossiChr_0028_wulfa_power_attack,
+    rossiChr_0028_wulfa_plunging_attack_end,
+    rossiChr_0028_wulfa_normal_skill,
+    rossiChr_0028_wulfa_combo_2_skill,
+    rossiChr_0028_wulfa_combo_3_skill,
+    rossiChr_0028_wulfa_ultimate_skill,
+    rossiCommon_character_perfect_dodge,
+    rossiChr_0028_wulfa_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        rossiChr_0028_wulfa_attack1,
-        rossiChr_0028_wulfa_attack2,
-        rossiChr_0028_wulfa_attack3,
-        rossiChr_0028_wulfa_attack4,
-        rossiChr_0028_wulfa_attack5,
+      skillIds: [
+        'chr_0028_wulfa_attack1',
+        'chr_0028_wulfa_attack2',
+        'chr_0028_wulfa_attack3',
+        'chr_0028_wulfa_attack4',
+        'chr_0028_wulfa_attack5',
       ],
     },
-    { key: 'finisher', operationType: 'finisher', skills: rossiChr_0028_wulfa_power_attack },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0028_wulfa_power_attack'] },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: rossiChr_0028_wulfa_plunging_attack_end,
+      skillIds: ['chr_0028_wulfa_plunging_attack_end'],
     },
-    { key: 'battleSkill', operationType: 'battleSkill', skills: rossiChr_0028_wulfa_normal_skill },
+    { key: 'battleSkill', operationType: 'battleSkill', skillIds: ['chr_0028_wulfa_normal_skill'] },
     {
       key: 'comboSkill',
       operationType: 'comboSkill',
-      skills: rossiChr_0028_wulfa_combo_2_skill,
+      skillIds: ['chr_0028_wulfa_combo_2_skill', 'chr_0028_wulfa_combo_3_skill'],
       placementSequenceSkillKeys: ['chr_0028_wulfa_combo_2_skill', 'chr_0028_wulfa_combo_3_skill'],
-      replacementSkills: [rossiChr_0028_wulfa_combo_3_skill],
     },
-    { key: 'ultimate', operationType: 'ultimate', skills: rossiChr_0028_wulfa_ultimate_skill },
+    { key: 'ultimate', operationType: 'ultimate', skillIds: ['chr_0028_wulfa_ultimate_skill'] },
   ],
-  dodgeSkill: rossiCommon_character_perfect_dodge,
+  dodgeSkillId: 'common_character_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0028_wulfa_plunging_attack_start',
+    endSkillId: 'chr_0028_wulfa_plunging_attack_end',
+    startDurationSeconds: 0.633,
+    endDurationSeconds: 2,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
   ],

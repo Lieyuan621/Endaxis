@@ -254,6 +254,24 @@ export function projectOperatorDefinition(
     runtimeTemplate === undefined
       ? undefined
       : compileNativePlayerActionRouting(runtimeTemplate.playerActionSource, activeSkills);
+  const plungingAttack =
+    runtimeTemplate?.plungingAttack === undefined
+      ? undefined
+      : {
+          ...runtimeTemplate.plungingAttack,
+          endSkillId: runtimeTemplate.playerActionSource.plungingAttackEndId,
+          startSkill: planOperatorActiveSkillRuntime({
+            ...args,
+            key: runtimeTemplate.playerActionSource.plungingAttackStartId,
+            skillType: 'plungingAttack',
+            sourceFile: `${runtimeTemplate.playerActionSource.plungingAttackStartId}.json`,
+            supplementalBuffIds: [],
+            preserveBuffIds: crossSkillObservedBuffIds,
+            allowMissingSkillPatch: true,
+            compileSkillSlotReplacement,
+            compileSkillTypeMutation,
+          }),
+        };
   // CharacterData.dashBuff 为空时，原生 Center Dash 状态仍安装公共 Dash Buff，
   // 并把该角色的隐藏 Dodge 技能 ID 写入监听链；角色显式配置仍优先。
   const dashBuffs =
@@ -274,6 +292,7 @@ export function projectOperatorDefinition(
     productPassiveUi: row.passiveUi,
     activeSkills,
     ...(dodgeSkill === undefined ? {} : { dodgeSkill }),
+    ...(plungingAttack === undefined ? {} : { plungingAttack }),
     ...(dashBuffs === undefined ? {} : { dashBuffs }),
     ...(presentationVariants.length === 0 ? {} : { presentationVariants }),
     runtimeReplacementSkillKeys,
@@ -569,6 +588,7 @@ function planOperatorRuntimeTemplate(
     ),
     comboSkillPriority: template.comboSkillPriority,
     playerActionSource: template.playerActionSource,
+    plungingAttack: template.plungingAttack,
     dashBuffs: template.dashBuffs,
   };
 }

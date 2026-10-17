@@ -139,65 +139,57 @@ function template(
     passiveSkills: [],
     comboSkillConditions,
     // 只保留本次链路入口，避免将旧产物其他技能的编辑身份问题混入连携验证。
-    skillGroups: carrier.skillGroups
-      .filter(group => !actualCombo || group.key === 'battleSkill' || group.key === 'comboSkill')
-      .map(group => {
-        const skills = group.skills;
-        if (Array.isArray(skills)) return group;
-        const single = skills as Exclude<typeof skills, readonly unknown[]>;
-        return group.key === 'comboSkill'
-          ? {
-              ...group,
-              skills: {
-                ...single,
-                cooldownFrames: single.cooldownFrames ?? 300,
-                // 诀真实 CastData.startCdFrame=0；补旧产物遗漏的静态元数据，不改它的动作。
-                costFrame: 0,
-                ...(actualCombo
-                  ? compileSkillTargetSelection(
-                      parseSkillTargetSelectionHeaderSource(
-                        {
-                          selectStrategy: 4,
-                          smartTargetSelectStrategy: 1,
-                          canDummyCast: true,
-                          dummyPositionOffset: { x: 0, y: 0, z: 6 },
-                        },
-                        'chr_0032_lizhiyan_combo_skill',
-                      ),
-                    ).definition
-                  : {}),
-              },
-            }
-          : group.key !== 'battleSkill'
-            ? group
-            : {
-                ...group,
-                skills: {
-                  ...single,
-                  costs: [],
-                  costFrame: undefined,
-                  cooldownFrames: undefined,
-                  timelineBlockFrames: 1,
-                  scheduledSequences: [
-                    { startFrame: 0, sequence: { $sequence: 'apply-infliction' } },
-                  ],
-                  actionGraph: {
-                    main: {
-                      nodes: {
-                        'apply-infliction': {
-                          action: {
-                            kind: 'applyElementalInfliction',
-                            parameters: { element, isExtra: false },
-                          },
-                          next: null,
-                        },
-                      },
+    skillGroups: carrier.skillGroups.filter(
+      group => !actualCombo || group.key === 'battleSkill' || group.key === 'comboSkill',
+    ),
+    skills: carrier.skills.map(single => {
+      const group = carrier.skillGroups.find(group => group.skillIds.includes(single.key));
+      if (!group) return single;
+      return group.key === 'comboSkill'
+        ? {
+            ...single,
+            cooldownFrames: single.cooldownFrames ?? 300,
+            // 诀真实 CastData.startCdFrame=0；补旧产物遗漏的静态元数据，不改它的动作。
+            costFrame: 0,
+            ...(actualCombo
+              ? compileSkillTargetSelection(
+                  parseSkillTargetSelectionHeaderSource(
+                    {
+                      selectStrategy: 4,
+                      smartTargetSelectStrategy: 1,
+                      canDummyCast: true,
+                      dummyPositionOffset: { x: 0, y: 0, z: 6 },
                     },
-                    macros: {},
+                    'chr_0032_lizhiyan_combo_skill',
+                  ),
+                ).definition
+              : {}),
+          }
+        : group.key !== 'battleSkill'
+          ? single
+          : {
+              ...single,
+              costs: [],
+              costFrame: undefined,
+              cooldownFrames: undefined,
+              timelineBlockFrames: 1,
+              scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'apply-infliction' } }],
+              actionGraph: {
+                main: {
+                  nodes: {
+                    'apply-infliction': {
+                      action: {
+                        kind: 'applyElementalInfliction',
+                        parameters: { element, isExtra: false },
+                      },
+                      next: null,
+                    },
                   },
                 },
-              };
-      }),
+                macros: {},
+              },
+            };
+    }),
   };
 }
 

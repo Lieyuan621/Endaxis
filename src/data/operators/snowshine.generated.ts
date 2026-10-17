@@ -626,6 +626,7 @@ export const snowshineChr_0014_aurora_power_attack: SkillDefinition = {
   naturalDurationFrames: 133,
   exclusiveFrame: 75,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -1245,6 +1246,7 @@ export const snowshineChr_0014_aurora_normal_skill: SkillDefinition = {
   naturalDurationFrames: 208,
   exclusiveFrame: 145,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 135, endFrame: 145, skillIds: ['chr_0014_aurora_normal_skill'] },
@@ -1448,6 +1450,7 @@ export const snowshineChr_0014_aurora_combo_skill: SkillDefinition = {
   naturalDurationFrames: 123,
   exclusiveFrame: 45,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 15, endFrame: 60, skillIds: ['chr_0014_aurora_normal_skill'] },
@@ -1664,6 +1667,28 @@ export const snowshineCommon_character_perfect_dodge: SkillDefinition = {
   defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
+};
+
+export const snowshineChr_0014_aurora_plunging_attack_startActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const snowshineChr_0014_aurora_plunging_attack_start: SkillDefinition = {
+  actionGraph: snowshineChr_0014_aurora_plunging_attack_startActionGraph,
+  key: 'chr_0014_aurora_plunging_attack_start',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 9,
+  scheduledSequences: [],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
 };
 
 const snowshineComboCondition1ActionGraph = {
@@ -2214,35 +2239,45 @@ export const snowshine: OperatorDefinition = {
     baseAttack: [30, 87, 147, 207, 267, 297],
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },
+  skills: [
+    snowshineChr_0014_aurora_attack1,
+    snowshineChr_0014_aurora_attack2,
+    snowshineChr_0014_aurora_attack3,
+    snowshineChr_0014_aurora_power_attack,
+    snowshineChr_0014_aurora_plunging_attack_end,
+    snowshineChr_0014_aurora_normal_skill,
+    snowshineChr_0014_aurora_combo_skill,
+    snowshineChr_0014_aurora_ultimate_skill,
+    snowshineCommon_character_perfect_dodge,
+    snowshineChr_0014_aurora_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        snowshineChr_0014_aurora_attack1,
-        snowshineChr_0014_aurora_attack2,
-        snowshineChr_0014_aurora_attack3,
-      ],
+      skillIds: ['chr_0014_aurora_attack1', 'chr_0014_aurora_attack2', 'chr_0014_aurora_attack3'],
     },
-    { key: 'finisher', operationType: 'finisher', skills: snowshineChr_0014_aurora_power_attack },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0014_aurora_power_attack'] },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: snowshineChr_0014_aurora_plunging_attack_end,
+      skillIds: ['chr_0014_aurora_plunging_attack_end'],
     },
     {
       key: 'battleSkill',
       operationType: 'battleSkill',
-      skills: snowshineChr_0014_aurora_normal_skill,
+      skillIds: ['chr_0014_aurora_normal_skill'],
     },
-    {
-      key: 'comboSkill',
-      operationType: 'comboSkill',
-      skills: snowshineChr_0014_aurora_combo_skill,
-    },
-    { key: 'ultimate', operationType: 'ultimate', skills: snowshineChr_0014_aurora_ultimate_skill },
+    { key: 'comboSkill', operationType: 'comboSkill', skillIds: ['chr_0014_aurora_combo_skill'] },
+    { key: 'ultimate', operationType: 'ultimate', skillIds: ['chr_0014_aurora_ultimate_skill'] },
   ],
-  dodgeSkill: snowshineCommon_character_perfect_dodge,
+  dodgeSkillId: 'common_character_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0014_aurora_plunging_attack_start',
+    endSkillId: 'chr_0014_aurora_plunging_attack_end',
+    startDurationSeconds: 0.633,
+    endDurationSeconds: 1.267,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
   ],

@@ -347,10 +347,14 @@ describe('原生控制流来源树', () => {
           sourceToTargetData: {
             sourceMountPoint: 'None',
             offsetForwardDirectionType: 'SourceForward',
-            startPosOffset: {},
+            startPosOffset: { x: scalarFixture(0), y: scalarFixture(0), z: scalarFixture(0) },
             targetMountPoint: 'None',
-            endPosOffset: {},
-            rayLocalRotationEuler: {},
+            endPosOffset: { x: scalarFixture(0), y: scalarFixture(-100), z: scalarFixture(0) },
+            rayLocalRotationEuler: {
+              x: scalarFixture(0),
+              y: scalarFixture(0),
+              z: scalarFixture(0),
+            },
           },
           layerMask: {},
           maxDistance: scalarFixture(100),

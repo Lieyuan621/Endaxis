@@ -107,7 +107,7 @@ function resolveLegacySkillSequence(
     if (group === undefined) return null;
     let skills;
     try {
-      skills = resolveSkillGroupPlacementSkills(group, variantKey);
+      skills = resolveSkillGroupPlacementSkills(group, operator, variantKey);
     } catch {
       return null;
     }

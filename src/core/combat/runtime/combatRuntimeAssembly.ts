@@ -1,4 +1,5 @@
 import type { AbilityEvent } from '../../../../packages/game-data-contract/src/abilityEvents';
+import type { PlungingAttackMotionConfig } from '../skills/plungingAttackMotion';
 import { cloneCombatAttributes, readCombatAttribute } from '../attributes/combatAttributeExecution';
 import { ATTRIBUTE_MODIFIER_SOURCES } from '../state/foundationState';
 import type { LogicalAbilityEntitySpawnRequest } from '../abilities/logicalAbilityEntityRuntime';
@@ -280,6 +281,13 @@ export type OperatorBuffRuntime = FrameRuntime &
 
 /** 一个干员按原生技能定义顺序进入运行时的完整程序。 */
 export interface CombatOperatorProgram {
+  readonly plungingAttack?: {
+    readonly startSkillId: string;
+    readonly endSkillId: string;
+    readonly startDurationSeconds: number;
+    readonly endDurationSeconds: number;
+    readonly downSpeed?: number;
+  };
   readonly operatorId: string;
   /** 原始轨道对应的零基队伍槽位；不能用过滤空轨后的干员顺序代替。 */
   readonly squadSlotIndex?: number;
@@ -486,6 +494,9 @@ export interface CombatRuntimeAssemblyOptions
 
 /** 应用装配层提供的运行时端口与模拟选项；新增字段在此显式确定归属。 */
 export interface CombatRuntimeInputRules {
+  readonly plungingAttackMotion?: Omit<PlungingAttackMotionConfig, 'startDurationSeconds'> & {
+    readonly jumpOffsetFrames: number;
+  };
   /** 原生连携候选等待时长，单位为秒。 */
   readonly comboSkillPendingInterval: number;
   /** 同帧连携的角色优先级；不影响战斗宿主的启动及推进顺序。 */
@@ -508,6 +519,9 @@ export function getCombatRuntimeInputRules(
     comboSkillPendingInterval: options.comboSkillPendingInterval,
     ...(options.comboSkillOrder === undefined ? {} : { comboSkillOrder: options.comboSkillOrder }),
     ...(options.dashTiming === undefined ? {} : { dashTiming: options.dashTiming }),
+    ...(options.plungingAttackMotion === undefined
+      ? {}
+      : { plungingAttackMotion: options.plungingAttackMotion }),
     ...(options.skillAvailabilityTags === undefined
       ? {}
       : { skillAvailabilityTags: options.skillAvailabilityTags }),
@@ -677,6 +691,9 @@ type CombatAbilityRuntimeBindings = Pick<
   | 'resolveTickDeltas'
   | 'advanceSkillSlotReplacements'
   | 'dashOffsetFrames'
+  | 'skillOffsetFrames'
+  | 'plungingAttack'
+  | 'canPreserveComboOnSkill'
   | 'onCurrentSkillChanged'
   | 'onPostSkillCastResolved'
 >;
@@ -2087,6 +2104,7 @@ export class CombatRuntimeAssembly {
     castId?: string,
     action?: PlayerSkillInput,
     simulationInputs: SkillSimulationInputs = {},
+    operationType?: CombatSkillInput['operationType'],
   ): boolean {
     const ability = this.#requireAbilitySystem(operatorId);
     const parameterKey = `${operatorId}\u0000${castId ?? expectedSkillId}`;
@@ -2271,11 +2289,39 @@ export class CombatRuntimeAssembly {
         },
       });
     }
+    if (castId !== undefined && operationType === 'plungingAttack') {
+      if (this.#options.plungingAttackMotion === undefined)
+        throw new Error('plunging attack movement parameters are not configured');
+      if (!ability.tryStartPlungingAttack(expectedSkillId, castId)) return false;
+      // 复合输入先起跳，内部 SkillStarted 仍记录起手/落地技能各自的执行时刻。
+      this.receipt.record({
+        frame: this.clock.frame,
+        time: this.clock.time,
+        event: 'SkillInputStarted',
+        sourceId: operatorId,
+        data: { skillId: expectedSkillId, castId },
+      });
+      return true;
+    }
     if (!ability.canStartSkill(expectedSkillId, castId, false)) return false;
+    return this.#startTimelineSkill(operatorId, expectedSkillId, castId, action === 'comboSkill');
+  }
+
+  /** 玩家输入与复合输入的内部阶段共用目标、来源和强制扣费初始化。 */
+  #startTimelineSkill(
+    operatorId: string,
+    expectedSkillId: string,
+    castId: string | undefined,
+    consumeComboWindow = false,
+  ): boolean {
+    const ability = this.#requireAbilitySystem(operatorId);
     return this.#withPreparedSkillStart(
       operatorId,
       expectedSkillId,
       () => {
+        const program = this.#skillPrograms.get(
+          `${operatorId}\u0000${expectedSkillId}\u0000${castId ?? ''}`,
+        );
         // 玩家默认施放遵循技能的选目标策略；实体和延迟请求仍使用各自传入的目标。
         ability.prepareCastInput(
           expectedSkillId,
@@ -2296,7 +2342,7 @@ export class CombatRuntimeAssembly {
       castId,
       undefined,
       false,
-      action === 'comboSkill',
+      consumeComboWindow,
     );
   }
 
@@ -2552,8 +2598,15 @@ export class CombatRuntimeAssembly {
 
   #createInputExecution(): CombatInputExecution {
     return (this.#inputExecution ??= createCombatInputExecution(
-      (operatorId, skillId, castId, action, simulationInputs) =>
-        this.tryStartPlayerInput(operatorId, skillId, castId, action, simulationInputs),
+      (operatorId, skillId, castId, action, simulationInputs, operationType) =>
+        this.tryStartPlayerInput(
+          operatorId,
+          skillId,
+          castId,
+          action,
+          simulationInputs,
+          operationType,
+        ),
       this.receipt,
     ));
   }
@@ -2656,7 +2709,9 @@ export class CombatRuntimeAssembly {
   ): boolean {
     if (mode === 'compact') {
       const timing = this.#inputTiming();
-      const interruption = timing.find(previous.castId, 'SkillInterrupted');
+      const interruption =
+        timing.find(previous.castId, 'SkillInputInterrupted') ??
+        timing.find(previous.castId, 'SkillInterrupted');
       if (interruption !== undefined && interruption.frame <= this.clock.frame) return true;
       const boundary = timing.find(previous.castId, 'SkillOperableBoundaryReached');
       if (boundary !== undefined) return boundary.frame < this.clock.frame;
@@ -3249,6 +3304,8 @@ export class CombatRuntimeAssembly {
           NonNullable<ConstructorParameters<typeof SkillRuntime>[1]['emitSkillEnd']>
         >[0],
       ) => this.#options.emitAbilityEvent?.(operatorId, 'skillEnd', payload),
+      onSkillExclusiveTimeExecuted: (skillId: string) =>
+        this.#abilitySystems.get(operatorId)?.onSkillExclusiveTimeExecuted(skillId),
       emitSkillInterrupted: (
         payload: Parameters<
           NonNullable<ConstructorParameters<typeof SkillRuntime>[1]['emitSkillInterrupted']>
@@ -3265,7 +3322,34 @@ export class CombatRuntimeAssembly {
 
   /** 能力系统的事件和推进端口不携带初始状态，可直接用于新建或绑定保存数据。 */
   #createAbilityRuntimeBindings(operatorId: string): CombatAbilityRuntimeBindings {
+    const plunge = this.#operators.get(operatorId)?.plungingAttack;
+    const movement = this.#options.plungingAttackMotion;
     return {
+      ...(plunge === undefined || movement === undefined
+        ? {}
+        : {
+            plungingAttack: {
+              startSkillId: plunge.startSkillId,
+              endSkillId: plunge.endSkillId,
+              motion: {
+                ...movement,
+                startDurationSeconds: plunge.startDurationSeconds,
+                downSpeed: plunge.downSpeed ?? movement.downSpeed,
+              },
+              jumpOffsetFrames: movement.jumpOffsetFrames,
+              startSkill: (skillId: string, castId: string) =>
+                this.#startTimelineSkill(operatorId, skillId, castId),
+              inputInterrupted: (castId: string) => {
+                this.receipt.record({
+                  frame: this.clock.frame,
+                  time: this.clock.time,
+                  event: 'SkillInputInterrupted',
+                  sourceId: operatorId,
+                  data: { castId },
+                });
+              },
+            },
+          }),
       onPostSkillCastResolved: () => {
         const state = this.#operatorCenterStates.get(operatorId);
         if (state?.pendingPerfectDodgeId != null) {
@@ -3283,7 +3367,13 @@ export class CombatRuntimeAssembly {
       },
       ...(this.#options.dashTiming === undefined
         ? {}
-        : { dashOffsetFrames: this.#options.dashTiming.dashOffsetFrames }),
+        : {
+            dashOffsetFrames: this.#options.dashTiming.dashOffsetFrames,
+            skillOffsetFrames: this.#options.dashTiming.skillOffsetFrames,
+          }),
+      // 模拟环境默认功能已解锁；原生仍要求当前角色是主控，不能扩展到全队。
+      canPreserveComboOnSkill: () =>
+        this.#options.isOperatorControlled?.(operatorId, this.clock.frame) === true,
       onPostSkillCastRequest: info => this.#options.onPostSkillCastRequest?.(operatorId, info),
       beforePostSkillCastStart: request => {
         const ability = this.#requireAbilitySystem(operatorId);
@@ -4309,6 +4399,7 @@ export class CombatRuntimeAssembly {
       () => this.projectileLifetimes.getUnfinishedTargets(),
       {
         // MainTargetFinder 读取全局主目标；单敌场景固定为木桩。
+        height: target => this.#queryGroundHeight(target),
         mainTarget: () => ({ kind: 'enemy' }),
         enemyMatchesTags: query =>
           this.#resolveBuffTargetById('enemy').matchesEntityTags(query.tags, query.tagQueryType),
@@ -4670,6 +4761,7 @@ export class CombatRuntimeAssembly {
       () => this.projectileLifetimes.getUnfinishedTargets(),
       {
         // MainTargetFinder 读取全局主目标；单敌场景固定为木桩。
+        height: target => this.#queryGroundHeight(target),
         mainTarget: () => ({ kind: 'enemy' }),
         enemyMatchesTags: query =>
           this.#resolveBuffTargetById('enemy').matchesEntityTags(query.tags, query.tagQueryType),
@@ -5493,6 +5585,13 @@ export class CombatRuntimeAssembly {
   }
 
   /** 查询句柄有效性与存活标记，不以血量或投射物飞行阶段代替。 */
+  #queryGroundHeight(target: RuntimeTargetRef): number | undefined {
+    if (target.kind === 'enemy') return 0;
+    if (target.kind !== 'operator') return undefined;
+    const runtime = this.#abilitySystems.get(target.operatorId);
+    return runtime ? (runtime.runtimeState.plungingAttack?.motion.height ?? 0) : undefined;
+  }
+
   #queryEntityLifeState(target: RuntimeTargetRef): 'alive' | 'dead' | 'unknown' | undefined {
     if (target.kind === 'spatialPoint') return undefined;
     if (target.kind === 'abilityEntity') {

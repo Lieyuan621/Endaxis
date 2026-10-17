@@ -260,8 +260,6 @@ export class ProjectileLifecycleRuntime implements FrameRuntime {
     this.#requireRelations();
     if (request.firstTickHit !== undefined && request.hit === undefined)
       throw new Error('projectile first-tick hit requires a hit port');
-    if (request.finishDelaySeconds === 'firstTickBlock' && request.block === undefined)
-      throw new Error('projectile landing requires a block port');
     const callbacks = request.callbacks ?? [];
     if (callbacks.length !== (request.callbackPrograms?.length ?? 0))
       throw new Error('projectile callbacks require matching fixed programs');

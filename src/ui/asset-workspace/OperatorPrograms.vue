@@ -23,36 +23,35 @@ const { t } = useI18n();
 const tr = (key: string) => t(`assetWorkspace.programs.${key}`);
 const groups = computed(() =>
   props.definition.skillGroups.map((group, index) => {
-    const members = props.resources.filter(resource => {
-      const path = resource.definitionResource.path;
-      return resource.kind === 'skill' && path[0] === 'skillGroups' && path[1] === index;
-    });
+    const members = (ids: readonly string[]) =>
+      ids.flatMap(id => {
+        const resource = props.resources.find(
+          item => item.kind === 'skill' && item.definitionResource.identity === id,
+        );
+        return resource ? [resource] : [];
+      });
     const sections = [
-      { key: 'base', items: members.filter(item => item.definitionResource.path[2] === 'skills') },
-      ...(group.variants ?? []).map((_, variant) => ({
+      { key: 'base', items: members(group.skillIds) },
+      ...(group.variants ?? []).map((variant, index) => ({
         key: 'variant',
-        number: variant + 1,
-        items: members.filter(
-          item =>
-            item.definitionResource.path[2] === 'variants' &&
-            item.definitionResource.path[3] === variant,
-        ),
+        number: index + 1,
+        items: members(variant.skillIds),
       })),
-      {
-        key: 'replacement',
-        items: members.filter(item =>
-          ['replacementSkills', 'routedReplacementSkills'].includes(
-            String(item.definitionResource.path[2]),
-          ),
-        ),
-      },
     ].filter(section => section.items.length);
     return { group, index, sections };
   }),
 );
 const extraSkills = computed(() =>
   props.resources.filter(
-    resource => resource.kind === 'skill' && resource.definitionResource.path[0] === 'dodgeSkill',
+    resource =>
+      resource.kind === 'skill' &&
+      !props.definition.skillGroups.some(
+        group =>
+          group.skillIds.includes(resource.definitionResource.identity) ||
+          group.variants?.some(variant =>
+            variant.skillIds.includes(resource.definitionResource.identity),
+          ),
+      ),
   ),
 );
 const upgrades = computed(() =>

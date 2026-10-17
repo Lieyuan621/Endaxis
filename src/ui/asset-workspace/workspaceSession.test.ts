@@ -29,7 +29,7 @@ const source: WorkspaceAssetSource = {
 describe('工作区资产草稿', () => {
   it('资源条件只连接自己的主图，连接和禁用参与同一撤销历史且不修改内置定义', () => {
     const session = new WorkspaceAssetSession(source, 'project:operator:conditions');
-    const path = ['skillGroups', 0, 'skills', 0] as const;
+    const path = ['skills', 0] as const;
     session.changeGraph(path, owner => ({
       ...owner,
       actionGraph: {
@@ -74,7 +74,7 @@ describe('工作区资产草稿', () => {
   });
   it('输入窗口条目按字段编辑，保留同一条目的其他值并支持撤销', () => {
     const session = new WorkspaceAssetSession(source, 'project:operator:windows');
-    const path = ['skillGroups', 0, 'skills', 0, 'inputWindows', 'commandMappings', 0] as const;
+    const path = ['skills', 0, 'inputWindows', 'commandMappings', 0] as const;
     const before = fieldValueAt(session.current.edit.definition, path) as Record<string, unknown>;
     session.change([...path, 'startFrame'], 6);
     expect(fieldValueAt(session.current.edit.definition, path)).toEqual({
@@ -86,7 +86,7 @@ describe('工作区资产草稿', () => {
   });
   it('子技能字段使用自己的契约：可清除可选字段、修改数值，身份和图仍不可绕过', () => {
     const session = new WorkspaceAssetSession(source, 'project:operator:fields');
-    const path = ['skillGroups', 0, 'skills', 0] as const;
+    const path = ['skills', 0] as const;
     const before = session.current;
     for (const field of [
       'skillType',

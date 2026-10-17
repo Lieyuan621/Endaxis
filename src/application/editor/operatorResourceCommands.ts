@@ -1,5 +1,5 @@
 import type { OperatorDefinition } from '../../../packages/game-data-contract/src/operators';
-import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills';
+import { requireOperatorSkill } from '../../core/game-data/operatorSkillDefinitions';
 
 /** 命令只返回失败原因，显示文案由调用方决定。 */
 export class OperatorResourceEditError extends Error {
@@ -36,9 +36,8 @@ export function editOperatorResources(
   }
   const group = definition.skillGroups[command.group];
   if (!group) throw new Error('Invalid skill group');
-  const skills: SkillDefinition[] = Array.isArray(group.skills)
-    ? [...group.skills]
-    : [group.skills as SkillDefinition];
+  const skills = group.skillIds.map(id => requireOperatorSkill(definition, id));
+  let ownedSkills = [...definition.skills];
   if (command.kind === 'addSkill') {
     // 自定义 ID 在整份定义内避让，避免与变体、换槽或实体子技能冲突。
     const used = new Set<string>();
@@ -64,6 +63,7 @@ export function editOperatorResources(
       scheduledSequences: [],
       actionGraph: { main: { nodes: {} }, macros: {} },
     });
+    ownedSkills.push(skills[skills.length - 1]!);
   } else {
     const skill = skills[command.index];
     if (!skill) throw new Error('Invalid skill index');
@@ -80,9 +80,17 @@ export function editOperatorResources(
           }
         }
       };
-      visit(definition);
+      visit({
+        ...definition,
+        skillGroups: definition.skillGroups.map(item =>
+          item === group
+            ? { ...item, skillIds: item.skillIds.filter(id => id !== skill.key) }
+            : item,
+        ),
+      });
       if (referenced) throw new OperatorResourceEditError('skillReferenced');
       skills.splice(command.index, 1);
+      ownedSkills = ownedSkills.filter(item => item !== skill);
     } else {
       const target = command.index + (command.kind === 'moveSkillUp' ? -1 : 1);
       if (target < 0 || target >= skills.length) return definition;
@@ -91,8 +99,9 @@ export function editOperatorResources(
   }
   return {
     ...definition,
+    skills: ownedSkills,
     skillGroups: definition.skillGroups.map((item, index) =>
-      index === command.group ? { ...group, skills } : item,
+      index === command.group ? { ...group, skillIds: skills.map(skill => skill.key) } : item,
     ),
   };
 }

@@ -1400,12 +1400,12 @@ describe('AbilitySystemRuntime', () => {
       actualSkillKey: 'attack2',
     });
     expect(ability.tryStartSkill('battle')).toBe(true);
-    expect(ability.runtimeState.comboOffsetTargetSkillKey).toBe('attack2');
-    expect(ability.runtimeState.comboOffsetModifier?.skillCasted).toBe(false);
-
-    for (let frame = 0; frame < 30; frame += 1) ability.advanceFrame();
+    expect(ability.runtimeState.comboOffsetTargetSkillKey).toBeNull();
     expect(ability.runtimeState.comboOffsetModifier).toBeNull();
-    expect(ability.runtimeState.comboOffsetTargetSkillKey).toBe('attack2');
+
+    for (let frame = 0; frame < 30; frame += 1) restored.advanceFrame();
+    expect(restored.runtimeState.comboOffsetModifier).toBeNull();
+    expect(restored.runtimeState.comboOffsetTargetSkillKey).toBe('attack2');
     expect(ability.resolvePlayerInputSkill('modeAttack', 'basicAttack')).toEqual({
       status: 'matched',
       actualSkillKey: 'modeAttack',

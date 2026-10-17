@@ -989,6 +989,7 @@ export const tangtangChr_0027_tangtang_power_attack: SkillDefinition = {
   naturalDurationFrames: 121,
   exclusiveFrame: 47,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   costFrame: 4,
   scheduledSequences: [
     { startFrame: 9, endFrame: 9, sequence: { $sequence: 'dealDamage_opt2' } },
@@ -1484,6 +1485,7 @@ export const tangtangChr_0027_tangtang_normal_skill: SkillDefinition = {
   naturalDurationFrames: 136,
   exclusiveFrame: 50,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 50, endFrame: 76, skillIds: ['chr_0027_tangtang_normal_skill'] },
@@ -1502,257 +1504,6 @@ export const tangtangChr_0027_tangtang_normal_skill: SkillDefinition = {
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
   actionGraph: tangtangChr_0027_tangtang_normal_skillActionGraph,
-};
-
-export const tangtangChr_0027_tangtang_ultimate_skillActionGraph = {
-  main: {
-    nodes: {
-      startTimeDilation_1: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: { kind: 'named', key: 'RESETto1' },
-            finishByAction: false,
-            targets: [{ kind: 'owner' }],
-          },
-        },
-        next: null,
-      },
-      finishBuffsById_2: {
-        action: {
-          kind: 'finishBuffsById',
-          parameters: {
-            targets: { kind: 'source' },
-            finishSource: { kind: 'source' },
-            buffIds: ['buff_chr_0027_tangtang_ultskill_vfx'],
-            reason: 'other',
-          },
-        },
-        next: null,
-      },
-      applyBuff_3: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_common_damage_immune_ult_skill' }],
-            targets: { kind: 'source' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-            finishByAction: true,
-          },
-        },
-        next: null,
-      },
-      hideUi_4: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      startUltimateTimeDilation_5: {
-        action: {
-          kind: 'startUltimateTimeDilation',
-          parameters: {
-            priority: 100,
-            targetScale: { kind: 'constant', value: 0 },
-            ignoredTargets: [],
-          },
-        },
-        next: null,
-      },
-      spawnAbilityEntity_9: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            bornAt: { kind: 'owner' },
-            abilityEntityId: 'abilityentity_chr_0027_tangtang_ultskill',
-            childSkillId: 'chr_0027_tangtang_ultimate_skill_1',
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: false,
-          },
-        },
-        next: null,
-      },
-      modifyActionValue_8: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'talent2_ultskill',
-            operation: 'assign',
-            value: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'spawnAbilityEntity_9',
-      },
-      ifElse_10: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'modifyActionValue_8' },
-          whenFalse: { $sequence: 'spawnAbilityEntity_9' },
-        },
-        next: null,
-      },
-      modifyActionValue_11: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'duration_spellvulnerable',
-            operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_3' },
-          },
-        },
-        next: 'ifElse_10',
-      },
-      modifyActionValue_12: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'rate_spellvulnerable_02',
-            operation: 'add',
-            value: { kind: 'valueNode', nodeId: 'data_4' },
-          },
-        },
-        next: 'modifyActionValue_11',
-      },
-      modifyActionValue_13: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'rate_spellvulnerable',
-            operation: 'add',
-            value: { kind: 'valueNode', nodeId: 'data_5' },
-          },
-        },
-        next: 'modifyActionValue_12',
-      },
-      modifyActionValue_14: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'tornado_atk_scale03',
-            operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_6' },
-          },
-        },
-        next: 'modifyActionValue_13',
-      },
-      modifyActionValue_15: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'tornado_atk_scale02',
-            operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_7' },
-          },
-        },
-        next: 'modifyActionValue_14',
-      },
-      modifyActionValue_16: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'tornado_atk_scale01',
-            operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_8' },
-          },
-        },
-        next: 'modifyActionValue_15',
-      },
-    },
-    dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'talent2', fallback: 0 } },
-      data_2: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_1' },
-          operator: 'greaterOrEqual',
-          right: { kind: 'constant', value: 1 },
-        },
-      },
-      data_3: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'EntityBB_abilityentity_duration_spellvulnerable' },
-      },
-      data_4: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'EntityBB_abilityentity_rate_spellvulnerable_02' },
-      },
-      data_5: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'EntityBB_abilityentity_rate_spellvulnerable' },
-      },
-      data_6: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'EntityBB_abilityentity_water03' },
-      },
-      data_7: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'EntityBB_abilityentity_water02' },
-      },
-      data_8: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'EntityBB_abilityentity_water01' },
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const tangtangChr_0027_tangtang_ultimate_skill: SkillDefinition = {
-  key: 'chr_0027_tangtang_ultimate_skill',
-  element: 'cryo',
-  blackboard: {
-    atk_scale_1: [0.178, 0.196, 0.213, 0.231, 0.249, 0.267, 0.284, 0.302, 0.32, 0.342, 0.369, 0.4],
-    atk_scale_2: [1.778, 1.956, 2.134, 2.311, 2.489, 2.667, 2.845, 3.023, 3.2, 3.423, 3.689, 4],
-    atk_scale_3: [3.111, 3.422, 3.734, 4.045, 4.356, 4.667, 4.978, 5.289, 5.6, 5.989, 6.456, 7],
-    dmg_up_water_ult: 0,
-    duration: 12,
-    duration_spellvulnerable: 0,
-    poise2: 15,
-    poise3: 20,
-    potential3_rate_spellvulnerable: 0,
-    potential5: 0,
-    rate_spellvulnerable: 0,
-    rate_spellvulnerable_02: 0,
-    rate_vul_base: 0,
-    talent2: 0,
-    talent2_ultskill: 0,
-    tornado_atk_scale01: 0,
-    tornado_atk_scale02: 0,
-    tornado_atk_scale03: 0,
-  },
-  timelineBlockFrames: 85,
-  naturalDurationFrames: 202,
-  exclusiveFrame: 84,
-  offsetRecordFrame: 0,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 82,
-        endFrame: 174,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0027_tangtang_attack1',
-      },
-    ],
-  },
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
-    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'finishBuffsById_2' } },
-    { startFrame: 0, endFrame: 84, sequence: { $sequence: 'applyBuff_3' } },
-    { startFrame: 0, endFrame: 82, sequence: { $sequence: 'hideUi_4' } },
-    { startFrame: 0, endFrame: 82, sequence: { $sequence: 'startUltimateTimeDilation_5' } },
-    { startFrame: 76, endFrame: 76, sequence: { $sequence: 'modifyActionValue_16' } },
-  ],
-  defaultTarget: 'enemy',
-  cooldownFrames: 600,
-  costs: [{ resource: 'ultimateEnergy', value: 90 }],
-  skillType: 'ultimate',
-  levelSource: 'ultimate',
-  nativeSkillType: 'ultimateSkill',
-  actionGraph: tangtangChr_0027_tangtang_ultimate_skillActionGraph,
 };
 
 const tangtangChr_0027_tangtang_combo_skillActionGraphCallback1 = {
@@ -2253,6 +2004,7 @@ export const tangtangChr_0027_tangtang_combo_skill: SkillDefinition = {
   naturalDurationFrames: 200,
   exclusiveFrame: 41,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 31, endFrame: 93, skillIds: ['chr_0027_tangtang_normal_skill'] },
@@ -2273,6 +2025,257 @@ export const tangtangChr_0027_tangtang_combo_skill: SkillDefinition = {
   actionGraph: tangtangChr_0027_tangtang_combo_skillActionGraph,
 };
 
+export const tangtangChr_0027_tangtang_ultimate_skillActionGraph = {
+  main: {
+    nodes: {
+      startTimeDilation_1: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 1 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'RESETto1' },
+            finishByAction: false,
+            targets: [{ kind: 'owner' }],
+          },
+        },
+        next: null,
+      },
+      finishBuffsById_2: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'source' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_chr_0027_tangtang_ultskill_vfx'],
+            reason: 'other',
+          },
+        },
+        next: null,
+      },
+      applyBuff_3: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_common_damage_immune_ult_skill' }],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          },
+        },
+        next: null,
+      },
+      hideUi_4: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      startUltimateTimeDilation_5: {
+        action: {
+          kind: 'startUltimateTimeDilation',
+          parameters: {
+            priority: 100,
+            targetScale: { kind: 'constant', value: 0 },
+            ignoredTargets: [],
+          },
+        },
+        next: null,
+      },
+      spawnAbilityEntity_9: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'owner' },
+            abilityEntityId: 'abilityentity_chr_0027_tangtang_ultskill',
+            childSkillId: 'chr_0027_tangtang_ultimate_skill_1',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+          },
+        },
+        next: null,
+      },
+      modifyActionValue_8: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'talent2_ultskill',
+            operation: 'assign',
+            value: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'spawnAbilityEntity_9',
+      },
+      ifElse_10: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+          whenTrue: { $sequence: 'modifyActionValue_8' },
+          whenFalse: { $sequence: 'spawnAbilityEntity_9' },
+        },
+        next: null,
+      },
+      modifyActionValue_11: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'duration_spellvulnerable',
+            operation: 'assign',
+            value: { kind: 'valueNode', nodeId: 'data_3' },
+          },
+        },
+        next: 'ifElse_10',
+      },
+      modifyActionValue_12: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'rate_spellvulnerable_02',
+            operation: 'add',
+            value: { kind: 'valueNode', nodeId: 'data_4' },
+          },
+        },
+        next: 'modifyActionValue_11',
+      },
+      modifyActionValue_13: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'rate_spellvulnerable',
+            operation: 'add',
+            value: { kind: 'valueNode', nodeId: 'data_5' },
+          },
+        },
+        next: 'modifyActionValue_12',
+      },
+      modifyActionValue_14: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'tornado_atk_scale03',
+            operation: 'assign',
+            value: { kind: 'valueNode', nodeId: 'data_6' },
+          },
+        },
+        next: 'modifyActionValue_13',
+      },
+      modifyActionValue_15: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'tornado_atk_scale02',
+            operation: 'assign',
+            value: { kind: 'valueNode', nodeId: 'data_7' },
+          },
+        },
+        next: 'modifyActionValue_14',
+      },
+      modifyActionValue_16: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'tornado_atk_scale01',
+            operation: 'assign',
+            value: { kind: 'valueNode', nodeId: 'data_8' },
+          },
+        },
+        next: 'modifyActionValue_15',
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'talent2', fallback: 0 } },
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_1' },
+          operator: 'greaterOrEqual',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_3: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'EntityBB_abilityentity_duration_spellvulnerable' },
+      },
+      data_4: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'EntityBB_abilityentity_rate_spellvulnerable_02' },
+      },
+      data_5: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'EntityBB_abilityentity_rate_spellvulnerable' },
+      },
+      data_6: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'EntityBB_abilityentity_water03' },
+      },
+      data_7: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'EntityBB_abilityentity_water02' },
+      },
+      data_8: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'EntityBB_abilityentity_water01' },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const tangtangChr_0027_tangtang_ultimate_skill: SkillDefinition = {
+  key: 'chr_0027_tangtang_ultimate_skill',
+  element: 'cryo',
+  blackboard: {
+    atk_scale_1: [0.178, 0.196, 0.213, 0.231, 0.249, 0.267, 0.284, 0.302, 0.32, 0.342, 0.369, 0.4],
+    atk_scale_2: [1.778, 1.956, 2.134, 2.311, 2.489, 2.667, 2.845, 3.023, 3.2, 3.423, 3.689, 4],
+    atk_scale_3: [3.111, 3.422, 3.734, 4.045, 4.356, 4.667, 4.978, 5.289, 5.6, 5.989, 6.456, 7],
+    dmg_up_water_ult: 0,
+    duration: 12,
+    duration_spellvulnerable: 0,
+    poise2: 15,
+    poise3: 20,
+    potential3_rate_spellvulnerable: 0,
+    potential5: 0,
+    rate_spellvulnerable: 0,
+    rate_spellvulnerable_02: 0,
+    rate_vul_base: 0,
+    talent2: 0,
+    talent2_ultskill: 0,
+    tornado_atk_scale01: 0,
+    tornado_atk_scale02: 0,
+    tornado_atk_scale03: 0,
+  },
+  timelineBlockFrames: 85,
+  naturalDurationFrames: 202,
+  exclusiveFrame: 84,
+  offsetRecordFrame: 0,
+  inputWindows: {
+    commandMappings: [
+      {
+        startFrame: 82,
+        endFrame: 174,
+        input: 'basicAttack',
+        targetSkillId: 'chr_0027_tangtang_attack1',
+      },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'finishBuffsById_2' } },
+    { startFrame: 0, endFrame: 84, sequence: { $sequence: 'applyBuff_3' } },
+    { startFrame: 0, endFrame: 82, sequence: { $sequence: 'hideUi_4' } },
+    { startFrame: 0, endFrame: 82, sequence: { $sequence: 'startUltimateTimeDilation_5' } },
+    { startFrame: 76, endFrame: 76, sequence: { $sequence: 'modifyActionValue_16' } },
+  ],
+  defaultTarget: 'enemy',
+  cooldownFrames: 600,
+  costs: [{ resource: 'ultimateEnergy', value: 90 }],
+  skillType: 'ultimate',
+  levelSource: 'ultimate',
+  nativeSkillType: 'ultimateSkill',
+  actionGraph: tangtangChr_0027_tangtang_ultimate_skillActionGraph,
+};
+
 export const tangtangCommon_character_perfect_dodgeActionGraph = {
   main: { nodes: {} },
   macros: {},
@@ -2291,6 +2294,28 @@ export const tangtangCommon_character_perfect_dodge: SkillDefinition = {
   defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
+};
+
+export const tangtangChr_0027_tangtang_plunging_attack_startActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const tangtangChr_0027_tangtang_plunging_attack_start: SkillDefinition = {
+  actionGraph: tangtangChr_0027_tangtang_plunging_attack_startActionGraph,
+  key: 'chr_0027_tangtang_plunging_attack_start',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
 };
 
 const tangtangPassive1ActionGraph = {
@@ -3712,41 +3737,53 @@ export const tangtang: OperatorDefinition = {
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },
   passiveUi: { kind: 'numeric', appearance: 'tangtangDroplets', maximum: 2 },
+  skills: [
+    tangtangChr_0027_tangtang_attack1,
+    tangtangChr_0027_tangtang_attack2,
+    tangtangChr_0027_tangtang_attack3,
+    tangtangChr_0027_tangtang_attack4,
+    tangtangChr_0027_tangtang_attack5,
+    tangtangChr_0027_tangtang_power_attack,
+    tangtangChr_0027_tangtang_plunging_attack_end,
+    tangtangChr_0027_tangtang_normal_skill,
+    tangtangChr_0027_tangtang_combo_skill,
+    tangtangChr_0027_tangtang_ultimate_skill,
+    tangtangCommon_character_perfect_dodge,
+    tangtangChr_0027_tangtang_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        tangtangChr_0027_tangtang_attack1,
-        tangtangChr_0027_tangtang_attack2,
-        tangtangChr_0027_tangtang_attack3,
-        tangtangChr_0027_tangtang_attack4,
-        tangtangChr_0027_tangtang_attack5,
+      skillIds: [
+        'chr_0027_tangtang_attack1',
+        'chr_0027_tangtang_attack2',
+        'chr_0027_tangtang_attack3',
+        'chr_0027_tangtang_attack4',
+        'chr_0027_tangtang_attack5',
       ],
     },
-    { key: 'finisher', operationType: 'finisher', skills: tangtangChr_0027_tangtang_power_attack },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0027_tangtang_power_attack'] },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: tangtangChr_0027_tangtang_plunging_attack_end,
+      skillIds: ['chr_0027_tangtang_plunging_attack_end'],
     },
     {
       key: 'battleSkill',
       operationType: 'battleSkill',
-      skills: tangtangChr_0027_tangtang_normal_skill,
+      skillIds: ['chr_0027_tangtang_normal_skill'],
     },
-    {
-      key: 'ultimate',
-      operationType: 'ultimate',
-      skills: tangtangChr_0027_tangtang_ultimate_skill,
-    },
-    {
-      key: 'comboSkill',
-      operationType: 'comboSkill',
-      skills: tangtangChr_0027_tangtang_combo_skill,
-    },
+    { key: 'ultimate', operationType: 'ultimate', skillIds: ['chr_0027_tangtang_ultimate_skill'] },
+    { key: 'comboSkill', operationType: 'comboSkill', skillIds: ['chr_0027_tangtang_combo_skill'] },
   ],
-  dodgeSkill: tangtangCommon_character_perfect_dodge,
+  dodgeSkillId: 'common_character_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0027_tangtang_plunging_attack_start',
+    endSkillId: 'chr_0027_tangtang_plunging_attack_end',
+    startDurationSeconds: 0.633,
+    endDurationSeconds: 2,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
   ],

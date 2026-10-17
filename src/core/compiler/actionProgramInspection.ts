@@ -18,6 +18,12 @@ export function rootActionSteps(sequence: ResolvedActionSequence): readonly Reso
       result.push(...rootActionSteps(action.entry));
     } else if (action.kind === 'callMacro') {
       result.push(...rootActionSteps(bind(action.entry, `${id}:macro`)));
+    } else if (action.kind === 'physicsCast') {
+      result.push({
+        ...action,
+        whenHit: bind(action.whenHit.$sequence, `${id}:hit`),
+        whenMiss: bind(action.whenMiss.$sequence, `${id}:miss`),
+      });
     } else if (action.kind === 'playAnimation') {
       result.push({ ...action, onEnd: bind(action.onEnd.$sequence, `${id}:onEnd`) });
     } else if (action.kind === 'showComboRingQte') {

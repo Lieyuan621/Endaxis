@@ -145,6 +145,7 @@ export interface ResolvedAbilityEntityDefinition {
 }
 
 export interface ResolvedCombatStepParameters {
+  physicsCast: CompiledStepParameters['physicsCast'];
   copyContextTargets: CompiledStepParameters['copyContextTargets'];
   findTargets: CompiledStepParameters['findTargets'];
   mergeContextTargets: CompiledStepParameters['mergeContextTargets'];
@@ -324,47 +325,52 @@ type ResolvedCombatStepNode<K extends CombatStepKind> = {
   readonly hitId?: string;
   readonly kind: K;
   readonly parameters: Readonly<ResolvedCombatStepParameters[K]>;
-} & (K extends 'playAnimation'
-  ? { readonly onEnd: ResolvedActionSequence }
-  : K extends 'showComboRingQte'
-    ? { readonly triggeredAction: ResolvedActionSequence }
-    : K extends 'aura'
-      ? { readonly onEnter: ResolvedActionSequence; readonly onExit: ResolvedActionSequence }
-      : K extends 'jumpTimeline'
-        ? { readonly condition: CompiledCondition }
-        : K extends 'anyCondition'
-          ? { readonly conditions: readonly CompiledCondition[] }
-          : K extends 'ifElse'
-            ? {
-                readonly condition: CompiledCondition;
-                readonly whenTrue: ResolvedActionSequence;
-                readonly whenFalse: ResolvedActionSequence;
-              }
-            : K extends 'conditional'
+} & (K extends 'physicsCast'
+  ? { readonly whenHit: ResolvedActionSequence; readonly whenMiss: ResolvedActionSequence }
+  : K extends 'playAnimation'
+    ? { readonly onEnd: ResolvedActionSequence }
+    : K extends 'showComboRingQte'
+      ? { readonly triggeredAction: ResolvedActionSequence }
+      : K extends 'aura'
+        ? { readonly onEnter: ResolvedActionSequence; readonly onExit: ResolvedActionSequence }
+        : K extends 'jumpTimeline'
+          ? { readonly condition: CompiledCondition }
+          : K extends 'anyCondition'
+            ? { readonly conditions: readonly CompiledCondition[] }
+            : K extends 'ifElse'
               ? {
+                  readonly condition: CompiledCondition;
                   readonly whenTrue: ResolvedActionSequence;
-                  readonly whenFalse?: ResolvedActionSequence;
+                  readonly whenFalse: ResolvedActionSequence;
                 }
-              : K extends 'once'
-                ? { readonly body: ResolvedActionSequence }
-                : K extends 'switch'
-                  ? {
-                      readonly options: readonly (Omit<ActionSwitchOptionDefinition, 'sequence'> & {
-                        readonly sequence: ResolvedActionSequence;
-                      })[];
-                    }
-                  : K extends 'repeatEachTick'
-                    ? { readonly body: ResolvedActionSequence }
-                    : K extends 'launchProjectile'
-                      ? {
-                          readonly callbacks: readonly {
-                            readonly event: 'launch' | 'hit' | 'block' | 'reach' | 'finish';
-                            readonly skill: CompiledAbilityEntityChildSkillProgram;
-                          }[];
-                        }
-                      : K extends 'forEachContextTarget'
-                        ? { readonly body: ResolvedActionSequence }
-                        : {});
+              : K extends 'conditional'
+                ? {
+                    readonly whenTrue: ResolvedActionSequence;
+                    readonly whenFalse?: ResolvedActionSequence;
+                  }
+                : K extends 'once'
+                  ? { readonly body: ResolvedActionSequence }
+                  : K extends 'switch'
+                    ? {
+                        readonly options: readonly (Omit<
+                          ActionSwitchOptionDefinition,
+                          'sequence'
+                        > & {
+                          readonly sequence: ResolvedActionSequence;
+                        })[];
+                      }
+                    : K extends 'repeatEachTick'
+                      ? { readonly body: ResolvedActionSequence }
+                      : K extends 'launchProjectile'
+                        ? {
+                            readonly callbacks: readonly {
+                              readonly event: 'launch' | 'hit' | 'block' | 'reach' | 'finish';
+                              readonly skill: CompiledAbilityEntityChildSkillProgram;
+                            }[];
+                          }
+                        : K extends 'forEachContextTarget'
+                          ? { readonly body: ResolvedActionSequence }
+                          : {});
 
 /** 按成员逐一构造，联合kind仍保留parameters与子序列字段的判别关联。 */
 export type ResolvedCombatStepForKind<K extends CombatStepKind> = {
@@ -376,6 +382,7 @@ export type ResolvedCombatStep = ResolvedCombatStepForKind<CombatStepKind>;
 
 /** 每种节点必须明确执行归属；新增 kind 不得自动落入操作链。 */
 export const COMBAT_STEP_EXECUTION_ROUTES = {
+  physicsCast: 'operation',
   copyContextTargets: 'operation',
   findTargets: 'operation',
   mergeContextTargets: 'operation',
@@ -483,11 +490,13 @@ type CombatOperationKind = {
 
 /** 仅交给操作链的节点；监听器与控制流程由序列运行时持有生命周期。 */
 export type ResolvedCombatOperationStep = {
-  [K in CombatOperationKind]: ResolvedCombatStepForKind<K>;
+  [K in CombatOperationKind]: K extends 'physicsCast'
+    ? Omit<ResolvedCombatStepForKind<K>, 'whenHit' | 'whenMiss'>
+    : ResolvedCombatStepForKind<K>;
 }[CombatOperationKind];
 
 export function isCombatOperationStep(
-  step: ResolvedCombatStep,
+  step: ResolvedCombatStep | ResolvedCombatOperationStep,
 ): step is ResolvedCombatOperationStep {
   return COMBAT_STEP_EXECUTION_ROUTES[step.kind] === 'operation';
 }
@@ -576,6 +585,7 @@ export interface CompiledSkillExecutionProgram extends CompiledSkillActionProgra
   readonly exclusiveFrame?: number;
   /** 原生普攻连段身份提交点；到达后下一次 Dash 可保存该目标。 */
   readonly offsetRecordFrame?: number;
+  readonly dontInterruptCombo?: boolean;
   /** 原生技能局部输入映射与接续窗口；已无等级值，运行时只读。 */
   readonly inputWindows?: SkillDefinition['inputWindows'];
   readonly cooldownFrames?: number;

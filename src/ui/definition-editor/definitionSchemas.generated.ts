@@ -12,7 +12,6 @@ const schema_bc6e5aef9dfe = { unionVariants: [{}, {}, {}, {}, {}, {}, {}] } as c
 const schema_d056c7fa0b76 = { kind: 'string', referenceKind: 'buff' } as const;
 const schema_c7288b42bef0 = { recordValue: schema_4107b248d073 } as const;
 const schema_eb26b72c4713 = { kind: 'string', referenceKind: 'skill' } as const;
-const schema_140af2d9bf58 = { arrayElement: schema_4107b248d073 } as const;
 const schema_3a45612f7fc2 = { recordValue: schema_f27fc5f4f63d } as const;
 const schema_bbff0d28079e = { kind: 'number', readonlyDeclaration: true } as const;
 const schema_06112e0554b3 = { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}] } as const;
@@ -116,6 +115,11 @@ const schema_d2d610731e8e = {
   referenceKind: 'skill',
   optional: true,
   description: '块宽的接续参照技能；覆盖默认接续目标，仅影响显示，不执行该技能。',
+} as const;
+const schema_87d9468b2097 = {
+  kind: 'boolean',
+  optional: true,
+  description: '原生 SkillData.dontInterruptCombo；主控插入此技能时保留普攻连段。缺省为 false。',
 } as const;
 const schema_5f503bc75d0e = {
   kind: 'condition',
@@ -709,6 +713,27 @@ const schema_79be2adc5b0c = {
     description: '元素异常颜色；缺省使用附着元素或来源颜色。',
   },
 } as const;
+const schema_1a962c0e459f = {
+  placementPolicy: {
+    kind: 'object',
+    fields: schema_f29775915ce0,
+    optional: true,
+    description: '此形态自己的技能链展开规则。',
+  },
+  key: { kind: 'string', description: '形态在技能组中的唯一名称。' },
+  nameKey: {
+    kind: 'string',
+    optional: true,
+    description: '此放置形态的名称模板覆盖；未提供时继承组的 nameKey。',
+  },
+  skillIds: {
+    kind: 'array',
+    element: schema_eb26b72c4713,
+    semantics: { arrayElement: {} },
+    referenceKind: 'skill',
+    description: '此形态包含的单个技能或有序技能链。',
+  },
+} as const;
 const schema_86ccf8004067 = {
   kind: 'object',
   fields: schema_79be2adc5b0c,
@@ -974,30 +999,6 @@ const schema_78c333188111 = {
   optional: true,
   description: 'Buff 启用期间注册到目标或来源身上的属性修正。',
 } as const;
-const schema_59ae2ded5e63 = {
-  placementPolicy: {
-    kind: 'object',
-    fields: schema_f29775915ce0,
-    optional: true,
-    description: '此形态自己的技能链展开规则。',
-  },
-  key: { kind: 'string', description: '形态在技能组中的唯一名称。' },
-  nameKey: {
-    kind: 'string',
-    optional: true,
-    description: '此放置形态的名称模板覆盖；未提供时继承组的 nameKey。',
-  },
-  skills: {
-    kind: 'union',
-    variants: [
-      schema_1f21df9328c5,
-      schema_1f21df9328c5,
-      { kind: 'array', element: schema_a361791fb8fc, semantics: schema_140af2d9bf58 },
-    ],
-    semantics: { unionVariants: [schema_4107b248d073, schema_140af2d9bf58] },
-    description: '此形态包含的单个技能或有序技能链。',
-  },
-} as const;
 const schema_72e7e1b50ca4 = {
   kind: 'object',
   fields: {
@@ -1114,7 +1115,7 @@ const schema_f15fd9ff6614 = {
     ],
     semantics: schema_4107b248d073,
   },
-  semantics: schema_140af2d9bf58,
+  semantics: { arrayElement: schema_4107b248d073 },
   description: '按顺序执行的治疗处理器。',
 } as const;
 const schema_3eab043b5ad6 = {
@@ -1212,7 +1213,7 @@ const schema_3eab043b5ad6 = {
     ],
     semantics: schema_4107b248d073,
   },
-  semantics: schema_140af2d9bf58,
+  semantics: { arrayElement: schema_4107b248d073 },
   description: '条件成立时按顺序执行的伤害处理器。',
 } as const;
 const schema_68de49e3fae3 = {
@@ -1326,6 +1327,74 @@ const schema_68de49e3fae3 = {
   semantics: { arrayElement: {} },
   optional: true,
   description: 'Buff 启用时创建的护盾；护盾的数值、吸收范围、次数和销毁行为由条目配置。',
+} as const;
+const schema_6bd3c4c3e886 = {
+  placementPolicy: {
+    kind: 'object',
+    fields: schema_f29775915ce0,
+    optional: true,
+    description: '编辑器一次放置整个技能组时采用的展开规则。',
+  },
+  key: { kind: 'string', description: '技能组在干员定义中的唯一名称。' },
+  operationType: {
+    kind: 'enum',
+    options: schema_a7c632da5929,
+    semantics: schema_bc6e5aef9dfe,
+    description: '玩家操作类别；技能库与轴上技能块均据此展示，实际执行读取具体技能的 skillType。',
+  },
+  skillIds: {
+    kind: 'array',
+    element: schema_eb26b72c4713,
+    semantics: { arrayElement: {} },
+    referenceKind: 'skill',
+    description: '单个可放置技能，或作为一个技能库条目放置的有序技能链。',
+  },
+  nameKey: {
+    kind: 'string',
+    optional: true,
+    description: '操作名称模板的 i18n 键，含 name/shortName；{baseName} 为操作名称（轴上含段号）。',
+  },
+  placementSequenceSkillKeys: {
+    kind: 'array',
+    element: schema_eb26b72c4713,
+    semantics: { arrayElement: {} },
+    referenceKind: 'skill',
+    optional: true,
+    description:
+      '运行时虽以换槽形态注册、但编辑器放置时具有明确先后关系的完整技能键序列。\n独立替换操作必须直接声明独立技能组，不由 UI 从 replacement 拆出卡片。',
+  },
+  variants: {
+    kind: 'array',
+    element: { kind: 'object', fields: schema_1a962c0e459f },
+    semantics: { arrayElement: {} },
+    optional: true,
+    description:
+      '同一稳定输入类型下的具名形态链。形态不是新的技能类型；它可以使用不同的养成等级来源，\n例如终结技状态下的强化普攻仍属于普攻，但倍率取终结技等级。',
+  },
+  presentationVariants: {
+    kind: 'array',
+    element: {
+      kind: 'object',
+      fields: {
+        icon: {
+          kind: 'string',
+          semantics: { aliases: ['ImageRef'] },
+          optional: true,
+          description: '此形态的图片资源引用；省略沿用默认图标。',
+        },
+        key: { kind: 'string', description: '展示形态在技能组中的唯一名称。' },
+        condition: {
+          kind: 'object',
+          fields: schema_bc69b4196c34,
+          semantics: { aliases: ['BuildCondition'] },
+          description: '最终构筑满足此条件时选用该展示形态。',
+        },
+      },
+    },
+    semantics: { arrayElement: {} },
+    optional: true,
+    description: '同一稳定技能组的 UI 变体，不会产生独立的释放身份。',
+  },
 } as const;
 const schema_2b4eefe15503 = [
   {
@@ -1916,116 +1985,6 @@ const schema_879701005051 = {
   optional: true,
   description: '构筑阶段持续生效的属性修正。',
 } as const;
-const schema_291c8169d3e3 = {
-  placementPolicy: {
-    kind: 'object',
-    fields: schema_f29775915ce0,
-    optional: true,
-    description: '编辑器一次放置整个技能组时采用的展开规则。',
-  },
-  key: { kind: 'string', description: '技能组在干员定义中的唯一名称。' },
-  operationType: {
-    kind: 'enum',
-    options: schema_a7c632da5929,
-    semantics: schema_bc6e5aef9dfe,
-    description: '玩家操作类别；技能库与轴上技能块均据此展示，实际执行读取具体技能的 skillType。',
-  },
-  skills: {
-    kind: 'union',
-    variants: [
-      schema_1f21df9328c5,
-      schema_1f21df9328c5,
-      { kind: 'array', element: schema_a361791fb8fc, semantics: schema_140af2d9bf58 },
-    ],
-    semantics: { unionVariants: [schema_4107b248d073, schema_140af2d9bf58] },
-    description: '单个可放置技能，或作为一个技能库条目放置的有序技能链。',
-  },
-  nameKey: {
-    kind: 'string',
-    optional: true,
-    description: '操作名称模板的 i18n 键，含 name/shortName；{baseName} 为操作名称（轴上含段号）。',
-  },
-  placementSequenceSkillKeys: {
-    kind: 'array',
-    element: schema_eb26b72c4713,
-    semantics: { arrayElement: {} },
-    referenceKind: 'skill',
-    optional: true,
-    description:
-      '运行时虽以换槽形态注册、但编辑器放置时具有明确先后关系的完整技能键序列。\n独立替换操作必须直接声明独立技能组，不由 UI 从 replacement 拆出卡片。',
-  },
-  variants: {
-    kind: 'array',
-    element: { kind: 'object', fields: schema_59ae2ded5e63 },
-    semantics: { arrayElement: {} },
-    optional: true,
-    description:
-      '同一稳定输入类型下的具名形态链。形态不是新的技能类型；它可以使用不同的养成等级来源，\n例如终结技状态下的强化普攻仍属于普攻，但倍率取终结技等级。',
-  },
-  replacementSkills: {
-    kind: 'array',
-    element: schema_a361791fb8fc,
-    semantics: schema_140af2d9bf58,
-    optional: true,
-    description:
-      '与 `skills` 共用一个稳定放置身份、仅由运行时换槽动作选中的技能形态。\n这里只保存本组连续段或内部执行技能；独立可放置的替换操作应放在独立组的 skills 中。',
-  },
-  replacementSkillPlacements: {
-    kind: 'record',
-    value: { kind: 'enum', options: ['internal'] },
-    semantics: { recordValue: {} },
-    optional: true,
-    description:
-      '每个运行时替换技能在技能库中的显式放置语义。运行时替换关系本身不能推出展示语义：\n`internal` 不接受玩家输入；独立操作由独立技能组表达。\n有序接续技能由 `placementSequenceSkillKeys` 表达，不重复出现在这里。',
-  },
-  routedReplacementSkills: {
-    kind: 'array',
-    element: {
-      kind: 'object',
-      fields: {
-        skill: {
-          kind: 'union',
-          variants: [schema_1f21df9328c5, schema_1f21df9328c5],
-          semantics: schema_4107b248d073,
-          description: '已合并输入包装器资源规则、且拥有独立稳定 key 的执行定义。',
-        },
-        executionSkillKey: {
-          kind: 'string',
-          referenceKind: 'skill',
-          description: '执行体在原生养成定义中的稳定技能身份。',
-        },
-      },
-    },
-    semantics: { arrayElement: {} },
-    optional: true,
-    description:
-      '本展示组中的转发技能。原生稳定槽位由 skillSlots 定义，与展示组独立；执行使用原生分类与等级源。\n仅用于原生输入旁路（例如战技包装器实际 Cast 连携技）；普通同组换槽继续使用 replacementSkills。',
-  },
-  presentationVariants: {
-    kind: 'array',
-    element: {
-      kind: 'object',
-      fields: {
-        icon: {
-          kind: 'string',
-          semantics: { aliases: ['ImageRef'] },
-          optional: true,
-          description: '此形态的图片资源引用；省略沿用默认图标。',
-        },
-        key: { kind: 'string', description: '展示形态在技能组中的唯一名称。' },
-        condition: {
-          kind: 'object',
-          fields: schema_bc69b4196c34,
-          semantics: { aliases: ['BuildCondition'] },
-          description: '最终构筑满足此条件时选用该展示形态。',
-        },
-      },
-    },
-    semantics: { arrayElement: {} },
-    optional: true,
-    description: '同一稳定技能组的 UI 变体，不会产生独立的释放身份。',
-  },
-} as const;
 const schema_88110a74ce8c = {
   kind: 'array',
   element: {
@@ -2103,7 +2062,7 @@ const schema_88110a74ce8c = {
     ],
     semantics: schema_4107b248d073,
   },
-  semantics: schema_140af2d9bf58,
+  semantics: { arrayElement: schema_4107b248d073 },
   optional: true,
   description: '装备能力注册的战斗事件响应。',
 } as const;
@@ -2267,18 +2226,61 @@ export const definitionSchemas = {
         optional: true,
         description: '仅记录偏离全局 `[10, 15, 15, 20]` 主属性规则的干员。',
       },
+      skills: {
+        kind: 'array',
+        element: schema_a361791fb8fc,
+        semantics: { arrayElement: schema_4107b248d073 },
+        description:
+          '本干员持有的全部执行技能，包括没有技能库入口的内部技能；技能 key 在此目录内唯一。',
+      },
+      routedReplacementSkills: {
+        kind: 'array',
+        element: {
+          kind: 'object',
+          fields: {
+            skillId: {
+              kind: 'string',
+              referenceKind: 'skill',
+              description: '本干员技能目录中已合并输入包装器资源规则的技能 ID。',
+            },
+            executionSkillKey: {
+              kind: 'string',
+              referenceKind: 'skill',
+              description: '执行体在原生养成定义中的稳定技能身份。',
+            },
+          },
+        },
+        semantics: { arrayElement: {} },
+        optional: true,
+        description: '原生输入包装技能与执行体的对应关系，独立于技能库中的分组和可见性。',
+      },
       skillGroups: {
         kind: 'array',
-        element: { kind: 'object', fields: schema_291c8169d3e3 },
+        element: { kind: 'object', fields: schema_6bd3c4c3e886 },
         semantics: { arrayElement: {} },
-        description: '干员技能库的操作组集合；不包含切人、闪避、跳跃。组成员配置操作段的目标技能。',
+        description: '干员技能库的操作组集合；不包含切人、闪避、跳跃。组成员只引用本干员的技能。',
       },
-      dodgeSkill: {
-        kind: 'union',
-        variants: [schema_1f21df9328c5, schema_1f21df9328c5],
-        semantics: schema_4107b248d073,
+      dodgeSkillId: {
+        kind: 'string',
+        referenceKind: 'skill',
         optional: true,
         description: '完美闪避成功后由中心状态机施放的隐藏技能；不作为普通技能块出现在技能库。',
+      },
+      plungingAttack: {
+        kind: 'object',
+        fields: {
+          startSkillId: schema_eb26b72c4713,
+          endSkillId: schema_eb26b72c4713,
+          startDurationSeconds: { kind: 'number' },
+          endDurationSeconds: { kind: 'number' },
+          downSpeed: {
+            kind: 'number',
+            optional: true,
+            description: '未覆盖时使用 GameplayMiscSetting 的公共下落速度。',
+          },
+        },
+        optional: true,
+        description: '原生下落攻击起手与落地路由；一次玩家输入驱动两段技能，不增加技能库操作。',
       },
       dashBuffs: {
         kind: 'array',
@@ -2925,6 +2927,7 @@ export const definitionSchemas = {
           naturalDurationFrames: { kind: 'number', description: schema_11661fe69962 },
           exclusiveFrame: schema_4d4ef7cf5451,
           offsetRecordFrame: schema_7e5b67c1428e,
+          dontInterruptCombo: schema_87d9468b2097,
           inputWindows: schema_72e7e1b50ca4,
           availability: schema_b05d7d181f20,
           cooldownFrames: schema_261fb5fd5774,
@@ -2990,6 +2993,7 @@ export const definitionSchemas = {
           naturalDurationFrames: { kind: 'number', description: schema_11661fe69962 },
           exclusiveFrame: schema_4d4ef7cf5451,
           offsetRecordFrame: schema_7e5b67c1428e,
+          dontInterruptCombo: schema_87d9468b2097,
           inputWindows: schema_72e7e1b50ca4,
           availability: schema_b05d7d181f20,
           cooldownFrames: schema_261fb5fd5774,
@@ -3013,8 +3017,8 @@ export const definitionSchemas = {
     ],
     semantics: schema_4107b248d073,
   },
-  skillGroup: { kind: 'object', fields: schema_291c8169d3e3 },
-  skillGroupVariant: { kind: 'object', fields: schema_59ae2ded5e63 },
+  skillGroup: { kind: 'object', fields: schema_6bd3c4c3e886 },
+  skillGroupVariant: { kind: 'object', fields: schema_1a962c0e459f },
   buff: {
     kind: 'union',
     variants: [

@@ -48,7 +48,10 @@ describe('definition field command boundary', () => {
     if (schema.kind !== 'object') return;
     expect(schema.fields.availability?.kind).toBe('condition');
     expect(schema.fields.levelSource?.optional).not.toBe(true);
-    const dodge = fieldSchemaForValue(definitionSchemas.skill, perlica.dodgeSkill);
+    const dodge = fieldSchemaForValue(
+      definitionSchemas.skill,
+      perlica.skills.find(skill => skill.key === perlica.dodgeSkillId),
+    );
     expect(dodge.kind).toBe('object');
     if (dodge.kind === 'object') expect(dodge.fields.levelSource?.optional).toBe(true);
   });

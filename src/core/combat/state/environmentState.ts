@@ -5,7 +5,10 @@
  * 它不负责校验初始配置，也不执行资源、生命或时间推进；这些操作留在 runtime 目录。
  */
 import type { GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags';
-import type { ActionBlackboardValue } from '../../../../packages/game-data-contract/src/primitives';
+import type {
+  ActionBlackboardValue,
+  OperationType,
+} from '../../../../packages/game-data-contract/src/primitives';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import type { PlayerSkillInput } from '../../game-data/operatorDefinition';
 import type { BuffInstanceState } from './instanceState';
@@ -441,6 +444,8 @@ export interface NormalSkillUltimateEnergySettings {
 
 /** 一次技能输入。固定输入已确定实际帧；组后段在运行时到达边界后才确定实际帧。 */
 export interface CombatSkillInput {
+  /** 编译后的玩家操作，不携带技能组；下落攻击据此进入运动过程，而非比较目标技能 ID。 */
+  readonly operationType?: OperationType;
   readonly simulationInputs?: SkillSimulationInputs;
   readonly operatorId: string;
   readonly skillId: string;

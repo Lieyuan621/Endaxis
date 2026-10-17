@@ -67,6 +67,8 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
     readonly resolveAbilityEntityObjectType?: (instanceId: number) => CombatObjectType,
     readonly listUnfinishedProjectiles?: () => readonly RuntimeTargetRef[],
     readonly targetQueries?: {
+      /** 固定地面模型中实体当前的离地高度；没有坐标的句柄返回 undefined。 */
+      height?(target: RuntimeTargetRef): number | undefined;
       mainBody?(target: RuntimeTargetRef): RuntimeTargetRef;
       exclusionTarget?(target: RuntimeTargetRef): RuntimeTargetRef;
       allyHitBox?(
@@ -85,6 +87,22 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
   ) {}
 
   execute(step: ResolvedCombatOperationStep, context?: CombatOperationContext): boolean {
+    if (step.kind === 'physicsCast') {
+      if (!context?.targetContext || !this.targetQueries?.height)
+        throw new Error('physicsCast requires target context and ground height query');
+      const source = this.queryTargets(step.parameters.source, context)[0];
+      const height = source && this.targetQueries.height(source);
+      const distance =
+        height === undefined ? undefined : height + step.parameters.startHeightOffset;
+      const hit =
+        distance !== undefined && distance >= 0 && distance <= step.parameters.maxDistance;
+      // 命中位置拥有空间点身份，不能放入 enemy 身份作为代替。
+      context.targetContext.set(
+        step.parameters.saveToContextKey,
+        hit ? [{ kind: 'spatialPoint', pointId: this.runtimeState.nextSpatialPointId++ }] : [],
+      );
+      return hit;
+    }
     if (step.kind === 'saveTransferredSource') {
       if (step.parameters.saveToContextKey === '') return true;
       if (!context?.targetContext)
@@ -325,8 +343,10 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
       if (!context) throw new Error('targetsEqual requires an action context');
       const first = this.queryTargets(condition.first, context);
       const second = this.queryTargets(condition.second, context);
-      return first.every(target => second.some(other => sameTarget(target, other))) &&
-        second.every(target => first.some(other => sameTarget(target, other)));
+      return (
+        first.every(target => second.some(other => sameTarget(target, other))) &&
+        second.every(target => first.some(other => sameTarget(target, other)))
+      );
     }
     if (condition.kind !== 'targetContains') {
       return context === undefined

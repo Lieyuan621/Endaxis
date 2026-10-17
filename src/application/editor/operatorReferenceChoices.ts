@@ -2,7 +2,6 @@
  * Never search other operators or flatten entity child skills into the operator namespace.
  */
 import type { OperatorDefinition } from '../../../packages/game-data-contract/src/operators';
-import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills';
 import type { CommonDefinitionSource } from '../../core/game-data/gameDataRepository';
 import type {
   ReferenceCandidate,
@@ -67,26 +66,8 @@ export function operatorReferenceChoices(
   for (const [index, group] of operator.skillGroups.entries()) {
     const path = ['skillGroups', index] as const;
     add('skillGroup', group.key, path, 'skills');
-    const skills = (
-      value: SkillDefinition | readonly SkillDefinition[],
-      prefix: readonly (string | number)[],
-    ) => {
-      if (Array.isArray(value))
-        value.forEach((skill, i) => add('skill', skill.key, [...prefix, i]));
-      else add('skill', (value as SkillDefinition).key, prefix);
-    };
-    skills(group.skills, [...path, 'skills']);
-    group.variants?.forEach((variant, i) =>
-      skills(variant.skills, [...path, 'variants', i, 'skills']),
-    );
-    group.replacementSkills?.forEach((skill, i) =>
-      add('skill', skill.key, [...path, 'replacementSkills', i]),
-    );
-    group.routedReplacementSkills?.forEach((route, i) =>
-      add('skill', route.skill.key, [...path, 'routedReplacementSkills', i, 'skill']),
-    );
   }
-  if (operator.dodgeSkill) add('skill', operator.dodgeSkill.key, ['dodgeSkill']);
+  operator.skills.forEach((skill, index) => add('skill', skill.key, ['skills', index]));
   operator.skillSlots?.forEach((slot, i) =>
     add('skillSlot', slot.key, ['skillSlots', i], 'skills'),
   );

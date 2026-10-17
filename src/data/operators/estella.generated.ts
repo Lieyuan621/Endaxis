@@ -597,6 +597,7 @@ export const estellaChr_0021_whiten_power_attack: SkillDefinition = {
   naturalDurationFrames: 151,
   exclusiveFrame: 50,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -1068,6 +1069,7 @@ export const estellaChr_0021_whiten_normal_skill: SkillDefinition = {
   naturalDurationFrames: 121,
   exclusiveFrame: 45,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_5' } },
@@ -1082,187 +1084,6 @@ export const estellaChr_0021_whiten_normal_skill: SkillDefinition = {
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
   actionGraph: estellaChr_0021_whiten_normal_skillActionGraph,
-};
-
-export const estellaChr_0021_whiten_ultimate_skillActionGraph = {
-  main: {
-    nodes: {
-      startTimeDilation_1: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: { kind: 'named', key: 'RESETto1' },
-            finishByAction: false,
-            targets: [{ kind: 'owner' }],
-          },
-        },
-        next: null,
-      },
-      hideUi_2: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      startUltimateTimeDilation_3: {
-        action: {
-          kind: 'startUltimateTimeDilation',
-          parameters: {
-            priority: 100,
-            targetScale: { kind: 'constant', value: 0 },
-            ignoredTargets: [],
-          },
-        },
-        next: null,
-      },
-      applyPhysicalInfliction_5: {
-        action: {
-          kind: 'applyPhysicalInfliction',
-          parameters: {
-            type: 'airborne',
-            target: 'enemy',
-            isExtra: false,
-            duration: { kind: 'constant', value: 0 },
-            height: { kind: 'constant', value: 0 },
-            speedFactorMultiplier: 1,
-            force: true,
-            targetFilter: 'aliveOnly',
-            returnWhen: 'always',
-          },
-        },
-        next: null,
-      },
-      checkCondition_6: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: 'applyPhysicalInfliction_5',
-      },
-      dealDamage_7: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
-            tags: ['ultimateSkill'],
-            features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_3' },
-          },
-        },
-        next: null,
-      },
-      modifyActionValue_8: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'atk_scale_total',
-            operation: 'add',
-            value: { kind: 'valueNode', nodeId: 'data_4' },
-          },
-        },
-        next: 'dealDamage_7',
-      },
-      modifyActionValue_9: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'atk_scale_total',
-            operation: 'add',
-            value: { kind: 'valueNode', nodeId: 'data_5' },
-          },
-        },
-        next: 'modifyActionValue_8',
-      },
-      forEachContextTarget_10: {
-        action: {
-          kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
-          body: { $sequence: 'checkCondition_6' },
-        },
-        next: 'modifyActionValue_9',
-      },
-      applyBuff_11: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_common_damage_immune_ult_skill' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'owner' },
-            inheritSourceSkillCastInfo: true,
-            finishByAction: true,
-          },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: {
-        type: 'boolean',
-        expression: {
-          kind: 'entityTagMatch',
-          target: { kind: 'fixed', target: 'enemy' },
-          tagQueryType: 'hasAny',
-          tags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerablePhysic'],
-        },
-      },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_total' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'dmg_up_total' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const estellaChr_0021_whiten_ultimate_skill: SkillDefinition = {
-  key: 'chr_0021_whiten_ultimate_skill',
-  element: 'physical',
-  blackboard: {
-    atk_scale: [4.89, 5.38, 5.86, 6.35, 6.84, 7.33, 7.82, 8.31, 8.8, 9.41, 10.14, 11],
-    atk_scale_total: 0,
-    dmg_up_total: 0,
-    poise: [15, 15, 15, 15, 15, 15, 15, 15, 15, 20, 20, 20],
-  },
-  timelineBlockFrames: 60,
-  naturalDurationFrames: 168,
-  exclusiveFrame: 77,
-  offsetRecordFrame: 0,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 51,
-        endFrame: 77,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0021_whiten_attack1',
-      },
-    ],
-    allowedNextSkills: [
-      {
-        startFrame: 60,
-        endFrame: 77,
-        skillIds: [
-          'chr_0021_whiten_attack1',
-          'chr_0021_whiten_normal_skill',
-          'chr_0021_whiten_combo_skill',
-        ],
-      },
-    ],
-  },
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 0, endFrame: 30, sequence: { $sequence: 'startTimeDilation_1' } },
-    { startFrame: 0, endFrame: 54, sequence: { $sequence: 'hideUi_2' } },
-    { startFrame: 0, endFrame: 54, sequence: { $sequence: 'startUltimateTimeDilation_3' } },
-    { startFrame: 54, endFrame: 57, sequence: { $sequence: 'forEachContextTarget_10' } },
-    { startFrame: 0, endFrame: 77, sequence: { $sequence: 'applyBuff_11' } },
-  ],
-  defaultTarget: 'enemy',
-  cooldownFrames: 300,
-  costs: [{ resource: 'ultimateEnergy', value: 70 }],
-  skillType: 'ultimate',
-  levelSource: 'ultimate',
-  nativeSkillType: 'ultimateSkill',
-  actionGraph: estellaChr_0021_whiten_ultimate_skillActionGraph,
 };
 
 export const estellaChr_0021_whiten_combo_skillActionGraph = {
@@ -1540,6 +1361,7 @@ export const estellaChr_0021_whiten_combo_skill: SkillDefinition = {
   naturalDurationFrames: 154,
   exclusiveFrame: 33,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 20, endFrame: 59, skillIds: ['chr_0021_whiten_normal_skill'] },
@@ -1557,6 +1379,187 @@ export const estellaChr_0021_whiten_combo_skill: SkillDefinition = {
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
   actionGraph: estellaChr_0021_whiten_combo_skillActionGraph,
+};
+
+export const estellaChr_0021_whiten_ultimate_skillActionGraph = {
+  main: {
+    nodes: {
+      startTimeDilation_1: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 1 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'RESETto1' },
+            finishByAction: false,
+            targets: [{ kind: 'owner' }],
+          },
+        },
+        next: null,
+      },
+      hideUi_2: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      startUltimateTimeDilation_3: {
+        action: {
+          kind: 'startUltimateTimeDilation',
+          parameters: {
+            priority: 100,
+            targetScale: { kind: 'constant', value: 0 },
+            ignoredTargets: [],
+          },
+        },
+        next: null,
+      },
+      applyPhysicalInfliction_5: {
+        action: {
+          kind: 'applyPhysicalInfliction',
+          parameters: {
+            type: 'airborne',
+            target: 'enemy',
+            isExtra: false,
+            duration: { kind: 'constant', value: 0 },
+            height: { kind: 'constant', value: 0 },
+            speedFactorMultiplier: 1,
+            force: true,
+            targetFilter: 'aliveOnly',
+            returnWhen: 'always',
+          },
+        },
+        next: null,
+      },
+      checkCondition_6: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: 'applyPhysicalInfliction_5',
+      },
+      dealDamage_7: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            tags: ['ultimateSkill'],
+            features: ['canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_3' },
+          },
+        },
+        next: null,
+      },
+      modifyActionValue_8: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'atk_scale_total',
+            operation: 'add',
+            value: { kind: 'valueNode', nodeId: 'data_4' },
+          },
+        },
+        next: 'dealDamage_7',
+      },
+      modifyActionValue_9: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'atk_scale_total',
+            operation: 'add',
+            value: { kind: 'valueNode', nodeId: 'data_5' },
+          },
+        },
+        next: 'modifyActionValue_8',
+      },
+      forEachContextTarget_10: {
+        action: {
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          body: { $sequence: 'checkCondition_6' },
+        },
+        next: 'modifyActionValue_9',
+      },
+      applyBuff_11: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_common_damage_immune_ult_skill' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityTagMatch',
+          target: { kind: 'fixed', target: 'enemy' },
+          tagQueryType: 'hasAny',
+          tags: ['Skill/Character/Common/Affixes/Vulnerable/VulnerablePhysic'],
+        },
+      },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_total' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'dmg_up_total' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const estellaChr_0021_whiten_ultimate_skill: SkillDefinition = {
+  key: 'chr_0021_whiten_ultimate_skill',
+  element: 'physical',
+  blackboard: {
+    atk_scale: [4.89, 5.38, 5.86, 6.35, 6.84, 7.33, 7.82, 8.31, 8.8, 9.41, 10.14, 11],
+    atk_scale_total: 0,
+    dmg_up_total: 0,
+    poise: [15, 15, 15, 15, 15, 15, 15, 15, 15, 20, 20, 20],
+  },
+  timelineBlockFrames: 60,
+  naturalDurationFrames: 168,
+  exclusiveFrame: 77,
+  offsetRecordFrame: 0,
+  inputWindows: {
+    commandMappings: [
+      {
+        startFrame: 51,
+        endFrame: 77,
+        input: 'basicAttack',
+        targetSkillId: 'chr_0021_whiten_attack1',
+      },
+    ],
+    allowedNextSkills: [
+      {
+        startFrame: 60,
+        endFrame: 77,
+        skillIds: [
+          'chr_0021_whiten_attack1',
+          'chr_0021_whiten_normal_skill',
+          'chr_0021_whiten_combo_skill',
+        ],
+      },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 30, sequence: { $sequence: 'startTimeDilation_1' } },
+    { startFrame: 0, endFrame: 54, sequence: { $sequence: 'hideUi_2' } },
+    { startFrame: 0, endFrame: 54, sequence: { $sequence: 'startUltimateTimeDilation_3' } },
+    { startFrame: 54, endFrame: 57, sequence: { $sequence: 'forEachContextTarget_10' } },
+    { startFrame: 0, endFrame: 77, sequence: { $sequence: 'applyBuff_11' } },
+  ],
+  defaultTarget: 'enemy',
+  cooldownFrames: 300,
+  costs: [{ resource: 'ultimateEnergy', value: 70 }],
+  skillType: 'ultimate',
+  levelSource: 'ultimate',
+  nativeSkillType: 'ultimateSkill',
+  actionGraph: estellaChr_0021_whiten_ultimate_skillActionGraph,
 };
 
 export const estellaCommon_character_perfect_dodgeActionGraph = {
@@ -1577,6 +1580,28 @@ export const estellaCommon_character_perfect_dodge: SkillDefinition = {
   defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
+};
+
+export const estellaChr_0021_whiten_plunging_attack_startActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const estellaChr_0021_whiten_plunging_attack_start: SkillDefinition = {
+  actionGraph: estellaChr_0021_whiten_plunging_attack_startActionGraph,
+  key: 'chr_0021_whiten_plunging_attack_start',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
 };
 
 const estellaComboCondition1ActionGraph = {
@@ -1938,32 +1963,51 @@ export const estella: OperatorDefinition = {
     baseAttack: [30, 90, 153, 217, 280, 312],
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },
+  skills: [
+    estellaChr_0021_whiten_attack1,
+    estellaChr_0021_whiten_attack2,
+    estellaChr_0021_whiten_attack3,
+    estellaChr_0021_whiten_attack4,
+    estellaChr_0021_whiten_power_attack,
+    estellaChr_0021_whiten_plunging_attack_end,
+    estellaChr_0021_whiten_normal_skill,
+    estellaChr_0021_whiten_combo_skill,
+    estellaChr_0021_whiten_ultimate_skill,
+    estellaCommon_character_perfect_dodge,
+    estellaChr_0021_whiten_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        estellaChr_0021_whiten_attack1,
-        estellaChr_0021_whiten_attack2,
-        estellaChr_0021_whiten_attack3,
-        estellaChr_0021_whiten_attack4,
+      skillIds: [
+        'chr_0021_whiten_attack1',
+        'chr_0021_whiten_attack2',
+        'chr_0021_whiten_attack3',
+        'chr_0021_whiten_attack4',
       ],
     },
-    { key: 'finisher', operationType: 'finisher', skills: estellaChr_0021_whiten_power_attack },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0021_whiten_power_attack'] },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: estellaChr_0021_whiten_plunging_attack_end,
+      skillIds: ['chr_0021_whiten_plunging_attack_end'],
     },
     {
       key: 'battleSkill',
       operationType: 'battleSkill',
-      skills: estellaChr_0021_whiten_normal_skill,
+      skillIds: ['chr_0021_whiten_normal_skill'],
     },
-    { key: 'ultimate', operationType: 'ultimate', skills: estellaChr_0021_whiten_ultimate_skill },
-    { key: 'comboSkill', operationType: 'comboSkill', skills: estellaChr_0021_whiten_combo_skill },
+    { key: 'ultimate', operationType: 'ultimate', skillIds: ['chr_0021_whiten_ultimate_skill'] },
+    { key: 'comboSkill', operationType: 'comboSkill', skillIds: ['chr_0021_whiten_combo_skill'] },
   ],
-  dodgeSkill: estellaCommon_character_perfect_dodge,
+  dodgeSkillId: 'common_character_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0021_whiten_plunging_attack_start',
+    endSkillId: 'chr_0021_whiten_plunging_attack_end',
+    startDurationSeconds: 0.633,
+    endDurationSeconds: 4.333,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
   ],

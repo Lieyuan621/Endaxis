@@ -41,6 +41,8 @@ const props = defineProps<{
   connectionDragging: boolean;
   /** 后续成员仅展示已发布的实际输入帧，不允许写入独立开始帧。 */
   actualStartFrame?: number;
+  /** 已发布模拟结果中的块宽，包含起跳等复合输入阶段及时间膨胀。 */
+  actualDurationFrames?: number;
   grouped?: boolean;
   inputReadOnly?: boolean;
 }>();
@@ -74,7 +76,7 @@ const connectionPorts: readonly TimelineConnectionPort[] = [
 const skillDuration = computed(() =>
   props.currentDefinition === null
     ? null
-    : `${Number((props.currentDefinition.timelineBlockFrames / PROJECT_FPS).toFixed(2))}s`,
+    : `${Number(((props.actualDurationFrames ?? props.currentDefinition.timelineBlockFrames) / PROJECT_FPS).toFixed(2))}s`,
 );
 const skillCooldown = computed(() => {
   const frames = props.currentDefinition?.cooldownFrames;

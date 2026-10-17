@@ -47,6 +47,145 @@ import type {
 
 import { createEditorSimulationService } from '../testSupport/editorSimulationService';
 import { si } from '../../../data/operators/si.generated';
+import { operatorDefinitions } from '../../../data/operators';
+import { ActionExecutionTrace } from '../../../core/combat/actions/actionExecutionTrace';
+import { CombatReceiptHistory } from '../../../core/combat/receipt/combatReceiptHistory';
+import { SkillInputGroupTiming } from '../../../core/combat/skills/skillInputGroupTiming';
+import { projectTimelineEditor } from '../../../ui/timeline/timelineEditorViewModel';
+import { skillPlacementDisplayFrames } from '../../editor/skillGroupPlacement';
+import { getCompiledGraphLocation } from '../../../core/compiler/compileActionGraph';
+import {
+  projectSkillCastActualStartFrames,
+  projectSkillCastActualDurationFrames,
+  projectSkillCastInterruptionFrames,
+} from '../../../core/projection/timelineDisplayTime';
+
+it('正式下落攻击从起跳经过起手再执行落地技能', async () => {
+  for (const operator of operatorDefinitions) {
+    const plunge = operator.plungingAttack;
+    if (!plunge) continue;
+    const startSkill = operator.skills.find(skill => skill.key === plunge.startSkillId)!;
+    const scenario = createEmptyScenario(`plunge-${operator.slug}`, operator.slug);
+    const group = operator.skillGroups.find(group => group.operationType === 'plungingAttack')!;
+    const segment = operator.skills.find(skill => skill.key === group.skillIds[0])!;
+    scenario.tracks[0] = {
+      id: operator.slug,
+      operator: {
+        operatorSlug: operator.slug,
+        level: 90,
+        promoted: true,
+        potential: 0,
+        trustLevel: 4,
+        skillLevels: { basicAttack: 12, battleSkill: 12, comboSkill: 12, ultimate: 12 },
+        talentStates: {},
+      },
+      weapon: null,
+      gears: { armor: null, gloves: null, accessory1: null, accessory2: null },
+      initialState: { ultimateEnergy: 0 },
+      skillCasts: [
+        {
+          id: 'plunge',
+          source: { kind: 'operatorSkill', skillGroupKey: group.key, skillKey: segment.key },
+          placement: { startFrame: 0 },
+        },
+      ],
+    };
+    const session = createEditorSimulationService().createCombatSession(scenario);
+    session.advanceToFrame(10);
+    const restored = session.fork(session.runtime.save());
+    session.advanceToFrame(180);
+    restored.advanceToFrame(180);
+    const result = session.collectResult();
+    expect(restored.collectResult(), operator.slug).toEqual(result);
+    const starts = result.receiptEntries.filter(
+      entry => entry.event === 'SkillStarted' && entry.data?.castId === 'plunge',
+    );
+    expect(
+      starts.map(entry => entry.data?.skillId),
+      operator.slug,
+    ).toEqual([plunge.startSkillId, plunge.endSkillId]);
+    expect(starts[0]!.frame, operator.slug).toBeGreaterThan(0);
+    expect(starts[1]!.frame, operator.slug).toBeGreaterThan(starts[0]!.frame);
+    expect(
+      projectSkillCastInterruptionFrames(result.receiptEntries).has('plunge'),
+      operator.slug,
+    ).toBe(false);
+    expect(
+      projectSkillCastActualStartFrames(result.receiptEntries).get('plunge'),
+      operator.slug,
+    ).toBe(0);
+    const boundary = result.receiptEntries.find(
+      entry => entry.event === 'SkillOperableBoundaryReached' && entry.data?.castId === 'plunge',
+    );
+    expect(boundary, operator.slug).toBeDefined();
+    const library = projectTimelineEditor(scenario, { getOperator: () => operator }).tracks[0]!
+      .skillLibrary;
+    const preview = library
+      .flatMap(entry => entry.skills)
+      .find(skill => skill.skillKey === segment.key)!;
+    expect(skillPlacementDisplayFrames(preview.timelineBlockFrames), operator.slug).toBe(
+      boundary!.frame + 1,
+    );
+    const inputHistory = new CombatReceiptHistory();
+    for (const entry of result.receiptEntries) inputHistory.append(entry);
+    const timing = new SkillInputGroupTiming(inputHistory, () => 1);
+    expect(timing.find('plunge', 'SkillInterrupted'), operator.slug).toBeUndefined();
+    expect(
+      projectSkillCastActualDurationFrames(result.receiptEntries).get('plunge'),
+      operator.slug,
+    ).toBe(boundary!.frame + 1);
+    scenario.battle.durationFrames = 180;
+    const trace = new ActionExecutionTrace('plunge');
+    createEditorSimulationService().diagnoseExecution(scenario, trace);
+    const executed = trace.records.filter(record => record.phase === 'execute');
+    const locations = executed.map(record =>
+      getCompiledGraphLocation(record.program, record.nodeId),
+    );
+    expect(
+      locations.every(location => location !== undefined),
+      operator.slug,
+    ).toBe(true);
+    // 没有战斗动作的起手只有技能生命周期，不应伪造节点执行记录。
+    if (Object.keys(startSkill.actionGraph.main.nodes).length > 0)
+      expect(
+        locations.some(location => location?.resource === startSkill.actionGraph),
+        operator.slug,
+      ).toBe(true);
+    expect(
+      locations.some(location => location?.resource === segment.actionGraph),
+      operator.slug,
+    ).toBe(true);
+    const repeatFrame = starts[0]!.frame + 1;
+    scenario.tracks[0]!.skillCasts.push({
+      ...scenario.tracks[0]!.skillCasts[0]!,
+      id: 'repeat-plunge',
+      placement: { startFrame: repeatFrame },
+    });
+    const repeated = createEditorSimulationService().createCombatSession(scenario);
+    repeated.advanceToFrame(repeatFrame - 1);
+    const height = repeated.runtime.readState().operators.get(operator.slug)!.ability
+      .plungingAttack!.motion.height;
+    repeated.advanceToFrame(repeatFrame);
+    expect(
+      repeated.runtime.readState().operators.get(operator.slug)!.ability.plungingAttack!.motion
+        .height,
+      operator.slug,
+    ).toBe(height);
+    const repeatedFork = repeated.fork(repeated.runtime.save());
+    repeated.advanceToFrame(180);
+    repeatedFork.advanceToFrame(180);
+    const repeatedResult = repeated.collectResult();
+    expect(repeatedFork.collectResult(), operator.slug).toEqual(repeatedResult);
+    expect(
+      repeatedResult.receiptEntries
+        .filter(
+          entry => entry.event === 'SkillStarted' && entry.data?.skillId === plunge.endSkillId,
+        )
+        .map(entry => entry.data?.castId),
+      operator.slug,
+    ).toEqual(['repeat-plunge']);
+  }
+});
 
 it('祀正式定义可放置全部技能并完成模拟', async () => {
   const scenario = createEmptyScenario('si-release', 'si');
@@ -66,11 +205,17 @@ it('祀正式定义可放置全部技能并完成模拟', async () => {
     initialState: { ultimateEnergy: 0 },
     skillCasts: si.skillGroups
       .flatMap(group =>
-        (Array.isArray(group.skills) ? group.skills : [group.skills]).map(skill => ({
-          id: skill.key,
-          source: { kind: 'operatorSkill' as const, skillGroupKey: group.key, skillKey: skill.key },
-          placement: { startFrame: 0 },
-        })),
+        group.skillIds
+          .map(key => si.skills.find(skill => skill.key === key)!)
+          .map(skill => ({
+            id: skill.key,
+            source: {
+              kind: 'operatorSkill' as const,
+              skillGroupKey: group.key,
+              skillKey: skill.key,
+            },
+            placement: { startFrame: 0 },
+          })),
       )
       .map((cast, index) => ({ ...cast, placement: { startFrame: index * 90 } })),
   };
@@ -280,9 +425,7 @@ it('真实失衡资格优先选出处决，命中消费后仍失衡但可以普�
 });
 
 function findSkill(operator: OperatorDefinition, key: string) {
-  const skill = operator.skillGroups
-    .flatMap(group => (Array.isArray(group.skills) ? group.skills : [group.skills]))
-    .find(candidate => candidate.key === key);
+  const skill = operator.skills.find(candidate => candidate.key === key);
   if (!skill) throw new Error(`missing skill: ${key}`);
   return skill;
 }
@@ -823,7 +966,11 @@ describe('registered generated operators', () => {
         undefined,
         undefined,
         gameDataRepository.actionPrograms,
-      ).find(candidate => candidate.skillGroupKey === 'battleSkill')!;
+      ).find(
+        candidate =>
+          candidate.skillId ===
+          ardelia.skillGroups.find(group => group.key === 'battleSkill')!.skillIds[0],
+      )!;
       const placed = placeSkillGroup({
         scenario,
         trackIndex: 0,
@@ -2109,9 +2256,9 @@ describe('registered generated operators', () => {
       }).scenario;
       const camilleCast = placed.tracks[0]?.skillCasts[0];
       if (camilleCast === undefined) throw new Error('missing Camille weapon probe cast');
-      const camilleComboDefinition = camille.skillGroups
-        .flatMap(group => (Array.isArray(group.skills) ? group.skills : [group.skills]))
-        .find(skill => skill.key === 'chr_0033_camille_combo_skill');
+      const camilleComboDefinition = camille.skills.find(
+        skill => skill.key === 'chr_0033_camille_combo_skill',
+      );
       if (camilleComboDefinition === undefined)
         throw new Error('missing Camille combo skill definition');
       const {

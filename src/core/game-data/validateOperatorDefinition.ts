@@ -9,7 +9,6 @@ import {
   type OperatorDefinition,
   type OperatorPassiveSkillDefinition,
 } from './operatorDefinition';
-import { listOperatorSkillDefinitionBindings } from './operatorSkillDefinitions';
 import { validateComboSkillConditions } from './validateComboSkillConditions';
 import { OPERATOR_PROGRESSION_SLOTS } from './operatorProgressionSlots';
 import { isOperatorPassiveAbilityEvent } from './definitionGuards.ts';
@@ -173,6 +172,15 @@ export function validateOperatorDefinition(
 
   const groupKeys = new Set<string>();
   const skillIdentities = new Set<string>();
+  definition.skills.forEach((skill, index) => {
+    const skillPath = `${path}.skills[${index}]`;
+    if (skillIdentities.has(skill.key)) push(issues, skillPath, `duplicate skill '${skill.key}'`);
+    skillIdentities.add(skill.key);
+    issues.push(...validateSkillDefinition(skill, skillPath));
+  });
+  const checkSkillReference = (id: string, referencePath: string) => {
+    if (!skillIdentities.has(id)) push(issues, referencePath, `unknown skill '${id}'`);
+  };
   for (const group of definition.skillGroups) {
     const groupPath = `${path}.skillGroups[${definition.skillGroups.indexOf(group)}]`;
     if (!(OPERATION_TYPES as readonly unknown[]).includes(group.operationType))
@@ -181,35 +189,43 @@ export function validateOperatorDefinition(
     if (groupKeys.has(group.key))
       push(issues, `${groupPath}.key`, `duplicate group key '${group.key}'`);
     groupKeys.add(group.key);
-    (group.routedReplacementSkills ?? []).forEach((item, index) => {
-      for (const field of ['executionSkillKey'] as const) {
-        if (item[field].trim() === '')
-          push(
-            issues,
-            `${groupPath}.routedReplacementSkills[${index}].${field}`,
-            'expected a non-empty execution identity',
-          );
-      }
-    });
+    group.skillIds.forEach((id, index) =>
+      checkSkillReference(id, `${groupPath}.skillIds[${index}]`),
+    );
+    group.variants?.forEach((variant, index) =>
+      variant.skillIds.forEach((id, skillIndex) =>
+        checkSkillReference(id, `${groupPath}.variants[${index}].skillIds[${skillIndex}]`),
+      ),
+    );
   }
-  for (const { group, skill, origin, variant } of listOperatorSkillDefinitionBindings(definition)) {
-    const groupIndex = definition.skillGroups.indexOf(group);
-    const identity = `${group.key}\u0000${skill.key}`;
-    const skillPath =
-      origin === 'variant'
-        ? `${path}.skillGroups[${groupIndex}].variants[${group.variants?.indexOf(variant!) ?? -1}].skills['${skill.key}']`
-        : `${path}.skillGroups[${groupIndex}].${origin}Skills['${skill.key}']`;
-    if (skillIdentities.has(identity))
-      push(issues, skillPath, `duplicate skill identity '${group.key}/${skill.key}'`);
-    skillIdentities.add(identity);
-    issues.push(...validateSkillDefinition(skill, skillPath));
+  definition.routedReplacementSkills?.forEach((route, index) => {
+    checkSkillReference(route.skillId, `${path}.routedReplacementSkills[${index}].skillId`);
+    checkSkillReference(
+      route.executionSkillKey,
+      `${path}.routedReplacementSkills[${index}].executionSkillKey`,
+    );
+  });
+  if (definition.dodgeSkillId !== undefined) {
+    checkSkillReference(definition.dodgeSkillId, `${path}.dodgeSkillId`);
+    const dodge = definition.skills.find(skill => skill.key === definition.dodgeSkillId);
+    if (dodge && (dodge.skillType !== 'dodge' || dodge.nativeSkillType !== 'dodge'))
+      push(issues, `${path}.dodgeSkillId`, 'expected a dodge skill');
   }
-  if (definition.dodgeSkill !== undefined) {
-    issues.push(...validateSkillDefinition(definition.dodgeSkill, `${path}.dodgeSkill`));
-    if (definition.dodgeSkill.skillType !== 'dodge')
-      push(issues, `${path}.dodgeSkill.skillType`, "expected 'dodge'");
-    if (definition.dodgeSkill.nativeSkillType !== 'dodge')
-      push(issues, `${path}.dodgeSkill.nativeSkillType`, "expected 'dodge'");
+  if (definition.plungingAttack !== undefined) {
+    const plunge = definition.plungingAttack;
+    checkSkillReference(plunge.startSkillId, `${path}.plungingAttack.startSkillId`);
+    checkSkillReference(plunge.endSkillId, `${path}.plungingAttack.endSkillId`);
+    for (const key of ['startDurationSeconds', 'endDurationSeconds', 'downSpeed'] as const) {
+      const value = plunge[key];
+      if (key === 'downSpeed' && value === undefined) continue;
+      if (
+        typeof value !== 'number' ||
+        !Number.isFinite(value) ||
+        value < 0 ||
+        (key === 'downSpeed' && value === 0)
+      )
+        push(issues, `${path}.plungingAttack.${key}`, 'invalid movement parameter');
+    }
   }
 
   issues.push(
@@ -220,9 +236,7 @@ export function validateOperatorDefinition(
     ),
   );
   const comboSkillKeys = new Set(
-    listOperatorSkillDefinitionBindings(definition)
-      .filter(({ skill }) => skill.skillType === 'comboSkill')
-      .map(({ skill }) => skill.key),
+    definition.skills.filter(skill => skill.skillType === 'comboSkill').map(skill => skill.key),
   );
   for (const [index, condition] of (definition.comboSkillConditions ?? []).entries()) {
     if (!comboSkillKeys.has(condition.skillKey))

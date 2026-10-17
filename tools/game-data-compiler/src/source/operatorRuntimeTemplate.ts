@@ -9,6 +9,7 @@ import {
   requireExactFields,
   requireInteger,
   requireNonEmptyString,
+  requireNumber,
   requireRecord,
   requireString,
 } from './primitives.ts';
@@ -69,6 +70,14 @@ export function parseOperatorRuntimeTemplateSource(
       `${path}.abilitySystem.skillDataBundle.comboSkillPriorityType`,
     ),
     playerActionSource: parsePlayerActionSource(ability, bundle, path),
+    ...(ability.plungingAttackData === undefined
+      ? {}
+      : {
+          plungingAttack: parsePlungingAttackData(
+            ability.plungingAttackData,
+            `${path}.abilitySystem.plungingAttackData`,
+          ),
+        }),
     dashBuffs: parseDashBuffs(data.dashBuff, `${path}.data.dashBuff`),
     blackboards: parseAbilitySystemBlackboardsSource(ability, `${path}.abilitySystem`),
     ...(options.parseComboConditions === false
@@ -80,6 +89,25 @@ export function parseOperatorRuntimeTemplateSource(
             `${path}.abilitySystem.skillDataBundle.comboSkillConditions`,
           ),
         }),
+  };
+}
+
+function parsePlungingAttackData(value: unknown, path: string) {
+  const row = requireRecord(value, path);
+  const duration = (key: string) => {
+    const result = requireNumber(row[key], `${path}.${key}`);
+    if (result < 0) throw new Error(`${path}.${key}: expected non-negative value`);
+    return result;
+  };
+  return {
+    startDurationSeconds: duration('startDuration'),
+    endDurationSeconds: duration('endDuration'),
+    ...(requireBoolean(
+      row.enableOverridePlungingAttackDownSpeed,
+      `${path}.enableOverridePlungingAttackDownSpeed`,
+    )
+      ? { downSpeed: duration('overridePlungingAttackDownSpeed') }
+      : {}),
   };
 }
 

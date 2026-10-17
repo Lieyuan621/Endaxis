@@ -90,7 +90,7 @@ describe('placeSkillGroup', () => {
       ids: createIds(),
     };
     const group = yvonne.skillGroups.find(group => group.key === 'enhancedBasicAttack')!;
-    const entry = listSkillGroupLibraryPlacements(group)[0]!;
+    const entry = listSkillGroupLibraryPlacements(group, yvonne)[0]!;
     expect(entry.skills.map(skill => skill.key)).toEqual([
       'chr_0017_yvonne_ult_attack1_1',
       'chr_0017_yvonne_ult_attack2_1',
@@ -156,7 +156,7 @@ describe('placeSkillGroup', () => {
     expect(original.tracks[0]!.skillCasts).toEqual([]);
     expect(casts).toHaveLength(4);
     const basicAttack = perlica.skillGroups.find(group => group.key === 'basicAttack')!;
-    const skills = Array.isArray(basicAttack.skills) ? basicAttack.skills : [basicAttack.skills];
+    const skills = basicAttack.skillIds.map(id => perlica.skills.find(skill => skill.key === id)!);
     expect(casts.map(cast => cast.placement.startFrame)).toEqual([
       30,
       31 + skills[0]!.timelineBlockFrames,

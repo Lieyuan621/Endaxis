@@ -18,7 +18,7 @@ describe('object definition project transaction', () => {
     const session = new ProjectEditorSession(createEmptyProject({ createdWith: 'test' }));
     const source = perlica;
     const layout = {
-      'skillGroups/0/skills': {
+      'skills/0': {
         main: { nodePositions: { action: { x: 40, y: 10 } }, entryPositions: {} },
       },
     };

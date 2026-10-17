@@ -7,7 +7,6 @@ import type { ResolvedOperatorResourceRules } from './compileScenarioResources';
 import type { ResolvedOperatorPanel } from './resolveOperatorPanel';
 import type { OperatorDefinition } from '../game-data/operatorDefinition';
 import type { OperatorInstanceDocument } from '../project/schema';
-import { listOperatorSkillDefinitionBindings } from '../game-data/operatorSkillDefinitions';
 import { compileSkillCosts } from './compileSkill';
 import { multiplySkillCost, resolveActiveOperatorUpgrades } from './compileOperatorUpgrades';
 
@@ -35,17 +34,16 @@ export function resolveOperatorMaxUltimateEnergy(
   operator: OperatorDefinition,
   build: OperatorInstanceDocument,
 ): number | undefined {
-  let skills = listOperatorSkillDefinitionBindings(operator).map(
-    ({ skill, routedReplacement }) => ({
-      skillId: skill.key,
-      executionSkillId: routedReplacement?.executionSkillKey,
-      skillType: skill.skillType,
-      costs: compileSkillCosts(
-        skill,
-        skill.levelSource === undefined ? 1 : (build.skillLevels[skill.levelSource] ?? 1),
-      ),
-    }),
-  );
+  let skills = operator.skills.map(skill => ({
+    skillId: skill.key,
+    executionSkillId: operator.routedReplacementSkills?.find(route => route.skillId === skill.key)
+      ?.executionSkillKey,
+    skillType: skill.skillType,
+    costs: compileSkillCosts(
+      skill,
+      skill.levelSource === undefined ? 1 : (build.skillLevels[skill.levelSource] ?? 1),
+    ),
+  }));
   if (
     !skills.some(
       skill =>

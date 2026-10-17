@@ -35,6 +35,13 @@ const PHYSICS_CAST_FIELDS = new Set([
 ]);
 
 export interface PhysicsCastActionSource {
+  readonly sourceToTarget: {
+    readonly sourceMountPoint: string;
+    readonly targetMountPoint: string;
+    readonly start: readonly ScalarSource[];
+    readonly end: readonly ScalarSource[];
+    readonly rotation: readonly ScalarSource[];
+  };
   readonly hitPositionTargetGroupKey: string;
   readonly hitDistanceBlackboardKey: string;
   readonly pointDirectionType: string;
@@ -48,7 +55,7 @@ export interface PhysicsCastActionSource {
   readonly stopTickWhenHit: boolean;
 }
 
-/** 严格保存 PhysicsCast 的战斗可见协议；几何/VFX 子结构当前只校验版本化容器形状。 */
+/** 保留射线几何；固定地面投影只接收能够证明为垂直向下的查询。 */
 export function parsePhysicsCastActionSource(
   value: unknown,
   path: string,
@@ -110,8 +117,31 @@ export function parsePhysicsCastActionSource(
     `${path}.sourceToTargetData.rayLocalRotationEuler`,
   );
   requireRecord(action.layerMask, `${path}.layerMask`);
+  const vector = (field: string) => {
+    const value = requireRecord(sourceToTarget[field], `${path}.sourceToTargetData.${field}`);
+    return ['x', 'y', 'z'].map(axis =>
+      parseScalarSource(
+        value[axis],
+        `${path}.sourceToTargetData.${field}.${axis}`,
+        inheritedBlackboard,
+      ),
+    );
+  };
 
   return {
+    sourceToTarget: {
+      sourceMountPoint: requireString(
+        sourceToTarget.sourceMountPoint,
+        `${path}.sourceToTargetData.sourceMountPoint`,
+      ),
+      targetMountPoint: requireString(
+        sourceToTarget.targetMountPoint,
+        `${path}.sourceToTargetData.targetMountPoint`,
+      ),
+      start: vector('startPosOffset'),
+      end: vector('endPosOffset'),
+      rotation: vector('rayLocalRotationEuler'),
+    },
     hitPositionTargetGroupKey: requireNonEmptyString(
       action.hitPositionTargetGroupKey,
       `${path}.hitPositionTargetGroupKey`,

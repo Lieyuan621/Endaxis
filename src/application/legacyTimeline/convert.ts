@@ -30,7 +30,7 @@ export function resolveLegacyRuntimeReplacementSource(
   const slot = operator.skillSlots?.find(candidate => candidate.baseSkillKey === expectedSkillKey);
   if (
     group === undefined ||
-    !listSkillGroupDefinitionBindings(group).some(
+    !listSkillGroupDefinitionBindings(group, operator).some(
       binding => binding.skill.key === expectedSkillKey,
     ) ||
     slot === undefined ||
@@ -39,12 +39,10 @@ export function resolveLegacyRuntimeReplacementSource(
   ) {
     return null;
   }
-  const targets = operator.skillGroups.filter(
-    candidate =>
-      candidate.replacementSkillPlacements?.[actualSkillKey] !== 'internal' &&
-      listSkillGroupDefinitionBindings(candidate).some(
-        binding => binding.skill.key === actualSkillKey,
-      ),
+  const targets = operator.skillGroups.filter(candidate =>
+    listSkillGroupDefinitionBindings(candidate, operator).some(
+      binding => binding.skill.key === actualSkillKey,
+    ),
   );
   return targets.length === 1 ? { skillGroupKey: targets[0]!.key, skillKey: actualSkillKey } : null;
 }

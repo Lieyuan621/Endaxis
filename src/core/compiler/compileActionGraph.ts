@@ -24,7 +24,9 @@ import { compileNestedAction, isNestedAction, type NestedActionKind } from './co
 import { createProgramDefinitionCompiler } from './compileProgramDefinitions';
 
 export type CompiledGraphOperation =
-  ResolvedLeafAction | ResolvedCombatStepForKind<NestedActionKind>;
+  | ResolvedLeafAction
+  | ResolvedCombatStepForKind<NestedActionKind>
+  | Omit<ResolvedCombatStepForKind<'physicsCast'>, 'whenHit' | 'whenMiss'>;
 
 export interface CompiledGraphMacroCall {
   readonly kind: 'callMacro';
@@ -40,7 +42,7 @@ export interface CompiledGraphMacroCall {
 export interface CompiledActionGraphNode {
   readonly action:
     | { readonly kind: 'callResource'; readonly entry: CompiledGraphEntry; readonly key?: never }
-    | CompiledGraphOperation
+    | Exclude<CompiledGraphOperation, { kind: 'physicsCast' }>
     | CompiledGraphMacroCall
     | CompiledGraphStepForKind<
         | 'conditional'
@@ -57,6 +59,7 @@ export interface CompiledActionGraphNode {
         | 'listenForTagQuery'
         | 'playAnimation'
         | 'showComboRingQte'
+        | 'physicsCast'
       >
     | (Omit<CompiledGraphStepForKind<'aura'>, 'parameters'> & {
         readonly parameters: ResolvedCombatStepParameters['aura'];
@@ -295,6 +298,7 @@ export function createActionGraphCompilation(
       const node = graph.nodes[id]!;
       let action: CompiledActionGraphNode['action'];
       if (
+        node.action.kind === 'physicsCast' ||
         node.action.kind === 'playAnimation' ||
         node.action.kind === 'showComboRingQte' ||
         node.action.kind === 'conditional' ||

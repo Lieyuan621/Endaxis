@@ -62,9 +62,9 @@ const rejectingExecutor: CombatOperationExecutor = {
   evaluate: () => false,
 };
 
-const gilbertaBattleSkill = gilbertaGeneratedOperator.skillGroups
-  .flatMap(group => (Array.isArray(group.skills) ? group.skills : [group.skills]))
-  .find(skill => skill.key === 'chr_0013_aglina_normal_skill') as SkillDefinition;
+const gilbertaBattleSkill = gilbertaGeneratedOperator.skills.find(
+  skill => skill.key === 'chr_0013_aglina_normal_skill',
+) as SkillDefinition;
 
 const compileGraphEntry = (
   revision: string,
@@ -400,10 +400,12 @@ function createAssembly(
       : { createOperatorBuffRuntime: resolvedCreateOperatorBuffRuntime }),
     ...(createAbilityEntityBuffRuntime === undefined ? {} : { createAbilityEntityBuffRuntime }),
     ...(isOperatorControlled === undefined ? {} : { isOperatorControlled }),
-    ...(resolveVitals === undefined ? {} : {
-      resolveVitals,
-      resolveOperatorVitals: (operatorId: string) => resolveVitals('caster', operatorId),
-    }),
+    ...(resolveVitals === undefined
+      ? {}
+      : {
+          resolveVitals,
+          resolveOperatorVitals: (operatorId: string) => resolveVitals('caster', operatorId),
+        }),
     ...(emitAbilityEvent === undefined ? {} : { emitAbilityEvent }),
   });
 }
@@ -562,6 +564,7 @@ describe('CombatRuntimeAssembly', () => {
         },
         dashTiming: {
           dashOffsetFrames: 30,
+          skillOffsetFrames: 30,
           blockAttackFramesInDash: 2,
           allowAttackAfterFramesInDash: 4,
           blockAttackFramesInPerfectDodge: 2,
@@ -1119,6 +1122,7 @@ describe('CombatRuntimeAssembly', () => {
       ],
       dashTiming: {
         dashOffsetFrames: 30,
+        skillOffsetFrames: 30,
         blockAttackFramesInDash: 1,
         allowAttackAfterFramesInDash: 4,
         blockAttackFramesInPerfectDodge: 1,
@@ -5092,7 +5096,11 @@ describe('CombatRuntimeAssembly', () => {
             {
               input_1: {
                 type: 'boolean',
-                expression: { kind: 'enemyRankIn', target: { kind: 'fixed', target: 'enemy' }, ranks: ['elite', 'boss'] },
+                expression: {
+                  kind: 'enemyRankIn',
+                  target: { kind: 'fixed', target: 'enemy' },
+                  ranks: ['elite', 'boss'],
+                },
               },
             },
           ),

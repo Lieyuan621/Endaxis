@@ -898,6 +898,7 @@ export const siChr_0036_jsspsi_power_attack: SkillDefinition = {
   naturalDurationFrames: 207,
   exclusiveFrame: 50,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -1272,6 +1273,7 @@ export const siChr_0036_jsspsi_normal_skill: SkillDefinition = {
   naturalDurationFrames: 168,
   exclusiveFrame: 35,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 34, endFrame: 53, skillIds: ['chr_0036_jsspsi_normal_skill_1'] },
@@ -1440,6 +1442,7 @@ export const siChr_0036_jsspsi_normal_skill_1: SkillDefinition = {
   naturalDurationFrames: 178,
   exclusiveFrame: 30,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 22, endFrame: 41, skillIds: ['chr_0036_jsspsi_normal_skill_2'] },
@@ -1564,6 +1567,7 @@ export const siChr_0036_jsspsi_normal_skill_2: SkillDefinition = {
   naturalDurationFrames: 168,
   exclusiveFrame: 45,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: { allowedNextSkills: [{ startFrame: 9, endFrame: 38, skillIds: [] }] },
   costFrame: 0,
   scheduledSequences: [
@@ -1787,6 +1791,7 @@ export const siChr_0036_jsspsi_combo_skill: SkillDefinition = {
   naturalDurationFrames: 228,
   exclusiveFrame: 35,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -1974,6 +1979,28 @@ export const siChr_0036_jsspsi_perfect_dodge: SkillDefinition = {
   defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
+};
+
+export const siChr_0036_jsspsi_plunging_attack_startActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const siChr_0036_jsspsi_plunging_attack_start: SkillDefinition = {
+  actionGraph: siChr_0036_jsspsi_plunging_attack_startActionGraph,
+  key: 'chr_0036_jsspsi_plunging_attack_start',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
 };
 
 const siComboCondition1ActionGraph = {
@@ -6504,37 +6531,59 @@ export const si: OperatorDefinition = {
     baseAttack: [30, 90, 152, 215, 277, 309],
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },
+  skills: [
+    siChr_0036_jsspsi_attack1,
+    siChr_0036_jsspsi_attack2,
+    siChr_0036_jsspsi_attack3,
+    siChr_0036_jsspsi_attack4,
+    siChr_0036_jsspsi_attack5,
+    siChr_0036_jsspsi_power_attack,
+    siChr_0036_jsspsi_plunging_attack_end,
+    siChr_0036_jsspsi_normal_skill,
+    siChr_0036_jsspsi_normal_skill_1,
+    siChr_0036_jsspsi_normal_skill_2,
+    siChr_0036_jsspsi_combo_skill,
+    siChr_0036_jsspsi_ultimate_skill,
+    siChr_0036_jsspsi_perfect_dodge,
+    siChr_0036_jsspsi_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        siChr_0036_jsspsi_attack1,
-        siChr_0036_jsspsi_attack2,
-        siChr_0036_jsspsi_attack3,
-        siChr_0036_jsspsi_attack4,
-        siChr_0036_jsspsi_attack5,
+      skillIds: [
+        'chr_0036_jsspsi_attack1',
+        'chr_0036_jsspsi_attack2',
+        'chr_0036_jsspsi_attack3',
+        'chr_0036_jsspsi_attack4',
+        'chr_0036_jsspsi_attack5',
       ],
     },
-    { key: 'finisher', operationType: 'finisher', skills: siChr_0036_jsspsi_power_attack },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0036_jsspsi_power_attack'] },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: siChr_0036_jsspsi_plunging_attack_end,
+      skillIds: ['chr_0036_jsspsi_plunging_attack_end'],
     },
     {
       key: 'battleSkill',
       operationType: 'battleSkill',
-      skills: [
-        siChr_0036_jsspsi_normal_skill,
-        siChr_0036_jsspsi_normal_skill_1,
-        siChr_0036_jsspsi_normal_skill_2,
+      skillIds: [
+        'chr_0036_jsspsi_normal_skill',
+        'chr_0036_jsspsi_normal_skill_1',
+        'chr_0036_jsspsi_normal_skill_2',
       ],
     },
-    { key: 'comboSkill', operationType: 'comboSkill', skills: siChr_0036_jsspsi_combo_skill },
-    { key: 'ultimate', operationType: 'ultimate', skills: siChr_0036_jsspsi_ultimate_skill },
+    { key: 'comboSkill', operationType: 'comboSkill', skillIds: ['chr_0036_jsspsi_combo_skill'] },
+    { key: 'ultimate', operationType: 'ultimate', skillIds: ['chr_0036_jsspsi_ultimate_skill'] },
   ],
-  dodgeSkill: siChr_0036_jsspsi_perfect_dodge,
+  dodgeSkillId: 'chr_0036_jsspsi_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0036_jsspsi_plunging_attack_start',
+    endSkillId: 'chr_0036_jsspsi_plunging_attack_end',
+    startDurationSeconds: 0.633,
+    endDurationSeconds: 2,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'chr_0036_jsspsi_perfect_dodge' } },
   ],

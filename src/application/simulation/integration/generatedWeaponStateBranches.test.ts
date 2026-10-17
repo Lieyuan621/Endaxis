@@ -17,11 +17,8 @@ import { placeSkillGroup } from '../../../ui/timeline/interaction/placeSkillGrou
 import { ScenarioSimulationService } from '../scenarioSimulationService';
 
 function findSkill(operator: OperatorDefinition, key: string): SkillDefinition {
-  for (const group of operator.skillGroups) {
-    const skills = Array.isArray(group.skills) ? group.skills : [group.skills];
-    const skill = skills.find(candidate => candidate.key === key);
-    if (skill !== undefined) return skill;
-  }
+  const skill = operator.skills.find(candidate => candidate.key === key);
+  if (skill !== undefined) return skill;
   throw new Error(`missing skill: ${key}`);
 }
 const daPanComboSkill = findSkill(daPan, 'chr_0018_dapan_combo_skill');
@@ -57,7 +54,10 @@ describe('生成武器的目标状态与层数伤害分支', () => {
           startFrame: 1,
           steps: Array.from({ length: layers }, () => ({
             kind: 'applyBuff' as const,
-            parameters: { buffs: [{ buffId: 'buff_physical_no_guard' }], targets: { kind: 'fixed', target: 'enemy' } as const },
+            parameters: {
+              buffs: [{ buffId: 'buff_physical_no_guard' }],
+              targets: { kind: 'fixed', target: 'enemy' } as const,
+            },
           })),
         },
         { startFrame: 60, steps: [crush] },
@@ -89,7 +89,10 @@ describe('生成武器的目标状态与层数伤害分支', () => {
         steps: [
           {
             kind: 'applyBuff',
-            parameters: { buffs: [{ buffId: 'buff_physical_no_guard' }], targets: { kind: 'fixed', target: 'caster' } },
+            parameters: {
+              buffs: [{ buffId: 'buff_physical_no_guard' }],
+              targets: { kind: 'fixed', target: 'caster' },
+            },
           },
         ],
       },
@@ -226,36 +229,39 @@ async function simulate(slug: string, tier: number, sequences: readonly ProbeSeq
       {
         key: 'basicAttack',
         operationType: 'basicAttack' as SkillType,
-        skills: (() => {
-          const nodes: Record<string, ActionGraphNode> = {};
-          const scheduledSequences = [...sequences]
-            .sort((a, b) => a.startFrame - b.startFrame)
-            .map((probe, index) => {
-              const chain = linearChain(`seq${index}`, probe.steps);
-              Object.assign(nodes, chain.nodes);
-              return { startFrame: probe.startFrame, sequence: { $sequence: chain.entry } };
-            });
-          const probe: SkillDefinition = skillFixture({
-            skillType: 'basicAttack' as const,
-            levelSource: 'basicAttack' as const,
-            key: 'state-probe',
-            // 保留大潘原始猛击参数，不为 fixture 猜 crush_multi。
-            blackboard: daPanComboSkill.blackboard,
-            timelineBlockFrames: 1050,
-            scheduledSequences,
-            actionGraph: {
-              main: {
-                nodes,
-                ...(daPanComboSkill.actionGraph.main.dataNodes === undefined
-                  ? {}
-                  : { dataNodes: daPanComboSkill.actionGraph.main.dataNodes }),
-              },
-              macros: {},
-            },
-          });
-          return probe;
-        })(),
+        skillIds: ['state-probe'],
       },
+    ],
+    skills: [
+      (() => {
+        const nodes: Record<string, ActionGraphNode> = {};
+        const scheduledSequences = [...sequences]
+          .sort((a, b) => a.startFrame - b.startFrame)
+          .map((probe, index) => {
+            const chain = linearChain(`seq${index}`, probe.steps);
+            Object.assign(nodes, chain.nodes);
+            return { startFrame: probe.startFrame, sequence: { $sequence: chain.entry } };
+          });
+        const probe: SkillDefinition = skillFixture({
+          skillType: 'basicAttack' as const,
+          levelSource: 'basicAttack' as const,
+          key: 'state-probe',
+          // 保留大潘原始猛击参数，不为 fixture 猜 crush_multi。
+          blackboard: daPanComboSkill.blackboard,
+          timelineBlockFrames: 1050,
+          scheduledSequences,
+          actionGraph: {
+            main: {
+              nodes,
+              ...(daPanComboSkill.actionGraph.main.dataNodes === undefined
+                ? {}
+                : { dataNodes: daPanComboSkill.actionGraph.main.dataNodes }),
+            },
+            macros: {},
+          },
+        });
+        return probe;
+      })(),
     ],
   };
   let scenario = createEmptyScenario('weapon-state', '武器目标状态生产回归');

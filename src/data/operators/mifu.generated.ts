@@ -5,6 +5,606 @@ import type { SkillDefinition } from '../../../packages/game-data-contract/src/s
 import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs';
 import type { ComboSkillConditionDefinition } from '../../../packages/game-data-contract/src/operators';
 import type { OperatorDefinition } from '../../../packages/game-data-contract/src/operators';
+export const mifuChr_0031_mifu_combo_skillActionGraph = {
+  main: {
+    nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0031_mifu_normalskill_2' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      applyBuff_2: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0031_mifu_comboprocess' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+            inheritToNextSkillIds: ['chr_0031_mifu_normalskill_2', 'chr_0031_mifu_normalskill_3'],
+          },
+        },
+        next: null,
+      },
+      applyBuff_4: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_chr_0031_mifu_potential_addattack',
+                copiedBlackboardAssignments: {
+                  addattack_effect: 'potential_addattack_effect',
+                  addattack_duraion: 'potential_addattack_duration',
+                },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      setGlobalCooldown_7: {
+        action: {
+          kind: 'setGlobalCooldown',
+          parameters: {
+            target: 'caster',
+            markerId: 'buff_chr_0031_mifu_shield',
+            durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
+          },
+        },
+        next: null,
+      },
+      applyBuff_8: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_chr_0031_mifu_shield',
+                copiedBlackboardAssignments: {
+                  duration: 'talent_shield_duration',
+                  FinalShield: 'talent_shield_maxhp',
+                },
+              },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: 'setGlobalCooldown_7',
+      },
+      modifyActionValue_9: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'talent_shield_maxhp',
+            operation: 'multiply',
+            value: { kind: 'valueNode', nodeId: 'data_2' },
+          },
+        },
+        next: 'applyBuff_8',
+      },
+      storeSourceAttributeValue_10: {
+        action: {
+          kind: 'storeSourceAttributeValue',
+          parameters: {
+            attribute: { kind: 'specific', key: 'maxHealth' },
+            stage: 'finalNonConverted',
+            useFloor: false,
+            divisor: { kind: 'constant', value: 1 },
+            multiplier: { kind: 'constant', value: 1 },
+            base: { kind: 'constant', value: 0 },
+            targetKey: 'talent_shield_maxhp',
+          },
+        },
+        next: 'modifyActionValue_9',
+      },
+      ifElse_11: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
+          whenTrue: { $sequence: 'applyBuff_4' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'storeSourceAttributeValue_10',
+      },
+      checkCondition_5: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+        },
+        next: null,
+      },
+      checkCondition_6: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+        },
+        next: 'checkCondition_5',
+      },
+      ifElse_12: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
+          whenTrue: { $sequence: 'ifElse_11' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      startTimeDilation_20: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.1 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: {
+              kind: 'inline',
+              keys: [
+                {
+                  time: 0,
+                  value: 0,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 0.7500001,
+                  value: 0,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 0,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+            },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: null,
+      },
+      checkCondition_21: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
+        },
+        next: 'startTimeDilation_20',
+      },
+      dealDamage_22: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_10' },
+            tags: ['comboSkill'],
+            features: ['canBreakWeakness'],
+          },
+        },
+        next: 'checkCondition_21',
+      },
+      startTimeDilation_23: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.15 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: {
+              kind: 'inline',
+              keys: [
+                {
+                  time: 0,
+                  value: 0,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 0,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+            },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: null,
+      },
+      checkCondition_24: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
+        },
+        next: 'startTimeDilation_23',
+      },
+      dealDamage_25: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_10' },
+            tags: ['comboSkill'],
+            features: ['canBreakWeakness'],
+          },
+        },
+        next: 'checkCondition_24',
+      },
+      startTimeDilation_26: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.06 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: {
+              kind: 'inline',
+              keys: [
+                {
+                  time: 0,
+                  value: 0,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 0.7,
+                  value: 0,
+                  inTangent: 0,
+                  outTangent: 2.481606,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 3.333333,
+                  outTangent: 3.333333,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+            },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: null,
+      },
+      checkCondition_27: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
+        },
+        next: 'startTimeDilation_26',
+      },
+      modifyActionValue_29: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'final_time',
+            operation: 'add',
+            value: { kind: 'valueNode', nodeId: 'data_13' },
+          },
+        },
+        next: null,
+      },
+      modifyActionValue_30: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'final_effect',
+            operation: 'add',
+            value: { kind: 'valueNode', nodeId: 'data_14' },
+          },
+        },
+        next: 'modifyActionValue_29',
+      },
+      changeResource_32: {
+        action: {
+          kind: 'changeResource',
+          parameters: {
+            resource: 'ultimateEnergy',
+            amount: { kind: 'valueNode', nodeId: 'data_15' },
+            coefficient: { kind: 'constant', value: 1 },
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+          },
+        },
+        next: null,
+      },
+      ifElse_33: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_16' },
+          whenTrue: { $sequence: 'changeResource_32' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_34: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_17' },
+            tags: ['comboSkill'],
+            features: ['canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_18' },
+          },
+        },
+        next: 'ifElse_33',
+      },
+      applyBuff_35: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_chr_0031_mifu_vulnerablephysic_comboskill',
+                copiedBlackboardAssignments: { duration: 'final_time', rate: 'final_effect' },
+              },
+            ],
+            targets: { kind: 'fixed', target: 'enemy' },
+            source: { kind: 'owner' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: 'dealDamage_34',
+      },
+      ifElse_36: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_19' },
+          whenTrue: { $sequence: 'modifyActionValue_30' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'applyBuff_35',
+      },
+      modifyActionValue_37: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'final_time',
+            operation: 'assign',
+            value: { kind: 'valueNode', nodeId: 'data_20' },
+          },
+        },
+        next: 'ifElse_36',
+      },
+      modifyActionValue_38: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'final_effect',
+            operation: 'assign',
+            value: { kind: 'valueNode', nodeId: 'data_21' },
+          },
+        },
+        next: 'modifyActionValue_37',
+      },
+      startTimeDilation_39: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'global',
+            durationSeconds: { kind: 'constant', value: 0.36666 },
+            slot: 'unassigned',
+            priority: 30,
+            curve: { kind: 'named', key: 'ComboSkill' },
+            finishByAction: false,
+            ignoredTargets: ['caster'],
+            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+          },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'talent_shield_cd' } },
+      data_2: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'talent_shield_hppercent' },
+      },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'potential', fallback: 0 } },
+      data_4: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_3' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_5: {
+        type: 'boolean',
+        expression: {
+          kind: 'globalCooldownPresent',
+          target: { kind: 'owner' },
+          returnTrueIfNotExists: true,
+          markerId: 'buff_chr_0031_mifu_shield',
+        },
+      },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'talent', fallback: 0 } },
+      data_7: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_6' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_8: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_6' } },
+      },
+      data_9: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale1' } },
+      data_11: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_12: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'extra_time' } },
+      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'extra_effect' } },
+      data_15: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_16: { type: 'boolean', expression: { kind: 'skillHasHit' } },
+      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
+      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_19: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_3' },
+          operator: 'equal',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_20: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
+      data_21: { type: 'number', expression: { kind: 'blackboard', key: 'rate' } },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const mifuChr_0031_mifu_combo_skill: SkillDefinition = {
+  key: 'chr_0031_mifu_combo_skill',
+  element: 'physical',
+  blackboard: {
+    atk_scale1: [0.3, 0.33, 0.36, 0.39, 0.42, 0.45, 0.48, 0.51, 0.54, 0.58, 0.62, 0.68],
+    atk_scale2: [0.51, 0.56, 0.61, 0.66, 0.71, 0.77, 0.82, 0.87, 0.92, 0.98, 1.06, 1.15],
+    duration: 16,
+    extra_effect: 0,
+    extra_time: 0,
+    final_effect: 0,
+    final_time: 0,
+    poise: 10,
+    potential: 0,
+    potential_addattack_duration: 0,
+    potential_addattack_effect: 0,
+    rate: 0.05,
+    talent: 0,
+    talent_shield_cd: 0,
+    talent_shield_duration: 0,
+    talent_shield_hppercent: 0,
+    talent_shield_maxhp: 0,
+    usp: 10,
+  },
+  timelineBlockFrames: 35,
+  naturalDurationFrames: 211,
+  exclusiveFrame: 41,
+  offsetRecordFrame: 0,
+  dontInterruptCombo: true,
+  inputWindows: {
+    allowedNextSkills: [
+      { startFrame: 35, endFrame: 73, skillIds: ['chr_0031_mifu_powerattack'] },
+      {
+        startFrame: 35,
+        endFrame: 73,
+        skillIds: ['chr_0031_mifu_normalskill_2', 'chr_0031_mifu_normalskill_3'],
+      },
+      {
+        startFrame: 35,
+        endFrame: 73,
+        skillIds: [
+          'chr_0031_mifu_attack1',
+          'chr_0031_mifu_attack2',
+          'chr_0031_mifu_attack3',
+          'chr_0031_mifu_attack4',
+        ],
+      },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'applyBuff_1' } },
+    { startFrame: 35, endFrame: 73, sequence: { $sequence: 'applyBuff_2' } },
+    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_12' } },
+    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'dealDamage_22' } },
+    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'dealDamage_25' } },
+    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'checkCondition_27' } },
+    { startFrame: 31, endFrame: 32, sequence: { $sequence: 'modifyActionValue_38' } },
+    { startFrame: 0, endFrame: 8, sequence: { $sequence: 'startTimeDilation_39' } },
+  ],
+  smartTarget: 'trigger',
+  cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 570],
+  skillType: 'comboSkill',
+  levelSource: 'comboSkill',
+  nativeSkillType: 'comboSkill',
+  actionGraph: mifuChr_0031_mifu_combo_skillActionGraph,
+};
+
 export const mifuChr_0031_mifu_attack1ActionGraph = {
   main: {
     nodes: {
@@ -1427,6 +2027,7 @@ export const mifuChr_0031_mifu_powerattack: SkillDefinition = {
   naturalDurationFrames: 282,
   exclusiveFrame: 53,
   offsetRecordFrame: 26,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -1687,6 +2288,7 @@ export const mifuChr_0031_mifu_normalskill_1: SkillDefinition = {
   naturalDurationFrames: 203,
   exclusiveFrame: 125,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     commandMappings: [
       {
@@ -2106,6 +2708,7 @@ export const mifuChr_0031_mifu_normalskill_2: SkillDefinition = {
   naturalDurationFrames: 150,
   exclusiveFrame: 34,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 28, endFrame: 62, skillIds: ['chr_0031_mifu_normalskill_3'] },
@@ -2668,6 +3271,7 @@ export const mifuChr_0031_mifu_normalskill_3: SkillDefinition = {
   naturalDurationFrames: 241,
   exclusiveFrame: 45,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 0, sequence: { $sequence: 'checkCondition_opt3' } },
@@ -3053,605 +3657,6 @@ export const mifuChr_0031_mifu_ultimate_skill: SkillDefinition = {
   actionGraph: mifuChr_0031_mifu_ultimate_skillActionGraph,
 };
 
-export const mifuChr_0031_mifu_combo_skillActionGraph = {
-  main: {
-    nodes: {
-      applyBuff_1: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0031_mifu_normalskill_2' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'owner' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-      applyBuff_2: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0031_mifu_comboprocess' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-            finishByAction: true,
-            inheritToNextSkillIds: ['chr_0031_mifu_normalskill_2', 'chr_0031_mifu_normalskill_3'],
-          },
-        },
-        next: null,
-      },
-      applyBuff_4: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [
-              {
-                buffId: 'buff_chr_0031_mifu_potential_addattack',
-                copiedBlackboardAssignments: {
-                  addattack_effect: 'potential_addattack_effect',
-                  addattack_duraion: 'potential_addattack_duration',
-                },
-              },
-            ],
-            targets: { kind: 'owner' },
-            source: { kind: 'owner' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-      setGlobalCooldown_7: {
-        action: {
-          kind: 'setGlobalCooldown',
-          parameters: {
-            target: 'caster',
-            markerId: 'buff_chr_0031_mifu_shield',
-            durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
-          },
-        },
-        next: null,
-      },
-      applyBuff_8: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [
-              {
-                buffId: 'buff_chr_0031_mifu_shield',
-                copiedBlackboardAssignments: {
-                  duration: 'talent_shield_duration',
-                  FinalShield: 'talent_shield_maxhp',
-                },
-              },
-            ],
-            targets: { kind: 'owner' },
-            source: { kind: 'owner' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: 'setGlobalCooldown_7',
-      },
-      modifyActionValue_9: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'talent_shield_maxhp',
-            operation: 'multiply',
-            value: { kind: 'valueNode', nodeId: 'data_2' },
-          },
-        },
-        next: 'applyBuff_8',
-      },
-      storeSourceAttributeValue_10: {
-        action: {
-          kind: 'storeSourceAttributeValue',
-          parameters: {
-            attribute: { kind: 'specific', key: 'maxHealth' },
-            stage: 'finalNonConverted',
-            useFloor: false,
-            divisor: { kind: 'constant', value: 1 },
-            multiplier: { kind: 'constant', value: 1 },
-            base: { kind: 'constant', value: 0 },
-            targetKey: 'talent_shield_maxhp',
-          },
-        },
-        next: 'modifyActionValue_9',
-      },
-      ifElse_11: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_4' },
-          whenTrue: { $sequence: 'applyBuff_4' },
-          whenFalse: { $sequence: null },
-        },
-        next: 'storeSourceAttributeValue_10',
-      },
-      checkCondition_5: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-        },
-        next: null,
-      },
-      checkCondition_6: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-        },
-        next: 'checkCondition_5',
-      },
-      ifElse_12: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_8' },
-          whenTrue: { $sequence: 'ifElse_11' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      startTimeDilation_20: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: {
-              kind: 'inline',
-              keys: [
-                {
-                  time: 0,
-                  value: 0,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 0.7500001,
-                  value: 0,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 0,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-            },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
-          },
-        },
-        next: null,
-      },
-      checkCondition_21: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
-        },
-        next: 'startTimeDilation_20',
-      },
-      dealDamage_22: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_10' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
-          },
-        },
-        next: 'checkCondition_21',
-      },
-      startTimeDilation_23: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.15 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: {
-              kind: 'inline',
-              keys: [
-                {
-                  time: 0,
-                  value: 0,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 0,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-            },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
-          },
-        },
-        next: null,
-      },
-      checkCondition_24: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
-        },
-        next: 'startTimeDilation_23',
-      },
-      dealDamage_25: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_10' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
-          },
-        },
-        next: 'checkCondition_24',
-      },
-      startTimeDilation_26: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.06 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: {
-              kind: 'inline',
-              keys: [
-                {
-                  time: 0,
-                  value: 0,
-                  inTangent: 0,
-                  outTangent: 0,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 0.7,
-                  value: 0,
-                  inTangent: 0,
-                  outTangent: 2.481606,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 3.333333,
-                  outTangent: 3.333333,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-            },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
-          },
-        },
-        next: null,
-      },
-      checkCondition_27: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
-        },
-        next: 'startTimeDilation_26',
-      },
-      modifyActionValue_29: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'final_time',
-            operation: 'add',
-            value: { kind: 'valueNode', nodeId: 'data_13' },
-          },
-        },
-        next: null,
-      },
-      modifyActionValue_30: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'final_effect',
-            operation: 'add',
-            value: { kind: 'valueNode', nodeId: 'data_14' },
-          },
-        },
-        next: 'modifyActionValue_29',
-      },
-      changeResource_32: {
-        action: {
-          kind: 'changeResource',
-          parameters: {
-            resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_15' },
-            coefficient: { kind: 'constant', value: 1 },
-            source: { kind: 'source' },
-            targets: { kind: 'source' },
-          },
-        },
-        next: null,
-      },
-      ifElse_33: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_16' },
-          whenTrue: { $sequence: 'changeResource_32' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      dealDamage_34: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_17' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_18' },
-          },
-        },
-        next: 'ifElse_33',
-      },
-      applyBuff_35: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [
-              {
-                buffId: 'buff_chr_0031_mifu_vulnerablephysic_comboskill',
-                copiedBlackboardAssignments: { duration: 'final_time', rate: 'final_effect' },
-              },
-            ],
-            targets: { kind: 'fixed', target: 'enemy' },
-            source: { kind: 'owner' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: 'dealDamage_34',
-      },
-      ifElse_36: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_19' },
-          whenTrue: { $sequence: 'modifyActionValue_30' },
-          whenFalse: { $sequence: null },
-        },
-        next: 'applyBuff_35',
-      },
-      modifyActionValue_37: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'final_time',
-            operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_20' },
-          },
-        },
-        next: 'ifElse_36',
-      },
-      modifyActionValue_38: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'final_effect',
-            operation: 'assign',
-            value: { kind: 'valueNode', nodeId: 'data_21' },
-          },
-        },
-        next: 'modifyActionValue_37',
-      },
-      startTimeDilation_39: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'global',
-            durationSeconds: { kind: 'constant', value: 0.36666 },
-            slot: 'unassigned',
-            priority: 30,
-            curve: { kind: 'named', key: 'ComboSkill' },
-            finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
-          },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'talent_shield_cd' } },
-      data_2: {
-        type: 'number',
-        expression: { kind: 'blackboard', key: 'talent_shield_hppercent' },
-      },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'potential', fallback: 0 } },
-      data_4: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_3' },
-          operator: 'greater',
-          right: { kind: 'constant', value: 0 },
-        },
-      },
-      data_5: {
-        type: 'boolean',
-        expression: {
-          kind: 'globalCooldownPresent',
-          target: { kind: 'owner' },
-          returnTrueIfNotExists: true,
-          markerId: 'buff_chr_0031_mifu_shield',
-        },
-      },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'talent', fallback: 0 } },
-      data_7: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_6' },
-          operator: 'greater',
-          right: { kind: 'constant', value: 0 },
-        },
-      },
-      data_8: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_6' } },
-      },
-      data_9: {
-        type: 'boolean',
-        expression: {
-          kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          containsHittableTarget: false,
-          excludeDeadEntity: false,
-          operator: 'greaterOrEqual',
-          value: 1,
-        },
-      },
-      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale1' } },
-      data_11: {
-        type: 'boolean',
-        expression: {
-          kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          containsHittableTarget: false,
-          excludeDeadEntity: false,
-          operator: 'greaterOrEqual',
-          value: 1,
-        },
-      },
-      data_12: {
-        type: 'boolean',
-        expression: {
-          kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          containsHittableTarget: false,
-          excludeDeadEntity: false,
-          operator: 'greaterOrEqual',
-          value: 1,
-        },
-      },
-      data_13: { type: 'number', expression: { kind: 'blackboard', key: 'extra_time' } },
-      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'extra_effect' } },
-      data_15: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_16: { type: 'boolean', expression: { kind: 'skillHasHit' } },
-      data_17: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
-      data_18: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_19: {
-        type: 'boolean',
-        expression: {
-          kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_3' },
-          operator: 'equal',
-          right: { kind: 'constant', value: 1 },
-        },
-      },
-      data_20: { type: 'number', expression: { kind: 'blackboard', key: 'duration' } },
-      data_21: { type: 'number', expression: { kind: 'blackboard', key: 'rate' } },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const mifuChr_0031_mifu_combo_skill: SkillDefinition = {
-  key: 'chr_0031_mifu_combo_skill',
-  element: 'physical',
-  blackboard: {
-    atk_scale1: [0.3, 0.33, 0.36, 0.39, 0.42, 0.45, 0.48, 0.51, 0.54, 0.58, 0.62, 0.68],
-    atk_scale2: [0.51, 0.56, 0.61, 0.66, 0.71, 0.77, 0.82, 0.87, 0.92, 0.98, 1.06, 1.15],
-    duration: 16,
-    extra_effect: 0,
-    extra_time: 0,
-    final_effect: 0,
-    final_time: 0,
-    poise: 10,
-    potential: 0,
-    potential_addattack_duration: 0,
-    potential_addattack_effect: 0,
-    rate: 0.05,
-    talent: 0,
-    talent_shield_cd: 0,
-    talent_shield_duration: 0,
-    talent_shield_hppercent: 0,
-    talent_shield_maxhp: 0,
-    usp: 10,
-  },
-  timelineBlockFrames: 35,
-  naturalDurationFrames: 211,
-  exclusiveFrame: 41,
-  offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 35, endFrame: 73, skillIds: ['chr_0031_mifu_powerattack'] },
-      {
-        startFrame: 35,
-        endFrame: 73,
-        skillIds: ['chr_0031_mifu_normalskill_2', 'chr_0031_mifu_normalskill_3'],
-      },
-      {
-        startFrame: 35,
-        endFrame: 73,
-        skillIds: [
-          'chr_0031_mifu_attack1',
-          'chr_0031_mifu_attack2',
-          'chr_0031_mifu_attack3',
-          'chr_0031_mifu_attack4',
-        ],
-      },
-    ],
-  },
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'applyBuff_1' } },
-    { startFrame: 35, endFrame: 73, sequence: { $sequence: 'applyBuff_2' } },
-    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_12' } },
-    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'dealDamage_22' } },
-    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'dealDamage_25' } },
-    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'checkCondition_27' } },
-    { startFrame: 31, endFrame: 32, sequence: { $sequence: 'modifyActionValue_38' } },
-    { startFrame: 0, endFrame: 8, sequence: { $sequence: 'startTimeDilation_39' } },
-  ],
-  smartTarget: 'trigger',
-  cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 570],
-  skillType: 'comboSkill',
-  levelSource: 'comboSkill',
-  nativeSkillType: 'comboSkill',
-  actionGraph: mifuChr_0031_mifu_combo_skillActionGraph,
-};
-
 export const mifuCommon_character_perfect_dodgeActionGraph = {
   main: { nodes: {} },
   macros: {},
@@ -3670,6 +3675,28 @@ export const mifuCommon_character_perfect_dodge: SkillDefinition = {
   defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
+};
+
+export const mifuChr_0031_mifu_plunging_attack_startActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const mifuChr_0031_mifu_plunging_attack_start: SkillDefinition = {
+  actionGraph: mifuChr_0031_mifu_plunging_attack_startActionGraph,
+  key: 'chr_0031_mifu_plunging_attack_start',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
 };
 
 const mifuComboCondition1ActionGraph = {
@@ -4184,38 +4211,62 @@ export const mifu: OperatorDefinition = {
     baseAttack: [30, 91, 155, 219, 283, 315],
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },
+  skills: [
+    mifuChr_0031_mifu_combo_skill,
+    mifuChr_0031_mifu_attack1,
+    mifuChr_0031_mifu_attack2,
+    mifuChr_0031_mifu_attack3,
+    mifuChr_0031_mifu_attack4,
+    mifuChr_0031_mifu_plunging_attack_end,
+    mifuChr_0031_mifu_powerattack,
+    mifuChr_0031_mifu_normalskill_1,
+    mifuChr_0031_mifu_normalskill_2,
+    mifuChr_0031_mifu_normalskill_3,
+    mifuChr_0031_mifu_ultimate_skill,
+    mifuCommon_character_perfect_dodge,
+    mifuChr_0031_mifu_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        mifuChr_0031_mifu_attack1,
-        mifuChr_0031_mifu_attack2,
-        mifuChr_0031_mifu_attack3,
-        mifuChr_0031_mifu_attack4,
+      skillIds: [
+        'chr_0031_mifu_attack1',
+        'chr_0031_mifu_attack2',
+        'chr_0031_mifu_attack3',
+        'chr_0031_mifu_attack4',
       ],
     },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: mifuChr_0031_mifu_plunging_attack_end,
+      skillIds: ['chr_0031_mifu_plunging_attack_end'],
     },
-    { key: 'finisher', operationType: 'finisher', skills: mifuChr_0031_mifu_powerattack },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0031_mifu_powerattack'] },
     {
       key: 'battleSkill',
       operationType: 'battleSkill',
-      skills: mifuChr_0031_mifu_normalskill_1,
+      skillIds: [
+        'chr_0031_mifu_normalskill_1',
+        'chr_0031_mifu_normalskill_2',
+        'chr_0031_mifu_normalskill_3',
+      ],
       placementSequenceSkillKeys: [
         'chr_0031_mifu_normalskill_1',
         'chr_0031_mifu_normalskill_2',
         'chr_0031_mifu_normalskill_3',
       ],
-      replacementSkills: [mifuChr_0031_mifu_normalskill_2, mifuChr_0031_mifu_normalskill_3],
     },
-    { key: 'ultimate', operationType: 'ultimate', skills: mifuChr_0031_mifu_ultimate_skill },
-    { key: 'comboSkill', operationType: 'comboSkill', skills: mifuChr_0031_mifu_combo_skill },
+    { key: 'ultimate', operationType: 'ultimate', skillIds: ['chr_0031_mifu_ultimate_skill'] },
+    { key: 'comboSkill', operationType: 'comboSkill', skillIds: ['chr_0031_mifu_combo_skill'] },
   ],
-  dodgeSkill: mifuCommon_character_perfect_dodge,
+  dodgeSkillId: 'common_character_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0031_mifu_plunging_attack_start',
+    endSkillId: 'chr_0031_mifu_plunging_attack_end',
+    startDurationSeconds: 0.5,
+    endDurationSeconds: 1.267,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
   ],

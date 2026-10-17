@@ -10,6 +10,7 @@ import { formatGeneratedSource } from './formatGeneratedSource.ts';
 
 export async function generateMovementSettingCatalog(args: {
   readonly sourceUrl: string;
+  readonly miscSourceUrl: string;
   readonly output: string;
   readonly check: boolean;
 }) {
@@ -29,7 +30,16 @@ export async function generateMovementSettingCatalog(args: {
     );
   if (typeof preview.text !== 'string')
     throw new Error(`${args.sourceUrl}: missing TypeTree dump text`);
-  const source = parseMovementSettingCatalogDumpSource(preview.text, args.sourceUrl);
+  const miscResponse = await fetch(args.miscSourceUrl);
+  if (!miscResponse.ok) throw new Error(`${args.miscSourceUrl}: HTTP ${miscResponse.status}`);
+  const misc = (await miscResponse.json()) as { asset?: { Container?: unknown }; text?: unknown };
+  if (
+    misc.asset?.Container !==
+      'assets/beyond/dynamicassets/gamedata/gameplayconfig/gameplaymiscsetting.asset' ||
+    typeof misc.text !== 'string'
+  )
+    throw new Error(`${args.miscSourceUrl}: expected GameplayMiscSetting TypeTree dump`);
+  const source = parseMovementSettingCatalogDumpSource(preview.text, args.sourceUrl, misc.text);
   const content = await formatGeneratedSource(
     renderMovementSettingCatalogModule(source),
     args.output,
@@ -51,8 +61,14 @@ function parseArguments(values: readonly string[]) {
     else if (value.startsWith('--')) throw new Error(`unsupported argument ${value}`);
     else positional.push(value);
   }
-  if (positional.length !== 2) throw new Error('expected <VFS preview URL> <output>');
-  return { sourceUrl: positional[0]!, output: path.resolve(positional[1]!), check };
+  if (positional.length !== 3)
+    throw new Error('expected <MovementSetting URL> <GameplayMiscSetting URL> <output>');
+  return {
+    sourceUrl: positional[0]!,
+    miscSourceUrl: positional[1]!,
+    output: path.resolve(positional[2]!),
+    check,
+  };
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

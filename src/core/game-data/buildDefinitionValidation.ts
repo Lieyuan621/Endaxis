@@ -6,7 +6,6 @@ import type { EndaxisProjectDocument, TrackDocument } from '../project/schema';
 import type { ValidationIssue } from '../project/validation';
 import type { GearDefinition, GearSlotType, WeaponDefinition } from './equipmentDefinition';
 import type { OperatorDefinition } from './operatorDefinition';
-import { listSkillGroupDefinitionBindings } from './operatorSkillDefinitions';
 
 type BuildDefinitionIndex = {
   getOperator(
@@ -93,10 +92,10 @@ export function validateProjectBuildDefinitionReferences(
               });
               continue;
             }
-            const skill = listSkillGroupDefinitionBindings(group).find(
-              candidate => candidate.skill.key === source.skillKey,
-            )?.skill;
-            if (skill === undefined) {
+            const present =
+              group.skillIds.includes(source.skillKey) ||
+              group.variants?.some(variant => variant.skillIds.includes(source.skillKey));
+            if (!present) {
               issues.push({
                 path: `${castPath}.skillKey`,
                 message: `unknown skill '${source.skillKey}'`,

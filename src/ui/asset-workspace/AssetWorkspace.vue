@@ -227,17 +227,20 @@ function resourceLabel(resource: WorkspaceDefinitionResource): string {
     );
   }
   if (resource.kind === 'skill' && draft.value.edit.kind === 'operator') {
-    const path = resource.path;
-    if (path[0] === 'dodgeSkill') return t('skillType.dodge');
-    if (path[0] === 'skillGroups') {
-      const group = draft.value.edit.definition.skillGroups[Number(path[1])];
-      if (group) {
-        const parent = fieldValueAt(definition, path.slice(0, -1));
-        const number = Array.isArray(parent) ? ` ${Number(path[path.length - 1]) + 1}` : '';
-        return `${t(skillTypeLabelKey(group.operationType))}${number}`;
+    const operator = draft.value.edit.definition;
+    if (operator.dodgeSkillId === resource.identity) return t('skillType.dodge');
+    for (const group of operator.skillGroups) {
+      for (const ids of [
+        group.skillIds,
+        ...(group.variants ?? []).map(variant => variant.skillIds),
+      ]) {
+        const index = ids.indexOf(resource.identity);
+        if (index >= 0)
+          return `${t(skillTypeLabelKey(group.operationType))}${ids.length > 1 ? ` ${index + 1}` : ''}`;
       }
     }
   }
+
   if (resource.kind === 'operatorUpgrade')
     return `${tr(resource.path[0] === 'talents' ? 'catalog.kinds.talent' : 'catalog.kinds.potential')} ${Number(resource.path[1]) + 1}`;
   return resource.identity;

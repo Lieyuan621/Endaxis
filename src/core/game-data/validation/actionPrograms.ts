@@ -2068,6 +2068,14 @@ function validateCombatStep(
           push(out, `${path}.parameters.nextSkillKeyFromSlot`, "expected 'comboSkill'");
       }
       break;
+    case 'physicsCast':
+      validateTargetQuery(parameters.source, `${path}.parameters.source`, out);
+      requireFiniteNumber(parameters, 'startHeightOffset', `${path}.parameters`, out);
+      requireFiniteNumber(parameters, 'maxDistance', `${path}.parameters`, out);
+      if (typeof parameters.maxDistance === 'number' && parameters.maxDistance <= 0)
+        push(out, `${path}.parameters.maxDistance`, 'expected positive distance');
+      requireString(parameters, 'saveToContextKey', `${path}.parameters`, out);
+      break;
     case 'playAnimation':
       requireFiniteNumber(parameters, 'durationSeconds', `${path}.parameters`, out);
       requireFiniteNumber(parameters, 'blendOutSeconds', `${path}.parameters`, out);
@@ -2254,6 +2262,9 @@ function validateActionChildren(
       recordStep.conditions.forEach((condition, index) =>
         validateCombatCondition(condition, `${path}.conditions[${index}]`, out),
       );
+  } else if (stepKind === 'physicsCast') {
+    validateActionGraphReference(recordStep.whenHit, `${path}.whenHit`, out);
+    validateActionGraphReference(recordStep.whenMiss, `${path}.whenMiss`, out);
   } else if (stepKind === 'ifElse') {
     validateCombatCondition(recordStep.condition, `${path}.condition`, out);
     validateActionGraphReference(recordStep.whenTrue, `${path}.whenTrue`, out);
@@ -2679,6 +2690,10 @@ export function validateActionGraphContexts(
           case 'once':
           case 'repeatEachTick':
             child(action.body, context);
+            break;
+          case 'physicsCast':
+            child(action.whenHit, context);
+            child(action.whenMiss, context);
             break;
           case 'playAnimation':
             child(action.onEnd, context);

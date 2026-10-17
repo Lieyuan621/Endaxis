@@ -57,6 +57,7 @@ it('方案自定义局部图保存重开、Worker 传输和执行中切面恢复
   const operator = gameDataRepository.getOperator('perlica')!;
   const skill = listSkillGroupDefinitionBindings(
     operator.skillGroups.find(group => group.key === 'battleSkill')!,
+    operator,
   )[0]!.skill;
   scenario.tracks[0] = {
     id: 'track:0',

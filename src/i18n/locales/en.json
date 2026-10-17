@@ -523,7 +523,10 @@
       "talents": "Talents",
       "potentials": "Potentials",
       "passiveSkills": "Passive skills",
-      "dodgeSkill": "Dodge skill",
+      "dodgeSkillId": "Dodge skill",
+      "startSkillId": "Starting skill",
+      "endSkillId": "Landing skill",
+      "skillIds": "Skill segments",
       "blackboard": "Initial variables",
       "entityBlackboard": "Initial entity variables",
       "traits": "Traits",
@@ -572,6 +575,7 @@
       "naturalDurationFrames": "Natural skill duration (frames)",
       "exclusiveFrame": "Uninterruptible frames",
       "offsetRecordFrame": "Combo record frame",
+      "dontInterruptCombo": "Preserve basic attack chain",
       "inputWindows": "Input windows",
       "commandMappings": "Basic attack input mapping",
       "input": "Input command",
@@ -610,7 +614,7 @@
       "igniteEventResponses": "Ignite responses",
       "placementSequenceSkillKeys": "Sequential skills",
       "replacementSkills": "Replacement skills",
-      "routedReplacementSkills": "Cross-group routed skills",
+      "routedReplacementSkills": "Skill execution routes",
       "presentationVariants": "Presentation forms"
     },
     "focusSubtree": "Focus this subtree",
@@ -953,6 +957,22 @@
       "callbacks": {
         "name": "Projectile callbacks",
         "help": "Complete callback skills started when the projectile hits, is blocked, reaches, or finishes."
+      },
+      "startHeightOffset": {
+        "name": "Start Height Offset",
+        "help": "Upward offset from the queried object's position."
+      },
+      "maxDistance": {
+        "name": "Maximum Distance",
+        "help": "Maximum distance to cast downwards for the ground."
+      },
+      "whenHit": {
+        "name": "On Ground Hit",
+        "help": "Actions to execute when the cast hits the ground."
+      },
+      "whenMiss": {
+        "name": "On Ground Miss",
+        "help": "Actions to execute when the cast misses the ground."
       },
       "saveToContextKey": {
         "name": "Save to Target Group",
@@ -1696,8 +1716,14 @@
         "name": "Parent Targets",
         "help": "Look for the child targets in this group."
       },
-      "first": { "name": "First Targets", "help": "First query result used in the equality comparison." },
-      "second": { "name": "Second Targets", "help": "Second query result used in the equality comparison." },
+      "first": {
+        "name": "First Targets",
+        "help": "First query result used in the equality comparison."
+      },
+      "second": {
+        "name": "Second Targets",
+        "help": "Second query result used in the equality comparison."
+      },
       "child": {
         "name": "Object to Find",
         "help": "Object to find in the group."
@@ -2132,6 +2158,10 @@
       "checkCondition": {
         "name": "Check Condition",
         "help": "Continue this sequence only when the check succeeds."
+      },
+      "physicsCast": {
+        "name": "Ground Raycast",
+        "help": "Cast downwards from above each queried object, store the ground hit in the target context, and run the hit or miss branch."
       },
       "checkActionResult": {
         "name": "Check Action Result",
@@ -4449,6 +4479,7 @@
         "repeatEachTick": "Repeat each tick",
         "openComboWindow": "Open next combo window",
         "showComboRingQte": "Show precise-link window",
+        "physicsCast": "Ground raycast",
         "listenForCombatEvents": "Listen for combat events",
         "aura": "Aura",
         "copyContextTargets": "Copy target group",

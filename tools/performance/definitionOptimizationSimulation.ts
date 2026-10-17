@@ -164,10 +164,8 @@ export function optimizationSimulationScenario(
     `optimization:${operator.slug}:${level}:${potential}`,
     '生成优化对照',
   );
-  const bindings = listOperatorSkillDefinitionBindings(operator).filter(binding =>
-    includeVariants
-      ? binding.group.replacementSkillPlacements?.[binding.skill.key] !== 'internal'
-      : binding.origin === 'base',
+  const bindings = listOperatorSkillDefinitionBindings(operator).filter(
+    binding => includeVariants || binding.origin === 'base',
   );
   scenario.battle.durationFrames = bindings.length * 210 + 600;
   scenario.enemy.editable.hp = 1_000_000_000;

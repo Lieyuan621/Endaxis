@@ -62,11 +62,12 @@ it('图场景通过 Worker 数据包往返后仍执行技能', async () => {
     talents: [],
     potentials: [],
     comboSkillConditions: [],
+    skills: [graphSkill, ...perlica.skills.filter(skill => skill.key !== graphSkill.key)],
     skillGroups: [
       {
         key: 'battleSkill',
         operationType: 'battleSkill' as const,
-        skills: graphSkill,
+        skillIds: [graphSkill.key],
       },
     ],
   };
@@ -79,7 +80,7 @@ it('图场景通过 Worker 数据包往返后仍执行技能', async () => {
       promoted: true,
       potential: 0,
       trustLevel: 4,
-      skillLevels: { battleSkill: 12 },
+      skillLevels: { basicAttack: 12, battleSkill: 12, comboSkill: 12, ultimate: 12 },
       talentStates: {},
     },
     weapon: null,
@@ -102,12 +103,18 @@ it('图场景通过 Worker 数据包往返后仍执行技能', async () => {
   });
   const worker = {
     postMessage: vi.fn(async (request: SimulationWorkerRequest) => {
-      const restored = restoreScenarioSimulationGameData(request.gameData!);
-      const service = createScenarioSimulationService(restored);
-      const result = await service.simulate(request.scenario, request.endFrame);
-      worker.onmessage?.({
-        data: { id: request.id, ok: true, result: toSimulationWorkerResult(result), samples: [] },
-      } as MessageEvent);
+      try {
+        const restored = restoreScenarioSimulationGameData(request.gameData!);
+        const service = createScenarioSimulationService(restored);
+        const result = await service.simulate(request.scenario, request.endFrame);
+        worker.onmessage?.({
+          data: { id: request.id, ok: true, result: toSimulationWorkerResult(result), samples: [] },
+        } as MessageEvent);
+      } catch (error) {
+        worker.onerror?.({
+          message: error instanceof Error ? error.message : String(error),
+        } as ErrorEvent);
+      }
     }),
     terminate: vi.fn(),
     onmessage: null as ((event: MessageEvent) => void) | null,

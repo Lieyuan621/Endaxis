@@ -662,6 +662,7 @@ export const catcherChr_0020_meurs_power_attack: SkillDefinition = {
   naturalDurationFrames: 135,
   exclusiveFrame: 75,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -1201,6 +1202,7 @@ export const catcherChr_0020_meurs_normal_skill: SkillDefinition = {
   naturalDurationFrames: 373,
   exclusiveFrame: 285,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 95, endFrame: 129, skillIds: ['chr_0020_meurs_normal_skill'] },
@@ -1470,6 +1472,7 @@ export const catcherChr_0020_meurs_combo_skill: SkillDefinition = {
   naturalDurationFrames: 98,
   exclusiveFrame: 45,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 24, endFrame: 60, skillIds: ['chr_0020_meurs_normal_skill'] },
@@ -1789,6 +1792,28 @@ export const catcherCommon_character_perfect_dodge: SkillDefinition = {
   defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
+};
+
+export const catcherChr_0020_meurs_plunging_attack_startActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const catcherChr_0020_meurs_plunging_attack_start: SkillDefinition = {
+  actionGraph: catcherChr_0020_meurs_plunging_attack_startActionGraph,
+  key: 'chr_0020_meurs_plunging_attack_start',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 9,
+  scheduledSequences: [],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
 };
 
 const catcherComboCondition1ActionGraph = {
@@ -2248,32 +2273,47 @@ export const catcher: OperatorDefinition = {
     baseAttack: [30, 88, 148, 209, 270, 300],
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },
+  skills: [
+    catcherChr_0020_meurs_attack1,
+    catcherChr_0020_meurs_attack2,
+    catcherChr_0020_meurs_attack3,
+    catcherChr_0020_meurs_attack4,
+    catcherChr_0020_meurs_power_attack,
+    catcherChr_0020_meurs_plunging_attack_end,
+    catcherChr_0020_meurs_normal_skill,
+    catcherChr_0020_meurs_combo_skill,
+    catcherChr_0020_meurs_ultimate_skill,
+    catcherCommon_character_perfect_dodge,
+    catcherChr_0020_meurs_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        catcherChr_0020_meurs_attack1,
-        catcherChr_0020_meurs_attack2,
-        catcherChr_0020_meurs_attack3,
-        catcherChr_0020_meurs_attack4,
+      skillIds: [
+        'chr_0020_meurs_attack1',
+        'chr_0020_meurs_attack2',
+        'chr_0020_meurs_attack3',
+        'chr_0020_meurs_attack4',
       ],
     },
-    { key: 'finisher', operationType: 'finisher', skills: catcherChr_0020_meurs_power_attack },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0020_meurs_power_attack'] },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: catcherChr_0020_meurs_plunging_attack_end,
+      skillIds: ['chr_0020_meurs_plunging_attack_end'],
     },
-    {
-      key: 'battleSkill',
-      operationType: 'battleSkill',
-      skills: catcherChr_0020_meurs_normal_skill,
-    },
-    { key: 'comboSkill', operationType: 'comboSkill', skills: catcherChr_0020_meurs_combo_skill },
-    { key: 'ultimate', operationType: 'ultimate', skills: catcherChr_0020_meurs_ultimate_skill },
+    { key: 'battleSkill', operationType: 'battleSkill', skillIds: ['chr_0020_meurs_normal_skill'] },
+    { key: 'comboSkill', operationType: 'comboSkill', skillIds: ['chr_0020_meurs_combo_skill'] },
+    { key: 'ultimate', operationType: 'ultimate', skillIds: ['chr_0020_meurs_ultimate_skill'] },
   ],
-  dodgeSkill: catcherCommon_character_perfect_dodge,
+  dodgeSkillId: 'common_character_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0020_meurs_plunging_attack_start',
+    endSkillId: 'chr_0020_meurs_plunging_attack_end',
+    startDurationSeconds: 0.633,
+    endDurationSeconds: 1.267,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
   ],

@@ -28,10 +28,10 @@ const defender: PlayerDamageDefenderSnapshot = {
 
 function findPerlicaBattleSkill(): SkillDefinition {
   const group = perlica.skillGroups.find(candidate => candidate.key === 'battleSkill');
-  if (group === undefined || !('key' in group.skills)) {
+  if (group === undefined || group.skillIds.length !== 1) {
     throw new Error('Perlica battle skill fixture is not singular');
   }
-  return group.skills;
+  return perlica.skills.find(skill => skill.key === group.skillIds[0])!;
 }
 
 function findDamageStep(): ResolvedCombatStepForKind<'dealDamage'> {

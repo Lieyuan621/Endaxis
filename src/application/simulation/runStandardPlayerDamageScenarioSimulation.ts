@@ -44,7 +44,10 @@ import {
 } from '../../core/compiler/compileScenarioRuntimeAssembly';
 import { resolveControlTimeline } from '../../core/project/resolveControlTimeline';
 import type { ScenarioDocument } from '../../core/project/schema';
-import { createNativeDashTimingProgram } from '../../data/combat/battleCommandMappingCatalog';
+import {
+  createNativeDashTimingProgram,
+  createNativePlungingAttackMotion,
+} from '../../data/combat/battleCommandMappingCatalog';
 import { gameplayTagRegistry } from '../../data/combat/gameplayTagCatalog';
 import { GAMEPLAY_TAG_PREDEFINE } from '../../data/combat/gameplayTagPredefine.generated';
 import { timeDilationRuntimeConfig } from '../../data/combat/timeDilationConfig';
@@ -183,6 +186,7 @@ export function prepareStandardPlayerDamageScenarioRuntime(
       comboSkillPendingInterval: skillSettingResources.comboSkillPendingInterval,
       skillAvailabilityTags: new GameplayTagPredefine(GAMEPLAY_TAG_PREDEFINE),
       dashTiming: createNativeDashTimingProgram(),
+      plungingAttackMotion: createNativePlungingAttackMotion(),
       timeDilation: {
         config: timeDilationRuntimeConfig,
       },

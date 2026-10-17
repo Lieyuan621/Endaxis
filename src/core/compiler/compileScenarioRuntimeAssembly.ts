@@ -459,11 +459,11 @@ export function compileScenarioRuntimeAssembly(
       return {
         ...operator,
         definitionSkillPrograms: definitionPrograms.get(operator.operatorId)!,
-        ...(build.operator.dodgeSkill === undefined
+        ...(build.operator.dodgeSkillId === undefined
           ? {}
           : {
               dodgeProgram: {
-                skillId: build.operator.dodgeSkill.key,
+                skillId: build.operator.dodgeSkillId,
                 dashBuffs: build.operator.dashBuffs ?? [],
               },
             }),
@@ -541,12 +541,18 @@ export function compileScenarioRuntimeAssembly(
             }))
           : [],
     },
-    ...(scenario.battle.comboSkillPriority?.enabled ? {
-      comboSkillOrder: [...new Set([
-        ...scenario.battle.comboSkillPriority.operatorOrder.filter(id => operators.some(operator => operator.operatorId === id)),
-        ...operators.map(operator => operator.operatorId),
-      ])],
-    } : {}),
+    ...(scenario.battle.comboSkillPriority?.enabled
+      ? {
+          comboSkillOrder: [
+            ...new Set([
+              ...scenario.battle.comboSkillPriority.operatorOrder.filter(id =>
+                operators.some(operator => operator.operatorId === id),
+              ),
+              ...operators.map(operator => operator.operatorId),
+            ]),
+          ],
+        }
+      : {}),
     ...(options.liveInputInitialFrame === undefined ? {} : { deferInitialInput: true }),
     resources,
     enemy: applyMechanicsToScenarioEnemy(compileScenarioEnemy(scenario.enemy), mechanics),

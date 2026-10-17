@@ -109,51 +109,54 @@ async function run(
       {
         key: 'basicAttack',
         operationType: 'basicAttack',
-        skills: (() => {
-          const actionSpecs: { startFrame: number; action: ActionGraphStep }[] = [
-            ...elements.map((element, index) => ({
-              startFrame: 1 + spacing * index,
-              action: {
-                kind: 'applyElementalInfliction' as const,
-                parameters: { element, isExtra: false },
-              },
-            })),
-            ...(consume === undefined
-              ? []
-              : [120, 180].map(startFrame => ({
-                  startFrame,
-                  action: {
-                    kind: 'finishBuffsByTag' as const,
-                    parameters: {
-                      targets: { kind: 'fixed', target: 'enemy' } as const,
-                      finishSource: { kind: 'source' } as const,
-                      tagQueryType: 'hasAny' as const,
-                      buffTags: [
-                        consume === 'electrification'
-                          ? 'Skill/Character/Common/SpellStatus/Conduct'
-                          : 'Skill/Character/Common/SpellStatus/Corrupt',
-                      ],
-                      reason: 'early' as const,
-                    },
-                  },
-                }))),
-          ];
-          const nodes: Record<string, ActionGraphNode> = {};
-          const scheduledSequences = actionSpecs.map((spec, index) => {
-            const nodeId = `probe-${index}`;
-            nodes[nodeId] = { action: spec.action, next: null };
-            return { startFrame: spec.startFrame, sequence: { $sequence: nodeId } };
-          });
-          return skillFixture({
-            key: 'probe',
-            skillType: 'basicAttack' as const,
-            levelSource: 'basicAttack' as const,
-            timelineBlockFrames: 1500,
-            scheduledSequences,
-            actionGraph: { main: { nodes }, macros: {} },
-          });
-        })(),
+        skillIds: ['probe'],
       },
+    ],
+    skills: [
+      (() => {
+        const actionSpecs: { startFrame: number; action: ActionGraphStep }[] = [
+          ...elements.map((element, index) => ({
+            startFrame: 1 + spacing * index,
+            action: {
+              kind: 'applyElementalInfliction' as const,
+              parameters: { element, isExtra: false },
+            },
+          })),
+          ...(consume === undefined
+            ? []
+            : [120, 180].map(startFrame => ({
+                startFrame,
+                action: {
+                  kind: 'finishBuffsByTag' as const,
+                  parameters: {
+                    targets: { kind: 'fixed', target: 'enemy' } as const,
+                    finishSource: { kind: 'source' } as const,
+                    tagQueryType: 'hasAny' as const,
+                    buffTags: [
+                      consume === 'electrification'
+                        ? 'Skill/Character/Common/SpellStatus/Conduct'
+                        : 'Skill/Character/Common/SpellStatus/Corrupt',
+                    ],
+                    reason: 'early' as const,
+                  },
+                },
+              }))),
+        ];
+        const nodes: Record<string, ActionGraphNode> = {};
+        const scheduledSequences = actionSpecs.map((spec, index) => {
+          const nodeId = `probe-${index}`;
+          nodes[nodeId] = { action: spec.action, next: null };
+          return { startFrame: spec.startFrame, sequence: { $sequence: nodeId } };
+        });
+        return skillFixture({
+          key: 'probe',
+          skillType: 'basicAttack' as const,
+          levelSource: 'basicAttack' as const,
+          timelineBlockFrames: 1500,
+          scheduledSequences,
+          actionGraph: { main: { nodes }, macros: {} },
+        });
+      })(),
     ],
   };
   const scenario = createEmptyScenario('matrix', 'matrix');

@@ -712,6 +712,7 @@ export const daPanChr_0018_dapan_power_attack: SkillDefinition = {
   naturalDurationFrames: 215,
   exclusiveFrame: 46,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -1002,6 +1003,7 @@ export const daPanChr_0018_dapan_normal_skill: SkillDefinition = {
   naturalDurationFrames: 210,
   exclusiveFrame: 65,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 65, endFrame: 89, skillIds: ['chr_0018_dapan_normal_skill'] },
@@ -1018,6 +1020,140 @@ export const daPanChr_0018_dapan_normal_skill: SkillDefinition = {
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
   actionGraph: daPanChr_0018_dapan_normal_skillActionGraph,
+};
+
+export const daPanChr_0018_dapan_combo_skillActionGraph = {
+  main: {
+    nodes: {
+      changeResource_2: {
+        action: {
+          kind: 'changeResource',
+          parameters: {
+            resource: 'ultimateEnergy',
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            coefficient: { kind: 'constant', value: 1 },
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_3: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.4 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 50,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: 'changeResource_2',
+      },
+      dealDamage_4: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'physical',
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            tags: ['comboSkill'],
+            features: ['canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_3' },
+          },
+        },
+        next: 'startTimeDilation_3',
+      },
+      applyPhysicalInfliction_5: {
+        action: {
+          kind: 'applyPhysicalInfliction',
+          parameters: {
+            type: 'crush',
+            target: 'enemy',
+            isExtra: false,
+            damageMultiplier: { kind: 'valueNode', nodeId: 'data_4' },
+            ignoreHitEffect: false,
+          },
+        },
+        next: 'dealDamage_4',
+      },
+      checkCondition_6: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+        },
+        next: 'applyPhysicalInfliction_5',
+      },
+      startTimeDilation_7: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'global',
+            durationSeconds: { kind: 'constant', value: 0.6 },
+            slot: 'unassigned',
+            priority: 30,
+            curve: { kind: 'named', key: 'ComboSkill' },
+            finishByAction: false,
+            ignoredTargets: ['caster'],
+            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+          },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'crush_multi' } },
+      data_5: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const daPanChr_0018_dapan_combo_skill: SkillDefinition = {
+  key: 'chr_0018_dapan_combo_skill',
+  element: 'physical',
+  blackboard: {
+    atk_scale: [2.89, 3.18, 3.47, 3.75, 4.04, 4.33, 4.62, 4.91, 5.2, 5.56, 5.99, 6.5],
+    crush_multi: [1.1, 1.1, 1.1, 1.1, 1.1, 1.1, 1.1, 1.1, 1.15, 1.15, 1.15, 1.2],
+    poise: 15,
+    usp: 10,
+  },
+  timelineBlockFrames: 53,
+  naturalDurationFrames: 146,
+  exclusiveFrame: 52,
+  offsetRecordFrame: 0,
+  dontInterruptCombo: true,
+  inputWindows: {
+    allowedNextSkills: [
+      { startFrame: 24, endFrame: 59, skillIds: ['chr_0018_dapan_normal_skill'] },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 23, endFrame: 26, sequence: { $sequence: 'checkCondition_6' } },
+    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_7' } },
+  ],
+  smartTarget: 'trigger',
+  cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 570],
+  skillType: 'comboSkill',
+  levelSource: 'comboSkill',
+  nativeSkillType: 'comboSkill',
+  actionGraph: daPanChr_0018_dapan_combo_skillActionGraph,
 };
 
 export const daPanChr_0018_dapan_ultimate_skillActionGraph = {
@@ -1295,139 +1431,6 @@ export const daPanChr_0018_dapan_ultimate_skill: SkillDefinition = {
   actionGraph: daPanChr_0018_dapan_ultimate_skillActionGraph,
 };
 
-export const daPanChr_0018_dapan_combo_skillActionGraph = {
-  main: {
-    nodes: {
-      changeResource_2: {
-        action: {
-          kind: 'changeResource',
-          parameters: {
-            resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_1' },
-            coefficient: { kind: 'constant', value: 1 },
-            source: { kind: 'source' },
-            targets: { kind: 'source' },
-          },
-        },
-        next: null,
-      },
-      startTimeDilation_3: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.4 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 50,
-            curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
-          },
-        },
-        next: 'changeResource_2',
-      },
-      dealDamage_4: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'physical',
-            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_3' },
-          },
-        },
-        next: 'startTimeDilation_3',
-      },
-      applyPhysicalInfliction_5: {
-        action: {
-          kind: 'applyPhysicalInfliction',
-          parameters: {
-            type: 'crush',
-            target: 'enemy',
-            isExtra: false,
-            damageMultiplier: { kind: 'valueNode', nodeId: 'data_4' },
-            ignoreHitEffect: false,
-          },
-        },
-        next: 'dealDamage_4',
-      },
-      checkCondition_6: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-        },
-        next: 'applyPhysicalInfliction_5',
-      },
-      startTimeDilation_7: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'global',
-            durationSeconds: { kind: 'constant', value: 0.6 },
-            slot: 'unassigned',
-            priority: 30,
-            curve: { kind: 'named', key: 'ComboSkill' },
-            finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
-          },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'crush_multi' } },
-      data_5: {
-        type: 'boolean',
-        expression: {
-          kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          containsHittableTarget: false,
-          excludeDeadEntity: false,
-          operator: 'greaterOrEqual',
-          value: 1,
-        },
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const daPanChr_0018_dapan_combo_skill: SkillDefinition = {
-  key: 'chr_0018_dapan_combo_skill',
-  element: 'physical',
-  blackboard: {
-    atk_scale: [2.89, 3.18, 3.47, 3.75, 4.04, 4.33, 4.62, 4.91, 5.2, 5.56, 5.99, 6.5],
-    crush_multi: [1.1, 1.1, 1.1, 1.1, 1.1, 1.1, 1.1, 1.1, 1.15, 1.15, 1.15, 1.2],
-    poise: 15,
-    usp: 10,
-  },
-  timelineBlockFrames: 53,
-  naturalDurationFrames: 146,
-  exclusiveFrame: 52,
-  offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 24, endFrame: 59, skillIds: ['chr_0018_dapan_normal_skill'] },
-    ],
-  },
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 23, endFrame: 26, sequence: { $sequence: 'checkCondition_6' } },
-    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_7' } },
-  ],
-  smartTarget: 'trigger',
-  cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 570],
-  skillType: 'comboSkill',
-  levelSource: 'comboSkill',
-  nativeSkillType: 'comboSkill',
-  actionGraph: daPanChr_0018_dapan_combo_skillActionGraph,
-};
-
 export const daPanCommon_character_perfect_dodgeActionGraph = {
   main: { nodes: {} },
   macros: {},
@@ -1446,6 +1449,28 @@ export const daPanCommon_character_perfect_dodge: SkillDefinition = {
   defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
+};
+
+export const daPanChr_0018_dapan_plunging_attack_startActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const daPanChr_0018_dapan_plunging_attack_start: SkillDefinition = {
+  actionGraph: daPanChr_0018_dapan_plunging_attack_startActionGraph,
+  key: 'chr_0018_dapan_plunging_attack_start',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
 };
 
 const daPanComboCondition1ActionGraph = {
@@ -1760,28 +1785,47 @@ export const daPan: OperatorDefinition = {
     baseAttack: [30, 88, 150, 211, 272, 303],
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },
+  skills: [
+    daPanChr_0018_dapan_attack1,
+    daPanChr_0018_dapan_attack2,
+    daPanChr_0018_dapan_attack3,
+    daPanChr_0018_dapan_attack4,
+    daPanChr_0018_dapan_power_attack,
+    daPanChr_0018_dapan_plunging_attack_end,
+    daPanChr_0018_dapan_normal_skill,
+    daPanChr_0018_dapan_combo_skill,
+    daPanChr_0018_dapan_ultimate_skill,
+    daPanCommon_character_perfect_dodge,
+    daPanChr_0018_dapan_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        daPanChr_0018_dapan_attack1,
-        daPanChr_0018_dapan_attack2,
-        daPanChr_0018_dapan_attack3,
-        daPanChr_0018_dapan_attack4,
+      skillIds: [
+        'chr_0018_dapan_attack1',
+        'chr_0018_dapan_attack2',
+        'chr_0018_dapan_attack3',
+        'chr_0018_dapan_attack4',
       ],
     },
-    { key: 'finisher', operationType: 'finisher', skills: daPanChr_0018_dapan_power_attack },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0018_dapan_power_attack'] },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: daPanChr_0018_dapan_plunging_attack_end,
+      skillIds: ['chr_0018_dapan_plunging_attack_end'],
     },
-    { key: 'battleSkill', operationType: 'battleSkill', skills: daPanChr_0018_dapan_normal_skill },
-    { key: 'ultimate', operationType: 'ultimate', skills: daPanChr_0018_dapan_ultimate_skill },
-    { key: 'comboSkill', operationType: 'comboSkill', skills: daPanChr_0018_dapan_combo_skill },
+    { key: 'battleSkill', operationType: 'battleSkill', skillIds: ['chr_0018_dapan_normal_skill'] },
+    { key: 'ultimate', operationType: 'ultimate', skillIds: ['chr_0018_dapan_ultimate_skill'] },
+    { key: 'comboSkill', operationType: 'comboSkill', skillIds: ['chr_0018_dapan_combo_skill'] },
   ],
-  dodgeSkill: daPanCommon_character_perfect_dodge,
+  dodgeSkillId: 'common_character_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0018_dapan_plunging_attack_start',
+    endSkillId: 'chr_0018_dapan_plunging_attack_end',
+    startDurationSeconds: 0.633,
+    endDurationSeconds: 1.267,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
   ],

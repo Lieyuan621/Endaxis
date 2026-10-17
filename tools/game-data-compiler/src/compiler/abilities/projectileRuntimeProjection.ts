@@ -187,6 +187,27 @@ export function createZeroDistanceProjectileProjectionExtensionSource(input: {
         ];
       }
       if (
+        runtime.finishOnBlock &&
+        !runtime.finishOnReach &&
+        launch.projectileSource.targetSource === 'Source' &&
+        launch.projectileSource.targetGroupKey === '' &&
+        isPlainZeroSpaceFixedPoint(launch.target, projectionContext, sourcePath)
+      ) {
+        assertSupportedFirstTickBlockShape(runtime, sourcePath);
+        // 是否注册阻挡回调不改变弹体自身的结束条件。
+        return [
+          {
+            kind: 'launchProjectile',
+            parameters: {
+              inheritActionBlackboard: launch.assignBlackboard,
+              finish: 'firstTickBlock',
+              ...(launch.syncTimeScale ? { syncTimeScale: true } : {}),
+            },
+            callbacks: [],
+          },
+        ];
+      }
+      if (
         launch.projectileSource.targetSource !== 'Source' ||
         launch.projectileSource.targetGroupKey !== '' ||
         runtime.moveModeTypes.get('Default') !== 0 ||

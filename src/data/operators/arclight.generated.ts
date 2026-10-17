@@ -606,6 +606,7 @@ export const arclightChr_0007_ikut_power_attack: SkillDefinition = {
   naturalDurationFrames: 131,
   exclusiveFrame: 68,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -1152,6 +1153,7 @@ export const arclightChr_0007_ikut_normal_skill: SkillDefinition = {
   naturalDurationFrames: 214,
   exclusiveFrame: 164,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 36, endFrame: 60, skillIds: ['chr_0007_ikut_normal_skill'] },
@@ -1177,106 +1179,6 @@ export const arclightChr_0007_ikut_normal_skill: SkillDefinition = {
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
   actionGraph: arclightChr_0007_ikut_normal_skillActionGraph,
-};
-
-export const arclightChr_0007_ikut_ultimate_skillActionGraph = {
-  main: {
-    nodes: {
-      startTimeDilation_1: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: { kind: 'named', key: 'RESETto1' },
-            finishByAction: false,
-            targets: [{ kind: 'owner' }],
-          },
-        },
-        next: null,
-      },
-      startUltimateTimeDilation_2: {
-        action: {
-          kind: 'startUltimateTimeDilation',
-          parameters: {
-            priority: 100,
-            targetScale: { kind: 'constant', value: 0 },
-            ignoredTargets: [],
-          },
-        },
-        next: null,
-      },
-      hideUi_3: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      applyBuff_4: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_common_damage_immune_ult_skill' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'owner' },
-            inheritSourceSkillCastInfo: true,
-            finishByAction: true,
-          },
-        },
-        next: null,
-      },
-      spawnAbilityEntity_5: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            bornAt: { kind: 'owner' },
-            abilityEntityId: 'abilityentity_chr_0007_ikut_ultimate_skill',
-            childSkillId: 'chr_0007_ikut_ultimate_skill_abentity',
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: false,
-          },
-        },
-        next: null,
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const arclightChr_0007_ikut_ultimate_skill: SkillDefinition = {
-  actionGraph: arclightChr_0007_ikut_ultimate_skillActionGraph,
-  key: 'chr_0007_ikut_ultimate_skill',
-  element: 'electric',
-  blackboard: {
-    atk_scale1: [1.56, 1.71, 1.87, 2.02, 2.18, 2.34, 2.49, 2.65, 2.8, 3, 3.23, 3.5],
-    atk_scale2: [2.44, 2.69, 2.93, 3.18, 3.42, 3.67, 3.91, 4.15, 4.4, 4.7, 5.07, 5.5],
-    poise1: [7, 7, 7, 7, 7, 7, 7, 7, 7, 10, 10, 10],
-    poise2: [7, 7, 7, 7, 7, 7, 7, 7, 7, 10, 10, 10],
-  },
-  timelineBlockFrames: 86,
-  naturalDurationFrames: 141,
-  exclusiveFrame: 85,
-  offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 77,
-        endFrame: 89,
-        skillIds: ['chr_0007_ikut_normal_skill', 'chr_0007_ikut_combo_skill'],
-      },
-    ],
-  },
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
-    { startFrame: 0, endFrame: 56, sequence: { $sequence: 'startUltimateTimeDilation_2' } },
-    { startFrame: 0, endFrame: 55, sequence: { $sequence: 'hideUi_3' } },
-    { startFrame: 0, endFrame: 85, sequence: { $sequence: 'applyBuff_4' } },
-    { startFrame: 54, endFrame: 55, sequence: { $sequence: 'spawnAbilityEntity_5' } },
-  ],
-  defaultTarget: 'enemy',
-  cooldownFrames: 450,
-  costs: [{ resource: 'ultimateEnergy', value: 90 }],
-  skillType: 'ultimate',
-  levelSource: 'ultimate',
-  nativeSkillType: 'ultimateSkill',
 };
 
 export const arclightChr_0007_ikut_combo_skillActionGraph = {
@@ -1455,6 +1357,7 @@ export const arclightChr_0007_ikut_combo_skill: SkillDefinition = {
   naturalDurationFrames: 86,
   exclusiveFrame: 37,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [{ startFrame: 27, endFrame: 60, skillIds: ['chr_0007_ikut_normal_skill'] }],
   },
@@ -1475,6 +1378,106 @@ export const arclightChr_0007_ikut_combo_skill: SkillDefinition = {
   actionGraph: arclightChr_0007_ikut_combo_skillActionGraph,
 };
 
+export const arclightChr_0007_ikut_ultimate_skillActionGraph = {
+  main: {
+    nodes: {
+      startTimeDilation_1: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 1 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'RESETto1' },
+            finishByAction: false,
+            targets: [{ kind: 'owner' }],
+          },
+        },
+        next: null,
+      },
+      startUltimateTimeDilation_2: {
+        action: {
+          kind: 'startUltimateTimeDilation',
+          parameters: {
+            priority: 100,
+            targetScale: { kind: 'constant', value: 0 },
+            ignoredTargets: [],
+          },
+        },
+        next: null,
+      },
+      hideUi_3: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      applyBuff_4: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_common_damage_immune_ult_skill' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          },
+        },
+        next: null,
+      },
+      spawnAbilityEntity_5: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'owner' },
+            abilityEntityId: 'abilityentity_chr_0007_ikut_ultimate_skill',
+            childSkillId: 'chr_0007_ikut_ultimate_skill_abentity',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+          },
+        },
+        next: null,
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const arclightChr_0007_ikut_ultimate_skill: SkillDefinition = {
+  actionGraph: arclightChr_0007_ikut_ultimate_skillActionGraph,
+  key: 'chr_0007_ikut_ultimate_skill',
+  element: 'electric',
+  blackboard: {
+    atk_scale1: [1.56, 1.71, 1.87, 2.02, 2.18, 2.34, 2.49, 2.65, 2.8, 3, 3.23, 3.5],
+    atk_scale2: [2.44, 2.69, 2.93, 3.18, 3.42, 3.67, 3.91, 4.15, 4.4, 4.7, 5.07, 5.5],
+    poise1: [7, 7, 7, 7, 7, 7, 7, 7, 7, 10, 10, 10],
+    poise2: [7, 7, 7, 7, 7, 7, 7, 7, 7, 10, 10, 10],
+  },
+  timelineBlockFrames: 86,
+  naturalDurationFrames: 141,
+  exclusiveFrame: 85,
+  offsetRecordFrame: 0,
+  inputWindows: {
+    allowedNextSkills: [
+      {
+        startFrame: 77,
+        endFrame: 89,
+        skillIds: ['chr_0007_ikut_normal_skill', 'chr_0007_ikut_combo_skill'],
+      },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
+    { startFrame: 0, endFrame: 56, sequence: { $sequence: 'startUltimateTimeDilation_2' } },
+    { startFrame: 0, endFrame: 55, sequence: { $sequence: 'hideUi_3' } },
+    { startFrame: 0, endFrame: 85, sequence: { $sequence: 'applyBuff_4' } },
+    { startFrame: 54, endFrame: 55, sequence: { $sequence: 'spawnAbilityEntity_5' } },
+  ],
+  defaultTarget: 'enemy',
+  cooldownFrames: 450,
+  costs: [{ resource: 'ultimateEnergy', value: 90 }],
+  skillType: 'ultimate',
+  levelSource: 'ultimate',
+  nativeSkillType: 'ultimateSkill',
+};
+
 export const arclightCommon_character_perfect_dodgeActionGraph = {
   main: { nodes: {} },
   macros: {},
@@ -1493,6 +1496,28 @@ export const arclightCommon_character_perfect_dodge: SkillDefinition = {
   defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
+};
+
+export const arclightChr_0007_ikut_plunging_attack_startActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const arclightChr_0007_ikut_plunging_attack_start: SkillDefinition = {
+  actionGraph: arclightChr_0007_ikut_plunging_attack_startActionGraph,
+  key: 'chr_0007_ikut_plunging_attack_start',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
 };
 
 const arclightComboCondition1ActionGraph = {
@@ -1810,33 +1835,49 @@ export const arclight: OperatorDefinition = {
     baseAttack: [30, 89, 151, 213, 275, 306],
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },
+  skills: [
+    arclightChr_0007_ikut_attack1,
+    arclightChr_0007_ikut_attack2,
+    arclightChr_0007_ikut_attack3,
+    arclightChr_0007_ikut_attack4,
+    arclightChr_0007_ikut_attack5,
+    arclightChr_0007_ikut_power_attack,
+    arclightChr_0007_ikut_plunging_attack_end,
+    arclightChr_0007_ikut_normal_skill,
+    arclightChr_0007_ikut_combo_skill,
+    arclightChr_0007_ikut_ultimate_skill,
+    arclightCommon_character_perfect_dodge,
+    arclightChr_0007_ikut_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        arclightChr_0007_ikut_attack1,
-        arclightChr_0007_ikut_attack2,
-        arclightChr_0007_ikut_attack3,
-        arclightChr_0007_ikut_attack4,
-        arclightChr_0007_ikut_attack5,
+      skillIds: [
+        'chr_0007_ikut_attack1',
+        'chr_0007_ikut_attack2',
+        'chr_0007_ikut_attack3',
+        'chr_0007_ikut_attack4',
+        'chr_0007_ikut_attack5',
       ],
     },
-    { key: 'finisher', operationType: 'finisher', skills: arclightChr_0007_ikut_power_attack },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0007_ikut_power_attack'] },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: arclightChr_0007_ikut_plunging_attack_end,
+      skillIds: ['chr_0007_ikut_plunging_attack_end'],
     },
-    {
-      key: 'battleSkill',
-      operationType: 'battleSkill',
-      skills: arclightChr_0007_ikut_normal_skill,
-    },
-    { key: 'ultimate', operationType: 'ultimate', skills: arclightChr_0007_ikut_ultimate_skill },
-    { key: 'comboSkill', operationType: 'comboSkill', skills: arclightChr_0007_ikut_combo_skill },
+    { key: 'battleSkill', operationType: 'battleSkill', skillIds: ['chr_0007_ikut_normal_skill'] },
+    { key: 'ultimate', operationType: 'ultimate', skillIds: ['chr_0007_ikut_ultimate_skill'] },
+    { key: 'comboSkill', operationType: 'comboSkill', skillIds: ['chr_0007_ikut_combo_skill'] },
   ],
-  dodgeSkill: arclightCommon_character_perfect_dodge,
+  dodgeSkillId: 'common_character_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0007_ikut_plunging_attack_start',
+    endSkillId: 'chr_0007_ikut_plunging_attack_end',
+    startDurationSeconds: 0.633,
+    endDurationSeconds: 1.267,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
   ],

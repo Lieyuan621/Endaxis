@@ -1,85 +1,74 @@
-import { skillFixture } from '../../test/skillFixture';
 import { describe, expect, it } from 'vitest';
-import type { OperatorDefinition } from '../../../packages/game-data-contract/src/operators';
+import { perlica } from '../../data/operators/perlica.generated';
+import { skillFixture } from '../../test/skillFixture';
 import { editOperatorResources } from './operatorResourceCommands';
 import { validateSkillDefinition } from '../../core/game-data/validateSkillDefinition';
 
-const skill = (key: string) =>
-  skillFixture({
-    key,
-    timelineBlockFrames: 30,
-    scheduledSequences: [],
-    actionGraph: { main: { nodes: {} }, macros: {} },
-  });
 const source = {
+  ...perlica,
+  skills: [
+    skillFixture({
+      timelineBlockFrames: 30,
+      scheduledSequences: [],
+      actionGraph: { main: { nodes: {} }, macros: {} },
+      key: 'one',
+      levelSource: 'battleSkill',
+    }),
+    skillFixture({
+      timelineBlockFrames: 30,
+      scheduledSequences: [],
+      actionGraph: { main: { nodes: {} }, macros: {} },
+      key: 'two',
+      levelSource: 'battleSkill',
+    }),
+  ],
   skillGroups: [
-    {
-      key: 'basicAttack',
-      operationType: 'basicAttack',
-      skills: [skill('one'), skill('two')],
-    },
+    { key: 'basicAttack', operationType: 'basicAttack' as const, skillIds: ['one', 'two'] },
   ],
   talents: [],
   potentials: [],
-} as unknown as OperatorDefinition;
-
-describe('干员内部列表操作', () => {
-  it('新增技能沿用组内技能的等级来源，而不是展示分类', () => {
-    const operator = {
-      ...source,
-      skillGroups: [
-        {
-          key: 'floating',
-          operationType: 'basicAttack' as const,
-          skills: skillFixture({
-            ...skill('floating1'),
-            key: 'floating1',
-            skillType: 'basicAttack',
-            levelSource: 'battleSkill',
-          }),
-        },
-      ],
-    };
-    const added = editOperatorResources(operator, { kind: 'addSkill', group: 0 });
-    expect(added.skillGroups[0]!.skills).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          key: 'custom_skill_1',
-          skillType: 'basicAttack',
-          levelSource: 'battleSkill',
-        }),
-      ]),
-    );
-  });
-  it('新增独立技能，重排保留完整技能，删除不修改原定义', () => {
+};
+describe('干员技能目录与放置引用事务', () => {
+  it('新增使用具体技能的等级源，重排只改引用，删除同时更新目录且不改原定义', () => {
     const added = editOperatorResources(source, { kind: 'addSkill', group: 0 });
-    const addedSkills = added.skillGroups[0]!.skills;
-    if (!Array.isArray(addedSkills)) throw new Error('expected a skill sequence');
-    expect(validateSkillDefinition(addedSkills[2])).toEqual([]);
+    const skill = added.skills.find(skill => skill.key === 'custom_skill_1')!;
+    expect(skill.levelSource).toBe('battleSkill');
+    expect(validateSkillDefinition(skill)).toEqual([]);
     const moved = editOperatorResources(added, { kind: 'moveSkillUp', group: 0, index: 2 });
+    expect(moved.skills).toEqual(added.skills);
+    expect(moved.skillGroups[0]!.skillIds).toEqual(['one', 'custom_skill_1', 'two']);
     const removed = editOperatorResources(moved, { kind: 'removeSkill', group: 0, index: 1 });
-    expect(
-      (moved.skillGroups[0]!.skills as readonly { key: string }[]).map(skill => skill.key),
-    ).toEqual(['one', 'custom_skill_1', 'two']);
-    expect(removed.skillGroups[0]!.skills).toEqual(source.skillGroups[0]!.skills);
-    expect(source.skillGroups[0]!.skills).toHaveLength(2);
+    expect(removed.skills).toEqual(source.skills);
+    expect(removed.skillGroups).toEqual(source.skillGroups);
+    expect(source.skills).toHaveLength(2);
   });
-  it('被引用的技能不能直接删除，失败不改变列表', () => {
+  it('其他输入或技能槽引用的定义不能删除，失败保持原数据', () => {
     const referenced = {
       ...source,
       skillSlots: [{ key: 'battleSkill', baseSkillKey: 'two', replacementSkillKeys: [] }],
-    } as OperatorDefinition;
+    };
     expect(() =>
       editOperatorResources(referenced, { kind: 'removeSkill', group: 0, index: 1 }),
     ).toThrow('skillReferenced');
-    expect(referenced.skillGroups[0]!.skills).toHaveLength(2);
+    expect(referenced.skills).toEqual(source.skills);
+    const shared = {
+      ...source,
+      skillGroups: [
+        ...source.skillGroups,
+        { key: 'other', operationType: 'battleSkill' as const, skillIds: ['two'] },
+      ],
+    };
+    expect(() =>
+      editOperatorResources(shared, { kind: 'removeSkill', group: 0, index: 1 }),
+    ).toThrow('skillReferenced');
   });
-  it('空天赋列表可新增并删除', () => {
+  it('天赋集合编辑不影响技能目录', () => {
     const added = editOperatorResources(source, { kind: 'addUpgrade', collection: 'talents' });
     expect(added.talents).toEqual([{ levels: 1 }]);
     expect(
       editOperatorResources(added, { kind: 'removeUpgrade', collection: 'talents', index: 0 })
         .talents,
     ).toEqual([]);
+    expect(added.skills).toBe(source.skills);
   });
 });

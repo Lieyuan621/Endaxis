@@ -26,6 +26,9 @@ import { listSkillGroupLibraryPlacements } from '../../application/editor/skillG
 import { orderTimelineSkillLibrary } from './library/skillLibraryOrder';
 import { resolveSkillCastStartFrames } from '../../core/project/skillCastPlacement';
 import { resolveOperatorMaxUltimateEnergy } from '../../core/compiler/resolveScenarioResourceRules';
+import { estimatePlungingAttackLandingFrames } from '../../core/combat/skills/plungingAttackMotion';
+import { MOVEMENT_SETTING_DEFAULT } from '../../data/combat/movementSettingCatalog.generated';
+import { PROJECT_FPS } from '../../core/project/schema';
 
 /** UI 投影读取干员定义的最小端口。 */
 export interface TimelineOperatorIndex {
@@ -156,7 +159,7 @@ function projectTrack(
     operator === null || operatorInstance === null
       ? []
       : operator.skillGroups.flatMap(group => {
-          return listSkillGroupLibraryPlacements(group).map(entry => ({
+          return listSkillGroupLibraryPlacements(group, operator).map(entry => ({
             entryKey: entry.entryKey,
             skillGroupKey: group.key,
             ...(entry.variantKey === undefined ? {} : { variantKey: entry.variantKey }),
@@ -165,7 +168,20 @@ function projectTrack(
             groupPlacementSkillKeys: entry.skills.map(skill => skill.key),
             skills: entry.skills.map(skill => ({
               skillKey: skill.key,
-              timelineBlockFrames: skill.timelineBlockFrames,
+              timelineBlockFrames:
+                skill.timelineBlockFrames +
+                (group.operationType === 'plungingAttack' && operator.plungingAttack !== undefined
+                  ? estimatePlungingAttackLandingFrames(
+                      {
+                        ...MOVEMENT_SETTING_DEFAULT,
+                        startDurationSeconds: operator.plungingAttack.startDurationSeconds,
+                        downSpeed:
+                          operator.plungingAttack.downSpeed ??
+                          MOVEMENT_SETTING_DEFAULT.plungingAttackDownSpeed,
+                      },
+                      PROJECT_FPS,
+                    )
+                  : 0),
               source: {
                 kind: 'operatorSkill' as const,
                 skillGroupKey: group.key,

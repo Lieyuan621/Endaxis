@@ -27,7 +27,6 @@ import type {
   OperatorDefinition,
   SkillType,
 } from '../game-data/operatorDefinition';
-import { listSkillGroupDefinitionBindings } from '../game-data/operatorSkillDefinitions';
 import { resolveUniquePlayerActionForSkill } from '../game-data/resolvePlayerActionRoute';
 import type {
   OperatorInstanceDocument,
@@ -112,6 +111,7 @@ export function compileSkillCastPlayerInput(
     frame,
     operatorId,
     skillId: resolved.definition.key,
+    operationType: resolved.group.operationType,
     ...(action === undefined ? {} : { action }),
     castId: cast.id,
     ...(cast.simulationInputs === undefined
@@ -158,19 +158,21 @@ function requireDefinitionLevelSource(
 /** 路由包装器保留施放与支付身份，动作入口统一来自执行体；自定义图优先。 */
 function compileResolvedSkillProgram(
   trackId: string,
-  resolved: ResolvedSkillDefinition,
+  resolved: Pick<ResolvedSkillDefinition, 'definition' | 'custom'> & {
+    readonly group?: ResolvedSkillDefinition['group'];
+  },
   build: OperatorInstanceDocument,
   operator: OperatorDefinition,
   compileDefinition: ReturnType<typeof createOperatorSkillCompiler>,
 ): CompiledSkillProgram {
   const definition = resolved.definition;
-  const route = resolved.group.routedReplacementSkills?.find(
-    replacement => replacement.skill.key === definition.key,
+  const route = operator.routedReplacementSkills?.find(
+    replacement => replacement.skillId === definition.key,
   );
   const compile = (skill: SkillDefinition, level: number) =>
     compileDefinition({
       operatorId: trackId,
-      skillGroupKey: resolved.group.key,
+      skillGroupKey: resolved.group?.key ?? '',
       skillType: requireDefinitionSkillType(
         skill,
         `operator '${operator.slug}' skill '${skill.key}'`,
@@ -178,7 +180,12 @@ function compileResolvedSkillProgram(
       skillLevel: level,
       skill,
     });
-  const wrapper = compile(definition, requireSkillLevel(build, resolved.levelSource));
+  const wrapper = compile(
+    definition,
+    definition.skillType === 'dodge'
+      ? 1
+      : requireSkillLevel(build, requireDefinitionLevelSource(definition, operator.slug)),
+  );
   if (route === undefined) return wrapper;
   const execution = resolveSkillExecutionDefinition(resolved, operator);
   if (execution === definition) return { ...wrapper, executionSkillId: route.executionSkillKey };
@@ -326,31 +333,17 @@ export function compileOperatorDefinitionSkills(
     programs,
     typeof imports === 'function' ? imports : imports === undefined ? undefined : () => imports,
   );
-  const skills = operator.skillGroups.flatMap(group =>
-    listSkillGroupDefinitionBindings(group).map(({ skill }) =>
-      compileResolvedSkillProgram(
-        trackId,
-        {
-          definition: skill,
-          group,
-          levelSource: requireDefinitionLevelSource(skill, operator.slug),
-        },
-        build,
-        operator,
-        compile,
-      ),
+  const skills = operator.skills.map(skill =>
+    compileResolvedSkillProgram(
+      trackId,
+      {
+        definition: skill,
+      },
+      build,
+      operator,
+      compile,
     ),
   );
-  if (operator.dodgeSkill !== undefined)
-    skills.push(
-      compile({
-        operatorId: trackId,
-        skillGroupKey: 'dodge',
-        skillType: 'dodge',
-        skillLevel: 1,
-        skill: operator.dodgeSkill,
-      }),
-    );
   return applyOperatorUpgradeSkillPatches(skills, resolveActiveOperatorUpgrades(build, operator), {
     buildAttributes,
   });
@@ -461,6 +454,19 @@ function compileResolvedTimelineTracks(
             comboConditionPriority: operator.comboSkillPriority ?? 'default',
           }),
       skillSlotGroups: compileSkillSlotGroups(operator),
+      ...(operator.plungingAttack === undefined
+        ? {}
+        : {
+            plungingAttack: {
+              startSkillId: operator.plungingAttack.startSkillId,
+              endSkillId: operator.plungingAttack.endSkillId,
+              startDurationSeconds: operator.plungingAttack.startDurationSeconds,
+              endDurationSeconds: operator.plungingAttack.endDurationSeconds,
+              ...(operator.plungingAttack.downSpeed === undefined
+                ? {}
+                : { downSpeed: operator.plungingAttack.downSpeed }),
+            },
+          }),
       ...(operator.playerActionRoutes === undefined
         ? {}
         : { playerActionRoutes: operator.playerActionRoutes }),

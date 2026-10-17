@@ -153,7 +153,23 @@ export interface ComboOffsetModifierState {
 }
 
 /** 单个干员的技能选择、形态切换和延迟施放数据。 */
+/** 固定地面下落攻击的可恢复垂直运动；不保存定义或回调。 */
+export interface PlungingAttackMotionState {
+  stage: 'jump' | 'pendingStart' | 'start' | 'fall' | 'freeFall' | 'landed';
+  height: number;
+  velocity: number;
+  stageSeconds: number;
+}
+
 export interface AbilitySystemState {
+  plungingAttack: {
+    readonly castId: string;
+    readonly endSkillId: string;
+    readonly inputFrame: number;
+    lastFrame: number;
+    cancelled: boolean;
+    motion: PlungingAttackMotionState;
+  } | null;
   readonly skillSlotReplacements: Map<
     string,
     {
@@ -195,6 +211,7 @@ export interface AbilitySystemState {
 
 export function createAbilitySystemState(): AbilitySystemState {
   return {
+    plungingAttack: null,
     skillSlotReplacements: new Map(),
     nextSkillSlotReplacementId: 0,
     playerActionModeActivations: new Map(),
@@ -265,6 +282,7 @@ export interface SkillExecutionState {
   forceTimelinePayment: boolean;
   preparationCast: boolean;
   reachedOperableBoundaryFrame: number | undefined;
+  executedExclusiveCallback: boolean;
   /** 本帧实际执行的 AllowNextSkillAction 所公开的候选；AbilitySystem 在技能 Tick 后解释玩家路由。 */
   operableBoundaryCandidateFrame: number | undefined;
   readonly operableBoundaryCandidateSkillIds: string[];
@@ -295,6 +313,7 @@ export function createSkillExecutionState(): SkillExecutionState {
     forceTimelinePayment: false,
     preparationCast: false,
     reachedOperableBoundaryFrame: undefined,
+    executedExclusiveCallback: false,
     operableBoundaryCandidateFrame: undefined,
     operableBoundaryCandidateSkillIds: [],
     preparedStartBlackboard: {},

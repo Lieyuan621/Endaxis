@@ -90,12 +90,13 @@ const guardedBuff: SkillBuffDefinition = {
 };
 
 function planned(slug: string, definitions: OperatorBuffDefinitions = {}) {
-  // 生成管线仍是树侧消费；avywenna 生成产物是图形态，剔除图专属字段后作为树夹具基座。
-  const { dodgeSkill: _dodgeSkill, eventHandlers: _eventHandlers, ...base } = avywenna;
+  // 只保留夹具显式声明的技能和效果，避免载体干员的其他程序参与依赖分析。
+  const { dodgeSkillId: _dodgeSkillId, eventHandlers: _eventHandlers, ...base } = avywenna;
   return {
     activeSkills: [{ key: `${slug}-skill` }],
     operator: {
       ...base,
+      skills: [],
       skillGroups: [],
       talents: [],
       potentials: [],
@@ -217,7 +218,8 @@ describe('干员与公共 Buff 共用规划', () => {
     const operator: OperatorDefinition = {
       ...planned('one').operator,
       abilityEntityDefinitions: { fixture: { lifetime: { kind: 'infinite' } } },
-      skillGroups: [{ key: 'spawn', operationType: 'battleSkill', skills: skill }],
+      skills: [skill],
+      skillGroups: [{ key: 'spawn', operationType: 'battleSkill', skillIds: [skill.key] }],
     };
     projectOperatorDefinition.mockReturnValue({ ...planned('one'), operator });
     const equipment = (key: string) =>
@@ -286,7 +288,7 @@ describe('干员与公共 Buff 共用规划', () => {
                 {
                   key: 'spawn',
                   operationType: 'battleSkill',
-                  skills: skill,
+                  skillIds: [skill.key],
                 },
               ],
             }
@@ -538,7 +540,8 @@ describe('干员与公共 Buff 共用规划', () => {
       const operator: OperatorDefinition = {
         ...planned('one').operator,
         abilityEntityDefinitions: { fixture: { lifetime: { kind: 'infinite' } } },
-        skillGroups: [{ key: 'spawn', operationType: 'battleSkill', skills: skill }],
+        skills: [skill],
+        skillGroups: [{ key: 'spawn', operationType: 'battleSkill', skillIds: [skill.key] }],
       };
       const gearSet: GearSetDefinition = {
         slug: 'fixture',
@@ -579,12 +582,8 @@ describe('干员与公共 Buff 共用规划', () => {
       expect(renderOperatorDefinitionFiles).toHaveBeenCalledWith(
         'one',
         expect.objectContaining({
-          skillGroups: [
-            expect.objectContaining({
-              skills: expect.objectContaining({
-                blackboard: withCommonBuffs ? {} : skill.blackboard,
-              }),
-            }),
+          skills: [
+            expect.objectContaining({ blackboard: withCommonBuffs ? {} : skill.blackboard }),
           ],
         }),
         expect.objectContaining({ optimization: expect.objectContaining({ mode: 'apply' }) }),

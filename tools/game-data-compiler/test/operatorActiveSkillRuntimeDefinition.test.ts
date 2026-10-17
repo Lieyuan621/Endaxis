@@ -17,6 +17,7 @@ const context = {
 describe('Operator 主动技能正式运行定义', () => {
   it('把原生操作映射与接续窗口保留到最终技能定义', () => {
     const source = activeSkillFixture('native.attack1');
+    source.dontInterruptCombo = true;
     source.castData = { startCdFrame: 0 };
     source.actionGroupData = {
       timelineActions: [
@@ -74,6 +75,7 @@ describe('Operator 主动技能正式运行定义', () => {
       context,
     });
 
+    expect(definition.dontInterruptCombo).toBe(true);
     expect(definition.inputWindows).toEqual({
       commandMappings: [
         {

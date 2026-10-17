@@ -70,8 +70,8 @@ export function expandLegacyRecursiveSkillSequences(
         const group = operator?.skillGroups.find(candidate => candidate.key === skillGroupKey);
         const variant = group?.variants?.find(candidate => candidate.key === variantKey);
         const policy = variantKey === undefined ? group?.placementPolicy : variant?.placementPolicy;
-        if (group === undefined || policy?.kind !== 'recursiveInput') continue;
-        const skills = resolveSkillGroupPlacementSkills(group, variantKey);
+        if (operator === null || group === undefined || policy?.kind !== 'recursiveInput') continue;
+        const skills = resolveSkillGroupPlacementSkills(group, operator, variantKey);
         const seedCastId = `legacy:${scenario.id}:track:${trackIndex}:cast:${actionIndex}`;
         const extension: RecursiveSkillChain = {
           allowedSkillKeys: skills.map(skill => skill.key),

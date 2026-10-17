@@ -1,13 +1,11 @@
 import type {
   OperatorDefinition,
-  RoutedSkillReplacementDefinition,
   SkillDefinition,
   SkillGroupDefinition,
   SkillGroupVariantDefinition,
 } from './operatorDefinition';
 
-export type OperatorSkillDefinitionOrigin =
-  'base' | 'variant' | 'replacement' | 'routedReplacement';
+export type OperatorSkillDefinitionOrigin = 'base' | 'variant';
 
 /** 一个技能在干员定义中的位置；只保留来源关系，不解释技能库展示或运行时路由。 */
 export interface OperatorSkillDefinitionBinding {
@@ -15,49 +13,42 @@ export interface OperatorSkillDefinitionBinding {
   readonly skill: SkillDefinition;
   readonly origin: OperatorSkillDefinitionOrigin;
   readonly variant?: SkillGroupVariantDefinition;
-  readonly routedReplacement?: RoutedSkillReplacementDefinition;
 }
 
-export function asSkillDefinitions(
-  value: SkillDefinition | readonly SkillDefinition[],
-): readonly SkillDefinition[] {
-  return Array.isArray(value) ? value : [value as SkillDefinition];
+/** 只在当前宿主内解析执行技能；内部技能无需技能库入口。 */
+export function requireOperatorSkill(
+  operator: Pick<OperatorDefinition, 'slug' | 'skills'>,
+  skillId: string,
+): SkillDefinition {
+  const skill = operator.skills.find(candidate => candidate.key === skillId);
+  if (!skill) throw new Error(`operator '${operator.slug}' has no skill '${skillId}'`);
+  return skill;
 }
 
-/** 以契约声明顺序枚举技能组的全部执行定义，包括形态与两类换槽技能。 */
+/** 枚举技能库入口的引用；执行编译直接枚举 operator.skills。 */
 export function listSkillGroupDefinitionBindings(
   group: SkillGroupDefinition,
+  operator: OperatorDefinition,
 ): readonly OperatorSkillDefinitionBinding[] {
   return [
-    ...asSkillDefinitions(group.skills).map(skill => ({
+    ...group.skillIds.map(skillId => ({
       group,
-      skill,
+      skill: requireOperatorSkill(operator, skillId),
       origin: 'base' as const,
     })),
     ...(group.variants ?? []).flatMap(variant =>
-      asSkillDefinitions(variant.skills).map(skill => ({
+      variant.skillIds.map(skillId => ({
         group,
-        skill,
+        skill: requireOperatorSkill(operator, skillId),
         origin: 'variant' as const,
         variant,
       })),
     ),
-    ...(group.replacementSkills ?? []).map(skill => ({
-      group,
-      skill,
-      origin: 'replacement' as const,
-    })),
-    ...(group.routedReplacementSkills ?? []).map(routedReplacement => ({
-      group,
-      skill: routedReplacement.skill,
-      origin: 'routedReplacement' as const,
-      routedReplacement,
-    })),
   ];
 }
 
 export function listOperatorSkillDefinitionBindings(
   operator: OperatorDefinition,
 ): readonly OperatorSkillDefinitionBinding[] {
-  return operator.skillGroups.flatMap(listSkillGroupDefinitionBindings);
+  return operator.skillGroups.flatMap(group => listSkillGroupDefinitionBindings(group, operator));
 }

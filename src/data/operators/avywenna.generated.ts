@@ -5,6 +5,210 @@ import type { SkillDefinition } from '../../../packages/game-data-contract/src/s
 import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs';
 import type { ComboSkillConditionDefinition } from '../../../packages/game-data-contract/src/operators';
 import type { OperatorDefinition } from '../../../packages/game-data-contract/src/operators';
+export const avywennaChr_0012_avywen_combo_skillActionGraph = {
+  main: {
+    nodes: {
+      launchProjectile_1: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
+            finish: 'firstTickBlock',
+            recycleDelaySeconds: 30,
+          },
+          callbacks: [
+            {
+              event: 'block',
+              skill: {
+                skillId: 'chr_0012_avywen_combo_skill_lance_gene',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 900,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { potential_2: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'spawnAbilityEntity_1' } },
+                ],
+                actionGraph: {
+                  main: {
+                    nodes: {
+                      spawnAbilityEntity_1: {
+                        action: {
+                          kind: 'spawnAbilityEntity',
+                          parameters: {
+                            bornAt: { kind: 'fixed', target: 'enemy' },
+                            abilityEntityId: 'abilityentity_chr_0012_avywen_combo_skill_lance',
+                            childSkillId: 'chr_0012_avywen_combo_skill_lance',
+                            inheritActionBlackboard: true,
+                            dieWhenSourceDies: false,
+                          },
+                        },
+                        next: null,
+                      },
+                    },
+                  },
+                  macros: {},
+                },
+              },
+            },
+          ],
+        },
+        next: null,
+      },
+      createSpatialPointTargets_2: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'lance_land_pos3',
+            count: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'launchProjectile_1',
+      },
+      createSpatialPointTargets_3: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'lance_land_pos2',
+            count: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'createSpatialPointTargets_2',
+      },
+      createSpatialPointTargets_4: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'lance_land_pos1',
+            count: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'createSpatialPointTargets_3',
+      },
+      mergeContextTargets_5: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+        },
+        next: null,
+      },
+      changeResource_6: {
+        action: {
+          kind: 'changeResource',
+          parameters: {
+            resource: 'ultimateEnergy',
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            coefficient: { kind: 'constant', value: 1 },
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+          },
+        },
+        next: null,
+      },
+      forEachContextTarget_7: {
+        action: {
+          kind: 'forEachContextTarget',
+          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
+          body: { $sequence: 'changeResource_6' },
+        },
+        next: null,
+      },
+      checkCondition_8: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: 'forEachContextTarget_7',
+      },
+      dealDamage_9: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'electric',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            tags: ['comboSkill'],
+            features: ['canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_4' },
+          },
+        },
+        next: 'checkCondition_8',
+      },
+      startTimeDilation_10: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'global',
+            durationSeconds: { kind: 'constant', value: 0.5 },
+            slot: 'unassigned',
+            priority: 30,
+            curve: { kind: 'named', key: 'ComboSkill' },
+            finishByAction: false,
+            ignoredTargets: ['caster'],
+            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+          },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'talent0_usp' } },
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0012_avywen_talent_0'],
+        },
+      },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const avywennaChr_0012_avywen_combo_skill: SkillDefinition = {
+  key: 'chr_0012_avywen_combo_skill',
+  element: 'electric',
+  blackboard: {
+    atk_scale: [1.69, 1.86, 2.03, 2.19, 2.36, 2.53, 2.7, 2.87, 3.04, 3.25, 3.5, 3.8],
+    poise: 10,
+    potential_2: 0,
+    talent0_usp: 0,
+  },
+  timelineBlockFrames: 41,
+  naturalDurationFrames: 254,
+  exclusiveFrame: 40,
+  offsetRecordFrame: 0,
+  dontInterruptCombo: true,
+  inputWindows: {
+    allowedNextSkills: [
+      { startFrame: 21, endFrame: 68, skillIds: ['chr_0012_avywen_normal_skill'] },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'createSpatialPointTargets_4' } },
+    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'mergeContextTargets_5' } },
+    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'dealDamage_9' } },
+    { startFrame: 0, endFrame: 12, sequence: { $sequence: 'startTimeDilation_10' } },
+  ],
+  defaultTarget: 'owner',
+  cooldownFrames: [390, 390, 390, 390, 390, 390, 390, 390, 390, 390, 390, 360],
+  skillType: 'comboSkill',
+  levelSource: 'comboSkill',
+  nativeSkillType: 'comboSkill',
+  actionGraph: avywennaChr_0012_avywen_combo_skillActionGraph,
+};
+
 export const avywennaChr_0012_avywen_attack1ActionGraph = {
   main: {
     nodes: {
@@ -775,6 +979,7 @@ export const avywennaChr_0012_avywen_power_attack: SkillDefinition = {
   naturalDurationFrames: 207,
   exclusiveFrame: 44,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -1704,6 +1909,7 @@ export const avywennaChr_0012_avywen_normal_skill: SkillDefinition = {
   naturalDurationFrames: 306,
   exclusiveFrame: 38,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 34, endFrame: 60, skillIds: ['chr_0012_avywen_normal_skill'] },
@@ -1725,209 +1931,6 @@ export const avywennaChr_0012_avywen_normal_skill: SkillDefinition = {
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
   actionGraph: avywennaChr_0012_avywen_normal_skillActionGraph,
-};
-
-export const avywennaChr_0012_avywen_combo_skillActionGraph = {
-  main: {
-    nodes: {
-      launchProjectile_1: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickBlock',
-            recycleDelaySeconds: 30,
-          },
-          callbacks: [
-            {
-              event: 'block',
-              skill: {
-                skillId: 'chr_0012_avywen_combo_skill_lance_gene',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 900,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { potential_2: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'spawnAbilityEntity_1' } },
-                ],
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      spawnAbilityEntity_1: {
-                        action: {
-                          kind: 'spawnAbilityEntity',
-                          parameters: {
-                            bornAt: { kind: 'fixed', target: 'enemy' },
-                            abilityEntityId: 'abilityentity_chr_0012_avywen_combo_skill_lance',
-                            childSkillId: 'chr_0012_avywen_combo_skill_lance',
-                            inheritActionBlackboard: true,
-                            dieWhenSourceDies: false,
-                          },
-                        },
-                        next: null,
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-              },
-            },
-          ],
-        },
-        next: null,
-      },
-      createSpatialPointTargets_2: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: {
-            saveToContextKey: 'lance_land_pos3',
-            count: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'launchProjectile_1',
-      },
-      createSpatialPointTargets_3: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: {
-            saveToContextKey: 'lance_land_pos2',
-            count: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'createSpatialPointTargets_2',
-      },
-      createSpatialPointTargets_4: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: {
-            saveToContextKey: 'lance_land_pos1',
-            count: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'createSpatialPointTargets_3',
-      },
-      mergeContextTargets_5: {
-        action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
-        },
-        next: null,
-      },
-      changeResource_6: {
-        action: {
-          kind: 'changeResource',
-          parameters: {
-            resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_1' },
-            coefficient: { kind: 'constant', value: 1 },
-            source: { kind: 'source' },
-            targets: { kind: 'source' },
-          },
-        },
-        next: null,
-      },
-      forEachContextTarget_7: {
-        action: {
-          kind: 'forEachContextTarget',
-          parameters: { targets: { kind: 'fixed', target: 'enemy' } },
-          body: { $sequence: 'changeResource_6' },
-        },
-        next: null,
-      },
-      checkCondition_8: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: 'forEachContextTarget_7',
-      },
-      dealDamage_9: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'electric',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_4' },
-          },
-        },
-        next: 'checkCondition_8',
-      },
-      startTimeDilation_10: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'global',
-            durationSeconds: { kind: 'constant', value: 0.5 },
-            slot: 'unassigned',
-            priority: 30,
-            curve: { kind: 'named', key: 'ComboSkill' },
-            finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
-          },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'talent0_usp' } },
-      data_2: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'source' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-          buffIds: ['buff_chr_0012_avywen_talent_0'],
-        },
-      },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const avywennaChr_0012_avywen_combo_skill: SkillDefinition = {
-  key: 'chr_0012_avywen_combo_skill',
-  element: 'electric',
-  blackboard: {
-    atk_scale: [1.69, 1.86, 2.03, 2.19, 2.36, 2.53, 2.7, 2.87, 3.04, 3.25, 3.5, 3.8],
-    poise: 10,
-    potential_2: 0,
-    talent0_usp: 0,
-  },
-  timelineBlockFrames: 41,
-  naturalDurationFrames: 254,
-  exclusiveFrame: 40,
-  offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 21, endFrame: 68, skillIds: ['chr_0012_avywen_normal_skill'] },
-    ],
-  },
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'createSpatialPointTargets_4' } },
-    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'mergeContextTargets_5' } },
-    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'dealDamage_9' } },
-    { startFrame: 0, endFrame: 12, sequence: { $sequence: 'startTimeDilation_10' } },
-  ],
-  defaultTarget: 'owner',
-  cooldownFrames: [390, 390, 390, 390, 390, 390, 390, 390, 390, 390, 390, 360],
-  skillType: 'comboSkill',
-  levelSource: 'comboSkill',
-  nativeSkillType: 'comboSkill',
-  actionGraph: avywennaChr_0012_avywen_combo_skillActionGraph,
 };
 
 export const avywennaChr_0012_avywen_ultimate_skillActionGraph = {
@@ -2254,6 +2257,28 @@ export const avywennaCommon_character_perfect_dodge: SkillDefinition = {
   nativeSkillType: 'dodge',
 };
 
+export const avywennaChr_0012_avywen_plunging_attack_startActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const avywennaChr_0012_avywen_plunging_attack_start: SkillDefinition = {
+  actionGraph: avywennaChr_0012_avywen_plunging_attack_startActionGraph,
+  key: 'chr_0012_avywen_plunging_attack_start',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
+};
+
 const avywennaComboCondition1ActionGraph = {
   main: {
     nodes: {
@@ -2479,33 +2504,53 @@ export const avywenna: OperatorDefinition = {
     baseAttack: [30, 90, 153, 217, 280, 312],
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },
+  skills: [
+    avywennaChr_0012_avywen_combo_skill,
+    avywennaChr_0012_avywen_attack1,
+    avywennaChr_0012_avywen_attack2,
+    avywennaChr_0012_avywen_attack3,
+    avywennaChr_0012_avywen_attack4,
+    avywennaChr_0012_avywen_attack5,
+    avywennaChr_0012_avywen_power_attack,
+    avywennaChr_0012_avywen_plunging_attack_end,
+    avywennaChr_0012_avywen_normal_skill,
+    avywennaChr_0012_avywen_ultimate_skill,
+    avywennaCommon_character_perfect_dodge,
+    avywennaChr_0012_avywen_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        avywennaChr_0012_avywen_attack1,
-        avywennaChr_0012_avywen_attack2,
-        avywennaChr_0012_avywen_attack3,
-        avywennaChr_0012_avywen_attack4,
-        avywennaChr_0012_avywen_attack5,
+      skillIds: [
+        'chr_0012_avywen_attack1',
+        'chr_0012_avywen_attack2',
+        'chr_0012_avywen_attack3',
+        'chr_0012_avywen_attack4',
+        'chr_0012_avywen_attack5',
       ],
     },
-    { key: 'finisher', operationType: 'finisher', skills: avywennaChr_0012_avywen_power_attack },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0012_avywen_power_attack'] },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: avywennaChr_0012_avywen_plunging_attack_end,
+      skillIds: ['chr_0012_avywen_plunging_attack_end'],
     },
     {
       key: 'battleSkill',
       operationType: 'battleSkill',
-      skills: avywennaChr_0012_avywen_normal_skill,
+      skillIds: ['chr_0012_avywen_normal_skill'],
     },
-    { key: 'comboSkill', operationType: 'comboSkill', skills: avywennaChr_0012_avywen_combo_skill },
-    { key: 'ultimate', operationType: 'ultimate', skills: avywennaChr_0012_avywen_ultimate_skill },
+    { key: 'comboSkill', operationType: 'comboSkill', skillIds: ['chr_0012_avywen_combo_skill'] },
+    { key: 'ultimate', operationType: 'ultimate', skillIds: ['chr_0012_avywen_ultimate_skill'] },
   ],
-  dodgeSkill: avywennaCommon_character_perfect_dodge,
+  dodgeSkillId: 'common_character_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0012_avywen_plunging_attack_start',
+    endSkillId: 'chr_0012_avywen_plunging_attack_end',
+    startDurationSeconds: 0.633,
+    endDurationSeconds: 4.333,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
   ],

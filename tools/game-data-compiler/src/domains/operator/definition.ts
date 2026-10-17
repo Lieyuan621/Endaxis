@@ -90,6 +90,12 @@ export interface OperatorDefinitionAssemblyInput {
     }[];
   };
   readonly dashBuffs?: OperatorDefinition['dashBuffs'];
+  readonly plungingAttack?: Omit<
+    NonNullable<OperatorDefinition['plungingAttack']>,
+    'startSkillId'
+  > & {
+    readonly startSkill: NonNullable<OperatorDefinitionAssemblyInput['dodgeSkill']>;
+  };
   readonly talentBindings: readonly { readonly index: number }[];
   readonly potentialBindings: readonly { readonly level: number }[];
   readonly entityCatalog: CompiledAbilityEntityTemplateCatalogSource;
@@ -199,6 +205,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
   const combatSkills = [
     ...input.activeSkills,
     ...(input.dodgeSkill === undefined ? [] : [input.dodgeSkill]),
+    ...(input.plungingAttack === undefined ? [] : [input.plungingAttack.startSkill]),
   ];
   selectBasicAttackTimelineBlockFrames(compiledDefinitions, skillLibrary.skillGroups);
   selectSingleSkillTimelineBlockFrames(
@@ -316,6 +323,12 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
     return added;
   };
   for (const spawn of combatSkills.flatMap(item => item.abilityEntitySpawns)) {
+    addEntityBinding(spawn);
+  }
+  // 已编译回调也属于技能依赖：事件监听器等叶内子序列可能创建实体。
+  for (const spawn of collectCompiledAbilityEntitySpawns(
+    combatSkills.map(item => item.definition),
+  )) {
     addEntityBinding(spawn);
   }
   const baseRoots = [
@@ -713,7 +726,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       stripSkillGroupCompilationEvidence(definition),
     ]),
   );
-  let dodgeSkill: OperatorDefinition['dodgeSkill'];
+  let dodgeSkill: SkillDefinition | undefined;
   if (input.dodgeSkill !== undefined) {
     const { element, ...definition } = stripSkillGroupCompilationEvidence(
       input.dodgeSkill.definition,
@@ -854,37 +867,17 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       operationType: group.operationType,
       ...(group.placementPolicy === undefined ? {} : { placementPolicy: group.placementPolicy }),
       ...(group.nameKey === undefined ? {} : { nameKey: group.nameKey }),
-      skills:
-        visibleSkillKeys.length === 1
-          ? definitions.get(visibleSkillKeys[0]!)!
-          : visibleSkillKeys.map(key => definitions.get(key)!),
+      skillIds: [
+        ...new Set([
+          ...placementSequenceSkillKeys,
+          ...routedSkillEntries
+            .filter(item => group.replacementPlacements[item.key] !== 'internal')
+            .map(item => item.key),
+        ]),
+      ],
       ...(sequenceReplacementKeys.size > 0 && placementSequenceSkillKeys.length > 1
         ? { placementSequenceSkillKeys }
         : {}),
-      ...(replacementSkillKeys.length === 0
-        ? {}
-        : { replacementSkills: replacementSkillKeys.map(key => definitions.get(key)!) }),
-      ...(runtimeReplacementKeysInGroup.some(key => group.replacementPlacements[key] === 'internal')
-        ? {
-            replacementSkillPlacements: Object.fromEntries(
-              runtimeReplacementKeysInGroup.flatMap(key => {
-                const placement = group.replacementPlacements[key]!;
-                return placement === undefined || placement === 'sequence'
-                  ? []
-                  : [[key, placement] as const];
-              }),
-            ),
-          }
-        : {}),
-      ...(routedSkillEntries.length === 0
-        ? {}
-        : {
-            routedReplacementSkills: routedSkillEntries.map(routed => ({
-              skill: definitions.get(routed.key)!,
-
-              executionSkillKey: routed.targetSkillKey,
-            })),
-          }),
       ...(group.variants.length === 0
         ? {}
         : {
@@ -894,10 +887,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
                 ? {}
                 : { placementPolicy: variant.placementPolicy }),
               ...(variant.nameKey === undefined ? {} : { nameKey: variant.nameKey }),
-              skills:
-                variant.skillKeys.length === 1
-                  ? definitions.get(variant.skillKeys[0]!)!
-                  : variant.skillKeys.map(key => definitions.get(key)!),
+              skillIds: variant.skillKeys,
             })),
           }),
       ...(input.presentationVariants === undefined
@@ -977,8 +967,43 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       const passiveUi = nativePassiveUi ?? productPassiveUi;
       return passiveUi === undefined ? {} : { passiveUi };
     })(),
+    skills: [
+      ...definitions.values(),
+      ...(dodgeSkill === undefined ? [] : [dodgeSkill]),
+      ...(input.plungingAttack === undefined
+        ? []
+        : [
+            {
+              ...stripSkillGroupCompilationEvidence(input.plungingAttack.startSkill.definition),
+              skillType: 'plungingAttack' as const,
+              nativeSkillType: 'attack' as const,
+              levelSource: 'basicAttack' as const,
+            },
+          ]),
+    ],
     skillGroups,
-    ...(dodgeSkill === undefined ? {} : { dodgeSkill }),
+    ...(routedSkills.size === 0
+      ? {}
+      : {
+          routedReplacementSkills: [...routedSkills.values()].map(route => ({
+            skillId: route.key,
+            executionSkillKey: route.targetSkillKey,
+          })),
+        }),
+    ...(dodgeSkill === undefined ? {} : { dodgeSkillId: dodgeSkill.key }),
+    ...(input.plungingAttack === undefined
+      ? {}
+      : {
+          plungingAttack: {
+            startSkillId: input.plungingAttack.startSkill.definition.key,
+            endSkillId: input.plungingAttack.endSkillId,
+            startDurationSeconds: input.plungingAttack.startDurationSeconds,
+            endDurationSeconds: input.plungingAttack.endDurationSeconds,
+            ...(input.plungingAttack.downSpeed === undefined
+              ? {}
+              : { downSpeed: input.plungingAttack.downSpeed }),
+          },
+        }),
     ...(input.dashBuffs === undefined ? {} : { dashBuffs: input.dashBuffs }),
     ...compileOperatorPlayerActionRouting(input, definitions, skillSlotReplacements, [
       ...Object.values(privateBuffs),

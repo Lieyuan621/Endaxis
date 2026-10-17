@@ -31,6 +31,7 @@ export type CompiledOperatorActiveSkillRuntimeDefinitionSource = Readonly<
     | 'naturalDurationFrames'
     | 'cooldownFrames'
     | 'enhancementStateBuffId'
+    | 'dontInterruptCombo'
   > &
     Required<
       Pick<
@@ -103,6 +104,7 @@ export function compileOperatorActiveSkillRuntimeDefinitionSource(input: {
     naturalDurationFrames: Math.max(runtime.durationFrame, 1),
     exclusiveFrame: runtime.exclusiveFrame,
     offsetRecordFrame: runtime.offsetRecordFrame,
+    ...(runtime.dontInterruptCombo ? { dontInterruptCombo: true } : {}),
     allowNextSkillTransitions: runtime.allowNextSkillTransitions,
     ...(runtime.inputWindows === undefined ? {} : { inputWindows: runtime.inputWindows }),
     costFrame,

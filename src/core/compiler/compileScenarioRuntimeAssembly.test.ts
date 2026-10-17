@@ -1,4 +1,3 @@
-import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import { actionSteps } from '../../test/actionProgramMatchers';
 import { createTestBuffReference } from '../combat/buffs/buffTestFixtures';
 
@@ -41,7 +40,7 @@ it('逐帧自定义技能在图干员上保留技能块身份和覆盖黑板', (
     ids: { allocate: () => 'cast:custom-graph' },
   }).scenario;
   const group = perlica.skillGroups.find(value => value.key === 'battleSkill')!;
-  const skill = Array.isArray(group.skills) ? group.skills[0]! : group.skills;
+  const skill = perlica.skills.find(skill => skill.key === group.skillIds[0])!;
   placed.tracks[0]!.skillCasts[0]!.customDefinition = {
     ...skill,
     blackboard: { ...skill.blackboard, custom_marker: 42 },
@@ -192,7 +191,7 @@ describe('compileScenarioRuntimeAssembly', () => {
     expect(combo).toMatchObject({
       operatorId: 'track:0',
       skillType: 'comboSkill',
-      skillGroupKey: 'comboSkill',
+      skillId: 'chr_0004_pelica_combo_skill',
     });
     expect(combo?.cooldownFrames).toBeGreaterThan(0);
     expect(combo).not.toHaveProperty('castId');
@@ -229,16 +228,14 @@ describe('compileScenarioRuntimeAssembly', () => {
       skillSlots: perlica.skillSlots?.map(slot =>
         slot.key === 'comboSkill' ? { ...slot, replacementSkillKeys: ['replacement'] } : slot,
       ),
-      skillGroups: perlica.skillGroups.map(group => {
-        const skills = group.skills;
-        if (group.key !== 'comboSkill' || Array.isArray(skills)) return group;
-        const base = skills as Exclude<typeof skills, readonly unknown[]>;
-        return {
-          ...group,
-          skills: { ...base, cooldownFrames: [60, 90] },
-          replacementSkills: [{ ...base, key: 'replacement', cooldownFrames: [120, 180] }],
-        };
-      }),
+      skills: perlica.skills.flatMap(skill =>
+        skill.key === 'chr_0004_pelica_combo_skill'
+          ? [
+              { ...skill, cooldownFrames: [60, 90] },
+              { ...skill, key: 'replacement', cooldownFrames: [120, 180] },
+            ]
+          : [skill],
+      ),
     };
     const compiled = compileScenarioRuntimeAssembly(scenario, {
       ...settings,
@@ -272,10 +269,9 @@ describe('compileScenarioRuntimeAssembly', () => {
       ids: { allocate: kind => `${kind}:custom` },
     }).scenario;
     const cast = scenario.tracks[0]!.skillCasts[0]!;
-    const skills = perlica.skillGroups.find(group => group.key === 'comboSkill')!.skills;
-    if (Array.isArray(skills)) throw new Error('expected one combo skill');
+    const skill = perlica.skills.find(skill => skill.key === 'chr_0004_pelica_combo_skill')!;
     cast.customDefinition = {
-      ...(skills as Exclude<typeof skills, readonly unknown[]>),
+      ...skill,
       cooldownFrames: 123,
     };
     const compiled = compileScenarioRuntimeAssembly(scenario, options());
@@ -918,11 +914,12 @@ it('无干员总图时，完整运行时使用独立技能和声明式附着 Buf
   };
   placed.tracks[0]!.operator!.talentStates = { 0: 2 };
   const sourceGroup = perlica.skillGroups.find(group => group.key === 'battleSkill')!;
-  if (Array.isArray(sourceGroup.skills)) throw new Error('expected one battle skill');
-  const skill = sourceGroup.skills as SkillDefinition;
+  const skill = perlica.skills.find(skill => skill.key === sourceGroup.skillIds[0])!;
   const operator: OperatorDefinition = {
     ...perlica,
     skillGroups: [sourceGroup],
+    skills: [skill],
+    plungingAttack: undefined,
     skillSlots: perlica.skillSlots!.filter(slot => slot.key === 'battleSkill'),
     buffDefinitions: { 'native-buff': { stackingType: 'unique' as const } },
     abilityEntityDefinitions: {},
@@ -931,7 +928,7 @@ it('无干员总图时，完整运行时使用独立技能和声明式附着 Buf
     eventHandlers: [],
     talents: [{ levels: 2, attachedBuffs: [{ buffId: 'native-buff' }] }],
     potentials: [],
-    dodgeSkill: undefined,
+    dodgeSkillId: undefined,
     entityBlackboardInitializers: [],
   };
   const base = options();

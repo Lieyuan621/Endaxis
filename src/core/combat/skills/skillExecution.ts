@@ -21,6 +21,7 @@ export function beginSkillCast(
   state.forceTimelinePayment = state.preparedForceTimelinePayment;
   state.preparationCast = frame < 0;
   state.reachedOperableBoundaryFrame = undefined;
+  state.executedExclusiveCallback = false;
   state.operableBoundaryCandidateFrame = undefined;
   state.operableBoundaryCandidateSkillIds.length = 0;
   state.inheritedSkillCastInfo = state.preparedSkillCastInfo;

@@ -510,6 +510,7 @@ export const liinoChr_0035_liino_combo_skill: SkillDefinition = {
   naturalDurationFrames: 150,
   exclusiveFrame: 98,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -2212,6 +2213,7 @@ export const liinoChr_0035_liino_power_attack: SkillDefinition = {
   naturalDurationFrames: 219,
   exclusiveFrame: 68,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -4356,6 +4358,50 @@ export const liinoChr_0035_liino_normal_skill: SkillDefinition = {
   actionGraph: liinoChr_0035_liino_normal_skillActionGraph,
 };
 
+export const liinoChr_0035_liino_normal_skill_endActionGraph = {
+  main: {
+    nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0035_liino_skill_end' }],
+            targets: { kind: 'fixed', target: 'caster' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const liinoChr_0035_liino_normal_skill_end: SkillDefinition = {
+  actionGraph: liinoChr_0035_liino_normal_skill_endActionGraph,
+  normalSkillSubType: 'additionalNormalSkill',
+  key: 'chr_0035_liino_normal_skill_end',
+  element: 'electric',
+  blackboard: {},
+  timelineBlockFrames: 1,
+  naturalDurationFrames: 1,
+  exclusiveFrame: 0,
+  offsetRecordFrame: 0,
+  dontInterruptCombo: true,
+  costFrame: 0,
+  scheduledSequences: [],
+  defaultTarget: 'enemy',
+  switchToBuffCast: {
+    currentSkillTypes: ['battleSkill', 'ultimate'],
+    asSkillCast: false,
+    sequence: { $sequence: 'applyBuff_1' },
+  },
+  icon: 'endaxis:operators/liino/battle_02',
+  skillType: 'battleSkill',
+  levelSource: 'battleSkill',
+  nativeSkillType: 'extraActiveSkill',
+};
+
 export const liinoChr_0035_liino_normal_skill_comboActionGraph = {
   main: {
     nodes: {
@@ -4846,49 +4892,6 @@ export const liinoChr_0035_liino_normal_skill_combo: SkillDefinition = {
   levelSource: 'battleSkill',
   nativeSkillType: 'extraActiveSkill',
   actionGraph: liinoChr_0035_liino_normal_skill_comboActionGraph,
-};
-
-export const liinoChr_0035_liino_normal_skill_endActionGraph = {
-  main: {
-    nodes: {
-      applyBuff_1: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0035_liino_skill_end' }],
-            targets: { kind: 'fixed', target: 'caster' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const liinoChr_0035_liino_normal_skill_end: SkillDefinition = {
-  actionGraph: liinoChr_0035_liino_normal_skill_endActionGraph,
-  normalSkillSubType: 'additionalNormalSkill',
-  key: 'chr_0035_liino_normal_skill_end',
-  element: 'electric',
-  blackboard: {},
-  timelineBlockFrames: 1,
-  naturalDurationFrames: 1,
-  exclusiveFrame: 0,
-  offsetRecordFrame: 0,
-  costFrame: 0,
-  scheduledSequences: [],
-  defaultTarget: 'enemy',
-  switchToBuffCast: {
-    currentSkillTypes: ['battleSkill', 'ultimate'],
-    asSkillCast: false,
-    sequence: { $sequence: 'applyBuff_1' },
-  },
-  icon: 'endaxis:operators/liino/battle_02',
-  skillType: 'battleSkill',
-  levelSource: 'battleSkill',
-  nativeSkillType: 'extraActiveSkill',
 };
 
 export const liinoChr_0035_liino_ultimate_skillActionGraph = {
@@ -5506,6 +5509,112 @@ export const liinoCommon_character_perfect_dodge: SkillDefinition = {
   defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
+};
+
+export const liinoChr_0035_liino_plunging_attack_startActionGraph = {
+  main: {
+    nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0035_liino_showhide_attack' }],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+            inheritToNextSkillIds: [
+              'chr_0035_liino_attack4',
+              'chr_0035_liino_attack5',
+              'chr_0035_liino_attack3',
+              'chr_0035_liino_power_attack',
+              'chr_0035_liino_plunging_attack_end',
+            ],
+          },
+        },
+        next: null,
+      },
+      applyBuff_2: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0035_liino_showhide_fire' }],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+            inheritToNextSkillIds: [
+              'chr_0035_liino_normal_skill',
+              'chr_0035_liino_attack4',
+              'chr_0035_liino_attack5',
+            ],
+          },
+        },
+        next: null,
+      },
+      applyBuff_3: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0035_liino_showhide_audio' }],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+            inheritToNextSkillIds: [
+              'chr_0035_liino_normal_skill',
+              'chr_0035_liino_attack4',
+              'chr_0035_liino_attack5',
+              'chr_0035_liino_plunging_attack_end',
+              'chr_0035_liino_attack3',
+            ],
+          },
+        },
+        next: null,
+      },
+      applyBuff_4: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0035_liino_showhide_audio_fire' }],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+            inheritToNextSkillIds: [
+              'chr_0035_liino_normal_skill',
+              'chr_0035_liino_attack4',
+              'chr_0035_liino_attack5',
+            ],
+          },
+        },
+        next: null,
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const liinoChr_0035_liino_plunging_attack_start: SkillDefinition = {
+  actionGraph: liinoChr_0035_liino_plunging_attack_startActionGraph,
+  key: 'chr_0035_liino_plunging_attack_start',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 5, endFrame: 1500, sequence: { $sequence: 'applyBuff_1' } },
+    { startFrame: 13, endFrame: 1500, sequence: { $sequence: 'applyBuff_2' } },
+    { startFrame: 12, endFrame: 1500, sequence: { $sequence: 'applyBuff_3' } },
+    { startFrame: 13, endFrame: 1500, sequence: { $sequence: 'applyBuff_4' } },
+  ],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
 };
 
 const liinoComboCondition1ActionGraph = {
@@ -8525,41 +8634,57 @@ export const liino: OperatorDefinition = {
     normalBuffId: 'buff_chr_0035_liino_normalskill_music_tag',
     ultimateBuffId: 'buff_chr_0035_liino_ultskill_music_tag',
   },
+  skills: [
+    liinoChr_0035_liino_combo_skill,
+    liinoChr_0035_liino_attack1,
+    liinoChr_0035_liino_attack2,
+    liinoChr_0035_liino_attack3,
+    liinoChr_0035_liino_attack4,
+    liinoChr_0035_liino_attack5,
+    liinoChr_0035_liino_power_attack,
+    liinoChr_0035_liino_plunging_attack_end,
+    liinoChr_0035_liino_normal_skill,
+    liinoChr_0035_liino_normal_skill_end,
+    liinoChr_0035_liino_normal_skill_combo,
+    liinoChr_0035_liino_ultimate_skill,
+    liinoCommon_character_perfect_dodge,
+    liinoChr_0035_liino_plunging_attack_start,
+  ],
   skillGroups: [
-    { key: 'comboSkill', operationType: 'comboSkill', skills: liinoChr_0035_liino_combo_skill },
+    { key: 'comboSkill', operationType: 'comboSkill', skillIds: ['chr_0035_liino_combo_skill'] },
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        liinoChr_0035_liino_attack1,
-        liinoChr_0035_liino_attack2,
-        liinoChr_0035_liino_attack3,
-        liinoChr_0035_liino_attack4,
-        liinoChr_0035_liino_attack5,
+      skillIds: [
+        'chr_0035_liino_attack1',
+        'chr_0035_liino_attack2',
+        'chr_0035_liino_attack3',
+        'chr_0035_liino_attack4',
+        'chr_0035_liino_attack5',
       ],
     },
-    { key: 'finisher', operationType: 'finisher', skills: liinoChr_0035_liino_power_attack },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0035_liino_power_attack'] },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: liinoChr_0035_liino_plunging_attack_end,
+      skillIds: ['chr_0035_liino_plunging_attack_end'],
     },
-    {
-      key: 'battleSkill',
-      operationType: 'battleSkill',
-      skills: liinoChr_0035_liino_normal_skill,
-      replacementSkills: [liinoChr_0035_liino_normal_skill_combo],
-      replacementSkillPlacements: { chr_0035_liino_normal_skill_combo: 'internal' },
-    },
+    { key: 'battleSkill', operationType: 'battleSkill', skillIds: ['chr_0035_liino_normal_skill'] },
     {
       key: 'stanceTermination',
       operationType: 'battleSkill',
       nameKey: 'skillNames.stanceTermination',
-      skills: liinoChr_0035_liino_normal_skill_end,
+      skillIds: ['chr_0035_liino_normal_skill_end'],
     },
-    { key: 'ultimate', operationType: 'ultimate', skills: liinoChr_0035_liino_ultimate_skill },
+    { key: 'ultimate', operationType: 'ultimate', skillIds: ['chr_0035_liino_ultimate_skill'] },
   ],
-  dodgeSkill: liinoCommon_character_perfect_dodge,
+  dodgeSkillId: 'common_character_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0035_liino_plunging_attack_start',
+    endSkillId: 'chr_0035_liino_plunging_attack_end',
+    startDurationSeconds: 0.633,
+    endDurationSeconds: 4.333,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
   ],

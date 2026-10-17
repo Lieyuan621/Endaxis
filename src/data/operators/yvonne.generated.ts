@@ -8,6 +8,121 @@ import type {
   ComboSkillConditionDefinition,
 } from '../../../packages/game-data-contract/src/operators';
 import type { OperatorDefinition } from '../../../packages/game-data-contract/src/operators';
+export const yvonneChr_0017_yvonne_combo_skillActionGraph = {
+  main: {
+    nodes: {
+      startTimeDilation_10: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'global',
+            durationSeconds: { kind: 'constant', value: 0.667 },
+            slot: 'unassigned',
+            priority: 30,
+            curve: { kind: 'named', key: 'ComboSkill' },
+            finishByAction: false,
+            ignoredTargets: ['caster'],
+            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_15: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.15 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 30,
+            curve: { kind: 'named', key: 'ComboSkill' },
+            finishByAction: false,
+            targets: [],
+            abilityEntityTargets: [{ kind: 'ownerSpawned' }],
+          },
+        },
+        next: null,
+      },
+      spawnAbilityEntity_opt1: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'context', key: 'cent' },
+            abilityEntityId: 'abilityentity_chr_0017_yvonne_combo_skill',
+            childSkillId: 'chr_0017_yvonne_combo_skill_abilityrange',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+          },
+        },
+        next: null,
+      },
+      createSpatialPointTargets_opt2: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'cent', count: { kind: 'constant', value: 1 } },
+        },
+        next: 'spawnAbilityEntity_opt1',
+      },
+      ifElse_opt3: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: 'createSpatialPointTargets_opt2' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const yvonneChr_0017_yvonne_combo_skill: SkillDefinition = {
+  key: 'chr_0017_yvonne_combo_skill',
+  element: 'cryo',
+  blackboard: {
+    atk_scale_boom: [0.89, 0.98, 1.07, 1.16, 1.25, 1.34, 1.42, 1.51, 1.6, 1.71, 1.85, 2],
+    atk_scale_tick: [0.45, 0.49, 0.54, 0.58, 0.62, 0.67, 0.71, 0.76, 0.8, 0.86, 0.93, 1],
+    duration: 3,
+    has_potential1: 0,
+    interval: 0.75,
+    maxcnt: 4,
+    poise: 10,
+    radius: 4,
+    usp: 10,
+    usp_extra: 10,
+  },
+  timelineBlockFrames: 25,
+  naturalDurationFrames: 130,
+  exclusiveFrame: 24,
+  offsetRecordFrame: 0,
+  dontInterruptCombo: true,
+  inputWindows: {
+    allowedNextSkills: [
+      { startFrame: 19, endFrame: 56, skillIds: ['chr_0017_yvonne_normal_skill'] },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_opt3' } },
+    { startFrame: 0, endFrame: 17, sequence: { $sequence: 'startTimeDilation_10' } },
+    { startFrame: 0, endFrame: 5, sequence: { $sequence: 'startTimeDilation_15' } },
+  ],
+  smartTarget: 'trigger',
+  cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 570, 570, 570, 540],
+  skillType: 'comboSkill',
+  levelSource: 'comboSkill',
+  nativeSkillType: 'comboSkill',
+  actionGraph: yvonneChr_0017_yvonne_combo_skillActionGraph,
+};
+
 export const yvonneChr_0017_yvonne_attack1ActionGraph = {
   main: {
     nodes: {
@@ -1100,6 +1215,792 @@ export const yvonneChr_0017_yvonne_attack5: SkillDefinition = {
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
   actionGraph: yvonneChr_0017_yvonne_attack5ActionGraph,
+};
+
+export const yvonneChr_0017_yvonne_power_attackActionGraph = {
+  main: {
+    nodes: {
+      launchProjectile_1: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
+            finish: 'firstTickReach',
+            recycleDelaySeconds: 0.0333333350718021,
+            hit: { onReach: true, finishOnHit: true },
+          },
+          callbacks: [
+            {
+              event: 'hit',
+              skill: {
+                skillId: 'chr_0017_yvonne_power_attack_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_2' } },
+                ],
+                actionGraph: {
+                  main: {
+                    nodes: {
+                      applyBuff_1: {
+                        action: {
+                          kind: 'applyBuff',
+                          parameters: {
+                            buffs: [{ buffId: 'buff_chr_0017_yvonne_power_attack' }],
+                            targets: { kind: 'fixed', target: 'enemy' },
+                            source: { kind: 'source' },
+                            inheritSourceSkillCastInfo: true,
+                          },
+                        },
+                        next: null,
+                      },
+                      dealDamage_2: {
+                        action: {
+                          kind: 'dealDamage',
+                          parameters: {
+                            damageType: 'cryo',
+                            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+                            calculation: 'breakingAttack',
+                            calculationMultiplier: 0.1,
+                            tags: ['normalAttack', 'powerAttack'],
+                          },
+                        },
+                        next: 'applyBuff_1',
+                      },
+                    },
+                    dataNodes: {
+                      data_1: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'atk_scale' },
+                      },
+                    },
+                  },
+                  macros: {},
+                },
+              },
+            },
+          ],
+        },
+        next: null,
+      },
+      finishBuffsById_2: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'fixed', target: 'enemy' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_chr_0017_yvonne_power_attack'],
+            reason: 'other',
+          },
+        },
+        next: null,
+      },
+      checkCondition_3: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: 'finishBuffsById_2',
+      },
+      gainFinisherSp_4: {
+        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+        next: 'checkCondition_3',
+      },
+      dealDamage_5: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'cryo',
+            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
+            calculation: 'breakingAttack',
+            calculationMultiplier: 0.9,
+            tags: ['normalAttack', 'powerAttack'],
+          },
+        },
+        next: 'gainFinisherSp_4',
+      },
+      startTimeDilation_6: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.5 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: {
+              kind: 'inline',
+              keys: [
+                {
+                  time: 0,
+                  value: 0.7,
+                  inTangent: -8.311591,
+                  outTangent: -8.311591,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 0.1,
+                  value: 0.04752808,
+                  inTangent: -0.01381588,
+                  outTangent: -0.01381588,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 2.675379,
+                  outTangent: 5.233175,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+            },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: null,
+      },
+      checkCondition_7: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+        },
+        next: 'startTimeDilation_6',
+      },
+      checkCondition_8: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+        },
+        next: 'checkCondition_7',
+      },
+      applyBuff_9: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_common_full_immune_medium' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          },
+        },
+        next: null,
+      },
+      applyBuff_10: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_common_power_attack_disable_cast_skill' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'owner' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          compareZeroWhenTargetMissing: false,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0017_yvonne_power_attack'],
+        },
+      },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'fixed', target: 'enemy' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const yvonneChr_0017_yvonne_power_attack: SkillDefinition = {
+  key: 'chr_0017_yvonne_power_attack',
+  element: 'cryo',
+  blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
+  timelineBlockFrames: 46,
+  naturalDurationFrames: 135,
+  exclusiveFrame: 45,
+  offsetRecordFrame: 0,
+  dontInterruptCombo: true,
+  inputWindows: {
+    allowedNextSkills: [
+      {
+        startFrame: 29,
+        endFrame: 47,
+        skillIds: ['chr_0017_yvonne_normal_skill', 'chr_0017_yvonne_combo_skill'],
+      },
+    ],
+  },
+  costFrame: 4,
+  scheduledSequences: [
+    { startFrame: 8, endFrame: 11, sequence: { $sequence: 'launchProjectile_1' } },
+    { startFrame: 28, endFrame: 30, sequence: { $sequence: 'dealDamage_5' } },
+    { startFrame: 29, endFrame: 30, sequence: { $sequence: 'checkCondition_8' } },
+    { startFrame: 0, endFrame: 45, sequence: { $sequence: 'applyBuff_9' } },
+    { startFrame: 0, endFrame: 29, sequence: { $sequence: 'applyBuff_10' } },
+  ],
+  defaultTarget: 'enemy',
+  skillType: 'finisher',
+  levelSource: 'basicAttack',
+  nativeSkillType: 'breakingAttack',
+  actionGraph: yvonneChr_0017_yvonne_power_attackActionGraph,
+};
+
+export const yvonneChr_0017_yvonne_plunging_attack_endActionGraph = {
+  main: {
+    nodes: {
+      changeResource_17: {
+        action: {
+          kind: 'changeResource',
+          parameters: {
+            resource: 'sp',
+            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            coefficient: { kind: 'constant', value: 1 },
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+            onlyMainOperator: true,
+            spGainKind: 'gain',
+            spGainSource: 'default',
+          },
+        },
+        next: null,
+      },
+      ifElse_20: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+          whenTrue: { $sequence: 'changeResource_17' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      dealDamage_21: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'cryo',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            tags: ['normalAttack', 'plungingAttack'],
+          },
+        },
+        next: 'ifElse_20',
+      },
+      dealDamage_4: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'cryo',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            tags: ['normalAttack', 'plungingAttack'],
+            stagger: { kind: 'valueNode', nodeId: 'data_4' },
+          },
+        },
+        next: 'ifElse_20',
+      },
+      applyBuff_5: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_chr_0017_yvonne_potential_5_cd',
+                copiedBlackboardAssignments: { cd: 'cd' },
+              },
+            ],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: 'dealDamage_4',
+      },
+      modifyActionValue_6: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'atk_scale',
+            operation: 'multiply',
+            value: { kind: 'valueNode', nodeId: 'data_5' },
+          },
+        },
+        next: 'applyBuff_5',
+      },
+      ifElse_9: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
+          whenTrue: { $sequence: 'modifyActionValue_6' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      ifElse_14: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
+          whenTrue: { $sequence: 'ifElse_9' },
+          whenFalse: { $sequence: 'dealDamage_21' },
+        },
+        next: null,
+      },
+      checkCondition_13: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
+        },
+        next: null,
+      },
+      ifElse_19: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_10' },
+          whenTrue: { $sequence: 'ifElse_14' },
+          whenFalse: { $sequence: 'dealDamage_21' },
+        },
+        next: null,
+      },
+      ifElse_22: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
+          whenTrue: { $sequence: 'ifElse_19' },
+          whenFalse: { $sequence: 'dealDamage_21' },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'dmg_scale' } },
+      data_6: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_7: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: false,
+          operator: 'equal',
+          value: { kind: 'constant', value: 0 },
+          buffIds: ['buff_chr_0017_yvonne_potential_5_cd'],
+        },
+      },
+      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'prob' } },
+      data_9: {
+        type: 'boolean',
+        expression: { kind: 'probability', probability: { kind: 'valueNode', nodeId: 'data_8' } },
+      },
+      data_10: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_13' } },
+      },
+      data_11: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: false,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0017_yvonne_potential_5'],
+        },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const yvonneChr_0017_yvonne_plunging_attack_end: SkillDefinition = {
+  key: 'chr_0017_yvonne_plunging_attack_end',
+  element: 'cryo',
+  blackboard: {
+    atb: 0,
+    atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
+    cd: 15,
+    dmg_scale: 2.5,
+    poise: 5,
+    prob: 0.5,
+  },
+  timelineBlockFrames: 2,
+  naturalDurationFrames: 130,
+  exclusiveFrame: 20,
+  offsetRecordFrame: 0,
+  inputWindows: {
+    allowedNextSkills: [
+      {
+        startFrame: 2,
+        endFrame: 20,
+        skillIds: [
+          'chr_0017_yvonne_ult_attack3_1',
+          'chr_0017_yvonne_ult_attack3_2',
+          'chr_0017_yvonne_ult_attack_end',
+          'chr_0017_yvonne_ult_attack2_1',
+          'chr_0017_yvonne_ult_attack2_2',
+          'chr_0017_yvonne_attack5',
+          'chr_0017_yvonne_attack4',
+          'chr_0017_yvonne_attack3',
+          'chr_0017_yvonne_attack2',
+        ],
+      },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [{ startFrame: 1, endFrame: 6, sequence: { $sequence: 'ifElse_22' } }],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  levelSource: 'basicAttack',
+  nativeSkillType: 'attack',
+  actionGraph: yvonneChr_0017_yvonne_plunging_attack_endActionGraph,
+};
+
+export const yvonneChr_0017_yvonne_normal_skillActionGraph = {
+  main: {
+    nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_chr_0017_yvonne_normal_skill_projectile',
+                copiedBlackboardAssignments: {
+                  atk_scale: 'atk_scale',
+                  poise: 'poise',
+                  has_potential2: 'has_potential2',
+                  atb_return: 'atb_return',
+                  count: 'count',
+                  atk_scale_layer: 'atk_scale_layer',
+                  usp_base: 'usp_base',
+                  usp_layer: 'usp_layer',
+                  atk_scale2: 'atk_scale2',
+                },
+              },
+            ],
+            targets: { kind: 'source' },
+            source: { kind: 'fixed', target: 'enemy' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          },
+        },
+        next: null,
+      },
+      ifElse_2: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: 'applyBuff_1' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      applyBuff_3: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0017_yvonne_normal_skill_listener' }],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const yvonneChr_0017_yvonne_normal_skill: SkillDefinition = {
+  key: 'chr_0017_yvonne_normal_skill',
+  element: 'cryo',
+  blackboard: {
+    atb_return: 10,
+    atk_scale: [1.11, 1.22, 1.33, 1.44, 1.55, 1.67, 1.78, 1.89, 2, 2.14, 2.3, 2.5],
+    atk_scale_layer: [0.89, 0.98, 1.07, 1.16, 1.24, 1.33, 1.42, 1.51, 1.6, 1.71, 1.85, 2],
+    atk_scale2: [0.67, 0.73, 0.8, 0.87, 0.93, 1, 1.07, 1.13, 1.2, 1.28, 1.38, 1.5],
+    count: 0,
+    has_potential2: 0,
+    poise: 10,
+    usp_base: 10,
+    usp_layer: 30,
+  },
+  timelineBlockFrames: 35,
+  naturalDurationFrames: 150,
+  exclusiveFrame: 34,
+  offsetRecordFrame: 0,
+  dontInterruptCombo: true,
+  inputWindows: {
+    allowedNextSkills: [
+      { startFrame: 34, endFrame: 56, skillIds: ['chr_0017_yvonne_normal_skill'] },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 5, endFrame: 17, sequence: { $sequence: 'ifElse_2' } },
+    { startFrame: 0, endFrame: 2, sequence: { $sequence: 'applyBuff_3' } },
+  ],
+  smartTarget: 'enemy',
+  costs: [{ resource: 'sp', value: 100 }],
+  skillType: 'battleSkill',
+  levelSource: 'battleSkill',
+  nativeSkillType: 'normalSkill',
+  actionGraph: yvonneChr_0017_yvonne_normal_skillActionGraph,
+};
+
+export const yvonneChr_0017_yvonne_ultimate_skillActionGraph = {
+  main: {
+    nodes: {
+      finishBuffsById_1: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'source' },
+            finishSource: { kind: 'source' },
+            buffIds: [
+              'buff_chr_0017_yvonne_ultimate_skill',
+              'buff_chr_0017_yvonne_ultimate_skill_end',
+            ],
+            reason: 'other',
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_2: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 1 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'RESETto1' },
+            finishByAction: false,
+            targets: [{ kind: 'owner' }],
+          },
+        },
+        next: null,
+      },
+      finishBuffsById_3: {
+        action: {
+          kind: 'finishBuffsById',
+          parameters: {
+            targets: { kind: 'owner' },
+            finishSource: { kind: 'source' },
+            buffIds: ['buff_chr_0017_yvonne_dash_attack'],
+            reason: 'other',
+          },
+        },
+        next: null,
+      },
+      applyBuff_6: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_chr_0017_yvonne_ultimate_skill',
+                copiedBlackboardAssignments: {
+                  duration: 'duration',
+                  has_potential4: 'has_potential4',
+                  ex_usp_up: 'ex_usp_up',
+                  has_potential5: 'has_potential5',
+                  atk_up: 'atk_up',
+                  crit_dmg_up: 'crit_dmg_up',
+                },
+              },
+            ],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      restrictUltimateEnergyRecovery_8: {
+        action: {
+          kind: 'restrictUltimateEnergyRecovery',
+          parameters: {
+            target: 'caster',
+            allowedRecoveryTags: ['Skill/Character/chr_0017_yvonne/UltimateEndUsp'],
+            clearUltimateEnergyOnEnd: false,
+          },
+        },
+        next: null,
+      },
+      spawnAbilityEntity_9: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'source' },
+            abilityEntityId: 'abilityentity_chr_0017_yvonne_ultimate_skill3',
+            childSkillId: 'chr_0017_yvonne_ultimate_skill_abilityentity',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+          },
+        },
+        next: null,
+      },
+      spawnAbilityEntity_10: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'source' },
+            abilityEntityId: 'abilityentity_chr_0017_yvonne_ultimate_skill2',
+            childSkillId: 'chr_0017_yvonne_ultimate_skill_abilityentity',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+          },
+        },
+        next: 'spawnAbilityEntity_9',
+      },
+      spawnAbilityEntity_11: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'source' },
+            abilityEntityId: 'abilityentity_chr_0017_yvonne_ultimate_skill',
+            childSkillId: 'chr_0017_yvonne_ultimate_skill_abilityentity',
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+          },
+        },
+        next: 'spawnAbilityEntity_10',
+      },
+      applyBuff_12: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_common_damage_immune_ult_skill' }],
+            targets: { kind: 'source' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+            finishByAction: true,
+          },
+        },
+        next: null,
+      },
+      hideUi_13: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
+      startUltimateTimeDilation_14: {
+        action: {
+          kind: 'startUltimateTimeDilation',
+          parameters: {
+            priority: 100,
+            targetScale: { kind: 'constant', value: 0 },
+            ignoredTargets: [],
+          },
+        },
+        next: null,
+      },
+      ifElse_opt1: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: 'applyBuff_6' },
+          whenFalse: { $sequence: 'applyBuff_6' },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const yvonneChr_0017_yvonne_ultimate_skill: SkillDefinition = {
+  key: 'chr_0017_yvonne_ultimate_skill',
+  element: 'cryo',
+  blackboard: {
+    atk_up: 0.3,
+    crit_dmg_up: 0.15,
+    duration: 7,
+    ex_usp_up: 0.3,
+    has_potential4: 0,
+    has_potential5: 0,
+  },
+  timelineBlockFrames: 65,
+  naturalDurationFrames: 126,
+  exclusiveFrame: 64,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 16, sequence: { $sequence: 'finishBuffsById_1' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_2' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_3' } },
+    { startFrame: 61, endFrame: 80, sequence: { $sequence: 'ifElse_opt1' } },
+    { startFrame: 0, endFrame: 61, sequence: { $sequence: 'restrictUltimateEnergyRecovery_8' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'spawnAbilityEntity_11' } },
+    { startFrame: 0, endFrame: 64, sequence: { $sequence: 'applyBuff_12' } },
+    { startFrame: 0, endFrame: 61, sequence: { $sequence: 'hideUi_13' } },
+    { startFrame: 0, endFrame: 61, sequence: { $sequence: 'startUltimateTimeDilation_14' } },
+  ],
+  defaultTarget: 'enemy',
+  cooldownFrames: 300,
+  costs: [{ resource: 'ultimateEnergy', value: 220 }],
+  enhancementStateBuffId: 'buff_chr_0017_yvonne_ultimate_skill',
+  skillType: 'ultimate',
+  levelSource: 'ultimate',
+  nativeSkillType: 'ultimateSkill',
+  actionGraph: yvonneChr_0017_yvonne_ultimate_skillActionGraph,
 };
 
 export const yvonneChr_0017_yvonne_ult_attack1_1ActionGraph = {
@@ -4058,904 +4959,6 @@ export const yvonneChr_0017_yvonne_ult_attack_end: SkillDefinition = {
   actionGraph: yvonneChr_0017_yvonne_ult_attack_endActionGraph,
 };
 
-export const yvonneChr_0017_yvonne_power_attackActionGraph = {
-  main: {
-    nodes: {
-      launchProjectile_1: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
-            recycleDelaySeconds: 0.0333333350718021,
-            hit: { onReach: true, finishOnHit: true },
-          },
-          callbacks: [
-            {
-              event: 'hit',
-              skill: {
-                skillId: 'chr_0017_yvonne_power_attack_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'dealDamage_2' } },
-                ],
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      applyBuff_1: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffs: [{ buffId: 'buff_chr_0017_yvonne_power_attack' }],
-                            targets: { kind: 'fixed', target: 'enemy' },
-                            source: { kind: 'source' },
-                            inheritSourceSkillCastInfo: true,
-                          },
-                        },
-                        next: null,
-                      },
-                      dealDamage_2: {
-                        action: {
-                          kind: 'dealDamage',
-                          parameters: {
-                            damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                            calculation: 'breakingAttack',
-                            calculationMultiplier: 0.1,
-                            tags: ['normalAttack', 'powerAttack'],
-                          },
-                        },
-                        next: 'applyBuff_1',
-                      },
-                    },
-                    dataNodes: {
-                      data_1: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale' },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-              },
-            },
-          ],
-        },
-        next: null,
-      },
-      finishBuffsById_2: {
-        action: {
-          kind: 'finishBuffsById',
-          parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
-            finishSource: { kind: 'source' },
-            buffIds: ['buff_chr_0017_yvonne_power_attack'],
-            reason: 'other',
-          },
-        },
-        next: null,
-      },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: 'finishBuffsById_2',
-      },
-      gainFinisherSp_4: {
-        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
-        next: 'checkCondition_3',
-      },
-      dealDamage_5: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_2' },
-            calculation: 'breakingAttack',
-            calculationMultiplier: 0.9,
-            tags: ['normalAttack', 'powerAttack'],
-          },
-        },
-        next: 'gainFinisherSp_4',
-      },
-      startTimeDilation_6: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.5 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: {
-              kind: 'inline',
-              keys: [
-                {
-                  time: 0,
-                  value: 0.7,
-                  inTangent: -8.311591,
-                  outTangent: -8.311591,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 0.1,
-                  value: 0.04752808,
-                  inTangent: -0.01381588,
-                  outTangent: -0.01381588,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-                {
-                  time: 1,
-                  value: 1,
-                  inTangent: 2.675379,
-                  outTangent: 5.233175,
-                  weightedMode: 0,
-                  inWeight: 0,
-                  outWeight: 0,
-                },
-              ],
-            },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
-          },
-        },
-        next: null,
-      },
-      checkCondition_7: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: 'startTimeDilation_6',
-      },
-      checkCondition_8: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-        },
-        next: 'checkCondition_7',
-      },
-      applyBuff_9: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_common_full_immune_medium' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'owner' },
-            inheritSourceSkillCastInfo: true,
-            finishByAction: true,
-          },
-        },
-        next: null,
-      },
-      applyBuff_10: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_common_power_attack_disable_cast_skill' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'owner' },
-            inheritSourceSkillCastInfo: true,
-            finishByAction: true,
-          },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          compareZeroWhenTargetMissing: false,
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-          buffIds: ['buff_chr_0017_yvonne_power_attack'],
-        },
-      },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_3: {
-        type: 'boolean',
-        expression: {
-          kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          containsHittableTarget: false,
-          excludeDeadEntity: false,
-          operator: 'greaterOrEqual',
-          value: 1,
-        },
-      },
-      data_4: {
-        type: 'boolean',
-        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const yvonneChr_0017_yvonne_power_attack: SkillDefinition = {
-  key: 'chr_0017_yvonne_power_attack',
-  element: 'cryo',
-  blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
-  timelineBlockFrames: 46,
-  naturalDurationFrames: 135,
-  exclusiveFrame: 45,
-  offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 29,
-        endFrame: 47,
-        skillIds: ['chr_0017_yvonne_normal_skill', 'chr_0017_yvonne_combo_skill'],
-      },
-    ],
-  },
-  costFrame: 4,
-  scheduledSequences: [
-    { startFrame: 8, endFrame: 11, sequence: { $sequence: 'launchProjectile_1' } },
-    { startFrame: 28, endFrame: 30, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 29, endFrame: 30, sequence: { $sequence: 'checkCondition_8' } },
-    { startFrame: 0, endFrame: 45, sequence: { $sequence: 'applyBuff_9' } },
-    { startFrame: 0, endFrame: 29, sequence: { $sequence: 'applyBuff_10' } },
-  ],
-  defaultTarget: 'enemy',
-  skillType: 'finisher',
-  levelSource: 'basicAttack',
-  nativeSkillType: 'breakingAttack',
-  actionGraph: yvonneChr_0017_yvonne_power_attackActionGraph,
-};
-
-export const yvonneChr_0017_yvonne_plunging_attack_endActionGraph = {
-  main: {
-    nodes: {
-      changeResource_17: {
-        action: {
-          kind: 'changeResource',
-          parameters: {
-            resource: 'sp',
-            amount: { kind: 'valueNode', nodeId: 'data_1' },
-            coefficient: { kind: 'constant', value: 1 },
-            source: { kind: 'source' },
-            targets: { kind: 'source' },
-            onlyMainOperator: true,
-            spGainKind: 'gain',
-            spGainSource: 'default',
-          },
-        },
-        next: null,
-      },
-      ifElse_20: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'changeResource_17' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      dealDamage_21: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
-            tags: ['normalAttack', 'plungingAttack'],
-          },
-        },
-        next: 'ifElse_20',
-      },
-      dealDamage_4: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
-            tags: ['normalAttack', 'plungingAttack'],
-            stagger: { kind: 'valueNode', nodeId: 'data_4' },
-          },
-        },
-        next: 'ifElse_20',
-      },
-      applyBuff_5: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [
-              {
-                buffId: 'buff_chr_0017_yvonne_potential_5_cd',
-                copiedBlackboardAssignments: { cd: 'cd' },
-              },
-            ],
-            targets: { kind: 'source' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: 'dealDamage_4',
-      },
-      modifyActionValue_6: {
-        action: {
-          kind: 'modifyActionValue',
-          parameters: {
-            key: 'atk_scale',
-            operation: 'multiply',
-            value: { kind: 'valueNode', nodeId: 'data_5' },
-          },
-        },
-        next: 'applyBuff_5',
-      },
-      ifElse_9: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_6' },
-          whenTrue: { $sequence: 'modifyActionValue_6' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      ifElse_14: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_7' },
-          whenTrue: { $sequence: 'ifElse_9' },
-          whenFalse: { $sequence: 'dealDamage_21' },
-        },
-        next: null,
-      },
-      checkCondition_13: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
-        },
-        next: null,
-      },
-      ifElse_19: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_10' },
-          whenTrue: { $sequence: 'ifElse_14' },
-          whenFalse: { $sequence: 'dealDamage_21' },
-        },
-        next: null,
-      },
-      ifElse_22: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_11' },
-          whenTrue: { $sequence: 'ifElse_19' },
-          whenFalse: { $sequence: 'dealDamage_21' },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-      data_2: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'dmg_scale' } },
-      data_6: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_7: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'source' },
-          compareZeroWhenTargetMissing: false,
-          operator: 'equal',
-          value: { kind: 'constant', value: 0 },
-          buffIds: ['buff_chr_0017_yvonne_potential_5_cd'],
-        },
-      },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'prob' } },
-      data_9: {
-        type: 'boolean',
-        expression: { kind: 'probability', probability: { kind: 'valueNode', nodeId: 'data_8' } },
-      },
-      data_10: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_13' } },
-      },
-      data_11: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'source' },
-          compareZeroWhenTargetMissing: false,
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-          buffIds: ['buff_chr_0017_yvonne_potential_5'],
-        },
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const yvonneChr_0017_yvonne_plunging_attack_end: SkillDefinition = {
-  key: 'chr_0017_yvonne_plunging_attack_end',
-  element: 'cryo',
-  blackboard: {
-    atb: 0,
-    atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
-    cd: 15,
-    dmg_scale: 2.5,
-    poise: 5,
-    prob: 0.5,
-  },
-  timelineBlockFrames: 2,
-  naturalDurationFrames: 130,
-  exclusiveFrame: 20,
-  offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 2,
-        endFrame: 20,
-        skillIds: [
-          'chr_0017_yvonne_ult_attack3_1',
-          'chr_0017_yvonne_ult_attack3_2',
-          'chr_0017_yvonne_ult_attack_end',
-          'chr_0017_yvonne_ult_attack2_1',
-          'chr_0017_yvonne_ult_attack2_2',
-          'chr_0017_yvonne_attack5',
-          'chr_0017_yvonne_attack4',
-          'chr_0017_yvonne_attack3',
-          'chr_0017_yvonne_attack2',
-        ],
-      },
-    ],
-  },
-  costFrame: 0,
-  scheduledSequences: [{ startFrame: 1, endFrame: 6, sequence: { $sequence: 'ifElse_22' } }],
-  defaultTarget: 'enemy',
-  skillType: 'plungingAttack',
-  levelSource: 'basicAttack',
-  nativeSkillType: 'attack',
-  actionGraph: yvonneChr_0017_yvonne_plunging_attack_endActionGraph,
-};
-
-export const yvonneChr_0017_yvonne_normal_skillActionGraph = {
-  main: {
-    nodes: {
-      applyBuff_1: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [
-              {
-                buffId: 'buff_chr_0017_yvonne_normal_skill_projectile',
-                copiedBlackboardAssignments: {
-                  atk_scale: 'atk_scale',
-                  poise: 'poise',
-                  has_potential2: 'has_potential2',
-                  atb_return: 'atb_return',
-                  count: 'count',
-                  atk_scale_layer: 'atk_scale_layer',
-                  usp_base: 'usp_base',
-                  usp_layer: 'usp_layer',
-                  atk_scale2: 'atk_scale2',
-                },
-              },
-            ],
-            targets: { kind: 'source' },
-            source: { kind: 'fixed', target: 'enemy' },
-            inheritSourceSkillCastInfo: true,
-            finishByAction: true,
-          },
-        },
-        next: null,
-      },
-      ifElse_2: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_1' },
-          whenTrue: { $sequence: 'applyBuff_1' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-      applyBuff_3: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0017_yvonne_normal_skill_listener' }],
-            targets: { kind: 'source' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const yvonneChr_0017_yvonne_normal_skill: SkillDefinition = {
-  key: 'chr_0017_yvonne_normal_skill',
-  element: 'cryo',
-  blackboard: {
-    atb_return: 10,
-    atk_scale: [1.11, 1.22, 1.33, 1.44, 1.55, 1.67, 1.78, 1.89, 2, 2.14, 2.3, 2.5],
-    atk_scale_layer: [0.89, 0.98, 1.07, 1.16, 1.24, 1.33, 1.42, 1.51, 1.6, 1.71, 1.85, 2],
-    atk_scale2: [0.67, 0.73, 0.8, 0.87, 0.93, 1, 1.07, 1.13, 1.2, 1.28, 1.38, 1.5],
-    count: 0,
-    has_potential2: 0,
-    poise: 10,
-    usp_base: 10,
-    usp_layer: 30,
-  },
-  timelineBlockFrames: 35,
-  naturalDurationFrames: 150,
-  exclusiveFrame: 34,
-  offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 34, endFrame: 56, skillIds: ['chr_0017_yvonne_normal_skill'] },
-    ],
-  },
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 5, endFrame: 17, sequence: { $sequence: 'ifElse_2' } },
-    { startFrame: 0, endFrame: 2, sequence: { $sequence: 'applyBuff_3' } },
-  ],
-  smartTarget: 'enemy',
-  costs: [{ resource: 'sp', value: 100 }],
-  skillType: 'battleSkill',
-  levelSource: 'battleSkill',
-  nativeSkillType: 'normalSkill',
-  actionGraph: yvonneChr_0017_yvonne_normal_skillActionGraph,
-};
-
-export const yvonneChr_0017_yvonne_ultimate_skillActionGraph = {
-  main: {
-    nodes: {
-      finishBuffsById_1: {
-        action: {
-          kind: 'finishBuffsById',
-          parameters: {
-            targets: { kind: 'source' },
-            finishSource: { kind: 'source' },
-            buffIds: [
-              'buff_chr_0017_yvonne_ultimate_skill',
-              'buff_chr_0017_yvonne_ultimate_skill_end',
-            ],
-            reason: 'other',
-          },
-        },
-        next: null,
-      },
-      startTimeDilation_2: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 1 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: { kind: 'named', key: 'RESETto1' },
-            finishByAction: false,
-            targets: [{ kind: 'owner' }],
-          },
-        },
-        next: null,
-      },
-      finishBuffsById_3: {
-        action: {
-          kind: 'finishBuffsById',
-          parameters: {
-            targets: { kind: 'owner' },
-            finishSource: { kind: 'source' },
-            buffIds: ['buff_chr_0017_yvonne_dash_attack'],
-            reason: 'other',
-          },
-        },
-        next: null,
-      },
-      applyBuff_6: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [
-              {
-                buffId: 'buff_chr_0017_yvonne_ultimate_skill',
-                copiedBlackboardAssignments: {
-                  duration: 'duration',
-                  has_potential4: 'has_potential4',
-                  ex_usp_up: 'ex_usp_up',
-                  has_potential5: 'has_potential5',
-                  atk_up: 'atk_up',
-                  crit_dmg_up: 'crit_dmg_up',
-                },
-              },
-            ],
-            targets: { kind: 'source' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-      restrictUltimateEnergyRecovery_8: {
-        action: {
-          kind: 'restrictUltimateEnergyRecovery',
-          parameters: {
-            target: 'caster',
-            allowedRecoveryTags: ['Skill/Character/chr_0017_yvonne/UltimateEndUsp'],
-            clearUltimateEnergyOnEnd: false,
-          },
-        },
-        next: null,
-      },
-      spawnAbilityEntity_9: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            bornAt: { kind: 'source' },
-            abilityEntityId: 'abilityentity_chr_0017_yvonne_ultimate_skill3',
-            childSkillId: 'chr_0017_yvonne_ultimate_skill_abilityentity',
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: false,
-          },
-        },
-        next: null,
-      },
-      spawnAbilityEntity_10: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            bornAt: { kind: 'source' },
-            abilityEntityId: 'abilityentity_chr_0017_yvonne_ultimate_skill2',
-            childSkillId: 'chr_0017_yvonne_ultimate_skill_abilityentity',
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: false,
-          },
-        },
-        next: 'spawnAbilityEntity_9',
-      },
-      spawnAbilityEntity_11: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            bornAt: { kind: 'source' },
-            abilityEntityId: 'abilityentity_chr_0017_yvonne_ultimate_skill',
-            childSkillId: 'chr_0017_yvonne_ultimate_skill_abilityentity',
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: false,
-          },
-        },
-        next: 'spawnAbilityEntity_10',
-      },
-      applyBuff_12: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_common_damage_immune_ult_skill' }],
-            targets: { kind: 'source' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-            finishByAction: true,
-          },
-        },
-        next: null,
-      },
-      hideUi_13: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      startUltimateTimeDilation_14: {
-        action: {
-          kind: 'startUltimateTimeDilation',
-          parameters: {
-            priority: 100,
-            targetScale: { kind: 'constant', value: 0 },
-            ignoredTargets: [],
-          },
-        },
-        next: null,
-      },
-      ifElse_opt1: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_1' },
-          whenTrue: { $sequence: 'applyBuff_6' },
-          whenFalse: { $sequence: 'applyBuff_6' },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const yvonneChr_0017_yvonne_ultimate_skill: SkillDefinition = {
-  key: 'chr_0017_yvonne_ultimate_skill',
-  element: 'cryo',
-  blackboard: {
-    atk_up: 0.3,
-    crit_dmg_up: 0.15,
-    duration: 7,
-    ex_usp_up: 0.3,
-    has_potential4: 0,
-    has_potential5: 0,
-  },
-  timelineBlockFrames: 65,
-  naturalDurationFrames: 126,
-  exclusiveFrame: 64,
-  offsetRecordFrame: 0,
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 0, endFrame: 16, sequence: { $sequence: 'finishBuffsById_1' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_2' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_3' } },
-    { startFrame: 61, endFrame: 80, sequence: { $sequence: 'ifElse_opt1' } },
-    { startFrame: 0, endFrame: 61, sequence: { $sequence: 'restrictUltimateEnergyRecovery_8' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'spawnAbilityEntity_11' } },
-    { startFrame: 0, endFrame: 64, sequence: { $sequence: 'applyBuff_12' } },
-    { startFrame: 0, endFrame: 61, sequence: { $sequence: 'hideUi_13' } },
-    { startFrame: 0, endFrame: 61, sequence: { $sequence: 'startUltimateTimeDilation_14' } },
-  ],
-  defaultTarget: 'enemy',
-  cooldownFrames: 300,
-  costs: [{ resource: 'ultimateEnergy', value: 220 }],
-  enhancementStateBuffId: 'buff_chr_0017_yvonne_ultimate_skill',
-  skillType: 'ultimate',
-  levelSource: 'ultimate',
-  nativeSkillType: 'ultimateSkill',
-  actionGraph: yvonneChr_0017_yvonne_ultimate_skillActionGraph,
-};
-
-export const yvonneChr_0017_yvonne_combo_skillActionGraph = {
-  main: {
-    nodes: {
-      startTimeDilation_10: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'global',
-            durationSeconds: { kind: 'constant', value: 0.667 },
-            slot: 'unassigned',
-            priority: 30,
-            curve: { kind: 'named', key: 'ComboSkill' },
-            finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
-          },
-        },
-        next: null,
-      },
-      startTimeDilation_15: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.15 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 30,
-            curve: { kind: 'named', key: 'ComboSkill' },
-            finishByAction: false,
-            targets: [],
-            abilityEntityTargets: [{ kind: 'ownerSpawned' }],
-          },
-        },
-        next: null,
-      },
-      spawnAbilityEntity_opt1: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            bornAt: { kind: 'context', key: 'cent' },
-            abilityEntityId: 'abilityentity_chr_0017_yvonne_combo_skill',
-            childSkillId: 'chr_0017_yvonne_combo_skill_abilityrange',
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: false,
-          },
-        },
-        next: null,
-      },
-      createSpatialPointTargets_opt2: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'cent', count: { kind: 'constant', value: 1 } },
-        },
-        next: 'spawnAbilityEntity_opt1',
-      },
-      ifElse_opt3: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_1' },
-          whenTrue: { $sequence: 'createSpatialPointTargets_opt2' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const yvonneChr_0017_yvonne_combo_skill: SkillDefinition = {
-  key: 'chr_0017_yvonne_combo_skill',
-  element: 'cryo',
-  blackboard: {
-    atk_scale_boom: [0.89, 0.98, 1.07, 1.16, 1.25, 1.34, 1.42, 1.51, 1.6, 1.71, 1.85, 2],
-    atk_scale_tick: [0.45, 0.49, 0.54, 0.58, 0.62, 0.67, 0.71, 0.76, 0.8, 0.86, 0.93, 1],
-    duration: 3,
-    has_potential1: 0,
-    interval: 0.75,
-    maxcnt: 4,
-    poise: 10,
-    radius: 4,
-    usp: 10,
-    usp_extra: 10,
-  },
-  timelineBlockFrames: 25,
-  naturalDurationFrames: 130,
-  exclusiveFrame: 24,
-  offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 19, endFrame: 56, skillIds: ['chr_0017_yvonne_normal_skill'] },
-    ],
-  },
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_opt3' } },
-    { startFrame: 0, endFrame: 17, sequence: { $sequence: 'startTimeDilation_10' } },
-    { startFrame: 0, endFrame: 5, sequence: { $sequence: 'startTimeDilation_15' } },
-  ],
-  smartTarget: 'trigger',
-  cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 570, 570, 570, 540],
-  skillType: 'comboSkill',
-  levelSource: 'comboSkill',
-  nativeSkillType: 'comboSkill',
-  actionGraph: yvonneChr_0017_yvonne_combo_skillActionGraph,
-};
-
 export const yvonneCommon_character_perfect_dodgeActionGraph = {
   main: { nodes: {} },
   macros: {},
@@ -4974,6 +4977,28 @@ export const yvonneCommon_character_perfect_dodge: SkillDefinition = {
   defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
+};
+
+export const yvonneChr_0017_yvonne_plunging_attack_startActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const yvonneChr_0017_yvonne_plunging_attack_start: SkillDefinition = {
+  actionGraph: yvonneChr_0017_yvonne_plunging_attack_startActionGraph,
+  key: 'chr_0017_yvonne_plunging_attack_start',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
 };
 
 const yvonnePassive1ActionGraph = {
@@ -7362,16 +7387,36 @@ export const yvonne: OperatorDefinition = {
     baseAttack: [30, 92, 157, 223, 288, 321],
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },
+  skills: [
+    yvonneChr_0017_yvonne_combo_skill,
+    yvonneChr_0017_yvonne_attack1,
+    yvonneChr_0017_yvonne_attack2,
+    yvonneChr_0017_yvonne_attack3,
+    yvonneChr_0017_yvonne_attack4,
+    yvonneChr_0017_yvonne_attack5,
+    yvonneChr_0017_yvonne_power_attack,
+    yvonneChr_0017_yvonne_plunging_attack_end,
+    yvonneChr_0017_yvonne_normal_skill,
+    yvonneChr_0017_yvonne_ultimate_skill,
+    yvonneChr_0017_yvonne_ult_attack1_1,
+    yvonneChr_0017_yvonne_ult_attack2_1,
+    yvonneChr_0017_yvonne_ult_attack2_2,
+    yvonneChr_0017_yvonne_ult_attack3_1,
+    yvonneChr_0017_yvonne_ult_attack3_2,
+    yvonneChr_0017_yvonne_ult_attack_end,
+    yvonneCommon_character_perfect_dodge,
+    yvonneChr_0017_yvonne_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        yvonneChr_0017_yvonne_attack1,
-        yvonneChr_0017_yvonne_attack2,
-        yvonneChr_0017_yvonne_attack3,
-        yvonneChr_0017_yvonne_attack4,
-        yvonneChr_0017_yvonne_attack5,
+      skillIds: [
+        'chr_0017_yvonne_attack1',
+        'chr_0017_yvonne_attack2',
+        'chr_0017_yvonne_attack3',
+        'chr_0017_yvonne_attack4',
+        'chr_0017_yvonne_attack5',
       ],
     },
     {
@@ -7385,30 +7430,36 @@ export const yvonne: OperatorDefinition = {
         fallback: 'sequence',
       },
       nameKey: 'skillNames.enhanced',
-      skills: [
-        yvonneChr_0017_yvonne_ult_attack1_1,
-        yvonneChr_0017_yvonne_ult_attack2_1,
-        yvonneChr_0017_yvonne_ult_attack2_2,
-        yvonneChr_0017_yvonne_ult_attack3_1,
-        yvonneChr_0017_yvonne_ult_attack3_2,
-        yvonneChr_0017_yvonne_ult_attack_end,
+      skillIds: [
+        'chr_0017_yvonne_ult_attack1_1',
+        'chr_0017_yvonne_ult_attack2_1',
+        'chr_0017_yvonne_ult_attack2_2',
+        'chr_0017_yvonne_ult_attack3_1',
+        'chr_0017_yvonne_ult_attack3_2',
+        'chr_0017_yvonne_ult_attack_end',
       ],
     },
-    { key: 'finisher', operationType: 'finisher', skills: yvonneChr_0017_yvonne_power_attack },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0017_yvonne_power_attack'] },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: yvonneChr_0017_yvonne_plunging_attack_end,
+      skillIds: ['chr_0017_yvonne_plunging_attack_end'],
     },
     {
       key: 'battleSkill',
       operationType: 'battleSkill',
-      skills: yvonneChr_0017_yvonne_normal_skill,
+      skillIds: ['chr_0017_yvonne_normal_skill'],
     },
-    { key: 'ultimate', operationType: 'ultimate', skills: yvonneChr_0017_yvonne_ultimate_skill },
-    { key: 'comboSkill', operationType: 'comboSkill', skills: yvonneChr_0017_yvonne_combo_skill },
+    { key: 'ultimate', operationType: 'ultimate', skillIds: ['chr_0017_yvonne_ultimate_skill'] },
+    { key: 'comboSkill', operationType: 'comboSkill', skillIds: ['chr_0017_yvonne_combo_skill'] },
   ],
-  dodgeSkill: yvonneCommon_character_perfect_dodge,
+  dodgeSkillId: 'common_character_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0017_yvonne_plunging_attack_start',
+    endSkillId: 'chr_0017_yvonne_plunging_attack_end',
+    startDurationSeconds: 0.633,
+    endDurationSeconds: 2,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
   ],

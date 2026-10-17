@@ -137,9 +137,10 @@ function fixture(custom = true) {
           {
             key: 'basicAttack',
             operationType: 'basicAttack',
-            skills: [definition],
+            skillIds: [definition.key],
           },
         ],
+        skills: [definition, ...perlica.skills.filter(skill => skill.key !== definition.key)],
       },
     ],
   });

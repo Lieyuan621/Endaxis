@@ -1,3 +1,4 @@
+import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills';
 import { mountSetup } from '../../test/componentSetup';
 import { computed, createSSRApp } from 'vue';
 import { renderToString } from 'vue/server-renderer';
@@ -228,7 +229,7 @@ it('discovery errors keep graph mode recovery available even with a missing pend
   });
   const session = host.state.active.value.session;
   const before = session.current;
-  host.state.active.value.asset = JSON.stringify(['dodgeSkill']);
+  host.state.active.value.asset = JSON.stringify(['skills', 0]);
   host.state.graphOpen.value = true;
   host.state.focused.value = true;
   host.state.layout.value.rightOpen = false;
@@ -238,18 +239,23 @@ it('discovery errors keep graph mode recovery available even with a missing pend
       ...draft.edit,
       definition: {
         ...draft.edit.definition,
-        dodgeSkill: {
-          ...draft.edit.definition.dodgeSkill,
-          actionGraph: {
-            main: { nodes: {} },
-            macros: Object.fromEntries(
-              Array.from({ length: 16_385 }, (_, i) => [
-                String(i),
-                { parameters: [], entry: { $sequence: null }, graph: { nodes: {} } },
-              ]),
-            ),
+        skills: [
+          {
+            ...draft.edit.definition.skills[0],
+            actionGraph: {
+              main: { nodes: {} },
+              macros: Object.fromEntries(
+                Array.from({ length: 16_385 }, (_, i) => [
+                  String(i),
+                  { parameters: [], entry: { $sequence: null }, graph: { nodes: {} } },
+                ]),
+              ),
+            },
           },
-        },
+          ...draft.edit.definition.skills.filter(
+            (skill: SkillDefinition) => skill.key !== draft.edit.definition.dodgeSkillId,
+          ),
+        ],
       },
     },
   }));

@@ -5348,7 +5348,7 @@ function resolvePlacedSkillDurationFrames(
   if (operator === null) return 0;
   const group = operator.skillGroups.find(g => g.key === skillGroupKey);
   if (group === undefined) return 0;
-  const lastSkill = resolveSkillGroupPlacementSkills(group, variantKey, skillKey).at(-1);
+  const lastSkill = resolveSkillGroupPlacementSkills(group, operator, variantKey, skillKey).at(-1);
   return skillPlacementDisplayFrames(lastSkill?.timelineBlockFrames ?? 0);
 }
 
@@ -7864,6 +7864,9 @@ function setMobileGuideFrame(frame: number | null): void {
         :input-read-only="selectedCastId !== null && isHistoricalSkillInput(selectedCastId)"
         :label="selectedCastModel?.label ?? ''"
         :current-definition="selectedCastModel?.currentDefinition ?? null"
+        :actual-duration-frames="
+          selectedCastId === null ? undefined : skillCastActualDurationFrames.get(selectedCastId)
+        "
         :skill-level="selectedCastModel?.skillLevel ?? 1"
         :minimum-frame="-scenario.battle.prepFrames"
         :maximum-frame="scenario.battle.durationFrames"

@@ -1132,10 +1132,6 @@ export function createGraphSharedEntityValueUsageCollector(
       handler.scheduledSequences.forEach(item => sequence({ graph, entry: item.sequence }));
     });
   };
-  const skills = (values: SkillDefinition | readonly SkillDefinition[]) => {
-    if ('key' in values) skill(values);
-    else values.forEach(skill);
-  };
   const upgrade = (value: OperatorUpgradeDefinition) => {
     const graph = value.actionGraph?.main;
     program(graph, value.initializationSequence);
@@ -1152,12 +1148,7 @@ export function createGraphSharedEntityValueUsageCollector(
     });
   };
   const operator = (value: OperatorDefinition) => {
-    value.skillGroups.forEach(group => {
-      skills(group.skills);
-      group.variants?.forEach(variant => skills(variant.skills));
-      group.replacementSkills?.forEach(skill);
-      group.routedReplacementSkills?.forEach(route => skill(route.skill));
-    });
+    value.skills.forEach(skill);
     value.talents.forEach(upgrade);
     value.potentials.forEach(upgrade);
     value.passiveSkills?.forEach(item => passive(item));

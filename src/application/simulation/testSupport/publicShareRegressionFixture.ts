@@ -66,12 +66,12 @@ function resolveFixtureSkill(slug: string, legacyKey: string) {
     .getOperator(slug)
     ?.skillGroups.find(candidate => candidate.key === skillGroupKey);
   if (!group) throw new Error(`missing ${slug}/${skillGroupKey} in regression fixture`);
-  const skills = Array.isArray(group.skills) ? group.skills : [group.skills];
+  const skills = group.skillIds;
   const index =
     skillGroupKey === 'basicAttack' ? Number(legacyKey.slice('basicAttack'.length)) - 1 : 0;
   const skill = skills[index];
   if (!skill) throw new Error(`missing ${slug}/${legacyKey} in regression fixture`);
-  return { skillGroupKey, skillKey: skill.key };
+  return { skillGroupKey, skillKey: skill };
 }
 
 export function createLowStarShareRegressionScenario() {

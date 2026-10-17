@@ -400,8 +400,9 @@ function fixtureOperator(
       {
         key: 'basicAttack',
         operationType: 'basicAttack',
-        skills: probeSkill,
+        skillIds: [probeSkill.key],
       },
     ],
+    skills: [probeSkill],
   };
 }

@@ -776,6 +776,7 @@ export const perlicaChr_0004_pelica_power_attack: SkillDefinition = {
   naturalDurationFrames: 135,
   exclusiveFrame: 50,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -979,6 +980,7 @@ export const perlicaChr_0004_pelica_normal_skill: SkillDefinition = {
   naturalDurationFrames: 155,
   exclusiveFrame: 30,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 28, endFrame: 54, skillIds: ['chr_0004_pelica_normal_skill'] },
@@ -1261,6 +1263,7 @@ export const perlicaChr_0004_pelica_combo_skill: SkillDefinition = {
   naturalDurationFrames: 115,
   exclusiveFrame: 45,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 25, endFrame: 54, skillIds: ['chr_0004_pelica_normal_skill'] },
@@ -1424,6 +1427,28 @@ export const perlicaCommon_character_perfect_dodge: SkillDefinition = {
   defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
+};
+
+export const perlicaChr_0004_pelica_plunging_attack_startActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const perlicaChr_0004_pelica_plunging_attack_start: SkillDefinition = {
+  actionGraph: perlicaChr_0004_pelica_plunging_attack_startActionGraph,
+  key: 'chr_0004_pelica_plunging_attack_start',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
 };
 
 const perlicaComboCondition1ActionGraph = {
@@ -1642,32 +1667,51 @@ export const perlica: OperatorDefinition = {
     baseAttack: [30, 88, 150, 211, 272, 303],
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },
+  skills: [
+    perlicaChr_0004_pelica_attack1,
+    perlicaChr_0004_pelica_attack2,
+    perlicaChr_0004_pelica_attack3,
+    perlicaChr_0004_pelica_attack4,
+    perlicaChr_0004_pelica_power_attack,
+    perlicaChr_0004_pelica_plunging_attack_end,
+    perlicaChr_0004_pelica_normal_skill,
+    perlicaChr_0004_pelica_combo_skill,
+    perlicaChr_0004_pelica_ultimate_skill,
+    perlicaCommon_character_perfect_dodge,
+    perlicaChr_0004_pelica_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        perlicaChr_0004_pelica_attack1,
-        perlicaChr_0004_pelica_attack2,
-        perlicaChr_0004_pelica_attack3,
-        perlicaChr_0004_pelica_attack4,
+      skillIds: [
+        'chr_0004_pelica_attack1',
+        'chr_0004_pelica_attack2',
+        'chr_0004_pelica_attack3',
+        'chr_0004_pelica_attack4',
       ],
     },
-    { key: 'finisher', operationType: 'finisher', skills: perlicaChr_0004_pelica_power_attack },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0004_pelica_power_attack'] },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: perlicaChr_0004_pelica_plunging_attack_end,
+      skillIds: ['chr_0004_pelica_plunging_attack_end'],
     },
     {
       key: 'battleSkill',
       operationType: 'battleSkill',
-      skills: perlicaChr_0004_pelica_normal_skill,
+      skillIds: ['chr_0004_pelica_normal_skill'],
     },
-    { key: 'comboSkill', operationType: 'comboSkill', skills: perlicaChr_0004_pelica_combo_skill },
-    { key: 'ultimate', operationType: 'ultimate', skills: perlicaChr_0004_pelica_ultimate_skill },
+    { key: 'comboSkill', operationType: 'comboSkill', skillIds: ['chr_0004_pelica_combo_skill'] },
+    { key: 'ultimate', operationType: 'ultimate', skillIds: ['chr_0004_pelica_ultimate_skill'] },
   ],
-  dodgeSkill: perlicaCommon_character_perfect_dodge,
+  dodgeSkillId: 'common_character_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0004_pelica_plunging_attack_start',
+    endSkillId: 'chr_0004_pelica_plunging_attack_end',
+    startDurationSeconds: 0.633,
+    endDurationSeconds: 1.433,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
   ],

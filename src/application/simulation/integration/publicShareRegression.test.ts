@@ -18,11 +18,14 @@ it('伊冯重击的同步连携检查可进入，但不插入本图步进且不�
   const group = gameDataRepository
     .getOperator('yvonne')!
     .skillGroups.find(g => g.key === 'basicAttack')!;
-  const skill = (Array.isArray(group.skills) ? group.skills : [group.skills]).at(-1)!;
+  const skillId = group.skillIds.at(-1)!;
+  const skill = gameDataRepository
+    .getOperator('yvonne')!
+    .skills.find(skill => skill.key === skillId)!;
   track.skillCasts = [
     {
       id: 'trace-heavy',
-      source: { kind: 'operatorSkill', skillGroupKey: group.key, skillKey: skill.key },
+      source: { kind: 'operatorSkill', skillGroupKey: group.key, skillKey: skillId },
       placement: { startFrame: 0 },
     },
   ];

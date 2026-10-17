@@ -352,6 +352,8 @@ export interface SkillDefinitionProperties extends SkillActionProgramDefinition 
   exclusiveFrame: number;
   /** 原生 SkillData.offsetRecordFrame；到达时把下一段普攻提交为连段偏移目标。 */
   offsetRecordFrame: number;
+  /** 原生 SkillData.dontInterruptCombo；主控插入此技能时保留普攻连段。缺省为 false。 */
+  dontInterruptCombo?: boolean;
   /**
    * 从原生顶层直连输入 Action 保留的操作解析证据。两类窗口职责不同：
    * commandMappings 选择该操作当前指向的技能，allowedNextSkills 只决定能否提前中断。
@@ -431,7 +433,7 @@ export interface SkillGroupPlacementPolicy {
 /**
  * 技能库中的操作组：一个或一组连续按键操作，不是原生技能槽。
  * 每个可见成员对应操作段的目标技能；轴上放置的是该段的实例。
- * 当前 skills 内嵌执行定义是存储布局，不意味着执行逻辑可依赖分组。
+ * 成员仅引用干员持有的技能；组不拥有执行定义，不参与原生执行路由。
  */
 export interface SkillGroupDefinition {
   /** 编辑器一次放置整个技能组时采用的展开规则。 */
@@ -441,7 +443,7 @@ export interface SkillGroupDefinition {
   /** 玩家操作类别；技能库与轴上技能块均据此展示，实际执行读取具体技能的 skillType。 */
   operationType: OperationType;
   /** 单个可放置技能，或作为一个技能库条目放置的有序技能链。 */
-  skills: SkillDefinition | readonly SkillDefinition[];
+  skillIds: readonly string[];
   /** 操作名称模板的 i18n 键，含 name/shortName；{baseName} 为操作名称（轴上含段号）。 */
   nameKey?: string;
   /**
@@ -454,22 +456,6 @@ export interface SkillGroupDefinition {
    * 例如终结技状态下的强化普攻仍属于普攻，但倍率取终结技等级。
    */
   variants?: readonly SkillGroupVariantDefinition[];
-  /**
-   * 与 `skills` 共用一个稳定放置身份、仅由运行时换槽动作选中的技能形态。
-   * 这里只保存本组连续段或内部执行技能；独立可放置的替换操作应放在独立组的 skills 中。
-   */
-  replacementSkills?: readonly SkillDefinition[];
-  /**
-   * 每个运行时替换技能在技能库中的显式放置语义。运行时替换关系本身不能推出展示语义：
-   * `internal` 不接受玩家输入；独立操作由独立技能组表达。
-   * 有序接续技能由 `placementSequenceSkillKeys` 表达，不重复出现在这里。
-   */
-  replacementSkillPlacements?: Readonly<Record<string, 'internal'>>;
-  /**
-   * 本展示组中的转发技能。原生稳定槽位由 skillSlots 定义，与展示组独立；执行使用原生分类与等级源。
-   * 仅用于原生输入旁路（例如战技包装器实际 Cast 连携技）；普通同组换槽继续使用 replacementSkills。
-   */
-  routedReplacementSkills?: readonly RoutedSkillReplacementDefinition[];
   /** 同一稳定技能组的 UI 变体，不会产生独立的释放身份。 */
   presentationVariants?: readonly SkillPresentationVariantDefinition[];
 }
@@ -483,13 +469,13 @@ export interface SkillGroupVariantDefinition {
   /** 此放置形态的名称模板覆盖；未提供时继承组的 nameKey。 */
   nameKey?: string;
   /** 此形态包含的单个技能或有序技能链。 */
-  skills: SkillDefinition | readonly SkillDefinition[];
+  skillIds: readonly string[];
 }
 
 /** 包装技能到实际执行技能的绑定；两者均按技能 ID 引用，与展示组无关。 */
 export interface RoutedSkillReplacementDefinition {
-  /** 已合并输入包装器资源规则、且拥有独立稳定 key 的执行定义。 */
-  skill: SkillDefinition;
+  /** 本干员技能目录中已合并输入包装器资源规则的技能 ID。 */
+  skillId: string;
 
   /** 执行体在原生养成定义中的稳定技能身份。 */
   executionSkillKey: string;

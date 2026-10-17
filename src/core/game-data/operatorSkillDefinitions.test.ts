@@ -2,6 +2,7 @@ import { skillFixture } from '../../test/skillFixture';
 import { describe, expect, it } from 'vitest';
 
 import { emptyActionGraph } from '../../test/compiledGraphEntry';
+import { perlica } from '../../data/operators/perlica.generated';
 import type { SkillDefinition, SkillGroupDefinition } from './operatorDefinition';
 import { listSkillGroupDefinitionBindings } from './operatorSkillDefinitions';
 
@@ -17,35 +18,32 @@ function skill(key: string): SkillDefinition {
 }
 
 describe('operatorSkillDefinitions', () => {
-  it('enumerates every structural skill origin without assigning placement semantics', () => {
+  it('resolves library references within their owner and excludes internal skills', () => {
     const group: SkillGroupDefinition = {
       key: 'battleSkill',
       operationType: 'battleSkill',
-      skills: [skill('base1'), skill('base2')],
-      variants: [{ key: 'variant', skills: skill('variant') }],
-      replacementSkills: [skill('replacement')],
-      routedReplacementSkills: [
-        {
-          skill: { ...skill('routed'), skillType: 'comboSkill', levelSource: 'comboSkill' },
-
-          executionSkillKey: 'comboSkill',
-        },
-      ],
+      skillIds: ['base1', 'base2'],
+      variants: [{ key: 'variant', skillIds: ['variant'] }],
+    };
+    const owner = {
+      ...perlica,
+      skills: ['base1', 'base2', 'variant', 'internal'].map(skill),
+      skillGroups: [group],
     };
 
     expect(
-      listSkillGroupDefinitionBindings(group).map(binding => ({
+      listSkillGroupDefinitionBindings(group, owner).map(binding => ({
         key: binding.skill.key,
         origin: binding.origin,
         variant: binding.variant?.key,
-        routed: binding.routedReplacement?.executionSkillKey,
       })),
     ).toEqual([
-      { key: 'base1', origin: 'base', variant: undefined, routed: undefined },
-      { key: 'base2', origin: 'base', variant: undefined, routed: undefined },
-      { key: 'variant', origin: 'variant', variant: 'variant', routed: undefined },
-      { key: 'replacement', origin: 'replacement', variant: undefined, routed: undefined },
-      { key: 'routed', origin: 'routedReplacement', variant: undefined, routed: 'comboSkill' },
+      { key: 'base1', origin: 'base', variant: undefined },
+      { key: 'base2', origin: 'base', variant: undefined },
+      { key: 'variant', origin: 'variant', variant: 'variant' },
     ]);
+    expect(() => listSkillGroupDefinitionBindings(group, { ...owner, skills: [] })).toThrow(
+      "has no skill 'base1'",
+    );
   });
 });

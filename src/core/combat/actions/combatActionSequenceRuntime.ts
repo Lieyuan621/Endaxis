@@ -62,7 +62,7 @@ abstract class StatelessCombatStep extends CombatStep {
 }
 
 export interface CombatActionSequenceRuntimeHooks {
-  readonly stepReached?: (step: ResolvedCombatStep) => void;
+  readonly stepReached?: (step: ResolvedCombatStep | ResolvedCombatOperationStep) => void;
   readonly conditionEvaluated?: (condition: CompiledCondition, passed: boolean) => void;
 }
 

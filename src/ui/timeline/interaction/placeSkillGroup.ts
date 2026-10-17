@@ -118,7 +118,7 @@ export function placeLibrarySkillGroup(input: PlaceSkillGroupInput): PlaceSkillG
       ? group.placementPolicy
       : group.variants?.find(variant => variant.key === input.variantKey)?.placementPolicy;
   if (!policy) return placeSkillGroup(input);
-  const skills = resolveSkillGroupPlacementSkills(group, input.variantKey);
+  const skills = resolveSkillGroupPlacementSkills(group, input.operator, input.variantKey);
   const first = skills.find(skill => skill.key === policy.firstSkillKey);
   if (!first) throw new Error('placement policy has no first skill');
   const terminal = policy.terminalSkillKey;
@@ -173,7 +173,12 @@ export function placeSkillGroup(input: PlaceSkillGroupInput): PlaceSkillGroupRes
     );
   }
 
-  const skills = resolveSkillGroupPlacementSkills(group, input.variantKey, input.skillKey);
+  const skills = resolveSkillGroupPlacementSkills(
+    group,
+    input.operator,
+    input.variantKey,
+    input.skillKey,
+  );
   const created: SkillCastDocument[] = [];
   const layout = layoutSkillGroupPlacement(skills);
 

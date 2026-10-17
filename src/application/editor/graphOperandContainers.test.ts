@@ -374,7 +374,7 @@ it.each(['resource', 'skill'] as const)(
     const second = { ...fixture.row, [fixture.key]: { kind: 'constant', value: 2 } };
     const current = withRows(first, fixture, [...rows(first, fixture), second]);
     const initial = {
-      ...perlica.dodgeSkill!,
+      ...perlica.skills.find(skill => skill.key === perlica.dodgeSkillId)!,
       blackboard: { rate: 2 },
       actionGraph: {
         main: { ...graph(fixture), nodes: { damage: { action: current, next: null } } },

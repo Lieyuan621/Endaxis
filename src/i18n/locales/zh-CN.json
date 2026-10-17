@@ -540,7 +540,10 @@
       "talents": "天赋",
       "potentials": "潜能",
       "passiveSkills": "常驻被动",
-      "dodgeSkill": "闪避技能",
+      "dodgeSkillId": "闪避技能",
+      "startSkillId": "起始技能",
+      "endSkillId": "落地技能",
+      "skillIds": "技能段",
       "blackboard": "变量初值",
       "entityBlackboard": "实体变量初值",
       "traits": "词条",
@@ -589,6 +592,7 @@
       "naturalDurationFrames": "技能自然时长（帧）",
       "exclusiveFrame": "不可中断帧数",
       "offsetRecordFrame": "连段记录帧",
+      "dontInterruptCombo": "保留普攻连段",
       "inputWindows": "输入窗口",
       "commandMappings": "普攻输入对应技能",
       "input": "输入操作",
@@ -627,7 +631,7 @@
       "igniteEventResponses": "点燃响应",
       "placementSequenceSkillKeys": "顺序放置的技能",
       "replacementSkills": "替换技能",
-      "routedReplacementSkills": "跨组路由技能",
+      "routedReplacementSkills": "技能执行路由",
       "presentationVariants": "展示形态"
     },
     "focusSubtree": "聚焦此子树",
@@ -970,6 +974,22 @@
       "callbacks": {
         "name": "投射物回调",
         "help": "投射物命中、阻挡、到达或结束时启动的完整回调技能。"
+      },
+      "startHeightOffset": {
+        "name": "起点高度偏移",
+        "help": "相对于查询对象位置的向上偏移。"
+      },
+      "maxDistance": {
+        "name": "最大检测距离",
+        "help": "竖直向下检测地面的最大距离。"
+      },
+      "whenHit": {
+        "name": "命中地面",
+        "help": "检测到地面时执行的行为。"
+      },
+      "whenMiss": {
+        "name": "未命中地面",
+        "help": "未检测到地面时执行的行为。"
       },
       "saveToContextKey": {
         "name": "保存到目标组",
@@ -2149,6 +2169,10 @@
       "checkCondition": {
         "name": "检查条件",
         "help": "检查通过才继续执行当前序列的后续动作。"
+      },
+      "physicsCast": {
+        "name": "地面射线查询",
+        "help": "从查询对象上方沿竖直方向检测地面，将命中点写入目标上下文，并执行命中或未命中分支。"
       },
       "checkActionResult": {
         "name": "检查执行结果",
@@ -4466,6 +4490,7 @@
         "repeatEachTick": "每 Tick 重复",
         "openComboWindow": "开启下一段连携窗口",
         "showComboRingQte": "显示精准连携窗口",
+        "physicsCast": "地面射线查询",
         "listenForCombatEvents": "监听战斗事件",
         "aura": "光环",
         "copyContextTargets": "复制目标组",

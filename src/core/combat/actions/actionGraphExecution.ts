@@ -453,6 +453,51 @@ export class ActionGraphExecution
         tick() {},
         end() {},
       };
+    } else if (action.kind === 'physicsCast') {
+      if (saved && saved.kind !== 'graphBranch')
+        throw new Error(`expected physics cast state: ${id}`);
+      const data = saved ?? {
+        kind: 'graphBranch' as const,
+        selection: createBranchActionState(),
+        branches: new Map<number, ActionGraphExecutionState>(),
+      };
+      const probe = this.host.bindOperation({ kind: 'physicsCast', parameters: action.parameters });
+      const children = new Map<number, ActionGraphExecution>();
+      const child = (index: number) => {
+        let result = children.get(index);
+        if (!result) {
+          result = this.#child(
+            id,
+            index,
+            (index === 0 ? action.whenHit : action.whenMiss).$sequence,
+            data.branches.get(index),
+          );
+          children.set(index, result);
+          data.branches.set(index, result.runtimeState);
+        }
+        return result;
+      };
+      for (const index of data.branches.keys()) child(index);
+      binding = {
+        data,
+        execute: context => {
+          const index = probe.tryExecute(context) ? 0 : 1;
+          data.selection.activeBranch = index;
+          child(index).tryExecute(context);
+          // 原生 ExecuteInternal 不传播物理查询或回调的返回值。
+          return true;
+        },
+        reset: context => {
+          child(0).reset(context);
+          child(1).reset(context);
+          data.selection.activeBranch = null;
+        },
+        // needTick=false 的 PhysicsCast 不推进子序列 Tick；投射物由独立宿主推进。
+        tick() {},
+        end: context => {
+          for (const value of children.values()) value.end(context);
+        },
+      };
     } else if (action.kind === 'checkCondition' || action.kind === 'invertNextResult') {
       if (saved && saved.kind !== 'stateless') throw new Error(`expected check state: ${id}`);
       binding = {

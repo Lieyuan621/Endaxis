@@ -14,17 +14,16 @@ const skill = (key: string) =>
   });
 const owner = {
   slug: 'owner',
+  skills: ['base', 'base', 'variant', 'replacement', 'routed', 'dodge'].map(skill),
   skillGroups: [
     {
       key: 'group',
       operationType: 'basicAttack',
-      skills: [skill('base'), skill('base')],
-      variants: [{ key: 'mode', skills: skill('variant') }],
-      replacementSkills: [skill('replacement')],
-      routedReplacementSkills: [{ skill: skill('routed') }],
+      skillIds: ['base'],
+      variants: [{ key: 'mode', skillIds: ['variant'] }],
     },
   ],
-  dodgeSkill: skill('dodge'),
+  dodgeSkillId: 'dodge',
   skillSlots: [{ key: 'slot' }],
   buffDefinitions: { localBuff: {} },
   abilityEntityDefinitions: {
@@ -51,20 +50,8 @@ describe('operatorReferenceChoices', () => {
     ]);
     expect(new Set(result.skill!.candidates.map(choice => choice.identity)).size).toBe(6);
     expect(resolveReference('skill', 'base', result.skill).state).toBe('ambiguous');
-    expect(result.skill!.candidates[2]!.target?.resourcePath).toEqual([
-      'skillGroups',
-      0,
-      'variants',
-      0,
-      'skills',
-    ]);
-    expect(result.skill!.candidates[4]!.target?.resourcePath).toEqual([
-      'skillGroups',
-      0,
-      'routedReplacementSkills',
-      0,
-      'skill',
-    ]);
+    expect(result.skill!.candidates[2]!.target?.resourcePath).toEqual(['skills', 2]);
+    expect(result.skill!.candidates[4]!.target?.resourcePath).toEqual(['skills', 4]);
     expect(result.skillGroup!.candidates[0]!.target).toEqual({
       assetId: 'actual-owner-asset',
       resourcePath: [],
@@ -153,6 +140,7 @@ describe('operatorReferenceChoices', () => {
   it('distinguishes empty, unset, unknown, cross-owner, and wrong-family catalogs', () => {
     const other = operatorReferenceChoices({
       slug: 'other',
+      skills: [],
       skillGroups: [],
     } as unknown as OperatorDefinition);
     expect(resolveReference('skill', 'dodge', other.skill)).toMatchObject({

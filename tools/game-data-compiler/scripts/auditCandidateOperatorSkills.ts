@@ -33,15 +33,12 @@ interface RuntimeOperator {
 
 interface RuntimeSkillGroup {
   readonly key: string;
-  readonly levelSource: string;
-  readonly skillType: string;
-  readonly replacementSkillPlacements?: Readonly<Record<string, string>>;
+  readonly operationType: string;
 }
 
 interface RuntimeSkillBinding {
   readonly group: {
     readonly key: string;
-    readonly replacementSkillPlacements?: Readonly<Record<string, string>>;
   };
   readonly skill: { readonly key: string };
   readonly variant?: { readonly key: string };
@@ -153,24 +150,24 @@ export async function auditCandidateOperatorSkills(args: AuditArguments) {
     );
     const attachmentModule = await server.ssrLoadModule('/src/data/buffs/elementalAttachments.ts');
     const cases: RuntimeSkillCase[] = operators.flatMap(operator =>
-      (bindingsModule.listOperatorSkillDefinitionBindings(operator) as RuntimeSkillBinding[])
-        .filter(
-          ({ group, skill }: RuntimeSkillBinding) =>
-            group.replacementSkillPlacements?.[skill.key] !== 'internal',
-        )
-        .map(({ group, skill, variant }: RuntimeSkillBinding) => ({
+      (bindingsModule.listOperatorSkillDefinitionBindings(operator) as RuntimeSkillBinding[]).map(
+        ({ group, skill, variant }: RuntimeSkillBinding) => ({
           operator,
           groupKey: group.key,
           variantKey: variant?.key,
           skill,
-        })),
+        }),
+      ),
     );
     const identities = new Set(cases.map(skillIdentity));
     if (identities.size !== cases.length) throw new Error('candidate skill identity is not unique');
     const libraryPlacementCases: RuntimeLibraryPlacementCase[] = operators.flatMap(operator =>
       operator.skillGroups.flatMap(group =>
         (
-          libraryPlacementModule.listSkillGroupLibraryPlacements(group) as RuntimeLibraryPlacement[]
+          libraryPlacementModule.listSkillGroupLibraryPlacements(
+            group,
+            operator,
+          ) as RuntimeLibraryPlacement[]
         ).map(placement => ({ operator, groupKey: group.key, placement })),
       ),
     );

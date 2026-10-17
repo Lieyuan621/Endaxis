@@ -1053,6 +1053,32 @@ export const actionNodeSchemas: Readonly<Record<ActionGraphStep['kind'], NodeSch
       },
     ],
   },
+  physicsCast: {
+    fields: [
+      schema_b5bd846f4492,
+      schema_ba33f83d25fe,
+      {
+        valueSchema: { kind: 'number' },
+        path: ['parameters', 'startHeightOffset'],
+        description: '',
+        control: 'number',
+      },
+      {
+        valueSchema: { kind: 'number' },
+        path: ['parameters', 'maxDistance'],
+        description: '',
+        control: 'number',
+      },
+      schema_d848b93d156c,
+      { valueSchema: schema_48e664ac4ce5, path: ['whenHit'], description: '', control: 'sequence' },
+      {
+        valueSchema: schema_48e664ac4ce5,
+        path: ['whenMiss'],
+        description: '',
+        control: 'sequence',
+      },
+    ],
+  },
   copyContextTargets: {
     fields: [
       schema_b5bd846f4492,

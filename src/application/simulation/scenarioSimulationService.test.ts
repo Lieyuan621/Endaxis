@@ -44,9 +44,7 @@ function graphFixtureSkillOf(fixture: {
 }
 
 function findSkill(operator: OperatorDefinition, key: string) {
-  const skill = operator.skillGroups
-    .flatMap(group => (Array.isArray(group.skills) ? group.skills : [group.skills]))
-    .find(candidate => candidate.key === key);
+  const skill = operator.skills.find(candidate => candidate.key === key);
   if (!skill) throw new Error(`missing skill: ${key}`);
   return skill;
 }
@@ -436,10 +434,14 @@ describe('ScenarioSimulationService', () => {
         {
           key: 'battleSkill',
           operationType: 'battleSkill',
-          skills: graphFixtureSkill,
+          skillIds: [graphFixtureSkill.key],
         },
       ],
     };
+    definition.skills = [
+      graphFixtureSkill,
+      ...perlica.skills.filter(skill => skill.key !== graphFixtureSkill.key),
+    ];
     const scenario = placeSkillGroup({
       scenario: createPerlicaScenario(),
       trackIndex: 0,
@@ -1090,7 +1092,7 @@ describe('ScenarioSimulationService', () => {
       ids: { allocate: kind => `${kind}:1` },
     }).scenario;
 
-    const run = await createService().simulate(placed, 4);
+    const run = await createService().simulate(placed, 100);
 
     const damage = run.receiptEntries.find(entry => entry.event === 'DamageApplied');
     expect(damage).toBeDefined();
@@ -1098,7 +1100,7 @@ describe('ScenarioSimulationService', () => {
     // 单节点失衡账本以敌人帧制失衡规则为初始值。
     expect(run.poiseCurve.maxValue).toBe(300);
     expect(run.poiseCurve.points[0]).toMatchObject({ value: 300 });
-    // 下落攻击依赖未建模的腾空状态；显式排轴仍执行，但不再拿 A1 默认路由制造误报。
+    // 一次下落攻击输入完成起跳与落地，不应被当成地面的普通攻击路由。
     expect(run.availabilityDiagnostics).toEqual([]);
     expect(run.executionDiagnostics).toEqual([]);
     expect(run.resourceCurves.sp.points[0]).toMatchObject({ value: run.initialResources.sp });
@@ -1452,9 +1454,11 @@ describe('ScenarioSimulationService', () => {
     expect(cursor.entries).toHaveLength(1);
     expect(cursor.entries[0]!.data!.castId).toBe(input.castId);
     driver.advanceToFrame(30);
-    expect(branch.runtime.readReceipts(cursor.cursor, new Set(['SkillStarted'])).entries).toEqual(
-      [],
-    );
+    expect(branch.runtime.readReceipts(cursor.cursor, new Set(['SkillStarted'])).entries).toEqual([
+      expect.objectContaining({
+        data: { skillId: perlica.plungingAttack!.endSkillId, castId: input.castId },
+      }),
+    ]);
     scheduled.advanceToFrame(30);
     expect(branch.collectResult()).toEqual(scheduled.collectResult());
     const completed = branch.runtime.readState();

@@ -241,6 +241,13 @@ export const STATUS_MODIFIER_KINDS = [
  * 增加步骤时必须同时提供编译、运行时执行和严格校验，不能只扩展此类型。
  */
 export interface CombatStepParameters {
+  /** PhysicsCastAction 的单次向下射线投影；模拟世界只有 y=0 地面，命中点不是敌人。 */
+  physicsCast: {
+    source: ActionTargetQuery;
+    startHeightOffset: number;
+    maxDistance: number;
+    saveToContextKey: string;
+  };
   /** 原生 ConvertToTargetContext(None)：复制目标句柄，保持顺序与重复项。 */
   copyContextTargets: {
     source: ActionTargetQuery;
@@ -1377,6 +1384,7 @@ export interface CombatStepParameters {
 
 /** `CombatStepParameters` 中全部动作种类，供编译、校验和运行时分派使用。 */
 export const COMBAT_STEP_KINDS = [
+  'physicsCast',
   'copyContextTargets',
   'findTargets',
   'mergeContextTargets',
@@ -1489,64 +1497,66 @@ type CombatStepNode<K extends CombatStepKind> = {
   kind: K;
   /** 此动作种类对应的参数。 */
   parameters: Readonly<CombatStepParameters[K]>;
-} & (K extends 'playAnimation'
-  ? { onEnd: ActionGraphReference }
-  : K extends 'showComboRingQte'
-    ? { triggeredAction: ActionGraphReference }
-    : K extends 'jumpTimeline'
-      ? { condition: CombatCondition }
-      : K extends 'anyCondition'
-        ? { conditions: readonly CombatCondition[] }
-        : K extends 'ifElse'
-          ? {
-              /** 消费布尔输入时求值；含行为的原生条件由 checkActionResult 显式转接。 */
-              condition: CombatCondition;
-              whenTrue: ActionGraphReference;
-              whenFalse: ActionGraphReference;
-            }
-          : K extends 'conditional'
+} & (K extends 'physicsCast'
+  ? { whenHit: ActionGraphReference; whenMiss: ActionGraphReference }
+  : K extends 'playAnimation'
+    ? { onEnd: ActionGraphReference }
+    : K extends 'showComboRingQte'
+      ? { triggeredAction: ActionGraphReference }
+      : K extends 'jumpTimeline'
+        ? { condition: CombatCondition }
+        : K extends 'anyCondition'
+          ? { conditions: readonly CombatCondition[] }
+          : K extends 'ifElse'
             ? {
-                /** 条件成立时执行。 */
+                /** 消费布尔输入时求值；含行为的原生条件由 checkActionResult 显式转接。 */
+                condition: CombatCondition;
                 whenTrue: ActionGraphReference;
-                /** 条件不成立时执行；省略时不执行额外步骤。 */
-                whenFalse?: ActionGraphReference;
+                whenFalse: ActionGraphReference;
               }
-            : K extends 'switch'
+            : K extends 'conditional'
               ? {
-                  /** 按顺序尝试匹配的候选分支。 */
-                  options: readonly ActionSwitchOptionDefinition[];
+                  /** 条件成立时执行。 */
+                  whenTrue: ActionGraphReference;
+                  /** 条件不成立时执行；省略时不执行额外步骤。 */
+                  whenFalse?: ActionGraphReference;
                 }
-              : K extends 'once'
+              : K extends 'switch'
                 ? {
-                    /** 在此一次性作用域中执行的子序列。 */
-                    body: ActionGraphReference;
+                    /** 按顺序尝试匹配的候选分支。 */
+                    options: readonly ActionSwitchOptionDefinition[];
                   }
-                : K extends 'repeatEachTick'
+                : K extends 'once'
                   ? {
-                      /** 每次触发时执行的序列。 */
+                      /** 在此一次性作用域中执行的子序列。 */
                       body: ActionGraphReference;
                     }
-                  : K extends 'launchProjectile'
+                  : K extends 'repeatEachTick'
                     ? {
-                        /** 每项都是完整的原生回调技能，不并入发射技能的时间轴。 */
-                        callbacks: readonly {
-                          event: 'launch' | 'hit' | 'block' | 'reach' | 'finish';
-                          skill: AbilityEntityChildSkillDefinition;
-                        }[];
+                        /** 每次触发时执行的序列。 */
+                        body: ActionGraphReference;
                       }
-                    : K extends 'aura'
+                    : K extends 'launchProjectile'
                       ? {
-                          /** 区域 Buff 安装后的原生进入回调。 */
-                          onEnter: ActionGraphReference;
-                          /** 区域 Buff 回收后的原生退出回调；Target 为离开对象。 */
-                          onExit: ActionGraphReference;
+                          /** 每项都是完整的原生回调技能，不并入发射技能的时间轴。 */
+                          callbacks: readonly {
+                            event: 'launch' | 'hit' | 'block' | 'reach' | 'finish';
+                            skill: AbilityEntityChildSkillDefinition;
+                          }[];
                         }
-                      : K extends 'forEachContextTarget'
+                      : K extends 'aura'
                         ? {
-                            /** 对每个目标执行的序列。 */
-                            body: ActionGraphReference;
+                            /** 区域 Buff 安装后的原生进入回调。 */
+                            onEnter: ActionGraphReference;
+                            /** 区域 Buff 回收后的原生退出回调；Target 为离开对象。 */
+                            onExit: ActionGraphReference;
                           }
-                        : {});
+                        : K extends 'forEachContextTarget'
+                          ? {
+                              /** 对每个目标执行的序列。 */
+                              body: ActionGraphReference;
+                            }
+                          : {});
 
 /** 干员定义中可执行、按 `kind` 精确区分的一项步骤。 */
 export type CombatStepDefinition = CombatStepForKind<CombatStepKind>;

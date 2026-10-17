@@ -99,11 +99,8 @@ it('keeps step kind, parameters and sequence fields correlated through the publi
 });
 
 function findPerlicaSkill(key: string): SkillDefinition {
-  for (const group of perlica.skillGroups) {
-    const skills = Array.isArray(group.skills) ? group.skills : [group.skills];
-    const skill = skills.find(candidate => candidate.key === key);
-    if (skill !== undefined) return skill;
-  }
+  const skill = perlica.skills.find(candidate => candidate.key === key);
+  if (skill !== undefined) return skill;
   throw new Error(`missing Perlica skill '${key}'`);
 }
 

@@ -91,9 +91,7 @@ function graphFixtureSkill(
 }
 
 function findSkill(operator: OperatorDefinition, key: string) {
-  const skill = operator.skillGroups
-    .flatMap(group => (Array.isArray(group.skills) ? group.skills : [group.skills]))
-    .find(candidate => candidate.key === key);
+  const skill = operator.skills.find(candidate => candidate.key === key);
   if (!skill) throw new Error(`missing skill: ${key}`);
   return skill;
 }
@@ -211,11 +209,12 @@ it('标准伤害模拟入口直接执行图干员并得到预期回执', () => {
     talents: [],
     potentials: [],
     comboSkillConditions: [],
+    skills: [graphEntrySkill, ...perlica.skills.filter(skill => skill.key !== graphEntrySkill.key)],
     skillGroups: [
       {
         key: 'battleSkill',
         operationType: 'battleSkill',
-        skills: graphEntrySkill,
+        skillIds: [graphEntrySkill.key],
       },
     ],
   };
@@ -303,6 +302,10 @@ describe('标准入口普通倒地装配', () => {
       ...perlica,
       talents: [],
       potentials: [],
+      skills: [
+        projectedDownSkill,
+        ...perlica.skills.filter(skill => skill.key !== projectedDownSkill.key),
+      ],
       buffDefinitions: {
         buff_physical_no_guard: {
           stackingType: 'refresh',
@@ -320,7 +323,7 @@ describe('标准入口普通倒地装配', () => {
         {
           key: 'battleSkill',
           operationType: 'battleSkill',
-          skills: projectedDownSkill,
+          skillIds: [projectedDownSkill.key],
         },
       ],
     };
@@ -394,7 +397,7 @@ function placeGeneratedPerlicaFlow(operator: OperatorDefinition = perlicaGenerat
     { skillGroupKey: 'battleSkill', startFrame: 132 },
     { skillGroupKey: 'ultimate', startFrame: 161 },
     { skillGroupKey: 'plungingAttack', startFrame: 225 },
-    { skillGroupKey: 'finisher', startFrame: 247 },
+    { skillGroupKey: 'finisher', startFrame: 310 },
   ] as const;
 
   return placements.reduce(
@@ -928,11 +931,10 @@ function createGeneratedTangtangUltimateResponseScenario(includeAllyPlungingAtta
   }).scenario;
   if (!includeAllyPlungingAttack) return withUltimate;
 
-  // 终结技水体在全局约第 198 帧向队友施加响应 Buff。佩丽卡下落攻击
-  // 在起手后第 3 帧命中，因此从 197 帧放置可让命中落在监听窗口内。
+  // 提前起跳，计入完整下落过程后，使落地命中进入水体末段的响应窗口。
   withUltimate.battle.controlSwitches.push({
     id: 'switch:tangtang-ultimate:perlica',
-    frame: 190,
+    frame: 170,
     trackIndex: 1,
   });
   return placeSkillGroup({
@@ -940,7 +942,7 @@ function createGeneratedTangtangUltimateResponseScenario(includeAllyPlungingAtta
     trackIndex: 1,
     operator: perlicaGeneratedOperator,
     skillGroupKey: 'plungingAttack',
-    startFrame: 197,
+    startFrame: 175,
     ids,
   }).scenario;
 }
@@ -1043,30 +1045,29 @@ function createGeneratedMifuBattleChainScenario() {
     spRecoveryPerSecond: 0,
   };
   const battleGroup = mifuGeneratedOperator.skillGroups.find(group => group.key === 'battleSkill')!;
-  const baseSkill = Array.isArray(battleGroup.skills) ? battleGroup.skills[0]! : battleGroup.skills;
+  const baseSkill = mifuGeneratedOperator.skills.find(
+    skill => skill.key === battleGroup.skillIds[0],
+  )!;
   // 原生第二段只在结算前读到至少三层 NoGuard 时换入第三段。测试前置只建立这项
   // 敌方状态，不改弭弗三段技能、换槽 Buff 或伤害定义本身。
   const battleChainOperator: OperatorDefinition = {
     ...mifuGeneratedOperator,
-    skillGroups: mifuGeneratedOperator.skillGroups.map(group =>
-      group !== battleGroup
-        ? group
-        : {
-            ...group,
-            skills: prependGraphSequences(baseSkill, [
-              {
-                startFrame: 0,
-                steps: Array.from({ length: 3 }, () => ({
-                  kind: 'applyBuff' as const,
-                  parameters: {
-                    buffs: [{ buffId: 'buff_physical_no_guard' }],
-                    targets: { kind: 'fixed', target: 'enemy' } as const,
-                    inheritSourceSkillCastInfo: true,
-                  },
-                })),
-              },
-            ]),
-          },
+    skills: mifuGeneratedOperator.skills.map(skill =>
+      skill !== baseSkill
+        ? skill
+        : prependGraphSequences(baseSkill, [
+            {
+              startFrame: 0,
+              steps: Array.from({ length: 3 }, () => ({
+                kind: 'applyBuff' as const,
+                parameters: {
+                  buffs: [{ buffId: 'buff_physical_no_guard' }],
+                  targets: { kind: 'fixed', target: 'enemy' } as const,
+                  inheritSourceSkillCastInfo: true,
+                },
+              })),
+            },
+          ]),
     ),
   };
   scenario.tracks[0] = {
@@ -1242,10 +1243,10 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       };
       const estellaForTalentTest = {
         ...estellaGeneratedOperator,
-        skillGroups: estellaGeneratedOperator.skillGroups.map(group =>
-          group.key === 'battleSkill'
-            ? { ...group, skills: talentTriggerAndConsumptionSkill }
-            : group,
+        skills: estellaGeneratedOperator.skills.map(skill =>
+          skill.key === talentTriggerAndConsumptionSkill.key
+            ? talentTriggerAndConsumptionSkill
+            : skill,
         ),
       };
       const scenario = createEmptyScenario(
@@ -2082,38 +2083,37 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
     const comboGroup = rossiGeneratedOperator.skillGroups.find(
       group => group.key === 'comboSkill',
     )!;
-    const firstStage = Array.isArray(comboGroup.skills) ? comboGroup.skills[0]! : comboGroup.skills;
+    const firstStage = rossiGeneratedOperator.skills.find(
+      skill => skill.key === comboGroup.skillIds[0],
+    )!;
     const preparedRossi: OperatorDefinition = {
       ...rossiGeneratedOperator,
-      skillGroups: rossiGeneratedOperator.skillGroups.map(group =>
-        group !== comboGroup
-          ? group
-          : {
-              ...group,
-              skills: prependGraphSequences(firstStage, [
-                {
-                  startFrame: 0,
-                  steps: [
-                    ...Array.from({ length: 3 }, (): ActionGraphStep => ({
-                      kind: 'applyBuff',
-                      parameters: {
-                        buffs: [{ buffId: 'buff_physical_no_guard' }],
-                        targets: { kind: 'fixed', target: 'enemy' },
-                        inheritSourceSkillCastInfo: true,
-                      },
-                    })),
-                    {
-                      kind: 'applyBuff',
-                      parameters: {
-                        buffs: [{ buffId: 'buff_common_energy_shard_attached_fire' }],
-                        targets: { kind: 'fixed', target: 'enemy' },
-                        inheritSourceSkillCastInfo: true,
-                      },
+      skills: rossiGeneratedOperator.skills.map(skill =>
+        skill !== firstStage
+          ? skill
+          : prependGraphSequences(firstStage, [
+              {
+                startFrame: 0,
+                steps: [
+                  ...Array.from({ length: 3 }, (): ActionGraphStep => ({
+                    kind: 'applyBuff',
+                    parameters: {
+                      buffs: [{ buffId: 'buff_physical_no_guard' }],
+                      targets: { kind: 'fixed', target: 'enemy' },
+                      inheritSourceSkillCastInfo: true,
                     },
-                  ],
-                },
-              ]),
-            },
+                  })),
+                  {
+                    kind: 'applyBuff',
+                    parameters: {
+                      buffs: [{ buffId: 'buff_common_energy_shard_attached_fire' }],
+                      targets: { kind: 'fixed', target: 'enemy' },
+                      inheritSourceSkillCastInfo: true,
+                    },
+                  },
+                ],
+              },
+            ]),
       ),
     };
     scenario.tracks[0] = {
@@ -2370,7 +2370,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
     const simulate = (includeAllyPlungingAttack: boolean) =>
       runStandardPlayerDamageScenarioSimulation({
         scenario: createGeneratedTangtangUltimateResponseScenario(includeAllyPlungingAttack),
-        endFrame: 240,
+        endFrame: 420,
         criticalSamples: new ExplicitCriticalSampleSource(Array(40).fill(1)),
         resolveNonRandomRuntimeSnapshot: () => ({
           runtimeExtensionMultiplier: 1,
@@ -3171,7 +3171,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
   it('runs every generated Perlica skill type through the production simulation flow', () => {
     const result = runStandardPlayerDamageScenarioSimulation({
       scenario: placeGeneratedPerlicaFlow(perlicaFormalOperator),
-      endFrame: 283,
+      endFrame: 350,
       criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -3215,6 +3215,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       'chr_0004_pelica_normal_skill',
       'chr_0004_pelica_ultimate_skill',
       'chr_0004_pelica_ultimate_skill_abilityrange',
+      'chr_0004_pelica_plunging_attack_start',
       'chr_0004_pelica_plunging_attack_end',
       'chr_0004_pelica_power_attack',
     ]);
@@ -3283,7 +3284,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
 
     const result = runStandardPlayerDamageScenarioSimulation({
       scenario: placed,
-      endFrame: 4,
+      endFrame: 100,
       criticalSamples: new ExplicitCriticalSampleSource([1]),
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,

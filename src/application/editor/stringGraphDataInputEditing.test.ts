@@ -196,7 +196,7 @@ it('workspace save and official project import preserve literal and connected st
     },
   };
   const owner = {
-    ...perlica.dodgeSkill!,
+    ...perlica.skills.find(skill => skill.key === perlica.dodgeSkillId)!,
     scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'first' } }],
     actionGraph: {
       main: {
@@ -207,7 +207,10 @@ it('workspace save and official project import preserve literal and connected st
           literal: {
             action: {
               kind: 'applyBuff' as const,
-              parameters: { buffs: [{ buffId: 'legacy literal' }], targets: { kind: 'fixed', target: 'caster' } as const },
+              parameters: {
+                buffs: [{ buffId: 'legacy literal' }],
+                targets: { kind: 'fixed', target: 'caster' } as const,
+              },
             },
             next: 'invoke',
           },
@@ -224,14 +227,20 @@ it('workspace save and official project import preserve literal and connected st
       kindName: 'Operator',
       name: 'String roundtrip',
       custom: false,
-      edit: { kind: 'operator', definition: { ...perlica, dodgeSkill: owner } },
+      edit: {
+        kind: 'operator',
+        definition: {
+          ...perlica,
+          skills: [owner, ...perlica.skills.filter(skill => skill.key !== perlica.dodgeSkillId)],
+        },
+      },
     },
     'project:operator:string-pins',
   );
   const before = session.current;
   const literal = ' \tprecise\r\n ';
   expect(
-    session.changeGraph(['dodgeSkill'], resource =>
+    session.changeGraph(['skills', 0], resource =>
       updateResourceGraph(resource, { kind: 'main' }, graph =>
         setGraphDataInput(graph, 'action', 'first', input(graph), null, literal),
       ),
@@ -256,7 +265,7 @@ it('workspace save and official project import preserve literal and connected st
   expect(parsed.ok).toBe(true);
   if (!parsed.ok) throw new Error(JSON.stringify(parsed));
   const reopened =
-    parsed.value.definitionLibrary!.operators[request.targetId]!.definition.dodgeSkill!;
+    parsed.value.definitionLibrary!.operators[request.targetId]!.definition.skills[0]!;
   expect(reopened.actionGraph.main.nodes.first!.action).toHaveProperty(
     'parameters.buffs.0.buffId',
     literal,

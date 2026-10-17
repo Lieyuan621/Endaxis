@@ -285,6 +285,7 @@ function removeKnotThreshold(index: number): void {
         v-model="selectorVisible"
         :title="labels.selectTitle"
         width="640px"
+        scroll-mode="body"
         align-center
         append-to-body
         class="char-selector-dialog next-enemy-selector"
@@ -354,7 +355,7 @@ function removeKnotThreshold(index: number): void {
             </EaFilterChip>
           </div>
         </div>
-        <div class="enemy-list-grid">
+        <div class="roster-scroll-container enemy-list-grid">
           <section v-if="showCustomEnemy" class="enemy-group-section">
             <div class="group-header">
               {{ t('resourceMonitor.enemy.specialGroup') }} <span>(1)</span>
@@ -761,6 +762,7 @@ function removeKnotThreshold(index: number): void {
   padding: 0 7px;
 }
 .enemy-filter-rows {
+  flex-shrink: 0;
   margin: 0 0 20px;
   padding: 8px;
   display: flex;

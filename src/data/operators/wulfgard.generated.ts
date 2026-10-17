@@ -5,6 +5,121 @@ import type { SkillDefinition } from '../../../packages/game-data-contract/src/s
 import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs';
 import type { ComboSkillConditionDefinition } from '../../../packages/game-data-contract/src/operators';
 import type { OperatorDefinition } from '../../../packages/game-data-contract/src/operators';
+export const wulfgardChr_0006_wolfgd_combo_skillActionGraph = {
+  main: {
+    nodes: {
+      launchProjectile_1: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            inheritActionBlackboard: true,
+            entityInitialValues: {},
+            finish: 'firstTickReach',
+            recycleDelaySeconds: 0.0333333350718021,
+            hit: { onReach: true, finishOnHit: true },
+          },
+          callbacks: [
+            {
+              event: 'hit',
+              skill: {
+                skillId: 'chr_0006_wolfgd_combo_skill_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale: 0, poise: 0, usp: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'spawnAbilityEntity_1' } },
+                ],
+                actionGraph: {
+                  main: {
+                    nodes: {
+                      spawnAbilityEntity_1: {
+                        action: {
+                          kind: 'spawnAbilityEntity',
+                          parameters: {
+                            bornAt: { kind: 'fixed', target: 'enemy' },
+                            abilityEntityId: 'abilityentity_chr_0006_wolfgd_combo_skill',
+                            childSkillId: 'chr_0006_wolfgd_combo_skill_abilityrange',
+                            inheritActionBlackboard: true,
+                            dieWhenSourceDies: false,
+                          },
+                        },
+                        next: null,
+                      },
+                    },
+                  },
+                  macros: {},
+                },
+              },
+            },
+          ],
+        },
+        next: null,
+      },
+      createSpatialPointTargets_2: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: { saveToContextKey: 'bomb', count: { kind: 'constant', value: 1 } },
+        },
+        next: 'launchProjectile_1',
+      },
+      startTimeDilation_3: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'global',
+            durationSeconds: { kind: 'constant', value: 0.6 },
+            slot: 'unassigned',
+            priority: 30,
+            curve: { kind: 'named', key: 'ComboSkill' },
+            finishByAction: false,
+            ignoredTargets: ['caster'],
+            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+          },
+        },
+        next: null,
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const wulfgardChr_0006_wolfgd_combo_skill: SkillDefinition = {
+  key: 'chr_0006_wolfgd_combo_skill',
+  element: 'heat',
+  blackboard: {
+    atk_scale: [0.6, 0.66, 0.72, 0.78, 0.84, 0.9, 0.96, 1.02, 1.08, 1.16, 1.25, 1.35],
+    poise: 10,
+    usp: 10,
+  },
+  timelineBlockFrames: 31,
+  naturalDurationFrames: 138,
+  exclusiveFrame: 30,
+  offsetRecordFrame: 0,
+  dontInterruptCombo: true,
+  inputWindows: {
+    allowedNextSkills: [
+      { startFrame: 30, endFrame: 65, skillIds: ['chr_0006_wolfgd_normal_skill'] },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 12, endFrame: 16, sequence: { $sequence: 'createSpatialPointTargets_2' } },
+    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_3' } },
+  ],
+  smartTarget: 'trigger',
+  cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 570],
+  skillType: 'comboSkill',
+  levelSource: 'comboSkill',
+  nativeSkillType: 'comboSkill',
+  actionGraph: wulfgardChr_0006_wolfgd_combo_skillActionGraph,
+};
+
 export const wulfgardChr_0006_wolfgd_attack1ActionGraph = {
   main: {
     nodes: {
@@ -768,6 +883,7 @@ export const wulfgardChr_0006_wolfgd_power_attack: SkillDefinition = {
   naturalDurationFrames: 150,
   exclusiveFrame: 60,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -1586,6 +1702,7 @@ export const wulfgardChr_0006_wolfgd_normal_skill: SkillDefinition = {
   naturalDurationFrames: 272,
   exclusiveFrame: 159,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 32, endFrame: 54, skillIds: ['chr_0006_wolfgd_normal_skill'] },
@@ -1609,120 +1726,6 @@ export const wulfgardChr_0006_wolfgd_normal_skill: SkillDefinition = {
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
   actionGraph: wulfgardChr_0006_wolfgd_normal_skillActionGraph,
-};
-
-export const wulfgardChr_0006_wolfgd_combo_skillActionGraph = {
-  main: {
-    nodes: {
-      launchProjectile_1: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
-            recycleDelaySeconds: 0.0333333350718021,
-            hit: { onReach: true, finishOnHit: true },
-          },
-          callbacks: [
-            {
-              event: 'hit',
-              skill: {
-                skillId: 'chr_0006_wolfgd_combo_skill_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale: 0, poise: 0, usp: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'spawnAbilityEntity_1' } },
-                ],
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      spawnAbilityEntity_1: {
-                        action: {
-                          kind: 'spawnAbilityEntity',
-                          parameters: {
-                            bornAt: { kind: 'fixed', target: 'enemy' },
-                            abilityEntityId: 'abilityentity_chr_0006_wolfgd_combo_skill',
-                            childSkillId: 'chr_0006_wolfgd_combo_skill_abilityrange',
-                            inheritActionBlackboard: true,
-                            dieWhenSourceDies: false,
-                          },
-                        },
-                        next: null,
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-              },
-            },
-          ],
-        },
-        next: null,
-      },
-      createSpatialPointTargets_2: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'bomb', count: { kind: 'constant', value: 1 } },
-        },
-        next: 'launchProjectile_1',
-      },
-      startTimeDilation_3: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'global',
-            durationSeconds: { kind: 'constant', value: 0.6 },
-            slot: 'unassigned',
-            priority: 30,
-            curve: { kind: 'named', key: 'ComboSkill' },
-            finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
-          },
-        },
-        next: null,
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const wulfgardChr_0006_wolfgd_combo_skill: SkillDefinition = {
-  key: 'chr_0006_wolfgd_combo_skill',
-  element: 'heat',
-  blackboard: {
-    atk_scale: [0.6, 0.66, 0.72, 0.78, 0.84, 0.9, 0.96, 1.02, 1.08, 1.16, 1.25, 1.35],
-    poise: 10,
-    usp: 10,
-  },
-  timelineBlockFrames: 31,
-  naturalDurationFrames: 138,
-  exclusiveFrame: 30,
-  offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 30, endFrame: 65, skillIds: ['chr_0006_wolfgd_normal_skill'] },
-    ],
-  },
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 12, endFrame: 16, sequence: { $sequence: 'createSpatialPointTargets_2' } },
-    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_3' } },
-  ],
-  smartTarget: 'trigger',
-  cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 570],
-  skillType: 'comboSkill',
-  levelSource: 'comboSkill',
-  nativeSkillType: 'comboSkill',
-  actionGraph: wulfgardChr_0006_wolfgd_combo_skillActionGraph,
 };
 
 export const wulfgardChr_0006_wolfgd_ultimate_skillActionGraph = {
@@ -2000,6 +2003,28 @@ export const wulfgardCommon_character_perfect_dodge: SkillDefinition = {
   nativeSkillType: 'dodge',
 };
 
+export const wulfgardChr_0006_wolfgd_plunging_attack_startActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const wulfgardChr_0006_wolfgd_plunging_attack_start: SkillDefinition = {
+  actionGraph: wulfgardChr_0006_wolfgd_plunging_attack_startActionGraph,
+  key: 'chr_0006_wolfgd_plunging_attack_start',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
+};
+
 const wulfgardComboCondition1ActionGraph = {
   main: {
     nodes: {
@@ -2140,32 +2165,51 @@ export const wulfgard: OperatorDefinition = {
     baseAttack: [30, 86, 146, 205, 264, 294],
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },
+  skills: [
+    wulfgardChr_0006_wolfgd_combo_skill,
+    wulfgardChr_0006_wolfgd_attack1,
+    wulfgardChr_0006_wolfgd_attack2,
+    wulfgardChr_0006_wolfgd_attack3,
+    wulfgardChr_0006_wolfgd_attack4,
+    wulfgardChr_0006_wolfgd_power_attack,
+    wulfgardChr_0006_wolfgd_plunging_attack_end,
+    wulfgardChr_0006_wolfgd_normal_skill,
+    wulfgardChr_0006_wolfgd_ultimate_skill,
+    wulfgardCommon_character_perfect_dodge,
+    wulfgardChr_0006_wolfgd_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        wulfgardChr_0006_wolfgd_attack1,
-        wulfgardChr_0006_wolfgd_attack2,
-        wulfgardChr_0006_wolfgd_attack3,
-        wulfgardChr_0006_wolfgd_attack4,
+      skillIds: [
+        'chr_0006_wolfgd_attack1',
+        'chr_0006_wolfgd_attack2',
+        'chr_0006_wolfgd_attack3',
+        'chr_0006_wolfgd_attack4',
       ],
     },
-    { key: 'finisher', operationType: 'finisher', skills: wulfgardChr_0006_wolfgd_power_attack },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0006_wolfgd_power_attack'] },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: wulfgardChr_0006_wolfgd_plunging_attack_end,
+      skillIds: ['chr_0006_wolfgd_plunging_attack_end'],
     },
     {
       key: 'battleSkill',
       operationType: 'battleSkill',
-      skills: wulfgardChr_0006_wolfgd_normal_skill,
+      skillIds: ['chr_0006_wolfgd_normal_skill'],
     },
-    { key: 'comboSkill', operationType: 'comboSkill', skills: wulfgardChr_0006_wolfgd_combo_skill },
-    { key: 'ultimate', operationType: 'ultimate', skills: wulfgardChr_0006_wolfgd_ultimate_skill },
+    { key: 'comboSkill', operationType: 'comboSkill', skillIds: ['chr_0006_wolfgd_combo_skill'] },
+    { key: 'ultimate', operationType: 'ultimate', skillIds: ['chr_0006_wolfgd_ultimate_skill'] },
   ],
-  dodgeSkill: wulfgardCommon_character_perfect_dodge,
+  dodgeSkillId: 'common_character_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0006_wolfgd_plunging_attack_start',
+    endSkillId: 'chr_0006_wolfgd_plunging_attack_end',
+    startDurationSeconds: 0.633,
+    endDurationSeconds: 1.433,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
   ],

@@ -736,7 +736,7 @@ test('spawn field preserves unstaged work and opens an independent child resourc
   await panel.getByRole('button', { name: 'Edit child metadata', exact: true }).click();
   await expect(panel.getByTestId('spawn-resource-state')).toContainText('edited-child');
   await panel.getByRole('button', { name: 'Back to spawn', exact: true }).click();
-  await expect(panel.getByTestId('spawn-resource-path')).toHaveText('["dodgeSkill"]');
+  await expect(panel.getByTestId('spawn-resource-path')).toHaveText('["skills",0]');
   await panel.getByRole('button', { name: 'Undo spawn', exact: true }).click();
   await expect(panel.getByTestId('spawn-resource-state')).not.toContainText('edited-child');
   await panel.getByRole('button', { name: 'Redo spawn', exact: true }).click();

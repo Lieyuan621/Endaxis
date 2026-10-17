@@ -7,9 +7,11 @@ export function projectSkillCastInterruptionFrames(
   const starts = projectSkillCastActualStartFrames(entries);
   const ends = new Map<string, number>();
   for (const entry of entries) {
-    if (entry.event !== 'SkillInterrupted') continue;
+    if (entry.event !== 'SkillInterrupted' && entry.event !== 'SkillInputInterrupted') continue;
     const castId = entry.data?.castId;
     if (typeof castId !== 'string' || !starts.has(castId) || ends.has(castId)) continue;
+    // 同一次输入的内部技能转场不会截短整个技能块。
+    if (entry.data?.nextCastId === castId) continue;
     if (entry.frame < starts.get(castId)!)
       throw new Error(`cast '${castId}' interrupted before start`);
     ends.set(castId, entry.frame);
@@ -59,13 +61,13 @@ export function projectCastTimeDilationSegments(
   );
 }
 
-/** 技能实际开始帧以运行时回执为准；被拒绝的放置输入不会伪造开始事实。 */
+/** 技能块从已接受的复合输入或普通技能开始计时；内部技能切换不改变块起点。 */
 export function projectSkillCastActualStartFrames(
   entries: readonly CombatReceiptEntry[],
 ): ReadonlyMap<string, number> {
   const result = new Map<string, number>();
   for (const entry of entries) {
-    if (entry.event !== 'SkillStarted') continue;
+    if (entry.event !== 'SkillInputStarted' && entry.event !== 'SkillStarted') continue;
     const castId = entry.data?.castId;
     if (typeof castId !== 'string' || result.has(castId)) continue;
     result.set(castId, entry.frame);

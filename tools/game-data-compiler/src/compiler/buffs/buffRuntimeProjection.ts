@@ -1460,10 +1460,64 @@ function createBuffSequenceProjection(
         initialState: () => refined,
       };
     },
-    compilePhysicsCast: (node, state) =>
-      context.combatInvisiblePhysicsCastPaths?.has(node.sourcePath) === true
-        ? { steps: [], state }
-        : null,
+    compilePhysicsCast: (node, state) => {
+      if (context.combatInvisiblePhysicsCastPaths?.has(node.sourcePath) === true)
+        return { steps: [], state };
+      const cast = node.body.value;
+      const geometry = cast.sourceToTarget;
+      // 固定地面没有墙体和斜坡。这里只投影同一来源实体向下的垂直射线，
+      // 其他方向、持续探测或球扫必须另行接入，不能默认为命中敌人。
+      if (
+        cast.pointDirectionType !== 'SourceToTarget' ||
+        cast.needTick ||
+        cast.hitDistanceBlackboardKey !== '' ||
+        cast.sphereRadius.blackboardKey !== null ||
+        cast.sphereRadius.value !== 0 ||
+        cast.maxDistance.blackboardKey !== null ||
+        cast.maxDistance.value <= 0 ||
+        geometry.sourceMountPoint !== 'None' ||
+        geometry.targetMountPoint !== 'None' ||
+        [...geometry.start, ...geometry.end, ...geometry.rotation].some(
+          value => value.blackboardKey !== null,
+        ) ||
+        geometry.start[0]!.value !== geometry.end[0]!.value ||
+        geometry.start[2]!.value !== geometry.end[2]!.value ||
+        geometry.end[1]!.value >= geometry.start[1]!.value ||
+        geometry.rotation.some(value => value.value !== 0) ||
+        JSON.stringify(cast.source) !== JSON.stringify(cast.target)
+      )
+        return null;
+      const nextState = new Map(state);
+      nextState.set(cast.hitPositionTargetGroupKey, 'spatialPoint');
+      const childContext = {
+        ...context,
+        staticZeroSpaceTargetGroupKeys: new Set([
+          ...(context.staticZeroSpaceTargetGroupKeys ?? []),
+          cast.hitPositionTargetGroupKey,
+        ]),
+      };
+      const compile = (sequence: NativeSequenceSource<KnownNativeActionLeafSource>) =>
+        compileActionSequenceProgram(sequence, {
+          ...createBuffSequenceProjection(visualOnlyIds, childContext, extensions),
+          initialState: () => nextState,
+        });
+      return {
+        steps: [
+          {
+            kind: 'physicsCast',
+            parameters: {
+              source: projectActionTargetQuery(cast.source, context, node.sourcePath),
+              startHeightOffset: geometry.start[1]!.value,
+              maxDistance: cast.maxDistance.value,
+              saveToContextKey: cast.hitPositionTargetGroupKey,
+            },
+            whenHit: compile(node.body.whenHit),
+            whenMiss: compile(node.body.whenMiss),
+          },
+        ],
+        state: nextState,
+      };
+    },
     compileTimelineControl: (first, partyTargetGroups) => {
       if (
         first.body.kind === 'leaf' &&

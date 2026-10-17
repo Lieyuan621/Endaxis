@@ -3,6 +3,18 @@ import type { DashTimingProgram } from '../../core/combat/skills/operatorCenterS
 import { BATTLE_COMMAND_MAPPING_CONFIG } from './battleCommandMappingCatalog.generated';
 import { MOVEMENT_SETTING_DEFAULT } from './movementSettingCatalog.generated';
 
+export function createNativePlungingAttackMotion() {
+  return {
+    jumpDelaySeconds: MOVEMENT_SETTING_DEFAULT.jumpDelaySeconds,
+    maxJumpHeight: MOVEMENT_SETTING_DEFAULT.maxJumpHeight,
+    gravity: MOVEMENT_SETTING_DEFAULT.gravity,
+    fallingGravity: MOVEMENT_SETTING_DEFAULT.fallingGravity,
+    minPlungingAttackHeight: MOVEMENT_SETTING_DEFAULT.minPlungingAttackHeight,
+    downSpeed: MOVEMENT_SETTING_DEFAULT.plungingAttackDownSpeed,
+    jumpOffsetFrames: BATTLE_COMMAND_MAPPING_CONFIG.jumpOffsetCacheTime * COMBAT_FRAMES_PER_SECOND,
+  };
+}
+
 /** 原生 BattleCommandType 0..5 顺序下的全局输入缓存与中心状态窗口。单位均为秒。 */
 export const battleCommandMappingConfig = BATTLE_COMMAND_MAPPING_CONFIG;
 
@@ -10,6 +22,7 @@ export const battleCommandMappingConfig = BATTLE_COMMAND_MAPPING_CONFIG;
 export function createNativeDashTimingProgram(): DashTimingProgram {
   return {
     dashOffsetFrames: battleCommandMappingConfig.dashOffsetCacheTime * COMBAT_FRAMES_PER_SECOND,
+    skillOffsetFrames: battleCommandMappingConfig.skillOffsetCacheTime * COMBAT_FRAMES_PER_SECOND,
     blockAttackFramesInDash:
       battleCommandMappingConfig.blockAttackTimeInDash * COMBAT_FRAMES_PER_SECOND,
     allowAttackAfterFramesInDash:

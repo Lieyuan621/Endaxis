@@ -12,22 +12,20 @@ import type {
 import type { SkillCastDocument } from '../project/schema';
 import {
   listSkillGroupDefinitionBindings,
-  listOperatorSkillDefinitionBindings,
+  requireOperatorSkill,
 } from '../game-data/operatorSkillDefinitions';
 
 /** 换槽包装技能保留施放身份；动作图来自路由执行体，诊断必须使用同一份定义。 */
 export function resolveSkillExecutionDefinition(
-  resolved: ResolvedSkillDefinition,
+  resolved: Pick<ResolvedSkillDefinition, 'custom' | 'definition'>,
   operator: OperatorDefinition,
 ): SkillDefinition {
   if (resolved.custom) return resolved.definition;
-  const route = resolved.group.routedReplacementSkills?.find(
-    replacement => replacement.skill.key === resolved.definition.key,
+  const route = operator.routedReplacementSkills?.find(
+    replacement => replacement.skillId === resolved.definition.key,
   );
   if (!route) return resolved.definition;
-  const execution = listOperatorSkillDefinitionBindings(operator).find(
-    binding => binding.skill.key === route.executionSkillKey,
-  )?.skill;
+  const execution = requireOperatorSkill(operator, route.executionSkillKey);
   if (!execution)
     throw new Error(
       `skill '${operator.slug}/${resolved.definition.key}' routes to missing execution skill '${route.executionSkillKey}'`,
@@ -62,7 +60,7 @@ export function resolveSkillTemplateDefinition(
     candidate => candidate.key === source.skillGroupKey,
   );
   const directBinding = directGroup
-    ? listSkillGroupDefinitionBindings(directGroup).find(
+    ? listSkillGroupDefinitionBindings(directGroup, operator).find(
         candidate => candidate.skill.key === source.skillKey,
       )
     : undefined;
@@ -79,7 +77,7 @@ export function resolveSkillTemplateDefinition(
   if (group === undefined) {
     throw new Error(`operator '${operator.slug}' has no skill group '${source.skillGroupKey}'`);
   }
-  const matches = listSkillGroupDefinitionBindings(group).filter(
+  const matches = listSkillGroupDefinitionBindings(group, operator).filter(
     candidate => candidate.skill.key === skillKey,
   );
   if (matches.length !== 1) {
@@ -91,11 +89,6 @@ export function resolveSkillTemplateDefinition(
   }
   const binding = matches[0]!;
   const resolvedDefinition = binding.skill;
-  if (group.replacementSkillPlacements?.[resolvedDefinition.key] === 'internal') {
-    throw new Error(
-      `skill '${operator.slug}/${group.key}/${resolvedDefinition.key}' is internal and cannot be placed on the timeline`,
-    );
-  }
   if (resolvedDefinition.levelSource === undefined) {
     throw new Error(
       `skill '${operator.slug}/${group.key}/${resolvedDefinition.key}' has no per-skill level source`,

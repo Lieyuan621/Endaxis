@@ -151,7 +151,10 @@ function inspectCondition(
     case 'entityTagMatch':
       return;
     case 'healthCompare':
-      if (!(condition.target.kind === 'fixed' && condition.target.target === 'enemy') && !flags.operatorVitals) {
+      if (
+        !(condition.target.kind === 'fixed' && condition.target.target === 'enemy') &&
+        !flags.operatorVitals
+      ) {
         report(
           collect,
           'unsupported-condition',
@@ -186,6 +189,10 @@ function inspectSequence(
   rootActionSteps(sequence).forEach((step, index) => {
     const stepPath = `${path}.steps[${index}]`;
     switch (step.kind) {
+      case 'physicsCast':
+        inspectSequence(step.whenHit, `${stepPath}.whenHit`, collect, flags, source);
+        inspectSequence(step.whenMiss, `${stepPath}.whenMiss`, collect, flags, source);
+        return;
       case 'copyContextTargets':
       case 'mergeContextTargets':
       case 'findCharacterTeamTargets':

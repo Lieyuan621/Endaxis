@@ -478,7 +478,12 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
             'movementsetting_default.asset',
             'assets/beyond/dynamicassets/gamedata/gameplayconfig/movementsetting/movementsetting_default.asset',
           );
-          const input = { sourceUrl, output: movementSettingCatalog, check: false };
+          const miscSourceUrl = await resolveNamedManifestAssetPreview(
+            args.vfsBase,
+            'gameplaymiscsetting.asset',
+            'assets/beyond/dynamicassets/gamedata/gameplayconfig/gameplaymiscsetting.asset',
+          );
+          const input = { sourceUrl, miscSourceUrl, output: movementSettingCatalog, check: false };
           const generated = await generateMovementSettingCatalog(input);
           await generateMovementSettingCatalog({ ...input, check: true });
           return {

@@ -28,6 +28,7 @@ import type {
   OperatorPlayerActionModeDefinition,
   OperatorPlayerActionRoutes,
   OperatorSkillSlotDefinition,
+  RoutedSkillReplacementDefinition,
   SkillDefinition,
   SkillGroupDefinition,
 } from './skills.ts';
@@ -521,10 +522,23 @@ export interface OperatorDefinition {
   attributes: AttributeGrowthDefinition;
   /** 仅记录偏离全局 `[10, 15, 15, 20]` 主属性规则的干员。 */
   trustAttributeBonus?: TrustAttributeBonusDefinition;
-  /** 干员技能库的操作组集合；不包含切人、闪避、跳跃。组成员配置操作段的目标技能。 */
+  /** 本干员持有的全部执行技能，包括没有技能库入口的内部技能；技能 key 在此目录内唯一。 */
+  skills: readonly SkillDefinition[];
+  /** 原生输入包装技能与执行体的对应关系，独立于技能库中的分组和可见性。 */
+  routedReplacementSkills?: readonly RoutedSkillReplacementDefinition[];
+  /** 干员技能库的操作组集合；不包含切人、闪避、跳跃。组成员只引用本干员的技能。 */
   skillGroups: readonly SkillGroupDefinition[];
   /** 完美闪避成功后由中心状态机施放的隐藏技能；不作为普通技能块出现在技能库。 */
-  dodgeSkill?: SkillDefinition;
+  dodgeSkillId?: string;
+  /** 原生下落攻击起手与落地路由；一次玩家输入驱动两段技能，不增加技能库操作。 */
+  plungingAttack?: {
+    readonly startSkillId: string;
+    readonly endSkillId: string;
+    readonly startDurationSeconds: number;
+    readonly endDurationSeconds: number;
+    /** 未覆盖时使用 GameplayMiscSetting 的公共下落速度。 */
+    readonly downSpeed?: number;
+  };
   /** 进入原生 Dash 状态时附着到当前干员的 Buff，以及创建实例时写入的字面黑板。 */
   dashBuffs?: readonly {
     readonly buffId: string;

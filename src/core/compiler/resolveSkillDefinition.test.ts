@@ -40,7 +40,7 @@ const customSkill: SkillDefinition = skillFixture({
 const skillGroup: SkillGroupDefinition = {
   key: 'battleSkill',
   operationType: 'battleSkill',
-  skills: catalogSkill,
+  skillIds: [catalogSkill.key],
 };
 
 const operator: OperatorDefinition = {
@@ -63,6 +63,7 @@ const operator: OperatorDefinition = {
       2500,
     ],
   },
+  skills: [catalogSkill],
   skillGroups: [skillGroup],
   talents: [],
   potentials: [],
@@ -121,7 +122,7 @@ describe('resolveEffectiveSkillDefinition', () => {
     });
     const groupWithVariant: SkillGroupDefinition = {
       ...skillGroup,
-      variants: [{ key: 'enhanced', skills: enhanced }],
+      variants: [{ key: 'enhanced', skillIds: [enhanced.key] }],
     };
     const resolved = resolveEffectiveSkillDefinition(
       createCast({
@@ -131,7 +132,7 @@ describe('resolveEffectiveSkillDefinition', () => {
           skillKey: 'enhancedBattleSkill',
         },
       }),
-      { ...operator, skillGroups: [groupWithVariant] },
+      { ...operator, skills: [catalogSkill, enhanced], skillGroups: [groupWithVariant] },
     );
 
     expect(resolved.definition).toBe(enhanced);
@@ -149,16 +150,14 @@ describe('resolveEffectiveSkillDefinition', () => {
     };
     const group: SkillGroupDefinition = {
       ...skillGroup,
-      replacementSkills: [replacement],
-      routedReplacementSkills: [
-        {
-          skill: routed,
-
-          executionSkillKey: 'comboSkill',
-        },
-      ],
+      skillIds: [catalogSkill.key, replacement.key, routed.key],
     };
-    const withReplacements = { ...operator, skillGroups: [group] };
+    const withReplacements = {
+      ...operator,
+      skills: [catalogSkill, replacement, routed],
+      skillGroups: [group],
+      routedReplacementSkills: [{ skillId: routed.key, executionSkillKey: 'comboSkill' }],
+    };
 
     const sameSlot = resolveEffectiveSkillDefinition(
       createCast({
@@ -186,7 +185,7 @@ describe('resolveEffectiveSkillDefinition', () => {
     expect(routedSlot.definition).toBe(routed);
     expect(routedSlot.levelSource).toBe('comboSkill');
     expect(() => resolveSkillExecutionDefinition(routedSlot, withReplacements)).toThrow(
-      "missing execution skill 'comboSkill'",
+      "has no skill 'comboSkill'",
     );
   });
 
@@ -194,8 +193,6 @@ describe('resolveEffectiveSkillDefinition', () => {
     const internal = { ...catalogSkill, key: 'internalEnd' };
     const group: SkillGroupDefinition = {
       ...skillGroup,
-      replacementSkills: [internal],
-      replacementSkillPlacements: { internalEnd: 'internal' },
     };
 
     expect(() =>
@@ -207,9 +204,9 @@ describe('resolveEffectiveSkillDefinition', () => {
             skillKey: internal.key,
           },
         }),
-        { ...operator, skillGroups: [group] },
+        { ...operator, skills: [catalogSkill, internal], skillGroups: [group] },
       ),
-    ).toThrow("skill 'test/battleSkill/internalEnd' is internal");
+    ).toThrow("has no skill 'internalEnd'");
   });
 
   it('returns custom definition when present', () => {
@@ -230,7 +227,7 @@ describe('resolveEffectiveSkillDefinition', () => {
         skillGroups: [
           {
             ...skillGroup,
-            replacementSkills: [{ ...catalogSkill }],
+            skillIds: [catalogSkill.key, catalogSkill.key],
           },
         ],
       }),
@@ -281,7 +278,8 @@ describe('resolveEffectiveSkillDefinition', () => {
 it('resolves graph-backed skill templates without expanding or copying their entries', () => {
   const graphOperator: OperatorDefinition = {
     ...operator,
-    skillGroups: [{ ...skillGroup, skills: customSkill }],
+    skills: [customSkill],
+    skillGroups: [skillGroup],
     skillAliases: [{ from: ['oldGroup', 'oldSkill'], to: ['battleSkill', 'battleSkill'] }],
   };
   const binding = listOperatorSkillDefinitionBindings(graphOperator)[0]!;

@@ -5,6 +5,266 @@ import type { SkillDefinition } from '../../../packages/game-data-contract/src/s
 import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs';
 import type { ComboSkillConditionDefinition } from '../../../packages/game-data-contract/src/operators';
 import type { OperatorDefinition } from '../../../packages/game-data-contract/src/operators';
+export const antalChr_0023_antal_combo_skillActionGraph = {
+  main: {
+    nodes: {
+      applyElementalInfliction_9: {
+        action: {
+          kind: 'applyElementalInfliction',
+          parameters: { element: 'nature', isExtra: false },
+        },
+        next: null,
+      },
+      applyElementalInfliction_8: {
+        action: {
+          kind: 'applyElementalInfliction',
+          parameters: { element: 'electric', isExtra: false },
+        },
+        next: null,
+      },
+      applyElementalInfliction_7: {
+        action: {
+          kind: 'applyElementalInfliction',
+          parameters: { element: 'cryo', isExtra: false },
+        },
+        next: null,
+      },
+      applyElementalInfliction_6: {
+        action: {
+          kind: 'applyElementalInfliction',
+          parameters: { element: 'heat', isExtra: false },
+        },
+        next: null,
+      },
+      switch_10: {
+        action: {
+          kind: 'switch',
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_1' }, alwaysNext: true },
+          options: [
+            {
+              value: { kind: 'constant', value: 0 },
+              sequence: { $sequence: 'applyElementalInfliction_6' },
+            },
+            {
+              value: { kind: 'constant', value: 2 },
+              sequence: { $sequence: 'applyElementalInfliction_7' },
+            },
+            {
+              value: { kind: 'constant', value: 1 },
+              sequence: { $sequence: 'applyElementalInfliction_8' },
+            },
+            {
+              value: { kind: 'constant', value: 3 },
+              sequence: { $sequence: 'applyElementalInfliction_9' },
+            },
+          ],
+        },
+        next: null,
+      },
+      applyPhysicalInfliction_4: {
+        action: {
+          kind: 'applyPhysicalInfliction',
+          parameters: {
+            type: 'crush',
+            target: 'enemy',
+            isExtra: false,
+            damageMultiplier: { kind: 'constant', value: 1 },
+            ignoreHitEffect: false,
+          },
+        },
+        next: null,
+      },
+      applyPhysicalInfliction_3: {
+        action: {
+          kind: 'applyPhysicalInfliction',
+          parameters: {
+            type: 'knockDown',
+            target: 'enemy',
+            duration: { kind: 'constant', value: 2 },
+            force: false,
+            isExtra: false,
+            targetFilter: 'aliveOnly',
+            returnWhen: 'always',
+          },
+        },
+        next: null,
+      },
+      applyPhysicalInfliction_2: {
+        action: {
+          kind: 'applyPhysicalInfliction',
+          parameters: {
+            type: 'airborne',
+            target: 'enemy',
+            isExtra: false,
+            duration: { kind: 'constant', value: 1.5 },
+            height: { kind: 'constant', value: 2 },
+            speedFactorMultiplier: 3,
+            force: false,
+            targetFilter: 'aliveOnly',
+            returnWhen: 'always',
+          },
+        },
+        next: null,
+      },
+      applyPhysicalInfliction_1: {
+        action: {
+          kind: 'applyPhysicalInfliction',
+          parameters: { type: 'fracture', target: 'enemy', isExtra: false },
+        },
+        next: null,
+      },
+      switch_5: {
+        action: {
+          kind: 'switch',
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_1' }, alwaysNext: true },
+          options: [
+            {
+              value: { kind: 'constant', value: 2 },
+              sequence: { $sequence: 'applyPhysicalInfliction_1' },
+            },
+            {
+              value: { kind: 'constant', value: 0 },
+              sequence: { $sequence: 'applyPhysicalInfliction_2' },
+            },
+            {
+              value: { kind: 'constant', value: 1 },
+              sequence: { $sequence: 'applyPhysicalInfliction_3' },
+            },
+            {
+              value: { kind: 'constant', value: 3 },
+              sequence: { $sequence: 'applyPhysicalInfliction_4' },
+            },
+          ],
+        },
+        next: null,
+      },
+      changeResource_11: {
+        action: {
+          kind: 'changeResource',
+          parameters: {
+            resource: 'ultimateEnergy',
+            amount: { kind: 'valueNode', nodeId: 'data_2' },
+            coefficient: { kind: 'constant', value: 1 },
+            source: { kind: 'source' },
+            targets: { kind: 'source' },
+          },
+        },
+        next: null,
+      },
+      dealDamage_12: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            damageType: 'electric',
+            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            tags: ['comboSkill'],
+            features: ['canBreakWeakness'],
+            stagger: { kind: 'valueNode', nodeId: 'data_4' },
+          },
+        },
+        next: 'changeResource_11',
+      },
+      switch_13: {
+        action: {
+          kind: 'switch',
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_5' }, alwaysNext: true },
+          options: [
+            { value: { kind: 'constant', value: 1 }, sequence: { $sequence: 'switch_5' } },
+            { value: { kind: 'constant', value: 0 }, sequence: { $sequence: 'switch_10' } },
+            { value: { kind: 'constant', value: 2 }, sequence: { $sequence: null } },
+          ],
+        },
+        next: 'dealDamage_12',
+      },
+      startTimeDilation_15: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'entity',
+            durationSeconds: { kind: 'constant', value: 0.2 },
+            slot: 'TimeDilation/Layer/Entity/HitStop',
+            priority: 10,
+            curve: { kind: 'named', key: 'char_hard_stop' },
+            finishByAction: false,
+            targets: ['enemy', 'caster'],
+          },
+        },
+        next: null,
+      },
+      ifElse_16: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_6' },
+          whenTrue: { $sequence: 'startTimeDilation_15' },
+          whenFalse: { $sequence: 'startTimeDilation_15' },
+        },
+        next: null,
+      },
+      startTimeDilation_17: {
+        action: {
+          kind: 'startTimeDilation',
+          parameters: {
+            scope: 'global',
+            durationSeconds: { kind: 'constant', value: 0.667 },
+            slot: 'unassigned',
+            priority: 30,
+            curve: { kind: 'named', key: 'ComboSkill' },
+            finishByAction: false,
+            ignoredTargets: ['caster'],
+            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
+          },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'EntityBB_combo_index' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'EntityBB_combo_type' } },
+      data_6: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const antalChr_0023_antal_combo_skill: SkillDefinition = {
+  key: 'chr_0023_antal_combo_skill',
+  element: 'electric',
+  blackboard: {
+    atk_scale: [1.51, 1.66, 1.81, 1.96, 2.11, 2.27, 2.42, 2.57, 2.72, 2.91, 3.13, 3.4],
+    poise: 10,
+    usp: 10,
+  },
+  timelineBlockFrames: 46,
+  naturalDurationFrames: 108,
+  exclusiveFrame: 45,
+  offsetRecordFrame: 0,
+  dontInterruptCombo: true,
+  inputWindows: {
+    allowedNextSkills: [
+      { startFrame: 24, endFrame: 63, skillIds: ['chr_0023_antal_normal_skill'] },
+    ],
+  },
+  costFrame: 0,
+  scheduledSequences: [
+    { startFrame: 21, endFrame: 24, sequence: { $sequence: 'switch_13' } },
+    { startFrame: 23, endFrame: 26, sequence: { $sequence: 'ifElse_16' } },
+    { startFrame: 0, endFrame: 17, sequence: { $sequence: 'startTimeDilation_17' } },
+  ],
+  smartTarget: 'trigger',
+  cooldownFrames: [750, 750, 750, 750, 750, 750, 750, 750, 750, 750, 750, 720],
+  skillType: 'comboSkill',
+  levelSource: 'comboSkill',
+  nativeSkillType: 'comboSkill',
+  actionGraph: antalChr_0023_antal_combo_skillActionGraph,
+};
+
 export const antalChr_0023_antal_attack1ActionGraph = {
   main: {
     nodes: {
@@ -1000,6 +1260,7 @@ export const antalChr_0023_antal_power_attack: SkillDefinition = {
   naturalDurationFrames: 124,
   exclusiveFrame: 42,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -1212,6 +1473,7 @@ export const antalChr_0023_antal_normal_skill: SkillDefinition = {
   naturalDurationFrames: 108,
   exclusiveFrame: 30,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 20, endFrame: 20, sequence: { $sequence: 'finishBuffsById_4' } },
@@ -1223,265 +1485,6 @@ export const antalChr_0023_antal_normal_skill: SkillDefinition = {
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
   actionGraph: antalChr_0023_antal_normal_skillActionGraph,
-};
-
-export const antalChr_0023_antal_combo_skillActionGraph = {
-  main: {
-    nodes: {
-      applyElementalInfliction_9: {
-        action: {
-          kind: 'applyElementalInfliction',
-          parameters: { element: 'nature', isExtra: false },
-        },
-        next: null,
-      },
-      applyElementalInfliction_8: {
-        action: {
-          kind: 'applyElementalInfliction',
-          parameters: { element: 'electric', isExtra: false },
-        },
-        next: null,
-      },
-      applyElementalInfliction_7: {
-        action: {
-          kind: 'applyElementalInfliction',
-          parameters: { element: 'cryo', isExtra: false },
-        },
-        next: null,
-      },
-      applyElementalInfliction_6: {
-        action: {
-          kind: 'applyElementalInfliction',
-          parameters: { element: 'heat', isExtra: false },
-        },
-        next: null,
-      },
-      switch_10: {
-        action: {
-          kind: 'switch',
-          parameters: { choice: { kind: 'valueNode', nodeId: 'data_1' }, alwaysNext: true },
-          options: [
-            {
-              value: { kind: 'constant', value: 0 },
-              sequence: { $sequence: 'applyElementalInfliction_6' },
-            },
-            {
-              value: { kind: 'constant', value: 2 },
-              sequence: { $sequence: 'applyElementalInfliction_7' },
-            },
-            {
-              value: { kind: 'constant', value: 1 },
-              sequence: { $sequence: 'applyElementalInfliction_8' },
-            },
-            {
-              value: { kind: 'constant', value: 3 },
-              sequence: { $sequence: 'applyElementalInfliction_9' },
-            },
-          ],
-        },
-        next: null,
-      },
-      applyPhysicalInfliction_4: {
-        action: {
-          kind: 'applyPhysicalInfliction',
-          parameters: {
-            type: 'crush',
-            target: 'enemy',
-            isExtra: false,
-            damageMultiplier: { kind: 'constant', value: 1 },
-            ignoreHitEffect: false,
-          },
-        },
-        next: null,
-      },
-      applyPhysicalInfliction_3: {
-        action: {
-          kind: 'applyPhysicalInfliction',
-          parameters: {
-            type: 'knockDown',
-            target: 'enemy',
-            duration: { kind: 'constant', value: 2 },
-            force: false,
-            isExtra: false,
-            targetFilter: 'aliveOnly',
-            returnWhen: 'always',
-          },
-        },
-        next: null,
-      },
-      applyPhysicalInfliction_2: {
-        action: {
-          kind: 'applyPhysicalInfliction',
-          parameters: {
-            type: 'airborne',
-            target: 'enemy',
-            isExtra: false,
-            duration: { kind: 'constant', value: 1.5 },
-            height: { kind: 'constant', value: 2 },
-            speedFactorMultiplier: 3,
-            force: false,
-            targetFilter: 'aliveOnly',
-            returnWhen: 'always',
-          },
-        },
-        next: null,
-      },
-      applyPhysicalInfliction_1: {
-        action: {
-          kind: 'applyPhysicalInfliction',
-          parameters: { type: 'fracture', target: 'enemy', isExtra: false },
-        },
-        next: null,
-      },
-      switch_5: {
-        action: {
-          kind: 'switch',
-          parameters: { choice: { kind: 'valueNode', nodeId: 'data_1' }, alwaysNext: true },
-          options: [
-            {
-              value: { kind: 'constant', value: 2 },
-              sequence: { $sequence: 'applyPhysicalInfliction_1' },
-            },
-            {
-              value: { kind: 'constant', value: 0 },
-              sequence: { $sequence: 'applyPhysicalInfliction_2' },
-            },
-            {
-              value: { kind: 'constant', value: 1 },
-              sequence: { $sequence: 'applyPhysicalInfliction_3' },
-            },
-            {
-              value: { kind: 'constant', value: 3 },
-              sequence: { $sequence: 'applyPhysicalInfliction_4' },
-            },
-          ],
-        },
-        next: null,
-      },
-      changeResource_11: {
-        action: {
-          kind: 'changeResource',
-          parameters: {
-            resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_2' },
-            coefficient: { kind: 'constant', value: 1 },
-            source: { kind: 'source' },
-            targets: { kind: 'source' },
-          },
-        },
-        next: null,
-      },
-      dealDamage_12: {
-        action: {
-          kind: 'dealDamage',
-          parameters: {
-            damageType: 'electric',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
-            tags: ['comboSkill'],
-            features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_4' },
-          },
-        },
-        next: 'changeResource_11',
-      },
-      switch_13: {
-        action: {
-          kind: 'switch',
-          parameters: { choice: { kind: 'valueNode', nodeId: 'data_5' }, alwaysNext: true },
-          options: [
-            { value: { kind: 'constant', value: 1 }, sequence: { $sequence: 'switch_5' } },
-            { value: { kind: 'constant', value: 0 }, sequence: { $sequence: 'switch_10' } },
-            { value: { kind: 'constant', value: 2 }, sequence: { $sequence: null } },
-          ],
-        },
-        next: 'dealDamage_12',
-      },
-      startTimeDilation_15: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'entity',
-            durationSeconds: { kind: 'constant', value: 0.2 },
-            slot: 'TimeDilation/Layer/Entity/HitStop',
-            priority: 10,
-            curve: { kind: 'named', key: 'char_hard_stop' },
-            finishByAction: false,
-            targets: ['enemy', 'caster'],
-          },
-        },
-        next: null,
-      },
-      ifElse_16: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_6' },
-          whenTrue: { $sequence: 'startTimeDilation_15' },
-          whenFalse: { $sequence: 'startTimeDilation_15' },
-        },
-        next: null,
-      },
-      startTimeDilation_17: {
-        action: {
-          kind: 'startTimeDilation',
-          parameters: {
-            scope: 'global',
-            durationSeconds: { kind: 'constant', value: 0.667 },
-            slot: 'unassigned',
-            priority: 30,
-            curve: { kind: 'named', key: 'ComboSkill' },
-            finishByAction: false,
-            ignoredTargets: ['caster'],
-            ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
-          },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'EntityBB_combo_index' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'EntityBB_combo_type' } },
-      data_6: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-export const antalChr_0023_antal_combo_skill: SkillDefinition = {
-  key: 'chr_0023_antal_combo_skill',
-  element: 'electric',
-  blackboard: {
-    atk_scale: [1.51, 1.66, 1.81, 1.96, 2.11, 2.27, 2.42, 2.57, 2.72, 2.91, 3.13, 3.4],
-    poise: 10,
-    usp: 10,
-  },
-  timelineBlockFrames: 46,
-  naturalDurationFrames: 108,
-  exclusiveFrame: 45,
-  offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 24, endFrame: 63, skillIds: ['chr_0023_antal_normal_skill'] },
-    ],
-  },
-  costFrame: 0,
-  scheduledSequences: [
-    { startFrame: 21, endFrame: 24, sequence: { $sequence: 'switch_13' } },
-    { startFrame: 23, endFrame: 26, sequence: { $sequence: 'ifElse_16' } },
-    { startFrame: 0, endFrame: 17, sequence: { $sequence: 'startTimeDilation_17' } },
-  ],
-  smartTarget: 'trigger',
-  cooldownFrames: [750, 750, 750, 750, 750, 750, 750, 750, 750, 750, 750, 720],
-  skillType: 'comboSkill',
-  levelSource: 'comboSkill',
-  nativeSkillType: 'comboSkill',
-  actionGraph: antalChr_0023_antal_combo_skillActionGraph,
 };
 
 export const antalChr_0023_antal_ultimate_skillActionGraph = {
@@ -1627,6 +1630,28 @@ export const antalCommon_character_perfect_dodge: SkillDefinition = {
   defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
+};
+
+export const antalChr_0023_antal_plunging_attack_startActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const antalChr_0023_antal_plunging_attack_start: SkillDefinition = {
+  actionGraph: antalChr_0023_antal_plunging_attack_startActionGraph,
+  key: 'chr_0023_antal_plunging_attack_start',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
 };
 
 const antalComboCondition1ActionGraph = {
@@ -2372,28 +2397,47 @@ export const antal: OperatorDefinition = {
     baseAttack: [30, 87, 147, 207, 267, 297],
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },
+  skills: [
+    antalChr_0023_antal_combo_skill,
+    antalChr_0023_antal_attack1,
+    antalChr_0023_antal_attack2,
+    antalChr_0023_antal_attack3,
+    antalChr_0023_antal_attack4,
+    antalChr_0023_antal_power_attack,
+    antalChr_0023_antal_plunging_attack_end,
+    antalChr_0023_antal_normal_skill,
+    antalChr_0023_antal_ultimate_skill,
+    antalCommon_character_perfect_dodge,
+    antalChr_0023_antal_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        antalChr_0023_antal_attack1,
-        antalChr_0023_antal_attack2,
-        antalChr_0023_antal_attack3,
-        antalChr_0023_antal_attack4,
+      skillIds: [
+        'chr_0023_antal_attack1',
+        'chr_0023_antal_attack2',
+        'chr_0023_antal_attack3',
+        'chr_0023_antal_attack4',
       ],
     },
-    { key: 'finisher', operationType: 'finisher', skills: antalChr_0023_antal_power_attack },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0023_antal_power_attack'] },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: antalChr_0023_antal_plunging_attack_end,
+      skillIds: ['chr_0023_antal_plunging_attack_end'],
     },
-    { key: 'battleSkill', operationType: 'battleSkill', skills: antalChr_0023_antal_normal_skill },
-    { key: 'comboSkill', operationType: 'comboSkill', skills: antalChr_0023_antal_combo_skill },
-    { key: 'ultimate', operationType: 'ultimate', skills: antalChr_0023_antal_ultimate_skill },
+    { key: 'battleSkill', operationType: 'battleSkill', skillIds: ['chr_0023_antal_normal_skill'] },
+    { key: 'comboSkill', operationType: 'comboSkill', skillIds: ['chr_0023_antal_combo_skill'] },
+    { key: 'ultimate', operationType: 'ultimate', skillIds: ['chr_0023_antal_ultimate_skill'] },
   ],
-  dodgeSkill: antalCommon_character_perfect_dodge,
+  dodgeSkillId: 'common_character_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0023_antal_plunging_attack_start',
+    endSkillId: 'chr_0023_antal_plunging_attack_end',
+    startDurationSeconds: 0.633,
+    endDurationSeconds: 1.433,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
   ],

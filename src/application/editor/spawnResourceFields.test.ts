@@ -65,7 +65,7 @@ function fixture() {
     },
   };
   const owner = {
-    ...arclight.dodgeSkill!,
+    ...arclight.skills.find(skill => skill.key === arclight.dodgeSkillId)!,
     scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'spawn' } }],
     actionGraph: {
       main: graph,
@@ -78,7 +78,13 @@ function fixture() {
     kindName: 'operator',
     name: 'Arclight',
     custom: false,
-    edit: { kind: 'operator', definition: { ...arclight, dodgeSkill: owner } },
+    edit: {
+      kind: 'operator',
+      definition: {
+        ...arclight,
+        skills: [owner, ...arclight.skills.filter(skill => skill.key !== arclight.dodgeSkillId)],
+      },
+    },
   };
   return { source, graph, owner };
 }
@@ -132,20 +138,23 @@ it('discovers nested spawns and rejects cycles, excessive depth, nodes and empty
   };
   const root: any = {
     ...source.edit.definition,
-    dodgeSkill: {
-      ...arclight.dodgeSkill,
-      actionGraph: {
-        main: {
-          nodes: {
-            spawn: {
-              action: action({ lifetime: { kind: 'infinite' }, childSkill: inner }),
-              next: null,
+    skills: [
+      {
+        ...arclight.skills.find(skill => skill.key === arclight.dodgeSkillId),
+        actionGraph: {
+          main: {
+            nodes: {
+              spawn: {
+                action: action({ lifetime: { kind: 'infinite' }, childSkill: inner }),
+                next: null,
+              },
             },
           },
+          macros: {},
         },
-        macros: {},
       },
-    },
+      ...arclight.skills.filter(skill => skill.key !== arclight.dodgeSkillId),
+    ],
   };
   expect(
     listDefinitionResources('operator', root).filter(resource =>
@@ -170,9 +179,9 @@ it('discovers nested spawns and rejects cycles, excessive depth, nodes and empty
         macros: {},
       },
     };
-  root.dodgeSkill = deep;
+  root.skills[0] = deep;
   expect(() => listDefinitionResources('operator', root)).toThrow(/depth/);
-  root.dodgeSkill = {
+  root.skills[0] = {
     ...child,
     actionGraph: {
       main: { nodes: {} },
@@ -185,7 +194,7 @@ it('discovers nested spawns and rejects cycles, excessive depth, nodes and empty
     },
   };
   expect(() => listDefinitionResources('operator', root)).toThrow(/budget/);
-  root.dodgeSkill.actionGraph = {
+  root.skills[0].actionGraph = {
     main: {
       nodes: Object.fromEntries(
         Array.from({ length: 16_385 }, (_, i) => [
@@ -201,7 +210,8 @@ it('discovers nested spawns and rejects cycles, excessive depth, nodes and empty
 it('keeps arbitrary slash-containing node/macro paths distinct for inline layout storage', () => {
   const paths = [
     [
-      'dodgeSkill',
+      'skills',
+      0,
       'actionGraph',
       'main',
       'nodes',
@@ -212,7 +222,8 @@ it('keeps arbitrary slash-containing node/macro paths distinct for inline layout
       'childSkill',
     ],
     [
-      'dodgeSkill',
+      'skills',
+      0,
       'actionGraph',
       'main',
       'nodes',
@@ -224,7 +235,8 @@ it('keeps arbitrary slash-containing node/macro paths distinct for inline layout
       'childSkill',
     ],
     [
-      'dodgeSkill',
+      'skills',
+      0,
       'actionGraph',
       'macros',
       'main/nodes',
@@ -246,10 +258,10 @@ it.each(['main', 'macro'] as const)(
     const session = new WorkspaceAssetSession(source, 'project:operator:inline');
     const address =
       kind === 'main' ? ({ kind } as const) : ({ kind, macroId: 'repeated' } as const);
-    let ownerPath: readonly (string | number)[] = ['dodgeSkill'];
+    let ownerPath: readonly (string | number)[] = ['skills', 0];
     const definition = () => session.current.edit.definition;
     const graph = () => {
-      const owner = fieldValueAt(definition(), ['dodgeSkill']) as ActionGraphResourceOwner;
+      const owner = fieldValueAt(definition(), ['skills', 0]) as ActionGraphResourceOwner;
       return kind === 'main' ? owner.actionGraph.main : owner.actionGraph.macros.repeated!.graph;
     };
     const resources = () => listDefinitionResources('operator', definition() as typeof arclight);
@@ -284,7 +296,8 @@ it.each(['main', 'macro'] as const)(
     expect(fieldValueAt(definition(), opened!)).toBe(actualChild);
     const before = session.current;
     const otherPath = [
-      'dodgeSkill',
+      'skills',
+      0,
       'actionGraph',
       ...(kind === 'main' ? ['macros', 'repeated', 'graph'] : ['main']),
       'nodes',
@@ -324,7 +337,7 @@ it.each(['main', 'macro'] as const)(
     expect(session.current).toBe(before);
     session.history.redo();
     expect(session.current).toBe(changed);
-    ownerPath = ['dodgeSkill']; // independent outer field edit; real Back behavior is covered by the mounted interaction test
+    ownerPath = ['skills', 0]; // independent outer field edit; real Back behavior is covered by the mounted interaction test
     const old = (graph().nodes.spawn!.action as any).parameters.definition;
     const next = { ...old, deathReleaseDelaySeconds: 0.25 };
     validateStructuredValue(field.valueSchema!, old, next, {
@@ -381,7 +394,7 @@ it('rejects stale field navigation after failed flush, removed owner, changed re
       {
         identity: () => 'asset',
         scope: () => scope,
-        ownerPath: () => ['dodgeSkill'],
+        ownerPath: () => ['skills', 0],
         address: () => ({ kind: 'main' }),
         graph: () => graph,
         definition: () => root,
@@ -392,10 +405,13 @@ it('rejects stale field navigation after failed flush, removed owner, changed re
           if (change === 'replace')
             root = {
               ...root,
-              dodgeSkill: {
-                ...root.dodgeSkill,
-                actionGraph: { ...root.dodgeSkill.actionGraph, main: { nodes: {} } },
-              },
+              skills: [
+                {
+                  ...root.skills[0],
+                  actionGraph: { ...root.skills[0].actionGraph, main: { nodes: {} } },
+                },
+                ...root.skills.slice(1),
+              ],
             };
           return change !== 'reject';
         },
@@ -498,16 +514,14 @@ it('discovers array-indexed skill owners and continues through an indexed passiv
   const passiveOwner = { ...passive, actionGraph: owner.actionGraph };
   const root: any = {
     ...source.edit.definition,
-    skillGroups: [{ ...arclight.skillGroups[0], skills: [owner] }],
-    dodgeSkill: undefined,
+    skillGroups: [{ ...arclight.skillGroups[0], skillIds: [owner.key] }],
+    skills: [owner],
     passiveSkills: [passiveOwner],
   };
   const resources = listDefinitionResources('operator', root);
   expect(
     resources.some(
-      r =>
-        r.path.slice(0, 4).join('/') === 'skillGroups/0/skills/0' &&
-        isInlineSpawnResourcePath(r.path),
+      r => r.path.slice(0, 2).join('/') === 'skills/0' && isInlineSpawnResourcePath(r.path),
     ),
   ).toBe(true);
   expect(

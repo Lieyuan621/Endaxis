@@ -10,15 +10,11 @@ it('resolves historical gamedata targets and does not collapse an enhanced attac
     const group = operator.skillGroups.find(group => group.key === target.skillGroupKey)!;
     expect(group, rule.id).toBeDefined();
     if (target.kind === 'operatorSkillSequence') {
-      expect(Array.isArray(group.skills) && group.skills.length > 1, rule.id).toBe(true);
+      expect(group.skillIds.length > 1, rule.id).toBe(true);
     } else if (target.kind === 'operatorSkill') {
-      const skills = [
-        ...(Array.isArray(group.skills) ? group.skills : [group.skills]),
-        ...(group.replacementSkills ?? []),
-        ...(group.variants ?? []).flatMap(v => (Array.isArray(v.skills) ? v.skills : [v.skills])),
-      ];
+      const skills = [...group.skillIds, ...(group.variants ?? []).flatMap(v => v.skillIds)];
       expect(
-        skills.some(s => s.key === target.skillKey),
+        skills.some(id => id === target.skillKey),
         rule.id,
       ).toBe(true);
     }
@@ -93,15 +89,9 @@ it('keeps each reviewed skill mapping unique and points to an existing group mem
         }
         continue;
       }
-      const skills = [
-        ...(Array.isArray(group.skills) ? group.skills : [group.skills]),
-        ...(group.replacementSkills ?? []),
-        ...(group.variants ?? []).flatMap(variant =>
-          Array.isArray(variant.skills) ? variant.skills : [variant.skills],
-        ),
-      ];
+      const skills = [...group.skillIds, ...(group.variants ?? []).flatMap(v => v.skillIds)];
       expect(
-        skills.some(skill => skill.key === target.skillKey),
+        skills.some(id => id === target.skillKey),
         slug + '/' + target.skillKey,
       ).toBe(true);
     }

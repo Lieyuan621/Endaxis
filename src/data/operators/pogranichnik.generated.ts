@@ -1022,6 +1022,7 @@ export const pogranichnikChr_0029_pograni_power_attack: SkillDefinition = {
   naturalDurationFrames: 145,
   exclusiveFrame: 47,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -1521,6 +1522,7 @@ export const pogranichnikChr_0029_pograni_normal_skill: SkillDefinition = {
   naturalDurationFrames: 218,
   exclusiveFrame: 55,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       {
@@ -2144,6 +2146,7 @@ export const pogranichnikChr_0029_pograni_combo_skill: SkillDefinition = {
   naturalDurationFrames: 728,
   exclusiveFrame: 649,
   offsetRecordFrame: 0,
+  dontInterruptCombo: true,
   inputWindows: {
     allowedNextSkills: [
       { startFrame: 66, endFrame: 96, skillIds: ['chr_0029_pograni_normal_skill'] },
@@ -2485,6 +2488,28 @@ export const pogranichnikCommon_character_perfect_dodge: SkillDefinition = {
   defaultTarget: 'enemy',
   skillType: 'dodge',
   nativeSkillType: 'dodge',
+};
+
+export const pogranichnikChr_0029_pograni_plunging_attack_startActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+export const pogranichnikChr_0029_pograni_plunging_attack_start: SkillDefinition = {
+  actionGraph: pogranichnikChr_0029_pograni_plunging_attack_startActionGraph,
+  key: 'chr_0029_pograni_plunging_attack_start',
+  element: 'physical',
+  blackboard: {},
+  timelineBlockFrames: 1501,
+  naturalDurationFrames: 1500,
+  exclusiveFrame: 1500,
+  offsetRecordFrame: 0,
+  costFrame: 0,
+  scheduledSequences: [],
+  defaultTarget: 'enemy',
+  skillType: 'plungingAttack',
+  nativeSkillType: 'attack',
+  levelSource: 'basicAttack',
 };
 
 const pogranichnikPassive1ActionGraph = {
@@ -3808,45 +3833,53 @@ export const pogranichnik: OperatorDefinition = {
     baseAttack: [30, 92, 157, 223, 288, 321],
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },
+  skills: [
+    pogranichnikChr_0029_pograni_attack1,
+    pogranichnikChr_0029_pograni_attack2,
+    pogranichnikChr_0029_pograni_attack3,
+    pogranichnikChr_0029_pograni_attack4,
+    pogranichnikChr_0029_pograni_attack5,
+    pogranichnikChr_0029_pograni_power_attack,
+    pogranichnikChr_0029_pograni_plunging_attack_end,
+    pogranichnikChr_0029_pograni_normal_skill,
+    pogranichnikChr_0029_pograni_combo_skill,
+    pogranichnikChr_0029_pograni_ultimate_skill,
+    pogranichnikCommon_character_perfect_dodge,
+    pogranichnikChr_0029_pograni_plunging_attack_start,
+  ],
   skillGroups: [
     {
       key: 'basicAttack',
       operationType: 'basicAttack',
-      skills: [
-        pogranichnikChr_0029_pograni_attack1,
-        pogranichnikChr_0029_pograni_attack2,
-        pogranichnikChr_0029_pograni_attack3,
-        pogranichnikChr_0029_pograni_attack4,
-        pogranichnikChr_0029_pograni_attack5,
+      skillIds: [
+        'chr_0029_pograni_attack1',
+        'chr_0029_pograni_attack2',
+        'chr_0029_pograni_attack3',
+        'chr_0029_pograni_attack4',
+        'chr_0029_pograni_attack5',
       ],
     },
-    {
-      key: 'finisher',
-      operationType: 'finisher',
-      skills: pogranichnikChr_0029_pograni_power_attack,
-    },
+    { key: 'finisher', operationType: 'finisher', skillIds: ['chr_0029_pograni_power_attack'] },
     {
       key: 'plungingAttack',
       operationType: 'plungingAttack',
-      skills: pogranichnikChr_0029_pograni_plunging_attack_end,
+      skillIds: ['chr_0029_pograni_plunging_attack_end'],
     },
     {
       key: 'battleSkill',
       operationType: 'battleSkill',
-      skills: pogranichnikChr_0029_pograni_normal_skill,
+      skillIds: ['chr_0029_pograni_normal_skill'],
     },
-    {
-      key: 'comboSkill',
-      operationType: 'comboSkill',
-      skills: pogranichnikChr_0029_pograni_combo_skill,
-    },
-    {
-      key: 'ultimate',
-      operationType: 'ultimate',
-      skills: pogranichnikChr_0029_pograni_ultimate_skill,
-    },
+    { key: 'comboSkill', operationType: 'comboSkill', skillIds: ['chr_0029_pograni_combo_skill'] },
+    { key: 'ultimate', operationType: 'ultimate', skillIds: ['chr_0029_pograni_ultimate_skill'] },
   ],
-  dodgeSkill: pogranichnikCommon_character_perfect_dodge,
+  dodgeSkillId: 'common_character_perfect_dodge',
+  plungingAttack: {
+    startSkillId: 'chr_0029_pograni_plunging_attack_start',
+    endSkillId: 'chr_0029_pograni_plunging_attack_end',
+    startDurationSeconds: 0.633,
+    endDurationSeconds: 2,
+  },
   dashBuffs: [
     { buffId: 'buff_common_dash', blackboard: { dodgeSkillId: 'common_character_perfect_dodge' } },
   ],

@@ -29,29 +29,32 @@ const session = new WorkspaceAssetSession(
       kind: 'operator',
       definition: {
         ...arclight,
-        dodgeSkill: {
-          ...arclight.dodgeSkill!,
-          scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'spawn' } }],
-          actionGraph: {
-            main: {
-              nodes: {
-                spawn: {
-                  action: {
-                    kind: 'spawnAbilityEntity',
-                    parameters: {
-                      bornAt: { kind: 'owner' },
-                      abilityEntityId: 'inline',
-                      dieWhenSourceDies: false,
-                      definition,
+        skills: [
+          {
+            ...arclight.skills.find(skill => skill.key === arclight.dodgeSkillId)!,
+            scheduledSequences: [{ startFrame: 0, sequence: { $sequence: 'spawn' } }],
+            actionGraph: {
+              main: {
+                nodes: {
+                  spawn: {
+                    action: {
+                      kind: 'spawnAbilityEntity',
+                      parameters: {
+                        bornAt: { kind: 'owner' },
+                        abilityEntityId: 'inline',
+                        dieWhenSourceDies: false,
+                        definition,
+                      },
                     },
+                    next: null,
                   },
-                  next: null,
                 },
               },
+              macros: {},
             },
-            macros: {},
           },
-        },
+          ...arclight.skills.filter(skill => skill.key !== arclight.dodgeSkillId),
+        ],
       },
     },
   },
@@ -59,7 +62,7 @@ const session = new WorkspaceAssetSession(
 );
 const revision = ref(0),
   readonly = ref(false),
-  path = shallowRef<readonly (string | number)[]>(['dodgeSkill']);
+  path = shallowRef<readonly (string | number)[]>(['skills', 0]);
 const navigation = new WorkspaceNavigation(),
   views = createWorkspaceDocumentViews();
 function record() {
@@ -116,7 +119,7 @@ provide(ownedActionResourceNavigationKey, request =>
   ),
 );
 const id = computed(() =>
-  path.value.length === 1 ? 'spawn' : Object.keys(editor.resource.graph.nodes)[0]!,
+  path.value.length === 2 ? 'spawn' : Object.keys(editor.resource.graph.nodes)[0]!,
 );
 function applyAction(action: unknown) {
   return (
@@ -137,13 +140,13 @@ function travel(direction: 'undo' | 'redo') {
   revision.value++;
 }
 function editChild() {
-  if (path.value.length === 1 || readonly.value) return;
+  if (path.value.length === 2 || readonly.value) return;
   const action = editor.resource.graph.nodes[id.value]!.action;
   applyAction({ ...action, key: 'edited-child' });
 }
 const current = computed(() => {
   void revision.value;
-  return fieldValueAt(session.current.edit.definition, ['dodgeSkill']);
+  return fieldValueAt(session.current.edit.definition, ['skills', 0]);
 });
 </script>
 <template>
@@ -151,7 +154,7 @@ const current = computed(() => {
     <h2>Inline spawn resource</h2>
     <label><input v-model="readonly" type="checkbox" />Readonly spawn</label>
     <button @click="back">Back to spawn</button>
-    <button :disabled="readonly || path.length === 1" @click="editChild">
+    <button :disabled="readonly || path.length === 2" @click="editChild">
       Edit child metadata
     </button>
     <button @click="travel('undo')">Undo spawn</button
