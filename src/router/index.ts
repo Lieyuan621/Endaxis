@@ -96,6 +96,12 @@ const routes: RouteRecordRaw[] = [
       gameTextFamilies: ALL_GAME_TEXT_FAMILIES,
     },
   },
+  {
+    // 游戏内提示条：独立窗口（或 OBS 浏览器源），自己从 IndexedDB 读项目。
+    path: '/overlay',
+    name: 'Overlay',
+    component: () => import('../ui/overlay/OverlayView.vue'),
+  },
 ];
 
 const router = createRouter({
