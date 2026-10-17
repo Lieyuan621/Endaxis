@@ -11,7 +11,11 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import GameOverlayHud from './GameOverlayHud.vue';
-import { emptyOverlayPlan, buildOverlayPlanFromProject } from './projectPlan';
+import {
+  applySimulationResources,
+  buildOverlayPlanFromProject,
+  emptyOverlayPlan,
+} from './projectPlan';
 import { buildDemoPlan } from './demoPlan';
 import { ensureOverlayMessages } from './messages';
 import { useOverlayPlayback } from './playback';
@@ -19,8 +23,10 @@ import { OVERLAY_LIMITS, useOverlayPreferences, type OverlayPreferences } from '
 import type { OverlayPlan } from './plan';
 import { loadBrowserProject } from '../../data/browserProjectStorage';
 import { openProject } from '../../application/openProject';
+import { createEditorSimulationService } from '../../application/simulation/editorSimulationService';
 import { createProjectGameDataRepository } from '../../data/projectGameDataRepository';
-import type { EndaxisProjectDocument } from '../../core/project/schema';
+import type { EndaxisProjectDocument, ScenarioDocument } from '../../core/project/schema';
+import type { GameDataRepository } from '../../core/game-data/gameDataRepository';
 
 interface EndaxisDesktopApi {
   isDesktop?: boolean;
@@ -50,6 +56,8 @@ const demoMode = ref(
   typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('demo'),
 );
 const loading = ref(true);
+const simulating = ref(false);
+const simulationError = ref<string | null>(null);
 const errorCode = ref<string | null>(null);
 const scenarioName = ref('');
 const plan = ref<OverlayPlan>(emptyOverlayPlan());
@@ -61,11 +69,10 @@ const emptyTitle = computed(() =>
     : t('overlay.emptyTitle'),
 );
 const hasResourceData = computed(
-  () =>
-    plan.value.spPoints.length > 0 || Object.keys(plan.value.gaugePoints).length > 0,
+  () => plan.value.spPoints.length > 0 || Object.keys(plan.value.gaugePoints).length > 0,
 );
 
-/** v3 的技力/能量曲线还没接上模拟服务；没有数据时隐藏资源条，避免显示假数据。 */
+/** 没有技力/能量曲线时隐藏资源条，避免显示假数据。 */
 const effectivePreferences = computed<OverlayPreferences>(() => ({
   ...preferences.value,
   showResources: preferences.value.showResources && hasResourceData.value,
@@ -74,7 +81,15 @@ const effectivePreferences = computed<OverlayPreferences>(() => ({
 const playback = useOverlayPlayback({ duration: () => plan.value.duration });
 const { now, isPlaying, isFinished } = playback;
 
-async function loadPlan() {
+/** 编辑器把方案存进 IndexedDB，没有 storage 事件；暂停时轮询做近似实时同步。 */
+let pollHandle: number | null = null;
+let lastRawProject: string | null = null;
+/** 每次重载 +1；模拟返回时用它判断结果是否已经过期。 */
+let loadGeneration = 0;
+
+/** 读取项目 → 投影施放序列 → 后台跑模拟补上技力/能量/连携窗口。 */
+async function loadPlan(options: { preserveTime?: boolean } = {}) {
+  const previousTime = options.preserveTime ? playback.now.value : 0;
   loading.value = true;
   errorCode.value = null;
   if (demoMode.value) {
@@ -86,6 +101,7 @@ async function loadPlan() {
   }
   try {
     const raw = await loadBrowserProject();
+    lastRawProject = raw ?? null;
     if (!raw) {
       plan.value = emptyOverlayPlan();
       errorCode.value = 'no-project';
@@ -104,12 +120,58 @@ async function loadPlan() {
     const built = buildOverlayPlanFromProject(result.project, repository);
     plan.value = built.plan;
     scenarioName.value = built.scenarioName;
-    if (preferences.value.autoStart && built.plan.hasCasts) playback.play();
+    loading.value = false;
+    if (previousTime > 0 && built.plan.duration > 0) {
+      playback.seek(Math.min(previousTime, built.plan.duration));
+    }
+    if (preferences.value.autoStart && built.plan.hasCasts && playback.now.value === 0) {
+      playback.play();
+    }
+    if (built.scenario && built.plan.hasCasts) {
+      const generation = ++loadGeneration;
+      void simulateScenario(built.scenario, built.fps, built.plan, repository, generation);
+    }
   } catch (error) {
     plan.value = emptyOverlayPlan();
     errorCode.value = error instanceof Error ? error.message : String(error);
   } finally {
     loading.value = false;
+  }
+}
+
+/** 模拟可能耗时几百毫秒；期间 HUD 先显示施放序列，资源条等结果到了再补。 */
+async function simulateScenario(
+  scenario: ScenarioDocument,
+  fps: number,
+  basePlan: OverlayPlan,
+  repository: GameDataRepository,
+  generation: number,
+) {
+  simulating.value = true;
+  simulationError.value = null;
+  try {
+    const service = createEditorSimulationService(repository);
+    const run = await service.simulate(scenario, scenario.battle.durationFrames);
+    // 期间用户可能又改了项目并触发重载，旧结果直接丢弃。
+    if (generation !== loadGeneration) return;
+    plan.value = applySimulationResources(basePlan, run, fps);
+  } catch (error) {
+    simulationError.value = error instanceof Error ? error.message : String(error);
+    console.error('[overlay] simulate failed', simulationError.value);
+  } finally {
+    simulating.value = false;
+  }
+}
+
+async function pollProject() {
+  if (demoMode.value || isPlaying.value) return;
+  try {
+    const raw = await loadBrowserProject();
+    if (!raw || raw === lastRawProject) return;
+    lastRawProject = raw;
+    await loadPlan({ preserveTime: true });
+  } catch {
+    /* 读失败时保持当前画面 */
   }
 }
 
@@ -289,6 +351,7 @@ onMounted(async () => {
   }
 
   await loadPlan();
+  pollHandle = window.setInterval(() => void pollProject(), 5000);
 });
 
 onBeforeUnmount(() => {
@@ -296,7 +359,26 @@ onBeforeUnmount(() => {
   window.removeEventListener('pointermove', revealControls);
   unsubscribeClickThrough?.();
   if (hideTimer !== null) window.clearTimeout(hideTimer);
+  if (pollHandle !== null) window.clearInterval(pollHandle);
 });
+
+// 开发期把计划摘要挂到 window，便于浏览器 / CDP 验证（生产构建会被摇掉）。
+if (import.meta.env?.DEV) {
+  (window as unknown as { __endaxisOverlayDebugNow?: () => unknown }).__endaxisOverlayDebugNow =
+    () => ({
+      casts: plan.value.casts.length,
+      duration: plan.value.duration,
+      hasCasts: plan.value.hasCasts,
+      spPoints: plan.value.spPoints.length,
+      gauges: Object.keys(plan.value.gaugePoints).length,
+      comboWindows: Object.keys(plan.value.comboWindows).length,
+      times: plan.value.casts.map(cast => [cast.type, cast.start]),
+      now: now.value,
+      scenarioName: scenarioName.value,
+      simulating: simulating.value,
+      simulationError: simulationError.value,
+    });
+}
 </script>
 
 <template>
@@ -327,7 +409,13 @@ onBeforeUnmount(() => {
           @toggle-play="playback.toggle()"
         />
         <div v-if="!isPlaying && now === 0" class="overlay-ready-hint">
-          {{ isDesktop ? desktopHintText : t('overlay.readyHint') }}
+          {{
+            simulating
+              ? t('overlay.simulating')
+              : isDesktop
+                ? desktopHintText
+                : t('overlay.readyHint')
+          }}
         </div>
       </div>
 
@@ -342,7 +430,7 @@ onBeforeUnmount(() => {
         </p>
         <p v-if="errorCode" class="overlay-message__code">{{ errorCode }}</p>
         <div class="overlay-message__actions">
-          <button type="button" class="overlay-link" @click="loadPlan">
+          <button type="button" class="overlay-link" @click="() => loadPlan()">
             {{ t('overlay.controls.reload') }}
           </button>
           <button type="button" class="overlay-link overlay-link--ghost" @click="startDemo">
@@ -568,7 +656,7 @@ onBeforeUnmount(() => {
         <button type="button" class="overlay-settings__button" @click="resetPosition">
           {{ t('overlay.settings.resetPosition') }}
         </button>
-        <button type="button" class="overlay-settings__button" @click="loadPlan">
+        <button type="button" class="overlay-settings__button" @click="() => loadPlan()">
           {{ t('overlay.controls.reload') }}
         </button>
         <button type="button" class="overlay-settings__button" @click="resetPreferences">

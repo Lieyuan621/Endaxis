@@ -89,6 +89,8 @@ import TimelineCursorGuide, {
   type TimelineCursorGaugeRow,
 } from './components/TimelineCursorGuide.vue';
 import TimelineHeaderToolbar from './components/TimelineHeaderToolbar.vue';
+import { ensureOverlayMessages } from '../overlay/messages';
+import { overlayUrl } from '../overlay/paths';
 import TimelineRuler from './components/TimelineRuler.vue';
 import type { TimelineShareTrack } from './components/TimelineShareCard.vue';
 import TimelineTrackHeader from './components/TimelineTrackHeader.vue';
@@ -722,6 +724,22 @@ const onlySkillsSelected = computed(
 const selectedCastId = computed(() => actionSelection.value.primaryId);
 const showDamageAnalysis = ref(false);
 const showExportDialog = ref(false);
+
+// 提示条按钮需要 overlay 命名空间的中文/英文文案；合并是幂等的。
+ensureOverlayMessages();
+
+/** 在独立窗口打开游戏内提示条（与 OBS 浏览器源同一页面）。 */
+function openOverlay() {
+  const width = 1180;
+  const height = 260;
+  const left = Math.max(0, Math.round((window.screen.availWidth - width) / 2));
+  const top = Math.max(0, Math.round(window.screen.availHeight * 0.06));
+  window.open(
+    overlayUrl(),
+    'endaxis-overlay',
+    `popup=yes,width=${width},height=${height},left=${left},top=${top}`,
+  );
+}
 const showReceiveDialog = ref(false);
 const receivingProjectCode = ref(false);
 const showSmallImageExport = ref(false);
@@ -6712,6 +6730,7 @@ function setMobileGuideFrame(frame: number | null): void {
           analysis: t('timeline.analysis.button'),
           open: t('common.load'),
           export: t('common.export'),
+          overlay: t('overlay.open'),
           more: t('timeline.header.more'),
           reset: t('common.reset'),
           view: t('timeline.header.sectionViewLayers'),
@@ -6754,6 +6773,7 @@ function setMobileGuideFrame(frame: number | null): void {
         @receive="requestReceiveProject"
         @asset-workspace="openAssetWorkspace"
         @export="showExportDialog = true"
+        @open-overlay="openOverlay"
         @reset="resetDialogVisible = true"
         @toggle-view-layer="toggleTimelineViewLayer"
         @toggle-operator-effects="toggleOperatorEffectsVisibility"
