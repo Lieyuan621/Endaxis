@@ -22,8 +22,9 @@ function parseArgs(argv) {
   const args = new Map();
   for (const raw of argv) {
     if (!raw.startsWith('--')) continue;
-    const [key, value] = raw.slice(2).split('=');
-    args.set(key, value === undefined ? 'true' : value);
+    // 只在第一个 '=' 处切分：URL 里可能带查询串（--url=http://…/overlay?demo=1）
+    const [key, ...rest] = raw.slice(2).split('=');
+    args.set(key, rest.length ? rest.join('=') : 'true');
   }
   return args;
 }
@@ -119,8 +120,12 @@ function createWindow() {
   win.loadURL(targetUrl);
 
   win.once('ready-to-show', () => {
-    win.show();
-    if (!capturePath) win.focus();
+    // 截图验证时不抢焦点，避免打扰正在使用电脑的人。
+    if (capturePath) win.showInactive();
+    else {
+      win.show();
+      win.focus();
+    }
   });
 
   win.webContents.on('did-fail-load', (_event, code, description, url) => {
