@@ -16,6 +16,7 @@ import {
   type Component,
 } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 import { primaryModifier } from '../keyboard/primaryModifier';
 import {
   ActiveScenarioEditorSession,
@@ -89,8 +90,8 @@ import TimelineCursorGuide, {
   type TimelineCursorGaugeRow,
 } from './components/TimelineCursorGuide.vue';
 import TimelineHeaderToolbar from './components/TimelineHeaderToolbar.vue';
-import { ensureOverlayMessages } from '../overlay/messages';
-import { overlayUrl } from '../overlay/paths';
+import { useOverlayI18n } from '../overlay/messages';
+import { exportEditorOverlay } from '../overlay/exportEditorOverlay';
 import TimelineRuler from './components/TimelineRuler.vue';
 import type { TimelineShareTrack } from './components/TimelineShareCard.vue';
 import TimelineTrackHeader from './components/TimelineTrackHeader.vue';
@@ -725,20 +726,24 @@ const selectedCastId = computed(() => actionSelection.value.primaryId);
 const showDamageAnalysis = ref(false);
 const showExportDialog = ref(false);
 
-// 提示条按钮需要 overlay 命名空间的中文/英文文案；合并是幂等的。
-ensureOverlayMessages();
+const { t: overlayT } = useOverlayI18n();
+const overlayRouter = useRouter();
 
-/** 在独立窗口打开游戏内提示条（与 OBS 浏览器源同一页面）。 */
+/** 仅导出当前完整模拟结果；HUD 不参与项目编辑或规则计算。 */
 function openOverlay() {
-  const width = 1180;
-  const height = 260;
-  const left = Math.max(0, Math.round((window.screen.availWidth - width) / 2));
-  const top = Math.max(0, Math.round(window.screen.availHeight * 0.06));
-  window.open(
-    overlayUrl(),
-    'endaxis-overlay',
-    `popup=yes,width=${width},height=${height},left=${left},top=${top}`,
-  );
+  void exportEditorOverlay({
+    href: overlayRouter.resolve({ name: 'Overlay' }).href,
+    repository: editorGameDataRepository,
+    ensureCurrentSimulation,
+    read: () => ({
+      project: projectSession.snapshot.project,
+      published: publishedSimulation.value,
+      revision: projectRevision.value,
+      locale: locale.value === 'zh-CN' ? 'zh-CN' : 'en',
+    }),
+    message: key => overlayT(`overlay.${key}`),
+    onError: message => ElMessage.error(message),
+  });
 }
 const showReceiveDialog = ref(false);
 const receivingProjectCode = ref(false);
@@ -6730,7 +6735,7 @@ function setMobileGuideFrame(frame: number | null): void {
           analysis: t('timeline.analysis.button'),
           open: t('common.load'),
           export: t('common.export'),
-          overlay: t('overlay.open'),
+          overlay: overlayT('overlay.open'),
           more: t('timeline.header.more'),
           reset: t('common.reset'),
           view: t('timeline.header.sectionViewLayers'),

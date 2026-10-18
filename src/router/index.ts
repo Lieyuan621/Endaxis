@@ -97,7 +97,7 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
-    // 游戏内提示条：独立窗口（或 OBS 浏览器源），自己从 IndexedDB 读项目。
+    // 独立提示窗口仅读取编辑器导出的 HUD 快照。
     path: '/overlay',
     name: 'Overlay',
     component: () => import('../ui/overlay/OverlayView.vue'),

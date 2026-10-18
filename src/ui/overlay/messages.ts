@@ -1,10 +1,9 @@
 /**
  * 提示条自带的文案字典。
  *
- * 不往 v3 的 i18n 资源里塞：这个功能是自包含的叠加页，进入时把 `overlay`
- * 命名空间合并进当前语言即可，避免和上游的文案加载策略耦合。
+ * 使用组件局部 composer，跟随全局语言；不修改主程序的语言资源或加载流程。
  */
-import { i18n } from '../../i18n';
+import { useI18n } from 'vue-i18n';
 
 const ZH_CN = {
   title: '游戏内提示',
@@ -13,20 +12,72 @@ const ZH_CN = {
   popupBlocked: '弹窗被拦截：请允许本站弹窗，或手动打开 /overlay',
   loading: '正在加载方案…',
   loadFailed: '读取浏览器方案失败',
-  noProject: '浏览器里还没有保存的排轴方案',
+  noProject: '请在同一浏览器的编辑器中点击「游戏内提示」导出当前轴',
   demo: '预览示例',
+  demoBadge: '示例轴 · 仅用于预览',
   close: '关闭',
   emptyTitle: '当前方案还没有动作',
-  emptyHint: '回到排轴工具添加动作，或用「智能排轴」生成一条轴；本窗口会自动同步。',
+  emptyHint: '回到编辑器添加动作，再点击「游戏内提示」导出；本窗口只播放已导出的快照。',
   secondsSuffix: '秒后',
+  waitingLabel: '等待开始',
+  waitingUnit: '秒',
+  auto: {
+    title: '屏幕倒计时启动（实验）',
+    hint: '先让游戏计时器可见，移开提示条等遮挡，再框选固定不变的部分（如冒号或边框）。框选使用提示条所在屏幕，保存后再监测。',
+    reference: '选定的计时器参考画面',
+    select: '框选并保存参考',
+    arm: '开始监测',
+    stop: '停止监测',
+    clear: '清除参考',
+    pauseFirst: '请先载入轴并暂停提示条。',
+    behavior:
+      '确认参考画面出现后，只启动一次，跳过额外等待；若当前已出现，先等其消失。每次重试需重新监测。',
+    started: '已识别参考画面，开始播放',
+    restartNeeded: '请完全退出并重新启动桌面版，以启用屏幕监测。',
+    phase: {
+      unconfigured: '尚未选择参考画面',
+      ready: '参考已保存，未监测',
+      checking: '正在检查画面',
+      'waiting-clear': '先等待参考画面消失',
+      watching: '正在监测参考画面出现',
+      confirming: '正在确认画面',
+      triggered: '已触发，监测已停止',
+      error: '监测已停止',
+    },
+  },
   simulating: '正在计算技力/连携…',
   capHint: '点击开始 / 暂停',
   readyHint: '按空格开始 · 拖住提示条可移动位置',
   desktopHint: '拖动可移动窗口 · Ctrl+Alt+O 鼠标穿透 · Ctrl+Alt+Q 退出',
+  desktopKeys: 'Ctrl+Alt+空格 开始/暂停 · Ctrl+Alt+Home 回起点并暂停 · Ctrl+Alt+←/→ 校正 0.25 秒',
+  browserKeys: '空格 开始/暂停 · R 回起点并暂停 · ←/→ 跳转 2 秒 · Shift+←/→ 校正 0.25 秒',
+  delay: '提示延后 0.25 秒',
+  advance: '提示提前 0.25 秒',
+  delayed: '提示已延后 0.25 秒',
+  advanced: '提示已提前 0.25 秒',
+  atStart: '已到轴起点',
+  atEnd: '已到轴终点',
   desktopLocked: '鼠标穿透中 · Ctrl+Alt+O 解除',
+  desktopUnavailable: '解锁快捷键不可用，鼠标穿透已禁用',
+  shortcutsUnavailable: '部分全局播放快捷键被占用；请使用控件，具体键位见桌面启动日志。',
+  exportFailed: '导出提示条失败，请等待当前模拟完成后重试',
+  exportChanged: '导出期间方案已变化，请重新点击「游戏内提示」',
+  returnToProject: '读取已导出的轴',
+  pendingExport: '新轴已导出，暂停后载入',
   typeIdle: '准备',
   typeDone: '完成',
   typeStandby: '待命',
+  nextActions: '下一操作',
+  moreActions: '另有 {count} 项',
+  playback: {
+    ready: '就绪',
+    paused: '已暂停',
+    playing: '播放中',
+    waiting: '等待中',
+    waitingPaused: '等待已暂停',
+    finished: '已完成',
+    timeHint: '轴时间 / 结束时间',
+  },
   type: {
     battleSkill: '战技',
     comboSkill: '连携技',
@@ -43,12 +94,13 @@ const ZH_CN = {
   controls: {
     play: '开始',
     pause: '暂停',
-    reset: '重播',
+    reset: '回到起点',
     settings: '设置',
     reload: '重新载入方案',
     lock: '开启鼠标穿透（不挡游戏点击）',
     unlock: '关闭鼠标穿透（可拖动/操作）',
     quit: '退出提示条',
+    editor: '打开桌面编辑器',
   },
   settings: {
     title: '提示条设置',
@@ -65,9 +117,12 @@ const ZH_CN = {
     transparent: '透明背景',
     transparentHint: '关闭后显示调试底色；OBS 叠加请保持开启',
     autoStart: '自动开始',
+    startDelay: '开始前等待',
+    startDelayHint:
+      '每次从起点开始时先等待，再播放轴；修改在下次重新开始时生效。回到起点会暂停，轴内准备动作照常保留。',
     resetPosition: '重置位置',
     reset: '恢复默认',
-    hint: '拖住提示条可移动位置；OBS 可用「浏览器源」加载本页。',
+    hint: '修改轴后请重新点击编辑器的「游戏内提示」。OBS 使用窗口捕获；浏览器源有独立存储。',
     fullscreenHint:
       '独占全屏（Exclusive Fullscreen）会盖住所有窗口，请把游戏改成「无边框窗口 / 窗口化全屏」；窗口化全屏下提示条会一直浮在最上层。',
   },
@@ -80,20 +135,75 @@ const EN = {
   popupBlocked: 'Popup blocked: allow popups for this site, or open /overlay manually',
   loading: 'Loading rotation…',
   loadFailed: 'Failed to read the saved project',
-  noProject: 'No saved rotation in this browser yet',
+  noProject: 'Export a rotation with Overlay in the editor using the same browser profile',
   demo: 'Preview demo',
+  demoBadge: 'Demo rotation · preview only',
   close: 'Close',
   emptyTitle: 'This rotation has no actions yet',
-  emptyHint: 'Add actions in the timeline editor. This window reloads the saved project.',
+  emptyHint:
+    'Add actions in the editor and select Overlay again. This window plays exported snapshots.',
   secondsSuffix: 's',
+  waitingLabel: 'Starting in',
+  waitingUnit: 's',
+  auto: {
+    title: 'Screen timer trigger (experimental)',
+    hint: 'Show the game timer and move the HUD or other obstructions away. Select a fixed feature such as its colon or border on the HUD display, then save and monitor.',
+    reference: 'Selected timer reference',
+    select: 'Select and save reference',
+    arm: 'Start monitoring',
+    stop: 'Stop monitoring',
+    clear: 'Clear reference',
+    pauseFirst: 'Load a rotation and pause the HUD first.',
+    behavior:
+      'Starts once when the reference is confirmed, skipping the extra delay. If already visible, waits for it to disappear first. Arm again for each attempt.',
+    started: 'Reference detected; playback started',
+    restartNeeded: 'Quit and restart the desktop app to enable screen monitoring.',
+    phase: {
+      unconfigured: 'No reference selected',
+      ready: 'Reference saved; monitoring off',
+      checking: 'Checking screen',
+      'waiting-clear': 'Waiting for reference to disappear',
+      watching: 'Watching for reference',
+      confirming: 'Confirming reference',
+      triggered: 'Triggered; monitoring stopped',
+      error: 'Monitoring stopped',
+    },
+  },
   simulating: 'Computing resources…',
   capHint: 'Click to start / pause',
   readyHint: 'Press Space to start · drag the strip to reposition',
   desktopHint: 'Drag to move the window · Ctrl+Alt+O click-through · Ctrl+Alt+Q quit',
+  desktopKeys:
+    'Ctrl+Alt+Space play/pause · Ctrl+Alt+Home reset and pause · Ctrl+Alt+←/→ adjust 0.25s',
+  browserKeys: 'Space play/pause · R reset and pause · ←/→ seek 2s · Shift+←/→ adjust 0.25s',
+  delay: 'Delay prompts by 0.25s',
+  advance: 'Advance prompts by 0.25s',
+  delayed: 'Prompts delayed by 0.25s',
+  advanced: 'Prompts advanced by 0.25s',
+  atStart: 'At timeline start',
+  atEnd: 'At timeline end',
   desktopLocked: 'Click-through on · Ctrl+Alt+O to unlock',
+  desktopUnavailable: 'Unlock shortcut unavailable; click-through is disabled',
+  shortcutsUnavailable:
+    'Some playback shortcuts are unavailable. Use the controls; see desktop startup logs for conflicting keys.',
+  exportFailed: 'Overlay export failed. Wait for the current simulation and try again.',
+  exportChanged: 'The rotation changed during export. Select Overlay again.',
+  returnToProject: 'Load exported rotation',
+  pendingExport: 'New rotation exported; pause to load it',
   typeIdle: 'READY',
   typeDone: 'DONE',
   typeStandby: 'STANDBY',
+  nextActions: 'Next actions',
+  moreActions: '+{count} more',
+  playback: {
+    ready: 'Ready',
+    paused: 'Paused',
+    playing: 'Playing',
+    waiting: 'Waiting',
+    waitingPaused: 'Waiting paused',
+    finished: 'Finished',
+    timeHint: 'Timeline time / end time',
+  },
   type: {
     battleSkill: 'BATTLE',
     comboSkill: 'COMBO',
@@ -110,12 +220,13 @@ const EN = {
   controls: {
     play: 'Start',
     pause: 'Pause',
-    reset: 'Restart',
+    reset: 'Reset to start',
     settings: 'Settings',
     reload: 'Reload rotation',
     lock: 'Click-through on (won’t block the game)',
     unlock: 'Click-through off (draggable / interactive)',
     quit: 'Quit overlay',
+    editor: 'Open desktop editor',
   },
   settings: {
     title: 'Overlay settings',
@@ -132,23 +243,22 @@ const EN = {
     transparent: 'Transparent',
     transparentHint: 'Turn off to see a debug backdrop; keep on for OBS overlays',
     autoStart: 'Auto start',
+    startDelay: 'Wait before starting',
+    startDelayHint:
+      'Wait before each start from the beginning. Changes apply on the next restart. Resetting pauses playback; existing preparation actions are preserved.',
     resetPosition: 'Reset position',
     reset: 'Restore defaults',
-    hint: 'Drag the strip to reposition it; in OBS, add this page as a Browser Source.',
+    hint: 'After editing, select Overlay again to export. Use OBS Window Capture; Browser Sources have separate storage.',
     fullscreenHint:
       'Exclusive fullscreen covers every window: switch the game to borderless/windowed fullscreen so the overlay can stay on top.',
   },
 };
 
-const MESSAGES: Record<string, typeof ZH_CN> = {
-  'zh-CN': ZH_CN,
-  zh: ZH_CN,
-  en: EN,
-};
-
-/** 把 `overlay` 文案合并进当前语言（重复调用安全）。 */
-export function ensureOverlayMessages(): void {
-  const locale = String(i18n.global.locale.value ?? 'zh-CN');
-  const messages = MESSAGES[locale] ?? EN;
-  i18n.global.mergeLocaleMessage(locale, { overlay: messages });
+/** 每个消费者持有局部文案，切换全局语言不会覆盖它。 */
+export function useOverlayI18n() {
+  return useI18n({
+    useScope: 'local',
+    inheritLocale: true,
+    messages: { 'zh-CN': { overlay: ZH_CN }, en: { overlay: EN } },
+  });
 }

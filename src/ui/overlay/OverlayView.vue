@@ -2,65 +2,54 @@
 /**
  * 游戏内提示窗口（v3，路由 `/overlay`）。
  *
- * v3 没有全局 store：页面自己从 IndexedDB 读出浏览器保存的项目，
- * 用 `projectTimelineEditor()` 投影出施放序列，再交给 HUD 播放。
+ * 页面只读编辑器导出的 HUD 快照，不加载项目或重新运行模拟。
  *
  * 桌面模式由 `desktop/preload.cjs` 注入的 `window.endaxisDesktop` 识别：
  * 无边框透明置顶窗口、可拖动、可鼠标穿透（Ctrl+Alt+O）。
  */
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import GameOverlayHud from './GameOverlayHud.vue';
-import {
-  applySimulationResources,
-  buildOverlayPlanFromProject,
-  emptyOverlayPlan,
-} from './projectPlan';
+import CountdownTriggerSettings from './CountdownTriggerSettings.vue';
+import { emptyOverlayPlan } from './plan';
 import { buildDemoPlan } from './demoPlan';
-import { ensureOverlayMessages } from './messages';
+import { useOverlayI18n } from './messages';
 import { useOverlayPlayback } from './playback';
+import { useCountdownTrigger } from './useCountdownTrigger';
 import { OVERLAY_LIMITS, useOverlayPreferences, type OverlayPreferences } from './preferences';
 import type { OverlayPlan } from './plan';
-import { loadBrowserProject } from '../../data/browserProjectStorage';
-import { openProject } from '../../application/openProject';
-import { createEditorSimulationService } from '../../application/simulation/editorSimulationService';
-import { createProjectGameDataRepository } from '../../data/projectGameDataRepository';
-import type { EndaxisProjectDocument, ScenarioDocument } from '../../core/project/schema';
-import type { GameDataRepository } from '../../core/game-data/gameDataRepository';
+import { loadOverlaySnapshot, type OverlaySnapshot } from './snapshot';
+import { ensureLocaleResources, i18n } from '../../i18n';
+import type {} from './desktopApi';
 
-interface EndaxisDesktopApi {
-  isDesktop?: boolean;
-  toggleClickThrough?: () => Promise<boolean>;
-  setClickThrough?: (value: boolean) => Promise<boolean>;
-  info?: () => Promise<{ clickThrough: boolean; url: string; alwaysOnTop: boolean }>;
-  resize?: (size: { width: number; height: number }) => Promise<unknown>;
-  quit?: () => void;
-  onClickThrough?: (callback: (value: boolean) => void) => () => void;
-}
-
-ensureOverlayMessages();
-
-const desktopApi = (window as unknown as { endaxisDesktop?: EndaxisDesktopApi }).endaxisDesktop;
+const desktopApi = window.endaxisDesktop;
 const isDesktop = Boolean(desktopApi?.isDesktop);
 const clickThrough = ref(false);
+const clickThroughAvailable = ref(false);
+const playbackShortcutsAvailable = ref(true);
+const autoTriggerAvailable = ref(false);
 let unsubscribeClickThrough: (() => void) | null = null;
+let unsubscribePlayback: (() => void) | null = null;
 
-const { t } = useI18n({ useScope: 'global' });
+const { t } = useOverlayI18n();
 const { preferences, patch, reset: resetPreferences } = useOverlayPreferences();
 
 const settingsOpen = ref(false);
 const controlsVisible = ref(true);
 let hideTimer: number | null = null;
+const feedback = ref('');
+let feedbackTimer: number | null = null;
 
 const demoMode = ref(
   typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('demo'),
 );
 const loading = ref(true);
-const simulating = ref(false);
-const simulationError = ref<string | null>(null);
 const errorCode = ref<string | null>(null);
 const scenarioName = ref('');
 const plan = ref<OverlayPlan>(emptyOverlayPlan());
+const hudAnchor = ref<HTMLElement | null>(null);
+let hudObserver: ResizeObserver | null = null;
+let snapshotChannel: BroadcastChannel | null = null;
+const pendingExport = ref(false);
 
 const empty = computed(() => !loading.value && !plan.value.hasCasts);
 const emptyTitle = computed(() =>
@@ -78,100 +67,142 @@ const effectivePreferences = computed<OverlayPreferences>(() => ({
   showResources: preferences.value.showResources && hasResourceData.value,
 }));
 
-const playback = useOverlayPlayback({ duration: () => plan.value.duration });
-const { now, isPlaying, isFinished } = playback;
+const playback = useOverlayPlayback({
+  startTime: () => plan.value.startTime,
+  duration: () => plan.value.duration,
+  startDelaySeconds: () => preferences.value.startDelaySeconds,
+});
+const { now, isPlaying, isFinished, waitingRemaining, hasStarted } = playback;
+const autoTrigger = useCountdownTrigger({
+  source: desktopApi?.countdownTrigger,
+  playback,
+  canStart: () => !loading.value && plan.value.hasCasts && !isPlaying.value,
+  startTime: () => plan.value.startTime,
+  onStarted: () => showFeedback(t('overlay.auto.started')),
+});
+const autoTriggerStatus = autoTrigger.status;
+const autoTriggerApi = autoTrigger.api;
 
-/** 编辑器把方案存进 IndexedDB，没有 storage 事件；暂停时轮询做近似实时同步。 */
+watch(
+  () => preferences.value.startDelaySeconds,
+  () => {
+    if (!hasStarted.value && !isPlaying.value) playback.reset();
+  },
+);
+
+function showFeedback(message: string) {
+  feedback.value = message;
+  if (feedbackTimer !== null) window.clearTimeout(feedbackTimer);
+  feedbackTimer = window.setTimeout(() => {
+    feedback.value = '';
+  }, 1800);
+}
+
+function togglePlayback() {
+  if (loading.value || !plan.value.hasCasts) return;
+  if (!isPlaying.value) autoTrigger.stop();
+  playback.toggle();
+  const state =
+    waitingRemaining.value > 0
+      ? isPlaying.value
+        ? 'waiting'
+        : 'waitingPaused'
+      : isPlaying.value
+        ? 'playing'
+        : 'paused';
+  showFeedback(t(`overlay.playback.${state}`));
+}
+
+function resetPlayback() {
+  autoTrigger.stop();
+  playback.reset();
+}
+
+function adjustTime(delta: number) {
+  const wasWaiting = waitingRemaining.value > 0;
+  playback.step(delta);
+  const key =
+    !wasWaiting && delta < 0 && now.value <= plan.value.startTime
+      ? 'overlay.atStart'
+      : delta > 0 && now.value >= plan.value.duration
+        ? 'overlay.atEnd'
+        : delta < 0
+          ? 'overlay.delayed'
+          : 'overlay.advanced';
+  showFeedback(t(key));
+}
+
+/** 独立数据库只保存展示快照，绝不写回编辑器存档。播放中保留当前版本。 */
 let pollHandle: number | null = null;
-let lastRawProject: string | null = null;
-/** 每次重载 +1；模拟返回时用它判断结果是否已经过期。 */
+let snapshotId: string | null = null;
+let disposed = false;
 let loadGeneration = 0;
+let polling = false;
 
-/** 读取项目 → 投影施放序列 → 后台跑模拟补上技力/能量/连携窗口。 */
-async function loadPlan(options: { preserveTime?: boolean } = {}) {
-  const previousTime = options.preserveTime ? playback.now.value : 0;
+async function acceptSnapshot(snapshot: OverlaySnapshot, generation: number) {
+  // 跟随这次导出的语言，仅更新当前窗口，不写回主程序偏好或项目。
+  const prepared = await ensureLocaleResources(snapshot.locale);
+  if (disposed || generation !== loadGeneration || isPlaying.value) return;
+  i18n.global.setLocaleMessage(prepared.locale, prepared.uiMessages);
+  i18n.global.locale.value = prepared.locale;
+  document.documentElement.lang = prepared.locale;
+  playback.pause();
+  plan.value = snapshot.plan;
+  scenarioName.value = snapshot.scenarioName;
+  snapshotId = snapshot.id;
+  pendingExport.value = false;
+  resetPlayback();
+  if (preferences.value.autoStart && snapshot.plan.hasCasts) playback.play();
+}
+
+async function loadPlan() {
+  const generation = ++loadGeneration;
+  playback.pause();
   loading.value = true;
   errorCode.value = null;
   if (demoMode.value) {
     plan.value = buildDemoPlan();
-    scenarioName.value = '示例轴';
+    scenarioName.value = t('overlay.demo');
     loading.value = false;
+    resetPlayback();
     if (preferences.value.autoStart) playback.play();
     return;
   }
   try {
-    const raw = await loadBrowserProject();
-    lastRawProject = raw ?? null;
-    if (!raw) {
+    const snapshot = await loadOverlaySnapshot();
+    if (disposed || generation !== loadGeneration) return;
+    if (!snapshot) {
       plan.value = emptyOverlayPlan();
+      scenarioName.value = '';
+      snapshotId = null;
+      resetPlayback();
       errorCode.value = 'no-project';
       return;
     }
-    const input: unknown = JSON.parse(raw);
-    const repository = await createProjectGameDataRepository(input);
-    const result = openProject(input, { gameDataRepository: repository }) as
-      | { ok: true; project: EndaxisProjectDocument }
-      | { ok: false; kind: string };
-    if (!result.ok) {
-      plan.value = emptyOverlayPlan();
-      errorCode.value = `invalid:${result.kind}`;
-      return;
-    }
-    const built = buildOverlayPlanFromProject(result.project, repository);
-    plan.value = built.plan;
-    scenarioName.value = built.scenarioName;
-    loading.value = false;
-    if (previousTime > 0 && built.plan.duration > 0) {
-      playback.seek(Math.min(previousTime, built.plan.duration));
-    }
-    if (preferences.value.autoStart && built.plan.hasCasts && playback.now.value === 0) {
-      playback.play();
-    }
-    if (built.scenario && built.plan.hasCasts) {
-      const generation = ++loadGeneration;
-      void simulateScenario(built.scenario, built.fps, built.plan, repository, generation);
-    }
+    await acceptSnapshot(snapshot, generation);
   } catch (error) {
+    if (disposed || generation !== loadGeneration) return;
     plan.value = emptyOverlayPlan();
     errorCode.value = error instanceof Error ? error.message : String(error);
   } finally {
-    loading.value = false;
+    if (!disposed && generation === loadGeneration) loading.value = false;
   }
 }
 
-/** 模拟可能耗时几百毫秒；期间 HUD 先显示施放序列，资源条等结果到了再补。 */
-async function simulateScenario(
-  scenario: ScenarioDocument,
-  fps: number,
-  basePlan: OverlayPlan,
-  repository: GameDataRepository,
-  generation: number,
-) {
-  simulating.value = true;
-  simulationError.value = null;
+async function pollSnapshot() {
+  if (demoMode.value || isPlaying.value || loading.value || disposed || polling) return;
+  polling = true;
+  const generation = loadGeneration;
   try {
-    const service = createEditorSimulationService(repository);
-    const run = await service.simulate(scenario, scenario.battle.durationFrames);
-    // 期间用户可能又改了项目并触发重载，旧结果直接丢弃。
-    if (generation !== loadGeneration) return;
-    plan.value = applySimulationResources(basePlan, run, fps);
-  } catch (error) {
-    simulationError.value = error instanceof Error ? error.message : String(error);
-    console.error('[overlay] simulate failed', simulationError.value);
-  } finally {
-    simulating.value = false;
-  }
-}
-
-async function pollProject() {
-  if (demoMode.value || isPlaying.value) return;
-  try {
-    const raw = await loadBrowserProject();
-    if (!raw || raw === lastRawProject) return;
-    lastRawProject = raw;
-    await loadPlan({ preserveTime: true });
+    const snapshot = await loadOverlaySnapshot();
+    if (disposed || generation !== loadGeneration || isPlaying.value || demoMode.value) return;
+    if (!snapshot || snapshot.id === snapshotId) return;
+    errorCode.value = null;
+    await acceptSnapshot(snapshot, generation);
   } catch {
-    /* 读失败时保持当前画面 */
+    /* 读失败保留当前快照，手动重载时展示详细错误。 */
+  } finally {
+    polling = false;
   }
 }
 
@@ -180,6 +211,10 @@ function startDemo() {
   errorCode.value = null;
   void loadPlan();
 }
+
+watch(isPlaying, playing => {
+  if (!playing) void pollSnapshot();
+});
 
 /* ── 拖拽（浏览器模式移动 HUD；桌面模式由 -webkit-app-region 移动窗口） ── */
 
@@ -227,8 +262,8 @@ function onHudPointerUp(event: PointerEvent) {
 }
 
 const hudStyle = computed(() => ({
-  left: `calc(50% + ${preferences.value.offsetX + (drag.value?.dx ?? 0)}px)`,
-  top: `${preferences.value.offsetY + (drag.value?.dy ?? 0)}px`,
+  left: isDesktop ? '50%' : `calc(50% + ${preferences.value.offsetX + (drag.value?.dx ?? 0)}px)`,
+  top: isDesktop ? '40px' : `${preferences.value.offsetY + (drag.value?.dy ?? 0)}px`,
   transform: 'translateX(-50%)',
 }));
 
@@ -239,7 +274,7 @@ function patchNumber(key: keyof OverlayPreferences, value: unknown) {
 }
 
 function resetPosition() {
-  patch({ offsetX: 0, offsetY: Math.max(24, Math.round(window.innerWidth * 0.04)) });
+  patch({ offsetX: 0, offsetY: 40 });
 }
 
 /* ── 桌面悬浮窗 ─────────────────────────────────────────────────────── */
@@ -247,8 +282,11 @@ function resetPosition() {
 function syncDesktopWindow() {
   if (!isDesktop || !desktopApi?.resize) return;
   const width = Math.round(preferences.value.width * preferences.value.scale) + 32;
-  const height = settingsOpen.value ? 420 : 214;
-  void desktopApi.resize({ width, height });
+  const bottom = 40 + (hudAnchor.value?.getBoundingClientRect().height ?? 180) + 16;
+  const height = Math.ceil(Math.max(bottom, settingsOpen.value ? 420 : 0));
+  void desktopApi.resize({ width, height }).catch(error => {
+    errorCode.value = error instanceof Error ? error.message : String(error);
+  });
 }
 
 async function toggleClickThrough() {
@@ -261,25 +299,41 @@ function quitDesktop() {
 }
 
 const desktopHintText = computed(() =>
-  clickThrough.value ? t('overlay.desktopLocked') : t('overlay.desktopHint'),
+  !clickThroughAvailable.value
+    ? t('overlay.desktopUnavailable')
+    : clickThrough.value
+      ? t('overlay.desktopLocked')
+      : t('overlay.desktopHint'),
 );
 
-watch([() => preferences.value.width, () => preferences.value.scale, settingsOpen], () => {
+watch([() => preferences.value.width, () => preferences.value.scale, settingsOpen], async () => {
+  await nextTick();
+  if (!disposed) syncDesktopWindow();
+});
+watch(hudAnchor, element => {
+  hudObserver?.disconnect();
+  if (!element || !isDesktop) return;
+  hudObserver = new ResizeObserver(syncDesktopWindow);
+  hudObserver.observe(element);
   syncDesktopWindow();
 });
 
 /* ── 键盘 / 控件显隐 ────────────────────────────────────────────────── */
 
 function onKeyDown(event: KeyboardEvent) {
+  if (event.defaultPrevented || event.ctrlKey || event.altKey || event.metaKey) return;
   const target = event.target as HTMLElement | null;
-  if (target && (target.tagName === 'INPUT' || target.tagName === 'SELECT')) return;
+  if (target?.closest('input, select, textarea, [contenteditable="true"]')) return;
+  // Space 留给已聚焦按钮的原生点击，其余快捷键在点击播放后仍可使用。
+  if (event.code === 'Space' && target?.closest('button')) return;
+  if (event.repeat && event.code !== 'ArrowLeft' && event.code !== 'ArrowRight') return;
   switch (event.code) {
     case 'Space':
       event.preventDefault();
-      playback.toggle();
+      togglePlayback();
       break;
     case 'KeyR':
-      playback.reset();
+      resetPlayback();
       break;
     case 'KeyS':
       settingsOpen.value = !settingsOpen.value;
@@ -289,14 +343,19 @@ function onKeyDown(event: KeyboardEvent) {
       break;
     case 'ArrowLeft':
       event.preventDefault();
-      playback.step(-2);
+      if (event.shiftKey) adjustTime(-0.25);
+      else playback.step(-2);
       break;
     case 'ArrowRight':
       event.preventDefault();
-      playback.step(2);
+      if (event.shiftKey) adjustTime(0.25);
+      else playback.step(2);
       break;
     case 'KeyH':
       controlsVisible.value = !controlsVisible.value;
+      break;
+    case 'Escape':
+      settingsOpen.value = false;
       break;
     default:
       break;
@@ -304,6 +363,7 @@ function onKeyDown(event: KeyboardEvent) {
 }
 
 function revealControls() {
+  if (clickThrough.value) return;
   controlsVisible.value = true;
   if (hideTimer !== null) window.clearTimeout(hideTimer);
   hideTimer = window.setTimeout(() => {
@@ -314,71 +374,99 @@ function revealControls() {
 
 /* ── 透明背景 ───────────────────────────────────────────────────────── */
 
+const backgroundElements = [
+  document.documentElement,
+  document.body,
+  document.getElementById('app'),
+];
+const originalBackgrounds = backgroundElements.map(element => ({
+  element,
+  value: element?.style.getPropertyValue('background') ?? '',
+  priority: element?.style.getPropertyPriority('background') ?? '',
+}));
+const originalTitle = document.title;
+
 function applyBackground(transparent: boolean) {
   const value = transparent ? 'transparent' : '#0b0e14';
-  for (const element of [
-    document.documentElement,
-    document.body,
-    document.getElementById('app'),
-  ]) {
+  for (const element of backgroundElements) {
     element?.style.setProperty('background', value, 'important');
   }
 }
 
 watch(() => preferences.value.transparent, applyBackground, { immediate: true });
 
-onMounted(async () => {
+onMounted(() => {
   // v3 的启动遮罩由首个编辑器移除；叠加页必须自己清掉，否则一直白屏。
   document.getElementById('boot-loader')?.remove();
   window.addEventListener('keydown', onKeyDown);
   window.addEventListener('pointermove', revealControls, { passive: true });
   revealControls();
   document.title = `${t('overlay.title')} · Endaxis`;
+  if (typeof BroadcastChannel !== 'undefined') {
+    snapshotChannel = new BroadcastChannel('endaxis-overlay');
+    snapshotChannel.onmessage = event => {
+      if (disposed || event.data === snapshotId) return;
+      demoMode.value = false;
+      pendingExport.value = true;
+      void pollSnapshot();
+    };
+  }
 
   if (isDesktop) {
     unsubscribeClickThrough =
       desktopApi?.onClickThrough?.(value => {
         clickThrough.value = value;
-        if (value) controlsVisible.value = false;
+        if (value) {
+          settingsOpen.value = false;
+          controlsVisible.value = false;
+        }
       }) ?? null;
-    try {
-      const info = await desktopApi?.info?.();
-      if (info) clickThrough.value = Boolean(info.clickThrough);
-    } catch {
-      /* 桌面能力不可用时按浏览器模式跑 */
-    }
+    unsubscribePlayback =
+      desktopApi?.onPlaybackCommand(command => {
+        if (loading.value || !plan.value.hasCasts) return;
+        if (command === 'toggle') togglePlayback();
+        else if (command === 'restart') {
+          resetPlayback();
+          showFeedback(t('overlay.controls.reset'));
+        } else adjustTime(command === 'backward' ? -0.25 : 0.25);
+      }) ?? null;
+    void desktopApi
+      ?.info()
+      .then(info => {
+        if (disposed) return;
+        clickThrough.value = info.clickThrough;
+        clickThroughAvailable.value = info.clickThroughAvailable;
+        playbackShortcutsAvailable.value = info.playbackShortcutsAvailable;
+        autoTriggerAvailable.value = info.countdownTriggerAvailable === true;
+      })
+      .catch(error => {
+        if (!disposed) errorCode.value = error instanceof Error ? error.message : String(error);
+      });
     syncDesktopWindow();
   }
 
-  await loadPlan();
-  pollHandle = window.setInterval(() => void pollProject(), 5000);
+  pollHandle = window.setInterval(() => void pollSnapshot(), 1000);
+  void loadPlan();
 });
 
 onBeforeUnmount(() => {
+  disposed = true;
+  loadGeneration++;
   window.removeEventListener('keydown', onKeyDown);
   window.removeEventListener('pointermove', revealControls);
   unsubscribeClickThrough?.();
+  unsubscribePlayback?.();
+  hudObserver?.disconnect();
+  snapshotChannel?.close();
   if (hideTimer !== null) window.clearTimeout(hideTimer);
+  if (feedbackTimer !== null) window.clearTimeout(feedbackTimer);
   if (pollHandle !== null) window.clearInterval(pollHandle);
+  document.title = originalTitle;
+  for (const { element, value, priority } of originalBackgrounds) {
+    if (value) element?.style.setProperty('background', value, priority);
+    else element?.style.removeProperty('background');
+  }
 });
-
-// 开发期把计划摘要挂到 window，便于浏览器 / CDP 验证（生产构建会被摇掉）。
-if (import.meta.env?.DEV) {
-  (window as unknown as { __endaxisOverlayDebugNow?: () => unknown }).__endaxisOverlayDebugNow =
-    () => ({
-      casts: plan.value.casts.length,
-      duration: plan.value.duration,
-      hasCasts: plan.value.hasCasts,
-      spPoints: plan.value.spPoints.length,
-      gauges: Object.keys(plan.value.gaugePoints).length,
-      comboWindows: Object.keys(plan.value.comboWindows).length,
-      times: plan.value.casts.map(cast => [cast.type, cast.start]),
-      now: now.value,
-      scenarioName: scenarioName.value,
-      simulating: simulating.value,
-      simulationError: simulationError.value,
-    });
-}
 </script>
 
 <template>
@@ -391,6 +479,7 @@ if (import.meta.env?.DEV) {
     <div class="overlay-stage">
       <div
         v-if="!loading && !empty && plan.hasCasts"
+        ref="hudAnchor"
         class="overlay-hud-anchor"
         :class="{ 'is-desktop': isDesktop }"
         :style="hudStyle"
@@ -399,23 +488,29 @@ if (import.meta.env?.DEV) {
         @pointerup="onHudPointerUp"
         @pointercancel="onHudPointerUp"
       >
+        <div class="overlay-source-label">
+          {{ demoMode ? t('overlay.demoBadge') : scenarioName }}
+        </div>
         <GameOverlayHud
           :plan="plan"
           :preferences="effectivePreferences"
           :now="now"
           :is-playing="isPlaying"
           :finished="isFinished"
+          :waiting-remaining="waitingRemaining"
+          :has-started="hasStarted"
           :loading="loading"
-          @toggle-play="playback.toggle()"
+          @toggle-play="togglePlayback"
         />
-        <div v-if="!isPlaying && now === 0" class="overlay-ready-hint">
-          {{
-            simulating
-              ? t('overlay.simulating')
-              : isDesktop
-                ? desktopHintText
-                : t('overlay.readyHint')
-          }}
+        <div v-if="!isPlaying && now === plan.startTime" class="overlay-ready-hint">
+          {{ isDesktop ? desktopHintText : t('overlay.readyHint') }}
+        </div>
+        <div v-if="feedback" class="overlay-ready-hint" role="status">{{ feedback }}</div>
+        <div v-if="pendingExport" class="overlay-ready-hint" role="status">
+          {{ t('overlay.pendingExport') }}
+        </div>
+        <div v-if="autoTriggerStatus?.armed" class="overlay-ready-hint" role="status">
+          {{ t(`overlay.auto.phase.${autoTriggerStatus.phase}`) }}
         </div>
       </div>
 
@@ -436,6 +531,14 @@ if (import.meta.env?.DEV) {
           <button type="button" class="overlay-link overlay-link--ghost" @click="startDemo">
             {{ t('overlay.demo') }}
           </button>
+          <button
+            v-if="isDesktop"
+            type="button"
+            class="overlay-link"
+            @click="desktopApi?.openEditor()"
+          >
+            {{ t('overlay.controls.editor') }}
+          </button>
         </div>
       </div>
     </div>
@@ -444,8 +547,9 @@ if (import.meta.env?.DEV) {
       <button
         type="button"
         class="overlay-control"
+        :disabled="loading || empty"
         :title="isPlaying ? t('overlay.controls.pause') : t('overlay.controls.play')"
-        @click="playback.toggle()"
+        @click="togglePlayback"
       >
         <svg v-if="isPlaying" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
           <rect x="6" y="5" width="4" height="14" fill="currentColor"></rect>
@@ -458,8 +562,26 @@ if (import.meta.env?.DEV) {
       <button
         type="button"
         class="overlay-control"
+        :title="t('overlay.delay')"
+        :disabled="loading || empty"
+        @click="adjustTime(-0.25)"
+      >
+        −
+      </button>
+      <button
+        type="button"
+        class="overlay-control"
+        :title="t('overlay.advance')"
+        :disabled="loading || empty"
+        @click="adjustTime(0.25)"
+      >
+        +
+      </button>
+      <button
+        type="button"
+        class="overlay-control"
         :title="t('overlay.controls.reset')"
-        @click="playback.reset()"
+        @click="resetPlayback"
       >
         <svg
           viewBox="0 0 24 24"
@@ -503,6 +625,7 @@ if (import.meta.env?.DEV) {
         type="button"
         class="overlay-control"
         :class="{ 'is-active': clickThrough }"
+        :disabled="!clickThroughAvailable"
         :title="clickThrough ? t('overlay.controls.unlock') : t('overlay.controls.lock')"
         :aria-pressed="clickThrough"
         @click="toggleClickThrough"
@@ -630,6 +753,20 @@ if (import.meta.env?.DEV) {
         <span class="overlay-field__value">{{ Math.round(preferences.hudOpacity * 100) }}%</span>
       </label>
 
+      <label class="overlay-field" :title="t('overlay.settings.startDelayHint')">
+        <span>{{ t('overlay.settings.startDelay') }}</span>
+        <input
+          type="range"
+          :min="OVERLAY_LIMITS.startDelaySeconds.min"
+          :max="OVERLAY_LIMITS.startDelaySeconds.max"
+          step="0.1"
+          :value="preferences.startDelaySeconds"
+          @input="patchNumber('startDelaySeconds', ($event.target as HTMLInputElement).value)"
+        />
+        <span class="overlay-field__value">{{ preferences.startDelaySeconds.toFixed(1) }}s</span>
+      </label>
+      <p class="overlay-settings__hint">{{ t('overlay.settings.startDelayHint') }}</p>
+
       <div class="overlay-settings__toggles">
         <label class="overlay-toggle" :title="t('overlay.settings.showBasicHint')">
           <input
@@ -666,7 +803,12 @@ if (import.meta.env?.DEV) {
       </div>
 
       <div class="overlay-settings__actions">
-        <button type="button" class="overlay-settings__button" @click="resetPosition">
+        <button
+          v-if="!isDesktop"
+          type="button"
+          class="overlay-settings__button"
+          @click="resetPosition"
+        >
           {{ t('overlay.settings.resetPosition') }}
         </button>
         <button type="button" class="overlay-settings__button" @click="() => loadPlan()">
@@ -675,9 +817,42 @@ if (import.meta.env?.DEV) {
         <button type="button" class="overlay-settings__button" @click="resetPreferences">
           {{ t('overlay.settings.reset') }}
         </button>
+        <button
+          v-if="demoMode"
+          type="button"
+          class="overlay-settings__button"
+          @click="
+            demoMode = false;
+            loadPlan();
+          "
+        >
+          {{ t('overlay.returnToProject') }}
+        </button>
+        <button
+          v-if="isDesktop"
+          type="button"
+          class="overlay-settings__button"
+          @click="desktopApi?.openEditor()"
+        >
+          {{ t('overlay.controls.editor') }}
+        </button>
       </div>
 
+      <CountdownTriggerSettings
+        v-if="autoTriggerApi && autoTriggerAvailable"
+        :api="autoTriggerApi"
+        :can-arm="!loading && plan.hasCasts && !isPlaying"
+      />
+      <p v-else-if="autoTriggerApi" class="overlay-settings__hint">
+        {{ t('overlay.auto.restartNeeded') }}
+      </p>
       <p class="overlay-settings__hint">{{ t('overlay.settings.hint') }}</p>
+      <p class="overlay-settings__hint">
+        {{ t(isDesktop ? 'overlay.desktopKeys' : 'overlay.browserKeys') }}
+      </p>
+      <p v-if="isDesktop && !playbackShortcutsAvailable" class="overlay-settings__hint">
+        {{ t('overlay.shortcutsUnavailable') }}
+      </p>
       <p class="overlay-settings__hint overlay-settings__hint--warn">
         {{ t('overlay.settings.fullscreenHint') }}
       </p>
@@ -686,6 +861,11 @@ if (import.meta.env?.DEV) {
 </template>
 
 <style scoped>
+/* 桌面壳复用开发服务；只在 HUD 页隐藏开发浮标，不影响编辑器。 */
+:global(body:has(.overlay-page) #__vue-devtools-container__) {
+  display: none !important;
+}
+
 .overlay-page {
   position: fixed;
   inset: 0;
@@ -719,13 +899,25 @@ if (import.meta.env?.DEV) {
   cursor: grabbing;
 }
 
+.overlay-source-label {
+  margin-bottom: 4px;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .overlay-hud-anchor.is-desktop {
   -webkit-app-region: drag;
 }
 
-.overlay-hud-anchor.is-desktop button,
-.overlay-hud-anchor.is-desktop input,
-.overlay-hud-anchor.is-desktop .ov-cap {
+.overlay-hud-anchor.is-desktop :deep(.ov-hud) {
+  max-width: calc(100vw - 32px);
+}
+
+.overlay-hud-anchor.is-desktop :deep(button),
+.overlay-hud-anchor.is-desktop :deep(input) {
   -webkit-app-region: no-drag;
 }
 
@@ -835,6 +1027,7 @@ if (import.meta.env?.DEV) {
   opacity: 1;
   transform: none;
   pointer-events: auto;
+  -webkit-app-region: no-drag;
 }
 
 .overlay-control {
@@ -864,6 +1057,11 @@ if (import.meta.env?.DEV) {
   color: #ffd166;
 }
 
+.overlay-control:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .overlay-control:hover,
   .overlay-link:hover {
@@ -873,6 +1071,8 @@ if (import.meta.env?.DEV) {
 }
 
 .overlay-settings {
+  /* 浮层的 z-index 不会取消下方 HUD 的原生拖拽命中，须整块显式排除。 */
+  -webkit-app-region: no-drag;
   position: fixed;
   top: 8px;
   right: 52px;

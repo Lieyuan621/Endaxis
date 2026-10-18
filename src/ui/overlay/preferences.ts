@@ -5,7 +5,7 @@
  * 玩家拖动一次即可放到游戏时间显示的下方。
  */
 
-import { computed, ref, watch, type Ref } from 'vue';
+import { ref, watch, type Ref } from 'vue';
 
 export type OverlayIconMode = 'skill' | 'portrait';
 
@@ -32,6 +32,8 @@ export interface OverlayPreferences {
   hudOpacity: number;
   /** 打开页面后自动开始计时。 */
   autoStart: boolean;
+  /** 每次重新开始前的等待时间（秒）；不改变轴内的准备动作。 */
+  startDelaySeconds: number;
 }
 
 export const OVERLAY_PREFS_KEY = 'endaxis_overlay_prefs_v1';
@@ -51,6 +53,7 @@ export const DEFAULT_OVERLAY_PREFERENCES: OverlayPreferences = {
   // 默认偏透：叠在游戏画面上时只保留一层很薄的底，文字靠描边和阴影保证可读。
   hudOpacity: 0.52,
   autoStart: false,
+  startDelaySeconds: 2,
 };
 
 export const OVERLAY_LIMITS = {
@@ -60,6 +63,7 @@ export const OVERLAY_LIMITS = {
   offsetY: { min: -200, max: 1600 },
   width: { min: 720, max: 1920 },
   hudOpacity: { min: 0.2, max: 1 },
+  startDelaySeconds: { min: 0, max: 10 },
 } as const;
 
 function clampNumber(value: unknown, min: number, max: number, fallback: number): number {
@@ -99,6 +103,14 @@ export function normalizeOverlayPreferences(raw: unknown): OverlayPreferences {
       defaults.hudOpacity,
     ),
     autoStart: readBoolean(source.autoStart, defaults.autoStart),
+    startDelaySeconds: clampNumber(
+      typeof source.startDelaySeconds === 'number'
+        ? source.startDelaySeconds
+        : defaults.startDelaySeconds,
+      limits.startDelaySeconds.min,
+      limits.startDelaySeconds.max,
+      defaults.startDelaySeconds,
+    ),
   };
 }
 
@@ -147,8 +159,4 @@ export function useOverlayPreferences(): {
   }
 
   return { preferences, patch, reset };
-}
-
-export function useOverlayIconMode(preferences: Ref<OverlayPreferences>) {
-  return computed(() => preferences.value.iconMode);
 }

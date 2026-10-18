@@ -1,20 +1,10 @@
-/**
- * Endaxis 游戏内提示条 —— Windows 桌面悬浮窗（Electron 主进程）。
- *
- * 行为对齐「QQ 音乐桌面歌词」：
- * - 无边框、透明、置顶（level = screen-saver，尽量压住普通窗口）；
- * - 默认可以交互（拖动/点按钮），按 Ctrl+Alt+O 切换鼠标穿透，穿透后完全不挡游戏点击；
- * - 窗口位置记忆在 userData 里，下次打开回到原处；
- * - 窗口大小跟随 HUD（页面通过 IPC 请求），打开设置面板时临时长高。
- *
- * 页面仍然复用 `/overlay`：它从同一来源的 localStorage 读取排轴方案，
- * 因此和排轴工具天然同步（开发服务器地址由启动器传入）。
- */
-const { app, BrowserWindow, globalShortcut, ipcMain, screen } = require('electron');
+/** 编辑器和 HUD 使用同一 Electron session、同一来源的 IndexedDB。 */
 const fs = require('node:fs');
 const path = require('node:path');
+const { ROOT, workspaceIdentity, validateUrl, startServer } = require('./server.cjs');
+const { createCountdownTrigger } = require('./countdown-trigger.cjs');
+const { createRegionPicker } = require('./region-picker.cjs');
 
-const DEFAULT_URL = 'http://127.0.0.1:5173/overlay';
 const MIN_WIDTH = 640;
 const MIN_HEIGHT = 150;
 
@@ -22,201 +12,402 @@ function parseArgs(argv) {
   const args = new Map();
   for (const raw of argv) {
     if (!raw.startsWith('--')) continue;
-    // 只在第一个 '=' 处切分：URL 里可能带查询串（--url=http://…/overlay?demo=1）
-    const [key, ...rest] = raw.slice(2).split('=');
-    args.set(key, rest.length ? rest.join('=') : 'true');
+    const index = raw.indexOf('=');
+    args.set(
+      raw.slice(2, index < 0 ? undefined : index),
+      index < 0 ? 'true' : raw.slice(index + 1),
+    );
   }
   return args;
 }
 
-const args = parseArgs(process.argv.slice(1));
-const targetUrl = args.get('url') || DEFAULT_URL;
-const capturePath = args.get('capture') || '';
-
-/** 上次的窗口位置（只保存位置，不保存大小：大小由 HUD 决定）。 */
-function stateFile() {
-  return path.join(app.getPath('userData'), 'window-state.json');
+/** IPC 和状态文件只接收有限数值；尺寸变化后同时把位置限制在当前显示器内。 */
+function fitBounds(bounds, area) {
+  if (![bounds.x, bounds.y, bounds.width, bounds.height].every(Number.isFinite)) return null;
+  if (bounds.width <= 0 || bounds.height <= 0) return null;
+  const width = Math.min(Math.max(MIN_WIDTH, Math.round(bounds.width)), area.width);
+  const height = Math.min(Math.max(MIN_HEIGHT, Math.round(bounds.height)), area.height);
+  return {
+    x: Math.min(Math.max(area.x, Math.round(bounds.x)), area.x + area.width - width),
+    y: Math.min(Math.max(area.y, Math.round(bounds.y)), area.y + area.height - height),
+    width,
+    height,
+  };
 }
 
-function readState() {
+function readPosition(file) {
   try {
-    const raw = fs.readFileSync(stateFile(), 'utf8');
-    const parsed = JSON.parse(raw);
-    if (Number.isFinite(parsed?.x) && Number.isFinite(parsed?.y)) {
-      return { x: Math.round(parsed.x), y: Math.round(parsed.y) };
+    const state = JSON.parse(fs.readFileSync(file, 'utf8'));
+    if (Number.isFinite(state?.x) && Number.isFinite(state?.y)) {
+      return { x: Math.round(state.x), y: Math.round(state.y) };
     }
   } catch {
-    /* 首次启动没有状态文件 */
+    // 首次启动或损坏的状态文件使用默认位置。
   }
   return null;
 }
 
-function writeState(bounds) {
-  try {
-    fs.mkdirSync(path.dirname(stateFile()), { recursive: true });
-    fs.writeFileSync(stateFile(), JSON.stringify({ x: bounds.x, y: bounds.y }), 'utf8');
-  } catch {
-    /* 写不了就算了，不影响使用 */
+function startDesktop(electron, argv = process.argv.slice(1), services = {}) {
+  const { app, BrowserWindow, globalShortcut, ipcMain, screen } = electron;
+  const args = parseArgs(argv);
+  let targetUrl = args.has('url') ? validateUrl(args.get('url')) : null;
+  const userData = args.has('user-data-dir')
+    ? path.resolve(args.get('user-data-dir'))
+    : path.join(app.getPath('appData'), 'EndaxisOverlay', workspaceIdentity());
+  fs.mkdirSync(userData, { recursive: true });
+  app.setPath('userData', userData);
+  app.setPath('sessionData', userData);
+  if (!app.requestSingleInstanceLock()) {
+    app.quit();
+    return;
   }
-}
 
-let win = null;
-let clickThrough = false;
-let topmostTimer = null;
+  let hud = null;
+  let editor = null;
+  let server = null;
+  let clickThrough = false;
+  let clickThroughAvailable = false;
+  let playbackShortcutsAvailable = true;
+  let topmostTimer = null;
+  let captureTimer = null;
+  let quitting = false;
+  let initializing = true;
+  let pendingEditorFocus = false;
+  let countdownTrigger = null;
+  let regionPicker = null;
+  const stateFile = path.join(app.getPath('userData'), 'window-state.json');
+  const channels = [];
 
-function clampSize(width, height) {
-  const display = win ? screen.getDisplayMatching(win.getBounds()) : screen.getPrimaryDisplay();
-  const area = display.workArea;
-  return {
-    width: Math.min(Math.max(MIN_WIDTH, Math.round(width)), area.width),
-    height: Math.min(Math.max(MIN_HEIGHT, Math.round(height)), area.height),
-  };
-}
+  function sendToHud(channel, payload) {
+    if (!quitting && hud && !hud.isDestroyed()) hud.webContents.send(channel, payload);
+  }
 
-function setClickThrough(next) {
-  clickThrough = Boolean(next);
-  if (!win || win.isDestroyed()) return clickThrough;
-  // forward:true 让穿透状态下页面仍能收到 mousemove（用于悬停提示）
-  win.setIgnoreMouseEvents(clickThrough, { forward: true });
-  win.webContents.send('endaxis:click-through', clickThrough);
-  return clickThrough;
-}
-
-function createWindow() {
-  const display = screen.getPrimaryDisplay();
-  const area = display.workArea;
-  const state = readState();
-  const width = clampSize(Number(args.get('width')) || 1120, 0).width;
-  const height = clampSize(0, Number(args.get('height')) || 220).height;
-
-  win = new BrowserWindow({
-    width,
-    height,
-    x: state ? Math.min(Math.max(area.x, state.x), area.x + area.width - 240) : Math.round(area.x + (area.width - width) / 2),
-    y: state ? Math.min(Math.max(area.y, state.y), area.y + area.height - 120) : area.y + 40,
-    frame: false,
-    transparent: true,
-    backgroundColor: '#00000000',
-    hasShadow: false,
-    resizable: false,
-    movable: true,
-    minimizable: false,
-    maximizable: false,
-    fullscreenable: false,
-    skipTaskbar: true,
-    alwaysOnTop: true,
-    show: false,
-    title: 'Endaxis 提示条',
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.cjs'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      backgroundThrottling: false,
-    },
-  });
-
-  // screen-saver 级别可以浮在大多数窗口之上（包括无边框全屏的游戏窗口）
-  win.setAlwaysOnTop(true, 'screen-saver');
-  win.setMenuBarVisibility(false);
-  win.loadURL(targetUrl);
-
-  // 有些游戏/启动器会抢回 Z 序，定期重新声明置顶（开销可忽略）。
-  // 注意：真正的「独占全屏」（D3D exclusive fullscreen）不属于 DWM 合成，
-  // 任何独立窗口都无法覆盖，只能靠游戏改「无边框窗口」或进程内 Hook。
-  topmostTimer = setInterval(() => {
-    if (!win || win.isDestroyed()) return;
-    win.setAlwaysOnTop(true, 'screen-saver');
-  }, 2000);
-
-  win.once('ready-to-show', () => {
-    // 截图验证时不抢焦点，避免打扰正在使用电脑的人。
-    if (capturePath) win.showInactive();
-    else {
-      win.show();
-      win.focus();
+  function countdown() {
+    if (!countdownTrigger) {
+      countdownTrigger = (services.createCountdownTrigger || createCountdownTrigger)({
+        desktopCapturer: electron.desktopCapturer,
+        screen,
+        nativeImage: electron.nativeImage,
+        stateFile: path.join(userData, 'countdown-trigger.json'),
+        onUpdate: status => sendToHud('endaxis:countdown-status', status),
+        onTrigger: event => sendToHud('endaxis:countdown-trigger', event),
+      });
     }
-  });
+    return countdownTrigger;
+  }
 
-  win.webContents.on('did-fail-load', (_event, code, description, url) => {
-    console.error(`[endaxis] 加载失败 ${code} ${description} ${url}`);
-  });
+  function cancelRegionPicker() {
+    regionPicker?.dispose();
+    regionPicker = null;
+  }
 
-  win.on('close', () => {
-    if (win && !win.isDestroyed()) writeState(win.getBounds());
-  });
-
-  win.on('closed', () => {
-    win = null;
-    if (topmostTimer !== null) {
-      clearInterval(topmostTimer);
-      topmostTimer = null;
+  async function selectCountdownRegion() {
+    countdown().disarm();
+    if (!regionPicker) {
+      regionPicker = (services.createRegionPicker || createRegionPicker)({
+        BrowserWindow,
+        ipcMain,
+        screen,
+        desktopCapturer: electron.desktopCapturer,
+        owner: () => hud,
+      });
     }
-  });
+    const selection = await regionPicker.pick();
+    if (quitting) return null;
+    return selection ? countdown().configure(selection) : countdown().info();
+  }
 
-  if (capturePath) {
-    win.webContents.once('did-finish-load', async () => {
-      await new Promise(resolve => setTimeout(resolve, 6000));
-      try {
-        const image = await win.webContents.capturePage();
-        fs.writeFileSync(capturePath, image.toPNG());
-        console.log(
-          `[endaxis] captured ${capturePath} alwaysOnTop=${win.isAlwaysOnTop()} clickThrough=${clickThrough}`,
-        );
-      } catch (error) {
-        console.error('[endaxis] capture failed', error);
-      }
-      app.quit();
+  function openEditor() {
+    if (!targetUrl) {
+      pendingEditorFocus = true;
+      return;
+    }
+    if (editor && !editor.isDestroyed()) {
+      if (editor.isMinimized()) editor.restore();
+      editor.show();
+      editor.focus();
+      return;
+    }
+    editor = new BrowserWindow({
+      width: 1440,
+      height: 960,
+      title: 'Endaxis',
+      webPreferences: {
+        preload: path.join(__dirname, 'editor-preload.cjs'),
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: true,
+      },
+    });
+    editor.setMenuBarVisibility(false);
+    void editor
+      .loadURL(new URL('/', targetUrl).href)
+      .catch(error => console.error('[endaxis]', error));
+    editor.on('closed', () => {
+      editor = null;
     });
   }
-}
 
-function registerShortcuts() {
-  const shortcuts = [
-    ['Control+Alt+O', () => setClickThrough(!clickThrough)],
-    ['Control+Alt+R', () => win && !win.isDestroyed() && win.reload()],
-    ['Control+Alt+Q', () => app.quit()],
-  ];
-  for (const [accelerator, handler] of shortcuts) {
-    if (!globalShortcut.register(accelerator, handler)) {
-      console.warn(`[endaxis] 全局快捷键注册失败：${accelerator}（可能被其它程序占用）`);
+  function setClickThrough(next) {
+    if (typeof next !== 'boolean') return clickThrough;
+    clickThrough = next && clickThroughAvailable;
+    if (hud && !hud.isDestroyed()) {
+      hud.setIgnoreMouseEvents(clickThrough, { forward: true });
+      hud.webContents.send('endaxis:click-through', clickThrough);
+    }
+    return clickThrough;
+  }
+
+  function resize(size) {
+    if (!hud || hud.isDestroyed() || !size) return null;
+    const bounds = hud.getBounds();
+    const next = fitBounds(
+      { ...bounds, width: size.width, height: size.height },
+      screen.getDisplayMatching(bounds).workArea,
+    );
+    if (!next) return null;
+    hud.setBounds(next, false);
+    return hud.getBounds();
+  }
+
+  function fitCurrentDisplay() {
+    if (!hud || hud.isDestroyed()) return;
+    const bounds = hud.getBounds();
+    const next = fitBounds(bounds, screen.getDisplayMatching(bounds).workArea);
+    if (next) hud.setBounds(next, false);
+  }
+
+  function handle(channel, callback) {
+    channels.push(channel);
+    ipcMain.handle(channel, (event, ...values) => {
+      if (!hud || hud.isDestroyed() || event.sender !== hud.webContents) return null;
+      return callback(...values);
+    });
+  }
+
+  function cleanup() {
+    countdownTrigger?.dispose();
+    cancelRegionPicker();
+    if (topmostTimer !== null) clearInterval(topmostTimer);
+    if (captureTimer !== null) clearTimeout(captureTimer);
+    topmostTimer = null;
+    captureTimer = null;
+    globalShortcut.unregisterAll();
+    channels.forEach(channel => ipcMain.removeHandler(channel));
+    screen.removeListener('display-removed', fitCurrentDisplay);
+    screen.removeListener('display-metrics-changed', fitCurrentDisplay);
+  }
+
+  function createHud() {
+    const position = readPosition(stateFile);
+    const initialSize = {
+      width: Number(args.get('width')) || 1120,
+      height: Number(args.get('height')) || 220,
+    };
+    const area = position
+      ? screen.getDisplayMatching({ ...position, ...initialSize }).workArea
+      : screen.getPrimaryDisplay().workArea;
+    const initial = fitBounds(
+      {
+        ...initialSize,
+        x: position?.x ?? area.x + (area.width - initialSize.width) / 2,
+        y: position?.y ?? area.y + 40,
+      },
+      area,
+    );
+    if (!initial) throw new TypeError('窗口尺寸必须是有限正数。');
+    hud = new BrowserWindow({
+      ...initial,
+      frame: false,
+      transparent: true,
+      backgroundColor: '#00000000',
+      hasShadow: false,
+      resizable: false,
+      movable: true,
+      minimizable: false,
+      maximizable: false,
+      fullscreenable: false,
+      skipTaskbar: true,
+      alwaysOnTop: true,
+      show: false,
+      title: 'Endaxis 提示条',
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.cjs'),
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: true,
+        backgroundThrottling: false,
+      },
+    });
+    const window = hud;
+    window.webContents.on('did-start-loading', () => {
+      countdownTrigger?.disarm();
+      cancelRegionPicker();
+    });
+    window.setAlwaysOnTop(true, 'screen-saver');
+    window.setMenuBarVisibility(false);
+    // 有桌面权限的页面不能通过导航把 preload 能力交给其它来源。
+    window.webContents.on('will-navigate', (event, url) => {
+      if (url !== targetUrl) event.preventDefault();
+    });
+    window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+    void window.loadURL(targetUrl).catch(error => console.error('[endaxis]', error));
+    topmostTimer = setInterval(() => {
+      if (!window.isDestroyed()) window.setAlwaysOnTop(true, 'screen-saver');
+    }, 2000);
+    window.once('ready-to-show', () => window.showInactive());
+    window.on('close', () => {
+      try {
+        const { x, y } = window.getBounds();
+        fs.mkdirSync(path.dirname(stateFile), { recursive: true });
+        fs.writeFileSync(stateFile, JSON.stringify({ x, y }), 'utf8');
+      } catch {
+        // 位置无法保存时仍允许正常退出。
+      }
+    });
+    window.on('closed', () => {
+      hud = null;
+      if (!quitting) app.quit();
+    });
+    if (args.has('capture')) {
+      window.webContents.once('did-finish-load', () => {
+        captureTimer = setTimeout(async () => {
+          try {
+            if (!window.isDestroyed()) {
+              const image = await window.webContents.capturePage();
+              fs.writeFileSync(args.get('capture'), image.toPNG());
+            }
+          } catch (error) {
+            console.error('[endaxis] 截图失败：', error);
+          }
+          app.quit();
+        }, 6000);
+      });
     }
   }
+
+  app.on('second-instance', () => openEditor());
+  app.on('activate', () => openEditor());
+  app.on('window-all-closed', () => app.quit());
+  app.on('before-quit', event => {
+    quitting = true;
+    cleanup();
+    if (initializing) {
+      event.preventDefault();
+      return;
+    }
+    if (server) {
+      event.preventDefault();
+      const ownedServer = server;
+      server = null;
+      void ownedServer
+        .close()
+        .catch(error => console.error('[endaxis] 关闭服务器失败：', error))
+        .finally(() => app.quit());
+    }
+  });
+
+  const ready = app
+    .whenReady()
+    .then(async () => {
+      if (quitting) {
+        initializing = false;
+        app.quit();
+        return;
+      }
+      if (!targetUrl) {
+        const started = await (services.startServer || startServer)(ROOT);
+        server = started.server;
+        targetUrl = started.url;
+        if (quitting) {
+          await server.close();
+          server = null;
+          initializing = false;
+          app.quit();
+          return;
+        }
+      }
+      clickThroughAvailable = globalShortcut.register('Control+Alt+O', () =>
+        setClickThrough(!clickThrough),
+      );
+      if (!clickThroughAvailable) {
+        console.warn('[endaxis] Ctrl+Alt+O 已被占用，本次禁用鼠标穿透以保留恢复入口。');
+      }
+      for (const [key, handler] of [
+        ['Control+Alt+R', () => hud && !hud.isDestroyed() && hud.reload()],
+        ['Control+Alt+Q', () => app.quit()],
+      ]) {
+        if (!globalShortcut.register(key, handler))
+          console.warn(`[endaxis] 全局快捷键注册失败：${key}`);
+      }
+      // 回放命令只传给 HUD，不显示或聚焦窗口，玩家可以一直留在游戏内操作。
+      for (const [key, command] of [
+        ['Control+Alt+Space', 'toggle'],
+        ['Control+Alt+Home', 'restart'],
+        ['Control+Alt+Left', 'backward'],
+        ['Control+Alt+Right', 'forward'],
+      ]) {
+        const registered = globalShortcut.register(key, () => {
+          if (hud && !hud.isDestroyed()) hud.webContents.send('endaxis:playback-command', command);
+        });
+        if (!registered) {
+          playbackShortcutsAvailable = false;
+          console.warn('[endaxis] 回放快捷键注册失败：' + key + '（可能被其它程序占用）');
+        }
+      }
+      handle('endaxis:desktop-info', () => ({
+        clickThrough,
+        clickThroughAvailable,
+        playbackShortcutsAvailable,
+        countdownTriggerAvailable: true,
+        url: targetUrl,
+        alwaysOnTop: Boolean(hud && hud.isAlwaysOnTop()),
+      }));
+      handle('endaxis:toggle-click-through', () => setClickThrough(!clickThrough));
+      handle('endaxis:set-click-through', setClickThrough);
+      handle('endaxis:open-editor', openEditor);
+      handle('endaxis:quit', () => app.quit());
+      handle('endaxis:resize', resize);
+      handle('endaxis:countdown-info', () => countdown().info());
+      handle('endaxis:countdown-select', selectCountdownRegion);
+      handle('endaxis:countdown-arm', () => countdown().arm());
+      handle('endaxis:countdown-disarm', () => countdown().disarm());
+      handle('endaxis:countdown-clear', () => countdown().clear());
+      channels.push('endaxis:show-overlay');
+      ipcMain.handle('endaxis:show-overlay', event => {
+        if (!editor || editor.isDestroyed() || event.sender !== editor.webContents) return null;
+        if (hud && !hud.isDestroyed()) hud.showInactive();
+      });
+      createHud();
+      screen.on('display-removed', fitCurrentDisplay);
+      screen.on('display-metrics-changed', fitCurrentDisplay);
+      if (!args.has('no-editor') || pendingEditorFocus) openEditor();
+      initializing = false;
+    })
+    .catch(async error => {
+      console.error('[endaxis] 启动失败：', error);
+      quitting = true;
+      initializing = false;
+      cleanup();
+      try {
+        if (server) await server.close();
+      } finally {
+        server = null;
+        app.exit(1);
+      }
+    });
+  return ready;
 }
 
-app.commandLine.appendSwitch('enable-features', 'CSSBackdropFilter');
+module.exports = { parseArgs, fitBounds, readPosition, startDesktop };
 
-app.whenReady().then(() => {
-  createWindow();
-  registerShortcuts();
-
-  ipcMain.handle('endaxis:desktop-info', () => ({
-    clickThrough,
-    url: targetUrl,
-    alwaysOnTop: win ? win.isAlwaysOnTop() : false,
-  }));
-
-  ipcMain.handle('endaxis:toggle-click-through', () => setClickThrough(!clickThrough));
-  ipcMain.handle('endaxis:set-click-through', (_event, value) => setClickThrough(value));
-  ipcMain.handle('endaxis:quit', () => {
-    app.quit();
-  });
-  ipcMain.handle('endaxis:resize', (_event, size) => {
-    if (!win || win.isDestroyed()) return null;
-    const { width: nextWidth, height: nextHeight } = clampSize(size?.width ?? 1120, size?.height ?? 220);
-    const bounds = win.getBounds();
-    win.setBounds({ x: bounds.x, y: bounds.y, width: nextWidth, height: nextHeight }, false);
-    return win.getBounds();
-  });
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
-});
-
-app.on('window-all-closed', () => {
-  app.quit();
-});
-
-app.on('will-quit', () => {
-  globalShortcut.unregisterAll();
-});
+// Electron 的 bootstrap 可持有 require.main；用宿主身份识别真正的应用入口。
+// 普通 Node 的启动器和单元测试导入本文件时不创建窗口。
+if (process.type === 'browser') {
+  try {
+    startDesktop(require('electron'));
+  } catch (error) {
+    console.error('[endaxis] 启动失败：', error);
+    require('electron').app.exit(1);
+  }
+}

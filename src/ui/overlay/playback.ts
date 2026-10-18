@@ -1,47 +1,49 @@
 /**
  * 叠加提示条的播放时钟。
  *
- * 用 `performance.now()` 推算当前时间，而不是累加 rAF 的时间差：
- * 标签页被游戏挡住/切到后台时 rAF 会停，累加会越来越慢；用绝对时间推算，
- * 回到前台时进度会直接对齐到真实时间，这正是提示工具需要的行为。
+ * 使用 performance.now() 的绝对时间：后台 rAF 暂停后，下一次显示仍与实际经过时间对齐。
  */
-
 import { onScopeDispose, ref, type Ref } from 'vue';
 
 export interface OverlayPlayback {
   now: Ref<number>;
+  /** 启动前剩余等待秒数；等待期间 now 保持计划起点。 */
+  waitingRemaining: Ref<number>;
+  hasStarted: Ref<boolean>;
   isPlaying: Ref<boolean>;
-  speed: Ref<number>;
+  isFinished: Ref<boolean>;
   play: () => void;
   pause: () => void;
   toggle: () => void;
   seek: (time: number) => void;
   step: (delta: number) => void;
   reset: () => void;
-  /** 是否已经播到结尾。 */
-  isFinished: Ref<boolean>;
 }
 
 export interface OverlayPlaybackOptions {
-  /** 计划总时长；返回 0 表示空计划。 */
+  /** 准备期起点；可以为负数。 */
+  startTime: () => number;
+  /** 计划结束时间，与起点使用相同的仿真时钟。 */
   duration: () => number;
-  /** 自动播放。 */
-  autoStart?: boolean;
-  initialSpeed?: number;
+  /** 每次从头播放前的额外等待，不改变计划本身的准备期。 */
+  startDelaySeconds?: () => number;
 }
 
 export function useOverlayPlayback(options: OverlayPlaybackOptions): OverlayPlayback {
-  const now = ref(0);
+  const startTime = () => finiteTime(options.startTime());
+  const endTime = () => Math.max(startTime(), finiteTime(options.duration()));
+  const startDelay = () => Math.max(0, finiteTime(options.startDelaySeconds?.() ?? 0));
+  const now = ref(startTime());
+  const waitingRemaining = ref(startDelay());
+  const hasStarted = ref(false);
   const isPlaying = ref(false);
   const isFinished = ref(false);
-  const speed = ref(options.initialSpeed ?? 1);
 
   let frameId: number | null = null;
-  /** 开始播放时的基准：`originMs` 时刻对应 `baseSeconds`。 */
+  /** originMs 时刻对应 baseSeconds，暂停和跳转时重设。 */
   let originMs = 0;
-  let baseSeconds = 0;
-
-  const duration = () => Math.max(0, Number(options.duration()) || 0);
+  let baseSeconds = now.value;
+  let baseWaitingSeconds = waitingRemaining.value;
 
   function cancelFrame() {
     if (frameId !== null) {
@@ -50,36 +52,49 @@ export function useOverlayPlayback(options: OverlayPlaybackOptions): OverlayPlay
     }
   }
 
-  function tick() {
+  function settle() {
     if (!isPlaying.value) return;
-    const target = baseSeconds + ((performance.now() - originMs) / 1000) * speed.value;
-    const limit = duration();
-    if (limit > 0 && target >= limit) {
-      now.value = limit;
-      isFinished.value = true;
+    const elapsedSeconds = Math.max(0, (performance.now() - originMs) / 1000);
+    waitingRemaining.value = Math.max(0, baseWaitingSeconds - elapsedSeconds);
+    const target = baseSeconds + Math.max(0, elapsedSeconds - baseWaitingSeconds);
+    const end = endTime();
+    now.value = Math.min(end, Math.max(startTime(), target));
+    isFinished.value = now.value >= end;
+    if (isFinished.value) {
       isPlaying.value = false;
-      frameId = null;
-      return;
+      cancelFrame();
     }
-    now.value = target;
-    frameId = requestAnimationFrame(tick);
+  }
+
+  function tick() {
+    frameId = null;
+    settle();
+    if (isPlaying.value) frameId = requestAnimationFrame(tick);
   }
 
   function play() {
     if (isPlaying.value) return;
-    const limit = duration();
-    if (limit <= 0) return;
-    if (now.value >= limit - 1e-6) now.value = 0;
+    const start = startTime();
+    const end = endTime();
+    if (end <= start) return;
+    if (now.value >= end) {
+      now.value = start;
+      waitingRemaining.value = startDelay();
+      hasStarted.value = false;
+    } else {
+      now.value = Math.max(start, now.value);
+    }
     isFinished.value = false;
+    hasStarted.value = true;
     baseSeconds = now.value;
+    baseWaitingSeconds = waitingRemaining.value;
     originMs = performance.now();
     isPlaying.value = true;
-    cancelFrame();
     frameId = requestAnimationFrame(tick);
   }
 
   function pause() {
-    if (!isPlaying.value) return;
+    settle();
     cancelFrame();
     isPlaying.value = false;
     baseSeconds = now.value;
@@ -91,39 +106,67 @@ export function useOverlayPlayback(options: OverlayPlaybackOptions): OverlayPlay
   }
 
   function seek(time: number) {
-    const limit = duration();
-    const clamped = Math.min(Math.max(0, Number(time) || 0), limit > 0 ? limit : Number.MAX_VALUE);
-    now.value = clamped;
-    isFinished.value = limit > 0 && clamped >= limit - 1e-6;
-    if (isPlaying.value) {
-      baseSeconds = clamped;
+    const start = startTime();
+    const end = endTime();
+    now.value = Math.min(end, Math.max(start, finiteTime(time, start)));
+    waitingRemaining.value = 0;
+    hasStarted.value = true;
+    isFinished.value = end > start && now.value >= end;
+    if (isFinished.value) {
+      isPlaying.value = false;
+      cancelFrame();
+    } else if (isPlaying.value) {
+      baseSeconds = now.value;
+      baseWaitingSeconds = 0;
       originMs = performance.now();
     }
   }
 
   function step(delta: number) {
-    seek(now.value + delta);
+    settle();
+    const correction = finiteTime(delta);
+    if (waitingRemaining.value > 0) {
+      const nextWait = waitingRemaining.value - correction;
+      if (nextWait >= 0) {
+        waitingRemaining.value = nextWait;
+        if (isPlaying.value) {
+          baseSeconds = now.value;
+          baseWaitingSeconds = nextWait;
+          originMs = performance.now();
+        }
+      } else {
+        seek(now.value - nextWait);
+      }
+    } else {
+      seek(now.value + correction);
+    }
   }
 
   function reset() {
-    const wasPlaying = isPlaying.value;
-    cancelFrame();
-    isPlaying.value = false;
-    now.value = 0;
-    baseSeconds = 0;
+    pause();
+    now.value = startTime();
+    waitingRemaining.value = startDelay();
+    hasStarted.value = false;
     isFinished.value = false;
-    if (wasPlaying) play();
   }
 
-  onScopeDispose(() => {
-    cancelFrame();
-    isPlaying.value = false;
-  });
+  onScopeDispose(pause);
 
-  if (options.autoStart) {
-    // 数据可能还没加载完（duration 为 0），交给调用方在数据就绪后调用 play()。
-    isPlaying.value = false;
-  }
+  return {
+    now,
+    waitingRemaining,
+    hasStarted,
+    isPlaying,
+    play,
+    pause,
+    toggle,
+    seek,
+    step,
+    reset,
+    isFinished,
+  };
+}
 
-  return { now, isPlaying, speed, play, pause, toggle, seek, step, reset, isFinished };
+function finiteTime(value: number, fallback = 0): number {
+  return Number.isFinite(value) ? value : fallback;
 }

@@ -96,7 +96,10 @@ export function buildDemoPlan(durationSeconds = 64): OverlayPlan {
 
     if (type === 'comboSkill') {
       const windows = comboWindows[track.id] ?? [];
-      windows.push({ start: Number((time - 1.5).toFixed(2)), end: Number((time + 3.2).toFixed(2)) });
+      windows.push({
+        start: Number((time - 1.5).toFixed(2)),
+        end: Number((time + 3.2).toFixed(2)),
+      });
       comboWindows[track.id] = windows;
     }
 
@@ -108,7 +111,7 @@ export function buildDemoPlan(durationSeconds = 64): OverlayPlan {
   const spPoints: OverlayTimePoint[] = [{ time: 0, value: 200 }];
   let sp = 200;
   for (const cast of casts) {
-    sp = Math.max(0, sp - cast.spCost);
+    sp = Math.max(0, sp - (cast.spCost ?? 0));
     spPoints.push({ time: cast.start, value: sp });
     const regenUntil = Math.min(durationSeconds, cast.start + step);
     for (let t = cast.start + 0.5; t < regenUntil; t += 0.5) {
@@ -122,7 +125,7 @@ export function buildDemoPlan(durationSeconds = 64): OverlayPlan {
     const points: OverlayTimePoint[] = [{ time: 0, value: 0 }];
     let gauge = 0;
     for (const cast of casts.filter(item => item.trackId === track.id)) {
-      gauge = Math.min(100, gauge + (cast.start * 4.2) % 100);
+      gauge = Math.min(100, gauge + ((cast.start * 4.2) % 100));
       points.push({ time: cast.start, value: Math.round(gauge) });
       if (cast.type === 'ultimate') {
         gauge = 0;
@@ -144,11 +147,13 @@ export function buildDemoPlan(durationSeconds = 64): OverlayPlan {
       portrait: track.portrait,
       element: track.element,
     })),
+    startTime: 0,
     duration: casts.length ? casts[casts.length - 1]!.end + 2 : durationSeconds,
     maxSp: 300,
     initialSp: 200,
     spPoints,
     gaugePoints,
+    gaugeMaxValues: Object.fromEntries(DEMO_TRACKS.map(track => [track.id, 100])),
     comboWindows,
     hasCasts: casts.length > 0,
   };

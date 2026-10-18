@@ -11,8 +11,8 @@
  *
  * 组件只负责渲染，时钟与位置由外层提供，便于单测与复用。
  */
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+import { useOverlayI18n } from './messages';
 import type { OverlayCast, OverlayPlan } from './plan';
 import { filterCasts } from './plan';
 import type { OverlayPreferences } from './preferences';
@@ -20,13 +20,12 @@ import {
   activeWindow,
   buildTimeTicks,
   computeBeltGeometry,
-  countdownToNext,
-  findNextCastIndex,
+  findNextCastGroup,
   formatCountdown,
+  formatOverlayTime,
   isVisibleAt,
   laneTop,
   samplePoints,
-  seriesMax,
   xForTime,
 } from './layout';
 
@@ -37,11 +36,13 @@ const props = defineProps<{
   isPlaying: boolean;
   finished?: boolean;
   loading?: boolean;
+  waitingRemaining?: number;
+  hasStarted?: boolean;
 }>();
 
 const emit = defineEmits<{ 'toggle-play': [] }>();
 
-const { t } = useI18n({ useScope: 'global' });
+const { t } = useOverlayI18n();
 
 const ICON_BASE = 42;
 
@@ -89,18 +90,30 @@ const casts = computed(() =>
   filterCasts(props.plan.casts, { showBasic: props.preferences.showBasic }),
 );
 
-const nextIndex = computed(() => findNextCastIndex(casts.value, props.now));
-const nextCast = computed<OverlayCast | null>(() =>
-  nextIndex.value >= 0 ? casts.value[nextIndex.value]! : null,
+const nextCasts = computed(() => (props.finished ? [] : findNextCastGroup(casts.value, props.now)));
+const nextCast = computed<OverlayCast | null>(() => nextCasts.value[0] ?? null);
+const countdown = computed(() =>
+  nextCast.value ? Math.max(0, nextCast.value.start - props.now) : null,
 );
-const countdown = computed(() => countdownToNext(casts.value, props.now));
-const countdownText = computed(() => formatCountdown(countdown.value));
-const countdownUrgent = computed(() => countdown.value !== null && countdown.value <= 1.2);
+const waiting = computed(() => (props.waitingRemaining ?? 0) > 0);
+const countdownText = computed(() =>
+  formatCountdown(waiting.value ? props.waitingRemaining! : countdown.value),
+);
+const countdownUrgent = computed(
+  () => props.isPlaying && !waiting.value && countdown.value !== null && countdown.value <= 1.2,
+);
+const playbackState = computed(() => {
+  if (props.finished) return 'finished';
+  if (waiting.value) {
+    if (props.isPlaying) return 'waiting';
+    return props.hasStarted ? 'waitingPaused' : 'ready';
+  }
+  if (props.isPlaying) return 'playing';
+  return Math.abs(props.now - props.plan.startTime) <= 1e-6 ? 'ready' : 'paused';
+});
 
 const ticks = computed(() =>
-  pxPerSecond.value > 0
-    ? buildTimeTicks(props.now, secondsAhead.value, pxPerSecond.value, 0)
-    : [],
+  pxPerSecond.value > 0 ? buildTimeTicks(props.now, secondsAhead.value, pxPerSecond.value, 0) : [],
 );
 
 const visibleCasts = computed(() => {
@@ -112,16 +125,21 @@ const visibleCasts = computed(() => {
 });
 
 const failedIcons = reactive(new Set<string>());
+watch(
+  () => props.plan,
+  () => failedIcons.clear(),
+);
 
 function iconOf(cast: OverlayCast): string {
   const portrait = props.preferences.iconMode === 'portrait';
   const primary = portrait ? cast.portrait : cast.skillIcon;
-  if (primary && !failedIcons.has(cast.id)) return primary;
+  if (primary && !failedIcons.has(primary)) return primary;
   return cast.avatar;
 }
 
-function markIconFailed(cast: OverlayCast) {
-  failedIcons.add(cast.id);
+function markIconFailed(event: Event) {
+  const source = (event.target as HTMLImageElement | null)?.getAttribute('src');
+  if (source) failedIcons.add(source);
 }
 
 function accentOf(cast: OverlayCast | null): string {
@@ -139,15 +157,23 @@ function typeLabelOf(cast: OverlayCast | null): string {
   return t('overlay.type.other');
 }
 
+function actionLabel(cast: OverlayCast): string {
+  const type = typeLabelOf(cast);
+  const name = cast.name && cast.name !== cast.type && cast.name !== type ? cast.name : '';
+  return `${cast.operatorName} · ${type}${name ? ` · ${name}` : ''}`;
+}
+
 /** 倒计时左侧的类型标签：未开始 / 下一个技能 / 待命 / 完成。 */
 const typeLabel = computed(() => {
   if (props.finished) return t('overlay.typeDone');
+  if (waiting.value) return t('overlay.waitingLabel');
   if (nextCast.value) return typeLabelOf(nextCast.value);
   if (!props.isPlaying && props.now <= 0.01) return t('overlay.typeIdle');
   return t('overlay.typeStandby');
 });
 const typeAccent = computed(() => {
   if (props.finished) return '#9ef0e0';
+  if (waiting.value) return '#ffd166';
   return accentOf(nextCast.value);
 });
 
@@ -163,8 +189,19 @@ function itemStyle(cast: OverlayCast) {
 
 const spValue = computed(() => samplePoints(props.plan.spPoints, props.now, props.plan.initialSp));
 const spRatio = computed(() => Math.min(1, Math.max(0, spValue.value / props.plan.maxSp)));
-const nextSpCost = computed(() => Math.max(0, nextCast.value?.spCost ?? 0));
-const spShort = computed(() => nextSpCost.value > 0 && spValue.value + 0.01 < nextSpCost.value);
+const nextSpCost = computed(() => {
+  if (!nextCasts.value.length) return null;
+  let total = 0;
+  for (const cast of nextCasts.value) {
+    if (cast.spCost === null) return null;
+    total += cast.spCost;
+  }
+  return total;
+});
+const spShort = computed(
+  () =>
+    nextSpCost.value !== null && nextSpCost.value > 0 && spValue.value + 0.01 < nextSpCost.value,
+);
 
 const comboState = computed(() => {
   for (const track of props.plan.tracks) {
@@ -177,15 +214,18 @@ const comboState = computed(() => {
 const gaugeChips = computed(() =>
   props.plan.tracks.map(track => {
     const points = props.plan.gaugePoints[track.trackId];
-    const max = seriesMax(points, 1);
+    const max = props.plan.gaugeMaxValues[track.trackId];
     const value = samplePoints(points, props.now, 0);
-    const ratio = Math.min(1, Math.max(0, value / max));
+    const ratio =
+      max !== undefined && Number.isFinite(max) && max > 0
+        ? Math.min(1, Math.max(0, value / max))
+        : 0;
     return {
       trackId: track.trackId,
       name: track.operatorName,
       avatar: track.avatar,
       ratio,
-      ready: ratio >= 0.995,
+      ready: ratio >= 1,
     };
   }),
 );
@@ -203,7 +243,29 @@ const rootStyle = computed(() => ({
 </script>
 
 <template>
-  <div class="ov-hud" :class="{ 'is-playing': isPlaying, 'is-finished': finished }" :style="rootStyle">
+  <div
+    class="ov-hud"
+    :class="{ 'is-playing': isPlaying, 'is-finished': finished }"
+    :style="rootStyle"
+  >
+    <div class="ov-summary">
+      <span class="ov-playback" :class="`ov-playback--${playbackState}`">
+        {{ t(`overlay.playback.${playbackState}`) }}
+      </span>
+      <span class="ov-clock" :title="t('overlay.playback.timeHint')">
+        {{ formatOverlayTime(now) }} / {{ formatOverlayTime(plan.duration) }}
+      </span>
+      <div class="ov-next" :class="{ 'is-urgent': countdownUrgent }">
+        <span class="ov-next__label">{{ t('overlay.nextActions') }}</span>
+        <span v-for="cast in nextCasts.slice(0, 2)" :key="cast.id" class="ov-next__item">
+          {{ actionLabel(cast) }}
+        </span>
+        <span v-if="nextCasts.length > 2" class="ov-next__more">
+          {{ t('overlay.moreActions', { count: nextCasts.length - 2 }) }}
+        </span>
+        <span v-if="!nextCast" class="ov-next__item">{{ typeLabel }}</span>
+      </div>
+    </div>
     <div class="ov-belt">
       <button
         class="ov-cap"
@@ -218,7 +280,9 @@ const rootStyle = computed(() => ({
         <span class="ov-cap__value" :class="{ 'is-urgent': countdownUrgent }">
           {{ loading ? '--' : countdownText }}
         </span>
-        <span class="ov-cap__unit">{{ t('overlay.secondsSuffix') }}</span>
+        <span class="ov-cap__unit">{{
+          t(waiting ? 'overlay.waitingUnit' : 'overlay.secondsSuffix')
+        }}</span>
       </button>
 
       <div ref="trackRef" class="ov-track">
@@ -242,7 +306,7 @@ const rootStyle = computed(() => ({
           :class="[
             `ov-item--${cast.type}`,
             {
-              'is-next': cast.id === nextCast?.id,
+              'is-next': nextCasts.some(next => next.id === cast.id),
               'is-past': cast.start < now - 0.01,
               'is-ultimate': cast.type === 'ultimate',
               'is-combo': cast.type === 'comboSkill',
@@ -253,7 +317,7 @@ const rootStyle = computed(() => ({
           :style="itemStyle(cast)"
           :title="`${cast.operatorName} · ${cast.name}`"
         >
-          <img :src="iconOf(cast)" alt="" draggable="false" @error="markIconFailed(cast)" />
+          <img :src="iconOf(cast)" alt="" draggable="false" @error="markIconFailed" />
           <span v-if="cast.segments > 1" class="ov-item__badge">{{ cast.segments }}</span>
         </div>
       </div>
@@ -263,8 +327,10 @@ const rootStyle = computed(() => ({
       <div class="ov-sp" :class="{ 'is-short': spShort }">
         <span class="ov-sp__label">{{ t('overlay.sp') }}</span>
         <span class="ov-sp__value">{{ Math.round(spValue) }}</span>
-        <span class="ov-sp__bar"><span class="ov-sp__fill" :style="{ width: `${spRatio * 100}%` }"></span></span>
-        <span v-if="nextSpCost > 0" class="ov-sp__cost">
+        <span class="ov-sp__bar"
+          ><span class="ov-sp__fill" :style="{ width: `${spRatio * 100}%` }"></span
+        ></span>
+        <span v-if="nextSpCost !== null && nextSpCost > 0" class="ov-sp__cost">
           {{ t('overlay.spNext', { cost: nextSpCost }) }}
         </span>
       </div>
@@ -320,6 +386,70 @@ const rootStyle = computed(() => ({
   user-select: none;
   /* 底色很透时文字仍然清晰 */
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.72);
+}
+
+.ov-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  min-height: var(--ov-row);
+  padding: 4px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: calc(var(--ov-icon) * 0.27);
+  line-height: 1.4;
+}
+
+.ov-playback,
+.ov-clock,
+.ov-next__label,
+.ov-next__more {
+  flex: 0 0 auto;
+}
+
+.ov-playback {
+  color: #cfd8dc;
+}
+
+.ov-playback--playing,
+.ov-playback--finished {
+  color: #9ef0e0;
+}
+
+.ov-playback--paused,
+.ov-playback--waiting,
+.ov-playback--waitingPaused {
+  color: #ffd166;
+}
+
+.ov-clock {
+  font-family: 'Roboto Mono', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.ov-next {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 300px;
+  min-width: 0;
+}
+
+.ov-next__label,
+.ov-next__more {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.ov-next__item {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ov-next.is-urgent .ov-next__item {
+  color: #ffd166;
 }
 
 .ov-belt {
@@ -387,13 +517,7 @@ const rootStyle = computed(() => ({
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
-  mask-image: linear-gradient(
-    90deg,
-    transparent 0,
-    #000 var(--ov-icon),
-    #000 calc(100% - 18px),
-    transparent 100%
-  );
+  mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 18px), transparent 100%);
 }
 
 .ov-track__axis {
@@ -429,6 +553,8 @@ const rootStyle = computed(() => ({
 
 .ov-gate {
   position: absolute;
+  z-index: 1;
+  pointer-events: none;
   top: 0;
   bottom: 0;
   left: 0;
@@ -506,6 +632,9 @@ const rootStyle = computed(() => ({
     0 0 0 2px rgba(255, 255, 255, 0.22),
     0 0 18px var(--ov-accent),
     0 2px 10px rgba(0, 0, 0, 0.55);
+}
+
+.is-playing .ov-item.is-next img {
   animation: ov-breathe 1400ms ease-in-out infinite;
 }
 
@@ -613,6 +742,9 @@ const rootStyle = computed(() => ({
 .ov-combo.is-open .ov-combo__dot {
   background: #fdd900;
   box-shadow: 0 0 8px #fdd900;
+}
+
+.is-playing .ov-combo.is-open .ov-combo__dot {
   animation: ov-pulse 1200ms ease-in-out infinite;
 }
 
@@ -685,9 +817,9 @@ const rootStyle = computed(() => ({
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ov-item.is-next img,
+  .is-playing .ov-item.is-next img,
   .ov-cap__value.is-urgent,
-  .ov-combo.is-open .ov-combo__dot {
+  .is-playing .ov-combo.is-open .ov-combo__dot {
     animation: none;
   }
 }
