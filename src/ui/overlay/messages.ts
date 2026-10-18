@@ -58,6 +58,7 @@ const ZH_CN = {
     range: '显示范围',
     scale: '缩放',
     width: '宽度',
+    opacity: '不透明度',
     showBasic: '显示普攻',
     showBasicHint: '在传送带上同时显示普攻 / 下落攻击 / 处决',
     showResources: '资源条',
@@ -67,6 +68,8 @@ const ZH_CN = {
     resetPosition: '重置位置',
     reset: '恢复默认',
     hint: '拖住提示条可移动位置；OBS 可用「浏览器源」加载本页。',
+    fullscreenHint:
+      '独占全屏（Exclusive Fullscreen）会盖住所有窗口，请把游戏改成「无边框窗口 / 窗口化全屏」；窗口化全屏下提示条会一直浮在最上层。',
   },
 };
 
@@ -122,6 +125,7 @@ const EN = {
     range: 'Range',
     scale: 'Scale',
     width: 'Width',
+    opacity: 'Opacity',
     showBasic: 'Basic skills',
     showBasicHint: 'Also show basic attacks / dive / finisher on the belt',
     showResources: 'Resource rail',
@@ -131,6 +135,8 @@ const EN = {
     resetPosition: 'Reset position',
     reset: 'Restore defaults',
     hint: 'Drag the strip to reposition it; in OBS, add this page as a Browser Source.',
+    fullscreenHint:
+      'Exclusive fullscreen covers every window: switch the game to borderless/windowed fullscreen so the overlay can stay on top.',
   },
 };
 

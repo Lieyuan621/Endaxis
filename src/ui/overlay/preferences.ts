@@ -28,6 +28,8 @@ export interface OverlayPreferences {
   transparent: boolean;
   /** HUD 宽度（px）。 */
   width: number;
+  /** 面板不透明度（0.25–1）：越低越透，越能看清后面的游戏画面。 */
+  hudOpacity: number;
   /** 打开页面后自动开始计时。 */
   autoStart: boolean;
 }
@@ -46,6 +48,8 @@ export const DEFAULT_OVERLAY_PREFERENCES: OverlayPreferences = {
   showResources: true,
   transparent: true,
   width: 1080,
+  // 默认偏透：叠在游戏画面上时只保留一层很薄的底，文字靠描边和阴影保证可读。
+  hudOpacity: 0.52,
   autoStart: false,
 };
 
@@ -55,6 +59,7 @@ export const OVERLAY_LIMITS = {
   offsetX: { min: -2000, max: 2000 },
   offsetY: { min: -200, max: 1600 },
   width: { min: 720, max: 1920 },
+  hudOpacity: { min: 0.2, max: 1 },
 } as const;
 
 function clampNumber(value: unknown, min: number, max: number, fallback: number): number {
@@ -87,6 +92,12 @@ export function normalizeOverlayPreferences(raw: unknown): OverlayPreferences {
     showResources: readBoolean(source.showResources, defaults.showResources),
     transparent: readBoolean(source.transparent, defaults.transparent),
     width: clampNumber(source.width, limits.width.min, limits.width.max, defaults.width),
+    hudOpacity: clampNumber(
+      source.hudOpacity,
+      limits.hudOpacity.min,
+      limits.hudOpacity.max,
+      defaults.hudOpacity,
+    ),
     autoStart: readBoolean(source.autoStart, defaults.autoStart),
   };
 }

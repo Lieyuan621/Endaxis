@@ -617,6 +617,19 @@ if (import.meta.env?.DEV) {
         <span class="overlay-field__value">{{ preferences.width }}</span>
       </label>
 
+      <label class="overlay-field">
+        <span>{{ t('overlay.settings.opacity') }}</span>
+        <input
+          type="range"
+          :min="OVERLAY_LIMITS.hudOpacity.min"
+          :max="OVERLAY_LIMITS.hudOpacity.max"
+          step="0.02"
+          :value="preferences.hudOpacity"
+          @input="patchNumber('hudOpacity', ($event.target as HTMLInputElement).value)"
+        />
+        <span class="overlay-field__value">{{ Math.round(preferences.hudOpacity * 100) }}%</span>
+      </label>
+
       <div class="overlay-settings__toggles">
         <label class="overlay-toggle" :title="t('overlay.settings.showBasicHint')">
           <input
@@ -665,6 +678,9 @@ if (import.meta.env?.DEV) {
       </div>
 
       <p class="overlay-settings__hint">{{ t('overlay.settings.hint') }}</p>
+      <p class="overlay-settings__hint overlay-settings__hint--warn">
+        {{ t('overlay.settings.fullscreenHint') }}
+      </p>
     </div>
   </div>
 </template>
@@ -713,8 +729,9 @@ if (import.meta.env?.DEV) {
   -webkit-app-region: no-drag;
 }
 
+/* 透明窗口里 backdrop-filter 拿不到桌面背景，关掉它，底色交给「不透明度」设置 */
 .is-desktop .ov-hud {
-  background: linear-gradient(180deg, rgba(9, 12, 18, 0.95), rgba(9, 12, 18, 0.86));
+  backdrop-filter: none;
 }
 
 .overlay-ready-hint {

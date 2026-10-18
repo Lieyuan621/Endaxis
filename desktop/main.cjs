@@ -62,6 +62,7 @@ function writeState(bounds) {
 
 let win = null;
 let clickThrough = false;
+let topmostTimer = null;
 
 function clampSize(width, height) {
   const display = win ? screen.getDisplayMatching(win.getBounds()) : screen.getPrimaryDisplay();
@@ -119,6 +120,14 @@ function createWindow() {
   win.setMenuBarVisibility(false);
   win.loadURL(targetUrl);
 
+  // 有些游戏/启动器会抢回 Z 序，定期重新声明置顶（开销可忽略）。
+  // 注意：真正的「独占全屏」（D3D exclusive fullscreen）不属于 DWM 合成，
+  // 任何独立窗口都无法覆盖，只能靠游戏改「无边框窗口」或进程内 Hook。
+  topmostTimer = setInterval(() => {
+    if (!win || win.isDestroyed()) return;
+    win.setAlwaysOnTop(true, 'screen-saver');
+  }, 2000);
+
   win.once('ready-to-show', () => {
     // 截图验证时不抢焦点，避免打扰正在使用电脑的人。
     if (capturePath) win.showInactive();
@@ -138,6 +147,10 @@ function createWindow() {
 
   win.on('closed', () => {
     win = null;
+    if (topmostTimer !== null) {
+      clearInterval(topmostTimer);
+      topmostTimer = null;
+    }
   });
 
   if (capturePath) {

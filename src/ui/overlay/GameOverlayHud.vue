@@ -197,6 +197,8 @@ const rootStyle = computed(() => ({
   '--ov-cap': `${capWidth.value}px`,
   '--ov-row': `${rowHeight.value}px`,
   '--ov-axis': `${geometry.value.axisY}px`,
+  // 面板不透明度：0.2 几乎全透，1 完全不透
+  '--ov-alpha': String(props.preferences.hudOpacity ?? 0.62),
 }));
 </script>
 
@@ -302,15 +304,22 @@ const rootStyle = computed(() => ({
   flex-direction: column;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
-  background: linear-gradient(180deg, rgba(9, 12, 18, 0.82), rgba(9, 12, 18, 0.55));
+  /* 面板底色跟随「不透明度」设置：顶深底浅，最低 0.2 时几乎只剩文字。 */
+  background: linear-gradient(
+    180deg,
+    rgb(9 12 18 / calc(var(--ov-alpha, 0.62) * 1)),
+    rgb(9 12 18 / calc(var(--ov-alpha, 0.62) * 0.72))
+  );
   box-shadow:
-    0 10px 30px rgba(0, 0, 0, 0.5),
+    0 10px 30px rgba(0, 0, 0, 0.42),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(10px) saturate(130%);
   color: #f2f5f8;
   font-family: 'Segoe UI', 'Inter', system-ui, sans-serif;
   overflow: hidden;
   user-select: none;
+  /* 底色很透时文字仍然清晰 */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.72);
 }
 
 .ov-belt {
