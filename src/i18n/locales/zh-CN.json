@@ -5837,6 +5837,15 @@
     "navigationChanged": "资源已变化或未能应用待提交字段，请重新选择资源后再打开。"
   },
   "operatorPresets": {
+    "import": "导入预设",
+    "export": "导出预设",
+    "selectAll": "全选",
+    "selectedCount": "已选择 {count} / {total}",
+    "importSelected": "导入所选",
+    "exportSelected": "导出所选",
+    "importError": "无法读取预设文件，请选择有效的 Endaxis 预设 JSON 文件。",
+    "imported": "已导入 {count} 个预设",
+    "exportError": "预设导出失败。",
     "setActive": "套组生效中",
     "noActiveSet": "无生效套组",
     "levelValue": "{level}级",

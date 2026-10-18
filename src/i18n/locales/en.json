@@ -5826,6 +5826,15 @@
     "navigationChanged": "The resource changed or pending fields could not be applied. Reselect the resource before opening it."
   },
   "operatorPresets": {
+    "import": "Import presets",
+    "export": "Export presets",
+    "selectAll": "Select all",
+    "selectedCount": "Selected {count} / {total}",
+    "importSelected": "Import selected",
+    "exportSelected": "Export selected",
+    "importError": "Could not read the preset file. Choose a valid Endaxis preset JSON file.",
+    "imported": "Imported {count} presets",
+    "exportError": "Could not export presets.",
     "setActive": "Set bonus active",
     "noActiveSet": "No active set bonus",
     "levelValue": "Lv. {level}",

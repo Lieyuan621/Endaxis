@@ -4,6 +4,13 @@ import { useI18n } from 'vue-i18n';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { EaButton, EaDialog, EaDialogActions, EaInput, EaDeleteIcon } from '@/design-system';
 import { getOperatorGameName, getWeaponGameName, getGearPieceGameName } from '../../gameText';
+import OperatorPresetTransferDialog from './OperatorPresetTransferDialog.vue';
+import {
+  readOperatorPresetFile,
+  serializeOperatorPresets,
+  operatorPresetFilename,
+} from '../../../application/editor/operatorBuildPresetFile';
+import { downloadProjectJson } from '../projectFileSession';
 import InputRegionBoundary from '../../keyboard/InputRegionBoundary.vue';
 import OperatorPresetBuildSummary from './OperatorPresetBuildSummary.vue';
 import {
@@ -25,6 +32,47 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{ close: [] }>();
 const { t, locale } = useI18n();
+const fileInput = ref<HTMLInputElement>();
+const transfer = ref<{ mode: 'import' | 'export'; presets: OperatorBuildPreset[] } | null>(null);
+async function readFile(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = '';
+  if (!file) return;
+  try {
+    transfer.value = { mode: 'import', presets: readOperatorPresetFile(await file.text()) };
+  } catch {
+    ElMessage.error(t('operatorPresets.importError'));
+  }
+}
+function exportPresets() {
+  try {
+    transfer.value = { mode: 'export', presets: loadOperatorBuildPresets() };
+  } catch {
+    ElMessage.error(t('operatorPresets.loadError'));
+  }
+}
+function finishTransfer(selected: OperatorBuildPreset[]) {
+  if (transfer.value?.mode === 'import') {
+    // 导入为独立副本，不覆盖浏览器里同名或同 ID 的预设。
+    if (
+      !write(items => [
+        ...items,
+        ...selected.map(preset => ({ ...preset, id: crypto.randomUUID() })),
+      ])
+    )
+      return;
+    ElMessage.success(t('operatorPresets.imported', { count: selected.length }));
+  } else {
+    try {
+      downloadProjectJson(serializeOperatorPresets(selected), operatorPresetFilename());
+    } catch {
+      ElMessage.error(t('operatorPresets.exportError'));
+      return;
+    }
+  }
+  transfer.value = null;
+}
 const search = ref('');
 const presets = ref<OperatorBuildPreset[]>([]);
 const name = ref('');
@@ -155,6 +203,19 @@ async function apply(preset: OperatorBuildPreset) {
             :placeholder="t('operatorPresets.search')"
             :aria-label="t('operatorPresets.search')"
           />
+          <EaButton size="sm" :disabled="!!error" @click="fileInput?.click()">{{
+            t('operatorPresets.import')
+          }}</EaButton>
+          <EaButton size="sm" :disabled="!!error || !presets.length" @click="exportPresets">{{
+            t('operatorPresets.export')
+          }}</EaButton>
+          <input
+            ref="fileInput"
+            type="file"
+            accept=".json,application/json"
+            hidden
+            @change="readFile"
+          />
         </div>
         <div class="operator-presets__list">
           <p v-if="presets.length && !filteredPresets.length" class="operator-presets__hint">
@@ -221,6 +282,14 @@ async function apply(preset: OperatorBuildPreset) {
         ></template
       >
     </EaDialog>
+    <OperatorPresetTransferDialog
+      v-if="transfer"
+      :mode="transfer.mode"
+      :presets="transfer.presets"
+      :game-data="gameData"
+      @close="transfer = null"
+      @confirm="finishTransfer"
+    />
   </InputRegionBoundary>
 </template>
 <style scoped>
