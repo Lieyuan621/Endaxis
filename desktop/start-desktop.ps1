@@ -34,8 +34,8 @@ function ConvertTo-EndaxisNativeArgument {
 function Get-EndaxisNodePath {
   param([string] $Root)
 
-  $command = Get-Command node.exe -CommandType Application -ErrorAction SilentlyContinue
-  if ($command) { return $command.Source }
+  $command = Get-Command node.exe -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+  if ($command) { return [string] $command.Source }
   $bundled = Join-Path $Root 'local\tooling\node.exe'
   if (Test-Path -LiteralPath $bundled -PathType Leaf) { return $bundled }
   throw 'Node.js was not found. Install Node.js 22.12 or newer, then try again.'

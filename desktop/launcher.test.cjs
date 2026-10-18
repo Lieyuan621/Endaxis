@@ -231,6 +231,29 @@ $code = Invoke-EndaxisDesktopLauncher -Root ${psString(root)} -LogRoot ${psStrin
   },
 );
 
+test(
+  'multiple Node applications resolve to the first PATH entry as one executable path',
+  windows,
+  () => {
+    const result = JSON.parse(
+      powershell(`
+$script:first = Microsoft.PowerShell.Core\\Get-Command node.exe -CommandType Application | Select-Object -First 1
+$script:second = Microsoft.PowerShell.Core\\Get-Command cmd.exe -CommandType Application | Select-Object -First 1
+function Get-Command {
+  param($Name, $CommandType, $ErrorAction)
+  return @($script:first, $script:second)
+}
+$resolved = Get-EndaxisNodePath -Root ${psString(path.dirname(__dirname))}
+@{ path = $resolved; first = $script:first.Source; count = @($resolved).Count; isString = $resolved -is [string]; applicationInfos = ($script:first -is [System.Management.Automation.ApplicationInfo]) -and ($script:second -is [System.Management.Automation.ApplicationInfo]) } | ConvertTo-Json -Compress
+`),
+    );
+    assert.equal(result.applicationInfos, true);
+    assert.equal(result.path, result.first);
+    assert.equal(result.count, 1);
+    assert.equal(result.isString, true);
+  },
+);
+
 test('missing Node is reported before spawning an application', windows, () => {
   fixture(root => {
     const result = JSON.parse(
