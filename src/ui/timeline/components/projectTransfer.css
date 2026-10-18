@@ -1,0 +1,86 @@
+.project-transfer-section {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  overflow: hidden;
+  border: 1px solid var(--ea-border);
+  background: var(--ea-surface-soft);
+}
+
+.project-transfer-section::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  background: var(--ea-gold);
+  content: '';
+  opacity: 0.7;
+}
+
+.project-transfer-section__header h3,
+.project-transfer-section__header p {
+  margin: 0;
+}
+
+.project-transfer-section__header h3 {
+  color: var(--ea-fg);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.project-transfer-section__header p {
+  margin-top: 3px;
+  color: var(--ea-fg-muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.project-transfer-scope {
+  display: grid;
+  grid-template-columns: repeat(var(--scope-columns, 2), minmax(0, 1fr));
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--ea-border);
+  background: var(--ea-fill-muted);
+}
+
+.project-transfer-scope :deep(.ea-button) {
+  --ea-control-pressed-border-hover: transparent;
+  --ea-control-pressed-bg-hover: transparent;
+  --ea-control-pressed-fg-hover: var(--ea-gold);
+
+  width: 100%;
+  border-color: transparent;
+  background: transparent;
+}
+
+.project-transfer-list {
+  display: grid;
+  gap: 2px;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--ea-border);
+  background: var(--ea-control-bg);
+  padding: 4px;
+}
+.project-transfer-list :deep(.ea-checkbox),
+.project-transfer-list__row {
+  display: flex;
+  min-width: 0;
+  padding: 8px 10px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.project-transfer-list :deep(.ea-checkbox:hover) {
+  background: var(--ea-hover-fill);
+}
+.project-transfer-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--ea-fg-muted);
+  font-size: 12px;
+}

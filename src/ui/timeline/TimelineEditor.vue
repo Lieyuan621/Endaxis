@@ -229,7 +229,10 @@ import {
   useKeyboardShortcutScope,
 } from '../keyboard/keyboardShortcutRouter';
 import { projectRossiComboSuccessCastIds } from '../operators/rossi/comboSuccessEvidence';
-import type { ExportScenarioScope } from './components/TimelineExportDialog.vue';
+import {
+  appendProjectScenarios,
+  type ExportScenarioScope,
+} from '../../application/editor/projectTransfer';
 import { groupPlacedSkillSequence, placeLibrarySkillGroup } from './interaction/placeSkillGroup';
 import {
   findSkillCastGroupInsertion,
@@ -530,6 +533,9 @@ const TimelineBuffDetailDialog = defineLazyDialog(
 );
 const TimelineOperatorPassiveUiDetailDialog = defineLazyDialog(
   () => import('./results/TimelineOperatorPassiveUiDetailDialog.vue'),
+);
+const TimelineProjectImportDialog = defineLazyDialog(
+  () => import('./components/TimelineProjectImportDialog.vue'),
 );
 const TimelineExportDialog = defineLazyDialog(
   () => import('./components/TimelineExportDialog.vue'),
@@ -1079,6 +1085,18 @@ function downloadLegacyJson(): void {
 
 onScopeDispose(() => finishLegacyConversionConfirmation(false));
 
+type ProjectImportSelection = { mode: 'replace' | 'append'; scenarioIds: string[] };
+const pendingProjectImport = shallowRef<{
+  project: EndaxisProjectDocument;
+  resolve: (selection: ProjectImportSelection | null) => void;
+} | null>(null);
+function finishProjectImport(selection: ProjectImportSelection | null) {
+  const pending = pendingProjectImport.value;
+  pendingProjectImport.value = null;
+  pending?.resolve(selection);
+}
+onScopeDispose(() => finishProjectImport(null));
+
 async function openProjectContent(content: string): Promise<boolean> {
   let legacy = false;
   try {
@@ -1137,7 +1155,18 @@ async function openProjectContent(content: string): Promise<boolean> {
       ElMessage.error(projectOpenFailureMessage(result));
       return false;
     }
-    await acceptOpenedProject(result.project, convertedLegacyProject);
+    const revision = projectSession.snapshot.revision;
+    const selection = await serviceModalBoundary.run(
+      () =>
+        new Promise<ProjectImportSelection | null>(resolve => {
+          finishProjectImport(null);
+          pendingProjectImport.value = { project: result.project, resolve };
+        }),
+    );
+    if (selection === null) return false;
+    if (projectSession.snapshot.revision !== revision)
+      throw new Error(t('projectTransfer.changed'));
+    await acceptOpenedProject(result.project, convertedLegacyProject, selection);
     if (
       legacyConversionReport !== null &&
       (legacyConversionReport.issues.length > 0 || legacyConversionReport.fatalIssues.length > 0)
@@ -1203,9 +1232,23 @@ async function showLegacyConversionReport(
 async function acceptOpenedProject(
   project: EndaxisProjectDocument,
   convertedLegacyProject = false,
+  selection: ProjectImportSelection = { mode: 'replace', scenarioIds: [] },
 ): Promise<void> {
-  resetSimulationPublication();
-  projectSession.replaceProject(project);
+  if (selection.mode === 'append') {
+    const merged = appendProjectScenarios(
+      projectSession.snapshot.project,
+      project,
+      selection.scenarioIds,
+      () => `scenario:${crypto.randomUUID()}`,
+    );
+    const checked = openProject(merged, { gameDataRepository });
+    if (!checked.ok) throw new Error(projectOpenFailureMessage(checked));
+    resetSimulationPublication();
+    projectSession.commit('importScenarios', () => merged);
+  } else {
+    resetSimulationPublication();
+    projectSession.replaceProject(project);
+  }
   selectedTrack.value = 0;
   clearTimelineSelection();
   timelineClipboard.value = null;
@@ -1213,9 +1256,11 @@ async function acceptOpenedProject(
   await nextTick();
   void simulateNow();
   ElMessage.success(
-    convertedLegacyProject
-      ? '旧版本轴已自动转换并打开，请导出为新版项目。原文件未修改。'
-      : `已打开项目：${scenarioSession.snapshot.scenario.name}`,
+    selection.mode === 'append'
+      ? t('projectTransfer.imported', { count: selection.scenarioIds.length })
+      : convertedLegacyProject
+        ? '旧版本轴已自动转换并打开，请导出为新版项目。原文件未修改。'
+        : `已打开项目：${scenarioSession.snapshot.scenario.name}`,
   );
 }
 
@@ -8436,11 +8481,17 @@ function setMobileGuideFrame(frame: number | null): void {
     @update:visible="showReceiveDialog = $event"
     @receive="receiveProjectCode"
   />
+  <TimelineProjectImportDialog
+    v-if="pendingProjectImport"
+    :project="pendingProjectImport.project"
+    @close="finishProjectImport(null)"
+    @confirm="finishProjectImport"
+  />
   <TimelineExportDialog
     v-if="showExportDialog"
     :visible="showExportDialog"
     :current-scenario-name="scenario.name"
-    :scenario-count="projectScenarios.length"
+    :scenarios="projectScenarios"
     :max-duration="Math.max(10, Math.round(scenario.battle.durationFrames / PROJECT_FPS))"
     :allow-long-image="!mobileLayout"
     @update:visible="showExportDialog = $event"

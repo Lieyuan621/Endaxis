@@ -5885,5 +5885,20 @@
     "accessory1": "配件 1",
     "accessory2": "配件 2",
     "empty": "未装备"
+  },
+  "projectTransfer": {
+    "selectedCount": "已选择 {count} 个方案",
+    "selectedScenarios": "部分方案",
+    "exportInfo": "导出所选方案的完整设置及项目元信息，不包含干员预设与个人偏好。",
+    "importTitle": "导入项目内容",
+    "replace": "完整覆盖",
+    "append": "导入部分方案",
+    "replaceInfo": "完整覆盖当前项目的元信息和所有方案。此操作无法撤销。",
+    "appendInfo": "将所选方案追加到当前项目。当前项目的元信息和已有方案不变。",
+    "confirmReplace": "确认完整覆盖",
+    "confirmAppend": "导入所选方案",
+    "changed": "选择导入内容期间项目已变化，请重新加载。",
+    "imported": "已导入 {count} 个方案",
+    "next": "下一步"
   }
 }

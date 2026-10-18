@@ -2,14 +2,21 @@
 /** 导出面板只收集范围、文件名和图片时长；文件生成由编辑器执行。 */
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { EaButton, EaDialog, EaFormField, EaInput, EaNumberInput } from '@/design-system';
+import {
+  EaButton,
+  EaCheckbox,
+  EaDialog,
+  EaFormField,
+  EaInput,
+  EaNumberInput,
+} from '@/design-system';
 
-export type ExportScenarioScope = 'current' | 'all';
+import type { ExportScenarioScope } from '../../../application/editor/projectTransfer';
 
 const props = defineProps<{
   visible: boolean;
   currentScenarioName: string;
-  scenarioCount: number;
+  scenarios: readonly { id: string; name: string }[];
   maxDuration: number;
   allowLongImage?: boolean;
 }>();
@@ -23,7 +30,17 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n({ useScope: 'global' });
-const scope = ref<ExportScenarioScope>('all');
+const scope = ref<'all' | 'current' | 'selected'>('all');
+const selectedIds = ref<string[]>([]);
+const exportScope = computed<ExportScenarioScope>(() =>
+  scope.value === 'selected' ? { scenarioIds: selectedIds.value } : scope.value,
+);
+const emptySelection = computed(() => scope.value === 'selected' && !selectedIds.value.length);
+function toggleScenario(id: string, checked: boolean) {
+  selectedIds.value = checked
+    ? [...selectedIds.value, id]
+    : selectedIds.value.filter(value => value !== id);
+}
 const filename = ref('');
 const duration = ref(60);
 const dialogVisible = computed({
@@ -36,7 +53,14 @@ const currentScenarioSummary = computed(() =>
 const dataScopeSummary = computed(() =>
   scope.value === 'current'
     ? currentScenarioSummary.value
-    : t('timeline.export.allScenariosCount', { count: props.scenarioCount }),
+    : t(
+        scope.value === 'selected'
+          ? 'projectTransfer.selectedCount'
+          : 'timeline.export.allScenariosCount',
+        {
+          count: scope.value === 'selected' ? selectedIds.value.length : props.scenarios.length,
+        },
+      ),
 );
 
 watch(
@@ -44,6 +68,7 @@ watch(
   visible => {
     if (!visible) return;
     scope.value = 'all';
+    selectedIds.value = props.scenarios.map(scenario => scenario.id);
     filename.value = `Endaxis_Timeline_${new Date().toISOString().slice(0, 10)}`;
     duration.value = Math.max(10, Math.round(props.maxDuration || 120));
   },
@@ -80,14 +105,19 @@ function imageOptions() {
         />
       </EaFormField>
 
-      <section class="export-section export-section--data">
-        <header class="export-section__header">
+      <section class="project-transfer-section project-transfer-section--data">
+        <header class="project-transfer-section__header">
           <div>
             <h3>{{ t('timeline.export.dataSectionTitle') }}</h3>
             <p>{{ dataScopeSummary }}</p>
           </div>
         </header>
-        <div class="export-scope" role="radiogroup" :aria-label="t('timeline.export.scopeLabel')">
+        <div
+          class="project-transfer-scope"
+          style="--scope-columns: 3"
+          role="radiogroup"
+          :aria-label="t('timeline.export.scopeLabel')"
+        >
           <EaButton
             size="sm"
             type="button"
@@ -108,13 +138,32 @@ function imageOptions() {
           >
             {{ t('timeline.export.scopeAll') }}
           </EaButton>
+          <EaButton
+            size="sm"
+            role="radio"
+            :aria-checked="scope === 'selected'"
+            :pressed="scope === 'selected'"
+            @click="scope = 'selected'"
+            >{{ t('projectTransfer.selectedScenarios') }}</EaButton
+          >
         </div>
+        <div v-if="scope === 'selected'" class="project-transfer-list">
+          <EaCheckbox
+            v-for="scenario in scenarios"
+            :key="scenario.id"
+            :model-value="selectedIds.includes(scenario.id)"
+            @update:model-value="toggleScenario(scenario.id, $event)"
+            >{{ scenario.name }}</EaCheckbox
+          >
+        </div>
+        <p class="scope-note">{{ t('projectTransfer.exportInfo') }}</p>
         <div class="export-actions-grid">
           <EaButton
             class="export-action-card"
             size="lg"
             type="button"
-            @click="emit('exportJson', { filename, scope })"
+            :disabled="emptySelection"
+            @click="emit('exportJson', { filename, scope: exportScope })"
           >
             <span class="export-action-card__icon" aria-hidden="true">
               <svg
@@ -140,7 +189,8 @@ function imageOptions() {
             class="export-action-card"
             size="lg"
             type="button"
-            @click="emit('copyCode', { scope })"
+            :disabled="emptySelection"
+            @click="emit('copyCode', { scope: exportScope })"
           >
             <span class="export-action-card__icon" aria-hidden="true">
               <svg
@@ -164,8 +214,8 @@ function imageOptions() {
         </div>
       </section>
 
-      <section class="export-section export-section--image">
-        <header class="export-section__header">
+      <section class="project-transfer-section project-transfer-section--image">
+        <header class="project-transfer-section__header">
           <div>
             <h3>{{ t('timeline.export.imageSectionTitle') }}</h3>
             <p>{{ currentScenarioSummary }}</p>
@@ -237,71 +287,17 @@ function imageOptions() {
   </EaDialog>
 </template>
 
+<style scoped src="./projectTransfer.css"></style>
 <style scoped>
+.scope-note {
+  color: var(--ea-fg-secondary);
+  font-size: 12px;
+}
 /* 与 V2 导出面板一致，数据和图片操作分别使用说明卡片。 */
 .export-dialog-content {
   display: flex;
   flex-direction: column;
   gap: 14px;
-}
-
-.export-section {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 14px;
-  overflow: hidden;
-  border: 1px solid var(--ea-border);
-  background: var(--ea-surface-soft);
-}
-
-.export-section::before {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 2px;
-  background: var(--ea-gold);
-  content: '';
-  opacity: 0.7;
-}
-
-.export-section__header h3,
-.export-section__header p {
-  margin: 0;
-}
-
-.export-section__header h3 {
-  color: var(--ea-fg);
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-.export-section__header p {
-  margin-top: 3px;
-  color: var(--ea-fg-muted);
-  font-size: 11px;
-  line-height: 1.4;
-}
-
-.export-scope {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px;
-  padding: 3px;
-  border: 1px solid var(--ea-border);
-  background: var(--ea-fill-muted);
-}
-
-.export-scope :deep(.ea-button) {
-  --ea-control-pressed-border-hover: transparent;
-  --ea-control-pressed-bg-hover: transparent;
-  --ea-control-pressed-fg-hover: var(--ea-gold);
-
-  width: 100%;
-  border-color: transparent;
-  background: transparent;
 }
 
 .export-actions-grid {

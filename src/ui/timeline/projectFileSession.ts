@@ -1,54 +1,14 @@
 import { onScopeDispose, ref } from 'vue';
 import type { ProjectEditorSession } from '../../application/editor/projectEditorSession';
-import type { EndaxisProjectDocument } from '../../core/project/schema';
-import { getProjectDefinitionLibrary } from '../../core/project/projectDefinitionLibrary';
 import { serializeProjectDocument } from '../../core/project/serialization';
 import { saveBrowserProject } from '../../data/browserProjectStorage';
 import { decompressProjectCode, downloadBlob, projectFilename } from './timelineExport';
-import type { ExportScenarioScope } from './components/TimelineExportDialog.vue';
+import {
+  selectProjectExportScope,
+  type ExportScenarioScope,
+} from '../../application/editor/projectTransfer';
+export { selectProjectExportScope } from '../../application/editor/projectTransfer';
 import { readProjectCodeFromPng } from './pngProjectData';
-
-/** 单方案仍是完整项目，只携带该方案引用的项目级模板及其套装依赖。 */
-export function selectProjectExportScope(
-  project: EndaxisProjectDocument,
-  scope: ExportScenarioScope,
-): EndaxisProjectDocument {
-  if (scope === 'all') return project;
-  const active = project.scenarios.find(scenario => scenario.id === project.activeScenarioId);
-  if (active === undefined) throw new Error('当前方案不存在');
-  const library = getProjectDefinitionLibrary(project);
-  const operators: typeof library.operators = {};
-  const weapons: typeof library.weapons = {};
-  const gears: typeof library.gears = {};
-  const gearSets: typeof library.gearSets = {};
-  const requireTemplate = <T>(records: Record<string, T>, id: string): T => {
-    const template = records[id];
-    if (template === undefined) throw new Error(`方案引用了不存在的自定义模板：${id}`);
-    return template;
-  };
-  for (const track of active.tracks) {
-    if (track === null) continue;
-    const operatorId = track.operator?.operatorSlug;
-    if (operatorId?.startsWith('project:'))
-      operators[operatorId] = requireTemplate(library.operators, operatorId);
-    const weaponId = track.weapon?.weaponSlug;
-    if (weaponId?.startsWith('project:'))
-      weapons[weaponId] = requireTemplate(library.weapons, weaponId);
-    for (const slot of Object.values(track.gears)) {
-      const gearId = slot?.gearSlug;
-      if (!gearId?.startsWith('project:')) continue;
-      const gear = requireTemplate(library.gears, gearId);
-      gears[gearId] = gear;
-      const setId = gear.definition.gearSetSlug;
-      if (setId?.startsWith('project:')) gearSets[setId] = requireTemplate(library.gearSets, setId);
-    }
-  }
-  return {
-    ...project,
-    scenarios: [active],
-    definitionLibrary: { operators, weapons, gears, gearSets },
-  };
-}
 
 /** 项目会话负责浏览器自动保存、文件读取代次和保存未完成时的离页保护。 */
 export function useProjectFileSession(

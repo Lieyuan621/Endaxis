@@ -5874,5 +5874,20 @@
     "accessory1": "Accessory 1",
     "accessory2": "Accessory 2",
     "empty": "Not equipped"
+  },
+  "projectTransfer": {
+    "selectedCount": "Selected {count} scenarios",
+    "selectedScenarios": "Selected scenarios",
+    "exportInfo": "Exports selected scenarios with their complete settings and project metadata. Operator presets and personal preferences are excluded.",
+    "importTitle": "Import project content",
+    "replace": "Replace project",
+    "append": "Append scenarios",
+    "replaceInfo": "Replaces the current project's metadata and all scenarios. This cannot be undone.",
+    "appendInfo": "Adds selected scenarios to the current project. Its metadata and existing scenarios stay unchanged.",
+    "confirmReplace": "Confirm replacement",
+    "confirmAppend": "Import selected scenarios",
+    "changed": "The project changed during selection. Please load it again.",
+    "imported": "Imported {count} scenarios",
+    "next": "Next"
   }
 }

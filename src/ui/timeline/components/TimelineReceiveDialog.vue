@@ -49,7 +49,7 @@ watch(
           :disabled="busy || !code.trim()"
           @click="emit('receive', code.trim())"
         >
-          {{ t('timeline.import.dialogConfirm') }}
+          {{ t('projectTransfer.next') }}
         </EaButton>
       </EaDialogActions>
     </template>
