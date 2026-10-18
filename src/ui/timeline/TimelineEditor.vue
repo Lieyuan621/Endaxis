@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { roundHitDamage } from './results/hitDamageDisplay';
 import { EaButton, EaDialog, EaNumberInput, EaSelect, type EaSelectValue } from '@/design-system';
 import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import {
@@ -3560,7 +3561,7 @@ function hitMarkerTitle(label: TimelineHitEffectLabel | undefined): string {
   const parts: string[] = [];
   for (const damage of label.damage) {
     parts.push(
-      `${Math.floor(damage.value)}${publishedRandomMode.value === 'sampled' && damage.isCritical ? '!' : ''} ${damageElementLabel(damage.damageType)}`,
+      `${roundHitDamage(damage.value)}${publishedRandomMode.value === 'sampled' && damage.isCritical ? '!' : ''} ${damageElementLabel(damage.damageType)}`,
     );
   }
   for (const infliction of label.infliction) {

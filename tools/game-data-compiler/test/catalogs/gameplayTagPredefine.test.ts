@@ -84,7 +84,19 @@ describe('GameplayTagPredefine 公共转换', () => {
     ).toBe('exceptAll');
   });
 
-  it.each([4, 'HasAny'])('拒绝缓存查询的越界或强转枚举 %s', kind => {
+  it('接受带原生私有缓存字段及枚举名称的导出数据', () => {
+    const parsed = parseGameplayTagPredefineTableSource(
+      {
+        ...sourceTable(),
+        m_cachedGameplayTagQueries: {},
+        predefinedQuery: { X: { queryType: 'HasAny', tags: [] } },
+      },
+      'fixture',
+    );
+    expect(parsed.predefinedQuery.X).toEqual({ queryType: 'hasAny', tagIds: [] });
+  });
+
+  it.each([4, 'Unknown'])('拒绝缓存查询的越界或未知枚举 %s', kind => {
     const source = sourceTable();
     expect(() =>
       parseGameplayTagPredefineTableSource(

@@ -444,8 +444,8 @@ describe('compileScenarioRuntimeAssembly', () => {
     ).toEqual({
       level: panel.level,
       maxHealth: panel.health,
-      strength: panel.attributes.strength,
-      agility: panel.attributes.agility,
+      strength: Math.fround(panel.attributes.strength),
+      agility: Math.fround(panel.attributes.agility),
       intellect: 20,
       will: 20,
       EntityBB_form: 1,
@@ -458,8 +458,8 @@ describe('compileScenarioRuntimeAssembly', () => {
     ).toEqual({
       level: panel.level,
       maxHealth: panel.health,
-      strength: panel.attributes.strength,
-      agility: panel.attributes.agility,
+      strength: Math.fround(panel.attributes.strength),
+      agility: Math.fround(panel.attributes.agility),
       intellect: 19,
       will: 20,
       EntityBB_form: 0,
@@ -539,7 +539,7 @@ describe('compileScenarioRuntimeAssembly', () => {
     expect(compiled.operators[0]!.operatorId).toBe('track:0');
     expect(compiled.operators[0]!.panel).toMatchObject({
       operatorId: 'track:0',
-      attack: 706,
+      attack: expect.closeTo(706.293, 3),
       health: 5950,
       defense: 0,
     });

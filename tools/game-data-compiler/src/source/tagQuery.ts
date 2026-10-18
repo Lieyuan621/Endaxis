@@ -51,13 +51,9 @@ export function parseTagQuerySource(value: unknown, path: string): TagQuerySourc
   return { queryType, tagIds: parseTagIdsSource(query.tags, `${path}.tags`) };
 }
 
-/** 原生缓存查询在 GameplayTagPredefineTable 中使用 Int32 枚举，动作 JSON 使用名称。 */
+/** 缓存查询与动作查询同形；导出器可能以枚举数值或名称表示 queryType。 */
 export function parseCachedTagQuerySource(value: unknown, path: string): TagQuerySource {
-  const query = requireRecord(value, path);
-  requireExactFields(query, new Set(['queryType', 'tags']), path);
-  const queryType = requireInteger(query.queryType, `${path}.queryType`);
-  const kind = projectNativeTagQueryType(queryType, `${path}.queryType`);
-  return { queryType: kind, tagIds: parseTagIdsSource(query.tags, `${path}.tags`) };
+  return parseTagQuerySource(value, path);
 }
 
 export function parseTagIdsSource(value: unknown, path: string): number[] {

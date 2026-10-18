@@ -17,6 +17,22 @@ const input: OperatorAttackDerivationInput = {
 };
 
 describe('operator attack attributes', () => {
+  it('保留四维小数供后续 Buff 累加，只在派生攻击时取整', () => {
+    const build = { ...input, attributes: { ...input.attributes, intellect: 120.8 } };
+    const attributes = createOperatorAttackAttributes(build);
+    const before = resolveOperatorAttack(build, attributes).value;
+    attributes.addModifier(
+      createCombatAttributeModifier(
+        'intellect',
+        attributeModifierValues('baseAddition', 0.3),
+        ATTRIBUTE_MODIFIER_SOURCES.buff,
+        'runtime',
+      ),
+    );
+    expect(attributes.get('intellect')).toBeCloseTo(121.1);
+    expect(resolveOperatorAttack(build, attributes).value - before).toBeCloseTo(2.5);
+    expect(Number.isInteger(before)).toBe(false);
+  });
   it.each([1, 60, 90])('derives reaction damage scalars from operator level %i', level => {
     const attributes = createOperatorAttackAttributes({ ...input, level });
     expect(attributes.get('IgniteDamageScalar')).toBeCloseTo(1 + (level - 1) / 196, 12);
@@ -38,8 +54,8 @@ describe('operator attack attributes', () => {
     );
     attributes.addModifier(buff);
     expect(attributes.get('Atk')).toBeCloseTo(714 * (1 + 0.312 + 0.2) + 20);
-    expect(resolveOperatorAttack(build, attributes).value).toBe(
-      Math.floor((714 * 1.512 + 20) * (1 + 120 * Math.fround(0.005) + 200 * Math.fround(0.002))),
+    expect(resolveOperatorAttack(build, attributes).value).toBeCloseTo(
+      (714 * 1.512 + 20) * (1 + 120 * Math.fround(0.005) + 200 * Math.fround(0.002)),
     );
     attributes.removeModifier(buff);
     expect(attributes.get('Atk')).toBeCloseTo(build.attackBeforeAttributeScalar);
@@ -106,8 +122,8 @@ describe('operator attack attributes', () => {
   it('按原生主副属性系数计算静态攻击', () => {
     const attributes = createOperatorAttackAttributes(input);
 
-    expect(resolveOperatorAttack(input, attributes).value).toBe(
-      Math.floor(500 * (1 + 120 * Math.fround(0.005) + 200 * Math.fround(0.002))),
+    expect(resolveOperatorAttack(input, attributes).value).toBeCloseTo(
+      500 * (1 + 120 * Math.fround(0.005) + 200 * Math.fround(0.002)),
     );
   });
 
@@ -130,10 +146,8 @@ describe('operator attack attributes', () => {
       ),
     );
 
-    expect(resolveOperatorAttack(input, attributes).value).toBe(
-      Math.floor(
-        500 * (1 + 120 * (Math.fround(0.005) + 0.001) + 200 * (Math.fround(0.002) + 0.001)),
-      ),
+    expect(resolveOperatorAttack(input, attributes).value).toBeCloseTo(
+      500 * (1 + 120 * (Math.fround(0.005) + 0.001) + 200 * (Math.fround(0.002) + 0.001)),
     );
   });
 
@@ -148,8 +162,8 @@ describe('operator attack attributes', () => {
       ),
     );
 
-    expect(resolveOperatorAttack(input, attributes).value).toBe(
-      Math.floor(500 * 1.4 * (1 + 120 * Math.fround(0.005) + 200 * Math.fround(0.002))),
+    expect(resolveOperatorAttack(input, attributes).value).toBeCloseTo(
+      500 * 1.4 * (1 + 120 * Math.fround(0.005) + 200 * Math.fround(0.002)),
     );
   });
 

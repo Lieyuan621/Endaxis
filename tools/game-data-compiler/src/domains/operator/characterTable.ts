@@ -164,6 +164,7 @@ function projectPanelAttribute(
     if (value === undefined) {
       throw new Error(`${frame.sourcePath}: missing panel attribute ${attributeType}`);
     }
-    return Math.trunc(value);
+    // 基础属性的小数参与后续加成；显示取整不属于数据转换。
+    return value;
   });
 }

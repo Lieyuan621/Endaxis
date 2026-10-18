@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { roundHitDamage } from './hitDamageDisplay';
 import { resolveImage } from '../../imageResources';
 import type { BuffDisplayName } from './buffDisplayName';
 import {
@@ -240,7 +241,9 @@ const damageHits = computed(() =>
           ? `${resolveBuffDisplayName(entry.data.buffId, { t, te })}: `
           : '') +
         group
-          .map(hit => String(Math.floor(Number(hit.data?.expectedDamage ?? hit.data?.value ?? 0))))
+          .map(hit =>
+            String(roundHitDamage(Number(hit.data?.expectedDamage ?? hit.data?.value ?? 0))),
+          )
           .join(' / '),
     };
   }),

@@ -54,9 +54,9 @@ it('佩丽卡潜能的攻击 Buff 与武器攻击词条按同槽加算，而非�
   // 当前生成潜能 3 的 atk_up 为 0.2；四维仍来自正式构筑，不手造额外 Buff。
   const attributeScalar =
     1 +
-    panel.attributes.intellect * Math.fround(0.005) +
-    panel.attributes.will * Math.fround(0.002);
-  expect(damage!.data?.attack).toBe(Math.floor(714 * (1 + 0.312 + 0.2) * attributeScalar));
+    Math.floor(panel.attributes.intellect) * Math.fround(0.005) +
+    Math.floor(panel.attributes.will) * Math.fround(0.002);
+  expect(damage!.data?.attack).toBeCloseTo(714 * (1 + 0.312 + 0.2) * attributeScalar);
   expect(damage!.data?.attack).not.toBe(
     Math.floor(panel.attackBeforeAttributeScalar * 1.2 * attributeScalar),
   );

@@ -430,9 +430,7 @@ export function resolveOperatorPanel(build: ResolvedScenarioBuild): ResolvedOper
     applyEquipmentContribution(contribution, values, receipt, combatModifiers);
   }
   for (const attribute of ATTRIBUTES) {
-    values.attributes[attribute] = Math.floor(
-      values.attributes[attribute] * (1 + values.attributePercent[attribute]),
-    );
+    values.attributes[attribute] *= 1 + values.attributePercent[attribute];
   }
 
   const mainAttribute = values.attributes[build.operator.mainAttribute];
@@ -444,19 +442,17 @@ export function resolveOperatorPanel(build: ResolvedScenarioBuild): ResolvedOper
   const attackBeforeAttributeScalar =
     (values.operatorBaseAttack + values.weaponBaseAttack) * (1 + values.panelStats.attackPercent) +
     values.panelStats.attackFlat;
-  const attack = Math.floor(attackBeforeAttributeScalar * attributeAttackMultiplier);
-  const strengthHealth = values.attributes.strength * 5;
+  const attack = attackBeforeAttributeScalar * attributeAttackMultiplier;
+  const strengthHealth = Math.floor(values.attributes.strength) * 5;
   const baseHealthTotal = values.operatorBaseHealth + strengthHealth;
-  const health = Math.floor(
+  const health =
     resolveUpgradeBasePanelStat(baseHealthTotal, 'health', values) *
       (1 + values.panelStats.healthPercent) +
-      values.panelStats.healthFlat,
-  );
-  const defense = Math.floor(
+    values.panelStats.healthFlat;
+  const defense =
     resolveUpgradeBasePanelStat(values.gearBaseDefense, 'defense', values) *
       (1 + values.panelStats.defensePercent) +
-      values.panelStats.defenseFlat,
-  );
+    values.panelStats.defenseFlat;
 
   return {
     operatorId: build.track.id,

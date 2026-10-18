@@ -19,7 +19,17 @@ export function parseGameplayTagPredefineTableSource(
   path: string,
 ): GameplayTagPredefineTableSource {
   const table = requireRecord(value, path);
-  requireExactFields(table, new Set(['predefinedTags', 'predefinedQuery', 'tagName2Immune']), path);
+  // 原生私有查询缓存不是配置；部分导出器也会序列化这个字段。
+  requireExactFields(
+    table,
+    new Set([
+      'predefinedTags',
+      'predefinedQuery',
+      'tagName2Immune',
+      ...(Object.hasOwn(table, 'm_cachedGameplayTagQueries') ? ['m_cachedGameplayTagQueries'] : []),
+    ]),
+    path,
+  );
   return {
     predefinedTags: parseDictionary(
       table.predefinedTags,

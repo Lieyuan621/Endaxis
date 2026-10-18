@@ -2190,7 +2190,91 @@ export const purrchenaChr_0038_purrche_normal_skill_counter: SkillDefinition = {
 export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
   main: {
     nodes: {
-      inheritBuffById_1: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0038_purrche_enter_normal_skill_end' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      checkCondition_2: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: 'applyBuff_1',
+      },
+      listenForCombatEvents_3: {
+        action: {
+          kind: 'listenForCombatEvents',
+          parameters: {
+            responses: [
+              {
+                key: 'SkillData.chr_0038_purrche_normal_skill_block_1.actionGroupData.timelineActions[2]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
+                event: { kind: 'abilityEvent', event: 'addedBuff' },
+                phase: 'dataAction',
+                priority: 0,
+                sequence: { $sequence: 'checkCondition_2' },
+              },
+            ],
+          },
+        },
+        next: null,
+      },
+      castSkillDuringAction_4: {
+        action: {
+          kind: 'castSkillDuringAction',
+          parameters: {
+            skillId: 'chr_0038_purrche_normal_skill_loop_2',
+            target: 'actionInputTarget',
+            skipApplyCost: false,
+            inheritSourceSkillCastInfo: false,
+          },
+        },
+        next: null,
+      },
+      applyBuff_5: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0038_purrche_enter_normal_skill_end' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: 'castSkillDuringAction_4',
+      },
+      checkCondition_6: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: 'applyBuff_5',
+      },
+      listenForCombatEvents_7: {
+        action: {
+          kind: 'listenForCombatEvents',
+          parameters: {
+            responses: [
+              {
+                key: 'SkillData.chr_0038_purrche_normal_skill_block_1.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
+                event: { kind: 'abilityEvent', event: 'addedBuff' },
+                phase: 'dataAction',
+                priority: 0,
+                sequence: { $sequence: 'checkCondition_6' },
+              },
+            ],
+          },
+        },
+        next: null,
+      },
+      inheritBuffById_8: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -2210,7 +2294,7 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
         },
         next: null,
       },
-      castSkillDuringAction_2: {
+      castSkillDuringAction_9: {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
@@ -2223,7 +2307,7 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
         },
         next: null,
       },
-      applyBuff_3: {
+      applyBuff_10: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2233,9 +2317,9 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'castSkillDuringAction_2',
+        next: 'castSkillDuringAction_9',
       },
-      castSkillDuringAction_4: {
+      castSkillDuringAction_11: {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
@@ -2248,7 +2332,7 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
         },
         next: null,
       },
-      applyBuff_5: {
+      applyBuff_12: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2261,16 +2345,16 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'castSkillDuringAction_4',
+        next: 'castSkillDuringAction_11',
       },
-      checkCondition_6: {
+      checkCondition_13: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
-        next: 'applyBuff_5',
+        next: 'applyBuff_12',
       },
-      castSkillDuringAction_7: {
+      castSkillDuringAction_14: {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
@@ -2283,7 +2367,7 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
         },
         next: null,
       },
-      applyBuff_8: {
+      applyBuff_15: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2293,112 +2377,21 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'castSkillDuringAction_7',
+        next: 'castSkillDuringAction_14',
       },
-      checkCondition_9: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: 'applyBuff_8',
-      },
-      checkCondition_10: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: 'checkCondition_9',
-      },
-      listenForCombatEvents_11: {
-        action: {
-          kind: 'listenForCombatEvents',
-          parameters: {
-            responses: [
-              {
-                key: 'SkillData.chr_0038_purrche_normal_skill_block_1.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
-                event: { kind: 'operatorHit' },
-                phase: 'dataAction',
-                priority: 0,
-                sequence: { $sequence: 'checkCondition_6' },
-              },
-              {
-                key: 'SkillData.chr_0038_purrche_normal_skill_block_1.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0].abilityActionMap[1].actions[0]',
-                event: { kind: 'abilityEvent', event: 'addedBuff' },
-                phase: 'dataAction',
-                priority: 0,
-                sequence: { $sequence: 'checkCondition_10' },
-              },
-            ],
-          },
-        },
-        next: null,
-      },
-      applyBuff_12: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0038_purrche_enter_normal_skill_end' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-      checkCondition_13: {
+      checkCondition_16: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
         },
-        next: 'applyBuff_12',
-      },
-      listenForCombatEvents_14: {
-        action: {
-          kind: 'listenForCombatEvents',
-          parameters: {
-            responses: [
-              {
-                key: 'SkillData.chr_0038_purrche_normal_skill_block_1.actionGroupData.timelineActions[7]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
-                event: { kind: 'abilityEvent', event: 'addedBuff' },
-                phase: 'dataAction',
-                priority: 0,
-                sequence: { $sequence: 'checkCondition_13' },
-              },
-            ],
-          },
-        },
-        next: null,
-      },
-      castSkillDuringAction_15: {
-        action: {
-          kind: 'castSkillDuringAction',
-          parameters: {
-            skillId: 'chr_0038_purrche_normal_skill_loop_2',
-            target: 'actionInputTarget',
-            skipApplyCost: false,
-            inheritSourceSkillCastInfo: false,
-          },
-        },
-        next: null,
-      },
-      applyBuff_16: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0038_purrche_enter_normal_skill_end' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: 'castSkillDuringAction_15',
+        next: 'applyBuff_15',
       },
       checkCondition_17: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
-        next: 'applyBuff_16',
+        next: 'checkCondition_16',
       },
       listenForCombatEvents_18: {
         action: {
@@ -2407,6 +2400,13 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
             responses: [
               {
                 key: 'SkillData.chr_0038_purrche_normal_skill_block_1.actionGroupData.timelineActions[8]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
+                event: { kind: 'operatorHit' },
+                phase: 'dataAction',
+                priority: 0,
+                sequence: { $sequence: 'checkCondition_13' },
+              },
+              {
+                key: 'SkillData.chr_0038_purrche_normal_skill_block_1.actionGroupData.timelineActions[8]._sequenceActionData.actionData[0].abilityActionMap[1].actions[0]',
                 event: { kind: 'abilityEvent', event: 'addedBuff' },
                 phase: 'dataAction',
                 priority: 0,
@@ -2594,13 +2594,21 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
+        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0038_purrche_block_end'] },
+      },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0038_purrche_block_end'] },
+      },
+      data_3: {
+        type: 'boolean',
         expression: {
           kind: 'eventDamageFeaturesMatch',
           match: 'exceptAny',
           features: ['dot', 'remainArea'],
         },
       },
-      data_2: {
+      data_4: {
         type: 'boolean',
         expression: {
           kind: 'targetDistance',
@@ -2612,17 +2620,9 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
           containsHittableObject: false,
         },
       },
-      data_3: {
-        type: 'boolean',
-        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_eny_0018_lbtough_pre_catch'] },
-      },
-      data_4: {
-        type: 'boolean',
-        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0038_purrche_block_end'] },
-      },
       data_5: {
         type: 'boolean',
-        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0038_purrche_block_end'] },
+        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_eny_0018_lbtough_pre_catch'] },
       },
       data_6: {
         type: 'boolean',
@@ -2671,11 +2671,11 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1: SkillDefinition = {
   },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'inheritBuffById_1' } },
-    { startFrame: 23, endFrame: 23, sequence: { $sequence: 'applyBuff_3' } },
-    { startFrame: 3, endFrame: 24, sequence: { $sequence: 'listenForCombatEvents_11' } },
-    { startFrame: 0, endFrame: 9, sequence: { $sequence: 'listenForCombatEvents_14' } },
-    { startFrame: 9, endFrame: 24, sequence: { $sequence: 'listenForCombatEvents_18' } },
+    { startFrame: 0, endFrame: 9, sequence: { $sequence: 'listenForCombatEvents_3' } },
+    { startFrame: 9, endFrame: 24, sequence: { $sequence: 'listenForCombatEvents_7' } },
+    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'inheritBuffById_8' } },
+    { startFrame: 23, endFrame: 23, sequence: { $sequence: 'applyBuff_10' } },
+    { startFrame: 3, endFrame: 24, sequence: { $sequence: 'listenForCombatEvents_18' } },
     { startFrame: 9, endFrame: 9, sequence: { $sequence: 'applyBuff_21' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_23' } },
     { startFrame: 0, endFrame: 9, sequence: { $sequence: 'applyBuff_24' } },
@@ -2693,7 +2693,103 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1: SkillDefinition = {
 export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
   main: {
     nodes: {
-      inheritBuffById_1: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0038_purrche_enter_normal_skill_end' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      checkCondition_2: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: 'applyBuff_1',
+      },
+      listenForCombatEvents_3: {
+        action: {
+          kind: 'listenForCombatEvents',
+          parameters: {
+            responses: [
+              {
+                key: 'SkillData.chr_0038_purrche_normal_skill_block_2.actionGroupData.timelineActions[2]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
+                event: { kind: 'abilityEvent', event: 'addedBuff' },
+                phase: 'dataAction',
+                priority: 0,
+                sequence: { $sequence: 'checkCondition_2' },
+              },
+            ],
+          },
+        },
+        next: null,
+      },
+      castSkillDuringAction_4: {
+        action: {
+          kind: 'castSkillDuringAction',
+          parameters: {
+            skillId: 'chr_0038_purrche_normal_skill_loop_2',
+            target: 'actionInputTarget',
+            skipApplyCost: false,
+            inheritSourceSkillCastInfo: false,
+          },
+        },
+        next: null,
+      },
+      applyBuff_5: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0038_purrche_block_immune_skillfx' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: 'castSkillDuringAction_4',
+      },
+      applyBuff_6: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0038_purrche_enter_normal_skill_end' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: 'applyBuff_5',
+      },
+      checkCondition_7: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: 'applyBuff_6',
+      },
+      listenForCombatEvents_8: {
+        action: {
+          kind: 'listenForCombatEvents',
+          parameters: {
+            responses: [
+              {
+                key: 'SkillData.chr_0038_purrche_normal_skill_block_2.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
+                event: { kind: 'abilityEvent', event: 'addedBuff' },
+                phase: 'dataAction',
+                priority: 0,
+                sequence: { $sequence: 'checkCondition_7' },
+              },
+            ],
+          },
+        },
+        next: null,
+      },
+      inheritBuffById_9: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -2713,7 +2809,7 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
         },
         next: null,
       },
-      castSkillDuringAction_2: {
+      castSkillDuringAction_10: {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
@@ -2726,7 +2822,7 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
         },
         next: null,
       },
-      applyBuff_3: {
+      applyBuff_11: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2736,157 +2832,17 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'castSkillDuringAction_2',
-      },
-      castSkillDuringAction_8: {
-        action: {
-          kind: 'castSkillDuringAction',
-          parameters: {
-            skillId: 'chr_0038_purrche_normal_skill_block_2',
-            target: 'actionInputTarget',
-            skipApplyCost: false,
-            inheritSourceSkillCastInfo: false,
-            interruptCurrentSkillOnlyWhenTargetCastable: true,
-          },
-        },
-        next: null,
-      },
-      applyBuff_9: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0038_purrche_block_immune_skillfx' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: 'castSkillDuringAction_8',
-      },
-      checkCondition_10: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: 'applyBuff_9',
-      },
-      checkCondition_11: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: 'checkCondition_10',
-      },
-      castSkillDuringAction_4: {
-        action: {
-          kind: 'castSkillDuringAction',
-          parameters: {
-            skillId: 'chr_0038_purrche_normal_skill_block_2',
-            target: 'enemy',
-            skipApplyCost: true,
-            inheritSourceSkillCastInfo: true,
-            interruptCurrentSkillOnlyWhenTargetCastable: true,
-          },
-        },
-        next: null,
-      },
-      applyBuff_5: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [
-              { buffId: 'buff_chr_0038_purrche_block_counter' },
-              { buffId: 'buff_chr_0038_purrche_block_immune_skillfx' },
-            ],
-            targets: { kind: 'owner' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: 'castSkillDuringAction_4',
-      },
-      checkCondition_6: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: 'applyBuff_5',
-      },
-      checkCondition_7: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-        },
-        next: 'checkCondition_6',
-      },
-      listenForCombatEvents_12: {
-        action: {
-          kind: 'listenForCombatEvents',
-          parameters: {
-            responses: [
-              {
-                key: 'SkillData.chr_0038_purrche_normal_skill_block_2.actionGroupData.timelineActions[7]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
-                event: { kind: 'operatorHit' },
-                phase: 'dataAction',
-                priority: 0,
-                sequence: { $sequence: 'checkCondition_7' },
-              },
-              {
-                key: 'SkillData.chr_0038_purrche_normal_skill_block_2.actionGroupData.timelineActions[7]._sequenceActionData.actionData[0].abilityActionMap[1].actions[0]',
-                event: { kind: 'abilityEvent', event: 'addedBuff' },
-                phase: 'dataAction',
-                priority: 0,
-                sequence: { $sequence: 'checkCondition_11' },
-              },
-            ],
-          },
-        },
-        next: null,
-      },
-      applyBuff_13: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0038_purrche_enter_normal_skill_end' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-      checkCondition_14: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-        },
-        next: 'applyBuff_13',
-      },
-      listenForCombatEvents_15: {
-        action: {
-          kind: 'listenForCombatEvents',
-          parameters: {
-            responses: [
-              {
-                key: 'SkillData.chr_0038_purrche_normal_skill_block_2.actionGroupData.timelineActions[8]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
-                event: { kind: 'abilityEvent', event: 'addedBuff' },
-                phase: 'dataAction',
-                priority: 0,
-                sequence: { $sequence: 'checkCondition_14' },
-              },
-            ],
-          },
-        },
-        next: null,
+        next: 'castSkillDuringAction_10',
       },
       castSkillDuringAction_16: {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
-            skillId: 'chr_0038_purrche_normal_skill_loop_2',
+            skillId: 'chr_0038_purrche_normal_skill_block_2',
             target: 'actionInputTarget',
             skipApplyCost: false,
             inheritSourceSkillCastInfo: false,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
           },
         },
         next: null,
@@ -2903,24 +2859,61 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
         },
         next: 'castSkillDuringAction_16',
       },
-      applyBuff_18: {
+      checkCondition_18: {
         action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0038_purrche_enter_normal_skill_end' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
         next: 'applyBuff_17',
       },
       checkCondition_19: {
         action: {
           kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+        },
+        next: 'checkCondition_18',
+      },
+      castSkillDuringAction_12: {
+        action: {
+          kind: 'castSkillDuringAction',
+          parameters: {
+            skillId: 'chr_0038_purrche_normal_skill_block_2',
+            target: 'enemy',
+            skipApplyCost: true,
+            inheritSourceSkillCastInfo: true,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          },
+        },
+        next: null,
+      },
+      applyBuff_13: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              { buffId: 'buff_chr_0038_purrche_block_counter' },
+              { buffId: 'buff_chr_0038_purrche_block_immune_skillfx' },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: 'castSkillDuringAction_12',
+      },
+      checkCondition_14: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+        },
+        next: 'applyBuff_13',
+      },
+      checkCondition_15: {
+        action: {
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
-        next: 'applyBuff_18',
+        next: 'checkCondition_14',
       },
       listenForCombatEvents_20: {
         action: {
@@ -2929,6 +2922,13 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
             responses: [
               {
                 key: 'SkillData.chr_0038_purrche_normal_skill_block_2.actionGroupData.timelineActions[9]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
+                event: { kind: 'operatorHit' },
+                phase: 'dataAction',
+                priority: 0,
+                sequence: { $sequence: 'checkCondition_15' },
+              },
+              {
+                key: 'SkillData.chr_0038_purrche_normal_skill_block_2.actionGroupData.timelineActions[9]._sequenceActionData.actionData[0].abilityActionMap[1].actions[0]',
                 event: { kind: 'abilityEvent', event: 'addedBuff' },
                 phase: 'dataAction',
                 priority: 0,
@@ -3125,6 +3125,14 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
+        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0038_purrche_block_end'] },
+      },
+      data_2: {
+        type: 'boolean',
+        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0038_purrche_block_end'] },
+      },
+      data_3: {
+        type: 'boolean',
         expression: {
           kind: 'targetDistance',
           source: { kind: 'owner' },
@@ -3135,11 +3143,11 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
           containsHittableObject: false,
         },
       },
-      data_2: {
+      data_4: {
         type: 'boolean',
         expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_eny_0018_lbtough_pre_catch'] },
       },
-      data_3: {
+      data_5: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -3150,21 +3158,13 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
           buffIds: ['buff_chr_0038_purrche_aura_block'],
         },
       },
-      data_4: {
+      data_6: {
         type: 'boolean',
         expression: {
           kind: 'eventDamageFeaturesMatch',
           match: 'exceptAny',
           features: ['dot', 'remainArea'],
         },
-      },
-      data_5: {
-        type: 'boolean',
-        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0038_purrche_block_end'] },
-      },
-      data_6: {
-        type: 'boolean',
-        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0038_purrche_block_end'] },
       },
       data_7: {
         type: 'boolean',
@@ -3201,11 +3201,11 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2: SkillDefinition = {
   },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'inheritBuffById_1' } },
-    { startFrame: 22, endFrame: 22, sequence: { $sequence: 'applyBuff_3' } },
-    { startFrame: 2, endFrame: 25, sequence: { $sequence: 'listenForCombatEvents_12' } },
-    { startFrame: 0, endFrame: 12, sequence: { $sequence: 'listenForCombatEvents_15' } },
-    { startFrame: 12, endFrame: 25, sequence: { $sequence: 'listenForCombatEvents_20' } },
+    { startFrame: 0, endFrame: 12, sequence: { $sequence: 'listenForCombatEvents_3' } },
+    { startFrame: 12, endFrame: 25, sequence: { $sequence: 'listenForCombatEvents_8' } },
+    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'inheritBuffById_9' } },
+    { startFrame: 22, endFrame: 22, sequence: { $sequence: 'applyBuff_11' } },
+    { startFrame: 2, endFrame: 25, sequence: { $sequence: 'listenForCombatEvents_20' } },
     { startFrame: 12, endFrame: 12, sequence: { $sequence: 'checkCondition_23' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_28' } },
     { startFrame: 0, endFrame: 11, sequence: { $sequence: 'applyBuff_29' } },
@@ -8125,10 +8125,22 @@ export const purrchena: OperatorDefinition = {
   mainAttribute: 'strength',
   secondaryAttribute: 'will',
   attributes: {
-    strength: [20, 52, 85, 118, 152, 168],
-    agility: [8, 26, 45, 64, 84, 93],
-    intellect: [9, 26, 44, 62, 80, 89],
-    will: [12, 34, 56, 79, 102, 113],
+    strength: [
+      20.4123711340206, 52.0723753418894, 85.3986955606987, 118.725015779508, 152.051335998317,
+      168.714496107722,
+    ],
+    agility: [
+      8.2474226804124, 26.5078897538397, 45.7294340416579, 64.9509783294761, 84.1725226172943,
+      93.7832947612035,
+    ],
+    intellect: [
+      9.27835051546395, 26.4754891647381, 44.5777403745003, 62.6799915842626, 80.7822427940248,
+      89.8333683989059,
+    ],
+    will: [
+      12.701030927835, 34.2210393435725, 56.8736797811909, 79.5263202188093, 102.178960656428,
+      113.505280875237,
+    ],
     baseAttack: [30, 90, 152, 215, 277, 309],
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },

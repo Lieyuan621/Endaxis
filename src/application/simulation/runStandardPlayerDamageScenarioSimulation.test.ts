@@ -3296,8 +3296,8 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
 
     const damage = result.receiptEntries.find(entry => entry.event === 'DamageApplied');
     expect(damage).toBeDefined();
-    expect(damage?.data?.value).toBeCloseTo(635.4);
-    expect(result.finalEnemyHealth).toBeCloseTo(result.enemy.health - 635.4);
+    expect(damage?.data?.value).toBeCloseTo(706.293 * 1.8 * 0.5);
+    expect(result.finalEnemyHealth).toBeCloseTo(result.enemy.health - 706.293 * 1.8 * 0.5);
     expect(damage?.data?.remainingHealth).toBe(result.finalEnemyHealth);
     // 最终结果与投影共用本次模拟唯一的敌人账本快照，不再回退到静态敌人数值。
     expect(result.enemyVitals.initialHealth).toBe(result.enemy.health);
