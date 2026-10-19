@@ -37,6 +37,43 @@ it('莱万汀终结技清除提前中断连携留下的普通攻击缓存', asyn
   ).toEqual([]);
 });
 
+it('腐蚀重复施加在正式切面恢复后仍继承累计减抗', async () => {
+  const scenario = createEmptyScenario('corrosion-reapplication', '腐蚀继承');
+  scenario.tracks[0] = track('si', []);
+  scenario.tracks[1] = track('arcane', [
+    ['battleSkill', 'battleSkill', 191],
+    ['battleSkill', 'battleSkill', 743],
+  ]);
+  scenario.tracks[2] = track('tangtang', [
+    ['battleSkill', 'battleSkill', 3],
+    ['battleSkill', 'battleSkill', 79],
+    ['battleSkill', 'battleSkill', 650],
+    ['battleSkill', 'battleSkill', 802],
+  ]);
+  for (const item of scenario.tracks) {
+    if (item === null) continue;
+    item.skillCasts.forEach((cast, index) => {
+      cast.id = `${item.id}:${index}`;
+    });
+  }
+  const result = await createEditorSimulationService().simulate(scenario, 1400);
+  const effects = result.receiptEntries.filter(
+    entry =>
+      entry.data?.buffId === 'buff_common_natural_cryst_triggered_wrapper' &&
+      entry.buffAttributeEffects?.some(effect => effect.attribute === 'PhysicalResistance'),
+  );
+  const value = (entry: (typeof effects)[number]) =>
+    entry.buffAttributeEffects!.find(effect => effect.attribute === 'PhysicalResistance')!.value;
+  const replacementIndex = effects.findIndex(
+    entry => entry.event === 'BuffApplied' && entry.frame === 763,
+  );
+  expect(replacementIndex).toBeGreaterThan(0);
+  expect(value(effects[replacementIndex]!)).toBe(value(effects[replacementIndex - 1]!));
+  for (const entry of effects.filter(entry => entry.frame > 763)) {
+    expect(value(entry)).toBeLessThanOrEqual(value(effects[replacementIndex]!));
+  }
+});
+
 it('正式编辑器装配从导出SkillSetting读取技力恢复暂停', async () => {
   const scenario = createEmptyScenario('native-resource-settings', '导出恢复暂停');
   scenario.tracks[0] = track('xaihi', [['battleSkill', 'battleSkill', 3]]);

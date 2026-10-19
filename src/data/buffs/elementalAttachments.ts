@@ -345,6 +345,129 @@ const CORROSION_ATTRIBUTE_MODIFIERS = [
   { attribute, slot: 'baseAddition', value: { blackboardKey: 'additional_def_decrease' } },
 ]) satisfies readonly CombatBuffDefinitionAttributeModifier[];
 
+/** 原生先比较再推进；已有减抗更强时不能用新上限把它截回去。 */
+function corrosionGraph(): ActionGraphResourceDefinition {
+  return {
+    main: {
+      nodes: {
+        damage: {
+          action: {
+            kind: 'dealDamage',
+            parameters: {
+              damageType: 'nature',
+              attackScale: { kind: 'valueNode', nodeId: 'atk_scale' },
+              tags: ['natureAbnormal'],
+              features: [],
+            },
+          },
+          next: null,
+        },
+        start: {
+          action: {
+            kind: 'checkCondition',
+            parameters: {
+              condition: { kind: 'conditionNode', nodeId: 'aboveStart' },
+            },
+          },
+          next: 'initialize',
+        },
+        initialize: {
+          action: {
+            kind: 'modifyActionValue',
+            parameters: {
+              key: 'def_decrease',
+              operation: 'assign',
+              value: { kind: 'valueNode', nodeId: 'start_def_decrease' },
+            },
+          },
+          next: 'refresh',
+        },
+        trigger: {
+          action: {
+            kind: 'checkCondition',
+            parameters: {
+              condition: { kind: 'conditionNode', nodeId: 'aboveCap' },
+            },
+          },
+          next: 'increment',
+        },
+        increment: {
+          action: {
+            kind: 'modifyActionValue',
+            parameters: {
+              key: 'def_decrease',
+              operation: 'add',
+              value: { kind: 'valueNode', nodeId: 'def_decrease_tick' },
+            },
+          },
+          next: 'clamp',
+        },
+        clamp: {
+          action: {
+            kind: 'ifElse',
+            parameters: { alwaysNext: true },
+            condition: { kind: 'conditionNode', nodeId: 'aboveCap' },
+            whenTrue: { $sequence: null },
+            whenFalse: { $sequence: 'assignCap' },
+          },
+          next: 'refresh',
+        },
+        assignCap: {
+          action: {
+            kind: 'modifyActionValue',
+            parameters: {
+              key: 'def_decrease',
+              operation: 'assign',
+              value: { kind: 'valueNode', nodeId: 'max_def_decrease' },
+            },
+          },
+          next: null,
+        },
+        refresh: {
+          action: { kind: 'refreshCurrentBuffAttributeModifiers', parameters: {} },
+          next: null,
+        },
+      },
+      dataNodes: {
+        ...Object.fromEntries(
+          [
+            'atk_scale',
+            'def_decrease',
+            'start_def_decrease',
+            'max_def_decrease',
+            'def_decrease_tick',
+          ].map(key => [
+            key,
+            {
+              type: 'number' as const,
+              expression: { kind: 'blackboard' as const, key },
+            },
+          ]),
+        ),
+        aboveStart: {
+          type: 'boolean',
+          expression: {
+            kind: 'actionValueCompare',
+            operator: 'greater',
+            left: { kind: 'valueNode', nodeId: 'def_decrease' },
+            right: { kind: 'valueNode', nodeId: 'start_def_decrease' },
+          },
+        },
+        aboveCap: {
+          type: 'boolean',
+          expression: {
+            kind: 'actionValueCompare',
+            operator: 'greater',
+            left: { kind: 'valueNode', nodeId: 'def_decrease' },
+            right: { kind: 'valueNode', nodeId: 'max_def_decrease' },
+          },
+        },
+      },
+    },
+    macros: {},
+  };
+}
+
 function corrosionStatus(
   id: string,
   consumedElement: 'heat' | 'electric' | 'cryo',
@@ -376,32 +499,10 @@ function corrosionStatus(
     },
     attributeModifiers: CORROSION_ATTRIBUTE_MODIFIERS,
     role: { kind: 'compoundStatus', consumedElement, incomingElement: 'nature' },
-    actions: {
-      start: [
-        compoundDamage('nature', 'natureAbnormal'),
-        {
-          kind: 'modifyBlackboard',
-          operation: 'assign',
-          targetKey: 'def_decrease',
-          value: { blackboardKey: 'start_def_decrease' },
-        },
-        { kind: 'refreshAttributeModifierValues' },
-      ],
-      trigger: [
-        {
-          kind: 'modifyBlackboard',
-          operation: 'add',
-          targetKey: 'def_decrease',
-          value: { blackboardKey: 'def_decrease_tick' },
-        },
-        // 原始链在递减后再次 CompareFloat，越过下限时 Assign max_def_decrease。
-        {
-          kind: 'clampBlackboard',
-          targetKey: 'def_decrease',
-          minimum: { blackboardKey: 'max_def_decrease' },
-        },
-        { kind: 'refreshAttributeModifierValues' },
-      ],
+    actionGraph: corrosionGraph(),
+    lifecycleSequences: {
+      start: [{ $sequence: 'damage' }, { $sequence: 'start' }],
+      trigger: [{ $sequence: 'trigger' }],
     },
   };
 }

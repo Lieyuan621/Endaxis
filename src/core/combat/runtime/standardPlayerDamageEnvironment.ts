@@ -1460,7 +1460,7 @@ export class StandardPlayerDamageEnvironment {
       throw new Error('elemental infliction requires an elemental infliction document');
     }
     this.#elementalDefinitions = compileCombatBuffDefinitions(document, {
-      resolveConditionOperations: source =>
+      resolveLifecycleOperations: source =>
         (source.ownerId === 'enemy'
           ? this.#enemyBuffRuntime
           : this.#operatorBuffRuntime(source.ownerId)
