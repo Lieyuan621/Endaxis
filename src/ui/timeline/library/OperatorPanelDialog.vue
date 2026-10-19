@@ -130,7 +130,7 @@ const attributeRows = computed<readonly StatRow[]>(() =>
   ATTRIBUTE_KEYS.map(key => ({
     key,
     label: statLabel(key),
-    value: formatNumber(props.panel?.attributes[key] ?? 0),
+    value: formatNumber(Math.floor(props.panel?.attributes[key] ?? 0)),
   })),
 );
 
@@ -175,18 +175,14 @@ const healthBreakdown = computed(() => {
   // 升级与装备的生命修正分阶段应用；“其他”只表示最终净差，不把原始百分比相加。
   return panel === null || detail === undefined
     ? null
-    : { ...detail, otherHealth: panel.health - Math.floor(detail.baseHealthTotal) };
+    : { ...detail, otherHealth: panel.health - detail.baseHealthTotal };
 });
 const healthOtherSources = computed(() =>
   sourcesFor('health').filter(entry => entry.operation !== 'base'),
 );
 
-function ceilNumber(value: number): string {
-  return new Intl.NumberFormat(locale.value).format(Math.ceil(value));
-}
-
 function signedNumber(value: number): string {
-  return `${value >= 0 ? '+' : ''}${ceilNumber(value)}`;
+  return `${value >= 0 ? '+' : ''}${formatNumber(value)}`;
 }
 
 function signedPercent(value: number): string {
@@ -201,9 +197,9 @@ const statRows = computed<readonly StatRow[]>(() => {
   const panel = props.panel;
   if (panel === null) return [];
   return [
-    { key: 'attack', label: statLabel('attack'), value: formatNumber(panel.attack) },
-    { key: 'health', label: statLabel('health'), value: formatNumber(panel.health) },
-    { key: 'defense', label: statLabel('defense'), value: formatNumber(panel.defense) },
+    { key: 'attack', label: statLabel('attack'), value: formatNumber(Math.floor(panel.attack)) },
+    { key: 'health', label: statLabel('health'), value: formatNumber(Math.floor(panel.health)) },
+    { key: 'defense', label: statLabel('defense'), value: formatNumber(Math.floor(panel.defense)) },
     {
       key: 'criticalRate',
       label: statLabel('criticalRate'),
@@ -325,19 +321,21 @@ const statRows = computed<readonly StatRow[]>(() => {
                 <template v-if="row.key === 'attack' && expanded.has(row.key) && attackBreakdown">
                   <tr class="sub-row">
                     <td class="label-cell indent-1">{{ t('statDetail.basicTotal') }}</td>
-                    <td class="value-cell">{{ ceilNumber(attackBreakdown.basicTotal) }}</td>
+                    <td class="value-cell">{{ formatNumber(attackBreakdown.basicTotal) }}</td>
                   </tr>
                   <tr class="sub-row">
                     <td class="label-cell indent-2">{{ t('statDetail.baseAtk') }}</td>
-                    <td class="value-cell">{{ ceilNumber(attackBreakdown.baseAttackTotal) }}</td>
+                    <td class="value-cell">{{ formatNumber(attackBreakdown.baseAttackTotal) }}</td>
                   </tr>
                   <tr class="sub-row dim">
                     <td class="label-cell indent-3">{{ t('statDetail.operatorAtk') }}</td>
-                    <td class="value-cell">{{ ceilNumber(attackBreakdown.operatorBaseAttack) }}</td>
+                    <td class="value-cell">
+                      {{ formatNumber(attackBreakdown.operatorBaseAttack) }}
+                    </td>
                   </tr>
                   <tr class="sub-row dim">
                     <td class="label-cell indent-3">{{ t('statDetail.weaponAtk') }}</td>
-                    <td class="value-cell">{{ ceilNumber(attackBreakdown.weaponBaseAttack) }}</td>
+                    <td class="value-cell">{{ formatNumber(attackBreakdown.weaponBaseAttack) }}</td>
                   </tr>
                   <tr class="sub-row">
                     <td class="label-cell indent-2">{{ t('statDetail.atkBonus') }}</td>
@@ -390,15 +388,17 @@ const statRows = computed<readonly StatRow[]>(() => {
                 <template v-if="row.key === 'health' && expanded.has(row.key) && healthBreakdown">
                   <tr class="sub-row">
                     <td class="label-cell indent-1">{{ t('statDetail.baseHp') }}</td>
-                    <td class="value-cell">{{ ceilNumber(healthBreakdown.baseHealthTotal) }}</td>
+                    <td class="value-cell">{{ formatNumber(healthBreakdown.baseHealthTotal) }}</td>
                   </tr>
                   <tr class="sub-row dim">
                     <td class="label-cell indent-2">{{ t('statDetail.operatorHp') }}</td>
-                    <td class="value-cell">{{ ceilNumber(healthBreakdown.operatorBaseHealth) }}</td>
+                    <td class="value-cell">
+                      {{ formatNumber(healthBreakdown.operatorBaseHealth) }}
+                    </td>
                   </tr>
                   <tr class="sub-row dim">
                     <td class="label-cell indent-2">{{ t('statDetail.hpFromStrength') }}</td>
-                    <td class="value-cell">{{ ceilNumber(healthBreakdown.strengthHealth) }}</td>
+                    <td class="value-cell">{{ formatNumber(healthBreakdown.strengthHealth) }}</td>
                   </tr>
                   <tr
                     v-if="healthBreakdown.otherHealth !== 0 || healthOtherSources.length > 0"

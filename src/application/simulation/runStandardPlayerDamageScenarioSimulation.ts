@@ -33,15 +33,9 @@ import { isOperatorControlledAt } from '../../core/combat/skills/operatorControl
 import type { CombatStateGraph } from '../../core/combat/state/combatState';
 import type { OrdinaryKnockDownRuntime } from '../../core/combat/status/ordinaryKnockDownRuntime';
 import { GameplayTagPredefine } from '../../core/combat/tags/gameplayTagPredefine';
-import {
-  applyMechanicsToScenarioEnemy,
-  compileScenarioEnemy,
-} from '../../core/compiler/compileScenarioEnemy';
+import { compileScenarioEnemy } from '../../core/compiler/compileScenarioEnemy';
 import type { CompileScenarioRuntimeAssemblyOptions } from '../../core/compiler/compileScenarioRuntimeAssembly';
-import {
-  compileScenarioMechanics,
-  compileScenarioRuntimeAssembly,
-} from '../../core/compiler/compileScenarioRuntimeAssembly';
+import { compileScenarioRuntimeAssembly } from '../../core/compiler/compileScenarioRuntimeAssembly';
 import { resolveControlTimeline } from '../../core/project/resolveControlTimeline';
 import type { ScenarioDocument } from '../../core/project/schema';
 import {
@@ -135,11 +129,7 @@ export function prepareStandardPlayerDamageScenarioRuntime(
   input: RunStandardPlayerDamageScenarioInput,
 ): PreparedStandardPlayerDamageScenarioRuntime {
   assertScenarioSimulationEndFrame(input.scenario, input.endFrame);
-  const mechanics = compileScenarioMechanics(input.scenario, input.options);
-  const enemy = applyMechanicsToScenarioEnemy(
-    compileScenarioEnemy(input.scenario.enemy),
-    mechanics,
-  );
+  const enemy = compileScenarioEnemy(input.scenario.enemy);
   const enemyVitals = createEnemyCombatVitals(enemy);
   const controlTimeline = resolveControlTimeline(
     input.scenario.tracks,

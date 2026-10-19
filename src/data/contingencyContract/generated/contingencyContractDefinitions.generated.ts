@@ -2348,6 +2348,24 @@ const commonBuff32: SkillBuffDefinition = {
 };
 
 const commonBuff33ActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff33: SkillBuffDefinition = {
+  stackingType: 'unlimited',
+  priority: 0,
+  maxStackCount: 1,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { hp_up: 1.5 },
+  attributeModifiers: [
+    { attribute: 'MaxHp', slot: 'finalMultiplier', value: { blackboardKey: 'hp_up' } },
+  ],
+  actionGraph: commonBuff33ActionGraph,
+};
+
+const commonBuff34ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -2372,7 +2390,7 @@ const commonBuff33ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff33: SkillBuffDefinition = {
+const commonBuff34: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -2381,10 +2399,10 @@ const commonBuff33: SkillBuffDefinition = {
   blackboard: { dmg_scale: 0.25, speedup_scale: 2 },
   attributeModifiers: [],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: commonBuff33ActionGraph,
+  actionGraph: commonBuff34ActionGraph,
 };
 
-const commonBuff34ActionGraph = {
+const commonBuff35ActionGraph = {
   main: {
     nodes: {
       calculateActionValue_1: {
@@ -2511,7 +2529,7 @@ const commonBuff34ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff34: SkillBuffDefinition = {
+const commonBuff35: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -2527,10 +2545,10 @@ const commonBuff34: SkillBuffDefinition = {
       sequence: { $sequence: 'storeEntityPropertyValue_8' },
     },
   ],
-  actionGraph: commonBuff34ActionGraph,
+  actionGraph: commonBuff35ActionGraph,
 };
 
-const commonBuff35ActionGraph = {
+const commonBuff36ActionGraph = {
   main: {
     nodes: {
       setHealthFloor_1: {
@@ -2647,7 +2665,7 @@ const commonBuff35ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff35: SkillBuffDefinition = {
+const commonBuff36: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 1,
@@ -2660,10 +2678,10 @@ const commonBuff35: SkillBuffDefinition = {
   abilityEventResponses: [
     { event: 'receiveHeal', priority: 0, sequence: { $sequence: 'checkCondition_8' } },
   ],
-  actionGraph: commonBuff35ActionGraph,
+  actionGraph: commonBuff36ActionGraph,
 };
 
-const commonBuff36ActionGraph = {
+const commonBuff37ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -2971,7 +2989,7 @@ const commonBuff36ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff36: SkillBuffDefinition = {
+const commonBuff37: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 1,
@@ -2991,10 +3009,10 @@ const commonBuff36: SkillBuffDefinition = {
     { event: 'beforeAddedBuff', priority: 0, sequence: { $sequence: 'checkCondition_25' } },
     { event: 'finishedBuff', priority: 0, sequence: { $sequence: 'checkCondition_28' } },
   ],
-  actionGraph: commonBuff36ActionGraph,
+  actionGraph: commonBuff37ActionGraph,
 };
 
-const commonBuff37ActionGraph = {
+const commonBuff38ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -3039,7 +3057,7 @@ const commonBuff37ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff37: SkillBuffDefinition = {
+const commonBuff38: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -3048,15 +3066,15 @@ const commonBuff37: SkillBuffDefinition = {
   blackboard: { hp_ratio: 0.01 },
   attributeModifiers: [],
   lifecycleSequences: { enable: [{ $sequence: 'checkCondition_2' }] },
-  actionGraph: commonBuff37ActionGraph,
+  actionGraph: commonBuff38ActionGraph,
 };
 
-const commonBuff38ActionGraph = {
+const commonBuff39ActionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff38: SkillBuffDefinition = {
+const commonBuff39: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 1,
@@ -3064,10 +3082,10 @@ const commonBuff38: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  actionGraph: commonBuff38ActionGraph,
+  actionGraph: commonBuff39ActionGraph,
 };
 
-const commonBuff39ActionGraph = {
+const commonBuff40ActionGraph = {
   main: {
     nodes: {
       heal_1: {
@@ -3125,7 +3143,7 @@ const commonBuff39ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff39: SkillBuffDefinition = {
+const commonBuff40: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -3137,10 +3155,10 @@ const commonBuff39: SkillBuffDefinition = {
   blackboard: { hp_ratio: 0.01 },
   attributeModifiers: [],
   lifecycleSequences: { enable: [{ $sequence: 'heal_1' }], trigger: [{ $sequence: 'ifElse_5' }] },
-  actionGraph: commonBuff39ActionGraph,
+  actionGraph: commonBuff40ActionGraph,
 };
 
-const commonBuff40ActionGraph = {
+const commonBuff41ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -3166,7 +3184,7 @@ const commonBuff40ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff40: SkillBuffDefinition = {
+const commonBuff41: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 1,
@@ -3175,10 +3193,10 @@ const commonBuff40: SkillBuffDefinition = {
   blackboard: { dmg_scale: -0.1 },
   attributeModifiers: [],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: commonBuff40ActionGraph,
+  actionGraph: commonBuff41ActionGraph,
 };
 
-const commonBuff41ActionGraph = {
+const commonBuff42ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -3605,7 +3623,7 @@ const commonBuff41ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff41: SkillBuffDefinition = {
+const commonBuff42: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 1,
@@ -3620,10 +3638,10 @@ const commonBuff41: SkillBuffDefinition = {
     { event: 'addedBuff', priority: 0, sequence: { $sequence: 'checkCondition_24' } },
     { event: 'addedBuff', priority: 0, sequence: { $sequence: 'checkCondition_30' } },
   ],
-  actionGraph: commonBuff41ActionGraph,
+  actionGraph: commonBuff42ActionGraph,
 };
 
-const commonBuff42ActionGraph = {
+const commonBuff43ActionGraph = {
   main: {
     nodes: {
       finishBuffsById_1: {
@@ -3706,7 +3724,7 @@ const commonBuff42ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff42: SkillBuffDefinition = {
+const commonBuff43: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 1,
@@ -3716,10 +3734,10 @@ const commonBuff42: SkillBuffDefinition = {
   blackboard: { index: 0 },
   attributeModifiers: [],
   lifecycleSequences: { finish: [{ $sequence: 'switch_6' }] },
-  actionGraph: commonBuff42ActionGraph,
+  actionGraph: commonBuff43ActionGraph,
 };
 
-const commonBuff43ActionGraph = {
+const commonBuff44ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -3889,7 +3907,7 @@ const commonBuff43ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff43: SkillBuffDefinition = {
+const commonBuff44: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 1,
@@ -3903,49 +3921,6 @@ const commonBuff43: SkillBuffDefinition = {
     { event: 'finishedBuff', priority: 0, sequence: { $sequence: 'checkCondition_6' } },
     { event: 'finishedBuff', priority: 0, sequence: { $sequence: 'checkCondition_8' } },
     { event: 'finishedBuff', priority: 0, sequence: { $sequence: 'checkCondition_10' } },
-  ],
-  actionGraph: commonBuff43ActionGraph,
-};
-
-const commonBuff44ActionGraph = {
-  main: {
-    nodes: {
-      checkCondition_1: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: null,
-      },
-    },
-    dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'eventDamageTypeIn', damageTypes: ['cryo'] } },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-const commonBuff44: SkillBuffDefinition = {
-  stackingType: 'unlimited',
-  priority: 0,
-  maxStackCount: 4,
-  applyTags: [],
-  extendTags: [],
-  blackboard: { dmg_scale: -0.1 },
-  attributeModifiers: [],
-  damageModifiers: [
-    {
-      enabledSide: 'defender',
-      condition: { $sequence: 'checkCondition_1' },
-      processors: [
-        {
-          kind: 'damageScale',
-          side: 'defender',
-          zone: 'product',
-          addition: { blackboardKey: 'dmg_scale' },
-        },
-      ],
-    },
   ],
   actionGraph: commonBuff44ActionGraph,
 };
@@ -3962,7 +3937,7 @@ const commonBuff45ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: { type: 'boolean', expression: { kind: 'eventDamageTypeIn', damageTypes: ['heat'] } },
+      data_1: { type: 'boolean', expression: { kind: 'eventDamageTypeIn', damageTypes: ['cryo'] } },
     },
   },
   macros: {},
@@ -4005,10 +3980,7 @@ const commonBuff46ActionGraph = {
       },
     },
     dataNodes: {
-      data_1: {
-        type: 'boolean',
-        expression: { kind: 'eventDamageTypeIn', damageTypes: ['nature'] },
-      },
+      data_1: { type: 'boolean', expression: { kind: 'eventDamageTypeIn', damageTypes: ['heat'] } },
     },
   },
   macros: {},
@@ -4053,7 +4025,7 @@ const commonBuff47ActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
-        expression: { kind: 'eventDamageTypeIn', damageTypes: ['physical'] },
+        expression: { kind: 'eventDamageTypeIn', damageTypes: ['nature'] },
       },
     },
   },
@@ -4099,7 +4071,7 @@ const commonBuff48ActionGraph = {
     dataNodes: {
       data_1: {
         type: 'boolean',
-        expression: { kind: 'eventDamageTypeIn', damageTypes: ['electric'] },
+        expression: { kind: 'eventDamageTypeIn', damageTypes: ['physical'] },
       },
     },
   },
@@ -4132,6 +4104,52 @@ const commonBuff48: SkillBuffDefinition = {
 };
 
 const commonBuff49ActionGraph = {
+  main: {
+    nodes: {
+      checkCondition_1: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'eventDamageTypeIn', damageTypes: ['electric'] },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff49: SkillBuffDefinition = {
+  stackingType: 'unlimited',
+  priority: 0,
+  maxStackCount: 4,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { dmg_scale: -0.1 },
+  attributeModifiers: [],
+  damageModifiers: [
+    {
+      enabledSide: 'defender',
+      condition: { $sequence: 'checkCondition_1' },
+      processors: [
+        {
+          kind: 'damageScale',
+          side: 'defender',
+          zone: 'product',
+          addition: { blackboardKey: 'dmg_scale' },
+        },
+      ],
+    },
+  ],
+  actionGraph: commonBuff49ActionGraph,
+};
+
+const commonBuff50ActionGraph = {
   main: {
     nodes: {
       applyBuff_2: {
@@ -4297,7 +4315,7 @@ const commonBuff49ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff49: SkillBuffDefinition = {
+const commonBuff50: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 1,
@@ -4309,27 +4327,6 @@ const commonBuff49: SkillBuffDefinition = {
     { event: 'afterTakeInfliction', priority: 0, sequence: { $sequence: 'ifElse_12' } },
     { event: 'addedBuff', priority: 0, sequence: { $sequence: 'checkCondition_14' } },
   ],
-  actionGraph: commonBuff49ActionGraph,
-};
-
-const commonBuff50ActionGraph = {
-  main: { nodes: {} },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-const commonBuff50: SkillBuffDefinition = {
-  stackingType: 'unique',
-  priority: 0,
-  maxStackCount: 1,
-  durationSeconds: { blackboardKey: 'duration' },
-  presentation: {
-    icon: 'endaxis:icons/icon_battle_eny_resist_inflict_cryst',
-    showInHeadBarCommon: true,
-  },
-  applyTags: ['Immune/ImmuneSpellInflict/ImmuneCrystInflict'],
-  extendTags: [],
-  blackboard: { duration: 5 },
-  attributeModifiers: [],
   actionGraph: commonBuff50ActionGraph,
 };
 
@@ -4344,10 +4341,10 @@ const commonBuff51: SkillBuffDefinition = {
   maxStackCount: 1,
   durationSeconds: { blackboardKey: 'duration' },
   presentation: {
-    icon: 'endaxis:icons/icon_battle_eny_resist_inflict_fire',
+    icon: 'endaxis:icons/icon_battle_eny_resist_inflict_cryst',
     showInHeadBarCommon: true,
   },
-  applyTags: ['Immune/ImmuneSpellInflict/ImmuneFireInflict'],
+  applyTags: ['Immune/ImmuneSpellInflict/ImmuneCrystInflict'],
   extendTags: [],
   blackboard: { duration: 5 },
   attributeModifiers: [],
@@ -4365,10 +4362,10 @@ const commonBuff52: SkillBuffDefinition = {
   maxStackCount: 1,
   durationSeconds: { blackboardKey: 'duration' },
   presentation: {
-    icon: 'endaxis:icons/icon_battle_eny_resist_inflict_natural',
+    icon: 'endaxis:icons/icon_battle_eny_resist_inflict_fire',
     showInHeadBarCommon: true,
   },
-  applyTags: ['Immune/ImmuneSpellInflict/ImmuneNaturalInflict'],
+  applyTags: ['Immune/ImmuneSpellInflict/ImmuneFireInflict'],
   extendTags: [],
   blackboard: { duration: 5 },
   attributeModifiers: [],
@@ -4386,10 +4383,10 @@ const commonBuff53: SkillBuffDefinition = {
   maxStackCount: 1,
   durationSeconds: { blackboardKey: 'duration' },
   presentation: {
-    icon: 'endaxis:icons/icon_battle_eny_resist_inflict_phy',
+    icon: 'endaxis:icons/icon_battle_eny_resist_inflict_natural',
     showInHeadBarCommon: true,
   },
-  applyTags: ['Immune/ImmuneNoGuard'],
+  applyTags: ['Immune/ImmuneSpellInflict/ImmuneNaturalInflict'],
   extendTags: [],
   blackboard: { duration: 5 },
   attributeModifiers: [],
@@ -4407,10 +4404,10 @@ const commonBuff54: SkillBuffDefinition = {
   maxStackCount: 1,
   durationSeconds: { blackboardKey: 'duration' },
   presentation: {
-    icon: 'endaxis:icons/icon_battle_eny_resist_inflict_pulse',
+    icon: 'endaxis:icons/icon_battle_eny_resist_inflict_phy',
     showInHeadBarCommon: true,
   },
-  applyTags: ['Immune/ImmuneSpellInflict/ImmunePulseInflict'],
+  applyTags: ['Immune/ImmuneNoGuard'],
   extendTags: [],
   blackboard: { duration: 5 },
   attributeModifiers: [],
@@ -4418,6 +4415,27 @@ const commonBuff54: SkillBuffDefinition = {
 };
 
 const commonBuff55ActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const commonBuff55: SkillBuffDefinition = {
+  stackingType: 'unique',
+  priority: 0,
+  maxStackCount: 1,
+  durationSeconds: { blackboardKey: 'duration' },
+  presentation: {
+    icon: 'endaxis:icons/icon_battle_eny_resist_inflict_pulse',
+    showInHeadBarCommon: true,
+  },
+  applyTags: ['Immune/ImmuneSpellInflict/ImmunePulseInflict'],
+  extendTags: [],
+  blackboard: { duration: 5 },
+  attributeModifiers: [],
+  actionGraph: commonBuff55ActionGraph,
+};
+
+const commonBuff56ActionGraph = {
   main: {
     nodes: {
       triggerCharacterInflictionEvent_6: {
@@ -4486,7 +4504,7 @@ const commonBuff55ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff55: SkillBuffDefinition = {
+const commonBuff56: SkillBuffDefinition = {
   stackingType: 'enhanceAndOverwriteDuration',
   priority: 0,
   maxStackCount: 4,
@@ -4508,10 +4526,10 @@ const commonBuff55: SkillBuffDefinition = {
     enable: [{ $sequence: 'triggerCharacterInflictionEvent_6' }],
     beforeEnhance: [{ $sequence: 'ifElse_5' }],
   },
-  actionGraph: commonBuff55ActionGraph,
+  actionGraph: commonBuff56ActionGraph,
 };
 
-const commonBuff56ActionGraph = {
+const commonBuff57ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -4539,7 +4557,7 @@ const commonBuff56ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff56: SkillBuffDefinition = {
+const commonBuff57: SkillBuffDefinition = {
   stackingType: 'stack',
   stackingKey: 'cryst_triggered',
   priority: 0,
@@ -4565,15 +4583,15 @@ const commonBuff56: SkillBuffDefinition = {
   lifecycleSequences: {
     enable: [{ $sequence: 'applyBuff_1' }, { $sequence: 'triggerCharacterInflictionEvent_2' }],
   },
-  actionGraph: commonBuff56ActionGraph,
+  actionGraph: commonBuff57ActionGraph,
 };
 
-const commonBuff57ActionGraph = {
+const commonBuff58ActionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff57: SkillBuffDefinition = {
+const commonBuff58: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -4588,10 +4606,10 @@ const commonBuff57: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 9999 },
   attributeModifiers: [],
-  actionGraph: commonBuff57ActionGraph,
+  actionGraph: commonBuff58ActionGraph,
 };
 
-const commonBuff58ActionGraph = {
+const commonBuff59ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -4617,7 +4635,7 @@ const commonBuff58ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff58: SkillBuffDefinition = {
+const commonBuff59: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -4633,7 +4651,7 @@ const commonBuff58: SkillBuffDefinition = {
   blackboard: { duration: 9999 },
   attributeModifiers: [],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: commonBuff58ActionGraph,
+  actionGraph: commonBuff59ActionGraph,
 };
 export const contingencyContractBuffDefinitions: OperatorBuffDefinitions = Object.freeze({
   buff_cc_chr_atb_recoverspeed_down_icon: commonBuff1,
@@ -4668,32 +4686,33 @@ export const contingencyContractBuffDefinitions: OperatorBuffDefinitions = Objec
   buff_cc_chr_ult_dmg_down_gradual: commonBuff30,
   buff_cc_chr_ult_dmg_down_gradual_instance: commonBuff31,
   buff_cc_chr_ult_dmg_down_gradual_stack: commonBuff32,
-  buff_cc_enemy_common_movespeedup: commonBuff33,
-  buff_cc_enemy_common_movespeedup_dmg_limit_base: commonBuff34,
-  buff_cc_enemy_common_movespeedup_dmg_limit_instance: commonBuff35,
-  buff_cc_enemy_heal_under_control: commonBuff36,
-  buff_cc_enemy_heal_under_control_instance: commonBuff37,
-  buff_cc_enemy_heal_under_control_stack: commonBuff38,
-  buff_cc_enemy_heal_under_control_timer: commonBuff39,
-  buff_cc_enemy_inflict_stack_resist: commonBuff40,
-  buff_cc_enemy_inflict_stack_resist_add_listener: commonBuff41,
-  buff_cc_enemy_inflict_stack_resist_consume_delay: commonBuff42,
-  buff_cc_enemy_inflict_stack_resist_consume_listener: commonBuff43,
-  buff_cc_enemy_inflict_stack_resist_cryst: commonBuff44,
-  buff_cc_enemy_inflict_stack_resist_fire: commonBuff45,
-  buff_cc_enemy_inflict_stack_resist_natural: commonBuff46,
-  buff_cc_enemy_inflict_stack_resist_phy: commonBuff47,
-  buff_cc_enemy_inflict_stack_resist_pulse: commonBuff48,
-  buff_cc_enemy_periodic_inflict_resist: commonBuff49,
-  buff_cc_enemy_periodic_inflict_resist_cryst: commonBuff50,
-  buff_cc_enemy_periodic_inflict_resist_fire: commonBuff51,
-  buff_cc_enemy_periodic_inflict_resist_natural: commonBuff52,
-  buff_cc_enemy_periodic_inflict_resist_phy: commonBuff53,
-  buff_cc_enemy_periodic_inflict_resist_pulse: commonBuff54,
-  buff_common_enemy_spell_cryst_attached: commonBuff55,
-  buff_common_enemy_spell_cryst_triggered_frozen: commonBuff56,
-  buff_common_enemy_spell_status_do_frozen: commonBuff57,
-  buff_common_enemy_spell_status_frozen: commonBuff58,
+  buff_cc_enemy_common_hp_up: commonBuff33,
+  buff_cc_enemy_common_movespeedup: commonBuff34,
+  buff_cc_enemy_common_movespeedup_dmg_limit_base: commonBuff35,
+  buff_cc_enemy_common_movespeedup_dmg_limit_instance: commonBuff36,
+  buff_cc_enemy_heal_under_control: commonBuff37,
+  buff_cc_enemy_heal_under_control_instance: commonBuff38,
+  buff_cc_enemy_heal_under_control_stack: commonBuff39,
+  buff_cc_enemy_heal_under_control_timer: commonBuff40,
+  buff_cc_enemy_inflict_stack_resist: commonBuff41,
+  buff_cc_enemy_inflict_stack_resist_add_listener: commonBuff42,
+  buff_cc_enemy_inflict_stack_resist_consume_delay: commonBuff43,
+  buff_cc_enemy_inflict_stack_resist_consume_listener: commonBuff44,
+  buff_cc_enemy_inflict_stack_resist_cryst: commonBuff45,
+  buff_cc_enemy_inflict_stack_resist_fire: commonBuff46,
+  buff_cc_enemy_inflict_stack_resist_natural: commonBuff47,
+  buff_cc_enemy_inflict_stack_resist_phy: commonBuff48,
+  buff_cc_enemy_inflict_stack_resist_pulse: commonBuff49,
+  buff_cc_enemy_periodic_inflict_resist: commonBuff50,
+  buff_cc_enemy_periodic_inflict_resist_cryst: commonBuff51,
+  buff_cc_enemy_periodic_inflict_resist_fire: commonBuff52,
+  buff_cc_enemy_periodic_inflict_resist_natural: commonBuff53,
+  buff_cc_enemy_periodic_inflict_resist_phy: commonBuff54,
+  buff_cc_enemy_periodic_inflict_resist_pulse: commonBuff55,
+  buff_common_enemy_spell_cryst_attached: commonBuff56,
+  buff_common_enemy_spell_cryst_triggered_frozen: commonBuff57,
+  buff_common_enemy_spell_status_do_frozen: commonBuff58,
+  buff_common_enemy_spell_status_frozen: commonBuff59,
 });
 
 export const contingencyContractTagDefinitions = Object.freeze<
@@ -6228,21 +6247,85 @@ export const contingencyContractInitializationPlans = Object.freeze<
       macros: {},
     },
   },
-]);
-export const contingencyContractEnemyMaxHealthPlans = Object.freeze([
   {
     tagId: 900101,
-    multiplier: 1.5,
+    sequence: { $sequence: 'applyBuff_1' },
+    actionGraph: {
+      main: {
+        nodes: {
+          applyBuff_1: {
+            action: {
+              kind: 'applyBuff',
+              parameters: {
+                buffs: [
+                  {
+                    buffId: 'buff_cc_enemy_common_hp_up',
+                    blackboardAssignments: { hp_up: { kind: 'constant', value: 1.5 } },
+                  },
+                ],
+                targets: { kind: 'fixed', target: 'enemy' },
+              },
+            },
+            next: null,
+          },
+        },
+      },
+      macros: {},
+    },
   },
   {
     tagId: 900102,
-    multiplier: 2,
+    sequence: { $sequence: 'applyBuff_1' },
+    actionGraph: {
+      main: {
+        nodes: {
+          applyBuff_1: {
+            action: {
+              kind: 'applyBuff',
+              parameters: {
+                buffs: [
+                  {
+                    buffId: 'buff_cc_enemy_common_hp_up',
+                    blackboardAssignments: { hp_up: { kind: 'constant', value: 2 } },
+                  },
+                ],
+                targets: { kind: 'fixed', target: 'enemy' },
+              },
+            },
+            next: null,
+          },
+        },
+      },
+      macros: {},
+    },
   },
   {
     tagId: 900103,
-    multiplier: 3,
+    sequence: { $sequence: 'applyBuff_1' },
+    actionGraph: {
+      main: {
+        nodes: {
+          applyBuff_1: {
+            action: {
+              kind: 'applyBuff',
+              parameters: {
+                buffs: [
+                  {
+                    buffId: 'buff_cc_enemy_common_hp_up',
+                    blackboardAssignments: { hp_up: { kind: 'constant', value: 3 } },
+                  },
+                ],
+                targets: { kind: 'fixed', target: 'enemy' },
+              },
+            },
+            next: null,
+          },
+        },
+      },
+      macros: {},
+    },
   },
-]) as readonly { readonly tagId: number; readonly multiplier: number }[];
+]);
 export const contingencyContractBlockedTagReasons = Object.freeze({}) as Readonly<
   Record<number, string>
 >;

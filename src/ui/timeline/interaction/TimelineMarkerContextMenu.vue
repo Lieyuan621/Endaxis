@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import TimelineMenuActionIcon from './TimelineMenuActionIcon.vue';
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { EaButton } from '../../../design-system/index';
@@ -10,6 +11,7 @@ const isDev = import.meta.env.DEV;
 const props = defineProps<{
   readOnly?: boolean;
   canCopy?: boolean;
+  canPaste?: boolean;
   inheritanceBoundary?: boolean;
   cycleBoundary?: boolean;
   sourceAvailable?: boolean;
@@ -50,6 +52,8 @@ const emit = defineEmits<{
   addDodge: [mode: 'dodge' | 'perfectDodge'];
   setDodgeMode: [mode: 'dodge' | 'perfectDodge'];
   copyMarker: [];
+  cut: [];
+  paste: [];
   useConsumable: [];
   controlComboCooldown: [mode: 'cooldown' | 'ready'];
   delete: [];
@@ -128,11 +132,32 @@ onBeforeUnmount(() => {
         class="menu-item"
         @click="$emit('copyMarker')"
       >
-        <span class="menu-icon" aria-hidden="true">⧉</span>
+        <TimelineMenuActionIcon action="copy" />
         <span>{{ labels.copyMarker }}</span>
         <kbd>Ctrl+C</kbd>
       </EaButton>
       <fieldset v-if="!inheritanceBoundary" :disabled="readOnly" class="menu-actions">
+        <EaButton
+          v-if="existingLabel && canCopy"
+          class="menu-item"
+          role="menuitem"
+          @click="$emit('cut')"
+        >
+          <TimelineMenuActionIcon action="cut" />
+          <span>{{ t('common.cut') }}</span>
+          <kbd>Ctrl+X</kbd>
+        </EaButton>
+        <EaButton
+          v-if="!existingLabel"
+          :disabled="!canPaste"
+          class="menu-item"
+          role="menuitem"
+          @click="$emit('paste')"
+        >
+          <TimelineMenuActionIcon action="paste" />
+          <span>{{ t('common.paste') }}</span>
+          <kbd>Ctrl+V</kbd>
+        </EaButton>
         <template v-if="existingLabel">
           <EaButton
             v-if="existingDodgeMode"
@@ -149,11 +174,7 @@ onBeforeUnmount(() => {
             }}</span>
           </EaButton>
           <EaButton type="button" role="menuitem" class="menu-item danger" @click="$emit('delete')">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-              />
-            </svg>
+            <TimelineMenuActionIcon action="delete" />
             <span>{{ labels.deleteMarker }}</span>
             <kbd>Delete</kbd>
           </EaButton>

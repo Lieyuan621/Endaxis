@@ -121,6 +121,11 @@ export interface BuffOperationTarget {
   ): void;
   /** 只读原生属性值；技能费用等非 Buff 操作不得反向持有具体容器。 */
   getAttributeValue?(attribute: string): number;
+  /** 只绑定当前分支的属性变化，不重放恢复前的变化。 */
+  bindAttributeChangeObserver?(
+    attribute: string,
+    observer: (value: number, previous: number) => void,
+  ): void;
   /** 根据已解析定义的 applyTags 选择实际接收者；查询和结束操作不随之转发。 */
   configureBuffApplicationRecipient?(
     resolve: (applyTags: readonly GameplayTag[]) => BuffOperationTarget | undefined,

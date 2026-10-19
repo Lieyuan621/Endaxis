@@ -81,6 +81,32 @@ export function selectTimelineItem(
     items,
   };
 }
+/** 范围选择只包含轨道上的可多选输入，不包含全局边界或模拟投影。 */
+export function selectTimelineItemRange(
+  items: ReadonlyMap<string, TimelineItem>,
+  scope: 'group' | 'track' | 'all',
+  anchor?: TimelineItem,
+  trackIndex = anchor?.trackIndex,
+): TimelineActionSelection {
+  const selectedIds = new Set(
+    [...items.values()]
+      .filter(item => {
+        if (!item.multiple || item.trackIndex === undefined) return false;
+        if (scope === 'all') return true;
+        if (item.trackIndex !== trackIndex) return false;
+        return scope === 'track' || item.moveAnchor === anchor?.moveAnchor;
+      })
+      .map(item => item.key),
+  );
+  return {
+    selectedIds,
+    primaryId:
+      anchor && selectedIds.has(anchor.key)
+        ? anchor.key
+        : (selectedIds.values().next().value ?? null),
+  };
+}
+
 export function selectedTimelineSkills(
   selection: TimelineActionSelection,
   items: ReadonlyMap<string, TimelineItem>,

@@ -1,5 +1,5 @@
 /**
- * 从伤害和治疗回执提取敌人生命变化，保留原始事件顺序。
+ * 从伤害、治疗和最大生命变更回执提取敌人生命变化，保留原始事件顺序。
  * 只检查和搬运字段，不算伤害、不算护甲减免。
  */
 import type { CombatReceiptEntry, CombatReceiptValue } from '../combat/receipt/combatReceipt';
@@ -16,6 +16,9 @@ export interface EnemyHealthChangePoint {
   readonly targetId: string;
   readonly healthChange: number;
   readonly remainingHealth: number;
+  readonly maxHealth?: number;
+  /** 上限同步直接记录写入前后值，避免相减再相加的浮点误差。 */
+  readonly previousHealth?: number;
 }
 
 function requireIdentity(entry: CombatReceiptEntry, key: 'sourceId' | 'targetId'): string {
@@ -47,6 +50,20 @@ function requireNumber(
 
 function readPoint(entry: CombatReceiptEntry): EnemyHealthChangePoint {
   const data = requireData(entry);
+  if (entry.event === 'MaxHealthChanged') {
+    const remainingHealth = requireNumber(entry, data, 'currentHealth');
+    return {
+      frame: entry.frame,
+      time: entry.time,
+      sequence: entry.sequence,
+      sourceId: requireIdentity(entry, 'sourceId'),
+      targetId: requireIdentity(entry, 'targetId'),
+      healthChange: remainingHealth - requireNumber(entry, data, 'previousHealth'),
+      previousHealth: requireNumber(entry, data, 'previousHealth'),
+      remainingHealth,
+      maxHealth: requireNumber(entry, data, 'maxHealth'),
+    };
+  }
   return {
     frame: entry.frame,
     time: entry.time,
@@ -76,7 +93,12 @@ export function projectEnemyHealthChangePoints(
 ): readonly EnemyHealthChangePoint[] {
   const points: EnemyHealthChangePoint[] = [];
   for (const entry of entries) {
-    if (entry.event !== 'DamageApplied' && entry.event !== 'HealingApplied') continue;
+    if (
+      entry.event !== 'DamageApplied' &&
+      entry.event !== 'HealingApplied' &&
+      entry.event !== 'MaxHealthChanged'
+    )
+      continue;
     const point = readPoint(entry);
     if (point.targetId === SINGLE_ENEMY_TARGET_ID) points.push(point);
   }

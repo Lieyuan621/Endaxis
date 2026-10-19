@@ -91,6 +91,12 @@ export class BuffDefinitionOperationTarget<Key extends string>
   get runtimeState() {
     return this.container.runtimeState;
   }
+  bindAttributeChangeObserver(
+    attribute: Key,
+    observer: (value: number, previous: number) => void,
+  ): void {
+    this.container.attributes.bindChangeObserver(attribute, observer);
+  }
 
   get currentFiniteShieldValue(): number {
     return this.container.currentFiniteShieldValue;

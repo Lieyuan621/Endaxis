@@ -223,7 +223,7 @@ export const EQUIPMENT_DAMAGE_SCALE_ATTRIBUTES: Readonly<Record<string, DamageSc
     staggeredEnemy: 'damageToStaggeredEnemyIncrease',
   };
 
-/** 同次读取的属性、系数和基础攻击共同产生整数攻击值，供计算与明细共享。 */
+/** 四维派生时取整，最终攻击保留小数，供伤害计算与明细共享。 */
 export function resolveOperatorAttack(
   input: OperatorAttackDerivationInput,
   attributes: CombatAttributeSet<string>,
@@ -244,7 +244,7 @@ export function resolveOperatorAttack(
     ? attributes.get('Atk')
     : input.attackBeforeAttributeScalar;
   return {
-    value: Math.floor(attackBase * scalar),
+    value: attackBase * scalar,
     baseValue: attackBase,
     attributes: values,
     coefficients,

@@ -2709,6 +2709,7 @@
     "old": "旧",
     "on": "开启",
     "paste": "粘贴",
+    "cut": "剪切",
     "receive": "接收",
     "reset": "重置",
     "replace": "替换",
@@ -3048,6 +3049,7 @@
     "skillWarnings": {
       "thisSkill": "该技能",
       "resourceUnavailable": "释放{skill}所需的技力或终结技能量不足。",
+      "skillLocked": "{skill}已被锁定，尚不能释放。",
       "cooldownUnavailable": "{skill}尚未冷却完毕。",
       "inputMismatch": "此时进行该操作不会触发{skill}。",
       "inputMismatchNamed": "此时进行该操作会触发{actual}，而不是{skill}。",
@@ -3260,6 +3262,8 @@
         "undo": "Ctrl + Z",
         "redo": "Ctrl + Y / Ctrl + Shift + Z",
         "copy": "Ctrl + C",
+        "cut": "Ctrl + X",
+        "selectTrackContents": "Ctrl + L",
         "paste": "Ctrl + V",
         "delete": "Delete / Backspace",
         "nudgeLeft": "A / ←",
@@ -3281,6 +3285,8 @@
         "undo": "撤销",
         "redo": "重做",
         "copy": "复制选中内容",
+        "cut": "剪切选中内容",
+        "selectTrackContents": "选中整轨技能块和标记",
         "paste": "粘贴",
         "delete": "删除当前选中",
         "nudgeLeft": "微调选中内容向左",
@@ -4822,7 +4828,8 @@
     },
     "selection": {
       "deleted": "已删除",
-      "selectedCount": "选中了 {count} 个对象"
+      "selectedCount": "选中了 {count} 个对象",
+      "selectTrack": "选择整轨"
     },
     "toolbar": {
       "buffLayoutCompact": "紧凑",
@@ -5337,6 +5344,36 @@
     "expressionValue": "由变量计算"
   },
   "contingencyContract": {
+    "selectSeason": "选择合约期数",
+    "initialVariables": "初始变量",
+    "editInitialVariables": "编辑初始变量",
+    "clearInitialVariables": "清空编辑内容",
+    "preview": {
+      "operationName": "浸蓝测试作战",
+      "note": "前瞻试用版：数值和机制仅供参考，合约上线后存档将自动迁移至正式版词条。",
+      "comboLock": "环境：锁闭-锁定连携技",
+      "comboDamage": "环境：锁闭-连携技伤害加成",
+      "battleLock": "环境：沉寂-锁定战技",
+      "heal": "改写：充血",
+      "tags": {
+        "200001": {
+          "name": "环境：锁闭",
+          "description": "连携技伤害加成 +{comboDamagePercent}%。全队每施放 {comboCount} 次连携技，为全队添加持续 {lockSeconds} 秒的限时锁。"
+        },
+        "200002": {
+          "name": "环境：沉寂",
+          "description": "技力自然恢复速度提升 {spRecoveryPercent}%，技力获取效率提升 {spGainPercent}%。干员施放战技后锁定战技；全队各施放一次后解除。追猎按连携技计算，多段战技后续段不重复计数。"
+        },
+        "200003": {
+          "name": "环境：逸散",
+          "description": "任意干员施放终结技并支付费用后，清空全队终结技能量。"
+        },
+        "200004": {
+          "name": "改写：充血",
+          "description": "敌人连续 {healDelaySeconds} 秒未处于破防或法术附着状态后，每秒恢复最大生命值的 {healPercent}%。每秒检查状态，施加附着会重置等待时间。"
+        }
+      }
+    },
     "title": "危机合约",
     "operationName": "重燃测试作战",
     "score": "危机等级",

@@ -21,6 +21,7 @@ import {
 import { readActionTarget, readDirectionType, readTargetSource } from './targetEnums.ts';
 const META = ['isEnable', 'priorityLevel', 'priorityOffset', 'serverActionIndex'];
 const LEAF_FIELDS: Readonly<Record<string, readonly string[]>> = {
+  'Beyond.Gameplay.Core.Conditions.CheckCustomAbilityEvent/Data': ['eventName', 'savedParamKey'],
   'Beyond.Gameplay.Core.SetBuffDurationAction/Data': [
     'targetSettings',
     'buffSettings',
@@ -200,6 +201,8 @@ function normalizeLeaf(
     $type: `${type.replace('/', '+')}, Gameplay.Beyond`,
     priorityLevel: 'Default',
   };
+  if ('eventName' in data)
+    result.eventName = normalizeBlackboardString(data.eventName, `${path}.eventName`);
   for (const key of [
     'target',
     'checkTarget',

@@ -2960,7 +2960,7 @@ describe('registered generated operators', () => {
     }
     const expectedInitialHealing =
       (snowshinePanel.attributes.will * 0.5 + 216) *
-      (1 + perlicaPanel.attributes.will * Math.fround(0.001));
+      (1 + Math.floor(perlicaPanel.attributes.will) * Math.fround(0.001));
 
     const result = runStandardPlayerDamageScenarioSimulation({
       scenario: placed,

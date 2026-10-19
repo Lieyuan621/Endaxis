@@ -5,19 +5,22 @@ const clipboardEvent = (type: string) => new Event(type, { cancelable: true }) a
 afterEach(() => vi.unstubAllGlobals());
 
 describe('native clipboard command ownership', () => {
-  it.each(['copy', 'paste'])('dispatches %s without requiring or synthesizing a keydown', type => {
-    const router = new KeyboardShortcutRouter();
-    const handle = vi.fn(() => true);
-    const handleClipboard = vi.fn(() => true);
-    router.register({ id: 'editor', priority: 10, active: () => true, handle, handleClipboard });
-    const event = clipboardEvent(type);
-    expect(router.routeClipboard(event)).toBe(true);
-    expect(event.defaultPrevented).toBe(true);
-    expect(handle).not.toHaveBeenCalled();
-    expect(handleClipboard).toHaveBeenCalledWith(event);
-    expect(router.routeClipboard(event)).toBe(false);
-    expect(handleClipboard).toHaveBeenCalledOnce();
-  });
+  it.each(['copy', 'cut', 'paste'])(
+    'dispatches %s without requiring or synthesizing a keydown',
+    type => {
+      const router = new KeyboardShortcutRouter();
+      const handle = vi.fn(() => true);
+      const handleClipboard = vi.fn(() => true);
+      router.register({ id: 'editor', priority: 10, active: () => true, handle, handleClipboard });
+      const event = clipboardEvent(type);
+      expect(router.routeClipboard(event)).toBe(true);
+      expect(event.defaultPrevented).toBe(true);
+      expect(handle).not.toHaveBeenCalled();
+      expect(handleClipboard).toHaveBeenCalledWith(event);
+      expect(router.routeClipboard(event)).toBe(false);
+      expect(handleClipboard).toHaveBeenCalledOnce();
+    },
+  );
 
   it('a modal with no clipboard handler still blocks the background editor', () => {
     const router = new KeyboardShortcutRouter();
@@ -66,41 +69,30 @@ describe('native clipboard command ownership', () => {
     expect(background).not.toHaveBeenCalled();
   });
 
-  it('preserves native text editing even when an editor has a selected node', () => {
-    class TextInput {
-      isContentEditable = false;
-      closest() {
-        return this;
+  it.each(['copy', 'cut', 'paste'])(
+    'preserves native text %s even when an editor has a selected node',
+    type => {
+      class TextInput {
+        isContentEditable = false;
+        closest() {
+          return this;
+        }
       }
-    }
-    vi.stubGlobal('HTMLElement', TextInput);
-    const router = new KeyboardShortcutRouter();
-    const handleClipboard = vi.fn(() => true);
-    router.register({
-      id: 'map',
-      priority: 200,
-      active: () => true,
-      handle: () => false,
-      handleClipboard,
-    });
-    const event = clipboardEvent('copy');
-    Object.defineProperty(event, 'target', { value: new TextInput() });
-    expect(router.routeClipboard(event)).toBe(false);
-    expect(event.defaultPrevented).toBe(false);
-    expect(handleClipboard).not.toHaveBeenCalled();
-  });
-
-  it('does not turn native cut into unsupported structural deletion', () => {
-    const router = new KeyboardShortcutRouter();
-    const handler = vi.fn(() => true);
-    router.register({
-      id: 'editor',
-      priority: 10,
-      active: () => true,
-      handle: () => false,
-      handleClipboard: handler,
-    });
-    expect(router.routeClipboard(clipboardEvent('cut'))).toBe(false);
-    expect(handler).not.toHaveBeenCalled();
-  });
+      vi.stubGlobal('HTMLElement', TextInput);
+      const router = new KeyboardShortcutRouter();
+      const handleClipboard = vi.fn(() => true);
+      router.register({
+        id: 'map',
+        priority: 200,
+        active: () => true,
+        handle: () => false,
+        handleClipboard,
+      });
+      const event = clipboardEvent(type);
+      Object.defineProperty(event, 'target', { value: new TextInput() });
+      expect(router.routeClipboard(event)).toBe(false);
+      expect(event.defaultPrevented).toBe(false);
+      expect(handleClipboard).not.toHaveBeenCalled();
+    },
+  );
 });

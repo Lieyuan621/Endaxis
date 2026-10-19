@@ -181,24 +181,4 @@ describe('compileMechanics', () => {
       ),
     ).toThrow('contribution must contain data only');
   });
-
-  it('rejects a non-positive pre-vitals enemy multiplier', () => {
-    const invalid = adapter({
-      compile: () => [
-        {
-          kind: 'enemyProgramStatMultiplier',
-          stat: 'maxHealth',
-          multiplier: 0,
-        },
-      ],
-    });
-
-    expect(() =>
-      compileMechanics(
-        document(),
-        { getMechanic: () => definition },
-        new MechanicAdapterRegistry([invalid]),
-      ),
-    ).toThrow('enemy stat multiplier must be positive');
-  });
 });

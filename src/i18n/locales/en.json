@@ -2698,6 +2698,7 @@
     "old": "old",
     "on": "on",
     "paste": "Paste",
+    "cut": "Cut",
     "receive": "Import",
     "reset": "Reset",
     "replace": "Replace",
@@ -3037,6 +3038,7 @@
     "skillWarnings": {
       "thisSkill": "this skill",
       "resourceUnavailable": "There is not enough SP or Ultimate Energy to use {skill}.",
+      "skillLocked": "{skill} is locked and cannot be used yet.",
       "cooldownUnavailable": "{skill} is still on cooldown.",
       "inputMismatch": "This action would not trigger {skill} at this time.",
       "inputMismatchNamed": "This action would trigger {actual} instead of {skill} at this time.",
@@ -3249,6 +3251,8 @@
         "undo": "Ctrl + Z",
         "redo": "Ctrl + Y / Ctrl + Shift + Z",
         "copy": "Ctrl + C",
+        "cut": "Ctrl + X",
+        "selectTrackContents": "Ctrl + L",
         "paste": "Ctrl + V",
         "delete": "Delete / Backspace",
         "nudgeLeft": "A / ←",
@@ -3270,6 +3274,8 @@
         "undo": "Undo",
         "redo": "Redo",
         "copy": "Copy selection",
+        "cut": "Cut selection",
+        "selectTrackContents": "Select all skill blocks and markers on the track",
         "paste": "Paste",
         "delete": "Delete current selection",
         "nudgeLeft": "Nudge selection left",
@@ -4811,6 +4817,7 @@
     },
     "selection": {
       "deleted": "Deleted",
+      "selectTrack": "Select entire track",
       "selectedCount": "{count} items selected"
     },
     "toolbar": {
@@ -5326,6 +5333,36 @@
     "expressionValue": "Variable expression"
   },
   "contingencyContract": {
+    "selectSeason": "Select contract season",
+    "initialVariables": "Initial variables",
+    "editInitialVariables": "Edit initial variables",
+    "clearInitialVariables": "Clear custom values",
+    "preview": {
+      "operationName": "Blue Immersion Test Operation",
+      "note": "Preview: provisional values. Using a locked skill shows a warning; the simulation still forces execution. Follow-up battle stages are provisionally exempt based on skill descriptions.",
+      "comboLock": "Timed Combo Lock",
+      "comboDamage": "Combo Skill Damage Boost",
+      "battleLock": "Battle Skill Lock",
+      "heal": "Engorgement",
+      "tags": {
+        "200001": {
+          "name": "Environment: Lockdown",
+          "description": "+{comboDamagePercent}% combo skill damage. Every {comboCount} squad combo casts display a {lockSeconds}-second lock on all operators."
+        },
+        "200002": {
+          "name": "Environment: Silence",
+          "description": "+{spRecoveryPercent}% natural SP regeneration and +{spGainPercent}% SP gain efficiency. Battle skills mark their caster as locked until every squad member has cast one. Pursuit counts as a combo; follow-up stages do not count again."
+        },
+        "200003": {
+          "name": "Environment: Dissipation",
+          "description": "After any operator casts an ultimate and pays its cost, clear the entire squad's ultimate energy."
+        },
+        "200004": {
+          "name": "Rewrite: Engorgement",
+          "description": "After {healDelaySeconds} seconds without Vulnerability or Arts Infliction, the enemy recovers {healPercent}% maximum HP each second. State is checked every second; applying infliction resets the delay."
+        }
+      }
+    },
     "title": "Contingency Contract",
     "operationName": "Rekindled Test Operation",
     "score": "Risk level",

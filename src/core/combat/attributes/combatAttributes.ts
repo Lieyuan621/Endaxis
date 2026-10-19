@@ -53,6 +53,8 @@ export function attributeModifierValues(
 /** 属性集合的现有调用接口，状态与算法由独立模块提供。 */
 export class CombatAttributeSet<Key extends string> {
   readonly #state: CombatAttributeState<Key>;
+  readonly #observers = new Map<Key, (value: number, previous: number) => void>();
+  #batching = false;
   constructor(state = createCombatAttributeState<Key>()) {
     this.#state = state;
   }
@@ -63,11 +65,43 @@ export class CombatAttributeSet<Key extends string> {
   get modifierCount(): number {
     return this.#state.modifiers.length;
   }
+  /** 分支装配时绑定；回调不进入切面，绑定本身不重放属性变化。 */
+  bindChangeObserver(attribute: Key, observer: (value: number, previous: number) => void): void {
+    this.#observers.set(attribute, observer);
+  }
+  #beforeChange(attribute: Key): number | undefined {
+    return !this.#batching && this.#observers.has(attribute) && this.has(attribute)
+      ? this.get(attribute)
+      : undefined;
+  }
+  /** 一次 Buff 修正集合的替换只发布最终值，不暴露新旧修正同时注册的过渡值。 */
+  batchChanges<T>(update: () => T): T {
+    if (this.#batching) return update();
+    const previous = [...this.#observers.keys()].map(
+      key => [key, this.#beforeChange(key)] as const,
+    );
+    this.#batching = true;
+    try {
+      return update();
+    } finally {
+      this.#batching = false;
+      for (const [key, value] of previous) this.#afterChange(key, value);
+    }
+  }
+  #afterChange(attribute: Key, previous: number | undefined): void {
+    if (previous === undefined) return;
+    const value = this.get(attribute);
+    if (value !== previous) this.#observers.get(attribute)?.(value, previous);
+  }
   define(attribute: Key, rawValue: number, definition: CombatAttributeDefinition): void {
+    const previous = this.#beforeChange(attribute);
     defineCombatAttribute(this.#state, attribute, rawValue, definition);
+    this.#afterChange(attribute, previous);
   }
   setRawValue(attribute: Key, value: number): void {
+    const previous = this.#beforeChange(attribute);
     setCombatAttributeRawValue(this.#state, attribute, value);
+    this.#afterChange(attribute, previous);
   }
   has(attribute: string): boolean {
     return this.#state.rawValues.has(attribute as Key);
@@ -99,12 +133,21 @@ export class CombatAttributeSet<Key extends string> {
     );
   }
   addModifier(modifier: CombatAttributeModifier<Key>): void {
+    const previous = this.#beforeChange(modifier.attribute);
     addCombatAttributeModifier(this.#state, modifier);
+    this.#afterChange(modifier.attribute, previous);
   }
   removeModifier(modifier: CombatAttributeModifier<Key>): boolean {
-    return removeCombatAttributeModifier(this.#state, modifier);
+    const previous = this.#beforeChange(modifier.attribute);
+    const removed = removeCombatAttributeModifier(this.#state, modifier);
+    this.#afterChange(modifier.attribute, previous);
+    return removed;
   }
   clearInstantModifiers(): void {
+    const previous = [...this.#observers.keys()].map(
+      key => [key, this.#beforeChange(key)] as const,
+    );
     clearInstantAttributeModifiers(this.#state);
+    for (const [key, value] of previous) this.#afterChange(key, value);
   }
 }

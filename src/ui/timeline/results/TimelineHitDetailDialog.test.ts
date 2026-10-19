@@ -293,7 +293,7 @@ it('projects the full attack breakdown from the frozen hit receipt instead of a 
     event: 'DamageApplied',
     data: {
       value: 440,
-      attack: 716,
+      attack: 716.474,
       attackDetailActualBase: 319,
       attackDetailOperatorBase: 200,
       attackDetailWeaponBase: 119,
@@ -360,7 +360,7 @@ it('projects the full attack breakdown from the frozen hit receipt instead of a 
     'agility',
     'strength',
   ]);
-  expect(detail.formula).toContain('= 716');
+  expect(detail.formula).toContain('≈ 716.474');
 });
 
 it('projects expandable crit rows from the frozen hit facts', async () => {

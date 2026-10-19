@@ -1,3 +1,4 @@
+import { roundHitDamage } from './hitDamageDisplay';
 import type { CombatReceiptValue } from '../../../core/combat/receipt/combatReceipt';
 
 /** 只格式化展示值；战斗回执和统计仍保留原始精度。 */
@@ -9,6 +10,7 @@ export function createTimelineBattleLogNumberFormat(locale: string) {
       typeof value === 'number' && Number.isFinite(value)
         ? valueFormatter.format(value)
         : String(value),
-    damage: (value: number): string => damageFormatter.format(value),
+    damage: (value: number): string =>
+      damageFormatter.format(Math.sign(value) * roundHitDamage(value)),
   };
 }

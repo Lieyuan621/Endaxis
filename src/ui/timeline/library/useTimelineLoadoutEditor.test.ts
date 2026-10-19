@@ -160,7 +160,7 @@ describe('useTimelineLoadoutEditor', () => {
     editor.selectOperator(perlica.slug);
 
     expect(editor.panelResolution.value.error).toBeNull();
-    expect(editor.panelResolution.value.panels.get(0)?.attack).toBe(706);
+    expect(editor.panelResolution.value.panels.get(0)?.attack).toBeCloseTo(706.293, 3);
 
     editor.openPanelDialog(0);
 

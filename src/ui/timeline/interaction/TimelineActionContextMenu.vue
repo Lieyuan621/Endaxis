@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { ElIcon } from 'element-plus';
+import TimelineMenuActionIcon from './TimelineMenuActionIcon.vue';
 /**
  * 时间轴动作的基础右键菜单，只负责定位、展示和派发命令意图。
  * 存档修改由编辑器应用层完成；Teleport 用于避免轨道裁剪和指针事件穿透。
  */
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { CopyDocument } from '@element-plus/icons-vue';
 import { EaButton } from '../../../design-system/index';
 import { useKeyboardShortcutScope } from '../../keyboard/keyboardShortcutRouter';
 
@@ -31,6 +30,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: [];
   copy: [];
+  cut: [];
   compact: [];
   createGroup: [];
   dissolveGroup: [];
@@ -107,17 +107,22 @@ onBeforeUnmount(() => {
       @wheel.stop
     >
       <div class="menu-header" :title="label">{{ label }}</div>
+      <EaButton class="menu-item" variant="ghost" size="sm" role="menuitem" @click="$emit('copy')">
+        <TimelineMenuActionIcon action="copy" />
+        <span>{{ t('common.copy') }}</span>
+        <kbd>Ctrl+C</kbd>
+      </EaButton>
       <EaButton
         class="menu-item"
         variant="ghost"
         size="sm"
-        type="button"
         role="menuitem"
-        @click="$emit('copy')"
+        :disabled="deleteDisabled || inputReadOnly"
+        @click="$emit('cut')"
       >
-        <el-icon><CopyDocument /></el-icon>
-        <span>{{ t('common.copy') }}</span>
-        <kbd>Ctrl+C</kbd>
+        <TimelineMenuActionIcon action="cut" />
+        <span>{{ t('common.cut') }}</span>
+        <kbd>Ctrl+X</kbd>
       </EaButton>
       <EaButton
         class="menu-item delete-item"
@@ -128,12 +133,7 @@ onBeforeUnmount(() => {
         @click="$emit('delete')"
         :disabled="deleteDisabled || inputReadOnly"
       >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <polyline points="3 6 5 6 21 6"></polyline>
-          <path
-            d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-          ></path>
-        </svg>
+        <TimelineMenuActionIcon action="delete" />
         <span>{{ t('common.delete') }}</span>
         <kbd>Delete</kbd>
       </EaButton>

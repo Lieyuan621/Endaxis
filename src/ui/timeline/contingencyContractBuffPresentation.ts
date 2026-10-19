@@ -1,6 +1,11 @@
 import type { MechanicSelectionDocument } from '../../core/project/schema';
 import { gameLocaleRegistry } from '../../i18n/gameLocaleRegistry';
 import { normalizeLocale } from '../../i18n/elementPlusLocale';
+import { i18n } from '../../i18n';
+import {
+  contractDisplayBlackboard,
+  resolveContractInitialVariables,
+} from '../../data/contingencyContract/definitions';
 import {
   contingencyContractTags,
   type ContingencyContractTagPresentation,
@@ -42,7 +47,19 @@ export function resolveContingencyContractBuffPresentation(
   const tagId = Number(selection.mechanicId.slice(CONTINGENCY_CONTRACT_MECHANIC_PREFIX.length));
   if (!Number.isInteger(tagId)) return undefined;
   const tag = contingencyContractTags.find(candidate => candidate.tagId === tagId);
-  return tag === undefined ? undefined : { selectionId, tag };
+  return tag === undefined
+    ? undefined
+    : {
+        selectionId,
+        tag: {
+          ...tag,
+          blackboard: contractDisplayBlackboard(
+            tagId,
+            tag.blackboard,
+            resolveContractInitialVariables(tagId, selection.parameters),
+          ),
+        },
+      };
 }
 
 export function localizedContingencyContractTagName(
@@ -57,6 +74,15 @@ export function contingencyContractTagText(
   tag: ContingencyContractTagPresentation,
   locale: string,
 ) {
+  if (tag.season === 2)
+    return {
+      name: i18n.global.t(`contingencyContract.preview.tags.${tag.tagId}.name`, {}, { locale }),
+      description: i18n.global.t(
+        `contingencyContract.preview.tags.${tag.tagId}.description`,
+        tag.blackboard,
+        { locale },
+      ),
+    };
   const texts = gameLocaleRegistry.getFamily(normalizeLocale(locale), 'contingency-contracts');
   const text = texts[String(tag.tagId)];
   if (text === undefined) throw new Error(`Contingency Contract text ${tag.tagId} is missing`);

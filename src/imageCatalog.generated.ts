@@ -421,6 +421,26 @@ export const imageCatalog: readonly {
     category: 'contingency_contract',
   },
   {
+    ref: 'endaxis:contingency_contract/2/dissipation',
+    path: '/contingency_contract/2/dissipation.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/engorgement',
+    path: '/contingency_contract/2/engorgement.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/lockdown',
+    path: '/contingency_contract/2/lockdown.webp',
+    category: 'contingency_contract',
+  },
+  {
+    ref: 'endaxis:contingency_contract/2/silence',
+    path: '/contingency_contract/2/silence.webp',
+    category: 'contingency_contract',
+  },
+  {
     ref: 'endaxis:contingency_contract/deco_contract_027',
     path: '/contingency_contract/deco_contract_027.webp',
     category: 'contingency_contract',

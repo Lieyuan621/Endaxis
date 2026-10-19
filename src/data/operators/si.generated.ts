@@ -2347,6 +2347,41 @@ const siComboCondition2: ComboSkillConditionDefinition = {
   actionGraph: siComboCondition2ActionGraph,
 };
 
+const siComboCondition3ActionGraph = {
+  main: {
+    nodes: {
+      checkCondition_1: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventCustomAbilityNameMatch',
+          eventName: 'SiComboSkillTrigger',
+          outputKey: 'EntityBB_combo_count',
+        },
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const siComboCondition3: ComboSkillConditionDefinition = {
+  key: 'native-combo:2',
+  skillKey: 'chr_0036_jsspsi_combo_skill',
+  event: 'customAbilityEvent',
+  immediately: false,
+  initialValues: null,
+  sequence: { $sequence: 'checkCondition_1' },
+  actionGraph: siComboCondition3ActionGraph,
+};
+
 const siBuff1ActionGraph = {
   main: { nodes: {} },
   macros: {},
@@ -6524,10 +6559,22 @@ export const si: OperatorDefinition = {
   mainAttribute: 'intellect',
   secondaryAttribute: 'strength',
   attributes: {
-    strength: [17, 38, 60, 83, 105, 117],
-    agility: [10, 29, 49, 69, 89, 100],
-    intellect: [24, 57, 92, 127, 162, 179],
-    will: [10, 29, 49, 69, 89, 100],
+    strength: [
+      17.0103092783505, 38.4071954555018, 60.9302335367138, 83.4532716179257, 105.976309699138,
+      117.237828739744,
+    ],
+    agility: [
+      10.1030927835052, 29.298969072165, 49.5051546391753, 69.7113402061856, 89.9175257731959,
+      100.020618556701,
+    ],
+    intellect: [
+      24.7422680412371, 57.8293709236273, 92.6579002735117, 127.486429623396, 162.31495897328,
+      179.729223648223,
+    ],
+    will: [
+      10.1030927835052, 29.298969072165, 49.5051546391753, 69.7113402061856, 89.9175257731959,
+      100.020618556701,
+    ],
     baseAttack: [30, 90, 152, 215, 277, 309],
     baseHealth: [500, 1566, 2689, 3811, 4934, 5495],
   },
@@ -6621,7 +6668,7 @@ export const si: OperatorDefinition = {
     comboSkill: { kind: 'skillSlot', skillSlotKey: 'comboSkill' },
     ultimate: { kind: 'skillSlot', skillSlotKey: 'ultimate' },
   },
-  comboSkillConditions: [siComboCondition1, siComboCondition2],
+  comboSkillConditions: [siComboCondition1, siComboCondition2, siComboCondition3],
   comboSkillPriority: 'default',
   talents: [
     {

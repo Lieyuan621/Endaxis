@@ -16,6 +16,7 @@ export const SKILL_AVAILABILITY_DIAGNOSTIC_REASONS = [
   'skillCommonTagUnavailable',
   'skillTypeTagUnavailable',
   'attackDuringDashWindow',
+  'skillLocked',
 ] as const;
 
 /** UI 可按稳定枚举映射本地化文本，核心投影不携带显示文案。 */

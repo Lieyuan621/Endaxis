@@ -229,7 +229,7 @@ describe('resolveStaticPlayerDamageSnapshots', () => {
     ).attacker;
     const frozen = freezeAttackReceiptDetail(captured.attack, captured.attackDetail);
     const base = (700 * 1.38 + 10) * 1.1;
-    expect(captured.attack).toBe(Math.floor(base * (1 + 123 * 0.005 + 60 * 0.002)));
+    expect(captured.attack).toBeCloseTo(base * (1 + 123 * 0.005 + 60 * 0.002));
     expect(frozen.attackDetailActualBase).toBeCloseTo(base);
     expect(frozen).toMatchObject({
       attackDetailIntellect: 123,
@@ -285,7 +285,7 @@ describe('resolveStaticPlayerDamageSnapshots', () => {
       electricDamage,
       attributes,
     ).attacker;
-    expect(captured.attack).toBe(1123);
+    expect(captured.attack).toBeCloseTo(1123.2);
     const frozen = freezeAttackReceiptDetail(captured.attack, captured.attackDetail);
     expect(frozen.attackDetailAttackPercent).toBeCloseTo(0.576);
     expect(frozen.attackDetailFlatAttack).toBe(20);

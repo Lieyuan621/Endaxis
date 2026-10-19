@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { roundHitDamage } from './hitDamageDisplay';
 import { ElIcon } from 'element-plus';
 import { CombatObjectOrigins } from '../../../core/projection/combatObjectOrigins';
 import {
@@ -217,8 +218,12 @@ function num(value: unknown): string {
   return Math.floor(finiteNumber(value)).toLocaleString();
 }
 
-function ceilNum(value: number): string {
-  return Math.ceil(value).toLocaleString();
+function hitNumber(value: unknown): string {
+  return roundHitDamage(finiteNumber(value)).toLocaleString();
+}
+
+function componentNumber(value: number): string {
+  return value.toLocaleString(undefined, { maximumFractionDigits: 3 });
 }
 
 function pct(value: unknown): string {
@@ -361,23 +366,7 @@ function projectAttackDetail(data: CombatReceiptEntry['data']): AttackDetail | n
     baseAttackTotal * (1 + attackPercent) + flatAttack,
   );
   const rawBase = finiteNumber(data.attackDetailRawBase, baseAttackTotal);
-  // 舍入不能改变公式算出的整数攻击；必要时增加显示精度。
-  let precision = 3;
-  const rounded = (value: number) => Number(value.toFixed(precision));
-  while (
-    precision < 15 &&
-    Math.floor(
-      rounded(basicTotal) *
-        (1 +
-          attributeContributions.reduce(
-            (sum, row) => sum + Math.floor(row.value) * rounded(row.coefficient),
-            0,
-          )),
-    ) !== data.attack
-  )
-    precision++;
-  const precise = (value: number) =>
-    rounded(value).toLocaleString(undefined, { maximumFractionDigits: precision });
+  const precise = (value: number) => value.toLocaleString(undefined, { maximumFractionDigits: 3 });
   const attributeFormula = attributeContributions
     .map(
       row =>
@@ -385,9 +374,9 @@ function projectAttackDetail(data: CombatReceiptEntry['data']): AttackDetail | n
     )
     .join(' + ');
   const formula = [
-    `${props.labels.attack} = ⌊${props.labels.basicTotal} × (1 + ${props.labels.attributeBonus})⌋`,
-    `= ⌊${precise(basicTotal)} × (1 + ${attributeFormula || '0'})⌋`,
-    `= ${num(data.attack)}`,
+    `${props.labels.attack} = ${props.labels.basicTotal} × (1 + ${props.labels.attributeBonus})`,
+    `≈ ${precise(basicTotal)} × (1 + ${attributeFormula || '0'})`,
+    `≈ ${precise(finiteNumber(data.attack))}`,
   ];
   // 基础四槽与最终四槽分阶段显示；不把 Buff 的最终乘数伪装成面板百分比加算。
   const slot = (name: string, fallback = 0) =>
@@ -1161,7 +1150,7 @@ function onClose(): void {
                   class="damage-value"
                   :class="{ forced: resultForceCritical && detail.canForceCritical }"
                   >{{
-                    num(
+                    hitNumber(
                       resultForceCritical && detail.canForceCritical
                         ? detail.criticalDamage
                         : detail.headline,
@@ -1174,15 +1163,15 @@ function onClose(): void {
               <tbody>
                 <tr v-if="detail.canCritical" class="dim">
                   <td class="label-cell">{{ labels.criticalDamage }}</td>
-                  <td class="value-cell">{{ num(detail.criticalDamage) }}</td>
+                  <td class="value-cell">{{ hitNumber(detail.criticalDamage) }}</td>
                 </tr>
                 <tr v-if="randomMode === 'sampled'" class="dim">
                   <td class="label-cell">{{ labels.expectedDamage }}</td>
-                  <td class="value-cell">{{ num(detail.expectedDamage) }}</td>
+                  <td class="value-cell">{{ hitNumber(detail.expectedDamage) }}</td>
                 </tr>
                 <tr class="dim">
                   <td class="label-cell">{{ labels.nonCriticalDamage }}</td>
-                  <td class="value-cell">{{ num(detail.nonCriticalDamage) }}</td>
+                  <td class="value-cell">{{ hitNumber(detail.nonCriticalDamage) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -1229,21 +1218,27 @@ function onClose(): void {
                 <template v-if="detail.attackDetail !== null">
                   <tr class="sub-row">
                     <td class="label-cell indent-1">{{ labels.basicTotal }}</td>
-                    <td class="value-cell">{{ ceilNum(detail.attackDetail.basicTotal) }}</td>
+                    <td class="value-cell">
+                      {{ componentNumber(detail.attackDetail.basicTotal) }}
+                    </td>
                   </tr>
                   <tr class="sub-row">
                     <td class="label-cell indent-2">{{ labels.baseAttack }}</td>
-                    <td class="value-cell">{{ ceilNum(detail.attackDetail.baseAttackTotal) }}</td>
+                    <td class="value-cell">
+                      {{ componentNumber(detail.attackDetail.baseAttackTotal) }}
+                    </td>
                   </tr>
                   <tr class="sub-row dim">
                     <td class="label-cell indent-3">{{ labels.operatorAttack }}</td>
                     <td class="value-cell">
-                      {{ ceilNum(detail.attackDetail.operatorBaseAttack) }}
+                      {{ componentNumber(detail.attackDetail.operatorBaseAttack) }}
                     </td>
                   </tr>
                   <tr class="sub-row dim">
                     <td class="label-cell indent-3">{{ labels.weaponAttack }}</td>
-                    <td class="value-cell">{{ ceilNum(detail.attackDetail.weaponBaseAttack) }}</td>
+                    <td class="value-cell">
+                      {{ componentNumber(detail.attackDetail.weaponBaseAttack) }}
+                    </td>
                   </tr>
                   <tr class="sub-row">
                     <td class="label-cell indent-2">{{ labels.attackBonus }}</td>

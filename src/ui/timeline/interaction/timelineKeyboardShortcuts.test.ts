@@ -19,6 +19,9 @@ function commands() {
     undo: command(),
     redo: command(),
     copy: command(),
+    cut: command(),
+    selectAll: command(),
+    selectTrackItems: command(),
     paste: command(),
     delete: command(),
     nudgeLeft: command(),
@@ -36,6 +39,12 @@ function commands() {
 
 describe('handleTimelineEditorShortcut', () => {
   it.each([
+    ['Ctrl+L', keyboardEvent('l', { ctrlKey: true }), 'selectTrackItems'],
+    ['Cmd+L', keyboardEvent('l', { metaKey: true }), 'selectTrackItems'],
+    ['Ctrl+X', keyboardEvent('x', { ctrlKey: true }), 'cut'],
+    ['Cmd+X', keyboardEvent('x', { metaKey: true }), 'cut'],
+    ['Ctrl+A', keyboardEvent('a', { ctrlKey: true }), 'selectAll'],
+    ['Cmd+A', keyboardEvent('a', { metaKey: true }), 'selectAll'],
     ['Ctrl+Z', keyboardEvent('z', { ctrlKey: true }), 'undo'],
     ['Cmd+Shift+Z', keyboardEvent('z', { metaKey: true, shiftKey: true }), 'redo'],
     ['Ctrl+Y', keyboardEvent('y', { ctrlKey: true }), 'redo'],

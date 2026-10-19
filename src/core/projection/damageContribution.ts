@@ -33,7 +33,6 @@ export function projectHitDamageContribution(
     {
       actual: number;
       attack?: {
-        unrounded: number;
         scalar: number;
         minimum: number;
         maximum: number;
@@ -126,7 +125,7 @@ export function projectHitDamageContribution(
         finalMultiplier <= 0 ||
         [baseValue, armed, resolved].some(value => value < minimum || value > maximum) ||
         Math.abs(resolved - base) > 1e-6 ||
-        Math.floor(base * attributeFactor) !== attack ||
+        Math.abs(base * attributeFactor - attack) > 1e-6 ||
         !Number.isFinite(modifier.value) ||
         slot('addition') !== 0 ||
         slot('finalAddition') !== 0 ||
@@ -148,7 +147,6 @@ export function projectHitDamageContribution(
         group = {
           actual: attack,
           attack: {
-            unrounded: base * attributeFactor,
             scalar: attributeFactor,
             minimum,
             maximum,
@@ -260,8 +258,8 @@ export function projectHitDamageContribution(
   for (const group of groups.values()) {
     if (group.attack !== undefined) {
       const delta = group.items.reduce((sum, item) => sum + item.addition, 0);
-      const selfUnrounded = group.attack.unrounded - delta;
-      const base = selfUnrounded / group.attack.scalar;
+      const selfAttack = group.actual - delta;
+      const base = selfAttack / group.attack.scalar;
       const armed = base / group.attack.outerMultiplier;
       if (
         group.attack.baseMultiplier < 0 ||
@@ -269,9 +267,6 @@ export function projectHitDamageContribution(
         [base, armed].some(value => value < group.attack!.minimum || value > group.attack!.maximum)
       )
         return fallback('non-positive-or-clamped-self-attack');
-      // 攻击力取整在来源拆分之前发生；把实际整数差按线性槽增量分摊，保持总额闭合。
-      const integerDelta = group.actual - Math.floor(selfUnrounded);
-      if (delta !== 0) for (const item of group.items) item.addition *= integerDelta / delta;
     }
     const delta = group.items.reduce((sum, item) => sum + item.addition, 0);
     const selfFactor = group.actual - delta;

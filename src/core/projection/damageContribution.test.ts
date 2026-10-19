@@ -62,7 +62,7 @@ it('护盾吸收后的伤害不能按吸收前的乘法公式分账', () => {
   ).toEqual({ self: 50, external: [], diagnostics: ['damage-absorbed'] });
 });
 
-it('攻击百分比和固定值按冻结攻击分账，保留自身构筑、取整及其他乘区', () => {
+it('攻击百分比和固定值按冻结攻击分账，保留自身构筑、小数及其他乘区', () => {
   const attackModifier = (
     sourceId: string,
     slot: 'baseMultiplier' | 'baseFinalAddition',
@@ -77,8 +77,8 @@ it('攻击百分比和固定值按冻结攻击分账，保留自身构筑、取�
   });
   const data = {
     standardCalculation: true,
-    attack: 300,
-    baseDamage: 600,
+    attack: 300.6,
+    baseDamage: 601.2,
     skillMultiplierPercent: 200,
     attackDetailRawBase: 100,
     attackDetailActualBase: 200.4,
@@ -98,18 +98,18 @@ it('攻击百分比和固定值按冻结攻击分账，保留自身构筑、取�
     attackModifier('b', 'baseMultiplier', 0.5),
     attackModifier('c', 'baseFinalAddition', 20),
   ];
-  const result = project(mods, 600, 1, 1, data);
-  expect(result.self).toBeCloseTo(390); // floor((200.4 - 50 - 20) * 1.5) * 2
+  const result = project(mods, 601.2, 1, 1, data);
+  expect(result.self).toBeCloseTo(391.2); // (200.4 - 50 - 20) * 1.5 * 2
   expect(result.external[0]!.value).toBeCloseTo(150);
   expect(result.external[1]!.value).toBeCloseTo(60);
   expect(result.diagnostics).toEqual([]);
-  const combined = project([...mods, modifier('d', 0.5)], 900, 1.5, 1, data);
-  expect(combined.self).toBeCloseTo(390);
+  const combined = project([...mods, modifier('d', 0.5)], 901.8, 1.5, 1, data);
+  expect(combined.self).toBeCloseTo(391.2);
   expect(combined.self + combined.external.reduce((sum, item) => sum + item.value, 0)).toBeCloseTo(
-    900,
+    901.8,
   );
-  expect(project(mods, 600, 1, 1, { ...data, baseDamage: 650 }).external).toEqual([]);
-  expect(project(mods, 600, 1, 1, { ...data, attackDetailMaximum: 150 }).external).toEqual([]);
+  expect(project(mods, 601.2, 1, 1, { ...data, baseDamage: 650 }).external).toEqual([]);
+  expect(project(mods, 601.2, 1, 1, { ...data, attackDetailMaximum: 150 }).external).toEqual([]);
 });
 
 it('直接倍率与已有乘区共用有限分配，保留自身倍率且不依赖记录顺序', () => {

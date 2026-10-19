@@ -101,14 +101,18 @@ describe('resolveOperatorPanel', () => {
   it('calculates the verified level-90 operator baseline and default trust nodes', () => {
     const panel = resolveOperatorPanel(resolvedBuild(zhuangFangyi));
 
-    expect(panel.attributes).toEqual({
+    expect(
+      Object.fromEntries(
+        Object.entries(panel.attributes).map(([key, value]) => [key, Math.floor(value)]),
+      ),
+    ).toEqual({
       strength: 99,
       agility: 99,
       intellect: 123,
       will: 244,
     });
     expect(panel).toMatchObject({
-      attack: 803,
+      attack: expect.closeTo(326 * (1 + 244 * 0.005 + 123 * 0.002), 3),
       attackDetail: {
         operatorBaseAttack: expect.any(Number),
         weaponBaseAttack: 0,
@@ -128,13 +132,17 @@ describe('resolveOperatorPanel', () => {
   it('uses the operator-specific trust targets and values for Arcane', () => {
     const panel = resolveOperatorPanel(resolvedBuild(arcane));
 
-    expect(panel.attributes).toEqual({
+    expect(
+      Object.fromEntries(
+        Object.entries(panel.attributes).map(([key, value]) => [key, Math.floor(value)]),
+      ),
+    ).toEqual({
       strength: 91,
       agility: 93,
       intellect: 219,
       will: 164,
     });
-    expect(panel.attack).toBe(755);
+    expect(Math.floor(panel.attack)).toBe(755);
     expect(panel.health).toBe(5950);
     expect(
       panel.receipt
@@ -155,8 +163,8 @@ describe('resolveOperatorPanel', () => {
   it('applies panel-relevant potential modifiers without mixing combat-only modifiers', () => {
     const panel = resolveOperatorPanel(resolvedBuild(zhuangFangyi, { potential: 2 }));
 
-    expect(panel.attributes.will).toBe(264);
-    expect(panel.attack).toBe(836);
+    expect(panel.attributes.will).toBeCloseTo(264.279402482643);
+    expect(Math.floor(panel.attack)).toBe(836);
     expect(panel.receipt).toContainEqual({
       source: { kind: 'operatorUpgrade', source: 'potential', index: 1 },
       stat: 'will',
@@ -213,7 +221,7 @@ describe('resolveOperatorPanel', () => {
     const panel = resolveOperatorPanel(resolvedBuild(operator, { potential: 1 }));
 
     expect(panel).toMatchObject({
-      health: 6589,
+      health: expect.closeTo(6589, 8),
       defense: 20,
       artsIntensity: 16,
     });
@@ -269,7 +277,7 @@ describe('resolveOperatorPanel', () => {
           levelCount: 1,
           display: gearDisplay,
           modifiers: [
-            { kind: 'attribute', attribute: 'main', operation: 'flat', value: 10 },
+            { kind: 'attribute', attribute: 'main', operation: 'flat', value: 10.4 },
             { kind: 'panelStat', stat: 'criticalRate', value: 0.05 },
             {
               kind: 'damageBonus',
@@ -308,8 +316,8 @@ describe('resolveOperatorPanel', () => {
 
     const panel = resolveOperatorPanel(build);
 
-    expect(panel.attributes.will).toBe(254);
-    expect(panel.attack).toBe(1229);
+    expect(panel.attributes.will).toBeCloseTo(254.679402482643);
+    expect(Math.floor(panel.attack)).toBe(1229);
     expect(panel.health).toBe(5990);
     expect(panel.defense).toBe(50);
     expect(panel.criticalRate).toBe(0.1);

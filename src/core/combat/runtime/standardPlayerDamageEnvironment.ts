@@ -441,6 +441,11 @@ export class StandardPlayerDamageEnvironment {
     this.#bindHealthChangeEvent('enemy', options.enemyVitals);
     const restoredEnemyBuffs = options.restoredBuffStates?.enemy;
     const enemyAttributes = new CombatAttributeSet<string>(restoredEnemyBuffs?.attributes);
+    if (restoredEnemyBuffs === undefined)
+      enemyAttributes.define('MaxHp', options.enemyVitals.maxHealth, { minimum: 0 });
+    enemyAttributes.bindChangeObserver('MaxHp', (value, previous) =>
+      options.enemyVitals.synchronizeMaxHealth(value, previous),
+    );
     const enemyBlackboard =
       restoredEnemyBuffs === undefined
         ? undefined
@@ -1118,12 +1123,28 @@ export class StandardPlayerDamageEnvironment {
   }
 
   #bindHealthChangeEvent(ownerId: string, vitals: CombatVitals): void {
-    vitals.bindHealthChangeObserver(() =>
+    vitals.bindHealthChangeObserver(maximumChange => {
+      if (maximumChange !== undefined) {
+        const clock = this.#requireClock();
+        this.#requireReceipt().record({
+          frame: clock.frame,
+          time: clock.time,
+          event: 'MaxHealthChanged',
+          sourceId: ownerId,
+          targetId: ownerId,
+          data: {
+            ...maximumChange,
+            currentHealth: vitals.health,
+            maxHealth: vitals.maxHealth,
+          },
+        });
+        if (vitals.health === maximumChange.previousHealth && vitals.health === 0) return;
+      }
       this.#publish(ownerId, {
         event: 'hpChanged',
         payload: { sourceId: ownerId, targetId: ownerId },
-      }),
-    );
+      });
+    });
   }
 
   #requireOperatorVitals(operatorId: string): CombatVitals {
@@ -1218,6 +1239,11 @@ export class StandardPlayerDamageEnvironment {
             ? new CombatAttributeSet<string>()
             : createOperatorAttackAttributes(panel)
           : new CombatAttributeSet<string>(configuredState.attributes);
+      if (panel !== undefined && configuredState === undefined)
+        attributes.define('MaxHp', panel.health, { minimum: 0 });
+      attributes.bindChangeObserver('MaxHp', (value, previous) =>
+        this.#requireOperatorVitals(operatorId).synchronizeMaxHealth(value, previous),
+      );
       const entityBlackboard =
         configuredState === undefined
           ? undefined
@@ -1470,27 +1496,21 @@ export class StandardPlayerDamageEnvironment {
           `combat attribute source enemy has no '${request.attribute.kind}' attribute`,
         );
       }
-      if (request.attribute.key === 'maxHealth') return this.#enemyVitals.maxHealth;
-      if (!this.#enemyAttributes.has(request.attribute.key)) {
+      const key = request.attribute.key === 'maxHealth' ? 'MaxHp' : request.attribute.key;
+      if (!this.#enemyAttributes.has(key)) {
         throw new Error(
           `combat attribute source 'enemy' has no attribute '${request.attribute.key}'`,
         );
       }
       return request.stage === 'armedNonConverted'
-        ? this.#enemyAttributes.getArmed(
-            request.attribute.key,
-            ATTRIBUTE_MODIFIER_SOURCES.nonConverted,
-          )
-        : this.#enemyAttributes.get(request.attribute.key, ATTRIBUTE_MODIFIER_SOURCES.nonConverted);
+        ? this.#enemyAttributes.getArmed(key, ATTRIBUTE_MODIFIER_SOURCES.nonConverted)
+        : this.#enemyAttributes.get(key, ATTRIBUTE_MODIFIER_SOURCES.nonConverted);
     }
     if (request.attribute.kind === 'specific' && request.attribute.key === 'maxUltimateEnergy') {
       if (this.#resources === null) {
         throw new Error('combat resource ledger is not bound');
       }
       return this.#resources.getMaxUltimateEnergy(sourceId);
-    }
-    if (request.attribute.kind === 'specific' && request.attribute.key === 'maxHealth') {
-      return this.#requireOperatorVitals(sourceId).maxHealth;
     }
     const panel = this.#operatorPanels.get(sourceId);
     if (panel === undefined) {
@@ -1504,7 +1524,7 @@ export class StandardPlayerDamageEnvironment {
     const attributes = this.#operatorBuffRuntime(sourceId, panel).container.attributes;
     const keys =
       request.attribute.kind === 'specific'
-        ? [request.attribute.key]
+        ? [request.attribute.key === 'maxHealth' ? 'MaxHp' : request.attribute.key]
         : request.attribute.kind === 'main'
           ? [panel.mainAttribute]
           : request.attribute.kind === 'secondary'

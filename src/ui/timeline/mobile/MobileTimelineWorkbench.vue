@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { roundHitDamage } from '../results/hitDamageDisplay';
 import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
@@ -1828,7 +1829,7 @@ function setScenario(value: EaSelectValue | EaSelectValue[]): void {
                       }}<small
                         >+{{ formatFrame(hit.frame - selectedCast.visualStartFrame) }}</small
                       ></span
-                    ><strong>{{ formatDamage(hit.damage) }}</strong></EaButton
+                    ><strong>{{ formatDamage(roundHitDamage(hit.damage)) }}</strong></EaButton
                   >
                 </div>
               </section>
@@ -1879,7 +1880,7 @@ function setScenario(value: EaSelectValue | EaSelectValue[]): void {
                       }}<small
                         >+{{ formatFrame(hit.frame - selectedCast.visualStartFrame) }}</small
                       ></span
-                    ><strong>{{ formatDamage(hit.damage) }}</strong></EaButton
+                    ><strong>{{ formatDamage(roundHitDamage(hit.damage)) }}</strong></EaButton
                   >
                 </div>
               </section>

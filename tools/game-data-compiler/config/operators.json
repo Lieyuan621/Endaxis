@@ -126,7 +126,7 @@
       ],
       "runtimeTemplate": {
         "sourceFile": "CharacterData/chr_0036_jsspsi.runtime-template.json",
-        "sourceSha256": "ab2d743876aebc95c291f2028f24590df4b0169fb7237c6c49fa62ad4044cc75",
+        "sourceSha256": "b8c9079fa014891f6eed028651bc77685bb92c4cf98ed2c300a6df47263f95d9",
         "sourceCharacterId": "chr_0036_jsspsi",
         "comboSkillGroupKey": "comboSkill"
       }

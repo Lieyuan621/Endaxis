@@ -9,7 +9,7 @@ import { operatorDefinitions } from './operators';
 import { gearDefinitions, gearSetDefinitions, weaponDefinitions } from './equipment';
 import { generatedEnemyDefinitions } from './enemies/generated/index.generated';
 import { commonBuffDefinitions } from './buffs/commonDefinitions';
-import { contingencyContractBuffDefinitions } from './contingencyContract/generated/contingencyContractDefinitions.generated';
+import { contingencyContractBuffDefinitions } from './contingencyContract/definitions';
 import { contingencyContractMechanicDefinitions } from './contingencyContract/contingencyContractAdapter';
 import { consumableBuffDefinitions, consumableDefinitions } from './consumables';
 import { GLOBAL_EFFECT_PRESETS } from './globalEffectPresets';

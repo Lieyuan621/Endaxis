@@ -108,6 +108,8 @@ export const ABILITY_EVENT_ACTION_CONTEXT_BINDINGS = {
 
   /** 生命变化由对象自身发布，不把伤害或治疗来源冒充为事件来源。 */
   hpChanged: { inputTarget: 'eventSource', triggerTarget: 'eventSource' },
+  /** 自定义事件的输入是显式来源，触发者是接收事件的对象。 */
+  customAbilityEvent: { inputTarget: 'eventSource', triggerTarget: 'eventTarget' },
   /** 投射物是输入目标，闪避中的角色是事件来源和触发者。 */
   beforeHitByProjectile: { inputTarget: 'eventSource', triggerTarget: 'eventTarget' },
   /** 新实体是输入目标，创建它的对象是事件来源和触发者。 */
