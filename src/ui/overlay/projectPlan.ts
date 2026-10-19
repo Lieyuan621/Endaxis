@@ -36,6 +36,11 @@ import {
   type OverlayTimeWindow,
 } from './plan';
 
+export type OverlaySimulationRun = Pick<
+  ScenarioSimulationRun,
+  'frame' | 'operatorPanels' | 'resourceCurves' | 'receiptHistory'
+>;
+
 const OPERATION_TYPE_MAP: Record<string, OverlaySkillType> = {
   basicAttack: 'basicAttack',
   battleSkill: 'battleSkill',
@@ -56,7 +61,7 @@ export interface ProjectOverlayPlanResult {
 export function buildOverlayPlanFromProject(
   project: EndaxisProjectDocument,
   repository: GameDataRepository,
-  run?: ScenarioSimulationRun | null,
+  run?: OverlaySimulationRun | null,
   locale?: string,
 ): ProjectOverlayPlanResult {
   const scenario =
@@ -193,7 +198,7 @@ export function buildOverlayPlanFromProject(
 /** 同一回执同时决定动作时间、费用和资源曲线，避免预览帧与实际帧混用。 */
 export function applySimulationResult(
   plan: OverlayPlan,
-  run: ScenarioSimulationRun,
+  run: OverlaySimulationRun,
   fps: number,
 ): OverlayPlan {
   const frameToTime = (frame: number) => frame / fps;

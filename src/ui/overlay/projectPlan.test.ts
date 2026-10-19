@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ScenarioSimulationRun } from '../../application/simulation/scenarioSimulationService';
-import { applySimulationResult } from './projectPlan';
+import { applySimulationResult, type OverlaySimulationRun } from './projectPlan';
 import type { OverlayPlan } from './plan';
 import { CombatReceiptHistory } from '../../core/combat/receipt/combatReceiptHistory';
 import { activeWindow } from './layout';
@@ -21,9 +20,10 @@ function basePlan(): OverlayPlan {
   };
 }
 
-function fakeRun(): ScenarioSimulationRun {
+function fakeRun(): OverlaySimulationRun {
   return {
     frame: 600,
+    operatorPanels: [],
     resourceCurves: {
       sp: {
         resource: 'sp',
@@ -52,8 +52,8 @@ function fakeRun(): ScenarioSimulationRun {
         },
       ],
     },
-    receiptHistory: { toArray: () => [] },
-  } as unknown as ScenarioSimulationRun;
+    receiptHistory: new CombatReceiptHistory().snapshot(),
+  };
 }
 
 describe('applySimulationResult', () => {
