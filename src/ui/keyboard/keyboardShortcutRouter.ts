@@ -174,7 +174,7 @@ export class KeyboardShortcutRouter {
   routeClipboard(event: ClipboardEvent): boolean {
     if (
       event.defaultPrevented ||
-      (event.type !== 'copy' && event.type !== 'paste') ||
+      (event.type !== 'copy' && event.type !== 'cut' && event.type !== 'paste') ||
       isTextEditingTarget(event.target)
     )
       return false;
@@ -235,6 +235,7 @@ function ensurePageListener(): void {
   window.addEventListener('keydown', routePageKeyboardEvent, true);
   window.addEventListener('copy', routePageClipboardEvent, true);
   window.addEventListener('paste', routePageClipboardEvent, true);
+  window.addEventListener('cut', routePageClipboardEvent, true);
   window.addEventListener('keyup', updatePageKeyboardState, true);
   window.addEventListener('blur', clearPageKeyboardState);
   listening = true;
@@ -272,6 +273,7 @@ function usePageKeyboardRouter(): void {
       window.removeEventListener('keydown', routePageKeyboardEvent, true);
       window.removeEventListener('copy', routePageClipboardEvent, true);
       window.removeEventListener('paste', routePageClipboardEvent, true);
+      window.removeEventListener('cut', routePageClipboardEvent, true);
       window.removeEventListener('keyup', updatePageKeyboardState, true);
       window.removeEventListener('blur', clearPageKeyboardState);
       listening = false;

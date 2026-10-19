@@ -2698,6 +2698,7 @@
     "old": "old",
     "on": "on",
     "paste": "Paste",
+    "cut": "Cut",
     "receive": "Import",
     "reset": "Reset",
     "replace": "Replace",
@@ -3250,6 +3251,8 @@
         "undo": "Ctrl + Z",
         "redo": "Ctrl + Y / Ctrl + Shift + Z",
         "copy": "Ctrl + C",
+        "cut": "Ctrl + X",
+        "selectTrackContents": "Ctrl + L",
         "paste": "Ctrl + V",
         "delete": "Delete / Backspace",
         "nudgeLeft": "A / ←",
@@ -3271,6 +3274,8 @@
         "undo": "Undo",
         "redo": "Redo",
         "copy": "Copy selection",
+        "cut": "Cut selection",
+        "selectTrackContents": "Select all skill blocks and markers on the track",
         "paste": "Paste",
         "delete": "Delete current selection",
         "nudgeLeft": "Nudge selection left",
@@ -4812,6 +4817,7 @@
     },
     "selection": {
       "deleted": "Deleted",
+      "selectTrack": "Select entire track",
       "selectedCount": "{count} items selected"
     },
     "toolbar": {

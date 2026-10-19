@@ -6,6 +6,9 @@ export interface TimelineKeyboardCommands {
   readonly undo: () => boolean;
   readonly redo: () => boolean;
   readonly copy: () => boolean;
+  readonly cut: () => boolean;
+  readonly selectAll: () => boolean;
+  readonly selectTrackItems: () => boolean;
   readonly paste: () => boolean;
   readonly delete: () => boolean;
   readonly nudgeLeft: () => boolean;
@@ -56,9 +59,12 @@ export function handleTimelineEditorShortcut(
     return false;
   }
   if (event.ctrlKey || event.metaKey) {
+    if (!event.shiftKey && key === 'a') return commands.selectAll();
+    if (!event.shiftKey && key === 'l') return commands.selectTrackItems();
     if (key === 'z') return event.shiftKey ? commands.redo() : commands.undo();
     if (key === 'y' && !event.shiftKey) return commands.redo();
     if (!event.shiftKey && key === 'c') return commands.copy();
+    if (!event.shiftKey && key === 'x') return commands.cut();
     if (!event.shiftKey && key === 'v') return commands.paste();
     return false;
   }

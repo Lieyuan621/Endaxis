@@ -44,6 +44,11 @@ const sections = computed(() => [
       [t('timeline.shortcuts.keys.undo'), t('timeline.shortcuts.items.undo')],
       [t('timeline.shortcuts.keys.redo'), t('timeline.shortcuts.items.redo')],
       [t('timeline.shortcuts.keys.copy'), t('timeline.shortcuts.items.copy')],
+      [t('timeline.shortcuts.keys.cut'), t('timeline.shortcuts.items.cut')],
+      [
+        t('timeline.shortcuts.keys.selectTrackContents'),
+        t('timeline.shortcuts.items.selectTrackContents'),
+      ],
       [t('timeline.shortcuts.keys.paste'), t('timeline.shortcuts.items.paste')],
       [t('timeline.shortcuts.keys.delete'), t('timeline.shortcuts.items.delete')],
       [t('timeline.shortcuts.keys.nudgeLeft'), t('timeline.shortcuts.items.nudgeLeft')],

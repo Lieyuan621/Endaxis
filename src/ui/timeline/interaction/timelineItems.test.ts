@@ -11,6 +11,7 @@ import {
 import {
   createTimelineEditorSelection,
   selectTimelineItem,
+  selectTimelineItemRange,
   selectedTimelineSkills,
 } from './timelineEditorSelection';
 import { copyTimelineItems, pasteTimelineActions } from './timelineClipboard';
@@ -55,6 +56,26 @@ const key = (kind: Parameters<typeof timelineItemKey>[0]['kind'], id: string) =>
   timelineItemKey({ kind, id });
 
 describe('mixed timeline objects', () => {
+  it('expands selection from a chain to a track and all tracks without global markers', () => {
+    const scenario = fixture();
+    scenario.tracks[1] = {
+      ...scenario.tracks[0]!,
+      id: 'other',
+      skillCasts: [{ ...scenario.tracks[0]!.skillCasts[0]!, id: 'other-skill' }],
+      consumableUses: [],
+    };
+    const items = collectTimelineItems(scenario);
+    const anchor = items.get(key('skill', 'tail'))!;
+    expect([...selectTimelineItemRange(items, 'group', anchor).selectedIds]).toEqual([
+      key('skill', 'head'),
+      key('skill', 'tail'),
+    ]);
+    const track = selectTimelineItemRange(items, 'track', anchor).selectedIds;
+    expect(track.has(key('dodge', 'same-id'))).toBe(true);
+    expect(track.has(key('controlSwitch', 'same-id'))).toBe(true);
+    expect(track.has(key('skill', 'other-skill'))).toBe(false);
+    expect(selectTimelineItemRange(items, 'all').selectedIds.size).toBe(track.size + 1);
+  });
   it('shares selection across types without colliding IDs, and right-click preserves the set', () => {
     const items = collectTimelineItems(fixture());
     let selection = createTimelineEditorSelection(0);

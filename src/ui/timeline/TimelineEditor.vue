@@ -316,6 +316,7 @@ import {
   selectedTimelineSkills,
   selectTimelineActionsIdentity,
   selectTimelineItem,
+  selectTimelineItemRange,
   selectTimelineMarkerIdentity,
   selectTimelineTrackIdentity,
   type TimelineMarkerKind,
@@ -2605,6 +2606,7 @@ const {
   simulate: ensureCurrentSimulation,
   blocked: () => ElMessage.warning(t('timelineGrid.action.locked')),
   dropped: (event, items) => {
+    itemClickSequence = null;
     if (items.length === 1 && items[0]!.ref.kind === 'skill')
       offerJoinContinuousGroup(event, items[0]!.trackIndex!, [items[0]!.ref.id]);
   },
@@ -4613,9 +4615,44 @@ function itemDragging(kind: TimelineItemKind, id: string): boolean {
     gesture.plan.items.some(item => item.key === timelineItemKey({ kind, id }))
   );
 }
+let itemClickSequence: { key: string; count: number; scenarioId: string } | null = null;
+function selectItemRange(
+  scope: 'group' | 'track' | 'all',
+  anchor = primaryItem.value ?? undefined,
+): boolean {
+  applyItemSelection(
+    selectTimelineItemRange(
+      timelineItems.value,
+      scope,
+      anchor,
+      anchor?.trackIndex ?? selectedTrack.value,
+    ),
+  );
+  return true;
+}
 function handleItemSelection(event: MouseEvent, kind: TimelineItemKind, id: string): void {
-  if (consumeItemClick(timelineItemKey({ kind, id }))) return;
-  selectItem(kind, id, event.ctrlKey || event.metaKey);
+  const key = timelineItemKey({ kind, id });
+  if (consumeItemClick(key)) {
+    itemClickSequence = null;
+    return;
+  }
+  if (event.ctrlKey || event.metaKey) {
+    itemClickSequence = null;
+    selectItem(kind, id, true);
+    return;
+  }
+  const count =
+    event.detail > 1 &&
+    itemClickSequence?.key === key &&
+    itemClickSequence.scenarioId === scenario.value.id
+      ? itemClickSequence.count + 1
+      : 1;
+  itemClickSequence = { key, count, scenarioId: scenario.value.id };
+  const item = timelineItems.value.get(key);
+  if (item?.trackIndex !== undefined && count >= 4) selectItemRange('all', item);
+  else if (item?.trackIndex !== undefined && count === 3) selectItemRange('track', item);
+  else if (item && kind === 'skill' && count === 2) selectItemRange('group', item);
+  else selectItem(kind, id);
 }
 function handleActionSelection(event: MouseEvent, id: string): void {
   handleItemSelection(event, 'skill', id);
@@ -5860,9 +5897,9 @@ async function compactSelectedSkills(): Promise<void> {
   commitScenario('compactSelectedSkills', () => compacted);
 }
 
-function pasteClipboardAtTimelinePosition(): void {
+function pasteClipboardAtTimelinePosition(frame?: number): boolean {
   const clipboard = timelineClipboard.value;
-  if (clipboard === null) return;
+  if (clipboard === null) return false;
   const minimumFrame = minimumEditableInputFrame.value;
   const pasteFrame =
     timelinePointerClientX.value === null
@@ -5873,11 +5910,41 @@ function pasteClipboardAtTimelinePosition(): void {
           minimumFrame,
         )
       : pointerMarkerFrame(timelinePointerClientX.value, 0, minimumFrame);
-  const result = pasteTimelineActions(scenario.value, clipboard, pasteFrame, ids);
-  if (!result.itemRefs.length) return;
-  if (!commitScenario('pasteTimelineItems', () => result.scenario)) return;
+  const result = pasteTimelineActions(scenario.value, clipboard, frame ?? pasteFrame, ids);
+  if (!result.itemRefs.length) return false;
+  if (!commitScenario('pasteTimelineItems', () => result.scenario)) return false;
   const keys = result.itemRefs.map(timelineItemKey);
   applyItemSelection({ selectedIds: new Set(keys), primaryId: keys.at(-1) ?? null });
+  return true;
+}
+
+function cutSelectedActions(): boolean {
+  const items = selectedItems.value;
+  if (!items.length) return false;
+  if (items.some(item => item.blocked)) {
+    ElMessage.warning(t('timelineGrid.action.locked'));
+    return true;
+  }
+  const clipboard = copyTimelineItems(scenario.value, items, displayedSkillCastStartFrames.value);
+  if (!clipboard) return false;
+  // 删除提交成功后才替换剪贴板，失败时保留原选区和上一次复制内容。
+  if (!commitScenario('removeTimelineItems', current => removeTimelineItems(current, items)))
+    return false;
+  timelineClipboard.value = clipboard;
+  clearTimelineSelection();
+  return true;
+}
+
+function cutContextSelection(): void {
+  cutSelectedActions();
+  contextMenuTarget.value = null;
+  markerContextTarget.value = null;
+}
+
+function pasteContextSelection(): void {
+  const frame = markerContextTarget.value?.frame;
+  pasteClipboardAtTimelinePosition(frame);
+  markerContextTarget.value = null;
 }
 
 function copySelectedActions(): boolean {
@@ -5972,8 +6039,8 @@ function copySelectedActionsByShortcut(): boolean {
 
 function pasteSelectedActionsByShortcut(): boolean {
   if (timelineClipboard.value === null) return false;
-  pasteClipboardAtTimelinePosition();
-  ElMessage.success({ message: t('timeline.shortcut.pasted'), duration: 800 });
+  if (pasteClipboardAtTimelinePosition())
+    ElMessage.success({ message: t('timeline.shortcut.pasted'), duration: 800 });
   return true;
 }
 
@@ -6077,6 +6144,7 @@ useKeyboardShortcutScope({
   handleClipboard: event => {
     if (isKeyboardShortcutIsolationTarget(event.target)) return false;
     if (event.type === 'copy') return copySelectedActionsByShortcut();
+    if (event.type === 'cut') return cutSelectedActions();
     if (event.type !== 'paste') return false;
     return pasteSelectedActionsByShortcut();
   },
@@ -6086,6 +6154,9 @@ useKeyboardShortcutScope({
       undo: () => restoreEditorHistoryByShortcut('undo'),
       redo: () => restoreEditorHistoryByShortcut('redo'),
       copy: copySelectedActionsByShortcut,
+      cut: cutSelectedActions,
+      selectAll: () => selectItemRange('all'),
+      selectTrackItems: () => selectItemRange('track'),
       paste: pasteSelectedActionsByShortcut,
       delete: deleteSelectionByShortcut,
       nudgeLeft: () => nudgeSelectedActions(-1),
@@ -8156,6 +8227,7 @@ function setMobileGuideFrame(frame: number | null): void {
     @close="groupInsertPrompt = null"
   />
   <TimelineActionContextMenu
+    @cut="cutContextSelection"
     :input-read-only="[...actionSelection.selectedIds].some(isHistoricalSkillInput)"
     :delete-disabled="selectedItems.some(item => item.blocked)"
     :skill-options="onlySkillsSelected"
@@ -8196,6 +8268,9 @@ function setMobileGuideFrame(frame: number | null): void {
     @set-color="setContextCastColor"
   />
   <TimelineMarkerContextMenu
+    :can-paste="timelineClipboard !== null"
+    @cut="cutContextSelection"
+    @paste="pasteContextSelection"
     :cycle-boundary="
       selectedItems.length === 1 && markerContextTarget?.existing?.kind === 'cycleBoundary'
     "
