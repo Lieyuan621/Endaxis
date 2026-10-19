@@ -7,6 +7,7 @@
  */
 import { convertLegacyGlobalConfig } from './globalConfigConversion';
 import type { GameDataRepository } from '../../core/game-data/gameDataRepository';
+import { resolveUniquePlayerActionForSkill } from '../../core/game-data/resolvePlayerActionRoute';
 import {
   layoutSkillGroupPlacement,
   resolveSkillGroupPlacementSkills,
@@ -257,7 +258,18 @@ function migrateTrack(
       ({ source: resolvedSource, offsetFrames }, sequenceIndex) =>
         ({
           id: sequenceIndex === 0 ? baseId : `${baseId}:sequence:${sequenceIndex}`,
-          source: resolvedSource,
+          source:
+            resolvedSource.kind === 'operatorSkill'
+              ? {
+                  ...resolvedSource,
+                  action:
+                    resolvedSource.action ??
+                    resolveUniquePlayerActionForSkill(
+                      repository.getOperator(operatorSlug)!,
+                      resolvedSource.skillKey,
+                    ),
+                }
+              : resolvedSource,
           placement: { startFrame: startFrame + offsetFrames },
         }) satisfies SkillCastDocument,
     );

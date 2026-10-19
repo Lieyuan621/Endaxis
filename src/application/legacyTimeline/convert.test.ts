@@ -40,6 +40,11 @@ it('保留时间允许同轴重叠，不保存切面且不改变原始输入', (
   expect(
     preserved.project!.scenarios[0]!.tracks[0]!.skillCasts.map(c => c.placement.startFrame),
   ).toEqual([162, 163]);
+  expect(
+    preserved.project!.scenarios[0]!.tracks[0]!.skillCasts.map(c =>
+      c.source.kind === 'operatorSkill' ? c.source.action : undefined,
+    ),
+  ).toEqual(['battleSkill', 'battleSkill']);
   expect(input).toEqual(original);
 });
 
