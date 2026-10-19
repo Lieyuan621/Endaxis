@@ -4,43 +4,53 @@ import {
   contingencyContractOmittedTagReasons,
   contingencyContractTagDefinitions,
   contingencyContractInitializationPlans,
-  contingencyContractEnemyMaxHealthPlans,
 } from './generated/contingencyContractDefinitions.generated';
 import { CONTINGENCY_CONTRACT_MECHANIC_PREFIX } from './contingencyContractAdapter';
+import { seasonTwoPreviewTags } from './previewSeasonTwo';
 
 export type ContingencyContractTagSupport = 'supported' | 'blocked' | 'omitted';
+export const contingencyContractSeasons = [
+  { id: 1, nameKey: 'contingencyContract.operationName' },
+  { id: 2, nameKey: 'contingencyContract.preview.operationName' },
+] as const;
 
 export interface ContingencyContractTagPresentation extends ContingencyContractTagDefinition {
+  readonly season: number;
   readonly support: ContingencyContractTagSupport;
   readonly supportReason?: string;
 }
 
-const supportedIds = new Set([
-  ...contingencyContractInitializationPlans.map(plan => plan.tagId),
-  ...contingencyContractEnemyMaxHealthPlans.map(plan => plan.tagId),
-]);
+const supportedIds = new Set([...contingencyContractInitializationPlans.map(plan => plan.tagId)]);
 
 export const contingencyContractTags: readonly ContingencyContractTagPresentation[] = Object.freeze(
-  contingencyContractTagDefinitions.map(tag => {
-    const support: ContingencyContractTagSupport = supportedIds.has(tag.tagId)
-      ? 'supported'
-      : Object.hasOwn(contingencyContractBlockedTagReasons, tag.tagId)
-        ? 'blocked'
-        : 'omitted';
-    const supportReason =
-      support === 'blocked'
-        ? contingencyContractBlockedTagReasons[tag.tagId]
-        : support === 'omitted'
-          ? contingencyContractOmittedTagReasons[tag.tagId]
-          : undefined;
-    return Object.freeze({
+  [
+    ...contingencyContractTagDefinitions.map<ContingencyContractTagPresentation>(tag => {
+      const support: ContingencyContractTagSupport = supportedIds.has(tag.tagId)
+        ? 'supported'
+        : Object.hasOwn(contingencyContractBlockedTagReasons, tag.tagId)
+          ? 'blocked'
+          : 'omitted';
+      const supportReason =
+        support === 'blocked'
+          ? contingencyContractBlockedTagReasons[tag.tagId]
+          : support === 'omitted'
+            ? contingencyContractOmittedTagReasons[tag.tagId]
+            : undefined;
+      return Object.freeze({
+        ...tag,
+        season: 1 as const,
+        lockIds: Object.freeze([...tag.lockIds]),
+        blackboard: Object.freeze(tag.blackboard),
+        support,
+        ...(supportReason === undefined ? {} : { supportReason }),
+      });
+    }),
+    ...seasonTwoPreviewTags.map(tag => ({
       ...tag,
-      lockIds: Object.freeze([...tag.lockIds]),
-      blackboard: Object.freeze(tag.blackboard),
-      support,
-      ...(supportReason === undefined ? {} : { supportReason }),
-    });
-  }),
+      season: 2 as const,
+      support: 'supported' as const,
+    })),
+  ],
 );
 
 export function contingencyContractMechanicId(tagId: number): string {

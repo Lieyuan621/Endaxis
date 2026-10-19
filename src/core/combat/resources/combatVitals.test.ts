@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { COMBAT_FRAME_INTERVAL } from '../time/combatClock';
 import { CombatVitals } from './combatVitals';
+import {
+  CombatAttributeSet,
+  attributeModifierValues,
+  createCombatAttributeModifier,
+} from '../attributes/combatAttributes';
+import { ATTRIBUTE_MODIFIER_SOURCES } from '../state/foundationState';
 import { createStateTestSession } from '../../../test/stateTestSession';
 import {
   registerVitalsHealthFloor,
@@ -24,6 +30,57 @@ function createVitals(overrides: Partial<ConstructorParameters<typeof CombatVita
 }
 
 describe('CombatVitals', () => {
+  it('最大生命修正保留比例，重复登记不重算，切面恢复后移除仍正确', () => {
+    const vitals = createVitals({ health: 400 });
+    const attributes = new CombatAttributeSet<string>();
+    attributes.define('MaxHp', 1000, { minimum: 0 });
+    attributes.bindChangeObserver('MaxHp', (value, previous) =>
+      vitals.synchronizeMaxHealth(value, previous),
+    );
+    const modifier = createCombatAttributeModifier(
+      'MaxHp',
+      attributeModifierValues('finalMultiplier', 1.5),
+      ATTRIBUTE_MODIFIER_SOURCES.buff,
+      'runtime',
+    );
+    const changes: number[] = [];
+    vitals.bindHealthChangeObserver(() => changes.push(vitals.health));
+    attributes.addModifier(modifier);
+    attributes.addModifier(modifier);
+    const replacement = { ...modifier };
+    attributes.batchChanges(() => {
+      attributes.addModifier(replacement);
+      attributes.removeModifier(modifier);
+    });
+    expect([vitals.health, vitals.maxHealth]).toEqual([600, 1500]);
+    expect(changes).toEqual([600]);
+    const state = structuredClone({
+      vitals: vitals.runtimeState,
+      attributes: attributes.runtimeState,
+    });
+    const restored = CombatVitals.bindRuntimeState(state.vitals);
+    const restoredAttributes = new CombatAttributeSet(state.attributes);
+    restoredAttributes.bindChangeObserver('MaxHp', (value, previous) =>
+      restored.synchronizeMaxHealth(value, previous),
+    );
+    const restoredChanges: number[] = [];
+    restored.bindHealthChangeObserver(() => restoredChanges.push(restored.health));
+    expect(restoredChanges).toEqual([]);
+    restoredAttributes.removeModifier(state.attributes.modifiers[0]!);
+    expect([restored.health, restored.maxHealth]).toEqual([400, 1000]);
+    expect(restoredChanges).toEqual([400]);
+    expect(vitals.health).toBe(600);
+  });
+  it('生命上限下降仍受生命下限限制，零上限后不产生 NaN', () => {
+    const vitals = createVitals({ health: 400 });
+    vitals.requestHealthFloor(400);
+    vitals.synchronizeMaxHealth(500, 1000);
+    expect(vitals.health).toBe(400);
+    vitals.synchronizeMaxHealth(0, 500);
+    expect(vitals.health).toBe(0);
+    vitals.synchronizeMaxHealth(1000, 0);
+    expect(vitals.health).toBe(0);
+  });
   it('生命写入后同步通知，满血治疗不通知，切面恢复不重放通知', () => {
     const vitals = createVitals();
     const changes: number[] = [];

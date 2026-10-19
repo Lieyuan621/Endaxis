@@ -813,9 +813,9 @@ export class CombatBuff<Key extends string> {
       this.owner.registerShields(this.shields);
       this.owner.registerSustainedProtection(this);
       this.addApplyTags();
-      for (const modifier of this.attributeModifiers) {
-        this.owner.attributes.addModifier(modifier);
-      }
+      this.owner.attributes.batchChanges(() => {
+        for (const modifier of this.attributeModifiers) this.owner.attributes.addModifier(modifier);
+      });
       this.registerSharedSpGainModifiers();
     } catch (error) {
       this.unregisterSharedSpGainModifiers();
@@ -1063,7 +1063,9 @@ export class CombatBuff<Key extends string> {
   }
 
   private removeAttributeModifiers(): void {
-    removeBuffAttributeModifiers(this.#state.attributes, this.owner.attributes);
+    this.owner.attributes.batchChanges(() =>
+      removeBuffAttributeModifiers(this.#state.attributes, this.owner.attributes),
+    );
   }
 
   private registerSharedSpGainModifiers(): void {
@@ -1125,11 +1127,13 @@ export class CombatBuff<Key extends string> {
 
   private replaceAttributeModifiers(replacements: readonly CombatAttributeModifier<Key>[]): void {
     const previous = this.attributeModifiers;
-    replaceBuffAttributeModifiers(
-      this.#state.attributes,
-      this.#state.lifecycle.enabled,
-      replacements,
-      this.owner.attributes,
+    this.owner.attributes.batchChanges(() =>
+      replaceBuffAttributeModifiers(
+        this.#state.attributes,
+        this.#state.lifecycle.enabled,
+        replacements,
+        this.owner.attributes,
+      ),
     );
     // 所有重建路径都使用同一事实观察：显式刷新、自动增强、消费减层以及 Modify。
     this.owner.onBuffAttributeModifiersRefreshed?.(this, previous);

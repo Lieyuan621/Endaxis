@@ -119,15 +119,6 @@ function validateContribution(
   occupiedLevelEvents: Set<string>,
 ): void {
   assertDataOnly(contribution, path);
-  if (contribution.kind === 'enemyProgramStatMultiplier') {
-    if (contribution.multiplier <= 0) {
-      throw new MechanicCompilationError(
-        'enemy stat multiplier must be positive',
-        `${path}.multiplier`,
-      );
-    }
-    return;
-  }
   if (contribution.kind === 'battleInitializationSequence') return;
   if (contribution.kind === 'combatEventSequence') {
     if (!Number.isInteger(contribution.priority)) {

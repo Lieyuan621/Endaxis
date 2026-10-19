@@ -7,7 +7,6 @@
 import type { PlayerDamageDefenderSnapshot } from '../combat/damage/playerActiveDamageInput';
 import type { CombatEnemyProgram } from '../combat/runtime/combatRuntimeAssembly';
 import type { EnemyDocument } from '../project/schema';
-import type { CompiledMechanics } from '../scenarioMechanics/mechanicCompiler';
 
 const RESISTIBLE_DAMAGE_TYPES = [
   'physical',
@@ -101,26 +100,6 @@ export function compileScenarioEnemy(enemy: EnemyDocument): CombatEnemyProgram {
       ),
     },
   };
-}
-
-/**
- * 应用必须发生在敌人动态账本创建前的场景机制。这里保持纯函数，场景装配和标准模拟入口
- * 共用同一条路径，避免静态程序、生命账本与最终投影各自解释机制。
- */
-export function applyMechanicsToScenarioEnemy(
-  enemy: CombatEnemyProgram,
-  mechanics: CompiledMechanics,
-): CombatEnemyProgram {
-  let health = enemy.health;
-  for (const entry of mechanics.contributions) {
-    const contribution = entry.contribution;
-    if (contribution.kind !== 'enemyProgramStatMultiplier') continue;
-    if (contribution.stat === 'maxHealth') health *= contribution.multiplier;
-  }
-  if (!Number.isFinite(health) || health < 0) {
-    throw new RangeError('mechanic-adjusted enemy health must be finite and non-negative');
-  }
-  return health === enemy.health ? enemy : Object.freeze({ ...enemy, health });
 }
 
 function compileKnotThresholds(values: readonly number[]): readonly number[] {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { EnemyHealthChangePoint } from './enemyHealthChangePoints';
-import { projectEnemyHealthCurve } from './enemyHealthCurves';
+import { projectEnemyHealthCurve, projectEnemyHealthCurveFromReceipt } from './enemyHealthCurves';
 
 const INITIAL = { health: 10000, maxHealth: 10000 };
 
@@ -18,6 +18,39 @@ function change(overrides: Partial<EnemyHealthChangePoint> = {}): EnemyHealthCha
 }
 
 describe('projectEnemyHealthCurve', () => {
+  it('最大生命变化使用独立事实接续曲线，不伪装成治疗', () => {
+    const curve = projectEnemyHealthCurveFromReceipt({ health: 400, maxHealth: 1000 }, [
+      {
+        sequence: 1,
+        frame: 0,
+        time: 0,
+        event: 'MaxHealthChanged',
+        sourceId: 'enemy',
+        targetId: 'enemy',
+        data: { previousHealth: 400, currentHealth: 600, previousMaxHealth: 1000, maxHealth: 1500 },
+      },
+      {
+        sequence: 2,
+        frame: 30,
+        time: 1,
+        event: 'DamageApplied',
+        sourceId: 'caster',
+        targetId: 'enemy',
+        data: { actualDamage: 150, remainingHealth: 450 },
+      },
+      {
+        sequence: 3,
+        frame: 60,
+        time: 2,
+        event: 'MaxHealthChanged',
+        sourceId: 'enemy',
+        targetId: 'enemy',
+        data: { previousHealth: 450, currentHealth: 300, previousMaxHealth: 1500, maxHealth: 1000 },
+      },
+    ]);
+    expect(curve.points.map(point => point.value)).toEqual([400, 600, 450, 300]);
+    expect(curve.maxValue).toBe(1500);
+  });
   it('从初始生命生成稀疏曲线并保留全部变化点', () => {
     const changes = [
       change(),

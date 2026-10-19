@@ -50,7 +50,7 @@ const blockingStateKeys: Readonly<Record<string, string>> = {
   'Status/Immobilized/Stunned': 'stunned',
   'Status/Immobilized/KnockDown': 'knockedDown',
   'Status/Immobilized/Airborne': 'airborne',
-  'Status/Immobilized/Getup': 'gettingUp'
+  'Status/Immobilized/Getup': 'gettingUp',
 };
 
 const warningKeys: Record<
@@ -62,6 +62,7 @@ const warningKeys: Record<
   string
 > = {
   resourceUnavailable: 'resourceUnavailable',
+  skillLocked: 'skillLocked',
   cooldownUnavailable: 'cooldownUnavailable',
   skillInputMismatch: 'inputMismatch',
   skillInputUnknown: 'inputUnknown',

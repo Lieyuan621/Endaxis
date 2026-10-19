@@ -60,7 +60,6 @@ interface Arguments extends ContingencyContractDefinitionSourceArguments {
 
 export interface ContingencyContractSimulationScope {
   readonly supportedTagIds: ReadonlySet<number>;
-  readonly enemyMaxHealthTagIds: ReadonlySet<number>;
   readonly blockedTagReasons: ReadonlyMap<number, string>;
   readonly omittedTagReasons: ReadonlyMap<number, string>;
 }
@@ -71,17 +70,11 @@ export interface ContingencyContractInitializationPlan {
   readonly actionGraph: ActionGraphResourceDefinition;
 }
 
-export interface ContingencyContractEnemyMaxHealthPlan {
-  readonly tagId: number;
-  readonly multiplier: number;
-}
-
 /** 来源校验和行为闭包完成后的结果；可先收集黑板用途，再直接渲染这一批内容。 */
 export interface CompiledContingencyContractDefinitions {
   readonly tags: ReturnType<typeof compileContingencyContractTagDefinitions>;
   readonly buffDefinitions: OperatorBuffDefinitions;
   readonly initializationPlans: readonly ContingencyContractInitializationPlan[];
-  readonly enemyMaxHealthPlans: readonly ContingencyContractEnemyMaxHealthPlan[];
   readonly scope: ContingencyContractSimulationScope;
   readonly revision: string;
 }
@@ -97,11 +90,6 @@ function readScope(file: string): ContingencyContractSimulationScope {
       requireInteger(entry, `${file}.supportedTagIds[${index}]`),
     ),
   );
-  const enemyMaxHealthTagIds = new Set(
-    requireArray(value.enemyMaxHealthTagIds, `${file}.enemyMaxHealthTagIds`).map((entry, index) =>
-      requireInteger(entry, `${file}.enemyMaxHealthTagIds[${index}]`),
-    ),
-  );
   const readReasons = (field: 'blockedTagReasons' | 'omittedTagReasons') => {
     const record = requireRecord(value[field], `${file}.${field}`);
     const result = new Map<number, string>();
@@ -115,12 +103,6 @@ function readScope(file: string): ContingencyContractSimulationScope {
   const omittedTagReasons = readReasons('omittedTagReasons');
   const classified = new Map<number, string>();
   for (const id of supportedTagIds) classified.set(id, 'supported');
-  for (const id of enemyMaxHealthTagIds) {
-    const previous = classified.get(id);
-    if (previous !== undefined)
-      throw new Error(`${file}: tag ${id} is both ${previous} and enemyMaxHealth`);
-    classified.set(id, 'enemyMaxHealth');
-  }
   for (const [id] of blockedTagReasons) {
     const previous = classified.get(id);
     if (previous !== undefined)
@@ -133,7 +115,7 @@ function readScope(file: string): ContingencyContractSimulationScope {
       throw new Error(`${file}: tag ${id} is both ${previous} and omitted`);
     classified.set(id, 'omitted');
   }
-  return { supportedTagIds, enemyMaxHealthTagIds, blockedTagReasons, omittedTagReasons };
+  return { supportedTagIds, blockedTagReasons, omittedTagReasons };
 }
 
 function validateScope(
@@ -143,7 +125,6 @@ function validateScope(
   const catalogIds = new Set(catalog.tags.map(tag => tag.tagId));
   for (const id of [
     ...scope.supportedTagIds,
-    ...scope.enemyMaxHealthTagIds,
     ...scope.blockedTagReasons.keys(),
     ...scope.omittedTagReasons.keys(),
   ]) {
@@ -152,7 +133,6 @@ function validateScope(
   const unclassified = [...catalogIds].filter(
     id =>
       !scope.supportedTagIds.has(id) &&
-      !scope.enemyMaxHealthTagIds.has(id) &&
       !scope.blockedTagReasons.has(id) &&
       !scope.omittedTagReasons.has(id),
   );
@@ -211,25 +191,6 @@ export function compileContingencyContractDefinitionsFromFiles(
   };
   const definitions: Record<string, CompiledBuffDefinitionSource> = {};
   const plans: ContingencyContractInitializationPlan[] = [];
-  const enemyMaxHealthPlans: ContingencyContractEnemyMaxHealthPlan[] = [];
-
-  for (const tag of catalog.tags.filter(tag => scope.enemyMaxHealthTagIds.has(tag.tagId))) {
-    if (tag.terms.length !== 1) {
-      throw new Error(`enemy max-health tag ${tag.tagId} must contain exactly one term`);
-    }
-    const term = tag.terms[0]!;
-    if (term.kind !== 'enemyBuff' || term.buffId !== 'buff_cc_enemy_common_hp_up') {
-      throw new Error(`enemy max-health tag ${tag.tagId} has an unexpected native Buff source`);
-    }
-    if (term.blackboard.length !== 1 || term.blackboard[0]?.key !== 'hp_up') {
-      throw new Error(`enemy max-health tag ${tag.tagId} must define only the hp_up blackboard`);
-    }
-    const multiplier = term.blackboard[0].value;
-    if (!Number.isFinite(multiplier) || multiplier <= 0) {
-      throw new Error(`enemy max-health tag ${tag.tagId} has invalid hp_up ${multiplier}`);
-    }
-    enemyMaxHealthPlans.push({ tagId: tag.tagId, multiplier });
-  }
 
   for (const tag of catalog.tags.filter(tag => scope.supportedTagIds.has(tag.tagId))) {
     const graph = createActionGraphBuilder();
@@ -299,7 +260,6 @@ export function compileContingencyContractDefinitionsFromFiles(
     buffDefinitions: definitions,
     tags: compileContingencyContractTagDefinitions(catalog),
     initializationPlans: plans,
-    enemyMaxHealthPlans,
     scope,
     revision,
   };
@@ -319,13 +279,7 @@ export async function renderContingencyContractDefinitionsFromCompiled(
   optimization: DefinitionOptimizationMode = 'apply',
   sharedUsage?: GraphSharedEntityValueUsage,
 ) {
-  const {
-    buffDefinitions,
-    initializationPlans: plans,
-    enemyMaxHealthPlans,
-    scope,
-    revision,
-  } = compiled;
+  const { buffDefinitions, initializationPlans: plans, scope, revision } = compiled;
   const { value: finalized, report } = finalizeDefinitionResources<{
     readonly buffDefinitions: Contract.OperatorBuffDefinitions;
     readonly initializationPlans: readonly {
@@ -350,7 +304,6 @@ import type { ActionGraphReference } from '../../../../packages/game-data-contra
 ${renderCommonBuffDefinitionsSource(definitions, 'contingencyContractBuffDefinitions')}
 export const contingencyContractTagDefinitions = Object.freeze<readonly ContingencyContractTagDefinition[]>(${JSON.stringify(compiled.tags, null, 2)});
 export const contingencyContractInitializationPlans = Object.freeze<readonly { readonly tagId: number; readonly sequence: ActionGraphReference; readonly actionGraph: ActionGraphResourceDefinition }[]>(${renderGraphValue(graphPlans)});
-export const contingencyContractEnemyMaxHealthPlans = Object.freeze(${JSON.stringify(enemyMaxHealthPlans, null, 2)}) as readonly { readonly tagId: number; readonly multiplier: number }[];
 export const contingencyContractBlockedTagReasons = Object.freeze(${JSON.stringify(Object.fromEntries(scope.blockedTagReasons), null, 2)}) as Readonly<Record<number, string>>;
 export const contingencyContractOmittedTagReasons = Object.freeze(${JSON.stringify(Object.fromEntries(scope.omittedTagReasons), null, 2)}) as Readonly<Record<number, string>>;
 export const contingencyContractDefinitionRevision = ${JSON.stringify(revision)};
@@ -361,7 +314,7 @@ export const contingencyContractDefinitionRevision = ${JSON.stringify(revision)}
   return {
     files,
     summary: {
-      supportedTagCount: plans.length + enemyMaxHealthPlans.length,
+      supportedTagCount: plans.length,
       blockedTagCount: scope.blockedTagReasons.size,
       omittedTagCount: scope.omittedTagReasons.size,
       buffDefinitionCount: Object.keys(definitions).length,

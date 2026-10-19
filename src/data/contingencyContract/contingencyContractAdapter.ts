@@ -8,10 +8,11 @@ import { ActionGraphDefinitionRepository } from '../../core/compiler/actionGraph
 import {
   contingencyContractDefinitionRevision,
   contingencyContractBlockedTagReasons,
-  contingencyContractEnemyMaxHealthPlans,
-  contingencyContractInitializationPlans,
   contingencyContractOmittedTagReasons,
 } from './generated/contingencyContractDefinitions.generated';
+import { contingencyContractInitializationPlans } from './definitions';
+import { contractInitialVariables, resolveContractInitialVariables } from './definitions';
+import { withContractInitialVariables } from './initialVariables';
 
 export const CONTINGENCY_CONTRACT_MECHANIC_PREFIX = 'contingency-contract:tag:';
 
@@ -23,17 +24,10 @@ const planByMechanicId = new Map(
     plan,
   ]),
 );
-const enemyMaxHealthPlanByMechanicId = new Map(
-  contingencyContractEnemyMaxHealthPlans.map(plan => [
-    `${CONTINGENCY_CONTRACT_MECHANIC_PREFIX}${plan.tagId}`,
-    plan,
-  ]),
-);
 
 const allTagIds = [
   ...new Set([
     ...contingencyContractInitializationPlans.map(plan => plan.tagId),
-    ...contingencyContractEnemyMaxHealthPlans.map(plan => plan.tagId),
     ...Object.keys(contingencyContractBlockedTagReasons).map(Number),
     ...Object.keys(contingencyContractOmittedTagReasons).map(Number),
   ]),
@@ -46,7 +40,13 @@ export const contingencyContractMechanicDefinitions: readonly MechanicDefinition
         id: `${CONTINGENCY_CONTRACT_MECHANIC_PREFIX}${tagId}`,
         family: 'contingencyContract' as const,
         revision: contingencyContractDefinitionRevision,
-        parameters: Object.freeze([]),
+        parameters: Object.freeze(
+          contractInitialVariables(tagId).map(field => ({
+            ...field,
+            type: 'number' as const,
+            required: false,
+          })),
+        ),
       }),
     ),
   );
@@ -56,21 +56,6 @@ export const contingencyContractMechanicAdapter: MechanicAdapter = Object.freeze
   revision: contingencyContractDefinitionRevision,
   compile(input: MechanicAdapterInput): readonly MechanicContribution[] {
     const plan = planByMechanicId.get(input.definition.id);
-    const enemyMaxHealthPlan = enemyMaxHealthPlanByMechanicId.get(input.definition.id);
-    if (enemyMaxHealthPlan !== undefined) {
-      if (Object.keys(input.parameters).length > 0) {
-        throw new Error(
-          `Contingency Contract tag '${enemyMaxHealthPlan.tagId}' does not accept parameters`,
-        );
-      }
-      return [
-        {
-          kind: 'enemyProgramStatMultiplier',
-          stat: 'maxHealth',
-          multiplier: enemyMaxHealthPlan.multiplier,
-        },
-      ];
-    }
     if (plan === undefined) {
       const tagId = Number(input.definition.id.slice(CONTINGENCY_CONTRACT_MECHANIC_PREFIX.length));
       if (
@@ -81,14 +66,18 @@ export const contingencyContractMechanicAdapter: MechanicAdapter = Object.freeze
       }
       throw new Error(`unknown Contingency Contract mechanic '${input.definition.id}'`);
     }
-    if (Object.keys(input.parameters).length > 0) {
-      throw new Error(`Contingency Contract tag '${plan.tagId}' does not accept parameters`);
-    }
+    const values = resolveContractInitialVariables(plan.tagId, input.parameters);
+    const changed = contractInitialVariables(plan.tagId).some(
+      field => values[field.key] !== field.defaultValue,
+    );
     return [
       {
         kind: 'battleInitializationSequence',
         sequence: programs
-          .compile(plan.actionGraph, 0)
+          .compile(
+            changed ? withContractInitialVariables(plan.actionGraph, values) : plan.actionGraph,
+            0,
+          )
           .compileEntry(plan.sequence, `ContingencyContract.${plan.tagId}.initialization`),
       },
     ];

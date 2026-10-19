@@ -6,6 +6,7 @@ import {
   compileFixedCombatInputSchedule,
 } from './compileFixedCombatInputSchedule';
 import { IncrementalScenarioSimulation } from './incrementalScenarioSimulation';
+import { projectPreviewSeasonTwoDiagnostics } from './previewSeasonTwoDiagnostics';
 import { InheritedScenarioSimulation } from './inheritedScenarioSimulation';
 import { planRecursiveSkillChain, type RecursiveSkillChain } from './recursiveSkillChain';
 /**
@@ -476,9 +477,14 @@ export class ScenarioSimulationService {
           result.receiptEntries,
           -scenario.battle.prepFrames,
         ),
-        availabilityDiagnostics: freezeDiagnostics(
-          projectSkillAvailabilityDiagnostics(result.receiptEntries),
-        ),
+        availabilityDiagnostics: freezeDiagnostics([
+          ...projectSkillAvailabilityDiagnostics(result.receiptEntries),
+          ...projectPreviewSeasonTwoDiagnostics(
+            result.receiptEntries,
+            scenario,
+            this.#options.index,
+          ),
+        ]),
         executionDiagnostics: freezeDiagnostics(
           projectSkillExecutionDiagnostics(result.receiptEntries),
         ),

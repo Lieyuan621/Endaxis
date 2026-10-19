@@ -52,10 +52,15 @@ export type PoiseTimerTransition = 'poiseRecovered' | 'poiseBrokenTagEnded';
 /** 现有宿主接口；动作宿主保存生命下限编号，恢复后可在当前分支按编号移除。 */
 export class CombatVitals {
   readonly runtimeState: CombatVitalsState;
-  private healthChanged?: () => void;
+  private healthChanged?: (maximumChange?: {
+    previousHealth: number;
+    previousMaxHealth: number;
+  }) => void;
 
   /** 装配当前分支的事件出口；恢复只绑定，不重放生命变化。 */
-  bindHealthChangeObserver(observer: () => void): void {
+  bindHealthChangeObserver(
+    observer: (maximumChange?: { previousHealth: number; previousMaxHealth: number }) => void,
+  ): void {
     this.healthChanged = observer;
   }
 
@@ -138,6 +143,28 @@ export class CombatVitals {
     const result = healVitals(this.runtimeState, value);
     if (result.currentHealth !== result.previousHealth) this.healthChanged?.();
     return result;
+  }
+  /** 原生 OnAttributeDirty(MaxHp)：保留生命比例，不作为伤害或治疗结算。 */
+  synchronizeMaxHealth(maxHealth: number, previousMaxHealth: number): void {
+    if (
+      !Number.isFinite(maxHealth) ||
+      maxHealth < 0 ||
+      !Number.isFinite(previousMaxHealth) ||
+      previousMaxHealth < 0
+    )
+      throw new RangeError('maximum health must be finite and non-negative');
+    const previous = this.runtimeState.health;
+    this.runtimeState.maxHealth = maxHealth;
+    // 模拟允许最大生命降至零且不销毁实体；此后保持零生命，不以 0/0 污染账本。
+    let health =
+      previousMaxHealth === 0
+        ? 0
+        : Math.min(maxHealth, Math.max(0, (previous / previousMaxHealth) * maxHealth));
+    const floor = Math.min(maxHealth, Math.max(0, ...this.runtimeState.healthFloors.values()));
+    if (health < previous) health = Math.min(previous, Math.max(health, floor));
+    this.runtimeState.health = health;
+    // 原生即使生命数值未变，只要最大生命改变且仍存活，也发布 OnHpChange。
+    this.healthChanged?.({ previousHealth: previous, previousMaxHealth });
   }
   applyPoiseDelta(delta: number): number {
     return applyVitalsPoiseDelta(this.runtimeState, delta);

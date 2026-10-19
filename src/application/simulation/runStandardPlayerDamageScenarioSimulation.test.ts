@@ -3360,7 +3360,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
     expect(contractedDamage).toBeCloseTo(baselineDamage * 0.3);
   });
 
-  it('applies an enemy maximum-health contract before creating the shared vitals ledger', () => {
+  it('applies an enemy maximum-health contract through a Buff and records the ledger change', () => {
     const scenario = createPerlicaScenario();
     scenario.mechanics.selections.push({
       id: 'selection:contract:900101',
@@ -3383,15 +3383,27 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
         index: {
           ...standardOptions().index,
           ...base.index,
+          getCommonDefinitionSources: gameDataRepository.getCommonDefinitionSources,
           getMechanic: gameDataRepository.getMechanic,
         },
         mechanicAdapters: new MechanicAdapterRegistry([contingencyContractMechanicAdapter]),
       },
     });
 
-    expect(result.enemy.health).toBe(result.enemyVitals.maxHealth);
-    expect(result.enemyVitals.initialHealth).toBe(result.enemyVitals.maxHealth);
+    expect(result.enemy.health).toBe(scenario.enemy.editable.hp);
+    expect(result.enemyVitals.initialHealth).toBe(scenario.enemy.editable.hp);
     expect(result.enemyVitals.maxHealth).toBeCloseTo(scenario.enemy.editable.hp * 1.5);
+    expect(result.finalEnemyHealth).toBe(result.enemyVitals.maxHealth);
+    expect(result.receiptEntries).toContainEqual(
+      expect.objectContaining({
+        event: 'MaxHealthChanged',
+        targetId: 'enemy',
+        data: expect.objectContaining({
+          previousMaxHealth: scenario.enemy.editable.hp,
+          maxHealth: scenario.enemy.editable.hp * 1.5,
+        }),
+      }),
+    );
   });
 
   it('uses the selected combo cooldown contract when each cast reserves its cooldown', () => {

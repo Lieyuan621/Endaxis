@@ -29,7 +29,7 @@ import type { ScenarioDocument } from '../project/schema';
 import { resolveScenarioInitialFrame } from '../project/skillCastPlacement';
 import type { CompiledEquipmentContribution } from './compileEquipment';
 import { compileGlobalEffects } from './compileGlobalEffects';
-import { applyMechanicsToScenarioEnemy, compileScenarioEnemy } from './compileScenarioEnemy';
+import { compileScenarioEnemy } from './compileScenarioEnemy';
 import { compileResolvedScenarioEquipment } from './compileScenarioEquipment';
 import {
   compileScenarioResources,
@@ -339,9 +339,7 @@ export function compileScenarioRuntimeAssembly(
       : [],
   );
   const unsupportedMechanicContribution = mechanics.contributions.find(
-    entry =>
-      entry.contribution.kind !== 'battleInitializationSequence' &&
-      entry.contribution.kind !== 'enemyProgramStatMultiplier',
+    entry => entry.contribution.kind !== 'battleInitializationSequence',
   );
   if (unsupportedMechanicContribution !== undefined) {
     throw new Error(
@@ -555,7 +553,7 @@ export function compileScenarioRuntimeAssembly(
       : {}),
     ...(options.liveInputInitialFrame === undefined ? {} : { deferInitialInput: true }),
     resources,
-    enemy: applyMechanicsToScenarioEnemy(compileScenarioEnemy(scenario.enemy), mechanics),
+    enemy: compileScenarioEnemy(scenario.enemy),
     operators,
     consumables: options.index.getConsumables?.() ?? [],
     consumableUses:

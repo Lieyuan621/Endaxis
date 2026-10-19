@@ -43,8 +43,13 @@ import { projectEnemyEffectViz } from '../../core/projection/enemyEffectViz';
 import { elementalAttachments } from '../../data/buffs/elementalAttachments';
 import { CONTINGENCY_CONTRACT_MECHANIC_PREFIX } from '../../data/contingencyContract/contingencyContractAdapter';
 import {
+  contractInitialVariables,
+  resolveContractInitialVariables,
+} from '../../data/contingencyContract/definitions';
+import {
   contingencyContractMechanicId,
   contingencyContractTags,
+  contingencyContractSeasons,
 } from '../../data/contingencyContract/contingencyContractCatalog';
 import { ALL_GAME_TEXT_FAMILIES, setLocale } from '../../i18n';
 import { useAppearance } from '../appearance/useAppearance';
@@ -455,6 +460,14 @@ function defineLazyDialog<T extends Component>(load: () => Promise<{ default: T 
   });
 }
 
+const contractSeason = ref(1);
+const contractSeasonOptions = computed(() =>
+  contingencyContractSeasons.map(season => ({ value: season.id, label: t(season.nameKey) })),
+);
+function selectContractSeason(value: EaSelectValue | EaSelectValue[]): void {
+  if (typeof value === 'number' && contingencyContractSeasons.some(season => season.id === value))
+    contractSeason.value = value;
+}
 const GearSelectionDialog = defineLazyDialog(() => import('./library/GearSelectionDialog.vue'));
 const SkillGraphEditorDialog = defineLazyDialog(
   () => import('../action-graph/SkillGraphEditorDialog.vue'),
@@ -4038,9 +4051,16 @@ function buffSourceName(segment: BuffPresentationSource): string | undefined {
   }
   const contractTagName = contingencyContractBuffName(segment);
   if (contractTagName !== undefined) {
+    const contract = resolveContingencyContractBuffPresentation(
+      segment.sourceActionId,
+      publishedSimulation.value?.scenario.mechanics.selections ?? [],
+    );
+    const season = contingencyContractSeasons.find(
+      candidate => candidate.id === contract?.tag.season,
+    );
     return formatContingencyContractBuffSourceName(
       t('contingencyContract.title'),
-      t('contingencyContract.operationName'),
+      t(season?.nameKey ?? 'contingencyContract.operationName'),
       contractTagName,
     );
   }
@@ -6150,13 +6170,83 @@ function setSelectedContingencyContractTagIds(tagIds: readonly number[]): void {
         ...current.mechanics.selections.filter(
           selection => !selection.mechanicId.startsWith(CONTINGENCY_CONTRACT_MECHANIC_PREFIX),
         ),
-        ...tagIds.map(tagId => ({
-          id: `mechanic:contingency-contract:${tagId}`,
-          mechanicId: contingencyContractMechanicId(tagId),
-          enabled: true,
-          parameters: {},
-        })),
+        ...current.mechanics.selections
+          .filter(selection =>
+            selection.mechanicId.startsWith(CONTINGENCY_CONTRACT_MECHANIC_PREFIX),
+          )
+          .map(selection => ({
+            ...selection,
+            enabled: tagIds.some(
+              tagId => selection.mechanicId === contingencyContractMechanicId(tagId),
+            ),
+          })),
+        ...tagIds
+          .filter(
+            tagId =>
+              !current.mechanics.selections.some(
+                selection => selection.mechanicId === contingencyContractMechanicId(tagId),
+              ),
+          )
+          .map(tagId => ({
+            id: `mechanic:contingency-contract:${tagId}`,
+            mechanicId: contingencyContractMechanicId(tagId),
+            enabled: true,
+            parameters: {},
+          })),
       ],
+    },
+  }));
+}
+
+function clearContractInitialVariables(tagId: number): void {
+  if (configurationReadOnly.value) return;
+  const keys = new Set(contractInitialVariables(tagId).map(field => field.key));
+  commitScenario('clearContractInitialVariables', current => ({
+    ...current,
+    mechanics: {
+      ...current.mechanics,
+      selections: current.mechanics.selections.map(selection =>
+        selection.mechanicId !== contingencyContractMechanicId(tagId)
+          ? selection
+          : {
+              ...selection,
+              parameters: Object.fromEntries(
+                Object.entries(selection.parameters).filter(([key]) => !keys.has(key)),
+              ),
+            },
+      ),
+    },
+  }));
+}
+
+function setContractInitialVariable(tagId: number, key: string, value: number): void {
+  if (configurationReadOnly.value) return;
+  const field = contractInitialVariables(tagId).find(field => field.key === key);
+  if (!field) return;
+  commitScenario('setContractInitialVariable', current => ({
+    ...current,
+    mechanics: {
+      ...current.mechanics,
+      selections: (current.mechanics.selections.some(
+        selection => selection.mechanicId === contingencyContractMechanicId(tagId),
+      )
+        ? current.mechanics.selections
+        : [
+            ...current.mechanics.selections,
+            {
+              id: `mechanic:contingency-contract:${tagId}`,
+              mechanicId: contingencyContractMechanicId(tagId),
+              enabled: false,
+              parameters: {},
+            },
+          ]
+      ).map(selection => {
+        if (selection.mechanicId !== contingencyContractMechanicId(tagId)) return selection;
+        const parameters = { ...selection.parameters, [key]: value };
+        resolveContractInitialVariables(tagId, parameters);
+        if (value === field.defaultValue) delete parameters[key];
+        return { ...selection, parameters };
+      }),
     },
   }));
 }
@@ -6674,7 +6764,15 @@ function setMobileGuideFrame(frame: number | null): void {
           alt=""
           aria-hidden="true"
         />
-        <div class="contract-side-title">{{ t('contingencyContract.operationName') }}</div>
+        <div class="contract-side-title">{{ t('contingencyContract.title') }}</div>
+        <EaSelect
+          class="contract-season-select"
+          size="sm"
+          :model-value="contractSeason"
+          :options="contractSeasonOptions"
+          :aria-label="t('contingencyContract.selectSeason')"
+          @update:model-value="selectContractSeason"
+        />
       </div>
       <div v-else class="empty-panel">{{ t('timeline.activityBar.contractUnavailable') }}</div>
     </template>
@@ -7823,11 +7921,16 @@ function setMobileGuideFrame(frame: number | null): void {
         <div v-else class="simulation-panel__empty">—</div>
       </section>
       <ContingencyContractPanel
+        :key="contractSeason"
+        :season="contractSeason"
         :read-only="configurationReadOnly"
         v-else-if="tool === 'contract'"
         :selected-tag-ids="selectedContingencyContractTagIds"
+        :selections="scenario.mechanics.selections"
         :locale="locale"
         @set-selected-tag-ids="setSelectedContingencyContractTagIds"
+        @set-initial-variable="setContractInitialVariable"
+        @clear-initial-variables="clearContractInitialVariables"
       />
       <div v-else class="empty-panel">{{ t('timeline.activityBar.contractUnavailable') }}</div>
     </template>
@@ -9715,6 +9818,13 @@ button:disabled {
   object-fit: contain;
   opacity: 0.78;
   filter: saturate(1.02) brightness(0.92);
+}
+.contract-season-select {
+  width: 100%;
+  max-width: 240px;
+}
+.contract-season-select :deep(.el-select__selected-item) {
+  text-align: center;
 }
 
 .contract-side-title {

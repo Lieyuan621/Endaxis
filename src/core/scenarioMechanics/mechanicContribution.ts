@@ -26,12 +26,6 @@ export type MechanicGameLevelEvent = { kind: 'spellInflictionStarted' };
  */
 export type MechanicContribution =
   | {
-      /** 创建敌人生命账本前应用；首批只开放已由原生属性修饰器确认的最大生命乘区。 */
-      readonly kind: 'enemyProgramStatMultiplier';
-      readonly stat: 'maxHealth';
-      readonly multiplier: number;
-    }
-  | {
       /** 战斗实体与事件总线完成装配后、任何技能输入前执行一次。 */
       readonly kind: 'battleInitializationSequence';
       readonly sequence: ResolvedActionSequence;

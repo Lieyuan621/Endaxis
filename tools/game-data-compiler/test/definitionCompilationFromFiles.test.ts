@@ -221,12 +221,15 @@ describe('从原始文件独立编译定义', () => {
       ...Object.values(buffFixture)[0],
       id: 'buff_fixture',
     });
+    writeJson(path.join(buffs, 'buff_cc_enemy_common_hp_up.json'), {
+      ...Object.values(buffFixture)[0],
+      id: 'buff_cc_enemy_common_hp_up',
+    });
     const scope = path.join(root, 'scope.json');
     const globalBuffCatalog = path.join(root, 'globals.json');
     const skillSettingCatalog = path.join(root, 'settings.json');
     writeJson(scope, {
-      supportedTagIds: [1],
-      enemyMaxHealthTagIds: [2],
+      supportedTagIds: [1, 2],
       blockedTagReasons: {},
       omittedTagReasons: {},
     });
@@ -269,8 +272,9 @@ describe('从原始文件独立编译定义', () => {
         targets: { kind: 'fixed', target: 'enemy' },
       },
     });
-    expect(compiled.enemyMaxHealthPlans).toEqual([{ tagId: 2, multiplier: 1.5 }]);
-    expect(compiled.scope.supportedTagIds).toEqual(new Set([1]));
+    expect(compiled.initializationPlans.map(plan => plan.tagId)).toEqual([1, 2]);
+    expect(compiled.buffDefinitions.buff_cc_enemy_common_hp_up).toBeDefined();
+    expect(compiled.scope.supportedTagIds).toEqual(new Set([1, 2]));
     expect(compiled.revision).toBe('fixture@1');
     expect(fs.readdirSync(root, { recursive: true })).toEqual(before);
     writeJson(path.join(tables, 'CcTagTable.json'), {

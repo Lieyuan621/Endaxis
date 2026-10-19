@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import { resolveImage } from '../../imageResources';
 import { EaTooltip } from '@/design-system';
-import { EaButton, EaDeleteIcon } from '@/design-system';
+import { EaButton, EaDeleteIcon, EaNumberInput, EaPopover } from '@/design-system';
+import type { MechanicSelectionDocument } from '../../../core/project/schema';
+import {
+  contractInitialVariables,
+  contractDisplayBlackboard,
+} from '../../../data/contingencyContract/definitions';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { GameRichTextRenderer } from '../../presentation';
 import { contingencyContractTagText } from '../contingencyContractBuffPresentation';
 import {
-  contingencyContractTags,
+  contingencyContractTags as allContingencyContractTags,
   isContingencyContractTagLocked,
   toggleContingencyContractTag,
   type ContingencyContractTagPresentation,
@@ -17,9 +22,29 @@ const props = defineProps<{
   selectedTagIds: readonly number[];
   locale: string;
   readOnly?: boolean;
+  season: number;
+  selections: readonly MechanicSelectionDocument[];
 }>();
-const emit = defineEmits<{ setSelectedTagIds: [tagIds: readonly number[]] }>();
+const emit = defineEmits<{
+  setSelectedTagIds: [tagIds: readonly number[]];
+  setInitialVariable: [tagId: number, key: string, value: number];
+  clearInitialVariables: [tagId: number];
+}>();
+function hasOverrides(tagId: number): boolean {
+  const selection = props.selections.find(
+    entry => entry.mechanicId === `contingency-contract:tag:${tagId}`,
+  );
+  return contractInitialVariables(tagId).some(
+    field =>
+      typeof selection?.parameters[field.key] === 'number' &&
+      selection.parameters[field.key] !== field.defaultValue,
+  );
+}
 const { t } = useI18n({ useScope: 'global' });
+// 父组件按期数重建面板；选择结果保留其他期数的指标。
+const contingencyContractTags = allContingencyContractTags.filter(
+  tag => tag.season === props.season,
+);
 
 const COLUMN_WIDTH = 76;
 const COLUMN_GAP = 12;
@@ -30,9 +55,25 @@ const MAX_SCORE_ROW = 3;
 
 const selected = computed(() => new Set(props.selectedTagIds));
 const columnIds = [...new Set(contingencyContractTags.map(tag => tag.columnId))];
+function effectiveTag(tag: ContingencyContractTagPresentation): ContingencyContractTagPresentation {
+  const selection = props.selections.find(
+    entry => entry.mechanicId === `contingency-contract:tag:${tag.tagId}`,
+  );
+  const values = Object.fromEntries(
+    contractInitialVariables(tag.tagId).map(field => {
+      const value = selection?.parameters[field.key];
+      return [field.key, typeof value === 'number' ? value : field.defaultValue];
+    }),
+  );
+  return { ...tag, blackboard: contractDisplayBlackboard(tag.tagId, tag.blackboard, values) };
+}
 const selectedTags = computed(() =>
-  contingencyContractTags.filter(tag => selected.value.has(tag.tagId)),
+  contingencyContractTags.filter(tag => selected.value.has(tag.tagId)).map(effectiveTag),
 );
+function updateVariable(tagId: number, key: string, value: number | undefined): void {
+  if (props.readOnly || value === undefined || !Number.isFinite(value)) return;
+  emit('setInitialVariable', tagId, key, value);
+}
 const selectedScore = computed(() => selectedTags.value.reduce((sum, tag) => sum + tag.score, 0));
 const tagMap = new Map(contingencyContractTags.map(tag => [tag.tagId, tag]));
 const tagCells = contingencyContractTags.map(tag => {
@@ -151,6 +192,7 @@ function evaluate(expression: string, tag: ContingencyContractTagPresentation): 
   return total;
 }
 function description(tag: ContingencyContractTagPresentation): string {
+  tag = effectiveTag(tag);
   return contingencyContractTagText(tag, props.locale).description.replace(
     /\{([^}]+)\}/g,
     (_match, content: string) => {
@@ -158,7 +200,7 @@ function description(tag: ContingencyContractTagPresentation): string {
       let expression = content;
       const reference = content.match(/^@(\d+)@(.+)$/);
       if (reference?.[1] !== undefined && reference[2] !== undefined) {
-        target = tagMap.get(Number(reference[1])) ?? tag;
+        target = effectiveTag(tagMap.get(Number(reference[1])) ?? tag);
         expression = reference[2];
       }
       const separator = expression.lastIndexOf(':');
@@ -175,6 +217,7 @@ function description(tag: ContingencyContractTagPresentation): string {
 
 <template>
   <section class="cc-panel">
+    <p v-if="season === 2" class="cc-preview-note">{{ t('contingencyContract.preview.note') }}</p>
     <div class="cc-body">
       <div class="cc-groups">
         <div class="cc-grid" :style="{ width: `${gridWidth}px`, height: `${gridHeight}px` }">
@@ -245,54 +288,119 @@ function description(tag: ContingencyContractTagPresentation): string {
             class="cc-tag-slot"
             :style="{ left: `${cell.left}px`, top: `${cell.top}px` }"
           >
-            <EaTooltip
+            <EaPopover
+              trigger="contextmenu"
               placement="right"
-              effect="dark"
-              popper-class="cc-tag-tooltip-popper"
-              :show-after="120"
+              :show-arrow="false"
+              :popper-style="{ padding: '6px 0' }"
+              :width="340"
             >
-              <template #content>
-                <div class="cc-tag-tooltip">
-                  <div class="cc-tag-tooltip-title">
-                    {{ contingencyContractTagText(cell.tag, locale).name }}
-                    {{ cell.tag.romanNumSuffix }}
-                  </div>
-                  <div class="cc-tag-tooltip-desc">
-                    <GameRichTextRenderer :text="description(cell.tag)" :locale="locale" />
-                  </div>
-                  <div v-if="cell.tag.support === 'blocked'" class="cc-tag-tooltip-state">
-                    <strong>{{ statusLabel(cell.tag) }}</strong>
-                    <span>{{ noEffectDescription(cell.tag) }}</span>
-                    <small v-if="!locale.startsWith('zh') && cell.tag.supportReason">
-                      {{ t('contingencyContract.reason') }}: {{ cell.tag.supportReason }}
-                    </small>
-                  </div>
-                  <div v-else-if="cell.tag.support === 'omitted'" class="cc-tag-tooltip-no-effect">
-                    {{ noEffectDescription(cell.tag) }}
-                  </div>
+              <template #reference>
+                <div @contextmenu.prevent.stop>
+                  <EaTooltip
+                    placement="right"
+                    effect="dark"
+                    popper-class="cc-tag-tooltip-popper"
+                    :show-after="120"
+                  >
+                    <template #content>
+                      <div class="cc-tag-tooltip">
+                        <div class="cc-tag-tooltip-title">
+                          {{ contingencyContractTagText(cell.tag, locale).name }}
+                          {{ cell.tag.romanNumSuffix }}
+                        </div>
+                        <div class="cc-tag-tooltip-desc">
+                          <GameRichTextRenderer :text="description(cell.tag)" :locale="locale" />
+                        </div>
+                        <div v-if="cell.tag.support === 'blocked'" class="cc-tag-tooltip-state">
+                          <strong>{{ statusLabel(cell.tag) }}</strong>
+                          <span>{{ noEffectDescription(cell.tag) }}</span>
+                          <small v-if="!locale.startsWith('zh') && cell.tag.supportReason">
+                            {{ t('contingencyContract.reason') }}: {{ cell.tag.supportReason }}
+                          </small>
+                        </div>
+                        <div
+                          v-else-if="cell.tag.support === 'omitted'"
+                          class="cc-tag-tooltip-no-effect"
+                        >
+                          {{ noEffectDescription(cell.tag) }}
+                        </div>
+                      </div>
+                    </template>
+                    <EaButton
+                      type="button"
+                      class="cc-tag"
+                      :class="{
+                        'is-unmodeled': cell.tag.support === 'blocked',
+                        'is-locked': isLocked(cell.tag),
+                        'is-conflict-muted': isConflictMuted(cell.tag),
+                      }"
+                      @click="toggle(cell.tag)"
+                      @contextmenu.prevent
+                      :disabled="readOnly"
+                      :pressed="selected.has(cell.tag.tagId)"
+                    >
+                      <svg
+                        v-if="hasOverrides(cell.tag.tagId)"
+                        class="cc-tag-edited"
+                        :class="{ 'is-selected': selected.has(cell.tag.tagId) }"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        :aria-label="t('contingencyContract.editInitialVariables')"
+                      >
+                        <path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15z" />
+                      </svg>
+                      <span class="cc-tag-check">✓</span
+                      ><img :src="resolveImage(cell.tag.icon)" alt="" aria-hidden="true" />
+                      <span v-if="cell.tag.romanNumSuffix" class="cc-tag-roman">{{
+                        cell.tag.romanNumSuffix
+                      }}</span>
+                      <span class="cc-tag-score">+{{ cell.tag.score }}</span
+                      ><span v-if="cell.tag.support === 'blocked'" class="cc-tag-lock">!</span>
+                    </EaButton>
+                  </EaTooltip>
                 </div>
               </template>
-              <EaButton
-                type="button"
-                class="cc-tag"
-                :class="{
-                  'is-unmodeled': cell.tag.support === 'blocked',
-                  'is-locked': isLocked(cell.tag),
-                  'is-conflict-muted': isConflictMuted(cell.tag),
-                }"
-                @click="toggle(cell.tag)"
-                :disabled="readOnly"
-                :pressed="selected.has(cell.tag.tagId)"
-              >
-                <span class="cc-tag-check">✓</span
-                ><img :src="resolveImage(cell.tag.icon)" alt="" aria-hidden="true" />
-                <span v-if="cell.tag.romanNumSuffix" class="cc-tag-roman">{{
-                  cell.tag.romanNumSuffix
-                }}</span>
-                <span class="cc-tag-score">+{{ cell.tag.score }}</span
-                ><span v-if="cell.tag.support === 'blocked'" class="cc-tag-lock">!</span>
-              </EaButton>
-            </EaTooltip>
+              <div class="cc-variables">
+                <strong
+                  >{{ contingencyContractTagText(cell.tag, locale).name }}
+                  {{ cell.tag.romanNumSuffix }}</strong
+                >
+                <div class="cc-variables-heading">
+                  {{ t('contingencyContract.initialVariables') }}
+                </div>
+                <label
+                  v-for="field in contractInitialVariables(cell.tag.tagId)"
+                  :key="field.key"
+                  class="cc-variable"
+                >
+                  <span :title="field.key">{{ field.key }}</span>
+                  <EaNumberInput
+                    size="sm"
+                    controls-position="right"
+                    :aria-label="field.key"
+                    :model-value="effectiveTag(cell.tag).blackboard[field.key]"
+                    :disabled="readOnly"
+                    :min="field.min"
+                    :max="field.max"
+                    :step="field.integer ? 1 : 0.01"
+                    :precision="field.integer ? 0 : undefined"
+                    @update:model-value="updateVariable(cell.tag.tagId, field.key, $event)"
+                  />
+                </label>
+              </div>
+              <div class="cc-context-menu">
+                <EaButton
+                  class="cc-menu-item"
+                  size="sm"
+                  :disabled="readOnly || !hasOverrides(cell.tag.tagId)"
+                  @click="emit('clearInitialVariables', cell.tag.tagId)"
+                  >{{ t('contingencyContract.clearInitialVariables') }}</EaButton
+                >
+              </div>
+            </EaPopover>
           </div>
         </div>
       </div>
@@ -308,7 +416,12 @@ function description(tag: ContingencyContractTagPresentation): string {
             type="button"
             class="cc-clear-btn"
             :disabled="readOnly || selectedTags.length === 0"
-            @click="emit('setSelectedTagIds', [])"
+            @click="
+              emit(
+                'setSelectedTagIds',
+                selectedTagIds.filter(id => !contingencyContractTags.some(tag => tag.tagId === id)),
+              )
+            "
           >
             {{ t('contingencyContract.reset') }}
           </EaButton>
@@ -348,6 +461,75 @@ function description(tag: ContingencyContractTagPresentation): string {
 </template>
 
 <style scoped>
+.cc-variables {
+  font-size: 12px;
+  padding: 6px 12px 12px;
+}
+.cc-variables-heading {
+  margin-top: 8px;
+  color: var(--ea-fg-muted);
+}
+.cc-context-menu {
+  border-top: 1px solid var(--ea-border-soft);
+  padding-top: 4px;
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+}
+.cc-menu-item {
+  width: 100%;
+  height: 32px;
+  justify-content: flex-start;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ea-floating-fg);
+  font: inherit;
+}
+.cc-menu-item:not(:disabled):hover {
+  background: #007fd4;
+  color: #fff;
+}
+.cc-menu-item:disabled {
+  color: var(--ea-fg-muted);
+  background: transparent;
+}
+.cc-tag-edited {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 11px;
+  height: 11px;
+  pointer-events: none;
+}
+.cc-tag-edited.is-selected {
+  right: 17px;
+}
+.cc-variable {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+  max-width: 380px;
+}
+.cc-variable > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.cc-variable :deep(.ea-number-input) {
+  width: 100px;
+  flex-shrink: 0;
+}
+.cc-preview-note {
+  margin: 0;
+  padding: 10px 12px;
+  color: var(--ea-fg-muted);
+  font-size: 12px;
+}
 .cc-panel {
   height: 100%;
   min-height: 0;
@@ -584,6 +766,8 @@ function description(tag: ContingencyContractTagPresentation): string {
   -webkit-box-orient: vertical;
 }
 .cc-selected-remove {
+  grid-column: 3;
+  grid-row: 1;
   align-self: center;
   width: 28px;
   height: 28px;

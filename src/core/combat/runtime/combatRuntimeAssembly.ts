@@ -1115,6 +1115,11 @@ export class CombatRuntimeAssembly {
           throw new Error(`restored AbilityEntity '${instanceId}' has no Buff target`);
         }
         this.#abilityEntityBuffs.set(instanceId, target as AbilityEntityBuffRuntime);
+        const vitals = this.abilityEntities.soulVitals({ kind: 'abilityEntity', instanceId });
+        if (vitals !== undefined)
+          target.bindAttributeChangeObserver?.('MaxHp', (value, previous) =>
+            vitals.synchronizeMaxHealth(value, previous),
+          );
       }
       for (const [instanceId, state] of preparation.graph.instances.projectiles.instances) {
         if (state.buffs === null) continue;
@@ -5819,6 +5824,11 @@ export class CombatRuntimeAssembly {
       );
     }
     this.#configureBuffLifecycle(runtime, options);
+    const vitals = projectile ? undefined : this.abilityEntities.soulVitals(target);
+    if (vitals !== undefined)
+      runtime.bindAttributeChangeObserver?.('MaxHp', (value, previous) =>
+        vitals.synchronizeMaxHealth(value, previous),
+      );
     this.#abilityEntityBuffs.set(target.instanceId, runtime);
     if (projectile) projectile.buffs = runtime.runtimeState ?? null;
     else {
