@@ -848,7 +848,11 @@ export class SkillRuntime {
     const executeRoute = () => {
       if (route.asSkillCast) {
         beforeCastStart?.();
-        this.#applyCost(true);
+        // 旁路不调用 beginSkillCast，扣费策略必须读取本次输入，不能沿用上次施法状态。
+        this.#applyCost(true, {
+          preparationCast: this.#dependencies.clock.frame < 0,
+          forceTimelinePayment: this.#execution.preparedForceTimelinePayment,
+        });
       }
       // 施法旁路的 Buff 必须继承扣费后的施法快照；条件检查时尚未支付费用。
       // 非施法旁路仍沿用当前技能的身份与消耗，不能换成候选技能。
@@ -867,6 +871,7 @@ export class SkillRuntime {
     this.#execution.preparedStartBlackboard = {};
     this.#execution.preparedSkillCastId = 0;
     this.#execution.preparedCastStart = undefined;
+    this.#execution.preparedForceTimelinePayment = false;
     return true;
   }
 
@@ -1063,14 +1068,20 @@ export class SkillRuntime {
     this.record(event, detail);
   }
 
-  #applyCost(emitSkillEvent: boolean): boolean {
-    const costs = this.#resolvedCosts(this.#execution.preparationCast);
+  #applyCost(
+    emitSkillEvent: boolean,
+    paymentContext = {
+      preparationCast: this.#execution.preparationCast,
+      forceTimelinePayment: this.#execution.forceTimelinePayment,
+    },
+  ): boolean {
+    const costs = this.#resolvedCosts(paymentContext.preparationCast);
     if (this.#dependencies.resources === null) this.#requireNoResourceCost(costs);
     const payment =
       this.#dependencies.resources === null
         ? { paid: true, nonReturnedSpCost: 0, changes: [] }
         : this.#dependencies.resources.pay(this.#hostIdentity.actionOwnerId, costs, {
-            forceTimelinePayment: this.#execution.forceTimelinePayment,
+            forceTimelinePayment: paymentContext.forceTimelinePayment,
           });
     if (!payment.paid) {
       this.#recordCostUnavailable('SkillCostRejected', costs);

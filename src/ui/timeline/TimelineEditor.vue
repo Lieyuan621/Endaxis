@@ -3035,6 +3035,31 @@ const visibleSkillEndFrames = computed(() => {
   return ends;
 });
 
+const skillCastBlockLayout = computed(() => {
+  const layout = new Map<string, { width: number; stackOrder: number }>();
+  for (const track of viewModel.value.tracks) {
+    const blocks = track.skillCasts.map(cast => {
+      const start = castActualStartFrame(cast.id, cast.startFrame);
+      return {
+        id: cast.id,
+        width: Math.max(
+          2,
+          timelineFrameSpanPx(
+            start,
+            Math.max(0, (visibleSkillEndFrames.value.get(cast.id) ?? cast.startFrame) - start),
+          ),
+        ),
+      };
+    });
+    // 按实际显示宽度从宽到窄叠放，同宽保留原顺序。
+    blocks.sort((a, b) => b.width - a.width);
+    blocks.forEach((block, stackOrder) => {
+      layout.set(block.id, { width: block.width, stackOrder });
+    });
+  }
+  return layout;
+});
+
 function castActualDurationPending(castId: string, definitionDurationFrames: number): boolean {
   return (
     definitionDurationFrames > 0 &&
@@ -7701,23 +7726,14 @@ function setMobileGuideFrame(frame: number | null): void {
                   @select="selectSkillCastGroup(group.casts.map(cast => cast.id))"
                 />
                 <TimelineActionBlock
-                  v-for="(cast, castIndex) in track.skillCasts"
+                  v-for="cast in track.skillCasts"
                   :key="cast.id"
                   :action-id="cast.id"
                   :label="timelineCastLabel(cast, track)"
                   :operation-type="cast.operationType"
                   :left="timelineFramePx(castActualStartFrame(cast.id, cast.startFrame))"
-                  :width="
-                    timelineFrameSpanPx(
-                      castActualStartFrame(cast.id, cast.startFrame),
-                      Math.max(
-                        0,
-                        (visibleSkillEndFrames.get(cast.id) ?? cast.startFrame) -
-                          castActualStartFrame(cast.id, cast.startFrame),
-                      ),
-                    )
-                  "
-                  :stack-order="castIndex"
+                  :width="skillCastBlockLayout.get(cast.id)!.width"
+                  :stack-order="skillCastBlockLayout.get(cast.id)!.stackOrder"
                   :duration-pending="castActualDurationPending(cast.id, cast.durationFrames)"
                   :selected="actionSelection.selectedIds.has(cast.id)"
                   :perfect="perfectComboCastIds.has(cast.id)"

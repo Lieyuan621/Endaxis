@@ -1033,6 +1033,30 @@ describe('SkillRuntime', () => {
     expect(fixture.resources.gainSp(20).actualValue).toBe(20);
   });
 
+  it.each([-1, 0])('Buff施法旁路使用本次输入的扣费规则且不泄漏到后续施法：%s', frame => {
+    const fixture = createBattleSkillRuntime(
+      0,
+      undefined,
+      undefined,
+      defineSkillFixture({
+        key: 'route-payment',
+        timelineBlockFrames: 1,
+        costFrame: 0,
+        costs: [{ resource: 'sp', value: 100 }],
+        switchToBuffCast: { asSkillCast: true, steps: [] },
+      }),
+    );
+    fixture.clock.initializeFrame(frame);
+    const ability = new AbilitySystemRuntime({ skills: [fixture.runtime] });
+    expect(ability.tryStartTimelineSkill(fixture.runtime.skillId)).toBe(true);
+    expect(fixture.resources.sp).toBe(frame < 0 ? 0 : -100);
+    expect(fixture.receipt.entries.some(e => e.event === 'SkillCostRejected')).toBe(false);
+    while (fixture.clock.frame < 1) fixture.clock.advanceFrame();
+    expect(ability.tryStartSkill(fixture.runtime.skillId)).toBe(true);
+    expect(fixture.resources.sp).toBe(frame < 0 ? 0 : -100);
+    expect(fixture.receipt.entries.filter(e => e.event === 'SkillCostRejected')).toHaveLength(1);
+  });
+
   it.each([false, true])('施法前事件只在需要的 Buff 旁路发布，asSkillCast=%s', asSkillCast => {
     const current = createBattleSkillRuntime(300);
     const ending = createBattleSkillRuntime(
@@ -2216,6 +2240,22 @@ describe('SkillRuntime', () => {
     expect(fixture.runtime.skillCastInfo).toEqual(inherited);
     expect(fixture.receipt.entries.some(entry => entry.event === 'SpChanged')).toBe(false);
     expect(fixture.receipt.entries.some(entry => entry.event === 'SkillCostApplied')).toBe(false);
+  });
+
+  it.each([0, 3])('时间轴强制扣费在费用帧执行一次，余额不足仍记录完整消耗：%s', costFrame => {
+    const fixture = createBattleSkillRuntime(0, costFrame);
+    const ability = new AbilitySystemRuntime({ skills: [fixture.runtime] });
+    expect(ability.tryStartTimelineSkill(fixture.runtime.skillId)).toBe(true);
+    expect(fixture.resources.sp).toBe(costFrame === 0 ? -100 : 0);
+    fixture.simulation.advanceFrames(costFrame + 1);
+    const payments = fixture.receipt.entries.filter(e => e.event === 'SkillCostApplied');
+    expect(payments).toHaveLength(1);
+    expect(payments[0]).toMatchObject({
+      frame: costFrame,
+      data: { nonReturnedSpCost: 100 },
+    });
+    expect(fixture.receipt.entries.some(e => e.event === 'SkillCostRejected')).toBe(false);
+    expect(fixture.runtime.skillCastInfo.nonReturnedSpCost).toBe(100);
   });
 
   it.each([0, 20])('继承施法费用只被本次实际技力消耗覆盖：%s', cost => {
