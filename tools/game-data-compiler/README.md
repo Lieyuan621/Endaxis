@@ -55,7 +55,7 @@ SkillData/BuffData 使用数字枚举编码时，通过 `--native-json-schema '<
 | `config/buffPresentationNames.ts`                | Buff 自身需要明确本地化名称或补充展示图标        |
 | `config/contingencyContractSimulationScope.json` | 确认合约效果的模拟范围                           |
 | `config/enemies/runtime-defaults.json`           | 有依据的敌人运行默认值变化                       |
-| `config/enemies/selection-categories.json`       | 新敌人的选择分类、未分类或隐藏状态               |
+| `config/enemies/hidden-enemies.json`       | 敌人隐藏状态；分类与顺序由原生图鉴表生成               |
 
 普通技能、天赋和潜能不逐项配置编译器，编译路径从原始动作推断。路由关系和递归技能组等确需人工确认的配置保留在对象定义中。递归放置策略必须校验起止技能、段数预算和回退序列，不按干员名称分派。
 

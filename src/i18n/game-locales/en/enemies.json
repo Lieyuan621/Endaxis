@@ -274,5 +274,32 @@
   },
   "eny_0134_jsspsi": {
     "name": "Si"
+  },
+  "wiki_group_monster_angel": {
+    "name": "Aggeloi"
+  },
+  "wiki_group_monster_landbreaker": {
+    "name": "Landbreakers"
+  },
+  "wiki_group_monster_hongshan": {
+    "name": "Cangzei Pirates"
+  },
+  "wiki_group_monster_animal": {
+    "name": "Wildlife"
+  },
+  "wiki_group_monster_kl": {
+    "name": "Blightshades"
+  },
+  "wiki_group_monster_js": {
+    "name": "Foundite"
+  },
+  "wiki_group_monster_witchcraft": {
+    "name": "Witchcraft Creation"
+  },
+  "wiki_group_monster_ml": {
+    "name": "Apparition"
+  },
+  "wiki_group_monster_else": {
+    "name": "Others"
   }
 }

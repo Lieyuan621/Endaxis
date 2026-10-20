@@ -7,7 +7,7 @@ const enemy: EnemyDefinition = {
   id: 'enemy-1',
   tier: 'normal',
   rank: 'mob',
-  levelHp: [100, 200, 400, 600, 800, 1000],
+  levelHp: { 1: 100, 20: 200, 35: 350, 40: 400, 60: 600, 80: 800, 90: 1000 },
   defense: 20,
   resistances: { physical: 0, heat: 0, cryo: 0, electric: 0, nature: 0 },
   superArmor: 0,
@@ -25,6 +25,7 @@ describe('enemyDefinition', () => {
   it('only resolves HP nodes explicitly present in the index', () => {
     expect(getEnemyHpAtLevel(enemy, 90)).toBe(1000);
     expect(getEnemyHpAtLevel(enemy, 20)).toBe(200);
+    expect(getEnemyHpAtLevel(enemy, 35)).toBe(350);
     expect(getEnemyHpAtLevel(enemy, 45)).toBeNull();
   });
 

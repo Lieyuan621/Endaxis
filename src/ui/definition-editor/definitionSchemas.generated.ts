@@ -13,7 +13,6 @@ const schema_d056c7fa0b76 = { kind: 'string', referenceKind: 'buff' } as const;
 const schema_c7288b42bef0 = { recordValue: schema_4107b248d073 } as const;
 const schema_eb26b72c4713 = { kind: 'string', referenceKind: 'skill' } as const;
 const schema_3a45612f7fc2 = { recordValue: schema_f27fc5f4f63d } as const;
-const schema_bbff0d28079e = { kind: 'number', readonlyDeclaration: true } as const;
 const schema_06112e0554b3 = { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}] } as const;
 const schema_85be103572e6 = {
   kind: 'number',
@@ -2820,31 +2819,10 @@ export const definitionSchemas = {
         description: '原生战斗等级；独立于五档展示 tier，供 CheckEnemyRank 等战斗规则读取。',
       },
       levelHp: {
-        kind: 'tuple',
-        elements: [
-          schema_bbff0d28079e,
-          schema_bbff0d28079e,
-          schema_bbff0d28079e,
-          schema_bbff0d28079e,
-          schema_bbff0d28079e,
-          schema_bbff0d28079e,
-        ],
-        minLength: 6,
-        semantics: {
-          tuple: {
-            elements: [
-              { semantics: {} },
-              { semantics: {} },
-              { semantics: {} },
-              { semantics: {} },
-              { semantics: {} },
-              { semantics: {} },
-            ],
-            minLength: 6,
-          },
-        },
+        kind: 'object',
+        fields: {},
         readonlyDeclaration: true,
-        description: '按 ENEMY_LEVELS 排列的六档生命值。',
+        description: '仅包含选择器和关卡实际引用等级的生命值。',
       },
       defense: { kind: 'number' },
       resistances: {

@@ -38,7 +38,7 @@ asset 导出为 JSON 最好，保留 asset 格式也可以适配。
 
 二、转换器使用的 AKEData 已有数据
 
-1. TableCfg 表格（31 张）
+1. TableCfg 表格
 
    下载路径：<manifest 中对应版本的 tableCfgPath>/<表名>.json
    游戏原始路径：Table/Data/TableCfg/<表名>.bytes
@@ -64,6 +64,12 @@ asset 导出为 JSON 最好，保留 asset 格式也可以适配。
      UseItemTable
 
    敌人：
+     WikiGroupTable
+     WikiEntryTable
+     WikiEntryDataTable
+     DungeonTable
+     DungeonSeriesTable
+     SeasonTowerGameGroupTable
      DisplayEnemyTypeTable
      EnemyAbilityDescTable
      EnemyAttributeTemplateTable
@@ -97,12 +103,19 @@ asset 导出为 JSON 最好，保留 asset 格式也可以适配。
    用途：属性修改、触发条件、动作、生命周期等。
    此集合不包含第一部分所列的 GlobalBuff 模板。
 
-4. 图片资源
+4. 刷怪配置
+
+   下载路径：public/Json/SpawnerConfig/<sceneId>/<configId>.json
+   游戏原始路径：JsonData/Data/Json/SpawnerConfig/<sceneId>/<configId>.json
+   用途：关卡敌人的实际等级、刷怪库引用、出生 Buff 及黑板覆盖值。
+   必须保留场景子目录，不将不同难度或波次的出生 Buff 合并。
+
+5. 图片资源
 
    下载路径：public/images/<asset-sync-index.json 中登记的原始相对路径>
    范围：干员头像、技能/天赋、武器、装备、Buff/状态、敌人及消耗品等图片，按需导出。
 
-5. 版本与资源索引
+6. 版本与资源索引
 
    manifest.json：选择游戏版本、热更新版本及 TableCfg 路径。
    asset-sync-index.json：枚举 JSON 与图片，取得每项版本、大小及 MD5。

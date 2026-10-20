@@ -33,7 +33,7 @@ export interface EnemyDefinition {
   readonly tier: EnemyTier;
   /** 原生战斗等级；独立于五档展示 tier，供 CheckEnemyRank 等战斗规则读取。 */
   readonly rank: EnemyRank;
-  /** 按 ENEMY_LEVELS 排列的六档生命值。 */
+  /** 仅包含选择器和关卡实际引用等级的生命值。 */
   readonly levelHp: EnemyLevelHp;
   readonly defense: number;
   readonly resistances: Readonly<Record<DamageElement, number>>;
@@ -44,6 +44,5 @@ export interface EnemyDefinition {
 
 /** 只接受定义中明确存在的等级节点，避免把推测插值伪装成游戏数据。 */
 export function getEnemyHpAtLevel(definition: EnemyDefinition, level: number): number | null {
-  const index = ENEMY_LEVELS.findIndex(value => value === level);
-  return definition.levelHp[index] ?? null;
+  return definition.levelHp[level] ?? null;
 }

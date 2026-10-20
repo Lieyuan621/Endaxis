@@ -2022,6 +2022,10 @@
         "name": "关联当前技能",
         "help": "将当前效果与正在处理的技能关联，并跟踪该技能结束。"
       },
+      "saveDamageSkillCastId": {
+        "name": "记录伤害施放编号",
+        "help": "将当前伤害的施放编号记入此 Buff，供后续受击去重。"
+      },
       "readBuffStackCount": {
         "name": "读取 Buff 层数或数量",
         "help": "统计符合条件的 Buff 层数或实例数量，并保存到变量。"
@@ -2453,6 +2457,10 @@
       "eventSkillCastMatchesBuffSource": {
         "name": "本次施放是 Buff 来源？",
         "help": "检查事件技能与 Buff 来源是否属于同一次施放。"
+      },
+      "eventDamageSkillCastRecorded": {
+        "name": "已记录本次伤害施放？",
+        "help": "检查当前伤害的施放编号是否已被此 Buff 实例记录。"
       },
       "eventBuffIdMatch": {
         "name": "本次 Buff 在列表中？",
@@ -5313,15 +5321,14 @@
       "editStatsTitle": "自定义敌人属性",
       "searchPlaceholder": "搜索敌人...",
       "level": "等级",
-      "categories": {
-        "wildlife": "野外生物",
-        "landbreakers": "裂地者",
-        "angels": "天使",
-        "cangThieves": "沧贼",
-        "shadows": "蚀影",
-        "progeny": "造裔",
-        "witchcraftConstructs": "巫术造物"
-      },
+      "byEnemy": "基础敌人",
+      "byStage": "关卡变种",
+      "allStages": "全部关卡系列",
+      "searchStage": "搜索关卡或敌人",
+      "chooseStage": "请选择关卡",
+      "variantPending": "该变体的战斗差异尚未接入",
+      "stageLevelPending": "该关卡等级的属性尚未导出",
+      "attributeOnly": "仅模拟敌人属性，特殊机制暂未接入。",
       "specialGroup": "特殊",
       "standardGroup": "敌人",
       "customDesc": "手动调整属性数值",

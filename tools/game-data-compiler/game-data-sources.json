@@ -23,6 +23,12 @@
     "UseItemTable",
     "EquipSuitTable",
     "DisplayEnemyTypeTable",
+    "WikiGroupTable",
+    "WikiEntryTable",
+    "WikiEntryDataTable",
+    "DungeonTable",
+    "DungeonSeriesTable",
+    "SeasonTowerGameGroupTable",
     "EnemyAbilityDescTable",
     "EnemyAttributeTemplateTable",
     "EnemyDisplayInfoTable",
@@ -34,6 +40,7 @@
     "I18nTextTable_EN"
   ],
   "jsonCollections": {
+    "SpawnerConfig": "SpawnerConfig",
     "SkillData": "SkillData",
     "BuffData": "BuffData",
     "ProjectileData": "ProjectileData",

@@ -2,6 +2,18 @@ import { i18n } from '@/i18n';
 import { normalizeLocale } from '../i18n/elementPlusLocale';
 import { gameLocaleRegistry } from '../i18n/gameLocaleRegistry';
 import { weaponPresentationSlugByAsset } from './weaponPresentationSlugs';
+import { generatedEnemyStages } from './enemies/generated/stages.generated';
+import stageZh from '../i18n/game-locales/zh/stages.json';
+import stageEn from '../i18n/game-locales/en/stages.json';
+
+const stageEnemyNames = new Map(
+  generatedEnemyStages.flatMap(stage =>
+    stage.enemies.flatMap(enemy => [
+      [enemy.id.replaceAll('_', '-'), enemy] as const,
+      [enemy.definitionId, enemy] as const,
+    ]),
+  ),
+);
 
 type LocaleTable = Record<string, any>;
 /** 以slug直接索引条目的语言表；装备与术语有各自的嵌套结构。 */
@@ -340,7 +352,15 @@ export function getGearSetGameDescription(slug: string, locale?: string | null) 
   return readTrimmedText(entry.description);
 }
 
-export function getEnemyGameName(slug: string, locale?: string | null) {
+export function getEnemyGameName(slug: string, locale?: string | null): string {
+  const stageEnemy = stageEnemyNames.get(slug);
+  if (stageEnemy && stageEnemy.templateId !== slug) {
+    const names: Record<string, string> =
+      normalizeLocale(locale ?? i18n.global.locale.value) === 'en' ? stageEn : stageZh;
+    return (
+      readTrimmedText(names[stageEnemy.nameKey]) || getEnemyGameName(stageEnemy.templateId, locale)
+    );
+  }
   const entry = getEnemyEntry(slug, locale);
   return readTrimmedText(entry?.name) || humanizeIdentifier(slug);
 }

@@ -164,6 +164,9 @@ it('统一候选生成读取本轮身份与精确文本 ID，不读取旧本地�
         },
       },
     };
+    await write('tables/WikiGroupTable.json', {
+      wiki_type_monster: { list: [{ groupId: 'wiki_group_test', groupName: 'Category' }] },
+    });
     for (const [name, value] of Object.entries(tables)) await write(`tables/${name}.json`, value);
     await write(
       'tables/EnemyTemplateDisplayInfoTable.json',
@@ -196,7 +199,10 @@ it('统一候选生成读取本轮身份与精确文本 ID，不读取旧本地�
     const read = async (file: string) =>
       JSON.parse(await fs.readFile(path.join(input.output, file), 'utf8'));
     expect(await read('zh/operators.json')).toHaveProperty('configured');
-    expect(await read('en/enemies.json')).toEqual({ eny_test: { name: 'EN enemy' } });
+    expect(await read('en/enemies.json')).toEqual({
+      eny_test: { name: 'EN enemy' },
+      wiki_group_test: { name: 'Category' },
+    });
     expect(await read('zh/weapons.json')).toHaveProperty('weapon-icon.skill3');
     expect(await read('zh/gearpieces.json')).toHaveProperty('gear_test.defense', 12);
     expect(await read('zh/consumables.json')).toHaveProperty('food.description', 'Gain 10%');

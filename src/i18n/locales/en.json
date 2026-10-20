@@ -2011,6 +2011,10 @@
         "name": "Track Current Skill",
         "help": "Associate this effect with the skill being processed and track its end."
       },
+      "saveDamageSkillCastId": {
+        "name": "Record Damage Cast ID",
+        "help": "Record the current damage cast ID in this Buff to identify repeated hits."
+      },
       "readBuffStackCount": {
         "name": "Count Buffs",
         "help": "Count matching Buff stacks or instances and store the result."
@@ -2442,6 +2446,10 @@
       "eventSkillCastMatchesBuffSource": {
         "name": "Cast Matches Buff Source?",
         "help": "Check whether the event and Buff source belong to the same cast."
+      },
+      "eventDamageSkillCastRecorded": {
+        "name": "Damage Cast Already Recorded?",
+        "help": "Check whether this Buff instance has recorded the current damage cast ID."
       },
       "eventBuffIdMatch": {
         "name": "Event Buff in List?",
@@ -5302,15 +5310,14 @@
       "editStatsTitle": "Customize Enemy Stats",
       "searchPlaceholder": "Search enemy...",
       "level": "Level",
-      "categories": {
-        "wildlife": "Wildlife",
-        "landbreakers": "Landbreakers",
-        "angels": "Angels",
-        "cangThieves": "Cang Thieves",
-        "shadows": "Shadows",
-        "progeny": "Progeny",
-        "witchcraftConstructs": "Witchcraft Constructs"
-      },
+      "byEnemy": "Base enemies",
+      "byStage": "Stage variants",
+      "allStages": "All stage series",
+      "searchStage": "Search stages or enemies",
+      "chooseStage": "Select a stage",
+      "variantPending": "This variant's combat differences are not supported yet",
+      "stageLevelPending": "Attributes for this stage level have not been exported",
+      "attributeOnly": "Only enemy attributes are simulated. Special mechanics are not yet supported.",
       "specialGroup": "Special",
       "standardGroup": "Enemies",
       "customDesc": "Manually adjust attribute values",

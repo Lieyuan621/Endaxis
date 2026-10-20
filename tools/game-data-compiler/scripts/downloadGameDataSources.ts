@@ -169,9 +169,10 @@ export async function downloadGameDataSources(args: DownloadArguments): Promise<
       for (const logicalPath of catalog.jsonFiles) await save(logicalPath, logicalPath);
       for (const [collection, directory] of Object.entries(catalog.jsonCollections)) {
         const cdnFiles = akedb?.collectionFiles(collection) ?? [];
-        const akedbOnly = collection === 'BuffData' && akedb !== null;
+        const akedbOnly =
+          (collection === 'BuffData' || collection === 'SpawnerConfig') && akedb !== null;
         if (akedbOnly && cdnFiles.length === 0)
-          throw new Error('BuffData: AKEDB inventory is empty');
+          throw new Error(`${collection}: AKEDB inventory is empty`);
         let vfsFiles: string[] = [];
         let vfsStatus = akedbOnly ? 'not-used' : 'available';
         // 取并集以发现 AKEDB 尚未收录的新文件；同名资源只取 AKEDB，不覆盖或合并字段。
@@ -198,7 +199,7 @@ export async function downloadGameDataSources(args: DownloadArguments): Promise<
           vfsFiles = parseCollectionManifest(parseJson(rawInventory.content), collection);
         const entries = [...new Set([...cdnFiles, ...vfsFiles])].sort();
         entries.forEach(name => {
-          if (!/^[A-Za-z0-9_.-]+\.json$/.test(name) || name.includes('..'))
+          if (!/^(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+\.json$/.test(name) || name.includes('..'))
             throw new Error('unsafe collection filename');
         });
         inventories.push({ collection, vfs: vfsStatus, files: entries.length });

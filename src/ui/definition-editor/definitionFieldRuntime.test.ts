@@ -174,14 +174,17 @@ describe('definition field command boundary', () => {
       ),
     ).toThrow(/read-only/);
   });
-  it('keeps enemy derived levelHp readonly independently of tuple editing', () => {
-    const levelHp = [100, 200, 300, 400, 500, 600];
+  it('keeps enemy derived levelHp readonly', () => {
+    const levelHp = { 1: 100, 35: 300, 90: 600 };
     const enemy = { levelHp };
     expect(() =>
-      assertEditableDefinitionField(definitionSchemas.enemy, enemy, ['levelHp'], [...levelHp, 700]),
+      assertEditableDefinitionField(definitionSchemas.enemy, enemy, ['levelHp'], {
+        ...levelHp,
+        80: 700,
+      }),
     ).toThrow(/cannot be changed/);
     expect(() =>
-      assertEditableDefinitionField(definitionSchemas.enemy, enemy, ['levelHp', 0], 120),
+      assertEditableDefinitionField(definitionSchemas.enemy, enemy, ['levelHp', '35'], 120),
     ).toThrow(/cannot be changed/);
     expect(() =>
       assertEditableDefinitionField(definitionSchemas.enemy, enemy, ['levelHp'], levelHp),

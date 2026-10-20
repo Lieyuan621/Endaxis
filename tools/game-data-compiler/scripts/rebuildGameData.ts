@@ -108,6 +108,8 @@ const GAME_DATA_PUBLISH_FILE_OUTPUTS = [
   'src/data/combat/movementSettingCatalog.generated.ts',
   'src/data/combat/skillSettings.generated.ts',
   ...GAME_LOCALE_REBUILD_OUTPUTS,
+  'src/i18n/game-locales/zh/stages.json',
+  'src/i18n/game-locales/en/stages.json',
 ] as const;
 
 /** 游戏派生产物不等于整个 src/data 或 public；混合文件不能直接登记为可删除目录。 */
@@ -312,58 +314,62 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
       });
     }
     if (!args.tablesOnly && missingRequestedInputs.length === 0 && args.unityWorker) {
-      await stage('enemies', async () => {
-        const relativeOutput = 'src/data/enemies/generated';
-        const rankOutput = path.join(runRoot, 'enemy-ranks.tmp.json');
-        try {
-          const rankInput = {
-            tablesDirectory: path.join(sourceRoot, 'TableCfg-current'),
-            unityWorker: args.unityWorker!,
-            output: rankOutput,
-            vfsUrl: args.vfsBase.replace(/\/api\/endaxis-data\/?$/, ''),
-            workers: Math.min(args.workers, 4),
-          };
-          const ranks = await extractEnemyRankEvidence(rankInput);
-          const firstRankText = await fs.readFile(rankOutput, 'utf8');
-          await extractEnemyRankEvidence(rankInput);
-          if ((await fs.readFile(rankOutput, 'utf8')) !== firstRankText) {
-            throw new Error('enemy rank evidence changed on identical second extraction');
-          }
-          const generationInput = {
-            tablesDirectory: rankInput.tablesDirectory,
-            rankEvidence: rankOutput,
-            runtimeDefaults: path.join(
-              root,
-              'tools/game-data-compiler/config/enemies/runtime-defaults.json',
-            ),
-            selectionCategories: path.join(
-              root,
-              'tools/game-data-compiler/config/enemies/selection-categories.json',
-            ),
-            outputDirectory: path.join(candidateRoot, relativeOutput),
-            check: false,
-          };
-          const generated = await generateEnemyDefinitions(generationInput);
-          await generateEnemyDefinitions({ ...generationInput, check: true });
-          return {
-            ranks,
-            generated,
-            audit: await auditCandidateEnemyDefinitions({
+      const generateEnemies = () =>
+        stage('enemies', async () => {
+          const relativeOutput = 'src/data/enemies/generated';
+          const rankOutput = path.join(runRoot, 'enemy-ranks.tmp.json');
+          try {
+            const rankInput = {
+              tablesDirectory: path.join(sourceRoot, 'TableCfg-current'),
+              unityWorker: args.unityWorker!,
+              output: rankOutput,
+              vfsUrl: args.vfsBase.replace(/\/api\/endaxis-data\/?$/, ''),
+              workers: Math.min(args.workers, 4),
+            };
+            const ranks = await extractEnemyRankEvidence(rankInput);
+            const firstRankText = await fs.readFile(rankOutput, 'utf8');
+            await extractEnemyRankEvidence(rankInput);
+            if ((await fs.readFile(rankOutput, 'utf8')) !== firstRankText) {
+              throw new Error('enemy rank evidence changed on identical second extraction');
+            }
+            const generationInput = {
               tablesDirectory: rankInput.tablesDirectory,
               rankEvidence: rankOutput,
-              runtimeDefaults: generationInput.runtimeDefaults,
-              selectionCategories: generationInput.selectionCategories,
-            }),
-            deterministicCheck: 'passed',
-            comparison: await compareCandidateFiles(
-              path.join(root, relativeOutput),
-              generationInput.outputDirectory,
-            ),
-          };
-        } finally {
-          await fs.rm(rankOutput, { force: true });
-        }
-      });
+              runtimeDefaults: path.join(
+                root,
+                'tools/game-data-compiler/config/enemies/runtime-defaults.json',
+              ),
+              selectionCategories: path.join(
+                root,
+                'tools/game-data-compiler/config/enemies/hidden-enemies.json',
+              ),
+              outputDirectory: path.join(candidateRoot, relativeOutput),
+              buffDirectory: path.join(sourceRoot, 'BuffData'),
+              spawnerDirectory: path.join(sourceRoot, 'SpawnerConfig'),
+              check: false,
+            };
+            const generated = await generateEnemyDefinitions(generationInput);
+            await generateEnemyDefinitions({ ...generationInput, check: true });
+            return {
+              ranks,
+              generated,
+              audit: await auditCandidateEnemyDefinitions({
+                tablesDirectory: rankInput.tablesDirectory,
+                rankEvidence: rankOutput,
+                runtimeDefaults: generationInput.runtimeDefaults,
+                selectionCategories: generationInput.selectionCategories,
+              }),
+              deterministicCheck: 'passed',
+              comparison: await compareCandidateFiles(
+                path.join(root, relativeOutput),
+                generationInput.outputDirectory,
+              ),
+            };
+          } finally {
+            await fs.rm(rankOutput, { force: true });
+          }
+        });
+      await generateEnemies();
       const tags = path.join(candidateRoot, 'src/data/combat/gameplayTagCatalog.generated.ts');
       const tagRoot = path.join(runRoot, 'unity-sources', 'GameplayTagConfigSet');
       const tagsOkay = await stage('gameplay-tags', async () => {

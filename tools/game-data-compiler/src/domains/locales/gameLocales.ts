@@ -421,6 +421,12 @@ export function compileGameLocales(
     }
   if (!Object.keys(enemies).length)
     throw new Error('EnemyTemplateDisplayInfoTable: no selectable eny_* templates');
+  const monsterWiki = requireRecord(table('WikiGroupTable').wiki_type_monster, 'wiki_type_monster');
+  for (const value of requireArray(monsterWiki.list, 'wiki_type_monster.list')) {
+    const group = requireRecord(value, 'monster wiki group');
+    const id = requireNonEmptyString(group.groupId, 'monster wiki groupId');
+    enemies[id] = { name: requiredText(group.groupName, id, true) };
+  }
 
   const consumables: Document = {};
   for (const [id, use] of entries(table('UseItemTable'))) {

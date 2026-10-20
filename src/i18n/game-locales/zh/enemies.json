@@ -274,5 +274,32 @@
   },
   "eny_0134_jsspsi": {
     "name": "祀"
+  },
+  "wiki_group_monster_angel": {
+    "name": "天使"
+  },
+  "wiki_group_monster_landbreaker": {
+    "name": "裂地者"
+  },
+  "wiki_group_monster_hongshan": {
+    "name": "沧贼"
+  },
+  "wiki_group_monster_animal": {
+    "name": "野外生物"
+  },
+  "wiki_group_monster_kl": {
+    "name": "蚀影"
+  },
+  "wiki_group_monster_js": {
+    "name": "造裔"
+  },
+  "wiki_group_monster_witchcraft": {
+    "name": "巫术造物"
+  },
+  "wiki_group_monster_ml": {
+    "name": "化物"
+  },
+  "wiki_group_monster_else": {
+    "name": "其他"
   }
 }

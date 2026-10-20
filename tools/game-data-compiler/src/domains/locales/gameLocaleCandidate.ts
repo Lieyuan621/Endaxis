@@ -105,6 +105,7 @@ export async function generateGameLocaleCandidate(input: GameLocaleCandidateInpu
     'EquipSuitTable',
     'EquipTable',
     'EnemyTemplateDisplayInfoTable',
+    'WikiGroupTable',
     'UseItemTable',
   ])
     tables[name] = await readRecord(path.join(input.tableRoot, `${name}.json`));

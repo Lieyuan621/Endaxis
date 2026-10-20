@@ -1,9 +1,13 @@
 import { imageRefFromPath } from '../src/compiler/publication/imageResources.ts';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
-import { isAbsolute, join, resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { format, resolveConfig } from 'prettier';
 import { ENEMY_LEVELS } from '../../../packages/game-data-contract/src/enemies.ts';
+import { generateEnemyStageCatalog } from './generateEnemyStageCatalog.ts';
+import { parseModifierTypeValue } from '../src/source/attributeModifiers.ts';
+import { readEnemyBornBuffAttributes } from '../src/domains/enemy/bornBuffAttributes.ts';
+import type { StageEnemyAttributes } from '../src/domains/enemy/spawnerAttributes.ts';
 
 const TIER_BY_DISPLAY_TYPE = {
   0: 'normal',
@@ -19,15 +23,19 @@ interface Arguments {
   readonly runtimeDefaults: string;
   readonly selectionCategories?: string;
   readonly outputDirectory: string;
+  readonly localeDirectory?: string;
+  readonly buffDirectory: string;
+  readonly spawnerDirectory: string;
   readonly check: boolean;
 }
 
 const DEFAULT_SELECTION_CATEGORIES = resolve(
-  'tools/game-data-compiler/config/enemies/selection-categories.json',
+  'tools/game-data-compiler/config/enemies/hidden-enemies.json',
 );
 
 interface EnemySelectionCatalog {
   readonly categories: readonly string[];
+  readonly enemyOrder: readonly string[];
   readonly categoryByEnemyId: Readonly<Record<string, string>>;
   readonly hiddenEnemyIds: readonly string[];
 }
@@ -59,9 +67,13 @@ export async function planEnemyDefinitions(
   rankEvidencePath: string,
   runtimeDefaultsPath: string,
   selectionCategoriesPath = DEFAULT_SELECTION_CATEGORIES,
+  stageVariantIds: readonly string[] = [],
+  buffDirectory?: string,
+  stageAttributes: readonly StageEnemyAttributes[] = [],
 ) {
   const displayTable = await readTable(tablesDirectory, 'EnemyTemplateDisplayInfoTable');
   const enemyTable = await readTable(tablesDirectory, 'EnemyTable');
+  for (const entry of stageAttributes) enemyTable[entry.id] = enemyTable[entry.enemyId];
   const attributeTable = await readTable(tablesDirectory, 'EnemyAttributeTemplateTable');
   const templateTable = await readTable(tablesDirectory, 'EnemyTemplateTable');
   const rankDocument = requireRecord(
@@ -84,18 +96,98 @@ export async function planEnemyDefinitions(
   const excludedDisplayIds = Object.keys(displayTable)
     .filter(gameId => !gameId.startsWith('eny_'))
     .sort((left, right) => left.localeCompare(right));
-  const selection = await readEnemySelectionCatalog(selectionCategoriesPath, gameIds);
-  const definitions = gameIds.map(gameId => {
-    const display = requireRecord(displayTable[gameId], `EnemyTemplateDisplayInfoTable.${gameId}`);
-    if (requireString(display.templateId, `${gameId}.display.templateId`) !== gameId) {
+  const selection = await readEnemySelectionCatalog(
+    selectionCategoriesPath,
+    gameIds,
+    tablesDirectory,
+  );
+  const definitionIds = [...gameIds, ...stageVariantIds.filter(id => !gameIds.includes(id))];
+  const hasModifiers = definitionIds.some(
+    id =>
+      requireArray(requireRecord(enemyTable[id], id).attrModifiers ?? [], `${id}.attrModifiers`)
+        .length > 0,
+  );
+  const attributeMeta =
+    hasModifiers || buffDirectory ? await readTable(tablesDirectory, 'AttributeMetaTable') : {};
+  const bornAttributes = new Map<string, ReturnType<typeof readEnemyBornBuffAttributes>>();
+  const spawnerAttributes = new Map<string, ReturnType<typeof readEnemyBornBuffAttributes>>();
+  const deferredSpawnerAttributes: { enemyId: string; buffId: string; attributeType: number }[] =
+    [];
+  if (buffDirectory) {
+    const ids = new Set(
+      definitionIds.flatMap(id =>
+        requireArray(requireRecord(enemyTable[id], id).bornBuffs ?? [], `${id}.bornBuffs`).map(
+          buffId => requireString(buffId, `${id}.bornBuffs`),
+        ),
+      ),
+    );
+    for (const id of ids) {
+      const path = join(buffDirectory, `${id}.json`);
+      bornAttributes.set(
+        id,
+        readEnemyBornBuffAttributes(JSON.parse(await readFile(path, 'utf8')), path),
+      );
+    }
+  }
+  if (buffDirectory)
+    for (const entry of stageAttributes) {
+      const modifiers = [];
+      for (const buff of entry.buffs) {
+        const file = join(buffDirectory, `${buff.buffId}.json`);
+        const overrides = Object.fromEntries(
+          (buff.blackboard ?? [])
+            .filter(value => !value.useString)
+            .map(value => [value.key, value.valueFloat]),
+        );
+        for (const modifier of readEnemyBornBuffAttributes(
+          JSON.parse(await readFile(file, 'utf8')),
+          file,
+          overrides,
+        )) {
+          // 第一阶段的 EnemyDefinition 仅承载固有属性；护盾等承伤倍率仍属于待定机制。
+          if ([1, 3, 20, 21, 27, 31].includes(modifier.attrType)) modifiers.push(modifier);
+          else
+            deferredSpawnerAttributes.push({
+              enemyId: entry.id,
+              buffId: buff.buffId,
+              attributeType: modifier.attrType,
+            });
+        }
+      }
+      spawnerAttributes.set(entry.id, modifiers);
+    }
+  const definitions = definitionIds.map(gameId => {
+    const enemy = requireRecord(enemyTable[gameId], `EnemyTable.${gameId}`);
+    const baseId = requireString(enemy.templateId, `${gameId}.enemy.templateId`);
+    const applyModifiers = compileEnemyAttributeModifiers(
+      [
+        ...requireArray(enemy.attrModifiers ?? [], `${gameId}.attrModifiers`).map((raw, index) => {
+          const modifier = requireRecord(raw, `${gameId}.attrModifiers[${index}]`);
+          return {
+            ...modifier,
+            formulaItem: parseModifierTypeValue(
+              modifier.modifierType,
+              `${gameId}.attrModifiers[${index}].modifierType`,
+            ),
+          };
+        }),
+        ...requireArray(enemy.bornBuffs ?? [], `${gameId}.bornBuffs`).flatMap(
+          id => bornAttributes.get(requireString(id, `${gameId}.bornBuffs`)) ?? [],
+        ),
+        ...(spawnerAttributes.get(gameId) ?? []),
+      ],
+      attributeMeta,
+      gameId,
+    );
+    const display = requireRecord(displayTable[baseId], `EnemyTemplateDisplayInfoTable.${baseId}`);
+    if (requireString(display.templateId, `${gameId}.display.templateId`) !== baseId) {
       throw new Error(`${gameId}: display template identity mismatch`);
     }
-    const template = requireRecord(templateTable[gameId], `EnemyTemplateTable.${gameId}`);
-    if (requireString(template.templateId, `${gameId}.template.templateId`) !== gameId) {
+    const template = requireRecord(templateTable[baseId], `EnemyTemplateTable.${baseId}`);
+    if (requireString(template.templateId, `${gameId}.template.templateId`) !== baseId) {
       throw new Error(`${gameId}: template identity mismatch`);
     }
-    const enemy = requireRecord(enemyTable[gameId], `EnemyTable.${gameId}`);
-    if (requireString(enemy.templateId, `${gameId}.enemy.templateId`) !== gameId) {
+    if (!stageVariantIds.includes(gameId) && baseId !== gameId) {
       throw new Error(`${gameId}: enemy template identity mismatch`);
     }
     const attributeTemplateId = requireString(
@@ -106,7 +198,7 @@ export async function planEnemyDefinitions(
       attributeTable[attributeTemplateId],
       `EnemyAttributeTemplateTable.${attributeTemplateId}`,
     );
-    const rankEntry = requireRecord(ranks[gameId], `${rankEvidencePath}.enemies.${gameId}`);
+    const rankEntry = requireRecord(ranks[baseId], `${rankEvidencePath}.enemies.${baseId}`);
     const rank = requireRank(rankEntry.rank, `${gameId}.rank`);
     const iconAssetPath = optionalString(rankEntry.iconAssetPath, `${gameId}.iconAssetPath`);
     const displayType = requireInteger(display.displayType, `${gameId}.displayType`);
@@ -123,11 +215,17 @@ export async function planEnemyDefinitions(
         `${gameId}.levelDependentAttributes[${index}].attrs`,
       );
       const level = requirePositiveInteger(values.get(0), `${gameId}.level[${index}]`);
-      const hp = requirePositive(values.get(1), `${gameId}.hp[${index}]`);
+      const hp = requirePositive(
+        applyModifiers(1, requireFinite(values.get(1), `${gameId}.hp[${index}]`)),
+        `${gameId}.hp[${index}]`,
+      );
       return {
         level,
         hp,
-        defense: requireFiniteNonNegative(values.get(3), `${gameId}.defense[${index}]`),
+        defense: requireFiniteNonNegative(
+          applyModifiers(3, requireFinite(values.get(3), `${gameId}.defense[${index}]`)),
+          `${gameId}.defense[${index}]`,
+        ),
       };
     });
     if (levelHp.length === 0) throw new Error(`${gameId}: no level-dependent attributes`);
@@ -147,6 +245,8 @@ export async function planEnemyDefinitions(
       independent.attrs,
       `${gameId}.levelIndependentAttributes.attrs`,
     );
+    for (const [type, value] of independentValues)
+      independentValues.set(type, applyModifiers(type, value));
     const knotThresholds = requireArray(
       attributes.poiseKnotPctList,
       `${gameId}.poiseKnotPctList`,
@@ -167,7 +267,7 @@ export async function planEnemyDefinitions(
     return {
       id: gameId.replaceAll('_', '-'),
       gameId,
-      ...(iconAssetPath === undefined ? {} : { icon: imageRefFromPath(`/enemies/${gameId}.webp`) }),
+      ...(iconAssetPath === undefined ? {} : { icon: imageRefFromPath(`/enemies/${baseId}.webp`) }),
       tier,
       rank,
       levelHp: levelHp.map(({ level, hp }) => ({ level, hp })),
@@ -188,7 +288,8 @@ export async function planEnemyDefinitions(
         knotThresholds,
         knotBreakDurationSeconds,
         brokenDurationSeconds: requireFiniteNonNegative(
-          independentValues.get(21),
+          requireFinite(independentValues.get(21), `${gameId}.PoiseRecTime`) *
+            (independentValues.has(31) ? independentValues.get(31)! : applyModifiers(31, 1)),
           `${gameId}.brokenDuration`,
         ),
         finisherSpRecovery: requireFiniteNonNegative(
@@ -215,7 +316,14 @@ export async function planEnemyDefinitions(
     throw new Error(`rank evidence has non-display enemies: ${extraRanks.join(', ')}`);
   return {
     definitions,
-    selection,
+    deferredSpawnerAttributes,
+    selection: {
+      ...selection,
+      hiddenEnemyIds: [
+        ...selection.hiddenEnemyIds,
+        ...stageVariantIds.map(id => id.replaceAll('_', '-')),
+      ],
+    },
     excludedDisplayIds,
     compatibilityDefaults: {
       knotBreakDurationSeconds,
@@ -225,15 +333,47 @@ export async function planEnemyDefinitions(
 }
 
 export async function generateEnemyDefinitions(args: Arguments) {
+  const stageCatalog = await generateEnemyStageCatalog(args);
+  const stageVariantIds = [
+    ...new Set(
+      stageCatalog.stages.flatMap(stage =>
+        stage.enemies
+          .filter(enemy => enemy.definitionId !== null && !enemy.usesBaseDefinition)
+          .map(
+            enemy =>
+              stageCatalog.stageAttributes.find(
+                entry => entry.id.replaceAll('_', '-') === enemy.definitionId,
+              )?.id ?? enemy.id,
+          ),
+      ),
+    ),
+  ];
   const plan = await planEnemyDefinitions(
     args.tablesDirectory,
     args.rankEvidence,
     args.runtimeDefaults,
     args.selectionCategories,
+    stageVariantIds,
+    args.buffDirectory,
+    stageCatalog.stageAttributes,
   );
   const prettierConfig = (await resolveConfig(resolve('.prettierrc.json'))) ?? {};
+  const requiredLevels = new Map<string, Set<number>>();
+  for (const stage of stageCatalog.stages) {
+    for (const enemy of stage.enemies) {
+      if (enemy.definitionId === null || enemy.level === null) continue;
+      const levels = requiredLevels.get(enemy.definitionId) ?? new Set<number>();
+      levels.add(enemy.level);
+      requiredLevels.set(enemy.definitionId, levels);
+    }
+  }
   const content = await format(
-    renderDefinitions(plan.definitions, plan.selection, plan.compatibilityDefaults.evidence),
+    renderDefinitions(
+      plan.definitions,
+      plan.selection,
+      plan.compatibilityDefaults.evidence,
+      requiredLevels,
+    ),
     {
       ...prettierConfig,
       parser: 'typescript',
@@ -249,6 +389,8 @@ export async function generateEnemyDefinitions(args: Arguments) {
   }
   return {
     definitionCount: plan.definitions.length,
+    deferredSpawnerAttributes: plan.deferredSpawnerAttributes,
+    stageCount: stageCatalog.stageCount,
     excludedDisplayIds: plan.excludedDisplayIds,
     compatibilityDefaults: plan.compatibilityDefaults,
     output,
@@ -259,15 +401,20 @@ function renderDefinitions(
   definitions: readonly EnemyDefinitionSource[],
   selection: EnemySelectionCatalog,
   evidence: string,
+  requiredLevels: ReadonlyMap<string, ReadonlySet<number>>,
 ): string {
   // Keep raw identities in the audit plan only; runtime references use the stable id.
   const runtimeDefinitions = definitions.map(({ gameId: _gameId, levelHp, ...definition }) => ({
     ...definition,
-    levelHp: ENEMY_LEVELS.map(level => {
-      const node = levelHp.find(node => node.level === level);
-      if (node === undefined) throw new Error(`${definition.id}: missing HP at level ${level}`);
-      return node.hp;
-    }),
+    levelHp: Object.fromEntries(
+      [...new Set([...ENEMY_LEVELS, ...(requiredLevels.get(definition.id) ?? [])])]
+        .sort((a, b) => a - b)
+        .map(level => {
+          const node = levelHp.find(node => node.level === level);
+          if (node === undefined) throw new Error(`${definition.id}: missing HP at level ${level}`);
+          return [level, node.hp];
+        }),
+    ),
   }));
   return `import type { EnemyDefinition } from '../../../core/game-data/enemyDefinition';
 
@@ -275,6 +422,7 @@ function renderDefinitions(
 // Every other field below is compiled from the same source snapshot and strict rank evidence.
 export const generatedEnemyDefinitions = ${JSON.stringify(runtimeDefinitions, null, 2)} as const satisfies readonly EnemyDefinition[];
 
+export const generatedEnemySelectionOrder = ${JSON.stringify(selection.enemyOrder)} as const;
 export const generatedEnemySelectionCategories = ${JSON.stringify(selection.categories, null, 2)} as const;
 export const generatedEnemySelectionCategoryById = ${JSON.stringify(selection.categoryByEnemyId, null, 2)} as const satisfies Readonly<Record<string, (typeof generatedEnemySelectionCategories)[number]>>;
 export const generatedHiddenEnemyIds = ${JSON.stringify(selection.hiddenEnemyIds, null, 2)} as const;
@@ -284,51 +432,119 @@ export const generatedHiddenEnemyIds = ${JSON.stringify(selection.hiddenEnemyIds
 async function readEnemySelectionCatalog(
   path: string,
   gameIds: readonly string[],
+  tablesDirectory: string,
 ): Promise<EnemySelectionCatalog> {
   const source = requireRecord(JSON.parse(await readFile(path, 'utf8')), path);
-  const categories = requireArray(source.categories, `${path}.categories`);
-  const categoryIds: string[] = [];
-  const categoryByEnemyId: Record<string, string> = {};
-  const assigned = new Set<string>();
+  const groups = await readTable(tablesDirectory, 'WikiGroupTable');
+  const entries = await readTable(tablesDirectory, 'WikiEntryTable');
+  const data = await readTable(tablesDirectory, 'WikiEntryDataTable');
+  const monster = requireRecord(groups.wiki_type_monster, 'WikiGroupTable.wiki_type_monster');
   const known = new Set(gameIds);
-  function claim(rawId: unknown, label: string): string {
-    const gameId = requireString(rawId, label);
-    if (!known.has(gameId)) throw new Error(`${label}: unknown enemy ${gameId}`);
-    if (assigned.has(gameId)) throw new Error(`${label}: duplicate enemy ${gameId}`);
-    assigned.add(gameId);
-    return gameId.replaceAll('_', '-');
-  }
-  categories.forEach((rawCategory, categoryIndex) => {
-    const label = `${path}.categories[${categoryIndex}]`;
-    const category = requireRecord(rawCategory, label);
-    const id = requireString(category.id, `${label}.id`);
-    if (!/^[a-z][A-Za-z0-9]*$/.test(id) || categoryIds.includes(id))
-      throw new Error(`${label}.id: invalid or duplicate category ${id}`);
-    categoryIds.push(id);
-    for (const [enemyIndex, rawId] of requireArray(
-      category.enemyIds,
-      `${label}.enemyIds`,
-    ).entries()) {
-      categoryByEnemyId[claim(rawId, `${label}.enemyIds[${enemyIndex}]`)] = id;
+  const categories: string[] = [];
+  const categoryByEnemyId: Record<string, string> = {};
+  const enemyOrder: string[] = [];
+  for (const raw of requireArray(monster.list, 'wiki_type_monster.list')) {
+    const group = requireRecord(raw, 'wiki group');
+    const id = requireString(group.groupId, 'wiki group.groupId');
+    categories.push(id);
+    const groupEntries = requireRecord(entries[id], `WikiEntryTable.${id}`);
+    for (const entryId of requireArray(groupEntries.list, `${id}.list`)) {
+      const key = requireString(entryId, `${id}.entryId`);
+      const entry = requireRecord(data[key], `WikiEntryDataTable.${key}`);
+      const enemyId = requireString(entry.refMonsterTemplateId, `${key}.refMonsterTemplateId`);
+      if (!known.has(enemyId)) continue;
+      const slug = enemyId.replaceAll('_', '-');
+      if (entry.groupId !== id || categoryByEnemyId[slug])
+        throw new Error(`${key}: conflicting wiki category`);
+      categoryByEnemyId[slug] = id;
+      enemyOrder.push(slug);
     }
-  });
-  for (const [index, rawId] of requireArray(
-    source.uncategorizedEnemyIds,
-    `${path}.uncategorizedEnemyIds`,
-  ).entries()) {
-    claim(rawId, `${path}.uncategorizedEnemyIds[${index}]`);
   }
-  const hiddenEnemyIds = requireArray(source.hiddenEnemyIds, `${path}.hiddenEnemyIds`).map(
-    (rawId, index) => claim(rawId, `${path}.hiddenEnemyIds[${index}]`),
-  );
-  const missing = gameIds.filter(gameId => !assigned.has(gameId));
-  if (missing.length) throw new Error(`${path}: unclassified enemies ${missing.join(', ')}`);
-  return { categories: categoryIds, categoryByEnemyId, hiddenEnemyIds };
+  const hiddenEnemyIds = requireArray(source.hiddenEnemyIds, `${path}.hiddenEnemyIds`).map(raw => {
+    const id = requireString(raw, 'hidden enemy');
+    if (!known.has(id)) throw new Error(`unknown hidden enemy ${id}`);
+    return id.replaceAll('_', '-');
+  });
+  return { categories, categoryByEnemyId, enemyOrder, hiddenEnemyIds };
 }
 
 async function readTable(directory: string, name: string): Promise<Record<string, unknown>> {
   const path = join(directory, `${name}.json`);
   return requireRecord(JSON.parse(await readFile(path, 'utf8')), path);
+}
+
+/** EnemyTable 当前使用常规 Addition/Multiplier/FinalMultiplier；采用原生聚合顺序，未知槽不猜测。 */
+function compileEnemyAttributeModifiers(
+  raw: unknown,
+  metadata: Record<string, unknown>,
+  enemyId: string,
+) {
+  const slots = new Map<
+    number,
+    {
+      addition: number;
+      multiplier: number;
+      finalAddition: number;
+      finalMultiplier: number;
+      baseAddition: number;
+      baseMultiplier: number;
+      baseFinalAddition: number;
+      baseFinalMultiplier: number;
+    }
+  >();
+  for (const [index, value] of requireArray(raw, `${enemyId}.attrModifiers`).entries()) {
+    const label = `${enemyId}.attrModifiers[${index}]`;
+    const modifier = requireRecord(value, label);
+    if (modifier.modifyAttributeType !== 0) throw new Error(`${label}: expected Specific target`);
+    const type = requireInteger(modifier.attrType, `${label}.attrType`);
+    // 敌人主动攻击尚未模拟，Atk 修正不影响当前承伤目标的属性。
+    if (![1, 2, 3, 20, 21, 27, 31].includes(type))
+      throw new Error(`${label}: unsupported enemy attribute ${type}`);
+    const slot = modifier.formulaItem;
+    const amount = requireFinite(modifier.attrValue, `${label}.attrValue`);
+    const aggregate = slots.get(type) ?? {
+      addition: 0,
+      multiplier: 1,
+      finalAddition: 0,
+      finalMultiplier: 1,
+      baseAddition: 0,
+      baseMultiplier: 1,
+      baseFinalAddition: 0,
+      baseFinalMultiplier: 1,
+    };
+    if (slot === 'Addition') aggregate.addition += amount;
+    else if (slot === 'Multiplier') aggregate.multiplier += amount;
+    else if (slot === 'FinalMultiplier') aggregate.finalMultiplier *= amount;
+    else if (slot === 'FinalAddition') aggregate.finalAddition += amount;
+    else if (slot === 'BaseAddition') aggregate.baseAddition += amount;
+    else if (slot === 'BaseMultiplier') aggregate.baseMultiplier += amount;
+    else if (slot === 'BaseFinalAddition') aggregate.baseFinalAddition += amount;
+    else if (slot === 'BaseFinalMultiplier') aggregate.baseFinalMultiplier *= amount;
+    else throw new Error(`${label}: unsupported enemy modifier slot ${slot}`);
+    slots.set(type, aggregate);
+  }
+  return (type: number, value: number): number => {
+    const modifier = slots.get(type);
+    if (!modifier) return value;
+    const meta = requireRecord(metadata[String(type)], `AttributeMetaTable.${type}`);
+    const clamp = (value: number) =>
+      Math.min(
+        meta.hasMaxValue ? requireFinite(meta.maxValue, `${type}.maxValue`) : Infinity,
+        Math.max(
+          meta.hasMinValue ? requireFinite(meta.minValue, `${type}.minValue`) : -Infinity,
+          value,
+        ),
+      );
+    const armed = clamp(
+      (clamp(value + modifier.baseAddition) * Math.max(0, modifier.baseMultiplier) +
+        modifier.baseFinalAddition) *
+        modifier.baseFinalMultiplier,
+    );
+    return clamp(
+      ((armed + modifier.addition) * Math.max(0, modifier.multiplier) + modifier.finalAddition) *
+        modifier.finalMultiplier,
+    );
+  };
 }
 
 function attributeValueMap(value: unknown, label: string): Map<number, number> {
@@ -423,14 +639,23 @@ function parseArguments(values: readonly string[]): Arguments {
     parsed.get('--selection-categories') ?? DEFAULT_SELECTION_CATEGORIES,
   );
   const outputDirectory = resolve(parsed.get('--output') ?? 'src/data/enemies/generated');
-  if (!isAbsolute(tablesDirectory) || !isAbsolute(rankEvidence))
-    throw new Error('--tables and --rank-evidence are required');
+  if (
+    !parsed.has('--tables') ||
+    !parsed.has('--rank-evidence') ||
+    !parsed.has('--buff-directory') ||
+    !parsed.has('--spawner-directory')
+  )
+    throw new Error(
+      '--tables, --rank-evidence, --buff-directory and --spawner-directory are required',
+    );
   return {
     tablesDirectory,
     rankEvidence,
     runtimeDefaults,
     selectionCategories,
     outputDirectory,
+    buffDirectory: resolve(parsed.get('--buff-directory')!),
+    spawnerDirectory: resolve(parsed.get('--spawner-directory')!),
     check,
   };
 }
