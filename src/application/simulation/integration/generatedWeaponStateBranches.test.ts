@@ -147,7 +147,7 @@ function createCrushProbe(): CombatStepForKind<'applyPhysicalInfliction'> {
       return {
         kind: 'applyPhysicalInfliction',
         parameters: {
-          target: 'enemy',
+          target: { kind: 'fixed' as const, target: 'enemy' as const }, source: { kind: 'fixed' as const, target: 'caster' as const },
           isExtra: false,
           type: 'crush',
           damageMultiplier,

@@ -23,6 +23,11 @@ function fieldKey(path: readonly string[], kind?: string) {
     'value'
   );
 }
+/** 原生步态枚举使用首字母大写，显示文案沿用已有的小写步态键。 */
+export function optionValueKey(value: string): string {
+  return value === 'Walk' || value === 'Run' || value === 'Sprint' ? value.toLowerCase() : value;
+}
+
 export function optionName(
   value: string | number | boolean,
   labels?: NodeFieldSchema['optionLabels'],
@@ -32,5 +37,5 @@ export function optionName(
   if (typeof value === 'number') return String(value);
   if (value === 'caster' && labels === 'operatorRole')
     return i18n.global.t('actionGraphEditor.options.roleCaster');
-  return i18n.global.t(`actionGraphEditor.options.${value}`);
+  return i18n.global.t(`actionGraphEditor.options.${optionValueKey(value)}`);
 }

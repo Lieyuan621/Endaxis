@@ -1,3 +1,4 @@
+import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
@@ -5,7 +6,7 @@ import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import { logicalAbilityEntityRuntimeId } from '../../game-data/logicalAbilityEntity';
 import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
-import type { ActionTargetQuery } from '../../../../packages/game-data-contract/src/conditions';
+
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
 
 type TriggerStep = ResolvedCombatStepForKind<'triggerCustomAbilityEvent'>;
@@ -13,7 +14,7 @@ type TriggerStep = ResolvedCombatStepForKind<'triggerCustomAbilityEvent'>;
 export interface CustomAbilityEventOperationExecutorDependencies {
   readonly sourceId: string;
   readonly queryTargets?: (
-    query: ActionTargetQuery,
+    query: CompiledTargetQuery,
     context: CombatOperationContext,
   ) => readonly RuntimeTargetRef[];
   readonly emit: (
@@ -81,7 +82,10 @@ export class CustomAbilityEventOperationExecutor implements CombatOperationExecu
       });
   }
 
-  #query(query: ActionTargetQuery, context?: CombatOperationContext): readonly RuntimeTargetRef[] {
+  #query(
+    query: CompiledTargetQuery,
+    context?: CombatOperationContext,
+  ): readonly RuntimeTargetRef[] {
     if (!context || !this.dependencies.queryTargets) {
       throw new Error('custom ability event target query requires an action context and resolver');
     }

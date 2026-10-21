@@ -1,4 +1,12 @@
+import {
+  parseCollectedBuffBlackboardAction,
+  type CollectedBuffBlackboardActionSource,
+} from './collectedBuffBlackboard.ts';
 import { parseAiMarkerActionSource, type AiMarkerActionSource } from './aiMarkerActions.ts';
+import {
+  parseRawAttributeOverrideSource,
+  type RawAttributeOverrideSource,
+} from './rawAttributeOverride.ts';
 import {
   parseContinuousAnimationTimeScaleActionSource,
   parseTargetAnimationTimeScaleActionSource,
@@ -70,10 +78,11 @@ import {
   type ChannelingCastingActionSource,
 } from './castingControlActions.ts';
 import {
-  parseCharacterTypeIdReadActionSource,
+  CHARACTER_IDENTITY_READ_KINDS,
+  parseCharacterIdentityReadActionSource,
   parseSquadSlotActionSource,
   type SquadSlotActionSource,
-  type CharacterTypeIdReadActionSource,
+  type CharacterIdentityReadActionSource,
 } from './characterIdentityActions.ts';
 import {
   parseComboPendingActionSource,
@@ -191,6 +200,16 @@ import {
   parseAnimatorAimOffsetActionSource,
   parseBombClearActionSource,
   parseCameraPresentationActionSource,
+  parseShowSquadTipsActionSource,
+  type ShowSquadTipsActionSource,
+  parseRewardComboStateActionSource,
+  type RewardComboStateActionSource,
+  parseRefreshHeadBarShowHideActionSource,
+  type RefreshHeadBarShowHideActionSource,
+  parseShakeCountShieldUiActionSource,
+  type ShakeCountShieldUiActionSource,
+  parseCountShieldUiActionSource,
+  type CountShieldUiActionSource,
   parseCameraRotateActionSource,
   parseDebugPrintActionSource,
   parseEffectActionSource,
@@ -363,6 +382,9 @@ const CONDITION_ACTION_NAMES = new Set([
   'CompareString',
   'CheckMainCharacterCondition',
   'CheckProfession',
+  'CheckWeaponTypeCondition',
+  'CheckGlobalBuffStackNum',
+  'CheckDashCount',
   'CheckDistanceCondition',
   'CheckEntityNum',
   'CheckBuffStackNum',
@@ -390,6 +412,7 @@ const CONDITION_ACTION_NAMES = new Set([
   'CompareDeckAttr',
   'CheckAbilityEntityCurDuration',
   'CheckDamageDecorateMask',
+  'CheckHasDamageSkillCastId',
   'CheckDamageTag',
   'CheckHealTag',
   'CheckOverHeal',
@@ -414,6 +437,7 @@ const CONDITION_ACTION_NAMES = new Set([
   'CheckPerfectDodgeDirection',
   'CheckDamageIgnoreImmuneLevel',
   'CheckProjectileInPerfectDodgeCd',
+  'CheckBuffFinishReason',
   'CheckAbilityEntityFinishReason',
   'CheckDamageTransferredSource',
   'CheckProjectileIgnoreImmuneLevel',
@@ -429,6 +453,7 @@ const REFERENCE_CLOSURE_ACTION_NAMES = new Set([
   'SlowAction',
   'SpeedupAction',
   'ObtainUspInNormalSkill',
+  'SetHpFloor',
   'CreateBuffAction',
   'CreateBuffAttachingSkill',
   'InheritBuffAction',
@@ -462,6 +487,11 @@ export interface HealthFloorActionSource {
 /** 已迁移到公共来源 IR 的 Action 叶子；领域适配器只能消费该公共并集。 */
 export type KnownNativeActionLeafSource =
   | {
+      readonly family: 'collectedBuffBlackboard';
+      readonly action: CollectedBuffBlackboardActionSource;
+    }
+  | { readonly family: 'rawAttributeOverride'; readonly action: RawAttributeOverrideSource }
+  | {
       readonly family: 'disabled';
       readonly action: { readonly kind: 'disabled'; readonly nativeActionType: string };
     }
@@ -474,10 +504,18 @@ export type KnownNativeActionLeafSource =
       readonly family: 'entityPropertySnapshot';
       readonly action: EntityPropertySnapshotActionSource;
     }
+  | {
+      readonly family: 'actionEnvironmentSkill';
+      readonly action: { readonly kind: 'changeOriginSkillToEventContextSkill' };
+    }
   | { readonly family: 'healthFloor'; readonly action: HealthFloorActionSource }
   | {
+      readonly family: 'buffApplicationTermination';
+      readonly action: { readonly kind: 'terminateAddingBuff' };
+    }
+  | {
       readonly family: 'characterIdentity';
-      readonly action: CharacterTypeIdReadActionSource | SquadSlotActionSource;
+      readonly action: CharacterIdentityReadActionSource | SquadSlotActionSource;
     }
   | { readonly family: 'targetGroup'; readonly action: TargetGroupActionSource }
   | {
@@ -642,6 +680,10 @@ export type KnownNativeActionLeafSource =
         | TrainingLevelEventActionSource;
     }
   | { readonly family: 'keywordBuff'; readonly action: KeywordBuffActionSource }
+  | {
+      readonly family: 'damageSkillCastRecord';
+      readonly action: { readonly kind: 'saveDamageSkillCastId' };
+    }
   | { readonly family: 'lifecycle'; readonly action: FinishOwnerActionSource }
   | {
       readonly family: 'timeDilation';
@@ -660,6 +702,11 @@ export type KnownNativeActionLeafSource =
       readonly family: 'presentation';
       readonly action:
         | PlaySoundActionSource
+        | ShowSquadTipsActionSource
+        | RewardComboStateActionSource
+        | RefreshHeadBarShowHideActionSource
+        | ShakeCountShieldUiActionSource
+        | CountShieldUiActionSource
         | HideHeadBarActionSource
         | DebugPrintActionSource
         | EffectActionSource
@@ -672,6 +719,11 @@ export type KnownNativeActionLeafSource =
           };
     }
   | { readonly family: 'interrupt'; readonly action: InterruptActionSource }
+  | {
+      readonly family: 'comboLock';
+      readonly action: { readonly kind: 'comboLock'; readonly duration: ScalarSource };
+    }
+  | { readonly family: 'disableNormalSkill'; readonly action: { readonly normalOnly: boolean } }
   | { readonly family: 'stumpControl'; readonly action: StumpControlActionSource }
   | { readonly family: 'projectile'; readonly action: ProjectileLaunchActionSource }
   | { readonly family: 'abilityEntity'; readonly action: AbilityEntitySpawnActionSource }
@@ -718,19 +770,19 @@ export type KnownNativeActionLeafSource =
     };
 
 /**
- * 单一公共分派入口。未知启用动作必须失败；未知关闭动作保留身份，不解析不会执行的载荷。
+ * 执行图分派入口。启用动作必须严格解析；关闭动作只保留身份，不解析不会执行的载荷。
  */
 export function parseKnownNativeActionLeafSource(
   value: unknown,
   path: string,
   inheritedBlackboard: BlackboardLevelValues,
 ): KnownNativeActionLeafSource {
-  const result = tryParseKnownNativeActionLeafSource(value, path, inheritedBlackboard);
-  if (result) return result;
   const action = requireRecord(value, path);
   const name = nativeActionName(requireNonEmptyString(action.$type, `${path}.$type`));
   if (action.isEnable === false)
     return { family: 'disabled', action: { kind: 'disabled', nativeActionType: name } };
+  const result = tryParseKnownNativeActionLeafSource(value, path, inheritedBlackboard);
+  if (result) return result;
   throw new Error(`${path}.$type: unsupported native action ${JSON.stringify(name)}`);
 }
 
@@ -755,6 +807,11 @@ export function tryParseKnownNativeActionLeafSource(
     };
   }
   switch (name) {
+    case 'OverrideRawAttributeAction':
+      return {
+        family: 'rawAttributeOverride',
+        action: parseRawAttributeOverrideSource(value, path, inheritedBlackboard),
+      };
     case 'TyphoeaArcheryTargetSelect':
       return {
         family: 'typhoeaArcherySelection',
@@ -1310,6 +1367,42 @@ export function tryParseKnownNativeActionLeafSource(
         family: 'entityPropertySnapshot',
         action: parseEntityPropertySnapshotActionSource(value, path, inheritedBlackboard),
       };
+    case 'ChangeOriginSkillToEventContextSkill':
+      requireExactFields(
+        action,
+        new Set([
+          '$type',
+          'isEnable',
+          'priorityLevel',
+          'priorityOffset',
+          'serverActionIndex',
+          'm_info',
+        ]),
+        path,
+      );
+      requireString(action.m_info, `${path}.m_info`);
+      return {
+        family: 'actionEnvironmentSkill',
+        action: { kind: 'changeOriginSkillToEventContextSkill' },
+      };
+    case 'ModifyCollectedBuffBbValue':
+    case 'SaveCollectedBuffBbValue':
+      return {
+        family: 'collectedBuffBlackboard',
+        action: parseCollectedBuffBlackboardAction(
+          action,
+          path,
+          name === 'SaveCollectedBuffBbValue',
+          inheritedBlackboard,
+        ),
+      };
+    case 'TerminateAddingBuff':
+      requireExactFields(
+        action,
+        new Set(['$type', 'isEnable', 'priorityLevel', 'priorityOffset', 'serverActionIndex']),
+        path,
+      );
+      return { family: 'buffApplicationTermination', action: { kind: 'terminateAddingBuff' } };
     case 'SetHpFloor': {
       requireExactFields(
         action,
@@ -1350,16 +1443,32 @@ export function tryParseKnownNativeActionLeafSource(
         },
       };
     }
+    case 'SaveSquadSlot':
+    case 'SaveProfession':
+    case 'SaveCharTypeIdToInt':
     case 'SaveCharTypeId':
       return {
         family: 'characterIdentity',
-        action: parseCharacterTypeIdReadActionSource(value, path),
+        action: parseCharacterIdentityReadActionSource(
+          value,
+          path,
+          CHARACTER_IDENTITY_READ_KINDS[name],
+        ),
       };
+    case 'GetNextAliveBySquadSlot':
     case 'SaveCharTypeIdToIntBySquadSlot':
     case 'GetCharBySquadSlot':
       return {
         family: 'characterIdentity',
-        action: parseSquadSlotActionSource(value, path, name === 'SaveCharTypeIdToIntBySquadSlot'),
+        action: parseSquadSlotActionSource(
+          value,
+          path,
+          name === 'SaveCharTypeIdToIntBySquadSlot'
+            ? 'storeCharacterTypeBySquadSlot'
+            : name === 'GetNextAliveBySquadSlot'
+              ? 'findNextAliveCharacterBySquadSlot'
+              : 'findCharacterBySquadSlot',
+        ),
       };
     case 'FindTargetAction':
     case 'ContinuousFindTargetAction':
@@ -1426,6 +1535,49 @@ export function tryParseKnownNativeActionLeafSource(
       return {
         family: 'modeAndResourcePolicy',
         action: parseRefrainUltimateEnergyRecoveryActionSource(value, path),
+      };
+    case 'ComboLockAction':
+      requireExactFields(
+        action,
+        new Set([
+          '$type',
+          'isEnable',
+          'priorityLevel',
+          'priorityOffset',
+          'serverActionIndex',
+          'duration',
+        ]),
+        path,
+      );
+      return {
+        family: 'comboLock',
+        action: {
+          kind: 'comboLock',
+          duration: parseScalarSource(action.duration, `${path}.duration`, inheritedBlackboard),
+        },
+      };
+    case 'DisableNormalSkillWithUI':
+      requireExactFields(
+        action,
+        new Set([
+          '$type',
+          'isEnable',
+          'priorityLevel',
+          'priorityOffset',
+          'serverActionIndex',
+          'autoFinishByAction',
+          'normalSkillSubTypeFilter',
+        ]),
+        path,
+      );
+      if (
+        action.autoFinishByAction !== true ||
+        !['Any', 'Normal'].includes(String(action.normalSkillSubTypeFilter))
+      )
+        throw new Error(`${path}: unsupported normal-skill restriction lifecycle or subtype`);
+      return {
+        family: 'disableNormalSkill',
+        action: { normalOnly: action.normalSkillSubTypeFilter === 'Normal' },
       };
     case 'RefreshBuffAttrModifierValue':
       requireExactFields(
@@ -1692,6 +1844,13 @@ export function tryParseKnownNativeActionLeafSource(
         family: 'buffDurationMutation',
         action: parseBuffDurationMutationActionSource(value, path, inheritedBlackboard),
       };
+    case 'SaveDamageSkillCastId':
+      requireExactFields(
+        requireRecord(value, path),
+        new Set(['$type', 'isEnable', 'priorityLevel', 'priorityOffset', 'serverActionIndex']),
+        path,
+      );
+      return { family: 'damageSkillCastRecord', action: { kind: 'saveDamageSkillCastId' } };
     case 'PauseBuffTime':
       return {
         family: 'buffTimePause',
@@ -1725,6 +1884,22 @@ export function tryParseKnownNativeActionLeafSource(
       };
     case 'PlaySoundAction':
       return { family: 'presentation', action: parsePlaySoundActionSource(value, path) };
+    case 'ShowSquadTipsAction':
+      return { family: 'presentation', action: parseShowSquadTipsActionSource(value, path) };
+    case 'SetRewardComboStateAction':
+      return { family: 'presentation', action: parseRewardComboStateActionSource(value, path) };
+    case 'RefreshHeadBarShowHideAction':
+      return {
+        family: 'presentation',
+        action: parseRefreshHeadBarShowHideActionSource(value, path),
+      };
+    case 'ShakeCountShieldUIAction':
+      return { family: 'presentation', action: parseShakeCountShieldUiActionSource(value, path) };
+    case 'CountShieldUIAction':
+      return {
+        family: 'presentation',
+        action: parseCountShieldUiActionSource(value, path, inheritedBlackboard),
+      };
     case 'DebugPrintAction':
       return { family: 'presentation', action: parseDebugPrintActionSource(value, path) };
     case 'EffectAction':
@@ -1950,8 +2125,19 @@ export function collectEnabledNativeActionNodes(
   return collectNativeActionNodesWithLeafSequences(sequence, leafActionSequences, true);
 }
 
+/** 不穿越事件/延后回调；同步子调用保留当前Owner/Source/InputTarget身份。 */
+export function collectImmediateNativeActionNodes(
+  sequence: NativeSequenceSource<KnownNativeActionLeafSource>,
+): readonly NativeActionNodeSource<KnownNativeActionLeafSource>[] {
+  return collectNativeActionNodesWithLeafSequences(sequence, leaf =>
+    leaf.family === 'healthFloor' ? [leaf.action.actionAfterSet] : [],
+  );
+}
+
 function leafActionSequences(leaf: KnownNativeActionLeafSource) {
   switch (leaf.family) {
+    case 'healthFloor':
+      return [leaf.action.actionAfterSet];
     case 'tagQueryListener':
       return [leaf.action.sequence];
     case 'eventListener':

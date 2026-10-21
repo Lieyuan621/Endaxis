@@ -44,16 +44,6 @@ const definition = {
           value: [0.16, 0.192, 0.224, 0.256, 0.288, 0.32, 0.352, 0.384, 0.448],
         },
       ],
-      skillId: 'sk_wpn_sword_0016',
-      eventHandlers: [
-        {
-          key: 'skill3:event:0:sequence:0',
-          abilityEvent: 'skillSpGained',
-          priority: 0,
-          sequence: { $sequence: 'checkCondition_6' },
-        },
-      ],
-      enableSequence: { $sequence: 'applyBuff_7' },
       actionGraph: {
         main: {
           nodes: {
@@ -166,6 +156,15 @@ const definition = {
         },
         macros: {},
       },
+      skillId: 'sk_wpn_sword_0016',
+      eventHandlers: [
+        {
+          key: 'skill3:event:0:sequence:0',
+          abilityEvent: 'skillSpGained',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_6' },
+        },
+      ],
       blackboard: {
         cd: 0.1,
         duration: [30, 30, 30, 30, 30, 30, 30, 30, 30],
@@ -173,6 +172,7 @@ const definition = {
         phy_dmg_up2: [0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.14],
         phy_dmg_up3: [0.025, 0.03, 0.035, 0.04, 0.045, 0.05, 0.055, 0.06, 0.07],
       },
+      enableSequence: { $sequence: 'applyBuff_7' },
     },
   ],
   assetSlug: 'wpn_sword_0016',

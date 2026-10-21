@@ -277,6 +277,77 @@ describe('从原始文件独立编译定义', () => {
     expect(compiled.scope.supportedTagIds).toEqual(new Set([1, 2]));
     expect(compiled.revision).toBe('fixture@1');
     expect(fs.readdirSync(root, { recursive: true })).toEqual(before);
+    // 同一词条仅省略范围外的入口，其他词条、GlobalBuff 的共享技力修正和有效子项继续保留。
+    writeJson(scope, {
+      supportedTagIds: [1, 2],
+      blockedTagReasons: {},
+      omittedTagReasons: {},
+      omittedBuffRootReasons: { buff_fixture: 'movement-only entry' },
+    });
+    fs.unlinkSync(path.join(buffs, 'buff_fixture.json'));
+    const omitted = compileContingencyContractDefinitionsFromFiles(args);
+    expect(omitted.initializationPlans[0]?.sequence).toEqual({ $sequence: null });
+    expect(omitted.buffDefinitions.buff_fixture).toBeUndefined();
+    expect(omitted.buffDefinitions.buff_cc_enemy_common_hp_up).toEqual(
+      compiled.buffDefinitions.buff_cc_enemy_common_hp_up,
+    );
+    const scalar = (value: number) => ({ useBlackboardKey: false, value, blackboardKey: '' });
+    writeJson(globalBuffCatalog, {
+      version: 'fixture@1',
+      evidence: {},
+      templates: {
+        global_mixed: {
+          id: 'global_mixed',
+          lifeType: 'Infinity',
+          duration: scalar(0),
+          triggerInterval: scalar(0),
+          waitFirstTriggerInterval: true,
+          maxTriggerCount: scalar(1),
+          stackingIdentifierType: 'Id',
+          stackingType: 'Unlimited',
+          stackingKey: '',
+          usePriorityKey: false,
+          priorityKey: '',
+          negatePriority: false,
+          priority: 0,
+          maxStackCount: 0,
+          applyIconDurationToBuffs: false,
+          buffInputs: ['buff_fixture', 'buff_cc_enemy_common_hp_up'].map(buffId => ({
+            buffId,
+            assignBlackboard: false,
+            assignItems: [],
+          })),
+          globalModifierCount: 1,
+          globalModifiers: [
+            {
+              attribute: 'spRecovery',
+              operation: 'multiplier',
+              value: scalar(1),
+              applyToReturnSpGain: true,
+            },
+          ],
+          globalEventCount: 0,
+          blackboard: [],
+        },
+      },
+    });
+    writeJson(path.join(tables, 'CcTagTable.json'), {
+      ...tags,
+      1: { ...tags[1], tagTerms: [{ blackboard: [], buffId: 'global_mixed', termType: 2 }] },
+    });
+    const mixed = compileContingencyContractDefinitionsFromFiles(args);
+    const mixedPlan = mixed.initializationPlans[0]!;
+    const mixedEntry = mixedPlan.sequence.$sequence!;
+    expect(mixedPlan.actionGraph.main.nodes[mixedEntry]?.action).toMatchObject({
+      kind: 'createGlobalBuff',
+      parameters: {
+        definition: {
+          children: [{ buffId: 'buff_cc_enemy_common_hp_up' }],
+          sharedSpModifiers: [{ attribute: 'spRecovery', operation: 'multiplier' }],
+        },
+      },
+    });
+    expect(mixed.buffDefinitions.buff_fixture).toBeUndefined();
     writeJson(path.join(tables, 'CcTagTable.json'), {
       ...tags,
       1: { ...tags[1], tagTerms: [{ blackboard: [], buffId: 'countdown', termType: 3 }] },

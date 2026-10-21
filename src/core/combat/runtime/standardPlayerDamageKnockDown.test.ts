@@ -134,7 +134,7 @@ function setup(requests = 2, listenerEvent: 'afterOutputKnockDown' = 'afterOutpu
             kind: 'applyPhysicalInfliction' as const,
             parameters: {
               type: 'knockDown' as const,
-              target: 'enemy' as const,
+              target: { kind: 'fixed' as const, target: 'enemy' as const }, source: { kind: 'fixed' as const, target: 'caster' as const },
               duration: { kind: 'constant' as const, value: 1.5 },
               force: false,
               isExtra: false,

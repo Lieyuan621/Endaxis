@@ -71,6 +71,7 @@ describe('公共属性快照投影', () => {
     expect(project({ targetSettings: targetFixture(target) })).toEqual({
       kind: 'storeSourceAttributeValue',
       parameters: {
+        target: { kind: target === 'Owner' ? 'owner' : 'source' },
         attribute: { kind: 'secondary' },
         stage: 'finalNonConverted',
         useFloor: false,
@@ -99,16 +100,16 @@ describe('公共属性快照投影', () => {
     });
   });
 
-  it('Buff 宿主的 Source 复用相同投影，但不把 Buff Owner 当成来源', () => {
+  it('Buff 的 Owner 与 Source 各自保留查询身份', () => {
     expect(
       project(
         { targetSettings: targetFixture('Source') },
         withProjectionGraph(BUFF_ACTION_CONTEXT),
       ),
     ).toMatchObject({ parameters: { attribute: { kind: 'secondary' } } });
-    expect(() => project({}, withProjectionGraph(BUFF_ACTION_CONTEXT))).toThrow(
-      'unsupported attribute snapshot target',
-    );
+    expect(project({}, withProjectionGraph(BUFF_ACTION_CONTEXT))).toMatchObject({
+      parameters: { target: { kind: 'owner' } },
+    });
   });
 
   it('保留原有 Specific/MaxHp 支持', () => {
@@ -129,10 +130,28 @@ describe('公共属性快照投影', () => {
     );
   });
 
-  it.each(['Target'])('仍拒绝未支持的属性目标 %s', target => {
-    expect(() => project({ targetSettings: targetFixture(target) })).toThrow(
-      'unsupported attribute snapshot target or selector',
-    );
+  it('固定目标与动作输入不借用施术者；HealTakenIncrease 复用公共属性映射', () => {
+    expect(
+      project({
+        targetSettings: targetFixture('Target'),
+        primaryAttributeType: 'Specific',
+        attributeType: 'HealTakenIncrease',
+      }),
+    ).toMatchObject({
+      parameters: {
+        target: { kind: 'inputTarget' },
+        attribute: { kind: 'specific', key: 'healTakenIncrease' },
+      },
+    });
+    expect(
+      project(
+        { targetSettings: targetFixture('Target') },
+        withProjectionGraph({
+          ...BUFF_ACTION_CONTEXT,
+          actionTargetTarget: 'actionInputTarget',
+        }),
+      ),
+    ).toMatchObject({ parameters: { target: { kind: 'inputTarget' } } });
   });
 
   it('Group 不是原生 TargetSource，必须在来源边界拒绝', () => {
@@ -154,8 +173,8 @@ describe('公共属性快照投影', () => {
     ).toThrow('action Owner projection is unavailable');
   });
 
-  it('接收侧 Buff 的 buffSource 尚未投影时仍阻断', () => {
-    expect(() =>
+  it('接收侧 Buff 的 Source 在执行时解析，不要求它等于施术者', () => {
+    expect(
       project(
         { targetSettings: targetFixture('Source') },
         withProjectionGraph({
@@ -163,6 +182,6 @@ describe('公共属性快照投影', () => {
           actionSourceTarget: 'buffSource',
         }),
       ),
-    ).toThrow('unsupported attribute snapshot target or selector');
+    ).toMatchObject({ parameters: { target: { kind: 'source' } } });
   });
 });

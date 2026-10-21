@@ -11,6 +11,7 @@ const props = defineProps<{
   pxPerFrame: number;
   actionTop: number;
   label: string;
+  lockedLabel: string;
   perfectLabel?: string;
   prepEndFrame?: number;
 
@@ -70,12 +71,17 @@ const items = computed(() =>
       v-for="item in items"
       :key="`${item.operatorId}:${item.sequence}:${item.startFrame}`"
       class="combo-window-bar"
-      :class="[`is-${item.outcome}`, { 'perfect-timing-bar': item.perfectTiming }]"
-      :title="item.perfectTiming ? (perfectLabel ?? label) : label"
+      :class="[
+        `is-${item.outcome}`,
+        { 'perfect-timing-bar': item.perfectTiming && !item.locked },
+      ]"
+      :title="item.locked ? lockedLabel : item.perfectTiming ? (perfectLabel ?? label) : label"
       :style="{
         left: `${item.left}px`,
         width: `${item.width}px`,
-        '--cw-color': COMBO_WINDOW_COLOR,
+        '--cw-color': item.locked
+          ? `color-mix(in srgb, ${COMBO_WINDOW_COLOR} 55%, black)`
+          : COMBO_WINDOW_COLOR,
       }"
     >
       <div class="cw-start-mark"></div>
@@ -147,4 +153,5 @@ const items = computed(() =>
   border-bottom: none;
   background: var(--cw-color);
 }
+
 </style>

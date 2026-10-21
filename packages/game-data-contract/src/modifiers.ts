@@ -226,8 +226,8 @@ export interface ModifyPoiseScalarProcessorDefinition {
   readonly timing: 'beforeCalculation';
   /** 修改攻击方还是目标方的倍率。 */
   readonly side: PoiseModifierSide;
-  /** 加入对应倍率区的数值。 */
-  readonly addition: PoiseModifierNumber;
+  /** 原生属性公式槽及本次修正数值。 */
+  readonly values: { readonly slot: AttributeModifierSlot; readonly value: PoiseModifierNumber };
 }
 
 /** 一个 Buff 在失衡伤害生命周期中注册的条件和处理器。 */

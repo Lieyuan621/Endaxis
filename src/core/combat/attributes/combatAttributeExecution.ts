@@ -43,7 +43,44 @@ export function setCombatAttributeRawValue<Key extends string>(
   value: number,
 ): void {
   assertFinite(value, 'raw attribute value');
+  if (state.rawBeneathOverrides.has(attribute)) state.rawBeneathOverrides.set(attribute, value);
+  else state.rawValues.set(attribute, value);
+}
+
+/** 原生 PushRawOverride：覆盖 Raw 槽，仍继续参与八槽计算。 */
+export function pushCombatAttributeRawOverride<Key extends string>(
+  state: CombatAttributeState<Key>,
+  attribute: Key,
+  value: number,
+): number {
+  assertFinite(value, 'raw attribute override');
+  const entries = state.rawOverrides.get(attribute) ?? [];
+  if (entries.length === 0) {
+    state.rawBeneathOverrides.set(attribute, state.rawValues.get(attribute) ?? 0);
+    state.rawOverrides.set(attribute, entries);
+  }
+  const token = state.nextRawOverrideToken++;
+  entries.push({ token, value });
   state.rawValues.set(attribute, value);
+  return token;
+}
+
+/** 按句柄移除，允许先结束下层覆盖；最后一层移除时恢复期间更新过的底值。 */
+export function popCombatAttributeRawOverride<Key extends string>(
+  state: CombatAttributeState<Key>,
+  attribute: Key,
+  token: number,
+): void {
+  const entries = state.rawOverrides.get(attribute);
+  const index = entries?.findIndex(entry => entry.token === token) ?? -1;
+  if (entries === undefined || index < 0) return;
+  entries.splice(index, 1);
+  if (entries.length > 0) state.rawValues.set(attribute, entries.at(-1)!.value);
+  else {
+    state.rawValues.set(attribute, state.rawBeneathOverrides.get(attribute)!);
+    state.rawOverrides.delete(attribute);
+    state.rawBeneathOverrides.delete(attribute);
+  }
 }
 
 /** 原生 Attributes.CloneTo：容器独立，修正对象共享；不是最终数值快照或 Buff 克隆。 */
@@ -53,6 +90,9 @@ export function cloneCombatAttributes<Key extends string>(
 ): void {
   if (source === target) throw new Error('attribute clone requires a distinct target');
   target.rawValues.clear();
+  // 原生 CloneTo 复制当前 Raw 数据，但不继承覆盖句柄及底值账本。
+  target.rawOverrides.clear();
+  target.rawBeneathOverrides.clear();
   for (const [key, value] of source.rawValues) target.rawValues.set(key, value);
   target.definitions.clear();
   for (const [key, definition] of source.definitions) target.definitions.set(key, definition);

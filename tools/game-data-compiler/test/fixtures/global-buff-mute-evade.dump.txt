@@ -1,0 +1,84 @@
+===== objects/0000-p5565CABEC5DAE306.txt =====
+MonoBehaviour Base
+	PPtr<GameObject> m_GameObject
+		int m_FileID = 0
+		SInt64 m_PathID = 0
+	UInt8 m_Enabled = 1
+	PPtr<MonoScript> m_Script
+		int m_FileID = 1
+		SInt64 m_PathID = 2867598702933798853
+	string m_Name = "global_buff_cc_level_mute_evade"
+	GlobalBuffData globalBuffData
+		string id = "global_buff_cc_level_mute_evade"
+		UInt8 lifeType = 1
+		BlackboardDouble duration
+			UInt8 useBlackboardKey = 1
+			float value = 0
+			string blackboardKey = "duration"
+		BlackboardDouble triggerInterval
+			UInt8 useBlackboardKey = 0
+			float value = 0
+			string blackboardKey = ""
+		UInt8 waitFirstTriggerInterval = 1
+		BlackboardInt maxTriggerCnt
+			UInt8 useBlackboardKey = 0
+			int value = 1
+			string blackboardKey = ""
+		GlobalBuffStackingSettings stackingSettings
+			UInt8 identifierType = 0
+			SInt16 stackingType = 0
+			string stackingKey = ""
+			UInt8 usePriorityKey = 0
+			string priorityKey = ""
+			UInt8 negatePriority = 0
+			float priority = 0
+			int maxStackCnt = 0
+		UInt8 applyIconDurationToBuffs = 0
+		BuffInput buffInputs
+			Array Array
+			int size = 1
+				[0]
+				BuffInput data
+					string buffId = "buff_cc_chr_mute_evade"
+					UInt8 assignBlackboard = 0
+					AssignPair assignItems
+						Array Array
+						int size = 0
+		Data globalModifier
+			Array Array
+			int size = 0
+		GlobalBuffActionMap globalBuffEventAction
+			Array Array
+			int size = 1
+				[0]
+				GlobalBuffActionMap data
+					int globalBuffEvent = 5
+					SequenceActionData actions
+						Array Array
+						int size = 1
+							[0]
+							SequenceActionData data
+								AbilityActionData actionData
+									Array Array
+									int size = 1
+										[0]
+										managedRefArrayItem data
+											SInt64 rid = 1946034012185166589
+								UInt8 onlyExecuteWhenSourceIsMainChar = 0
+								UInt8 onlyExecuteWhenSourceIsGuard = 0
+		DataPair blackboard
+			Array Array
+			int size = 0
+	ManagedReferencesRegistry references
+		int version = 2
+		vector RefIds
+			Array Array
+			int size = 1
+				[0]
+				ReferencedObject data
+					SInt64 rid = 1946034012185166589
+					ReferencedManagedType type
+						string class = "ShowSquadTipsAction/Data"
+						string ns = "Beyond.Gameplay.Core"
+						string asm = "Gameplay.Beyond"
+					ReferencedObjectData data

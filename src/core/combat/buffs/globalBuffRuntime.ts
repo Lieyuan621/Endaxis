@@ -4,6 +4,7 @@ import type {
   ResolvedSkillBuffDefinition,
 } from '../../compiler/combatProgram';
 import type { CompiledGlobalBuffDefinition } from '../../compiler/combatProgram.ts';
+import { compareCombatNumbers } from '../../math/combatNumbers';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import { logicalAbilityEntityRuntimeId } from '../../game-data/logicalAbilityEntity';
 import type { BuffApplicationSource } from '../../game-data/operatorDefinition';
@@ -203,7 +204,10 @@ export class GlobalBuffRuntime {
           throw new Error(`global buff child target '${target.ownerId}' is not scoped`);
         }
         for (const child of definition.children) {
-          const childDefinition = this.resolveBuffDefinition(sourceId, child.buffId);
+          const childDefinition = this.resolveBuffDefinition(
+            sourceActionOwnerId ?? sourceId,
+            child.buffId,
+          );
           if (childDefinition === undefined) {
             throw new Error(`global buff '${id}' child definition '${child.buffId}' is missing`);
           }
@@ -313,6 +317,14 @@ export class GlobalBuffRuntime {
         if (instance.remainingDuration <= 1e-8) this.#requireInstance(instance).finish('other');
       }
     }
+  }
+
+  /** 当前模型的父实例同步启用；统计父实例，不把各队员的镜像重复计数。 */
+  getCount(id: string): number {
+    let count = 0;
+    for (const group of this.runtimeState.groups.values())
+      for (const instance of group) if (instance.id === id && !instance.finished) count++;
+    return count;
   }
 
   /** 原生 FinishGlobalBuff(finishAll=true) 按稳定 ID 清理全部同名父实例。 */
@@ -440,6 +452,14 @@ export class GlobalBuffOperationExecutor implements CombatOperationExecutor {
   }
 
   evaluate(condition: CompiledCondition, context?: CombatOperationContext): boolean {
+    if (condition.kind === 'globalBuffCountCompare') {
+      if (!context) throw new Error('globalBuffCountCompare requires an action context');
+      return compareCombatNumbers(
+        this.dependencies.runtime.getCount(condition.globalBuffId),
+        resolveActionValueOperand(condition.value, context.blackboard),
+        condition.operator,
+      );
+    }
     return this.dependencies.delegate.evaluate(condition, context);
   }
 }

@@ -22,7 +22,7 @@ describe('shared cooldown data', () => {
         if (input === 'reserve')
           return reserveSkillCooldown(state.first, program, () => {
             state.reads++;
-            return state.multiplier;
+            return program.periodFrames * state.multiplier;
           });
         if (input === 'advance') return advanceSkillCooldown(state.second, 5);
         if (input === 'override') return overrideSkillCooldown(state.second, program, false);
@@ -51,7 +51,7 @@ describe('shared cooldown data', () => {
   it('does not read dynamic multipliers when already cooling or unconfigured', () => {
     const program = compileSkillCooldown(10, 1);
     const state = createSkillCooldownState(program);
-    reserveSkillCooldown(state, program, () => 1);
+    reserveSkillCooldown(state, program, baseFrames => baseFrames);
     expect(
       reserveSkillCooldown(state, program, () => {
         throw new Error('unexpected');

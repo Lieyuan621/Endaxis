@@ -1,5 +1,6 @@
+import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
-import type { ActionTargetQuery } from '../../../../packages/game-data-contract/src/conditions';
+
 import { runtimeTargetEntityId, type RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import type { CombatObjectRef } from '../receipt/combatReceipt';
@@ -48,7 +49,7 @@ export interface ElementalInflictionEventPayload {
 /** 元素附着执行节点所需的状态读写、事件、回执和后继执行端口。 */
 export interface ElementalInflictionOperationDependencies {
   readonly queryTargets?: (
-    query: ActionTargetQuery,
+    query: CompiledTargetQuery,
     context: CombatOperationContext,
   ) => readonly RuntimeTargetRef[];
   readonly resolveInflictionTarget?: (target: RuntimeTargetRef) => RuntimeTargetRef;

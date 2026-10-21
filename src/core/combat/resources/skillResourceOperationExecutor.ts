@@ -1,4 +1,7 @@
+import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
 import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
+import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+
 import { resolveDirectActionTargets } from '../abilities/targetContextOperationExecutor';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
 import type { SpGainSource } from '../../game-data/operatorDefinition';
@@ -29,10 +32,11 @@ export interface SkillResourceOperationDependencies {
   readonly resources: CombatResources;
   readonly receipt: CombatReceiptSink;
   readonly getNonReturnedSpCost: () => number;
-  /** 当前敌人的处决技力回复基础值；技能步骤只保存自身倍率。 */
-  readonly finisherSpRecovery: number;
+  /** 读取目标敌人模板的 BreakingAttackedAtbObtain；undefined 表示没有模板，不能以零代替。 */
+  readonly readFinisherSpRecovery: (target: RuntimeTargetRef) => number | undefined;
   readonly onSpGained?: (event: AbilitySpGainPayload) => void;
   readonly onPerfectDodge?: (sourceOperatorId: string) => void;
+  readonly queryTargets?: NonNullable<CombatOperationExecutor['queryTargets']>;
   readonly delegate: CombatOperationExecutor;
 }
 
@@ -54,11 +58,20 @@ export class SkillResourceOperationExecutor implements CombatOperationExecutor {
 
   execute(step: RuntimeOperation, context?: CombatOperationContext): boolean {
     if (step.kind === 'restrictUltimateEnergyRecovery') {
-      const handle = this.dependencies.resources.requestUltimateEnergyRecoveryRestriction(
-        this.dependencies.sourceOperatorId,
-        new Set(step.parameters.allowedRecoveryTags),
-      );
-      this.runtimeState.ultimateRecoveryRestrictionHandles.set(this.programs.slot(step), handle);
+      if (!context) throw new Error('ultimate-energy restriction requires an action context');
+      const targets = this.#queryTargets(step.parameters.target, context);
+      const slot = this.programs.slot(step);
+      const handles = this.runtimeState.ultimateRecoveryRestrictionHandles.get(slot) ?? [];
+      for (const target of targets) {
+        if (target.kind !== 'operator') continue;
+        handles.push(
+          this.dependencies.resources.requestUltimateEnergyRecoveryRestriction(
+            target.operatorId,
+            new Set(step.parameters.allowedRecoveryTags),
+          ),
+        );
+      }
+      this.runtimeState.ultimateRecoveryRestrictionHandles.set(slot, handles);
       return true;
     }
     if (step.kind === 'recoverDashEnergy') {
@@ -96,22 +109,11 @@ export class SkillResourceOperationExecutor implements CombatOperationExecutor {
     if (step.kind === 'changeResource') {
       const p = step.parameters;
       if (context === undefined) throw new Error('resource change requires an action context');
-      const query = (selection: typeof p.source) => {
-        const direct = resolveDirectActionTargets(
-          selection,
-          context,
-          this.dependencies.sourceOperatorId,
-        );
-        if (direct !== undefined) return direct;
-        if (!this.dependencies.delegate.queryTargets)
-          throw new Error('resource target query is unavailable');
-        return this.dependencies.delegate.queryTargets(selection, context);
-      };
-      const source = query(p.source)[0];
+      const source = this.#queryTargets(p.source, context)[0];
       if (!source) return false;
       const sourceId = runtimeTargetEntityId(source);
       if (sourceId === undefined) return false;
-      const targets = query(p.targets);
+      const targets = this.#queryTargets(p.targets, context);
       if (
         p.resource === 'sp' &&
         p.onlyMainOperator &&
@@ -162,9 +164,20 @@ export class SkillResourceOperationExecutor implements CombatOperationExecutor {
     }
 
     if (step.kind === 'gainFinisherSp') {
-      const baseValue = Math.fround(this.dependencies.finisherSpRecovery * step.parameters.factor);
+      if (context === undefined) throw new Error('gainFinisherSp requires an action context');
+      const source = this.#queryTargets(step.parameters.source, context)[0];
+      const sourceId = source === undefined ? undefined : runtimeTargetEntityId(source);
+      if (sourceId === undefined) return false;
+      const target = this.#queryTargets(step.parameters.target, context)[0];
+      if (target === undefined || runtimeTargetEntityId(target) === undefined) return false;
+      const recovery = this.dependencies.readFinisherSpRecovery(target);
+      if (recovery === undefined) return false;
+      const factor = Math.fround(
+        resolveActionValueOperand(step.parameters.factor, context.blackboard),
+      );
+      const baseValue = Math.fround(recovery * factor);
       const change = this.dependencies.resources.gainSp(baseValue, 'gain', 'powerAttack');
-      this.#recordSpChange(change, 'powerAttack', context);
+      this.#recordSpChange(change, 'powerAttack', context, sourceId);
       return true;
     }
 
@@ -176,7 +189,7 @@ export class SkillResourceOperationExecutor implements CombatOperationExecutor {
 
     const changes = this.dependencies.resources.gainSquadUltimateEnergyFromSkillCost(
       this.dependencies.sourceOperatorId,
-      this.dependencies.getNonReturnedSpCost(),
+      context?.skillCastInfo?.nonReturnedSpCost ?? this.dependencies.getNonReturnedSpCost(),
       step.parameters.coefficient,
     );
     for (const change of changes) this.#recordUltimateEnergyChange(change, context);
@@ -186,15 +199,15 @@ export class SkillResourceOperationExecutor implements CombatOperationExecutor {
   end(step: ResolvedCombatOperationStep, context?: CombatOperationContext): void {
     if (step.kind === 'restrictUltimateEnergyRecovery') {
       const slot = this.programs.slot(step);
-      const handle = this.runtimeState.ultimateRecoveryRestrictionHandles.get(slot);
-      if (handle !== undefined) {
+      const handles = this.runtimeState.ultimateRecoveryRestrictionHandles.get(slot) ?? [];
+      for (const handle of handles) {
         const clearChange = this.dependencies.resources.revertUltimateEnergyRecoveryRestriction(
           handle,
           step.parameters.clearUltimateEnergyOnEnd,
         );
         if (clearChange !== null) this.#recordUltimateEnergyChange(clearChange, context);
-        this.runtimeState.ultimateRecoveryRestrictionHandles.delete(slot);
       }
+      this.runtimeState.ultimateRecoveryRestrictionHandles.delete(slot);
       return;
     }
     this.dependencies.delegate.end?.(step, context);
@@ -204,6 +217,16 @@ export class SkillResourceOperationExecutor implements CombatOperationExecutor {
     return context === undefined
       ? this.dependencies.delegate.evaluate(condition)
       : this.dependencies.delegate.evaluate(condition, context);
+  }
+
+  #queryTargets(
+    query: CompiledTargetQuery,
+    context: CombatOperationContext,
+  ): readonly RuntimeTargetRef[] {
+    const direct = resolveDirectActionTargets(query, context, this.dependencies.sourceOperatorId);
+    if (direct !== undefined) return direct;
+    if (!this.dependencies.queryTargets) throw new Error('resource target query is unavailable');
+    return this.dependencies.queryTargets(query, context);
   }
 
   #recordSpChange(

@@ -1,443 +1,266 @@
-import { numberInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it } from 'vitest';
+import { numberInput } from '../../../test/compiledGraphInputs';
 import { CombatReceiptCollector } from '../receipt/combatReceipt';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatClock } from '../time/combatClock';
 import { CombatVitals } from '../resources/combatVitals';
-import { HealOperationExecutor } from './healOperationExecutor';
+import { HealOperationExecutor, type HealOperationDependencies } from './healOperationExecutor';
 import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
+import { TargetContextOperationExecutor } from '../abilities/targetContextOperationExecutor';
+import type { CombatStepParameters } from '../../../../packages/game-data-contract/src/actions';
 
-const terminal = {
-  execute: () => false,
-  evaluate: () => false,
-};
+const terminal = { execute: () => false, evaluate: () => false };
+const definite = {
+  kind: 'heal',
+  parameters: {
+    target: { kind: 'context', key: 'receivers' },
+    healer: { kind: 'source' },
+    amount: 100,
+    tags: [],
+  },
+} as const;
 
-function vitals(health: number) {
-  return new CombatVitals({
-    health,
-    maxHealth: 1000,
-    maxPoise: 0,
-    poise: 0,
-    poiseRecoveryTime: 0,
-    poiseRecoveryTimeMultiplier: 0,
-    poiseBrokenEndTime: 0,
-    poiseImmune: false,
+function fixture(
+  initialHealth: Record<string, number>,
+  overrides: Partial<HealOperationDependencies> = {},
+) {
+  const vitals = new Map(
+    Object.entries(initialHealth).map(([id, health]) => [
+      id,
+      new CombatVitals({
+        health,
+        maxHealth: 1000,
+        maxPoise: 0,
+        poise: 0,
+        poiseRecoveryTime: 0,
+        poiseRecoveryTimeMultiplier: 1,
+        poiseBrokenEndTime: 0,
+        poiseImmune: false,
+      }),
+    ]),
+  );
+  const receipt = new CombatReceiptCollector();
+  const first = Object.keys(initialHealth)[0]!;
+  const queries = new TargetContextOperationExecutor('caster', terminal, {
+    listOperatorIds: () => [...vitals.keys()],
+    isOperatorControlled: id => id === first,
+    resolveVitals: id => vitals.get(id)!,
   });
+  const targetContext = new RuntimeTargetContext();
+  targetContext.set(
+    'receivers',
+    [...vitals.keys()].map(operatorId => ({ kind: 'operator', operatorId })),
+  );
+  const context = {
+    blackboard: new ActionBlackboard(),
+    targetContext,
+    actionSourceId: 'healer',
+    actionOwnerId: 'owner',
+    actionInputTarget: { kind: 'operator' as const, operatorId: 'input' },
+    buffSourceId: 'unrelated-buff-source',
+    buffOwnerId: 'unrelated-buff-owner',
+  };
+  const executor = new HealOperationExecutor({
+    clock: new CombatClock(),
+    receipt,
+    queryTargets: queries.queryTargets.bind(queries),
+    resolveEntity: entityId => ({ entityId, vitals: vitals.get(entityId)! }),
+    resolveSourceAttribute: () => 100,
+    delegate: terminal,
+    ...overrides,
+  });
+  return { executor, context, receipt, vitals, targetContext };
 }
 
-describe('HealOperationExecutor', () => {
-  it('uses the Buff owner and target attribute for an enemy self-heal', () => {
-    const enemy = vitals(400);
-    const events: Array<{ sourceId: string; targetId: string }> = [];
-    const executor = new HealOperationExecutor({
-      sourceOperatorId: 'operator:caster',
-      clock: new CombatClock(),
-      receipt: new CombatReceiptCollector(),
-      resolveSourceAttribute: () => {
-        throw new Error('target-sourced healing must not read the caster panel');
-      },
-      resolveTargetAttribute: (targetId, attribute) => {
-        expect(targetId).toBe('enemy');
-        expect(attribute).toBe('maxHealth');
-        return enemy.maxHealth;
-      },
-      resolveTarget: target => {
-        expect(target).toBe('enemy');
-        return { operatorId: 'enemy', vitals: enemy };
-      },
-      emitSuccessfulHeal: event =>
-        events.push({ sourceId: event.payload.sourceId, targetId: event.payload.targetId }),
-      delegate: terminal,
-    });
-    const blackboard = new ActionBlackboard({ eny_heal_ratio: 0.05 });
-
-    expect(
-      executor.execute(
-        {
-          kind: 'heal',
-          parameters: {
-            target: 'enemy',
-            source: 'buffOwner',
-            attribute: 'maxHealth',
-            attributeSource: 'target',
-            multiplier: numberInput({ kind: 'blackboard', key: 'eny_heal_ratio' }),
-            addition: 0,
-            tags: [],
-          },
-        },
-        { blackboard, buffOwnerId: 'enemy' },
-      ),
-    ).toBe(true);
-    expect(enemy.health).toBe(450);
-    expect(events).toEqual([
-      { sourceId: 'enemy', targetId: 'enemy' },
-      { sourceId: 'enemy', targetId: 'enemy' },
-    ]);
-  });
-
-  it('heals the operator identity saved in Context without reselecting', () => {
-    const savedTarget = vitals(600);
-    const otherTarget = vitals(100);
-    const targetContext = new RuntimeTargetContext();
-    targetContext.set('CureTarget', [{ kind: 'operator', operatorId: 'operator:saved' }]);
-    const resolved: string[] = [];
-    const executor = new HealOperationExecutor({
-      sourceOperatorId: 'operator:ember',
-      clock: new CombatClock(),
-      receipt: new CombatReceiptCollector(),
-      resolveSourceAttribute: () => 100,
-      resolveTarget: () => {
-        throw new Error('context healing must not run a role selector');
-      },
-      resolveContextTarget: operatorId => {
-        resolved.push(operatorId);
-        return {
-          operatorId,
-          vitals: operatorId === 'operator:saved' ? savedTarget : otherTarget,
-        };
-      },
-      delegate: terminal,
-    });
-
-    expect(
-      executor.execute(
-        {
-          kind: 'heal',
-          parameters: {
-            target: 'contextTarget',
-            contextKey: 'CureTarget',
-            amount: 200,
-            tags: [],
-          },
-        },
-        { blackboard: new ActionBlackboard(), targetContext },
-      ),
-    ).toBe(true);
-    expect(resolved).toEqual(['operator:saved']);
-    expect(savedTarget.health).toBe(800);
-    expect(otherTarget.health).toBe(100);
-    const inputStep = {
-      kind: 'heal' as const,
-      parameters: { target: 'actionInputTarget' as const, amount: 50, tags: [] },
-    };
-    expect(
-      executor.execute(inputStep, {
-        blackboard: new ActionBlackboard(),
-        actionInputTarget: { kind: 'operator', operatorId: 'operator:saved' },
-        currentTarget: { kind: 'operator', operatorId: 'operator:other' },
-      }),
-    ).toBe(true);
-    expect(savedTarget.health).toBe(850);
-    expect(otherTarget.health).toBe(100);
-    expect(executor.execute(inputStep, { blackboard: new ActionBlackboard() })).toBe(false);
-    expect(
-      executor.execute(
-        { ...inputStep, parameters: { ...inputStep.parameters, alwaysNext: true } },
-        {
-          blackboard: new ActionBlackboard(),
-        },
-      ),
-    ).toBe(true);
-  });
-
-  it('preserves alwaysNext when a context query saved no target', () => {
-    const executor = new HealOperationExecutor({
-      sourceOperatorId: 'operator:ember',
-      clock: new CombatClock(),
-      receipt: new CombatReceiptCollector(),
-      resolveSourceAttribute: () => 0,
-      resolveTarget: () => {
-        throw new Error('context healing must not run a role selector');
-      },
-      resolveContextTarget: () => {
-        throw new Error('empty context must not resolve an operator');
-      },
-      delegate: terminal,
-    });
-    const targetContext = new RuntimeTargetContext();
-    targetContext.set('CureTarget', []);
-    const context = {
-      blackboard: new ActionBlackboard(),
-      targetContext,
-    };
-    const step = {
-      kind: 'heal' as const,
-      parameters: {
-        target: 'contextTarget' as const,
-        contextKey: 'CureTarget',
-        amount: 200,
-        tags: [],
-      },
-    };
-    expect(executor.execute(step, context)).toBe(false);
-    expect(
-      executor.execute({ ...step, parameters: { ...step.parameters, alwaysNext: true } }, context),
-    ).toBe(true);
-  });
-
-  it('resolves attribute formula and records actual plus overhealing', () => {
-    const target = vitals(900);
-    const receipt = new CombatReceiptCollector();
-    const executor = new HealOperationExecutor({
-      sourceOperatorId: 'operator:healer',
-      clock: new CombatClock(),
-      receipt,
-      resolveSourceAttribute: (_sourceId, attribute) => (attribute === 'will' ? 100 : 0),
-      resolveTarget: () => ({ operatorId: 'operator:target', vitals: target }),
-      delegate: terminal,
-    });
-
-    expect(
-      executor.execute(
-        {
-          kind: 'heal',
-          parameters: {
-            target: 'controlledOperator',
-            attribute: 'will',
-            multiplier: numberInput({ kind: 'blackboard', key: 'scale' }),
-            addition: 10,
-            tags: ['Test/TagNegative1'],
-          },
-        },
-        { blackboard: new ActionBlackboard({ scale: 1.5 }) },
-      ),
-    ).toBe(true);
-    expect(target.health).toBe(1000);
-    expect(receipt.entries[0]).toMatchObject({
-      event: 'HealingApplied',
-      sourceId: 'operator:healer',
-      targetId: 'operator:target',
-      data: {
-        requestedHealing: 160,
-        actualHealing: 100,
-        overhealing: 60,
-      },
-    });
-  });
-
-  it('records a full-health heal instead of suppressing it', () => {
-    const target = vitals(1000);
-    const receipt = new CombatReceiptCollector();
+describe('原生治疗目标和结算', () => {
+  it('逐目标治疗，保留重复项和查询顺序，跳过空间点', () => {
     const events: string[] = [];
-    const executor = new HealOperationExecutor({
-      sourceOperatorId: 'operator:healer',
-      clock: new CombatClock(),
-      receipt,
-      resolveSourceAttribute: () => 100,
-      resolveTarget: () => ({ operatorId: 'operator:target', vitals: target }),
-      emitSuccessfulHeal: event => {
-        events.push(
-          `${event.event}:${event.payload.sourceId}->${event.payload.targetId}:${event.payload.requestedHealing}:${event.payload.actualHealing}`,
-        );
+    const f = fixture(
+      { first: 500, second: 800 },
+      {
+        emitSuccessfulHeal: event => events.push(`${event.event}:${event.payload.targetId}`),
       },
-      delegate: terminal,
-    });
-
-    executor.execute({
-      kind: 'heal',
-      parameters: {
-        target: 'caster',
-        attribute: 'will',
-        multiplier: 1,
-        addition: 0,
-        tags: [],
-      },
-    });
-
-    expect(receipt.entries[0]?.data).toMatchObject({
-      requestedHealing: 100,
-      actualHealing: 0,
-      overhealing: 100,
-    });
+    );
+    f.targetContext.set('receivers', [
+      { kind: 'operator', operatorId: 'first' },
+      { kind: 'spatialPoint', pointId: 1 },
+      { kind: 'operator', operatorId: 'second' },
+      { kind: 'operator', operatorId: 'first' },
+    ]);
+    expect(f.executor.execute(definite, f.context)).toBe(true);
+    expect(f.vitals.get('first')!.health).toBe(700);
+    expect(f.vitals.get('second')!.health).toBe(900);
+    expect(f.receipt.entries.map(entry => entry.targetId)).toEqual(['first', 'second', 'first']);
     expect(events).toEqual([
-      'outputHeal:operator:healer->operator:target:100:0',
-      'receiveHeal:operator:healer->operator:target:100:0',
+      'outputHeal:first',
+      'receiveHeal:first',
+      'outputHeal:second',
+      'receiveHeal:second',
+      'outputHeal:first',
+      'receiveHeal:first',
     ]);
   });
 
-  it('uses the source maximum health for native MaxHp healing formulas', () => {
-    const target = vitals(700);
-    const receipt = new CombatReceiptCollector();
-    const executor = new HealOperationExecutor({
-      sourceOperatorId: 'operator:healer',
-      clock: new CombatClock(),
-      receipt,
-      resolveSourceAttribute: (_sourceId, attribute) => (attribute === 'maxHealth' ? 1800 : 0),
-      resolveTarget: () => ({ operatorId: 'operator:target', vitals: target }),
-      delegate: terminal,
-    });
-
-    executor.execute(
-      {
-        kind: 'heal',
-        parameters: {
-          target: 'caster',
-          attribute: 'maxHealth',
-          multiplier: numberInput({ kind: 'blackboard', key: 'heal' }),
-          addition: 0,
-          tags: [],
-        },
-      },
-      { blackboard: new ActionBlackboard({ heal: 0.12 }) },
-    );
-
-    expect(receipt.entries[0]?.data).toMatchObject({
-      attribute: 'maxHealth',
-      attributeValue: 1800,
-      requestedHealing: 216,
-      actualHealing: 216,
-    });
-  });
-
-  it('passes the current Buff source identity to a buffSource heal target', () => {
-    const target = vitals(800);
-    const reached: Array<[string, string | undefined]> = [];
-    const executor = new HealOperationExecutor({
-      sourceOperatorId: 'operator:runtime',
-      clock: new CombatClock(),
-      receipt: new CombatReceiptCollector(),
-      resolveSourceAttribute: () => 100,
-      resolveTarget: (role, buffSourceId) => {
-        reached.push([role, buffSourceId]);
-        return { operatorId: buffSourceId ?? '<missing>', vitals: target };
-      },
-      delegate: terminal,
-    });
-
-    executor.execute(
-      {
-        kind: 'heal',
-        parameters: {
-          target: 'buffSource',
-          attribute: 'will',
-          multiplier: 1,
-          addition: 0,
-          alwaysNext: false,
-          tags: [],
-        },
-      },
-      {
-        blackboard: new ActionBlackboard(),
-        buffSourceId: 'operator:original-source',
-      },
-    );
-
-    expect(reached).toEqual([['buffSource', 'operator:original-source']]);
-    expect(target.health).toBe(900);
-  });
-
-  it('passes the current Buff owner identity to a buffOwner heal target', () => {
-    const target = vitals(800);
-    const reached: Array<[string, string | undefined, string | undefined]> = [];
-    const receipt = new CombatReceiptCollector();
-    const executor = new HealOperationExecutor({
-      sourceOperatorId: 'operator:runtime',
-      clock: new CombatClock(),
-      receipt,
-      resolveSourceAttribute: sourceId => (sourceId === 'operator:source' ? 100 : 1),
-      resolveTarget: (role, buffSourceId, buffOwnerId) => {
-        reached.push([role, buffSourceId, buffOwnerId]);
-        return { operatorId: buffOwnerId ?? '<missing>', vitals: target };
-      },
-      delegate: terminal,
-    });
-
-    executor.execute(
-      {
-        kind: 'heal',
-        parameters: {
-          target: 'buffOwner',
-          attribute: 'will',
-          multiplier: 1,
-          addition: 0,
-          alwaysNext: false,
-          tags: [],
-        },
-      },
-      {
-        blackboard: new ActionBlackboard(),
-        buffSourceId: 'operator:source',
-        buffOwnerId: 'operator:aura-recipient',
-      },
-    );
-
-    expect(reached).toEqual([['buffOwner', 'operator:source', 'operator:aura-recipient']]);
-    expect(target.health).toBe(900);
-    expect(receipt.entries[0]).toMatchObject({
-      sourceId: 'operator:source',
-      targetId: 'operator:aura-recipient',
-    });
-  });
-
-  it('applies both heal-modifier sides before writing the health ledger', () => {
-    const target = vitals(700);
-    const stages: string[] = [];
-    const executor = new HealOperationExecutor({
-      sourceOperatorId: 'operator:healer',
-      clock: new CombatClock(),
-      receipt: new CombatReceiptCollector(),
-      resolveSourceAttribute: () => 100,
-      resolveTarget: () => ({ operatorId: 'operator:target', vitals: target }),
-      applyHealModifiers: (timing, side, context) => {
-        stages.push(`${timing}:${side}`);
-        if (timing === 'afterCalculation') context.value *= side === 'healer' ? 1.1 : 1.2;
-      },
-      resolveHealingIncrease: side => (side === 'healer' ? 0.2 : 0.3),
-      delegate: terminal,
-    });
-
-    executor.execute({
-      kind: 'heal',
+  it('空接收组和无有效治疗者不求值；只在 alwaysNext 时强制返回成功', () => {
+    const f = fixture({ receiver: 500 });
+    const step = {
+      ...definite,
       parameters: {
-        target: 'caster',
-        attribute: 'will',
-        multiplier: 1,
-        addition: 0,
-        alwaysNext: true,
-        tags: [],
+        ...definite.parameters,
+        amount: numberInput({ kind: 'blackboard', key: 'missing' }),
+        healer: { kind: 'context' as const, key: 'healers' },
       },
-    });
+    };
+    f.targetContext.set('receivers', []);
+    expect(f.executor.execute(step, f.context)).toBe(false);
+    f.targetContext.setSingle('receivers', { kind: 'operator', operatorId: 'receiver' });
+    expect(f.executor.execute(step, f.context)).toBe(false);
+    f.targetContext.set('healers', [
+      { kind: 'spatialPoint', pointId: 1 },
+      { kind: 'operator', operatorId: 'healer' },
+    ]);
+    expect(f.executor.execute(step, f.context)).toBe(false);
+    expect(
+      f.executor.execute(
+        { ...step, parameters: { ...step.parameters, alwaysNext: true } },
+        f.context,
+      ),
+    ).toBe(true);
+    expect(f.receipt.entries).toHaveLength(0);
+    expect(f.vitals.get('receiver')!.health).toBe(500);
+  });
 
+  it.each<readonly [CombatStepParameters['heal']['healer'], string]>([
+    [{ kind: 'source' }, 'healer'],
+    [{ kind: 'owner' }, 'owner'],
+    [{ kind: 'inputTarget' }, 'input'],
+    [{ kind: 'context', key: 'healers' }, 'selected'],
+    [{ kind: 'mainCharacter' }, 'receiver'],
+    [{ kind: 'currentTarget' }, 'receiver'],
+  ])('治疗者按独立 ActionTarget 解析 %j', (healer, expected) => {
+    const f = fixture({ receiver: 500 });
+    f.targetContext.set('healers', [
+      { kind: 'operator', operatorId: 'selected' },
+      { kind: 'operator', operatorId: 'ignored' },
+    ]);
+    f.executor.execute({ ...definite, parameters: { ...definite.parameters, healer } }, f.context);
+    expect(f.receipt.entries[0]).toMatchObject({ sourceId: expected, targetId: 'receiver' });
+  });
+
+  it('CurrentTarget 在每次治疗循环中绑定接收者，不读取外层当前目标', () => {
+    const f = fixture({ first: 500, second: 500 });
+    f.executor.execute(
+      { ...definite, parameters: { ...definite.parameters, healer: { kind: 'currentTarget' } } },
+      {
+        ...f.context,
+        currentTarget: { kind: 'operator', operatorId: 'unrelated' },
+      },
+    );
+    expect(f.receipt.entries.map(entry => [entry.sourceId, entry.targetId])).toEqual([
+      ['first', 'first'],
+      ['second', 'second'],
+    ]);
+  });
+
+  it('属性公式、两侧修正与治疗效率依原生顺序结算，再钳制生命', () => {
+    const stages: string[] = [];
+    const f = fixture(
+      { receiver: 700 },
+      {
+        applyHealModifiers: (timing, side, calculation) => {
+          stages.push(`${timing}:${side}`);
+          if (timing === 'afterCalculation') calculation.value *= side === 'healer' ? 1.1 : 1.2;
+        },
+        resolveHealingIncrease: side => (side === 'healer' ? 0.2 : 0.3),
+      },
+    );
+    f.context.blackboard.assign({ scale: 1.5 });
+    f.executor.execute(
+      {
+        kind: 'heal',
+        parameters: {
+          target: definite.parameters.target,
+          healer: { kind: 'source' },
+          tags: [],
+          attribute: 'will',
+          multiplier: numberInput({ kind: 'blackboard', key: 'scale' }),
+          addition: 10,
+        },
+      },
+      f.context,
+    );
     expect(stages).toEqual([
       'beforeCalculation:healer',
       'beforeCalculation:receiver',
       'afterCalculation:healer',
       'afterCalculation:receiver',
     ]);
-    expect(target.health).toBeCloseTo(898);
+    expect(f.vitals.get('receiver')!.health).toBe(1000);
+    expect(f.receipt.entries[0]!.data?.requestedHealing).toBeCloseTo(316.8);
+    expect(f.receipt.entries[0]!.data?.actualHealing).toBe(300);
+    expect(f.receipt.entries[0]!.data?.overhealing).toBeCloseTo(16.8);
   });
 
-  it('applies a definite blackboard amount without reading an attribute', () => {
-    const target = vitals(700);
-    const receipt = new CombatReceiptCollector();
-    const executor = new HealOperationExecutor({
-      sourceOperatorId: 'operator:healer',
-      clock: new CombatClock(),
-      receipt,
-      resolveSourceAttribute: () => {
-        throw new Error('definite healing must not read an attribute');
+  it.each([undefined, 'target'] as const)('MaxHp 公式读取正确一侧：%s', attributeSource => {
+    const f = fixture(
+      { receiver: 700 },
+      {
+        resolveSourceAttribute: (_id, attribute) => (attribute === 'maxHealth' ? 1800 : 0),
+        resolveTargetAttribute: (id, attribute) => {
+          expect(id).toBe('receiver');
+          expect(attribute).toBe('maxHealth');
+          return 1000;
+        },
       },
-      resolveTarget: () => ({ operatorId: 'operator:target', vitals: target }),
-      delegate: terminal,
-    });
-
-    executor.execute(
+    );
+    f.executor.execute(
       {
         kind: 'heal',
         parameters: {
-          target: 'controlledOperator',
-          amount: numberInput({ kind: 'blackboard', key: 'final_heal_value' }),
-          tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
+          target: definite.parameters.target,
+          healer: { kind: 'source' },
+          tags: [],
+          attribute: 'maxHealth',
+          attributeSource,
+          multiplier: 0.12,
+          addition: 0,
         },
       },
-      { blackboard: new ActionBlackboard({ final_heal_value: 240 }) },
+      f.context,
     );
+    expect(f.receipt.entries[0]!.data?.requestedHealing).toBeCloseTo(attributeSource ? 120 : 216);
+  });
 
-    expect(target.health).toBe(940);
-    expect(receipt.entries[0]?.data).toMatchObject({
-      attribute: 'definite',
+  it('固定治疗不读取来源属性，满血也发布两侧事件', () => {
+    const events: string[] = [];
+    const f = fixture(
+      { receiver: 1000 },
+      {
+        resolveSourceAttribute: () => {
+          throw new Error('definite healing must not read attributes');
+        },
+        emitSuccessfulHeal: event =>
+          events.push(
+            `${event.event}:${event.payload.requestedHealing}:${event.payload.actualHealing}`,
+          ),
+      },
+    );
+    f.context.blackboard.assign({ value: 240 });
+    f.executor.execute(
+      {
+        ...definite,
+        parameters: {
+          ...definite.parameters,
+          amount: numberInput({ kind: 'blackboard', key: 'value' }),
+        },
+      },
+      f.context,
+    );
+    expect(f.receipt.entries[0]!.data).toMatchObject({
       requestedHealing: 240,
-      actualHealing: 240,
+      actualHealing: 0,
+      overhealing: 240,
     });
+    expect(events).toEqual(['outputHeal:240:0', 'receiveHeal:240:0']);
   });
 });

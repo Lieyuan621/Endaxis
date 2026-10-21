@@ -128,3 +128,5 @@ export type SkillGroupVariantDefinition =
   IntermediateDefinition<Contract.SkillGroupVariantDefinition>;
 export type EquipmentEventHandlerDefinition =
   IntermediateDefinition<Contract.EquipmentEventHandlerDefinition>;
+
+export type ActionTargetQuery = IntermediateDefinition<Contract.ActionTargetQuery>;

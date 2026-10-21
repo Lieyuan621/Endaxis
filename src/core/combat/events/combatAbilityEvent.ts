@@ -1,3 +1,5 @@
+import type { ActionBlackboard } from '../actions/actionBlackboard';
+import type { BeforeBuffImmunityEvent } from '../buffs/buffApplicationEvents';
 import type { AbilityEvent } from '../../../../packages/game-data-contract/src/abilityEvents';
 import type {
   SkillInterruptReason,
@@ -16,7 +18,6 @@ import type {
 import type { BuffApplicationHandle, BuffAppliedEvent } from '../buffs/buffOperationExecutor';
 import type { CombatBuff } from '../buffs/combatBuffs';
 import type { HealthDamageEventPayload } from '../damage/healthDamage';
-import type { PlayerDamageContext } from '../damage/playerDamageContext';
 import type { ElementalInflictionEventPayload } from '../infliction/elementalInflictionOperationExecutor';
 import type {
   AbilityEntityPair,
@@ -24,6 +25,7 @@ import type {
   AbilityResponseEventName,
   BuffFinishReason,
   CombatSkillCastInfo,
+  EnemyPartTransferInfo,
   SkillCastEventData,
 } from '../state/foundationState';
 import type { AbilityEventFromMap } from './abilityEventDispatcher';
@@ -84,6 +86,7 @@ export function skillAbilityEvent(event: AbilityEventCandidate): SkillAbilityEve
 
 export type LifecycleAbilityEvent = CombatAbilityEvent<
   | 'enterFight'
+  | 'enemyEnterFight'
   | 'ownerSwitchToCenter'
   | 'ownerSwitchToGuard'
   | 'ownerHpZero'
@@ -100,6 +103,7 @@ export function lifecycleAbilityEvent(
   if (!('event' in event)) return undefined;
   switch (event.event) {
     case 'enterFight':
+    case 'enemyEnterFight':
     case 'ownerSwitchToCenter':
     case 'ownerSwitchToGuard':
     case 'ownerHpZero':
@@ -222,6 +226,7 @@ export interface ProjectileHitAbilityEventPayload extends AbilityOriginPayload {
 }
 
 export interface AbilityPhysicalInflictionPayload extends AbilityOriginPayload {
+  readonly isExtra?: boolean;
   readonly type?: PhysicalInflictionType;
   readonly attachBuffToCurrentSkill?: (buff: BuffApplicationHandle) => void;
 }
@@ -323,11 +328,19 @@ export function spGainAbilityEvent(event: AbilityEventCandidate): SpGainAbilityE
   return 'event' in event && event.event === 'skillSpGained' ? event : undefined;
 }
 
+/** Buff.Reset 收集阶段共享即将创建的实例黑板和修改记录。 */
+export interface CollectedBuffBlackboardPayload extends BuffAppliedEvent {
+  readonly blackboard: ActionBlackboard;
+  readonly modifiedKeys: Set<string>;
+}
 /** 每个公共事件只在此关联一种载荷；不按 Buff/技能/装备重新定义范围。 */
 export interface AbilityEventPayloadMap {
+  collectAddedBuffBlackboard: CollectedBuffBlackboardPayload;
+  collectOutputBuffBlackboard: CollectedBuffBlackboardPayload;
   projectileLaunched: ProjectileLaunchedPayload;
   beforeHitByProjectile: ProjectileHitAbilityEventPayload;
   enterFight: AbilityOriginPayload;
+  enemyEnterFight: Pick<AbilityOriginPayload, 'sourceId' | 'skillCastInfo'>;
   ownerSwitchToCenter: AbilityOriginPayload;
   ownerSwitchToGuard: AbilityOriginPayload;
   ownerHpZero: AbilityOriginPayload;
@@ -340,10 +353,10 @@ export interface AbilityEventPayloadMap {
   abilityEntitySelfFinished: AbilityOriginPayload & {
     readonly finishReason: AbilityEntityFinishReason;
   };
-  // 准备阶段传递可变伤害包，结算阶段传递结算结果；不能裁成相似的只读字段集合。
+  // 原生准备事件只提供元数据；伤害包在计算前通知后创建。
   beforeTakeDamage: HealthDamageEventPayload | ExternalOperatorHitPayload;
-  beforeCalculateDamage: PlayerDamageContext;
-  beforeDamageAction: PlayerDamageContext;
+  beforeCalculateDamage: BeforeCalculateDamagePayload;
+  beforeDamageAction: BeforeDamageActionPayload;
   beforeOutputDamage: HealthDamageEventPayload;
   takeDamage: HealthDamageEventPayload | ExternalOperatorHitPayload;
   takeCriticalDamage: HealthDamageEventPayload;
@@ -378,6 +391,8 @@ export interface AbilityEventPayloadMap {
     reason: SkillInterruptReason;
   };
   beforeOutputBuff: BuffAppliedEvent;
+  beforeAddedBuffBeforeImmune: BeforeBuffImmunityEvent;
+  beforeOutputBuffBeforeImmune: BeforeBuffImmunityEvent;
   beforeAddedBuff: BuffAppliedEvent;
   outputBuff: AbilityOutputBuffPayload;
   addedBuff: BuffAppliedEvent;
@@ -414,15 +429,22 @@ export type AbilityResponseEvent = CombatAbilityEvent<AbilityResponseEventName> 
   readonly kind?: never;
 };
 
-/** 四个施加阶段共用 AddBuffContext 数据，但必须保留各自的事件身份。 */
+/** 施加阶段共享Buff身份，免疫前阶段另外携带独立的可取消上下文。 */
 export type BuffApplicationAbilityEvent = CombatAbilityEvent<
-  'beforeOutputBuff' | 'beforeAddedBuff' | 'addedBuff' | 'outputBuff'
+  | 'beforeOutputBuffBeforeImmune'
+  | 'beforeAddedBuffBeforeImmune'
+  | 'beforeOutputBuff'
+  | 'beforeAddedBuff'
+  | 'addedBuff'
+  | 'outputBuff'
 > & { readonly kind?: never };
 
 export function buffApplicationEvent(
   event: CombatAbilityEvent,
 ): BuffApplicationAbilityEvent | undefined {
   switch (event.event) {
+    case 'beforeOutputBuffBeforeImmune':
+    case 'beforeAddedBuffBeforeImmune':
     case 'beforeOutputBuff':
     case 'beforeAddedBuff':
     case 'addedBuff':
@@ -436,6 +458,7 @@ export function buffApplicationEvent(
 /** Buff 通知共用身份与数据读取；结束与消耗的不同字段仍由事件名判别。 */
 export type BuffAbilityEvent =
   | BuffApplicationAbilityEvent
+  | CombatAbilityEvent<'collectAddedBuffBlackboard' | 'collectOutputBuffBlackboard'>
   | (CombatAbilityEvent<
       | 'finishedBuff'
       | 'buffEndsEarly'
@@ -450,6 +473,8 @@ export type BuffAbilityEvent =
 
 export function buffAbilityEvent(event: CombatAbilityEvent): BuffAbilityEvent | undefined {
   switch (event.event) {
+    case 'collectAddedBuffBlackboard':
+    case 'collectOutputBuffBlackboard':
     case 'finishedBuff':
     case 'buffEndsEarly':
     case 'buffConsumed':
@@ -473,7 +498,26 @@ export function healAbilityEvent(event: AbilityEventCandidate): HealAbilityEvent
     : undefined;
 }
 
-/** 准备阶段保留可变伤害包，结算阶段保留结果，禁止裁成只读字段副本。 */
+/** 伤害动作与单元的原生准备通知；不提供伤害值修改接口。 */
+export interface BeforeDamageActionPayload {
+  readonly sourceId: string;
+  readonly partTransferInfo?: EnemyPartTransferInfo;
+  readonly tags: readonly DamageTag[];
+  readonly gameplayTags: readonly GameplayTag[];
+  readonly features: readonly DamageFeature[];
+  readonly skillCastInfo: CombatSkillCastInfo | null;
+}
+
+export interface BeforeCalculateDamagePayload {
+  readonly sourceId: string;
+  readonly partTransferInfo?: EnemyPartTransferInfo;
+  readonly tags: readonly DamageTag[];
+  readonly gameplayTags: readonly GameplayTag[];
+  readonly features: readonly DamageFeature[];
+  readonly damageType: DamageType;
+}
+
+/** 准备阶段只读元数据与结算结果按事件类型区分。 */
 export type DamageAbilityEvent = CombatAbilityEvent<
   | 'beforeDamageAction'
   | 'beforeCalculateDamage'

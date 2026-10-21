@@ -1,3 +1,4 @@
+import { inheritCombatOperationContext } from '../actions/inheritCombatOperationContext';
 import { createModifierConditionRuntime } from '../actions/modifierConditionRuntime';
 import type { PoiseModifierConditionInput } from '../damage/poiseModifiers';
 import { skillAbilityEvent } from '../events/combatAbilityEvent';
@@ -583,9 +584,14 @@ export function attachBuffLifecycleSequences<Key extends string>(
         damageSnapshotProgram,
         restoredHost?.damageSnapshots,
       ),
-      targetContext: new RuntimeTargetContext(restoredHost?.targets),
+      targetContext: new RuntimeTargetContext(
+        restoredHost?.targets ?? buff.runtimeState.inheritedTargetGroups ?? undefined,
+      ),
       ...(currentTarget === undefined ? {} : { currentTarget }),
-      ...(buff.skillCastInfo === null ? {} : { skillCastInfo: buff.skillCastInfo }),
+      get skillCastInfo() {
+        return buff.skillCastInfo ?? undefined;
+      },
+      overrideEnvironmentSkillCastInfo: info => buff.overrideSkillCastInfo(info),
       buffSourceId: buff.sourceId,
       buffOwnerId: buff.owner.ownerId,
       ...(buff.runtimeState.partTransferInfo === null
@@ -602,6 +608,10 @@ export function attachBuffLifecycleSequences<Key extends string>(
       finishCurrentBuff: (reason, sourceId, skillCastInfo) =>
         buff.owner.finishInstance(buff, reason, sourceId, skillCastInfo),
       getCurrentBuffAffixSkillCastId: () => buff.affixSkillCastId,
+      hasCurrentBuffDamageSkillCastId: id => buff.runtimeState.recordedDamageSkillCastIds.has(id),
+      saveCurrentBuffDamageSkillCastId: id => {
+        buff.runtimeState.recordedDamageSkillCastIds.add(id);
+      },
       bindCurrentBuffSkillAffix: skillCastId => {
         buff.recordBuffAffixSkillCastId(skillCastId);
         const host = buff.runtimeState.actionHost!;
@@ -767,12 +777,11 @@ export function attachBuffLifecycleSequences<Key extends string>(
     const sequence = new BuffActionSequences(
       runtime,
       definition,
-      {
-        ...runtime.context,
+      inheritCombatOperationContext(runtime.context, {
         ...(inputTargetId === undefined
           ? {}
           : { actionInputTarget: runtimeTargetFromEntityId(inputTargetId) }),
-      },
+      }),
       states.get(key),
     );
     states.set(key, sequence.runtimeState);
@@ -831,11 +840,10 @@ export function attachBuffLifecycleSequences<Key extends string>(
           throw new Error(`buff '${definition.id}' saved event responses do not match its program`);
         }
         const runtime = runtimeFor(buff);
-        const context = {
-          ...runtime.context,
+        const context = inheritCombatOperationContext(runtime.context, {
           actionOwnerId: buff.owner.ownerId,
           actionSourceId: buff.sourceId,
-        };
+        });
         const sequence = runtime.createSequence(response.sequence, context, restored?.sequence);
         if (restored === undefined) sequence.reset({});
         const registration = registerAbilityEventAction(
@@ -974,13 +982,12 @@ export function attachBuffLifecycleSequences<Key extends string>(
               const sequence = new BuffActionSequences(
                 runtime,
                 response.sequences,
-                {
-                  ...runtime.context,
+                inheritCombatOperationContext(runtime.context, {
                   // OnIgnite 保留 Buff 来源，只把点燃者作为输入目标。
                   actionSourceId: buff.sourceId,
                   ...(skillCastInfo === undefined ? {} : { skillCastInfo }),
                   actionInputTarget: runtimeTargetFromEntityId(sourceId),
-                },
+                }),
                 states.get(key),
               );
               states.set(key, sequence.runtimeState);

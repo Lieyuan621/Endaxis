@@ -86,7 +86,7 @@ export function analyzeGraphBuffParameters(
     for (const processor of modifier.processors) {
       switch (processor.kind) {
         case 'modifyPoiseScalar':
-          usages.push(keys(processor.addition));
+          usages.push(keys(processor.values.value));
           break;
         default:
           usages.push(unknown(processor.kind));

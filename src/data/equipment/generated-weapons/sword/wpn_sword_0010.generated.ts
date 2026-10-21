@@ -85,12 +85,12 @@ const definition = {
         macros: {},
       },
       skillId: 'sk_wpn_sword_0010',
-      enableSequence: { $sequence: 'applyBuff_1' },
       blackboard: {
         install_0_dmg_up: [0.08, 0.096, 0.112, 0.128, 0.144, 0.16, 0.176, 0.192, 0.224],
         install_0_duration: [20, 20, 20, 20, 20, 20, 20, 20, 20],
         install_0_max_stack: [2, 2, 2, 2, 2, 2, 2, 2, 2],
       },
+      enableSequence: { $sequence: 'applyBuff_1' },
     },
   ],
   assetSlug: 'wpn_sword_0010',

@@ -3244,9 +3244,22 @@
           "placementPolicy": {
             "kind": "recursiveInput",
             "firstSkillKey": "chr_0017_yvonne_ult_attack1_1",
+            "fallback": [
+              "chr_0017_yvonne_ult_attack1_1",
+              "chr_0017_yvonne_ult_attack2_1",
+              "chr_0017_yvonne_ult_attack2_2",
+              "chr_0017_yvonne_ult_attack3_1",
+              "chr_0017_yvonne_ult_attack3_2",
+              "chr_0017_yvonne_ult_attack3_2",
+              "chr_0017_yvonne_ult_attack3_2",
+              "chr_0017_yvonne_ult_attack3_2",
+              "chr_0017_yvonne_ult_attack3_2",
+              "chr_0017_yvonne_ult_attack3_2",
+              "chr_0017_yvonne_ult_attack3_2",
+              "chr_0017_yvonne_ult_attack_end"
+            ],
             "terminalSkillKey": "chr_0017_yvonne_ult_attack_end",
-            "maxSegments": 24,
-            "fallback": "sequence"
+            "maxSegments": 24
           }
         },
         {

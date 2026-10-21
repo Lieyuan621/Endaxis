@@ -1,3 +1,4 @@
+import { inheritCombatOperationContext } from './inheritCombatOperationContext';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import type { CompiledCondition } from '../../compiler/compiledGraphData';
 import { conditionInputExpression } from '../../compiler/compiledGraphData';
@@ -49,7 +50,7 @@ import {
 import { ActionBlackboard, resolveActionValueOperand } from './actionBlackboard';
 import type { CombatActionExecution } from './actionGraphExecution';
 import { ActionGraphExecution, type ActionGraphExecutionHost } from './actionGraphExecution';
-import { CombatStep } from './combatStep';
+import { CombatStep, type CombatExecutionContext } from './combatStep';
 
 /** 步骤自身没有可变数据；它调用的操作执行器仍须由所属宿主恢复。 */
 abstract class StatelessCombatStep extends CombatStep {
@@ -80,6 +81,8 @@ class OperationStep extends StatelessCombatStep {
       step.kind === 'changePlayerActionMode' ||
       step.kind === 'overrideBasicAttackMapping' ||
       step.kind === 'overrideMultiDashLimit' ||
+      step.kind === 'disableNormalSkill' ||
+      step.kind === 'limitMovementGait' ||
       step.kind === 'skillAffix' ||
       (step.kind === 'changeSkillSlot' && step.parameters.lifetime !== undefined)
     )
@@ -154,6 +157,8 @@ class OperationStep extends StatelessCombatStep {
     | 'basicAttackMapping'
     | 'multiDashLimit'
     | 'skillSlotReplacement'
+    | 'normalSkillRestriction'
+    | 'movementGait'
     | 'skillAffix' {
     switch (this.step.kind) {
       case 'changePlayerActionMode':
@@ -164,6 +169,10 @@ class OperationStep extends StatelessCombatStep {
         return 'multiDashLimit';
       case 'changeSkillSlot':
         return 'skillSlotReplacement';
+      case 'disableNormalSkill':
+        return 'normalSkillRestriction';
+      case 'limitMovementGait':
+        return 'movementGait';
       case 'skillAffix':
         return 'skillAffix';
       default:
@@ -191,7 +200,64 @@ class OperationStep extends StatelessCombatStep {
   }
 
   override reset(): void {
+    // OverrideRawAttributeAction.OnReset 与 OnEnd 都释放句柄；外层执行器不必支持 prepare。
+    if (this.step.kind === 'overrideRawAttributes') this.end();
     this.#withState(() => this.runtime.operations.prepare?.(this.step, this.operationContext));
+  }
+}
+
+/** SetHpFloor持有句柄；回调即时结束，父End仅回收句柄，Reset重置同一子程序。 */
+class HealthFloorStep extends CombatStep {
+  readonly operation: OperationStep;
+  #data: Extract<GraphLeafStepData, { kind: 'healthFloor' }> = { kind: 'healthFloor', body: null };
+  #body: CombatActionExecution | undefined;
+  constructor(
+    readonly step: ResolvedCombatStepForKind<'setHealthFloor'>,
+    readonly runtime: CombatActionSequenceRuntime,
+    readonly context: CombatOperationContext,
+  ) {
+    super();
+    this.operation = new OperationStep(step, runtime, context);
+  }
+  override get executionData() {
+    return this.#data;
+  }
+  override bindExecutionData(data: ActionStepData | null): void {
+    if (data?.kind !== 'healthFloor') throw new Error('expected health floor callback state');
+    this.#data = data;
+    if (data.body !== null) this.#getBody();
+  }
+  #getBody(): CombatActionExecution | undefined {
+    if (!this.step.afterSet) return undefined;
+    if (!this.#body) {
+      this.#body = this.runtime.createSequence(
+        this.step.afterSet,
+        {
+          ...this.context,
+          event: undefined,
+          eventSkillCastInfo: undefined,
+          modifierContext: undefined,
+        },
+        this.#data.body ?? undefined,
+      );
+      this.#data.body = this.#body.runtimeState;
+    }
+    return this.#body;
+  }
+  execute(context: CombatExecutionContext): void {
+    this.tryExecute(context);
+  }
+  override tryExecute(context: CombatExecutionContext): boolean {
+    this.operation.tryExecute();
+    this.#getBody()?.executeInstant(context);
+    return true;
+  }
+  override end(): void {
+    this.operation.end();
+  }
+  override reset(context: CombatExecutionContext): void {
+    this.operation.reset();
+    this.#getBody()?.reset(context);
   }
 }
 
@@ -337,6 +403,17 @@ class ProjectileLaunchStep extends StatelessCombatStep {
 }
 
 class SkillOperableBoundaryStep extends StatelessCombatStep {
+  #activation: ActionRegistrationState = { registrationIds: [] };
+
+  override get executionData(): OperationStepData {
+    return { kind: 'allowedNextSkills', activation: this.#activation };
+  }
+
+  override bindExecutionData(data: ActionStepData | null): void {
+    if (data?.kind !== 'allowedNextSkills')
+      throw new Error('expected allowed-next-skill registration');
+    this.#activation = data.activation;
+  }
   constructor(
     readonly step: ResolvedCombatStepForKind<'reachSkillOperableBoundary'>,
     readonly runtime: CombatActionSequenceRuntime,
@@ -347,7 +424,17 @@ class SkillOperableBoundaryStep extends StatelessCombatStep {
 
   execute(): void {
     this.runtime.hooks.stepReached?.(this.step);
+    this.end();
+    const register = this.operationContext.registerAllowedNextSkills;
+    if (register !== undefined)
+      this.#activation.registrationIds.push(register(this.step.parameters.skillIds));
     this.operationContext.reachSkillOperableBoundary?.(this.step.parameters.skillIds);
+  }
+
+  override end(): void {
+    for (const id of this.#activation.registrationIds)
+      this.operationContext.finishAllowedNextSkills?.(id);
+    this.#activation.registrationIds = [];
   }
 }
 
@@ -472,19 +559,21 @@ export class CombatActionSequenceRuntime {
         return this.operations.ownerTagQuery(operationContext).matches(parameters);
       },
       withTarget: (target, asInput) =>
-        this.#graphHost({
-          ...operationContext,
-          currentTarget: target,
-          ...(asInput ? { actionInputTarget: target } : {}),
-        }),
+        this.#graphHost(
+          inheritCombatOperationContext(operationContext, {
+            currentTarget: target,
+            ...(asInput ? { actionInputTarget: target } : {}),
+          }),
+        ),
       withSavedInput: target =>
-        this.#graphHost({
-          ...operationContext,
-          actionInputTarget: target ?? undefined,
-          currentTarget: target ?? undefined,
-          event: undefined,
-          eventSkillCastInfo: undefined,
-        }),
+        this.#graphHost(
+          inheritCombatOperationContext(operationContext, {
+            actionInputTarget: target ?? undefined,
+            currentTarget: target ?? undefined,
+            event: undefined,
+            eventSkillCastInfo: undefined,
+          }),
+        ),
       comboQte: {
         register: (early, active) => {
           const windows = this.operations.comboWindows;
@@ -580,6 +669,7 @@ export class CombatActionSequenceRuntime {
     step: CompiledGraphOperation,
     operationContext: CombatOperationContext,
   ): CombatStep & { readonly executionData: GraphLeafStepData } {
+    if (step.kind === 'setHealthFloor') return new HealthFloorStep(step, this, operationContext);
     if (isCombatOperationStep(step)) return new OperationStep(step, this, operationContext);
     if (step.kind === 'launchProjectile')
       return new ProjectileLaunchStep(step, this, operationContext);

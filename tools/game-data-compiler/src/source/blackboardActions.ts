@@ -4,6 +4,7 @@ import {
   requireNonEmptyString,
   requireNativeEnum,
   requireRecord,
+  requireString,
 } from './primitives.ts';
 import { readBlackboardCalculationType } from './nativeEnums.ts';
 
@@ -200,7 +201,8 @@ export function parseAttributeSnapshotActionSource(
       inheritedBlackboard,
     ),
     baseValue: parseScalarSource(action.baseValue, `${path}.baseValue`, inheritedBlackboard),
-    outputKey: requireNonEmptyString(action.key, `${path}.key`),
+    // StoreAttributeValue 将 key 直接传入 AssignDynamic，不跳过空字符串。
+    outputKey: requireString(action.key, `${path}.key`),
   };
 }
 

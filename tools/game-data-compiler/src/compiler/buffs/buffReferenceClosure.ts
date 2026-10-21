@@ -7,7 +7,7 @@ import {
   parseBuffRuntimeSource,
   type BuffRuntimeSource,
 } from '../../source/buffRuntime.ts';
-import { collectNativeActionNodes } from '../../source/controlFlow.ts';
+import { collectImmediateNativeActionNodes } from '../../source/actionLeaf.ts';
 import type { DefinitionReferenceSource } from '../../source/referenceGraph.ts';
 import type { GlobalBuffTemplateCatalogSource } from '../../source/globalBuffTemplate.ts';
 
@@ -21,6 +21,7 @@ export function collectBuffRuntimeClosure(
   globalBuffCatalog?: GlobalBuffTemplateCatalogSource,
   provenDefaultKeywordCarrierRootIds: ReadonlySet<string> = new Set(),
   rootBlackboards: ReadonlyMap<string, Readonly<Record<string, number | string>>> = new Map(),
+  omittedAbilityEvents: ReadonlyMap<string, ReadonlySet<string | number>> = new Map(),
 ): Map<string, BuffRuntimeSource> {
   const result = new Map<string, BuffRuntimeSource>();
   const references = new Map<string, readonly DefinitionReferenceSource[]>();
@@ -36,12 +37,21 @@ export function collectBuffRuntimeClosure(
       if (source.graph.buffId !== id) throw new Error(`BuffData.${id}.id: identity mismatch`);
       result.set(id, source);
       const referenceGraph = parseReferenceAwareBuffActionGraphSource(value, `BuffData.${id}`, {});
-      const executableGraph = buffShowsTimelineActions(source)
-        ? source.graph
-        : { ...source.graph, timelineActions: [] };
-      const executableReferenceGraph = buffShowsTimelineActions(source)
-        ? referenceGraph
-        : { ...referenceGraph, timelineActions: [] };
+      const excludedEvents = omittedAbilityEvents.get(id);
+      const executableGraph = {
+        ...source.graph,
+        timelineActions: buffShowsTimelineActions(source) ? source.graph.timelineActions : [],
+        abilityEvents: source.graph.abilityEvents.filter(
+          event => !excludedEvents?.has(event.event),
+        ),
+      };
+      const executableReferenceGraph = {
+        ...referenceGraph,
+        timelineActions: buffShowsTimelineActions(source) ? referenceGraph.timelineActions : [],
+        abilityEvents: referenceGraph.abilityEvents.filter(
+          event => !excludedEvents?.has(event.event),
+        ),
+      };
       // 可执行图能识别测试/旧切片中的公共动作，引用专用图还能穿透表现动作中
       // 的嵌套结束子图；闭包取二者并集，不能用后者替换前者。
       const allRefs = [
@@ -102,7 +112,7 @@ function nodes(source: BuffRuntimeSource) {
     ...(buffShowsTimelineActions(source)
       ? source.graph.timelineActions.map(timeline => timeline.sequence)
       : []),
-  ].flatMap(sequence => collectNativeActionNodes(sequence));
+  ].flatMap(sequence => collectImmediateNativeActionNodes(sequence));
 }
 
 /** 已知引用存在，但当前创建来路不足以证明它的全部候选。 */

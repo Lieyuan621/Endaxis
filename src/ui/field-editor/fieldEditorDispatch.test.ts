@@ -264,3 +264,14 @@ it('routes the formal open native-ID query without an asset family or graph conn
     'nativeId',
   );
 });
+
+it('动作和数值图的目标查询均使用结构化编辑器承载距离阈值输入', () => {
+  const action = actionNodeSchemas.findTargets.fields.find(field => field.path.at(-1) === 'query')!;
+  const data = dataNodeSchemas['boolean:entityCountCompare']!.fields.find(
+    field => field.path.at(-1) === 'target',
+  )!;
+  expect(resolveFieldEditor(action, { nodeKind: 'findTargets' }).control).toBe('structuredValue');
+  expect(resolveFieldEditor(data, { nodeKind: 'boolean:entityCountCompare' }).control).toBe(
+    'structuredValue',
+  );
+});

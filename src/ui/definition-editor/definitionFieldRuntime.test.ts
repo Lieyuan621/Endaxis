@@ -21,20 +21,20 @@ describe('definition field command boundary', () => {
     expect(skill.fields.levelSource?.kind).toBe('enum');
   });
   it('preserves required nullable skill routes instead of treating null as a removable field', () => {
-    const skillSchema = fieldSchemaForValue(definitionSchemas.skill, { skillType: 'basicAttack' });
-    if (skillSchema.kind !== 'object') throw new Error('expected skill fields');
-    const windows = skillSchema.fields.inputWindows;
-    if (windows?.kind !== 'object') throw new Error('expected input windows');
-    const mappings = windows.fields.commandMappings;
-    if (mappings?.kind !== 'array') throw new Error('expected command mappings');
-    const mapping = { startFrame: 0, endFrame: 10, input: 'basicAttack', targetSkillId: null };
+    const mapping = { targetSkillId: null };
+    const mappingSchema = {
+      kind: 'object',
+      fields: {
+        targetSkillId: { kind: 'union', variants: [{ kind: 'null' }, { kind: 'string' }] },
+      },
+    } as const;
     for (const target of [null, 'next_skill']) {
       expect(() =>
-        assertEditableDefinitionField(mappings.element, mapping, ['targetSkillId'], target),
+        assertEditableDefinitionField(mappingSchema, mapping, ['targetSkillId'], target),
       ).not.toThrow();
     }
     expect(() =>
-      assertEditableDefinitionField(mappings.element, mapping, ['targetSkillId'], undefined),
+      assertEditableDefinitionField(mappingSchema, mapping, ['targetSkillId'], undefined),
     ).toThrow();
     expect(
       fieldSchemaForValue({ kind: 'union', variants: [{ kind: 'null' }, { kind: 'string' }] }, null)

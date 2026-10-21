@@ -263,7 +263,7 @@ describe('标准入口普通倒地装配', () => {
               kind: 'applyPhysicalInfliction' as const,
               parameters: {
                 type: 'knockDown' as const,
-                target: 'enemy' as const,
+                target: { kind: 'fixed' as const, target: 'enemy' as const }, source: { kind: 'fixed' as const, target: 'caster' as const },
                 duration: { kind: 'constant' as const, value: 0.1 },
                 force: false,
                 isExtra: false,

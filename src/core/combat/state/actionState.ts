@@ -118,7 +118,7 @@ export interface AbilityEntityActionState {
 }
 
 export interface SkillResourceActionState {
-  readonly ultimateRecoveryRestrictionHandles: Map<number, number>;
+  readonly ultimateRecoveryRestrictionHandles: Map<number, number[]>;
 }
 
 export interface TimedMarkerActionReference {
@@ -137,6 +137,10 @@ export interface HealthFloorActionReference {
 
 export interface ActionBlackboardActionState {
   readonly healthFloors: Map<number, HealthFloorActionReference>;
+  readonly rawAttributeOverrides: Map<
+    number,
+    readonly { entityId: string; attribute: string; token: number }[]
+  >;
 }
 
 export interface SkillCastInheritanceActionState {
@@ -159,7 +163,7 @@ export function createCombatOperationHostState(): CombatOperationHostState {
     abilityEntities: { actionDurationEntities: new Map() },
     resources: { ultimateRecoveryRestrictionHandles: new Map() },
     timedMarkers: { markers: new Map() },
-    actionBlackboard: { healthFloors: new Map() },
+    actionBlackboard: { healthFloors: new Map(), rawAttributeOverrides: new Map() },
     skillCastInheritance: { registrations: new Map() },
     timeDilation: createTimeDilationActionState(),
     globalBuffs: createGlobalBuffActionState(),
@@ -275,17 +279,21 @@ export interface ActionBuffReferencesState {
 
 /** 叶子操作的登记与句柄数据，图执行器按调用实例持有，不含子程序状态。 */
 export type OperationStepData =
+  | { readonly kind: 'allowedNextSkills'; readonly activation: ActionRegistrationState }
   | { readonly kind: 'playerActionMode'; readonly activation: ActionRegistrationState }
   | { readonly kind: 'basicAttackMapping'; readonly activation: ActionRegistrationState }
   | { readonly kind: 'multiDashLimit'; readonly activation: ActionRegistrationState }
   | { readonly kind: 'skillSlotReplacement'; readonly activation: ActionRegistrationState }
+  | { readonly kind: 'normalSkillRestriction'; readonly activation: ActionRegistrationState }
+  | { readonly kind: 'movementGait'; readonly activation: ActionRegistrationState }
   | { readonly kind: 'skillAffix'; readonly activation: ActionRegistrationState }
   | { readonly kind: 'actionDurationBuffs'; readonly buffs: ActionBuffReferencesState }
   | { readonly kind: 'inheritedBuff'; readonly buffs: ActionBuffReferencesState }
   | { readonly kind: 'buffHold'; readonly buffs: ActionBuffReferencesState }
   | { readonly kind: 'stateless' };
 
-export type GraphLeafStepData = OperationStepData;
+export type GraphLeafStepData =
+  OperationStepData | { readonly kind: 'healthFloor'; body: ActionGraphExecutionState | null };
 
 export type ActionStepData =
   | GraphLeafStepData

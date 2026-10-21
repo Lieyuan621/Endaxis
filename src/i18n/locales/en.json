@@ -135,7 +135,6 @@
       "timing": "Timing and follow-up",
       "targeting": "Target and enhancement",
       "casting": "Costs and cast conditions",
-      "inputWindows": "Input and interruption windows",
       "variables": "Variables",
       "effects": "Effects",
       "ownedResources": "Owned resources"
@@ -526,7 +525,7 @@
       "dodgeSkillId": "Dodge skill",
       "startSkillId": "Starting skill",
       "endSkillId": "Landing skill",
-      "skillIds": "Skill segments",
+      "skillIds": "Allowed skills",
       "blackboard": "Initial variables",
       "entityBlackboard": "Initial entity variables",
       "traits": "Traits",
@@ -570,19 +569,16 @@
       "enhancementStateBuffId": "Enhanced state",
       "smartTarget": "Automatic target",
       "timelineBlockFrames": "Timeline block width (frames)",
-      "timelineContinuationSkillId": "Next skill",
       "timelineBlockFollowUpSkillId": "Width reference skill",
       "naturalDurationFrames": "Natural skill duration (frames)",
       "exclusiveFrame": "Uninterruptible frames",
       "offsetRecordFrame": "Combo record frame",
       "dontInterruptCombo": "Preserve basic attack chain",
-      "inputWindows": "Input windows",
       "commandMappings": "Basic attack input mapping",
       "input": "Input command",
       "allowedNextSkills": "Allowed follow-up skills",
       "hasConditionalActions": "Conditional input rules",
       "targetSkillId": "Target skill",
-      "skillIds": "Allowed skills",
       "availability": "Cast condition",
       "costs": "Resource costs",
       "costFrame": "Cost frame",
@@ -644,6 +640,17 @@
     "noMatchingNodes": "No matching nodes",
     "addNode": "Add Node…",
     "options": {
+      "beforeAddedBuffBeforeImmune": "Before Buff Reception (Before Immunity)",
+      "beforeOutputBuffBeforeImmune": "Before Buff Output (Before Immunity)",
+      "funnel": "Arts Unit",
+      "pistol": "Handcannon",
+      "lance": "Polearm",
+      "claym": "Greatsword",
+      "sword": "Sword",
+      "buffFilter": "Buff Filter",
+      "exclude": "Exclude targets",
+      "ignite": "Ignited",
+      "dispelled": "Dispelled",
       "fixed": "Fixed damage",
       "definite": "Definite",
       "none": "None",
@@ -861,6 +868,27 @@
     "scopeUnknown": "Not connected; scope unknown",
     "searchNodes": "Search nodes",
     "fields": {
+      "useDirectValue": {
+        "name": "Use direct value",
+        "help": "Assign a direct value instead of multiplying the current value and adding an offset."
+      },
+      "directValue": {
+        "name": "Direct value",
+        "help": "Value assigned when direct mode is enabled."
+      },
+      "afterSet": {
+        "name": "After Setting"
+      },
+      "weaponTypes": {
+        "name": "Weapon Types"
+      },
+      "trigger": {
+        "name": "Trigger target",
+        "help": "The additional trigger target captured by this combo candidate. Omit to skip this query."
+      },
+      "attacker": {
+        "name": "Damage attacker"
+      },
       "replacePartsWithMainBodies": {
         "name": "Replace parts with main bodies"
       },
@@ -1052,6 +1080,10 @@
         "name": "Keep Source Cast",
         "help": "Keep the new effect associated with the cast that created it."
       },
+      "passTargetGroupsToBuff": {
+        "name": "Copy Target Groups",
+        "help": "Copy the current named target groups when creating the buff. Later changes remain independent."
+      },
       "source": {
         "name": "Source",
         "help": "Object producing this effect, used for attribution and source checks."
@@ -1219,6 +1251,9 @@
         "name": "Always Continue",
         "help": "Continue even if this action does not succeed."
       },
+      "attributes": {
+        "name": "Attribute Overrides"
+      },
       "attribute": {
         "name": "Attribute"
       },
@@ -1276,6 +1311,9 @@
       "items": {
         "name": "Read Items",
         "help": "Values to read and variables to store them in, in order."
+      },
+      "requireBuff": {
+        "name": "Require Matching Buff"
       },
       "query": {
         "name": "Buff Filter",
@@ -1853,6 +1891,13 @@
       },
       "level": {
         "name": "Dispel level"
+      },
+      "normalOnly": {
+        "name": "Normal stages only"
+      },
+      "healer": {
+        "name": "Healer",
+        "help": "Select the healer independently. Current target refers to the recipient in the current healing iteration."
       }
     },
     "help": "Help",
@@ -1866,6 +1911,10 @@
       "saveTransferredSource": {
         "name": "Save transferred source",
         "help": "Save the transferred part of the first source target to a target group. Keep the original target when no transfer is recorded."
+      },
+      "findNextAliveCharacterBySquadSlot": {
+        "name": "Find next living squad member",
+        "help": "Search circularly from the next squad slot, skipping empty slots and dead characters and finally checking the original slot. Failure preserves the previous target group."
       },
       "findCharacterBySquadSlot": {
         "name": "Find squad slot character",
@@ -1886,6 +1935,10 @@
       "listenForTagQuery": {
         "name": "Listen for tag matches",
         "help": "Observe tag query changes and run callbacks for the matching state."
+      },
+      "eventBuffFinishReasonIn": {
+        "name": "Check Buff finish reason",
+        "help": "Check the finish reason in the current Buff finish or enhancement-change event."
       },
       "eventAbilityEntityFinishReasonIn": {
         "name": "Check ability entity finish reason",
@@ -2075,6 +2128,22 @@
         "name": "Ultimate Time Dilation",
         "help": "Slow global time while this action is active, excluding the caster."
       },
+      "changeOriginSkillToEventContextSkill": {
+        "name": "Use event skill as origin",
+        "help": "Replace the current Buff or ability origin with the cast information of the current skill event."
+      },
+      "storeCollectedBuffValue": {
+        "name": "Read collected Buff value",
+        "help": "Copy a value from the Buff currently being initialized into the action blackboard."
+      },
+      "modifyCollectedBuffValue": {
+        "name": "Modify collected Buff value",
+        "help": "Modify the new Buff blackboard before its duration and attributes are evaluated."
+      },
+      "terminateAddingBuff": {
+        "name": "Cancel Buff Application",
+        "help": "Cancel the current cancellable application event; continue executing subsequent actions."
+      },
       "hideUi": {
         "name": "Hide UI or Block Input",
         "help": "Hide the game UI or only block player input while the action is active."
@@ -2082,6 +2151,18 @@
       "setIgnoreGlobalTimeScale": {
         "name": "Ignore Global Time Scale",
         "help": "Exclude selected entities from global time dilation, or restore it."
+      },
+      "storeCharacterTypeCode": {
+        "name": "Store character element code",
+        "help": "Write the first queried character’s element code to the blackboard: Heat, Electric, Cryo, Nature and Physical map to 0 through 4. A missing or non-character target fails without changing the value."
+      },
+      "storeProfession": {
+        "name": "Store character profession code",
+        "help": "Write the first queried character’s native profession enum code to the blackboard. A missing character or profession fails without changing the value."
+      },
+      "storeSquadSlot": {
+        "name": "Store character squad slot",
+        "help": "Write the first queried character’s zero-based squad slot to the blackboard. A missing character or squad member fails without changing the value."
       },
       "storeCharacterTypeId": {
         "name": "Read character type",
@@ -2112,12 +2193,16 @@
         "help": "Calculate a result from two inputs and store it in a variable."
       },
       "storeSourceAttributeValue": {
-        "name": "Get Source Attribute",
-        "help": "Read a source attribute, scale and offset it, then store the result."
+        "name": "Get Attribute Value",
+        "help": "Read the first queried target’s attribute, apply rounding, scaling and offset, then store the result."
       },
       "storeEntityPropertyValue": {
         "name": "Get Health or Stagger",
         "help": "Read health or stagger, scale it and store the result."
+      },
+      "overrideRawAttributes": {
+        "name": "Override Raw Attributes",
+        "help": "Override target raw attributes while preserving modifiers, and restore them when the action ends."
       },
       "setHealthFloor": {
         "name": "Set Health Floor",
@@ -2290,6 +2375,14 @@
       "characterTypeIn": {
         "name": "Element Type Matches?",
         "help": "Check the target’s element type against the list."
+      },
+      "globalBuffCountCompare": {
+        "name": "Compare Global Buff Count",
+        "help": "Compare active parent instances in the battle directory, across all sources."
+      },
+      "operatorWeaponTypeIn": {
+        "name": "Weapon Type Matches?",
+        "help": "Check the first queried character’s weapon type. Missing or non-character targets do not match."
       },
       "operatorRoleIn": {
         "name": "Role Matches?",
@@ -2546,6 +2639,18 @@
       "interruptCurrentSkill": {
         "name": "Interrupt current skill",
         "help": "End the skill currently being executed by the selected targets."
+      },
+      "queueComboLock": {
+        "name": "Lock combo queue",
+        "help": "Append a timed lock. Existing windows stay available; later windows must wait for the lock to expire."
+      },
+      "disableNormalSkill": {
+        "name": "Disable battle skill",
+        "help": "Apply a battle-skill restriction while the action is active, optionally allowing additional stages."
+      },
+      "limitMovementGait": {
+        "name": "Limit movement gait",
+        "help": "Write the owner's shared gait limit. A maximum below Sprint marks dodge inputs as forced. The limit clears after all gait actions end."
       }
     },
     "open": "Edit skill graph",
@@ -3074,9 +3179,6 @@
       "comboStage": "The available combo stage or form does not match {skill}.",
       "groupNotStarted": "The continuous group could not start. Its subsequent {skill} was not executed.",
       "groupInterrupted": "The continuous group was interrupted. Its subsequent {skill} was not executed.",
-      "conflictingSkillChanges": "Several effects change the skill at once. The simulation cannot yet determine which skill would trigger.",
-      "conditionalSkillChange": "The skill changes with conditions. The simulation cannot yet determine which one would trigger.",
-      "specialAttackUnknown": "The simulation cannot yet determine whether this should be a basic attack, plunge attack, or execution.",
       "definitionUnavailable": "The skill data could not be read, so it could not be simulated. Place the skill again; if it is custom, check its settings.",
       "unknown": "The simulation cannot yet determine whether this skill can be used at this time.",
       "stillSimulated": "The simulator will force {skill} to execute."
@@ -3237,6 +3339,7 @@
         "skillErrors": "Skill error hints",
         "hitMarkers": "Hit markers",
         "comboWindows": "Combo windows",
+        "comboWindowsLocked": "Combo window (locked)",
         "switchMarkers": "Switch markers",
         "effectLinks": "Links"
       },
@@ -3473,7 +3576,6 @@
       "trackOption": "Track {index} · {name}",
       "results": {
         "noPublishedResult": "No published simulation result",
-        "executed": "Dodge input executed",
         "interruptedSkill": "Interrupted skill: {skillName}",
         "operatorNotControlled": "The target operator was not controlled; the timeline input was still forced",
         "perfectDodgeDashBlocked": "The perfect-dodge skill still blocked another dodge; the timeline input was forced",
@@ -3481,7 +3583,7 @@
         "multiDashLimitReached": "The current multi-dodge limit was reached; the timeline input was forced",
         "ultimateCannotDash": "The ultimate had not opened its dodge window; the timeline input was still forced",
         "inImmobilized": "The operator was immobilized; the timeline input was still forced",
-        "inDisableDash": "Current gameplay tags disabled dodge; the timeline input was still forced",
+        "inDisableDash": "Dodge disabled\nThe simulation will force the dodge to execute.",
         "hasSuperArmor": "The operator had the SuperArmor tag; the timeline input was still forced",
         "playerActionDisabled": "Player actions disabled dodge; the timeline input was still forced",
         "movementGaitTooLow": "The current movement gait did not allow dodge; the timeline input was still forced",
@@ -3898,7 +4000,6 @@
       },
       "ultimateEnergyMetadata": "Ultimate energy semantics",
       "percentOfMaximum": "Interpret as percent of maximum",
-      "recoveryTag": "Recovery permission tag",
       "ignoreGainMultiplier": "Ignore ultimate gain efficiency",
       "factor": "Recovery factor",
       "nextComboSkillKey": "Next combo skill key",
@@ -4199,7 +4300,6 @@
         "spGainKind": "Distinguishes ordinary gain from refund. Refunded SP does not generate ultimate energy again when spent.",
         "spGainSource": "Marks SP as coming from a normal attack, power attack, or skill so shared gain efficiency can choose its multiplier.",
         "percentOfMaximum": "Interprets the amount as a fraction of maximum ultimate energy instead of fixed points.",
-        "recoveryTag": "Native permission tag carried by positive ultimate recovery. Some recovery blocks inspect this tag.",
         "ignoreGainMultiplier": "Skips the target's ultimate energy gain efficiency and uses the current amount directly.",
         "statusKey": "Stable internal status identity, not display text. Apply and consume steps must use the same key.",
         "statusDuration": "Duration in simulation frames. Empty leaves the duration unspecified; per-level data edits only the current level.",
@@ -4338,7 +4438,7 @@
         "setHealthFloor": "Registers a health floor owned by the current action lifecycle and removes it when the action ends.",
         "modifyActionValue": "Modifies a value in the current skill cast's action blackboard.",
         "calculateActionValue": "Calculates from two operands and writes to the action blackboard.",
-        "storeSourceAttributeValue": "Reads a current combat attribute from the skill source and stores the native rounded and scaled result in the action blackboard.",
+        "storeSourceAttributeValue": "Reads the first queried target’s non-converted attribute and stores the native rounded and scaled result in the action blackboard; an empty query does not write a value.",
         "changeResource": "Changes SP or ultimate energy using a per-level amount.",
         "gainSquadUltimateEnergyFromSkillCost": "Converts the actual SP cost of this skill into squad ultimate energy.",
         "gainFinisherSp": "Restores shared SP using the finisher-specific rule.",
@@ -4356,7 +4456,7 @@
         "showComboRingQte": "Registers a precise-link input window using the native warning and active durations.",
         "changeSkillSlot": "Changes the variant used by the next release of this stable skill group; an ongoing release keeps its snapshotted variant.",
         "changePlayerActionMode": "Changes the native command mode for one semantic player action and may restore the mode that was active before the step.",
-        "overrideBasicAttackMapping": "Maps basic attack to a native skill while the Buff action is active, ahead of skill and mode mappings. Removed when the action ends.",
+        "overrideBasicAttackMapping": "Maps basic attack to a native skill while the action is active, at Skill or Buff priority. Removed when the action ends.",
         "changeNativeSkillType": "Changes one skill's mutable native SkillType without changing its library group or player-action identity.",
         "setCharacterPassiveUiValue": "Updates the value shown by the character-specific combat HUD. This emits an auditable UI-semantic output without modifying damage attributes.",
         "listenForCombatEvents": "Registers temporary event listeners for the outer scheduled sequence interval. They are disposed when the skill ends or is interrupted.",
@@ -4367,7 +4467,10 @@
         "aura": "Maintain aura Buff instances per target and execute entry and exit callbacks.",
         "copyContextTargets": "Copy target group",
         "interruptCurrentSkill": "Interrupt the selected target’s current skill. A target without an active skill is unaffected.",
-        "finishOwner": "End the selected summoned entities or projectiles. Ending flight does not trigger a timeout skill."
+        "finishOwner": "End the selected summoned entities or projectiles. Ending flight does not trigger a timeout skill.",
+        "queueComboLock": "Append a timed lock. Existing windows stay available; later windows must wait for the lock to expire.",
+        "disableNormalSkill": "Apply a battle-skill restriction while the action is active, optionally allowing additional stages.",
+        "limitMovementGait": "Write the owner's shared gait limit until all gait actions end. A maximum below Sprint affects dodge eligibility."
       },
       "damageType": "Damage type",
       "eventListenerWindowHint": "The current scheduled sequence start and end frames define the listening window. Responses run synchronously on the triggering frame.",
@@ -4477,7 +4580,7 @@
         "storeShieldValue": "Store shield value",
         "modifyActionValue": "Modify action value",
         "calculateActionValue": "Calculate action value",
-        "storeSourceAttributeValue": "Store source attribute value",
+        "storeSourceAttributeValue": "Store attribute value",
         "changeResource": "Change resource",
         "gainSquadUltimateEnergyFromSkillCost": "Gain ultimate energy from skill cost",
         "gainFinisherSp": "Gain finisher SP",
@@ -4498,7 +4601,10 @@
         "aura": "Aura",
         "copyContextTargets": "Copy target group",
         "interruptCurrentSkill": "Interrupt current skill",
-        "finishOwner": "Finish target entities"
+        "finishOwner": "Finish target entities",
+        "queueComboLock": "Lock combo queue",
+        "disableNormalSkill": "Disable battle skill",
+        "limitMovementGait": "Limit movement gait"
       }
     },
     "inspector": {
@@ -5346,7 +5452,7 @@
     "clearInitialVariables": "Clear custom values",
     "preview": {
       "operationName": "Blue Immersion Test Operation",
-      "note": "Preview: provisional values. Using a locked skill shows a warning; the simulation still forces execution. Follow-up battle stages are provisionally exempt based on skill descriptions.",
+      "note": "Preview: behavior uses native Buffs. Tag combinations and default values await the official contract data.",
       "comboLock": "Timed Combo Lock",
       "comboDamage": "Combo Skill Damage Boost",
       "battleLock": "Battle Skill Lock",
@@ -5354,19 +5460,19 @@
       "tags": {
         "200001": {
           "name": "Environment: Lockdown",
-          "description": "+{comboDamagePercent}% combo skill damage. Every {comboCount} squad combo casts display a {lockSeconds}-second lock on all operators."
+          "description": "Combo skill damage +{comboDamagePercent}%. Every {comboCount} squad combo casts inserts a {lockSeconds}-second lock into the combo queue. Windows opened before the lock remain usable. Rossi’s second combo stage does not count."
         },
         "200002": {
           "name": "Environment: Silence",
-          "description": "+{spRecoveryPercent}% natural SP regeneration and +{spGainPercent}% SP gain efficiency. Battle skills mark their caster as locked until every squad member has cast one. Pursuit counts as a combo; follow-up stages do not count again."
+          "description": "Natural SP recovery +{spRecoveryPercent}%; SP recovered by skills +{spGainPercent}%. Casting a normal battle skill locks normal battle skills until the squad completes a round. Native follow-up stages remain available and do not count."
         },
         "200003": {
           "name": "Environment: Dissipation",
-          "description": "After any operator casts an ultimate and pays its cost, clear the entire squad's ultimate energy."
+          "description": "After an operator casts an ultimate and pays its cost, clear the other squad members’ ultimate energy."
         },
         "200004": {
           "name": "Rewrite: Engorgement",
-          "description": "After {healDelaySeconds} seconds without Vulnerability or Arts Infliction, the enemy recovers {healPercent}% maximum HP each second. State is checked every second; applying infliction resets the delay."
+          "description": "Once the enemy has neither Vulnerability nor Arts Infliction, wait {healDelaySeconds} seconds, then recover {healPercent}% maximum HP each second. Reapplying these statuses stops the timer and healing."
         }
       }
     },

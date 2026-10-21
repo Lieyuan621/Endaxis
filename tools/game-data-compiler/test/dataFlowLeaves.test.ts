@@ -86,7 +86,7 @@ describe('黑板运行时动作载荷', () => {
     });
   });
 
-  it('StoreAttributeValue 保留属性来源、换算参数和输出黑板键', () => {
+  it.each(['duration', ''])('StoreAttributeValue 保留属性来源、换算参数和输出黑板键 %j', key => {
     expect(
       parseAttributeSnapshotActionSource(
         {
@@ -99,7 +99,7 @@ describe('黑板运行时动作载荷', () => {
           divisorValue: scalarFixture(1),
           multiplierValue: scalarFixture(0.01, 'str_ratio'),
           baseValue: scalarFixture(4, 'duration'),
-          key: 'duration',
+          key,
         },
         'skill.StoreAttributeValue',
         { str_ratio: [0.01, 0.02], duration: [4, 5] },
@@ -113,7 +113,7 @@ describe('黑板运行时动作载荷', () => {
       useFloor: false,
       multiplier: { blackboardKey: 'str_ratio', levelValues: [0.01, 0.02] },
       baseValue: { blackboardKey: 'duration', levelValues: [4, 5] },
-      outputKey: 'duration',
+      outputKey: key,
     });
   });
 

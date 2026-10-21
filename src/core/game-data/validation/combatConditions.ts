@@ -1,4 +1,5 @@
 import {
+  BUFF_FINISH_REASONS,
   SKILL_INTERRUPT_REASONS,
   ABILITY_ENTITY_FINISH_REASONS,
 } from '../../../../packages/game-data-contract/src/conditions';
@@ -10,7 +11,10 @@ import {
   OPERATOR_ROLES,
 } from '../operatorDefinition';
 import { ENEMY_RANKS } from '../enemyRank';
-import { COMBAT_OBJECT_TYPES } from '../../../../packages/game-data-contract/src/primitives';
+import {
+  OPERATOR_WEAPON_TYPES,
+  COMBAT_OBJECT_TYPES,
+} from '../../../../packages/game-data-contract/src/primitives';
 import {
   type SkillDefinitionValidationIssue,
   DAMAGE_ELEMENTS_SET,
@@ -89,6 +93,7 @@ export function validateCombatCondition(
     case 'skillHasHit':
     case 'combatActive':
     case 'singleEnemyPresent':
+    case 'eventDamageSkillCastRecorded':
     case 'eventSkillCastMatchesBuffSource':
       break;
     case 'checkMainCharacter':
@@ -133,6 +138,18 @@ export function validateCombatCondition(
           if (typeof value !== 'string' || !roles.has(value)) {
             push(out, `${path}.roles[${index}]`, 'unknown operator role');
           }
+        });
+      }
+      break;
+    case 'operatorWeaponTypeIn':
+      validateTargetQuery(record.target, `${path}.target`, out);
+      if (!Array.isArray(record.weaponTypes)) {
+        push(out, `${path}.weaponTypes`, 'expected an array');
+      } else {
+        const types = new Set<string>(OPERATOR_WEAPON_TYPES);
+        record.weaponTypes.forEach((value, index) => {
+          if (typeof value !== 'string' || !types.has(value))
+            push(out, `${path}.weaponTypes[${index}]`, 'unknown weapon type');
         });
       }
       break;
@@ -191,6 +208,11 @@ export function validateCombatCondition(
     case 'stringEquals':
       validateActionStringOperand(record.left, `${path}.left`, out);
       validateActionStringOperand(record.right, `${path}.right`, out);
+      break;
+    case 'globalBuffCountCompare':
+      requireString(record, 'globalBuffId', path, out);
+      requireEnum(record, 'operator', COMPARISON_OPERATORS_SET, path, out);
+      validateActionValueOperand(record.value, `${path}.value`, out);
       break;
     case 'actionValueCompare':
       validateActionValueOperand(record.left, `${path}.left`, out);
@@ -390,6 +412,14 @@ export function validateCombatCondition(
       break;
     case 'eventBuffEndedEarly':
       break;
+    case 'eventBuffFinishReasonIn':
+      if (!Array.isArray(record.reasons)) push(out, `${path}.reasons`, 'expected an array');
+      else
+        record.reasons.forEach((reason, index) => {
+          if (!BUFF_FINISH_REASONS.some(value => value === reason))
+            push(out, `${path}.reasons[${index}]`, 'unsupported Buff finish reason');
+        });
+      break;
     case 'eventAbilityEntityFinishReasonIn':
       if (!Array.isArray(record.reasons)) push(out, `${path}.reasons`, 'expected an array');
       else
@@ -438,10 +468,12 @@ export function validateCombatCondition(
       break;
     case 'deckAttributeCompare':
       validateTargetQuery(record.target, `${path}.target`, out);
-      if (typeof record.left === 'string') requireEnum(record, 'left', OPERATOR_ATTRIBUTES_SET, path, out);
+      if (typeof record.left === 'string')
+        requireEnum(record, 'left', OPERATOR_ATTRIBUTES_SET, path, out);
       else validateActionValueOperand(record.left, `${path}.left`, out);
       requireEnum(record, 'operator', COMPARISON_OPERATORS_SET, path, out);
-      if (typeof record.right === 'string') requireEnum(record, 'right', OPERATOR_ATTRIBUTES_SET, path, out);
+      if (typeof record.right === 'string')
+        requireEnum(record, 'right', OPERATOR_ATTRIBUTES_SET, path, out);
       else validateActionValueOperand(record.right, `${path}.right`, out);
       break;
   }
@@ -469,11 +501,14 @@ export function validateTargetQuery(
       'enemyByTags',
       'fixed',
       'characterTeam',
+      'exclude',
+      'buffFilter',
+      'distanceFilter',
       'mainTarget',
       'abilitySystemSource',
       'abilityEntityTarget',
       'ownerSoul',
-      'allyHitBox',
+      'factionHitBox',
       'fixedPoint',
       'ownerSpawned',
     ]),
@@ -486,6 +521,32 @@ export function validateTargetQuery(
     validateGameplayTags(query.tags, `${path}.tags`, out);
   }
   if (query.kind === 'fixed') requireEnum(query, 'target', new Set(['enemy', 'caster']), path, out);
+  if (query.kind === 'exclude') {
+    validateTargetQuery(query.targets, `${path}.targets`, out);
+    validateTargetQuery(query.excludeTargets, `${path}.excludeTargets`, out);
+  }
+  if (query.kind === 'distanceFilter') {
+    validateTargetQuery(query.targets, `${path}.targets`, out);
+    validateTargetQuery(query.center, `${path}.center`, out);
+    requireEnum(query, 'operator', new Set(COMPARISON_OPERATORS), path, out);
+    validateActionValueOperand(query.threshold, `${path}.threshold`, out);
+    requireBoolean(query, 'clampToXZ', path, out);
+  }
+  if (query.kind === 'buffFilter') {
+    validateTargetQuery(query.targets, `${path}.targets`, out);
+    requireBoolean(query, 'requireBuff', path, out);
+    const lookup = asRecord(query.query, `${path}.query`, out);
+    if (lookup) {
+      requireEnum(lookup, 'kind', new Set(['id', 'tag']), `${path}.query`, out);
+      if (lookup.kind === 'id') {
+        if (!Array.isArray(lookup.buffIds) || lookup.buffIds.some(id => typeof id !== 'string'))
+          push(out, `${path}.query.buffIds`, 'expected string array');
+      } else if (lookup.kind === 'tag') {
+        requireEnum(lookup, 'tagQueryType', TAG_QUERY_TYPES_SET, `${path}.query`, out);
+        validateGameplayTags(lookup.buffTags, `${path}.query.buffTags`, out);
+      }
+    }
+  }
   if (query.kind === 'characterTeam') {
     requireBoolean(query, 'excludeOwner', path, out);
     if (query.owner !== undefined) validateTargetQuery(query.owner, `${path}.owner`, out);
@@ -495,7 +556,7 @@ export function validateTargetQuery(
     query.kind === 'abilitySystemSource' ||
     query.kind === 'abilityEntityTarget' ||
     query.kind === 'ownerSoul' ||
-    query.kind === 'allyHitBox' ||
+    query.kind === 'factionHitBox' ||
     query.kind === 'ownerSpawned' ||
     query.kind === 'fixedPoint'
   )
@@ -504,7 +565,9 @@ export function validateTargetQuery(
     validateTargetQuery(query.center, `${path}.center`, out);
     validateTargetQuery(query.directionTarget, `${path}.directionTarget`, out);
   }
-  if (query.kind === 'allyHitBox') {
+  if (query.kind === 'factionHitBox') {
+    if (query.factionTarget !== 'ally' && query.factionTarget !== 'anti')
+      push(out, `${path}.factionTarget`, 'expected ally or anti');
     requireBoolean(query, 'checkAlive', path, out);
     requireBoolean(query, 'containsUnmarkable', path, out);
     requireBoolean(query, 'replacePartsWithMainBodies', path, out);

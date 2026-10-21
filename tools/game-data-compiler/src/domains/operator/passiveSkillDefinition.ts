@@ -436,8 +436,9 @@ interface CollectedBuffReactionProjection {
 
 /**
  * OnCollectOutputBuffBbValue 在腐蚀输出 Buff 创建前修改其 duration 与
- * max_def_decrease。固定模型把这一数据流投影为正式反应修正，不安装一个运行时永远不会收到
- * 该原生收集事件的伪监听器。形状不完全匹配时返回 undefined，后续普通 Buff 编译会严格报错。
+ * max_def_decrease。这是现有干员数据沿用的腐蚀天赋兼容投影。通用收集事件已接入；迁移
+ * 该天赋时须同步重生成干员并移除运行时兼容修正，不能同时启用两条加成路径。
+ * 形状不完全匹配时返回 undefined，后续走普通 Buff 编译。
  */
 function projectCollectedBuffReactionPassive(
   skill: CompiledPassiveSkillDefinitionSource['definition']['skill'],

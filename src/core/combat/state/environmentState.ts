@@ -96,6 +96,7 @@ export interface ComboRingQteRegistration {
 
 /** 全场连携候选、暂停状态和 QTE 结果。 */
 export interface ComboWindowState {
+  readonly locks: Map<number, number>;
   readonly records: Map<string, PendingComboRecord>;
   readonly pausedOperators: Set<string>;
   readonly ringQtes: Map<number, ComboRingQteRegistration>;
@@ -106,6 +107,7 @@ export interface ComboWindowState {
 
 export function createComboWindowState(): ComboWindowState {
   return {
+    locks: new Map(),
     records: new Map(),
     pausedOperators: new Set(),
     ringQtes: new Map(),
@@ -213,7 +215,7 @@ export interface CombatVitalsState {
   stopPoiseRecovery: boolean;
   hasPoiseBrokenTag: boolean;
   maxHealth: number;
-  readonly maxPoise: number;
+  maxPoise: number;
   readonly poiseKnotThresholds: readonly number[];
   readonly poiseRecoveryTime: number;
   readonly poiseRecoveryTimeMultiplier: number;
@@ -407,6 +409,8 @@ export function createPlayerMultiDashState(): PlayerMultiDashState {
 
 /** 所有干员和动态实例共享的战斗数据。 */
 export interface CombatSharedState {
+  /** 已登记的非施法动作来源。宿主结束后，其创建的 Buff 仍可依此恢复执行绑定。 */
+  readonly reactiveOperationSources: Map<string, Set<string>>;
   readonly clock: CombatClockState;
   readonly resources: CombatResourceState;
   /** 原生 PlayerController 的连续闪避窗口；切人不会重置。 */

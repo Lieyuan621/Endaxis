@@ -214,7 +214,6 @@ describe('原生连携条件注册环境', () => {
         },
         id => id === 'ally',
       ),
-      id => id,
       {
         listOperatorIds: () => ['ally'],
         isOperatorControlled: id => id === 'ally',

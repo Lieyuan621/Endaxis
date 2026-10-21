@@ -54,6 +54,8 @@ export const purrchenaChr_0038_purrche_attack1ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -133,6 +135,8 @@ export const purrchenaChr_0038_purrche_attack1ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_7' },
             tags: ['normalAttack'],
@@ -169,7 +173,14 @@ export const purrchenaChr_0038_purrche_attack1ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_21: {
+      overrideBasicAttackMapping_21: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0038_purrche_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_22: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0038_purrche_attack2'] },
@@ -186,7 +197,7 @@ export const purrchenaChr_0038_purrche_attack1ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -203,7 +214,7 @@ export const purrchenaChr_0038_purrche_attack1ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -217,6 +228,7 @@ export const purrchenaChr_0038_purrche_attack1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const purrchenaChr_0038_purrche_attack1: SkillDefinition = {
+  actionGraph: purrchenaChr_0038_purrche_attack1ActionGraph,
   key: 'chr_0038_purrche_attack1',
   element: 'physical',
   blackboard: {
@@ -228,29 +240,17 @@ export const purrchenaChr_0038_purrche_attack1: SkillDefinition = {
   naturalDurationFrames: 130,
   exclusiveFrame: 28,
   offsetRecordFrame: 10,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 42,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0038_purrche_attack2',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 23, endFrame: 42, skillIds: ['chr_0038_purrche_attack2'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 10, endFrame: 11, sequence: { $sequence: 'repeatEachTick_11' } },
     { startFrame: 17, endFrame: 18, sequence: { $sequence: 'repeatEachTick_20' } },
-    { startFrame: 23, endFrame: 42, sequence: { $sequence: 'reachSkillOperableBoundary_21' } },
+    { startFrame: 0, endFrame: 42, sequence: { $sequence: 'overrideBasicAttackMapping_21' } },
+    { startFrame: 23, endFrame: 42, sequence: { $sequence: 'reachSkillOperableBoundary_22' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0038_purrche_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: purrchenaChr_0038_purrche_attack1ActionGraph,
 };
 
 export const purrchenaChr_0038_purrche_attack2ActionGraph = {
@@ -316,6 +316,8 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
             tags: ['normalAttack'],
@@ -412,6 +414,8 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_11' },
             tags: ['normalAttack'],
@@ -508,6 +512,8 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_16' },
             tags: ['normalAttack'],
@@ -544,7 +550,14 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_37: {
+      overrideBasicAttackMapping_37: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0038_purrche_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_38: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0038_purrche_attack3'] },
@@ -574,7 +587,7 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -604,7 +617,7 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -633,7 +646,7 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -647,6 +660,7 @@ export const purrchenaChr_0038_purrche_attack2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const purrchenaChr_0038_purrche_attack2: SkillDefinition = {
+  actionGraph: purrchenaChr_0038_purrche_attack2ActionGraph,
   key: 'chr_0038_purrche_attack2',
   element: 'physical',
   blackboard: {
@@ -662,30 +676,18 @@ export const purrchenaChr_0038_purrche_attack2: SkillDefinition = {
   naturalDurationFrames: 180,
   exclusiveFrame: 48,
   offsetRecordFrame: 22,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 53,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0038_purrche_attack3',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 46, endFrame: 53, skillIds: ['chr_0038_purrche_attack3'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 11, endFrame: 12, sequence: { $sequence: 'repeatEachTick_14' } },
     { startFrame: 14, endFrame: 15, sequence: { $sequence: 'repeatEachTick_25' } },
     { startFrame: 22, endFrame: 24, sequence: { $sequence: 'repeatEachTick_36' } },
-    { startFrame: 46, endFrame: 53, sequence: { $sequence: 'reachSkillOperableBoundary_37' } },
+    { startFrame: 0, endFrame: 53, sequence: { $sequence: 'overrideBasicAttackMapping_37' } },
+    { startFrame: 46, endFrame: 53, sequence: { $sequence: 'reachSkillOperableBoundary_38' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0038_purrche_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: purrchenaChr_0038_purrche_attack2ActionGraph,
 };
 
 export const purrchenaChr_0038_purrche_attack3ActionGraph = {
@@ -751,6 +753,8 @@ export const purrchenaChr_0038_purrche_attack3ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
             tags: ['normalAttack'],
@@ -831,6 +835,8 @@ export const purrchenaChr_0038_purrche_attack3ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_10' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
@@ -869,7 +875,14 @@ export const purrchenaChr_0038_purrche_attack3ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_25: {
+      overrideBasicAttackMapping_25: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0038_purrche_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_26: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0038_purrche_attack1'] },
@@ -899,7 +912,7 @@ export const purrchenaChr_0038_purrche_attack3ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -917,7 +930,7 @@ export const purrchenaChr_0038_purrche_attack3ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -932,6 +945,7 @@ export const purrchenaChr_0038_purrche_attack3ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const purrchenaChr_0038_purrche_attack3: SkillDefinition = {
+  actionGraph: purrchenaChr_0038_purrche_attack3ActionGraph,
   key: 'chr_0038_purrche_attack3',
   element: 'physical',
   blackboard: {
@@ -946,36 +960,31 @@ export const purrchenaChr_0038_purrche_attack3: SkillDefinition = {
   naturalDurationFrames: 209,
   exclusiveFrame: 47,
   offsetRecordFrame: 21,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 58,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0038_purrche_attack1',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 47, endFrame: 58, skillIds: ['chr_0038_purrche_attack1'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 18, endFrame: 20, sequence: { $sequence: 'repeatEachTick_13' } },
     { startFrame: 21, endFrame: 23, sequence: { $sequence: 'repeatEachTick_23' } },
-    { startFrame: 47, endFrame: 58, sequence: { $sequence: 'reachSkillOperableBoundary_25' } },
+    { startFrame: 0, endFrame: 58, sequence: { $sequence: 'overrideBasicAttackMapping_25' } },
+    { startFrame: 47, endFrame: 58, sequence: { $sequence: 'reachSkillOperableBoundary_26' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0038_purrche_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: purrchenaChr_0038_purrche_attack3ActionGraph,
 };
 
 export const purrchenaChr_0038_purrche_power_attackActionGraph = {
   main: {
     nodes: {
       gainFinisherSp_1: {
-        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+        action: {
+          kind: 'gainFinisherSp',
+          parameters: {
+            source: { kind: 'source' },
+            target: { kind: 'inputTarget' },
+            factor: { kind: 'constant', value: 1 },
+          },
+        },
         next: null,
       },
       startTimeDilation_2: {
@@ -1037,6 +1046,8 @@ export const purrchenaChr_0038_purrche_power_attackActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
@@ -1109,6 +1120,10 @@ export const purrchenaChr_0038_purrche_power_attackActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_7: {
+        action: { kind: 'reachSkillOperableBoundary', parameters: { skillIds: [] } },
+        next: null,
+      },
     },
     dataNodes: { data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } } },
   },
@@ -1125,13 +1140,13 @@ export const purrchenaChr_0038_purrche_power_attack: SkillDefinition = {
   exclusiveFrame: 46,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: { allowedNextSkills: [{ startFrame: 37, endFrame: 56, skillIds: [] }] },
   costFrame: 4,
   scheduledSequences: [
     { startFrame: 24, endFrame: 26, sequence: { $sequence: 'dealDamage_3' } },
     { startFrame: 33, endFrame: 35, sequence: { $sequence: 'startTimeDilation_4' } },
     { startFrame: 0, endFrame: 46, sequence: { $sequence: 'applyBuff_5' } },
     { startFrame: 0, endFrame: 25, sequence: { $sequence: 'applyBuff_6' } },
+    { startFrame: 37, endFrame: 56, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
@@ -1142,6 +1157,13 @@ export const purrchenaChr_0038_purrche_power_attack: SkillDefinition = {
 export const purrchenaChr_0038_purrche_plunging_attack_endActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -1172,6 +1194,8 @@ export const purrchenaChr_0038_purrche_plunging_attack_endActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'plungingAttack'],
@@ -1193,6 +1217,7 @@ export const purrchenaChr_0038_purrche_plunging_attack_endActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const purrchenaChr_0038_purrche_plunging_attack_end: SkillDefinition = {
+  actionGraph: purrchenaChr_0038_purrche_plunging_attack_endActionGraph,
   key: 'chr_0038_purrche_plunging_attack_end',
   element: 'physical',
   blackboard: {
@@ -1204,12 +1229,14 @@ export const purrchenaChr_0038_purrche_plunging_attack_end: SkillDefinition = {
   exclusiveFrame: 21,
   offsetRecordFrame: 0,
   costFrame: 0,
-  scheduledSequences: [{ startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } }],
+  scheduledSequences: [
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } },
+  ],
   defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: purrchenaChr_0038_purrche_plunging_attack_endActionGraph,
 };
 
 export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
@@ -1323,7 +1350,7 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
       copyContextTargets_22: {
         action: {
           kind: 'copyContextTargets',
-          parameters: { source: { kind: 'fixed', target: 'enemy' }, saveToContextKey: 'HitTar' },
+          parameters: { source: { kind: 'context', key: 'MainTar' }, saveToContextKey: 'HitTar' },
         },
         next: null,
       },
@@ -1384,19 +1411,6 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
         },
         next: 'checkCondition_34',
       },
-      castSkillDuringAction_27: {
-        action: {
-          kind: 'castSkillDuringAction',
-          parameters: {
-            skillId: 'chr_0038_purrche_normal_skill_block_1',
-            target: 'enemy',
-            skipApplyCost: false,
-            inheritSourceSkillCastInfo: false,
-            interruptCurrentSkillOnlyWhenTargetCastable: true,
-          },
-        },
-        next: null,
-      },
       applyBuff_28: {
         action: {
           kind: 'applyBuff',
@@ -1410,12 +1424,12 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'castSkillDuringAction_27',
+        next: 'castSkillDuringAction_31',
       },
       copyContextTargets_29: {
         action: {
           kind: 'copyContextTargets',
-          parameters: { source: { kind: 'fixed', target: 'enemy' }, saveToContextKey: 'Attacker' },
+          parameters: { source: { kind: 'inputTarget' }, saveToContextKey: 'Attacker' },
         },
         next: 'applyBuff_28',
       },
@@ -1433,7 +1447,7 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
             responses: [
               {
                 key: 'SkillData.chr_0038_purrche_normal_skill.actionGroupData.timelineActions[29]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
-                event: { kind: 'operatorHit' },
+                event: { kind: 'abilityEvent', event: 'beforeTakeDamage' },
                 phase: 'dataAction',
                 priority: 0,
                 sequence: { $sequence: 'checkCondition_30' },
@@ -1484,7 +1498,7 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
           kind: 'castSkillDuringAction',
           parameters: {
             skillId: 'chr_0038_purrche_block',
-            target: 'enemy',
+            target: 'actionInputTarget',
             skipApplyCost: false,
             inheritSourceSkillCastInfo: false,
           },
@@ -1506,7 +1520,7 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
       copyContextTargets_39: {
         action: {
           kind: 'copyContextTargets',
-          parameters: { source: { kind: 'fixed', target: 'enemy' }, saveToContextKey: 'Attacker' },
+          parameters: { source: { kind: 'inputTarget' }, saveToContextKey: 'Attacker' },
         },
         next: 'applyBuff_38',
       },
@@ -1524,7 +1538,7 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
             responses: [
               {
                 key: 'SkillData.chr_0038_purrche_normal_skill.actionGroupData.timelineActions[30]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
-                event: { kind: 'operatorHit' },
+                event: { kind: 'abilityEvent', event: 'beforeTakeDamage' },
                 phase: 'dataAction',
                 priority: 0,
                 sequence: { $sequence: 'checkCondition_40' },
@@ -1693,6 +1707,20 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_62: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0038_purrche_normal_skill_counter'] },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_63: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0038_purrche_normal_skill_sp'] },
+        },
+        next: null,
+      },
       findTargets_opt1: {
         action: {
           kind: 'findTargets',
@@ -1727,7 +1755,7 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
       copyContextTargets_opt4: {
         action: {
           kind: 'copyContextTargets',
-          parameters: { source: { kind: 'fixed', target: 'enemy' }, saveToContextKey: 'Attacker' },
+          parameters: { source: { kind: 'inputTarget' }, saveToContextKey: 'Attacker' },
         },
         next: 'ifElse_opt3',
       },
@@ -1825,6 +1853,7 @@ export const purrchenaChr_0038_purrche_normal_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const purrchenaChr_0038_purrche_normal_skill: SkillDefinition = {
+  actionGraph: purrchenaChr_0038_purrche_normal_skillActionGraph,
   key: 'chr_0038_purrche_normal_skill',
   element: 'nature',
   blackboard: {
@@ -1841,12 +1870,6 @@ export const purrchenaChr_0038_purrche_normal_skill: SkillDefinition = {
   exclusiveFrame: 50,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 12, endFrame: 50, skillIds: ['chr_0038_purrche_normal_skill_counter'] },
-      { startFrame: 300, endFrame: 585, skillIds: ['chr_0038_purrche_normal_skill_sp'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 49, endFrame: 49, sequence: { $sequence: 'applyBuff_2' } },
@@ -1868,6 +1891,8 @@ export const purrchenaChr_0038_purrche_normal_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'applyBuff_58' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'changeResource_60' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'applyBuff_61' } },
+    { startFrame: 12, endFrame: 50, sequence: { $sequence: 'reachSkillOperableBoundary_62' } },
+    { startFrame: 300, endFrame: 585, sequence: { $sequence: 'reachSkillOperableBoundary_63' } },
   ],
   defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
@@ -1875,7 +1900,6 @@ export const purrchenaChr_0038_purrche_normal_skill: SkillDefinition = {
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: purrchenaChr_0038_purrche_normal_skillActionGraph,
 };
 
 export const purrchenaChr_0038_purrche_normal_skill_counterActionGraph = {
@@ -2065,6 +2089,8 @@ export const purrchenaChr_0038_purrche_normal_skill_counterActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_7' },
             tags: ['normalSkill'],
@@ -2117,6 +2143,13 @@ export const purrchenaChr_0038_purrche_normal_skill_counterActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_48: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0038_purrche_normal_skill'] },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'potential_5_atb' } },
@@ -2126,7 +2159,7 @@ export const purrchenaChr_0038_purrche_normal_skill_counterActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -2151,6 +2184,7 @@ export const purrchenaChr_0038_purrche_normal_skill_counterActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const purrchenaChr_0038_purrche_normal_skill_counter: SkillDefinition = {
+  actionGraph: purrchenaChr_0038_purrche_normal_skill_counterActionGraph,
   normalSkillSubType: 'additionalNormalSkill',
   key: 'chr_0038_purrche_normal_skill_counter',
   element: 'nature',
@@ -2167,114 +2201,25 @@ export const purrchenaChr_0038_purrche_normal_skill_counter: SkillDefinition = {
   exclusiveFrame: 35,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 15, endFrame: 45, skillIds: ['chr_0038_purrche_normal_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'readBuffStackCount_5' } },
     { startFrame: 9, endFrame: 13, sequence: { $sequence: 'repeatEachTick_22' } },
     { startFrame: 0, endFrame: 0, sequence: { $sequence: 'finishBuffsById_23' } },
+    { startFrame: 15, endFrame: 45, sequence: { $sequence: 'reachSkillOperableBoundary_48' } },
   ],
   defaultTarget: 'enemy',
   icon: 'endaxis:operators/purrchena/battle_02',
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: purrchenaChr_0038_purrche_normal_skill_counterActionGraph,
 };
 
 export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
   main: {
     nodes: {
-      applyBuff_1: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0038_purrche_enter_normal_skill_end' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: 'applyBuff_1',
-      },
-      listenForCombatEvents_3: {
-        action: {
-          kind: 'listenForCombatEvents',
-          parameters: {
-            responses: [
-              {
-                key: 'SkillData.chr_0038_purrche_normal_skill_block_1.actionGroupData.timelineActions[2]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
-                event: { kind: 'abilityEvent', event: 'addedBuff' },
-                phase: 'dataAction',
-                priority: 0,
-                sequence: { $sequence: 'checkCondition_2' },
-              },
-            ],
-          },
-        },
-        next: null,
-      },
-      castSkillDuringAction_4: {
-        action: {
-          kind: 'castSkillDuringAction',
-          parameters: {
-            skillId: 'chr_0038_purrche_normal_skill_loop_2',
-            target: 'actionInputTarget',
-            skipApplyCost: false,
-            inheritSourceSkillCastInfo: false,
-          },
-        },
-        next: null,
-      },
-      applyBuff_5: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0038_purrche_enter_normal_skill_end' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: 'castSkillDuringAction_4',
-      },
-      checkCondition_6: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: 'applyBuff_5',
-      },
-      listenForCombatEvents_7: {
-        action: {
-          kind: 'listenForCombatEvents',
-          parameters: {
-            responses: [
-              {
-                key: 'SkillData.chr_0038_purrche_normal_skill_block_1.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
-                event: { kind: 'abilityEvent', event: 'addedBuff' },
-                phase: 'dataAction',
-                priority: 0,
-                sequence: { $sequence: 'checkCondition_6' },
-              },
-            ],
-          },
-        },
-        next: null,
-      },
-      inheritBuffById_8: {
+      inheritBuffById_1: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -2294,7 +2239,7 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
         },
         next: null,
       },
-      castSkillDuringAction_9: {
+      castSkillDuringAction_2: {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
@@ -2307,7 +2252,7 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
         },
         next: null,
       },
-      applyBuff_10: {
+      applyBuff_3: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2317,44 +2262,9 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'castSkillDuringAction_9',
+        next: 'castSkillDuringAction_2',
       },
-      castSkillDuringAction_11: {
-        action: {
-          kind: 'castSkillDuringAction',
-          parameters: {
-            skillId: 'chr_0038_purrche_normal_skill_block_2',
-            target: 'enemy',
-            skipApplyCost: false,
-            inheritSourceSkillCastInfo: false,
-            interruptCurrentSkillOnlyWhenTargetCastable: true,
-          },
-        },
-        next: null,
-      },
-      applyBuff_12: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [
-              { buffId: 'buff_chr_0038_purrche_block_counter' },
-              { buffId: 'buff_chr_0038_purrche_block_immune_skillfx' },
-            ],
-            targets: { kind: 'owner' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: 'castSkillDuringAction_11',
-      },
-      checkCondition_13: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-        },
-        next: 'applyBuff_12',
-      },
-      castSkillDuringAction_14: {
+      castSkillDuringAction_7: {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
@@ -2367,7 +2277,7 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
         },
         next: null,
       },
-      applyBuff_15: {
+      applyBuff_8: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2377,21 +2287,134 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'castSkillDuringAction_14',
+        next: 'castSkillDuringAction_7',
       },
-      checkCondition_16: {
+      checkCondition_9: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: 'applyBuff_8',
+      },
+      checkCondition_10: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: 'checkCondition_9',
+      },
+      applyBuff_5: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              { buffId: 'buff_chr_0038_purrche_block_counter' },
+              { buffId: 'buff_chr_0038_purrche_block_immune_skillfx' },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: 'castSkillDuringAction_7',
+      },
+      checkCondition_6: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+        },
+        next: 'applyBuff_5',
+      },
+      listenForCombatEvents_11: {
+        action: {
+          kind: 'listenForCombatEvents',
+          parameters: {
+            responses: [
+              {
+                key: 'SkillData.chr_0038_purrche_normal_skill_block_1.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
+                event: { kind: 'abilityEvent', event: 'beforeTakeDamage' },
+                phase: 'dataAction',
+                priority: 0,
+                sequence: { $sequence: 'checkCondition_6' },
+              },
+              {
+                key: 'SkillData.chr_0038_purrche_normal_skill_block_1.actionGroupData.timelineActions[6]._sequenceActionData.actionData[0].abilityActionMap[1].actions[0]',
+                event: { kind: 'abilityEvent', event: 'addedBuff' },
+                phase: 'dataAction',
+                priority: 0,
+                sequence: { $sequence: 'checkCondition_10' },
+              },
+            ],
+          },
+        },
+        next: null,
+      },
+      applyBuff_12: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0038_purrche_enter_normal_skill_end' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      checkCondition_13: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
         },
-        next: 'applyBuff_15',
+        next: 'applyBuff_12',
+      },
+      listenForCombatEvents_14: {
+        action: {
+          kind: 'listenForCombatEvents',
+          parameters: {
+            responses: [
+              {
+                key: 'SkillData.chr_0038_purrche_normal_skill_block_1.actionGroupData.timelineActions[7]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
+                event: { kind: 'abilityEvent', event: 'addedBuff' },
+                phase: 'dataAction',
+                priority: 0,
+                sequence: { $sequence: 'checkCondition_13' },
+              },
+            ],
+          },
+        },
+        next: null,
+      },
+      castSkillDuringAction_15: {
+        action: {
+          kind: 'castSkillDuringAction',
+          parameters: {
+            skillId: 'chr_0038_purrche_normal_skill_loop_2',
+            target: 'actionInputTarget',
+            skipApplyCost: false,
+            inheritSourceSkillCastInfo: false,
+          },
+        },
+        next: null,
+      },
+      applyBuff_16: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0038_purrche_enter_normal_skill_end' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: 'castSkillDuringAction_15',
       },
       checkCondition_17: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
         },
-        next: 'checkCondition_16',
+        next: 'applyBuff_16',
       },
       listenForCombatEvents_18: {
         action: {
@@ -2400,13 +2423,6 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
             responses: [
               {
                 key: 'SkillData.chr_0038_purrche_normal_skill_block_1.actionGroupData.timelineActions[8]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
-                event: { kind: 'operatorHit' },
-                phase: 'dataAction',
-                priority: 0,
-                sequence: { $sequence: 'checkCondition_13' },
-              },
-              {
-                key: 'SkillData.chr_0038_purrche_normal_skill_block_1.actionGroupData.timelineActions[8]._sequenceActionData.actionData[0].abilityActionMap[1].actions[0]',
                 event: { kind: 'abilityEvent', event: 'addedBuff' },
                 phase: 'dataAction',
                 priority: 0,
@@ -2590,25 +2606,16 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_31: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0038_purrche_normal_skill_counter'] },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: {
-        type: 'boolean',
-        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0038_purrche_block_end'] },
-      },
-      data_2: {
-        type: 'boolean',
-        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0038_purrche_block_end'] },
-      },
-      data_3: {
-        type: 'boolean',
-        expression: {
-          kind: 'eventDamageFeaturesMatch',
-          match: 'exceptAny',
-          features: ['dot', 'remainArea'],
-        },
-      },
-      data_4: {
         type: 'boolean',
         expression: {
           kind: 'targetDistance',
@@ -2620,9 +2627,25 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
           containsHittableObject: false,
         },
       },
-      data_5: {
+      data_2: {
         type: 'boolean',
         expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_eny_0018_lbtough_pre_catch'] },
+      },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventDamageFeaturesMatch',
+          match: 'exceptAny',
+          features: ['dot', 'remainArea'],
+        },
+      },
+      data_4: {
+        type: 'boolean',
+        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0038_purrche_block_end'] },
+      },
+      data_5: {
+        type: 'boolean',
+        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0038_purrche_block_end'] },
       },
       data_6: {
         type: 'boolean',
@@ -2657,6 +2680,7 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const purrchenaChr_0038_purrche_normal_skill_block_1: SkillDefinition = {
+  actionGraph: purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph,
   key: 'chr_0038_purrche_normal_skill_block_1',
   element: 'nature',
   blackboard: { atb_return_2: 20, potential_5_atb: 0, talent_1_stack: 0, talent_1_usp: 0 },
@@ -2664,132 +2688,31 @@ export const purrchenaChr_0038_purrche_normal_skill_block_1: SkillDefinition = {
   naturalDurationFrames: 25,
   exclusiveFrame: 25,
   offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 0, endFrame: 24, skillIds: ['chr_0038_purrche_normal_skill_counter'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 0, endFrame: 9, sequence: { $sequence: 'listenForCombatEvents_3' } },
-    { startFrame: 9, endFrame: 24, sequence: { $sequence: 'listenForCombatEvents_7' } },
-    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'inheritBuffById_8' } },
-    { startFrame: 23, endFrame: 23, sequence: { $sequence: 'applyBuff_10' } },
-    { startFrame: 3, endFrame: 24, sequence: { $sequence: 'listenForCombatEvents_18' } },
+    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'inheritBuffById_1' } },
+    { startFrame: 23, endFrame: 23, sequence: { $sequence: 'applyBuff_3' } },
+    { startFrame: 3, endFrame: 24, sequence: { $sequence: 'listenForCombatEvents_11' } },
+    { startFrame: 0, endFrame: 9, sequence: { $sequence: 'listenForCombatEvents_14' } },
+    { startFrame: 9, endFrame: 24, sequence: { $sequence: 'listenForCombatEvents_18' } },
     { startFrame: 9, endFrame: 9, sequence: { $sequence: 'applyBuff_21' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_23' } },
     { startFrame: 0, endFrame: 9, sequence: { $sequence: 'applyBuff_24' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'changeResource_29' } },
     { startFrame: 0, endFrame: 21, sequence: { $sequence: 'applyBuff_30' } },
+    { startFrame: 0, endFrame: 24, sequence: { $sequence: 'reachSkillOperableBoundary_31' } },
   ],
   defaultTarget: 'enemy',
   icon: 'endaxis:operators/purrchena/battle_02',
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'extraActiveSkill',
-  actionGraph: purrchenaChr_0038_purrche_normal_skill_block_1ActionGraph,
 };
 
 export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
   main: {
     nodes: {
-      applyBuff_1: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0038_purrche_enter_normal_skill_end' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: null,
-      },
-      checkCondition_2: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: 'applyBuff_1',
-      },
-      listenForCombatEvents_3: {
-        action: {
-          kind: 'listenForCombatEvents',
-          parameters: {
-            responses: [
-              {
-                key: 'SkillData.chr_0038_purrche_normal_skill_block_2.actionGroupData.timelineActions[2]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
-                event: { kind: 'abilityEvent', event: 'addedBuff' },
-                phase: 'dataAction',
-                priority: 0,
-                sequence: { $sequence: 'checkCondition_2' },
-              },
-            ],
-          },
-        },
-        next: null,
-      },
-      castSkillDuringAction_4: {
-        action: {
-          kind: 'castSkillDuringAction',
-          parameters: {
-            skillId: 'chr_0038_purrche_normal_skill_loop_2',
-            target: 'actionInputTarget',
-            skipApplyCost: false,
-            inheritSourceSkillCastInfo: false,
-          },
-        },
-        next: null,
-      },
-      applyBuff_5: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0038_purrche_block_immune_skillfx' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: 'castSkillDuringAction_4',
-      },
-      applyBuff_6: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [{ buffId: 'buff_chr_0038_purrche_enter_normal_skill_end' }],
-            targets: { kind: 'owner' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: 'applyBuff_5',
-      },
-      checkCondition_7: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-        },
-        next: 'applyBuff_6',
-      },
-      listenForCombatEvents_8: {
-        action: {
-          kind: 'listenForCombatEvents',
-          parameters: {
-            responses: [
-              {
-                key: 'SkillData.chr_0038_purrche_normal_skill_block_2.actionGroupData.timelineActions[3]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
-                event: { kind: 'abilityEvent', event: 'addedBuff' },
-                phase: 'dataAction',
-                priority: 0,
-                sequence: { $sequence: 'checkCondition_7' },
-              },
-            ],
-          },
-        },
-        next: null,
-      },
-      inheritBuffById_9: {
+      inheritBuffById_1: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -2809,7 +2732,7 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
         },
         next: null,
       },
-      castSkillDuringAction_10: {
+      castSkillDuringAction_2: {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
@@ -2822,7 +2745,7 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
         },
         next: null,
       },
-      applyBuff_11: {
+      applyBuff_3: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2832,9 +2755,9 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'castSkillDuringAction_10',
+        next: 'castSkillDuringAction_2',
       },
-      castSkillDuringAction_16: {
+      castSkillDuringAction_8: {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
@@ -2843,6 +2766,146 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
             skipApplyCost: false,
             inheritSourceSkillCastInfo: false,
             interruptCurrentSkillOnlyWhenTargetCastable: true,
+          },
+        },
+        next: null,
+      },
+      applyBuff_9: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0038_purrche_block_immune_skillfx' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: 'castSkillDuringAction_8',
+      },
+      checkCondition_10: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: 'applyBuff_9',
+      },
+      checkCondition_11: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: 'checkCondition_10',
+      },
+      castSkillDuringAction_4: {
+        action: {
+          kind: 'castSkillDuringAction',
+          parameters: {
+            skillId: 'chr_0038_purrche_normal_skill_block_2',
+            target: 'actionInputTarget',
+            skipApplyCost: true,
+            inheritSourceSkillCastInfo: true,
+            interruptCurrentSkillOnlyWhenTargetCastable: true,
+          },
+        },
+        next: null,
+      },
+      applyBuff_5: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              { buffId: 'buff_chr_0038_purrche_block_counter' },
+              { buffId: 'buff_chr_0038_purrche_block_immune_skillfx' },
+            ],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: 'castSkillDuringAction_4',
+      },
+      checkCondition_6: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+        },
+        next: 'applyBuff_5',
+      },
+      checkCondition_7: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
+        },
+        next: 'checkCondition_6',
+      },
+      listenForCombatEvents_12: {
+        action: {
+          kind: 'listenForCombatEvents',
+          parameters: {
+            responses: [
+              {
+                key: 'SkillData.chr_0038_purrche_normal_skill_block_2.actionGroupData.timelineActions[7]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
+                event: { kind: 'abilityEvent', event: 'beforeTakeDamage' },
+                phase: 'dataAction',
+                priority: 0,
+                sequence: { $sequence: 'checkCondition_7' },
+              },
+              {
+                key: 'SkillData.chr_0038_purrche_normal_skill_block_2.actionGroupData.timelineActions[7]._sequenceActionData.actionData[0].abilityActionMap[1].actions[0]',
+                event: { kind: 'abilityEvent', event: 'addedBuff' },
+                phase: 'dataAction',
+                priority: 0,
+                sequence: { $sequence: 'checkCondition_11' },
+              },
+            ],
+          },
+        },
+        next: null,
+      },
+      applyBuff_13: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0038_purrche_enter_normal_skill_end' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
+        },
+        next: null,
+      },
+      checkCondition_14: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+        },
+        next: 'applyBuff_13',
+      },
+      listenForCombatEvents_15: {
+        action: {
+          kind: 'listenForCombatEvents',
+          parameters: {
+            responses: [
+              {
+                key: 'SkillData.chr_0038_purrche_normal_skill_block_2.actionGroupData.timelineActions[8]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
+                event: { kind: 'abilityEvent', event: 'addedBuff' },
+                phase: 'dataAction',
+                priority: 0,
+                sequence: { $sequence: 'checkCondition_14' },
+              },
+            ],
+          },
+        },
+        next: null,
+      },
+      castSkillDuringAction_16: {
+        action: {
+          kind: 'castSkillDuringAction',
+          parameters: {
+            skillId: 'chr_0038_purrche_normal_skill_loop_2',
+            target: 'actionInputTarget',
+            skipApplyCost: false,
+            inheritSourceSkillCastInfo: false,
           },
         },
         next: null,
@@ -2859,61 +2922,24 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
         },
         next: 'castSkillDuringAction_16',
       },
-      checkCondition_18: {
+      applyBuff_18: {
         action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [{ buffId: 'buff_chr_0038_purrche_enter_normal_skill_end' }],
+            targets: { kind: 'owner' },
+            source: { kind: 'source' },
+            inheritSourceSkillCastInfo: true,
+          },
         },
         next: 'applyBuff_17',
       },
       checkCondition_19: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_4' } },
-        },
-        next: 'checkCondition_18',
-      },
-      castSkillDuringAction_12: {
-        action: {
-          kind: 'castSkillDuringAction',
-          parameters: {
-            skillId: 'chr_0038_purrche_normal_skill_block_2',
-            target: 'enemy',
-            skipApplyCost: true,
-            inheritSourceSkillCastInfo: true,
-            interruptCurrentSkillOnlyWhenTargetCastable: true,
-          },
-        },
-        next: null,
-      },
-      applyBuff_13: {
-        action: {
-          kind: 'applyBuff',
-          parameters: {
-            buffs: [
-              { buffId: 'buff_chr_0038_purrche_block_counter' },
-              { buffId: 'buff_chr_0038_purrche_block_immune_skillfx' },
-            ],
-            targets: { kind: 'owner' },
-            source: { kind: 'source' },
-            inheritSourceSkillCastInfo: true,
-          },
-        },
-        next: 'castSkillDuringAction_12',
-      },
-      checkCondition_14: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-        },
-        next: 'applyBuff_13',
-      },
-      checkCondition_15: {
-        action: {
-          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
-        next: 'checkCondition_14',
+        next: 'applyBuff_18',
       },
       listenForCombatEvents_20: {
         action: {
@@ -2922,13 +2948,6 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
             responses: [
               {
                 key: 'SkillData.chr_0038_purrche_normal_skill_block_2.actionGroupData.timelineActions[9]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
-                event: { kind: 'operatorHit' },
-                phase: 'dataAction',
-                priority: 0,
-                sequence: { $sequence: 'checkCondition_15' },
-              },
-              {
-                key: 'SkillData.chr_0038_purrche_normal_skill_block_2.actionGroupData.timelineActions[9]._sequenceActionData.actionData[0].abilityActionMap[1].actions[0]',
                 event: { kind: 'abilityEvent', event: 'addedBuff' },
                 phase: 'dataAction',
                 priority: 0,
@@ -3121,17 +3140,16 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_30: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0038_purrche_normal_skill_counter'] },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: {
-        type: 'boolean',
-        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0038_purrche_block_end'] },
-      },
-      data_2: {
-        type: 'boolean',
-        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0038_purrche_block_end'] },
-      },
-      data_3: {
         type: 'boolean',
         expression: {
           kind: 'targetDistance',
@@ -3143,11 +3161,11 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
           containsHittableObject: false,
         },
       },
-      data_4: {
+      data_2: {
         type: 'boolean',
         expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_eny_0018_lbtough_pre_catch'] },
       },
-      data_5: {
+      data_3: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -3158,13 +3176,21 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
           buffIds: ['buff_chr_0038_purrche_aura_block'],
         },
       },
-      data_6: {
+      data_4: {
         type: 'boolean',
         expression: {
           kind: 'eventDamageFeaturesMatch',
           match: 'exceptAny',
           features: ['dot', 'remainArea'],
         },
+      },
+      data_5: {
+        type: 'boolean',
+        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0038_purrche_block_end'] },
+      },
+      data_6: {
+        type: 'boolean',
+        expression: { kind: 'eventBuffIdMatch', buffIds: ['buff_chr_0038_purrche_block_end'] },
       },
       data_7: {
         type: 'boolean',
@@ -3187,6 +3213,7 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const purrchenaChr_0038_purrche_normal_skill_block_2: SkillDefinition = {
+  actionGraph: purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph,
   key: 'chr_0038_purrche_normal_skill_block_2',
   element: 'physical',
   blackboard: {},
@@ -3194,27 +3221,22 @@ export const purrchenaChr_0038_purrche_normal_skill_block_2: SkillDefinition = {
   naturalDurationFrames: 25,
   exclusiveFrame: 25,
   offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 0, endFrame: 25, skillIds: ['chr_0038_purrche_normal_skill_counter'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 0, endFrame: 12, sequence: { $sequence: 'listenForCombatEvents_3' } },
-    { startFrame: 12, endFrame: 25, sequence: { $sequence: 'listenForCombatEvents_8' } },
-    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'inheritBuffById_9' } },
-    { startFrame: 22, endFrame: 22, sequence: { $sequence: 'applyBuff_11' } },
-    { startFrame: 2, endFrame: 25, sequence: { $sequence: 'listenForCombatEvents_20' } },
+    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'inheritBuffById_1' } },
+    { startFrame: 22, endFrame: 22, sequence: { $sequence: 'applyBuff_3' } },
+    { startFrame: 2, endFrame: 25, sequence: { $sequence: 'listenForCombatEvents_12' } },
+    { startFrame: 0, endFrame: 12, sequence: { $sequence: 'listenForCombatEvents_15' } },
+    { startFrame: 12, endFrame: 25, sequence: { $sequence: 'listenForCombatEvents_20' } },
     { startFrame: 12, endFrame: 12, sequence: { $sequence: 'checkCondition_23' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_28' } },
     { startFrame: 0, endFrame: 11, sequence: { $sequence: 'applyBuff_29' } },
+    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'reachSkillOperableBoundary_30' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'extraActiveSkill',
-  actionGraph: purrchenaChr_0038_purrche_normal_skill_block_2ActionGraph,
 };
 
 export const purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph = {
@@ -3351,19 +3373,6 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph = {
         },
         next: 'checkCondition_21',
       },
-      castSkillDuringAction_16: {
-        action: {
-          kind: 'castSkillDuringAction',
-          parameters: {
-            skillId: 'chr_0038_purrche_normal_skill_block_1',
-            target: 'enemy',
-            skipApplyCost: false,
-            inheritSourceSkillCastInfo: false,
-            interruptCurrentSkillOnlyWhenTargetCastable: true,
-          },
-        },
-        next: null,
-      },
       applyBuff_17: {
         action: {
           kind: 'applyBuff',
@@ -3377,7 +3386,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph = {
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'castSkillDuringAction_16',
+        next: 'castSkillDuringAction_19',
       },
       checkCondition_18: {
         action: {
@@ -3393,7 +3402,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph = {
             responses: [
               {
                 key: 'SkillData.chr_0038_purrche_normal_skill_loop_1.actionGroupData.timelineActions[25]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
-                event: { kind: 'operatorHit' },
+                event: { kind: 'abilityEvent', event: 'beforeTakeDamage' },
                 phase: 'dataAction',
                 priority: 0,
                 sequence: { $sequence: 'checkCondition_18' },
@@ -3431,6 +3440,13 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph = {
               },
             ],
           },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_27: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0038_purrche_normal_skill_counter'] },
         },
         next: null,
       },
@@ -3496,6 +3512,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const purrchenaChr_0038_purrche_normal_skill_loop_1: SkillDefinition = {
+  actionGraph: purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph,
   key: 'chr_0038_purrche_normal_skill_loop_1',
   element: 'physical',
   blackboard: {},
@@ -3503,11 +3520,6 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_1: SkillDefinition = {
   naturalDurationFrames: 494,
   exclusiveFrame: 361,
   offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 1, endFrame: 494, skillIds: ['chr_0038_purrche_normal_skill_counter'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 494, sequence: { $sequence: 'inheritBuffById_1' } },
@@ -3519,12 +3531,12 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_1: SkillDefinition = {
     { startFrame: 1, endFrame: 2, sequence: { $sequence: 'finishBuffsById_15' } },
     { startFrame: 0, endFrame: 360, sequence: { $sequence: 'listenForCombatEvents_23' } },
     { startFrame: 0, endFrame: 360, sequence: { $sequence: 'listenForCombatEvents_26' } },
+    { startFrame: 1, endFrame: 494, sequence: { $sequence: 'reachSkillOperableBoundary_27' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'extraActiveSkill',
-  actionGraph: purrchenaChr_0038_purrche_normal_skill_loop_1ActionGraph,
 };
 
 export const purrchenaChr_0038_purrche_normal_skill_loop_2ActionGraph = {
@@ -3696,7 +3708,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_2ActionGraph = {
       copyContextTargets_17: {
         action: {
           kind: 'copyContextTargets',
-          parameters: { source: { kind: 'fixed', target: 'enemy' }, saveToContextKey: 'Attacker' },
+          parameters: { source: { kind: 'inputTarget' }, saveToContextKey: 'Attacker' },
         },
         next: 'applyBuff_16',
       },
@@ -3714,7 +3726,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_2ActionGraph = {
             responses: [
               {
                 key: 'SkillData.chr_0038_purrche_normal_skill_loop_2.actionGroupData.timelineActions[18]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
-                event: { kind: 'operatorHit' },
+                event: { kind: 'abilityEvent', event: 'beforeTakeDamage' },
                 phase: 'dataAction',
                 priority: 0,
                 sequence: { $sequence: 'checkCondition_18' },
@@ -3752,6 +3764,13 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_2ActionGraph = {
               },
             ],
           },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_28: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0038_purrche_normal_skill_counter'] },
         },
         next: null,
       },
@@ -3817,6 +3836,7 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const purrchenaChr_0038_purrche_normal_skill_loop_2: SkillDefinition = {
+  actionGraph: purrchenaChr_0038_purrche_normal_skill_loop_2ActionGraph,
   key: 'chr_0038_purrche_normal_skill_loop_2',
   element: 'physical',
   blackboard: {},
@@ -3824,11 +3844,6 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_2: SkillDefinition = {
   naturalDurationFrames: 431,
   exclusiveFrame: 361,
   offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 0, endFrame: 431, skillIds: ['chr_0038_purrche_normal_skill_counter'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 431, sequence: { $sequence: 'inheritBuffById_1' } },
@@ -3838,12 +3853,12 @@ export const purrchenaChr_0038_purrche_normal_skill_loop_2: SkillDefinition = {
     { startFrame: 361, endFrame: 362, sequence: { $sequence: 'finishBuffsById_12' } },
     { startFrame: 0, endFrame: 360, sequence: { $sequence: 'listenForCombatEvents_24' } },
     { startFrame: 0, endFrame: 360, sequence: { $sequence: 'listenForCombatEvents_27' } },
+    { startFrame: 0, endFrame: 431, sequence: { $sequence: 'reachSkillOperableBoundary_28' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'extraActiveSkill',
-  actionGraph: purrchenaChr_0038_purrche_normal_skill_loop_2ActionGraph,
 };
 
 export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
@@ -4310,6 +4325,37 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
             {
               event: 'hit',
               skill: {
+                actionGraph: {
+                  main: {
+                    nodes: {
+                      spawnAbilityEntity_1: {
+                        action: {
+                          kind: 'spawnAbilityEntity',
+                          parameters: {
+                            bornAt: { kind: 'context', key: 'pos' },
+                            abilityEntityId: 'abilityentity_chr_0038_purrche_combo',
+                            childSkillId: 'chr_0038_purrche_combo_skill_giftbox_abilityrange',
+                            source: { kind: 'source' },
+                            inheritActionBlackboard: true,
+                            dieWhenSourceDies: false,
+                          },
+                        },
+                        next: null,
+                      },
+                      createSpatialPointTargets_2: {
+                        action: {
+                          kind: 'createSpatialPointTargets',
+                          parameters: {
+                            saveToContextKey: 'pos',
+                            count: { kind: 'constant', value: 1 },
+                          },
+                        },
+                        next: 'spawnAbilityEntity_1',
+                      },
+                    },
+                  },
+                  macros: {},
+                },
                 skillId: 'chr_0038_purrche_combo_skill_gene',
                 nativeSkillType: 'normalSkill',
                 naturalDurationFrames: 2,
@@ -4334,36 +4380,6 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
                     sequence: { $sequence: 'createSpatialPointTargets_2' },
                   },
                 ],
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      spawnAbilityEntity_1: {
-                        action: {
-                          kind: 'spawnAbilityEntity',
-                          parameters: {
-                            bornAt: { kind: 'context', key: 'pos' },
-                            abilityEntityId: 'abilityentity_chr_0038_purrche_combo',
-                            childSkillId: 'chr_0038_purrche_combo_skill_giftbox_abilityrange',
-                            inheritActionBlackboard: true,
-                            dieWhenSourceDies: false,
-                          },
-                        },
-                        next: null,
-                      },
-                      createSpatialPointTargets_2: {
-                        action: {
-                          kind: 'createSpatialPointTargets',
-                          parameters: {
-                            saveToContextKey: 'pos',
-                            count: { kind: 'constant', value: 1 },
-                          },
-                        },
-                        next: 'spawnAbilityEntity_1',
-                      },
-                    },
-                  },
-                  macros: {},
-                },
               },
             },
           ],
@@ -4468,18 +4484,6 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         },
         next: 'checkCondition_325',
       },
-      castSkillDuringAction_319: {
-        action: {
-          kind: 'castSkillDuringAction',
-          parameters: {
-            skillId: 'chr_0038_purrche_normal_skill_block_1',
-            target: 'enemy',
-            skipApplyCost: false,
-            inheritSourceSkillCastInfo: false,
-          },
-        },
-        next: null,
-      },
       applyBuff_320: {
         action: {
           kind: 'applyBuff',
@@ -4494,7 +4498,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'castSkillDuringAction_319',
+        next: 'castSkillDuringAction_322',
       },
       checkCondition_321: {
         action: {
@@ -4510,7 +4514,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
             responses: [
               {
                 key: 'SkillData.chr_0038_purrche_combo_skill.actionGroupData.timelineActions[49]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
-                event: { kind: 'operatorHit' },
+                event: { kind: 'abilityEvent', event: 'beforeTakeDamage' },
                 phase: 'dataAction',
                 priority: 0,
                 sequence: { $sequence: 'checkCondition_321' },
@@ -4580,18 +4584,6 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
         },
         next: 'checkCondition_334',
       },
-      castSkillDuringAction_328: {
-        action: {
-          kind: 'castSkillDuringAction',
-          parameters: {
-            skillId: 'chr_0038_purrche_normal_skill_block_2',
-            target: 'enemy',
-            skipApplyCost: false,
-            inheritSourceSkillCastInfo: false,
-          },
-        },
-        next: null,
-      },
       applyBuff_329: {
         action: {
           kind: 'applyBuff',
@@ -4606,7 +4598,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'castSkillDuringAction_328',
+        next: 'castSkillDuringAction_331',
       },
       checkCondition_330: {
         action: {
@@ -4622,7 +4614,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
             responses: [
               {
                 key: 'SkillData.chr_0038_purrche_combo_skill.actionGroupData.timelineActions[50]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
-                event: { kind: 'operatorHit' },
+                event: { kind: 'abilityEvent', event: 'beforeTakeDamage' },
                 phase: 'dataAction',
                 priority: 0,
                 sequence: { $sequence: 'checkCondition_330' },
@@ -4702,6 +4694,22 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_345: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: ['chr_0038_purrche_normal_skill_counter', 'chr_0038_purrche_normal_skill'],
+          },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_346: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0038_purrche_normal_skill_counter'] },
         },
         next: null,
       },
@@ -4914,6 +4922,7 @@ export const purrchenaChr_0038_purrche_combo_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const purrchenaChr_0038_purrche_combo_skill: SkillDefinition = {
+  actionGraph: purrchenaChr_0038_purrche_combo_skillActionGraph,
   key: 'chr_0038_purrche_combo_skill',
   element: 'physical',
   blackboard: {
@@ -4942,17 +4951,6 @@ export const purrchenaChr_0038_purrche_combo_skill: SkillDefinition = {
   exclusiveFrame: 330,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 26,
-        endFrame: 75,
-        skillIds: ['chr_0038_purrche_normal_skill_counter', 'chr_0038_purrche_normal_skill'],
-      },
-      { startFrame: 221, endFrame: 251, skillIds: ['chr_0038_purrche_normal_skill_counter'] },
-      { startFrame: 281, endFrame: 310, skillIds: ['chr_0038_purrche_normal_skill_counter'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 332, sequence: { $sequence: 'inheritBuffById_1' } },
@@ -4980,13 +4978,15 @@ export const purrchenaChr_0038_purrche_combo_skill: SkillDefinition = {
     { startFrame: 270, endFrame: 310, sequence: { $sequence: 'listenForCombatEvents_342' } },
     { startFrame: 210, endFrame: 251, sequence: { $sequence: 'applyBuff_343' } },
     { startFrame: 270, endFrame: 310, sequence: { $sequence: 'applyBuff_343' } },
+    { startFrame: 26, endFrame: 75, sequence: { $sequence: 'reachSkillOperableBoundary_345' } },
+    { startFrame: 221, endFrame: 251, sequence: { $sequence: 'reachSkillOperableBoundary_346' } },
+    { startFrame: 281, endFrame: 310, sequence: { $sequence: 'reachSkillOperableBoundary_346' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: [720, 720, 720, 720, 720, 720, 720, 720, 690, 690, 690, 660],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
-  actionGraph: purrchenaChr_0038_purrche_combo_skillActionGraph,
 };
 
 export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
@@ -5335,21 +5335,6 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
             {
               event: 'reach',
               skill: {
-                skillId: 'chr_0038_purrche_ult_skill_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 14,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale_ult: 4, duration_vul: 0, poise_2: 10, rate_vul: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'mergeContextTargets_3' } },
-                  { startFrame: 2, endFrame: 2, sequence: { $sequence: 'startTimeDilation_6' } },
-                  { startFrame: 6, endFrame: 6, sequence: { $sequence: 'startTimeDilation_9' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -5357,6 +5342,8 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'context', key: 'tar' },
                             damageType: 'physical',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                             tags: ['ultimateSkill'],
@@ -5379,7 +5366,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
                                 },
                               },
                             ],
-                            targets: { kind: 'fixed', target: 'enemy' },
+                            targets: { kind: 'context', key: 'tar' },
                             source: { kind: 'source' },
                             inheritSourceSkillCastInfo: true,
                           },
@@ -5391,7 +5378,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
                           kind: 'mergeContextTargets',
                           parameters: {
                             saveToContextKey: 'tar',
-                            sources: [{ kind: 'target', target: 'enemy' }],
+                            sources: [{ kind: 'fixed', target: 'enemy' }],
                           },
                         },
                         next: 'applyBuff_2',
@@ -5583,6 +5570,21 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0038_purrche_ult_skill_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 14,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale_ult: 4, duration_vul: 0, poise_2: 10, rate_vul: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'mergeContextTargets_3' } },
+                  { startFrame: 2, endFrame: 2, sequence: { $sequence: 'startTimeDilation_6' } },
+                  { startFrame: 6, endFrame: 6, sequence: { $sequence: 'startTimeDilation_9' } },
+                ],
               },
             },
           ],
@@ -5609,19 +5611,6 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
             {
               event: 'reach',
               skill: {
-                skillId: 'chr_0038_purrche_ult_skill_normal_bomb_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale: 1, poise_1: 5 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'mergeContextTargets_2' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -5629,6 +5618,8 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'context', key: 'tar' },
                             damageType: 'physical',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                             tags: ['ultimateSkill'],
@@ -5643,7 +5634,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
                           kind: 'mergeContextTargets',
                           parameters: {
                             saveToContextKey: 'tar',
-                            sources: [{ kind: 'target', target: 'enemy' }],
+                            sources: [{ kind: 'fixed', target: 'enemy' }],
                           },
                         },
                         next: 'dealDamage_1',
@@ -5662,6 +5653,19 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0038_purrche_ult_skill_normal_bomb_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale: 1, poise_1: 5 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 0, sequence: { $sequence: 'mergeContextTargets_2' } },
+                ],
               },
             },
           ],
@@ -5692,6 +5696,27 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
             {
               event: 'reach',
               skill: {
+                actionGraph: {
+                  main: {
+                    nodes: {
+                      spawnAbilityEntity_opt1: {
+                        action: {
+                          kind: 'spawnAbilityEntity',
+                          parameters: {
+                            bornAt: { kind: 'owner' },
+                            abilityEntityId: 'abilityentity_chr_0038_purrche_combo_item_1',
+                            childSkillId: 'chr_0038_purrche_ultimate_skill_abilityrange_blackhole',
+                            source: { kind: 'source' },
+                            inheritActionBlackboard: true,
+                            dieWhenSourceDies: false,
+                          },
+                        },
+                        next: null,
+                      },
+                    },
+                  },
+                  macros: {},
+                },
                 skillId: 'chr_0038_purrche_ult_skill_normal_blackhole_projhit',
                 nativeSkillType: 'normalSkill',
                 naturalDurationFrames: 1,
@@ -5709,26 +5734,6 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
                     sequence: { $sequence: 'spawnAbilityEntity_opt1' },
                   },
                 ],
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      spawnAbilityEntity_opt1: {
-                        action: {
-                          kind: 'spawnAbilityEntity',
-                          parameters: {
-                            bornAt: { kind: 'owner' },
-                            abilityEntityId: 'abilityentity_chr_0038_purrche_combo_item_1',
-                            childSkillId: 'chr_0038_purrche_ultimate_skill_abilityrange_blackhole',
-                            inheritActionBlackboard: true,
-                            dieWhenSourceDies: false,
-                          },
-                        },
-                        next: null,
-                      },
-                    },
-                  },
-                  macros: {},
-                },
               },
             },
           ],
@@ -6005,6 +6010,15 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_184: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: ['chr_0038_purrche_combo_skill', 'chr_0038_purrche_normal_skill'],
+          },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: {
@@ -6012,7 +6026,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         expression: {
           kind: 'targetDistance',
           source: { kind: 'owner' },
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           distance: 5.5,
           lessThan: false,
           includeTargetRadius: false,
@@ -6137,7 +6151,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         expression: {
           kind: 'targetDistance',
           source: { kind: 'mainCharacter' },
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'Main_tar' },
           distance: 12,
           lessThan: true,
           includeTargetRadius: false,
@@ -6148,7 +6162,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'Main_tar' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -6191,6 +6205,7 @@ export const purrchenaChr_0038_purrche_ultimate_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const purrchenaChr_0038_purrche_ultimate_skill: SkillDefinition = {
+  actionGraph: purrchenaChr_0038_purrche_ultimate_skillActionGraph,
   key: 'chr_0038_purrche_ultimate_skill',
   element: 'physical',
   blackboard: {
@@ -6216,15 +6231,6 @@ export const purrchenaChr_0038_purrche_ultimate_skill: SkillDefinition = {
   naturalDurationFrames: 262,
   exclusiveFrame: 157,
   offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 146,
-        endFrame: 180,
-        skillIds: ['chr_0038_purrche_combo_skill', 'chr_0038_purrche_normal_skill'],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 146, sequence: { $sequence: 'applyBuff_1' } },
@@ -6242,6 +6248,7 @@ export const purrchenaChr_0038_purrche_ultimate_skill: SkillDefinition = {
     { startFrame: 67, endFrame: 67, sequence: { $sequence: 'jumpTimeline_181' } },
     { startFrame: 0, endFrame: 157, sequence: { $sequence: 'applyBuff_182' } },
     { startFrame: 68, endFrame: 157, sequence: { $sequence: 'applyBuff_182' } },
+    { startFrame: 146, endFrame: 180, sequence: { $sequence: 'reachSkillOperableBoundary_184' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 600,
@@ -6249,7 +6256,6 @@ export const purrchenaChr_0038_purrche_ultimate_skill: SkillDefinition = {
   skillType: 'ultimate',
   levelSource: 'ultimate',
   nativeSkillType: 'ultimateSkill',
-  actionGraph: purrchenaChr_0038_purrche_ultimate_skillActionGraph,
 };
 
 export const purrchenaCommon_character_perfect_dodgeActionGraph = {
@@ -6961,6 +6967,7 @@ const purrchenaBuff3: SkillBuffDefinition = {
     { event: 'addedBuff', priority: 0, sequence: { $sequence: 'checkCondition_3' } },
     { event: 'finishedBuff', priority: 0, sequence: { $sequence: 'checkCondition_5' } },
   ],
+  actionGraph: purrchenaBuff3ActionGraph,
   skillSlotReplacements: [
     {
       skillSlotKey: 'battleSkill',
@@ -6969,7 +6976,6 @@ const purrchenaBuff3: SkillBuffDefinition = {
       inheritOriginSkillCooldownProgress: false,
     },
   ],
-  actionGraph: purrchenaBuff3ActionGraph,
 };
 
 const purrchenaBuff4ActionGraph = {
@@ -7864,7 +7870,7 @@ const purrchenaBuff22ActionGraph = {
         action: {
           kind: 'setGlobalCooldown',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             markerId: 'buff_chr_0038_purrche_talent_2_effectbuff',
             durationSeconds: { kind: 'valueNode', nodeId: 'data_7' },
           },
@@ -8393,35 +8399,6 @@ export const purrchena: OperatorDefinition = {
       lifetime: { kind: 'infinite' },
       maxStackingCount: 1,
       childSkill: {
-        skillId: 'chr_0038_purrche_combo_skill_giftbox_abilityrange',
-        nativeSkillType: 'normalSkill',
-        naturalDurationFrames: 120,
-        castResource: {
-          costFrame: 0,
-          cooldownSeconds: 10,
-          maxChargeTime: 1,
-          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-        },
-        blackboard: {
-          atk_scale_blackhole_dot: 0.1,
-          atk_scale_blackhole_end: 0,
-          atk_scale_boom: 0,
-          comboType: 0,
-          heal_scale: 1,
-          heal_scale_fish: 1,
-          heal_static_value: 100,
-          heal_static_value_fish: 100,
-          poise: 15,
-          usp: 0,
-        },
-        scheduledSequences: [
-          { startFrame: 64, endFrame: 67, sequence: { $sequence: 'finishOwner_1' } },
-          { startFrame: 44, endFrame: 44, sequence: { $sequence: 'findTargets_2' } },
-          { startFrame: 45, endFrame: 48, sequence: { $sequence: 'switch_opt3' } },
-          { startFrame: 44, endFrame: 45, sequence: { $sequence: 'findTargets_36' } },
-          { startFrame: 44, endFrame: 45, sequence: { $sequence: 'repeatEachTick_38' } },
-          { startFrame: 44, endFrame: 47, sequence: { $sequence: 'changeResource_39' } },
-        ],
         actionGraph: {
           main: {
             nodes: {
@@ -8453,23 +8430,6 @@ export const purrchena: OperatorDefinition = {
                     {
                       event: 'reach',
                       skill: {
-                        skillId: 'chr_0038_purrche_combo_skill_projhit_3',
-                        nativeSkillType: 'normalSkill',
-                        naturalDurationFrames: 1,
-                        castResource: {
-                          costFrame: 0,
-                          cooldownSeconds: 0,
-                          maxChargeTime: 1,
-                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                        },
-                        blackboard: { atk_scale_boom: 1, poise: 15 },
-                        scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 0,
-                            sequence: { $sequence: 'mergeContextTargets_2' },
-                          },
-                        ],
                         actionGraph: {
                           main: {
                             nodes: {
@@ -8477,6 +8437,8 @@ export const purrchena: OperatorDefinition = {
                                 action: {
                                   kind: 'dealDamage',
                                   parameters: {
+                                    attacker: 'actionSource',
+                                    target: { kind: 'context', key: 'tar' },
                                     damageType: 'physical',
                                     attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                                     tags: ['comboSkill'],
@@ -8492,7 +8454,7 @@ export const purrchena: OperatorDefinition = {
                                   kind: 'mergeContextTargets',
                                   parameters: {
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'target', target: 'enemy' }],
+                                    sources: [{ kind: 'fixed', target: 'enemy' }],
                                   },
                                 },
                                 next: 'dealDamage_1',
@@ -8511,6 +8473,23 @@ export const purrchena: OperatorDefinition = {
                           },
                           macros: {},
                         },
+                        skillId: 'chr_0038_purrche_combo_skill_projhit_3',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 1,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                        },
+                        blackboard: { atk_scale_boom: 1, poise: 15 },
+                        scheduledSequences: [
+                          {
+                            startFrame: 0,
+                            endFrame: 0,
+                            sequence: { $sequence: 'mergeContextTargets_2' },
+                          },
+                        ],
                       },
                     },
                   ],
@@ -8537,23 +8516,6 @@ export const purrchena: OperatorDefinition = {
                     {
                       event: 'reach',
                       skill: {
-                        skillId: 'chr_0038_purrche_combo_skill_projhit_3',
-                        nativeSkillType: 'normalSkill',
-                        naturalDurationFrames: 1,
-                        castResource: {
-                          costFrame: 0,
-                          cooldownSeconds: 0,
-                          maxChargeTime: 1,
-                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                        },
-                        blackboard: { atk_scale_boom: 1, poise: 15 },
-                        scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 0,
-                            sequence: { $sequence: 'mergeContextTargets_2' },
-                          },
-                        ],
                         actionGraph: {
                           main: {
                             nodes: {
@@ -8561,6 +8523,8 @@ export const purrchena: OperatorDefinition = {
                                 action: {
                                   kind: 'dealDamage',
                                   parameters: {
+                                    attacker: 'actionSource',
+                                    target: { kind: 'context', key: 'tar' },
                                     damageType: 'physical',
                                     attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                                     tags: ['comboSkill'],
@@ -8576,7 +8540,7 @@ export const purrchena: OperatorDefinition = {
                                   kind: 'mergeContextTargets',
                                   parameters: {
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'target', target: 'enemy' }],
+                                    sources: [{ kind: 'fixed', target: 'enemy' }],
                                   },
                                 },
                                 next: 'dealDamage_1',
@@ -8595,6 +8559,23 @@ export const purrchena: OperatorDefinition = {
                           },
                           macros: {},
                         },
+                        skillId: 'chr_0038_purrche_combo_skill_projhit_3',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 1,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                        },
+                        blackboard: { atk_scale_boom: 1, poise: 15 },
+                        scheduledSequences: [
+                          {
+                            startFrame: 0,
+                            endFrame: 0,
+                            sequence: { $sequence: 'mergeContextTargets_2' },
+                          },
+                        ],
                       },
                     },
                   ],
@@ -8621,23 +8602,6 @@ export const purrchena: OperatorDefinition = {
                     {
                       event: 'reach',
                       skill: {
-                        skillId: 'chr_0038_purrche_combo_skill_projhit_3',
-                        nativeSkillType: 'normalSkill',
-                        naturalDurationFrames: 1,
-                        castResource: {
-                          costFrame: 0,
-                          cooldownSeconds: 0,
-                          maxChargeTime: 1,
-                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                        },
-                        blackboard: { atk_scale_boom: 1, poise: 15 },
-                        scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 0,
-                            sequence: { $sequence: 'mergeContextTargets_2' },
-                          },
-                        ],
                         actionGraph: {
                           main: {
                             nodes: {
@@ -8645,6 +8609,8 @@ export const purrchena: OperatorDefinition = {
                                 action: {
                                   kind: 'dealDamage',
                                   parameters: {
+                                    attacker: 'actionSource',
+                                    target: { kind: 'context', key: 'tar' },
                                     damageType: 'physical',
                                     attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                                     tags: ['comboSkill'],
@@ -8660,7 +8626,7 @@ export const purrchena: OperatorDefinition = {
                                   kind: 'mergeContextTargets',
                                   parameters: {
                                     saveToContextKey: 'tar',
-                                    sources: [{ kind: 'target', target: 'enemy' }],
+                                    sources: [{ kind: 'fixed', target: 'enemy' }],
                                   },
                                 },
                                 next: 'dealDamage_1',
@@ -8679,6 +8645,23 @@ export const purrchena: OperatorDefinition = {
                           },
                           macros: {},
                         },
+                        skillId: 'chr_0038_purrche_combo_skill_projhit_3',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 1,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                        },
+                        blackboard: { atk_scale_boom: 1, poise: 15 },
+                        scheduledSequences: [
+                          {
+                            startFrame: 0,
+                            endFrame: 0,
+                            sequence: { $sequence: 'mergeContextTargets_2' },
+                          },
+                        ],
                       },
                     },
                   ],
@@ -8719,19 +8702,6 @@ export const purrchena: OperatorDefinition = {
                     {
                       event: 'hit',
                       skill: {
-                        skillId: 'chr_0038_purrche_combo_skill_projhit_4',
-                        nativeSkillType: 'normalSkill',
-                        naturalDurationFrames: 2,
-                        castResource: {
-                          costFrame: 0,
-                          cooldownSeconds: 0,
-                          maxChargeTime: 1,
-                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                        },
-                        blackboard: { heal_scale_fish: 1, heal_static_value_fish: 100 },
-                        scheduledSequences: [
-                          { startFrame: 0, endFrame: 0, sequence: { $sequence: 'heal_1' } },
-                        ],
                         actionGraph: {
                           main: {
                             nodes: {
@@ -8739,7 +8709,8 @@ export const purrchena: OperatorDefinition = {
                                 action: {
                                   kind: 'heal',
                                   parameters: {
-                                    target: 'actionInputTarget',
+                                    target: { kind: 'inputTarget' },
+                                    healer: { kind: 'source' },
                                     alwaysNext: true,
                                     tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
                                     attribute: 'will',
@@ -8763,6 +8734,19 @@ export const purrchena: OperatorDefinition = {
                           },
                           macros: {},
                         },
+                        skillId: 'chr_0038_purrche_combo_skill_projhit_4',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 2,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                        },
+                        blackboard: { heal_scale_fish: 1, heal_static_value_fish: 100 },
+                        scheduledSequences: [
+                          { startFrame: 0, endFrame: 0, sequence: { $sequence: 'heal_1' } },
+                        ],
                       },
                     },
                   ],
@@ -8800,23 +8784,6 @@ export const purrchena: OperatorDefinition = {
                     {
                       event: 'reach',
                       skill: {
-                        skillId: 'chr_0038_purrche_combo_skill_projhit_1',
-                        nativeSkillType: 'normalSkill',
-                        naturalDurationFrames: 1,
-                        castResource: {
-                          costFrame: 0,
-                          cooldownSeconds: 0,
-                          maxChargeTime: 1,
-                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                        },
-                        blackboard: { atk_scale_blackhole_dot: 0, potential_3: 0 },
-                        scheduledSequences: [
-                          {
-                            startFrame: 0,
-                            endFrame: 0,
-                            sequence: { $sequence: 'createSpatialPointTargets_opt2' },
-                          },
-                        ],
                         actionGraph: {
                           main: {
                             nodes: {
@@ -8827,6 +8794,7 @@ export const purrchena: OperatorDefinition = {
                                     bornAt: { kind: 'context', key: 'pos' },
                                     abilityEntityId: 'abilityentity_chr_0038_purrche_combo_item_1',
                                     childSkillId: 'chr_0038_purrche_combo_skill_abilityrange_1_1',
+                                    source: { kind: 'source' },
                                     inheritActionBlackboard: true,
                                     dieWhenSourceDies: false,
                                   },
@@ -8841,6 +8809,7 @@ export const purrchena: OperatorDefinition = {
                                     abilityEntityId: 'abilityentity_chr_0038_purrche_combo_item_1',
                                     childSkillId:
                                       'chr_0038_purrche_combo_skill_abilityrange_1_1_potential_3',
+                                    source: { kind: 'source' },
                                     inheritActionBlackboard: true,
                                     dieWhenSourceDies: false,
                                   },
@@ -8886,6 +8855,23 @@ export const purrchena: OperatorDefinition = {
                           },
                           macros: {},
                         },
+                        skillId: 'chr_0038_purrche_combo_skill_projhit_1',
+                        nativeSkillType: 'normalSkill',
+                        naturalDurationFrames: 1,
+                        castResource: {
+                          costFrame: 0,
+                          cooldownSeconds: 0,
+                          maxChargeTime: 1,
+                          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                        },
+                        blackboard: { atk_scale_blackhole_dot: 0, potential_3: 0 },
+                        scheduledSequences: [
+                          {
+                            startFrame: 0,
+                            endFrame: 0,
+                            sequence: { $sequence: 'createSpatialPointTargets_opt2' },
+                          },
+                        ],
                       },
                     },
                   ],
@@ -8905,7 +8891,8 @@ export const purrchena: OperatorDefinition = {
                   parameters: {
                     owner: { kind: 'owner' },
                     query: {
-                      kind: 'allyHitBox',
+                      kind: 'factionHitBox',
+                      factionTarget: 'ally',
                       owner: { kind: 'owner' },
                       checkAlive: true,
                       containsUnmarkable: false,
@@ -8920,7 +8907,8 @@ export const purrchena: OperatorDefinition = {
                 action: {
                   kind: 'heal',
                   parameters: {
-                    target: 'actionInputTarget',
+                    target: { kind: 'inputTarget' },
+                    healer: { kind: 'source' },
                     alwaysNext: true,
                     tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
                     attribute: 'will',
@@ -9009,7 +8997,7 @@ export const purrchena: OperatorDefinition = {
                 expression: {
                   kind: 'targetDistance',
                   source: { kind: 'mainCharacter' },
-                  target: { kind: 'fixed', target: 'enemy' },
+                  target: { kind: 'context', key: 'main_tar' },
                   distance: 10,
                   lessThan: true,
                   includeTargetRadius: false,
@@ -9020,7 +9008,7 @@ export const purrchena: OperatorDefinition = {
                 type: 'boolean',
                 expression: {
                   kind: 'entityCountCompare',
-                  target: { kind: 'fixed', target: 'enemy' },
+                  target: { kind: 'context', key: 'main_tar' },
                   containsHittableTarget: false,
                   excludeDeadEntity: false,
                   operator: 'greaterOrEqual',
@@ -9041,7 +9029,7 @@ export const purrchena: OperatorDefinition = {
                 type: 'boolean',
                 expression: {
                   kind: 'entityCountCompare',
-                  target: { kind: 'fixed', target: 'enemy' },
+                  target: { kind: 'context', key: 'main_tar' },
                   containsHittableTarget: false,
                   excludeDeadEntity: false,
                   operator: 'greaterOrEqual',
@@ -9053,6 +9041,35 @@ export const purrchena: OperatorDefinition = {
           },
           macros: {},
         },
+        skillId: 'chr_0038_purrche_combo_skill_giftbox_abilityrange',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 120,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 10,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: {
+          atk_scale_blackhole_dot: 0.1,
+          atk_scale_blackhole_end: 0,
+          atk_scale_boom: 0,
+          comboType: 0,
+          heal_scale: 1,
+          heal_scale_fish: 1,
+          heal_static_value: 100,
+          heal_static_value_fish: 100,
+          poise: 15,
+          usp: 0,
+        },
+        scheduledSequences: [
+          { startFrame: 64, endFrame: 67, sequence: { $sequence: 'finishOwner_1' } },
+          { startFrame: 44, endFrame: 44, sequence: { $sequence: 'findTargets_2' } },
+          { startFrame: 45, endFrame: 48, sequence: { $sequence: 'switch_opt3' } },
+          { startFrame: 44, endFrame: 45, sequence: { $sequence: 'findTargets_36' } },
+          { startFrame: 44, endFrame: 45, sequence: { $sequence: 'repeatEachTick_38' } },
+          { startFrame: 44, endFrame: 47, sequence: { $sequence: 'changeResource_39' } },
+        ],
       },
     },
     abilityentity_chr_0038_purrche_combo_item_1: {
@@ -9069,6 +9086,8 @@ export const purrchena: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
                       damageType: 'physical',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                       tags: ['ultimateSkill'],
@@ -9083,7 +9102,7 @@ export const purrchena: OperatorDefinition = {
                     kind: 'mergeContextTargets',
                     parameters: {
                       saveToContextKey: 'tar',
-                      sources: [{ kind: 'target', target: 'enemy' }],
+                      sources: [{ kind: 'fixed', target: 'enemy' }],
                     },
                   },
                   next: 'dealDamage_1',
@@ -9096,6 +9115,8 @@ export const purrchena: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
                       damageType: 'physical',
                       attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                       tags: ['ultimateSkill'],
@@ -9109,7 +9130,7 @@ export const purrchena: OperatorDefinition = {
                     kind: 'mergeContextTargets',
                     parameters: {
                       saveToContextKey: 'tar',
-                      sources: [{ kind: 'target', target: 'enemy' }],
+                      sources: [{ kind: 'fixed', target: 'enemy' }],
                     },
                   },
                   next: 'dealDamage_4',
@@ -9162,6 +9183,8 @@ export const purrchena: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
                       damageType: 'physical',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                       tags: ['comboSkill'],
@@ -9176,7 +9199,7 @@ export const purrchena: OperatorDefinition = {
                     kind: 'mergeContextTargets',
                     parameters: {
                       saveToContextKey: 'tar',
-                      sources: [{ kind: 'target', target: 'enemy' }],
+                      sources: [{ kind: 'fixed', target: 'enemy' }],
                     },
                   },
                   next: 'dealDamage_1',
@@ -9189,6 +9212,8 @@ export const purrchena: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
                       damageType: 'physical',
                       attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                       tags: ['comboSkill'],
@@ -9202,7 +9227,7 @@ export const purrchena: OperatorDefinition = {
                     kind: 'mergeContextTargets',
                     parameters: {
                       saveToContextKey: 'tar',
-                      sources: [{ kind: 'target', target: 'enemy' }],
+                      sources: [{ kind: 'fixed', target: 'enemy' }],
                     },
                   },
                   next: 'dealDamage_4',
@@ -9255,6 +9280,8 @@ export const purrchena: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
                       damageType: 'physical',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                       tags: ['comboSkill'],
@@ -9269,7 +9296,7 @@ export const purrchena: OperatorDefinition = {
                     kind: 'mergeContextTargets',
                     parameters: {
                       saveToContextKey: 'tar',
-                      sources: [{ kind: 'target', target: 'enemy' }],
+                      sources: [{ kind: 'fixed', target: 'enemy' }],
                     },
                   },
                   next: 'dealDamage_1',
@@ -9282,6 +9309,8 @@ export const purrchena: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
                       damageType: 'physical',
                       attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                       tags: ['comboSkill'],
@@ -9295,7 +9324,7 @@ export const purrchena: OperatorDefinition = {
                     kind: 'mergeContextTargets',
                     parameters: {
                       saveToContextKey: 'tar',
-                      sources: [{ kind: 'target', target: 'enemy' }],
+                      sources: [{ kind: 'fixed', target: 'enemy' }],
                     },
                   },
                   next: 'dealDamage_4',

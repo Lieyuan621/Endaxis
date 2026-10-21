@@ -1,3 +1,4 @@
+import { SkillSlotOperationExecutor } from './skillSlotOperationExecutor';
 import { describe, expect, it, vi } from 'vitest';
 import type {
   ActionGraphDefinition,
@@ -62,7 +63,6 @@ function defineSkillFixture(options: {
   readonly costs?: SkillDefinition['costs'];
   readonly costFrame?: number;
   readonly cooldownFrames?: SkillDefinition['cooldownFrames'];
-  readonly inputWindows?: SkillDefinition['inputWindows'];
   readonly scheduled?: readonly ScheduledFixture[];
   readonly switchToBuffCast?: {
     readonly currentSkillTypes?: readonly (
@@ -115,7 +115,6 @@ function defineSkillFixture(options: {
     ...(options.costs === undefined ? {} : { costs: options.costs }),
     ...(options.costFrame === undefined ? {} : { costFrame: options.costFrame }),
     ...(options.cooldownFrames === undefined ? {} : { cooldownFrames: options.cooldownFrames }),
-    ...(options.inputWindows === undefined ? {} : { inputWindows: options.inputWindows }),
     scheduledSequences: (options.scheduled ?? []).map((item, index) => ({
       startFrame: item.startFrame,
       ...(item.endFrame === undefined ? {} : { endFrame: item.endFrame }),
@@ -182,7 +181,7 @@ function createBattleSkillRuntime(
     clock,
     resources,
     receipt,
-    operations,
+    operations: new SkillSlotOperationExecutor({ changeSkillSlot: () => {}, delegate: operations }),
     allocateSkillCastId: () => nextSkillCastId++,
     semanticEvents,
     emitSkillEnd,
@@ -201,6 +200,7 @@ function createBattleSkillRuntime(
     simulation,
     emitAddedBuff,
     emitOutputDamage,
+    compiledProgram,
   };
 }
 
@@ -753,6 +753,12 @@ describe('SkillRuntime', () => {
       targetId: 'ability-entity:17',
       skillId: 'entity-callback',
       skillCastId: 77,
+      skillCastInfo: {
+        skillCastId: 77,
+        originSkillId: 'source-combo',
+        originSkillType: 'comboSkill',
+        nonReturnedSpCost: 0,
+      },
       skillType: undefined,
       element: undefined,
     };
@@ -1235,7 +1241,7 @@ describe('SkillRuntime', () => {
     const input = () => ({
       skillType: current.runtime.skillType,
       skillCastInfo: current.runtime.skillCastInfo!,
-      canInterrupt: current.runtime.canInterrupt,
+      canInterrupt: current.runtime.canInterrupt === true,
     });
 
     expect(ending.runtime.trySwitchToBuffCast(input())).toBe(true);
@@ -1638,24 +1644,28 @@ describe('SkillRuntime', () => {
         timelineBlockFrames: 22,
         naturalDurationFrames: 160,
         exclusiveFrame: 135,
-        inputWindows: {
-          commandMappings: [
-            {
-              startFrame: 0,
-              endFrame: 60,
-              input: 'basicAttack',
-              targetSkillId: 'native.enhancedAttack2',
-            },
-          ],
-          allowedNextSkills: [
-            {
-              startFrame: 22,
-              endFrame: 60,
-              skillIds: ['native.enhancedAttack2'],
-            },
-          ],
-        },
-        scheduled: [{ startFrame: 0, steps: [] }],
+        scheduled: [
+          {
+            startFrame: 0,
+            endFrame: 60,
+            steps: [
+              {
+                kind: 'overrideBasicAttackMapping',
+                parameters: { priority: 'skill', skillIds: ['native.enhancedAttack2'] },
+              },
+            ],
+          },
+          {
+            startFrame: 22,
+            endFrame: 60,
+            steps: [
+              {
+                kind: 'reachSkillOperableBoundary',
+                parameters: { skillIds: ['native.enhancedAttack2'] },
+              },
+            ],
+          },
+        ],
       }),
     );
     const second = createBattleSkillRuntime(
@@ -1709,6 +1719,88 @@ describe('SkillRuntime', () => {
     expect(ability.evaluatePlayerInputInterruption('native.enhancedAttack2')).toEqual({
       status: 'allowed',
     });
+  });
+
+  it('输入映射与接续窗口恢复后保持登记顺序，结束和再次施放不残留', () => {
+    const fixture = createBattleSkillRuntime(
+      300,
+      undefined,
+      undefined,
+      defineSkillFixture({
+        key: 'native.input-windows',
+        timelineBlockFrames: 10,
+        naturalDurationFrames: 20,
+        exclusiveFrame: 15,
+        scheduled: [
+          {
+            startFrame: 1,
+            endFrame: 3,
+            steps: [
+              {
+                kind: 'overrideBasicAttackMapping',
+                parameters: { priority: 'skill', skillIds: ['next'] },
+              },
+              { kind: 'reachSkillOperableBoundary', parameters: { skillIds: ['next'] } },
+            ],
+          },
+          {
+            startFrame: 2,
+            endFrame: 5,
+            steps: [
+              {
+                kind: 'overrideBasicAttackMapping',
+                parameters: { priority: 'skill', skillIds: ['later'] },
+              },
+              { kind: 'reachSkillOperableBoundary', parameters: { skillIds: ['next'] } },
+            ],
+          },
+        ],
+      }),
+    );
+    fixture.runtime.tryStart();
+    expect(fixture.runtime.activeBasicAttackMapping).toBeNull();
+    expect(fixture.runtime.activeAllowedNextSkillIds).toEqual([]);
+    fixture.simulation.advanceFrames(2);
+    expect(fixture.runtime.activeAllowedNextSkillIds).toEqual(['next', 'next']);
+    expect(fixture.runtime.activeBasicAttackMapping).toBe('next');
+    const restored = new SkillRuntime(
+      fixture.compiledProgram,
+      {
+        clock: new CombatClock(),
+        resources: null,
+        receipt: new CombatReceiptCollector(),
+        allocateSkillCastId: () => 2,
+        operations: new SkillSlotOperationExecutor({
+          changeSkillSlot: () => {},
+          delegate: fixture.operations,
+        }),
+      },
+      {
+        state: structuredClone(fixture.runtime.runtimeState),
+        damageSnapshotProgram: fixture.runtime.damageSnapshotProgram,
+        resolveAttachedBuff: () => undefined,
+      },
+    );
+    expect(restored.activeBasicAttackMapping).toBe('next');
+    restored.advanceFrame();
+    restored.advanceFrame();
+    expect(restored.activeBasicAttackMapping).toBe('later');
+    expect(restored.activeAllowedNextSkillIds).toEqual(['next']);
+    restored.interrupt('default');
+    expect(restored.activeBasicAttackMapping).toBeNull();
+    expect(restored.activeAllowedNextSkillIds).toEqual([]);
+    fixture.simulation.advanceFrames(2);
+    expect(fixture.runtime.activeAllowedNextSkillIds).toEqual(['next']);
+    expect(fixture.runtime.activeBasicAttackMapping).toBe('later');
+    fixture.runtime.interrupt('castNextSkill');
+    expect(fixture.runtime.activeAllowedNextSkillIds).toEqual([]);
+    fixture.runtime.tryStart();
+    expect(fixture.runtime.activeBasicAttackMapping).toBeNull();
+    expect(fixture.runtime.activeAllowedNextSkillIds).toEqual([]);
+    fixture.simulation.advanceFrames(2);
+    expect(fixture.runtime.activeAllowedNextSkillIds).toEqual(['next', 'next']);
+    fixture.simulation.advanceFrames(4);
+    expect(fixture.runtime.activeAllowedNextSkillIds).toEqual([]);
   });
 
   it('exposes the native rounded local execute frame to timeline actions', () => {

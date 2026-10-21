@@ -26,6 +26,46 @@ function addModifier(
 }
 
 describe('CombatAttributeSet', () => {
+  it('keeps modifiers and mutable base values beneath token-owned raw overrides across a branch', () => {
+    const attributes = new CombatAttributeSet<Attribute>();
+    attributes.define('attack', 100, {});
+    addModifier(attributes, 'addition', 10, ATTRIBUTE_MODIFIER_SOURCES.buff);
+    const lower = attributes.pushRawOverride('attack', 200);
+    const upper = attributes.pushRawOverride('attack', 300);
+    expect(attributes.get('attack')).toBe(310);
+    attributes.setRawValue('attack', 120);
+    const branch = new CombatAttributeSet(structuredClone(attributes.runtimeState));
+    attributes.popRawOverride('attack', lower);
+    expect(attributes.get('attack')).toBe(310);
+    attributes.popRawOverride('attack', upper);
+    expect(attributes.get('attack')).toBe(130);
+    expect(branch.get('attack')).toBe(310);
+    branch.popRawOverride('attack', upper);
+    expect(branch.get('attack')).toBe(210);
+    branch.popRawOverride('attack', lower);
+    expect(branch.get('attack')).toBe(130);
+    const next = branch.pushRawOverride('attack', 400);
+    branch.popRawOverride('attack', upper);
+    expect(branch.get('attack')).toBe(410);
+    branch.popRawOverride('attack', next);
+    expect(branch.get('attack')).toBe(130);
+  });
+
+  it('native attribute cloning copies the visible raw value without copying override ownership', () => {
+    const source = new CombatAttributeSet<Attribute>();
+    source.define('attack', 100, {});
+    const handle = source.pushRawOverride('attack', 200);
+    const target = new CombatAttributeSet<Attribute>();
+    target.define('attack', 1, {});
+    target.pushRawOverride('attack', 2);
+    cloneCombatAttributes(source.runtimeState, target.runtimeState);
+    expect(target.get('attack')).toBe(200);
+    source.popRawOverride('attack', handle);
+    expect(source.get('attack')).toBe(100);
+    expect(target.get('attack')).toBe(200);
+    target.setRawValue('attack', 300);
+    expect(target.get('attack')).toBe(300);
+  });
   it('属性克隆保留槽位与修正对象身份，但后续登记、移除和原始值写入相互独立', () => {
     const source = new CombatAttributeSet<Attribute>();
     const target = new CombatAttributeSet<Attribute>();

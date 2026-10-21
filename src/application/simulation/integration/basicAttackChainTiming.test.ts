@@ -211,7 +211,7 @@ describe('generated basic attack chain input timing', () => {
     );
   });
 
-  it('伊冯未开启强化时回退为12345重击六段，原场景不留下推测前缀', async () => {
+  it('伊冯未开启强化时回退为强化A1至A4、七个强化A5和强化重击，原场景不留下推测前缀', async () => {
     const scenario = createChain(operators.yvonne);
     scenario.battle.durationFrames = 650;
     scenario.tracks[0]!.skillCasts = [];
@@ -227,7 +227,7 @@ describe('generated basic attack chain input timing', () => {
     const transaction = new SkillPlacementTransaction(service, () => 0);
     const result = await transaction.resolve(placed);
     expect(result?.incomplete).toBe(true);
-    expect(result?.skillCastIds).toHaveLength(6);
+    expect(result?.skillCastIds).toHaveLength(12);
     expect(
       result?.scenario.tracks[0]!.skillCasts.map(cast =>
         cast.source.kind === 'operatorSkill' ? cast.source.skillKey : '',
@@ -238,12 +238,18 @@ describe('generated basic attack chain input timing', () => {
       'chr_0017_yvonne_ult_attack2_2',
       'chr_0017_yvonne_ult_attack3_1',
       'chr_0017_yvonne_ult_attack3_2',
+      'chr_0017_yvonne_ult_attack3_2',
+      'chr_0017_yvonne_ult_attack3_2',
+      'chr_0017_yvonne_ult_attack3_2',
+      'chr_0017_yvonne_ult_attack3_2',
+      'chr_0017_yvonne_ult_attack3_2',
+      'chr_0017_yvonne_ult_attack3_2',
       'chr_0017_yvonne_ult_attack_end',
     ]);
     expect(result?.scenario).toEqual(placed.fallback?.scenario);
     expect(scenario.tracks[0]!.skillCasts).toHaveLength(0);
   });
-  it.each([66, 96])(
+  it.each([67, 96])(
     '伊冯强化整组从A1按实际块尾递归续段，重复A5直到重击（起始%s帧）',
     async startFrame => {
       let scenario = createChain(operators.yvonne);
@@ -536,7 +542,7 @@ describe('generated basic attack chain input timing', () => {
       expect(result.status).toBe('planned');
       if (result.status !== 'planned') return;
       expect(result.scenario.tracks[0]!.skillCasts.map(cast => cast.placement.startFrame)).toEqual(
-        [1, 28, 48, 68].map(frame => frame + startFrame - 1),
+        [1, 28, 49, 69].map(frame => frame + startFrame - 1),
       );
       expect(result.run.availabilityDiagnostics).toEqual([]);
       expect(result.scenario.tracks[0]!.skillCasts.map(cast => cast.id)).toEqual(ids);
@@ -604,7 +610,7 @@ describe('generated basic attack chain input timing', () => {
 
   it.each([
     { operator: perlica, expected: [1, 18, 37, 64] },
-    { operator: lifeng, expected: [1, 28, 48, 68] },
+    { operator: lifeng, expected: [1, 28, 49, 69] },
   ])(
     '$operator.slug finds the earliest legal input from actual simulation',
     async ({ operator, expected }) => {
@@ -674,8 +680,8 @@ describe('generated basic attack chain input timing', () => {
           { frame: 10, skill: 'chr_0015_lifeng_attack1', duration: 0.067 },
           { frame: 19, skill: 'chr_0015_lifeng_attack1', duration: 0.067 },
           { frame: 32, skill: 'chr_0015_lifeng_attack2', duration: 0.1 },
-          { frame: 59, skill: 'chr_0015_lifeng_attack3', duration: 0.167 },
-          { frame: 92, skill: 'chr_0015_lifeng_attack5', duration: 0.3 },
+          { frame: 60, skill: 'chr_0015_lifeng_attack3', duration: 0.167 },
+          { frame: 93, skill: 'chr_0015_lifeng_attack5', duration: 0.3 },
         ]);
       }
     },

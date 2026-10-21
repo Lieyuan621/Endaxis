@@ -61,6 +61,7 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
         action: {
           kind: 'storeSourceAttributeValue',
           parameters: {
+            target: { kind: 'source' },
             attribute: { kind: 'specific', key: 'will' },
             stage: 'armedNonConverted',
             useFloor: false,
@@ -88,7 +89,7 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
           kind: 'mergeContextTargets',
           parameters: {
             saveToContextKey: 'trigger',
-            sources: [{ kind: 'target', target: 'enemy' }],
+            sources: [{ kind: 'context', key: 'smart_target' }],
           },
         },
         next: null,
@@ -163,9 +164,10 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
-            bornAt: { kind: 'fixed', target: 'enemy' },
+            bornAt: { kind: 'context', key: 'trigger' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_combo_skill',
             childSkillId: 'chr_032_lizhiyan_combo_skill_abilityentity_seal',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             target: { kind: 'context', key: 'FR' },
@@ -182,9 +184,10 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
-            bornAt: { kind: 'fixed', target: 'enemy' },
+            bornAt: { kind: 'context', key: 'trigger' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_combo_skill',
             childSkillId: 'chr_032_lizhiyan_combo_skill_abilityentity_seal',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             target: { kind: 'context', key: 'FL' },
@@ -201,9 +204,10 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
-            bornAt: { kind: 'fixed', target: 'enemy' },
+            bornAt: { kind: 'context', key: 'trigger' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_combo_skill',
             childSkillId: 'chr_032_lizhiyan_combo_skill_abilityentity_seal',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             target: { kind: 'context', key: 'BR' },
@@ -220,9 +224,10 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
-            bornAt: { kind: 'fixed', target: 'enemy' },
+            bornAt: { kind: 'context', key: 'trigger' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_combo_skill',
             childSkillId: 'chr_032_lizhiyan_combo_skill_abilityentity_seal',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             target: { kind: 'context', key: 'BL' },
@@ -325,7 +330,7 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
           kind: 'applyBuff',
           parameters: {
             buffs: [{ buffId: 'buff_chr_0032_lizhiyan_combo_skill_precheck' }],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'context', key: 'trigger' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
@@ -371,6 +376,7 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
             targets: { kind: 'source' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
+            passTargetGroupsToBuff: true,
           },
         },
         next: null,
@@ -405,6 +411,13 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
           condition: { kind: 'conditionNode', nodeId: 'data_14' },
           whenTrue: { $sequence: null },
           whenFalse: { $sequence: 'findCharacterTeamTargets_60' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_62: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0032_lizhiyan_normal_skill'] },
         },
         next: null,
       },
@@ -510,7 +523,7 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'trigger' },
           containsHittableTarget: false,
           excludeDeadEntity: true,
           operator: 'greaterOrEqual',
@@ -521,7 +534,7 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'trigger' },
           containsHittableTarget: false,
           excludeDeadEntity: true,
           operator: 'greaterOrEqual',
@@ -568,6 +581,7 @@ export const arcaneChr_0032_lizhiyan_combo_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const arcaneChr_0032_lizhiyan_combo_skill: SkillDefinition = {
+  actionGraph: arcaneChr_0032_lizhiyan_combo_skillActionGraph,
   key: 'chr_0032_lizhiyan_combo_skill',
   useSkillGroupIcon: true,
   element: 'nature',
@@ -601,11 +615,6 @@ export const arcaneChr_0032_lizhiyan_combo_skill: SkillDefinition = {
   exclusiveFrame: 23,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 16, endFrame: 39, skillIds: ['chr_0032_lizhiyan_normal_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_opt6' } },
@@ -618,13 +627,13 @@ export const arcaneChr_0032_lizhiyan_combo_skill: SkillDefinition = {
     { startFrame: 9, endFrame: 30, sequence: { $sequence: 'applyBuff_56' } },
     { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_57' } },
     { startFrame: 0, endFrame: 15, sequence: { $sequence: 'ifElse_61' } },
+    { startFrame: 16, endFrame: 39, sequence: { $sequence: 'reachSkillOperableBoundary_62' } },
   ],
   smartTarget: 'trigger',
   cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 570, 570, 570, 540],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
-  actionGraph: arcaneChr_0032_lizhiyan_combo_skillActionGraph,
 };
 
 export const arcaneChr_0032_lizhiyan_attack1ActionGraph = {
@@ -634,6 +643,8 @@ export const arcaneChr_0032_lizhiyan_attack1ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalAttack'],
@@ -675,7 +686,14 @@ export const arcaneChr_0032_lizhiyan_attack1ActionGraph = {
         },
         next: 'repeatEachTick_15',
       },
-      reachSkillOperableBoundary_17: {
+      overrideBasicAttackMapping_17: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0032_lizhiyan_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_18: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0032_lizhiyan_attack2'] },
@@ -722,6 +740,7 @@ export const arcaneChr_0032_lizhiyan_attack1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const arcaneChr_0032_lizhiyan_attack1: SkillDefinition = {
+  actionGraph: arcaneChr_0032_lizhiyan_attack1ActionGraph,
   key: 'chr_0032_lizhiyan_attack1',
   element: 'nature',
   blackboard: {
@@ -731,29 +750,17 @@ export const arcaneChr_0032_lizhiyan_attack1: SkillDefinition = {
   naturalDurationFrames: 224,
   exclusiveFrame: 30,
   offsetRecordFrame: 10,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 3,
-        endFrame: 30,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0032_lizhiyan_attack2',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 10, endFrame: 30, skillIds: ['chr_0032_lizhiyan_attack2'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 10, endFrame: 12, sequence: { $sequence: 'repeatEachTick_opt2' } },
     { startFrame: 10, endFrame: 12, sequence: { $sequence: 'repeatEachTick_16' } },
-    { startFrame: 10, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_17' } },
+    { startFrame: 3, endFrame: 30, sequence: { $sequence: 'overrideBasicAttackMapping_17' } },
+    { startFrame: 10, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_18' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0032_lizhiyan_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: arcaneChr_0032_lizhiyan_attack1ActionGraph,
 };
 
 export const arcaneChr_0032_lizhiyan_attack2ActionGraph = {
@@ -763,6 +770,8 @@ export const arcaneChr_0032_lizhiyan_attack2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalAttack'],
@@ -795,7 +804,14 @@ export const arcaneChr_0032_lizhiyan_attack2ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_29: {
+      overrideBasicAttackMapping_29: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0032_lizhiyan_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_30: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0032_lizhiyan_attack3'] },
@@ -846,6 +862,7 @@ export const arcaneChr_0032_lizhiyan_attack2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const arcaneChr_0032_lizhiyan_attack2: SkillDefinition = {
+  actionGraph: arcaneChr_0032_lizhiyan_attack2ActionGraph,
   key: 'chr_0032_lizhiyan_attack2',
   element: 'nature',
   blackboard: {
@@ -856,30 +873,18 @@ export const arcaneChr_0032_lizhiyan_attack2: SkillDefinition = {
   naturalDurationFrames: 215,
   exclusiveFrame: 30,
   offsetRecordFrame: 11,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 32,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0032_lizhiyan_attack3',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 14, endFrame: 32, skillIds: ['chr_0032_lizhiyan_attack3'] }],
-  },
   costFrame: 11,
   scheduledSequences: [
     { startFrame: 11, endFrame: 12, sequence: { $sequence: 'forEachContextTarget_opt2' } },
     { startFrame: 12, endFrame: 13, sequence: { $sequence: 'forEachContextTarget_opt3' } },
     { startFrame: 13, endFrame: 14, sequence: { $sequence: 'forEachContextTarget_opt3' } },
-    { startFrame: 14, endFrame: 32, sequence: { $sequence: 'reachSkillOperableBoundary_29' } },
+    { startFrame: 0, endFrame: 32, sequence: { $sequence: 'overrideBasicAttackMapping_29' } },
+    { startFrame: 14, endFrame: 32, sequence: { $sequence: 'reachSkillOperableBoundary_30' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0032_lizhiyan_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: arcaneChr_0032_lizhiyan_attack2ActionGraph,
 };
 
 export const arcaneChr_0032_lizhiyan_attack3ActionGraph = {
@@ -889,6 +894,8 @@ export const arcaneChr_0032_lizhiyan_attack3ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalAttack'],
@@ -921,7 +928,14 @@ export const arcaneChr_0032_lizhiyan_attack3ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_23: {
+      overrideBasicAttackMapping_23: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0032_lizhiyan_attack4'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_24: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0032_lizhiyan_attack4'] },
@@ -964,6 +978,7 @@ export const arcaneChr_0032_lizhiyan_attack3ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const arcaneChr_0032_lizhiyan_attack3: SkillDefinition = {
+  actionGraph: arcaneChr_0032_lizhiyan_attack3ActionGraph,
   key: 'chr_0032_lizhiyan_attack3',
   element: 'nature',
   blackboard: {
@@ -974,29 +989,17 @@ export const arcaneChr_0032_lizhiyan_attack3: SkillDefinition = {
   naturalDurationFrames: 235,
   exclusiveFrame: 30,
   offsetRecordFrame: 7,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 39,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0032_lizhiyan_attack4',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 22, endFrame: 39, skillIds: ['chr_0032_lizhiyan_attack4'] }],
-  },
   costFrame: 13,
   scheduledSequences: [
     { startFrame: 5, endFrame: 6, sequence: { $sequence: 'forEachContextTarget_opt2' } },
     { startFrame: 13, endFrame: 14, sequence: { $sequence: 'forEachContextTarget_opt2' } },
-    { startFrame: 22, endFrame: 39, sequence: { $sequence: 'reachSkillOperableBoundary_23' } },
+    { startFrame: 0, endFrame: 39, sequence: { $sequence: 'overrideBasicAttackMapping_23' } },
+    { startFrame: 22, endFrame: 39, sequence: { $sequence: 'reachSkillOperableBoundary_24' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0032_lizhiyan_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: arcaneChr_0032_lizhiyan_attack3ActionGraph,
 };
 
 export const arcaneChr_0032_lizhiyan_attack4ActionGraph = {
@@ -1006,6 +1009,8 @@ export const arcaneChr_0032_lizhiyan_attack4ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar1' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalAttack'],
@@ -1016,16 +1021,41 @@ export const arcaneChr_0032_lizhiyan_attack4ActionGraph = {
       mergeContextTargets_2: {
         action: {
           kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar1', sources: [{ kind: 'target', target: 'enemy' }] },
+          parameters: {
+            saveToContextKey: 'tar1',
+            sources: [
+              { kind: 'context', key: 'tar1' },
+              { kind: 'fixed', target: 'enemy' },
+            ],
+          },
         },
         next: 'dealDamage_1',
+      },
+      dealDamage_9: {
+        action: {
+          kind: 'dealDamage',
+          parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar2' },
+            damageType: 'nature',
+            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+            tags: ['normalAttack'],
+          },
+        },
+        next: null,
       },
       mergeContextTargets_10: {
         action: {
           kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar2', sources: [{ kind: 'target', target: 'enemy' }] },
+          parameters: {
+            saveToContextKey: 'tar2',
+            sources: [
+              { kind: 'context', key: 'tar2' },
+              { kind: 'fixed', target: 'enemy' },
+            ],
+          },
         },
-        next: 'dealDamage_1',
+        next: 'dealDamage_9',
       },
       createTimedMarker_17: {
         action: {
@@ -1062,7 +1092,14 @@ export const arcaneChr_0032_lizhiyan_attack4ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_21: {
+      overrideBasicAttackMapping_21: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0032_lizhiyan_attack5'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_22: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0032_lizhiyan_attack5'] },
@@ -1076,7 +1113,7 @@ export const arcaneChr_0032_lizhiyan_attack4ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
@@ -1098,6 +1135,7 @@ export const arcaneChr_0032_lizhiyan_attack4ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const arcaneChr_0032_lizhiyan_attack4: SkillDefinition = {
+  actionGraph: arcaneChr_0032_lizhiyan_attack4ActionGraph,
   key: 'chr_0032_lizhiyan_attack4',
   element: 'nature',
   blackboard: {
@@ -1107,17 +1145,6 @@ export const arcaneChr_0032_lizhiyan_attack4: SkillDefinition = {
   naturalDurationFrames: 230,
   exclusiveFrame: 26,
   offsetRecordFrame: 8,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 39,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0032_lizhiyan_attack5',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 18, endFrame: 39, skillIds: ['chr_0032_lizhiyan_attack5'] }],
-  },
   costFrame: 13,
   scheduledSequences: [
     { startFrame: 2, endFrame: 3, sequence: { $sequence: 'mergeContextTargets_2' } },
@@ -1129,19 +1156,25 @@ export const arcaneChr_0032_lizhiyan_attack4: SkillDefinition = {
     { startFrame: 8, endFrame: 9, sequence: { $sequence: 'mergeContextTargets_10' } },
     { startFrame: 11, endFrame: 12, sequence: { $sequence: 'mergeContextTargets_10' } },
     { startFrame: 4, endFrame: 36, sequence: { $sequence: 'forEachContextTarget_20' } },
-    { startFrame: 18, endFrame: 39, sequence: { $sequence: 'reachSkillOperableBoundary_21' } },
+    { startFrame: 0, endFrame: 39, sequence: { $sequence: 'overrideBasicAttackMapping_21' } },
+    { startFrame: 18, endFrame: 39, sequence: { $sequence: 'reachSkillOperableBoundary_22' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0032_lizhiyan_attack5',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: arcaneChr_0032_lizhiyan_attack4ActionGraph,
 };
 
 export const arcaneChr_0032_lizhiyan_attack5ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       modifyActionValue_2: {
         action: {
           kind: 'modifyActionValue',
@@ -1192,6 +1225,8 @@ export const arcaneChr_0032_lizhiyan_attack5ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
@@ -1293,7 +1328,14 @@ export const arcaneChr_0032_lizhiyan_attack5ActionGraph = {
         },
         next: 'checkCondition_21',
       },
-      reachSkillOperableBoundary_35: {
+      overrideBasicAttackMapping_35: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0032_lizhiyan_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_36: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0032_lizhiyan_attack1'] },
@@ -1348,7 +1390,7 @@ export const arcaneChr_0032_lizhiyan_attack5ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
@@ -1374,6 +1416,7 @@ export const arcaneChr_0032_lizhiyan_attack5ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const arcaneChr_0032_lizhiyan_attack5: SkillDefinition = {
+  actionGraph: arcaneChr_0032_lizhiyan_attack5ActionGraph,
   key: 'chr_0032_lizhiyan_attack5',
   element: 'nature',
   blackboard: {
@@ -1386,30 +1429,19 @@ export const arcaneChr_0032_lizhiyan_attack5: SkillDefinition = {
   naturalDurationFrames: 300,
   exclusiveFrame: 41,
   offsetRecordFrame: 22,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 50,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0032_lizhiyan_attack1',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 40, endFrame: 50, skillIds: ['chr_0032_lizhiyan_attack1'] }],
-  },
   costFrame: 13,
   scheduledSequences: [
+    { startFrame: 22, endFrame: 25, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 22, endFrame: 25, sequence: { $sequence: 'dealDamage_7' } },
     { startFrame: 23, endFrame: 25, sequence: { $sequence: 'ifElse_10' } },
     { startFrame: 22, endFrame: 25, sequence: { $sequence: 'ifElse_opt2' } },
-    { startFrame: 40, endFrame: 50, sequence: { $sequence: 'reachSkillOperableBoundary_35' } },
+    { startFrame: 0, endFrame: 50, sequence: { $sequence: 'overrideBasicAttackMapping_35' } },
+    { startFrame: 40, endFrame: 50, sequence: { $sequence: 'reachSkillOperableBoundary_36' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0032_lizhiyan_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: arcaneChr_0032_lizhiyan_attack5ActionGraph,
 };
 
 export const arcaneChr_0032_lizhiyan_power_attackActionGraph = {
@@ -1419,6 +1451,8 @@ export const arcaneChr_0032_lizhiyan_power_attackActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
@@ -1428,7 +1462,14 @@ export const arcaneChr_0032_lizhiyan_power_attackActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_4: {
+      mergeContextTargets_4: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'myTar', sources: [{ kind: 'inputTarget' }] },
+        },
+        next: null,
+      },
+      startTimeDilation_5: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1483,14 +1524,23 @@ export const arcaneChr_0032_lizhiyan_power_attackActionGraph = {
         },
         next: null,
       },
-      gainFinisherSp_5: {
-        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
-        next: 'startTimeDilation_4',
+      gainFinisherSp_6: {
+        action: {
+          kind: 'gainFinisherSp',
+          parameters: {
+            source: { kind: 'source' },
+            target: { kind: 'inputTarget' },
+            factor: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'startTimeDilation_5',
       },
-      dealDamage_6: {
+      dealDamage_7: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
@@ -1498,9 +1548,9 @@ export const arcaneChr_0032_lizhiyan_power_attackActionGraph = {
             tags: ['normalAttack', 'powerAttack'],
           },
         },
-        next: 'gainFinisherSp_5',
+        next: 'gainFinisherSp_6',
       },
-      repeatEachTick_8: {
+      repeatEachTick_9: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
@@ -1517,7 +1567,7 @@ export const arcaneChr_0032_lizhiyan_power_attackActionGraph = {
         },
         next: null,
       },
-      createTimedMarker_9: {
+      createTimedMarker_10: {
         action: {
           kind: 'createTimedMarker',
           parameters: {
@@ -1530,7 +1580,7 @@ export const arcaneChr_0032_lizhiyan_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_10: {
+      applyBuff_11: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1543,7 +1593,7 @@ export const arcaneChr_0032_lizhiyan_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_11: {
+      applyBuff_12: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1556,6 +1606,15 @@ export const arcaneChr_0032_lizhiyan_power_attackActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_13: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: ['chr_0032_lizhiyan_normal_skill', 'chr_0032_lizhiyan_combo_skill'],
+          },
+        },
+        next: null,
+      },
     },
     dataNodes: { data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } } },
   },
@@ -1563,6 +1622,7 @@ export const arcaneChr_0032_lizhiyan_power_attackActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const arcaneChr_0032_lizhiyan_power_attack: SkillDefinition = {
+  actionGraph: arcaneChr_0032_lizhiyan_power_attackActionGraph,
   key: 'chr_0032_lizhiyan_power_attack',
   element: 'nature',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -1571,36 +1631,35 @@ export const arcaneChr_0032_lizhiyan_power_attack: SkillDefinition = {
   exclusiveFrame: 51,
   offsetRecordFrame: 21,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 34,
-        endFrame: 51,
-        skillIds: ['chr_0032_lizhiyan_normal_skill', 'chr_0032_lizhiyan_combo_skill'],
-      },
-    ],
-  },
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 7, endFrame: 8, sequence: { $sequence: 'dealDamage_1' } },
     { startFrame: 10, endFrame: 11, sequence: { $sequence: 'dealDamage_1' } },
     { startFrame: 13, endFrame: 14, sequence: { $sequence: 'dealDamage_1' } },
-    { startFrame: 36, endFrame: 39, sequence: { $sequence: 'dealDamage_6' } },
-    { startFrame: 32, endFrame: 35, sequence: { $sequence: 'repeatEachTick_8' } },
-    { startFrame: 7, endFrame: 37, sequence: { $sequence: 'createTimedMarker_9' } },
-    { startFrame: 0, endFrame: 51, sequence: { $sequence: 'applyBuff_10' } },
-    { startFrame: 0, endFrame: 37, sequence: { $sequence: 'applyBuff_11' } },
+    { startFrame: 15, endFrame: 18, sequence: { $sequence: 'mergeContextTargets_4' } },
+    { startFrame: 36, endFrame: 39, sequence: { $sequence: 'dealDamage_7' } },
+    { startFrame: 32, endFrame: 35, sequence: { $sequence: 'repeatEachTick_9' } },
+    { startFrame: 7, endFrame: 37, sequence: { $sequence: 'createTimedMarker_10' } },
+    { startFrame: 0, endFrame: 51, sequence: { $sequence: 'applyBuff_11' } },
+    { startFrame: 0, endFrame: 37, sequence: { $sequence: 'applyBuff_12' } },
+    { startFrame: 34, endFrame: 51, sequence: { $sequence: 'reachSkillOperableBoundary_13' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
-  actionGraph: arcaneChr_0032_lizhiyan_power_attackActionGraph,
 };
 
 export const arcaneChr_0032_lizhiyan_plunging_attack_endActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -1631,6 +1690,8 @@ export const arcaneChr_0032_lizhiyan_plunging_attack_endActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'plungingAttack'],
@@ -1652,6 +1713,7 @@ export const arcaneChr_0032_lizhiyan_plunging_attack_endActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const arcaneChr_0032_lizhiyan_plunging_attack_end: SkillDefinition = {
+  actionGraph: arcaneChr_0032_lizhiyan_plunging_attack_endActionGraph,
   key: 'chr_0032_lizhiyan_plunging_attack_end',
   element: 'nature',
   blackboard: {
@@ -1663,17 +1725,56 @@ export const arcaneChr_0032_lizhiyan_plunging_attack_end: SkillDefinition = {
   exclusiveFrame: 12,
   offsetRecordFrame: 0,
   costFrame: 0,
-  scheduledSequences: [{ startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } }],
+  scheduledSequences: [
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } },
+  ],
   defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: arcaneChr_0032_lizhiyan_plunging_attack_endActionGraph,
 };
 
 export const arcaneChr_0032_lizhiyan_normal_skillActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_4: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'real_tar', sources: [{ kind: 'inputTarget' }] },
+        },
+        next: null,
+      },
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: {
+            saveToContextKey: 'real_tar',
+            sources: [{ kind: 'context', key: 'smart_target' }],
+          },
+        },
+        next: null,
+      },
+      ifElse_3: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: 'mergeContextTargets_1' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      ifElse_5: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          whenTrue: { $sequence: 'ifElse_3' },
+          whenFalse: { $sequence: 'mergeContextTargets_4' },
+        },
+        next: null,
+      },
       createSpatialPointTargets_6: {
         action: {
           kind: 'createSpatialPointTargets',
@@ -1688,19 +1789,44 @@ export const arcaneChr_0032_lizhiyan_normal_skillActionGraph = {
             bornAt: { kind: 'context', key: 'center' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_normal_skill',
             childSkillId: 'chr_0032_lizhiyan_normal_skill_abilityrange2',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             overrideDurationSeconds: { kind: 'constant', value: 7 },
             blackboardAssignments: {
-              EntityBB_wisd_greater_will: { kind: 'valueNode', nodeId: 'data_1' },
+              EntityBB_wisd_greater_will: { kind: 'valueNode', nodeId: 'data_4' },
             },
           },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_13: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0032_lizhiyan_combo_skill'] },
         },
         next: null,
       },
     },
     dataNodes: {
       data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_2: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'EntityBB_wisd_greater_will', fallback: 0 },
+      },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_2' },
+          operator: 'greaterOrEqual',
+          right: { kind: 'constant', value: 1 },
+        },
+      },
+      data_4: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'EntityBB_wisd_greater_will' },
       },
@@ -1710,6 +1836,7 @@ export const arcaneChr_0032_lizhiyan_normal_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const arcaneChr_0032_lizhiyan_normal_skill: SkillDefinition = {
+  actionGraph: arcaneChr_0032_lizhiyan_normal_skillActionGraph,
   key: 'chr_0032_lizhiyan_normal_skill',
   useSkillGroupIcon: true,
   element: 'nature',
@@ -1725,22 +1852,18 @@ export const arcaneChr_0032_lizhiyan_normal_skill: SkillDefinition = {
   exclusiveFrame: 32,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 24, endFrame: 56, skillIds: ['chr_0032_lizhiyan_combo_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_5' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'createSpatialPointTargets_6' } },
     { startFrame: 0, endFrame: 2, sequence: { $sequence: 'spawnAbilityEntity_7' } },
+    { startFrame: 24, endFrame: 56, sequence: { $sequence: 'reachSkillOperableBoundary_13' } },
   ],
   smartTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: arcaneChr_0032_lizhiyan_normal_skillActionGraph,
 };
 
 export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
@@ -1826,6 +1949,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
           parameters: {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_place',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             overrideDurationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
@@ -1840,6 +1964,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
           parameters: {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_place',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             overrideDurationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
@@ -1854,6 +1979,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
           parameters: {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_place',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             overrideDurationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
@@ -1868,6 +1994,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
           parameters: {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_place',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             overrideDurationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
@@ -1882,6 +2009,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
           parameters: {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_place',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             overrideDurationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
@@ -1896,6 +2024,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
           parameters: {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_place',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             overrideDurationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
@@ -1910,6 +2039,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
           parameters: {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_place',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             overrideDurationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
@@ -1924,6 +2054,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
           parameters: {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_place',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             overrideDurationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
@@ -1939,6 +2070,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill',
             childSkillId: 'chr_0032_lizhiyan_ultimate_skill_abilityrange',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             overrideDurationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
@@ -1996,7 +2128,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
         action: {
           kind: 'restrictUltimateEnergyRecovery',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             allowedRecoveryTags: ['Skill/Character/chr_0032_lizhiyan/special_usp'],
             clearUltimateEnergyOnEnd: false,
           },
@@ -2089,7 +2221,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
                 copiedBlackboardAssignments: { count: 'count', duration: 'duration2' },
               },
             ],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'context', key: 'targets' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
@@ -2106,7 +2238,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
                 copiedBlackboardAssignments: { rate: 'spell_vul_rate', duration: 'duration_vul' },
               },
             ],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'context', key: 'targets' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
@@ -2137,7 +2269,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
                 },
               },
             ],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'context', key: 'targets' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
@@ -2181,6 +2313,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
         action: {
           kind: 'storeSourceAttributeValue',
           parameters: {
+            target: { kind: 'source' },
             attribute: { kind: 'specific', key: 'will' },
             stage: 'armedNonConverted',
             useFloor: false,
@@ -2270,6 +2403,8 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'targets' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_16' },
             tags: ['ultimateSkill'],
@@ -2304,7 +2439,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
           kind: 'mergeContextTargets',
           parameters: {
             saveToContextKey: 'targets',
-            sources: [{ kind: 'target', target: 'enemy' }],
+            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'ifElse_53',
@@ -2322,7 +2457,16 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      markCurrentSkillCanDash_56: {
+      reachSkillOperableBoundary_56: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: ['chr_0032_lizhiyan_combo_skill', 'chr_0032_lizhiyan_normal_skill'],
+          },
+        },
+        next: null,
+      },
+      markCurrentSkillCanDash_57: {
         action: { kind: 'markCurrentSkillCanDash', parameters: {} },
         next: null,
       },
@@ -2337,7 +2481,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffStackCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
@@ -2349,7 +2493,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffStackCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
@@ -2361,7 +2505,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffStackCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
@@ -2373,7 +2517,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffStackCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
@@ -2458,6 +2602,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const arcaneChr_0032_lizhiyan_ultimate_skill: SkillDefinition = {
+  actionGraph: arcaneChr_0032_lizhiyan_ultimate_skillActionGraph,
   key: 'chr_0032_lizhiyan_ultimate_skill',
   useSkillGroupIcon: true,
   element: 'nature',
@@ -2482,15 +2627,6 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill: SkillDefinition = {
   naturalDurationFrames: 308,
   exclusiveFrame: 72,
   offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 48,
-        endFrame: 79,
-        skillIds: ['chr_0032_lizhiyan_combo_skill', 'chr_0032_lizhiyan_normal_skill'],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
@@ -2504,7 +2640,8 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 47, sequence: { $sequence: 'restrictUltimateEnergyRecovery_19' } },
     { startFrame: 47, endFrame: 47, sequence: { $sequence: 'mergeContextTargets_54' } },
     { startFrame: 0, endFrame: 72, sequence: { $sequence: 'applyBuff_55' } },
-    { startFrame: 48, endFrame: 79, sequence: { $sequence: 'markCurrentSkillCanDash_56' } },
+    { startFrame: 48, endFrame: 79, sequence: { $sequence: 'reachSkillOperableBoundary_56' } },
+    { startFrame: 48, endFrame: 79, sequence: { $sequence: 'markCurrentSkillCanDash_57' } },
   ],
   defaultTarget: 'owner',
   cooldownFrames: 600,
@@ -2513,7 +2650,6 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill: SkillDefinition = {
   skillType: 'ultimate',
   levelSource: 'ultimate',
   nativeSkillType: 'ultimateSkill',
-  actionGraph: arcaneChr_0032_lizhiyan_ultimate_skillActionGraph,
 };
 
 export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
@@ -2567,6 +2703,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
         action: {
           kind: 'storeSourceAttributeValue',
           parameters: {
+            target: { kind: 'source' },
             attribute: { kind: 'specific', key: 'will' },
             stage: 'armedNonConverted',
             useFloor: false,
@@ -2788,10 +2925,22 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
         },
         next: null,
       },
+      mergeContextTargets_28: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: {
+            saveToContextKey: 'targets',
+            sources: [{ kind: 'fixed', target: 'enemy' }],
+          },
+        },
+        next: null,
+      },
       dealDamage_34: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'targets' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_15' },
             tags: ['ultimateSkill'],
@@ -2811,7 +2960,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
                 copiedBlackboardAssignments: { rate: 'spell_vul_rate', duration: 'duration_vul' },
               },
             ],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'context', key: 'targets' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
@@ -2822,6 +2971,8 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'targets' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_17' },
             tags: ['ultimateSkill'],
@@ -2917,7 +3068,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
         action: {
           kind: 'adjustSkillCooldown',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             skill: { kind: 'id', skillId: 'chr_0032_lizhiyan_combo_skill' },
             operation: 'reduce',
             basis: 'baseDurationRatio',
@@ -2988,6 +3139,15 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_50: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: ['chr_0032_lizhiyan_normal_skill', 'chr_0032_lizhiyan_combo_skill'],
+          },
+        },
+        next: null,
+      },
       ifElse_opt1: {
         action: {
           kind: 'ifElse',
@@ -3009,7 +3169,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
       mergeContextTargets_opt3: {
         action: {
           kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'main', sources: [{ kind: 'target', target: 'enemy' }] },
+          parameters: { saveToContextKey: 'main', sources: [{ kind: 'inputTarget' }] },
         },
         next: 'forEachContextTarget_opt2',
       },
@@ -3114,7 +3274,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'targets' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -3155,6 +3315,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const arcaneChr_0032_lizhiyan_ultimate_skill2: SkillDefinition = {
+  actionGraph: arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph,
   key: 'chr_0032_lizhiyan_ultimate_skill2',
   element: 'nature',
   blackboard: {
@@ -3175,15 +3336,6 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2: SkillDefinition = {
   naturalDurationFrames: 287,
   exclusiveFrame: 75,
   offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 60,
-        endFrame: 91,
-        skillIds: ['chr_0032_lizhiyan_normal_skill', 'chr_0032_lizhiyan_combo_skill'],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 287, sequence: { $sequence: 'ifElse_21' } },
@@ -3192,6 +3344,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2: SkillDefinition = {
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_24' } },
     { startFrame: 57, endFrame: 58, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_26' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'changeSkillSlot_27' } },
+    { startFrame: 58, endFrame: 61, sequence: { $sequence: 'mergeContextTargets_28' } },
     { startFrame: 58, endFrame: 58, sequence: { $sequence: 'ifElse_35' } },
     { startFrame: 58, endFrame: 59, sequence: { $sequence: 'mergeContextTargets_opt3' } },
     { startFrame: 60, endFrame: 63, sequence: { $sequence: 'checkCondition_41' } },
@@ -3200,6 +3353,7 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2: SkillDefinition = {
     { startFrame: 0, endFrame: 50, sequence: { $sequence: 'startUltimateTimeDilation_47' } },
     { startFrame: 0, endFrame: 59, sequence: { $sequence: 'applyBuff_48' } },
     { startFrame: 59, endFrame: 75, sequence: { $sequence: 'applyBuff_49' } },
+    { startFrame: 60, endFrame: 91, sequence: { $sequence: 'reachSkillOperableBoundary_50' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 300,
@@ -3208,7 +3362,6 @@ export const arcaneChr_0032_lizhiyan_ultimate_skill2: SkillDefinition = {
   skillType: 'ultimate',
   levelSource: 'ultimate',
   nativeSkillType: 'normalSkill',
-  actionGraph: arcaneChr_0032_lizhiyan_ultimate_skill2ActionGraph,
 };
 
 export const arcaneCommon_character_perfect_dodgeActionGraph = {
@@ -3988,6 +4141,8 @@ const arcaneBuff4ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['comboSkill'],
@@ -4000,7 +4155,7 @@ const arcaneBuff4ActionGraph = {
       mergeContextTargets_4: {
         action: {
           kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
         },
         next: 'dealDamage_3',
       },
@@ -4147,6 +4302,13 @@ const arcaneBuff6: SkillBuffDefinition = {
 const arcaneBuff7ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       createTimedMarker_2: {
         action: {
           kind: 'createTimedMarker',
@@ -4164,6 +4326,8 @@ const arcaneBuff7ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['comboSkill'],
@@ -4300,7 +4464,7 @@ const arcaneBuff7ActionGraph = {
         action: {
           kind: 'finishBuffsById',
           parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             finishSource: { kind: 'source' },
             buffIds: ['buff_chr_0032_lizhiyan_combo_skill_spell_vulnerable'],
             reason: 'other',
@@ -4338,6 +4502,7 @@ const arcaneBuff7: SkillBuffDefinition = {
   blackboard: { atk_scale_laser2: 0, poise_final: 10 },
   attributeModifiers: [],
   scheduledSequences: [
+    { startFrame: 0, endFrame: 4, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 0, endFrame: 6, sequence: { $sequence: 'dealDamage_3' } },
     { startFrame: 1, endFrame: 4, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_6' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'forEachContextTarget_8' } },
@@ -4354,6 +4519,7 @@ const arcaneBuff8ActionGraph = {
           parameters: {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_combo_skill_place',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             overrideDurationSeconds: { kind: 'constant', value: 2 },
@@ -4369,10 +4535,19 @@ const arcaneBuff8ActionGraph = {
         },
         next: 'spawnAbilityEntity_1',
       },
+      mergeContextTargets_3: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       dealDamage_7: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['comboSkill'],
@@ -4398,6 +4573,8 @@ const arcaneBuff8ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['comboSkill'],
@@ -4547,7 +4724,7 @@ const arcaneBuff8ActionGraph = {
         action: {
           kind: 'finishBuffsById',
           parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             finishSource: { kind: 'source' },
             buffIds: ['buff_chr_0032_lizhiyan_combo_skill_spell_vulnerable'],
             reason: 'other',
@@ -4612,10 +4789,15 @@ const arcaneBuff8: SkillBuffDefinition = {
   attributeModifiers: [],
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findCharacterTeamTargets_2' } },
+    { startFrame: 2, endFrame: 4, sequence: { $sequence: 'mergeContextTargets_3' } },
+    { startFrame: 5, endFrame: 7, sequence: { $sequence: 'mergeContextTargets_3' } },
+    { startFrame: 8, endFrame: 10, sequence: { $sequence: 'mergeContextTargets_3' } },
+    { startFrame: 11, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_3' } },
     { startFrame: 2, endFrame: 4, sequence: { $sequence: 'dealDamage_7' } },
     { startFrame: 5, endFrame: 7, sequence: { $sequence: 'dealDamage_7' } },
     { startFrame: 8, endFrame: 10, sequence: { $sequence: 'dealDamage_7' } },
     { startFrame: 11, endFrame: 13, sequence: { $sequence: 'dealDamage_7' } },
+    { startFrame: 17, endFrame: 21, sequence: { $sequence: 'mergeContextTargets_3' } },
     { startFrame: 17, endFrame: 23, sequence: { $sequence: 'dealDamage_13' } },
     { startFrame: 11, endFrame: 14, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_14' } },
     { startFrame: 18, endFrame: 21, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_17' } },
@@ -4743,7 +4925,7 @@ const arcaneBuff11ActionGraph = {
                 },
               },
             ],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'context', key: 'trigger' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
@@ -4765,7 +4947,7 @@ const arcaneBuff11ActionGraph = {
                 },
               },
             ],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'context', key: 'trigger' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
@@ -4777,7 +4959,7 @@ const arcaneBuff11ActionGraph = {
           kind: 'applyBuff',
           parameters: {
             buffs: [{ buffId: 'buff_chr_0032_lizhiyan_combo_skill_precheck' }],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'context', key: 'trigger' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
@@ -4842,6 +5024,8 @@ const arcaneBuff11ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['comboSkill'],
@@ -4933,7 +5117,7 @@ const arcaneBuff11ActionGraph = {
                 },
               },
             ],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'context', key: 'trigger' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
@@ -4953,17 +5137,41 @@ const arcaneBuff11ActionGraph = {
       mergeContextTargets_opt5: {
         action: {
           kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
         },
         next: 'ifElse_opt4',
       },
-      ifElse_opt6: {
+      mergeContextTargets_opt6: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'context', key: 'trigger' }] },
+        },
+        next: 'ifElse_opt4',
+      },
+      ifElse_opt7: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_10' },
           whenTrue: { $sequence: 'mergeContextTargets_opt5' },
-          whenFalse: { $sequence: 'mergeContextTargets_opt5' },
+          whenFalse: { $sequence: 'mergeContextTargets_opt6' },
+        },
+        next: null,
+      },
+      mergeContextTargets_opt8: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
+      ifElse_opt9: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_11' },
+          whenTrue: { $sequence: 'mergeContextTargets_opt8' },
+          whenFalse: { $sequence: null },
         },
         next: null,
       },
@@ -4988,7 +5196,7 @@ const arcaneBuff11ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'tar' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -5014,7 +5222,25 @@ const arcaneBuff11ActionGraph = {
       },
       data_10: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'trigger' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_11: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'trigger' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
     },
   },
@@ -5046,7 +5272,8 @@ const arcaneBuff11: SkillBuffDefinition = {
   scheduledSequences: [
     { startFrame: 2, endFrame: 21, sequence: { $sequence: 'applyBuff_2' } },
     { startFrame: 0, endFrame: 2, sequence: { $sequence: 'applyBuff_3' } },
-    { startFrame: 6, endFrame: 9, sequence: { $sequence: 'ifElse_opt6' } },
+    { startFrame: 6, endFrame: 9, sequence: { $sequence: 'ifElse_opt7' } },
+    { startFrame: 2, endFrame: 5, sequence: { $sequence: 'ifElse_opt9' } },
   ],
   actionGraph: arcaneBuff11ActionGraph,
 };
@@ -5092,6 +5319,8 @@ const arcaneBuff12ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['comboSkill'],
@@ -5104,7 +5333,7 @@ const arcaneBuff12ActionGraph = {
       mergeContextTargets_5: {
         action: {
           kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
         },
         next: 'dealDamage_4',
       },
@@ -5477,7 +5706,7 @@ const arcaneBuff17ActionGraph = {
       mergeContextTargets_7: {
         action: {
           kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
         },
         next: 'finishBuffsById_6',
       },
@@ -5716,6 +5945,7 @@ const arcaneBuff22ActionGraph = {
         action: {
           kind: 'storeSourceAttributeValue',
           parameters: {
+            target: { kind: 'source' },
             attribute: { kind: 'specific', key: 'maxUltimateEnergy' },
             stage: 'armedNonConverted',
             useFloor: false,
@@ -5753,6 +5983,7 @@ const arcaneBuff22ActionGraph = {
           parameters: {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_death',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             overrideDurationSeconds: { kind: 'constant', value: 0.2 },
@@ -5820,6 +6051,7 @@ const arcaneBuff22ActionGraph = {
           parameters: {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_laser_target',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             saveToContextKey: 'laser_target2',
@@ -5860,6 +6092,7 @@ const arcaneBuff22ActionGraph = {
           parameters: {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_laser_target',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             saveToContextKey: 'laser_target1',
@@ -6219,6 +6452,7 @@ const arcaneBuff23ActionGraph = {
             bornAt: { kind: 'context', key: 'first' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_laser',
             childSkillId: 'chr_0032_lizhiyan_ultimate_skill_laser',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             target: 'currentAbilityEntity',
@@ -6233,6 +6467,7 @@ const arcaneBuff23ActionGraph = {
             bornAt: { kind: 'context', key: 'second' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_laser',
             childSkillId: 'chr_0032_lizhiyan_ultimate_skill_laser',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             target: 'currentAbilityEntity',
@@ -6247,6 +6482,7 @@ const arcaneBuff23ActionGraph = {
             bornAt: { kind: 'context', key: 'third' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_laser',
             childSkillId: 'chr_0032_lizhiyan_ultimate_skill_laser',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             target: 'currentAbilityEntity',
@@ -6261,6 +6497,7 @@ const arcaneBuff23ActionGraph = {
             bornAt: { kind: 'context', key: 'forth' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_laser',
             childSkillId: 'chr_0032_lizhiyan_ultimate_skill_laser',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             target: 'currentAbilityEntity',
@@ -6409,6 +6646,7 @@ const arcaneBuff24ActionGraph = {
             bornAt: { kind: 'context', key: 'first' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_laser',
             childSkillId: 'chr_0032_lizhiyan_ultimate_skill_laser',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             target: 'currentAbilityEntity',
@@ -6423,6 +6661,7 @@ const arcaneBuff24ActionGraph = {
             bornAt: { kind: 'context', key: 'second' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_laser',
             childSkillId: 'chr_0032_lizhiyan_ultimate_skill_laser',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             target: 'currentAbilityEntity',
@@ -6437,6 +6676,7 @@ const arcaneBuff24ActionGraph = {
             bornAt: { kind: 'context', key: 'third' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_laser',
             childSkillId: 'chr_0032_lizhiyan_ultimate_skill_laser',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             target: 'currentAbilityEntity',
@@ -6451,6 +6691,7 @@ const arcaneBuff24ActionGraph = {
             bornAt: { kind: 'context', key: 'forth' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_laser',
             childSkillId: 'chr_0032_lizhiyan_ultimate_skill_laser',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             target: 'currentAbilityEntity',
@@ -6535,7 +6776,7 @@ const arcaneBuff26ActionGraph = {
         action: {
           kind: 'restrictUltimateEnergyRecovery',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             allowedRecoveryTags: ['Skill/Character/chr_0032_lizhiyan/special_usp'],
             clearUltimateEnergyOnEnd: true,
           },
@@ -6727,6 +6968,7 @@ const arcaneBuff26: SkillBuffDefinition = {
     enable: [{ $sequence: 'restrictUltimateEnergyRecovery_1' }],
     finish: [{ $sequence: 'setCharacterPassiveUiValue_4' }],
   },
+  actionGraph: arcaneBuff26ActionGraph,
   skillSlotReplacements: [
     {
       skillSlotKey: 'ultimate',
@@ -6735,7 +6977,6 @@ const arcaneBuff26: SkillBuffDefinition = {
       inheritOriginSkillCooldownProgress: false,
     },
   ],
-  actionGraph: arcaneBuff26ActionGraph,
 };
 
 const arcaneBuff27ActionGraph = {
@@ -6850,7 +7091,7 @@ const arcaneBuff28ActionGraph = {
         action: {
           kind: 'restrictUltimateEnergyRecovery',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             allowedRecoveryTags: ['Skill/Character/chr_0032_lizhiyan/special_usp'],
             clearUltimateEnergyOnEnd: true,
           },
@@ -7019,6 +7260,7 @@ const arcaneBuff28: SkillBuffDefinition = {
   abilityEventResponses: [
     { event: 'addedBuff', priority: 0, sequence: { $sequence: 'ifElse_16' } },
   ],
+  actionGraph: arcaneBuff28ActionGraph,
   skillSlotReplacements: [
     {
       skillSlotKey: 'ultimate',
@@ -7027,7 +7269,6 @@ const arcaneBuff28: SkillBuffDefinition = {
       inheritOriginSkillCooldownProgress: false,
     },
   ],
-  actionGraph: arcaneBuff28ActionGraph,
 };
 
 const arcaneBuff29ActionGraph = {
@@ -7071,6 +7312,7 @@ const arcaneBuff29ActionGraph = {
           parameters: {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_laser_target',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             saveToContextKey: 'laser_target2',
@@ -7111,6 +7353,7 @@ const arcaneBuff29ActionGraph = {
           parameters: {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_laser_target',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             saveToContextKey: 'laser_target1',
@@ -7750,30 +7993,6 @@ export const arcane: OperatorDefinition = {
           scheduledSequences: [],
         },
         chr_0032_lizhiyan_combo_skill_abilityentity_end: {
-          skillId: 'chr_0032_lizhiyan_combo_skill_abilityentity_end',
-          nativeSkillType: 'normalSkill',
-          naturalDurationFrames: 45,
-          castResource: {
-            costFrame: 0,
-            cooldownSeconds: 0,
-            maxChargeTime: 1,
-            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-          },
-          blackboard: { atb_return_wisd: 0, atk_scale_boom: 1, poise_boom: 5 },
-          scheduledSequences: [
-            { startFrame: 9, endFrame: 12, sequence: { $sequence: 'finishBuffsById_1' } },
-            {
-              startFrame: 21,
-              endFrame: 22,
-              sequence: { $sequence: 'triggerCustomAbilityEvent_2' },
-            },
-            { startFrame: 44, endFrame: 45, sequence: { $sequence: 'finishOwner_3' } },
-            { startFrame: 0, endFrame: 15, sequence: { $sequence: 'repeatEachTick_opt2' } },
-            { startFrame: 0, endFrame: 14, sequence: { $sequence: 'checkCondition_11' } },
-            { startFrame: 14, endFrame: 20, sequence: { $sequence: 'ifElse_26' } },
-            { startFrame: 0, endFrame: 3, sequence: { $sequence: 'createTimedMarker_27' } },
-            { startFrame: 14, endFrame: 17, sequence: { $sequence: 'forEachContextTarget_31' } },
-          ],
           actionGraph: {
             main: {
               nodes: {
@@ -7857,6 +8076,16 @@ export const arcane: OperatorDefinition = {
                   },
                   next: 'checkCondition_10',
                 },
+                mergeContextTargets_14: {
+                  action: {
+                    kind: 'mergeContextTargets',
+                    parameters: {
+                      saveToContextKey: 'tar',
+                      sources: [{ kind: 'fixed', target: 'enemy' }],
+                    },
+                  },
+                  next: null,
+                },
                 createTimedMarker_22: {
                   action: {
                     kind: 'createTimedMarker',
@@ -7874,6 +8103,8 @@ export const arcane: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
                       damageType: 'nature',
                       attackScale: { kind: 'valueNode', nodeId: 'data_4' },
                       tags: ['comboSkill'],
@@ -7907,6 +8138,8 @@ export const arcane: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
                       damageType: 'nature',
                       attackScale: { kind: 'valueNode', nodeId: 'data_4' },
                       tags: ['comboSkill'],
@@ -8010,7 +8243,7 @@ export const arcane: OperatorDefinition = {
                   action: {
                     kind: 'finishBuffsById',
                     parameters: {
-                      targets: { kind: 'fixed', target: 'enemy' },
+                      targets: { kind: 'inputTarget' },
                       finishSource: { kind: 'source' },
                       buffIds: ['buff_chr_0032_lizhiyan_combo_skill_spell_vulnerable'],
                       reason: 'other',
@@ -8060,6 +8293,16 @@ export const arcane: OperatorDefinition = {
                       },
                     },
                     body: { $sequence: 'ifElse_opt1' },
+                  },
+                  next: null,
+                },
+                ifElse_opt3: {
+                  action: {
+                    kind: 'ifElse',
+                    parameters: { alwaysNext: true },
+                    condition: { kind: 'conditionNode', nodeId: 'data_11' },
+                    whenTrue: { $sequence: 'mergeContextTargets_14' },
+                    whenFalse: { $sequence: 'mergeContextTargets_14' },
                   },
                   next: null,
                 },
@@ -8132,7 +8375,7 @@ export const arcane: OperatorDefinition = {
                   type: 'boolean',
                   expression: {
                     kind: 'buffIdStackCompare',
-                    target: { kind: 'fixed', target: 'enemy' },
+                    target: { kind: 'inputTarget' },
                     compareZeroWhenTargetMissing: true,
                     operator: 'greaterOrEqual',
                     value: { kind: 'constant', value: 1 },
@@ -8143,40 +8386,41 @@ export const arcane: OperatorDefinition = {
                   type: 'boolean',
                   expression: { kind: 'checkActionResult', action: { $sequence: null } },
                 },
+                data_11: {
+                  type: 'boolean',
+                  expression: { kind: 'checkActionResult', action: { $sequence: null } },
+                },
               },
             },
             macros: {},
           },
-        },
-        chr_0032_lizhiyan_combo_skill_abilityentity_seal_again: {
-          skillId: 'chr_0032_lizhiyan_combo_skill_abilityentity_seal_again',
+          skillId: 'chr_0032_lizhiyan_combo_skill_abilityentity_end',
           nativeSkillType: 'normalSkill',
-          naturalDurationFrames: 243,
+          naturalDurationFrames: 45,
           castResource: {
             costFrame: 0,
             cooldownSeconds: 0,
             maxChargeTime: 1,
             cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
           },
-          blackboard: {
-            atk_scale_laser1: 6,
-            atk_scale_laser2: 2,
-            duration_calc: 0,
-            duration_extra: 0,
-            duration_vul: 2,
-            isWisd: 1,
-            poise_laser: 5,
-            rate_final: 0.3,
-          },
+          blackboard: { atb_return_wisd: 0, atk_scale_boom: 1, poise_boom: 5 },
           scheduledSequences: [
-            { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_1' } },
-            { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_7' } },
-            { startFrame: 41, endFrame: 44, sequence: { $sequence: 'ifElse_18' } },
-            { startFrame: 23, endFrame: 26, sequence: { $sequence: 'finishBuffsById_19' } },
-            { startFrame: 239, endFrame: 239, sequence: { $sequence: 'checkCondition_24' } },
-            { startFrame: 240, endFrame: 243, sequence: { $sequence: 'finishOwner_25' } },
-            { startFrame: 0, endFrame: 240, sequence: { $sequence: 'checkCondition_31' } },
+            { startFrame: 9, endFrame: 12, sequence: { $sequence: 'finishBuffsById_1' } },
+            {
+              startFrame: 21,
+              endFrame: 22,
+              sequence: { $sequence: 'triggerCustomAbilityEvent_2' },
+            },
+            { startFrame: 44, endFrame: 45, sequence: { $sequence: 'finishOwner_3' } },
+            { startFrame: 0, endFrame: 15, sequence: { $sequence: 'repeatEachTick_opt2' } },
+            { startFrame: 0, endFrame: 14, sequence: { $sequence: 'checkCondition_11' } },
+            { startFrame: 14, endFrame: 17, sequence: { $sequence: 'ifElse_opt3' } },
+            { startFrame: 14, endFrame: 20, sequence: { $sequence: 'ifElse_26' } },
+            { startFrame: 0, endFrame: 3, sequence: { $sequence: 'createTimedMarker_27' } },
+            { startFrame: 14, endFrame: 17, sequence: { $sequence: 'forEachContextTarget_31' } },
           ],
+        },
+        chr_0032_lizhiyan_combo_skill_abilityentity_seal_again: {
           actionGraph: {
             main: {
               nodes: {
@@ -8292,6 +8536,7 @@ export const arcane: OperatorDefinition = {
                       bornAt: { kind: 'inputTarget' },
                       abilityEntityId: 'abilityentity_chr_0032_lizhiyan_combo_skill_death',
                       childSkillId: 'chr_0032_lizhiyan_combo_skill_abilityentity_death_move',
+                      source: { kind: 'source' },
                       inheritActionBlackboard: true,
                       dieWhenSourceDies: false,
                       target: 'actionInputTarget',
@@ -8587,6 +8832,34 @@ export const arcane: OperatorDefinition = {
             },
             macros: {},
           },
+          skillId: 'chr_0032_lizhiyan_combo_skill_abilityentity_seal_again',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 243,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
+          blackboard: {
+            atk_scale_laser1: 6,
+            atk_scale_laser2: 2,
+            duration_calc: 0,
+            duration_extra: 0,
+            duration_vul: 2,
+            isWisd: 1,
+            poise_laser: 5,
+            rate_final: 0.3,
+          },
+          scheduledSequences: [
+            { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_1' } },
+            { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_7' } },
+            { startFrame: 41, endFrame: 44, sequence: { $sequence: 'ifElse_18' } },
+            { startFrame: 23, endFrame: 26, sequence: { $sequence: 'finishBuffsById_19' } },
+            { startFrame: 239, endFrame: 239, sequence: { $sequence: 'checkCondition_24' } },
+            { startFrame: 240, endFrame: 243, sequence: { $sequence: 'finishOwner_25' } },
+            { startFrame: 0, endFrame: 240, sequence: { $sequence: 'checkCondition_31' } },
+          ],
         },
         chr_0032_lizhiyan_combo_skill_abilityentity_seal_finisher: {
           actionGraph: {
@@ -8628,30 +8901,19 @@ export const arcane: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 6 },
       childSkills: {
         chr_0032_lizhiyan_normal_skill_abilityrange2: {
-          skillId: 'chr_0032_lizhiyan_normal_skill_abilityrange2',
-          nativeSkillType: 'normalSkill',
-          naturalDurationFrames: 240,
-          castResource: {
-            costFrame: 0,
-            cooldownSeconds: 0,
-            maxChargeTime: 1,
-            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-          },
-          blackboard: {
-            atk_scale_will: 1,
-            atk_scale_wisd: 1,
-            effect_count: 0,
-            max_effect_count: 3,
-            poise: 0,
-          },
-          scheduledSequences: [
-            { startFrame: 20, endFrame: 22, sequence: { $sequence: 'forEachContextTarget_15' } },
-            { startFrame: 20, endFrame: 23, sequence: { $sequence: 'ifElse_17' } },
-            { startFrame: 22, endFrame: 25, sequence: { $sequence: 'finishOwner_18' } },
-          ],
           actionGraph: {
             main: {
               nodes: {
+                mergeContextTargets_2: {
+                  action: {
+                    kind: 'mergeContextTargets',
+                    parameters: {
+                      saveToContextKey: 'tar',
+                      sources: [{ kind: 'fixed', target: 'enemy' }],
+                    },
+                  },
+                  next: null,
+                },
                 calculateActionValue_4: {
                   action: {
                     kind: 'calculateActionValue',
@@ -8688,6 +8950,8 @@ export const arcane: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
                       damageType: 'nature',
                       attackScale: { kind: 'valueNode', nodeId: 'data_6' },
                       tags: ['normalSkill'],
@@ -8702,6 +8966,8 @@ export const arcane: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
                       damageType: 'nature',
                       attackScale: { kind: 'valueNode', nodeId: 'data_8' },
                       tags: ['normalSkill'],
@@ -8717,7 +8983,7 @@ export const arcane: OperatorDefinition = {
                     kind: 'mergeContextTargets',
                     parameters: {
                       saveToContextKey: 'mainPos',
-                      sources: [{ kind: 'target', target: 'enemy' }],
+                      sources: [{ kind: 'fixed', target: 'enemy' }],
                     },
                   },
                   next: 'dealDamage_10',
@@ -8845,7 +9111,7 @@ export const arcane: OperatorDefinition = {
                   expression: {
                     kind: 'targetDistance',
                     source: { kind: 'owner' },
-                    target: { kind: 'fixed', target: 'enemy' },
+                    target: { kind: 'inputTarget' },
                     distance: 0.5,
                     lessThan: false,
                     includeTargetRadius: true,
@@ -8886,9 +9152,7 @@ export const arcane: OperatorDefinition = {
             },
             macros: {},
           },
-        },
-        chr_0032_lizhiyan_normal_skill_abilityrange: {
-          skillId: 'chr_0032_lizhiyan_normal_skill_abilityrange',
+          skillId: 'chr_0032_lizhiyan_normal_skill_abilityrange2',
           nativeSkillType: 'normalSkill',
           naturalDurationFrames: 240,
           castResource: {
@@ -8897,14 +9161,21 @@ export const arcane: OperatorDefinition = {
             maxChargeTime: 1,
             cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
           },
-          blackboard: { atk_scale: 0, isJumped: 0, poise: 0 },
+          blackboard: {
+            atk_scale_will: 1,
+            atk_scale_wisd: 1,
+            effect_count: 0,
+            max_effect_count: 3,
+            poise: 0,
+          },
           scheduledSequences: [
-            { startFrame: 21, endFrame: 180, sequence: { $sequence: 'aura_1' } },
-            { startFrame: 21, endFrame: 180, sequence: { $sequence: 'listenForCombatEvents_5' } },
-            { startFrame: 187, endFrame: 190, sequence: { $sequence: 'finishOwner_8' } },
-            { startFrame: 20, endFrame: 23, sequence: { $sequence: 'forEachContextTarget_11' } },
-            { startFrame: 186, endFrame: 189, sequence: { $sequence: 'forEachContextTarget_15' } },
+            { startFrame: 20, endFrame: 20, sequence: { $sequence: 'mergeContextTargets_2' } },
+            { startFrame: 20, endFrame: 22, sequence: { $sequence: 'forEachContextTarget_15' } },
+            { startFrame: 20, endFrame: 23, sequence: { $sequence: 'ifElse_17' } },
+            { startFrame: 22, endFrame: 25, sequence: { $sequence: 'finishOwner_18' } },
           ],
+        },
+        chr_0032_lizhiyan_normal_skill_abilityrange: {
           actionGraph: {
             main: {
               nodes: {
@@ -8971,6 +9242,16 @@ export const arcane: OperatorDefinition = {
                   },
                   next: null,
                 },
+                mergeContextTargets_6: {
+                  action: {
+                    kind: 'mergeContextTargets',
+                    parameters: {
+                      saveToContextKey: 'tar',
+                      sources: [{ kind: 'fixed', target: 'enemy' }],
+                    },
+                  },
+                  next: null,
+                },
                 finishOwner_8: {
                   action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
                   next: null,
@@ -8986,6 +9267,8 @@ export const arcane: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
                       damageType: 'nature',
                       attackScale: { kind: 'valueNode', nodeId: 'data_3' },
                       tags: ['normalSkill'],
@@ -9014,6 +9297,8 @@ export const arcane: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
                       damageType: 'nature',
                       attackScale: { kind: 'valueNode', nodeId: 'data_3' },
                       tags: ['normalSkill'],
@@ -9063,6 +9348,25 @@ export const arcane: OperatorDefinition = {
             },
             macros: {},
           },
+          skillId: 'chr_0032_lizhiyan_normal_skill_abilityrange',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 240,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
+          blackboard: { atk_scale: 0, isJumped: 0, poise: 0 },
+          scheduledSequences: [
+            { startFrame: 21, endFrame: 180, sequence: { $sequence: 'aura_1' } },
+            { startFrame: 21, endFrame: 180, sequence: { $sequence: 'listenForCombatEvents_5' } },
+            { startFrame: 20, endFrame: 20, sequence: { $sequence: 'mergeContextTargets_6' } },
+            { startFrame: 186, endFrame: 186, sequence: { $sequence: 'mergeContextTargets_6' } },
+            { startFrame: 187, endFrame: 190, sequence: { $sequence: 'finishOwner_8' } },
+            { startFrame: 20, endFrame: 23, sequence: { $sequence: 'forEachContextTarget_11' } },
+            { startFrame: 186, endFrame: 189, sequence: { $sequence: 'forEachContextTarget_15' } },
+          ],
         },
       },
     },
@@ -9077,20 +9381,6 @@ export const arcane: OperatorDefinition = {
       ],
       lifetime: { kind: 'limited', durationSeconds: 30 },
       childSkill: {
-        skillId: 'chr_0032_lizhiyan_ultimate_skill_abilityrange',
-        nativeSkillType: 'normalSkill',
-        naturalDurationFrames: 1800,
-        castResource: {
-          costFrame: 0,
-          cooldownSeconds: 0,
-          maxChargeTime: 1,
-          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-        },
-        blackboard: { atk_scale_laser: 0.5, atk_scale_laser_will: 0.2, isWisd: 0 },
-        scheduledSequences: [
-          { startFrame: 0, endFrame: 1800, sequence: { $sequence: 'applyBuff_1' } },
-          { startFrame: 0, endFrame: 1800, sequence: { $sequence: 'ifElse_5' } },
-        ],
         actionGraph: {
           main: {
             nodes: {
@@ -9190,6 +9480,20 @@ export const arcane: OperatorDefinition = {
           },
           macros: {},
         },
+        skillId: 'chr_0032_lizhiyan_ultimate_skill_abilityrange',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 1800,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: { atk_scale_laser: 0.5, atk_scale_laser_will: 0.2, isWisd: 0 },
+        scheduledSequences: [
+          { startFrame: 0, endFrame: 1800, sequence: { $sequence: 'applyBuff_1' } },
+          { startFrame: 0, endFrame: 1800, sequence: { $sequence: 'ifElse_5' } },
+        ],
       },
     },
     abilityentity_chr_0032_lizhiyan_ultimate_skill_place: {
@@ -9269,20 +9573,6 @@ export const arcane: OperatorDefinition = {
       ],
       lifetime: { kind: 'limited', durationSeconds: 2 },
       childSkill: {
-        skillId: 'chr_0032_lizhiyan_ultimate_skill_laser',
-        nativeSkillType: 'normalSkill',
-        naturalDurationFrames: 90,
-        castResource: {
-          costFrame: 0,
-          cooldownSeconds: 0,
-          maxChargeTime: 1,
-          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-        },
-        blackboard: { atk_scale_laser: 1 },
-        scheduledSequences: [
-          { startFrame: 12, endFrame: 28, sequence: { $sequence: 'mergeContextTargets_opt2' } },
-          { startFrame: 13, endFrame: 45, sequence: { $sequence: 'ifElse_14' } },
-        ],
         actionGraph: {
           main: {
             nodes: {
@@ -9290,6 +9580,8 @@ export const arcane: OperatorDefinition = {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'tar' },
                     damageType: 'nature',
                     attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                     tags: ['ultimateSkill'],
@@ -9390,7 +9682,7 @@ export const arcane: OperatorDefinition = {
                   kind: 'mergeContextTargets',
                   parameters: {
                     saveToContextKey: 'tar',
-                    sources: [{ kind: 'target', target: 'enemy' }],
+                    sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
                 next: 'ifElse_opt1',
@@ -9445,6 +9737,20 @@ export const arcane: OperatorDefinition = {
           },
           macros: {},
         },
+        skillId: 'chr_0032_lizhiyan_ultimate_skill_laser',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 90,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: { atk_scale_laser: 1 },
+        scheduledSequences: [
+          { startFrame: 12, endFrame: 28, sequence: { $sequence: 'mergeContextTargets_opt2' } },
+          { startFrame: 13, endFrame: 45, sequence: { $sequence: 'ifElse_14' } },
+        ],
       },
     },
   },

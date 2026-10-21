@@ -126,6 +126,7 @@ export function createGlobalBuffState(): GlobalBuffState {
 
 /** Soul 的主体绑定与独立生命账本；主体不是施法来源，也不随控制器重设目标改变。 */
 export interface AbilityEntitySoulState {
+  readonly canBeDirectlyBuffed: boolean;
   readonly damageTransferType: 'sharedDamage';
   readonly useMainBodyPoise: boolean;
   readonly mainBody: RuntimeTargetRef;
@@ -314,6 +315,8 @@ export interface BuffInstanceIdentity {
 }
 
 export interface BuffInstanceState<Key extends string> {
+  readonly recordedDamageSkillCastIds: Set<number>;
+  readonly modifiedBlackboardKeys: Set<string>;
   actionHost: BuffActionHostState | null;
   /** onRecycled 回调的稳定登记顺序；函数由恢复后的宿主按编号重绑。 */
   readonly recycleCallbackIds: number[];
@@ -325,6 +328,7 @@ export interface BuffInstanceState<Key extends string> {
   sourceActionId: string;
   definitionOwnerId: string;
   partTransferInfo: EnemyPartTransferInfo | null;
+  inheritedTargetGroups: RuntimeTargetContextState | null;
   /** null 表示创建时没有显式的来源属性读取目标；否则恢复时必须按实体身份接回读取端口。 */
   sourceAttributeOwnerId: string | null;
   skillCastInfo: CombatSkillCastInfo | null;
@@ -345,6 +349,8 @@ export function createBuffInstanceState<Key extends string>(
   blackboard: ActionBlackboardState = createActionBlackboardState(),
 ): BuffInstanceState<Key> {
   return {
+    recordedDamageSkillCastIds: new Set(),
+    modifiedBlackboardKeys: new Set(),
     actionHost: null,
     recycleCallbackIds: [],
     nextRecycleCallbackId: 0,
@@ -354,6 +360,7 @@ export function createBuffInstanceState<Key extends string>(
     sourceActionId: identity.definitionId,
     definitionOwnerId: identity.sourceId,
     partTransferInfo: null,
+    inheritedTargetGroups: null,
     sourceAttributeOwnerId: null,
     skillCastInfo: null,
     priority: 0,

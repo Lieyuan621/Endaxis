@@ -8,7 +8,7 @@ import type {
 import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
 import type { ResolvedActionSequence } from '../../compiler/combatProgram';
 import { AbilityEventDispatcher } from '../events/abilityEventDispatcher';
-import { lifecycleAbilityEvent, type AbilityEventPayloadMap } from '../events/combatAbilityEvent';
+import { abilityEventTargetId, type AbilityEventPayloadMap } from '../events/combatAbilityEvent';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { ActionBlackboardOperationExecutor } from '../actions/actionBlackboardOperationExecutor';
 import { PassiveAbilityEventRuntime } from './passiveAbilityEventRuntime';
@@ -423,7 +423,7 @@ it('当前响应步骤已进入时不重启本序列，仍恢复外层事件目�
       evaluate: () => true,
       execute: (_step, context) => {
         const target = context?.event
-          ? (lifecycleAbilityEvent(context.event)?.payload.targetId ?? '')
+          ? (abilityEventTargetId(context.event) ?? '')
           : '';
         seen.push(target);
         if (!nested) {

@@ -242,8 +242,17 @@ function readPlacementPolicy(
   );
   if (!keys.includes(firstSkillKey) || !keys.includes(terminalSkillKey))
     throw new Error(`${policyPath}: endpoints must belong to skillKeys`);
+  const fallback = requireArray(policy.fallback, `${policyPath}.fallback`).map((value, index) =>
+    requireNonEmptyString(value, `${policyPath}.fallback[${index}]`),
+  );
+  if (
+    fallback[0] !== firstSkillKey ||
+    fallback.at(-1) !== terminalSkillKey ||
+    fallback.some(key => !keys.includes(key))
+  )
+    throw new Error(`${policyPath}: fallback sequence must use group skills and match endpoints`);
   const maxSegments = requireNonNegativeInteger(policy.maxSegments, `${policyPath}.maxSegments`);
-  if (maxSegments < keys.length || maxSegments < 1)
+  if (maxSegments < fallback.length || maxSegments < 1)
     throw new Error(`${policyPath}.maxSegments: must cover the fallback sequence`);
   return {
     placementPolicy: {
@@ -251,11 +260,7 @@ function readPlacementPolicy(
       firstSkillKey,
       terminalSkillKey,
       maxSegments,
-      fallback: requireGroupIdentity(
-        policy.fallback,
-        ['sequence'] as const,
-        `${policyPath}.fallback`,
-      ),
+      fallback,
     },
   };
 }

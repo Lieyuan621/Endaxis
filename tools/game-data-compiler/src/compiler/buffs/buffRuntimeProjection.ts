@@ -17,7 +17,7 @@ import { simplifyNativeSequences } from '../optimization/nativeSequenceOptimizat
 import { projectGameplayTags } from '../combatProjectionCommon.ts';
 import {
   buffPresentationNames,
-  buffPresentationIcons,
+  buffPresentationOverrides,
 } from '../../../config/buffPresentationNames.ts';
 import { createActionGraphBuilder } from '../actions/actionGraphBuilder.ts';
 import { buffHasNoAffixIdentityWriter } from './buffCastIdentityProof.ts';
@@ -73,6 +73,7 @@ import {
   isPartyExceptOwnerInstantSearch,
   isPartyInstantSearch,
   scalarOperand,
+  requireActionOwnerProjection,
   actionValueOperand,
   DAMAGE_TYPES,
 } from '../combatProjectionCommon.ts';
@@ -81,6 +82,7 @@ import { compileEventCondition } from '../conditions/combatConditionProjection.t
 import { canOmitUnusedNativeCondition } from '../optimization/nativeConditionUsage.ts';
 import { assertPresentationCalculationIsolation } from '../scenario/presentationCalculationIsolation.ts';
 import {
+  collectRandomPointTargetGroupKeys,
   compareKnownNumbers,
   isStaticControlledOperatorWrite,
   isStaticZeroSpacePointWrite,
@@ -409,6 +411,7 @@ export function compileBuffRuntimeDefinitionSource(
     }
   }
   const projectionContextOverrides = {
+    randomPointTargetGroupKeys: collectRandomPointTargetGroupKeys(targetGroupWritesByKey),
     materializedTargetGroupKeys: collectMaterializedSequenceTargetGroups(allSequences),
     unobservedTargetQueryOutputs: collectUnobservedTargetQueryOutputs(allSequences),
     graph,
@@ -567,43 +570,50 @@ export function compileBuffRuntimeDefinitionSource(
         projectBuffAbilityEvent(event, sourcePath, contextOverrides.fixedBuffOwnerTarget),
       compileSequence: (sequence, _sequencePath, abilityEvent) =>
         compileLinearSequence(
-          omitFixedExternalOperatorHitEnemyGuard(
-            sequence,
-            abilityEvent,
-            contextOverrides.fixedBuffOwnerTarget,
-          ),
+          sequence,
           visualOnlyIds,
-          abilityEvent === 'OnBeforeAddedBuff'
+          abilityEvent === 'OnCollectAddedBuffBbValue' ||
+            abilityEvent === 'OnCollectOutputBuffBbValue'
             ? {
-                ...BUFF_BEFORE_ADDED_CONTEXT,
+                ...BUFF_ACTION_CONTEXT,
                 abilityEntityQueries,
                 ...abilityEventProjectionContext,
+                // 两个收集事件都没有 Target；输入是各自发布者。
+                actionTargetTarget:
+                  abilityEvent === 'OnCollectAddedBuffBbValue' ? 'eventTarget' : 'eventSource',
+                nativeAbilityEvent: abilityEvent,
               }
-            : abilityEvent === 'OnBeforeTakeDamage' ||
-                abilityEvent === 'OnBeforeTakePhysicalInfliction'
+            : abilityEvent === 'OnBeforeAddedBuff'
               ? {
-                  ...BUFF_BEFORE_TAKE_CONTEXT,
+                  ...BUFF_BEFORE_ADDED_CONTEXT,
                   abilityEntityQueries,
                   ...abilityEventProjectionContext,
                 }
-              : (abilityEvent === 'OnOutputDamage' ||
-                    abilityEvent === 'OnBeforeOutputDamage' ||
-                    abilityEvent === 'OnBeforeDamageAction') &&
-                  contextOverrides.fixedBuffOwnerTarget === 'caster'
+              : abilityEvent === 'OnBeforeTakeDamage' ||
+                  abilityEvent === 'OnBeforeTakePhysicalInfliction'
                 ? {
-                    ...BUFF_ACTION_CONTEXT,
-                    // 固定木桩场景中干员输出伤害的受击目标只能是唯一敌人。保留事件
-                    // 条件与动态标签筛选，但无需把已知身份降级成不可投影的 eventTarget。
-                    actionTargetTarget: 'enemy' as const,
+                    ...BUFF_BEFORE_TAKE_CONTEXT,
                     abilityEntityQueries,
                     ...abilityEventProjectionContext,
                   }
-                : {
-                    ...BUFF_ACTION_CONTEXT,
-                    abilityEntityQueries,
-                    ...abilityEventProjectionContext,
-                    nativeAbilityEvent: abilityEvent,
-                  },
+                : (abilityEvent === 'OnOutputDamage' ||
+                      abilityEvent === 'OnBeforeOutputDamage' ||
+                      abilityEvent === 'OnBeforeDamageAction') &&
+                    contextOverrides.fixedBuffOwnerTarget === 'caster'
+                  ? {
+                      ...BUFF_ACTION_CONTEXT,
+                      // 固定木桩场景中干员输出伤害的受击目标只能是唯一敌人。保留事件
+                      // 条件与动态标签筛选，但无需把已知身份降级成不可投影的 eventTarget。
+                      actionTargetTarget: 'enemy' as const,
+                      abilityEntityQueries,
+                      ...abilityEventProjectionContext,
+                    }
+                  : {
+                      ...BUFF_ACTION_CONTEXT,
+                      abilityEntityQueries,
+                      ...abilityEventProjectionContext,
+                      nativeAbilityEvent: abilityEvent,
+                    },
           extensions,
         ),
       isEmptySequence: sequence => sequence.$sequence === null,
@@ -667,17 +677,11 @@ export function compileBuffRuntimeDefinitionSource(
     ...(source.presentation.hasIcon ||
     source.presentation.spritePath !== '' ||
     buffPresentationNames[source.graph.buffId] ||
-    buffPresentationIcons[source.graph.buffId]
+    buffPresentationOverrides[source.graph.buffId]
       ? {
           presentation: {
             ...compilePresentation(source.presentation),
-            ...(buffPresentationIcons[source.graph.buffId]
-              ? {
-                  icon: buffPresentationIcons[source.graph.buffId]!,
-                  visible: true,
-                  showInSquadIcon: true,
-                }
-              : {}),
+            ...buffPresentationOverrides[source.graph.buffId],
             ...(buffPresentationNames[source.graph.buffId]
               ? { nameKey: buffPresentationNames[source.graph.buffId] }
               : {}),
@@ -705,7 +709,10 @@ export function compileBuffRuntimeDefinitionSource(
       });
       if (
         modifier.modifyAttributeType === 'Specific' &&
-        !isCombatRuntimeAttributeRelevant(modifier.attributeType)
+        !isCombatRuntimeAttributeRelevant(
+          modifier.attributeType,
+          projectionContextOverrides.fixedBuffOwnerTarget,
+        )
       )
         return [];
       const attribute =
@@ -760,41 +767,6 @@ export function compileBuffRuntimeDefinitionSource(
     ...(igniteEventResponses.length === 0 ? {} : { igniteEventResponses }),
   };
   return { ...definition, actionGraph: { main: graph.finish(), macros: {} } };
-}
-
-/**
- * 当前 operatorHit 外部事实固定由唯一敌人发出，且输入协议不表示 Dot / RemainArea。
- * 角色受击监听开头的对应类型与 ExceptAny 守卫因此恒真；只删除这些无黑板副作用的精确前缀，
- * 不推广到敌方 Buff、其他事件或其他掩码。
- */
-function omitFixedExternalOperatorHitEnemyGuard(
-  sequence: NativeSequenceSource<KnownNativeActionLeafSource>,
-  abilityEvent: string | number,
-  fixedBuffOwnerTarget?: 'caster' | 'enemy' | 'currentAbilityEntity',
-): NativeSequenceSource<KnownNativeActionLeafSource> {
-  if (
-    fixedBuffOwnerTarget !== 'caster' ||
-    (abilityEvent !== 'OnBeforeTakeDamage' && abilityEvent !== 'OnTakeDamage')
-  ) {
-    return sequence;
-  }
-  let omitted = 0;
-  for (const node of sequence.actions) {
-    if (node.body.kind !== 'leaf' || node.body.value.family !== 'condition') break;
-    const condition = node.body.value.action;
-    const isEnemySourceGuard =
-      condition.kind === 'objectTypeMatch' &&
-      condition.target.targetSource === 'Target' &&
-      condition.target.targetGroupKey === '' &&
-      condition.objectTypeMask === 'Enemy';
-    const isDirectDamageGuard =
-      condition.kind === 'damageDecorateMask' &&
-      condition.checkType === 'ExceptAny' &&
-      condition.mask === 268435456 + 536870912;
-    if (!isEnemySourceGuard && !isDirectDamageGuard) break;
-    omitted += 1;
-  }
-  return omitted === 0 ? sequence : { ...sequence, actions: sequence.actions.slice(omitted) };
 }
 
 function compileBuffDamageModifiers(
@@ -950,18 +922,24 @@ function compileBuffPoiseModifiers(
       if (
         side === null ||
         processor.modifier.modifyAttributeType !== 'Specific' ||
-        processor.modifier.attributeType !== expectedAttribute ||
-        processor.modifier.formulaItem !== 'BaseAddition'
+        processor.modifier.attributeType !== expectedAttribute
       ) {
         throw new Error(
           `poiseModifier[${modifierIndex}].poiseProcessors[${processorIndex}]: unsupported instant poise attribute modifier`,
         );
       }
+      const compiled = compileResolvedAttributeModifierSource({
+        sourcePath: `poiseModifier[${modifierIndex}].poiseProcessors[${processorIndex}]`,
+        modifyAttributeType: processor.modifier.modifyAttributeType,
+        attributeType: processor.modifier.attributeType,
+        formulaItem: processor.modifier.formulaItem,
+        value: 0,
+      });
       return {
         kind: 'modifyPoiseScalar' as const,
         timing: 'beforeCalculation' as const,
         side,
-        addition: scalarOperand(processor.modifier.parameter),
+        values: { slot: compiled.slot, value: scalarOperand(processor.modifier.parameter) },
       };
     });
     return { enabledSide, ...(condition === undefined ? {} : { condition }), processors };
@@ -1091,9 +1069,7 @@ function compileLinearSequence(
       .every(
         node =>
           node.body.kind !== 'leaf' ||
-          ['presentation', 'presentationCalculation', 'spatial', 'selfDefense'].includes(
-            node.body.value.family,
-          ),
+          ['presentation', 'presentationCalculation', 'spatial'].includes(node.body.value.family),
       )
   ) {
     return { $sequence: null };
@@ -1180,6 +1156,38 @@ function createBuffSequenceProjection(
     node: NativeActionNodeSource<KnownNativeActionLeafSource>,
     partyTargetGroups: ReadonlyMap<string, BuffProjectionTargetGroup>,
   ) => {
+    if (node.body.kind === 'leaf' && node.body.value.family === 'healthFloor') {
+      const action = node.body.value.action;
+      requireActionOwnerProjection(context, node.sourcePath);
+      const afterSet = compileActionSequenceProgram(action.actionAfterSet, {
+        ...createBuffSequenceProjection(
+          visualOnlyIds,
+          {
+            ...context,
+            // 原生传入同一InputTarget，但显式清空EventContext；不可沿用受击事件专属投影。
+            restrictEventSourceTargetProjection: false,
+            modifierContext: undefined,
+          },
+          extensions,
+        ),
+        initialState: () => partyTargetGroups,
+        resultIsConsumed: false,
+      });
+      return {
+        steps: [
+          {
+            kind: 'setHealthFloor' as const,
+            parameters: {
+              target: 'actionOwner' as const,
+              mode: action.useRatio ? ('maxHealthRatio' as const) : ('absolute' as const),
+              value: actionValueOperand(action.useRatio ? action.floorRatio : action.floorValue),
+            },
+            afterSet,
+          },
+        ],
+        state: partyTargetGroups,
+      };
+    }
     if (node.body.kind === 'leaf' && node.body.value.family === 'tagQueryListener') {
       const action = node.body.value.action;
       const query =
@@ -1554,6 +1562,30 @@ function createBuffSequenceProjection(
     },
     compileForEach: (node, partyTargetGroups) => {
       if (
+        node.body.target.targetSource === 'InstantSearch' &&
+        node.body.target.finderType === 'CharacterTeamFinder' &&
+        !node.body.action.onlyExecuteWhenSourceIsMainCharacter &&
+        !node.body.action.onlyExecuteWhenSourceIsGuard
+      ) {
+        const targets = projectActionTargetQuery(
+          node.body.target,
+          context,
+          `${node.sourcePath}.target`,
+        );
+        const body = compileActionSequenceProgram(node.body.action, {
+          ...createBuffSequenceProjection(
+            visualOnlyIds,
+            { ...context, actionTargetTarget: 'currentOperator' },
+            extensions,
+          ),
+          initialState: () => partyTargetGroups,
+        });
+        return {
+          steps: [{ kind: 'forEachContextTarget', parameters: { targets }, body }],
+          state: partyTargetGroups,
+        };
+      }
+      if (
         node.body.target.targetSource === 'Context' &&
         [
           'party',
@@ -1564,12 +1596,10 @@ function createBuffSequenceProjection(
           'casterAndControlledOperator',
           'casterAndLowestHealthRatioOperatorExceptCaster',
         ].includes(partyTargetGroups.get(node.body.target.targetGroupKey) ?? '') &&
-        node.body.target.finderType === null &&
-        node.body.target.validatorTypes.length === 0 &&
-        node.body.target.postProcessorTypes.length === 0 &&
         !node.body.action.onlyExecuteWhenSourceIsMainCharacter &&
         !node.body.action.onlyExecuteWhenSourceIsGuard
       ) {
+        // GetTargetsView 的 Context 分支只读取已保存集合，不运行残留的 selector。
         const body = compileActionSequenceProgram(node.body.action, {
           ...createBuffSequenceProjection(
             visualOnlyIds,
@@ -1945,6 +1975,8 @@ function compileEventListenerNode(
       if (
         event === 'addedBuff' ||
         event === 'beforeAddedBuff' ||
+        event === 'beforeAddedBuffBeforeImmune' ||
+        event === 'beforeOutputBuffBeforeImmune' ||
         event === 'outputBuff' ||
         event === 'beforeTakeDamage'
       )
@@ -1960,13 +1992,15 @@ function compileEventListenerNode(
           {
             ...context,
             // Added/BeforeTakeDamage 在接收者发布且 Target 是来源；Output 在来源发布且
-            // Target 是接收者。外部 operatorHit 只陈述受击事实，不制造敌方伤害或扣血。
+            // Target 是接收者。来源可能是敌人，也可能是合约或角色自身，不能静态绑定为敌人。
             actionTargetTarget:
               event === 'beforeTakeDamage'
-                ? 'enemy'
-                : event === 'outputBuff'
+                ? 'eventSource'
+                : event === 'outputBuff' || event === 'beforeOutputBuffBeforeImmune'
                   ? 'eventTarget'
-                  : event === 'addedBuff' || event === 'beforeAddedBuff'
+                  : event === 'addedBuff' ||
+                      event === 'beforeAddedBuff' ||
+                      event === 'beforeAddedBuffBeforeImmune'
                     ? 'eventSource'
                     : context.actionTargetTarget,
           },
@@ -1988,11 +2022,8 @@ function compileEventListenerNode(
       : [
           {
             key: program.sequence.key,
-            // 原生事件直达公共订阅；受击事实仍是木桩模型的显式输入桥接。
-            event:
-              program.event === 'beforeTakeDamage'
-                ? { kind: 'operatorHit' as const }
-                : { kind: 'abilityEvent' as const, event: program.event },
+            // 临时监听注册到宿主的实际能力事件，保留受伤前后的阶段差异。
+            event: { kind: 'abilityEvent' as const, event: program.event },
             phase: 'dataAction' as const,
             priority: program.priority,
             sequence: program.sequence.sequence,
@@ -2049,9 +2080,7 @@ function isCombatInvisibleTogglable(
         ((child.body.value.family === 'inputControl' && !isBuffAttackMapping(child)) ||
           child.body.value.family === 'presentation' ||
           (onlyReadsMoveInput &&
-            ['spatial', 'presentationCalculation', 'selfDefense'].includes(
-              child.body.value.family,
-            ))),
+            ['spatial', 'presentationCalculation'].includes(child.body.value.family))),
     )
   );
 }

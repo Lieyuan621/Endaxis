@@ -36,11 +36,16 @@ describe('EnemySuperArmorConditionExecutor', () => {
         value: { kind: 'constant', value: 30 },
       }),
     ).toThrow('enemySuperArmorCompare requires a combat operation context');
-    expect(executor.evaluate({
-      kind: 'enemySuperArmorCompare',
-      target: { kind: 'inputTarget' },
-      operator: 'equal',
-      value: numberInput({ kind: 'blackboard', key: 'missing' }),
-    }, { blackboard: new ActionBlackboard() })).toBe(false);
+    expect(
+      executor.evaluate(
+        {
+          kind: 'enemySuperArmorCompare',
+          target: { kind: 'inputTarget' },
+          operator: 'equal',
+          value: numberInput({ kind: 'blackboard', key: 'missing' }),
+        },
+        { blackboard: new ActionBlackboard() },
+      ),
+    ).toBe(false);
   });
 });

@@ -123,9 +123,12 @@ it('正式下落攻击从起跳经过起手再执行落地技能', async () => {
     const preview = library
       .flatMap(entry => entry.skills)
       .find(skill => skill.skillKey === segment.key)!;
-    expect(skillPlacementDisplayFrames(preview.timelineBlockFrames), operator.slug).toBe(
-      boundary!.frame + 1,
-    );
+    // 技能库展示候选接续时长；例如伊冯落地时只有保留普攻段数才能走早期窗口。
+    // 实际边界由当前输入映射决定，不能用预览窗口替代运行时判定。
+    expect(
+      skillPlacementDisplayFrames(preview.timelineBlockFrames),
+      operator.slug,
+    ).toBeLessThanOrEqual(boundary!.frame + 1);
     const inputHistory = new CombatReceiptHistory();
     for (const entry of result.receiptEntries) inputHistory.append(entry);
     const timing = new SkillInputGroupTiming(inputHistory, () => 1);
@@ -247,6 +250,34 @@ it('祀正式定义可放置全部技能并完成模拟', async () => {
     ['chr_0036_jsspsi_normal_skill', 'chr_0036_jsspsi_normal_skill_1'].includes(cast.id),
   ).map((cast, index) => ({ ...cast, placement: { startFrame: index * 60 } }));
   const returningSession = createEditorSimulationService().createCombatSession(returning);
+  const attackingSoul = structuredClone(returning);
+  attackingSoul.tracks[1] = {
+    ...structuredClone(returning.tracks[0]!),
+    id: 'perlica',
+    operator: { ...returning.tracks[0]!.operator!, operatorSlug: 'perlica', talentStates: {} },
+    skillCasts: [150, 1000].map((startFrame, index) => ({
+      id: `attack-soul:${index}`,
+      source: {
+        kind: 'operatorSkill',
+        skillGroupKey: 'basicAttack',
+        skillKey: perlica.skillGroups.find(group => group.key === 'basicAttack')!.skillIds[0]!,
+      },
+      placement: { startFrame },
+    })),
+  };
+  const soulAttacks = await createEditorSimulationService().simulate(attackingSoul, 1100);
+  const hits = (castId: string) =>
+    soulAttacks.receiptEntries.filter(
+      entry => entry.event === 'DamageApplied' && entry.data?.castId === castId,
+    );
+  expect(hits('attack-soul:0').length).toBeGreaterThan(0);
+  expect(hits('attack-soul:0').some(entry => entry.data?.transferredSourceId !== undefined)).toBe(
+    true,
+  );
+  expect(hits('attack-soul:1').length).toBeGreaterThan(0);
+  expect(hits('attack-soul:1').every(entry => entry.data?.transferredSourceId === undefined)).toBe(
+    true,
+  );
   returningSession.advanceToFrame(90);
   const returningFork = returningSession.fork(returningSession.runtime.save());
   returningSession.advanceToFrame(900);
@@ -2279,7 +2310,8 @@ describe('registered generated operators', () => {
                   {
                     kind: 'heal',
                     parameters: {
-                      target: 'controlledOperator',
+                      target: { kind: 'mainCharacter' },
+                      healer: { kind: 'source' },
                       tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
                       attribute: 'intellect',
                       multiplier: { kind: 'constant', value: 0.3 },

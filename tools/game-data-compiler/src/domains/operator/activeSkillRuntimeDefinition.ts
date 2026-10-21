@@ -26,7 +26,6 @@ export type CompiledOperatorActiveSkillRuntimeDefinitionSource = Readonly<
     | 'element'
     | 'useSkillGroupIcon'
     | 'timelineBlockFrames'
-    | 'timelineContinuationSkillId'
     | 'timelineBlockFollowUpSkillId'
     | 'naturalDurationFrames'
     | 'cooldownFrames'
@@ -50,7 +49,6 @@ export type CompiledOperatorActiveSkillRuntimeDefinitionSource = Readonly<
   readonly actionGraph: ActionGraphResourceDefinition;
   /** 仅供整名技能组装配；生成最终 OperatorDefinition 前必须移除。 */
   readonly allowNextSkillTransitions: CompiledActiveSkillRuntimeProjectionSource['allowNextSkillTransitions'];
-  readonly inputWindows?: SkillDefinition['inputWindows'];
   /** 默认施放的目标；省略时由调用方提供，不能回退到敌人。 */
   readonly defaultTarget?: 'enemy' | 'owner';
   readonly smartTarget?: 'enemy' | 'input' | 'trigger';
@@ -73,7 +71,7 @@ export function compileOperatorActiveSkillRuntimeDefinitionSource(input: {
     ...input,
     context: {
       ...input.context,
-      preserveSkillOperableBoundary: input.skillType === 'basicAttack',
+      preserveSkillInputActions: true,
     },
   });
   if (runtime.skillId !== input.key) {
@@ -106,7 +104,6 @@ export function compileOperatorActiveSkillRuntimeDefinitionSource(input: {
     offsetRecordFrame: runtime.offsetRecordFrame,
     ...(runtime.dontInterruptCombo ? { dontInterruptCombo: true } : {}),
     allowNextSkillTransitions: runtime.allowNextSkillTransitions,
-    ...(runtime.inputWindows === undefined ? {} : { inputWindows: runtime.inputWindows }),
     costFrame,
     scheduledSequences: runtime.scheduledSequences.map(item => ({
       startFrame: item.startFrame,

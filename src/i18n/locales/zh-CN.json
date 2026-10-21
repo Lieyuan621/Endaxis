@@ -135,7 +135,6 @@
       "timing": "时长与接续",
       "targeting": "目标与强化状态",
       "casting": "消耗与施放条件",
-      "inputWindows": "输入与中断窗口",
       "variables": "变量",
       "effects": "效果",
       "ownedResources": "内部资源"
@@ -543,7 +542,7 @@
       "dodgeSkillId": "闪避技能",
       "startSkillId": "起始技能",
       "endSkillId": "落地技能",
-      "skillIds": "技能段",
+      "skillIds": "允许的技能",
       "blackboard": "变量初值",
       "entityBlackboard": "实体变量初值",
       "traits": "词条",
@@ -587,19 +586,16 @@
       "enhancementStateBuffId": "强化状态",
       "smartTarget": "自动锁定目标",
       "timelineBlockFrames": "技能块宽度（帧）",
-      "timelineContinuationSkillId": "下一段技能",
       "timelineBlockFollowUpSkillId": "块宽参照技能",
       "naturalDurationFrames": "技能自然时长（帧）",
       "exclusiveFrame": "不可中断帧数",
       "offsetRecordFrame": "连段记录帧",
       "dontInterruptCombo": "保留普攻连段",
-      "inputWindows": "输入窗口",
       "commandMappings": "普攻输入对应技能",
       "input": "输入操作",
       "allowedNextSkills": "允许提前接续的技能",
       "hasConditionalActions": "包含条件控制的输入规则",
       "targetSkillId": "目标技能",
-      "skillIds": "允许的技能",
       "availability": "释放条件",
       "costs": "资源消耗",
       "costFrame": "扣费帧",
@@ -661,6 +657,17 @@
     "noMatchingNodes": "没有匹配的节点",
     "addNode": "添加节点…",
     "options": {
+      "beforeAddedBuffBeforeImmune": "接收Buff前（免疫检查前）",
+      "beforeOutputBuffBeforeImmune": "输出Buff前（免疫检查前）",
+      "funnel": "施术单元",
+      "pistol": "手铳",
+      "lance": "长柄武器",
+      "claym": "双手剑",
+      "sword": "单手剑",
+      "buffFilter": "Buff 筛选",
+      "exclude": "排除目标",
+      "ignite": "点燃结束",
+      "dispelled": "被驱散",
       "fixed": "固定伤害",
       "definite": "确定值",
       "none": "无",
@@ -878,6 +885,27 @@
     "scopeUnknown": "尚未连接，作用域未确定",
     "searchNodes": "搜索节点",
     "fields": {
+      "useDirectValue": {
+        "name": "使用直接值",
+        "help": "直接赋值，或按当前值乘倍率再加增量计算。"
+      },
+      "directValue": {
+        "name": "直接值",
+        "help": "直接赋值时使用的数值。"
+      },
+      "afterSet": {
+        "name": "设置后执行"
+      },
+      "weaponTypes": {
+        "name": "武器类型"
+      },
+      "trigger": {
+        "name": "触发目标",
+        "help": "连携候选额外记录的触发目标；省略时不执行该查询。"
+      },
+      "attacker": {
+        "name": "攻击来源"
+      },
       "replacePartsWithMainBodies": {
         "name": "将部件替换为本体"
       },
@@ -1069,6 +1097,10 @@
         "name": "保留来源技能",
         "help": "使新效果仍归属于创建它的这次技能施放。"
       },
+      "passTargetGroupsToBuff": {
+        "name": "复制目标组",
+        "help": "创建状态时复制当前的命名目标组；后续修改互不影响。"
+      },
       "source": {
         "name": "来源",
         "help": "选择产生此效果的对象，用于来源判断和效果归属。"
@@ -1236,6 +1268,9 @@
         "name": "始终继续",
         "help": "即使当前动作未成功，也继续后续动作。"
       },
+      "attributes": {
+        "name": "属性覆盖"
+      },
       "attribute": {
         "name": "属性"
       },
@@ -1293,6 +1328,9 @@
       "items": {
         "name": "读取项",
         "help": "按顺序配置要读取的数值和保存变量。"
+      },
+      "requireBuff": {
+        "name": "需要匹配 Buff"
       },
       "query": {
         "name": "Buff 筛选",
@@ -1733,8 +1771,14 @@
         "name": "父目标组",
         "help": "在此目标组中查找子目标。"
       },
-      "first": { "name": "第一组目标", "help": "参与相等比较的第一组查询结果。" },
-      "second": { "name": "第二组目标", "help": "参与相等比较的第二组查询结果。" },
+      "first": {
+        "name": "第一组目标",
+        "help": "参与相等比较的第一组查询结果。"
+      },
+      "second": {
+        "name": "第二组目标",
+        "help": "参与相等比较的第二组查询结果。"
+      },
       "child": {
         "name": "查找对象",
         "help": "在目标组中查找的对象。"
@@ -1864,6 +1908,13 @@
       },
       "level": {
         "name": "驱散等级"
+      },
+      "normalOnly": {
+        "name": "仅禁用普通段"
+      },
+      "healer": {
+        "name": "治疗者",
+        "help": "独立选择治疗者；当前目标表示本次循环的被治疗者。"
       }
     },
     "help": "查看说明",
@@ -1877,6 +1928,10 @@
       "saveTransferredSource": {
         "name": "保存转移来源",
         "help": "将首个来源目标对应的转移部位保存到目标组；没有转移记录时保留原目标。"
+      },
+      "findNextAliveCharacterBySquadSlot": {
+        "name": "查找下一位存活干员",
+        "help": "从指定队伍槽位的下一槽开始循环查找存活干员，跳过空槽与死亡干员，最终可回到原槽位。失败时保留原目标组。"
       },
       "findCharacterBySquadSlot": {
         "name": "按队伍位置查找干员",
@@ -1897,6 +1952,10 @@
       "listenForTagQuery": {
         "name": "监听标签匹配",
         "help": "监听标签查询结果变化，并按匹配状态执行回调。"
+      },
+      "eventBuffFinishReasonIn": {
+        "name": "检查 Buff 结束原因",
+        "help": "检查当前 Buff 结束或增强变化事件中的结束原因是否匹配。"
       },
       "eventAbilityEntityFinishReasonIn": {
         "name": "检查能力实体结束原因",
@@ -2086,6 +2145,22 @@
         "name": "终结技时间膨胀",
         "help": "在本动作期间减慢全局时间，施放者不受影响。"
       },
+      "changeOriginSkillToEventContextSkill": {
+        "name": "替换为事件来源技能",
+        "help": "将当前 Buff 或技能环境的来源施法替换为当前技能事件的施法信息。"
+      },
+      "storeCollectedBuffValue": {
+        "name": "读取收集Buff黑板",
+        "help": "将当前收集中的Buff黑板值写入动作黑板。"
+      },
+      "modifyCollectedBuffValue": {
+        "name": "修改收集Buff黑板",
+        "help": "在新Buff解析持续时间和属性前修改其黑板值。"
+      },
+      "terminateAddingBuff": {
+        "name": "取消Buff施加",
+        "help": "取消当前可取消的施加事件，仍继续执行后续动作。"
+      },
       "hideUi": {
         "name": "隐藏界面或屏蔽输入",
         "help": "在动作期间隐藏游戏界面，或仅屏蔽玩家输入。"
@@ -2093,6 +2168,18 @@
       "setIgnoreGlobalTimeScale": {
         "name": "忽略全局时间流速",
         "help": "让选定召唤物不受全局时间膨胀影响，或恢复跟随全局时间。"
+      },
+      "storeCharacterTypeCode": {
+        "name": "保存干员属性编号",
+        "help": "读取目标查询中首个角色的属性编号并写入黑板：热、电、寒冷、自然、物理分别为0至4。无角色目标时返回失败并保留原值。"
+      },
+      "storeProfession": {
+        "name": "保存干员职业编号",
+        "help": "读取目标查询中首个角色的原生职业枚举编号并写入黑板，无角色或职业信息时返回失败并保留原值。"
+      },
+      "storeSquadSlot": {
+        "name": "保存干员队伍槽位",
+        "help": "读取目标查询中首个角色所在的队伍槽位（从0开始）并写入黑板，非队员或缺少目标时返回失败并保留原值。"
       },
       "storeCharacterTypeId": {
         "name": "读取角色类型",
@@ -2123,12 +2210,16 @@
         "help": "计算两个输入值，将结果保存到变量。"
       },
       "storeSourceAttributeValue": {
-        "name": "读取来源属性",
-        "help": "读取来源对象的属性，按除数、乘数和基础值换算后保存。"
+        "name": "读取属性值",
+        "help": "读取查询首个目标的属性，按取整、乘数和基础值换算后保存。"
       },
       "storeEntityPropertyValue": {
         "name": "读取生命或失衡值",
         "help": "读取目标的生命或失衡值，换算后保存到变量。"
+      },
+      "overrideRawAttributes": {
+        "name": "覆盖原始属性",
+        "help": "在动作期间覆盖目标的原始属性，仍应用属性修正；结束时恢复。"
       },
       "setHealthFloor": {
         "name": "设置生命下限",
@@ -2301,6 +2392,14 @@
       "characterTypeIn": {
         "name": "元素类型匹配？",
         "help": "检查目标的元素类型是否在列表中。"
+      },
+      "globalBuffCountCompare": {
+        "name": "比较全局Buff层数",
+        "help": "统计战斗级目录中同ID的有效父实例，不按队员镜像或来源拆分。"
+      },
+      "operatorWeaponTypeIn": {
+        "name": "武器类型匹配？",
+        "help": "检查查询首个角色的武器类型；无目标或非角色时不匹配。"
       },
       "operatorRoleIn": {
         "name": "职业匹配？",
@@ -2557,6 +2656,18 @@
       "interruptCurrentSkill": {
         "name": "打断当前技能",
         "help": "结束所选目标正在执行的技能。"
+      },
+      "queueComboLock": {
+        "name": "锁定连携队列",
+        "help": "在队尾插入限时锁。此前已打开的窗口仍可释放，之后的窗口须等待锁结束。"
+      },
+      "disableNormalSkill": {
+        "name": "禁用战技",
+        "help": "在动作生效期间添加战技禁用标签，可允许追加战技继续释放。"
+      },
+      "limitMovementGait": {
+        "name": "限制步态",
+        "help": "写入宿主共用步态限制；最大步态低于冲刺时，闪避输入会标为强制执行。全部限制动作结束后清除。"
       }
     },
     "open": "编辑技能图",
@@ -3085,9 +3196,6 @@
       "comboStage": "当前可释放的连携段数或形态与{skill}不符。",
       "groupNotStarted": "连续组未能开始，组内后续的{skill}未执行。",
       "groupInterrupted": "连续组已被打断，组内后续的{skill}未执行。",
-      "conflictingSkillChanges": "多个效果同时改变了技能，模拟暂时无法判断此时会触发哪一个。",
-      "conditionalSkillChange": "技能会随条件变化，模拟暂时无法判断此时应触发哪一个。",
-      "specialAttackUnknown": "模拟暂时无法判断此时应使用普通攻击、下落攻击还是处决。",
       "definitionUnavailable": "无法读取该技能的数据，未能模拟。请重新放置技能；若使用了自定义技能，请检查其设置。",
       "unknown": "模拟暂时无法判断该技能是否能在此时释放。",
       "stillSimulated": "模拟程序将强制执行{skill}。"
@@ -3248,6 +3356,7 @@
         "skillErrors": "技能错误提示",
         "hitMarkers": "伤害判定点",
         "comboWindows": "连携窗口",
+        "comboWindowsLocked": "连携窗口（被锁定）",
         "switchMarkers": "换人标记",
         "effectLinks": "连线"
       },
@@ -3484,7 +3593,6 @@
       "trackOption": "轨道 {index} · {name}",
       "results": {
         "noPublishedResult": "暂无已发布的模拟结果",
-        "executed": "闪避输入已执行",
         "interruptedSkill": "中断技能：{skillName}",
         "operatorNotControlled": "目标干员不是当前主控；仍按时间轴声明强制执行",
         "perfectDodgeDashBlocked": "仍处于极限闪避技能的再次闪避禁用窗口；仍按时间轴声明强制执行",
@@ -3492,7 +3600,7 @@
         "multiDashLimitReached": "已达到当前连续闪避次数上限；仍按时间轴声明强制执行",
         "ultimateCannotDash": "终结技当前尚未开放闪避；仍按时间轴声明强制执行",
         "inImmobilized": "当前处于定身状态；仍按时间轴声明强制执行",
-        "inDisableDash": "当前标签状态禁止闪避；仍按时间轴声明强制执行",
+        "inDisableDash": "禁止闪避\n模拟程序将强制执行闪避。",
         "hasSuperArmor": "当前持有霸体标签；仍按时间轴声明强制执行",
         "playerActionDisabled": "当前玩家动作开关禁止闪避；仍按时间轴声明强制执行",
         "movementGaitTooLow": "当前移动步态不允许闪避；仍按时间轴声明强制执行",
@@ -3909,7 +4017,6 @@
       },
       "ultimateEnergyMetadata": "终结技能量语义",
       "percentOfMaximum": "按最大能量百分比解释",
-      "recoveryTag": "回能许可标签",
       "ignoreGainMultiplier": "忽略终结技回能效率",
       "factor": "回复系数",
       "nextComboSkillKey": "下一段连携技能键",
@@ -4210,7 +4317,6 @@
         "spGainKind": "区分普通获得与返还。返还的技力再次消费时，不会重复转化为终结技能量。",
         "spGainSource": "标记技力来自普攻、重击或技能，供共享技力获取效率选择对应倍率。",
         "percentOfMaximum": "启用后，变化量按目标最大终结技能量的比例解释，而不是固定点数。",
-        "recoveryTag": "正向终结技能量回复携带的原生许可标签；部分禁回能规则会检查它。",
         "ignoreGainMultiplier": "跳过目标自身的终结技回能效率修正，直接使用当前变化量。",
         "statusKey": "模拟器内部使用的稳定状态身份，不是给用户显示的名称。施加和消耗必须使用同一个键。",
         "statusDuration": "状态持续的模拟帧数。留空表示不由该步骤设置期限；逐等级值只修改当前技能等级。",
@@ -4349,7 +4455,7 @@
         "setHealthFloor": "注册由当前动作生命周期持有的生命下限，动作结束时自动撤销。",
         "modifyActionValue": "修改当前技能释放实例的一个技能变量。",
         "calculateActionValue": "用两个操作数计算结果并写入当前技能技能变量。",
-        "storeSourceAttributeValue": "读取技能来源实体的当前战斗属性，按原生取整与倍率公式写入技能变量。",
+        "storeSourceAttributeValue": "读取查询首个目标的非转化属性，按原生取整与倍率公式写入动作变量；空查询不写入。",
         "changeResource": "按等级配置的数值改变技力或终结技能量。",
         "gainSquadUltimateEnergyFromSkillCost": "根据本次技能实际消耗的技力，为队伍成员换算终结技能量。",
         "gainFinisherSp": "按处决专用规则为全队回复共享技力。",
@@ -4367,7 +4473,7 @@
         "showComboRingQte": "按原生提示时长和有效时长登记精准连携输入窗口。",
         "changeSkillSlot": "切换该稳定技能组下一次释放使用的形态；已经开始的当前释放保持原形态。",
         "changePlayerActionMode": "切换指定玩家语义操作的原生命令模式；结束时可恢复进入步骤前的模式。",
-        "overrideBasicAttackMapping": "在 Buff 动作有效期间将普攻输入指向指定原生技能，优先于技能和模式映射；动作结束时撤销。",
+        "overrideBasicAttackMapping": "在动作有效期间将普攻输入指向指定原生技能，按技能或 Buff 优先级登记；动作结束时撤销。",
         "changeNativeSkillType": "修改指定技能实例的原生可变 SkillType；不改变技能库分组或玩家操作身份。",
         "setCharacterPassiveUiValue": "更新角色专属战斗界面的数值状态；该步骤只产生可追溯的界面语义输出，不修改伤害属性。",
         "listenForCombatEvents": "在外层调度项的起止帧之间注册临时事件监听器。技能结束或被打断时会立即注销。",
@@ -4378,7 +4484,10 @@
         "aura": "光环",
         "copyContextTargets": "复制目标组",
         "interruptCurrentSkill": "中断所选目标正在施放的技能；目标没有正在施放的技能时不产生效果。",
-        "finishOwner": "结束所选召唤物或投射物；结束飞行不会触发投射物的超时技能。"
+        "finishOwner": "结束所选召唤物或投射物；结束飞行不会触发投射物的超时技能。",
+        "queueComboLock": "在队尾插入限时锁。此前已打开的窗口仍可释放，之后的窗口须等待锁结束。",
+        "disableNormalSkill": "在动作生效期间添加战技禁用标签，可允许追加战技继续释放。",
+        "limitMovementGait": "写入宿主共用步态限制，全部限制动作结束后清除。最大步态低于冲刺时影响闪避准入。"
       },
       "damageType": "伤害类型",
       "eventListenerWindowHint": "监听窗口由当前调度序列的开始帧和结束帧决定；事件响应在触发帧同步执行。",
@@ -4488,7 +4597,7 @@
         "storeShieldValue": "保存护盾量",
         "modifyActionValue": "修改动作值",
         "calculateActionValue": "计算动作值",
-        "storeSourceAttributeValue": "保存来源属性值",
+        "storeSourceAttributeValue": "保存属性值",
         "changeResource": "改变资源",
         "gainSquadUltimateEnergyFromSkillCost": "按技能消耗获得终结技能量",
         "gainFinisherSp": "处决回复技力",
@@ -4509,7 +4618,10 @@
         "aura": "光环",
         "copyContextTargets": "复制目标组",
         "interruptCurrentSkill": "中断当前技能",
-        "finishOwner": "结束目标实体"
+        "finishOwner": "结束目标实体",
+        "queueComboLock": "锁定连携队列",
+        "disableNormalSkill": "禁用战技",
+        "limitMovementGait": "限制步态"
       }
     },
     "inspector": {
@@ -5357,7 +5469,7 @@
     "clearInitialVariables": "清空编辑内容",
     "preview": {
       "operationName": "浸蓝测试作战",
-      "note": "前瞻试用版：数值和机制仅供参考，合约上线后存档将自动迁移至正式版词条。",
+      "note": "试用版：行为采用原生 Buff，词条组合和默认数值待正式合约数据确认。",
       "comboLock": "环境：锁闭-锁定连携技",
       "comboDamage": "环境：锁闭-连携技伤害加成",
       "battleLock": "环境：沉寂-锁定战技",
@@ -5365,19 +5477,19 @@
       "tags": {
         "200001": {
           "name": "环境：锁闭",
-          "description": "连携技伤害加成 +{comboDamagePercent}%。全队每施放 {comboCount} 次连携技，为全队添加持续 {lockSeconds} 秒的限时锁。"
+          "description": "连携技伤害加成 +{comboDamagePercent}%。全队每施放 {comboCount} 次连携技，在连携队列中加入持续 {lockSeconds} 秒的锁；锁前已开启的窗口仍可使用。洛茜二段连携不计数。"
         },
         "200002": {
           "name": "环境：沉寂",
-          "description": "技力自然恢复速度提升 {spRecoveryPercent}%，技力获取效率提升 {spGainPercent}%。干员施放战技后锁定战技；全队各施放一次后解除。追猎按连携技计算，多段战技后续段不重复计数。"
+          "description": "技力自然恢复速度提升 {spRecoveryPercent}%，技能带来的技力恢复量提升 {spGainPercent}%。干员施放普通战技后锁定普通战技；全队完成一轮后解除。原生后续段战技不受此锁限制，也不计数。"
         },
         "200003": {
           "name": "环境：逸散",
-          "description": "任意干员施放终结技并支付费用后，清空全队终结技能量。"
+          "description": "任意干员施放终结技并支付费用后，清空其他队员的终结技能量。"
         },
         "200004": {
           "name": "改写：充血",
-          "description": "敌人连续 {healDelaySeconds} 秒未处于破防或法术附着状态后，每秒恢复最大生命值的 {healPercent}%。每秒检查状态，施加附着会重置等待时间。"
+          "description": "敌人不再处于破防或法术附着状态后，等待 {healDelaySeconds} 秒，每秒恢复最大生命值的 {healPercent}%。重新施加这些状态会中止计时和回血。"
         }
       }
     },

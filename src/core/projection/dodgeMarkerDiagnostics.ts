@@ -5,7 +5,6 @@ import { DODGE_FORCED_REASONS, DODGE_UNKNOWN_REASONS } from '../combat/skills/do
 export type DodgeMarkerMessageCode =
   | (typeof DODGE_FORCED_REASONS)[number]
   | (typeof DODGE_UNKNOWN_REASONS)[number]
-  | 'executed'
   | 'interruptedSkill'
   | 'perfectDodgeDeclared'
   | 'perfectDodgeSkillStarted'
@@ -45,7 +44,6 @@ export function projectDodgeMarkerDiagnostics(
     const append = (code: DodgeMarkerMessageCode) => result.messages.push({ code });
     switch (entry.event) {
       case 'DashInputExecuted': {
-        append('executed');
         if (typeof entry.data?.interruptedSkillId === 'string') {
           const castId = entry.data.interruptedCastId;
           result.messages.push({

@@ -59,6 +59,9 @@ interface Arguments extends ContingencyContractDefinitionSourceArguments {
 }
 
 export interface ContingencyContractSimulationScope {
+  readonly previewBuffRoots?: ReadonlyMap<string, 'caster' | 'enemy'>;
+  /** 仅裁剪合约初始化入口；不能据此删除其他动作调用的共享子定义。 */
+  readonly omittedBuffRootReasons?: ReadonlyMap<string, string>;
   readonly supportedTagIds: ReadonlySet<number>;
   readonly blockedTagReasons: ReadonlyMap<number, string>;
   readonly omittedTagReasons: ReadonlyMap<number, string>;
@@ -115,7 +118,36 @@ function readScope(file: string): ContingencyContractSimulationScope {
       throw new Error(`${file}: tag ${id} is both ${previous} and omitted`);
     classified.set(id, 'omitted');
   }
-  return { supportedTagIds, blockedTagReasons, omittedTagReasons };
+  const previewBuffRoots = new Map<string, 'caster' | 'enemy'>();
+  for (const [id, owner] of Object.entries(
+    requireRecord(value.previewBuffRoots ?? {}, `${file}.previewBuffRoots`),
+  )) {
+    if (owner !== 'caster' && owner !== 'enemy')
+      throw new Error(`${file}: invalid owner for ${id}`);
+    previewBuffRoots.set(id, owner);
+  }
+  const omittedBuffRootReasons = new Map(
+    Object.entries(
+      requireRecord(value.omittedBuffRootReasons ?? {}, `${file}.omittedBuffRootReasons`),
+    ).map(
+      ([id, reason]) =>
+        [
+          requireNonEmptyString(id, `${file}.omittedBuffRootReasons`),
+          requireNonEmptyString(reason, `${file}.omittedBuffRootReasons.${id}`),
+        ] as const,
+    ),
+  );
+  for (const id of previewBuffRoots.keys()) {
+    if (omittedBuffRootReasons.has(id))
+      throw new Error(`${file}: Buff root ${id} is both preview and omitted`);
+  }
+  return {
+    supportedTagIds,
+    blockedTagReasons,
+    omittedTagReasons,
+    previewBuffRoots,
+    omittedBuffRootReasons,
+  };
 }
 
 function validateScope(
@@ -199,11 +231,22 @@ export function compileContingencyContractDefinitionsFromFiles(
       if (term.kind === 'reduceChallengeTime') {
         throw new Error(`supported tag ${tag.tagId} contains a challenge-time-only term`);
       }
-      const template =
+      // 范围省略只发生在明确的入口，公共解析器和递归动作闭包继续严格检查。
+      if (term.kind === 'enemyBuff' && scope.omittedBuffRootReasons?.has(term.buffId)) continue;
+      const nativeTemplate =
         term.kind === 'selfGlobalBuff' ? globalBuffCatalog.byId.get(term.buffId) : undefined;
-      if (term.kind === 'selfGlobalBuff' && template === undefined) {
+      if (term.kind === 'selfGlobalBuff' && nativeTemplate === undefined) {
         throw new Error(`supported tag ${tag.tagId} is missing GlobalBuff '${term.buffId}'`);
       }
+      const template =
+        nativeTemplate === undefined
+          ? undefined
+          : {
+              ...nativeTemplate,
+              children: nativeTemplate.children.filter(
+                child => !scope.omittedBuffRootReasons?.has(child.buffId),
+              ),
+            };
       const rootBuffIds =
         term.kind === 'enemyBuff' ? [term.buffId] : template!.children.map(child => child.buffId);
       const owner = term.kind === 'enemyBuff' ? ('enemy' as const) : ('caster' as const);
@@ -254,6 +297,26 @@ export function compileContingencyContractDefinitionsFromFiles(
       sequence,
       actionGraph: { main: graph.finish(), macros: {} },
     });
+  }
+
+  for (const [id, owner] of scope.previewBuffRoots ?? []) {
+    const closure = compileStandardStumpBuffClosure(
+      [id],
+      loadBuff,
+      globalBuffCatalogValue,
+      skillSettingCatalog,
+      undefined,
+      undefined,
+      new Map([[id, owner]]),
+      new Set([id]),
+      gameplayTagRegistry,
+    );
+    const blocked = closure.diagnostics.filter(item => item.status === 'blocked');
+    if (blocked.length)
+      throw new Error(
+        `preview Buff '${id}' is blocked: ${blocked.map(item => item.reason).join(' | ')}`,
+      );
+    mergeDefinitions(definitions, closure.definitions, `preview Buff ${id}`);
   }
 
   return {

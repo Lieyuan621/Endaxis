@@ -114,9 +114,6 @@ export function compileSkillProgram(
     ...(input.skill.timelineBlockFollowUpSkillId === undefined
       ? {}
       : { timelineBlockFollowUpSkillId: input.skill.timelineBlockFollowUpSkillId }),
-    ...(input.skill.timelineContinuationSkillId === undefined
-      ? {}
-      : { timelineContinuationSkillId: input.skill.timelineContinuationSkillId }),
     ...(input.skill.naturalDurationFrames === undefined
       ? {}
       : { naturalDurationFrames: input.skill.naturalDurationFrames }),
@@ -126,7 +123,6 @@ export function compileSkillProgram(
     ...(input.skill.offsetRecordFrame === undefined
       ? {}
       : { offsetRecordFrame: input.skill.offsetRecordFrame }),
-    ...(input.skill.inputWindows === undefined ? {} : { inputWindows: input.skill.inputWindows }),
     ...(input.skill.dontInterruptCombo ? { dontInterruptCombo: true } : {}),
     ...(cooldownFrames === undefined ? {} : { cooldownFrames }),
     ...(input.skill.costFrame === undefined ? {} : { costFrame: input.skill.costFrame }),

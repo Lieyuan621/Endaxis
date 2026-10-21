@@ -66,7 +66,8 @@ export const antalChr_0023_antal_combo_skillActionGraph = {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'crush',
-            target: 'enemy',
+            source: { kind: 'owner' },
+            target: { kind: 'context', key: 'smart_target' },
             isExtra: false,
             damageMultiplier: { kind: 'constant', value: 1 },
             ignoreHitEffect: false,
@@ -79,7 +80,8 @@ export const antalChr_0023_antal_combo_skillActionGraph = {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'knockDown',
-            target: 'enemy',
+            source: { kind: 'owner' },
+            target: { kind: 'context', key: 'smart_target' },
             duration: { kind: 'constant', value: 2 },
             force: false,
             isExtra: false,
@@ -94,7 +96,8 @@ export const antalChr_0023_antal_combo_skillActionGraph = {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'airborne',
-            target: 'enemy',
+            source: { kind: 'source' },
+            target: { kind: 'context', key: 'smart_target' },
             isExtra: false,
             duration: { kind: 'constant', value: 1.5 },
             height: { kind: 'constant', value: 2 },
@@ -109,7 +112,12 @@ export const antalChr_0023_antal_combo_skillActionGraph = {
       applyPhysicalInfliction_1: {
         action: {
           kind: 'applyPhysicalInfliction',
-          parameters: { type: 'fracture', target: 'enemy', isExtra: false },
+          parameters: {
+            type: 'fracture',
+            source: { kind: 'owner' },
+            target: { kind: 'context', key: 'smart_target' },
+            isExtra: false,
+          },
         },
         next: null,
       },
@@ -155,6 +163,8 @@ export const antalChr_0023_antal_combo_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'smart_target' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['comboSkill'],
@@ -217,6 +227,13 @@ export const antalChr_0023_antal_combo_skillActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_18: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0023_antal_normal_skill'] },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'EntityBB_combo_index' } },
@@ -234,6 +251,7 @@ export const antalChr_0023_antal_combo_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const antalChr_0023_antal_combo_skill: SkillDefinition = {
+  actionGraph: antalChr_0023_antal_combo_skillActionGraph,
   key: 'chr_0023_antal_combo_skill',
   element: 'electric',
   blackboard: {
@@ -246,23 +264,18 @@ export const antalChr_0023_antal_combo_skill: SkillDefinition = {
   exclusiveFrame: 45,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 24, endFrame: 63, skillIds: ['chr_0023_antal_normal_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 21, endFrame: 24, sequence: { $sequence: 'switch_13' } },
     { startFrame: 23, endFrame: 26, sequence: { $sequence: 'ifElse_16' } },
     { startFrame: 0, endFrame: 17, sequence: { $sequence: 'startTimeDilation_17' } },
+    { startFrame: 24, endFrame: 63, sequence: { $sequence: 'reachSkillOperableBoundary_18' } },
   ],
   smartTarget: 'trigger',
   cooldownFrames: [750, 750, 750, 750, 750, 750, 750, 750, 750, 750, 750, 720],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
-  actionGraph: antalChr_0023_antal_combo_skillActionGraph,
 };
 
 export const antalChr_0023_antal_attack1ActionGraph = {
@@ -282,19 +295,6 @@ export const antalChr_0023_antal_attack1ActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0023_antal_attack1_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 0, atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -341,6 +341,8 @@ export const antalChr_0023_antal_attack1ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'electric',
                             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
@@ -355,7 +357,7 @@ export const antalChr_0023_antal_attack1ActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           containsHittableTarget: false,
                           excludeDeadEntity: false,
                           operator: 'greaterOrEqual',
@@ -381,13 +383,33 @@ export const antalChr_0023_antal_attack1ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0023_antal_attack1_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atb: 0, atk_scale: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
+                ],
               },
             },
           ],
         },
         next: null,
       },
-      reachSkillOperableBoundary_2: {
+      overrideBasicAttackMapping_2: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0023_antal_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_3: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0023_antal_attack2'] },
@@ -400,6 +422,7 @@ export const antalChr_0023_antal_attack1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const antalChr_0023_antal_attack1: SkillDefinition = {
+  actionGraph: antalChr_0023_antal_attack1ActionGraph,
   key: 'chr_0023_antal_attack1',
   element: 'electric',
   blackboard: {
@@ -410,28 +433,16 @@ export const antalChr_0023_antal_attack1: SkillDefinition = {
   naturalDurationFrames: 69,
   exclusiveFrame: 21,
   offsetRecordFrame: 8,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 26,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0023_antal_attack2',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 15, endFrame: 26, skillIds: ['chr_0023_antal_attack2'] }],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 8, endFrame: 8, sequence: { $sequence: 'launchProjectile_1' } },
-    { startFrame: 15, endFrame: 26, sequence: { $sequence: 'reachSkillOperableBoundary_2' } },
+    { startFrame: 0, endFrame: 26, sequence: { $sequence: 'overrideBasicAttackMapping_2' } },
+    { startFrame: 15, endFrame: 26, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0023_antal_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: antalChr_0023_antal_attack1ActionGraph,
 };
 
 export const antalChr_0023_antal_attack2ActionGraph = {
@@ -451,19 +462,6 @@ export const antalChr_0023_antal_attack2ActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0023_antal_attack2_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 0, atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -510,6 +508,8 @@ export const antalChr_0023_antal_attack2ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'electric',
                             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
@@ -524,7 +524,7 @@ export const antalChr_0023_antal_attack2ActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           containsHittableTarget: false,
                           excludeDeadEntity: false,
                           operator: 'greaterOrEqual',
@@ -550,13 +550,33 @@ export const antalChr_0023_antal_attack2ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0023_antal_attack2_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atb: 0, atk_scale: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
+                ],
               },
             },
           ],
         },
         next: null,
       },
-      reachSkillOperableBoundary_2: {
+      overrideBasicAttackMapping_2: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0023_antal_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_3: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0023_antal_attack3'] },
@@ -569,6 +589,7 @@ export const antalChr_0023_antal_attack2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const antalChr_0023_antal_attack2: SkillDefinition = {
+  actionGraph: antalChr_0023_antal_attack2ActionGraph,
   key: 'chr_0023_antal_attack2',
   element: 'electric',
   blackboard: {
@@ -579,28 +600,16 @@ export const antalChr_0023_antal_attack2: SkillDefinition = {
   naturalDurationFrames: 90,
   exclusiveFrame: 31,
   offsetRecordFrame: 12,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 31,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0023_antal_attack3',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 20, endFrame: 31, skillIds: ['chr_0023_antal_attack3'] }],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 12, endFrame: 12, sequence: { $sequence: 'launchProjectile_1' } },
-    { startFrame: 20, endFrame: 31, sequence: { $sequence: 'reachSkillOperableBoundary_2' } },
+    { startFrame: 0, endFrame: 31, sequence: { $sequence: 'overrideBasicAttackMapping_2' } },
+    { startFrame: 20, endFrame: 31, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0023_antal_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: antalChr_0023_antal_attack2ActionGraph,
 };
 
 export const antalChr_0023_antal_attack3ActionGraph = {
@@ -620,19 +629,6 @@ export const antalChr_0023_antal_attack3ActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0023_antal_attack3_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 0, atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -679,6 +675,8 @@ export const antalChr_0023_antal_attack3ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'electric',
                             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
@@ -693,7 +691,7 @@ export const antalChr_0023_antal_attack3ActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           containsHittableTarget: false,
                           excludeDeadEntity: false,
                           operator: 'greaterOrEqual',
@@ -719,6 +717,19 @@ export const antalChr_0023_antal_attack3ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0023_antal_attack3_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atb: 0, atk_scale: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
+                ],
               },
             },
           ],
@@ -736,7 +747,14 @@ export const antalChr_0023_antal_attack3ActionGraph = {
         },
         next: 'launchProjectile_1',
       },
-      reachSkillOperableBoundary_4: {
+      overrideBasicAttackMapping_4: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0023_antal_attack4'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_5: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0023_antal_attack4'] },
@@ -749,6 +767,7 @@ export const antalChr_0023_antal_attack3ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const antalChr_0023_antal_attack3: SkillDefinition = {
+  actionGraph: antalChr_0023_antal_attack3ActionGraph,
   key: 'chr_0023_antal_attack3',
   element: 'electric',
   blackboard: {
@@ -759,43 +778,20 @@ export const antalChr_0023_antal_attack3: SkillDefinition = {
   naturalDurationFrames: 107,
   exclusiveFrame: 33,
   offsetRecordFrame: 14,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 33,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0023_antal_attack4',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 22, endFrame: 33, skillIds: ['chr_0023_antal_attack4'] }],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 14, endFrame: 14, sequence: { $sequence: 'modifyActionValue_2' } },
     { startFrame: 18, endFrame: 18, sequence: { $sequence: 'launchProjectile_1' } },
-    { startFrame: 22, endFrame: 33, sequence: { $sequence: 'reachSkillOperableBoundary_4' } },
+    { startFrame: 0, endFrame: 33, sequence: { $sequence: 'overrideBasicAttackMapping_4' } },
+    { startFrame: 22, endFrame: 33, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0023_antal_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: antalChr_0023_antal_attack3ActionGraph,
 };
 
 const antalChr_0023_antal_attack4ActionGraphCallback1 = {
-  skillId: 'chr_0023_antal_attack4_powerattack_projhit',
-  nativeSkillType: 'normalSkill',
-  naturalDurationFrames: 1,
-  castResource: {
-    costFrame: 0,
-    cooldownSeconds: 0,
-    maxChargeTime: 1,
-    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-  },
-  blackboard: { atb: 0, atk_scale: 0, poise: 0 },
-  scheduledSequences: [{ startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_9' } }],
   actionGraph: {
     main: {
       nodes: {
@@ -803,6 +799,8 @@ const antalChr_0023_antal_attack4ActionGraphCallback1 = {
           action: {
             kind: 'dealDamage',
             parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
               damageType: 'electric',
               attackScale: { kind: 'valueNode', nodeId: 'data_1' },
               tags: ['normalAttack'],
@@ -866,6 +864,8 @@ const antalChr_0023_antal_attack4ActionGraphCallback1 = {
           action: {
             kind: 'dealDamage',
             parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
               damageType: 'electric',
               attackScale: { kind: 'valueNode', nodeId: 'data_1' },
               tags: ['normalAttack', 'normalAttackLastCombo'],
@@ -893,7 +893,7 @@ const antalChr_0023_antal_attack4ActionGraphCallback1 = {
           type: 'boolean',
           expression: {
             kind: 'entityCountCompare',
-            target: { kind: 'fixed', target: 'enemy' },
+            target: { kind: 'inputTarget' },
             containsHittableTarget: false,
             excludeDeadEntity: false,
             operator: 'greaterOrEqual',
@@ -922,6 +922,17 @@ const antalChr_0023_antal_attack4ActionGraphCallback1 = {
     },
     macros: {},
   },
+  skillId: 'chr_0023_antal_attack4_powerattack_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 1,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: { atb: 0, atk_scale: 0, poise: 0 },
+  scheduledSequences: [{ startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_9' } }],
 } as const;
 
 export const antalChr_0023_antal_attack4ActionGraph = {
@@ -966,7 +977,14 @@ export const antalChr_0023_antal_attack4ActionGraph = {
         },
         next: 'launchProjectile_2',
       },
-      reachSkillOperableBoundary_4: {
+      overrideBasicAttackMapping_4: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0023_antal_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_5: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0023_antal_attack1'] },
@@ -979,6 +997,7 @@ export const antalChr_0023_antal_attack4ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const antalChr_0023_antal_attack4: SkillDefinition = {
+  actionGraph: antalChr_0023_antal_attack4ActionGraph,
   key: 'chr_0023_antal_attack4',
   element: 'electric',
   blackboard: {
@@ -990,28 +1009,16 @@ export const antalChr_0023_antal_attack4: SkillDefinition = {
   naturalDurationFrames: 109,
   exclusiveFrame: 43,
   offsetRecordFrame: 27,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 48,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0023_antal_attack1',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 38, endFrame: 48, skillIds: ['chr_0023_antal_attack1'] }],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 27, endFrame: 27, sequence: { $sequence: 'modifyActionValue_3' } },
-    { startFrame: 38, endFrame: 48, sequence: { $sequence: 'reachSkillOperableBoundary_4' } },
+    { startFrame: 0, endFrame: 48, sequence: { $sequence: 'overrideBasicAttackMapping_4' } },
+    { startFrame: 38, endFrame: 48, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0023_antal_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: antalChr_0023_antal_attack4ActionGraph,
 };
 
 export const antalChr_0023_antal_power_attackActionGraph = {
@@ -1031,19 +1038,6 @@ export const antalChr_0023_antal_power_attackActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0023_antal_power_attack02_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 150,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 0, atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -1090,6 +1084,8 @@ export const antalChr_0023_antal_power_attackActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'electric',
                             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             calculation: 'breakingAttack',
@@ -1106,7 +1102,7 @@ export const antalChr_0023_antal_power_attackActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           containsHittableTarget: false,
                           excludeDeadEntity: false,
                           operator: 'greaterOrEqual',
@@ -1132,6 +1128,19 @@ export const antalChr_0023_antal_power_attackActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0023_antal_power_attack02_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 150,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atb: 0, atk_scale: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
+                ],
               },
             },
           ],
@@ -1153,27 +1162,17 @@ export const antalChr_0023_antal_power_attackActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0023_antal_power_attack_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 150,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
-                  { startFrame: 1, endFrame: 2, sequence: { $sequence: 'startTimeDilation_3' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
                       gainFinisherSp_1: {
                         action: {
                           kind: 'gainFinisherSp',
-                          parameters: { factor: 1, recipient: 'team' },
+                          parameters: {
+                            source: { kind: 'source' },
+                            target: { kind: 'inputTarget' },
+                            factor: { kind: 'constant', value: 1 },
+                          },
                         },
                         next: null,
                       },
@@ -1181,6 +1180,8 @@ export const antalChr_0023_antal_power_attackActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'electric',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                             calculation: 'breakingAttack',
@@ -1215,6 +1216,20 @@ export const antalChr_0023_antal_power_attackActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0023_antal_power_attack_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 150,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
+                  { startFrame: 1, endFrame: 2, sequence: { $sequence: 'startTimeDilation_3' } },
+                ],
               },
             },
           ],
@@ -1247,12 +1262,20 @@ export const antalChr_0023_antal_power_attackActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_9: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0023_antal_normal_skill', 'chr_0023_antal_combo_skill'] },
+        },
+        next: null,
+      },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const antalChr_0023_antal_power_attack: SkillDefinition = {
+  actionGraph: antalChr_0023_antal_power_attackActionGraph,
   key: 'chr_0023_antal_power_attack',
   element: 'electric',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -1261,15 +1284,6 @@ export const antalChr_0023_antal_power_attack: SkillDefinition = {
   exclusiveFrame: 42,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 32,
-        endFrame: 48,
-        skillIds: ['chr_0023_antal_normal_skill', 'chr_0023_antal_combo_skill'],
-      },
-    ],
-  },
   costFrame: 4,
   scheduledSequences: [
     { startFrame: 10, endFrame: 10, sequence: { $sequence: 'launchProjectile_1' } },
@@ -1280,17 +1294,24 @@ export const antalChr_0023_antal_power_attack: SkillDefinition = {
     { startFrame: 25, endFrame: 25, sequence: { $sequence: 'launchProjectile_6' } },
     { startFrame: 0, endFrame: 30, sequence: { $sequence: 'applyBuff_7' } },
     { startFrame: 0, endFrame: 42, sequence: { $sequence: 'applyBuff_8' } },
+    { startFrame: 32, endFrame: 48, sequence: { $sequence: 'reachSkillOperableBoundary_9' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
-  actionGraph: antalChr_0023_antal_power_attackActionGraph,
 };
 
 export const antalChr_0023_antal_plunging_attack_endActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_2: {
         action: {
           kind: 'changeResource',
@@ -1311,6 +1332,8 @@ export const antalChr_0023_antal_plunging_attack_endActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['normalAttack', 'plungingAttack'],
@@ -1328,6 +1351,7 @@ export const antalChr_0023_antal_plunging_attack_endActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const antalChr_0023_antal_plunging_attack_end: SkillDefinition = {
+  actionGraph: antalChr_0023_antal_plunging_attack_endActionGraph,
   key: 'chr_0023_antal_plunging_attack_end',
   element: 'electric',
   blackboard: {
@@ -1339,12 +1363,14 @@ export const antalChr_0023_antal_plunging_attack_end: SkillDefinition = {
   exclusiveFrame: 15,
   offsetRecordFrame: 0,
   costFrame: 0,
-  scheduledSequences: [{ startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_3' } }],
+  scheduledSequences: [
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_3' } },
+  ],
   defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: antalChr_0023_antal_plunging_attack_endActionGraph,
 };
 
 export const antalChr_0023_antal_normal_skillActionGraph = {
@@ -1366,6 +1392,9 @@ export const antalChr_0023_antal_normal_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            alwaysNext: false,
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalSkill'],
@@ -1392,7 +1421,7 @@ export const antalChr_0023_antal_normal_skillActionGraph = {
               },
             ],
             targets: { kind: 'owner' },
-            source: { kind: 'fixed', target: 'enemy' },
+            source: { kind: 'inputTarget' },
             inheritSourceSkillCastInfo: true,
           },
         },
@@ -1443,7 +1472,7 @@ export const antalChr_0023_antal_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -1456,6 +1485,7 @@ export const antalChr_0023_antal_normal_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const antalChr_0023_antal_normal_skill: SkillDefinition = {
+  actionGraph: antalChr_0023_antal_normal_skillActionGraph,
   key: 'chr_0023_antal_normal_skill',
   element: 'electric',
   blackboard: {
@@ -1484,7 +1514,6 @@ export const antalChr_0023_antal_normal_skill: SkillDefinition = {
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: antalChr_0023_antal_normal_skillActionGraph,
 };
 
 export const antalChr_0023_antal_ultimate_skillActionGraph = {
@@ -1558,6 +1587,26 @@ export const antalChr_0023_antal_ultimate_skillActionGraph = {
         },
         next: 'applyBuff_5',
       },
+      overrideBasicAttackMapping_7: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0023_antal_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_8: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: [
+              'chr_0023_antal_attack1',
+              'chr_0023_antal_normal_skill',
+              'chr_0023_antal_combo_skill',
+            ],
+          },
+        },
+        next: null,
+      },
     },
   },
   macros: {},
@@ -1575,27 +1624,6 @@ export const antalChr_0023_antal_ultimate_skill: SkillDefinition = {
   naturalDurationFrames: 112,
   exclusiveFrame: 60,
   offsetRecordFrame: 0,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 47,
-        endFrame: 73,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0023_antal_attack1',
-      },
-    ],
-    allowedNextSkills: [
-      {
-        startFrame: 56,
-        endFrame: 73,
-        skillIds: [
-          'chr_0023_antal_attack1',
-          'chr_0023_antal_normal_skill',
-          'chr_0023_antal_combo_skill',
-        ],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
@@ -1603,6 +1631,8 @@ export const antalChr_0023_antal_ultimate_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 44, sequence: { $sequence: 'hideUi_3' } },
     { startFrame: 0, endFrame: 60, sequence: { $sequence: 'applyBuff_4' } },
     { startFrame: 49, endFrame: 51, sequence: { $sequence: 'findTargets_6' } },
+    { startFrame: 47, endFrame: 73, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
+    { startFrame: 56, endFrame: 73, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 600,
@@ -2074,7 +2104,7 @@ const antalBuff7ActionGraph = {
         action: {
           kind: 'setGlobalCooldown',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
             markerId: 'buff_chr_0023_antal_talent_1_heal_trigger',
             durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
           },
@@ -2085,7 +2115,8 @@ const antalBuff7ActionGraph = {
         action: {
           kind: 'heal',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
+            healer: { kind: 'source' },
             alwaysNext: true,
             tags: [],
             attribute: 'strength',
@@ -2173,7 +2204,8 @@ const antalBuff8ActionGraph = {
         action: {
           kind: 'heal',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
+            healer: { kind: 'source' },
             alwaysNext: true,
             tags: [],
             attribute: 'strength',

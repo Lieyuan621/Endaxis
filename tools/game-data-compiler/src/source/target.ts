@@ -17,6 +17,12 @@ import {
 } from './tagQuery.ts';
 import { parseScalarSource, type ScalarSource, type BlackboardLevelValues } from './scalar.ts';
 import { readCompareType } from './nativeEnums.ts';
+import { parseBuffFindSettingsSource, type BuffFindSettingsSource } from './buffFindSettings.ts';
+
+export interface BuffValidatorSource {
+  readonly settings: BuffFindSettingsSource;
+  readonly mode: 'HasBuff' | 'NotHasBuff';
+}
 
 /** 原生按目标自身 hp/maxHp 筛选；阈值在执行筛选时读取。 */
 export interface HpRatioValidatorSource {
@@ -55,6 +61,8 @@ import {
 } from './targetEnums.ts';
 
 export interface TargetReferenceSource {
+  readonly buffValidators?: readonly BuffValidatorSource[];
+  readonly excludeTargets?: readonly TargetReferenceSource[];
   readonly hpRatioValidators?: readonly HpRatioValidatorSource[];
   readonly targetSource: string;
   readonly targetGroupKey: string;
@@ -94,6 +102,7 @@ export interface TargetReferenceSource {
 }
 
 export interface SelectorSummarySource {
+  readonly buffValidators?: readonly BuffValidatorSource[];
   readonly finderSpatialPoint?: SpatialPointFinderSource;
   readonly hpRatioValidators?: readonly HpRatioValidatorSource[];
   readonly finderType: string | null;
@@ -125,10 +134,7 @@ export interface SelectorSummarySource {
     readonly targetGroupKey: string;
   }[];
   /** ExcludeTarget 后处理器引用的排除集合；顺序与 postProcessorData 一致。 */
-  readonly excludeTargets: readonly {
-    readonly targetSource: string;
-    readonly targetGroupKey: string;
-  }[];
+  readonly excludeTargets: readonly TargetReferenceSource[];
 }
 
 export interface FixedPointFinderSource {
@@ -221,6 +227,7 @@ const KNOWN_FINDERS = new Set([
   'TyphoeaArcherySelectedFinder',
 ]);
 const KNOWN_VALIDATORS = new Set([
+  'BuffValidator',
   'CurHpRatioValidator',
   'DistanceValidator',
   'ExcludeOwnerValidator',
@@ -298,12 +305,14 @@ export function parseTargetReferenceSource(value: unknown, path: string): Target
       : { finderPointBlackboardKeys: summary.finderPointBlackboardKeys }),
     ...(summary.finderFixedPoint === null ? {} : { finderFixedPoint: summary.finderFixedPoint }),
     ...(summary.finderSpatialPoint ? { finderSpatialPoint: summary.finderSpatialPoint } : {}),
+    ...(summary.excludeTargets.length ? { excludeTargets: summary.excludeTargets } : {}),
     validatorTypes: summary.validatorTypes,
     postProcessorTypes: summary.postProcessorTypes,
     priorityFilters: summary.priorityFilters,
     shuffleTargets: summary.shuffleTargets,
     distanceValidators: summary.distanceValidators,
     ...(summary.hpRatioValidators ? { hpRatioValidators: summary.hpRatioValidators } : {}),
+    ...(summary.buffValidators ? { buffValidators: summary.buffValidators } : {}),
     finderSpawnedObjectType: spawnedIdentity.spawnedObjectType,
     validatorTagQueries: spawnedIdentity.tagQueries,
   };
@@ -524,6 +533,36 @@ export function parseSelectorSummarySource(
       ];
     },
   );
+  const buffValidators: BuffValidatorSource[] = requireArray(
+    selector.validatorData,
+    `${path}.validatorData`,
+  ).flatMap((raw, index) => {
+    const validatorPath = `${path}.validatorData[${index}]`;
+    const validator = requireRecord(raw, validatorPath);
+    if (selectorComponentName(validator, validatorPath) !== 'BuffValidator') return [];
+    requireExactFields(
+      validator,
+      new Set(['$type', 'buffFindSettings', 'validateMode']),
+      validatorPath,
+    );
+    const mode =
+      validator.validateMode === 0
+        ? 'HasBuff'
+        : validator.validateMode === 1
+          ? 'NotHasBuff'
+          : validator.validateMode;
+    if (mode !== 'HasBuff' && mode !== 'NotHasBuff')
+      throw new Error(`${validatorPath}.validateMode: unsupported BuffValidator mode`);
+    return [
+      {
+        settings: parseBuffFindSettingsSource(
+          validator.buffFindSettings,
+          `${validatorPath}.buffFindSettings`,
+        ),
+        mode,
+      },
+    ];
+  });
   const targetContainsParents = requireArray(
     selector.validatorData,
     `${path}.validatorData`,
@@ -551,7 +590,7 @@ export function parseSelectorSummarySource(
     }
     if (selectorComponentName(processor, processorPath) !== 'ExcludeTarget') return [];
     const excluded = parseExcludeTargetSource(processor, processorPath);
-    return [{ targetSource: excluded.targetSource, targetGroupKey: excluded.targetGroupKey }];
+    return [excluded];
   });
   return {
     finderType,
@@ -574,6 +613,7 @@ export function parseSelectorSummarySource(
     shuffleTargets,
     distanceValidators,
     ...(hpRatioValidators.length ? { hpRatioValidators } : {}),
+    ...(buffValidators.length ? { buffValidators } : {}),
     targetContainsParents,
     excludeTargets,
   };

@@ -82,10 +82,15 @@ export function projectCombatRuntimeAttributeKey(attribute: AttributeTypeSource)
 
 /**
  * 固定单敌人、零空间模型实际消费的属性边界。公共 IR 仍保留所有原生枚举，只有进入
- * Endaxis Buff 运行定义时才排除纯索敌距离与移动速度；否则它们会伪装成需要战斗属性上下界的数值。
+ * Endaxis Buff 运行定义时才排除纯索敌距离、移动速度和已确认敌人持有的攻击力修正。
+ * 木桩没有主动攻击行为，敌人攻击力修正不参与伤害模拟；归属未知或干员持有时继续保留。
  * 对同一 Buff 中仍影响伤害的生命周期、事件与其他修饰不做连带裁剪。
  */
-export function isCombatRuntimeAttributeRelevant(attribute: AttributeTypeSource): boolean {
+export function isCombatRuntimeAttributeRelevant(
+  attribute: AttributeTypeSource,
+  owner?: 'caster' | 'enemy' | 'currentAbilityEntity',
+): boolean {
+  if (attribute === 'Atk' && owner === 'enemy') return false;
   return ![
     'NormalAttackRange',
     'NormalAttackStartRange',

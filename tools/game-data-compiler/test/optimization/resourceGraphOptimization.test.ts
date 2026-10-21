@@ -47,6 +47,34 @@ function repeatedMiddleResource() {
 }
 
 describe('独立资源图构建与优化', () => {
+  it('裁剪与宏提取保留任意位置的字段顺序，嵌套资源及重复优化也一致', () => {
+    type Position = 'first' | 'middle' | 'last';
+    const make = (position: Position) => {
+      const { entries, actionGraph } = repeatedMiddleResource();
+      return position === 'first'
+        ? { actionGraph, label: 'resource', entries }
+        : position === 'middle'
+          ? { label: 'resource', actionGraph, entries }
+          : { label: 'resource', entries, actionGraph };
+    };
+    const positions: Position[] = ['first', 'middle', 'last'];
+    const input = {
+      resources: positions.map(position => ({
+        ...make(position),
+        child: make('middle'),
+      })),
+    };
+    const original = JSON.stringify(input);
+    const once = optimizeResourceGraphs(input, 'apply').value;
+    for (const [index, resource] of once.resources.entries()) {
+      expect(Object.keys(resource)).toEqual(Object.keys(input.resources[index]!));
+      expect(Object.keys(resource.child)).toEqual(Object.keys(input.resources[index]!.child));
+      expect(Object.keys(resource.actionGraph.macros)).toHaveLength(1);
+    }
+    expect(JSON.stringify(optimizeResourceGraphs(once, 'apply').value)).toBe(JSON.stringify(once));
+    expect(JSON.stringify(input)).toBe(original);
+  });
+
   it('干员实体初值只证明自己的技能读取安全，不越过子资源边界', () => {
     const graph = createActionGraphBuilder();
     const sequence = graph.sequence([
@@ -257,7 +285,7 @@ describe('独立资源图构建与优化', () => {
                   kind,
                   parameters: {
                     saveToContextKey: 'targets',
-                    sources: [{ kind: 'target' as const, target: 'enemy' as const }],
+                    sources: [{ kind: 'fixed' as const, target: 'enemy' as const }],
                   },
                 }
               : {
@@ -672,6 +700,7 @@ describe('独立资源图构建与优化', () => {
     expect(() => validateFinalOwner(applied.value, 'skill')).not.toThrow();
     const again = optimizeResourceGraphs(applied.value, 'apply');
     expect(again.value).toEqual(applied.value);
+    expect(JSON.stringify(again.value)).toBe(JSON.stringify(applied.value));
     expect(() => validateFinalOwner(again.value, 'skill')).not.toThrow();
   });
 

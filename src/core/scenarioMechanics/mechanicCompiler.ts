@@ -16,7 +16,6 @@ import type {
 } from '../project/schema';
 import type {
   CompiledMechanicContribution,
-  MechanicAbilityEvent,
   MechanicContribution,
   MechanicGameLevelEvent,
 } from './mechanicContribution';
@@ -77,10 +76,6 @@ function resolveParameters(
   return resolved;
 }
 
-function combatEventKey(event: MechanicAbilityEvent): string {
-  return event;
-}
-
 function levelEventKey(event: MechanicGameLevelEvent): string {
   return event.kind;
 }
@@ -115,7 +110,6 @@ function assertDataOnly(value: unknown, path: string, ancestors = new Set<object
 function validateContribution(
   contribution: MechanicContribution,
   path: string,
-  occupiedAbilityPriorities: Set<string>,
   occupiedLevelEvents: Set<string>,
 ): void {
   assertDataOnly(contribution, path);
@@ -124,14 +118,7 @@ function validateContribution(
     if (!Number.isInteger(contribution.priority)) {
       throw new MechanicCompilationError('event priority must be an integer', `${path}.priority`);
     }
-    const key = `${combatEventKey(contribution.event)}:${contribution.priority}`;
-    if (occupiedAbilityPriorities.has(key)) {
-      throw new MechanicCompilationError(
-        'equal-priority event ordering is not recovered; combine the source actions into one sequence',
-        path,
-      );
-    }
-    occupiedAbilityPriorities.add(key);
+    // 同级事件允许共存，保留 selection/contribution 顺序供执行器依次注册。
     return;
   }
 
@@ -183,7 +170,6 @@ export function compileMechanics(
     adapterRevision: string;
   }[] = [];
   const contributions: CompiledMechanicContribution[] = [];
-  const occupiedAbilityPriorities = new Set<string>();
   const occupiedLevelEvents = new Set<string>();
 
   mechanics.selections.forEach((selection, selectionIndex) => {
@@ -209,7 +195,7 @@ export function compileMechanics(
     });
     compiled.forEach((contribution, contributionIndex) => {
       const path = `$.mechanics.selections[${selectionIndex}].contributions[${contributionIndex}]`;
-      validateContribution(contribution, path, occupiedAbilityPriorities, occupiedLevelEvents);
+      validateContribution(contribution, path, occupiedLevelEvents);
       contributions.push({
         selectionId: selection.id,
         mechanicId: selection.mechanicId,

@@ -80,6 +80,36 @@ describe('DamageModifier', () => {
     });
     expect(context.damageScales.getFinalValue()).toBe(1.2);
   });
+  it('damage scale 缺键时取零，后续赋值仍即时读取且不吞掉类型错误', () => {
+    const blackboard = createActionBlackboardState();
+    const modifier = new DamageModifier(
+      'operator',
+      {
+        enabledSide: 'attacker',
+        processors: [
+          {
+            kind: 'damageScale',
+            side: 'attacker',
+            zone: 'product',
+            addition: { blackboardKey: 'dmg_scale' },
+          },
+        ],
+      },
+      { buffId: 'clear-ball', blackboard },
+    );
+    const missing = createContext('physical');
+    modifier.apply('afterCalculation', 'attacker', missing);
+    expect(missing.damageScales.getFinalValue()).toBe(1);
+    blackboard.values.set('dmg_scale', 0.25);
+    const assigned = createContext('physical');
+    modifier.apply('afterCalculation', 'attacker', assigned);
+    expect(assigned.damageScales.getFinalValue()).toBe(1.25);
+    blackboard.values.set('dmg_scale', 'invalid');
+    expect(() =>
+      modifier.apply('afterCalculation', 'attacker', createContext('physical')),
+    ).toThrow();
+  });
+
   it('resolves a Buff value into a one-hit instant attribute modifier', () => {
     const addInstantAttributeModifier = vi.fn();
     const context = createContext('physical', addInstantAttributeModifier);

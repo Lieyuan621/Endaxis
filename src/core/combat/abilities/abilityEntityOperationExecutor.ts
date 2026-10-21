@@ -1,3 +1,4 @@
+import type { CombatSkillCastInfo } from '../state/foundationState';
 import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
 import type { TargetContextOperationExecutor } from './targetContextOperationExecutor';
 import {
@@ -39,7 +40,11 @@ import type { ActionValueCalculation, PostSkillCastRequest } from '../state/foun
 type RuntimeOperation = ResolvedCombatOperationStep;
 
 interface AbilityEntityRuntimeDependencies {
-  readonly resolveOperations: (state: CombatOperationHostState) => CombatOperationExecutor;
+  readonly resolveOperations: (
+    state: CombatOperationHostState,
+    program: CompiledAbilityEntityChildSkillProgram,
+    origin: CombatSkillCastInfo | undefined,
+  ) => CombatOperationExecutor;
   readonly semanticEvents?: CombatSemanticEventRuntime;
   readonly launchProjectile?: LaunchProjectile;
   readonly finishProjectile?: (target: RuntimeTargetRef) => boolean;
@@ -212,19 +217,6 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
         targets = targets.slice(0, step.parameters.maxTargets);
       }
       context.targetContext.set(step.parameters.saveToContextKey, targets);
-      return true;
-    }
-    if (step.kind === 'pickContextTarget') {
-      if (context?.targetContext === undefined) {
-        throw new Error('Context target selection requires a combat target context');
-      }
-      const index = resolveActionValueOperand(step.parameters.index, context.blackboard);
-      if (!Number.isInteger(index) || index < 0) {
-        throw new RangeError('Context target index must be a non-negative integer');
-      }
-      const target = context.targetContext.getOptional(step.parameters.sourceContextKey)?.[index];
-      if (target === undefined) return false;
-      context.targetContext.setSingle(step.parameters.saveToContextKey, target);
       return true;
     }
     if (step.kind === 'setAbilityEntityRemainingDuration') {
@@ -553,7 +545,11 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
       {
         entity,
         entityBlackboard,
-        operations: this.#childRuntimeDependencies.resolveOperations(operationState),
+        operations: this.#childRuntimeDependencies.resolveOperations(
+          operationState,
+          instanceProgram,
+          inheritSourceSkillCastInfo ? context.skillCastInfo : undefined,
+        ),
         source: this.#entities.snapshot(entity).source,
         target: this.#entities.snapshot(entity).target,
         skillHostGroup: this.#entities.childSkillHosts(entity),

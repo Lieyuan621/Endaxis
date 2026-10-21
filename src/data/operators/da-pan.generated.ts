@@ -63,6 +63,8 @@ export const daPanChr_0018_dapan_attack1ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack'],
@@ -87,7 +89,14 @@ export const daPanChr_0018_dapan_attack1ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_11: {
+      overrideBasicAttackMapping_11: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0018_dapan_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_12: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0018_dapan_attack2'] },
@@ -105,7 +114,7 @@ export const daPanChr_0018_dapan_attack1ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -119,6 +128,7 @@ export const daPanChr_0018_dapan_attack1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const daPanChr_0018_dapan_attack1: SkillDefinition = {
+  actionGraph: daPanChr_0018_dapan_attack1ActionGraph,
   key: 'chr_0018_dapan_attack1',
   element: 'physical',
   blackboard: {
@@ -129,33 +139,28 @@ export const daPanChr_0018_dapan_attack1: SkillDefinition = {
   naturalDurationFrames: 176,
   exclusiveFrame: 20,
   offsetRecordFrame: 13,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 30,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0018_dapan_attack2',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 15, endFrame: 30, skillIds: ['chr_0018_dapan_attack2'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 13, endFrame: 15, sequence: { $sequence: 'repeatEachTick_10' } },
-    { startFrame: 15, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
+    { startFrame: 0, endFrame: 30, sequence: { $sequence: 'overrideBasicAttackMapping_11' } },
+    { startFrame: 15, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0018_dapan_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: daPanChr_0018_dapan_attack1ActionGraph,
 };
 
 export const daPanChr_0018_dapan_attack2ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_2: {
         action: {
           kind: 'changeResource',
@@ -210,6 +215,8 @@ export const daPanChr_0018_dapan_attack2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack'],
@@ -217,7 +224,14 @@ export const daPanChr_0018_dapan_attack2ActionGraph = {
         },
         next: 'ifElse_6',
       },
-      reachSkillOperableBoundary_8: {
+      overrideBasicAttackMapping_8: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0018_dapan_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_9: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0018_dapan_attack3'] },
@@ -242,6 +256,7 @@ export const daPanChr_0018_dapan_attack2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const daPanChr_0018_dapan_attack2: SkillDefinition = {
+  actionGraph: daPanChr_0018_dapan_attack2ActionGraph,
   key: 'chr_0018_dapan_attack2',
   element: 'physical',
   blackboard: {
@@ -252,33 +267,29 @@ export const daPanChr_0018_dapan_attack2: SkillDefinition = {
   naturalDurationFrames: 171,
   exclusiveFrame: 30,
   offsetRecordFrame: 7,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 25,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0018_dapan_attack3',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 20, endFrame: 25, skillIds: ['chr_0018_dapan_attack3'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 7, endFrame: 8, sequence: { $sequence: 'dealDamage_7' } },
-    { startFrame: 20, endFrame: 25, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
+    { startFrame: 0, endFrame: 25, sequence: { $sequence: 'overrideBasicAttackMapping_8' } },
+    { startFrame: 20, endFrame: 25, sequence: { $sequence: 'reachSkillOperableBoundary_9' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0018_dapan_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: daPanChr_0018_dapan_attack2ActionGraph,
 };
 
 export const daPanChr_0018_dapan_attack3ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_4: {
         action: {
           kind: 'changeResource',
@@ -334,6 +345,8 @@ export const daPanChr_0018_dapan_attack3ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack'],
@@ -397,6 +410,8 @@ export const daPanChr_0018_dapan_attack3ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_7' },
             tags: ['normalAttack'],
@@ -404,7 +419,14 @@ export const daPanChr_0018_dapan_attack3ActionGraph = {
         },
         next: 'ifElse_15',
       },
-      reachSkillOperableBoundary_17: {
+      overrideBasicAttackMapping_17: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0018_dapan_attack4'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_18: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0018_dapan_attack4'] },
@@ -418,7 +440,7 @@ export const daPanChr_0018_dapan_attack3ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -445,6 +467,7 @@ export const daPanChr_0018_dapan_attack3ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const daPanChr_0018_dapan_attack3: SkillDefinition = {
+  actionGraph: daPanChr_0018_dapan_attack3ActionGraph,
   key: 'chr_0018_dapan_attack3',
   element: 'physical',
   blackboard: {
@@ -456,34 +479,31 @@ export const daPanChr_0018_dapan_attack3: SkillDefinition = {
   naturalDurationFrames: 193,
   exclusiveFrame: 38,
   offsetRecordFrame: 10,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 40,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0018_dapan_attack4',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 25, endFrame: 40, skillIds: ['chr_0018_dapan_attack4'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 10, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 23, endFrame: 24, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 10, endFrame: 13, sequence: { $sequence: 'repeatEachTick_10' } },
     { startFrame: 23, endFrame: 24, sequence: { $sequence: 'dealDamage_16' } },
-    { startFrame: 25, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_17' } },
+    { startFrame: 0, endFrame: 40, sequence: { $sequence: 'overrideBasicAttackMapping_17' } },
+    { startFrame: 25, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_18' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0018_dapan_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: daPanChr_0018_dapan_attack3ActionGraph,
 };
 
 export const daPanChr_0018_dapan_attack4ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_2: {
         action: {
           kind: 'changeResource',
@@ -538,6 +558,8 @@ export const daPanChr_0018_dapan_attack4ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
@@ -547,7 +569,14 @@ export const daPanChr_0018_dapan_attack4ActionGraph = {
         },
         next: 'ifElse_6',
       },
-      reachSkillOperableBoundary_8: {
+      overrideBasicAttackMapping_8: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0018_dapan_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_9: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0018_dapan_attack1'] },
@@ -573,6 +602,7 @@ export const daPanChr_0018_dapan_attack4ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const daPanChr_0018_dapan_attack4: SkillDefinition = {
+  actionGraph: daPanChr_0018_dapan_attack4ActionGraph,
   key: 'chr_0018_dapan_attack4',
   element: 'physical',
   blackboard: {
@@ -584,28 +614,17 @@ export const daPanChr_0018_dapan_attack4: SkillDefinition = {
   naturalDurationFrames: 236,
   exclusiveFrame: 60,
   offsetRecordFrame: 32,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 70,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0018_dapan_attack1',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 45, endFrame: 70, skillIds: ['chr_0018_dapan_attack1'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 32, endFrame: 33, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 32, endFrame: 33, sequence: { $sequence: 'dealDamage_7' } },
-    { startFrame: 45, endFrame: 70, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
+    { startFrame: 0, endFrame: 70, sequence: { $sequence: 'overrideBasicAttackMapping_8' } },
+    { startFrame: 45, endFrame: 70, sequence: { $sequence: 'reachSkillOperableBoundary_9' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0018_dapan_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: daPanChr_0018_dapan_attack4ActionGraph,
 };
 
 export const daPanChr_0018_dapan_power_attackActionGraph = {
@@ -630,6 +649,8 @@ export const daPanChr_0018_dapan_power_attackActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
@@ -640,7 +661,14 @@ export const daPanChr_0018_dapan_power_attackActionGraph = {
         next: 'startTimeDilation_1',
       },
       gainFinisherSp_3: {
-        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+        action: {
+          kind: 'gainFinisherSp',
+          parameters: {
+            source: { kind: 'source' },
+            target: { kind: 'inputTarget' },
+            factor: { kind: 'constant', value: 1 },
+          },
+        },
         next: null,
       },
       startTimeDilation_4: {
@@ -662,6 +690,8 @@ export const daPanChr_0018_dapan_power_attackActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
@@ -697,6 +727,13 @@ export const daPanChr_0018_dapan_power_attackActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_8: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0018_dapan_normal_skill', 'chr_0018_dapan_combo_skill'] },
+        },
+        next: null,
+      },
     },
     dataNodes: { data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } } },
   },
@@ -713,21 +750,13 @@ export const daPanChr_0018_dapan_power_attack: SkillDefinition = {
   exclusiveFrame: 46,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 35,
-        endFrame: 56,
-        skillIds: ['chr_0018_dapan_normal_skill', 'chr_0018_dapan_combo_skill'],
-      },
-    ],
-  },
   costFrame: 4,
   scheduledSequences: [
     { startFrame: 16, endFrame: 19, sequence: { $sequence: 'dealDamage_2' } },
     { startFrame: 35, endFrame: 38, sequence: { $sequence: 'dealDamage_5' } },
     { startFrame: 0, endFrame: 46, sequence: { $sequence: 'applyBuff_6' } },
     { startFrame: 0, endFrame: 35, sequence: { $sequence: 'applyBuff_7' } },
+    { startFrame: 35, endFrame: 56, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
@@ -738,6 +767,13 @@ export const daPanChr_0018_dapan_power_attack: SkillDefinition = {
 export const daPanChr_0018_dapan_plunging_attack_endActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -768,6 +804,8 @@ export const daPanChr_0018_dapan_plunging_attack_endActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'plungingAttack'],
@@ -789,6 +827,7 @@ export const daPanChr_0018_dapan_plunging_attack_endActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const daPanChr_0018_dapan_plunging_attack_end: SkillDefinition = {
+  actionGraph: daPanChr_0018_dapan_plunging_attack_endActionGraph,
   key: 'chr_0018_dapan_plunging_attack_end',
   element: 'physical',
   blackboard: {
@@ -800,17 +839,26 @@ export const daPanChr_0018_dapan_plunging_attack_end: SkillDefinition = {
   exclusiveFrame: 15,
   offsetRecordFrame: 0,
   costFrame: 0,
-  scheduledSequences: [{ startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } }],
+  scheduledSequences: [
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } },
+  ],
   defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: daPanChr_0018_dapan_plunging_attack_endActionGraph,
 };
 
 export const daPanChr_0018_dapan_normal_skillActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_6: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       startTimeDilation_8: {
         action: {
           kind: 'startTimeDilation',
@@ -830,6 +878,8 @@ export const daPanChr_0018_dapan_normal_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalSkill'],
@@ -856,7 +906,7 @@ export const daPanChr_0018_dapan_normal_skillActionGraph = {
           kind: 'applyBuff',
           parameters: {
             buffs: [{ buffId: 'buff_physical_no_guard' }],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'context', key: 'tar' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
@@ -908,6 +958,8 @@ export const daPanChr_0018_dapan_normal_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
             tags: ['normalSkill'],
@@ -932,7 +984,8 @@ export const daPanChr_0018_dapan_normal_skillActionGraph = {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'airborne',
-            target: 'enemy',
+            source: { kind: 'owner' },
+            target: { kind: 'context', key: 'tar' },
             isExtra: false,
             duration: { kind: 'valueNode', nodeId: 'data_9' },
             height: { kind: 'constant', value: 2.1 },
@@ -944,6 +997,13 @@ export const daPanChr_0018_dapan_normal_skillActionGraph = {
         },
         next: 'ifElse_18',
       },
+      reachSkillOperableBoundary_20: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0018_dapan_normal_skill'] },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_pre' } },
@@ -952,7 +1012,7 @@ export const daPanChr_0018_dapan_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'tar' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'equal',
@@ -990,6 +1050,7 @@ export const daPanChr_0018_dapan_normal_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const daPanChr_0018_dapan_normal_skill: SkillDefinition = {
+  actionGraph: daPanChr_0018_dapan_normal_skillActionGraph,
   key: 'chr_0018_dapan_normal_skill',
   element: 'physical',
   blackboard: {
@@ -1004,27 +1065,31 @@ export const daPanChr_0018_dapan_normal_skill: SkillDefinition = {
   exclusiveFrame: 65,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 65, endFrame: 89, skillIds: ['chr_0018_dapan_normal_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
+    { startFrame: 8, endFrame: 11, sequence: { $sequence: 'mergeContextTargets_6' } },
+    { startFrame: 43, endFrame: 46, sequence: { $sequence: 'mergeContextTargets_6' } },
     { startFrame: 8, endFrame: 11, sequence: { $sequence: 'dealDamage_9' } },
     { startFrame: 43, endFrame: 46, sequence: { $sequence: 'applyPhysicalInfliction_19' } },
+    { startFrame: 65, endFrame: 89, sequence: { $sequence: 'reachSkillOperableBoundary_20' } },
   ],
   defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: daPanChr_0018_dapan_normal_skillActionGraph,
 };
 
 export const daPanChr_0018_dapan_combo_skillActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_2: {
         action: {
           kind: 'changeResource',
@@ -1057,6 +1122,8 @@ export const daPanChr_0018_dapan_combo_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['comboSkill'],
@@ -1071,7 +1138,8 @@ export const daPanChr_0018_dapan_combo_skillActionGraph = {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'crush',
-            target: 'enemy',
+            source: { kind: 'owner' },
+            target: { kind: 'context', key: 'tar' },
             isExtra: false,
             damageMultiplier: { kind: 'valueNode', nodeId: 'data_4' },
             ignoreHitEffect: false,
@@ -1102,6 +1170,13 @@ export const daPanChr_0018_dapan_combo_skillActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_8: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0018_dapan_normal_skill'] },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
@@ -1112,7 +1187,7 @@ export const daPanChr_0018_dapan_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'tar' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -1125,6 +1200,7 @@ export const daPanChr_0018_dapan_combo_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const daPanChr_0018_dapan_combo_skill: SkillDefinition = {
+  actionGraph: daPanChr_0018_dapan_combo_skillActionGraph,
   key: 'chr_0018_dapan_combo_skill',
   element: 'physical',
   blackboard: {
@@ -1138,22 +1214,18 @@ export const daPanChr_0018_dapan_combo_skill: SkillDefinition = {
   exclusiveFrame: 52,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 24, endFrame: 59, skillIds: ['chr_0018_dapan_normal_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
+    { startFrame: 23, endFrame: 26, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 23, endFrame: 26, sequence: { $sequence: 'checkCondition_6' } },
     { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_7' } },
+    { startFrame: 24, endFrame: 59, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
   ],
   smartTarget: 'trigger',
   cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 570],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
-  actionGraph: daPanChr_0018_dapan_combo_skillActionGraph,
 };
 
 export const daPanChr_0018_dapan_ultimate_skillActionGraph = {
@@ -1174,12 +1246,20 @@ export const daPanChr_0018_dapan_ultimate_skillActionGraph = {
         },
         next: null,
       },
+      mergeContextTargets_2: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       applyPhysicalInfliction_5: {
         action: {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'airborne',
-            target: 'enemy',
+            source: { kind: 'owner' },
+            target: { kind: 'context', key: 'tar' },
             isExtra: false,
             duration: { kind: 'constant', value: 2 },
             height: { kind: 'constant', value: 2 },
@@ -1210,6 +1290,8 @@ export const daPanChr_0018_dapan_ultimate_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['ultimateSkill'],
@@ -1283,6 +1365,9 @@ export const daPanChr_0018_dapan_ultimate_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            alwaysNext: false,
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['ultimateSkill'],
@@ -1296,7 +1381,8 @@ export const daPanChr_0018_dapan_ultimate_skillActionGraph = {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'knockDown',
-            target: 'enemy',
+            source: { kind: 'owner' },
+            target: { kind: 'context', key: 'tar' },
             duration: { kind: 'constant', value: 2 },
             force: true,
             isExtra: false,
@@ -1354,7 +1440,14 @@ export const daPanChr_0018_dapan_ultimate_skillActionGraph = {
         next: null,
       },
       hideUi_17: { action: { kind: 'hideUi', parameters: { onlyBlockInput: false } }, next: null },
-      applyBuff_18: {
+      reachSkillOperableBoundary_18: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0018_dapan_normal_skill', 'chr_0018_dapan_combo_skill'] },
+        },
+        next: null,
+      },
+      applyBuff_19: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1387,6 +1480,7 @@ export const daPanChr_0018_dapan_ultimate_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const daPanChr_0018_dapan_ultimate_skill: SkillDefinition = {
+  actionGraph: daPanChr_0018_dapan_ultimate_skillActionGraph,
   key: 'chr_0018_dapan_ultimate_skill',
   element: 'physical',
   blackboard: {
@@ -1403,24 +1497,19 @@ export const daPanChr_0018_dapan_ultimate_skill: SkillDefinition = {
   naturalDurationFrames: 235,
   exclusiveFrame: 100,
   offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 86,
-        endFrame: 120,
-        skillIds: ['chr_0018_dapan_normal_skill', 'chr_0018_dapan_combo_skill'],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'startTimeDilation_1' } },
+    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'mergeContextTargets_2' } },
+    { startFrame: 42, endFrame: 64, sequence: { $sequence: 'mergeContextTargets_2' } },
+    { startFrame: 80, endFrame: 81, sequence: { $sequence: 'mergeContextTargets_2' } },
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'applyPhysicalInfliction_5' } },
     { startFrame: 42, endFrame: 64, sequence: { $sequence: 'repeatEachTick_8' } },
     { startFrame: 80, endFrame: 81, sequence: { $sequence: 'ifElse_15' } },
     { startFrame: 0, endFrame: 36, sequence: { $sequence: 'startTimeDilation_16' } },
     { startFrame: 0, endFrame: 46, sequence: { $sequence: 'hideUi_17' } },
-    { startFrame: 0, endFrame: 100, sequence: { $sequence: 'applyBuff_18' } },
+    { startFrame: 86, endFrame: 120, sequence: { $sequence: 'reachSkillOperableBoundary_18' } },
+    { startFrame: 0, endFrame: 100, sequence: { $sequence: 'applyBuff_19' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 450,
@@ -1428,7 +1517,6 @@ export const daPanChr_0018_dapan_ultimate_skill: SkillDefinition = {
   skillType: 'ultimate',
   levelSource: 'ultimate',
   nativeSkillType: 'ultimateSkill',
-  actionGraph: daPanChr_0018_dapan_ultimate_skillActionGraph,
 };
 
 export const daPanCommon_character_perfect_dodgeActionGraph = {
@@ -1677,7 +1765,7 @@ const daPanBuff3ActionGraph = {
         action: {
           kind: 'adjustSkillCooldown',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             skill: { kind: 'type', skillType: 'comboSkill' },
             operation: 'reduce',
             basis: 'baseDurationRatio',

@@ -609,6 +609,39 @@ function graph(durationFrame: number): SkillActionGraphSource<KnownNativeActionL
 }
 
 describe('complete projectile callback skill source', () => {
+  it('compiles a native jump against the callback timeline rather than the launching skill', () => {
+    const source = graph(90);
+    const timeline = source.actionGroup.timelineActions[0]!;
+    const compiled = compileProjectileCallbackSkillSource({
+      graph: {
+        ...source,
+        actionGroup: {
+          ...source.actionGroup,
+          timelineActions: [
+            {
+              ...timeline,
+              startFrame: 3,
+              endFrame: 7,
+              sequence: {
+                ...timeline.sequence,
+                actions: [
+                  callbackNode({
+                    kind: 'timelineJump',
+                    destinationFrame: 78,
+                    condition: { ...timeline.sequence, actions: [] },
+                  }),
+                ],
+              },
+            },
+          ],
+        },
+      },
+      context: returnProjectionContext,
+    });
+    expect(
+      readActionGraphChain(compiled.program.finish(), compiled.timelineActions[0]!.sequence),
+    ).toMatchObject([{ kind: 'jumpTimeline', parameters: { destinationFrame: 78 } }]);
+  });
   it('keeps immediate writes and delayed reads in the same full callback program', () => {
     const compiled = compileProjectileCallbackSkillSource({
       graph: statefulCallback(true),

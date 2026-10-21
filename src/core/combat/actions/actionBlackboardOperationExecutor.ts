@@ -14,6 +14,7 @@ import type {
   DamageElement,
   OperatorAttribute,
   OperatorRole,
+  OperatorWeaponType,
 } from '../../game-data/operatorDefinition';
 import {
   resolveActionValueOperand,
@@ -27,6 +28,25 @@ import type { ResolvedCombatStepParameters } from '../../compiler/combatProgram'
 import { CombatOperationPrograms } from './combatOperationPrograms';
 import type { ActionBlackboardActionState } from '../state/actionState';
 
+// AbilityActionUtils.CharTypeIdToInt：两个角色属性读取动作共享同一原生编码。
+const CHARACTER_TYPE_CODES: Readonly<Record<DamageElement, number>> = {
+  heat: 0,
+  electric: 1,
+  cryo: 2,
+  nature: 3,
+  physical: 4,
+};
+
+// Beyond.GEnums.ProfessionCategory；编号不等于UI职业排列顺序。
+const PROFESSION_CODES: Readonly<Record<OperatorRole, number>> = {
+  guard: 0,
+  defender: 2,
+  supporter: 4,
+  caster: 5,
+  vanguard: 7,
+  striker: 8,
+};
+
 const PROBABILITY_TOLERANCE = Math.fround(0.00001);
 
 export class ActionBlackboardOperationExecutor implements CombatOperationExecutor {
@@ -37,6 +57,7 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
     readonly probabilitySamples?: ProbabilitySampleSource,
     readonly sourceAttributes?: {
       readonly sourceId: string;
+      readonly queryTargets?: CombatOperationExecutor['queryTargets'];
       readonly read: (
         sourceId: string,
         request: Readonly<ResolvedCombatStepParameters['storeSourceAttributeValue']>,
@@ -56,12 +77,15 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       readonly sourceId: string;
       readonly resolve: (entityId: string) => DamageElement | undefined;
       readonly readTypeId?: (entityId: string) => string | undefined;
+      readonly queryTargets?: CombatOperationExecutor['queryTargets'];
       readonly readSquadSlot?: (index: number) => string | undefined;
+      readonly readSquadSlotIndex?: (entityId: string) => number | undefined;
     },
-    /** CharacterTable.profession 的静态投影；仅职业条件实际执行时读取。 */
-    readonly operatorRoles?: {
+    /** CharacterTable 的角色身份；只查询首个目标，不从技能种类推断。 */
+    readonly operatorIdentity?: {
       readonly queryTargets: NonNullable<CombatOperationExecutor['queryTargets']>;
       readonly resolve: (entityId: string) => OperatorRole | undefined;
+      readonly readWeaponType?: (entityId: string) => OperatorWeaponType | undefined;
     },
     readonly entityProperties?: {
       readonly queryTargets?: CombatOperationExecutor['queryTargets'];
@@ -75,17 +99,46 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
         value: number,
       ) => number;
       readonly removeHealthFloor?: (entityId: string, handle: number) => void;
+      readonly pushRawOverride?: (entityId: string, attribute: string, value: number) => number;
+      readonly popRawOverride?: (entityId: string, attribute: string, token: number) => void;
     },
     restored?: {
       readonly state: ActionBlackboardActionState;
       readonly programs: CombatOperationPrograms;
     },
   ) {
-    this.runtimeState = restored?.state ?? { healthFloors: new Map() };
+    this.runtimeState = restored?.state ?? {
+      healthFloors: new Map(),
+      rawAttributeOverrides: new Map(),
+    };
     this.programs = restored?.programs ?? new CombatOperationPrograms();
   }
 
   execute(step: ResolvedCombatOperationStep, context?: CombatOperationContext): boolean {
+    if (step.kind === 'overrideRawAttributes') {
+      if (context === undefined)
+        throw new Error('overrideRawAttributes requires an operation context');
+      const query = this.entityProperties?.queryTargets;
+      const push = this.entityProperties?.pushRawOverride;
+      if (!query || !push)
+        throw new Error('overrideRawAttributes requires target and attribute writers');
+      const slot = this.programs.slot(step);
+      const applied = [...(this.runtimeState.rawAttributeOverrides.get(slot) ?? [])];
+      this.runtimeState.rawAttributeOverrides.set(slot, applied);
+      for (const target of query(step.parameters.targets, context)) {
+        const entityId = runtimeTargetEntityId(target);
+        if (entityId === undefined) continue;
+        for (const entry of step.parameters.attributes) {
+          const value = Math.fround(resolveActionValueOperand(entry.value, context.blackboard));
+          applied.push({
+            entityId,
+            attribute: entry.attribute,
+            token: push(entityId, entry.attribute, value),
+          });
+        }
+      }
+      return true;
+    }
     if (step.kind === 'storeRandomInteger') {
       if (!context || !this.probabilitySamples)
         throw new Error('storeRandomInteger requires an action context and random sample source');
@@ -130,17 +183,31 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       const entityId = this.characterTypes?.readSquadSlot?.(index);
       const element = entityId === undefined ? undefined : this.characterTypes?.resolve(entityId);
       // 原生 CharTypeIdToInt 的编号只作为动作黑板数值，不作为领域元素身份。
-      const codes: Record<DamageElement, number> = {
-        heat: 0,
-        electric: 1,
-        cryo: 2,
-        nature: 3,
-        physical: 4,
-      };
       context.blackboard.assignDynamic(
         step.parameters.outputKey,
-        element === undefined ? step.parameters.defaultValue : codes[element],
+        element === undefined ? step.parameters.defaultValue : CHARACTER_TYPE_CODES[element],
       );
+      return true;
+    }
+    if (
+      step.kind === 'storeCharacterTypeCode' ||
+      step.kind === 'storeProfession' ||
+      step.kind === 'storeSquadSlot'
+    ) {
+      if (!context || !step.parameters.outputKey) return false;
+      const queryTargets = this.characterTypes?.queryTargets;
+      if (!queryTargets) throw new Error('character identity read requires a target query runtime');
+      const target = queryTargets(step.parameters.target, context)[0];
+      // 原生GetFirstTarget后要求角色实体；不跳到后面的角色，也不把敌人当作物理干员。
+      if (target?.kind !== 'operator') return false;
+      const code =
+        step.kind === 'storeCharacterTypeCode'
+          ? this.#characterTypeCode(target.operatorId)
+          : step.kind === 'storeProfession'
+            ? this.#professionCode(target.operatorId)
+            : this.characterTypes?.readSquadSlotIndex?.(target.operatorId);
+      if (code === undefined) return false;
+      context.blackboard.assignDynamic(step.parameters.outputKey, code);
       return true;
     }
     if (step.kind === 'storeCharacterTypeId') {
@@ -349,7 +416,16 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       if (this.sourceAttributes === undefined) {
         throw new Error('storeSourceAttributeValue requires a source attribute reader');
       }
-      const sourceId = context.buffSourceId ?? this.sourceAttributes.sourceId;
+      let sourceId = context.buffSourceId ?? this.sourceAttributes.sourceId;
+      if (step.parameters.target !== undefined) {
+        if (this.sourceAttributes.queryTargets === undefined)
+          throw new Error('storeSourceAttributeValue requires target queries');
+        const target = this.sourceAttributes.queryTargets(step.parameters.target, context)[0];
+        if (target === undefined) return false;
+        const targetId = runtimeTargetEntityId(target);
+        if (targetId === undefined) return false;
+        sourceId = targetId;
+      }
       const attributeValue = this.sourceAttributes.read(sourceId, step.parameters);
       const scaledAttribute = step.parameters.useFloor
         ? Math.floor(
@@ -359,7 +435,7 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       const result =
         resolveActionValueOperand(step.parameters.base, context.blackboard) +
         scaledAttribute * resolveActionValueOperand(step.parameters.multiplier, context.blackboard);
-      context.blackboard.assignDynamic(step.parameters.targetKey, result);
+      context.blackboard.assignDynamic(step.parameters.targetKey, Math.fround(result));
       context.refreshCurrentBuffAttributeModifiers?.();
       return true;
     }
@@ -413,7 +489,7 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
         handle: setHealthFloor(
           ownerId,
           step.parameters.mode,
-          resolveActionValueOperand(step.parameters.value, context.blackboard),
+          Math.fround(resolveActionValueOperand(step.parameters.value, context.blackboard)),
         ),
       });
       return true;
@@ -486,14 +562,39 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       : this.delegate.execute(step, context);
   }
 
+  #characterTypeCode(entityId: string): number | undefined {
+    const element = this.characterTypes?.resolve(entityId);
+    return element === undefined ? undefined : CHARACTER_TYPE_CODES[element];
+  }
+
+  #professionCode(entityId: string): number | undefined {
+    const role = this.operatorIdentity?.resolve(entityId);
+    return role === undefined ? undefined : PROFESSION_CODES[role];
+  }
+
+  prepare(step: ResolvedCombatOperationStep): void {
+    // 原生 OnReset 与 OnEnd 都撤销本动作已注册的覆盖句柄。
+    if (step.kind === 'overrideRawAttributes') this.#releaseRawOverrides(this.programs.slot(step));
+  }
+
   end(step: ResolvedCombatOperationStep, context?: CombatOperationContext): void {
     const slot = this.programs.slot(step);
+    this.#releaseRawOverrides(slot);
     const healthFloor = this.runtimeState.healthFloors.get(slot);
     if (healthFloor !== undefined) {
       this.#removeHealthFloor(healthFloor.entityId, healthFloor.handle);
       this.runtimeState.healthFloors.delete(slot);
     }
     this.delegate.end?.(step, context);
+  }
+
+  #releaseRawOverrides(slot: number): void {
+    const applied = this.runtimeState.rawAttributeOverrides.get(slot);
+    if (applied === undefined) return;
+    const pop = this.entityProperties?.popRawOverride;
+    if (pop === undefined) throw new Error('restored raw overrides require an attribute writer');
+    for (const entry of applied) pop(entry.entityId, entry.attribute, entry.token);
+    this.runtimeState.rawAttributeOverrides.delete(slot);
   }
 
   #removeHealthFloor(entityId: string, handle: number): void {
@@ -535,14 +636,24 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       }
       return condition.characterTypes.includes(characterType);
     }
+    if (condition.kind === 'operatorWeaponTypeIn') {
+      const identity = this.operatorIdentity;
+      if (!identity?.readWeaponType)
+        throw new Error('operatorWeaponTypeIn requires an operator weapon type registry');
+      if (!context) throw new Error('operatorWeaponTypeIn requires an action context');
+      const target = identity.queryTargets(condition.target, context)[0];
+      if (target?.kind !== 'operator') return false;
+      const type = identity.readWeaponType(target.operatorId);
+      return type !== undefined && condition.weaponTypes.includes(type);
+    }
     if (condition.kind === 'operatorRoleIn') {
-      if (this.operatorRoles === undefined) {
+      if (this.operatorIdentity === undefined) {
         throw new Error('operatorRoleIn requires an operator registry');
       }
       if (!context) throw new Error('operatorRoleIn requires an action context');
-      const target = this.operatorRoles.queryTargets(condition.target, context)[0];
+      const target = this.operatorIdentity.queryTargets(condition.target, context)[0];
       if (target?.kind !== 'operator') return false;
-      const role = this.operatorRoles.resolve(target.operatorId);
+      const role = this.operatorIdentity.resolve(target.operatorId);
       return role !== undefined && condition.roles.includes(role);
     }
     if (condition.kind === 'not') return !this.evaluate(condition.condition, context);
@@ -572,9 +683,11 @@ export class ActionBlackboardOperationExecutor implements CombatOperationExecuto
       const attributes = this.deckAttributes.resolve(target.operatorId);
       if (attributes === undefined) return false;
       return compareCombatNumbers(
-        typeof condition.left === 'string' ? attributes[condition.left]
+        typeof condition.left === 'string'
+          ? attributes[condition.left]
           : Math.fround(resolveActionValueOperand(condition.left, context.blackboard)),
-        typeof condition.right === 'string' ? attributes[condition.right]
+        typeof condition.right === 'string'
+          ? attributes[condition.right]
           : Math.fround(resolveActionValueOperand(condition.right, context.blackboard)),
         condition.operator,
         'double',

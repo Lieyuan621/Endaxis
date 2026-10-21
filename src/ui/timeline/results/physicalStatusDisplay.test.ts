@@ -303,3 +303,58 @@ it('keeps physical markers on one row and selects the Main priority at the same 
     'buff_physical_airborne',
   ]);
 });
+
+it.each([
+  ['crush', 'buff_physical_crushed', 'buff_physical_do_crushed'],
+  ['fracture', 'buff_physical_fracture', 'buff_physical_do_fracture'],
+] as const)(
+  'routes %s child damage to the physical row through its creation parent',
+  (type, parentId, childId) => {
+    const entries = [
+      applied(1, 0, guardId, 1, 2),
+      receipt(2, 40, 'BuffConsumed', guardId, 1, { layers: 2 }),
+      applied(
+        4,
+        40,
+        childId,
+        3,
+        1,
+        {},
+        {
+          producedBy: { kind: 'buff', ownerId: 'enemy', instanceId: 2 },
+        },
+      ),
+      // Native Start executes children before the parent birth receipt.
+      applied(5, 40, parentId, 2, 1, { physicalInflictionType: type }),
+    ];
+    const damage: CombatReceiptEntry = {
+      sequence: 3,
+      frame: 40,
+      time: 40 / 30,
+      event: 'DamageApplied',
+      targetId: 'enemy',
+      producedBy: { kind: 'buff', ownerId: 'enemy', instanceId: 3 },
+      data: { buffId: childId, buffOwnerId: 'enemy', buffInstanceId: 3, value: 100 },
+    };
+    entries.push(
+      {
+        ...receipt(6, 40, 'BuffCreated', parentId, 2),
+        subject: { kind: 'buff', ownerId: 'enemy', instanceId: 2 },
+      },
+      {
+        ...receipt(7, 40, 'BuffCreated', childId, 3),
+        subject: { kind: 'buff', ownerId: 'enemy', instanceId: 3 },
+        producedBy: { kind: 'buff', ownerId: 'enemy', instanceId: 2 },
+      },
+    );
+    entries.push(damage);
+    const displays = projectPhysicalStatusDisplay(entries, 100, { enemySuperArmor: 0 });
+    const physical = displays.find(display => display.startFrame === 40)!;
+    expect(physical).toBeDefined();
+    expect(physical.icon).toBe('endaxis:icons/icon_term_ba_' + type);
+    const positions = layoutEnemyDamageHits(entries, displays, [], new Set());
+    expect(positions).toHaveLength(1);
+    expect(positions[0]).toMatchObject({ row: 0, standalone: false });
+    expect(positions[0]!.group).toEqual([damage]);
+  },
+);

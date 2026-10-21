@@ -17,10 +17,7 @@ import type {
  * 游戏数据与战斗运行时之间的解析后协议。这里的值已经确定等级和引用，
  * 运行时可以直接消费，但不得修改或重新解释原始干员配置。
  */
-import type {
-  ActionSwitchOptionDefinition,
-  HealTargetBinding,
-} from '../../../packages/game-data-contract/src/actions.ts';
+import type { ActionSwitchOptionDefinition } from '../../../packages/game-data-contract/src/actions.ts';
 import type { GameplayTag } from '../combat/tags/gameplayTags';
 import type {
   AbilityEntityDefinition,
@@ -170,6 +167,8 @@ export interface ResolvedCombatStepParameters {
   applyPhysicalInfliction: CompiledStepParameters['applyPhysicalInfliction'];
   forceSpellStatus: CompiledStepParameters['forceSpellStatus'];
   dealDamage: {
+    alwaysNext?: CompiledStepParameters['dealDamage']['alwaysNext'];
+    attacker?: 'actionOwner' | 'actionSource';
     target?: CompiledStepParameters['dealDamage']['target'];
     damageType: DamageType;
     calculation?: CompiledStepParameters['dealDamage']['calculation'];
@@ -177,6 +176,7 @@ export interface ResolvedCombatStepParameters {
     takeAttackSnapshot?: boolean;
     calculationMultiplier?: number;
     calculationAttribute?: string;
+    attributeSource?: CompiledStepParameters['dealDamage']['attributeSource'];
     calculationAddition?: number | CompiledValueInput;
     calculationValue?: number | CompiledValueInput;
     calculationValueScale?: number | CompiledValueInput;
@@ -190,30 +190,33 @@ export interface ResolvedCombatStepParameters {
     instantDamageScaleModifiers?: CompiledStepParameters['dealDamage']['instantDamageScaleModifiers'];
   };
   dealStagger: {
+    attacker?: CompiledStepParameters['dealStagger']['attacker'];
+    alwaysNext?: CompiledStepParameters['dealStagger']['alwaysNext'];
     target?: CompiledStepParameters['dealStagger']['target'];
     value: number | CompiledValueInput;
     valueMultiplier?: number | CompiledValueInput;
     features?: readonly DamageFeature[];
   };
-  heal: HealTargetBinding & {
-    source?: CompiledStepParameters['heal']['source'];
+  heal: {
+    target: CompiledStepParameters['heal']['target'];
+    healer: CompiledStepParameters['heal']['healer'];
     alwaysNext?: boolean;
     tags: readonly GameplayTag[];
   } & (
-      | {
-          attribute: HealCalculationAttribute;
-          attributeSource?: 'target';
-          multiplier: number | CompiledValueInput;
-          addition: number | CompiledValueInput;
-          amount?: never;
-        }
-      | {
-          amount: number | CompiledValueInput;
-          attribute?: never;
-          multiplier?: never;
-          addition?: never;
-        }
-    );
+    | {
+        attribute: HealCalculationAttribute;
+        attributeSource?: 'target';
+        multiplier: number | CompiledValueInput;
+        addition: number | CompiledValueInput;
+        amount?: never;
+      }
+    | {
+        amount: number | CompiledValueInput;
+        attribute?: never;
+        multiplier?: never;
+        addition?: never;
+      }
+  );
   aura: Omit<CompiledStepParameters['aura'], 'buffs'> & {
     readonly buffs: ResolvedCombatStepParameters['applyBuff']['buffs'];
   };
@@ -236,6 +239,7 @@ export interface ResolvedCombatStepParameters {
   readBuffRemainingDuration: CompiledStepParameters['readBuffRemainingDuration'];
   setBuffRemainingDuration: CompiledStepParameters['setBuffRemainingDuration'];
   setCurrentBuffRemainingDuration: CompiledStepParameters['setCurrentBuffRemainingDuration'];
+  saveDamageSkillCastId: CompiledStepParameters['saveDamageSkillCastId'];
   refreshCurrentBuffAttributeModifiers: CompiledStepParameters['refreshCurrentBuffAttributeModifiers'];
   readBuffStackCount: CompiledStepParameters['readBuffStackCount'];
   dispelBuffs: CompiledStepParameters['dispelBuffs'];
@@ -252,9 +256,17 @@ export interface ResolvedCombatStepParameters {
   setGlobalCooldown: CompiledStepParameters['setGlobalCooldown'];
   startTimeDilation: CompiledStepParameters['startTimeDilation'];
   startUltimateTimeDilation: CompiledStepParameters['startUltimateTimeDilation'];
+  changeOriginSkillToEventContextSkill: CompiledStepParameters['changeOriginSkillToEventContextSkill'];
+  terminateAddingBuff: CompiledStepParameters['terminateAddingBuff'];
+  storeCollectedBuffValue: CompiledStepParameters['storeCollectedBuffValue'];
+  modifyCollectedBuffValue: CompiledStepParameters['modifyCollectedBuffValue'];
   hideUi: CompiledStepParameters['hideUi'];
   setIgnoreGlobalTimeScale: CompiledStepParameters['setIgnoreGlobalTimeScale'];
+  storeSquadSlot: CompiledStepParameters['storeSquadSlot'];
+  storeProfession: CompiledStepParameters['storeProfession'];
+  storeCharacterTypeCode: CompiledStepParameters['storeCharacterTypeCode'];
   storeCharacterTypeId: CompiledStepParameters['storeCharacterTypeId'];
+  findNextAliveCharacterBySquadSlot: CompiledStepParameters['findNextAliveCharacterBySquadSlot'];
   findCharacterBySquadSlot: CompiledStepParameters['findCharacterBySquadSlot'];
   storeCharacterTypeBySquadSlot: CompiledStepParameters['storeCharacterTypeBySquadSlot'];
   storeCurrentTimelineFrame: CompiledStepParameters['storeCurrentTimelineFrame'];
@@ -268,6 +280,7 @@ export interface ResolvedCombatStepParameters {
   storeSourceAttributeValue: CompiledStepParameters['storeSourceAttributeValue'];
   storeEntityPropertyValue: CompiledStepParameters['storeEntityPropertyValue'];
   setHealthFloor: CompiledStepParameters['setHealthFloor'];
+  overrideRawAttributes: CompiledStepParameters['overrideRawAttributes'];
   changeResource: Omit<CompiledStepParameters['changeResource'], 'amount' | 'coefficient'> & {
     amount: number | CompiledValueInput;
     coefficient?: number | CompiledValueInput;
@@ -276,6 +289,9 @@ export interface ResolvedCombatStepParameters {
   recordPerfectDodge: CompiledStepParameters['recordPerfectDodge'];
   gainSquadUltimateEnergyFromSkillCost: { coefficient: number };
   gainFinisherSp: CompiledStepParameters['gainFinisherSp'];
+  disableNormalSkill: CompiledStepParameters['disableNormalSkill'];
+  limitMovementGait: CompiledStepParameters['limitMovementGait'];
+  queueComboLock: CompiledStepParameters['queueComboLock'];
   restrictUltimateEnergyRecovery: Omit<
     CompiledStepParameters['restrictUltimateEnergyRecovery'],
     'allowedRecoveryTags'
@@ -348,29 +364,31 @@ type ResolvedCombatStepNode<K extends CombatStepKind> = {
                     readonly whenTrue: ResolvedActionSequence;
                     readonly whenFalse?: ResolvedActionSequence;
                   }
-                : K extends 'once'
-                  ? { readonly body: ResolvedActionSequence }
-                  : K extends 'switch'
-                    ? {
-                        readonly options: readonly (Omit<
-                          ActionSwitchOptionDefinition,
-                          'sequence'
-                        > & {
-                          readonly sequence: ResolvedActionSequence;
-                        })[];
-                      }
-                    : K extends 'repeatEachTick'
-                      ? { readonly body: ResolvedActionSequence }
-                      : K extends 'launchProjectile'
-                        ? {
-                            readonly callbacks: readonly {
-                              readonly event: 'launch' | 'hit' | 'block' | 'reach' | 'finish';
-                              readonly skill: CompiledAbilityEntityChildSkillProgram;
-                            }[];
-                          }
-                        : K extends 'forEachContextTarget'
-                          ? { readonly body: ResolvedActionSequence }
-                          : {});
+                : K extends 'setHealthFloor'
+                  ? { readonly afterSet?: ResolvedActionSequence }
+                  : K extends 'once'
+                    ? { readonly body: ResolvedActionSequence }
+                    : K extends 'switch'
+                      ? {
+                          readonly options: readonly (Omit<
+                            ActionSwitchOptionDefinition,
+                            'sequence'
+                          > & {
+                            readonly sequence: ResolvedActionSequence;
+                          })[];
+                        }
+                      : K extends 'repeatEachTick'
+                        ? { readonly body: ResolvedActionSequence }
+                        : K extends 'launchProjectile'
+                          ? {
+                              readonly callbacks: readonly {
+                                readonly event: 'launch' | 'hit' | 'block' | 'reach' | 'finish';
+                                readonly skill: CompiledAbilityEntityChildSkillProgram;
+                              }[];
+                            }
+                          : K extends 'forEachContextTarget'
+                            ? { readonly body: ResolvedActionSequence }
+                            : {});
 
 /** 按成员逐一构造，联合kind仍保留parameters与子序列字段的判别关联。 */
 export type ResolvedCombatStepForKind<K extends CombatStepKind> = {
@@ -419,6 +437,7 @@ export const COMBAT_STEP_EXECUTION_ROUTES = {
   readBuffRemainingDuration: 'operation',
   setBuffRemainingDuration: 'operation',
   setCurrentBuffRemainingDuration: 'operation',
+  saveDamageSkillCastId: 'operation',
   refreshCurrentBuffAttributeModifiers: 'operation',
   skillAffix: 'operation',
   readBuffStackCount: 'operation',
@@ -431,14 +450,25 @@ export const COMBAT_STEP_EXECUTION_ROUTES = {
   adjustSkillCooldown: 'operation',
   holdBuffsById: 'operation',
   inheritBuffById: 'operation',
+  disableNormalSkill: 'operation',
+  limitMovementGait: 'operation',
+  queueComboLock: 'operation',
   restrictUltimateEnergyRecovery: 'operation',
   createTimedMarker: 'operation',
   setGlobalCooldown: 'operation',
   startTimeDilation: 'operation',
   startUltimateTimeDilation: 'operation',
+  changeOriginSkillToEventContextSkill: 'operation',
+  terminateAddingBuff: 'operation',
+  storeCollectedBuffValue: 'operation',
+  modifyCollectedBuffValue: 'operation',
   hideUi: 'operation',
   setIgnoreGlobalTimeScale: 'operation',
+  storeSquadSlot: 'operation',
+  storeProfession: 'operation',
+  storeCharacterTypeCode: 'operation',
   storeCharacterTypeId: 'operation',
+  findNextAliveCharacterBySquadSlot: 'operation',
   findCharacterBySquadSlot: 'operation',
   storeCharacterTypeBySquadSlot: 'operation',
   storeCurrentTimelineFrame: 'operation',
@@ -452,6 +482,7 @@ export const COMBAT_STEP_EXECUTION_ROUTES = {
   storeSourceAttributeValue: 'operation',
   storeEntityPropertyValue: 'operation',
   setHealthFloor: 'operation',
+  overrideRawAttributes: 'operation',
   changeResource: 'operation',
   recoverDashEnergy: 'operation',
   recordPerfectDodge: 'operation',
@@ -577,8 +608,6 @@ export interface CompiledSkillExecutionProgram extends CompiledSkillActionProgra
   readonly smartTarget?: 'enemy' | 'input' | 'trigger';
   /** 时间轴投影使用的技能块宽度，不参与技能生命周期和中断判断。 */
   readonly timelineBlockFrames?: number;
-  /** 有序连段下一技能身份；也标记程序已保留 AllowNext 动作，但不预选正式边界目标。 */
-  readonly timelineContinuationSkillId?: string;
   readonly timelineBlockFollowUpSkillId?: string;
   /** 原生技能实例的自然结束周期；与块宽、可中断边界彼此独立。 */
   readonly naturalDurationFrames?: number;
@@ -586,8 +615,6 @@ export interface CompiledSkillExecutionProgram extends CompiledSkillActionProgra
   /** 原生普攻连段身份提交点；到达后下一次 Dash 可保存该目标。 */
   readonly offsetRecordFrame?: number;
   readonly dontInterruptCombo?: boolean;
-  /** 原生技能局部输入映射与接续窗口；已无等级值，运行时只读。 */
-  readonly inputWindows?: SkillDefinition['inputWindows'];
   readonly cooldownFrames?: number;
   readonly costFrame?: number;
   readonly costs: readonly CompiledSkillCost[];
@@ -621,7 +648,6 @@ export type CompiledSkillCooldownProgram = Pick<
   | 'nativeSkillType'
   | 'normalSkillSubType'
   | 'skillType'
-  | 'inputWindows'
   | 'cooldownFrames'
   | 'costFrame'
 >;

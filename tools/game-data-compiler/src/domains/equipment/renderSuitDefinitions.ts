@@ -36,7 +36,11 @@ export function renderEquipmentSuitDefinitionFiles(batch: {
       throw new Error(`duplicate rendered gear set definition ${JSON.stringify(definition.slug)}`);
     seen.add(definition.slug);
     validateActionGraphOwner(definition, `gearSet.${definition.slug}`);
-    const projected = definition;
+    const { actionGraph, ...fields } = definition;
+    const projected = {
+      ...fields,
+      ...(actionGraph === undefined ? {} : { actionGraph }),
+    };
     imports.push(`import generatedGearSet${index} from './${definition.slug}.generated';`);
     files.push({
       relativePath: `${definition.slug}.generated.ts`,

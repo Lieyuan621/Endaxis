@@ -1,3 +1,4 @@
+import { runtimeTargetEntityId, type RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import {
   PHYSICAL_NO_GUARD_BUFF as NO_GUARD,
   PHYSICAL_INFLICTION_BUFFS,
@@ -32,19 +33,21 @@ export interface KnockDownEventPayload {
   readonly type: 'knockDown';
   readonly isExtra: boolean;
   readonly fromAirborne: false;
-  readonly skillCastInfo: CombatSkillCastInfo;
+  readonly skillCastInfo?: CombatSkillCastInfo;
   readonly attachBuffToCurrentSkill?: (buff: BuffApplicationHandle) => void;
 }
 
-export interface KnockDownOperationDependencies {
-  /** null 是实际缺来源；不可用缺省值冒充已绑定的干员。 */
-  readonly sourceId: string | null;
+export interface KnockDownTargetBinding {
   readonly target: BuffDefinitionOperationTarget<string>;
   readonly isTargetAlive: () => boolean;
-  readonly predefine: GameplayTagPredefine;
-  /** Buff 生命周期可能改变目标组件，故在状态 Buff 执行后查询。 */
   readonly getControl: () => OrdinaryKnockDownRuntime | null;
-  readonly readSourceDurationAddition: () => number;
+}
+
+export interface KnockDownOperationDependencies {
+  readonly queryTargets: NonNullable<CombatOperationExecutor['queryTargets']>;
+  readonly resolveTarget: (target: RuntimeTargetRef) => KnockDownTargetBinding | undefined;
+  readonly predefine: GameplayTagPredefine;
+  readonly readSourceDurationAddition: (sourceId: string) => number;
   readonly resolveBuffDefinition: (id: string) => ResolvedSkillBuffDefinition | undefined;
   readonly emit: (event: KnockDownAbilityEvent, payload: KnockDownEventPayload) => void;
   readonly onNoGuard: (payload: KnockDownEventPayload) => void;
@@ -68,55 +71,66 @@ export class KnockDownOperationExecutor implements CombatOperationExecutor {
     if (step.kind !== 'applyPhysicalInfliction' || step.parameters.type !== 'knockDown')
       return this.dependencies.delegate.execute(step, context);
     const d = this.dependencies;
-    if (d.sourceId === null) return false;
-    if (context?.skillCastInfo === undefined)
-      throw new Error('physical knockDown requires a skill runtime context');
-    // IsExtra 的通用 BuffAddContext 尚未贯通，不可把 true 静默投影成普通异常。
-    if (step.parameters.isExtra)
-      throw new Error('extra knock-down requires BuffAddContext support');
-    const payload: KnockDownEventPayload = {
-      sourceId: d.sourceId,
-      targetId: d.target.ownerId,
-      type: 'knockDown',
-      isExtra: step.parameters.isExtra,
-      fromAirborne: false,
-      skillCastInfo: context.skillCastInfo,
-      ...(context.attachBuffToCurrentSkill === undefined
-        ? {}
-        : { attachBuffToCurrentSkill: context.attachBuffToCurrentSkill }),
-    };
+    if (context === undefined) throw new Error('physical knockDown requires an action context');
+    const source = d.queryTargets(step.parameters.source, context)[0];
+    const sourceId = source === undefined ? undefined : runtimeTargetEntityId(source);
+    if (sourceId === undefined) return false;
+    const targets = d.queryTargets(step.parameters.target, context);
     let success = false;
     let interrupted = false;
-    if (step.parameters.targetFilter === 'aliveOnly' && d.isTargetAlive()) {
-      // 181 是 OnTriggerDodge 的事件身份，不表示目标真的执行了闪避。
-      d.emit('triggerDodge', payload);
-      if (!step.parameters.force && d.isTargetAlive() && d.target.getCountByIds([NO_GUARD]) <= 0) {
-        this.#applyBuff(NO_GUARD, payload, context);
-        d.onNoGuard(payload);
-      } else if (d.predefine.canAddTag(d.target.container, PHYSICAL_STATUS_TAG)) {
-        d.emit('beforeOutputPhysicalInfliction', payload);
-        d.emit('beforeTakePhysicalInfliction', payload);
-        this.#applyBuff(KNOCK_DOWN, payload, context);
-        const control = d.getControl();
-        if (control !== null) {
-          if (control.entity !== d.target.container || control.predefine !== d.predefine)
-            throw new Error(
-              'knock-down control must share the target container and tag configuration',
+    for (const selected of targets) {
+      if (runtimeTargetEntityId(selected) === undefined) continue;
+      const binding = d.resolveTarget(selected);
+      if (binding === undefined) continue;
+      const payload: KnockDownEventPayload = {
+        sourceId,
+        targetId: binding.target.ownerId,
+        type: 'knockDown',
+        isExtra: step.parameters.isExtra,
+        fromAirborne: false,
+        skillCastInfo: context.skillCastInfo,
+        ...(context.attachBuffToCurrentSkill === undefined
+          ? {}
+          : { attachBuffToCurrentSkill: context.attachBuffToCurrentSkill }),
+      };
+      if (step.parameters.targetFilter === 'aliveOnly' && binding.isTargetAlive()) {
+        // 181 是 OnTriggerDodge 的事件身份，不表示目标真的执行了闪避。
+        d.emit('triggerDodge', payload);
+        if (
+          !step.parameters.force &&
+          binding.isTargetAlive() &&
+          binding.target.getCountByIds([NO_GUARD]) <= 0
+        ) {
+          this.#applyBuff(binding.target, NO_GUARD, payload, context);
+          d.onNoGuard(payload);
+        } else if (d.predefine.canAddTag(binding.target.container, PHYSICAL_STATUS_TAG)) {
+          d.emit('beforeOutputPhysicalInfliction', payload);
+          d.emit('beforeTakePhysicalInfliction', payload);
+          this.#applyBuff(binding.target, KNOCK_DOWN, payload, context);
+          const control = binding.getControl();
+          if (control !== null) {
+            if (control.entity !== binding.target.container || control.predefine !== d.predefine)
+              throw new Error(
+                'knock-down control must share the target container and tag configuration',
+              );
+            // duration 不传入 Buff，也不能在前置事件/状态 Buff 之前求值。
+            const duration = resolveActionValueOperand(
+              step.parameters.duration,
+              context.blackboard,
             );
-          // duration 不传入 Buff，也不能在前置事件/状态 Buff 之前求值。
-          const duration = resolveActionValueOperand(step.parameters.duration, context.blackboard);
-          const result = control.apply(duration, {
-            readSourceDurationAddition: d.readSourceDurationAddition,
-            emit: event => d.emit(event, payload),
-            onApplied: () => d.onControlApplied(payload),
-          });
-          success = result === 'success';
-          interrupted = result === 'interruption';
+            const result = control.apply(duration, {
+              readSourceDurationAddition: () => d.readSourceDurationAddition(sourceId),
+              emit: event => d.emit(event, payload),
+              onApplied: () => d.onControlApplied(payload),
+            });
+            success ||= result === 'success';
+            interrupted ||= result === 'interruption';
+          }
+          // 无控制组件或控制拒绝也仍发通用 After；不以 Buff 添加返回值决定。
+          d.emit('afterOutputPhysicalInfliction', payload);
+          d.emit('afterTakePhysicalInfliction', payload);
+          d.onPhysicalInflictionApplied(payload);
         }
-        // 无控制组件或控制拒绝也仍发通用 After；不以 Buff 添加返回值决定。
-        d.emit('afterOutputPhysicalInfliction', payload);
-        d.emit('afterTakePhysicalInfliction', payload);
-        d.onPhysicalInflictionApplied(payload);
       }
     }
     switch (step.parameters.returnWhen) {
@@ -132,20 +146,22 @@ export class KnockDownOperationExecutor implements CombatOperationExecutor {
   }
 
   #applyBuff(
+    target: BuffDefinitionOperationTarget<string>,
     buffId: string,
     payload: KnockDownEventPayload,
     context: CombatOperationContext,
   ): void {
-    this.dependencies.target.apply({
+    target.apply({
+      isExtra: buffId === KNOCK_DOWN && payload.isExtra,
       buffId,
       physicalInflictionType: 'knockDown',
       producedBy: operationProducer(context, {
         ownerId: payload.sourceId,
-        actionId: context.actionSourceId ?? payload.skillCastInfo.originSkillId,
+        actionId: context.actionSourceId ?? payload.skillCastInfo?.originSkillId,
       }),
       definition: this.dependencies.resolveBuffDefinition(buffId),
       sourceId: payload.sourceId,
-      sourceActionId: context.actionSourceId ?? payload.skillCastInfo.originSkillId,
+      sourceActionId: context.actionSourceId ?? payload.skillCastInfo?.originSkillId,
       blackboardValues: {},
       skillCastInfo: payload.skillCastInfo,
     });

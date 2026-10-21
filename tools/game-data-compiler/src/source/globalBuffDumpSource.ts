@@ -136,7 +136,10 @@ export function parseGlobalBuffDumpSource(text: string, sourcePath: string): Glo
   );
   const globalModifierCount = declaredSize(modifier, sourcePath, 'global modifier', 3);
   const globalEventCount = declaredSize(events, sourcePath, 'global event', 3);
-  if (globalEventCount !== 0)
+  if (
+    globalEventCount !== 0 &&
+    !hasOnlySquadTipsEvents(events, text.slice(referencesStart), sourcePath)
+  )
     throw new Error(`${sourcePath}: non-empty GlobalBuff event behavior is unsupported`);
   const modifierStarts = [...modifier.matchAll(/^\t{4}\[(\d+)\]\r?\n\t{4}Data data\r?$/gm)];
   if (modifierStarts.length !== globalModifierCount)
@@ -220,10 +223,43 @@ export function parseGlobalBuffDumpSource(text: string, sourcePath: string): Glo
       globalModifierCount,
       globalModifiers,
       globalEventCount,
+      ...(globalEventCount === 0 ? {} : { presentationOnlyGlobalEventCount: globalEventCount }),
       blackboard,
     },
     sha256: createHash('sha256').update(text).digest('hex'),
   };
+}
+
+/** 只识别无载荷的队伍提示动作；有其他类型、未解析引用或额外字段时继续阻断。 */
+function hasOnlySquadTipsEvents(events: string, registry: string, sourcePath: string): boolean {
+  const starts = [...registry.matchAll(/^\t{4}\[(\d+)\]\r?\n\t{4}ReferencedObject data\r?$/gm)];
+  if (
+    starts.length === 0 ||
+    starts.length !== declaredSize(registry, sourcePath, 'managed reference', 3)
+  )
+    return false;
+  const ids = new Set<string>();
+  for (const [index, start] of starts.entries()) {
+    const block = registry.slice(
+      start.index! + start[0].length,
+      starts[index + 1]?.index ?? registry.length,
+    );
+    const id = /^\t{5}SInt64 rid = (\d+)\r?$/m.exec(block)?.[1];
+    if (
+      !id ||
+      ids.has(id) ||
+      stringField(block, 'class', sourcePath, 6, false) !== 'ShowSquadTipsAction/Data' ||
+      stringField(block, 'ns', sourcePath, 6, false) !== 'Beyond.Gameplay.Core' ||
+      stringField(block, 'asm', sourcePath, 6, false) !== 'Gameplay.Beyond'
+    )
+      return false;
+    const payload = '\t\t\t\t\tReferencedObjectData data';
+    const offset = block.indexOf(payload);
+    if (offset < 0 || block.slice(offset + payload.length).trim() !== '') return false;
+    ids.add(id);
+  }
+  const calls = [...events.matchAll(/^\t+SInt64 rid = (-?\d+)\r?$/gm)];
+  return calls.length > 0 && calls.every(call => ids.has(call[1]!));
 }
 
 function scalar(block: string, valueType: 'float' | 'int', sourcePath: string, indentation = 3) {

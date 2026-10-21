@@ -183,6 +183,7 @@ export function executeHealthDamage(input: ExecuteHealthDamageInput): HealthDama
   if (input.tags.includes('powerAttack')) input.consumeFinisherEligibility?.();
   const spellBurstType = spellBurstTypeFromDamageTags(input.tags);
   const beforePayload: HealthDamageEventPayload = {
+    ...(input.skillCastInfo === undefined ? {} : { skillCastInfo: input.skillCastInfo }),
     ...(input.partTransferInfo === undefined ? {} : { partTransferInfo: input.partTransferInfo }),
     sourceId: input.sourceId,
     targetId: input.targetId,
@@ -193,11 +194,10 @@ export function executeHealthDamage(input: ExecuteHealthDamageInput): HealthDama
     result: input.result,
     triggersCriticalEffects: input.triggersCriticalEffects ?? input.result.isCritical,
   };
-  // TakeDamageContext 不含施法身份；只为原生 OutputDamageContext 分支附加来源。
+  // 1.6.3 Take/OutputDamageContext 均保留施法来源，仅输出侧另带执行技能身份。
   const sourceBeforePayload = {
     ...beforePayload,
     ...(input.executingSkillId === undefined ? {} : { executingSkillId: input.executingSkillId }),
-    ...(input.skillCastInfo === undefined ? {} : { skillCastInfo: input.skillCastInfo }),
   };
 
   input.emitTargetEvent('beforeTakeDamage', beforePayload);

@@ -488,6 +488,7 @@ export function compileScenarioRuntimeAssembly(
         characterTypeId: build.operator.characterTypeId,
         squadSlotIndex: scenario.tracks.findIndex(track => track?.id === operator.operatorId),
         operatorRole: build.operator.role,
+        weaponType: build.operator.weaponType,
         ...(Object.keys(equipmentBuffDefinitions).length === 0
           ? {}
           : { buffDefinitions: equipmentBuffDefinitions }),
@@ -528,6 +529,7 @@ export function compileScenarioRuntimeAssembly(
   return {
     ...options.environment,
     initialFrame,
+    squadSlotCount: scenario.tracks.length,
     operatorControl: {
       initialOperatorId: initialControlledOperatorId,
       automaticSwitches: scenario.battle.automaticControlSwitches !== false,

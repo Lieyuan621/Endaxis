@@ -1,4 +1,4 @@
-import type { PoiseCurve } from '../../../core/projection/poiseCurves';
+import { poiseMaximumAt, type PoiseCurve } from '../../../core/projection/poiseCurves';
 import type { ResourceCurvePoint } from '../../../core/projection/resourceCurves';
 
 export interface PoiseDisplayPoint {
@@ -29,7 +29,7 @@ export function poiseDisplayPoints(
 export function poiseProgressPoints(curve: PoiseCurve): readonly ResourceCurvePoint[] {
   return curve.points.map(point => ({
     ...point,
-    value: Math.max(0, Math.min(curve.maxValue, curve.maxValue - point.value)),
+    value: Math.max(0, poiseMaximumAt(curve, point.frame, point.sequence ?? -1) - point.value),
   }));
 }
 

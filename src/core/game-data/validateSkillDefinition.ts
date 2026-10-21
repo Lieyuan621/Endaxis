@@ -151,9 +151,6 @@ export function validateSkillDefinition(
   if (record.timelineBlockFollowUpSkillId !== undefined) {
     requireString(record, 'timelineBlockFollowUpSkillId', path, out);
   }
-  if (record.timelineContinuationSkillId !== undefined) {
-    requireString(record, 'timelineContinuationSkillId', path, out);
-  }
   requirePositiveInteger(record, 'naturalDurationFrames', path, out);
   if (record.enhancementStateBuffId !== undefined) {
     requireString(record, 'enhancementStateBuffId', path, out);
@@ -198,45 +195,6 @@ export function validateSkillDefinition(
   requireNonNegativeInteger(record, 'offsetRecordFrame', path, out);
   if (record.dontInterruptCombo !== undefined)
     requireBoolean(record, 'dontInterruptCombo', path, out);
-  if (record.inputWindows !== undefined) {
-    const windows = asRecord(record.inputWindows, `${path}.inputWindows`, out);
-    if (windows !== null) {
-      if (windows.hasConditionalActions !== undefined)
-        requireBoolean(windows, 'hasConditionalActions', `${path}.inputWindows`, out);
-      for (const field of ['commandMappings', 'allowedNextSkills'] as const) {
-        const value = windows[field];
-        if (value === undefined) continue;
-        if (!Array.isArray(value)) {
-          push(out, `${path}.inputWindows.${field}`, 'expected an array');
-          continue;
-        }
-        value.forEach((item, index) => {
-          const itemPath = `${path}.inputWindows.${field}[${index}]`;
-          const row = asRecord(item, itemPath, out);
-          if (row === null) return;
-          requireNonNegativeInteger(row, 'startFrame', itemPath, out);
-          requireNonNegativeInteger(row, 'endFrame', itemPath, out);
-          if (
-            typeof row.startFrame === 'number' &&
-            typeof row.endFrame === 'number' &&
-            row.endFrame < row.startFrame
-          )
-            push(out, `${itemPath}.endFrame`, 'expected endFrame >= startFrame');
-          if (field === 'commandMappings') {
-            requireEnum(row, 'input', new Set(['basicAttack']), itemPath, out);
-            if (row.targetSkillId !== null) requireString(row, 'targetSkillId', itemPath, out);
-          } else if (!Array.isArray(row.skillIds)) {
-            push(out, `${itemPath}.skillIds`, 'expected an array');
-          } else {
-            row.skillIds.forEach((skillId, sourceIndex) => {
-              if (typeof skillId !== 'string' || skillId.length === 0)
-                push(out, `${itemPath}.skillIds[${sourceIndex}]`, 'expected a non-empty string');
-            });
-          }
-        });
-      }
-    }
-  }
   if (record.switchToBuffCast !== undefined) {
     const route = asRecord(record.switchToBuffCast, `${path}.switchToBuffCast`, out);
     if (route !== null) {

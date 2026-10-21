@@ -210,6 +210,8 @@ export function isCombatInvisiblePresentationLeaf(
     node.body.kind === 'leaf' &&
     node.body.value.family === 'presentation' &&
     node.body.value.action.kind !== 'passiveUiValue' &&
+    // 需到目标身份投影后才能证明原生成功返回；不能提前删掉可能失败的查询。
+    node.body.value.action.kind !== 'rewardComboState' &&
     (node.body.value.action.kind !== 'playAnimation' ||
       node.body.value.action.onEnd === undefined ||
       node.body.value.action.onEnd.actions.every(

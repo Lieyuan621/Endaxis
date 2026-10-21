@@ -87,8 +87,8 @@ export {
   type KnownNativeActionLeafSource,
 } from './source/actionLeaf.ts';
 export {
-  parseCharacterTypeIdReadActionSource,
-  type CharacterTypeIdReadActionSource,
+  parseCharacterIdentityReadActionSource,
+  type CharacterIdentityReadActionSource,
 } from './source/characterIdentityActions.ts';
 export {
   parseAdvancedBuffFinishActionSource,

@@ -65,7 +65,7 @@ const definition = {
               action: {
                 kind: 'setGlobalCooldown',
                 parameters: {
-                  target: 'caster',
+                  target: { kind: 'owner' },
                   markerId: 'buff_wpn_claym_0007_valid',
                   durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
                 },
@@ -76,6 +76,7 @@ const definition = {
               action: {
                 kind: 'storeSourceAttributeValue',
                 parameters: {
+                  target: { kind: 'owner' },
                   attribute: { kind: 'specific', key: 'maxHealth' },
                   stage: 'armedNonConverted',
                   useFloor: false,

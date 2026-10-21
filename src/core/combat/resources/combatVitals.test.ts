@@ -30,6 +30,17 @@ function createVitals(overrides: Partial<ConstructorParameters<typeof CombatVita
 }
 
 describe('CombatVitals', () => {
+  it('失衡上限修正按剩余比例同步，恢复后的分支可独立移除修正', () => {
+    const vitals = createVitals({ poise: 40 });
+    vitals.synchronizeMaxPoise(200, 100);
+    expect(vitals.poise).toBe(80);
+    const restored = CombatVitals.bindRuntimeState(structuredClone(vitals.runtimeState));
+    restored.synchronizeMaxPoise(100, 200);
+    expect(restored.poise).toBe(40);
+    expect(vitals.maxPoise).toBe(200);
+    restored.applyPoiseDelta(-40);
+    expect(restored.beginPoiseBreakIfZero()).toBe(true);
+  });
   it('最大生命修正保留比例，重复登记不重算，切面恢复后移除仍正确', () => {
     const vitals = createVitals({ health: 400 });
     const attributes = new CombatAttributeSet<string>();

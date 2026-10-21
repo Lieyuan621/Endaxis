@@ -1,3 +1,4 @@
+import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import { numberInput, conditionInput, stringInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it, vi } from 'vitest';
 import { ActionBlackboard } from './actionBlackboard';
@@ -5,6 +6,7 @@ import { ActionBlackboardOperationExecutor } from './actionBlackboardOperationEx
 import { ExplicitProbabilitySampleSource } from '../random/probabilitySampleSource';
 import { CombatVitals } from '../resources/combatVitals';
 import { createStateTestSession } from '../../../test/stateTestSession';
+import { CombatAttributeSet } from '../attributes/combatAttributes';
 
 const delegate = {
   execute: vi.fn(() => false),
@@ -12,6 +14,66 @@ const delegate = {
 };
 
 describe('ActionBlackboardOperationExecutor', () => {
+  it('restores raw override ownership with its branch and releases every repeated execution handle', () => {
+    const attributes = new CombatAttributeSet<string>();
+    attributes.define('PhysicalResistance', 10, {});
+    const ports = (values: CombatAttributeSet<string>) => ({
+      read: () => 0,
+      queryTargets: () => [{ kind: 'enemy' as const }],
+      pushRawOverride: (_id: string, key: string, value: number) =>
+        values.pushRawOverride(key, value),
+      popRawOverride: (_id: string, key: string, token: number) =>
+        values.popRawOverride(key, token),
+    });
+    const executor = new ActionBlackboardOperationExecutor(
+      delegate,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      ports(attributes),
+    );
+    const step = {
+      kind: 'overrideRawAttributes' as const,
+      parameters: {
+        targets: { kind: 'owner' as const },
+        attributes: [
+          {
+            attribute: 'PhysicalResistance',
+            value: numberInput({ kind: 'blackboard' as const, key: 'resist' }),
+          },
+        ],
+      },
+    };
+    const context = { blackboard: new ActionBlackboard({ resist: 20.2 }), actionOwnerId: 'enemy' };
+    executor.execute(step, context);
+    expect(attributes.get('PhysicalResistance')).toBe(Math.fround(20.2));
+    context.blackboard.assignDynamic('resist', 30);
+    executor.execute(step, context);
+    const copied = createStateTestSession(
+      { attributes: attributes.runtimeState, actions: executor.runtimeState },
+      () => undefined,
+    ).read();
+    const branch = new CombatAttributeSet(copied.attributes);
+    const restored = new ActionBlackboardOperationExecutor(
+      delegate,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      ports(branch),
+      { state: copied.actions, programs: executor.programs },
+    );
+    restored.prepare(step);
+    expect(branch.get('PhysicalResistance')).toBe(10);
+    expect(attributes.get('PhysicalResistance')).toBe(30);
+    executor.end(step, context);
+    expect(attributes.get('PhysicalResistance')).toBe(10);
+  });
   it('随机整数在执行时读取上下界，保留原生容差、右开边界及等值区间的取样顺序', () => {
     const executor = new ActionBlackboardOperationExecutor(
       delegate,
@@ -66,6 +128,83 @@ describe('ActionBlackboardOperationExecutor', () => {
     expect(executor.execute(step, { blackboard })).toBe(true);
     expect(blackboard.getNumber('element')).toBe(-1);
   });
+  it('目标属性编号只读取首个角色，空查询与非角色返回false且保留原值', () => {
+    let targets: RuntimeTargetRef[] = [{ kind: 'operator', operatorId: 'caster' }];
+    const resolve = vi.fn((id: string) => (id === 'caster' ? ('nature' as const) : undefined));
+    const queryTargets = vi.fn(() => targets);
+    const executor = new ActionBlackboardOperationExecutor(
+      delegate,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { sourceId: 'caster', resolve, queryTargets },
+    );
+    const blackboard = new ActionBlackboard({ code: -1 });
+    const step = {
+      kind: 'storeCharacterTypeCode',
+      parameters: { target: { kind: 'context', key: 'members' }, outputKey: 'code' },
+    } as const;
+    expect(executor.execute(step, { blackboard })).toBe(true);
+    expect(blackboard.getNumber('code')).toBe(3);
+    expect(executor.execute(step, { blackboard })).toBe(true);
+    targets = [{ kind: 'enemy' }, { kind: 'operator', operatorId: 'caster' }];
+    resolve.mockClear();
+    expect(executor.execute(step, { blackboard })).toBe(false);
+    expect(resolve).not.toHaveBeenCalled();
+    targets = [];
+    expect(executor.execute(step, { blackboard })).toBe(false);
+    targets = [{ kind: 'operator', operatorId: 'missing' }];
+    expect(executor.execute(step, { blackboard })).toBe(false);
+    expect(blackboard.getNumber('code')).toBe(3);
+  });
+
+  it('职业编号沿原生枚举且队伍槽位保留空槽，不按职业展示顺序或队员压缩顺序推断', () => {
+    let target: RuntimeTargetRef = { kind: 'operator', operatorId: 'caster' };
+    const queryTargets = () => [target];
+    const executor = new ActionBlackboardOperationExecutor(
+      delegate,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      {
+        sourceId: 'caster',
+        resolve: () => 'electric',
+        queryTargets,
+        readSquadSlotIndex: id => (id === 'caster' ? 2 : undefined),
+      },
+      {
+        queryTargets,
+        resolve: id => (id === 'caster' ? 'vanguard' : id === 'ally' ? 'caster' : undefined),
+      },
+    );
+    const blackboard = new ActionBlackboard({ role: -1, slot: -1 });
+    const parameters = { target: { kind: 'owner' }, outputKey: 'role' } as const;
+    expect(executor.execute({ kind: 'storeProfession', parameters }, { blackboard })).toBe(true);
+    expect(blackboard.getNumber('role')).toBe(7);
+    expect(
+      executor.execute(
+        { kind: 'storeSquadSlot', parameters: { ...parameters, outputKey: 'slot' } },
+        { blackboard },
+      ),
+    ).toBe(true);
+    expect(blackboard.getNumber('slot')).toBe(2);
+    target = { kind: 'operator', operatorId: 'ally' };
+    expect(executor.execute({ kind: 'storeProfession', parameters }, { blackboard })).toBe(true);
+    expect(blackboard.getNumber('role')).toBe(5);
+    expect(
+      executor.execute(
+        { kind: 'storeSquadSlot', parameters: { ...parameters, outputKey: 'slot' } },
+        { blackboard },
+      ),
+    ).toBe(false);
+    expect(blackboard.getNumber('slot')).toBe(2);
+    target = { kind: 'operator', operatorId: 'missing' };
+    expect(executor.execute({ kind: 'storeProfession', parameters }, { blackboard })).toBe(false);
+    expect(blackboard.getNumber('role')).toBe(5);
+  });
+
   it('读取角色原生类型，只写成功目标；重复执行和缺失目标不改写语义', () => {
     const executor = new ActionBlackboardOperationExecutor(
       delegate,
@@ -304,6 +443,45 @@ describe('ActionBlackboardOperationExecutor', () => {
     expect(blackboard.getNumber('result')).toBe(18.5);
   });
 
+  it('属性读取只取查询首目标，忽略不同的 Buff 来源；空查询不读公式也不写黑板', () => {
+    let targets: readonly RuntimeTargetRef[] = [
+      { kind: 'operator', operatorId: 'owner' },
+      { kind: 'enemy' },
+    ];
+    const read = vi.fn(() => 0.123456789);
+    const queryTargets = vi.fn(() => targets);
+    const executor = new ActionBlackboardOperationExecutor(delegate, undefined, {
+      sourceId: 'caster',
+      read,
+      queryTargets,
+    });
+    const blackboard = new ActionBlackboard();
+    const context = { blackboard, actionOwnerId: 'owner', buffSourceId: 'different-source' };
+    const step = {
+      kind: 'storeSourceAttributeValue' as const,
+      parameters: {
+        target: { kind: 'owner' as const },
+        attribute: { kind: 'specific' as const, key: 'healTakenIncrease' },
+        stage: 'armedNonConverted' as const,
+        useFloor: false,
+        divisor: numberInput({ kind: 'blackboard', key: 'unused-divisor' }),
+        multiplier: { kind: 'constant' as const, value: 1 },
+        base: { kind: 'constant' as const, value: 0 },
+        targetKey: 'result',
+      },
+    };
+    expect(executor.execute(step, context)).toBe(true);
+    expect(read).toHaveBeenCalledExactlyOnceWith('owner', step.parameters);
+    expect(blackboard.getNumber('result')).toBe(Math.fround(0.123456789));
+    targets = [];
+    read.mockClear();
+    const formulaRead = vi.fn();
+    expect(blackboard.observeReads(formulaRead, () => executor.execute(step, context))).toBe(false);
+    expect(read).not.toHaveBeenCalled();
+    expect(formulaRead).not.toHaveBeenCalled();
+    expect(blackboard.getNumber('result')).toBe(Math.fround(0.123456789));
+  });
+
   it('stores the action owner current entity property using the native formula order', () => {
     const blackboard = new ActionBlackboard({ multiplier: 3 });
     const reads: unknown[] = [];
@@ -395,7 +573,7 @@ describe('ActionBlackboardOperationExecutor', () => {
     const context = { blackboard, actionOwnerId: 'enemy' };
 
     expect(executor.execute(step, context)).toBe(true);
-    expect(setHealthFloor).toHaveBeenCalledWith('enemy', 'maxHealthRatio', 0.4);
+    expect(setHealthFloor).toHaveBeenCalledWith('enemy', 'maxHealthRatio', Math.fround(0.4));
     executor.end(step, context);
     expect(removeHealthFloor).toHaveBeenCalledWith('enemy', 7);
   });
@@ -1106,25 +1284,42 @@ describe('ActionBlackboardOperationExecutor', () => {
 
   it('Deck 查询取首角色快照，属性保留 double 而黑板按 float 读取', () => {
     const executor = new ActionBlackboardOperationExecutor(
-      delegate, undefined, undefined, undefined,
+      delegate,
+      undefined,
+      undefined,
+      undefined,
       {
         queryTargets: (query, context) => resolveDirectActionTargets(query, context) ?? [],
-        resolve: id => id === 'caster'
-          ? { strength: 1000, agility: 1000.00002, intellect: 100, will: 100 }
-          : { strength: 20, agility: 10, intellect: 50, will: 100 },
+        resolve: id =>
+          id === 'caster'
+            ? { strength: 1000, agility: 1000.00002, intellect: 100, will: 100 }
+            : { strength: 20, agility: 10, intellect: 50, will: 100 },
       },
     );
-    const context = { blackboard: new ActionBlackboard({ value: 1000.00002 }),
-      actionInputTarget: { kind: 'operator' as const, operatorId: 'caster' } };
-    const condition = { kind: 'deckAttributeCompare' as const,
+    const context = {
+      blackboard: new ActionBlackboard({ value: 1000.00002 }),
+      actionInputTarget: { kind: 'operator' as const, operatorId: 'caster' },
+    };
+    const condition = {
+      kind: 'deckAttributeCompare' as const,
       target: { kind: 'inputTarget' as const },
-      left: 'strength' as const, operator: 'less' as const, right: 'agility' as const };
+      left: 'strength' as const,
+      operator: 'less' as const,
+      right: 'agility' as const,
+    };
     expect(executor.evaluate(condition, context)).toBe(true);
-    expect(executor.evaluate({ ...condition,
-      right: numberInput({ kind: 'blackboard', key: 'value' }) }, context)).toBe(false);
-    expect(executor.evaluate(condition, {
-      ...context, actionInputTarget: { kind: 'enemy' },
-    })).toBe(false);
+    expect(
+      executor.evaluate(
+        { ...condition, right: numberInput({ kind: 'blackboard', key: 'value' }) },
+        context,
+      ),
+    ).toBe(false);
+    expect(
+      executor.evaluate(condition, {
+        ...context,
+        actionInputTarget: { kind: 'enemy' },
+      }),
+    ).toBe(false);
     expect(executor.evaluate(condition, { blackboard: context.blackboard })).toBe(false);
   });
 });

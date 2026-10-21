@@ -10,6 +10,25 @@ import { createNativeEventFixture } from './nativeEventTestFixture';
 import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
 
 describe('CombatSemanticEventRuntime', () => {
+  it('受伤前直接订阅保留来源身份，受伤后事件不能提前触发它', () => {
+    const { semanticEvents, dispatcher } = createNativeEventFixture();
+    const payload = { ...createKillEvent().payload, sourceId: 'operator', targetId: 'operator' };
+    const received: unknown[] = [];
+    const registration = semanticEvents.register({
+      ownerOperatorId: 'operator',
+      trigger: { kind: 'abilityEvent', event: 'beforeTakeDamage' },
+      phase: 'dataAction',
+      handle: ({ event }) => received.push(event),
+    });
+    dispatcher.dispatch({ event: 'takeDamage', payload }, []);
+    expect(received).toHaveLength(0);
+    const before = { event: 'beforeTakeDamage' as const, payload };
+    dispatcher.dispatch(before, []);
+    expect(received).toEqual([before]);
+    registration.dispose();
+    dispatcher.dispatch(before, []);
+    expect(received).toHaveLength(1);
+  });
   it.each(['addedBuff', 'outputBuff'] as const)(
     '直接订阅 %s 保留载荷、条件和原生实体归属',
     event => {

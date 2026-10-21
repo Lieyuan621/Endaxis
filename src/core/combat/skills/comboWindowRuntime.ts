@@ -21,13 +21,13 @@ import {
 } from '../state/environmentState';
 
 export type ComboWindowConsumeFailure =
-  'windowMissing' | 'releaseOrderMismatch' | 'skillStageMismatch';
+  'windowMissing' | 'releaseOrderMismatch' | 'skillStageMismatch' | 'comboLocked';
 
 export type ComboWindowConsumeResult =
   | {
       readonly consumed: true;
       readonly window: PendingComboWindow;
-      readonly reason?: 'releaseOrderMismatch';
+      readonly reason?: 'releaseOrderMismatch' | 'comboLocked';
       readonly expected?: PendingComboWindow;
     }
   | {
@@ -69,6 +69,26 @@ export class ComboWindowRuntime implements FrameRuntime {
   /** 原生 HasPendingComboSkill：只看该角色记录的候选数，不执行释放门禁或检查队首。 */
   hasPending(operatorId: string): boolean {
     return (this.runtimeState.records.get(operatorId)?.candidates.length ?? 0) > 0;
+  }
+
+  queueLock(durationSeconds: number): void {
+    if (!Number.isFinite(durationSeconds)) throw new Error('combo lock duration must be finite');
+    if (durationSeconds <= 0) return;
+    const lockSequence = this.runtimeState.nextSequence++;
+    this.runtimeState.locks.set(lockSequence, durationSeconds * COMBAT_FRAMES_PER_SECOND);
+    this.receipt.record({
+      frame: this.clock.frame,
+      time: this.clock.time,
+      event: 'ComboLockQueued',
+      data: { lockSequence },
+    });
+  }
+
+  get isLocked(): boolean {
+    const first = this.#orderedRecords()[0];
+    return [...this.runtimeState.locks.keys()].some(
+      sequence => first === undefined || sequence < first.activationSequence,
+    );
   }
 
   registerRingQte(
@@ -206,17 +226,18 @@ export class ComboWindowRuntime implements FrameRuntime {
   ): T {
     const first = this.#orderedRecords()[0];
     const expected = first?.candidates.at(-1);
-    const outOfOrder = first !== undefined && first.operatorId !== operatorId;
+    const locked = this.isLocked;
+    const outOfOrder = locked || (first !== undefined && first.operatorId !== operatorId);
+    const queueFailure = locked ? 'comboLocked' : 'releaseOrderMismatch';
     // 时间轴强制施放绕过队首门禁，但只消费施放者自己的匹配候选。
     // 正常输入仍保留队首限制，不能因强制执行策略而提前消费其他干员。
-    if (outOfOrder && !forceCast)
-      return cast({ consumed: false, reason: 'releaseOrderMismatch', expected });
+    if (outOfOrder && !forceCast) return cast({ consumed: false, reason: queueFailure, expected });
     const active = forceCast ? this.runtimeState.records.get(operatorId) : first;
     const candidate = active?.candidates.at(-1);
     if (active === undefined || candidate === undefined) {
       return cast({
         consumed: false,
-        reason: outOfOrder ? 'releaseOrderMismatch' : 'windowMissing',
+        reason: outOfOrder ? queueFailure : 'windowMissing',
         expected,
       });
     }
@@ -270,7 +291,7 @@ export class ComboWindowRuntime implements FrameRuntime {
     const result = cast({
       consumed: true,
       window: selected,
-      ...(outOfOrder ? { reason: 'releaseOrderMismatch' as const, expected } : {}),
+      ...(outOfOrder ? { reason: queueFailure, expected } : {}),
     });
     // 清空原记录，让嵌套调用持有的引用也观察到消费；下一次触发仍复用它。
     active.candidates.length = 0;
@@ -301,6 +322,18 @@ export class ComboWindowRuntime implements FrameRuntime {
   /** BattleManager 的候选剩余时间随全局缩放；显式暂停仍优先。 */
   advance(deltaSeconds: number): void {
     if (this.runtimeState.globallyPaused) return;
+    for (const [sequence, remaining] of this.runtimeState.locks) {
+      const next = remaining - deltaSeconds * COMBAT_FRAMES_PER_SECOND;
+      if (next < 0) {
+        this.runtimeState.locks.delete(sequence);
+        this.receipt.record({
+          frame: this.clock.frame,
+          time: this.clock.time,
+          event: 'ComboLockExpired',
+          data: { lockSequence: sequence },
+        });
+      } else this.runtimeState.locks.set(sequence, next);
+    }
     const previous = this.#perfectOperators();
     for (const record of [...this.runtimeState.records.values()]) {
       if (
@@ -378,6 +411,12 @@ export class ComboWindowRuntime implements FrameRuntime {
     return [...this.runtimeState.records.values()]
       .filter(record => record.candidates.length > 0)
       .sort((left, right) => {
+        for (const sequence of this.runtimeState.locks.keys()) {
+          const difference =
+            Number(left.activationSequence > sequence) -
+            Number(right.activationSequence > sequence);
+          if (difference) return difference;
+        }
         if (left.openedFrame !== right.openedFrame) return left.openedFrame - right.openedFrame;
         const leftOrder = this.#operatorOrder.get(left.operatorId) ?? Number.MAX_SAFE_INTEGER;
         const rightOrder = this.#operatorOrder.get(right.operatorId) ?? Number.MAX_SAFE_INTEGER;

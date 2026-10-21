@@ -1307,6 +1307,7 @@ describe('attachBuffLifecycleSequences', () => {
     const operations: CombatOperationExecutor = {
       execute(step, context): boolean {
         if (step.kind === 'findOwnerSpawnedAbilityEntities') {
+          expect(context!.targetContext!.get('inherited')).toEqual([{ kind: 'enemy' }]);
           context!.targetContext!.set('seals', [
             { kind: 'abilityEntity', instanceId: 11 },
             { kind: 'abilityEntity', instanceId: 12 },
@@ -1357,8 +1358,14 @@ describe('attachBuffLifecycleSequences', () => {
     );
     const container = new CombatBuffContainer<never>('enemy', new CombatAttributeSet<never>());
 
-    container.add(definition, 'operator');
-
+    const inheritedTargetGroups = {
+      groups: new Map([['inherited', [{ kind: 'enemy' as const }]]]),
+    };
+    const buff = container.add(definition, 'operator', { inheritedTargetGroups });
+    inheritedTargetGroups.groups.clear();
+    expect(buff!.runtimeState.actionHost!.targets.groups.get('inherited')).toEqual([
+      { kind: 'enemy' },
+    ]);
     expect(reached).toEqual([11, 12]);
   });
 
@@ -1547,7 +1554,8 @@ describe('attachBuffLifecycleSequences', () => {
     const definition = attachBuffLifecycleSequences<never>(
       { id: 'damage-listener', stackingType: 'unique' },
       {},
-      () => new EventContextConditionExecutor(new TargetContextOperationExecutor('enemy', terminal)),
+      () =>
+        new EventContextConditionExecutor(new TargetContextOperationExecutor('enemy', terminal)),
       undefined,
       [
         {

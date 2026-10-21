@@ -170,3 +170,22 @@ export function propagateGuaranteedSingletonZeroSpaceFacts(
   }
   return state;
 }
+
+/** 技能与 Buff 共用空间点身份分析；点的数量仍在运行时求值。 */
+export function collectRandomPointTargetGroupKeys(
+  writesByKey: ReadonlyMap<string, readonly TargetGroupActionSource[]>,
+): Set<string> {
+  const result = new Set<string>();
+  for (const [key, writes] of writesByKey) {
+    const randomWrites = writes.filter(write => write.finderType === 'RandomPointFinder');
+    if (randomWrites.length === 0) continue;
+    if (
+      randomWrites.length !== writes.length ||
+      randomWrites.some(write => write.finderRandomPointCount === undefined)
+    )
+      // 混合写入不满足纯随机点证明；各写入仍由原动作投影处理。
+      continue;
+    result.add(key);
+  }
+  return result;
+}

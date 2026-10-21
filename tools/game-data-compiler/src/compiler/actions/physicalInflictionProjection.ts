@@ -1,3 +1,6 @@
+import type { ActionTargetQuery, CombatStepParameters } from '../intermediateDefinitions.ts';
+import { COMPILED_BUFF_TARGET_KINDS } from '../buffs/compiledBuffMetadata.ts';
+import { projectActionTargetQuery } from '../conditions/combatConditionProjection.ts';
 import type {
   AirborneActionSource,
   PhysicalInflictionActionSource,
@@ -17,21 +20,7 @@ export function projectPhysicalInflictionAction(
   path: string,
   context: CombatActionProjectionContextSource,
 ): Extract<CompiledBuffStepSource, { readonly kind: 'applyPhysicalInfliction' }> {
-  const fixedEnemy =
-    (action.target.targetSource === 'Target' && context.actionTargetTarget === 'enemy') ||
-    (action.target.targetSource === 'Context' &&
-      context.staticEnemyTargetGroupKeys?.has(action.target.targetGroupKey) === true);
   const source = action.kind === 'airborne' ? action.source : action.attacker;
-  const fixedCasterSource =
-    (source.targetSource === 'Owner' &&
-      source.targetGroupKey === '' &&
-      context.actionOwnerTarget === 'caster') ||
-    (source.targetSource === 'Source' &&
-      source.targetGroupKey === '' &&
-      context.actionSourceTarget === 'caster');
-  if (!fixedCasterSource || !fixedEnemy)
-    throw new Error(`${path}: unsupported physical-infliction attacker/target`);
-
   if (action.kind === 'airborne') {
     const returnWhen = {
       Always: 'always',
@@ -41,17 +30,21 @@ export function projectPhysicalInflictionAction(
     } as const;
     return {
       kind: 'applyPhysicalInfliction',
-      parameters: {
-        type: 'airborne',
-        target: 'enemy',
-        isExtra: action.isExtra,
-        duration: actionValueOperand(action.floatingDuration),
-        height: actionValueOperand(action.floatingHeight),
-        speedFactorMultiplier: action.speedFactorMultiplier,
-        force: action.forceAirborne,
-        targetFilter: action.deadOption === 'OnlyDead' ? 'skipAll' : 'aliveOnly',
-        returnWhen: returnWhen[action.returnTrueWhen],
-      },
+      parameters: physicalInflictionParameters(
+        {
+          type: 'airborne',
+          source: projectActionTargetQuery(source, context, `${path}.source`),
+          target: projectActionTargetQuery(action.target, context, `${path}.target`),
+          isExtra: action.isExtra,
+          duration: actionValueOperand(action.floatingDuration),
+          height: actionValueOperand(action.floatingHeight),
+          speedFactorMultiplier: action.speedFactorMultiplier,
+          force: action.forceAirborne,
+          targetFilter: action.deadOption === 'OnlyDead' ? 'skipAll' : 'aliveOnly',
+          returnWhen: returnWhen[action.returnTrueWhen],
+        },
+        context,
+      ),
     };
   }
   if (action.deadOption === 'OnlyDead')
@@ -62,21 +55,57 @@ export function projectPhysicalInflictionAction(
   if (action.kind === 'fracture') {
     return {
       kind: 'applyPhysicalInfliction',
-      parameters: {
-        type: 'fracture',
-        target: 'enemy',
-        isExtra: action.isExtra,
-      },
+      parameters: physicalInflictionParameters(
+        {
+          type: 'fracture',
+          source: projectActionTargetQuery(source, context, `${path}.source`),
+          target: projectActionTargetQuery(action.target, context, `${path}.target`),
+          isExtra: action.isExtra,
+        },
+        context,
+      ),
     };
   }
   return {
     kind: 'applyPhysicalInfliction',
-    parameters: {
-      type: 'crush',
-      target: 'enemy',
-      isExtra: action.isExtra,
-      damageMultiplier: actionValueOperand(action.damageMultiplier),
-      ignoreHitEffect: action.ignoreHitEffect,
-    },
+    parameters: physicalInflictionParameters(
+      {
+        type: 'crush',
+        source: projectActionTargetQuery(source, context, `${path}.source`),
+        target: projectActionTargetQuery(action.target, context, `${path}.target`),
+        isExtra: action.isExtra,
+        damageMultiplier: actionValueOperand(action.damageMultiplier),
+        ignoreHitEffect: action.ignoreHitEffect,
+      },
+      context,
+    ),
   };
+}
+
+/** 查询身份留给运行时；闭包只使用可证明的宿主种类，未知来源不能默认成干员。 */
+export function physicalInflictionParameters<
+  T extends CombatStepParameters['applyPhysicalInfliction'],
+>(parameters: T, context: CombatActionProjectionContextSource): T {
+  const kind = (query: ActionTargetQuery): string => {
+    if (query.kind === 'fixed') return query.target;
+    if (query.kind === 'context' && context.staticEnemyTargetGroupKeys?.has(query.key))
+      return 'enemy';
+    if (query.kind === 'owner') return context.fixedBuffOwnerTarget ?? context.actionOwnerTarget;
+    if (query.kind === 'source') return context.fixedBuffSourceTarget ?? context.actionSourceTarget;
+    if (query.kind === 'inputTarget') return context.actionTargetTarget ?? 'unknown';
+    if (query.kind === 'characterTeam' || query.kind === 'mainCharacter') return 'caster';
+    if (query.kind === 'battleMainTarget' || query.kind === 'enemyByTags') return 'enemy';
+    if (query.kind === 'buffFilter' || query.kind === 'exclude') return kind(query.targets);
+    return 'unknown';
+  };
+  const source = kind(parameters.source);
+  return Object.assign(parameters, {
+    [COMPILED_BUFF_TARGET_KINDS]: {
+      target:
+        parameters.type === 'crush' || parameters.type === 'fracture'
+          ? 'enemy'
+          : kind(parameters.target),
+      ...(source === 'caster' ? {} : { source }),
+    },
+  });
 }

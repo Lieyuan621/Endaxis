@@ -38,6 +38,19 @@ function isReference(value: object): value is ActionGraphReference {
   );
 }
 
+/** 更新图与入口时保留原字段位置；删掉的字段不复活，新增字段才追加。 */
+function replaceResourceGraph(
+  original: Record<string, unknown>,
+  metadata: object,
+  actionGraph: ActionGraphResourceDefinition,
+): Record<string, unknown> {
+  const result = { ...original };
+  for (const key of Object.keys(result)) {
+    if (key !== 'actionGraph' && !Object.hasOwn(metadata, key)) delete result[key];
+  }
+  return Object.assign(result, metadata, { actionGraph });
+}
+
 /** 枚举或替换当前资源的入口；独立子资源有自己的图，不跨进去解析引用。未改动子树保留引用身份。 */
 function mapEntries(
   value: unknown,
@@ -236,7 +249,7 @@ export function optimizeResourceGraphs<T>(
           ? resource
           : { main: extracted.graph, macros: extracted.macros };
       if (finalResource !== record.actionGraph) changed = true;
-      return changed ? { ...(metadata as object), actionGraph: finalResource } : value;
+      return changed ? replaceResourceGraph(record, metadata as object, finalResource) : value;
     }
     // 等价分支可能只是节点 ID 不同；先共享定义，控制流才能识别同一后继。
     // 共享不合并调用次数或状态，优化后的新等价尾段仍由下方再次收拢。
@@ -300,7 +313,9 @@ export function optimizeResourceGraphs<T>(
       deduplicated.graph === resource.main && !macrosChanged
         ? resource
         : { main: deduplicated.graph, macros };
-    const simplified = changed ? { ...(metadata as object), actionGraph: finalResource } : value;
+    const simplified = changed
+      ? replaceResourceGraph(record, metadata as object, finalResource)
+      : value;
     // 常驻资源的入口可能重复、交错执行，统一保留跨入口用途，不推断单次覆盖。
     // passiveSkills 目录声明资源身份，不根据 enableSequence 字段猜测装备或被动。
     if (
@@ -345,11 +360,11 @@ export function optimizeResourceGraphs<T>(
         );
         recordValueReport(path, pruned.report);
         let entryIndex = 0;
-        return {
+        const prunedMetadata = {
           ...(mapEntries(metadata, () => pruned.scope.entries[entryIndex++]!.sequence) as object),
-          actionGraph: pruned.scope.actionGraph,
           ...(pruned.scope.blackboard === undefined ? {} : { blackboard: pruned.scope.blackboard }),
         };
+        return replaceResourceGraph(record, prunedMetadata, pruned.scope.actionGraph);
       }
       if (owner.blackboard && Object.keys(owner.blackboard).length > 0) {
         recordValueReport(path, {

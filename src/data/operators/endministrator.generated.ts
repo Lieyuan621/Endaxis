@@ -53,6 +53,8 @@ export const endministratorChr_0003_endminf_combo_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'smart_target' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['comboSkill'],
@@ -76,7 +78,7 @@ export const endministratorChr_0003_endminf_combo_skillActionGraph = {
                 },
               },
             ],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'context', key: 'smart_target' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
@@ -87,6 +89,8 @@ export const endministratorChr_0003_endminf_combo_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'smart_target' },
             damageType: 'physical',
             attackScale: { kind: 'constant', value: 0 },
             tags: ['comboSkill'],
@@ -177,6 +181,13 @@ export const endministratorChr_0003_endminf_combo_skillActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_12: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0003_endminf_normal_skill'] },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
@@ -200,6 +211,7 @@ export const endministratorChr_0003_endminf_combo_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const endministratorChr_0003_endminf_combo_skill: SkillDefinition = {
+  actionGraph: endministratorChr_0003_endminf_combo_skillActionGraph,
   key: 'chr_0003_endminf_combo_skill',
   element: 'physical',
   blackboard: {
@@ -215,28 +227,30 @@ export const endministratorChr_0003_endminf_combo_skill: SkillDefinition = {
   exclusiveFrame: 30,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 23, endFrame: 54, skillIds: ['chr_0003_endminf_normal_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 23, endFrame: 24, sequence: { $sequence: 'ifElse_7' } },
     { startFrame: 0, endFrame: 23, sequence: { $sequence: 'startTimeDilation_8' } },
     { startFrame: 0, endFrame: 4, sequence: { $sequence: 'ifElse_11' } },
+    { startFrame: 23, endFrame: 54, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
   ],
   smartTarget: 'input',
   cooldownFrames: [480, 480, 480, 480, 480, 480, 480, 480, 480, 480, 480, 450],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
-  actionGraph: endministratorChr_0003_endminf_combo_skillActionGraph,
 };
 
 export const endministratorChr_0003_endminf_attack1ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       startTimeDilation_3: {
         action: {
           kind: 'startTimeDilation',
@@ -281,6 +295,8 @@ export const endministratorChr_0003_endminf_attack1ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -288,7 +304,14 @@ export const endministratorChr_0003_endminf_attack1ActionGraph = {
         },
         next: 'ifElse_5',
       },
-      reachSkillOperableBoundary_7: {
+      overrideBasicAttackMapping_7: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0003_endminf_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_8: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0003_endminf_attack2'] },
@@ -309,6 +332,7 @@ export const endministratorChr_0003_endminf_attack1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const endministratorChr_0003_endminf_attack1: SkillDefinition = {
+  actionGraph: endministratorChr_0003_endminf_attack1ActionGraph,
   key: 'chr_0003_endminf_attack1',
   element: 'physical',
   blackboard: {
@@ -319,33 +343,29 @@ export const endministratorChr_0003_endminf_attack1: SkillDefinition = {
   naturalDurationFrames: 179,
   exclusiveFrame: 12,
   offsetRecordFrame: 6,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 5,
-        endFrame: 24,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0003_endminf_attack2',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 9, endFrame: 24, skillIds: ['chr_0003_endminf_attack2'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 6, endFrame: 7, sequence: { $sequence: 'dealDamage_6' } },
-    { startFrame: 9, endFrame: 24, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
+    { startFrame: 5, endFrame: 24, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
+    { startFrame: 9, endFrame: 24, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0003_endminf_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: endministratorChr_0003_endminf_attack1ActionGraph,
 };
 
 export const endministratorChr_0003_endminf_attack2ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       startTimeDilation_3: {
         action: {
           kind: 'startTimeDilation',
@@ -390,6 +410,8 @@ export const endministratorChr_0003_endminf_attack2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -397,7 +419,14 @@ export const endministratorChr_0003_endminf_attack2ActionGraph = {
         },
         next: 'ifElse_5',
       },
-      reachSkillOperableBoundary_7: {
+      overrideBasicAttackMapping_7: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0003_endminf_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_8: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0003_endminf_attack3'] },
@@ -418,6 +447,7 @@ export const endministratorChr_0003_endminf_attack2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const endministratorChr_0003_endminf_attack2: SkillDefinition = {
+  actionGraph: endministratorChr_0003_endminf_attack2ActionGraph,
   key: 'chr_0003_endminf_attack2',
   element: 'physical',
   blackboard: {
@@ -428,33 +458,29 @@ export const endministratorChr_0003_endminf_attack2: SkillDefinition = {
   naturalDurationFrames: 105,
   exclusiveFrame: 15,
   offsetRecordFrame: 5,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 4,
-        endFrame: 30,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0003_endminf_attack3',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 12, endFrame: 30, skillIds: ['chr_0003_endminf_attack3'] }],
-  },
   costFrame: 8,
   scheduledSequences: [
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 5, endFrame: 11, sequence: { $sequence: 'dealDamage_6' } },
-    { startFrame: 12, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
+    { startFrame: 4, endFrame: 30, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
+    { startFrame: 12, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0003_endminf_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: endministratorChr_0003_endminf_attack2ActionGraph,
 };
 
 export const endministratorChr_0003_endminf_attack3ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       startTimeDilation_4: {
         action: {
           kind: 'startTimeDilation',
@@ -499,6 +525,8 @@ export const endministratorChr_0003_endminf_attack3ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -552,6 +580,8 @@ export const endministratorChr_0003_endminf_attack3ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -561,7 +591,14 @@ export const endministratorChr_0003_endminf_attack3ActionGraph = {
         },
         next: 'ifElse_11',
       },
-      reachSkillOperableBoundary_13: {
+      overrideBasicAttackMapping_13: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0003_endminf_attack4'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_14: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0003_endminf_attack4'] },
@@ -587,6 +624,7 @@ export const endministratorChr_0003_endminf_attack3ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const endministratorChr_0003_endminf_attack3: SkillDefinition = {
+  actionGraph: endministratorChr_0003_endminf_attack3ActionGraph,
   key: 'chr_0003_endminf_attack3',
   element: 'physical',
   blackboard: {
@@ -598,34 +636,31 @@ export const endministratorChr_0003_endminf_attack3: SkillDefinition = {
   naturalDurationFrames: 101,
   exclusiveFrame: 22,
   offsetRecordFrame: 5,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 12,
-        endFrame: 35,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0003_endminf_attack4',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 17, endFrame: 35, skillIds: ['chr_0003_endminf_attack4'] }],
-  },
   costFrame: 12,
   scheduledSequences: [
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 5, endFrame: 6, sequence: { $sequence: 'dealDamage_7' } },
     { startFrame: 12, endFrame: 13, sequence: { $sequence: 'dealDamage_12' } },
-    { startFrame: 17, endFrame: 35, sequence: { $sequence: 'reachSkillOperableBoundary_13' } },
+    { startFrame: 12, endFrame: 35, sequence: { $sequence: 'overrideBasicAttackMapping_13' } },
+    { startFrame: 17, endFrame: 35, sequence: { $sequence: 'reachSkillOperableBoundary_14' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0003_endminf_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: endministratorChr_0003_endminf_attack3ActionGraph,
 };
 
 export const endministratorChr_0003_endminf_attack4ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       startTimeDilation_5: {
         action: {
           kind: 'startTimeDilation',
@@ -670,6 +705,8 @@ export const endministratorChr_0003_endminf_attack4ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -721,6 +758,8 @@ export const endministratorChr_0003_endminf_attack4ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -772,6 +811,8 @@ export const endministratorChr_0003_endminf_attack4ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -779,7 +820,14 @@ export const endministratorChr_0003_endminf_attack4ActionGraph = {
         },
         next: 'ifElse_23',
       },
-      reachSkillOperableBoundary_25: {
+      overrideBasicAttackMapping_25: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0003_endminf_attack5'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_26: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0003_endminf_attack5'] },
@@ -808,6 +856,7 @@ export const endministratorChr_0003_endminf_attack4ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const endministratorChr_0003_endminf_attack4: SkillDefinition = {
+  actionGraph: endministratorChr_0003_endminf_attack4ActionGraph,
   key: 'chr_0003_endminf_attack4',
   element: 'physical',
   blackboard: {
@@ -818,36 +867,35 @@ export const endministratorChr_0003_endminf_attack4: SkillDefinition = {
   naturalDurationFrames: 127,
   exclusiveFrame: 34,
   offsetRecordFrame: 7,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 18,
-        endFrame: 45,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0003_endminf_attack5',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 32, endFrame: 45, skillIds: ['chr_0003_endminf_attack5'] }],
-  },
   costFrame: 8,
   scheduledSequences: [
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 7, endFrame: 8, sequence: { $sequence: 'dealDamage_8' } },
     { startFrame: 9, endFrame: 10, sequence: { $sequence: 'dealDamage_8' } },
     { startFrame: 19, endFrame: 20, sequence: { $sequence: 'dealDamage_18' } },
+    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 18, endFrame: 19, sequence: { $sequence: 'dealDamage_24' } },
-    { startFrame: 32, endFrame: 45, sequence: { $sequence: 'reachSkillOperableBoundary_25' } },
+    { startFrame: 18, endFrame: 45, sequence: { $sequence: 'overrideBasicAttackMapping_25' } },
+    { startFrame: 32, endFrame: 45, sequence: { $sequence: 'reachSkillOperableBoundary_26' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0003_endminf_attack5',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: endministratorChr_0003_endminf_attack4ActionGraph,
 };
 
 export const endministratorChr_0003_endminf_attack5ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       modifyActionValue_3: {
         action: {
           kind: 'modifyActionValue',
@@ -898,6 +946,8 @@ export const endministratorChr_0003_endminf_attack5ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
@@ -936,7 +986,7 @@ export const endministratorChr_0003_endminf_attack5ActionGraph = {
         action: {
           kind: 'finishBuffsById',
           parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             finishSource: { kind: 'source' },
             buffIds: ['buff_chr_0003_endminf_attack4'],
             reason: 'other',
@@ -944,7 +994,14 @@ export const endministratorChr_0003_endminf_attack5ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_14: {
+      overrideBasicAttackMapping_14: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0003_endminf_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_15: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0003_endminf_attack1'] },
@@ -958,7 +1015,7 @@ export const endministratorChr_0003_endminf_attack5ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'tar' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -990,6 +1047,7 @@ export const endministratorChr_0003_endminf_attack5ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const endministratorChr_0003_endminf_attack5: SkillDefinition = {
+  actionGraph: endministratorChr_0003_endminf_attack5ActionGraph,
   key: 'chr_0003_endminf_attack5',
   element: 'physical',
   blackboard: {
@@ -1002,30 +1060,20 @@ export const endministratorChr_0003_endminf_attack5: SkillDefinition = {
   naturalDurationFrames: 125,
   exclusiveFrame: 26,
   offsetRecordFrame: 18,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 15,
-        endFrame: 32,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0003_endminf_attack1',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 25, endFrame: 32, skillIds: ['chr_0003_endminf_attack1'] }],
-  },
   costFrame: 12,
   scheduledSequences: [
+    { startFrame: 16, endFrame: 19, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 18, endFrame: 19, sequence: { $sequence: 'dealDamage_8' } },
+    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 19, endFrame: 21, sequence: { $sequence: 'ifElse_12' } },
     { startFrame: 18, endFrame: 21, sequence: { $sequence: 'finishBuffsById_13' } },
-    { startFrame: 25, endFrame: 32, sequence: { $sequence: 'reachSkillOperableBoundary_14' } },
+    { startFrame: 15, endFrame: 32, sequence: { $sequence: 'overrideBasicAttackMapping_14' } },
+    { startFrame: 25, endFrame: 32, sequence: { $sequence: 'reachSkillOperableBoundary_15' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0003_endminf_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: endministratorChr_0003_endminf_attack5ActionGraph,
 };
 
 export const endministratorChr_0003_endminf_power_attack2ActionGraph = {
@@ -1060,6 +1108,8 @@ export const endministratorChr_0003_endminf_power_attack2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             calculation: 'breakingAttack',
@@ -1070,7 +1120,14 @@ export const endministratorChr_0003_endminf_power_attack2ActionGraph = {
         next: 'ifElse_3',
       },
       gainFinisherSp_6: {
-        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+        action: {
+          kind: 'gainFinisherSp',
+          parameters: {
+            source: { kind: 'source' },
+            target: { kind: 'inputTarget' },
+            factor: { kind: 'constant', value: 1 },
+          },
+        },
         next: null,
       },
       ifElse_7: {
@@ -1087,6 +1144,8 @@ export const endministratorChr_0003_endminf_power_attack2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             calculation: 'breakingAttack',
@@ -1180,6 +1239,15 @@ export const endministratorChr_0003_endminf_power_attack2ActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_17: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: ['chr_0003_endminf_normal_skill', 'chr_0003_endminf_combo_skill'],
+          },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: {
@@ -1195,7 +1263,7 @@ export const endministratorChr_0003_endminf_power_attack2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -1210,7 +1278,7 @@ export const endministratorChr_0003_endminf_power_attack2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -1227,6 +1295,7 @@ export const endministratorChr_0003_endminf_power_attack2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const endministratorChr_0003_endminf_power_attack2: SkillDefinition = {
+  actionGraph: endministratorChr_0003_endminf_power_attack2ActionGraph,
   key: 'chr_0003_endminf_power_attack2',
   element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -1235,15 +1304,6 @@ export const endministratorChr_0003_endminf_power_attack2: SkillDefinition = {
   exclusiveFrame: 47,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 27,
-        endFrame: 58,
-        skillIds: ['chr_0003_endminf_normal_skill', 'chr_0003_endminf_combo_skill'],
-      },
-    ],
-  },
   costFrame: 4,
   scheduledSequences: [
     { startFrame: 9, endFrame: 15, sequence: { $sequence: 'dealDamage_4' } },
@@ -1252,17 +1312,24 @@ export const endministratorChr_0003_endminf_power_attack2: SkillDefinition = {
     { startFrame: 11, endFrame: 29, sequence: { $sequence: 'checkCondition_14' } },
     { startFrame: 0, endFrame: 47, sequence: { $sequence: 'applyBuff_15' } },
     { startFrame: 0, endFrame: 27, sequence: { $sequence: 'applyBuff_16' } },
+    { startFrame: 27, endFrame: 58, sequence: { $sequence: 'reachSkillOperableBoundary_17' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
-  actionGraph: endministratorChr_0003_endminf_power_attack2ActionGraph,
 };
 
 export const endministratorChr_0003_endminf_plunging_attack_endActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -1292,6 +1359,8 @@ export const endministratorChr_0003_endminf_plunging_attack_endActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'plungingAttack'],
@@ -1313,6 +1382,7 @@ export const endministratorChr_0003_endminf_plunging_attack_endActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const endministratorChr_0003_endminf_plunging_attack_end: SkillDefinition = {
+  actionGraph: endministratorChr_0003_endminf_plunging_attack_endActionGraph,
   key: 'chr_0003_endminf_plunging_attack_end',
   element: 'physical',
   blackboard: {
@@ -1324,12 +1394,14 @@ export const endministratorChr_0003_endminf_plunging_attack_end: SkillDefinition
   exclusiveFrame: 20,
   offsetRecordFrame: 0,
   costFrame: 0,
-  scheduledSequences: [{ startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } }],
+  scheduledSequences: [
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } },
+  ],
   defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: endministratorChr_0003_endminf_plunging_attack_endActionGraph,
 };
 
 export const endministratorChr_0003_endminf_normal_skillActionGraph = {
@@ -1343,6 +1415,13 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
             query: { kind: 'mainTarget', owner: { kind: 'owner' } },
             saveToContextKey: 'mainTar',
           },
+        },
+        next: null,
+      },
+      mergeContextTargets_20: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
         },
         next: null,
       },
@@ -1422,6 +1501,8 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalSkill'],
@@ -1436,7 +1517,8 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'crush',
-            target: 'enemy',
+            source: { kind: 'owner' },
+            target: { kind: 'inputTarget' },
             isExtra: false,
             damageMultiplier: { kind: 'constant', value: 1 },
             ignoreHitEffect: false,
@@ -1475,7 +1557,8 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'crush',
-            target: 'enemy',
+            source: { kind: 'owner' },
+            target: { kind: 'inputTarget' },
             isExtra: false,
             damageMultiplier: { kind: 'constant', value: 1 },
             ignoreHitEffect: false,
@@ -1615,6 +1698,13 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
         },
         next: 'ifElse_47',
       },
+      reachSkillOperableBoundary_49: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0003_endminf_normal_skill'] },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'trigger', fallback: 0 } },
@@ -1634,7 +1724,7 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
@@ -1658,7 +1748,7 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           compareZeroWhenTargetMissing: true,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
@@ -1714,7 +1804,7 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'tar' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -1727,6 +1817,7 @@ export const endministratorChr_0003_endminf_normal_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const endministratorChr_0003_endminf_normal_skill: SkillDefinition = {
+  actionGraph: endministratorChr_0003_endminf_normal_skillActionGraph,
   key: 'chr_0003_endminf_normal_skill',
   element: 'physical',
   blackboard: {
@@ -1741,25 +1832,21 @@ export const endministratorChr_0003_endminf_normal_skill: SkillDefinition = {
   exclusiveFrame: 28,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 24, endFrame: 54, skillIds: ['chr_0003_endminf_normal_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 90, sequence: { $sequence: 'findTargets_1' } },
     { startFrame: 0, endFrame: 9, sequence: { $sequence: 'findTargets_1' } },
+    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'mergeContextTargets_20' } },
     { startFrame: 11, endFrame: 12, sequence: { $sequence: 'repeatEachTick_41' } },
     { startFrame: 11, endFrame: 12, sequence: { $sequence: 'ifElse_43' } },
     { startFrame: 11, endFrame: 14, sequence: { $sequence: 'checkCondition_48' } },
+    { startFrame: 24, endFrame: 54, sequence: { $sequence: 'reachSkillOperableBoundary_49' } },
   ],
   defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: endministratorChr_0003_endminf_normal_skillActionGraph,
 };
 
 export const endministratorChr_0003_endminf_ultimate_skillActionGraph = {
@@ -1791,6 +1878,8 @@ export const endministratorChr_0003_endminf_ultimate_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['ultimateSkill'],
@@ -1820,6 +1909,8 @@ export const endministratorChr_0003_endminf_ultimate_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'targets' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['ultimateSkill'],
@@ -1834,7 +1925,7 @@ export const endministratorChr_0003_endminf_ultimate_skillActionGraph = {
           kind: 'mergeContextTargets',
           parameters: {
             saveToContextKey: 'targets',
-            sources: [{ kind: 'target', target: 'enemy' }],
+            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'dealDamage_7',
@@ -1917,7 +2008,7 @@ export const endministratorChr_0003_endminf_ultimate_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           compareZeroWhenTargetMissing: false,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
@@ -1956,7 +2047,7 @@ export const endministratorChr_0003_endminf_ultimate_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'targets' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -1969,6 +2060,7 @@ export const endministratorChr_0003_endminf_ultimate_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const endministratorChr_0003_endminf_ultimate_skill: SkillDefinition = {
+  actionGraph: endministratorChr_0003_endminf_ultimate_skillActionGraph,
   key: 'chr_0003_endminf_ultimate_skill',
   element: 'physical',
   blackboard: {
@@ -1995,7 +2087,6 @@ export const endministratorChr_0003_endminf_ultimate_skill: SkillDefinition = {
   skillType: 'ultimate',
   levelSource: 'ultimate',
   nativeSkillType: 'ultimateSkill',
-  actionGraph: endministratorChr_0003_endminf_ultimate_skillActionGraph,
 };
 
 export const endministratorCommon_character_perfect_dodgeActionGraph = {
@@ -2192,7 +2283,7 @@ const endministratorBuff4ActionGraph = {
         action: {
           kind: 'adjustSkillCooldown',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             skill: { kind: 'id', skillId: 'chr_0002_endminm_combo_skill' },
             operation: 'reduce',
             basis: 'absoluteSeconds',
@@ -2205,7 +2296,7 @@ const endministratorBuff4ActionGraph = {
         action: {
           kind: 'adjustSkillCooldown',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             skill: { kind: 'id', skillId: 'chr_0003_endminf_combo_skill' },
             operation: 'reduce',
             basis: 'absoluteSeconds',

@@ -29,6 +29,9 @@ import type {
 /** 当前公共 Buff 生命周期已经能够注册和归一化的 AbilitySystem 事件。 */
 export const BUFF_ABILITY_EVENTS = [
   'enterFight',
+  'enemyEnterFight',
+  'collectAddedBuffBlackboard',
+  'collectOutputBuffBlackboard',
   'ownerHpZero',
   'hpChanged',
   'abilityEntitySpawned',
@@ -70,6 +73,8 @@ export const BUFF_ABILITY_EVENTS = [
   'skillEnd',
   'skillInterrupted',
   'beforeOutputBuff',
+  'beforeAddedBuffBeforeImmune',
+  'beforeOutputBuffBeforeImmune',
   'beforeAddedBuff',
   'outputBuff',
   'addedBuff',
@@ -79,6 +84,7 @@ export const BUFF_ABILITY_EVENTS = [
   'customAbilityEvent',
   'afterKillEntity',
   'buffConsumed',
+  'buffAbsorbed',
   'skillSpGained',
 ] as const satisfies readonly AbilityEvent[];
 

@@ -91,10 +91,12 @@ export class GameplayTagPredefine {
     entity: Pick<EntityTags, 'matchesEntityTags'>,
     type: NativeSkillType,
     isCurrentNormalSkill?: boolean,
+    normalSkillSubType?: 'normal' | 'additionalNormalSkill',
   ):
     | 'InDisarmed'
     | 'InSilence'
     | 'DisableNormalSkill'
+    | 'DisableNormalSkillExceptForAdditional'
     | 'DisableCastComboSkill'
     | 'InDisableDash'
     | undefined {
@@ -108,6 +110,11 @@ export class GameplayTagPredefine {
         return matches('InDisarmed') ? 'InDisarmed' : undefined;
       case 'normalSkill':
         if (matches('InSilence')) return 'InSilence';
+        if (
+          normalSkillSubType !== 'additionalNormalSkill' &&
+          matches('DisableNormalSkillExceptForAdditional')
+        )
+          return 'DisableNormalSkillExceptForAdditional';
         return isCurrentNormalSkill === true && matches('DisableNormalSkill')
           ? 'DisableNormalSkill'
           : undefined;
@@ -143,7 +150,7 @@ export class GameplayTagPredefine {
     return blockers;
   }
 
-  canAddTag(entity: EntityTags, tag: GameplayTag): boolean {
+  canAddTag(entity: Pick<EntityTags, 'matchesEntityTags'>, tag: GameplayTag): boolean {
     const query = this.#immunity.get(tag);
     return query === undefined || !entity.matchesEntityTags(query.tags, query.queryType);
   }

@@ -386,7 +386,7 @@ describe('compileSkill', () => {
   it('keeps physical infliction Buff references without embedding definitions', () => {
     const parameters = {
       type: 'fracture' as const,
-      target: 'enemy' as const,
+      target: { kind: 'fixed' as const, target: 'enemy' as const }, source: { kind: 'fixed' as const, target: 'caster' as const },
       isExtra: false,
     };
     const skill = linearSkill({
@@ -491,7 +491,8 @@ describe('compileSkill', () => {
         {
           kind: 'heal',
           parameters: {
-            target: 'controlledOperator',
+            target: { kind: 'mainCharacter' },
+            healer: { kind: 'source' },
             alwaysNext: false,
             attribute: 'will',
             multiplier: [1, 2],
@@ -501,7 +502,12 @@ describe('compileSkill', () => {
         },
         {
           kind: 'heal',
-          parameters: { target: 'controlledOperator', amount: [100, 240], tags: [] },
+          parameters: {
+            target: { kind: 'mainCharacter' },
+            healer: { kind: 'source' },
+            amount: [100, 240],
+            tags: [],
+          },
         },
       ],
     });

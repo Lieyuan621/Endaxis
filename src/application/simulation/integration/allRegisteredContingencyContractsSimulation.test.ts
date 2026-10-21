@@ -13,8 +13,6 @@ import {
   contingencyContractInitializationPlans,
 } from '../../../data/contingencyContract/definitions';
 import { ScenarioSimulationService } from '../scenarioSimulationService';
-import { projectPreviewSeasonTwoDiagnostics } from '../previewSeasonTwoDiagnostics';
-import type { CombatReceiptEntry } from '../../../core/combat/receipt/combatReceipt';
 
 const supportedTags = contingencyContractTags.filter(tag => tag.support === 'supported');
 const initializationTagIds = new Set(
@@ -31,7 +29,20 @@ const resources = {
 } as const;
 
 describe('危机合约生效词条的开局装配', () => {
-  it('预览锁按释放前状态诊断，豁免后续段并保留强制执行', async () => {
+  it.each([
+    {
+      slug: 'perlica',
+      first: 'chr_0004_pelica_normal_skill',
+      second: 'chr_0004_pelica_normal_skill',
+      blocked: [150],
+    },
+    {
+      slug: 'si',
+      first: 'chr_0036_jsspsi_normal_skill',
+      second: 'chr_0036_jsspsi_normal_skill_1',
+      blocked: [],
+    },
+  ])('沉寂限制普通战技并放行原生后续段：$slug', async ({ slug, first, second, blocked }) => {
     const scenario = createEmptyScenario('preview-locks', 'preview');
     scenario.mechanics.selections = [200001, 200002].map(id => ({
       id: String(id),
@@ -42,7 +53,7 @@ describe('危机合约生效词条的开局装配', () => {
     scenario.tracks[0] = {
       id: 'track:si',
       operator: {
-        operatorSlug: 'si',
+        operatorSlug: slug,
         level: 90,
         promoted: true,
         potential: 0,
@@ -55,35 +66,6 @@ describe('危机合约生效词条的开局装配', () => {
       initialState: { ultimateEnergy: 0 },
       skillCasts: [],
     };
-    const entries: CombatReceiptEntry[] = [];
-    const emit = (event: string, data: CombatReceiptEntry['data']) =>
-      entries.push({
-        sequence: entries.length,
-        frame: entries.length,
-        time: entries.length / 30,
-        sourceId: 'track:si',
-        targetId: 'track:si',
-        event,
-        data,
-      });
-    const cast = (suffix: string) =>
-      emit('SkillStarted', {
-        skillId: `chr_0036_jsspsi_${suffix}`,
-        castId: `cast:${entries.length}`,
-      });
-    cast('normal_skill');
-    emit('BuffApplied', { buffId: 'buff_endaxis_cc2_battle_lock', instanceId: 1 });
-    cast('normal_skill_1');
-    cast('normal_skill_2');
-    cast('normal_skill');
-    emit('BuffFinished', { buffId: 'buff_endaxis_cc2_battle_lock', instanceId: 1 });
-    cast('normal_skill');
-    emit('BuffApplied', { buffId: 'buff_endaxis_cc2_combo_lock', instanceId: 2 });
-    cast('combo_skill');
-    expect(
-      projectPreviewSeasonTwoDiagnostics(entries, scenario, gameDataRepository).map(d => d.frame),
-    ).toEqual([4, 8]);
-
     // 真实模拟中首发挂锁不误报，第二次释放提示，但仍执行。
     scenario.mechanics.selections = [
       {
@@ -100,7 +82,7 @@ describe('危机合约生效词条的开局装配', () => {
       source: {
         kind: 'operatorSkill',
         skillGroupKey: 'battleSkill',
-        skillKey: 'chr_0036_jsspsi_normal_skill',
+        skillKey: i === 0 ? first : second,
       },
       placement: { startFrame },
     }));
@@ -111,8 +93,10 @@ describe('危机合约生效词条的开局装配', () => {
     });
     const run = await service.simulate(scenario, 180);
     expect(
-      run.availabilityDiagnostics.filter(d => d.reasons.includes('skillLocked')).map(d => d.frame),
-    ).toEqual([150]);
+      run.availabilityDiagnostics
+        .filter(d => d.reasons.includes('skillTypeTagUnavailable'))
+        .map(d => d.frame),
+    ).toEqual(blocked);
     expect(
       run.receiptEntries.some(e => e.event === 'SkillStarted' && e.data?.castId === 'battle:1'),
     ).toBe(true);
@@ -182,33 +166,55 @@ describe('危机合约生效词条的开局装配', () => {
       spellInflictionSettings: skillSettings,
     });
     const result = await service.simulate(scenario, 1200);
+    const statusSegments = projectBuffTimelineViz(result.receiptEntries, 1200);
+    expect(statusSegments).toContainEqual(
+      expect.objectContaining({
+        buffId: 'buff_cc_chr_disable_normal_skill',
+        targetId: 'track:0',
+        icon: 'endaxis:contingency_contract/2/silence',
+        showInSquadIcon: true,
+      }),
+    );
+    expect(statusSegments).not.toContainEqual(
+      expect.objectContaining({
+        buffId: 'buff_cc_eny_heal_no_inflict',
+      }),
+    );
+    const locks = projectBuffTimelineViz(result.receiptEntries, 1200).filter(
+      segment => segment.buffId === 'buff_cc_chr_combo_lock_instance',
+    );
+    expect(locks.map(segment => segment.targetId).sort()).toEqual(['track:0', 'track:1']);
+    for (const lock of locks) {
+      expect(lock.icon).toBe('endaxis:contingency_contract/2/lockdown');
+      expect(lock.showInSquadIcon).toBe(true);
+      expect(lock.endFrame).toBeGreaterThan(lock.startFrame);
+    }
     const applied = (id: string) =>
       result.receiptEntries.filter(
         entry => entry.event === 'BuffApplied' && entry.data?.buffId === id,
       );
     expect(
-      applied('buff_endaxis_cc2_combo_lock')
+      applied('buff_cc_chr_combo_lock_instance')
         .map(entry => entry.targetId)
         .sort(),
     ).toEqual(['track:0', 'track:1']);
-    expect(
-      applied('buff_endaxis_cc2_battle_lock')
-        .map(entry => entry.targetId)
-        .sort(),
-    ).toEqual(['track:0', 'track:1']);
+    expect(applied('buff_cc_chr_disable_normal_skill').map(entry => entry.targetId)).toEqual([
+      'track:0',
+    ]);
     expect(
       result.receiptEntries.filter(
         entry =>
-          entry.event === 'BuffFinished' && entry.data?.buffId === 'buff_endaxis_cc2_battle_lock',
+          entry.event === 'BuffFinished' &&
+          entry.data?.buffId === 'buff_cc_chr_disable_normal_skill',
       ),
-    ).toHaveLength(2);
+    ).toHaveLength(1);
     expect(
       result.receiptEntries
         .filter(
           entry => entry.event === 'UltimateEnergyChanged' && entry.data?.requestedValue === -1000,
         )
-        .map(entry => entry.data?.currentValue),
-    ).toEqual([0, 0]);
+        .map(entry => ({ targetId: entry.targetId, value: entry.data?.currentValue })),
+    ).toEqual([{ targetId: 'track:1', value: 0 }]);
     const without = structuredClone(scenario);
     without.mechanics.selections = without.mechanics.selections.filter(
       entry => entry.mechanicId !== contingencyContractMechanicId(200001),
@@ -226,6 +232,14 @@ describe('危机合约生效词条的开局装配', () => {
       entry => entry.mechanicId === contingencyContractMechanicId(200004),
     );
     const healing = await service.simulate(healingOnly, 240);
+    expect(projectBuffTimelineViz(healing.receiptEntries, 240)).toContainEqual(
+      expect.objectContaining({
+        buffId: 'buff_cc_eny_heal_no_inflict_do_heal',
+        targetId: 'enemy',
+        icon: 'endaxis:icons/icon_battle_continuous_healing',
+        showInHeadBarCommon: true,
+      }),
+    );
     const heal = healing.receiptEntries.find(
       entry => entry.event === 'HealingApplied' && entry.targetId === 'enemy',
     );

@@ -451,7 +451,7 @@ describe('GlobalBuffRuntime', () => {
         context,
       ),
     ).toBe(true);
-    expect(definitionSources).toEqual(['battle:icon']);
+    expect(definitionSources).toEqual(['akekuri:icon']);
     expect(member.requests[0]!.sourceId).toBe('battle');
     expect(member.requests[0]!.definitionOwnerId).toBe('akekuri');
     expect(recoveryModifiers.resolve(10)).toBe(0);
@@ -587,3 +587,44 @@ it.each([false, true])(
     expect(recovery.resolve(10)).toBe(10 + local * 2);
   },
 );
+
+it('全局层数按父实例跨来源统计，叠层替换和恢复后仍从同一目录读取', () => {
+  const a = target('a'),
+    b = target('b');
+  const runtime = new GlobalBuffRuntime(
+    () => [a.value, b.value],
+    () => childDefinition,
+  );
+  const executor = new GlobalBuffOperationExecutor({
+    runtime,
+    sourceId: 'source',
+    delegate: { execute: () => false, evaluate: () => false },
+  });
+  const board = new ActionBlackboard({ minimum: 2 });
+  const condition = {
+    kind: 'globalBuffCountCompare',
+    globalBuffId: 'global',
+    operator: 'greaterOrEqual',
+    value: numberInput({ kind: 'blackboard', key: 'minimum' }),
+  } as const;
+  const context = { blackboard: board };
+  expect(executor.evaluate(condition, context)).toBe(false);
+  for (const sourceId of ['first', 'second', 'third'])
+    runtime.add({ id: 'global', sourceId, definition, blackboardValues: {} });
+  expect(runtime.getCount('global')).toBe(2);
+  expect(a.requests.length + b.requests.length).toBe(6);
+  expect(executor.evaluate(condition, context)).toBe(true);
+  board.assign({ minimum: 3 });
+  expect(executor.evaluate(condition, context)).toBe(false);
+  const saved = createStateTestSession(runtime.runtimeState, () => undefined).read();
+  const restored = new GlobalBuffRuntime(
+    () => [],
+    () => childDefinition,
+    null,
+    null,
+    saved,
+  );
+  runtime.finishAllByIds(['global'], 'other');
+  expect(runtime.getCount('global')).toBe(0);
+  expect(restored.getCount('global')).toBe(2);
+});

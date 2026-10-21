@@ -52,7 +52,7 @@ describe('placeSkillGroup', () => {
       firstSkillKey: 'chr_0004_pelica_attack1',
       terminalSkillKey: 'chr_0004_pelica_attack4',
       maxSegments: 8,
-      fallback: 'sequence',
+      fallback: [...group.skillIds],
     };
     const placed = placeLibrarySkillGroup({
       scenario: createPerlicaScenario(),
@@ -110,8 +110,8 @@ describe('placeSkillGroup', () => {
       fallback.scenario.tracks[0]!.skillCasts.map(cast =>
         cast.source.kind === 'operatorSkill' ? cast.source.skillKey : '',
       ),
-    ).toEqual(entry.skills.map(skill => skill.key));
-    expect(fallback.skillCastIds).toHaveLength(6);
+    ).toEqual(group.placementPolicy!.fallback);
+    expect(fallback.skillCastIds).toHaveLength(12);
     expect(fallback.skillCastIds[0]).toBe(placed.skillCastIds[0]);
     expect(fallback.scenario.tracks[0]!.skillCasts[0]!.placement.startFrame).toBe(90);
     const single = placeLibrarySkillGroup({ ...input, skillKey: 'chr_0017_yvonne_ult_attack_end' });

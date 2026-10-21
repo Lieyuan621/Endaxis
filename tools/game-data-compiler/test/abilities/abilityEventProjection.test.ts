@@ -9,6 +9,12 @@ describe('公共 AbilityEvent 身份投影', () => {
     expect(projectAbilityEvent(121, 'numeric')).toBe('beforeTakeInfliction');
   });
 
+  it('敌人与干员入战保留各自的原生事件身份', () => {
+    expect(projectAbilityEvent('OnEnemyEnterFight', 'named')).toBe('enemyEnterFight');
+    expect(projectAbilityEvent(153, 'numeric')).toBe('enemyEnterFight');
+    expect(projectAbilityEvent(6, 'numeric')).toBe('enterFight');
+  });
+
   it.each(['OnFutureEvent', 999] as const)('未知事件 %s 严格失败', event => {
     expect(() => projectAbilityEvent(event, 'source.event')).toThrow(
       `source.event: unsupported ability event ${JSON.stringify(event)}`,

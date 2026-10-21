@@ -1,4 +1,5 @@
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
+import type { CombatStepParameters } from '../../../../packages/game-data-contract/src/actions';
 
 import type { CombatOperationContext } from './skillRuntime';
 /** 切换原生技能槽后续选择的技能；当前释放已经持有的 SkillRuntime 引用不会改变。 */
@@ -26,6 +27,11 @@ export interface SkillSlotOperationExecutorOptions {
   readonly overrideBasicAttackMapping?: (skillId: string) => number;
   readonly finishBasicAttackMapping?: (registrationId: number) => void;
   readonly setMultiDashLimit?: (limit: number | null) => void;
+  readonly registerMovementGait?: (
+    ownerId: string,
+    parameters: Readonly<CombatStepParameters['limitMovementGait']>,
+  ) => number;
+  readonly finishMovementGait?: (ownerId: string, id: number) => void;
   readonly changeNativeSkillType?: (skillKey: string, nativeSkillType: NativeSkillType) => void;
   readonly delegate: CombatOperationExecutor;
 }
@@ -34,9 +40,25 @@ export class SkillSlotOperationExecutor implements CombatOperationExecutor {
   constructor(readonly options: SkillSlotOperationExecutorOptions) {}
 
   execute(step: ResolvedCombatOperationStep, context?: CombatOperationContext): boolean {
+    if (step.kind === 'limitMovementGait') {
+      const state = context?.actionRegistrationState;
+      const owner = context?.actionOwnerId;
+      const register = this.options.registerMovementGait;
+      const finish = this.options.finishMovementGait;
+      if (!state || !owner || !register || !finish)
+        throw new Error('movement gait requires owner, action state and lifecycle ports');
+      state.registrationIds.push(register(owner, step.parameters));
+      return true;
+    }
     if (step.kind === 'overrideBasicAttackMapping') {
-      const register = this.options.overrideBasicAttackMapping;
-      const finish = this.options.finishBasicAttackMapping;
+      const register =
+        step.parameters.priority === 'skill'
+          ? context?.registerSkillBasicAttackMapping
+          : this.options.overrideBasicAttackMapping;
+      const finish =
+        step.parameters.priority === 'skill'
+          ? context?.finishSkillBasicAttackMapping
+          : this.options.finishBasicAttackMapping;
       const state = context?.actionRegistrationState;
       if (register === undefined || finish === undefined || state === undefined)
         throw new Error('basic-attack mapping requires action state and lifecycle ports');
@@ -117,9 +139,22 @@ export class SkillSlotOperationExecutor implements CombatOperationExecutor {
   }
 
   end(step: ResolvedCombatOperationStep, context?: CombatOperationContext): void {
+    if (step.kind === 'limitMovementGait') {
+      const state = context?.actionRegistrationState;
+      const owner = context?.actionOwnerId;
+      const finish = this.options.finishMovementGait;
+      if (!state || !owner || !finish)
+        throw new Error('movement gait requires owner, action state and lifecycle ports');
+      for (const id of state.registrationIds) finish(owner, id);
+      state.registrationIds = [];
+      return;
+    }
     if (step.kind === 'overrideBasicAttackMapping') {
       const state = context?.actionRegistrationState;
-      const finish = this.options.finishBasicAttackMapping;
+      const finish =
+        step.parameters.priority === 'skill'
+          ? context?.finishSkillBasicAttackMapping
+          : this.options.finishBasicAttackMapping;
       if (state === undefined || finish === undefined)
         throw new Error('basic-attack mapping requires action state and lifecycle ports');
       for (const id of state.registrationIds) finish(id);

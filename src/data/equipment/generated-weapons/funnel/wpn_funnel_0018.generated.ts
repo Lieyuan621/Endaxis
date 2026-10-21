@@ -47,39 +47,6 @@ const definition = {
           value: [0.07, 0.084, 0.098, 0.112, 0.126, 0.14, 0.154, 0.168, 0.196],
         },
       ],
-      skillId: 'sk_wpn_funnel_0018',
-      eventHandlers: [
-        {
-          key: 'skill3:event:0:sequence:0',
-          abilityEvent: 'beforeOutputBuff',
-          priority: 0,
-          sequence: { $sequence: 'checkCondition_5' },
-        },
-        {
-          key: 'skill3:event:1:sequence:0',
-          abilityEvent: 'beforeOutputBuff',
-          priority: 0,
-          sequence: { $sequence: 'checkCondition_10' },
-        },
-        {
-          key: 'skill3:event:2:sequence:0',
-          abilityEvent: 'beforeOutputBuff',
-          priority: 0,
-          sequence: { $sequence: 'checkCondition_15' },
-        },
-        {
-          key: 'skill3:event:3:sequence:0',
-          abilityEvent: 'beforeOutputBuff',
-          priority: 0,
-          sequence: { $sequence: 'checkCondition_20' },
-        },
-        {
-          key: 'skill3:event:4:sequence:0',
-          abilityEvent: 'beforeOutputInfliction',
-          priority: 0,
-          sequence: { $sequence: 'checkCondition_4' },
-        },
-      ],
       actionGraph: {
         main: {
           nodes: {
@@ -215,6 +182,39 @@ const definition = {
         },
         macros: {},
       },
+      skillId: 'sk_wpn_funnel_0018',
+      eventHandlers: [
+        {
+          key: 'skill3:event:0:sequence:0',
+          abilityEvent: 'beforeOutputBuff',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_5' },
+        },
+        {
+          key: 'skill3:event:1:sequence:0',
+          abilityEvent: 'beforeOutputBuff',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_10' },
+        },
+        {
+          key: 'skill3:event:2:sequence:0',
+          abilityEvent: 'beforeOutputBuff',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_15' },
+        },
+        {
+          key: 'skill3:event:3:sequence:0',
+          abilityEvent: 'beforeOutputBuff',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_20' },
+        },
+        {
+          key: 'skill3:event:4:sequence:0',
+          abilityEvent: 'beforeOutputInfliction',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_4' },
+        },
+      ],
       blackboard: {
         atk_up: [0.06, 0.072, 0.084, 0.096, 0.108, 0.12, 0.132, 0.144, 0.168],
         atk_up2: [0.015, 0.018, 0.021, 0.024, 0.027, 0.03, 0.033, 0.036, 0.042],

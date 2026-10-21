@@ -15,79 +15,83 @@ const context = {
 } as const;
 
 describe('Operator 主动技能正式运行定义', () => {
-  it('把原生操作映射与接续窗口保留到最终技能定义', () => {
-    const source = activeSkillFixture('native.attack1');
-    source.dontInterruptCombo = true;
-    source.castData = { startCdFrame: 0 };
-    source.actionGroupData = {
-      timelineActions: [
-        {
-          _startFrame: 6,
-          _endFrame: 9,
-          _sequenceActionData: {
-            actionData: [
-              {
-                $type: 'Beyond.Gameplay.Core.ComboCacheAction+Data, Gameplay.Beyond',
-                isEnable: true,
-                priorityLevel: 'Default',
-                priorityOffset: 0,
-                serverActionIndex: 1,
-                mappingDataList: [
-                  {
-                    cmdType: 'Attack',
-                    skillId: 'native.attack2',
-                    cacheEndByAction: true,
-                    clearOffsetTargetSkillIdOnEnd: false,
-                    overrideCacheTime: true,
-                    cacheTime: { value: 0.2, useBlackboardKey: false, blackboardKey: '' },
-                  },
-                ],
-              },
-              {
-                $type: 'Beyond.Gameplay.Core.AllowNextSkillAction+Data, Gameplay.Beyond',
-                isEnable: true,
-                priorityLevel: 'Default',
-                priorityOffset: 0,
-                serverActionIndex: 2,
-                allowedSkillIdList: ['native.attack2'],
-              },
-            ],
-            onlyExecuteWhenSourceIsMainChar: false,
-            onlyExecuteWhenSourceIsGuard: false,
+  it.each([true, false])(
+    '把原生操作映射与接续窗口保留到最终技能定义，结束时清除缓存输入=%s',
+    cacheEndByAction => {
+      const source = activeSkillFixture('native.attack1');
+      source.dontInterruptCombo = true;
+      source.castData = { startCdFrame: 0 };
+      source.actionGroupData = {
+        timelineActions: [
+          {
+            _startFrame: 6,
+            _endFrame: 9,
+            _sequenceActionData: {
+              actionData: [
+                {
+                  $type: 'Beyond.Gameplay.Core.ComboCacheAction+Data, Gameplay.Beyond',
+                  isEnable: true,
+                  priorityLevel: 'Default',
+                  priorityOffset: 0,
+                  serverActionIndex: 1,
+                  mappingDataList: [
+                    {
+                      cmdType: 'Attack',
+                      skillId: 'native.attack2',
+                      cacheEndByAction,
+                      clearOffsetTargetSkillIdOnEnd: false,
+                      overrideCacheTime: true,
+                      cacheTime: { value: 0.2, useBlackboardKey: false, blackboardKey: '' },
+                    },
+                  ],
+                },
+                {
+                  $type: 'Beyond.Gameplay.Core.AllowNextSkillAction+Data, Gameplay.Beyond',
+                  isEnable: true,
+                  priorityLevel: 'Default',
+                  priorityOffset: 0,
+                  serverActionIndex: 2,
+                  allowedSkillIdList: ['native.attack2'],
+                },
+              ],
+              onlyExecuteWhenSourceIsMainChar: false,
+              onlyExecuteWhenSourceIsGuard: false,
+            },
+            forceSyncAnimData: {
+              forceSync: false,
+              montageName: '',
+              targetFrame: 0,
+              playbackSpeed: 1,
+            },
           },
-          forceSyncAnimData: {
-            forceSync: false,
-            montageName: '',
-            targetFrame: 0,
-            playbackSpeed: 1,
-          },
-        },
-      ],
-      passiveEventActions: [],
-    };
+        ],
+        passiveEventActions: [],
+      };
 
-    const definition = compileOperatorActiveSkillRuntimeDefinitionSource({
-      key: 'native.attack1',
-      skillType: 'basicAttack',
-      value: source,
-      sourcePath: 'native.attack1.json',
-      patch: null,
-      context,
-    });
+      const definition = compileOperatorActiveSkillRuntimeDefinitionSource({
+        key: 'native.attack1',
+        skillType: 'basicAttack',
+        value: source,
+        sourcePath: 'native.attack1.json',
+        patch: null,
+        context,
+      });
 
-    expect(definition.dontInterruptCombo).toBe(true);
-    expect(definition.inputWindows).toEqual({
-      commandMappings: [
-        {
-          startFrame: 6,
-          endFrame: 9,
-          input: 'basicAttack',
-          targetSkillId: 'native.attack2',
-        },
-      ],
-      allowedNextSkills: [{ startFrame: 6, endFrame: 9, skillIds: ['native.attack2'] }],
-    });
-  });
+      expect(definition.dontInterruptCombo).toBe(true);
+      expect(Object.values(definition.actionGraph.main.nodes).map(node => node.action)).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            kind: 'overrideBasicAttackMapping',
+            parameters: { priority: 'skill', skillIds: ['native.attack2'] },
+          }),
+          expect.objectContaining({
+            kind: 'reachSkillOperableBoundary',
+            parameters: { skillIds: ['native.attack2'] },
+          }),
+        ]),
+      );
+    },
+  );
 
   it('动态声明进入实例初值，同名等级补丁覆盖初值而不改变来源', () => {
     const source = activeSkillFixture('dynamic');

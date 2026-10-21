@@ -5,6 +5,8 @@
  * 起身动画/恢复行动不是根击倒的前置条件；标签计时是否保留须按具体读者及目标归属审计。
  */
 const OMITTED_CASTER_BUFF_ABILITY_EVENT_REASONS: Readonly<Record<string, string>> = {
+  OnSquadMemberDie:
+    'squad member death cannot occur without player damage in the fixed passive-enemy scenario',
   OnOwnerHpZero:
     'operator HP cannot reach zero without player damage in the fixed passive-enemy scenario',
   OnOwnerDead:

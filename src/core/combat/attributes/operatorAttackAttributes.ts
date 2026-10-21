@@ -8,6 +8,7 @@ import {
   HEAL_TAKEN_INCREASE_PER_WILL,
   MAIN_ATTRIBUTE_ATTACK_FACTOR,
   SECONDARY_ATTRIBUTE_ATTACK_FACTOR,
+  RESISTANCE_EFFICIENCY_PER_ATTRIBUTE,
 } from '../../game-data/battleConstants';
 import { ATTRIBUTE_MODIFIER_SOURCES } from '../state/foundationState';
 import {
@@ -37,6 +38,15 @@ const PLAYER_DAMAGE_TAKEN_ATTRIBUTES = [
   'NaturalDamageTakenScalar',
   'EtherDamageTakenScalar',
 ] as const;
+const PLAYER_RESISTANCE_ATTRIBUTES = [
+  'PhysicalResistance',
+  'FireResistance',
+  'PulseResistance',
+  'CrystResistance',
+  'NaturalResistance',
+  'EtherResistance',
+] as const;
+type PlayerResistanceAttribute = (typeof PLAYER_RESISTANCE_ATTRIBUTES)[number];
 type PlayerDamageTakenAttribute = (typeof PLAYER_DAMAGE_TAKEN_ATTRIBUTES)[number];
 export type OperatorRuntimeAttribute =
   | OperatorAttribute
@@ -48,7 +58,10 @@ export type OperatorRuntimeAttribute =
   | 'IgniteDamageScalar'
   | 'PhysicalInflictionDamageScalar'
   | 'AtbCostAddition'
+  | 'ComboSkillAtbCostAddition'
   | 'ComboSkillCooldownScalar'
+  | 'ComboSkillCooldownFinalAddition'
+  | 'NormalSkillCooldownAddition'
   | 'ComboSkillCooldownRecoveryScalar'
   | 'KeywordSpeedUpScalar'
   | 'SlowActionSpeedScalar'
@@ -61,7 +74,8 @@ export type OperatorRuntimeAttribute =
   | 'criticalDamageIncrease'
   | 'healOutputIncrease'
   | 'healTakenIncrease'
-  | PlayerDamageTakenAttribute;
+  | PlayerDamageTakenAttribute
+  | PlayerResistanceAttribute;
 
 export interface OperatorAttackDerivationInput {
   readonly level: number;
@@ -135,8 +149,7 @@ export function createOperatorAttackAttributes(
     result.define(attribute, 0, {});
   }
   // AttributeMetaTable[4-7,48,60]：六种受伤倍率默认值均为 1，且没有原生上下限。
-  // 当前木桩模型不计算干员承伤，但治疗套装会把这类 Buff 挂到受治疗的队友身上，
-  // 所以属性仍须存在并完整承载原生修正槽。
+  // 治疗套装及不可避免的合约自伤共用这些属性，完整承载原生修正槽。
   for (const attribute of PLAYER_DAMAGE_TAKEN_ATTRIBUTES) result.define(attribute, 1, {});
   for (const modifier of input.combatModifiers ?? []) {
     if (
@@ -184,6 +197,7 @@ export function createOperatorAttackAttributes(
   result.define('weaknessDamageMultiplier', 1, {});
   // AttributeMetaTable[45]: default 0, no min/max.
   result.define('AtbCostAddition', 0, {});
+  result.define('ComboSkillAtbCostAddition', 0, {});
   // AttributeMetaTable[34]：倒地请求读取来源的时长加成，默认 0、下限 0、无上限。
   result.define('KnockDownTimeAddition', 0, { minimum: 0 });
   // AttributeMetaTable[63]：默认 0、无上下限；保存关键词属性不表示模拟干员受击。
@@ -193,6 +207,9 @@ export function createOperatorAttackAttributes(
   // AttributeMetaTable[47]: default 1, no native bounds. This scales the period
   // captured when a combo skill reserves cooldown, not its per-frame recovery.
   result.define('ComboSkillCooldownScalar', 1, {});
+  // AttributeMetaTable[23, 46]：秒数附加值，默认 0，无上下限。
+  result.define('ComboSkillCooldownFinalAddition', 0, {});
+  result.define('NormalSkillCooldownAddition', 0, {});
   // AttributeMetaTable[92]：关键词“加速”的原生倍率，默认 1，范围 [0.1, 1.3]。
   // 固定站桩模型未必消费其动作速度，但汤汤等 Buff 仍会按原生槽位修改它。
   result.define('KeywordSpeedUpScalar', 1, { minimum: 0.1, maximum: 1.3 });
@@ -205,6 +222,8 @@ export function createOperatorAttackAttributes(
   result.define('UltimateSpGainScalar', input.ultimateEnergyGainEfficiency ?? 1, {
     minimum: 0,
   });
+  for (const attribute of PLAYER_RESISTANCE_ATTRIBUTES) result.define(attribute, 0, {});
+  bindOperatorResistanceDerivation(result);
   return result;
 }
 
@@ -249,4 +268,22 @@ export function resolveOperatorAttack(
     attributes: values,
     coefficients,
   };
+}
+
+/** 派生项仍进入原生基础槽；恢复切面时只重新绑定观察者，不重放属性变化。 */
+export function bindOperatorResistanceDerivation(attributes: CombatAttributeSet<string>): void {
+  for (const source of ['agility', 'intellect'] as const) {
+    if (!attributes.has(source)) continue;
+    const update = () => {
+      const value =
+        (1 - 1 / (Math.floor(attributes.get(source)) * RESISTANCE_EFFICIENCY_PER_ATTRIBUTE + 1)) *
+        100;
+      for (const attribute of PLAYER_RESISTANCE_ATTRIBUTES) {
+        if ((attribute === 'PhysicalResistance') !== (source === 'agility')) continue;
+        attributes.setOtherAttributeBaseAddition(attribute, value);
+      }
+    };
+    update();
+    attributes.bindChangeObserver(source, update);
+  }
 }

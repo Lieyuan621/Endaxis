@@ -28,7 +28,6 @@ it('目标查询重建执行器及恢复切面后继续使用已保存的空间�
       undefined,
       undefined,
       undefined,
-      undefined,
       host,
     );
   const context = { blackboard: new ActionBlackboard(), targetContext: new RuntimeTargetContext() };
@@ -52,7 +51,7 @@ describe('Context 条件查询', () => {
       actionSourceId: 'source',
     };
     context.targetContext.setSingle('trigger', { kind: 'operator', operatorId: 'source' });
-    const executor = new TargetContextOperationExecutor('owner', terminal, id => id, {
+    const executor = new TargetContextOperationExecutor('owner', terminal, {
       listOperatorIds: () => ['source'],
       isOperatorControlled: id => id === 'source',
       resolveVitals: () => {
@@ -143,7 +142,6 @@ describe('Context 条件查询', () => {
       new TargetContextOperationExecutor(
         'owner',
         terminal,
-        undefined,
         undefined,
         undefined,
         () => 'abilityEntity',
@@ -337,7 +335,6 @@ it('实体计数排除位置点、保留重复项，仅比较成功后写回已�
   const executor = new TargetContextOperationExecutor(
     'owner',
     terminal,
-    undefined,
     undefined,
     undefined,
     undefined,

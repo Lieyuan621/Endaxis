@@ -695,14 +695,14 @@ describe('跨技能黑板用途', () => {
   });
 
   it('队友环排序确实读取生成实体上的普通键，而不是查询者自己的同名板', () => {
-    const query: CombatStepForKind<'findOwnerSpawnedAbilityEntities'> = {
+    const query = {
       kind: 'findOwnerSpawnedAbilityEntities',
       parameters: {
         owner: { kind: 'context', key: 'owner' },
         saveToContextKey: 'found',
         circularOrder: { indexBlackboardKey: 'slot', desiredCount: 3, reverseFlag: 1 },
       },
-    };
+    } satisfies CombatStepForKind<'findOwnerSpawnedAbilityEntities'>;
     const collected = collectGraphSharedEntityValueUsage(
       input({ mechanicSequences: [program([query])] }),
     );

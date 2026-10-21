@@ -3,7 +3,7 @@ import type { OperatorBuffDefinitions } from '../../../core/game-data/operatorDe
 
 import type { ActionGraphResourceDefinition } from '../../../../packages/game-data-contract/src/actionGraph';
 import type { SkillBuffDefinition } from '../../../../packages/game-data-contract/src/buffs';
-const commonBuff1ActionGraph = {
+const commonBuff_buff_common_affixes_combo_trigger$actionGraph = {
   main: {
     nodes: {
       finishParentGlobalBuff_1: {
@@ -72,7 +72,7 @@ const commonBuff1ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff1: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_combo_trigger: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'imbue_scale', negate: true },
   maxStackCount: 99,
@@ -94,10 +94,10 @@ const commonBuff1: SkillBuffDefinition = {
   abilityEventResponses: [
     { event: 'beforeCastSkill', priority: 0, sequence: { $sequence: 'checkCondition_5' } },
   ],
-  actionGraph: commonBuff1ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_combo_trigger$actionGraph,
 };
 
-const commonBuff2ActionGraph = {
+const commonBuff_buff_common_affixes_enhance_crystal$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -125,7 +125,7 @@ const commonBuff2ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff2: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_enhance_crystal: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -145,15 +145,15 @@ const commonBuff2: SkillBuffDefinition = {
     },
   ],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: commonBuff2ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_enhance_crystal$actionGraph,
 };
 
-const commonBuff3ActionGraph = {
+const commonBuff_buff_common_affixes_enhance_crystal_default_child$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff3: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_enhance_crystal_default_child: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -168,10 +168,10 @@ const commonBuff3: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 0, rate: 0.2 },
   attributeModifiers: [],
-  actionGraph: commonBuff3ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_enhance_crystal_default_child$actionGraph,
 };
 
-const commonBuff4ActionGraph = {
+const commonBuff_buff_common_affixes_enhance_fire$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -199,7 +199,7 @@ const commonBuff4ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff4: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_enhance_fire: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -219,15 +219,15 @@ const commonBuff4: SkillBuffDefinition = {
     },
   ],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: commonBuff4ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_enhance_fire$actionGraph,
 };
 
-const commonBuff5ActionGraph = {
+const commonBuff_buff_common_affixes_enhance_fire_default_child$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff5: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_enhance_fire_default_child: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -242,10 +242,10 @@ const commonBuff5: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 0, rate: 0.2 },
   attributeModifiers: [],
-  actionGraph: commonBuff5ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_enhance_fire_default_child$actionGraph,
 };
 
-const commonBuff6ActionGraph = {
+const commonBuff_buff_common_affixes_enhance_natural$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -273,7 +273,7 @@ const commonBuff6ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff6: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_enhance_natural: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -293,15 +293,15 @@ const commonBuff6: SkillBuffDefinition = {
     },
   ],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: commonBuff6ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_enhance_natural$actionGraph,
 };
 
-const commonBuff7ActionGraph = {
+const commonBuff_buff_common_affixes_enhance_natural_default_child$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff7: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_enhance_natural_default_child: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -316,10 +316,10 @@ const commonBuff7: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 0, rate: 0.2 },
   attributeModifiers: [],
-  actionGraph: commonBuff7ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_enhance_natural_default_child$actionGraph,
 };
 
-const commonBuff8ActionGraph = {
+const commonBuff_buff_common_affixes_enhance_pulse$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -347,7 +347,7 @@ const commonBuff8ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff8: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_enhance_pulse: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -367,15 +367,15 @@ const commonBuff8: SkillBuffDefinition = {
     },
   ],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: commonBuff8ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_enhance_pulse$actionGraph,
 };
 
-const commonBuff9ActionGraph = {
+const commonBuff_buff_common_affixes_enhance_pulse_default_child$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff9: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_enhance_pulse_default_child: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -390,10 +390,10 @@ const commonBuff9: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 0, rate: 0.2 },
   attributeModifiers: [],
-  actionGraph: commonBuff9ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_enhance_pulse_default_child$actionGraph,
 };
 
-const commonBuff10ActionGraph = {
+const commonBuff_buff_common_affixes_enhance_spell$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -421,7 +421,7 @@ const commonBuff10ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff10: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_enhance_spell: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -463,15 +463,15 @@ const commonBuff10: SkillBuffDefinition = {
     },
   ],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: commonBuff10ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_enhance_spell$actionGraph,
 };
 
-const commonBuff11ActionGraph = {
+const commonBuff_buff_common_affixes_enhance_spell_default_child$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff11: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_enhance_spell_default_child: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -486,10 +486,10 @@ const commonBuff11: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 0, rate: 0.2 },
   attributeModifiers: [],
-  actionGraph: commonBuff11ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_enhance_spell_default_child$actionGraph,
 };
 
-const commonBuff12ActionGraph = {
+const commonBuff_buff_common_affixes_shelter$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -517,7 +517,7 @@ const commonBuff12ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff12: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_shelter: SkillBuffDefinition = {
   stackingType: 'highPriority',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -537,15 +537,15 @@ const commonBuff12: SkillBuffDefinition = {
     },
   ],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: commonBuff12ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_shelter$actionGraph,
 };
 
-const commonBuff13ActionGraph = {
+const commonBuff_buff_common_affixes_shelter_default_child$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff13: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_shelter_default_child: SkillBuffDefinition = {
   stackingType: 'highPriority',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -560,10 +560,10 @@ const commonBuff13: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 0, rate: -0.2 },
   attributeModifiers: [],
-  actionGraph: commonBuff13ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_shelter_default_child$actionGraph,
 };
 
-const commonBuff14ActionGraph = {
+const commonBuff_buff_common_affixes_skillimbue$actionGraph = {
   main: {
     nodes: {
       skillAffix_1: { action: { kind: 'skillAffix', parameters: {} }, next: null },
@@ -590,7 +590,7 @@ const commonBuff14ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff14: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_skillimbue: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'imbue_scale', negate: true },
   maxStackCount: 4,
@@ -602,10 +602,10 @@ const commonBuff14: SkillBuffDefinition = {
   blackboard: { imbue_scale: 0.3 },
   attributeModifiers: [],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_2' }] },
-  actionGraph: commonBuff14ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_skillimbue$actionGraph,
 };
 
-const commonBuff15ActionGraph = {
+const commonBuff_buff_common_affixes_skillimbue_atk$actionGraph = {
   main: {
     nodes: {
       modifyActionValue_4: {
@@ -677,7 +677,7 @@ const commonBuff15ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff15: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_skillimbue_atk: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'imbue_scale', negate: true },
   maxStackCount: 4,
@@ -703,10 +703,10 @@ const commonBuff15: SkillBuffDefinition = {
     },
   ],
   lifecycleSequences: { enable: [{ $sequence: 'skillAffix_1' }] },
-  actionGraph: commonBuff15ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_skillimbue_atk$actionGraph,
 };
 
-const commonBuff16ActionGraph = {
+const commonBuff_buff_common_affixes_slow$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -734,7 +734,7 @@ const commonBuff16ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff16: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_slow: SkillBuffDefinition = {
   stackingType: 'highPriority',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 1,
@@ -749,15 +749,15 @@ const commonBuff16: SkillBuffDefinition = {
     { attribute: 'SlowActionSpeedScalar', slot: 'addition', value: { blackboardKey: 'rate' } },
   ],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: commonBuff16ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_slow$actionGraph,
 };
 
-const commonBuff17ActionGraph = {
+const commonBuff_buff_common_affixes_slow_default_child$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff17: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_slow_default_child: SkillBuffDefinition = {
   stackingType: 'highPriority',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 1,
@@ -775,10 +775,10 @@ const commonBuff17: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 0, rate: 0 },
   attributeModifiers: [],
-  actionGraph: commonBuff17ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_slow_default_child$actionGraph,
 };
 
-const commonBuff18ActionGraph = {
+const commonBuff_buff_common_affixes_speedup$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -805,7 +805,7 @@ const commonBuff18ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff18: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_speedup: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate', negate: true },
   maxStackCount: 1,
@@ -826,10 +826,10 @@ const commonBuff18: SkillBuffDefinition = {
     { attribute: 'KeywordSpeedUpScalar', slot: 'baseAddition', value: { blackboardKey: 'rate' } },
   ],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: commonBuff18ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_speedup$actionGraph,
 };
 
-const commonBuff19ActionGraph = {
+const commonBuff_buff_common_affixes_vulnerable_crystal$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -857,7 +857,7 @@ const commonBuff19ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff19: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_vulnerable_crystal: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -881,15 +881,15 @@ const commonBuff19: SkillBuffDefinition = {
     },
   ],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: commonBuff19ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_vulnerable_crystal$actionGraph,
 };
 
-const commonBuff20ActionGraph = {
+const commonBuff_buff_common_affixes_vulnerable_crystal_default_child$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff20: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_vulnerable_crystal_default_child: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -903,15 +903,15 @@ const commonBuff20: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 0, rate: 0.2 },
   attributeModifiers: [],
-  actionGraph: commonBuff20ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_vulnerable_crystal_default_child$actionGraph,
 };
 
-const commonBuff21ActionGraph = {
+const commonBuff_buff_common_affixes_vulnerable_crystal_lizhiyan_child$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff21: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_vulnerable_crystal_lizhiyan_child: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -920,10 +920,10 @@ const commonBuff21: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 0, rate: 0.2 },
   attributeModifiers: [],
-  actionGraph: commonBuff21ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_vulnerable_crystal_lizhiyan_child$actionGraph,
 };
 
-const commonBuff22ActionGraph = {
+const commonBuff_buff_common_affixes_vulnerable_fire$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -951,7 +951,7 @@ const commonBuff22ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff22: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_vulnerable_fire: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -975,10 +975,10 @@ const commonBuff22: SkillBuffDefinition = {
     },
   ],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: commonBuff22ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_vulnerable_fire$actionGraph,
 };
 
-const commonBuff23ActionGraph = {
+const commonBuff_buff_common_affixes_vulnerable_natural$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -1006,7 +1006,7 @@ const commonBuff23ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff23: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_vulnerable_natural: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -1030,15 +1030,15 @@ const commonBuff23: SkillBuffDefinition = {
     },
   ],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: commonBuff23ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_vulnerable_natural$actionGraph,
 };
 
-const commonBuff24ActionGraph = {
+const commonBuff_buff_common_affixes_vulnerable_natural_lizhiyan_child$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff24: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_vulnerable_natural_lizhiyan_child: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -1047,10 +1047,10 @@ const commonBuff24: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 0, rate: 0.2 },
   attributeModifiers: [],
-  actionGraph: commonBuff24ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_vulnerable_natural_lizhiyan_child$actionGraph,
 };
 
-const commonBuff25ActionGraph = {
+const commonBuff_buff_common_affixes_vulnerable_physical$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -1078,7 +1078,7 @@ const commonBuff25ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff25: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_vulnerable_physical: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -1101,15 +1101,15 @@ const commonBuff25: SkillBuffDefinition = {
     },
   ],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: commonBuff25ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_vulnerable_physical$actionGraph,
 };
 
-const commonBuff26ActionGraph = {
+const commonBuff_buff_common_affixes_vulnerable_physical_default_child$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff26: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_vulnerable_physical_default_child: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -1123,10 +1123,10 @@ const commonBuff26: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 0, rate: 0.2 },
   attributeModifiers: [],
-  actionGraph: commonBuff26ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_vulnerable_physical_default_child$actionGraph,
 };
 
-const commonBuff27ActionGraph = {
+const commonBuff_buff_common_affixes_vulnerable_pulse$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -1154,7 +1154,7 @@ const commonBuff27ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff27: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_vulnerable_pulse: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -1178,15 +1178,15 @@ const commonBuff27: SkillBuffDefinition = {
     },
   ],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: commonBuff27ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_vulnerable_pulse$actionGraph,
 };
 
-const commonBuff28ActionGraph = {
+const commonBuff_buff_common_affixes_vulnerable_pulse_default_child$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff28: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_vulnerable_pulse_default_child: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -1200,10 +1200,10 @@ const commonBuff28: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 0, rate: 0.2 },
   attributeModifiers: [],
-  actionGraph: commonBuff28ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_vulnerable_pulse_default_child$actionGraph,
 };
 
-const commonBuff29ActionGraph = {
+const commonBuff_buff_common_affixes_vulnerable_spell$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -1231,7 +1231,7 @@ const commonBuff29ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff29: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_vulnerable_spell: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -1273,15 +1273,15 @@ const commonBuff29: SkillBuffDefinition = {
     },
   ],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: commonBuff29ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_vulnerable_spell$actionGraph,
 };
 
-const commonBuff30ActionGraph = {
+const commonBuff_buff_common_affixes_vulnerable_spell_default_child$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff30: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_vulnerable_spell_default_child: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate' },
   maxStackCount: 0,
@@ -1295,10 +1295,10 @@ const commonBuff30: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 0, rate: 0.2 },
   attributeModifiers: [],
-  actionGraph: commonBuff30ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_vulnerable_spell_default_child$actionGraph,
 };
 
-const commonBuff31ActionGraph = {
+const commonBuff_buff_common_affixes_weak$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -1326,7 +1326,7 @@ const commonBuff31ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff31: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_weak: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate', negate: true },
   maxStackCount: 0,
@@ -1346,15 +1346,15 @@ const commonBuff31: SkillBuffDefinition = {
     },
   ],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: commonBuff31ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_weak$actionGraph,
 };
 
-const commonBuff32ActionGraph = {
+const commonBuff_buff_common_affixes_weak_default_child$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff32: SkillBuffDefinition = {
+const commonBuff_buff_common_affixes_weak_default_child: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: { blackboardKey: 'rate', negate: true },
   maxStackCount: 0,
@@ -1368,16 +1368,18 @@ const commonBuff32: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 0, rate: -0.2 },
   attributeModifiers: [],
-  actionGraph: commonBuff32ActionGraph,
+  actionGraph: commonBuff_buff_common_affixes_weak_default_child$actionGraph,
 };
 
-const commonBuff33ActionGraph = {
+const commonBuff_buff_common_burning_status$actionGraph = {
   main: {
     nodes: {
       dealDamage_1: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'owner' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             takeAttackSnapshot: true,
@@ -1404,7 +1406,7 @@ const commonBuff33ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff33: SkillBuffDefinition = {
+const commonBuff_buff_common_burning_status: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -1416,10 +1418,10 @@ const commonBuff33: SkillBuffDefinition = {
   blackboard: { burning_atk_scale: 0 },
   attributeModifiers: [],
   lifecycleSequences: { trigger: [{ $sequence: 'dealDamage_1' }] },
-  actionGraph: commonBuff33ActionGraph,
+  actionGraph: commonBuff_buff_common_burning_status$actionGraph,
 };
 
-const commonBuff34ActionGraph = {
+const commonBuff_buff_common_cryst_cryst_frozen_triggered$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -1474,7 +1476,7 @@ const commonBuff34ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff34: SkillBuffDefinition = {
+const commonBuff_buff_common_cryst_cryst_frozen_triggered: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 1,
@@ -1484,10 +1486,10 @@ const commonBuff34: SkillBuffDefinition = {
   blackboard: { count: 1, duration: 0, extra_duration: 0 },
   attributeModifiers: [],
   lifecycleSequences: { start: [{ $sequence: 'readSkillSettingData_3' }] },
-  actionGraph: commonBuff34ActionGraph,
+  actionGraph: commonBuff_buff_common_cryst_cryst_frozen_triggered$actionGraph,
 };
 
-const commonBuff35ActionGraph = {
+const commonBuff_buff_common_cryst_cryst_frozen_triggered_do$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -1531,6 +1533,7 @@ const commonBuff35ActionGraph = {
         action: {
           kind: 'storeSourceAttributeValue',
           parameters: {
+            target: { kind: 'source' },
             attribute: { kind: 'specific', key: 'cryoAbnormalDamageIncrease' },
             stage: 'finalNonConverted',
             useFloor: false,
@@ -1559,7 +1562,7 @@ const commonBuff35ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff35: SkillBuffDefinition = {
+const commonBuff_buff_common_cryst_cryst_frozen_triggered_do: SkillBuffDefinition = {
   stackingType: 'stack',
   stackingKey: 'cryst_triggered',
   priority: 0,
@@ -1583,10 +1586,10 @@ const commonBuff35: SkillBuffDefinition = {
     start: [{ $sequence: 'storeSourceAttributeValue_4' }],
     enable: [{ $sequence: 'checkCondition_2' }],
   },
-  actionGraph: commonBuff35ActionGraph,
+  actionGraph: commonBuff_buff_common_cryst_cryst_frozen_triggered_do$actionGraph,
 };
 
-const commonBuff36ActionGraph = {
+const commonBuff_buff_common_cryst_cryst_triggered$actionGraph = {
   main: {
     nodes: {
       triggerSpellBurst_1: {
@@ -1597,6 +1600,8 @@ const commonBuff36ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'owner' },
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['cryoBurst'],
@@ -1626,7 +1631,7 @@ const commonBuff36ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff36: SkillBuffDefinition = {
+const commonBuff_buff_common_cryst_cryst_triggered: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -1641,15 +1646,15 @@ const commonBuff36: SkillBuffDefinition = {
   lifecycleSequences: {
     trigger: [{ $sequence: 'triggerSpellBurst_1' }, { $sequence: 'readSkillSettingData_3' }],
   },
-  actionGraph: commonBuff36ActionGraph,
+  actionGraph: commonBuff_buff_common_cryst_cryst_triggered$actionGraph,
 };
 
-const commonBuff37ActionGraph = {
+const commonBuff_buff_common_cryst_triggered_fx$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff37: SkillBuffDefinition = {
+const commonBuff_buff_common_cryst_triggered_fx: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -1661,16 +1666,18 @@ const commonBuff37: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  actionGraph: commonBuff37ActionGraph,
+  actionGraph: commonBuff_buff_common_cryst_triggered_fx$actionGraph,
 };
 
-const commonBuff38ActionGraph = {
+const commonBuff_buff_common_cryst_triggered_physical_break$actionGraph = {
   main: {
     nodes: {
       dealDamage_1: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'owner' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['cryoAbnormal'],
@@ -1685,7 +1692,7 @@ const commonBuff38ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff38: SkillBuffDefinition = {
+const commonBuff_buff_common_cryst_triggered_physical_break: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -1695,15 +1702,15 @@ const commonBuff38: SkillBuffDefinition = {
   blackboard: { atk_scale: 0 },
   attributeModifiers: [],
   lifecycleSequences: { start: [{ $sequence: 'dealDamage_1' }] },
-  actionGraph: commonBuff38ActionGraph,
+  actionGraph: commonBuff_buff_common_cryst_triggered_physical_break$actionGraph,
 };
 
-const commonBuff39ActionGraph = {
+const commonBuff_buff_common_damage_immune_medium$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff39: SkillBuffDefinition = {
+const commonBuff_buff_common_damage_immune_medium: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -1716,15 +1723,15 @@ const commonBuff39: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 9999 },
   attributeModifiers: [],
-  actionGraph: commonBuff39ActionGraph,
+  actionGraph: commonBuff_buff_common_damage_immune_medium$actionGraph,
 };
 
-const commonBuff40ActionGraph = {
+const commonBuff_buff_common_damage_immune_talent$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff40: SkillBuffDefinition = {
+const commonBuff_buff_common_damage_immune_talent: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -1733,15 +1740,15 @@ const commonBuff40: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 9999 },
   attributeModifiers: [],
-  actionGraph: commonBuff40ActionGraph,
+  actionGraph: commonBuff_buff_common_damage_immune_talent$actionGraph,
 };
 
-const commonBuff41ActionGraph = {
+const commonBuff_buff_common_damage_immune_ult_skill$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff41: SkillBuffDefinition = {
+const commonBuff_buff_common_damage_immune_ult_skill: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -1754,10 +1761,10 @@ const commonBuff41: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 9999 },
   attributeModifiers: [],
-  actionGraph: commonBuff41ActionGraph,
+  actionGraph: commonBuff_buff_common_damage_immune_ult_skill$actionGraph,
 };
 
-const commonBuff42ActionGraph = {
+const commonBuff_buff_common_dash$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -1796,7 +1803,7 @@ const commonBuff42ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff42: SkillBuffDefinition = {
+const commonBuff_buff_common_dash: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -1806,10 +1813,10 @@ const commonBuff42: SkillBuffDefinition = {
   blackboard: { dodgeSkillId: 0 },
   attributeModifiers: [{ attribute: 'TurnRateScalar', slot: 'addition', value: 2 }],
   lifecycleSequences: { enable: [{ $sequence: 'checkCondition_2' }] },
-  actionGraph: commonBuff42ActionGraph,
+  actionGraph: commonBuff_buff_common_dash$actionGraph,
 };
 
-const commonBuff43ActionGraph = {
+const commonBuff_buff_common_dash_behit_listener$actionGraph = {
   main: {
     nodes: {
       createTimedMarker_3: {
@@ -2019,7 +2026,14 @@ const commonBuff43ActionGraph = {
         },
         next: 'ifElse_12',
       },
-      createTimedMarker_16: {
+      checkCondition_14: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+        },
+        next: 'checkCondition_13',
+      },
+      createTimedMarker_17: {
         action: {
           kind: 'createTimedMarker',
           parameters: {
@@ -2032,7 +2046,7 @@ const commonBuff43ActionGraph = {
         },
         next: null,
       },
-      castSkillDuringAction_17: {
+      castSkillDuringAction_18: {
         action: {
           kind: 'castSkillDuringAction',
           parameters: {
@@ -2042,9 +2056,9 @@ const commonBuff43ActionGraph = {
             inheritSourceSkillCastInfo: false,
           },
         },
-        next: 'createTimedMarker_16',
+        next: 'createTimedMarker_17',
       },
-      startTimeDilation_18: {
+      startTimeDilation_19: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -2088,9 +2102,9 @@ const commonBuff43ActionGraph = {
             targets: ['caster'],
           },
         },
-        next: 'castSkillDuringAction_17',
+        next: 'castSkillDuringAction_18',
       },
-      startTimeDilation_19: {
+      startTimeDilation_20: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -2125,9 +2139,9 @@ const commonBuff43ActionGraph = {
             ignoredTargets: ['caster'],
           },
         },
-        next: 'startTimeDilation_18',
+        next: 'startTimeDilation_19',
       },
-      changeResource_20: {
+      changeResource_21: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -2140,31 +2154,31 @@ const commonBuff43ActionGraph = {
             spGainSource: 'default',
           },
         },
-        next: 'startTimeDilation_19',
+        next: 'startTimeDilation_20',
       },
-      ifElse_25: {
+      ifElse_26: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_6' },
-          whenTrue: { $sequence: 'changeResource_20' },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
+          whenTrue: { $sequence: 'changeResource_21' },
           whenFalse: { $sequence: null },
         },
         next: 'recoverDashEnergy_11',
-      },
-      checkCondition_26: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-        },
-        next: 'ifElse_25',
       },
       checkCondition_27: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
         },
-        next: 'checkCondition_26',
+        next: 'ifElse_26',
+      },
+      checkCondition_28: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
+        },
+        next: 'checkCondition_27',
       },
     },
     dataNodes: {
@@ -2189,9 +2203,17 @@ const commonBuff43ActionGraph = {
       },
       data_6: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_2' } },
+        expression: {
+          kind: 'eventDamageFeaturesMatch',
+          match: 'exceptAny',
+          features: ['dot', 'remainArea'],
+        },
       },
       data_7: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_2' } },
+      },
+      data_8: {
         type: 'boolean',
         expression: {
           kind: 'eventProjectileIgnoreImmuneLevelCompare',
@@ -2199,7 +2221,7 @@ const commonBuff43ActionGraph = {
           value: 0,
         },
       },
-      data_8: {
+      data_9: {
         type: 'boolean',
         expression: { kind: 'eventProjectilePerfectDodgeCooldownEquals', value: false },
       },
@@ -2208,7 +2230,7 @@ const commonBuff43ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff43: SkillBuffDefinition = {
+const commonBuff_buff_common_dash_behit_listener: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -2217,13 +2239,13 @@ const commonBuff43: SkillBuffDefinition = {
   blackboard: { atb: 7, dodgeSkillId: 0 },
   attributeModifiers: [],
   abilityEventResponses: [
-    { event: 'beforeTakeDamage', priority: 0, sequence: { $sequence: 'checkCondition_13' } },
-    { event: 'beforeHitByProjectile', priority: 0, sequence: { $sequence: 'checkCondition_27' } },
+    { event: 'beforeTakeDamage', priority: 0, sequence: { $sequence: 'checkCondition_14' } },
+    { event: 'beforeHitByProjectile', priority: 0, sequence: { $sequence: 'checkCondition_28' } },
   ],
-  actionGraph: commonBuff43ActionGraph,
+  actionGraph: commonBuff_buff_common_dash_behit_listener$actionGraph,
 };
 
-const commonBuff44ActionGraph = {
+const commonBuff_buff_common_dash_immune$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -2291,7 +2313,7 @@ const commonBuff44ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff44: SkillBuffDefinition = {
+const commonBuff_buff_common_dash_immune: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -2300,10 +2322,10 @@ const commonBuff44: SkillBuffDefinition = {
   blackboard: { dodgeSkillId: 0 },
   attributeModifiers: [],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }, { $sequence: 'checkCondition_4' }] },
-  actionGraph: commonBuff44ActionGraph,
+  actionGraph: commonBuff_buff_common_dash_immune$actionGraph,
 };
 
-const commonBuff45ActionGraph = {
+const commonBuff_buff_common_dash_succeed_immune$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -2324,7 +2346,7 @@ const commonBuff45ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff45: SkillBuffDefinition = {
+const commonBuff_buff_common_dash_succeed_immune: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -2334,10 +2356,10 @@ const commonBuff45: SkillBuffDefinition = {
   blackboard: {},
   attributeModifiers: [],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: commonBuff45ActionGraph,
+  actionGraph: commonBuff_buff_common_dash_succeed_immune$actionGraph,
 };
 
-const commonBuff46ActionGraph = {
+const commonBuff_buff_common_do_frozen$actionGraph = {
   main: {
     nodes: {
       startTimeDilation_1: {
@@ -2383,7 +2405,7 @@ const commonBuff46ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff46: SkillBuffDefinition = {
+const commonBuff_buff_common_do_frozen: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -2393,10 +2415,10 @@ const commonBuff46: SkillBuffDefinition = {
   blackboard: { duration: 9999 },
   attributeModifiers: [],
   lifecycleSequences: { enable: [{ $sequence: 'startTimeDilation_1' }] },
-  actionGraph: commonBuff46ActionGraph,
+  actionGraph: commonBuff_buff_common_do_frozen$actionGraph,
 };
 
-const commonBuff47ActionGraph = {
+const commonBuff_buff_common_fire_fire_burning_triggered$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -2465,7 +2487,7 @@ const commonBuff47ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff47: SkillBuffDefinition = {
+const commonBuff_buff_common_fire_fire_burning_triggered: SkillBuffDefinition = {
   stackingType: 'stack',
   stackingKey: 'fire_triggered',
   priority: 0,
@@ -2489,10 +2511,10 @@ const commonBuff47: SkillBuffDefinition = {
     start: [{ $sequence: 'readSkillSettingData_3' }, { $sequence: 'applyBuff_4' }],
     enable: [{ $sequence: 'applyBuff_1' }],
   },
-  actionGraph: commonBuff47ActionGraph,
+  actionGraph: commonBuff_buff_common_fire_fire_burning_triggered$actionGraph,
 };
 
-const commonBuff48ActionGraph = {
+const commonBuff_buff_common_fire_fire_triggered$actionGraph = {
   main: {
     nodes: {
       triggerSpellBurst_1: {
@@ -2503,6 +2525,8 @@ const commonBuff48ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'owner' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['fireBurst'],
@@ -2532,7 +2556,7 @@ const commonBuff48ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff48: SkillBuffDefinition = {
+const commonBuff_buff_common_fire_fire_triggered: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -2547,15 +2571,15 @@ const commonBuff48: SkillBuffDefinition = {
   lifecycleSequences: {
     trigger: [{ $sequence: 'triggerSpellBurst_1' }, { $sequence: 'readSkillSettingData_3' }],
   },
-  actionGraph: commonBuff48ActionGraph,
+  actionGraph: commonBuff_buff_common_fire_fire_triggered$actionGraph,
 };
 
-const commonBuff49ActionGraph = {
+const commonBuff_buff_common_fire_triggered_fx$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff49: SkillBuffDefinition = {
+const commonBuff_buff_common_fire_triggered_fx: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -2567,10 +2591,10 @@ const commonBuff49: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  actionGraph: commonBuff49ActionGraph,
+  actionGraph: commonBuff_buff_common_fire_triggered_fx$actionGraph,
 };
 
-const commonBuff50ActionGraph = {
+const commonBuff_buff_common_frozen$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -2596,7 +2620,7 @@ const commonBuff50ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff50: SkillBuffDefinition = {
+const commonBuff_buff_common_frozen: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -2606,15 +2630,15 @@ const commonBuff50: SkillBuffDefinition = {
   blackboard: { duration: 9999 },
   attributeModifiers: [],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: commonBuff50ActionGraph,
+  actionGraph: commonBuff_buff_common_frozen$actionGraph,
 };
 
-const commonBuff51ActionGraph = {
+const commonBuff_buff_common_full_immune$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff51: SkillBuffDefinition = {
+const commonBuff_buff_common_full_immune: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -2635,15 +2659,15 @@ const commonBuff51: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 9999 },
   attributeModifiers: [],
-  actionGraph: commonBuff51ActionGraph,
+  actionGraph: commonBuff_buff_common_full_immune$actionGraph,
 };
 
-const commonBuff52ActionGraph = {
+const commonBuff_buff_common_full_immune_medium$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff52: SkillBuffDefinition = {
+const commonBuff_buff_common_full_immune_medium: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -2663,15 +2687,15 @@ const commonBuff52: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 9999 },
   attributeModifiers: [],
-  actionGraph: commonBuff52ActionGraph,
+  actionGraph: commonBuff_buff_common_full_immune_medium$actionGraph,
 };
 
-const commonBuff53ActionGraph = {
+const commonBuff_buff_common_full_immune_weak$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff53: SkillBuffDefinition = {
+const commonBuff_buff_common_full_immune_weak: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -2692,10 +2716,10 @@ const commonBuff53: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 9999 },
   attributeModifiers: [],
-  actionGraph: commonBuff53ActionGraph,
+  actionGraph: commonBuff_buff_common_full_immune_weak$actionGraph,
 };
 
-const commonBuff54ActionGraph = {
+const commonBuff_buff_common_natural_natural_corrupt_do$actionGraph = {
   main: {
     nodes: {
       refreshCurrentBuffAttributeModifiers_9: {
@@ -2819,7 +2843,7 @@ const commonBuff54ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff54: SkillBuffDefinition = {
+const commonBuff_buff_common_natural_natural_corrupt_do: SkillBuffDefinition = {
   stackingType: 'stack',
   stackingKey: 'natural_triggered',
   priority: 0,
@@ -2899,10 +2923,10 @@ const commonBuff54: SkillBuffDefinition = {
     enable: [{ $sequence: 'checkCondition_1' }],
     trigger: [{ $sequence: 'checkCondition_8' }],
   },
-  actionGraph: commonBuff54ActionGraph,
+  actionGraph: commonBuff_buff_common_natural_natural_corrupt_do$actionGraph,
 };
 
-const commonBuff55ActionGraph = {
+const commonBuff_buff_common_natural_natural_corrupt_triggered$actionGraph = {
   main: {
     nodes: {
       readBuffBlackboard_2: {
@@ -3046,7 +3070,7 @@ const commonBuff55ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff55: SkillBuffDefinition = {
+const commonBuff_buff_common_natural_natural_corrupt_triggered: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -3064,10 +3088,10 @@ const commonBuff55: SkillBuffDefinition = {
   },
   attributeModifiers: [],
   lifecycleSequences: { start: [{ $sequence: 'readSkillSettingData_8' }] },
-  actionGraph: commonBuff55ActionGraph,
+  actionGraph: commonBuff_buff_common_natural_natural_corrupt_triggered$actionGraph,
 };
 
-const commonBuff56ActionGraph = {
+const commonBuff_buff_common_natural_natural_triggered$actionGraph = {
   main: {
     nodes: {
       triggerSpellBurst_1: {
@@ -3078,6 +3102,8 @@ const commonBuff56ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'owner' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['natureBurst'],
@@ -3107,7 +3133,7 @@ const commonBuff56ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff56: SkillBuffDefinition = {
+const commonBuff_buff_common_natural_natural_triggered: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -3122,10 +3148,10 @@ const commonBuff56: SkillBuffDefinition = {
   lifecycleSequences: {
     trigger: [{ $sequence: 'triggerSpellBurst_1' }, { $sequence: 'readSkillSettingData_3' }],
   },
-  actionGraph: commonBuff56ActionGraph,
+  actionGraph: commonBuff_buff_common_natural_natural_triggered$actionGraph,
 };
 
-const commonBuff57ActionGraph = {
+const commonBuff_buff_common_natural_natural_triggered_typhoea$actionGraph = {
   main: {
     nodes: {
       triggerSpellBurst_1: {
@@ -3136,6 +3162,8 @@ const commonBuff57ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'owner' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['natureBurst'],
@@ -3180,7 +3208,7 @@ const commonBuff57ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff57: SkillBuffDefinition = {
+const commonBuff_buff_common_natural_natural_triggered_typhoea: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -3195,10 +3223,10 @@ const commonBuff57: SkillBuffDefinition = {
   lifecycleSequences: {
     trigger: [{ $sequence: 'triggerSpellBurst_1' }, { $sequence: 'readSkillSettingData_4' }],
   },
-  actionGraph: commonBuff57ActionGraph,
+  actionGraph: commonBuff_buff_common_natural_natural_triggered_typhoea$actionGraph,
 };
 
-const commonBuff58ActionGraph = {
+const commonBuff_buff_common_obtain_ultimate_sp$actionGraph = {
   main: {
     nodes: {
       gainSquadUltimateEnergyFromSkillCost_1: {
@@ -3210,7 +3238,7 @@ const commonBuff58ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff58: SkillBuffDefinition = {
+const commonBuff_buff_common_obtain_ultimate_sp: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -3220,10 +3248,10 @@ const commonBuff58: SkillBuffDefinition = {
   blackboard: {},
   attributeModifiers: [],
   lifecycleSequences: { start: [{ $sequence: 'gainSquadUltimateEnergyFromSkillCost_1' }] },
-  actionGraph: commonBuff58ActionGraph,
+  actionGraph: commonBuff_buff_common_obtain_ultimate_sp$actionGraph,
 };
 
-const commonBuff59ActionGraph = {
+const commonBuff_buff_common_originum_frozen$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -3263,6 +3291,8 @@ const commonBuff59ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'owner' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['ultimateSkill'],
@@ -3431,6 +3461,8 @@ const commonBuff59ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'owner' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['comboSkill'],
@@ -3495,7 +3527,7 @@ const commonBuff59ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff59: SkillBuffDefinition = {
+const commonBuff_buff_common_originum_frozen: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -3541,10 +3573,10 @@ const commonBuff59: SkillBuffDefinition = {
       sequences: [{ $sequence: 'dealDamage_18' }, { $sequence: 'checkCondition_14' }],
     },
   ],
-  actionGraph: commonBuff59ActionGraph,
+  actionGraph: commonBuff_buff_common_originum_frozen$actionGraph,
 };
 
-const commonBuff60ActionGraph = {
+const commonBuff_buff_common_originum_frozen_inner$actionGraph = {
   main: {
     nodes: {
       startTimeDilation_1: {
@@ -3590,7 +3622,7 @@ const commonBuff60ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff60: SkillBuffDefinition = {
+const commonBuff_buff_common_originum_frozen_inner: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -3599,15 +3631,15 @@ const commonBuff60: SkillBuffDefinition = {
   blackboard: { duration: 9999 },
   attributeModifiers: [],
   lifecycleSequences: { enable: [{ $sequence: 'startTimeDilation_1' }] },
-  actionGraph: commonBuff60ActionGraph,
+  actionGraph: commonBuff_buff_common_originum_frozen_inner$actionGraph,
 };
 
-const commonBuff61ActionGraph = {
+const commonBuff_buff_common_poise_break_damage_taken_scale$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff61: SkillBuffDefinition = {
+const commonBuff_buff_common_poise_break_damage_taken_scale: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 1,
@@ -3628,15 +3660,15 @@ const commonBuff61: SkillBuffDefinition = {
       ],
     },
   ],
-  actionGraph: commonBuff61ActionGraph,
+  actionGraph: commonBuff_buff_common_poise_break_damage_taken_scale$actionGraph,
 };
 
-const commonBuff62ActionGraph = {
+const commonBuff_buff_common_poise_can_be_breaking_attacked$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff62: SkillBuffDefinition = {
+const commonBuff_buff_common_poise_can_be_breaking_attacked: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 1,
@@ -3644,15 +3676,15 @@ const commonBuff62: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  actionGraph: commonBuff62ActionGraph,
+  actionGraph: commonBuff_buff_common_poise_can_be_breaking_attacked$actionGraph,
 };
 
-const commonBuff63ActionGraph = {
+const commonBuff_buff_common_power_attack_disable_cast_skill$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff63: SkillBuffDefinition = {
+const commonBuff_buff_common_power_attack_disable_cast_skill: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -3666,10 +3698,10 @@ const commonBuff63: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  actionGraph: commonBuff63ActionGraph,
+  actionGraph: commonBuff_buff_common_power_attack_disable_cast_skill$actionGraph,
 };
 
-const commonBuff64ActionGraph = {
+const commonBuff_buff_common_pulse_pulse_conduct_triggered$actionGraph = {
   main: {
     nodes: {
       readSkillSettingData_3: {
@@ -3748,7 +3780,7 @@ const commonBuff64ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff64: SkillBuffDefinition = {
+const commonBuff_buff_common_pulse_pulse_conduct_triggered: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 1,
@@ -3758,10 +3790,10 @@ const commonBuff64: SkillBuffDefinition = {
   blackboard: { count: 1, duration: 0, extra_scaling: 1, real_duration: 0 },
   attributeModifiers: [],
   lifecycleSequences: { start: [{ $sequence: 'ifElse_5' }] },
-  actionGraph: commonBuff64ActionGraph,
+  actionGraph: commonBuff_buff_common_pulse_pulse_conduct_triggered$actionGraph,
 };
 
-const commonBuff65ActionGraph = {
+const commonBuff_buff_common_pulse_pulse_conduct_triggered_do$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -3791,6 +3823,7 @@ const commonBuff65ActionGraph = {
         action: {
           kind: 'storeSourceAttributeValue',
           parameters: {
+            target: { kind: 'source' },
             attribute: { kind: 'specific', key: 'electricAbnormalDamageIncrease' },
             stage: 'finalNonConverted',
             useFloor: false,
@@ -3879,7 +3912,7 @@ const commonBuff65ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff65: SkillBuffDefinition = {
+const commonBuff_buff_common_pulse_pulse_conduct_triggered_do: SkillBuffDefinition = {
   stackingType: 'stack',
   stackingKey: 'pulse_triggered',
   priority: 0,
@@ -3933,10 +3966,10 @@ const commonBuff65: SkillBuffDefinition = {
     },
   ],
   lifecycleSequences: { start: [{ $sequence: 'readSkillSettingData_4' }] },
-  actionGraph: commonBuff65ActionGraph,
+  actionGraph: commonBuff_buff_common_pulse_pulse_conduct_triggered_do$actionGraph,
 };
 
-const commonBuff66ActionGraph = {
+const commonBuff_buff_common_pulse_pulse_triggered$actionGraph = {
   main: {
     nodes: {
       triggerSpellBurst_1: {
@@ -3947,6 +3980,8 @@ const commonBuff66ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'owner' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['electricBurst'],
@@ -3976,7 +4011,7 @@ const commonBuff66ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff66: SkillBuffDefinition = {
+const commonBuff_buff_common_pulse_pulse_triggered: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -3991,15 +4026,15 @@ const commonBuff66: SkillBuffDefinition = {
   lifecycleSequences: {
     trigger: [{ $sequence: 'triggerSpellBurst_1' }, { $sequence: 'readSkillSettingData_3' }],
   },
-  actionGraph: commonBuff66ActionGraph,
+  actionGraph: commonBuff_buff_common_pulse_pulse_triggered$actionGraph,
 };
 
-const commonBuff67ActionGraph = {
+const commonBuff_buff_common_pulse_triggered_fx$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff67: SkillBuffDefinition = {
+const commonBuff_buff_common_pulse_triggered_fx: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 0,
@@ -4011,10 +4046,10 @@ const commonBuff67: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  actionGraph: commonBuff67ActionGraph,
+  actionGraph: commonBuff_buff_common_pulse_triggered_fx$actionGraph,
 };
 
-const commonBuff68ActionGraph = {
+const commonBuff_buff_physical_airborne$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -4038,6 +4073,8 @@ const commonBuff68ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'owner' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: [],
@@ -4097,7 +4134,7 @@ const commonBuff68ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff68: SkillBuffDefinition = {
+const commonBuff_buff_physical_airborne: SkillBuffDefinition = {
   stackingType: 'stack',
   stackingKey: 'physical',
   priority: 0,
@@ -4124,10 +4161,10 @@ const commonBuff68: SkillBuffDefinition = {
       { $sequence: 'igniteBuffs_5' },
     ],
   },
-  actionGraph: commonBuff68ActionGraph,
+  actionGraph: commonBuff_buff_physical_airborne$actionGraph,
 };
 
-const commonBuff69ActionGraph = {
+const commonBuff_buff_physical_crushed$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -4169,7 +4206,7 @@ const commonBuff69ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff69: SkillBuffDefinition = {
+const commonBuff_buff_physical_crushed: SkillBuffDefinition = {
   stackingType: 'stack',
   stackingKey: 'physical',
   priority: 0,
@@ -4189,16 +4226,18 @@ const commonBuff69: SkillBuffDefinition = {
   blackboard: { atk_scale: 1, count: 0, dmg_multiplier: 1, duration: 3, ignore_hit_effect: 0 },
   attributeModifiers: [],
   lifecycleSequences: { start: [{ $sequence: 'readBuffStackCount_2' }] },
-  actionGraph: commonBuff69ActionGraph,
+  actionGraph: commonBuff_buff_physical_crushed$actionGraph,
 };
 
-const commonBuff70ActionGraph = {
+const commonBuff_buff_physical_do_crushed$actionGraph = {
   main: {
     nodes: {
       dealDamage_1: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'owner' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: [],
@@ -4399,7 +4438,7 @@ const commonBuff70ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff70: SkillBuffDefinition = {
+const commonBuff_buff_physical_do_crushed: SkillBuffDefinition = {
   stackingType: 'stack',
   stackingKey: 'physical',
   priority: 0,
@@ -4425,10 +4464,10 @@ const commonBuff70: SkillBuffDefinition = {
       { $sequence: 'checkCondition_13' },
     ],
   },
-  actionGraph: commonBuff70ActionGraph,
+  actionGraph: commonBuff_buff_physical_do_crushed$actionGraph,
 };
 
-const commonBuff71ActionGraph = {
+const commonBuff_buff_physical_do_fracture$actionGraph = {
   main: {
     nodes: {
       refreshCurrentBuffAttributeModifiers_1: {
@@ -4494,6 +4533,8 @@ const commonBuff71ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'owner' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: [],
@@ -4639,7 +4680,7 @@ const commonBuff71ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff71: SkillBuffDefinition = {
+const commonBuff_buff_physical_do_fracture: SkillBuffDefinition = {
   stackingType: 'stack',
   stackingKey: 'fracture',
   priority: 0,
@@ -4681,10 +4722,10 @@ const commonBuff71: SkillBuffDefinition = {
       { $sequence: 'switch_13' },
     ],
   },
-  actionGraph: commonBuff71ActionGraph,
+  actionGraph: commonBuff_buff_physical_do_fracture$actionGraph,
 };
 
-const commonBuff72ActionGraph = {
+const commonBuff_buff_physical_fracture$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -4736,7 +4777,7 @@ const commonBuff72ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff72: SkillBuffDefinition = {
+const commonBuff_buff_physical_fracture: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 1,
@@ -4749,10 +4790,10 @@ const commonBuff72: SkillBuffDefinition = {
   blackboard: { count: 0, duration: 15 },
   attributeModifiers: [],
   lifecycleSequences: { start: [{ $sequence: 'readBuffStackCount_3' }] },
-  actionGraph: commonBuff72ActionGraph,
+  actionGraph: commonBuff_buff_physical_fracture$actionGraph,
 };
 
-const commonBuff73ActionGraph = {
+const commonBuff_buff_physical_handle_cryst_break$actionGraph = {
   main: {
     nodes: {
       startTimeDilation_1: {
@@ -4927,7 +4968,7 @@ const commonBuff73ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff73: SkillBuffDefinition = {
+const commonBuff_buff_physical_handle_cryst_break: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -4940,10 +4981,10 @@ const commonBuff73: SkillBuffDefinition = {
   blackboard: { atk_scale: 0, count: 0 },
   attributeModifiers: [],
   lifecycleSequences: { start: [{ $sequence: 'readBuffBlackboard_10' }] },
-  actionGraph: commonBuff73ActionGraph,
+  actionGraph: commonBuff_buff_physical_handle_cryst_break$actionGraph,
 };
 
-const commonBuff74ActionGraph = {
+const commonBuff_buff_physical_knockdown$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -4967,6 +5008,8 @@ const commonBuff74ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'owner' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: [],
@@ -5026,7 +5069,7 @@ const commonBuff74ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff74: SkillBuffDefinition = {
+const commonBuff_buff_physical_knockdown: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -5052,10 +5095,10 @@ const commonBuff74: SkillBuffDefinition = {
       { $sequence: 'igniteBuffs_5' },
     ],
   },
-  actionGraph: commonBuff74ActionGraph,
+  actionGraph: commonBuff_buff_physical_knockdown$actionGraph,
 };
 
-const commonBuff75ActionGraph = {
+const commonBuff_buff_physical_no_guard$actionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -5131,7 +5174,7 @@ const commonBuff75ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff75: SkillBuffDefinition = {
+const commonBuff_buff_physical_no_guard: SkillBuffDefinition = {
   stackingType: 'enhanceAndRefresh',
   priority: 100,
   maxStackCount: 4,
@@ -5150,15 +5193,15 @@ const commonBuff75: SkillBuffDefinition = {
     finish: [{ $sequence: 'applyBuff_3' }],
     afterEnhance: [{ $sequence: 'igniteBuffs_4' }, { $sequence: 'checkCondition_7' }],
   },
-  actionGraph: commonBuff75ActionGraph,
+  actionGraph: commonBuff_buff_physical_no_guard$actionGraph,
 };
 
-const commonBuff76ActionGraph = {
+const commonBuff_buff_physical_no_guard_fake$actionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const commonBuff76: SkillBuffDefinition = {
+const commonBuff_buff_physical_no_guard_fake: SkillBuffDefinition = {
   stackingType: 'refresh',
   priority: 100,
   maxStackCount: 1,
@@ -5167,83 +5210,99 @@ const commonBuff76: SkillBuffDefinition = {
   extendTags: [],
   blackboard: { duration: 1 },
   attributeModifiers: [],
-  actionGraph: commonBuff76ActionGraph,
+  actionGraph: commonBuff_buff_physical_no_guard_fake$actionGraph,
 };
 export const commonBuffDefinitions: OperatorBuffDefinitions = Object.freeze({
-  buff_common_affixes_combo_trigger: commonBuff1,
-  buff_common_affixes_enhance_crystal: commonBuff2,
-  buff_common_affixes_enhance_crystal_default_child: commonBuff3,
-  buff_common_affixes_enhance_fire: commonBuff4,
-  buff_common_affixes_enhance_fire_default_child: commonBuff5,
-  buff_common_affixes_enhance_natural: commonBuff6,
-  buff_common_affixes_enhance_natural_default_child: commonBuff7,
-  buff_common_affixes_enhance_pulse: commonBuff8,
-  buff_common_affixes_enhance_pulse_default_child: commonBuff9,
-  buff_common_affixes_enhance_spell: commonBuff10,
-  buff_common_affixes_enhance_spell_default_child: commonBuff11,
-  buff_common_affixes_shelter: commonBuff12,
-  buff_common_affixes_shelter_default_child: commonBuff13,
-  buff_common_affixes_skillimbue: commonBuff14,
-  buff_common_affixes_skillimbue_atk: commonBuff15,
-  buff_common_affixes_slow: commonBuff16,
-  buff_common_affixes_slow_default_child: commonBuff17,
-  buff_common_affixes_speedup: commonBuff18,
-  buff_common_affixes_vulnerable_crystal: commonBuff19,
-  buff_common_affixes_vulnerable_crystal_default_child: commonBuff20,
-  buff_common_affixes_vulnerable_crystal_lizhiyan_child: commonBuff21,
-  buff_common_affixes_vulnerable_fire: commonBuff22,
-  buff_common_affixes_vulnerable_natural: commonBuff23,
-  buff_common_affixes_vulnerable_natural_lizhiyan_child: commonBuff24,
-  buff_common_affixes_vulnerable_physical: commonBuff25,
-  buff_common_affixes_vulnerable_physical_default_child: commonBuff26,
-  buff_common_affixes_vulnerable_pulse: commonBuff27,
-  buff_common_affixes_vulnerable_pulse_default_child: commonBuff28,
-  buff_common_affixes_vulnerable_spell: commonBuff29,
-  buff_common_affixes_vulnerable_spell_default_child: commonBuff30,
-  buff_common_affixes_weak: commonBuff31,
-  buff_common_affixes_weak_default_child: commonBuff32,
-  buff_common_burning_status: commonBuff33,
-  buff_common_cryst_cryst_frozen_triggered: commonBuff34,
-  buff_common_cryst_cryst_frozen_triggered_do: commonBuff35,
-  buff_common_cryst_cryst_triggered: commonBuff36,
-  buff_common_cryst_triggered_fx: commonBuff37,
-  buff_common_cryst_triggered_physical_break: commonBuff38,
-  buff_common_damage_immune_medium: commonBuff39,
-  buff_common_damage_immune_talent: commonBuff40,
-  buff_common_damage_immune_ult_skill: commonBuff41,
-  buff_common_dash: commonBuff42,
-  buff_common_dash_behit_listener: commonBuff43,
-  buff_common_dash_immune: commonBuff44,
-  buff_common_dash_succeed_immune: commonBuff45,
-  buff_common_do_frozen: commonBuff46,
-  buff_common_fire_fire_burning_triggered: commonBuff47,
-  buff_common_fire_fire_triggered: commonBuff48,
-  buff_common_fire_triggered_fx: commonBuff49,
-  buff_common_frozen: commonBuff50,
-  buff_common_full_immune: commonBuff51,
-  buff_common_full_immune_medium: commonBuff52,
-  buff_common_full_immune_weak: commonBuff53,
-  buff_common_natural_natural_corrupt_do: commonBuff54,
-  buff_common_natural_natural_corrupt_triggered: commonBuff55,
-  buff_common_natural_natural_triggered: commonBuff56,
-  buff_common_natural_natural_triggered_typhoea: commonBuff57,
-  buff_common_obtain_ultimate_sp: commonBuff58,
-  buff_common_originum_frozen: commonBuff59,
-  buff_common_originum_frozen_inner: commonBuff60,
-  buff_common_poise_break_damage_taken_scale: commonBuff61,
-  buff_common_poise_can_be_breaking_attacked: commonBuff62,
-  buff_common_power_attack_disable_cast_skill: commonBuff63,
-  buff_common_pulse_pulse_conduct_triggered: commonBuff64,
-  buff_common_pulse_pulse_conduct_triggered_do: commonBuff65,
-  buff_common_pulse_pulse_triggered: commonBuff66,
-  buff_common_pulse_triggered_fx: commonBuff67,
-  buff_physical_airborne: commonBuff68,
-  buff_physical_crushed: commonBuff69,
-  buff_physical_do_crushed: commonBuff70,
-  buff_physical_do_fracture: commonBuff71,
-  buff_physical_fracture: commonBuff72,
-  buff_physical_handle_cryst_break: commonBuff73,
-  buff_physical_knockdown: commonBuff74,
-  buff_physical_no_guard: commonBuff75,
-  buff_physical_no_guard_fake: commonBuff76,
+  buff_common_affixes_combo_trigger: commonBuff_buff_common_affixes_combo_trigger,
+  buff_common_affixes_enhance_crystal: commonBuff_buff_common_affixes_enhance_crystal,
+  buff_common_affixes_enhance_crystal_default_child:
+    commonBuff_buff_common_affixes_enhance_crystal_default_child,
+  buff_common_affixes_enhance_fire: commonBuff_buff_common_affixes_enhance_fire,
+  buff_common_affixes_enhance_fire_default_child:
+    commonBuff_buff_common_affixes_enhance_fire_default_child,
+  buff_common_affixes_enhance_natural: commonBuff_buff_common_affixes_enhance_natural,
+  buff_common_affixes_enhance_natural_default_child:
+    commonBuff_buff_common_affixes_enhance_natural_default_child,
+  buff_common_affixes_enhance_pulse: commonBuff_buff_common_affixes_enhance_pulse,
+  buff_common_affixes_enhance_pulse_default_child:
+    commonBuff_buff_common_affixes_enhance_pulse_default_child,
+  buff_common_affixes_enhance_spell: commonBuff_buff_common_affixes_enhance_spell,
+  buff_common_affixes_enhance_spell_default_child:
+    commonBuff_buff_common_affixes_enhance_spell_default_child,
+  buff_common_affixes_shelter: commonBuff_buff_common_affixes_shelter,
+  buff_common_affixes_shelter_default_child: commonBuff_buff_common_affixes_shelter_default_child,
+  buff_common_affixes_skillimbue: commonBuff_buff_common_affixes_skillimbue,
+  buff_common_affixes_skillimbue_atk: commonBuff_buff_common_affixes_skillimbue_atk,
+  buff_common_affixes_slow: commonBuff_buff_common_affixes_slow,
+  buff_common_affixes_slow_default_child: commonBuff_buff_common_affixes_slow_default_child,
+  buff_common_affixes_speedup: commonBuff_buff_common_affixes_speedup,
+  buff_common_affixes_vulnerable_crystal: commonBuff_buff_common_affixes_vulnerable_crystal,
+  buff_common_affixes_vulnerable_crystal_default_child:
+    commonBuff_buff_common_affixes_vulnerable_crystal_default_child,
+  buff_common_affixes_vulnerable_crystal_lizhiyan_child:
+    commonBuff_buff_common_affixes_vulnerable_crystal_lizhiyan_child,
+  buff_common_affixes_vulnerable_fire: commonBuff_buff_common_affixes_vulnerable_fire,
+  buff_common_affixes_vulnerable_natural: commonBuff_buff_common_affixes_vulnerable_natural,
+  buff_common_affixes_vulnerable_natural_lizhiyan_child:
+    commonBuff_buff_common_affixes_vulnerable_natural_lizhiyan_child,
+  buff_common_affixes_vulnerable_physical: commonBuff_buff_common_affixes_vulnerable_physical,
+  buff_common_affixes_vulnerable_physical_default_child:
+    commonBuff_buff_common_affixes_vulnerable_physical_default_child,
+  buff_common_affixes_vulnerable_pulse: commonBuff_buff_common_affixes_vulnerable_pulse,
+  buff_common_affixes_vulnerable_pulse_default_child:
+    commonBuff_buff_common_affixes_vulnerable_pulse_default_child,
+  buff_common_affixes_vulnerable_spell: commonBuff_buff_common_affixes_vulnerable_spell,
+  buff_common_affixes_vulnerable_spell_default_child:
+    commonBuff_buff_common_affixes_vulnerable_spell_default_child,
+  buff_common_affixes_weak: commonBuff_buff_common_affixes_weak,
+  buff_common_affixes_weak_default_child: commonBuff_buff_common_affixes_weak_default_child,
+  buff_common_burning_status: commonBuff_buff_common_burning_status,
+  buff_common_cryst_cryst_frozen_triggered: commonBuff_buff_common_cryst_cryst_frozen_triggered,
+  buff_common_cryst_cryst_frozen_triggered_do:
+    commonBuff_buff_common_cryst_cryst_frozen_triggered_do,
+  buff_common_cryst_cryst_triggered: commonBuff_buff_common_cryst_cryst_triggered,
+  buff_common_cryst_triggered_fx: commonBuff_buff_common_cryst_triggered_fx,
+  buff_common_cryst_triggered_physical_break: commonBuff_buff_common_cryst_triggered_physical_break,
+  buff_common_damage_immune_medium: commonBuff_buff_common_damage_immune_medium,
+  buff_common_damage_immune_talent: commonBuff_buff_common_damage_immune_talent,
+  buff_common_damage_immune_ult_skill: commonBuff_buff_common_damage_immune_ult_skill,
+  buff_common_dash: commonBuff_buff_common_dash,
+  buff_common_dash_behit_listener: commonBuff_buff_common_dash_behit_listener,
+  buff_common_dash_immune: commonBuff_buff_common_dash_immune,
+  buff_common_dash_succeed_immune: commonBuff_buff_common_dash_succeed_immune,
+  buff_common_do_frozen: commonBuff_buff_common_do_frozen,
+  buff_common_fire_fire_burning_triggered: commonBuff_buff_common_fire_fire_burning_triggered,
+  buff_common_fire_fire_triggered: commonBuff_buff_common_fire_fire_triggered,
+  buff_common_fire_triggered_fx: commonBuff_buff_common_fire_triggered_fx,
+  buff_common_frozen: commonBuff_buff_common_frozen,
+  buff_common_full_immune: commonBuff_buff_common_full_immune,
+  buff_common_full_immune_medium: commonBuff_buff_common_full_immune_medium,
+  buff_common_full_immune_weak: commonBuff_buff_common_full_immune_weak,
+  buff_common_natural_natural_corrupt_do: commonBuff_buff_common_natural_natural_corrupt_do,
+  buff_common_natural_natural_corrupt_triggered:
+    commonBuff_buff_common_natural_natural_corrupt_triggered,
+  buff_common_natural_natural_triggered: commonBuff_buff_common_natural_natural_triggered,
+  buff_common_natural_natural_triggered_typhoea:
+    commonBuff_buff_common_natural_natural_triggered_typhoea,
+  buff_common_obtain_ultimate_sp: commonBuff_buff_common_obtain_ultimate_sp,
+  buff_common_originum_frozen: commonBuff_buff_common_originum_frozen,
+  buff_common_originum_frozen_inner: commonBuff_buff_common_originum_frozen_inner,
+  buff_common_poise_break_damage_taken_scale: commonBuff_buff_common_poise_break_damage_taken_scale,
+  buff_common_poise_can_be_breaking_attacked: commonBuff_buff_common_poise_can_be_breaking_attacked,
+  buff_common_power_attack_disable_cast_skill:
+    commonBuff_buff_common_power_attack_disable_cast_skill,
+  buff_common_pulse_pulse_conduct_triggered: commonBuff_buff_common_pulse_pulse_conduct_triggered,
+  buff_common_pulse_pulse_conduct_triggered_do:
+    commonBuff_buff_common_pulse_pulse_conduct_triggered_do,
+  buff_common_pulse_pulse_triggered: commonBuff_buff_common_pulse_pulse_triggered,
+  buff_common_pulse_triggered_fx: commonBuff_buff_common_pulse_triggered_fx,
+  buff_physical_airborne: commonBuff_buff_physical_airborne,
+  buff_physical_crushed: commonBuff_buff_physical_crushed,
+  buff_physical_do_crushed: commonBuff_buff_physical_do_crushed,
+  buff_physical_do_fracture: commonBuff_buff_physical_do_fracture,
+  buff_physical_fracture: commonBuff_buff_physical_fracture,
+  buff_physical_handle_cryst_break: commonBuff_buff_physical_handle_cryst_break,
+  buff_physical_knockdown: commonBuff_buff_physical_knockdown,
+  buff_physical_no_guard: commonBuff_buff_physical_no_guard,
+  buff_physical_no_guard_fake: commonBuff_buff_physical_no_guard_fake,
 });

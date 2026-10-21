@@ -4,7 +4,7 @@ import {
   parseReferenceAwareBuffActionGraphSource,
 } from '../../source/buffActionGraph.ts';
 import { buffShowsTimelineActions, type BuffRuntimeSource } from '../../source/buffRuntime.ts';
-import { collectNativeActionNodes } from '../../source/controlFlow.ts';
+import { collectImmediateNativeActionNodes } from '../../source/actionLeaf.ts';
 import {
   parseGlobalBuffTemplateCatalogSource,
   type GlobalBuffTemplateCatalogSource,
@@ -163,6 +163,45 @@ export function compileStandardStumpBuffClosure(
       : createSkillSettingProjectionExtensions(skillSettingCatalog)),
     ...(createAdditionalExtensions?.(sources, omittedBuffIds) ?? {}),
   };
+  const omittedAbilityEvents = new Map(
+    [...sources].map(
+      ([id, source]) =>
+        [
+          id,
+          new Set(
+            source.graph.abilityEvents
+              .filter(
+                event =>
+                  standardStumpBuffAbilityEventOmissionReason(
+                    event.event,
+                    buffOwnerTargets.get(id),
+                  ) !== null,
+              )
+              .map(event => event.event),
+          ),
+        ] as const,
+    ),
+  );
+  // 场景已排除的事件不能继续保活专属子链；共享子定义或独立根仍由其他来路保留。
+  const reachableSources = [...omittedAbilityEvents.values()].some(events => events.size > 0)
+    ? collectBuffRuntimeClosure(
+        rootBuffIds,
+        buffData,
+        globalBuffCatalog,
+        provenDefaultKeywordCarrierRootIds,
+        rootBuffBlackboards,
+        omittedAbilityEvents,
+      )
+    : sources;
+  for (const id of sources.keys()) {
+    if (reachableSources.has(id)) continue;
+    omittedBuffIds.add(id);
+    diagnostics.push({
+      status: 'scenario-omitted',
+      sourcePath: `BuffData.${id}`,
+      reason: 'Buff is reachable only through events omitted by the fixed-target scenario',
+    });
+  }
   const definitions: Record<string, CompiledBuffDefinitionSource> = {};
   for (const [buffId, source] of sources) {
     if (omittedBuffIds.has(buffId)) continue;
@@ -403,7 +442,7 @@ function buffActionNodes(source: BuffRuntimeSource) {
     ...source.damageModifiers.map(item => item.condition),
     ...source.healModifiers.map(item => item.condition),
     ...source.poiseModifiers.map(item => item.condition),
-  ].flatMap(sequence => collectNativeActionNodes(sequence));
+  ].flatMap(sequence => collectImmediateNativeActionNodes(sequence));
 }
 
 /** AbilityEntity 创建动作保存的 Context 在该序列后只可能引用刚创建的实体实例。 */
@@ -521,7 +560,7 @@ function propagateBuffTargets(
             ? source.graph.timelineActions.map(item => item.sequence)
             : []),
           ...source.graph.buffEvents.flatMap(item => item.actions),
-        ].flatMap(sequence => collectNativeActionNodes(sequence)),
+        ].flatMap(sequence => collectImmediateNativeActionNodes(sequence)),
       );
       const staticEnemyTargetGroupKeys = new Set([
         ...(capturedTargetGroups.get(id)?.enemyKeys ?? []),
@@ -595,7 +634,7 @@ function propagateBuffTargets(
           const childSource = action.buffSource === 'ActionOwner' ? owner : sourceTarget;
           for (const sequence of [action.actionOnEnter, action.actionOnExit])
             pendingNodes.push(
-              ...collectNativeActionNodes(sequence).map(node => ({
+              ...collectImmediateNativeActionNodes(sequence).map(node => ({
                 node,
                 inputTarget: childOwner,
               })),

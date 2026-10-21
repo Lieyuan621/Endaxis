@@ -22,19 +22,6 @@ export const perlicaChr_0004_pelica_attack1ActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0004_pelica_attack1_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 0, atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -81,6 +68,8 @@ export const perlicaChr_0004_pelica_attack1ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'electric',
                             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
@@ -95,7 +84,7 @@ export const perlicaChr_0004_pelica_attack1ActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           containsHittableTarget: false,
                           excludeDeadEntity: false,
                           operator: 'greaterOrEqual',
@@ -121,13 +110,33 @@ export const perlicaChr_0004_pelica_attack1ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0004_pelica_attack1_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atb: 0, atk_scale: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
+                ],
               },
             },
           ],
         },
         next: null,
       },
-      reachSkillOperableBoundary_2: {
+      overrideBasicAttackMapping_2: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0004_pelica_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_3: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0004_pelica_attack2'] },
@@ -140,6 +149,7 @@ export const perlicaChr_0004_pelica_attack1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const perlicaChr_0004_pelica_attack1: SkillDefinition = {
+  actionGraph: perlicaChr_0004_pelica_attack1ActionGraph,
   key: 'chr_0004_pelica_attack1',
   element: 'electric',
   blackboard: {
@@ -150,28 +160,16 @@ export const perlicaChr_0004_pelica_attack1: SkillDefinition = {
   naturalDurationFrames: 166,
   exclusiveFrame: 15,
   offsetRecordFrame: 8,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 5,
-        endFrame: 27,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0004_pelica_attack2',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 16, endFrame: 27, skillIds: ['chr_0004_pelica_attack2'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 8, endFrame: 8, sequence: { $sequence: 'launchProjectile_1' } },
-    { startFrame: 16, endFrame: 27, sequence: { $sequence: 'reachSkillOperableBoundary_2' } },
+    { startFrame: 5, endFrame: 27, sequence: { $sequence: 'overrideBasicAttackMapping_2' } },
+    { startFrame: 16, endFrame: 27, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0004_pelica_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: perlicaChr_0004_pelica_attack1ActionGraph,
 };
 
 export const perlicaChr_0004_pelica_attack2ActionGraph = {
@@ -191,19 +189,6 @@ export const perlicaChr_0004_pelica_attack2ActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0004_pelica_attack2_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 3,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 0, atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_4' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -236,6 +221,8 @@ export const perlicaChr_0004_pelica_attack2ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'electric',
                             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
                             tags: ['normalAttack'],
@@ -258,13 +245,33 @@ export const perlicaChr_0004_pelica_attack2ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0004_pelica_attack2_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 3,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atb: 0, atk_scale: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_4' } },
+                ],
               },
             },
           ],
         },
         next: null,
       },
-      reachSkillOperableBoundary_3: {
+      overrideBasicAttackMapping_3: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0004_pelica_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_4: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0004_pelica_attack3'] },
@@ -277,6 +284,7 @@ export const perlicaChr_0004_pelica_attack2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const perlicaChr_0004_pelica_attack2: SkillDefinition = {
+  actionGraph: perlicaChr_0004_pelica_attack2ActionGraph,
   key: 'chr_0004_pelica_attack2',
   element: 'electric',
   blackboard: {
@@ -287,29 +295,17 @@ export const perlicaChr_0004_pelica_attack2: SkillDefinition = {
   naturalDurationFrames: 168,
   exclusiveFrame: 22,
   offsetRecordFrame: 12,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 28,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0004_pelica_attack3',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 18, endFrame: 28, skillIds: ['chr_0004_pelica_attack3'] }],
-  },
   costFrame: 11,
   scheduledSequences: [
     { startFrame: 9, endFrame: 9, sequence: { $sequence: 'launchProjectile_1' } },
     { startFrame: 12, endFrame: 12, sequence: { $sequence: 'launchProjectile_1' } },
-    { startFrame: 18, endFrame: 28, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
+    { startFrame: 0, endFrame: 28, sequence: { $sequence: 'overrideBasicAttackMapping_3' } },
+    { startFrame: 18, endFrame: 28, sequence: { $sequence: 'reachSkillOperableBoundary_4' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0004_pelica_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: perlicaChr_0004_pelica_attack2ActionGraph,
 };
 
 export const perlicaChr_0004_pelica_attack3ActionGraph = {
@@ -329,19 +325,6 @@ export const perlicaChr_0004_pelica_attack3ActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0004_pelica_attack3_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: {},
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -388,6 +371,8 @@ export const perlicaChr_0004_pelica_attack3ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'electric',
                             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
@@ -402,7 +387,7 @@ export const perlicaChr_0004_pelica_attack3ActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           containsHittableTarget: false,
                           excludeDeadEntity: false,
                           operator: 'greaterOrEqual',
@@ -428,13 +413,33 @@ export const perlicaChr_0004_pelica_attack3ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0004_pelica_attack3_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: {},
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
+                ],
               },
             },
           ],
         },
         next: null,
       },
-      reachSkillOperableBoundary_4: {
+      overrideBasicAttackMapping_4: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0004_pelica_attack4'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_5: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0004_pelica_attack4'] },
@@ -447,6 +452,7 @@ export const perlicaChr_0004_pelica_attack3ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const perlicaChr_0004_pelica_attack3: SkillDefinition = {
+  actionGraph: perlicaChr_0004_pelica_attack3ActionGraph,
   key: 'chr_0004_pelica_attack3',
   element: 'electric',
   blackboard: {
@@ -457,30 +463,18 @@ export const perlicaChr_0004_pelica_attack3: SkillDefinition = {
   naturalDurationFrames: 173,
   exclusiveFrame: 29,
   offsetRecordFrame: 22,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 8,
-        endFrame: 40,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0004_pelica_attack4',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 26, endFrame: 40, skillIds: ['chr_0004_pelica_attack4'] }],
-  },
   costFrame: 13,
   scheduledSequences: [
     { startFrame: 16, endFrame: 16, sequence: { $sequence: 'launchProjectile_1' } },
     { startFrame: 19, endFrame: 19, sequence: { $sequence: 'launchProjectile_1' } },
     { startFrame: 22, endFrame: 22, sequence: { $sequence: 'launchProjectile_1' } },
-    { startFrame: 26, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_4' } },
+    { startFrame: 8, endFrame: 40, sequence: { $sequence: 'overrideBasicAttackMapping_4' } },
+    { startFrame: 26, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0004_pelica_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: perlicaChr_0004_pelica_attack3ActionGraph,
 };
 
 export const perlicaChr_0004_pelica_attack4ActionGraph = {
@@ -500,19 +494,6 @@ export const perlicaChr_0004_pelica_attack4ActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0004_pelica_attack4_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: {},
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -559,6 +540,8 @@ export const perlicaChr_0004_pelica_attack4ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'electric',
                             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack', 'normalAttackLastCombo'],
@@ -575,7 +558,7 @@ export const perlicaChr_0004_pelica_attack4ActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           containsHittableTarget: false,
                           excludeDeadEntity: false,
                           operator: 'greaterOrEqual',
@@ -602,13 +585,33 @@ export const perlicaChr_0004_pelica_attack4ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0004_pelica_attack4_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: {},
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
+                ],
               },
             },
           ],
         },
         next: null,
       },
-      reachSkillOperableBoundary_2: {
+      overrideBasicAttackMapping_2: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0004_pelica_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_3: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0004_pelica_attack1'] },
@@ -621,6 +624,7 @@ export const perlicaChr_0004_pelica_attack4ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const perlicaChr_0004_pelica_attack4: SkillDefinition = {
+  actionGraph: perlicaChr_0004_pelica_attack4ActionGraph,
   key: 'chr_0004_pelica_attack4',
   element: 'electric',
   blackboard: {
@@ -632,35 +636,30 @@ export const perlicaChr_0004_pelica_attack4: SkillDefinition = {
   naturalDurationFrames: 269,
   exclusiveFrame: 43,
   offsetRecordFrame: 27,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 29,
-        endFrame: 64,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0004_pelica_attack1',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 54, endFrame: 64, skillIds: ['chr_0004_pelica_attack1'] }],
-  },
   costFrame: 13,
   scheduledSequences: [
     { startFrame: 27, endFrame: 27, sequence: { $sequence: 'launchProjectile_1' } },
-    { startFrame: 54, endFrame: 64, sequence: { $sequence: 'reachSkillOperableBoundary_2' } },
+    { startFrame: 29, endFrame: 64, sequence: { $sequence: 'overrideBasicAttackMapping_2' } },
+    { startFrame: 54, endFrame: 64, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0004_pelica_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: perlicaChr_0004_pelica_attack4ActionGraph,
 };
 
 export const perlicaChr_0004_pelica_power_attackActionGraph = {
   main: {
     nodes: {
       gainFinisherSp_2: {
-        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+        action: {
+          kind: 'gainFinisherSp',
+          parameters: {
+            source: { kind: 'source' },
+            target: { kind: 'inputTarget' },
+            factor: { kind: 'constant', value: 1 },
+          },
+        },
         next: null,
       },
       applyPhysicalInfliction_3: {
@@ -668,7 +667,8 @@ export const perlicaChr_0004_pelica_power_attackActionGraph = {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'knockDown',
-            target: 'enemy',
+            source: { kind: 'source' },
+            target: { kind: 'inputTarget' },
             duration: { kind: 'constant', value: 1.5 },
             force: true,
             isExtra: false,
@@ -692,6 +692,8 @@ export const perlicaChr_0004_pelica_power_attackActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             calculation: 'breakingAttack',
@@ -726,7 +728,14 @@ export const perlicaChr_0004_pelica_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_9: {
+      reachSkillOperableBoundary_9: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0004_pelica_normal_skill', 'chr_0004_pelica_combo_skill'] },
+        },
+        next: null,
+      },
+      applyBuff_10: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -739,7 +748,7 @@ export const perlicaChr_0004_pelica_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_10: {
+      applyBuff_11: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -769,6 +778,7 @@ export const perlicaChr_0004_pelica_power_attackActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const perlicaChr_0004_pelica_power_attack: SkillDefinition = {
+  actionGraph: perlicaChr_0004_pelica_power_attackActionGraph,
   key: 'chr_0004_pelica_power_attack',
   element: 'electric',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -777,27 +787,18 @@ export const perlicaChr_0004_pelica_power_attack: SkillDefinition = {
   exclusiveFrame: 50,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 35,
-        endFrame: 58,
-        skillIds: ['chr_0004_pelica_normal_skill', 'chr_0004_pelica_combo_skill'],
-      },
-    ],
-  },
   costFrame: 4,
   scheduledSequences: [
     { startFrame: 35, endFrame: 44, sequence: { $sequence: 'dealDamage_5' } },
     { startFrame: 35, endFrame: 38, sequence: { $sequence: 'ifElse_8' } },
-    { startFrame: 0, endFrame: 50, sequence: { $sequence: 'applyBuff_9' } },
-    { startFrame: 0, endFrame: 35, sequence: { $sequence: 'applyBuff_10' } },
+    { startFrame: 35, endFrame: 58, sequence: { $sequence: 'reachSkillOperableBoundary_9' } },
+    { startFrame: 0, endFrame: 50, sequence: { $sequence: 'applyBuff_10' } },
+    { startFrame: 0, endFrame: 35, sequence: { $sequence: 'applyBuff_11' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
-  actionGraph: perlicaChr_0004_pelica_power_attackActionGraph,
 };
 
 export const perlicaChr_0004_pelica_plunging_attack_endActionGraph = {
@@ -806,7 +807,7 @@ export const perlicaChr_0004_pelica_plunging_attack_endActionGraph = {
       mergeContextTargets_1: {
         action: {
           kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
         },
         next: null,
       },
@@ -830,6 +831,8 @@ export const perlicaChr_0004_pelica_plunging_attack_endActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['normalAttack', 'plungingAttack'],
@@ -937,6 +940,8 @@ export const perlicaChr_0004_pelica_normal_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalSkill'],
@@ -956,9 +961,16 @@ export const perlicaChr_0004_pelica_normal_skillActionGraph = {
       mergeContextTargets_6: {
         action: {
           kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
         },
         next: 'applyElementalInfliction_5',
+      },
+      reachSkillOperableBoundary_20: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0004_pelica_normal_skill'] },
+        },
+        next: null,
       },
     },
     dataNodes: {
@@ -970,6 +982,7 @@ export const perlicaChr_0004_pelica_normal_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const perlicaChr_0004_pelica_normal_skill: SkillDefinition = {
+  actionGraph: perlicaChr_0004_pelica_normal_skillActionGraph,
   key: 'chr_0004_pelica_normal_skill',
   element: 'electric',
   blackboard: {
@@ -981,30 +994,28 @@ export const perlicaChr_0004_pelica_normal_skill: SkillDefinition = {
   exclusiveFrame: 30,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 28, endFrame: 54, skillIds: ['chr_0004_pelica_normal_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 13, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_6' } },
+    { startFrame: 28, endFrame: 54, sequence: { $sequence: 'reachSkillOperableBoundary_20' } },
   ],
   defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: perlicaChr_0004_pelica_normal_skillActionGraph,
 };
 
 export const perlicaChr_0004_pelica_combo_skillActionGraph = {
   main: {
     nodes: {
-      mergeContextTargets_1: {
+      copyContextTargets_1: {
         action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+          kind: 'copyContextTargets',
+          parameters: {
+            source: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'tar',
+          },
         },
         next: null,
       },
@@ -1013,7 +1024,7 @@ export const perlicaChr_0004_pelica_combo_skillActionGraph = {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_1' },
-          whenTrue: { $sequence: 'mergeContextTargets_1' },
+          whenTrue: { $sequence: 'copyContextTargets_1' },
           whenFalse: { $sequence: null },
         },
         next: null,
@@ -1032,26 +1043,6 @@ export const perlicaChr_0004_pelica_combo_skillActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0004_pelica_combo_skill_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: {
-                  atk_scale: 1,
-                  duration: 5,
-                  extra_scaling: 1,
-                  poise: 0,
-                  talent2: 0,
-                  usp: 0,
-                },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_opt2' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -1100,6 +1091,8 @@ export const perlicaChr_0004_pelica_combo_skillActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'electric',
                             attackScale: { kind: 'valueNode', nodeId: 'data_8' },
                             tags: ['comboSkill'],
@@ -1122,7 +1115,7 @@ export const perlicaChr_0004_pelica_combo_skillActionGraph = {
                                 },
                               },
                             ],
-                            targets: { kind: 'fixed', target: 'enemy' },
+                            targets: { kind: 'inputTarget' },
                             source: { kind: 'source' },
                             inheritSourceSkillCastInfo: true,
                           },
@@ -1169,7 +1162,7 @@ export const perlicaChr_0004_pelica_combo_skillActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityTagMatch',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           tagQueryType: 'hasAny',
                           tags: ['Skill/Character/Common/NoGuard'],
                         },
@@ -1192,7 +1185,7 @@ export const perlicaChr_0004_pelica_combo_skillActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           containsHittableTarget: false,
                           excludeDeadEntity: false,
                           operator: 'greaterOrEqual',
@@ -1215,6 +1208,26 @@ export const perlicaChr_0004_pelica_combo_skillActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0004_pelica_combo_skill_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: {
+                  atk_scale: 1,
+                  duration: 5,
+                  extra_scaling: 1,
+                  poise: 0,
+                  talent2: 0,
+                  usp: 0,
+                },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_opt2' } },
+                ],
               },
             },
           ],
@@ -1237,6 +1250,13 @@ export const perlicaChr_0004_pelica_combo_skillActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_5: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0004_pelica_normal_skill'] },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: {
@@ -1249,6 +1269,7 @@ export const perlicaChr_0004_pelica_combo_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const perlicaChr_0004_pelica_combo_skill: SkillDefinition = {
+  actionGraph: perlicaChr_0004_pelica_combo_skillActionGraph,
   key: 'chr_0004_pelica_combo_skill',
   element: 'electric',
   blackboard: {
@@ -1264,23 +1285,18 @@ export const perlicaChr_0004_pelica_combo_skill: SkillDefinition = {
   exclusiveFrame: 45,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 25, endFrame: 54, skillIds: ['chr_0004_pelica_normal_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 11, sequence: { $sequence: 'ifElse_2' } },
     { startFrame: 24, endFrame: 27, sequence: { $sequence: 'launchProjectile_3' } },
     { startFrame: 0, endFrame: 22, sequence: { $sequence: 'startTimeDilation_4' } },
+    { startFrame: 25, endFrame: 54, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 570],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
-  actionGraph: perlicaChr_0004_pelica_combo_skillActionGraph,
 };
 
 export const perlicaChr_0004_pelica_ultimate_skillActionGraph = {
@@ -1302,6 +1318,8 @@ export const perlicaChr_0004_pelica_ultimate_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'targets' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['ultimateSkill'],
@@ -1325,7 +1343,7 @@ export const perlicaChr_0004_pelica_ultimate_skillActionGraph = {
           kind: 'mergeContextTargets',
           parameters: {
             saveToContextKey: 'targets',
-            sources: [{ kind: 'target', target: 'enemy' }],
+            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'dealDamage_3',
@@ -1355,9 +1373,17 @@ export const perlicaChr_0004_pelica_ultimate_skillActionGraph = {
             },
             abilityEntityId: 'abilityentity_chr_0004_pelica_ultimate_skill',
             childSkillId: 'chr_0004_pelica_ultimate_skill_abilityrange',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
           },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_7: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0004_pelica_normal_skill', 'chr_0004_pelica_combo_skill'] },
         },
         next: null,
       },
@@ -1384,15 +1410,6 @@ export const perlicaChr_0004_pelica_ultimate_skill: SkillDefinition = {
   naturalDurationFrames: 114,
   exclusiveFrame: 85,
   offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 63,
-        endFrame: 90,
-        skillIds: ['chr_0004_pelica_normal_skill', 'chr_0004_pelica_combo_skill'],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 50, sequence: { $sequence: 'startUltimateTimeDilation_1' } },
@@ -1400,6 +1417,7 @@ export const perlicaChr_0004_pelica_ultimate_skill: SkillDefinition = {
     { startFrame: 58, endFrame: 63, sequence: { $sequence: 'mergeContextTargets_4' } },
     { startFrame: 0, endFrame: 85, sequence: { $sequence: 'applyBuff_5' } },
     { startFrame: 55, endFrame: 58, sequence: { $sequence: 'spawnAbilityEntity_6' } },
+    { startFrame: 63, endFrame: 90, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 300,

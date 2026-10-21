@@ -70,6 +70,60 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
   }
 
   execute(step: ResolvedCombatOperationStep, context?: CombatOperationContext): boolean {
+    if (step.kind === 'storeCollectedBuffValue' || step.kind === 'modifyCollectedBuffValue') {
+      const event = context?.event;
+      if (
+        context === undefined ||
+        event === undefined ||
+        !('event' in event) ||
+        (event.event !== 'collectAddedBuffBlackboard' &&
+          event.event !== 'collectOutputBuffBlackboard')
+      )
+        return false;
+      const current = event.payload.blackboard.getNumber(step.parameters.key);
+      if (current === undefined) return false;
+      if (step.kind === 'storeCollectedBuffValue') {
+        const previous = context.blackboard.getNumber(step.parameters.outputKey) ?? 0;
+        if (Math.abs(Math.fround(previous) - Math.fround(current)) > 0.00001)
+          context.blackboard.assignDynamic(step.parameters.outputKey, Math.fround(current));
+      } else {
+        const read = (input: Parameters<typeof resolveActionValueOperand>[0]) =>
+          resolveActionValueOperand(input, context.blackboard);
+        const value = step.parameters.useDirectValue
+          ? read(step.parameters.directValue)
+          : Math.fround(
+              Math.fround(Math.fround(current) * Math.fround(read(step.parameters.multiplier))) +
+                Math.fround(read(step.parameters.addition)),
+            );
+        event.payload.blackboard.assignDynamic(step.parameters.key, Math.fround(value));
+        event.payload.modifiedKeys.add(step.parameters.key);
+      }
+      return true;
+    }
+    if (step.kind === 'changeOriginSkillToEventContextSkill') {
+      const event = context?.event && skillAbilityEvent(context.event);
+      const info = event?.payload.skillCastInfo;
+      if (!info) return false;
+      context?.overrideEnvironmentSkillCastInfo?.(info);
+      return true;
+    }
+    if (step.kind === 'terminateAddingBuff') {
+      if (!context) throw new Error('terminateAddingBuff requires an action context');
+      const event = context.event === undefined ? undefined : buffAbilityEvent(context.event);
+      if (
+        event?.event === 'beforeAddedBuffBeforeImmune' ||
+        event?.event === 'beforeOutputBuffBeforeImmune'
+      )
+        event.payload.termination.isTerminated = true;
+      // 原生没有可取消上下文时仅记录日志，仍返回true。
+      return true;
+    }
+    if (step.kind === 'saveDamageSkillCastId') {
+      const id = currentDamageSkillCastId(context);
+      if (id === undefined || context?.saveCurrentBuffDamageSkillCastId === undefined) return false;
+      context.saveCurrentBuffDamageSkillCastId(id);
+      return true;
+    }
     return context === undefined
       ? this.delegate.execute(step)
       : this.delegate.execute(step, context);
@@ -121,6 +175,10 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
       )
         throw new Error('skill element check is not supported for this skill');
       return element !== undefined && condition.damageTypes.includes(element);
+    }
+    if (condition.kind === 'eventDamageSkillCastRecorded') {
+      const id = currentDamageSkillCastId(context);
+      return id !== undefined && context?.hasCurrentBuffDamageSkillCastId?.(id) === true;
     }
     const modifierContext = context?.modifierContext;
     const modifier = modifierContext?.kind === 'damage' ? modifierContext.input : undefined;
@@ -182,6 +240,7 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
       condition.kind !== 'currentSkillTypeIn' &&
       condition.kind !== 'eventSkillTypeIn' &&
       condition.kind !== 'originSkillTypeIn' &&
+      condition.kind !== 'eventBuffFinishReasonIn' &&
       condition.kind !== 'eventAbilityEntityFinishReasonIn' &&
       condition.kind !== 'eventSkillIdIn' &&
       condition.kind !== 'eventSkillCastMatchesBuffSource' &&
@@ -199,6 +258,17 @@ export class EventContextConditionExecutor implements CombatOperationExecutor {
       return context === undefined
         ? this.delegate.evaluate(condition)
         : this.delegate.evaluate(condition, context);
+    }
+    if (condition.kind === 'eventBuffFinishReasonIn') {
+      const event = context?.event;
+      if (!event || !('event' in event)) return false;
+      if (
+        event.event !== 'finishedBuff' &&
+        event.event !== 'buffEndsEarly' &&
+        event.event !== 'buffEnhanceChanged'
+      )
+        return false;
+      return event.payload.reason !== undefined && condition.reasons.includes(event.payload.reason);
     }
     if (condition.kind === 'eventAbilityEntityFinishReasonIn') {
       const event = context?.event;
@@ -533,4 +603,12 @@ function matchValues<T>(
     case 'exceptAll':
       return !hasAll;
   }
+}
+
+/** 原生只读取当前伤害包；不能退回 Buff 创建来源或正在响应的其他技能。 */
+function currentDamageSkillCastId(context?: CombatOperationContext): number | undefined {
+  if (context?.modifierContext?.kind === 'damage')
+    return context.modifierContext.input.skillCastId ?? 0;
+  const event = context?.event === undefined ? undefined : damageAbilityEvent(context.event);
+  return event === undefined ? undefined : (abilityEventSkillCastInfo(event)?.skillCastId ?? 0);
 }

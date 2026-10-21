@@ -14,6 +14,44 @@ function advance(clock: CombatClock, runtime: ComboWindowRuntime, frames: number
 }
 
 describe('ComboWindowRuntime', () => {
+  it('锁加入队尾，既有窗口先释放，锁后窗口仍可登记但不能越过锁', () => {
+    const clock = new CombatClock();
+    const runtime = new ComboWindowRuntime(clock, new CombatReceiptCollector(), 20, [
+      'later',
+      'earlier',
+    ]);
+    runtime.open('earlier', 'combo');
+    runtime.queueLock(2);
+    runtime.open('later', 'combo');
+    expect(runtime.first?.operatorId).toBe('earlier');
+    expect(runtime.isLocked).toBe(false);
+    expect(runtime.tryConsume('earlier', 'combo')).toBe(true);
+    expect(runtime.hasPending('later')).toBe(true);
+    expect(runtime.isLocked).toBe(true);
+    expect(runtime.tryConsume('later', 'combo')).toBe(false);
+    expect(runtime.consume('later', 'combo', result => result)).toMatchObject({
+      consumed: false,
+      reason: 'comboLocked',
+    });
+    advance(clock, runtime, 60);
+    expect(runtime.isLocked).toBe(true);
+    advance(clock, runtime, 1);
+    expect(runtime.tryConsume('later', 'combo')).toBe(true);
+  });
+
+  it('锁从入队即开始计时，不等待前方窗口消费，且不随单个干员暂停', () => {
+    const clock = new CombatClock();
+    const runtime = new ComboWindowRuntime(clock, new CombatReceiptCollector(), 20);
+    runtime.open('earlier', 'combo');
+    runtime.queueLock(1);
+    runtime.open('later', 'combo');
+    runtime.setOperatorPaused('earlier', true);
+    advance(clock, runtime, 31);
+    expect(runtime.tryConsume('earlier', 'combo')).toBe(true);
+    expect(runtime.isLocked).toBe(false);
+    expect(runtime.tryConsume('later', 'combo')).toBe(true);
+  });
+
   it('强制越序施放保留诊断并消费自身候选，不消费队首干员', () => {
     const receipt = new CombatReceiptCollector();
     const runtime = new ComboWindowRuntime(new CombatClock(), receipt, 5);

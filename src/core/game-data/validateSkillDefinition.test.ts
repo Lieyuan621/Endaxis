@@ -199,7 +199,8 @@ describe('validateSkillDefinition', () => {
       kind: 'applyPhysicalInfliction',
       parameters: {
         type: 'fracture',
-        target: 'enemy',
+        target: { kind: 'fixed' as const, target: 'enemy' as const },
+        source: { kind: 'fixed' as const, target: 'caster' as const },
         isExtra: false,
       },
     };
@@ -216,7 +217,8 @@ describe('validateSkillDefinition', () => {
     const step: Record<string, unknown> = {
       kind: 'heal',
       parameters: {
-        target: 'controlledOperator',
+        target: { kind: 'mainCharacter' },
+        healer: { kind: 'source' },
         attribute: 'will',
         multiplier: [1, 2],
         addition: { kind: 'blackboard', key: 'base' },
@@ -236,7 +238,8 @@ describe('validateSkillDefinition', () => {
     const step: Record<string, unknown> = {
       kind: 'heal',
       parameters: {
-        target: 'controlledOperator',
+        target: { kind: 'mainCharacter' },
+        healer: { kind: 'source' },
         amount: { kind: 'blackboard', key: 'final_heal_value' },
         tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
       },
@@ -759,7 +762,17 @@ describe('validateSkillDefinition', () => {
           kind: 'mergeContextTargets',
           parameters: {
             saveToContextKey: 'source',
-            sources: [{ kind: 'abilitySystemSource', owner }],
+            sources: [
+              {
+                kind: 'abilitySystemSource',
+                owner:
+                  owner === 'actionSource'
+                    ? { kind: 'source' }
+                    : owner === 'actionOwner'
+                      ? { kind: 'owner' }
+                      : owner,
+              },
+            ],
           },
         },
       ]);
@@ -810,7 +823,7 @@ describe('validateSkillDefinition', () => {
         kind: 'mergeContextTargets',
         parameters: {
           saveToContextKey: 'source',
-          sources: [{ kind: 'target', target: 'buffSource' }],
+          sources: [{ kind: 'source' }],
         },
       },
       second,

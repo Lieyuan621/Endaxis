@@ -19,6 +19,7 @@ import {
   parseSpawnedEntitySelectorIdentitySource,
   parseTargetReferenceSource,
   type HpRatioValidatorSource,
+  type BuffValidatorSource,
   type ShapeFinderSource,
   type ColliderShapeSource,
   type TargetReferenceSource,
@@ -42,7 +43,7 @@ import {
   smartTargetFallsBackToMainTarget,
 } from './selectorFacts.ts';
 
-export interface TargetGroupInputSource {
+export interface TargetGroupInputSource extends TargetReferenceSource {
   readonly targetSource: string;
   readonly targetGroupKey: string;
   readonly finderType: string | null;
@@ -66,16 +67,14 @@ export interface TargetGroupInputSource {
   readonly shuffleTargets: readonly ShuffleTargetSource[];
   readonly distanceValidators: readonly DistanceValidatorSource[];
   readonly hpRatioValidators?: readonly HpRatioValidatorSource[];
+  readonly buffValidators?: readonly BuffValidatorSource[];
   readonly finderSpawnedObjectType: string | null;
   readonly validatorTagQueries: ReadonlyArray<readonly [string, readonly number[]]>;
   readonly targetContainsParents?: readonly {
     readonly targetSource: string;
     readonly targetGroupKey: string;
   }[];
-  readonly excludeTargets?: readonly {
-    readonly targetSource: string;
-    readonly targetGroupKey: string;
-  }[];
+  readonly excludeTargets?: readonly TargetReferenceSource[];
 }
 
 export interface TargetGroupWriteSource {
@@ -118,10 +117,7 @@ export interface TargetGroupWriteSource {
     readonly targetSource: string;
     readonly targetGroupKey: string;
   }[];
-  readonly excludeTargets?: readonly {
-    readonly targetSource: string;
-    readonly targetGroupKey: string;
-  }[];
+  readonly excludeTargets?: readonly TargetReferenceSource[];
   readonly finderFixedPointSnapToNavmesh: boolean | null;
   readonly finderSpatialPoint?: SpatialPointFinderSource;
   readonly center: string | null;
@@ -143,6 +139,7 @@ export interface TargetGroupWriteSource {
   readonly shuffleTargets: readonly ShuffleTargetSource[];
   readonly distanceValidators: readonly DistanceValidatorSource[];
   readonly hpRatioValidators?: readonly HpRatioValidatorSource[];
+  readonly buffValidators?: readonly BuffValidatorSource[];
   readonly circularOrderIndexKey: string | null;
   readonly circularOrderDesiredCount: number | null;
   readonly circularOrderReverseFlag: number | null;
@@ -374,6 +371,7 @@ function parseTargetPostProcessorAction(
   );
   const direction = parseAdvancedDirectionSource(action.direction, `${path}.direction`);
   const input: TargetGroupInputSource = {
+    ...target,
     targetSource: target.targetSource,
     targetGroupKey: target.targetGroupKey,
     finderType: target.finderType,
@@ -394,6 +392,7 @@ function parseTargetPostProcessorAction(
     shuffleTargets: target.shuffleTargets,
     distanceValidators: target.distanceValidators,
     ...(target.hpRatioValidators ? { hpRatioValidators: target.hpRatioValidators } : {}),
+    ...(target.buffValidators ? { buffValidators: target.buffValidators } : {}),
     finderSpawnedObjectType: target.finderSpawnedObjectType,
     validatorTagQueries: target.validatorTagQueries,
   };
@@ -409,6 +408,7 @@ function parseTargetPostProcessorAction(
     shuffleTargets: summary.shuffleTargets,
     distanceValidators: summary.distanceValidators,
     ...(summary.hpRatioValidators ? { hpRatioValidators: summary.hpRatioValidators } : {}),
+    ...(summary.buffValidators ? { buffValidators: summary.buffValidators } : {}),
     center: center.targetSource,
     centerContextKey: center.targetGroupKey,
     selectorOwner: source.targetSource,
@@ -474,6 +474,7 @@ function parseConvertToTargetContextAction(
     source.targetSource === 'InstantSearch',
   );
   const input: TargetGroupInputSource = {
+    ...source,
     targetSource: source.targetSource,
     targetGroupKey: source.targetGroupKey,
     finderType: summary.finderType,
@@ -503,6 +504,7 @@ function parseConvertToTargetContextAction(
     shuffleTargets: summary.shuffleTargets,
     distanceValidators: summary.distanceValidators,
     ...(summary.hpRatioValidators ? { hpRatioValidators: summary.hpRatioValidators } : {}),
+    ...(summary.buffValidators ? { buffValidators: summary.buffValidators } : {}),
     finderSpawnedObjectType: source.finderSpawnedObjectType,
     validatorTagQueries: source.validatorTagQueries,
     ...(summary.targetContainsParents.length === 0
@@ -564,6 +566,7 @@ function parseConvertToTargetContextAction(
     shuffleTargets: summary.shuffleTargets,
     distanceValidators: summary.distanceValidators,
     ...(summary.hpRatioValidators ? { hpRatioValidators: summary.hpRatioValidators } : {}),
+    ...(summary.buffValidators ? { buffValidators: summary.buffValidators } : {}),
     finderSpawnedObjectType: source.finderSpawnedObjectType,
     validatorTagQueries: source.validatorTagQueries,
     ...(summary.targetContainsParents.length === 0
@@ -670,6 +673,7 @@ function parseFindTargetAction(
     shuffleTargets: summary.shuffleTargets,
     distanceValidators: summary.distanceValidators,
     ...(summary.hpRatioValidators ? { hpRatioValidators: summary.hpRatioValidators } : {}),
+    ...(summary.buffValidators ? { buffValidators: summary.buffValidators } : {}),
     circularOrderIndexKey: circularOrder?.indexKey ?? null,
     circularOrderDesiredCount: circularOrder?.desiredCount ?? null,
     circularOrderReverseFlag: circularOrder?.reverseFlag ?? null,
@@ -709,6 +713,7 @@ function parseMergeTargetAction(
       target.targetSource === 'InstantSearch',
     );
     return {
+      ...target,
       targetSource: target.targetSource,
       targetGroupKey: target.targetGroupKey,
       finderType: summary.finderType,
@@ -731,6 +736,7 @@ function parseMergeTargetAction(
       shuffleTargets: summary.shuffleTargets,
       distanceValidators: summary.distanceValidators,
       ...(summary.hpRatioValidators ? { hpRatioValidators: summary.hpRatioValidators } : {}),
+      ...(summary.buffValidators ? { buffValidators: summary.buffValidators } : {}),
       finderSpawnedObjectType: target.finderSpawnedObjectType,
       validatorTagQueries: target.validatorTagQueries,
       ...(summary.targetContainsParents.length === 0
@@ -757,6 +763,7 @@ function parsePickTargetAction(
   const indexKey = requireString(index.blackboardKey, `${path}.index.blackboardKey`);
   if (useKey && !indexKey) throw new Error(`${path}.index.blackboardKey: invalid key`);
   const input: TargetGroupInputSource = {
+    ...target,
     targetSource: target.targetSource,
     targetGroupKey: target.targetGroupKey,
     finderType: target.finderType,
@@ -774,6 +781,7 @@ function parsePickTargetAction(
     shuffleTargets: target.shuffleTargets,
     distanceValidators: target.distanceValidators,
     ...(target.hpRatioValidators ? { hpRatioValidators: target.hpRatioValidators } : {}),
+    ...(target.buffValidators ? { buffValidators: target.buffValidators } : {}),
     finderSpawnedObjectType: null,
     validatorTagQueries: [],
   };

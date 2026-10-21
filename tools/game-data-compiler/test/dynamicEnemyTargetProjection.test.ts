@@ -191,7 +191,6 @@ describe('动态敌人集合的投影', () => {
       undefined,
       undefined,
       undefined,
-      undefined,
       { mainTarget: () => (hasTarget ? { kind: 'enemy' } : undefined), ownerSpawned: () => [] },
     );
     const run = (actionSourceId?: string) =>
@@ -250,7 +249,6 @@ describe('动态敌人集合的投影', () => {
           return true;
         },
       },
-      undefined,
       undefined,
       undefined,
       undefined,
@@ -397,7 +395,6 @@ describe('跨时间段的目标组读写', () => {
           undefined,
           undefined,
           undefined,
-          undefined,
           {
             entityLifeState: () => 'alive',
             mainTarget: () => undefined,
@@ -422,4 +419,68 @@ describe('跨时间段的目标组读写', () => {
       else expect(targets.get(group)).toEqual([{ kind: 'enemy' }]);
     },
   );
+});
+
+describe('目标转换保留运行时写入', () => {
+  it('目标组被静态证明为敌人时，复制仍读取本次动作输入', () => {
+    const builder = createActionGraphBuilder<CompiledBuffStepSource>();
+    const entry = compileCombatActionSequenceSource(
+      parseKnownNativeActionSequenceSource(
+        sequence([
+          {
+            ...meta,
+            $type: 'Beyond.Gameplay.Core.ConvertToTargetContext+Data, Gameplay.Beyond',
+            convertFrom: targetFixture('Target'),
+            targetGroupKey: 'selected',
+            operationType: 'None',
+            translateOperation: 'Rotate180DegAroundRef',
+            translationRef: 'ActionSource',
+            translationDeg: 0,
+            excludeTarget: 'InputTarget',
+            blackboardVector3: { x: scalarFixture(0), y: scalarFixture(0), z: scalarFixture(0) },
+          },
+        ]),
+        'convert',
+        {},
+      ),
+      {
+        graph: builder,
+        actionOwnerTarget: 'caster',
+        actionSourceTarget: 'caster',
+        actionTargetTarget: 'enemy',
+        staticEnemyTargetGroupKeys: new Set(['selected']),
+        materializedTargetGroupKeys: new Set(['selected']),
+      },
+    );
+    const graph = builder.finish();
+    expect(readActionGraphChain(graph, entry)).toMatchObject([
+      {
+        kind: 'copyContextTargets',
+        parameters: { source: { kind: 'inputTarget' }, saveToContextKey: 'selected' },
+      },
+    ]);
+    const targets = new RuntimeTargetContext();
+    const executor = new TargetContextOperationExecutor('caster', {
+      execute: () => {
+        throw new Error('unexpected delegated action');
+      },
+      evaluate: () => {
+        throw new Error('unexpected delegated condition');
+      },
+    });
+    const blackboard = new ActionBlackboard();
+    const run = (actionInputTarget?: { kind: 'abilityEntity'; instanceId: number }) =>
+      new CombatActionSequenceRuntime(executor, {
+        blackboard,
+        targetContext: targets,
+        actionInputTarget,
+      })
+        .createSequence(compileGraphSequence(entry, graph))
+        .executeInstant({});
+    targets.set('selected', [{ kind: 'enemy' }]);
+    expect(run({ kind: 'abilityEntity', instanceId: 7 })).toBe(true);
+    expect(targets.get('selected')).toEqual([{ kind: 'abilityEntity', instanceId: 7 }]);
+    expect(run()).toBe(true);
+    expect(targets.get('selected')).toEqual([]);
+  });
 });

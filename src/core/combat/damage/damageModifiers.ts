@@ -70,7 +70,8 @@ export class DamageModifier {
     applyDamageModifier(
       this.runtimeState.ownerId,
       this.runtimeState.definition,
-      value => resolveBuffModifierNumber(this.runtimeState.numberSource, value, 'damage'),
+      (value, missingValue) =>
+        resolveBuffModifierNumber(this.runtimeState.numberSource, value, 'damage', missingValue),
       this.condition,
       timing,
       side,

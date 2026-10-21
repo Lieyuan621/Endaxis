@@ -14,7 +14,7 @@ import type { AbilityEntityTargetRef } from '../game-data/logicalAbilityEntity';
  */
 import type { CombatReceiptEntry, CombatReceiptValue } from '../combat/receipt/combatReceipt';
 import type { EnemyHealthCurve } from './enemyHealthCurves';
-import type { PoiseCurve } from './poiseCurves';
+import { poiseMaximumAt, type PoiseCurve } from './poiseCurves';
 import type { CombatResourceCurves, OperatorUltimateEnergyCurve } from './resourceCurves';
 import { sampleStepCurve } from './curveSampling';
 import {
@@ -426,7 +426,11 @@ export function projectCombatHudSnapshot(input: CombatHudSnapshotInput): CombatH
         input.poiseCurve.maxValue <= 0
           ? null
           : {
-              ...gauge(input.poiseCurve.points, input.poiseCurve.maxValue, input.frame),
+              ...gauge(
+                input.poiseCurve.points,
+                poiseMaximumAt(input.poiseCurve, input.frame),
+                input.frame,
+              ),
               state: enemyPoiseState(input.receiptEntries, input.frame),
             },
     },

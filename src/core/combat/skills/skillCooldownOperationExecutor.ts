@@ -10,6 +10,7 @@ import type { CombatOperationContext, CombatOperationExecutor } from './skillRun
 import type { CompiledSkillCooldownProgram } from '../../compiler/combatProgram';
 import type { SkillCooldown } from './skillCooldown';
 import type { SkillCooldownSnapshot } from '../state/abilityState';
+import type { NativeSkillType } from '../../game-data/operatorDefinition';
 
 /** 按施术者与技能身份修改共享账本；来源别名不会导致同一技能重复结算。 */
 export function adjustMatchingSkillCooldowns(
@@ -27,6 +28,7 @@ export function adjustMatchingSkillCooldowns(
   basis: 'baseDurationRatio' | 'absoluteFrames',
   value: number,
   record: (skillId: string, snapshot: SkillCooldownSnapshot) => void,
+  nativeSkillTypeForSkill: (skillId: string) => NativeSkillType,
 ): number {
   const matchedKeys = new Set<string>();
   let changed = 0;
@@ -34,7 +36,25 @@ export function adjustMatchingSkillCooldowns(
     if (
       program.operatorId !== operatorId ||
       (skill.kind === 'type'
-        ? program.skillType !== skill.skillType
+        ? ![...skillIds].some(id => {
+            const nativeType = nativeSkillTypeForSkill(id);
+            switch (skill.skillType) {
+              case 'basicAttack':
+                return nativeType === 'attack';
+              case 'battleSkill':
+                return nativeType === 'normalSkill';
+              case 'comboSkill':
+                return nativeType === 'comboSkill';
+              case 'ultimate':
+                return nativeType === 'ultimateSkill';
+              case 'finisher':
+                return nativeType === 'breakingAttack';
+              case 'dodge':
+                return nativeType === 'dodge';
+              case 'plungingAttack':
+                return false;
+            }
+          })
         : program.skillId !== skill.skillId && !skillIds.has(skill.skillId))
     )
       continue;
@@ -47,10 +67,10 @@ export function adjustMatchingSkillCooldowns(
     const didChange =
       operation === 'reduce'
         ? basis === 'baseDurationRatio'
-          ? cooldown.reduceByBaseDurationRatio(value)
+          ? cooldown.reduceByPeriodRatio(value)
           : cooldown.reduceByFrames(value)
         : basis === 'baseDurationRatio'
-          ? cooldown.setByBaseDurationRatio(value)
+          ? cooldown.setByPeriodRatio(value)
           : cooldown.setRemainingFrames(value);
     if (!didChange) continue;
     changed++;
@@ -61,7 +81,7 @@ export function adjustMatchingSkillCooldowns(
 
 export interface SkillCooldownOperationExecutorOptions {
   readonly queryTargets?: CombatOperationExecutor['queryTargets'];
-  readonly reduceByBaseDurationRatio: (
+  readonly reduceByPeriodRatio: (
     skill: CompiledStepParameters['adjustSkillCooldown']['skill'],
     ratio: number,
     targetId?: string,
@@ -71,7 +91,7 @@ export interface SkillCooldownOperationExecutorOptions {
     frames: number,
     targetId?: string,
   ) => number;
-  readonly setByBaseDurationRatio: (
+  readonly setByPeriodRatio: (
     skill: CompiledStepParameters['adjustSkillCooldown']['skill'],
     ratio: number,
     targetId?: string,
@@ -109,11 +129,11 @@ export class SkillCooldownOperationExecutor implements CombatOperationExecutor {
         throw new Error('adjustSkillCooldown target requires an operator skill ledger');
       const targetId = target?.operatorId;
       if (operation === 'reduce' && basis === 'baseDurationRatio') {
-        this.options.reduceByBaseDurationRatio(skill, value, targetId);
+        this.options.reduceByPeriodRatio(skill, value, targetId);
       } else if (operation === 'reduce' && basis === 'absoluteSeconds') {
         this.options.reduceByAbsoluteFrames(skill, value * COMBAT_FRAMES_PER_SECOND, targetId);
       } else if (operation === 'set' && basis === 'baseDurationRatio') {
-        this.options.setByBaseDurationRatio(skill, value, targetId);
+        this.options.setByPeriodRatio(skill, value, targetId);
       } else if (operation === 'set' && basis === 'absoluteSeconds') {
         this.options.setByAbsoluteFrames(skill, value * COMBAT_FRAMES_PER_SECOND, targetId);
       } else {

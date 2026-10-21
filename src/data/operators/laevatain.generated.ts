@@ -11,7 +11,10 @@ export const laevatainChr_0016_laevat_combo_skillActionGraph = {
       mergeContextTargets_2: {
         action: {
           kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+          parameters: {
+            saveToContextKey: 'tar',
+            sources: [{ kind: 'mainTarget', owner: { kind: 'owner' } }],
+          },
         },
         next: null,
       },
@@ -33,7 +36,7 @@ export const laevatainChr_0016_laevat_combo_skillActionGraph = {
                 copiedBlackboardAssignments: { atk_scale: 'atk_scale', poise: 'poise' },
               },
             ],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
@@ -51,7 +54,7 @@ export const laevatainChr_0016_laevat_combo_skillActionGraph = {
                 copiedBlackboardAssignments: { atk_scale: 'atk_scale', poise: 'poise' },
               },
             ],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
@@ -69,7 +72,7 @@ export const laevatainChr_0016_laevat_combo_skillActionGraph = {
                 copiedBlackboardAssignments: { atk_scale: 'atk_scale', poise: 'poise' },
               },
             ],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
@@ -87,7 +90,7 @@ export const laevatainChr_0016_laevat_combo_skillActionGraph = {
                 copiedBlackboardAssignments: { atk_scale: 'atk_scale', poise: 'poise' },
               },
             ],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
@@ -99,7 +102,7 @@ export const laevatainChr_0016_laevat_combo_skillActionGraph = {
           kind: 'applyBuff',
           parameters: {
             buffs: [{ buffId: 'buff_chr_0016_laevat_combo_skill_hitstop' }],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
@@ -236,7 +239,7 @@ export const laevatainChr_0016_laevat_combo_skillActionGraph = {
           kind: 'mergeContextTargets',
           parameters: {
             saveToContextKey: 'tar',
-            sources: [{ kind: 'context', contextKey: 'smart_target' }],
+            sources: [{ kind: 'context', key: 'smart_target' }],
           },
         },
         next: null,
@@ -325,6 +328,15 @@ export const laevatainChr_0016_laevat_combo_skillActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_34: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: ['chr_0016_laevat_normal_skill', 'chr_0016_laevat_normal_skill_during_ult'],
+          },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'index' } },
@@ -389,6 +401,7 @@ export const laevatainChr_0016_laevat_combo_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const laevatainChr_0016_laevat_combo_skill: SkillDefinition = {
+  actionGraph: laevatainChr_0016_laevat_combo_skillActionGraph,
   key: 'chr_0016_laevat_combo_skill',
   element: 'heat',
   blackboard: {
@@ -403,33 +416,31 @@ export const laevatainChr_0016_laevat_combo_skill: SkillDefinition = {
   exclusiveFrame: 57,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 41,
-        endFrame: 85,
-        skillIds: ['chr_0016_laevat_normal_skill', 'chr_0016_laevat_normal_skill_during_ult'],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 20, endFrame: 56, sequence: { $sequence: 'ifElse_16' } },
     { startFrame: 0, endFrame: 57, sequence: { $sequence: 'repeatEachTick_20' } },
     { startFrame: 5, endFrame: 8, sequence: { $sequence: 'createSpatialPointTargets_29' } },
     { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_33' } },
+    { startFrame: 41, endFrame: 85, sequence: { $sequence: 'reachSkillOperableBoundary_34' } },
   ],
   smartTarget: 'trigger',
   cooldownFrames: [300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 270],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
-  actionGraph: laevatainChr_0016_laevat_combo_skillActionGraph,
 };
 
 export const laevatainChr_0016_laevat_attack1ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       startTimeDilation_3: {
         action: {
           kind: 'startTimeDilation',
@@ -459,6 +470,8 @@ export const laevatainChr_0016_laevat_attack1ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['normalAttack'],
@@ -466,7 +479,14 @@ export const laevatainChr_0016_laevat_attack1ActionGraph = {
         },
         next: 'ifElse_4',
       },
-      reachSkillOperableBoundary_6: {
+      overrideBasicAttackMapping_6: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0016_laevat_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_7: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0016_laevat_attack2'] },
@@ -486,6 +506,7 @@ export const laevatainChr_0016_laevat_attack1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const laevatainChr_0016_laevat_attack1: SkillDefinition = {
+  actionGraph: laevatainChr_0016_laevat_attack1ActionGraph,
   key: 'chr_0016_laevat_attack1',
   element: 'heat',
   blackboard: {
@@ -495,33 +516,29 @@ export const laevatainChr_0016_laevat_attack1: SkillDefinition = {
   naturalDurationFrames: 120,
   exclusiveFrame: 16,
   offsetRecordFrame: 6,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 33,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0016_laevat_attack2',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 10, endFrame: 33, skillIds: ['chr_0016_laevat_attack2'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 6, endFrame: 7, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 10, endFrame: 33, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
+    { startFrame: 0, endFrame: 33, sequence: { $sequence: 'overrideBasicAttackMapping_6' } },
+    { startFrame: 10, endFrame: 33, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0016_laevat_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: laevatainChr_0016_laevat_attack1ActionGraph,
 };
 
 export const laevatainChr_0016_laevat_attack2ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -542,6 +559,8 @@ export const laevatainChr_0016_laevat_attack2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['normalAttack'],
@@ -594,6 +613,8 @@ export const laevatainChr_0016_laevat_attack2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['normalAttack'],
@@ -601,7 +622,14 @@ export const laevatainChr_0016_laevat_attack2ActionGraph = {
         },
         next: 'changeResource_8',
       },
-      reachSkillOperableBoundary_10: {
+      overrideBasicAttackMapping_10: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0016_laevat_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_11: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0016_laevat_attack3'] },
@@ -622,6 +650,7 @@ export const laevatainChr_0016_laevat_attack2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const laevatainChr_0016_laevat_attack2: SkillDefinition = {
+  actionGraph: laevatainChr_0016_laevat_attack2ActionGraph,
   key: 'chr_0016_laevat_attack2',
   element: 'heat',
   blackboard: {
@@ -632,34 +661,31 @@ export const laevatainChr_0016_laevat_attack2: SkillDefinition = {
   naturalDurationFrames: 140,
   exclusiveFrame: 25,
   offsetRecordFrame: 13,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 37,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0016_laevat_attack3',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 16, endFrame: 38, skillIds: ['chr_0016_laevat_attack3'] }],
-  },
   costFrame: 8,
   scheduledSequences: [
+    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 6, endFrame: 9, sequence: { $sequence: 'dealDamage_4' } },
     { startFrame: 13, endFrame: 16, sequence: { $sequence: 'dealDamage_9' } },
-    { startFrame: 16, endFrame: 38, sequence: { $sequence: 'reachSkillOperableBoundary_10' } },
+    { startFrame: 0, endFrame: 37, sequence: { $sequence: 'overrideBasicAttackMapping_10' } },
+    { startFrame: 16, endFrame: 38, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0016_laevat_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: laevatainChr_0016_laevat_attack2ActionGraph,
 };
 
 export const laevatainChr_0016_laevat_attack3ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       startTimeDilation_3: {
         action: {
           kind: 'startTimeDilation',
@@ -704,6 +730,8 @@ export const laevatainChr_0016_laevat_attack3ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -711,7 +739,14 @@ export const laevatainChr_0016_laevat_attack3ActionGraph = {
         },
         next: 'ifElse_5',
       },
-      reachSkillOperableBoundary_7: {
+      overrideBasicAttackMapping_7: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0016_laevat_attack4'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_8: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0016_laevat_attack4'] },
@@ -732,6 +767,7 @@ export const laevatainChr_0016_laevat_attack3ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const laevatainChr_0016_laevat_attack3: SkillDefinition = {
+  actionGraph: laevatainChr_0016_laevat_attack3ActionGraph,
   key: 'chr_0016_laevat_attack3',
   element: 'heat',
   blackboard: {
@@ -742,28 +778,17 @@ export const laevatainChr_0016_laevat_attack3: SkillDefinition = {
   naturalDurationFrames: 105,
   exclusiveFrame: 22,
   offsetRecordFrame: 9,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 32,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0016_laevat_attack4',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 12, endFrame: 32, skillIds: ['chr_0016_laevat_attack4'] }],
-  },
   costFrame: 12,
   scheduledSequences: [
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 9, endFrame: 10, sequence: { $sequence: 'dealDamage_6' } },
-    { startFrame: 12, endFrame: 32, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
+    { startFrame: 0, endFrame: 32, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
+    { startFrame: 12, endFrame: 32, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0016_laevat_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: laevatainChr_0016_laevat_attack3ActionGraph,
 };
 
 export const laevatainChr_0016_laevat_attack4ActionGraph = {
@@ -783,19 +808,6 @@ export const laevatainChr_0016_laevat_attack4ActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0016_laevat_attack_5_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'anyCondition_4' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -803,6 +815,8 @@ export const laevatainChr_0016_laevat_attack4ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'heat',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                             tags: ['normalAttack'],
@@ -831,7 +845,7 @@ export const laevatainChr_0016_laevat_attack4ActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'targetObjectTypeMatch',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           objectTypes: ['enemy'],
                         },
                       },
@@ -839,7 +853,7 @@ export const laevatainChr_0016_laevat_attack4ActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityTagMatch',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           tagQueryType: 'hasAny',
                           tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoul'],
                         },
@@ -848,6 +862,19 @@ export const laevatainChr_0016_laevat_attack4ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0016_laevat_attack_5_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'anyCondition_4' } },
+                ],
               },
             },
           ],
@@ -857,7 +884,7 @@ export const laevatainChr_0016_laevat_attack4ActionGraph = {
       mergeContextTargets_3: {
         action: {
           kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
         },
         next: null,
       },
@@ -916,6 +943,8 @@ export const laevatainChr_0016_laevat_attack4ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack'],
@@ -923,7 +952,14 @@ export const laevatainChr_0016_laevat_attack4ActionGraph = {
         },
         next: 'ifElse_8',
       },
-      reachSkillOperableBoundary_10: {
+      overrideBasicAttackMapping_10: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0016_laevat_attack5'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_11: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0016_laevat_attack5'] },
@@ -948,6 +984,7 @@ export const laevatainChr_0016_laevat_attack4ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const laevatainChr_0016_laevat_attack4: SkillDefinition = {
+  actionGraph: laevatainChr_0016_laevat_attack4ActionGraph,
   key: 'chr_0016_laevat_attack4',
   element: 'heat',
   blackboard: {
@@ -958,40 +995,37 @@ export const laevatainChr_0016_laevat_attack4: SkillDefinition = {
   naturalDurationFrames: 121,
   exclusiveFrame: 35,
   offsetRecordFrame: 19,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 5,
-        endFrame: 45,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0016_laevat_attack5',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 22, endFrame: 45, skillIds: ['chr_0016_laevat_attack5'] }],
-  },
   costFrame: 8,
   scheduledSequences: [
     { startFrame: 12, endFrame: 14, sequence: { $sequence: 'launchProjectile_1' } },
     { startFrame: 19, endFrame: 21, sequence: { $sequence: 'launchProjectile_1' } },
     { startFrame: 6, endFrame: 7, sequence: { $sequence: 'mergeContextTargets_3' } },
     { startFrame: 6, endFrame: 7, sequence: { $sequence: 'dealDamage_9' } },
-    { startFrame: 22, endFrame: 45, sequence: { $sequence: 'reachSkillOperableBoundary_10' } },
+    { startFrame: 5, endFrame: 45, sequence: { $sequence: 'overrideBasicAttackMapping_10' } },
+    { startFrame: 22, endFrame: 45, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0016_laevat_attack5',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: laevatainChr_0016_laevat_attack4ActionGraph,
 };
 
 export const laevatainChr_0016_laevat_attack5ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       dealDamage_6: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalAttack'],
@@ -1092,6 +1126,8 @@ export const laevatainChr_0016_laevat_attack5ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
@@ -1118,7 +1154,14 @@ export const laevatainChr_0016_laevat_attack5ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_18: {
+      overrideBasicAttackMapping_18: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0016_laevat_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_19: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0016_laevat_attack1'] },
@@ -1147,7 +1190,7 @@ export const laevatainChr_0016_laevat_attack5ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'tar' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -1165,6 +1208,7 @@ export const laevatainChr_0016_laevat_attack5ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const laevatainChr_0016_laevat_attack5: SkillDefinition = {
+  actionGraph: laevatainChr_0016_laevat_attack5ActionGraph,
   key: 'chr_0016_laevat_attack5',
   element: 'heat',
   blackboard: {
@@ -1177,29 +1221,22 @@ export const laevatainChr_0016_laevat_attack5: SkillDefinition = {
   naturalDurationFrames: 145,
   exclusiveFrame: 42,
   offsetRecordFrame: 23,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 4,
-        endFrame: 46,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0016_laevat_attack1',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 34, endFrame: 46, skillIds: ['chr_0016_laevat_attack1'] }],
-  },
   costFrame: 12,
   scheduledSequences: [
+    { startFrame: 23, endFrame: 24, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 24, endFrame: 25, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 24, endFrame: 25, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 25, endFrame: 26, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 26, endFrame: 27, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 23, endFrame: 26, sequence: { $sequence: 'repeatEachTick_7' } },
     { startFrame: 26, endFrame: 30, sequence: { $sequence: 'repeatEachTick_17' } },
-    { startFrame: 34, endFrame: 46, sequence: { $sequence: 'reachSkillOperableBoundary_18' } },
+    { startFrame: 4, endFrame: 46, sequence: { $sequence: 'overrideBasicAttackMapping_18' } },
+    { startFrame: 34, endFrame: 46, sequence: { $sequence: 'reachSkillOperableBoundary_19' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0016_laevat_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: laevatainChr_0016_laevat_attack5ActionGraph,
 };
 
 export const laevatainChr_0016_laevat_power_attackActionGraph = {
@@ -1249,6 +1286,8 @@ export const laevatainChr_0016_laevat_power_attackActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             calculation: 'breakingAttack',
@@ -1259,7 +1298,14 @@ export const laevatainChr_0016_laevat_power_attackActionGraph = {
         next: 'ifElse_6',
       },
       gainFinisherSp_9: {
-        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+        action: {
+          kind: 'gainFinisherSp',
+          parameters: {
+            source: { kind: 'source' },
+            target: { kind: 'inputTarget' },
+            factor: { kind: 'constant', value: 1 },
+          },
+        },
         next: null,
       },
       startTimeDilation_10: {
@@ -1341,6 +1387,8 @@ export const laevatainChr_0016_laevat_power_attackActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             calculation: 'breakingAttack',
@@ -1376,6 +1424,13 @@ export const laevatainChr_0016_laevat_power_attackActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_16: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0016_laevat_normal_skill', 'chr_0016_laevat_combo_skill'] },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: {
@@ -1397,6 +1452,7 @@ export const laevatainChr_0016_laevat_power_attackActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const laevatainChr_0016_laevat_power_attack: SkillDefinition = {
+  actionGraph: laevatainChr_0016_laevat_power_attackActionGraph,
   key: 'chr_0016_laevat_power_attack',
   element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -1405,32 +1461,30 @@ export const laevatainChr_0016_laevat_power_attack: SkillDefinition = {
   exclusiveFrame: 50,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 42,
-        endFrame: 62,
-        skillIds: ['chr_0016_laevat_normal_skill', 'chr_0016_laevat_combo_skill'],
-      },
-    ],
-  },
   costFrame: 4,
   scheduledSequences: [
     { startFrame: 5, endFrame: 11, sequence: { $sequence: 'dealDamage_7' } },
     { startFrame: 42, endFrame: 46, sequence: { $sequence: 'dealDamage_13' } },
     { startFrame: 0, endFrame: 50, sequence: { $sequence: 'applyBuff_14' } },
     { startFrame: 0, endFrame: 42, sequence: { $sequence: 'applyBuff_15' } },
+    { startFrame: 42, endFrame: 62, sequence: { $sequence: 'reachSkillOperableBoundary_16' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
-  actionGraph: laevatainChr_0016_laevat_power_attackActionGraph,
 };
 
 export const laevatainChr_0016_laevat_plunging_attack_endActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -1461,6 +1515,8 @@ export const laevatainChr_0016_laevat_plunging_attack_endActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'plungingAttack'],
@@ -1482,6 +1538,7 @@ export const laevatainChr_0016_laevat_plunging_attack_endActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const laevatainChr_0016_laevat_plunging_attack_end: SkillDefinition = {
+  actionGraph: laevatainChr_0016_laevat_plunging_attack_endActionGraph,
   key: 'chr_0016_laevat_plunging_attack_end',
   element: 'physical',
   blackboard: {
@@ -1493,12 +1550,14 @@ export const laevatainChr_0016_laevat_plunging_attack_end: SkillDefinition = {
   exclusiveFrame: 13,
   offsetRecordFrame: 0,
   costFrame: 0,
-  scheduledSequences: [{ startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } }],
+  scheduledSequences: [
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } },
+  ],
   defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: laevatainChr_0016_laevat_plunging_attack_endActionGraph,
 };
 
 export const laevatainChr_0016_laevat_normal_skillActionGraph = {
@@ -1566,6 +1625,7 @@ export const laevatainChr_0016_laevat_normal_skillActionGraph = {
             bornAt: { kind: 'source' },
             abilityEntityId: 'abilityentity_chr_0016_laevat_normal_skill',
             childSkillId: 'chr_0016_laevat_normal_skill_abilityentity',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             saveToContextKey: 'ball',
@@ -1627,6 +1687,8 @@ export const laevatainChr_0016_laevat_normal_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_9' },
             tags: ['normalSkill'],
@@ -1670,7 +1732,7 @@ export const laevatainChr_0016_laevat_normal_skillActionGraph = {
                 },
               },
             ],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
@@ -1786,6 +1848,7 @@ export const laevatainChr_0016_laevat_normal_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const laevatainChr_0016_laevat_normal_skill: SkillDefinition = {
+  actionGraph: laevatainChr_0016_laevat_normal_skillActionGraph,
   key: 'chr_0016_laevat_normal_skill',
   element: 'heat',
   blackboard: {
@@ -1822,7 +1885,6 @@ export const laevatainChr_0016_laevat_normal_skill: SkillDefinition = {
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: laevatainChr_0016_laevat_normal_skillActionGraph,
 };
 
 export const laevatainChr_0016_laevat_normal_skill_during_ultActionGraph = {
@@ -1953,6 +2015,8 @@ export const laevatainChr_0016_laevat_normal_skill_during_ultActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_10' },
             tags: ['normalSkill'],
@@ -2034,6 +2098,8 @@ export const laevatainChr_0016_laevat_normal_skill_during_ultActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_14' },
             tags: ['normalSkill'],
@@ -2111,6 +2177,8 @@ export const laevatainChr_0016_laevat_normal_skill_during_ultActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_19' },
             tags: ['normalSkill'],
@@ -2154,7 +2222,7 @@ export const laevatainChr_0016_laevat_normal_skill_during_ultActionGraph = {
                 },
               },
             ],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
@@ -2201,7 +2269,16 @@ export const laevatainChr_0016_laevat_normal_skill_during_ultActionGraph = {
         },
         next: 'finishBuffsById_43',
       },
-      applyBuff_62: {
+      reachSkillOperableBoundary_45: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: ['chr_0016_laevat_normal_skill', 'chr_0016_laevat_normal_skill_during_ult'],
+          },
+        },
+        next: null,
+      },
+      applyBuff_63: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2263,7 +2340,7 @@ export const laevatainChr_0016_laevat_normal_skill_during_ultActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           compareZeroWhenTargetMissing: false,
           operator: 'greaterOrEqual',
           value: { kind: 'constant', value: 1 },
@@ -2331,6 +2408,7 @@ export const laevatainChr_0016_laevat_normal_skill_during_ultActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const laevatainChr_0016_laevat_normal_skill_during_ult: SkillDefinition = {
+  actionGraph: laevatainChr_0016_laevat_normal_skill_during_ultActionGraph,
   key: 'chr_0016_laevat_normal_skill_during_ult',
   element: 'heat',
   blackboard: {
@@ -2351,15 +2429,6 @@ export const laevatainChr_0016_laevat_normal_skill_during_ult: SkillDefinition =
   exclusiveFrame: 115,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 33,
-        endFrame: 75,
-        skillIds: ['chr_0016_laevat_normal_skill', 'chr_0016_laevat_normal_skill_during_ult'],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'checkCondition_2' } },
@@ -2369,7 +2438,8 @@ export const laevatainChr_0016_laevat_normal_skill_during_ult: SkillDefinition =
     { startFrame: 13, endFrame: 14, sequence: { $sequence: 'repeatEachTick_23' } },
     { startFrame: 23, endFrame: 24, sequence: { $sequence: 'repeatEachTick_33' } },
     { startFrame: 98, endFrame: 99, sequence: { $sequence: 'modifyActionValue_44' } },
-    { startFrame: 0, endFrame: 115, sequence: { $sequence: 'applyBuff_62' } },
+    { startFrame: 33, endFrame: 75, sequence: { $sequence: 'reachSkillOperableBoundary_45' } },
+    { startFrame: 0, endFrame: 115, sequence: { $sequence: 'applyBuff_63' } },
   ],
   defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
@@ -2377,7 +2447,6 @@ export const laevatainChr_0016_laevat_normal_skill_during_ult: SkillDefinition =
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: laevatainChr_0016_laevat_normal_skill_during_ultActionGraph,
 };
 
 export const laevatainChr_0016_laevat_ultimate_skillActionGraph = {
@@ -2489,6 +2558,13 @@ export const laevatainChr_0016_laevat_ultimate_skill: SkillDefinition = {
 export const laevatainChr_0016_laevat_ult_attack1ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_9: {
         action: {
           kind: 'changeResource',
@@ -2555,6 +2631,8 @@ export const laevatainChr_0016_laevat_ult_attack1ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_6' },
             tags: ['normalAttack'],
@@ -2590,7 +2668,21 @@ export const laevatainChr_0016_laevat_ult_attack1ActionGraph = {
         },
         next: 'repeatEachTick_16',
       },
-      reachSkillOperableBoundary_19: {
+      overrideBasicAttackMapping_18: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0016_laevat_ult_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      checkCondition_19: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+        },
+        next: 'overrideBasicAttackMapping_18',
+      },
+      reachSkillOperableBoundary_20: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0016_laevat_ult_attack2', 'chr_0016_laevat_attack1'] },
@@ -2614,7 +2706,7 @@ export const laevatainChr_0016_laevat_ult_attack1ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'tar' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -2627,12 +2719,24 @@ export const laevatainChr_0016_laevat_ult_attack1ActionGraph = {
       },
       data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_7: { type: 'number', expression: { kind: 'blackboard', key: 'ratio' } },
+      data_8: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: false,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0016_laevat_ring_start_asset'],
+        },
+      },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const laevatainChr_0016_laevat_ult_attack1: SkillDefinition = {
+  actionGraph: laevatainChr_0016_laevat_ult_attack1ActionGraph,
   key: 'chr_0016_laevat_ult_attack1',
   element: 'heat',
   blackboard: {
@@ -2645,40 +2749,35 @@ export const laevatainChr_0016_laevat_ult_attack1: SkillDefinition = {
   naturalDurationFrames: 155,
   exclusiveFrame: 25,
   offsetRecordFrame: 11,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 32,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0016_laevat_ult_attack2',
-      },
-    ],
-    allowedNextSkills: [
-      {
-        startFrame: 17,
-        endFrame: 32,
-        skillIds: ['chr_0016_laevat_ult_attack2', 'chr_0016_laevat_attack1'],
-      },
-      { startFrame: 17, endFrame: 32, skillIds: ['chr_0016_laevat_ult_attack2'] },
-    ],
-  },
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 15, endFrame: 16, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 16, endFrame: 17, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 17, endFrame: 18, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 18, endFrame: 24, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 12, endFrame: 24, sequence: { $sequence: 'modifyActionValue_17' } },
-    { startFrame: 17, endFrame: 32, sequence: { $sequence: 'reachSkillOperableBoundary_19' } },
+    { startFrame: 0, endFrame: 32, sequence: { $sequence: 'checkCondition_19' } },
+    { startFrame: 17, endFrame: 32, sequence: { $sequence: 'reachSkillOperableBoundary_20' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0016_laevat_ult_attack2',
   skillType: 'basicAttack',
   levelSource: 'ultimate',
   nativeSkillType: 'attack',
-  actionGraph: laevatainChr_0016_laevat_ult_attack1ActionGraph,
 };
 
 export const laevatainChr_0016_laevat_ult_attack2ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_19: {
         action: {
           kind: 'changeResource',
@@ -2745,6 +2844,8 @@ export const laevatainChr_0016_laevat_ult_attack2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_6' },
             tags: ['normalAttack'],
@@ -2815,6 +2916,8 @@ export const laevatainChr_0016_laevat_ult_attack2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_6' },
             tags: ['normalAttack'],
@@ -2839,7 +2942,21 @@ export const laevatainChr_0016_laevat_ult_attack2ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_38: {
+      overrideBasicAttackMapping_37: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0016_laevat_ult_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      checkCondition_38: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
+        },
+        next: 'overrideBasicAttackMapping_37',
+      },
+      reachSkillOperableBoundary_39: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0016_laevat_ult_attack3', 'chr_0016_laevat_attack1'] },
@@ -2863,7 +2980,7 @@ export const laevatainChr_0016_laevat_ult_attack2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'tar' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -2890,7 +3007,7 @@ export const laevatainChr_0016_laevat_ult_attack2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'tar' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -2901,12 +3018,24 @@ export const laevatainChr_0016_laevat_ult_attack2ActionGraph = {
         type: 'boolean',
         expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
       },
+      data_12: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: false,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0016_laevat_ring_start_asset'],
+        },
+      },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const laevatainChr_0016_laevat_ult_attack2: SkillDefinition = {
+  actionGraph: laevatainChr_0016_laevat_ult_attack2ActionGraph,
   key: 'chr_0016_laevat_ult_attack2',
   element: 'heat',
   blackboard: {
@@ -2920,41 +3049,46 @@ export const laevatainChr_0016_laevat_ult_attack2: SkillDefinition = {
   naturalDurationFrames: 245,
   exclusiveFrame: 36,
   offsetRecordFrame: 10,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 44,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0016_laevat_ult_attack3',
-      },
-    ],
-    allowedNextSkills: [
-      {
-        startFrame: 27,
-        endFrame: 44,
-        skillIds: ['chr_0016_laevat_ult_attack3', 'chr_0016_laevat_attack1'],
-      },
-      { startFrame: 27, endFrame: 44, skillIds: ['chr_0016_laevat_ult_attack3'] },
-    ],
-  },
   costFrame: 8,
   scheduledSequences: [
+    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 14, endFrame: 15, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 15, endFrame: 16, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 16, endFrame: 17, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 17, endFrame: 18, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 18, endFrame: 19, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 21, endFrame: 22, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 22, endFrame: 23, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 23, endFrame: 24, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 24, endFrame: 25, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 25, endFrame: 26, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 26, endFrame: 27, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 28, endFrame: 29, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 10, endFrame: 19, sequence: { $sequence: 'modifyActionValue_27' } },
     { startFrame: 21, endFrame: 29, sequence: { $sequence: 'repeatEachTick_36' } },
-    { startFrame: 27, endFrame: 44, sequence: { $sequence: 'reachSkillOperableBoundary_38' } },
+    { startFrame: 0, endFrame: 44, sequence: { $sequence: 'checkCondition_38' } },
+    { startFrame: 27, endFrame: 44, sequence: { $sequence: 'reachSkillOperableBoundary_39' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0016_laevat_ult_attack3',
   skillType: 'basicAttack',
   levelSource: 'ultimate',
   nativeSkillType: 'attack',
-  actionGraph: laevatainChr_0016_laevat_ult_attack2ActionGraph,
 };
 
 export const laevatainChr_0016_laevat_ult_attack3ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_8: {
         action: {
           kind: 'changeResource',
@@ -3021,6 +3155,8 @@ export const laevatainChr_0016_laevat_ult_attack3ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_6' },
             tags: ['normalAttack'],
@@ -3063,7 +3199,21 @@ export const laevatainChr_0016_laevat_ult_attack3ActionGraph = {
         },
         next: 'repeatEachTick_16',
       },
-      reachSkillOperableBoundary_19: {
+      overrideBasicAttackMapping_18: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0016_laevat_ult_attack4'], priority: 'skill' },
+        },
+        next: null,
+      },
+      checkCondition_19: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+        },
+        next: 'overrideBasicAttackMapping_18',
+      },
+      reachSkillOperableBoundary_20: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0016_laevat_ult_attack4', 'chr_0016_laevat_attack1'] },
@@ -3087,7 +3237,7 @@ export const laevatainChr_0016_laevat_ult_attack3ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'tar' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -3100,12 +3250,24 @@ export const laevatainChr_0016_laevat_ult_attack3ActionGraph = {
       },
       data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
       data_7: { type: 'number', expression: { kind: 'blackboard', key: 'ratio' } },
+      data_8: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: false,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0016_laevat_ring_start_asset'],
+        },
+      },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const laevatainChr_0016_laevat_ult_attack3: SkillDefinition = {
+  actionGraph: laevatainChr_0016_laevat_ult_attack3ActionGraph,
   key: 'chr_0016_laevat_ult_attack3',
   element: 'heat',
   blackboard: {
@@ -3118,44 +3280,40 @@ export const laevatainChr_0016_laevat_ult_attack3: SkillDefinition = {
   naturalDurationFrames: 180,
   exclusiveFrame: 20,
   offsetRecordFrame: 9,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 28,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0016_laevat_ult_attack4',
-      },
-    ],
-    allowedNextSkills: [
-      {
-        startFrame: 14,
-        endFrame: 28,
-        skillIds: ['chr_0016_laevat_ult_attack4', 'chr_0016_laevat_attack1'],
-      },
-      { startFrame: 14, endFrame: 28, skillIds: ['chr_0016_laevat_ult_attack4'] },
-    ],
-  },
   costFrame: 8,
   scheduledSequences: [
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 13, endFrame: 18, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 18, endFrame: 23, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 9, endFrame: 23, sequence: { $sequence: 'modifyActionValue_17' } },
-    { startFrame: 14, endFrame: 28, sequence: { $sequence: 'reachSkillOperableBoundary_19' } },
+    { startFrame: 0, endFrame: 28, sequence: { $sequence: 'checkCondition_19' } },
+    { startFrame: 14, endFrame: 28, sequence: { $sequence: 'reachSkillOperableBoundary_20' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0016_laevat_ult_attack4',
   skillType: 'basicAttack',
   levelSource: 'ultimate',
   nativeSkillType: 'attack',
-  actionGraph: laevatainChr_0016_laevat_ult_attack3ActionGraph,
 };
 
 export const laevatainChr_0016_laevat_ult_attack4ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       dealDamage_14: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalAttack'],
@@ -3263,6 +3421,8 @@ export const laevatainChr_0016_laevat_ult_attack4ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
@@ -3289,7 +3449,21 @@ export const laevatainChr_0016_laevat_ult_attack4ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_28: {
+      overrideBasicAttackMapping_27: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0016_laevat_ult_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      checkCondition_28: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
+        },
+        next: 'overrideBasicAttackMapping_27',
+      },
+      reachSkillOperableBoundary_29: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0016_laevat_ult_attack1', 'chr_0016_laevat_attack1'] },
@@ -3319,7 +3493,7 @@ export const laevatainChr_0016_laevat_ult_attack4ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'tar' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -3331,12 +3505,24 @@ export const laevatainChr_0016_laevat_ult_attack4ActionGraph = {
         expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
       },
       data_9: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_10: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: false,
+          operator: 'greaterOrEqual',
+          value: { kind: 'constant', value: 1 },
+          buffIds: ['buff_chr_0016_laevat_ring_start_asset'],
+        },
+      },
     },
   },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
 export const laevatainChr_0016_laevat_ult_attack4: SkillDefinition = {
+  actionGraph: laevatainChr_0016_laevat_ult_attack4ActionGraph,
   key: 'chr_0016_laevat_ult_attack4',
   element: 'heat',
   blackboard: {
@@ -3350,36 +3536,30 @@ export const laevatainChr_0016_laevat_ult_attack4: SkillDefinition = {
   naturalDurationFrames: 181,
   exclusiveFrame: 47,
   offsetRecordFrame: 22,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 68,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0016_laevat_ult_attack1',
-      },
-    ],
-    allowedNextSkills: [
-      {
-        startFrame: 35,
-        endFrame: 68,
-        skillIds: ['chr_0016_laevat_ult_attack1', 'chr_0016_laevat_attack1'],
-      },
-      { startFrame: 35, endFrame: 68, skillIds: ['chr_0016_laevat_ult_attack1'] },
-    ],
-  },
   costFrame: 8,
   scheduledSequences: [
+    { startFrame: 22, endFrame: 23, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 23, endFrame: 24, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 24, endFrame: 25, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 25, endFrame: 26, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 26, endFrame: 27, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 27, endFrame: 28, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 28, endFrame: 29, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 29, endFrame: 30, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 30, endFrame: 31, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 31, endFrame: 32, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 32, endFrame: 33, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 33, endFrame: 34, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 34, endFrame: 35, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 22, endFrame: 26, sequence: { $sequence: 'modifyActionValue_16' } },
     { startFrame: 26, endFrame: 35, sequence: { $sequence: 'repeatEachTick_26' } },
-    { startFrame: 35, endFrame: 68, sequence: { $sequence: 'reachSkillOperableBoundary_28' } },
+    { startFrame: 0, endFrame: 68, sequence: { $sequence: 'checkCondition_28' } },
+    { startFrame: 35, endFrame: 68, sequence: { $sequence: 'reachSkillOperableBoundary_29' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0016_laevat_ult_attack1',
   skillType: 'basicAttack',
   levelSource: 'ultimate',
   nativeSkillType: 'attack',
-  actionGraph: laevatainChr_0016_laevat_ult_attack4ActionGraph,
 };
 
 export const laevatainCommon_character_perfect_dodgeActionGraph = {
@@ -3408,6 +3588,7 @@ export const laevatainChr_0016_laevat_plunging_attack_startActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const laevatainChr_0016_laevat_plunging_attack_start: SkillDefinition = {
+  actionGraph: laevatainChr_0016_laevat_plunging_attack_startActionGraph,
   key: 'chr_0016_laevat_plunging_attack_start',
   element: 'physical',
   blackboard: {},
@@ -3421,7 +3602,6 @@ export const laevatainChr_0016_laevat_plunging_attack_start: SkillDefinition = {
   skillType: 'plungingAttack',
   nativeSkillType: 'attack',
   levelSource: 'basicAttack',
-  actionGraph: laevatainChr_0016_laevat_plunging_attack_startActionGraph,
 };
 
 const laevatainComboCondition1ActionGraph = {
@@ -3463,77 +3643,6 @@ const laevatainComboCondition1: ComboSkillConditionDefinition = {
 };
 
 const laevatainBuff1ActionGraph = {
-  main: {
-    nodes: {
-      launchProjectile_1: {
-        action: {
-          kind: 'launchProjectile',
-          parameters: {
-            inheritActionBlackboard: true,
-            finish: 'firstTickReach',
-            recycleDelaySeconds: 5,
-          },
-          callbacks: [],
-        },
-        next: null,
-      },
-      finishBuffsByTag_2: {
-        action: {
-          kind: 'finishBuffsByTag',
-          parameters: {
-            targets: { kind: 'inputTarget' },
-            finishSource: { kind: 'source' },
-            tagQueryType: 'hasAny',
-            buffTags: ['Skill/Character/Common/SpellInflict/FireInflict'],
-            reason: 'absorbed',
-            count: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'launchProjectile_1',
-      },
-      checkCondition_3: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
-        },
-        next: 'finishBuffsByTag_2',
-      },
-    },
-    dataNodes: {
-      data_1: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffStackCompare',
-          target: { kind: 'inputTarget' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'greaterOrEqual',
-          value: { kind: 'constant', value: 1 },
-          tagQueryType: 'hasAny',
-          buffTags: ['Skill/Character/Common/SpellInflict/FireInflict'],
-        },
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-const laevatainBuff1: SkillBuffDefinition = {
-  stackingType: 'unlimited',
-  priority: 0,
-  maxStackCount: 1,
-  durationSeconds: 3,
-  triggerIntervalSeconds: 0.5,
-  waitFirstTriggerInterval: false,
-  maxTriggerCount: 1,
-  applyTags: [],
-  extendTags: [],
-  blackboard: {},
-  attributeModifiers: [],
-  lifecycleSequences: { start: [{ $sequence: 'checkCondition_3' }] },
-  actionGraph: laevatainBuff1ActionGraph,
-};
-
-const laevatainBuff2ActionGraph = {
   main: {
     nodes: {
       checkCondition_7: {
@@ -3589,6 +3698,8 @@ const laevatainBuff2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
             tags: ['comboSkill'],
@@ -3623,7 +3734,7 @@ const laevatainBuff2ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const laevatainBuff2: SkillBuffDefinition = {
+const laevatainBuff1: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 1,
@@ -3636,10 +3747,10 @@ const laevatainBuff2: SkillBuffDefinition = {
   blackboard: { atk_scale: 0, poise: 0 },
   attributeModifiers: [],
   scheduledSequences: [{ startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_16' } }],
-  actionGraph: laevatainBuff2ActionGraph,
+  actionGraph: laevatainBuff1ActionGraph,
 };
 
-const laevatainBuff3ActionGraph = {
+const laevatainBuff2ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -3659,7 +3770,7 @@ const laevatainBuff3ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const laevatainBuff3: SkillBuffDefinition = {
+const laevatainBuff2: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -3669,10 +3780,10 @@ const laevatainBuff3: SkillBuffDefinition = {
   blackboard: {},
   attributeModifiers: [],
   scheduledSequences: [{ startFrame: 21, endFrame: 24, sequence: { $sequence: 'applyBuff_1' } }],
-  actionGraph: laevatainBuff3ActionGraph,
+  actionGraph: laevatainBuff2ActionGraph,
 };
 
-const laevatainBuff4ActionGraph = {
+const laevatainBuff3ActionGraph = {
   main: {
     nodes: {
       startTimeDilation_1: {
@@ -3695,7 +3806,7 @@ const laevatainBuff4ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const laevatainBuff4: SkillBuffDefinition = {
+const laevatainBuff3: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 1,
@@ -3707,10 +3818,10 @@ const laevatainBuff4: SkillBuffDefinition = {
   scheduledSequences: [
     { startFrame: 25, endFrame: 28, sequence: { $sequence: 'startTimeDilation_1' } },
   ],
-  actionGraph: laevatainBuff4ActionGraph,
+  actionGraph: laevatainBuff3ActionGraph,
 };
 
-const laevatainBuff5ActionGraph = {
+const laevatainBuff4ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -3735,7 +3846,7 @@ const laevatainBuff5ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const laevatainBuff5: SkillBuffDefinition = {
+const laevatainBuff4: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 1,
@@ -3748,10 +3859,10 @@ const laevatainBuff5: SkillBuffDefinition = {
   blackboard: { atk_scale: 0, poise: 0, trigger: 1 },
   attributeModifiers: [],
   lifecycleSequences: { trigger: [{ $sequence: 'applyBuff_1' }] },
-  actionGraph: laevatainBuff5ActionGraph,
+  actionGraph: laevatainBuff4ActionGraph,
 };
 
-const laevatainBuff6ActionGraph = {
+const laevatainBuff5ActionGraph = {
   main: {
     nodes: {
       changeResource_1: {
@@ -3842,7 +3953,7 @@ const laevatainBuff6ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const laevatainBuff6: SkillBuffDefinition = {
+const laevatainBuff5: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 1,
@@ -3852,10 +3963,10 @@ const laevatainBuff6: SkillBuffDefinition = {
   blackboard: { count: 0, usp_1: 25, usp_2: 5, usp_3: 5, usp_4: 0 },
   attributeModifiers: [],
   lifecycleSequences: { start: [{ $sequence: 'readBuffStackCount_6' }] },
-  actionGraph: laevatainBuff6ActionGraph,
+  actionGraph: laevatainBuff5ActionGraph,
 };
 
-const laevatainBuff7ActionGraph = {
+const laevatainBuff6ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -3968,7 +4079,7 @@ const laevatainBuff7ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const laevatainBuff7: SkillBuffDefinition = {
+const laevatainBuff6: SkillBuffDefinition = {
   stackingType: 'enhance',
   priority: 0,
   maxStackCount: { blackboardKey: 'max_stack' },
@@ -3981,10 +4092,10 @@ const laevatainBuff7: SkillBuffDefinition = {
     enhanceChanged: [{ $sequence: 'readBuffStackCount_4' }],
     finish: [{ $sequence: 'setCharacterPassiveUiValue_9' }],
   },
-  actionGraph: laevatainBuff7ActionGraph,
+  actionGraph: laevatainBuff6ActionGraph,
 };
 
-const laevatainBuff8ActionGraph = {
+const laevatainBuff7ActionGraph = {
   main: {
     nodes: {
       applyBuff_2: {
@@ -4012,7 +4123,7 @@ const laevatainBuff8ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const laevatainBuff8: SkillBuffDefinition = {
+const laevatainBuff7: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 5,
   maxStackCount: 5,
@@ -4021,6 +4132,23 @@ const laevatainBuff8: SkillBuffDefinition = {
   blackboard: { ignore_fire_resist: 0, ignore_fire_resist_duration: 0 },
   attributeModifiers: [],
   lifecycleSequences: { start: [{ $sequence: null }, { $sequence: 'applyBuff_2' }] },
+  actionGraph: laevatainBuff7ActionGraph,
+};
+
+const laevatainBuff8ActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const laevatainBuff8: SkillBuffDefinition = {
+  stackingType: 'unlimited',
+  priority: 1,
+  maxStackCount: 5,
+  durationSeconds: 2,
+  applyTags: [],
+  extendTags: [],
+  blackboard: {},
+  attributeModifiers: [],
   actionGraph: laevatainBuff8ActionGraph,
 };
 
@@ -4030,23 +4158,6 @@ const laevatainBuff9ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 const laevatainBuff9: SkillBuffDefinition = {
-  stackingType: 'unlimited',
-  priority: 1,
-  maxStackCount: 5,
-  durationSeconds: 2,
-  applyTags: [],
-  extendTags: [],
-  blackboard: {},
-  attributeModifiers: [],
-  actionGraph: laevatainBuff9ActionGraph,
-};
-
-const laevatainBuff10ActionGraph = {
-  main: { nodes: {} },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-const laevatainBuff10: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -4076,10 +4187,10 @@ const laevatainBuff10: SkillBuffDefinition = {
     },
   ],
   lifecycleSequences: { enable: [{ $sequence: null }] },
-  actionGraph: laevatainBuff10ActionGraph,
+  actionGraph: laevatainBuff9ActionGraph,
 };
 
-const laevatainBuff11ActionGraph = {
+const laevatainBuff10ActionGraph = {
   main: {
     nodes: {
       aura_1: {
@@ -4122,7 +4233,7 @@ const laevatainBuff11ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const laevatainBuff11: SkillBuffDefinition = {
+const laevatainBuff10: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 1,
@@ -4131,10 +4242,10 @@ const laevatainBuff11: SkillBuffDefinition = {
   blackboard: { ignore_fire_resist: 0, ignore_fire_resist_duration: 0, max_stack: 4 },
   attributeModifiers: [],
   lifecycleSequences: { enable: [{ $sequence: 'aura_1' }, { $sequence: 'aura_2' }] },
-  actionGraph: laevatainBuff11ActionGraph,
+  actionGraph: laevatainBuff10ActionGraph,
 };
 
-const laevatainBuff12ActionGraph = {
+const laevatainBuff11ActionGraph = {
   main: {
     nodes: {
       checkCondition_1: {
@@ -4170,7 +4281,7 @@ const laevatainBuff12ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const laevatainBuff12: SkillBuffDefinition = {
+const laevatainBuff11: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -4182,10 +4293,10 @@ const laevatainBuff12: SkillBuffDefinition = {
     { event: 'beforeTakeInfliction', priority: 0, sequence: { $sequence: 'checkCondition_1' } },
     { event: 'addedBuff', priority: 0, sequence: { $sequence: 'checkCondition_2' } },
   ],
-  actionGraph: laevatainBuff12ActionGraph,
+  actionGraph: laevatainBuff11ActionGraph,
 };
 
-const laevatainBuff13ActionGraph = {
+const laevatainBuff12ActionGraph = {
   main: {
     nodes: {
       applyBuff_22: {
@@ -4204,7 +4315,7 @@ const laevatainBuff13ActionGraph = {
         action: {
           kind: 'finishBuffsByTag',
           parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             finishSource: { kind: 'source' },
             tagQueryType: 'hasAny',
             buffTags: ['Skill/Character/Common/SpellInflict/FireInflict'],
@@ -4237,7 +4348,7 @@ const laevatainBuff13ActionGraph = {
         action: {
           kind: 'finishBuffsByTag',
           parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             finishSource: { kind: 'source' },
             tagQueryType: 'hasAny',
             buffTags: ['Skill/Character/Common/SpellInflict/FireInflict'],
@@ -4270,7 +4381,7 @@ const laevatainBuff13ActionGraph = {
         action: {
           kind: 'finishBuffsByTag',
           parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             finishSource: { kind: 'source' },
             tagQueryType: 'hasAny',
             buffTags: ['Skill/Character/Common/SpellInflict/FireInflict'],
@@ -4315,7 +4426,7 @@ const laevatainBuff13ActionGraph = {
         action: {
           kind: 'finishBuffsByTag',
           parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             finishSource: { kind: 'source' },
             tagQueryType: 'hasAny',
             buffTags: ['Skill/Character/Common/SpellInflict/FireInflict'],
@@ -4360,7 +4471,7 @@ const laevatainBuff13ActionGraph = {
         action: {
           kind: 'finishBuffsByTag',
           parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             finishSource: { kind: 'source' },
             tagQueryType: 'hasAny',
             buffTags: ['Skill/Character/Common/SpellInflict/FireInflict'],
@@ -4405,7 +4516,7 @@ const laevatainBuff13ActionGraph = {
         action: {
           kind: 'finishBuffsByTag',
           parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             finishSource: { kind: 'source' },
             tagQueryType: 'hasAny',
             buffTags: ['Skill/Character/Common/SpellInflict/FireInflict'],
@@ -4450,7 +4561,7 @@ const laevatainBuff13ActionGraph = {
         action: {
           kind: 'finishBuffsByTag',
           parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             finishSource: { kind: 'source' },
             tagQueryType: 'hasAny',
             buffTags: ['Skill/Character/Common/SpellInflict/FireInflict'],
@@ -4677,7 +4788,7 @@ const laevatainBuff13ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const laevatainBuff13: SkillBuffDefinition = {
+const laevatainBuff12: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -4688,6 +4799,23 @@ const laevatainBuff13: SkillBuffDefinition = {
   abilityEventResponses: [
     { event: 'beforeOutputDamage', priority: 0, sequence: { $sequence: 'checkCondition_44' } },
   ],
+  actionGraph: laevatainBuff12ActionGraph,
+};
+
+const laevatainBuff13ActionGraph = {
+  main: { nodes: {} },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const laevatainBuff13: SkillBuffDefinition = {
+  stackingType: 'unique',
+  priority: 0,
+  maxStackCount: 1,
+  durationSeconds: 1,
+  applyTags: [],
+  extendTags: [],
+  blackboard: {},
+  attributeModifiers: [],
   actionGraph: laevatainBuff13ActionGraph,
 };
 
@@ -4700,7 +4828,6 @@ const laevatainBuff14: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
-  durationSeconds: 1,
   applyTags: [],
   extendTags: [],
   blackboard: {},
@@ -4709,22 +4836,6 @@ const laevatainBuff14: SkillBuffDefinition = {
 };
 
 const laevatainBuff15ActionGraph = {
-  main: { nodes: {} },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-const laevatainBuff15: SkillBuffDefinition = {
-  stackingType: 'unique',
-  priority: 0,
-  maxStackCount: 1,
-  applyTags: [],
-  extendTags: [],
-  blackboard: {},
-  attributeModifiers: [],
-  actionGraph: laevatainBuff15ActionGraph,
-};
-
-const laevatainBuff16ActionGraph = {
   main: {
     nodes: {
       checkCondition_2: {
@@ -4748,7 +4859,7 @@ const laevatainBuff16ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const laevatainBuff16: SkillBuffDefinition = {
+const laevatainBuff15: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -4759,10 +4870,10 @@ const laevatainBuff16: SkillBuffDefinition = {
   abilityEventResponses: [
     { event: 'finishedBuff', priority: 0, sequence: { $sequence: 'checkCondition_2' } },
   ],
-  actionGraph: laevatainBuff16ActionGraph,
+  actionGraph: laevatainBuff15ActionGraph,
 };
 
-const laevatainBuff17ActionGraph = {
+const laevatainBuff16ActionGraph = {
   main: {
     nodes: {
       changePlayerActionMode_1: {
@@ -4789,7 +4900,7 @@ const laevatainBuff17ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const laevatainBuff17: SkillBuffDefinition = {
+const laevatainBuff16: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -4801,6 +4912,7 @@ const laevatainBuff17: SkillBuffDefinition = {
     enable: [{ $sequence: 'changePlayerActionMode_1' }],
     finish: [{ $sequence: 'finishBuffsById_2' }],
   },
+  actionGraph: laevatainBuff16ActionGraph,
   skillSlotReplacements: [
     {
       skillSlotKey: 'battleSkill',
@@ -4809,17 +4921,16 @@ const laevatainBuff17: SkillBuffDefinition = {
       inheritOriginSkillCooldownProgress: false,
     },
   ],
-  actionGraph: laevatainBuff17ActionGraph,
 };
 
-const laevatainBuff18ActionGraph = {
+const laevatainBuff17ActionGraph = {
   main: {
     nodes: {
       restrictUltimateEnergyRecovery_1: {
         action: {
           kind: 'restrictUltimateEnergyRecovery',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             allowedRecoveryTags: [],
             clearUltimateEnergyOnEnd: false,
           },
@@ -4830,7 +4941,7 @@ const laevatainBuff18ActionGraph = {
         action: {
           kind: 'adjustSkillCooldown',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             skill: { kind: 'type', skillType: 'ultimate' },
             operation: 'set',
             basis: 'absoluteSeconds',
@@ -4891,7 +5002,7 @@ const laevatainBuff18ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const laevatainBuff18: SkillBuffDefinition = {
+const laevatainBuff17: SkillBuffDefinition = {
   stackingType: 'extend',
   priority: 0,
   maxStackCount: 1,
@@ -4917,10 +5028,10 @@ const laevatainBuff18: SkillBuffDefinition = {
     { event: 'addedBuff', priority: 0, sequence: { $sequence: 'checkCondition_5' } },
     { event: 'finishedBuff', priority: 0, sequence: { $sequence: 'checkCondition_7' } },
   ],
-  actionGraph: laevatainBuff18ActionGraph,
+  actionGraph: laevatainBuff17ActionGraph,
 };
 
-const laevatainBuff19ActionGraph = {
+const laevatainBuff18ActionGraph = {
   main: {
     nodes: {
       applyBuff_1: {
@@ -4948,7 +5059,7 @@ const laevatainBuff19ActionGraph = {
         action: {
           kind: 'setGlobalCooldown',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             markerId: 'buff_chr_0016_laevat_talent_2_0',
             durationSeconds: { kind: 'valueNode', nodeId: 'data_1' },
           },
@@ -4997,7 +5108,7 @@ const laevatainBuff19ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const laevatainBuff19: SkillBuffDefinition = {
+const laevatainBuff18: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -5008,17 +5119,18 @@ const laevatainBuff19: SkillBuffDefinition = {
   abilityEventResponses: [
     { event: 'takeDamage', priority: 0, sequence: { $sequence: 'checkCondition_4' } },
   ],
-  actionGraph: laevatainBuff19ActionGraph,
+  actionGraph: laevatainBuff18ActionGraph,
 };
 
-const laevatainBuff20ActionGraph = {
+const laevatainBuff19ActionGraph = {
   main: {
     nodes: {
       heal_1: {
         action: {
           kind: 'heal',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
+            healer: { kind: 'source' },
             alwaysNext: true,
             tags: [],
             attribute: 'maxHealth',
@@ -5059,7 +5171,7 @@ const laevatainBuff20ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const laevatainBuff20: SkillBuffDefinition = {
+const laevatainBuff19: SkillBuffDefinition = {
   stackingType: 'unlimited',
   priority: 0,
   maxStackCount: 5,
@@ -5075,10 +5187,10 @@ const laevatainBuff20: SkillBuffDefinition = {
     enable: [{ $sequence: 'applyBuff_2' }],
     trigger: [{ $sequence: 'heal_1' }],
   },
-  actionGraph: laevatainBuff20ActionGraph,
+  actionGraph: laevatainBuff19ActionGraph,
 };
 
-const laevatainBuff21ActionGraph = {
+const laevatainBuff20ActionGraph = {
   main: {
     nodes: {
       finishBuffsById_1: {
@@ -5133,7 +5245,7 @@ const laevatainBuff21ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const laevatainBuff21: SkillBuffDefinition = {
+const laevatainBuff20: SkillBuffDefinition = {
   stackingType: 'extend',
   priority: 0,
   maxStackCount: 1,
@@ -5152,7 +5264,7 @@ const laevatainBuff21: SkillBuffDefinition = {
     { event: 'addedBuff', priority: 0, sequence: { $sequence: 'checkCondition_3' } },
     { event: 'finishedBuff', priority: 0, sequence: { $sequence: 'checkCondition_5' } },
   ],
-  actionGraph: laevatainBuff21ActionGraph,
+  actionGraph: laevatainBuff20ActionGraph,
 };
 
 export const laevatain: OperatorDefinition = {
@@ -5469,27 +5581,26 @@ export const laevatain: OperatorDefinition = {
     },
   ],
   buffDefinitions: {
-    buff_chr_0016_laevat_absorb_fire_inflict: laevatainBuff1,
-    buff_chr_0016_laevat_combo_skill_hit: laevatainBuff2,
-    buff_chr_0016_laevat_combo_skill_hit_self: laevatainBuff3,
-    buff_chr_0016_laevat_combo_skill_hitstop: laevatainBuff4,
-    buff_chr_0016_laevat_combo_skill_start: laevatainBuff5,
-    buff_chr_0016_laevat_combo_skill_usp: laevatainBuff6,
-    buff_chr_0016_laevat_energy: laevatainBuff7,
-    buff_chr_0016_laevat_energy_icon_5: laevatainBuff8,
-    buff_chr_0016_laevat_has_max_energy: laevatainBuff9,
-    buff_chr_0016_laevat_ignore_fire_resist: laevatainBuff10,
-    buff_chr_0016_laevat_passive: laevatainBuff11,
-    buff_chr_0016_laevat_passive_enemy: laevatainBuff12,
-    buff_chr_0016_laevat_passive_teammate: laevatainBuff13,
-    buff_chr_0016_laevat_passive_teammate_cd: laevatainBuff14,
-    buff_chr_0016_laevat_pause_ult: laevatainBuff15,
-    buff_chr_0016_laevat_potential_5: laevatainBuff16,
-    buff_chr_0016_laevat_ring_start_asset: laevatainBuff17,
-    buff_chr_0016_laevat_show_weapon: laevatainBuff18,
-    buff_chr_0016_laevat_talent_2_0: laevatainBuff19,
-    buff_chr_0016_laevat_talent_2_1: laevatainBuff20,
-    buff_chr_0016_laevat_ult_end: laevatainBuff21,
+    buff_chr_0016_laevat_combo_skill_hit: laevatainBuff1,
+    buff_chr_0016_laevat_combo_skill_hit_self: laevatainBuff2,
+    buff_chr_0016_laevat_combo_skill_hitstop: laevatainBuff3,
+    buff_chr_0016_laevat_combo_skill_start: laevatainBuff4,
+    buff_chr_0016_laevat_combo_skill_usp: laevatainBuff5,
+    buff_chr_0016_laevat_energy: laevatainBuff6,
+    buff_chr_0016_laevat_energy_icon_5: laevatainBuff7,
+    buff_chr_0016_laevat_has_max_energy: laevatainBuff8,
+    buff_chr_0016_laevat_ignore_fire_resist: laevatainBuff9,
+    buff_chr_0016_laevat_passive: laevatainBuff10,
+    buff_chr_0016_laevat_passive_enemy: laevatainBuff11,
+    buff_chr_0016_laevat_passive_teammate: laevatainBuff12,
+    buff_chr_0016_laevat_passive_teammate_cd: laevatainBuff13,
+    buff_chr_0016_laevat_pause_ult: laevatainBuff14,
+    buff_chr_0016_laevat_potential_5: laevatainBuff15,
+    buff_chr_0016_laevat_ring_start_asset: laevatainBuff16,
+    buff_chr_0016_laevat_show_weapon: laevatainBuff17,
+    buff_chr_0016_laevat_talent_2_0: laevatainBuff18,
+    buff_chr_0016_laevat_talent_2_1: laevatainBuff19,
+    buff_chr_0016_laevat_ult_end: laevatainBuff20,
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0016_laevat_normal_skill: {
@@ -5502,29 +5613,6 @@ export const laevatain: OperatorDefinition = {
       ],
       lifetime: { kind: 'limited', durationSeconds: 5 },
       childSkill: {
-        skillId: 'chr_0016_laevat_normal_skill_abilityentity',
-        nativeSkillType: 'normalSkill',
-        naturalDurationFrames: 100,
-        castResource: {
-          costFrame: 0,
-          cooldownSeconds: 0,
-          maxChargeTime: 1,
-          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-        },
-        blackboard: { atk_scale: 3, atk_scale_2: 0, hit_count: 0, poise: 0 },
-        scheduledSequences: [
-          { startFrame: 18, endFrame: 18, sequence: { $sequence: 'mergeContextTargets_7' } },
-          { startFrame: 25, endFrame: 25, sequence: { $sequence: 'mergeContextTargets_14' } },
-          { startFrame: 29, endFrame: 29, sequence: { $sequence: 'mergeContextTargets_21' } },
-          { startFrame: 33, endFrame: 33, sequence: { $sequence: 'mergeContextTargets_28' } },
-          { startFrame: 37, endFrame: 37, sequence: { $sequence: 'mergeContextTargets_35' } },
-          { startFrame: 41, endFrame: 41, sequence: { $sequence: 'mergeContextTargets_42' } },
-          { startFrame: 45, endFrame: 45, sequence: { $sequence: 'mergeContextTargets_49' } },
-          { startFrame: 50, endFrame: 50, sequence: { $sequence: 'mergeContextTargets_56' } },
-          { startFrame: 54, endFrame: 54, sequence: { $sequence: 'mergeContextTargets_63' } },
-          { startFrame: 58, endFrame: 58, sequence: { $sequence: 'mergeContextTargets_70' } },
-          { startFrame: 62, endFrame: 62, sequence: { $sequence: 'mergeContextTargets_77' } },
-        ],
         actionGraph: {
           main: {
             nodes: {
@@ -5532,6 +5620,8 @@ export const laevatain: OperatorDefinition = {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'inputTarget' },
                     damageType: 'heat',
                     attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                     tags: ['normalSkill'],
@@ -5597,7 +5687,7 @@ export const laevatain: OperatorDefinition = {
                   kind: 'mergeContextTargets',
                   parameters: {
                     saveToContextKey: 'targets',
-                    sources: [{ kind: 'target', target: 'enemy' }],
+                    sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
                 next: 'forEachContextTarget_6',
@@ -5655,6 +5745,8 @@ export const laevatain: OperatorDefinition = {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'targets' },
                     damageType: 'heat',
                     attackScale: { kind: 'valueNode', nodeId: 'data_7' },
                     tags: ['normalSkill'],
@@ -5668,7 +5760,7 @@ export const laevatain: OperatorDefinition = {
                   kind: 'mergeContextTargets',
                   parameters: {
                     saveToContextKey: 'targets',
-                    sources: [{ kind: 'target', target: 'enemy' }],
+                    sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
                 next: 'dealDamage_13',
@@ -5677,6 +5769,8 @@ export const laevatain: OperatorDefinition = {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'targets' },
                     damageType: 'heat',
                     attackScale: { kind: 'valueNode', nodeId: 'data_7' },
                     tags: ['normalSkill'],
@@ -5690,7 +5784,7 @@ export const laevatain: OperatorDefinition = {
                   kind: 'mergeContextTargets',
                   parameters: {
                     saveToContextKey: 'targets',
-                    sources: [{ kind: 'target', target: 'enemy' }],
+                    sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
                 next: 'dealDamage_20',
@@ -5699,6 +5793,8 @@ export const laevatain: OperatorDefinition = {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'targets' },
                     damageType: 'heat',
                     attackScale: { kind: 'valueNode', nodeId: 'data_7' },
                     tags: ['normalSkill'],
@@ -5712,7 +5808,7 @@ export const laevatain: OperatorDefinition = {
                   kind: 'mergeContextTargets',
                   parameters: {
                     saveToContextKey: 'targets',
-                    sources: [{ kind: 'target', target: 'enemy' }],
+                    sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
                 next: 'dealDamage_27',
@@ -5721,6 +5817,8 @@ export const laevatain: OperatorDefinition = {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'targets' },
                     damageType: 'heat',
                     attackScale: { kind: 'valueNode', nodeId: 'data_7' },
                     tags: ['normalSkill'],
@@ -5734,7 +5832,7 @@ export const laevatain: OperatorDefinition = {
                   kind: 'mergeContextTargets',
                   parameters: {
                     saveToContextKey: 'targets',
-                    sources: [{ kind: 'target', target: 'enemy' }],
+                    sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
                 next: 'dealDamage_34',
@@ -5743,6 +5841,8 @@ export const laevatain: OperatorDefinition = {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'targets' },
                     damageType: 'heat',
                     attackScale: { kind: 'valueNode', nodeId: 'data_7' },
                     tags: ['normalSkill'],
@@ -5756,7 +5856,7 @@ export const laevatain: OperatorDefinition = {
                   kind: 'mergeContextTargets',
                   parameters: {
                     saveToContextKey: 'targets',
-                    sources: [{ kind: 'target', target: 'enemy' }],
+                    sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
                 next: 'dealDamage_41',
@@ -5765,6 +5865,8 @@ export const laevatain: OperatorDefinition = {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'targets' },
                     damageType: 'heat',
                     attackScale: { kind: 'valueNode', nodeId: 'data_7' },
                     tags: ['normalSkill'],
@@ -5778,7 +5880,7 @@ export const laevatain: OperatorDefinition = {
                   kind: 'mergeContextTargets',
                   parameters: {
                     saveToContextKey: 'targets',
-                    sources: [{ kind: 'target', target: 'enemy' }],
+                    sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
                 next: 'dealDamage_48',
@@ -5787,6 +5889,8 @@ export const laevatain: OperatorDefinition = {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'targets' },
                     damageType: 'heat',
                     attackScale: { kind: 'valueNode', nodeId: 'data_7' },
                     tags: ['normalSkill'],
@@ -5800,7 +5904,7 @@ export const laevatain: OperatorDefinition = {
                   kind: 'mergeContextTargets',
                   parameters: {
                     saveToContextKey: 'targets',
-                    sources: [{ kind: 'target', target: 'enemy' }],
+                    sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
                 next: 'dealDamage_55',
@@ -5809,6 +5913,8 @@ export const laevatain: OperatorDefinition = {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'targets' },
                     damageType: 'heat',
                     attackScale: { kind: 'valueNode', nodeId: 'data_7' },
                     tags: ['normalSkill'],
@@ -5822,7 +5928,7 @@ export const laevatain: OperatorDefinition = {
                   kind: 'mergeContextTargets',
                   parameters: {
                     saveToContextKey: 'targets',
-                    sources: [{ kind: 'target', target: 'enemy' }],
+                    sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
                 next: 'dealDamage_62',
@@ -5831,6 +5937,8 @@ export const laevatain: OperatorDefinition = {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'targets' },
                     damageType: 'heat',
                     attackScale: { kind: 'valueNode', nodeId: 'data_7' },
                     tags: ['normalSkill'],
@@ -5844,7 +5952,7 @@ export const laevatain: OperatorDefinition = {
                   kind: 'mergeContextTargets',
                   parameters: {
                     saveToContextKey: 'targets',
-                    sources: [{ kind: 'target', target: 'enemy' }],
+                    sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
                 next: 'dealDamage_69',
@@ -5853,6 +5961,8 @@ export const laevatain: OperatorDefinition = {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'targets' },
                     damageType: 'heat',
                     attackScale: { kind: 'valueNode', nodeId: 'data_7' },
                     tags: ['normalSkill'],
@@ -5866,7 +5976,7 @@ export const laevatain: OperatorDefinition = {
                   kind: 'mergeContextTargets',
                   parameters: {
                     saveToContextKey: 'targets',
-                    sources: [{ kind: 'target', target: 'enemy' }],
+                    sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
                 next: 'dealDamage_76',
@@ -5879,7 +5989,7 @@ export const laevatain: OperatorDefinition = {
                 type: 'boolean',
                 expression: {
                   kind: 'entityCountCompare',
-                  target: { kind: 'fixed', target: 'enemy' },
+                  target: { kind: 'context', key: 'targets' },
                   containsHittableTarget: false,
                   excludeDeadEntity: false,
                   operator: 'greaterOrEqual',
@@ -5903,7 +6013,7 @@ export const laevatain: OperatorDefinition = {
                 type: 'boolean',
                 expression: {
                   kind: 'entityCountCompare',
-                  target: { kind: 'fixed', target: 'enemy' },
+                  target: { kind: 'context', key: 'targets' },
                   containsHittableTarget: false,
                   excludeDeadEntity: false,
                   operator: 'greaterOrEqual',
@@ -5915,6 +6025,29 @@ export const laevatain: OperatorDefinition = {
           },
           macros: {},
         },
+        skillId: 'chr_0016_laevat_normal_skill_abilityentity',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 100,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: { atk_scale: 3, atk_scale_2: 0, hit_count: 0, poise: 0 },
+        scheduledSequences: [
+          { startFrame: 18, endFrame: 18, sequence: { $sequence: 'mergeContextTargets_7' } },
+          { startFrame: 25, endFrame: 25, sequence: { $sequence: 'mergeContextTargets_14' } },
+          { startFrame: 29, endFrame: 29, sequence: { $sequence: 'mergeContextTargets_21' } },
+          { startFrame: 33, endFrame: 33, sequence: { $sequence: 'mergeContextTargets_28' } },
+          { startFrame: 37, endFrame: 37, sequence: { $sequence: 'mergeContextTargets_35' } },
+          { startFrame: 41, endFrame: 41, sequence: { $sequence: 'mergeContextTargets_42' } },
+          { startFrame: 45, endFrame: 45, sequence: { $sequence: 'mergeContextTargets_49' } },
+          { startFrame: 50, endFrame: 50, sequence: { $sequence: 'mergeContextTargets_56' } },
+          { startFrame: 54, endFrame: 54, sequence: { $sequence: 'mergeContextTargets_63' } },
+          { startFrame: 58, endFrame: 58, sequence: { $sequence: 'mergeContextTargets_70' } },
+          { startFrame: 62, endFrame: 62, sequence: { $sequence: 'mergeContextTargets_77' } },
+        ],
       },
     },
   },

@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { parseGlobalBuffDumpSource } from '../src/source/globalBuffDumpSource.ts';
+import { readFileSync } from 'node:fs';
+import { parseGlobalBuffTemplateSource } from '../src/source/globalBuffTemplate.ts';
+import { compileGlobalBuffTemplate } from '../src/compiler/buffs/globalBuffProjection.ts';
 
 const dump = `MonoBehaviour Base
 \tGlobalBuffData globalBuffData
@@ -65,6 +68,31 @@ const dump = `MonoBehaviour Base
 `;
 
 describe('GlobalBuff TypeTree source', () => {
+  it('原生禁闪避 GlobalBuff 只省略队伍提示，保留全队子 Buff；其他事件动作仍阻断', () => {
+    const text = readFileSync(
+      new URL('./fixtures/global-buff-mute-evade.dump.txt', import.meta.url),
+      'utf8',
+    );
+    const parsed = parseGlobalBuffDumpSource(text, 'mute-evade');
+    expect(parsed.template).toMatchObject({
+      globalEventCount: 1,
+      presentationOnlyGlobalEventCount: 1,
+    });
+    expect(
+      compileGlobalBuffTemplate(
+        parseGlobalBuffTemplateSource(parsed.template, 'mute-evade'),
+        'mute-evade',
+      ).children,
+    ).toEqual([{ buffId: 'buff_cc_chr_mute_evade', blackboardAssignments: {} }]);
+    for (const invalid of [
+      text.replace('ShowSquadTipsAction/Data', 'DamageAction/Data'),
+      text.replace('rid = 1946034012185166589', 'rid = 123'),
+      text + '\t\t\t\t\t\tint unexpectedPayload = 1\n',
+    ])
+      expect(() => parseGlobalBuffDumpSource(invalid, 'invalid-event')).toThrow(
+        'non-empty GlobalBuff event behavior',
+      );
+  });
   it('preserves parent lifetime, stacking, children, assignments and blackboard', () => {
     expect(parseGlobalBuffDumpSource(dump, 'global.fixture').template).toMatchObject({
       id: 'global_test',

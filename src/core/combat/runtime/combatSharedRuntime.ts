@@ -125,6 +125,7 @@ export class CombatSharedRuntime {
       ultimatePresentation: this.ultimatePresentation.runtimeState,
       globalCooldowns: this.globalCooldowns.runtimeState,
       basicAttackInheritance: this.basicAttackInheritance.runtimeState,
+      reactiveOperationSources: new Map(),
       identities: {
         abilityEntities: this.abilityEntityInstanceIds.runtimeState,
         skillCasts: this.skillCastIds.runtimeState,

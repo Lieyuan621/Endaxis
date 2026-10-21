@@ -11,7 +11,6 @@ import { compilePassiveSkillSource } from '../skills/passiveSkillDefinition.ts';
 import { selectSkillBlackboardLevel } from '../skills/skillBlackboard.ts';
 import { materializePassiveBuffInstallation } from '../skills/passiveSkillInstallation.ts';
 import { compileCombatActionSequenceSource } from '../buffs/buffRuntimeProjection.ts';
-import { isPresentationOnlyActionSequence } from '../skills/skillPresentationTargets.ts';
 import { collectNativeActionNodes } from '../../source/controlFlow.ts';
 import { projectAbilityEvent } from './abilityEventProjection.ts';
 import type { CombatActionProjectionExtensionsSource } from '../combatProjectionCommon.ts';
@@ -212,13 +211,12 @@ function compileAbilityEntityPassiveSkill(
     skill.skillId !== skillId ||
     skill.passiveType !== 'AddBuff' ||
     skill.toggleBuffs.length > 0 ||
-    compiled.hasCardAttributeModifiers ||
-    skill.actionGraph.actionGroup.timelineActions.some(
-      timeline => !isPresentationOnlyActionSequence(timeline.sequence),
-    )
+    compiled.hasCardAttributeModifiers
   ) {
     throw new Error(`${sourcePath}: unsupported AbilityEntity passive SkillData program`);
   }
+  // 模板启用被动只走 Skill.Enable/Ability.Enable；不会 CastStart，不能把残留时间轴
+  // 当作启用行为，也不能因它存在而拒绝安装启动 Buff 和真正的被动事件。
   const blackboard = selectSkillBlackboardLevel(compiled.blackboard, null).values;
   const enableSteps = skill.startupBuffs.map((buff, index) => {
     const materialized = materializePassiveBuffInstallation(buff, blackboard);

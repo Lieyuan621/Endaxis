@@ -18,6 +18,8 @@ import {
   readCombatAttribute,
   removeCombatAttributeModifier,
   setCombatAttributeRawValue,
+  pushCombatAttributeRawOverride,
+  popCombatAttributeRawOverride,
 } from './combatAttributeExecution';
 export {
   ATTRIBUTE_MODIFIER_SLOTS,
@@ -98,9 +100,29 @@ export class CombatAttributeSet<Key extends string> {
     defineCombatAttribute(this.#state, attribute, rawValue, definition);
     this.#afterChange(attribute, previous);
   }
+  /** 更新其他属性的派生基础加成，保留原始值、覆盖栈及全部修正器。 */
+  setOtherAttributeBaseAddition(attribute: Key, value: number): void {
+    const definition = this.#state.definitions.get(attribute);
+    if (definition === undefined) throw new Error(`undefined derived attribute '${attribute}'`);
+    this.define(attribute, this.#state.rawValues.get(attribute)!, {
+      ...definition,
+      otherAttributeBaseAddition: value,
+    });
+  }
   setRawValue(attribute: Key, value: number): void {
     const previous = this.#beforeChange(attribute);
     setCombatAttributeRawValue(this.#state, attribute, value);
+    this.#afterChange(attribute, previous);
+  }
+  pushRawOverride(attribute: Key, value: number): number {
+    const previous = this.#beforeChange(attribute);
+    const token = pushCombatAttributeRawOverride(this.#state, attribute, value);
+    this.#afterChange(attribute, previous);
+    return token;
+  }
+  popRawOverride(attribute: Key, token: number): void {
+    const previous = this.#beforeChange(attribute);
+    popCombatAttributeRawOverride(this.#state, attribute, token);
     this.#afterChange(attribute, previous);
   }
   has(attribute: string): boolean {

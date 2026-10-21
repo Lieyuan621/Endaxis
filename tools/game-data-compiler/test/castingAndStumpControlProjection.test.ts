@@ -53,7 +53,37 @@ function createActiveSkillContext(): CombatActionProjectionContextSource {
 /** 每次叶子编译使用独立图构建器；结果中的分支引用在该图内解析。 */
 const leafContext = createActiveSkillContext;
 
-it('能力实体命中盒写入可被后续改写的目标组，不要求全技能静态身份', () => {
+it('MoveGaitAction 保留干员闪避所需约束，敌人步态不进入木桩运行时', () => {
+  const sequence = parseKnownNativeActionSequenceSource(
+    {
+      actionData: [
+        {
+          ...META,
+          $type: 'Beyond.Gameplay.Core.MoveGaitAction+Data, Gameplay.Beyond',
+          minGait: 'Walk',
+          maxGait: 'Run',
+        },
+      ],
+      onlyExecuteWhenSourceIsMainChar: false,
+      onlyExecuteWhenSourceIsGuard: false,
+    },
+    'fixture.gait',
+    {},
+  );
+  const node = sequence.actions[0]!;
+  expect(compileBuffLeafNode(node, new Set(), new Map(), leafContext()).steps).toEqual([
+    { kind: 'limitMovementGait', parameters: { min: 'Walk', max: 'Run' } },
+  ]);
+  expect(
+    compileBuffLeafNode(node, new Set(), new Map(), {
+      ...leafContext(),
+      actionOwnerTarget: 'buffOwner',
+      fixedBuffOwnerTarget: 'enemy',
+    }).steps,
+  ).toEqual([]);
+});
+
+it('能力实体友方命中盒保留宿主查询与后续按身份排除', () => {
   const action = parseKnownNativeActionLeafSource(
     {
       $type: 'Beyond.Gameplay.Core.FindTargetAction+FindTargetActionData, Gameplay.Beyond',
@@ -63,19 +93,19 @@ it('能力实体命中盒写入可被后续改写的目标组，不要求全技�
       serverActionIndex: 1,
       targetGroupKey: 'tar',
       center: 'ActionOwner',
-      centerContextKey: '',
+      centerContextKey: 'inactive-center-key',
       useCenterEntityMountPoint: false,
       centerMountPoint: 'None',
       centerToGround: false,
       selectorOwner: 'ActionOwner',
-      selectorOwnerContextKey: '',
+      selectorOwnerContextKey: 'inactive-owner-key',
       selectorData: {
         finderData: {
           $type: 'Beyond.Gameplay.Core.Selector+HitBoxFinder+Data, Gameplay.Beyond',
           checkAlive: true,
           autoSetTargetFaction: true,
           containsUnMarkable: false,
-          factionTarget: 'Anti',
+          factionTarget: 'Ally',
           targetFactionType: 0,
           targetObjectType: 'Normal',
           checkIntUnSelectableTag: true,
@@ -111,11 +141,22 @@ it('能力实体命中盒写入可被后续改写的目标组，不要求全技�
   );
   expect(result.steps).toEqual([
     {
-      kind: 'mergeContextTargets',
-      parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+      kind: 'findTargets',
+      parameters: {
+        owner: { kind: 'owner' },
+        saveToContextKey: 'tar',
+        query: {
+          kind: 'factionHitBox',
+          factionTarget: 'ally',
+          owner: { kind: 'owner' },
+          checkAlive: true,
+          containsUnmarkable: false,
+          replacePartsWithMainBodies: false,
+        },
+      },
     },
   ]);
-  expect(result.state.get('tar')).toBe('enemy');
+  expect(result.state.get('tar')).toBe('runtimeTargets');
   const exclusion = parseKnownNativeActionLeafSource(
     {
       ...META,
@@ -167,30 +208,39 @@ it('能力实体命中盒写入可被后续改写的目标组，不要求全技�
   expect(excluded.state.get('tar')).toBe('runtimeTargets');
 });
 
-it('PickTarget 读取已有敌人组，不先补写或覆盖输入组', () => {
-  const action = parseKnownNativeActionLeafSource(
-    {
-      ...META,
-      $type: 'Beyond.Gameplay.Core.PickTargetAction+Data, Gameplay.Beyond',
-      target: targetFixture('Context', undefined, 'tar'),
-      index: scalarFixture(0),
-      contextKey: 'picked',
-    },
-    'fixture.action',
-    {},
-  );
-  const result = compileBuffLeafNode(node(action), new Set(), new Map(), leafContext());
-  expect(result.steps).toEqual([
-    {
-      kind: 'pickContextTarget',
-      parameters: {
-        sourceContextKey: 'tar',
-        saveToContextKey: 'picked',
-        index: { kind: 'constant', value: 0 },
+it.each(['enemy', 'party', 'runtimeTargets', 'abilityEntity', 'spatialPoint'] as const)(
+  'PickTarget 按索引读取 %s 目标组，不先补写或覆盖输入组',
+  sourceKind => {
+    const action = parseKnownNativeActionLeafSource(
+      {
+        ...META,
+        $type: 'Beyond.Gameplay.Core.PickTargetAction+Data, Gameplay.Beyond',
+        target: targetFixture('Context', undefined, 'tar'),
+        index: scalarFixture(0),
+        contextKey: 'picked',
       },
-    },
-  ]);
-});
+      'fixture.action',
+      {},
+    );
+    const result = compileBuffLeafNode(
+      node(action),
+      new Set(),
+      new Map([['tar', sourceKind]]),
+      leafContext(),
+    );
+    expect(result.steps).toEqual([
+      {
+        kind: 'pickContextTarget',
+        parameters: {
+          sourceContextKey: 'tar',
+          saveToContextKey: 'picked',
+          index: { kind: 'constant', value: 0 },
+        },
+      },
+    ]);
+    expect(result.state.get('picked')).toBe('runtimeTargets');
+  },
+);
 
 function node(value: ReturnType<typeof parseKnownNativeActionLeafSource>) {
   return {
@@ -464,22 +514,22 @@ describe('施法输入限制与木桩物理控制投影', () => {
       {},
     );
     expect(
-      compileEventCondition(
-        node(action),
-        { ...createActiveSkillContext(), actionEnvironmentSkillCastInfoIsSourceCast: true },
-      ),
+      compileEventCondition(node(action), {
+        ...createActiveSkillContext(),
+        actionEnvironmentSkillCastInfoIsSourceCast: true,
+      }),
     ).toEqual({
       kind: 'buffIdStackCompare',
-      target: { kind: 'fixed', target: 'enemy' },
+      target: { kind: 'inputTarget' },
       compareZeroWhenTargetMissing: true,
       buffIds: ['buff_test_same_cast'],
       operator: 'less',
       value: { kind: 'constant', value: 2 },
       sameSourceSkillCast: true,
     });
-    expect(() =>
-      compileEventCondition(node(action), createActiveSkillContext()),
-    ).toThrow('Buff count requires source skill cast identity');
+    expect(() => compileEventCondition(node(action), createActiveSkillContext())).toThrow(
+      'Buff count requires source skill cast identity',
+    );
   });
 
   it('主控到能力实体 Context 的零距离条件仍保留空组失败语义', () => {
@@ -497,12 +547,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
       'fixture.action',
       {},
     );
-    expect(
-      compileEventCondition(
-        node(action),
-        createActiveSkillContext(),
-      ),
-    ).toEqual({
+    expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
       kind: 'targetDistance',
       source: { kind: 'mainCharacter' },
       target: { kind: 'context', key: 'center_entity' },
@@ -556,10 +601,10 @@ describe('施法输入限制与木桩物理控制投影', () => {
       action: { kind: 'skillHasHit' as const, sourceType: 'CheckSkillHasHit' },
     } as unknown as ReturnType<typeof parseKnownNativeActionLeafSource>;
     expect(
-      compileEventCondition(
-        node(action),
-        { ...createActiveSkillContext(), timelineRange: { startFrame: 12, endFrame: 13 } },
-      ),
+      compileEventCondition(node(action), {
+        ...createActiveSkillContext(),
+        timelineRange: { startFrame: 12, endFrame: 13 },
+      }),
     ).toEqual({ kind: 'skillHasHit' });
     expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
       kind: 'skillHasHit',
@@ -580,7 +625,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
     );
     expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
       kind: 'enemySuperArmorCompare',
-      target: { kind: 'fixed', target: 'enemy' },
+      target: { kind: 'context', key: 'tar' },
       operator: 'greater',
       value: { kind: 'constant', value: 10 },
     });
@@ -599,7 +644,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
     );
     expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
       kind: 'enemyRankIn',
-      target: { kind: 'fixed', target: 'enemy' },
+      target: { kind: 'inputTarget' },
       ranks: ['elite', 'boss'],
     });
     const contextAction = parseKnownNativeActionLeafSource(
@@ -613,26 +658,23 @@ describe('施法输入限制与木桩物理控制投影', () => {
       {},
     );
     expect(
-      compileEventCondition(
-        node(contextAction),
-        {
-          ...createActiveSkillContext(),
-          staticEnemyTargetGroupKeys: new Set(['smart_target']),
-        },
-      ),
+      compileEventCondition(node(contextAction), {
+        ...createActiveSkillContext(),
+        staticEnemyTargetGroupKeys: new Set(['smart_target']),
+      }),
     ).toEqual({
       kind: 'enemyRankIn',
-      target: { kind: 'fixed', target: 'enemy' },
+      target: { kind: 'context', key: 'smart_target' },
       ranks: ['elite'],
     });
     expect(
-      compileEventCondition(
-        node(action),
-        { ...createActiveSkillContext(), actionTargetTarget: 'caster' },
-      ),
+      compileEventCondition(node(action), {
+        ...createActiveSkillContext(),
+        actionTargetTarget: 'caster',
+      }),
     ).toEqual({
       kind: 'enemyRankIn',
-      target: { kind: 'fixed', target: 'caster' },
+      target: { kind: 'inputTarget' },
       ranks: ['elite', 'boss'],
     });
   });
@@ -671,7 +713,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
         {
           kind: 'setGlobalCooldown',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             markerId: 'buff_chr_0031_mifu_shield',
             durationSeconds: { kind: 'constant', value: 1 },
           },
@@ -695,12 +737,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
       'fixture.action',
       {},
     );
-    expect(
-      compileEventCondition(
-        node(action),
-        createActiveSkillContext(),
-      ),
-    ).toEqual({
+    expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
       kind: 'timedMarkerPresent',
       returnTrueIfNotExists: true,
       target: { kind: 'context', key: 'water_group' },
@@ -1086,7 +1123,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
     );
     expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
       kind: 'targetsEqual',
-      first: { kind: 'fixed', target: 'enemy' },
+      first: { kind: 'inputTarget' },
       second: { kind: 'mainTarget', owner: { kind: 'owner' } },
     });
   });
@@ -1104,7 +1141,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
     );
     expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
       kind: 'targetsEqual',
-      first: { kind: 'fixed', target: 'enemy' },
+      first: { kind: 'inputTarget' },
       second: { kind: 'battleMainTarget' },
     });
   });
@@ -1121,14 +1158,11 @@ describe('施法输入限制与木桩物理控制投影', () => {
       {},
     );
     expect(
-      compileEventCondition(
-        node(action),
-        {
-          ...createActiveSkillContext(),
-          actionOwnerTarget: 'buffOwner',
-          fixedBuffOwnerTarget: 'caster',
-        },
-      ),
+      compileEventCondition(node(action), {
+        ...createActiveSkillContext(),
+        actionOwnerTarget: 'buffOwner',
+        fixedBuffOwnerTarget: 'caster',
+      }),
     ).toEqual({
       kind: 'targetsEqual',
       first: { kind: 'owner' },
@@ -1155,14 +1189,11 @@ describe('施法输入限制与木桩物理控制投影', () => {
       {},
     );
     expect(
-      compileEventCondition(
-        node(action),
-        {
-          ...createActiveSkillContext(),
-          actionTargetTarget: 'eventSource',
-          actionSourceTarget: 'buffSource',
-        },
-      ),
+      compileEventCondition(node(action), {
+        ...createActiveSkillContext(),
+        actionTargetTarget: 'eventSource',
+        actionSourceTarget: 'buffSource',
+      }),
     ).toEqual({
       kind: 'targetsEqual',
       first: { kind: 'abilitySystemSource', owner: { kind: 'source' } },
@@ -1182,14 +1213,14 @@ describe('施法输入限制与木桩物理控制投影', () => {
       {},
     );
     expect(
-      compileEventCondition(
-        node(action),
-        { ...createActiveSkillContext(), staticEnemyTargetGroupKeys: new Set(['smart_target']) },
-      ),
+      compileEventCondition(node(action), {
+        ...createActiveSkillContext(),
+        staticEnemyTargetGroupKeys: new Set(['smart_target']),
+      }),
     ).toEqual({
       kind: 'targetsEqual',
-      first: { kind: 'fixed', target: 'enemy' },
-      second: { kind: 'fixed', target: 'enemy' },
+      first: { kind: 'inputTarget' },
+      second: { kind: 'context', key: 'smart_target' },
     });
   });
 
@@ -1271,8 +1302,8 @@ describe('施法输入限制与木桩物理控制投影', () => {
     );
     expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
       kind: 'targetContains',
-      parent: { kind: 'fixed', target: 'enemy' },
-      child: { kind: 'fixed', target: 'enemy' },
+      parent: { kind: 'context', key: 'tar' },
+      child: { kind: 'inputTarget' },
     });
   });
 
@@ -1288,14 +1319,14 @@ describe('施法输入限制与木桩物理控制投影', () => {
       {},
     );
     expect(
-      compileEventCondition(
-        node(action),
-        { ...createActiveSkillContext(), staticEnemyTargetGroupKeys: new Set(['MainTar']) },
-      ),
+      compileEventCondition(node(action), {
+        ...createActiveSkillContext(),
+        staticEnemyTargetGroupKeys: new Set(['MainTar']),
+      }),
     ).toEqual({
       kind: 'targetContains',
-      parent: { kind: 'fixed', target: 'enemy' },
-      child: { kind: 'fixed', target: 'enemy' },
+      parent: { kind: 'inputTarget' },
+      child: { kind: 'context', key: 'MainTar' },
     });
   });
 
@@ -1316,7 +1347,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
     );
     expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
       kind: 'entityCountCompare',
-      target: { kind: 'fixed', target: 'enemy' },
+      target: { kind: 'inputTarget' },
       containsHittableTarget: false,
       excludeDeadEntity: true,
       operator: 'greaterOrEqual',
@@ -1325,6 +1356,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
   });
 
   it.each([
+    ['当前主目标', targetFixture('MainTarget'), new Map()],
     ['输入目标的序列化残留组名', targetFixture('Target', undefined, 'stale_target'), new Map()],
     [
       '已解析空间点',
@@ -1451,7 +1483,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
         {
           kind: 'adjustSkillCooldown',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             skill: { kind: 'type', skillType: 'comboSkill' },
             operation: 'set',
             basis: 'absoluteSeconds',
@@ -1535,12 +1567,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
       {},
     );
 
-    expect(
-      compileEventCondition(
-        node(action),
-        createActiveSkillContext(),
-      ),
-    ).toEqual({
+    expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
       kind: 'entityTagMatch',
       target: { kind: 'context', key: 'smart_target' },
       tagQueryType: 'hasAny',
@@ -1562,12 +1589,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
       {},
     );
 
-    expect(
-      compileEventCondition(
-        node(action),
-        createActiveSkillContext(),
-      ),
-    ).toEqual({
+    expect(compileEventCondition(node(action), createActiveSkillContext())).toEqual({
       kind: 'healthCompare',
       target: { kind: 'context', key: 'CureTarget' },
       valueType: 'ratio',
@@ -1576,7 +1598,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
     });
   });
 
-  it('生命条件把已证明为唯一敌人的命名目标折叠到木桩账本', () => {
+  it('生命条件保留命名目标，静态证明不替换运行时查询', () => {
     const action = parseKnownNativeActionLeafSource(
       {
         ...META,
@@ -1591,13 +1613,13 @@ describe('施法输入限制与木桩物理控制投影', () => {
     );
 
     expect(
-      compileEventCondition(
-        node(action),
-        { ...createActiveSkillContext(), staticEnemyTargetGroupKeys: new Set(['maintar']) },
-      ),
+      compileEventCondition(node(action), {
+        ...createActiveSkillContext(),
+        staticEnemyTargetGroupKeys: new Set(['maintar']),
+      }),
     ).toEqual({
       kind: 'healthCompare',
-      target: { kind: 'fixed', target: 'enemy' },
+      target: { kind: 'context', key: 'maintar' },
       valueType: 'ratio',
       operator: 'greater',
       value: { kind: 'constant', value: 0 },
@@ -1775,7 +1797,8 @@ describe('施法输入限制与木桩物理控制投影', () => {
         {
           kind: 'heal',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
+            healer: { kind: 'source' },
             alwaysNext: true,
             tags: [],
             attribute: 'intellect',
@@ -1832,8 +1855,8 @@ describe('施法输入限制与木桩物理控制投影', () => {
         {
           kind: 'heal',
           parameters: {
-            target: 'enemy',
-            source: 'buffOwner',
+            target: { kind: 'owner' },
+            healer: { kind: 'owner' },
             alwaysNext: true,
             tags: [],
             attribute: 'maxHealth',
@@ -1885,7 +1908,8 @@ describe('施法输入限制与木桩物理控制投影', () => {
         {
           kind: 'heal',
           parameters: {
-            target: 'buffOwner',
+            target: { kind: 'owner' },
+            healer: { kind: 'source' },
             alwaysNext: true,
             tags: [],
             attribute: 'intellect',
@@ -2053,6 +2077,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
             kind: 'spawnAbilityEntity',
             parameters: {
               bornAt: { kind: 'source' },
+              source: { kind: 'owner' },
               abilityEntityId: 'abilityentity_fixture',
               childSkillId: 'fixture_skill',
               inheritActionBlackboard: true,
@@ -2182,7 +2207,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
         steps: [
           {
             kind: 'spawnAbilityEntity',
-            parameters: { source: 'currentAbilityEntity', dieWhenSourceDies: false },
+            parameters: { source: { kind: 'owner' }, dieWhenSourceDies: false },
           },
         ],
       });
@@ -2231,7 +2256,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
         {
           kind: 'adjustSkillCooldown',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             skill: { kind: 'id', skillId: 'chr_0022_bounda_combo_skill' },
             operation: 'reduce',
             basis: 'absoluteSeconds',
@@ -2301,6 +2326,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_fixture_owner',
             childSkillId: 'fixture_skill',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
           },
@@ -2339,6 +2365,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_fixture_owner',
             childSkillId: 'fixture_skill',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
           },
@@ -2360,6 +2387,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_fixture_owner',
             childSkillId: 'fixture_skill',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             finishByAction: true,
@@ -2390,6 +2418,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
             bornAt: { kind: 'context', key: 'enemy_anchor' },
             abilityEntityId: 'abilityentity_fixture_owner',
             childSkillId: 'fixture_skill',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
           },
@@ -2451,6 +2480,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_fixture_owner',
             childSkillId: 'fixture_skill',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             target: 'enemy',

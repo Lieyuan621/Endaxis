@@ -136,28 +136,24 @@ export function collectCompiledBuffApplications(
     }
     if (item === null || typeof item !== 'object') return;
     const record = item as Record<string, unknown>;
-    if (
-      record.kind === 'applyPhysicalInfliction' &&
-      (record.parameters as Record<string, unknown>).type === 'knockDown'
-    ) {
-      const parameters = record.parameters as Record<string, unknown>;
-      if (parameters.targetFilter !== 'skipAll') {
-        // 原生根动作的隐式安装仍是依赖，不能在从来源图转到正式程序时丢失。
-        applications.push({ buffId: PHYSICAL_INFLICTION_BUFFS.knockDown, target: 'enemy' });
-        if (!parameters.force)
-          applications.push({ buffId: PHYSICAL_NO_GUARD_BUFF, target: 'enemy' });
-      }
-    }
-    if (
-      record.kind === 'applyPhysicalInfliction' &&
-      (record.parameters as Record<string, unknown>).type !== 'knockDown'
-    ) {
+    if (record.kind === 'applyPhysicalInfliction') {
       const parameters = record.parameters as Record<string, unknown>;
       const type = parameters.type;
-      if (type !== 'fracture' && type !== 'crush' && type !== 'airborne')
+      if (type !== 'fracture' && type !== 'crush' && type !== 'airborne' && type !== 'knockDown')
         throw new Error('compiled physical infliction step has invalid type');
-      applications.push({ buffId: PHYSICAL_NO_GUARD_BUFF, target: 'enemy' });
-      applications.push({ buffId: PHYSICAL_INFLICTION_BUFFS[type], target: 'enemy' });
+      const kinds = (parameters as {
+        readonly [COMPILED_BUFF_TARGET_KINDS]?: { target: string; source?: string };
+      })[COMPILED_BUFF_TARGET_KINDS];
+      const query = parameters.target as { kind?: string; target?: string };
+      const target = kinds?.target ?? (query.kind === 'fixed' ? query.target : 'unknown') ?? 'unknown';
+      const source = kinds?.source;
+      const binding = { target, ...(source === undefined ? {} : { source }) };
+      const controlled = type === 'airborne' || type === 'knockDown';
+      if (!(controlled && parameters.targetFilter === 'skipAll')) {
+        applications.push({ buffId: PHYSICAL_INFLICTION_BUFFS[type], ...binding });
+        if (!(controlled && parameters.force))
+          applications.push({ buffId: PHYSICAL_NO_GUARD_BUFF, ...binding });
+      }
     }
     if (record.kind === 'forceSpellStatus') {
       const parameters = record.parameters as {

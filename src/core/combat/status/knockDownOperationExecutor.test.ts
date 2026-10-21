@@ -1,3 +1,5 @@
+import { TargetContextOperationExecutor } from '../abilities/targetContextOperationExecutor';
+import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
 import { numberInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it, vi } from 'vitest';
 import type { CompiledStepParameters } from '../../compiler/compiledGraphData';
@@ -30,7 +32,8 @@ const step = (
   kind: 'applyPhysicalInfliction' as const,
   parameters: {
     type: 'knockDown' as const,
-    target: 'enemy' as const,
+    target: { kind: 'fixed' as const, target: 'enemy' as const },
+    source: { kind: 'fixed' as const, target: 'caster' as const },
     duration: { kind: 'constant' as const, value: 1.5 },
     force: false,
     isExtra: false,
@@ -94,12 +97,12 @@ function setup() {
     prepare: vi.fn(),
     end: vi.fn(),
   };
+  const queries = new TargetContextOperationExecutor('ember', delegate);
   const executor = new KnockDownOperationExecutor({
-    sourceId: 'ember',
-    target,
-    isTargetAlive: () => alive,
+    queryTargets: queries.queryTargets.bind(queries),
+    resolveTarget: selected =>
+      selected.kind === 'enemy' ? { target, isTargetAlive: () => alive, getControl } : undefined,
     predefine,
-    getControl,
     readSourceDurationAddition: readAddition,
     resolveBuffDefinition: () => undefined,
     emit: (event, payload) => {
@@ -345,12 +348,81 @@ describe('普通根倒地：复用真实 Buff 目标与控制标签', () => {
     },
   );
 
-  it('缺来源直接 false，Always 也不能覆盖；未绑定上下文或额外异常明确拒绝', () => {
+  it('缺来源直接 false，Always 不能覆盖；额外标记只传入异常 Buff', () => {
     const s = setup();
-    const missing = new KnockDownOperationExecutor({ ...s.executor.dependencies, sourceId: null });
+    const missing = new KnockDownOperationExecutor({
+      ...s.executor.dependencies,
+      queryTargets: () => [],
+    });
     expect(missing.execute(step(), s.context)).toBe(false);
-    expect(() => s.executor.execute(step())).toThrow('skill runtime context');
-    expect(() => s.executor.execute(step({ isExtra: true }), s.context)).toThrow('BuffAddContext');
+    expect(() => s.executor.execute(step())).toThrow('action context');
+    const apply = vi.spyOn(s.target, 'apply');
+    expect(s.executor.execute(step({ isExtra: true }), s.context)).toBe(true);
+    expect(s.executor.execute(step({ isExtra: true }), s.context)).toBe(true);
+    expect(apply.mock.calls.map(([request]) => [request.buffId, request.isExtra])).toEqual([
+      [NO_GUARD, false],
+      [DOWN_BUFF, true],
+    ]);
+  });
+
+  it('按查询绑定多个控制实体，并对所有接收者累计成功和打断结果', () => {
+    const s = setup();
+    s.container.addEntityTags([INTERRUPTED_TAG, 'Immune/KnockDown']);
+    const container = new CombatBuffContainer('ability-entity:2', new CombatAttributeSet<string>());
+    const target = new BuffDefinitionOperationTarget(container, {
+      get: id => ({ id, stackingType: 'refresh', durationSeconds: 9 }),
+    });
+    const control = new OrdinaryKnockDownRuntime(
+      container,
+      s.executor.dependencies.predefine,
+      runtime => runtime.exit(),
+    );
+    const targetContext = new RuntimeTargetContext();
+    const events: Array<[string, string]> = [];
+    const durationSources: string[] = [];
+    const executor = new KnockDownOperationExecutor({
+      ...s.executor.dependencies,
+      resolveTarget: selected =>
+        selected.kind === 'enemy'
+          ? s.executor.dependencies.resolveTarget(selected)
+          : { target, isTargetAlive: () => true, getControl: () => control },
+      readSourceDurationAddition: sourceId => {
+        durationSources.push(sourceId);
+        return 0;
+      },
+      emit: (event, payload) => {
+        if (event === 'beforeOutputPhysicalInfliction')
+          events.push([payload.sourceId, payload.targetId]);
+      },
+    });
+    const action = step({
+      source: { kind: 'context', key: 'sources' },
+      target: { kind: 'context', key: 'receivers' },
+      force: true,
+      returnWhen: 'successAndInterrupted',
+    });
+    const context = { ...s.context, targetContext };
+    targetContext.set('receivers', [{ kind: 'enemy' }, { kind: 'abilityEntity', instanceId: 2 }]);
+    targetContext.set('sources', [
+      { kind: 'spatialPoint', pointId: 1 },
+      { kind: 'operator', operatorId: 'selected-source' },
+    ]);
+    expect(executor.execute(action, context)).toBe(false);
+    expect(events).toHaveLength(0);
+    targetContext.set('sources', [
+      { kind: 'operator', operatorId: 'selected-source' },
+      { kind: 'operator', operatorId: 'ignored-source' },
+    ]);
+    expect(executor.execute(action, context)).toBe(true);
+    expect(events).toEqual([
+      ['selected-source', 'enemy'],
+      ['selected-source', 'ability-entity:2'],
+    ]);
+    expect(durationSources).toEqual(['selected-source']);
+    targetContext.set('receivers', []);
+    expect(executor.execute(step({ ...action.parameters, returnWhen: 'always' }), context)).toBe(
+      true,
+    );
   });
 
   it('不制造弱点打断；已有标签只消费一次，成功优先于仅打断', () => {

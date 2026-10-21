@@ -175,6 +175,8 @@ describe('compileScenarioRuntimeAssembly', () => {
       ...settings,
       environment: { ...settings.environment, createOperationExecutor },
     });
+    expect(compiled.squadSlotCount).toBe(4);
+    expect(compiled.operators).toHaveLength(1);
     const operator = compiled.operators[0]!;
     expect(operator.skills).toEqual([]);
     expect(compiled.inputs).toEqual([]);
@@ -942,8 +944,8 @@ it('无干员总图时，完整运行时使用独立技能和声明式附着 Buf
     },
     environment: {
       ...base.environment,
-      createOperatorBuffRuntime: ownerId =>
-        ({
+      createOperatorBuffRuntime: ownerId => {
+        return {
           ownerId,
           advanceFrame: () => undefined,
           apply: buff => {
@@ -966,7 +968,8 @@ it('无干员总图时，完整运行时使用独立技能和声明式附着 Buf
           matchesEntityTags: () => false,
           findFirstByTags: () => undefined,
           finishByTags: () => 0,
-        }) satisfies OperatorBuffRuntime,
+        } satisfies OperatorBuffRuntime;
+      },
     },
   });
   const sequence = compiled.operators[0]!.skillCasts![0]!.program.timelineActions[0]!.sequence;

@@ -1,3 +1,4 @@
+import { inheritCombatOperationContext } from './inheritCombatOperationContext';
 /** 修正宿主共用的同步动作调用。临时计算包只在调用期间绑定，不进入切面。 */
 import type { ResolvedActionSequence } from '../../compiler/combatProgram';
 import type { CombatOperationContext } from '../skills/skillRuntime';
@@ -19,14 +20,14 @@ export function createModifierConditionRuntime<Input>(
   },
   state?: ActionSequenceState,
 ): ModifierConditionRuntime<Input> {
-  const context: { -readonly [K in keyof CombatOperationContext]: CombatOperationContext[K] } = {
-    ...runtime.context,
-    event: undefined,
-    eventSkillCastInfo: undefined,
-    actionInputTarget: undefined,
-    currentTarget: undefined,
-    modifierContext: undefined,
-  };
+  const context: { -readonly [K in keyof CombatOperationContext]: CombatOperationContext[K] } =
+    inheritCombatOperationContext(runtime.context, {
+      event: undefined,
+      eventSkillCastInfo: undefined,
+      actionInputTarget: undefined,
+      currentTarget: undefined,
+      modifierContext: undefined,
+    });
   const action = runtime.createSequence(sequence, context, state);
   return {
     runtimeState: action.runtimeState,

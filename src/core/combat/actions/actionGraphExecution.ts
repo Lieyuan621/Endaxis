@@ -1,4 +1,5 @@
-import type { ActionTargetQuery } from '../../../../packages/game-data-contract/src/conditions';
+import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
+
 import type { ResolvedCombatStepParameters } from '../../compiler/combatProgram';
 import type {
   CompiledCondition,
@@ -80,7 +81,10 @@ export interface ActionGraphExecutionHost {
   };
   readonly frame?: () => number;
   readonly inputTarget?: RuntimeTargetRef;
-  selectTargets?(selection: ActionTargetQuery, input: RuntimeTargetRef | null): RuntimeTargetGroup;
+  selectTargets?(
+    selection: CompiledTargetQuery,
+    input: RuntimeTargetRef | null,
+  ): RuntimeTargetGroup;
   readonly requestTimelineJump: ((frame: number) => void) | undefined;
   readonly executionPolicy: SequenceExecutionState;
   readonly trace?: <T>(

@@ -1,3 +1,7 @@
+export {
+  BUFF_FINISH_REASONS,
+  type BuffFinishReason,
+} from '../../../../packages/game-data-contract/src/conditions';
 /** 跨状态层共享的数据节点、稳定身份和修正项；不引用执行实现或上层状态。 */
 import type { AbilityEvent } from '../../../../packages/game-data-contract/src/abilityEvents';
 import type {
@@ -227,10 +231,20 @@ export interface CombatAttributeState<Key extends string> {
   readonly rawValues: Map<Key, number>;
   readonly definitions: Map<Key, CombatAttributeDefinition>;
   readonly modifiers: CombatAttributeModifier<Key>[];
+  readonly rawOverrides: Map<Key, { token: number; value: number }[]>;
+  readonly rawBeneathOverrides: Map<Key, number>;
+  nextRawOverrideToken: number;
 }
 
 export function createCombatAttributeState<Key extends string>(): CombatAttributeState<Key> {
-  return { rawValues: new Map(), definitions: new Map(), modifiers: [] };
+  return {
+    rawValues: new Map(),
+    definitions: new Map(),
+    modifiers: [],
+    rawOverrides: new Map(),
+    rawBeneathOverrides: new Map(),
+    nextRawOverrideToken: 1,
+  };
 }
 
 export interface DamageModifierState {
@@ -294,17 +308,6 @@ export interface SharedSpRecoveryModifierState {
   readonly modifiers: SharedSpRecoveryModifier[];
 }
 
-export const BUFF_FINISH_REASONS = [
-  'lifetime',
-  'ignite',
-  'early',
-  'dispelled',
-  'absorbed',
-  'other',
-] as const;
-
-/** Buff 结束时记录并传给生命周期行为的原因。 */
-export type BuffFinishReason = (typeof BUFF_FINISH_REASONS)[number];
 /**
  * 描述一次技能释放在战斗运行时中的来源身份。
  * 该值只在单场模拟内流转并由 Buff 等实例复制，不属于项目存档或编辑器对象身份。

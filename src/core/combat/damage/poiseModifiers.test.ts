@@ -5,11 +5,45 @@ import { EventContextConditionExecutor } from '../events/eventContextConditionEx
 import { OperatorControlConditionExecutor } from '../skills/operatorControlConditionExecutor';
 import type { PoiseModifierConditionInput } from './poiseModifiers';
 import { describe, expect, it } from 'vitest';
-import { CombatAttributeSet } from '../attributes/combatAttributes';
+import {
+  CombatAttributeSet,
+  attributeModifierValues,
+  createCombatAttributeModifier,
+} from '../attributes/combatAttributes';
+import { ATTRIBUTE_MODIFIER_SOURCES } from '../state/foundationState';
 import { CombatBuffContainer } from '../buffs/combatBuffs';
 import { PoiseCalculationContext } from './poiseModifiers';
 
 describe('poise modifiers', () => {
+  it('即时修正使用属性快照和原生公式槽，零最终乘区不被后续加算穿透', () => {
+    const output = new CombatAttributeSet<string>();
+    const taken = new CombatAttributeSet<string>();
+    output.define('PoiseDamageOutputScalar', 1, {});
+    taken.define('PoiseDamageTakenScalar', 1, {});
+    const permanent = createCombatAttributeModifier(
+      'PoiseDamageTakenScalar',
+      attributeModifierValues('finalMultiplier', 2),
+      ATTRIBUTE_MODIFIER_SOURCES.all,
+      'runtime',
+    );
+    taken.addModifier(permanent);
+    const context = new PoiseCalculationContext('operator', 'enemy', [], [], 1, 1, {
+      output,
+      taken,
+    });
+    taken.removeModifier(permanent);
+    taken.setRawValue('PoiseDamageTakenScalar', 4);
+    context.modifyScalar('defender', 'baseAddition', 0.5);
+    expect(context.takenMultiplier).toBe(3);
+    context.modifyScalar('defender', 'finalMultiplier', 0);
+    context.modifyScalar('defender', 'baseAddition', 1);
+    expect(context.takenMultiplier).toBe(0);
+    expect(context.outputMultiplier).toBe(1);
+    expect(taken.get('PoiseDamageTakenScalar')).toBe(4);
+    const next = new PoiseCalculationContext('operator', 'enemy', [], [], 1, 1, { output, taken });
+    expect(next.takenMultiplier).toBe(4);
+  });
+
   it('失衡条件同时检查主控、技能标签和伤害特征，结束后不再生效', () => {
     let controlled = true;
     const buffs = new CombatBuffContainer('operator', new CombatAttributeSet());
@@ -86,7 +120,7 @@ describe('poise modifiers', () => {
                 kind: 'modifyPoiseScalar',
                 timing: 'beforeCalculation',
                 side: 'attacker',
-                addition: { blackboardKey: 'poise_up' },
+                values: { slot: 'baseAddition', value: { blackboardKey: 'poise_up' } },
               },
             ],
           },

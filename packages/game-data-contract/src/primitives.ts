@@ -349,11 +349,6 @@ export const TIMED_MARKER_TARGETS = [
 /** 定时标记还可明确落到触发当前响应的事件目标。 */
 export type TimedMarkerTarget = (typeof TIMED_MARKER_TARGETS)[number];
 
-/** 全局冷却按角色身份索引；Buff 的持有者与来源在执行时解析，不等同于施法者。 */
-export const GLOBAL_COOLDOWN_TARGETS = ['caster', 'buffOwner', 'buffSource'] as const;
-/** 全局冷却记录可以归属的一种对象。 */
-export type GlobalCooldownTarget = (typeof GLOBAL_COOLDOWN_TARGETS)[number];
-
 /** 全局时间膨胀可以排除的对象。 */
 export const TIME_DILATION_IGNORE_TARGETS = [...COMBAT_TARGETS, 'controlled'] as const;
 
@@ -463,33 +458,6 @@ export const DAMAGE_CALCULATIONS = [
 
 /** 命中进入标准或破防专用公式前处理的计算路径。 */
 export type DamageCalculation = (typeof DAMAGE_CALCULATIONS)[number];
-
-/** 治疗动作支持的目标选择方式。 */
-export const HEAL_TARGETS = [
-  /** 当前敌人目标。 */
-  'enemy',
-  /** 当前施法者。 */
-  'caster',
-  /** 当前 Buff 的来源。 */
-  'buffSource',
-  /** 当前 Buff 的持有者。 */
-  'buffOwner',
-  /** 当前主控干员。 */
-  'controlledOperator',
-  /** 全队生命比例最低的干员。 */
-  'lowestHealthRatioOperator',
-  /** 除当前主控外生命比例最低的干员。 */
-  'lowestHealthRatioOperatorExceptControlled',
-  /** 当前动作环境中绑定的目标。 */
-  'contextTarget',
-  /** `forEachContextTarget` 正在迭代的对象。 */
-  'currentTarget',
-  /** 本次技能施放输入中保存的目标。 */
-  'actionInputTarget',
-] as const;
-
-/** 当前原生治疗样本能够严格归约的队伍目标身份。 */
-export type HealTarget = (typeof HEAL_TARGETS)[number];
 
 /** 技力增加的结算种类。 */
 export const SP_GAIN_KINDS = [

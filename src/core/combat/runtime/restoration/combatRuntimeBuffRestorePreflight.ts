@@ -103,7 +103,11 @@ function collectRequiredActionSequenceReferences(
         collectRequiredActionSequenceReferences(influence.enter, references);
         collectRequiredActionSequenceReferences(influence.exit, references);
       }
-    } else if (data.kind === 'graphTargets' || data.kind === 'graphOnce') {
+    } else if (
+      data.kind === 'graphTargets' ||
+      data.kind === 'graphOnce' ||
+      data.kind === 'healthFloor'
+    ) {
       collectRequiredActionSequenceReferences(data.body, references);
     } else if (data.kind === 'repeat') {
       collectRequiredActionSequenceReferences(data.repetition.body, references);

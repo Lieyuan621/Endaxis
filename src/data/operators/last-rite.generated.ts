@@ -11,6 +11,13 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const lastRiteChr_0026_lastrite_attack1ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_2: {
         action: {
           kind: 'changeResource',
@@ -66,6 +73,8 @@ export const lastRiteChr_0026_lastrite_attack1ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack'],
@@ -73,7 +82,14 @@ export const lastRiteChr_0026_lastrite_attack1ActionGraph = {
         },
         next: 'ifElse_6',
       },
-      reachSkillOperableBoundary_8: {
+      overrideBasicAttackMapping_8: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0026_lastrite_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_9: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0026_lastrite_attack2'] },
@@ -98,6 +114,7 @@ export const lastRiteChr_0026_lastrite_attack1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const lastRiteChr_0026_lastrite_attack1: SkillDefinition = {
+  actionGraph: lastRiteChr_0026_lastrite_attack1ActionGraph,
   key: 'chr_0026_lastrite_attack1',
   element: 'cryo',
   blackboard: {
@@ -108,33 +125,29 @@ export const lastRiteChr_0026_lastrite_attack1: SkillDefinition = {
   naturalDurationFrames: 171,
   exclusiveFrame: 25,
   offsetRecordFrame: 12,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 35,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0026_lastrite_attack2',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 20, endFrame: 35, skillIds: ['chr_0026_lastrite_attack2'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 12, endFrame: 13, sequence: { $sequence: 'dealDamage_7' } },
-    { startFrame: 20, endFrame: 35, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
+    { startFrame: 0, endFrame: 35, sequence: { $sequence: 'overrideBasicAttackMapping_8' } },
+    { startFrame: 20, endFrame: 35, sequence: { $sequence: 'reachSkillOperableBoundary_9' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0026_lastrite_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: lastRiteChr_0026_lastrite_attack1ActionGraph,
 };
 
 export const lastRiteChr_0026_lastrite_attack2ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -189,6 +202,8 @@ export const lastRiteChr_0026_lastrite_attack2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack'],
@@ -196,7 +211,14 @@ export const lastRiteChr_0026_lastrite_attack2ActionGraph = {
         },
         next: 'ifElse_7',
       },
-      reachSkillOperableBoundary_15: {
+      overrideBasicAttackMapping_15: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0026_lastrite_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_16: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0026_lastrite_attack3'] },
@@ -221,6 +243,7 @@ export const lastRiteChr_0026_lastrite_attack2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const lastRiteChr_0026_lastrite_attack2: SkillDefinition = {
+  actionGraph: lastRiteChr_0026_lastrite_attack2ActionGraph,
   key: 'chr_0026_lastrite_attack2',
   element: 'cryo',
   blackboard: {
@@ -231,34 +254,31 @@ export const lastRiteChr_0026_lastrite_attack2: SkillDefinition = {
   naturalDurationFrames: 175,
   exclusiveFrame: 34,
   offsetRecordFrame: 10,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 44,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0026_lastrite_attack3',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 29, endFrame: 44, skillIds: ['chr_0026_lastrite_attack3'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 24, endFrame: 25, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 10, endFrame: 11, sequence: { $sequence: 'dealDamage_8' } },
     { startFrame: 24, endFrame: 25, sequence: { $sequence: 'dealDamage_8' } },
-    { startFrame: 29, endFrame: 44, sequence: { $sequence: 'reachSkillOperableBoundary_15' } },
+    { startFrame: 0, endFrame: 44, sequence: { $sequence: 'overrideBasicAttackMapping_15' } },
+    { startFrame: 29, endFrame: 44, sequence: { $sequence: 'reachSkillOperableBoundary_16' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0026_lastrite_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: lastRiteChr_0026_lastrite_attack2ActionGraph,
 };
 
 export const lastRiteChr_0026_lastrite_attack3ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -313,6 +333,8 @@ export const lastRiteChr_0026_lastrite_attack3ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack'],
@@ -324,6 +346,8 @@ export const lastRiteChr_0026_lastrite_attack3ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack'],
@@ -406,7 +430,14 @@ export const lastRiteChr_0026_lastrite_attack3ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_14: {
+      overrideBasicAttackMapping_14: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0026_lastrite_attack4'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_15: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0026_lastrite_attack4'] },
@@ -439,6 +470,7 @@ export const lastRiteChr_0026_lastrite_attack3ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const lastRiteChr_0026_lastrite_attack3: SkillDefinition = {
+  actionGraph: lastRiteChr_0026_lastrite_attack3ActionGraph,
   key: 'chr_0026_lastrite_attack3',
   element: 'cryo',
   blackboard: {
@@ -449,35 +481,32 @@ export const lastRiteChr_0026_lastrite_attack3: SkillDefinition = {
   naturalDurationFrames: 230,
   exclusiveFrame: 47,
   offsetRecordFrame: 29,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 48,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0026_lastrite_attack4',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 36, endFrame: 48, skillIds: ['chr_0026_lastrite_attack4'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 26, endFrame: 27, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 9, endFrame: 10, sequence: { $sequence: 'dealDamage_8' } },
     { startFrame: 27, endFrame: 28, sequence: { $sequence: 'dealDamage_9' } },
     { startFrame: 26, endFrame: 28, sequence: { $sequence: 'ifElse_13' } },
-    { startFrame: 36, endFrame: 48, sequence: { $sequence: 'reachSkillOperableBoundary_14' } },
+    { startFrame: 0, endFrame: 48, sequence: { $sequence: 'overrideBasicAttackMapping_14' } },
+    { startFrame: 36, endFrame: 48, sequence: { $sequence: 'reachSkillOperableBoundary_15' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0026_lastrite_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: lastRiteChr_0026_lastrite_attack3ActionGraph,
 };
 
 export const lastRiteChr_0026_lastrite_attack4ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_9: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_10: {
         action: {
           kind: 'changeResource',
@@ -517,6 +546,8 @@ export const lastRiteChr_0026_lastrite_attack4ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
@@ -592,7 +623,14 @@ export const lastRiteChr_0026_lastrite_attack4ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_19: {
+      overrideBasicAttackMapping_19: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0026_lastrite_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_20: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0026_lastrite_attack1'] },
@@ -626,6 +664,7 @@ export const lastRiteChr_0026_lastrite_attack4ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const lastRiteChr_0026_lastrite_attack4: SkillDefinition = {
+  actionGraph: lastRiteChr_0026_lastrite_attack4ActionGraph,
   key: 'chr_0026_lastrite_attack4',
   element: 'cryo',
   blackboard: {
@@ -637,29 +676,18 @@ export const lastRiteChr_0026_lastrite_attack4: SkillDefinition = {
   naturalDurationFrames: 182,
   exclusiveFrame: 54,
   offsetRecordFrame: 21,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 54,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0026_lastrite_attack1',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 46, endFrame: 54, skillIds: ['chr_0026_lastrite_attack1'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 21, endFrame: 22, sequence: { $sequence: 'mergeContextTargets_9' } },
     { startFrame: 21, endFrame: 22, sequence: { $sequence: 'dealDamage_14' } },
     { startFrame: 22, endFrame: 23, sequence: { $sequence: 'ifElse_18' } },
-    { startFrame: 46, endFrame: 54, sequence: { $sequence: 'reachSkillOperableBoundary_19' } },
+    { startFrame: 0, endFrame: 54, sequence: { $sequence: 'overrideBasicAttackMapping_19' } },
+    { startFrame: 46, endFrame: 54, sequence: { $sequence: 'reachSkillOperableBoundary_20' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0026_lastrite_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: lastRiteChr_0026_lastrite_attack4ActionGraph,
 };
 
 export const lastRiteChr_0026_lastrite_power_attackActionGraph = {
@@ -691,13 +719,22 @@ export const lastRiteChr_0026_lastrite_power_attackActionGraph = {
         next: null,
       },
       gainFinisherSp_4: {
-        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+        action: {
+          kind: 'gainFinisherSp',
+          parameters: {
+            source: { kind: 'source' },
+            target: { kind: 'inputTarget' },
+            factor: { kind: 'constant', value: 1 },
+          },
+        },
         next: null,
       },
       dealDamage_5: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             calculation: 'breakingAttack',
@@ -733,6 +770,15 @@ export const lastRiteChr_0026_lastrite_power_attackActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_8: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: ['chr_0026_lastrite_normal_skill', 'chr_0026_lastrite_combo_skill'],
+          },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: {
@@ -746,6 +792,7 @@ export const lastRiteChr_0026_lastrite_power_attackActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const lastRiteChr_0026_lastrite_power_attack: SkillDefinition = {
+  actionGraph: lastRiteChr_0026_lastrite_power_attackActionGraph,
   key: 'chr_0026_lastrite_power_attack',
   element: 'cryo',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -754,32 +801,30 @@ export const lastRiteChr_0026_lastrite_power_attack: SkillDefinition = {
   exclusiveFrame: 58,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 40,
-        endFrame: 58,
-        skillIds: ['chr_0026_lastrite_normal_skill', 'chr_0026_lastrite_combo_skill'],
-      },
-    ],
-  },
   costFrame: 4,
   scheduledSequences: [
     { startFrame: 41, endFrame: 42, sequence: { $sequence: 'ifElse_3' } },
     { startFrame: 40, endFrame: 40, sequence: { $sequence: 'dealDamage_5' } },
     { startFrame: 0, endFrame: 40, sequence: { $sequence: 'applyBuff_6' } },
     { startFrame: 0, endFrame: 58, sequence: { $sequence: 'applyBuff_7' } },
+    { startFrame: 40, endFrame: 58, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
-  actionGraph: lastRiteChr_0026_lastrite_power_attackActionGraph,
 };
 
 export const lastRiteChr_0026_lastrite_plunging_attack_endActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_2: {
         action: {
           kind: 'changeResource',
@@ -800,6 +845,8 @@ export const lastRiteChr_0026_lastrite_plunging_attack_endActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['normalAttack', 'plungingAttack'],
@@ -817,6 +864,7 @@ export const lastRiteChr_0026_lastrite_plunging_attack_endActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const lastRiteChr_0026_lastrite_plunging_attack_end: SkillDefinition = {
+  actionGraph: lastRiteChr_0026_lastrite_plunging_attack_endActionGraph,
   key: 'chr_0026_lastrite_plunging_attack_end',
   element: 'cryo',
   blackboard: {
@@ -828,12 +876,14 @@ export const lastRiteChr_0026_lastrite_plunging_attack_end: SkillDefinition = {
   exclusiveFrame: 20,
   offsetRecordFrame: 0,
   costFrame: 9,
-  scheduledSequences: [{ startFrame: 2, endFrame: 3, sequence: { $sequence: 'dealDamage_3' } }],
+  scheduledSequences: [
+    { startFrame: 2, endFrame: 3, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 2, endFrame: 3, sequence: { $sequence: 'dealDamage_3' } },
+  ],
   defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: lastRiteChr_0026_lastrite_plunging_attack_endActionGraph,
 };
 
 export const lastRiteChr_0026_lastrite_normal_skillActionGraph = {
@@ -983,6 +1033,7 @@ export const lastRiteChr_0026_lastrite_normal_skillActionGraph = {
             {
               event: 'reach',
               skill: {
+                actionGraph: { main: { nodes: {} }, macros: {} },
                 skillId: 'chr_0026_lastrite_normal_skill_projhit',
                 nativeSkillType: 'normalSkill',
                 naturalDurationFrames: 30,
@@ -994,14 +1045,27 @@ export const lastRiteChr_0026_lastrite_normal_skillActionGraph = {
                 },
                 blackboard: {},
                 scheduledSequences: [],
-                actionGraph: { main: { nodes: {} }, macros: {} },
               },
             },
           ],
         },
         next: null,
       },
-      changeResource_14: {
+      reachSkillOperableBoundary_14: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: [
+              'chr_0026_lastrite_attack1',
+              'chr_0026_lastrite_attack2',
+              'chr_0026_lastrite_attack3',
+              'chr_0026_lastrite_attack4',
+            ],
+          },
+        },
+        next: null,
+      },
+      changeResource_15: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -1015,7 +1079,7 @@ export const lastRiteChr_0026_lastrite_normal_skillActionGraph = {
         },
         next: null,
       },
-      applyBuff_15: {
+      applyBuff_16: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1025,16 +1089,16 @@ export const lastRiteChr_0026_lastrite_normal_skillActionGraph = {
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'changeResource_14',
+        next: 'changeResource_15',
       },
-      checkCondition_16: {
+      checkCondition_17: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'constant', value: true } },
         },
-        next: 'applyBuff_15',
+        next: 'applyBuff_16',
       },
-      applyBuff_17: {
+      applyBuff_18: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1056,9 +1120,9 @@ export const lastRiteChr_0026_lastrite_normal_skillActionGraph = {
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'checkCondition_16',
+        next: 'checkCondition_17',
       },
-      finishBuffsById_18: {
+      finishBuffsById_19: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
@@ -1068,9 +1132,9 @@ export const lastRiteChr_0026_lastrite_normal_skillActionGraph = {
             reason: 'other',
           },
         },
-        next: 'applyBuff_17',
+        next: 'applyBuff_18',
       },
-      findTargets_19: {
+      findTargets_20: {
         action: {
           kind: 'findTargets',
           parameters: {
@@ -1079,7 +1143,7 @@ export const lastRiteChr_0026_lastrite_normal_skillActionGraph = {
             saveToContextKey: 'team',
           },
         },
-        next: 'finishBuffsById_18',
+        next: 'finishBuffsById_19',
       },
     },
     dataNodes: {
@@ -1112,6 +1176,7 @@ export const lastRiteChr_0026_lastrite_normal_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const lastRiteChr_0026_lastrite_normal_skill: SkillDefinition = {
+  actionGraph: lastRiteChr_0026_lastrite_normal_skillActionGraph,
   key: 'chr_0026_lastrite_normal_skill',
   element: 'cryo',
   blackboard: {
@@ -1128,20 +1193,6 @@ export const lastRiteChr_0026_lastrite_normal_skill: SkillDefinition = {
   exclusiveFrame: 373,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 34,
-        endFrame: 51,
-        skillIds: [
-          'chr_0026_lastrite_attack1',
-          'chr_0026_lastrite_attack2',
-          'chr_0026_lastrite_attack3',
-          'chr_0026_lastrite_attack4',
-        ],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'modifyActionValue_5' } },
@@ -1151,7 +1202,8 @@ export const lastRiteChr_0026_lastrite_normal_skill: SkillDefinition = {
     { startFrame: 300, endFrame: 301, sequence: { $sequence: 'findCharacterTeamTargets_11' } },
     { startFrame: 6, endFrame: 7, sequence: { $sequence: 'applyBuff_12' } },
     { startFrame: 300, endFrame: 301, sequence: { $sequence: 'launchProjectile_13' } },
-    { startFrame: 300, endFrame: 301, sequence: { $sequence: 'findTargets_19' } },
+    { startFrame: 34, endFrame: 51, sequence: { $sequence: 'reachSkillOperableBoundary_14' } },
+    { startFrame: 300, endFrame: 301, sequence: { $sequence: 'findTargets_20' } },
   ],
   defaultTarget: 'owner',
   switchToBuffCast: {
@@ -1165,12 +1217,18 @@ export const lastRiteChr_0026_lastrite_normal_skill: SkillDefinition = {
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: lastRiteChr_0026_lastrite_normal_skillActionGraph,
 };
 
 export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       modifyActionValue_3: {
         action: {
           kind: 'modifyActionValue',
@@ -1224,6 +1282,8 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
             tags: ['comboSkill'],
@@ -1250,7 +1310,7 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
         action: {
           kind: 'finishBuffsByTag',
           parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             finishSource: { kind: 'source' },
             tagQueryType: 'hasAny',
             buffTags: ['Skill/Character/Common/SpellInflict/CrystInflict'],
@@ -1263,6 +1323,8 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_6' },
             tags: ['comboSkill'],
@@ -1276,6 +1338,8 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_8' },
             tags: ['comboSkill'],
@@ -1333,7 +1397,7 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
       mergeContextTargets_16: {
         action: {
           kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
         },
         next: 'forEachContextTarget_15',
       },
@@ -1342,7 +1406,7 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
           kind: 'applyBuff',
           parameters: {
             buffs: [{ buffId: 'buff_chr_0026_lastrite_combo_skill_hitstop' }],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'context', key: 'tar' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
           },
@@ -1448,6 +1512,13 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_28: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0026_lastrite_normal_skill'] },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
@@ -1456,7 +1527,7 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'smart_target' },
           valueType: 'current',
           operator: 'lessOrEqual',
           value: { kind: 'constant', value: 0 },
@@ -1509,6 +1580,7 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const lastRiteChr_0026_lastrite_combo_skill: SkillDefinition = {
+  actionGraph: lastRiteChr_0026_lastrite_combo_skillActionGraph,
   key: 'chr_0026_lastrite_combo_skill',
   element: 'cryo',
   blackboard: {
@@ -1528,26 +1600,22 @@ export const lastRiteChr_0026_lastrite_combo_skill: SkillDefinition = {
   exclusiveFrame: 90,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 65, endFrame: 91, skillIds: ['chr_0026_lastrite_normal_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
+    { startFrame: 2, endFrame: 3, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 13, endFrame: 13, sequence: { $sequence: 'readBuffStackCount_8' } },
     { startFrame: 63, endFrame: 63, sequence: { $sequence: 'mergeContextTargets_16' } },
     { startFrame: 2, endFrame: 3, sequence: { $sequence: 'ifElse_18' } },
     { startFrame: 63, endFrame: 63, sequence: { $sequence: 'ifElse_24' } },
     { startFrame: 64, endFrame: 64, sequence: { $sequence: 'ifElse_26' } },
     { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_27' } },
+    { startFrame: 65, endFrame: 91, sequence: { $sequence: 'reachSkillOperableBoundary_28' } },
   ],
   smartTarget: 'trigger',
   cooldownFrames: [270, 270, 270, 270, 270, 270, 270, 270, 270, 270, 270, 240],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
-  actionGraph: lastRiteChr_0026_lastrite_combo_skillActionGraph,
 };
 
 export const lastRiteChr_0026_lastrite_ultimate_skillActionGraph = {
@@ -1597,6 +1665,8 @@ export const lastRiteChr_0026_lastrite_ultimate_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['ultimateSkill'],
@@ -1610,6 +1680,8 @@ export const lastRiteChr_0026_lastrite_ultimate_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['ultimateSkill'],
@@ -1632,6 +1704,8 @@ export const lastRiteChr_0026_lastrite_ultimate_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['ultimateSkill'],
@@ -1645,6 +1719,8 @@ export const lastRiteChr_0026_lastrite_ultimate_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['ultimateSkill'],
@@ -1706,7 +1782,23 @@ export const lastRiteChr_0026_lastrite_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_43: {
+      overrideBasicAttackMapping_43: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0026_lastrite_combo_skill'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_44: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: ['chr_0026_lastrite_normal_skill', 'chr_0026_lastrite_combo_skill'],
+          },
+        },
+        next: null,
+      },
+      startTimeDilation_45: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1805,6 +1897,7 @@ export const lastRiteChr_0026_lastrite_ultimate_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const lastRiteChr_0026_lastrite_ultimate_skill: SkillDefinition = {
+  actionGraph: lastRiteChr_0026_lastrite_ultimate_skillActionGraph,
   key: 'chr_0026_lastrite_ultimate_skill',
   element: 'cryo',
   blackboard: {
@@ -1819,23 +1912,6 @@ export const lastRiteChr_0026_lastrite_ultimate_skill: SkillDefinition = {
   naturalDurationFrames: 360,
   exclusiveFrame: 170,
   offsetRecordFrame: 0,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 86,
-        endFrame: 170,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0026_lastrite_combo_skill',
-      },
-    ],
-    allowedNextSkills: [
-      {
-        startFrame: 140,
-        endFrame: 170,
-        skillIds: ['chr_0026_lastrite_normal_skill', 'chr_0026_lastrite_combo_skill'],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
@@ -1847,7 +1923,9 @@ export const lastRiteChr_0026_lastrite_ultimate_skill: SkillDefinition = {
     { startFrame: 105, endFrame: 108, sequence: { $sequence: 'repeatEachTick_opt4' } },
     { startFrame: 134, endFrame: 137, sequence: { $sequence: 'repeatEachTick_41' } },
     { startFrame: 86, endFrame: 86, sequence: { $sequence: 'startTimeDilation_42' } },
-    { startFrame: 85, endFrame: 145, sequence: { $sequence: 'startTimeDilation_43' } },
+    { startFrame: 86, endFrame: 170, sequence: { $sequence: 'overrideBasicAttackMapping_43' } },
+    { startFrame: 140, endFrame: 170, sequence: { $sequence: 'reachSkillOperableBoundary_44' } },
+    { startFrame: 85, endFrame: 145, sequence: { $sequence: 'startTimeDilation_45' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 600,
@@ -1855,7 +1933,6 @@ export const lastRiteChr_0026_lastrite_ultimate_skill: SkillDefinition = {
   skillType: 'ultimate',
   levelSource: 'ultimate',
   nativeSkillType: 'ultimateSkill',
-  actionGraph: lastRiteChr_0026_lastrite_ultimate_skillActionGraph,
 };
 
 export const lastRiteCommon_character_perfect_dodgeActionGraph = {
@@ -2060,7 +2137,11 @@ const lastRiteBuff2ActionGraph = {
       dealStagger_1: {
         action: {
           kind: 'dealStagger',
-          parameters: { value: { kind: 'valueNode', nodeId: 'data_5' } },
+          parameters: {
+            attacker: 'actionOwner',
+            target: { kind: 'inputTarget' },
+            value: { kind: 'valueNode', nodeId: 'data_5' },
+          },
         },
         next: null,
       },
@@ -2242,7 +2323,7 @@ const lastRiteBuff2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           valueType: 'current',
           operator: 'greater',
           value: { kind: 'constant', value: 0 },
@@ -2282,7 +2363,7 @@ const lastRiteBuff2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           valueType: 'current',
           operator: 'greater',
           value: { kind: 'constant', value: 0 },
@@ -2548,10 +2629,19 @@ const lastRiteBuff4: SkillBuffDefinition = {
 const lastRiteBuff5ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       dealDamage_3: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalSkill'],
@@ -2598,6 +2688,7 @@ const lastRiteBuff5: SkillBuffDefinition = {
   blackboard: { atk_scale: 0 },
   attributeModifiers: [],
   scheduledSequences: [
+    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 9, endFrame: 10, sequence: { $sequence: 'applyElementalInfliction_5' } },
     { startFrame: 9, endFrame: 10, sequence: { $sequence: 'dealDamage_3' } },
   ],
@@ -2607,10 +2698,19 @@ const lastRiteBuff5: SkillBuffDefinition = {
 const lastRiteBuff6ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       dealDamage_2: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'cryo',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalSkill'],
@@ -2681,6 +2781,7 @@ const lastRiteBuff6: SkillBuffDefinition = {
   blackboard: { atk_scale1: 0 },
   attributeModifiers: [],
   scheduledSequences: [
+    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 21, endFrame: 22, sequence: { $sequence: 'applyElementalInfliction_4' } },
     { startFrame: 21, endFrame: 22, sequence: { $sequence: 'dealDamage_2' } },
   ],
@@ -2831,7 +2932,7 @@ const lastRiteBuff9ActionGraph = {
         action: {
           kind: 'restrictUltimateEnergyRecovery',
           parameters: {
-            target: 'caster',
+            target: { kind: 'owner' },
             allowedRecoveryTags: ['Skill/Character/chr_0026_lastrite'],
             clearUltimateEnergyOnEnd: false,
           },

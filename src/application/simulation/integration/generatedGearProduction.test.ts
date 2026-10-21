@@ -1,3 +1,5 @@
+import { projectPhysicalStatusDisplay } from '../../../ui/timeline/results/physicalStatusDisplay';
+import { layoutEnemyDamageHits } from '../../../ui/timeline/results/enemyDamageHitLayout';
 import { describe, expect, it } from 'vitest';
 
 import { ExplicitCriticalSampleSource } from '../../../core/combat/random/criticalSampleSource';
@@ -310,6 +312,21 @@ describe('generated gear production integration', () => {
         appliesPhysicalInflictionDamageMultiplier: false,
       }),
     });
+
+    const physical = projectPhysicalStatusDisplay(result.receiptEntries, 260, {
+      enemySuperArmor: placed.enemy.editable.superArmor,
+    });
+    expect(physical.some(segment => segment.buffId === 'buff_physical_do_fracture')).toBe(true);
+    const physicalHits = layoutEnemyDamageHits(
+      result.receiptEntries,
+      physical,
+      [],
+      new Set(),
+    ).filter(position =>
+      position.group.some(hit => hit.data?.buffId === 'buff_physical_do_fracture'),
+    );
+    expect(physicalHits.length).toBeGreaterThan(0);
+    expect(physicalHits.every(position => position.row === 0 && !position.standalone)).toBe(true);
 
     expect(result.receiptEntries).toContainEqual(
       expect.objectContaining({

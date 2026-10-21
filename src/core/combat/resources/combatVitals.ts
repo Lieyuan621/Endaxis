@@ -166,6 +166,17 @@ export class CombatVitals {
     // 原生即使生命数值未变，只要最大生命改变且仍存活，也发布 OnHpChange。
     this.healthChanged?.({ previousHealth: previous, previousMaxHealth });
   }
+  synchronizeMaxPoise(maxPoise: number, previousMaxPoise: number): void {
+    if (!Number.isFinite(maxPoise) || maxPoise < 0)
+      throw new RangeError('maximum poise must be finite and non-negative');
+    const ratio =
+      previousMaxPoise === 0 ? 0 : Math.fround(this.poise / Math.fround(previousMaxPoise));
+    this.runtimeState.maxPoise = maxPoise;
+    this.runtimeState.poise = Math.min(
+      maxPoise,
+      Math.max(0, Math.fround(ratio * Math.fround(maxPoise))),
+    );
+  }
   applyPoiseDelta(delta: number): number {
     return applyVitalsPoiseDelta(this.runtimeState, delta);
   }

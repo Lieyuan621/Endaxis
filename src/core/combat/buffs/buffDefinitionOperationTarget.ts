@@ -1,12 +1,11 @@
+import type { BuffLookupQuery } from '../../../../packages/game-data-contract/src/conditions';
+import { publishBeforeBuffImmunity, type BeforeBuffImmunityEvents } from './buffApplicationEvents';
 /**
  * 把只读 Buff 定义与单场战斗的 Buff 容器组合成技能操作端口。
  * 定义负责稳定身份解析，容器只持有实例；未知身份必须在施加点明确失败。
  */
 import type { CombatBuffDefinitionEntry } from '../../../../packages/game-data-contract/src/buffs';
-import type {
-  ResolvedCombatStepParameters,
-  ResolvedSkillBuffDefinition,
-} from '../../compiler/combatProgram';
+import type { ResolvedSkillBuffDefinition } from '../../compiler/combatProgram';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import type { ActionBlackboard } from '../actions/actionBlackboard';
 import { copyEnemyPartTransferInfo } from '../abilities/runtimeTargetContext';
@@ -82,6 +81,11 @@ export class BuffDefinitionOperationTarget<Key extends string>
     bindRestoredSkillAffixObjectReference?: BindRestoredSkillAffixObjectReference,
   ) {
     this.#bindRestoredSkillAffixObjectReference = bindRestoredSkillAffixObjectReference;
+  }
+
+  #beforeImmunityEvents: BeforeBuffImmunityEvents | undefined;
+  configureBeforeImmunityEvents(events: BeforeBuffImmunityEvents): void {
+    this.#beforeImmunityEvents = events;
   }
 
   get ownerId(): string {
@@ -170,6 +174,12 @@ export class BuffDefinitionOperationTarget<Key extends string>
   getAttributeValue(attribute: string): number {
     return this.container.attributes.get(attribute as Key);
   }
+  pushRawAttributeOverride(attribute: string, value: number): number {
+    return this.container.attributes.pushRawOverride(attribute as Key, value);
+  }
+  popRawAttributeOverride(attribute: string, token: number): void {
+    this.container.attributes.popRawOverride(attribute as Key, token);
+  }
 
   apply(request: BuffApplicationRequest): boolean {
     return this.#apply(request) !== null;
@@ -224,11 +234,13 @@ export class BuffDefinitionOperationTarget<Key extends string>
         : { iconDurationSourceTargetId: request.iconDurationSourceTargetId }),
     };
     try {
+      if (!publishBeforeBuffImmunity(event, this.#beforeImmunityEvents)) return null;
       return this.container.add(
         definition,
         request.sourceId,
         {
           partTransferInfo: request.partTransferInfo,
+          inheritedTargetGroups: request.inheritedTargetGroups,
           blackboardValues: request.blackboardValues,
           blackboardArtsIntensityFactors: request.blackboardArtsIntensityFactors,
           blackboardValueCalculations: request.blackboardValueCalculations,
@@ -469,7 +481,7 @@ export class BuffDefinitionOperationTarget<Key extends string>
     this.container.recycleFinishedBuffs();
   }
 
-  *findMatching(query: ResolvedCombatStepParameters['setBuffRemainingDuration']['query']) {
+  *findMatching(query: BuffLookupQuery) {
     for (const buff of this.container.buffs) {
       if (buff.isFinished) continue;
       if (
@@ -486,7 +498,7 @@ export class BuffDefinitionOperationTarget<Key extends string>
   }
 
   setRemainingDuration(
-    query: ResolvedCombatStepParameters['setBuffRemainingDuration']['query'],
+    query: BuffLookupQuery,
     operation: 'assign' | 'add' | 'multiply',
     value: number,
   ): void {
@@ -586,6 +598,13 @@ export class BuffDefinitionOperationTarget<Key extends string>
     skillCastId?: number,
   ): number {
     return this.container.getInstanceCountByTags(tags, type, exact, skillCastId);
+  }
+
+  addEntityTags(tags: readonly GameplayTag[]): void {
+    this.container.addEntityTags(tags);
+  }
+  removeEntityTags(tags: readonly GameplayTag[]): void {
+    this.container.removeEntityTags(tags);
   }
 
   matchesEntityTags(

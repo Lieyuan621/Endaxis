@@ -25,19 +25,6 @@ export const gilbertaChr_0013_aglina_attack1ActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0013_aglina_attack1_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 0, atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -85,6 +72,8 @@ export const gilbertaChr_0013_aglina_attack1ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'nature',
                             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
@@ -99,7 +88,7 @@ export const gilbertaChr_0013_aglina_attack1ActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           containsHittableTarget: false,
                           excludeDeadEntity: false,
                           operator: 'greaterOrEqual',
@@ -125,6 +114,19 @@ export const gilbertaChr_0013_aglina_attack1ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0013_aglina_attack1_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atb: 0, atk_scale: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
+                ],
               },
             },
           ],
@@ -138,7 +140,14 @@ export const gilbertaChr_0013_aglina_attack1ActionGraph = {
         },
         next: 'launchProjectile_1',
       },
-      reachSkillOperableBoundary_3: {
+      overrideBasicAttackMapping_3: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0013_aglina_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_4: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0013_aglina_attack2'] },
@@ -151,6 +160,7 @@ export const gilbertaChr_0013_aglina_attack1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const gilbertaChr_0013_aglina_attack1: SkillDefinition = {
+  actionGraph: gilbertaChr_0013_aglina_attack1ActionGraph,
   key: 'chr_0013_aglina_attack1',
   element: 'nature',
   blackboard: {
@@ -161,28 +171,16 @@ export const gilbertaChr_0013_aglina_attack1: SkillDefinition = {
   naturalDurationFrames: 91,
   exclusiveFrame: 30,
   offsetRecordFrame: 7,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 30,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0013_aglina_attack2',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 18, endFrame: 30, skillIds: ['chr_0013_aglina_attack2'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 7, endFrame: 7, sequence: { $sequence: 'createSpatialPointTargets_2' } },
-    { startFrame: 18, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
+    { startFrame: 0, endFrame: 30, sequence: { $sequence: 'overrideBasicAttackMapping_3' } },
+    { startFrame: 18, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_4' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0013_aglina_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: gilbertaChr_0013_aglina_attack1ActionGraph,
 };
 
 export const gilbertaChr_0013_aglina_attack2ActionGraph = {
@@ -202,19 +200,6 @@ export const gilbertaChr_0013_aglina_attack2ActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0013_aglina_attack2_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 0, atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -238,6 +223,8 @@ export const gilbertaChr_0013_aglina_attack2ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'nature',
                             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                             tags: ['normalAttack'],
@@ -256,13 +243,33 @@ export const gilbertaChr_0013_aglina_attack2ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0013_aglina_attack2_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atb: 0, atk_scale: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
+                ],
               },
             },
           ],
         },
         next: null,
       },
-      reachSkillOperableBoundary_3: {
+      overrideBasicAttackMapping_3: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0013_aglina_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_4: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0013_aglina_attack3'] },
@@ -275,6 +282,7 @@ export const gilbertaChr_0013_aglina_attack2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const gilbertaChr_0013_aglina_attack2: SkillDefinition = {
+  actionGraph: gilbertaChr_0013_aglina_attack2ActionGraph,
   key: 'chr_0013_aglina_attack2',
   element: 'nature',
   blackboard: {
@@ -285,29 +293,17 @@ export const gilbertaChr_0013_aglina_attack2: SkillDefinition = {
   naturalDurationFrames: 118,
   exclusiveFrame: 30,
   offsetRecordFrame: 4,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 29,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0013_aglina_attack3',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 22, endFrame: 29, skillIds: ['chr_0013_aglina_attack3'] }],
-  },
   costFrame: 11,
   scheduledSequences: [
     { startFrame: 4, endFrame: 4, sequence: { $sequence: 'launchProjectile_1' } },
     { startFrame: 8, endFrame: 8, sequence: { $sequence: 'launchProjectile_1' } },
-    { startFrame: 22, endFrame: 29, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
+    { startFrame: 0, endFrame: 29, sequence: { $sequence: 'overrideBasicAttackMapping_3' } },
+    { startFrame: 22, endFrame: 29, sequence: { $sequence: 'reachSkillOperableBoundary_4' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0013_aglina_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: gilbertaChr_0013_aglina_attack2ActionGraph,
 };
 
 export const gilbertaChr_0013_aglina_attack3ActionGraph = {
@@ -327,19 +323,6 @@ export const gilbertaChr_0013_aglina_attack3ActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0013_aglina_attack3_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: {},
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -387,6 +370,8 @@ export const gilbertaChr_0013_aglina_attack3ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'nature',
                             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
@@ -401,7 +386,7 @@ export const gilbertaChr_0013_aglina_attack3ActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           containsHittableTarget: false,
                           excludeDeadEntity: false,
                           operator: 'greaterOrEqual',
@@ -427,13 +412,33 @@ export const gilbertaChr_0013_aglina_attack3ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0013_aglina_attack3_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: {},
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
+                ],
               },
             },
           ],
         },
         next: null,
       },
-      reachSkillOperableBoundary_4: {
+      overrideBasicAttackMapping_4: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0013_aglina_attack4'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_5: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0013_aglina_attack4'] },
@@ -446,6 +451,7 @@ export const gilbertaChr_0013_aglina_attack3ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const gilbertaChr_0013_aglina_attack3: SkillDefinition = {
+  actionGraph: gilbertaChr_0013_aglina_attack3ActionGraph,
   key: 'chr_0013_aglina_attack3',
   element: 'nature',
   blackboard: {
@@ -456,30 +462,18 @@ export const gilbertaChr_0013_aglina_attack3: SkillDefinition = {
   naturalDurationFrames: 138,
   exclusiveFrame: 38,
   offsetRecordFrame: 7,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 38,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0013_aglina_attack4',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 23, endFrame: 38, skillIds: ['chr_0013_aglina_attack4'] }],
-  },
   costFrame: 13,
   scheduledSequences: [
     { startFrame: 7, endFrame: 8, sequence: { $sequence: 'launchProjectile_1' } },
     { startFrame: 10, endFrame: 11, sequence: { $sequence: 'launchProjectile_1' } },
     { startFrame: 14, endFrame: 15, sequence: { $sequence: 'launchProjectile_1' } },
-    { startFrame: 23, endFrame: 38, sequence: { $sequence: 'reachSkillOperableBoundary_4' } },
+    { startFrame: 0, endFrame: 38, sequence: { $sequence: 'overrideBasicAttackMapping_4' } },
+    { startFrame: 23, endFrame: 38, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0013_aglina_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: gilbertaChr_0013_aglina_attack3ActionGraph,
 };
 
 export const gilbertaChr_0013_aglina_attack4ActionGraph = {
@@ -499,19 +493,6 @@ export const gilbertaChr_0013_aglina_attack4ActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0013_aglina_attack4_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 0, atk_scale: 0, poise: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -558,6 +539,8 @@ export const gilbertaChr_0013_aglina_attack4ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'nature',
                             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack', 'normalAttackLastCombo'],
@@ -575,7 +558,7 @@ export const gilbertaChr_0013_aglina_attack4ActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           containsHittableTarget: false,
                           excludeDeadEntity: false,
                           operator: 'greaterOrEqual',
@@ -602,6 +585,19 @@ export const gilbertaChr_0013_aglina_attack4ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0013_aglina_attack4_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atb: 0, atk_scale: 0, poise: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
+                ],
               },
             },
           ],
@@ -622,19 +618,6 @@ export const gilbertaChr_0013_aglina_attack4ActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0013_aglina_attack4_projhit_2',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 0, atk_scale: 0, poise: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -681,6 +664,8 @@ export const gilbertaChr_0013_aglina_attack4ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'nature',
                             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
@@ -698,7 +683,7 @@ export const gilbertaChr_0013_aglina_attack4ActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           containsHittableTarget: false,
                           excludeDeadEntity: false,
                           operator: 'greaterOrEqual',
@@ -725,13 +710,33 @@ export const gilbertaChr_0013_aglina_attack4ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0013_aglina_attack4_projhit_2',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atb: 0, atk_scale: 0, poise: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
+                ],
               },
             },
           ],
         },
         next: null,
       },
-      reachSkillOperableBoundary_7: {
+      overrideBasicAttackMapping_7: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0013_aglina_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_8: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0013_aglina_attack1'] },
@@ -744,6 +749,7 @@ export const gilbertaChr_0013_aglina_attack4ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const gilbertaChr_0013_aglina_attack4: SkillDefinition = {
+  actionGraph: gilbertaChr_0013_aglina_attack4ActionGraph,
   key: 'chr_0013_aglina_attack4',
   element: 'nature',
   blackboard: {
@@ -755,30 +761,18 @@ export const gilbertaChr_0013_aglina_attack4: SkillDefinition = {
   naturalDurationFrames: 147,
   exclusiveFrame: 50,
   offsetRecordFrame: 23,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 50,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0013_aglina_attack1',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 40, endFrame: 50, skillIds: ['chr_0013_aglina_attack1'] }],
-  },
   costFrame: 13,
   scheduledSequences: [
     { startFrame: 23, endFrame: 23, sequence: { $sequence: 'launchProjectile_1' } },
     { startFrame: 25, endFrame: 25, sequence: { $sequence: 'launchProjectile_2' } },
     { startFrame: 27, endFrame: 27, sequence: { $sequence: 'launchProjectile_2' } },
-    { startFrame: 40, endFrame: 50, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
+    { startFrame: 0, endFrame: 50, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
+    { startFrame: 40, endFrame: 50, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0013_aglina_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: gilbertaChr_0013_aglina_attack4ActionGraph,
 };
 
 export const gilbertaChr_0013_aglina_power_attackActionGraph = {
@@ -788,6 +782,8 @@ export const gilbertaChr_0013_aglina_power_attackActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
@@ -798,13 +794,22 @@ export const gilbertaChr_0013_aglina_power_attackActionGraph = {
         next: null,
       },
       gainFinisherSp_7: {
-        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+        action: {
+          kind: 'gainFinisherSp',
+          parameters: {
+            source: { kind: 'source' },
+            target: { kind: 'inputTarget' },
+            factor: { kind: 'constant', value: 1 },
+          },
+        },
         next: null,
       },
       dealDamage_8: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
@@ -840,6 +845,13 @@ export const gilbertaChr_0013_aglina_power_attackActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_11: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0013_aglina_normal_skill', 'chr_0013_aglina_combo_skill'] },
+        },
+        next: null,
+      },
     },
     dataNodes: { data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } } },
   },
@@ -847,6 +859,7 @@ export const gilbertaChr_0013_aglina_power_attackActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const gilbertaChr_0013_aglina_power_attack: SkillDefinition = {
+  actionGraph: gilbertaChr_0013_aglina_power_attackActionGraph,
   key: 'chr_0013_aglina_power_attack',
   element: 'nature',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -855,15 +868,6 @@ export const gilbertaChr_0013_aglina_power_attack: SkillDefinition = {
   exclusiveFrame: 50,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 43,
-        endFrame: 50,
-        skillIds: ['chr_0013_aglina_normal_skill', 'chr_0013_aglina_combo_skill'],
-      },
-    ],
-  },
   costFrame: 4,
   scheduledSequences: [
     { startFrame: 12, endFrame: 12, sequence: { $sequence: 'dealDamage_1' } },
@@ -875,17 +879,24 @@ export const gilbertaChr_0013_aglina_power_attack: SkillDefinition = {
     { startFrame: 43, endFrame: 52, sequence: { $sequence: 'dealDamage_8' } },
     { startFrame: 0, endFrame: 50, sequence: { $sequence: 'applyBuff_9' } },
     { startFrame: 0, endFrame: 43, sequence: { $sequence: 'applyBuff_10' } },
+    { startFrame: 43, endFrame: 50, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
-  actionGraph: gilbertaChr_0013_aglina_power_attackActionGraph,
 };
 
 export const gilbertaChr_0013_aglina_plunging_attack_endActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -916,6 +927,8 @@ export const gilbertaChr_0013_aglina_plunging_attack_endActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'plungingAttack'],
@@ -937,6 +950,7 @@ export const gilbertaChr_0013_aglina_plunging_attack_endActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const gilbertaChr_0013_aglina_plunging_attack_end: SkillDefinition = {
+  actionGraph: gilbertaChr_0013_aglina_plunging_attack_endActionGraph,
   key: 'chr_0013_aglina_plunging_attack_end',
   element: 'nature',
   blackboard: {
@@ -948,12 +962,14 @@ export const gilbertaChr_0013_aglina_plunging_attack_end: SkillDefinition = {
   exclusiveFrame: 20,
   offsetRecordFrame: 0,
   costFrame: 0,
-  scheduledSequences: [{ startFrame: 0, endFrame: 5, sequence: { $sequence: 'dealDamage_5' } }],
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 4, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 0, endFrame: 5, sequence: { $sequence: 'dealDamage_5' } },
+  ],
   defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: gilbertaChr_0013_aglina_plunging_attack_endActionGraph,
 };
 
 export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
@@ -993,6 +1009,7 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
             bornAt: { kind: 'context', key: 'targetPos' },
             abilityEntityId: 'abilityentity_chr_0013_aglina_normal_skill',
             childSkillId: 'chr_0013_aglina_normal_skill_abilityrange',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
           },
@@ -1015,6 +1032,8 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['normalSkill'],
@@ -1025,7 +1044,7 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
       mergeContextTargets_11: {
         action: {
           kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
         },
         next: 'dealDamage_10',
       },
@@ -1033,6 +1052,8 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['normalSkill'],
@@ -1043,7 +1064,7 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
       mergeContextTargets_13: {
         action: {
           kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
         },
         next: 'dealDamage_12',
       },
@@ -1051,7 +1072,8 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
         action: {
           kind: 'heal',
           parameters: {
-            target: 'controlledOperator',
+            target: { kind: 'mainCharacter' },
+            healer: { kind: 'source' },
             alwaysNext: true,
             tags: ['Skill/Character/Common/Heal/NormalSkillHeal'],
             attribute: 'intellect',
@@ -1065,8 +1087,8 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
         action: {
           kind: 'heal',
           parameters: {
-            target: 'contextTarget',
-            contextKey: 'CureTarget',
+            target: { kind: 'context', key: 'CureTarget' },
+            healer: { kind: 'source' },
             alwaysNext: true,
             tags: ['Skill/Character/Common/Heal/NormalSkillHeal'],
             attribute: 'intellect',
@@ -1134,6 +1156,8 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'explo' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_11' },
             tags: ['normalSkill'],
@@ -1153,9 +1177,16 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
       mergeContextTargets_31: {
         action: {
           kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'explo', sources: [{ kind: 'target', target: 'enemy' }] },
+          parameters: { saveToContextKey: 'explo', sources: [{ kind: 'fixed', target: 'enemy' }] },
         },
         next: 'applyElementalInfliction_30',
+      },
+      reachSkillOperableBoundary_32: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0013_aglina_combo_skill'] },
+        },
+        next: null,
       },
     },
     dataNodes: {
@@ -1190,7 +1221,7 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'explo' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -1222,6 +1253,7 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const gilbertaChr_0013_aglina_normal_skill: SkillDefinition = {
+  actionGraph: gilbertaChr_0013_aglina_normal_skillActionGraph,
   key: 'chr_0013_aglina_normal_skill',
   element: 'nature',
   blackboard: {
@@ -1239,11 +1271,6 @@ export const gilbertaChr_0013_aglina_normal_skill: SkillDefinition = {
   exclusiveFrame: 135,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 123, endFrame: 148, skillIds: ['chr_0013_aglina_combo_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 12, endFrame: 12, sequence: { $sequence: 'ifElse_7' } },
@@ -1253,13 +1280,13 @@ export const gilbertaChr_0013_aglina_normal_skill: SkillDefinition = {
     { startFrame: 62, endFrame: 62, sequence: { $sequence: 'mergeContextTargets_13' } },
     { startFrame: 78, endFrame: 78, sequence: { $sequence: 'mergeContextTargets_13' } },
     { startFrame: 108, endFrame: 109, sequence: { $sequence: 'mergeContextTargets_31' } },
+    { startFrame: 123, endFrame: 148, sequence: { $sequence: 'reachSkillOperableBoundary_32' } },
   ],
   defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: gilbertaChr_0013_aglina_normal_skillActionGraph,
 };
 
 export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
@@ -1269,7 +1296,8 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
         action: {
           kind: 'heal',
           parameters: {
-            target: 'controlledOperator',
+            target: { kind: 'mainCharacter' },
+            healer: { kind: 'source' },
             alwaysNext: true,
             tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
             attribute: 'intellect',
@@ -1283,8 +1311,8 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
         action: {
           kind: 'heal',
           parameters: {
-            target: 'contextTarget',
-            contextKey: 'CureTarget',
+            target: { kind: 'context', key: 'CureTarget' },
+            healer: { kind: 'source' },
             alwaysNext: true,
             tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
             attribute: 'intellect',
@@ -1365,6 +1393,8 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_10' },
             tags: ['comboSkill'],
@@ -1379,7 +1409,8 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'airborne',
-            target: 'enemy',
+            source: { kind: 'owner' },
+            target: { kind: 'context', key: 'tar' },
             isExtra: false,
             duration: { kind: 'constant', value: 2.5 },
             height: { kind: 'constant', value: 2 },
@@ -1394,7 +1425,7 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
       mergeContextTargets_18: {
         action: {
           kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
         },
         next: 'applyPhysicalInfliction_17',
       },
@@ -1411,6 +1442,20 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
             ignoredTargets: ['caster'],
             ignoredAbilityEntityTargets: [{ kind: 'ownerSpawned' }],
           },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_20: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0013_aglina_normal_skill'] },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_21: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0013_aglina_ultimate_skill'] },
         },
         next: null,
       },
@@ -1462,7 +1507,7 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'tar' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -1499,6 +1544,7 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const gilbertaChr_0013_aglina_combo_skill: SkillDefinition = {
+  actionGraph: gilbertaChr_0013_aglina_combo_skillActionGraph,
   key: 'chr_0013_aglina_combo_skill',
   element: 'nature',
   blackboard: {
@@ -1513,24 +1559,19 @@ export const gilbertaChr_0013_aglina_combo_skill: SkillDefinition = {
   exclusiveFrame: 72,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 53, endFrame: 72, skillIds: ['chr_0013_aglina_normal_skill'] },
-      { startFrame: 53, endFrame: 72, skillIds: ['chr_0013_aglina_ultimate_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 0, sequence: { $sequence: 'ifElse_opt2' } },
     { startFrame: 48, endFrame: 50, sequence: { $sequence: 'mergeContextTargets_18' } },
     { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_19' } },
+    { startFrame: 53, endFrame: 72, sequence: { $sequence: 'reachSkillOperableBoundary_20' } },
+    { startFrame: 53, endFrame: 72, sequence: { $sequence: 'reachSkillOperableBoundary_21' } },
   ],
   defaultTarget: 'owner',
   cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 570],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
-  actionGraph: gilbertaChr_0013_aglina_combo_skillActionGraph,
 };
 
 export const gilbertaChr_0013_aglina_ultimate_skillActionGraph = {
@@ -1594,6 +1635,8 @@ export const gilbertaChr_0013_aglina_ultimate_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'targets' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['ultimateSkill'],
@@ -1615,7 +1658,7 @@ export const gilbertaChr_0013_aglina_ultimate_skillActionGraph = {
           kind: 'mergeContextTargets',
           parameters: {
             saveToContextKey: 'targets',
-            sources: [{ kind: 'target', target: 'enemy' }],
+            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'applyElementalInfliction_8',
@@ -1627,6 +1670,7 @@ export const gilbertaChr_0013_aglina_ultimate_skillActionGraph = {
             bornAt: { kind: 'context', key: 'triggerpos' },
             abilityEntityId: 'abilityentity_chr_0013_aglina_ultimate_skill',
             childSkillId: 'chr_0013_aglina_ultimate_skill_abilityrange',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
             overrideDurationSeconds: { kind: 'valueNode', nodeId: 'data_4' },
@@ -1638,6 +1682,7 @@ export const gilbertaChr_0013_aglina_ultimate_skillActionGraph = {
         action: {
           kind: 'storeSourceAttributeValue',
           parameters: {
+            target: { kind: 'source' },
             attribute: { kind: 'specific', key: 'intellect' },
             stage: 'finalNonConverted',
             useFloor: false,
@@ -1653,6 +1698,7 @@ export const gilbertaChr_0013_aglina_ultimate_skillActionGraph = {
         action: {
           kind: 'storeSourceAttributeValue',
           parameters: {
+            target: { kind: 'source' },
             attribute: { kind: 'specific', key: 'intellect' },
             stage: 'finalNonConverted',
             useFloor: false,
@@ -1674,6 +1720,13 @@ export const gilbertaChr_0013_aglina_ultimate_skillActionGraph = {
             inheritSourceSkillCastInfo: true,
             finishByAction: true,
           },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_14: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0013_aglina_normal_skill', 'chr_0013_aglina_combo_skill'] },
         },
         next: null,
       },
@@ -1699,6 +1752,7 @@ export const gilbertaChr_0013_aglina_ultimate_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const gilbertaChr_0013_aglina_ultimate_skill: SkillDefinition = {
+  actionGraph: gilbertaChr_0013_aglina_ultimate_skillActionGraph,
   key: 'chr_0013_aglina_ultimate_skill',
   element: 'nature',
   blackboard: {
@@ -1721,15 +1775,6 @@ export const gilbertaChr_0013_aglina_ultimate_skill: SkillDefinition = {
   naturalDurationFrames: 116,
   exclusiveFrame: 85,
   offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 64,
-        endFrame: 91,
-        skillIds: ['chr_0013_aglina_normal_skill', 'chr_0013_aglina_combo_skill'],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
@@ -1739,6 +1784,7 @@ export const gilbertaChr_0013_aglina_ultimate_skill: SkillDefinition = {
     { startFrame: 60, endFrame: 60, sequence: { $sequence: 'mergeContextTargets_9' } },
     { startFrame: 60, endFrame: 65, sequence: { $sequence: 'storeSourceAttributeValue_12' } },
     { startFrame: 0, endFrame: 85, sequence: { $sequence: 'applyBuff_13' } },
+    { startFrame: 64, endFrame: 91, sequence: { $sequence: 'reachSkillOperableBoundary_14' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 600,
@@ -1746,7 +1792,6 @@ export const gilbertaChr_0013_aglina_ultimate_skill: SkillDefinition = {
   skillType: 'ultimate',
   levelSource: 'ultimate',
   nativeSkillType: 'ultimateSkill',
-  actionGraph: gilbertaChr_0013_aglina_ultimate_skillActionGraph,
 };
 
 export const gilbertaCommon_character_perfect_dodgeActionGraph = {
@@ -2553,20 +2598,6 @@ export const gilberta: OperatorDefinition = {
       ],
       lifetime: { kind: 'limited', durationSeconds: 6 },
       childSkill: {
-        skillId: 'chr_0013_aglina_normal_skill_abilityrange',
-        nativeSkillType: 'normalSkill',
-        naturalDurationFrames: 93,
-        castResource: {
-          costFrame: 0,
-          cooldownSeconds: 0,
-          maxChargeTime: 1,
-          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-        },
-        blackboard: {},
-        scheduledSequences: [
-          { startFrame: 0, endFrame: 93, sequence: { $sequence: 'repeatEachTick_2' } },
-          { startFrame: 0, endFrame: 93, sequence: { $sequence: 'applyBuff_3' } },
-        ],
         actionGraph: {
           main: {
             nodes: {
@@ -2604,6 +2635,20 @@ export const gilberta: OperatorDefinition = {
           },
           macros: {},
         },
+        skillId: 'chr_0013_aglina_normal_skill_abilityrange',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 93,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: {},
+        scheduledSequences: [
+          { startFrame: 0, endFrame: 93, sequence: { $sequence: 'repeatEachTick_2' } },
+          { startFrame: 0, endFrame: 93, sequence: { $sequence: 'applyBuff_3' } },
+        ],
       },
     },
     abilityentity_chr_0013_aglina_ultimate_skill: {
@@ -2617,24 +2662,6 @@ export const gilberta: OperatorDefinition = {
       ],
       lifetime: { kind: 'limited', durationSeconds: 6 },
       childSkill: {
-        skillId: 'chr_0013_aglina_ultimate_skill_abilityrange',
-        nativeSkillType: 'normalSkill',
-        naturalDurationFrames: 180,
-        castResource: {
-          costFrame: 0,
-          cooldownSeconds: 0,
-          maxChargeTime: 1,
-          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-        },
-        blackboard: {
-          BuffStack: 0,
-          FinalRate: 0,
-          move_speed_scalar: 1,
-          potential2: 0,
-          spell_vulnerable_perstack: 0,
-          spell_vulnerable_rate: 0,
-        },
-        scheduledSequences: [{ startFrame: 0, endFrame: 180, sequence: { $sequence: 'aura_1' } }],
         actionGraph: {
           main: {
             nodes: {
@@ -2686,6 +2713,24 @@ export const gilberta: OperatorDefinition = {
           },
           macros: {},
         },
+        skillId: 'chr_0013_aglina_ultimate_skill_abilityrange',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 180,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: {
+          BuffStack: 0,
+          FinalRate: 0,
+          move_speed_scalar: 1,
+          potential2: 0,
+          spell_vulnerable_perstack: 0,
+          spell_vulnerable_rate: 0,
+        },
+        scheduledSequences: [{ startFrame: 0, endFrame: 180, sequence: { $sequence: 'aura_1' } }],
       },
     },
   },

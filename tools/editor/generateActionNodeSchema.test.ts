@@ -53,7 +53,7 @@ test('keeps contract optionality in the value schema, enum values and documentat
 
 test('retains fields found in only some alternatives of a parameter union', () => {
   assert.equal(Boolean(field('heal', 'parameters', 'target').valueSchema.optional), false);
-  assert.equal(Boolean(field('heal', 'parameters', 'contextKey').valueSchema.optional), true);
+  assert.equal(Boolean(field('heal', 'parameters', 'healer').valueSchema.optional), false);
   assert.equal(Boolean(field('heal', 'parameters', 'amount').valueSchema.optional), true);
   assert.equal(Boolean(field('heal', 'parameters', 'multiplier').valueSchema.optional), true);
   assert.equal(Boolean(field('heal', 'parameters', 'addition').valueSchema.optional), true);

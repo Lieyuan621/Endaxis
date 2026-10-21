@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { ATTRIBUTE_MODIFIER_SOURCES } from '../state/foundationState';
-import { createCombatAttributeModifier, attributeModifierValues } from './combatAttributes';
+import {
+  CombatAttributeSet,
+  createCombatAttributeModifier,
+  attributeModifierValues,
+} from './combatAttributes';
 import {
   createOperatorAttackAttributes,
+  bindOperatorResistanceDerivation,
   resolveOperatorAttack,
   type OperatorAttackDerivationInput,
 } from './operatorAttackAttributes';
@@ -214,4 +219,26 @@ describe('operator attack attributes', () => {
     expect(attributes.get('PhysicalDamageTakenScalar')).toBeCloseTo(0.7);
     expect(attributes.get('EtherDamageTakenScalar')).toBe(1);
   });
+});
+
+it('抗性随四维变化进入基础槽，并在切面恢复后保持动态派生', () => {
+  const attributes = createOperatorAttackAttributes(input);
+  attributes.addModifier(
+    createCombatAttributeModifier(
+      'FireResistance',
+      attributeModifierValues('baseFinalMultiplier', 0.5),
+      ATTRIBUTE_MODIFIER_SOURCES.buff,
+      'runtime',
+    ),
+  );
+  const resistance = (intellect: number) =>
+    (1 - 1 / (Math.floor(intellect) * Math.fround(0.001) + 1)) * 100;
+  expect(attributes.get('FireResistance')).toBeCloseTo(resistance(120) * 0.5);
+  const restored = new CombatAttributeSet(structuredClone(attributes.runtimeState));
+  bindOperatorResistanceDerivation(restored);
+  restored.setRawValue('intellect', 240.9);
+  expect(restored.get('FireResistance')).toBeCloseTo(resistance(240.9) * 0.5);
+  expect(restored.get('CrystResistance')).toBeCloseTo(resistance(240.9));
+  expect(restored.get('PhysicalResistance')).toBeCloseTo(resistance(80));
+  expect(attributes.get('FireResistance')).toBeCloseTo(resistance(120) * 0.5);
 });

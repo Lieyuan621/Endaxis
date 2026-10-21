@@ -19,6 +19,7 @@ import type { PoiseModifierConditionInput } from '../damage/poiseModifiers';
 import type { HealModifierConditionInput } from '../heal/healModifiers';
 import type { CombatObjectRef } from '../receipt/combatReceipt';
 import type { ActionSequenceState } from '../state/actionState';
+import type { RuntimeTargetContextState } from '../state/abilityState';
 import type {
   ActionValueCalculation,
   ArtsIntensityFactor,
@@ -124,7 +125,7 @@ import type {
   DamageModifierState,
   EnemyPartTransferInfo,
 } from '../state/foundationState';
-import { copyEnemyPartTransferInfo } from '../abilities/runtimeTargetContext';
+import { copyEnemyPartTransferInfo, RuntimeTargetContext } from '../abilities/runtimeTargetContext';
 import {
   ATTRIBUTE_MODIFIER_SOURCES,
   type AttributeModifierSource,
@@ -283,6 +284,7 @@ export interface CombatBuffDefinition<Key extends string> {
 
 /** 添加 Buff 实例时由具体行为提供的初始黑板和层数。 */
 export interface CombatBuffAddOptions {
+  readonly inheritedTargetGroups?: RuntimeTargetContextState;
   readonly partTransferInfo?: EnemyPartTransferInfo;
   readonly blackboardValueCalculations?: Readonly<Record<string, ActionValueCalculation>>;
   readonly producedBy?: CombatObjectRef;
@@ -390,9 +392,12 @@ export class CombatBuff<Key extends string> {
   get definitionOwnerId(): string {
     return this.#state.definitionOwnerId;
   }
-  /** 来源施法在创建瞬间的快照，不随后续技能扣费变化。 */
+  /** 创建时保存的来源快照；仅显式来源切换动作可替换，不随来源技能后续扣费变化。 */
   get skillCastInfo(): CombatSkillCastInfo | null {
     return this.#state.skillCastInfo;
+  }
+  overrideSkillCastInfo(info: CombatSkillCastInfo): void {
+    this.#state.skillCastInfo = { ...info };
   }
   /** 原生独立运行时状态：只有显式记录才写入，不从 Buff 普通来源编号继承。 */
   get affixSkillCastId(): number {
@@ -521,9 +526,19 @@ export class CombatBuff<Key extends string> {
       options?.blackboardArtsIntensityFactors,
       options?.blackboardValueCalculations,
     );
-    // 对应原生 Buff.Reset：本次赋值完成后收集来源修正，早于寿命/修正器求值。
+    // 对应原生 Buff.Reset：本次赋值完成后收集接收侧及来源侧修正，早于寿命/修正器求值。
     // 仅初始化新实例执行；刷新旧实例不会因此重播收集事件。
-    owner.collectOutputBlackboard?.(definition, sourceId, this.blackboard);
+    owner.collectBlackboard?.(
+      definition,
+      sourceId,
+      this.blackboard,
+      this.#state.modifiedBlackboardKeys,
+      options?.skillCastInfo ?? null,
+    );
+    if (options?.inheritedTargetGroups !== undefined)
+      this.#state.inheritedTargetGroups = new RuntimeTargetContext(
+        options.inheritedTargetGroups,
+      ).snapshot();
     this.getSourceAttributeValue = options?.getSourceAttributeValue ?? null;
     this.#state.sourceAttributeOwnerId =
       options?.sourceAttributeOwnerId ?? (this.getSourceAttributeValue === null ? null : sourceId);
@@ -1320,10 +1335,12 @@ export class CombatBuffContainer<Key extends string> {
     }) => readonly Key[],
     /** AbilitySystem.AddShield 完成后的同步事件；值分别为实际新增量与当前有限护盾总量。 */
     readonly onShieldsAdded?: (gainedValue: number, currentValue: number) => void,
-    readonly collectOutputBlackboard?: (
+    readonly collectBlackboard?: (
       definition: CombatBuffDefinition<Key>,
       sourceId: string,
       blackboard: ActionBlackboard,
+      modifiedKeys: Set<string>,
+      skillCastInfo: CombatSkillCastInfo | null,
     ) => void,
     readonly onBuffReleased?: (buff: CombatBuff<Key>) => void,
     restoredState?: BuffContainerState<Key>,
@@ -1687,12 +1704,9 @@ export class CombatBuffContainer<Key extends string> {
     sourceId: string | undefined,
     finishSkillCastInfo?: CombatSkillCastInfo | null,
   ): boolean {
-    if (
-      buff.owner !== this ||
-      this.#memberBindings.get(buff.instanceId) !== buff ||
-      !this.#state.memberIds.includes(buff.instanceId)
-    )
+    if (buff.owner !== this || this.#state.instances.get(buff.instanceId) !== buff.runtimeState)
       throw new Error('Buff instance does not belong to this container');
+    // Start 中的 Environment 查询可直接结束自身，此时尚未加入公开成员列表。
     return this.#finishWithSource(buff, reason, sourceId, finishSkillCastInfo);
   }
 
@@ -2731,8 +2745,8 @@ function resolveIncomingMaxStackCount<Key extends string>(
 }
 
 function validateBuffMaxStackCount(value: number): void {
-  if (!Number.isSafeInteger(value) || value < 0) {
-    throw new RangeError('buff max stack count must resolve to a non-negative safe integer');
+  if (!Number.isSafeInteger(value)) {
+    throw new RangeError('buff max stack count must resolve to a safe integer');
   }
 }
 

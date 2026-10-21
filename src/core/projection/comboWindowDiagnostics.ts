@@ -24,6 +24,7 @@ function readReason(entry: CombatReceiptEntry): ComboWindowDiagnosticReason | un
   if (
     reason === 'windowMissing' ||
     reason === 'releaseOrderMismatch' ||
+    reason === 'comboLocked' ||
     reason === 'skillStageMismatch'
   ) {
     return reason;

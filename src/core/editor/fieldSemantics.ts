@@ -8,6 +8,7 @@ export type FieldDeclarationId =
   | 'CombatStepParameters.applyBuff.buffs'
   | 'CombatStepParameters.aura.buffs'
   | 'CombatStepParameters.readSkillSettingData.items'
+  | 'CombatStepParameters.overrideRawAttributes.attributes'
   | 'CombatStepParameters.createGlobalBuff.definition'
   | 'CombatStepParameters.listenForCombatEvents.responses'
   | 'CombatStepNode.options'

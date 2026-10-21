@@ -30,6 +30,38 @@ import { createStateTestSession } from '../../../test/stateTestSession';
 
 type Attribute = 'attack';
 
+it('启动动作可按实例结束自身，但不能结束其他容器或已回收的实例', () => {
+  const container = new CombatBuffContainer('owner', new CombatAttributeSet<Attribute>());
+  const other = new CombatBuffContainer('other', new CombatAttributeSet<Attribute>());
+  const finished: string[] = [];
+  const buff = requireAddedBuff(
+    container.add(
+      {
+        id: 'self-finishing',
+        stackingType: 'unlimited',
+        actions: {
+          start: current => {
+            expect(container.getCountById(current.definition.id)).toBe(0);
+            expect(() => other.finishInstance(current, 'other', undefined)).toThrow(
+              'Buff instance does not belong to this container',
+            );
+            expect(container.finishInstance(current, 'other', undefined)).toBe(true);
+            expect(container.finishInstance(current, 'other', undefined)).toBe(false);
+          },
+          finish: current => finished.push(current.definition.id),
+        },
+      },
+      'caster',
+    ),
+  );
+  expect(buff.isFinished).toBe(true);
+  expect(finished).toEqual(['self-finishing']);
+  container.recycleFinishedBuffs();
+  expect(() => container.finishInstance(buff, 'other', undefined)).toThrow(
+    'Buff instance does not belong to this container',
+  );
+});
+
 it('标签查询订阅只观察集合变化，支持同步退订且注册不重放状态', () => {
   const container = new CombatBuffContainer('owner', new CombatAttributeSet<Attribute>());
   container.addEntityTags(['SelectCategory/Unmarkable']);
@@ -1101,14 +1133,14 @@ describe('CombatBuffContainer', () => {
     expect(attributes.get('attack')).toBe(125);
     const firstHit = createDamageContext(attributes, container);
     firstHit.applyModifiers('beforeCalculation');
-    firstHit.setCalculationResult(firstHit.attackerAttributes.attack);
+    firstHit.setCalculationResult(firstHit.attackerAttributes.attack!);
     expect(firstHit.value).toBe(250);
 
     buff.disable();
     expect(attributes.get('attack')).toBe(100);
     const disabledHit = createDamageContext(attributes, container);
     disabledHit.applyModifiers('beforeCalculation');
-    disabledHit.setCalculationResult(disabledHit.attackerAttributes.attack);
+    disabledHit.setCalculationResult(disabledHit.attackerAttributes.attack!);
     expect(disabledHit.value).toBe(100);
 
     buff.enable();
@@ -1901,7 +1933,23 @@ describe('CombatBuffContainer', () => {
     expect(container.buffs.filter(buff => !buff.isFinished)).toEqual([first, third]);
   });
 
-  it.each([-1, 1.5, Number.POSITIVE_INFINITY])(
+  it.each(['stack', 'enhance'] as const)('%s 的负数层数上限不限制叠加', stackingType => {
+    const container = new CombatBuffContainer('operator', new CombatAttributeSet<Attribute>());
+    const definition: CombatBuffDefinition<Attribute> = {
+      id: 'negative-stack-limit',
+      stackingType,
+      maxStackCount: { blackboardKey: 'limit' },
+      blackboard: { limit: -1 },
+    };
+    const first = requireAddedBuff(container.add(definition, 'source'));
+    container.add(definition, 'source');
+    container.add(definition, 'source');
+    expect(first.isFinished).toBe(false);
+    expect(container.getCountById(definition.id)).toBe(3);
+    expect(container.buffs).toHaveLength(stackingType === 'stack' ? 3 : 1);
+  });
+
+  it.each([1.5, Number.POSITIVE_INFINITY])(
     'rejects invalid dynamic max stack count %s before allocating an instance',
     invalidLimit => {
       const attributes = new CombatAttributeSet<Attribute>();
@@ -1918,7 +1966,7 @@ describe('CombatBuffContainer', () => {
           'source',
           { blackboardValues: { limit: invalidLimit } },
         ),
-      ).toThrow('buff max stack count must resolve to a non-negative safe integer');
+      ).toThrow('buff max stack count must resolve to a safe integer');
       expect(container.buffs).toEqual([]);
     },
   );

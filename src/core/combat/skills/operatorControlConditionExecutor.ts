@@ -1,5 +1,6 @@
+import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
-import type { ActionTargetQuery } from '../../../../packages/game-data-contract/src/conditions';
+
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
 import type { CombatOperationContext, CombatOperationExecutor } from './skillRuntime';
@@ -12,7 +13,7 @@ import type { CombatOperationContext, CombatOperationExecutor } from './skillRun
 interface OperatorControlConditionExecutorDependencies {
   readonly isOperatorControlled: (operatorId: string) => boolean;
   readonly queryTargets: (
-    query: ActionTargetQuery,
+    query: CompiledTargetQuery,
     context: CombatOperationContext,
   ) => readonly RuntimeTargetRef[];
   readonly delegate: CombatOperationExecutor;

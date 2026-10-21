@@ -35,6 +35,29 @@ function change(overrides: Partial<PoiseChangePoint> = {}): PoiseChangePoint {
 }
 
 describe('projectPoiseCurve', () => {
+  it('上限变化与恢复按回执顺序使用当时上限', () => {
+    const curve = projectPoiseCurveFromReceipt(INITIAL, [
+      {
+        frame: 0,
+        time: 0,
+        sequence: 1,
+        event: 'MaxPoiseChanged',
+        targetId: 'enemy',
+        data: { previousPoise: 300, currentPoise: 600, maxPoise: 600 },
+      },
+      { frame: 10, time: 1 / 3, sequence: 2, event: 'PoiseRecovered', data: { poise: 600 } },
+      {
+        frame: 20,
+        time: 2 / 3,
+        sequence: 3,
+        event: 'MaxPoiseChanged',
+        targetId: 'enemy',
+        data: { previousPoise: 600, currentPoise: 300, maxPoise: 300 },
+      },
+    ]);
+    expect(curve.points.map(point => point.value)).toEqual([300, 600, 600, 300]);
+    expect(curve.maximumPoints?.map(point => point.value)).toEqual([300, 600, 300]);
+  });
   it('从初始失衡生成稀疏曲线并保留被拦截的结算事实', () => {
     const changes = [
       change(),

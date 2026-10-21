@@ -1,3 +1,4 @@
+import { BUFF_ABILITY_EVENTS } from '../../../../packages/game-data-contract/src/buffs';
 import { parseCombatBuffDefinitionEntry } from '../../combat/buffs/combatBuffDefinitions';
 import { validateTargetQuery } from './combatConditions';
 import type { ActionGraphContextEntry } from './actionPrograms';
@@ -15,6 +16,8 @@ import {
   validateActionStringOperand,
   requireInteger,
 } from './definitionValues';
+const buffAbilityEvents: ReadonlySet<string> = new Set(BUFF_ABILITY_EVENTS);
+
 interface BuffSequenceValidators {
   readonly action: (value: unknown, path: string, out: SkillDefinitionValidationIssue[]) => void;
   readonly scheduled: (value: unknown, path: string, out: SkillDefinitionValidationIssue[]) => void;
@@ -136,6 +139,9 @@ export function validateBuffApplication(
   }
   if (parameters.inheritSourceSkillCastInfo !== undefined) {
     requireBoolean(parameters, 'inheritSourceSkillCastInfo', `${path}.parameters`, out);
+  }
+  if (parameters.passTargetGroupsToBuff !== undefined) {
+    requireBoolean(parameters, 'passTargetGroupsToBuff', `${path}.parameters`, out);
   }
   if (parameters.isExtra !== undefined) {
     requireBoolean(parameters, 'isExtra', `${path}.parameters`, out);
@@ -345,46 +351,7 @@ export function validateBuffDefinition(
                 push(out, `${responsePath}.${key}`, 'unknown Buff ability event field');
               }
             }
-            if (
-              response.event !== 'enterFight' &&
-              response.event !== 'ownerHpZero' &&
-              response.event !== 'hpChanged' &&
-              response.event !== 'beforeTakeDamage' &&
-              response.event !== 'beforeCalculateDamage' &&
-              response.event !== 'beforeTakePhysicalInfliction' &&
-              response.event !== 'beforeOutputPhysicalInfliction' &&
-              response.event !== 'afterOutputPhysicalInfliction' &&
-              response.event !== 'beforeOutputKnockDown' &&
-              response.event !== 'afterOutputKnockDown' &&
-              response.event !== 'beforeOutputInfliction' &&
-              response.event !== 'beforeOutputSpellBurst' &&
-              response.event !== 'beforeTakeSpellInfliction' &&
-              response.event !== 'afterTakeSpellInfliction' &&
-              response.event !== 'beforeTakeSpellAbnormal' &&
-              response.event !== 'afterTakeSpellAbnormal' &&
-              response.event !== 'squadTakeSpellAbnormal' &&
-              response.event !== 'beforeTakeInfliction' &&
-              response.event !== 'takeDamage' &&
-              response.event !== 'takeCriticalDamage' &&
-              response.event !== 'outputDamage' &&
-              response.event !== 'outputCriticalDamage' &&
-              response.event !== 'outputHeal' &&
-              response.event !== 'receiveHeal' &&
-              response.event !== 'poiseZero' &&
-              response.event !== 'beforeCastSkill' &&
-              response.event !== 'skillEnd' &&
-              response.event !== 'beforeOutputBuff' &&
-              response.event !== 'beforeAddedBuff' &&
-              response.event !== 'outputBuff' &&
-              response.event !== 'addedBuff' &&
-              response.event !== 'finishedBuff' &&
-              response.event !== 'afterOutputWeaknessTriggered' &&
-              response.event !== 'afterKillEntity' &&
-              response.event !== 'buffConsumed' &&
-              response.event !== 'skillSpGained'
-            ) {
-              push(out, `${responsePath}.event`, 'unsupported Buff ability event');
-            }
+            requireEnum(response, 'event', buffAbilityEvents, responsePath, out);
             requireInteger(response, 'priority', responsePath, out);
             sequences.action(response.sequence, `${responsePath}.sequence`, out);
           }

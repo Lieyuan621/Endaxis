@@ -63,6 +63,7 @@ function combo(skillId = 'combo'): CompiledSkillProgram {
     skillGroupKey: 'combo',
     skillId,
     skillType: 'comboSkill',
+    nativeSkillType: 'comboSkill',
     skillLevel: 1,
     initialBlackboard: {},
     costs: [],
@@ -77,6 +78,7 @@ function action(skillId: string, steps: readonly ActionGraphStep[]): CompiledSki
     ...combo(skillId),
     skillGroupKey: skillId,
     skillType: 'battleSkill',
+    nativeSkillType: 'normalSkill',
     cooldownFrames: undefined,
     costFrame: undefined,
     timelineActions: [{ startFrame: 0, sequence: chainEntry(`action-${skillId}`, steps) }],
@@ -236,7 +238,10 @@ describe('assembly 原生常驻连携条件', () => {
             },
           },
           {
-            input_1: { type: 'boolean', expression: { kind: 'comboSkillPending', target: { kind: 'owner' } } },
+            input_1: {
+              type: 'boolean',
+              expression: { kind: 'comboSkillPending', target: { kind: 'owner' } },
+            },
             input_2: {
               type: 'boolean',
               expression: { kind: 'not', condition: { kind: 'conditionNode', nodeId: 'input_1' } },
@@ -936,25 +941,28 @@ describe('assembly 原生常驻连携条件', () => {
     },
   );
 
-  it.each([
-    'no-skill',
-    'no-cooldown',
-    'no-start-frame',
-    'wrong-type',
-    'duplicate-key',
-    'no-slot',
-  ] as const)('%s 严格拒绝不完整装配', failure => {
+  it('零基础冷却仍可装配连携条件，保留动态冷却附加值的入口', () => {
     const f = setup();
-    if (failure === 'no-skill') f.owner.skills = [];
-    if (failure === 'no-cooldown') f.owner.skills[0] = { ...combo(), cooldownFrames: undefined };
-    if (failure === 'no-start-frame') f.owner.skills[0] = { ...combo(), costFrame: undefined };
-    if (failure === 'wrong-type') f.owner.skills[0] = { ...combo(), skillType: 'battleSkill' };
-    if (failure === 'duplicate-key') f.owner.comboConditionPrograms.push(condition);
-    if (failure === 'no-slot') f.owner.skillSlotGroups = [];
-    expect(() => new CombatRuntimeAssembly(f.options)).toThrow(/combo condition/);
+    f.owner.skills[0] = { ...combo(), cooldownFrames: undefined };
+    new CombatRuntimeAssembly(f.options);
     f.emit();
-    expect(f.pending).toEqual([]);
+    expect(f.pending).toHaveLength(1);
   });
+
+  it.each(['no-skill', 'no-start-frame', 'wrong-type', 'duplicate-key', 'no-slot'] as const)(
+    '%s 严格拒绝不完整装配',
+    failure => {
+      const f = setup();
+      if (failure === 'no-skill') f.owner.skills = [];
+      if (failure === 'no-start-frame') f.owner.skills[0] = { ...combo(), costFrame: undefined };
+      if (failure === 'wrong-type') f.owner.skills[0] = { ...combo(), skillType: 'battleSkill' };
+      if (failure === 'duplicate-key') f.owner.comboConditionPrograms.push(condition);
+      if (failure === 'no-slot') f.owner.skillSlotGroups = [];
+      expect(() => new CombatRuntimeAssembly(f.options)).toThrow(/combo condition/);
+      f.emit();
+      expect(f.pending).toEqual([]);
+    },
+  );
 
   it('开局事件已能触发条件；入战或第零帧输入失败时撤销本次注册', () => {
     const f = setup();

@@ -37,7 +37,7 @@ const definition = {
               action: {
                 kind: 'setGlobalCooldown',
                 parameters: {
-                  target: 'buffOwner',
+                  target: { kind: 'owner' },
                   markerId: 'buff_equipsuit_spellburst_01',
                   durationSeconds: { kind: 'constant', value: 0.1 },
                 },

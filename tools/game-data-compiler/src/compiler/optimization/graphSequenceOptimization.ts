@@ -248,7 +248,7 @@ function processChainInner(
         context.unobservedTargetGroups.has(action.parameters.saveToContextKey) &&
         (action.kind === 'mergeContextTargets'
           ? action.parameters.sources.every(
-              source => source.kind === 'target' && source.target === 'enemy',
+              source => source.kind === 'fixed' && source.target === 'enemy',
             )
           : action.kind === 'findCharacterTeamTargets'
             ? action.parameters.selection.kind === 'controlledOperator' ||
@@ -482,6 +482,15 @@ function processAction(
       const body = processChain(action.body, `${path}.body`, context);
       return [body === action.body ? action : { ...action, body }];
     }
+    case 'setHealthFloor':
+      return [
+        action.afterSet === undefined
+          ? action
+          : {
+              ...action,
+              afterSet: processChain(action.afterSet, `${path}.afterSet`, context),
+            },
+      ];
     case 'playAnimation': {
       const onEnd = processChain(action.onEnd, `${path}.onEnd`, context);
       return onEnd.$sequence === null ? [] : [{ ...action, onEnd }];

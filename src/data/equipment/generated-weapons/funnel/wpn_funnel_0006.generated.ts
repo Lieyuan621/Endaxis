@@ -213,8 +213,8 @@ const definition = {
                 parameters: {
                   saveToContextKey: 'wpn_funnel_0006_total_tar',
                   sources: [
-                    { kind: 'target', target: 'eventTarget' },
-                    { kind: 'context', contextKey: 'wpn_funnel_0006_total_tar' },
+                    { kind: 'inputTarget' },
+                    { kind: 'context', key: 'wpn_funnel_0006_total_tar' },
                   ],
                 },
               },

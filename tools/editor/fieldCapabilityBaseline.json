@@ -133,7 +133,7 @@
       "previousReason": "depth-limit"
     },
     {
-      "key": "definition/buff/<0>/poiseModifiers/[]/processors/[]/addition/<1>",
+      "key": "definition/buff/<0>/poiseModifiers/[]/processors/[]/values/value/<1>",
       "previousReason": "depth-limit"
     },
     {
@@ -177,7 +177,7 @@
       "previousReason": "depth-limit"
     },
     {
-      "key": "definition/buff/<1>/poiseModifiers/[]/processors/[]/addition/<1>",
+      "key": "definition/buff/<1>/poiseModifiers/[]/processors/[]/values/value/<1>",
       "previousReason": "depth-limit"
     },
     {

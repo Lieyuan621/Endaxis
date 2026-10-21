@@ -47,27 +47,6 @@ const definition = {
           value: [0.16, 0.192, 0.224, 0.256, 0.288, 0.32, 0.352, 0.384, 0.448],
         },
       ],
-      skillId: 'sk_wpn_claym_0018',
-      eventHandlers: [
-        {
-          key: 'skill3:event:0:sequence:0',
-          abilityEvent: 'outputBuff',
-          priority: 0,
-          sequence: { $sequence: 'checkCondition_2' },
-        },
-        {
-          key: 'skill3:event:1:sequence:0',
-          abilityEvent: 'beforeCastSkill',
-          priority: 0,
-          sequence: { $sequence: 'checkCondition_4' },
-        },
-        {
-          key: 'skill3:event:2:sequence:0',
-          abilityEvent: 'outputBuff',
-          priority: 0,
-          sequence: { $sequence: 'checkCondition_6' },
-        },
-      ],
       actionGraph: {
         main: {
           nodes: {
@@ -160,6 +139,27 @@ const definition = {
         },
         macros: {},
       },
+      skillId: 'sk_wpn_claym_0018',
+      eventHandlers: [
+        {
+          key: 'skill3:event:0:sequence:0',
+          abilityEvent: 'outputBuff',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_2' },
+        },
+        {
+          key: 'skill3:event:1:sequence:0',
+          abilityEvent: 'beforeCastSkill',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_4' },
+        },
+        {
+          key: 'skill3:event:2:sequence:0',
+          abilityEvent: 'outputBuff',
+          priority: 0,
+          sequence: { $sequence: 'checkCondition_6' },
+        },
+      ],
       blackboard: {
         combo_dmg_up: [0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.7],
         dmg_taken_up: [0.075, 0.09, 0.105, 0.12, 0.135, 0.15, 0.165, 0.18, 0.21],

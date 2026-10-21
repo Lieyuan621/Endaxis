@@ -27,14 +27,20 @@ export function projectKeywordBuffAction(
     (action.source.targetSource === 'Owner' &&
       (context.actionOwnerTarget === 'caster' ||
         (context.actionOwnerTarget === 'buffOwner' && context.fixedBuffOwnerTarget === 'caster')));
-  const resolveTarget = (identity: string): 'caster' | 'enemy' | 'buffOwner' | null =>
+  const resolveTarget = (
+    identity: string,
+  ): 'caster' | 'enemy' | 'buffOwner' | 'currentTarget' | 'currentAbilityEntity' | null =>
     identity === 'caster' || identity === 'enemy'
       ? identity
-      : identity === 'buffOwner'
-        ? context.fixedBuffOwnerTarget === 'caster' || context.fixedBuffOwnerTarget === 'enemy'
-          ? context.fixedBuffOwnerTarget
-          : 'buffOwner'
-        : null;
+      : identity === 'runtimeTargets' || identity === 'actionInputTarget'
+        ? 'currentTarget'
+        : identity === 'currentAbilityEntity' || identity === 'abilityEntity'
+          ? 'currentAbilityEntity'
+          : identity === 'buffOwner'
+            ? context.fixedBuffOwnerTarget === 'caster' || context.fixedBuffOwnerTarget === 'enemy'
+              ? context.fixedBuffOwnerTarget
+              : 'buffOwner'
+            : null;
   const target =
     action.target.targetSource === 'Owner'
       ? resolveTarget(context.actionOwnerTarget)

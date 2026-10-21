@@ -1,3 +1,5 @@
+import { GameplayTagPredefine } from '../tags/gameplayTagPredefine';
+import { GAMEPLAY_TAG_PREDEFINE } from '../../../data/combat/gameplayTagPredefine.generated';
 import { describe, expect, it, vi } from 'vitest';
 import type { ActionGraphStep } from '../../../../packages/game-data-contract/src/actionGraph';
 import type { GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags';
@@ -34,6 +36,7 @@ const delegate: CombatOperationExecutor = {
 function createExecutor(dependencies: BuffOperationDependencies): BuffOperationExecutor {
   const queries = new TargetContextOperationExecutor(dependencies.sourceId, delegate);
   return new BuffOperationExecutor({
+    physicalTagPredefine: new GameplayTagPredefine(GAMEPLAY_TAG_PREDEFINE),
     queryTargets: queries.queryTargets.bind(queries),
     resolveEventTarget: id => dependencies.resolveTarget(id === 'enemy' ? 'enemy' : 'caster'),
     ...dependencies,
@@ -41,6 +44,27 @@ function createExecutor(dependencies: BuffOperationDependencies): BuffOperationE
 }
 
 describe('BuffOperationExecutor', () => {
+  it('战技禁用标签随动作结束移除，重叠动作互不清除对方的标签', () => {
+    const container = new CombatBuffContainer('caster', new CombatAttributeSet());
+    const target = new BuffDefinitionOperationTarget(container, { get: () => undefined });
+    const executor = createExecutor({ sourceId: 'caster', resolveTarget: () => target, delegate });
+    const step = { kind: 'disableNormalSkill' as const, parameters: { normalOnly: true } };
+    const context = () => ({
+      blackboard: new ActionBlackboard(),
+      actionOwnerId: 'caster',
+      actionRegistrationState: { registrationIds: [] as number[] },
+    });
+    const first = context();
+    const second = context();
+    const tags = ['Status/DisableNormalSkillExceptForAdditional/WithUI'];
+    executor.execute(step, first);
+    executor.execute(step, second);
+    executor.end(step, first);
+    executor.end(step, first);
+    expect(container.matchesEntityTags(tags, 'hasAny')).toBe(true);
+    executor.end(step, second);
+    expect(container.matchesEntityTags(tags, 'hasAny')).toBe(false);
+  });
   it.each(['finishBuffsById', 'finishBuffsByTag'] as const)(
     '%s snapshots the truncated count before synchronous finish callbacks',
     kind => {
@@ -210,12 +234,14 @@ describe('BuffOperationExecutor', () => {
       resolveBuffDefinition: id => (id === attached ? definition : { stackingType: 'unique' }),
       isCharacterTarget: id => id === 'receiver',
       beforeCharacterInfliction: before,
+      queryTargets: () => [{ kind: 'operator', operatorId: 'receiver' }],
+      resolveEventTarget: () => target,
       delegate,
     });
     const parameters = {
       element: 'cryo' as const,
-      source: 'caster' as const,
-      target: 'caster' as const,
+      source: { kind: 'owner' } as const,
+      target: { kind: 'owner' } as const,
       count: numberInput({ kind: 'constant', value: 3 }),
       directToTriggered: false,
       ignoreWeakImmune: true,
@@ -233,6 +259,66 @@ describe('BuffOperationExecutor', () => {
     );
     expect(container.getCountByIds([attached])).toBe(0);
     expect(container.getCountByIds([triggered])).toBe(1);
+    expect(before).toHaveBeenCalledTimes(2);
+  });
+
+  it('角色附着使用全队查询并保留 GodEntity 来源，跳过非角色且不回退到动作宿主', () => {
+    const attached = 'buff_common_enemy_spell_pulse_attached';
+    const definition = { stackingType: 'unlimited' as const };
+    const targets = ['a', 'b'].map(
+      id =>
+        new BuffDefinitionOperationTarget(new CombatBuffContainer(id, new CombatAttributeSet()), {
+          get: buffId => ({ ...definition, id: buffId }),
+          compile: entry => ({ ...definition, id: entry.id }),
+        }),
+    );
+    const before = vi.fn();
+    let hasSource = true;
+    const executor = new BuffOperationExecutor({
+      sourceId: 'unrelated-host',
+      resolveTarget: () => {
+        throw new Error('legacy target resolver must not run');
+      },
+      queryTargets: query =>
+        query.kind === 'godEntity'
+          ? hasSource
+            ? [{ kind: 'godEntity' }]
+            : []
+          : [
+              { kind: 'enemy' },
+              { kind: 'operator', operatorId: 'a' },
+              { kind: 'operator', operatorId: 'b' },
+            ],
+      resolveEventTarget: id => {
+        const target = targets.find(target => target.ownerId === id);
+        if (!target) throw new Error(`unexpected target ${id}`);
+        return target;
+      },
+      resolveBuffDefinition: () => definition,
+      isCharacterTarget: id => id === 'a' || id === 'b',
+      beforeCharacterInfliction: before,
+      delegate,
+    });
+    const step = {
+      kind: 'applyCharacterInfliction' as const,
+      parameters: {
+        element: 'electric' as const,
+        source: { kind: 'godEntity' } as const,
+        target: { kind: 'characterTeam', excludeOwner: false } as const,
+        count: numberInput({ kind: 'constant', value: 1 }),
+        directToTriggered: false,
+        ignoreWeakImmune: true,
+        ignoreAddingCooldown: true,
+      },
+    };
+    const context = { blackboard: new ActionBlackboard() };
+    expect(executor.execute(step, context)).toBe(true);
+    for (const target of targets) {
+      expect(target.container.getCountByIds([attached])).toBe(1);
+      expect(before).toHaveBeenCalledWith(target.ownerId, 'god-entity', 'electric');
+    }
+    hasSource = false;
+    expect(executor.execute(step, context)).toBe(false);
     expect(before).toHaveBeenCalledTimes(2);
   });
 
@@ -458,8 +544,10 @@ describe('BuffOperationExecutor', () => {
     const target = new BuffDefinitionOperationTarget(container, { get: () => undefined });
     // Preserve the container methods while overriding only the live reader.
     Object.defineProperty(container, 'currentFiniteShieldValue', { get: () => liveValue });
+    const queryExecutor = new TargetContextOperationExecutor('source', delegate);
     const executor = new BuffOperationExecutor({
       sourceId: 'source',
+      queryTargets: queryExecutor.queryTargets.bind(queryExecutor),
       resolveTarget: () => target,
       resolveEventTarget: id => {
         expect(id).toBe('owner');
@@ -483,7 +571,7 @@ describe('BuffOperationExecutor', () => {
     };
     const step = (value: 'gained' | 'current') => ({
       kind: 'storeShieldValue' as const,
-      parameters: { target: 'actionOwner' as const, value, outputKey: 'shield' },
+      parameters: { target: { kind: 'owner' as const }, value, outputKey: 'shield' },
     });
     expect(executor.execute(step('current'), context)).toBe(true);
     expect(blackboard.getNumber('shield')).toBe(liveValue);
@@ -495,6 +583,24 @@ describe('BuffOperationExecutor', () => {
     expect(executor.execute(step('gained'), { blackboard, actionOwnerId: 'owner' })).toBe(true);
     expect(executor.execute(step('gained'), { blackboard, event: context.event })).toBe(true);
     expect(blackboard.getNumber('shield')).toBe(33.123456789);
+    const targetContext = new RuntimeTargetContext();
+    const selected = {
+      ...step('current'),
+      parameters: {
+        ...step('current').parameters,
+        target: { kind: 'context' as const, key: 'selected' },
+      },
+    };
+    targetContext.set('selected', [{ kind: 'operator', operatorId: 'owner' }, { kind: 'enemy' }]);
+    executor.execute(selected, { ...context, actionOwnerId: 'other', targetContext });
+    expect(blackboard.getNumber('shield')).toBe(liveValue);
+    liveValue = 1;
+    targetContext.set('selected', [
+      { kind: 'spatialPoint', pointId: 1 },
+      { kind: 'operator', operatorId: 'owner' },
+    ]);
+    expect(executor.execute(selected, { ...context, targetContext })).toBe(true);
+    expect(blackboard.getNumber('shield')).toBe(80.123456789);
   });
   it.each([false, true])('结束动作传递自身施法而非事件施法，存在来源=%s', hasSource => {
     const target = new CombatBuffContainer<string>('caster', new CombatAttributeSet());
@@ -1074,11 +1180,13 @@ describe('BuffOperationExecutor', () => {
   it('applies the first no-guard layer before executing the fracture Buff chain', () => {
     let noGuardCount = 0;
     const applied: string[] = [];
+    const sources: string[] = [];
     const beforeOutput: Array<AbilityPhysicalInflictionPayload> = [];
     const target = {
       ownerId: 'enemy',
-      apply: (request: { buffId: string }) => {
+      apply: (request: { buffId: string; sourceId: string }) => {
         applied.push(request.buffId);
+        sources.push(request.sourceId);
         if (request.buffId === 'buff_physical_no_guard') noGuardCount += 1;
         if (request.buffId === 'buff_physical_fracture') noGuardCount = 0;
         return true;
@@ -1093,7 +1201,7 @@ describe('BuffOperationExecutor', () => {
       findFirstByTags: () => undefined,
       finishByTags: () => 0,
     };
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'antal',
       sourceActionId: 'comboSkill',
       resolveTarget: () => target,
@@ -1105,7 +1213,8 @@ describe('BuffOperationExecutor', () => {
       kind: 'applyPhysicalInfliction' as const,
       parameters: {
         type: 'fracture' as const,
-        target: 'enemy' as const,
+        target: { kind: 'fixed' as const, target: 'enemy' as const },
+        source: { kind: 'fixed' as const, target: 'caster' as const },
         isExtra: false,
       },
     };
@@ -1128,11 +1237,54 @@ describe('BuffOperationExecutor', () => {
         sourceId: 'antal',
         targetId: 'enemy',
         type: 'fracture',
+        isExtra: false,
         skillCastInfo: context.skillCastInfo,
         attachBuffToCurrentSkill,
       },
     ]);
     expect(applied).toEqual(['buff_physical_no_guard', 'buff_physical_fracture']);
+    const queries = new TargetContextOperationExecutor('antal', delegate);
+    const targetContext = new RuntimeTargetContext();
+    const queried = new BuffOperationExecutor({
+      ...executor.dependencies,
+      queryTargets: queries.queryTargets.bind(queries),
+    });
+    const dynamic = {
+      ...step,
+      parameters: {
+        ...step.parameters,
+        source: { kind: 'context' as const, key: 'sources' },
+        target: { kind: 'context' as const, key: 'receivers' },
+        isExtra: true,
+      },
+    };
+    targetContext.set('sources', [
+      { kind: 'spatialPoint', pointId: 1 },
+      { kind: 'operator', operatorId: 'selected-source' },
+    ]);
+    targetContext.set('receivers', [{ kind: 'enemy' }, { kind: 'enemy' }]);
+    expect(queried.execute(dynamic, { ...context, targetContext })).toBe(false);
+    expect(applied).toHaveLength(2);
+    targetContext.set('sources', [
+      { kind: 'operator', operatorId: 'selected-source' },
+      { kind: 'operator', operatorId: 'ignored-source' },
+    ]);
+    targetContext.set('receivers', []);
+    expect(queried.execute(dynamic, { ...context, targetContext })).toBe(false);
+    targetContext.set('receivers', [
+      { kind: 'enemy' },
+      { kind: 'spatialPoint', pointId: 2 },
+      { kind: 'enemy' },
+    ]);
+    expect(queried.execute(dynamic, { ...context, targetContext })).toBe(true);
+    expect(applied).toEqual([
+      'buff_physical_no_guard',
+      'buff_physical_fracture',
+      'buff_physical_no_guard',
+      'buff_physical_fracture',
+    ]);
+    expect(sources).toEqual(['antal', 'antal', 'selected-source', 'selected-source']);
+    expect(beforeOutput.at(-1)).toMatchObject({ sourceId: 'selected-source', isExtra: true });
     // 此处是只模拟层数的目标；消费事件由真实 Buff 容器负责，不能在此反推。
   });
 
@@ -1157,7 +1309,7 @@ describe('BuffOperationExecutor', () => {
       findFirstByTags: () => undefined,
       finishByTags: () => 0,
     };
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'antal',
       resolveTarget: () => target,
       onBeforeOutputPhysicalInfliction: event => beforeOutput.push(event.type),
@@ -1166,7 +1318,8 @@ describe('BuffOperationExecutor', () => {
     });
     const parameters = {
       type: 'airborne' as const,
-      target: 'enemy' as const,
+      target: { kind: 'fixed' as const, target: 'enemy' as const },
+      source: { kind: 'fixed' as const, target: 'caster' as const },
       isExtra: false,
       duration: { kind: 'constant' as const, value: 1.5 },
       height: { kind: 'constant' as const, value: 2 },
@@ -1205,28 +1358,43 @@ describe('BuffOperationExecutor', () => {
 
   it('resolves Crush assignments only when the existing no-guard layer is consumed', () => {
     let noGuardCount = 1;
+    let immune = false;
+    let accepted = true;
+    const events: string[] = [];
     const applied: BuffApplicationRequest[] = [];
     const target = {
       ownerId: 'enemy',
       apply: (request: BuffApplicationRequest) => {
         applied.push(request);
         if (request.buffId === 'buff_physical_crushed') noGuardCount = 0;
-        return true;
+        return accepted;
       },
       getCountByIds: (ids: readonly string[]) =>
         ids.includes('buff_physical_no_guard') ? noGuardCount : 0,
       finishByIds: () => 0,
       holdByIds: () => ({ release: () => undefined }),
       getCountByTags: () => 0,
-      matchesEntityTags: () => false,
+      matchesEntityTags: () => immune,
       findFirstByIds: () => undefined,
       findFirstByTags: () => undefined,
       finishByTags: () => 0,
     };
-    const executor = new BuffOperationExecutor({
+    const executor = createExecutor({
       sourceId: 'dapan',
       resolveTarget: () => target,
       resolveBuffDefinition: () => ({ stackingType: 'refresh' }),
+      physicalTagPredefine: new GameplayTagPredefine({
+        tags: {},
+        queries: {},
+        immunityQueries: [
+          {
+            tag: 'Skill/Character/Common/PhysicalStatus/CrushStatus',
+            query: { tags: ['Test/BlockCrush'], queryType: 'hasAny' },
+          },
+        ],
+      }),
+      onBeforeOutputPhysicalInfliction: () => events.push('before'),
+      onPhysicalInflictionApplied: () => events.push('after'),
       delegate,
     });
 
@@ -1236,7 +1404,8 @@ describe('BuffOperationExecutor', () => {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'crush',
-            target: 'enemy',
+            target: { kind: 'fixed' as const, target: 'enemy' as const },
+            source: { kind: 'fixed' as const, target: 'caster' as const },
             isExtra: false,
             damageMultiplier: numberInput({ kind: 'blackboard', key: 'crush_multi' }),
             ignoreHitEffect: true,
@@ -1259,6 +1428,28 @@ describe('BuffOperationExecutor', () => {
         blackboardValues: { dmg_multiplier: 1.75, ignore_hit_effect: 1 },
       }),
     ]);
+    noGuardCount = 1;
+    accepted = false;
+    const step = {
+      kind: 'applyPhysicalInfliction' as const,
+      parameters: {
+        type: 'crush' as const,
+        source: { kind: 'fixed' as const, target: 'caster' as const },
+        target: { kind: 'fixed' as const, target: 'enemy' as const },
+        isExtra: false,
+        damageMultiplier: numberInput({ kind: 'blackboard', key: 'multiplier' }),
+        ignoreHitEffect: false,
+      },
+    };
+    expect(executor.execute(step, { blackboard: new ActionBlackboard({ multiplier: 1 }) })).toBe(
+      true,
+    );
+    expect(events).toEqual(['before', 'after', 'before', 'after']);
+    noGuardCount = 1;
+    immune = true;
+    expect(executor.execute(step, { blackboard: new ActionBlackboard() })).toBe(true);
+    expect(applied).toHaveLength(2);
+    expect(events).toHaveLength(4);
   });
 
   it('finishes only Buff instances created for the active action interval', () => {
@@ -1997,6 +2188,76 @@ describe('BuffOperationExecutor', () => {
     expect(blackboard.getNumber('count')).toBe(4);
   });
 
+  it('时长修改只查询首个目标；空查询不修改任何 Buff', () => {
+    const first = new CombatBuffContainer('first', new CombatAttributeSet());
+    const second = new CombatBuffContainer('second', new CombatAttributeSet());
+    const one = first.add(
+      { id: 'timed', stackingType: 'unlimited', durationSeconds: 9 },
+      'source',
+    )!;
+    const two = second.add(
+      { id: 'timed', stackingType: 'unlimited', durationSeconds: 9 },
+      'source',
+    )!;
+    const targets = new Map(
+      [first, second].map(container => [
+        container.ownerId,
+        new BuffDefinitionOperationTarget(container, { get: () => undefined }),
+      ]),
+    );
+    let empty = false;
+    let spatialFirst = false;
+    const executor = new BuffOperationExecutor({
+      sourceId: 'first',
+      delegate,
+      queryTargets: () =>
+        empty
+          ? []
+          : spatialFirst
+            ? [
+                { kind: 'spatialPoint', pointId: 1 },
+                { kind: 'operator', operatorId: 'second' },
+              ]
+            : [
+                { kind: 'operator', operatorId: 'first' },
+                { kind: 'operator', operatorId: 'second' },
+              ],
+      resolveEventTarget: id => targets.get(id)!,
+      resolveTarget: () => {
+        throw new Error('unexpected fixed target');
+      },
+    });
+    const step = {
+      kind: 'setBuffRemainingDuration' as const,
+      parameters: {
+        target: { kind: 'characterTeam' as const, excludeOwner: false },
+        query: { kind: 'id' as const, buffIds: ['timed'] },
+        operation: 'assign' as const,
+        value: { kind: 'constant' as const, value: 3 },
+      },
+    };
+    executor.execute(step, { blackboard: new ActionBlackboard() });
+    expect(one.remainingDuration).toBe(3);
+    expect(two.remainingDuration).toBe(9);
+    empty = true;
+    expect(executor.execute(step, { blackboard: new ActionBlackboard() })).toBe(true);
+    empty = false;
+    spatialFirst = true;
+    expect(
+      executor.execute(
+        {
+          ...step,
+          parameters: {
+            ...step.parameters,
+            value: numberInput({ kind: 'blackboard', key: 'missing' }),
+          },
+        },
+        { blackboard: new ActionBlackboard() },
+      ),
+    ).toBe(true);
+    expect(two.remainingDuration).toBe(9);
+  });
+
   it('uses container order for lifetime reads and preserves the native write tolerance', () => {
     const container = new CombatBuffContainer('operator', new CombatAttributeSet());
     const target = new BuffDefinitionOperationTarget(container, {
@@ -2676,11 +2937,13 @@ describe('BuffOperationExecutor', () => {
     const targetContext = new RuntimeTargetContext();
     targetContext.set('source', [{ kind: 'operator', operatorId: 'original' }]);
     const sources: string[] = [];
+    const captured: BuffApplicationRequest[] = [];
     const applied: { target: string; id: string; value: number }[] = [];
     const makeTarget = (id: string) =>
       Object.assign(new CombatBuffContainer(id, new CombatAttributeSet()), {
         apply: (request: BuffApplicationRequest) => {
           sources.push(request.sourceId);
+          captured.push(request);
           applied.push({
             target: id,
             id: request.buffId,
@@ -2714,6 +2977,7 @@ describe('BuffOperationExecutor', () => {
           parameters: {
             targets: { kind: 'characterTeam', excludeOwner: false },
             source: { kind: 'context', key: 'source' },
+            passTargetGroupsToBuff: true,
             count: numberInput({ kind: 'blackboard', key: 'count' }),
             buffs: ['a', 'b'].map(buffId => ({
               buffId,
@@ -2744,6 +3008,10 @@ describe('BuffOperationExecutor', () => {
       'changed',
       'changed',
     ]);
+    // 动作传递环境，由 Buff 创建边沿复制，不能提前冻结后续同步回调的写入。
+    expect(
+      captured.every(request => request.inheritedTargetGroups === targetContext.runtimeState),
+    ).toBe(true);
   });
 
   it('compares matching buff enhance stacks with the native tolerance', () => {
@@ -2789,6 +3057,84 @@ describe('BuffOperationExecutor', () => {
     expect(
       executor.evaluate(
         { ...condition, value: numberInput({ kind: 'blackboard', key: 'threshold' }) },
+        context,
+      ),
+    ).toBe(false);
+  });
+
+  it('routes Buff counts and tag consumption through the native part Buff source', () => {
+    const body = new CombatBuffContainer(
+      'enemy',
+      new CombatAttributeSet(),
+      new GameplayTagRegistry(['natural']),
+    );
+    const part = new CombatBuffContainer(
+      'ability-entity:7',
+      new CombatAttributeSet(),
+      new GameplayTagRegistry(['natural']),
+    );
+    body.add(
+      { id: 'infliction', stackingType: 'enhance', maxStackCount: 4, applyTags: ['natural'] },
+      'operator',
+    );
+    const executor = createExecutor({
+      sourceId: 'operator',
+      resolveTarget: () => body,
+      queryTargets: () => [{ kind: 'abilityEntity', instanceId: 7 }],
+      resolvePartBuffSource: () => ({ kind: 'enemy' }),
+      resolveCurrentAbilityEntityTarget: () => part,
+      resolveEventTarget: () => body,
+      delegate,
+    });
+    const context = { blackboard: new ActionBlackboard() };
+    const comparison = {
+      target: { kind: 'inputTarget' as const },
+      compareZeroWhenTargetMissing: false,
+      operator: 'equal' as const,
+      value: { kind: 'constant' as const, value: 1 },
+    };
+    expect(
+      executor.evaluate(
+        { ...comparison, kind: 'buffStackCompare', buffTags: ['natural'], tagQueryType: 'hasAny' },
+        context,
+      ),
+    ).toBe(true);
+    expect(
+      executor.evaluate(
+        {
+          ...comparison,
+          kind: 'buffTagIdCountCompare',
+          buffTags: ['natural'],
+          tagQueryType: 'hasAny',
+        },
+        context,
+      ),
+    ).toBe(true);
+    expect(
+      executor.evaluate(
+        { ...comparison, kind: 'buffIdStackCompare', buffIds: ['infliction'] },
+        context,
+      ),
+    ).toBe(true);
+    expect(
+      executor.execute(
+        {
+          kind: 'finishBuffsByTag',
+          parameters: {
+            targets: { kind: 'inputTarget' },
+            finishSource: { kind: 'source' },
+            buffTags: ['natural'],
+            tagQueryType: 'hasAny',
+            reason: 'early',
+            count: { kind: 'constant', value: 1 },
+          },
+        },
+        context,
+      ),
+    ).toBe(true);
+    expect(
+      executor.evaluate(
+        { ...comparison, kind: 'buffStackCompare', buffTags: ['natural'], tagQueryType: 'hasAny' },
         context,
       ),
     ).toBe(false);
@@ -3178,14 +3524,17 @@ describe('BuffOperationExecutor', () => {
     });
 
     expect(
-      executor.evaluate({
-        kind: 'buffIdStackCompare',
-        target: { kind: 'fixed', target: 'caster' },
-        compareZeroWhenTargetMissing: false,
-        buffIds: ['sword-trigger'],
-        operator: 'greaterOrEqual',
-        value: 2,
-      }, { blackboard: new ActionBlackboard() }),
+      executor.evaluate(
+        {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'fixed', target: 'caster' },
+          compareZeroWhenTargetMissing: false,
+          buffIds: ['sword-trigger'],
+          operator: 'greaterOrEqual',
+          value: 2,
+        },
+        { blackboard: new ActionBlackboard() },
+      ),
     ).toBe(true);
     expect(
       executor.evaluate(

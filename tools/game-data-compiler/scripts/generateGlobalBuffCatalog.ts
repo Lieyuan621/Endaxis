@@ -103,6 +103,8 @@ export function collectReferencedGlobalBuffIds(value: unknown): string[] {
     }
     if (current === null || typeof current !== 'object') return;
     const record = current as Record<string, unknown>;
+    // 禁用动作及其嵌套序列不会执行，不能要求其中遗留的模板引用仍然存在。
+    if (typeof record.$type === 'string' && record.isEnable === false) return;
     const addWrappedId = (candidate: unknown): void => {
       if (typeof candidate === 'string' && candidate.startsWith('global_buff_')) {
         result.add(candidate);

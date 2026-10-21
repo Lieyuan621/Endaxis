@@ -61,6 +61,16 @@ export const emberChr_0009_azrila_combo_skillActionGraph = {
         },
         next: null,
       },
+      mergeContextTargets_10: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: {
+            saveToContextKey: 'targets',
+            sources: [{ kind: 'fixed', target: 'enemy' }],
+          },
+        },
+        next: null,
+      },
       applyBuff_14: {
         action: {
           kind: 'applyBuff',
@@ -103,8 +113,8 @@ export const emberChr_0009_azrila_combo_skillActionGraph = {
         action: {
           kind: 'heal',
           parameters: {
-            target: 'contextTarget',
-            contextKey: 'CureTarget',
+            target: { kind: 'context', key: 'CureTarget' },
+            healer: { kind: 'source' },
             alwaysNext: true,
             tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
             attribute: 'will',
@@ -190,7 +200,8 @@ export const emberChr_0009_azrila_combo_skillActionGraph = {
         action: {
           kind: 'heal',
           parameters: {
-            target: 'controlledOperator',
+            target: { kind: 'mainCharacter' },
+            healer: { kind: 'source' },
             alwaysNext: true,
             tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
             attribute: 'will',
@@ -204,6 +215,8 @@ export const emberChr_0009_azrila_combo_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'targets' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_16' },
             tags: ['comboSkill'],
@@ -218,7 +231,8 @@ export const emberChr_0009_azrila_combo_skillActionGraph = {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'knockDown',
-            target: 'enemy',
+            source: { kind: 'source' },
+            target: { kind: 'context', key: 'targets' },
             duration: { kind: 'constant', value: 1.5 },
             force: false,
             isExtra: false,
@@ -254,6 +268,13 @@ export const emberChr_0009_azrila_combo_skillActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_29: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0009_azrila_normal_skill'] },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'extrashelter' } },
@@ -284,7 +305,7 @@ export const emberChr_0009_azrila_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'targets' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -342,6 +363,7 @@ export const emberChr_0009_azrila_combo_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const emberChr_0009_azrila_combo_skill: SkillDefinition = {
+  actionGraph: emberChr_0009_azrila_combo_skillActionGraph,
   key: 'chr_0009_azrila_combo_skill',
   element: 'physical',
   blackboard: {
@@ -363,23 +385,19 @@ export const emberChr_0009_azrila_combo_skill: SkillDefinition = {
   exclusiveFrame: 38,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 40, endFrame: 60, skillIds: ['chr_0009_azrila_normal_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 26, sequence: { $sequence: 'ifElse_6' } },
+    { startFrame: 26, endFrame: 27, sequence: { $sequence: 'mergeContextTargets_10' } },
     { startFrame: 26, endFrame: 27, sequence: { $sequence: 'ifElse_27' } },
     { startFrame: 0, endFrame: 12, sequence: { $sequence: 'startTimeDilation_28' } },
+    { startFrame: 40, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_29' } },
   ],
   smartTarget: 'input',
   cooldownFrames: [570, 570, 570, 570, 570, 570, 570, 570, 570, 570, 570, 540],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
-  actionGraph: emberChr_0009_azrila_combo_skillActionGraph,
 };
 
 export const emberChr_0009_azrila_attack1ActionGraph = {
@@ -414,6 +432,8 @@ export const emberChr_0009_azrila_attack1ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['normalAttack'],
@@ -438,7 +458,14 @@ export const emberChr_0009_azrila_attack1ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_11: {
+      overrideBasicAttackMapping_11: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0009_azrila_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_12: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0009_azrila_attack2'] },
@@ -458,6 +485,7 @@ export const emberChr_0009_azrila_attack1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const emberChr_0009_azrila_attack1: SkillDefinition = {
+  actionGraph: emberChr_0009_azrila_attack1ActionGraph,
   key: 'chr_0009_azrila_attack1',
   element: 'physical',
   blackboard: {
@@ -467,28 +495,16 @@ export const emberChr_0009_azrila_attack1: SkillDefinition = {
   naturalDurationFrames: 163,
   exclusiveFrame: 38,
   offsetRecordFrame: 13,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 38,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0009_azrila_attack2',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 24, endFrame: 38, skillIds: ['chr_0009_azrila_attack2'] }],
-  },
   costFrame: 15,
   scheduledSequences: [
     { startFrame: 13, endFrame: 18, sequence: { $sequence: 'repeatEachTick_10' } },
-    { startFrame: 24, endFrame: 38, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
+    { startFrame: 0, endFrame: 38, sequence: { $sequence: 'overrideBasicAttackMapping_11' } },
+    { startFrame: 24, endFrame: 38, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0009_azrila_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: emberChr_0009_azrila_attack1ActionGraph,
 };
 
 export const emberChr_0009_azrila_attack2ActionGraph = {
@@ -523,6 +539,8 @@ export const emberChr_0009_azrila_attack2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['normalAttack'],
@@ -547,7 +565,14 @@ export const emberChr_0009_azrila_attack2ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_12: {
+      overrideBasicAttackMapping_12: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0009_azrila_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_13: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0009_azrila_attack3'] },
@@ -567,6 +592,7 @@ export const emberChr_0009_azrila_attack2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const emberChr_0009_azrila_attack2: SkillDefinition = {
+  actionGraph: emberChr_0009_azrila_attack2ActionGraph,
   key: 'chr_0009_azrila_attack2',
   element: 'physical',
   blackboard: { atk_scale: [0.54, 0.59, 0.64, 0.7, 0.75, 0.8, 0.86, 0.91, 0.96, 1.03, 1.11, 1.2] },
@@ -574,28 +600,16 @@ export const emberChr_0009_azrila_attack2: SkillDefinition = {
   naturalDurationFrames: 151,
   exclusiveFrame: 26,
   offsetRecordFrame: 6,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 41,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0009_azrila_attack3',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 18, endFrame: 41, skillIds: ['chr_0009_azrila_attack3'] }],
-  },
   costFrame: 6,
   scheduledSequences: [
     { startFrame: 6, endFrame: 12, sequence: { $sequence: 'repeatEachTick_11' } },
-    { startFrame: 18, endFrame: 41, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
+    { startFrame: 0, endFrame: 41, sequence: { $sequence: 'overrideBasicAttackMapping_12' } },
+    { startFrame: 18, endFrame: 41, sequence: { $sequence: 'reachSkillOperableBoundary_13' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0009_azrila_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: emberChr_0009_azrila_attack2ActionGraph,
 };
 
 export const emberChr_0009_azrila_attack3ActionGraph = {
@@ -630,6 +644,8 @@ export const emberChr_0009_azrila_attack3ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['normalAttack'],
@@ -654,7 +670,14 @@ export const emberChr_0009_azrila_attack3ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_10: {
+      overrideBasicAttackMapping_10: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0009_azrila_attack4'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_11: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0009_azrila_attack4'] },
@@ -674,6 +697,7 @@ export const emberChr_0009_azrila_attack3ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const emberChr_0009_azrila_attack3: SkillDefinition = {
+  actionGraph: emberChr_0009_azrila_attack3ActionGraph,
   key: 'chr_0009_azrila_attack3',
   element: 'physical',
   blackboard: {
@@ -683,28 +707,16 @@ export const emberChr_0009_azrila_attack3: SkillDefinition = {
   naturalDurationFrames: 182,
   exclusiveFrame: 47,
   offsetRecordFrame: 18,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 50,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0009_azrila_attack4',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 35, endFrame: 50, skillIds: ['chr_0009_azrila_attack4'] }],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 18, endFrame: 22, sequence: { $sequence: 'repeatEachTick_9' } },
-    { startFrame: 35, endFrame: 50, sequence: { $sequence: 'reachSkillOperableBoundary_10' } },
+    { startFrame: 0, endFrame: 50, sequence: { $sequence: 'overrideBasicAttackMapping_10' } },
+    { startFrame: 35, endFrame: 50, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0009_azrila_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: emberChr_0009_azrila_attack3ActionGraph,
 };
 
 export const emberChr_0009_azrila_attack4ActionGraph = {
@@ -758,6 +770,8 @@ export const emberChr_0009_azrila_attack4ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
@@ -799,6 +813,7 @@ export const emberChr_0009_azrila_attack4ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const emberChr_0009_azrila_attack4: SkillDefinition = {
+  actionGraph: emberChr_0009_azrila_attack4ActionGraph,
   key: 'chr_0009_azrila_attack4',
   element: 'physical',
   blackboard: {
@@ -818,20 +833,28 @@ export const emberChr_0009_azrila_attack4: SkillDefinition = {
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: emberChr_0009_azrila_attack4ActionGraph,
 };
 
 export const emberChr_0009_azrila_power_attackActionGraph = {
   main: {
     nodes: {
       gainFinisherSp_2: {
-        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+        action: {
+          kind: 'gainFinisherSp',
+          parameters: {
+            source: { kind: 'source' },
+            target: { kind: 'inputTarget' },
+            factor: { kind: 'constant', value: 1 },
+          },
+        },
         next: null,
       },
       dealDamage_3: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
@@ -902,6 +925,8 @@ export const emberChr_0009_azrila_power_attackActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
@@ -924,7 +949,14 @@ export const emberChr_0009_azrila_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_12: {
+      reachSkillOperableBoundary_12: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0009_azrila_normal_skill', 'chr_0009_azrila_combo_skill'] },
+        },
+        next: null,
+      },
+      applyBuff_13: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -950,6 +982,7 @@ export const emberChr_0009_azrila_power_attackActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const emberChr_0009_azrila_power_attack: SkillDefinition = {
+  actionGraph: emberChr_0009_azrila_power_attackActionGraph,
   key: 'chr_0009_azrila_power_attack',
   element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -958,33 +991,31 @@ export const emberChr_0009_azrila_power_attack: SkillDefinition = {
   exclusiveFrame: 50,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 28,
-        endFrame: 44,
-        skillIds: ['chr_0009_azrila_normal_skill', 'chr_0009_azrila_combo_skill'],
-      },
-    ],
-  },
   costFrame: 4,
   scheduledSequences: [
     { startFrame: 23, endFrame: 32, sequence: { $sequence: 'dealDamage_3' } },
     { startFrame: 23, endFrame: 26, sequence: { $sequence: 'ifElse_6' } },
     { startFrame: 9, endFrame: 13, sequence: { $sequence: 'dealDamage_10' } },
     { startFrame: 0, endFrame: 50, sequence: { $sequence: 'applyBuff_11' } },
-    { startFrame: 0, endFrame: 28, sequence: { $sequence: 'applyBuff_12' } },
+    { startFrame: 28, endFrame: 44, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
+    { startFrame: 0, endFrame: 28, sequence: { $sequence: 'applyBuff_13' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
-  actionGraph: emberChr_0009_azrila_power_attackActionGraph,
 };
 
 export const emberChr_0009_azrila_plunging_attack_endActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -1015,12 +1046,21 @@ export const emberChr_0009_azrila_plunging_attack_endActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'plungingAttack'],
           },
         },
         next: 'ifElse_4',
+      },
+      reachSkillOperableBoundary_6: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0009_azrila_attack1'] },
+        },
+        next: null,
       },
     },
     dataNodes: {
@@ -1036,6 +1076,7 @@ export const emberChr_0009_azrila_plunging_attack_endActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const emberChr_0009_azrila_plunging_attack_end: SkillDefinition = {
+  actionGraph: emberChr_0009_azrila_plunging_attack_endActionGraph,
   key: 'chr_0009_azrila_plunging_attack_end',
   element: 'physical',
   blackboard: {
@@ -1046,16 +1087,16 @@ export const emberChr_0009_azrila_plunging_attack_end: SkillDefinition = {
   naturalDurationFrames: 128,
   exclusiveFrame: 20,
   offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [{ startFrame: 12, endFrame: 21, skillIds: ['chr_0009_azrila_attack1'] }],
-  },
   costFrame: 0,
-  scheduledSequences: [{ startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } }],
+  scheduledSequences: [
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } },
+    { startFrame: 12, endFrame: 21, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
+  ],
   defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: emberChr_0009_azrila_plunging_attack_endActionGraph,
 };
 
 export const emberChr_0009_azrila_normal_skillActionGraph = {
@@ -1087,7 +1128,7 @@ export const emberChr_0009_azrila_normal_skillActionGraph = {
             responses: [
               {
                 key: 'SkillData.chr_0009_azrila_normal_skill.actionGroupData.timelineActions[2]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
-                event: { kind: 'operatorHit' },
+                event: { kind: 'abilityEvent', event: 'beforeTakeDamage' },
                 phase: 'dataAction',
                 priority: 0,
                 sequence: { $sequence: 'checkCondition_18' },
@@ -1166,6 +1207,8 @@ export const emberChr_0009_azrila_normal_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_7' },
             tags: ['normalSkill'],
@@ -1232,7 +1275,11 @@ export const emberChr_0009_azrila_normal_skillActionGraph = {
       dealStagger_38: {
         action: {
           kind: 'dealStagger',
-          parameters: { value: { kind: 'valueNode', nodeId: 'data_11' } },
+          parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'targets' },
+            value: { kind: 'valueNode', nodeId: 'data_11' },
+          },
         },
         next: null,
       },
@@ -1287,6 +1334,8 @@ export const emberChr_0009_azrila_normal_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'targets' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_14' },
             tags: ['normalSkill'],
@@ -1301,7 +1350,8 @@ export const emberChr_0009_azrila_normal_skillActionGraph = {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'knockDown',
-            target: 'enemy',
+            source: { kind: 'source' },
+            target: { kind: 'context', key: 'targets' },
             duration: { kind: 'constant', value: 1.5 },
             force: false,
             isExtra: false,
@@ -1326,10 +1376,17 @@ export const emberChr_0009_azrila_normal_skillActionGraph = {
           kind: 'mergeContextTargets',
           parameters: {
             saveToContextKey: 'targets',
-            sources: [{ kind: 'target', target: 'enemy' }],
+            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'ifElse_46',
+      },
+      reachSkillOperableBoundary_54: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0009_azrila_normal_skill'] },
+        },
+        next: null,
       },
       findTargets_opt1: {
         action: {
@@ -1390,7 +1447,7 @@ export const emberChr_0009_azrila_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'targets' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -1411,7 +1468,7 @@ export const emberChr_0009_azrila_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'targets' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
@@ -1441,6 +1498,7 @@ export const emberChr_0009_azrila_normal_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const emberChr_0009_azrila_normal_skill: SkillDefinition = {
+  actionGraph: emberChr_0009_azrila_normal_skillActionGraph,
   key: 'chr_0009_azrila_normal_skill',
   element: 'heat',
   blackboard: {
@@ -1459,11 +1517,6 @@ export const emberChr_0009_azrila_normal_skill: SkillDefinition = {
   exclusiveFrame: 55,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 51, endFrame: 60, skillIds: ['chr_0009_azrila_normal_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_opt1' } },
@@ -1471,13 +1524,13 @@ export const emberChr_0009_azrila_normal_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 38, sequence: { $sequence: 'ifElse_25' } },
     { startFrame: 10, endFrame: 15, sequence: { $sequence: 'repeatEachTick_32' } },
     { startFrame: 38, endFrame: 41, sequence: { $sequence: 'mergeContextTargets_47' } },
+    { startFrame: 51, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_54' } },
   ],
   defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: emberChr_0009_azrila_normal_skillActionGraph,
 };
 
 export const emberChr_0009_azrila_ultimate_skillActionGraph = {
@@ -1535,6 +1588,8 @@ export const emberChr_0009_azrila_ultimate_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'targets' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['ultimateSkill'],
@@ -1549,7 +1604,7 @@ export const emberChr_0009_azrila_ultimate_skillActionGraph = {
           kind: 'mergeContextTargets',
           parameters: {
             saveToContextKey: 'targets',
-            sources: [{ kind: 'target', target: 'enemy' }],
+            sources: [{ kind: 'fixed', target: 'enemy' }],
           },
         },
         next: 'dealDamage_5',
@@ -1569,6 +1624,7 @@ export const emberChr_0009_azrila_ultimate_skillActionGraph = {
         action: {
           kind: 'storeSourceAttributeValue',
           parameters: {
+            target: { kind: 'owner' },
             attribute: { kind: 'specific', key: 'maxHealth' },
             stage: 'finalNonConverted',
             useFloor: false,
@@ -1626,6 +1682,13 @@ export const emberChr_0009_azrila_ultimate_skillActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_14: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0009_azrila_normal_skill', 'chr_0009_azrila_combo_skill'] },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'extrashield' } },
@@ -1651,6 +1714,7 @@ export const emberChr_0009_azrila_ultimate_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const emberChr_0009_azrila_ultimate_skill: SkillDefinition = {
+  actionGraph: emberChr_0009_azrila_ultimate_skillActionGraph,
   key: 'chr_0009_azrila_ultimate_skill',
   element: 'heat',
   blackboard: {
@@ -1667,15 +1731,6 @@ export const emberChr_0009_azrila_ultimate_skill: SkillDefinition = {
   naturalDurationFrames: 262,
   exclusiveFrame: 90,
   offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 59,
-        endFrame: 90,
-        skillIds: ['chr_0009_azrila_normal_skill', 'chr_0009_azrila_combo_skill'],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
@@ -1683,6 +1738,7 @@ export const emberChr_0009_azrila_ultimate_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 90, sequence: { $sequence: 'applyBuff_11' } },
     { startFrame: 0, endFrame: 48, sequence: { $sequence: 'hideUi_12' } },
     { startFrame: 0, endFrame: 48, sequence: { $sequence: 'startUltimateTimeDilation_13' } },
+    { startFrame: 59, endFrame: 90, sequence: { $sequence: 'reachSkillOperableBoundary_14' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 600,
@@ -1690,7 +1746,6 @@ export const emberChr_0009_azrila_ultimate_skill: SkillDefinition = {
   skillType: 'ultimate',
   levelSource: 'ultimate',
   nativeSkillType: 'ultimateSkill',
-  actionGraph: emberChr_0009_azrila_ultimate_skillActionGraph,
 };
 
 export const emberCommon_character_perfect_dodgeActionGraph = {
@@ -1967,6 +2022,38 @@ const emberBuff3ActionGraph = {
         },
         next: null,
       },
+      checkCondition_2: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_1' } },
+        },
+        next: 'applyBuff_1',
+      },
+      checkCondition_3: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+        },
+        next: 'checkCondition_2',
+      },
+    },
+    dataNodes: {
+      data_1: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventDamageFeaturesMatch',
+          match: 'exceptAny',
+          features: ['dot', 'remainArea'],
+        },
+      },
+      data_2: {
+        type: 'boolean',
+        expression: {
+          kind: 'targetObjectTypeMatch',
+          target: { kind: 'inputTarget' },
+          objectTypes: ['enemy'],
+        },
+      },
     },
   },
   macros: {},
@@ -1981,7 +2068,7 @@ const emberBuff3: SkillBuffDefinition = {
   blackboard: { attack: 0, duration: 0 },
   attributeModifiers: [],
   abilityEventResponses: [
-    { event: 'takeDamage', priority: 0, sequence: { $sequence: 'applyBuff_1' } },
+    { event: 'takeDamage', priority: 0, sequence: { $sequence: 'checkCondition_3' } },
   ],
   actionGraph: emberBuff3ActionGraph,
 };

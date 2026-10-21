@@ -7532,6 +7532,7 @@ function setMobileGuideFrame(frame: number | null): void {
                     trackEffectLayout(track.trackIndex, track.operatorInstanceId).actionTop
                   "
                   :label="t('timeline.header.viewLayers.comboWindows')"
+                  :locked-label="t('timeline.header.viewLayers.comboWindowsLocked')"
                   :perfect-label="t('effects.name.perfectTiming')"
                 />
                 <div

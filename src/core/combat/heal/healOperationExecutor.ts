@@ -1,9 +1,9 @@
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
-import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
 
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
 import type { ResolvedCombatOperationStep } from '../../compiler/combatProgram';
-import type { HealCalculationAttribute, HealTarget } from '../../game-data/operatorDefinition';
+import type { HealCalculationAttribute } from '../../game-data/operatorDefinition';
 import type { CombatReceiptSink } from '../receipt/combatReceipt';
 import { resolveActionValueOperand } from '../actions/actionBlackboard';
 import type { CombatClock } from '../time/combatClock';
@@ -19,29 +19,24 @@ import {
 type HealStep = ResolvedCombatStepForKind<'heal'>;
 
 export interface ResolvedHealTarget {
-  readonly operatorId: string;
+  readonly entityId: string;
   readonly vitals: CombatVitals;
 }
 
 export interface HealOperationDependencies {
-  readonly sourceOperatorId: string;
   readonly clock: CombatClock;
   readonly receipt: CombatReceiptSink;
   readonly resolveSourceAttribute: (
-    sourceOperatorId: string,
+    healerId: string,
     attribute: HealCalculationAttribute,
   ) => number;
   readonly resolveTargetAttribute?: (
     targetId: string,
     attribute: HealCalculationAttribute,
   ) => number;
-  readonly resolveTarget: (
-    target: HealTarget,
-    buffSourceId?: string,
-    buffOwnerId?: string,
-  ) => ResolvedHealTarget;
-  /** Context 查询保存的是实例身份；治疗只按该身份取账本，不在此处重新选择。 */
-  readonly resolveContextTarget?: (operatorId: string) => ResolvedHealTarget;
+  readonly queryTargets: NonNullable<CombatOperationExecutor['queryTargets']>;
+  /** 只按实例身份取得账本，不在此处重新选择目标。 */
+  readonly resolveEntity: (entityId: string) => ResolvedHealTarget;
   readonly applyHealModifiers?: (
     timing: HealProcessTiming,
     side: HealModifierSide,
@@ -63,27 +58,29 @@ export class HealOperationExecutor implements CombatOperationExecutor {
 
   execute(step: ResolvedCombatOperationStep, context?: CombatOperationContext): boolean {
     if (step.kind !== 'heal') return this.dependencies.delegate.execute(step, context);
-    const target =
-      step.parameters.target === 'currentTarget' || step.parameters.target === 'actionInputTarget'
-        ? this.#resolveRuntimeTarget(
-            step.parameters.target === 'actionInputTarget'
-              ? context?.actionInputTarget
-              : context?.currentTarget,
-          )
-        : step.parameters.target === 'contextTarget'
-          ? this.#resolveContextTarget(step, context)
-          : this.dependencies.resolveTarget(
-              step.parameters.target,
-              context?.buffSourceId,
-              context?.buffOwnerId,
-            );
-    if (target === null) return step.parameters.alwaysNext === true;
-    // Buff 生命周期运行在宿主的执行器上，但治疗者仍是创建该 Buff 的来源。
-    // 直接技能没有 Buff 上下文，继续使用当前技能所属干员。
-    const sourceOperatorId =
-      step.parameters.source === 'buffOwner'
-        ? this.#requireBuffOwner(context)
-        : (context?.buffSourceId ?? this.dependencies.sourceOperatorId);
+    if (context === undefined) throw new Error('heal requires an action context');
+    let healedAny = false;
+    for (const receiver of this.dependencies.queryTargets(step.parameters.target, context)) {
+      const targetId = runtimeTargetEntityId(receiver);
+      if (targetId === undefined) continue;
+      const healer =
+        step.parameters.healer.kind === 'currentTarget'
+          ? receiver
+          : this.dependencies.queryTargets(step.parameters.healer, context)[0];
+      const sourceId = healer === undefined ? undefined : runtimeTargetEntityId(healer);
+      if (sourceId === undefined) continue;
+      this.#heal(step, context, sourceId, this.dependencies.resolveEntity(targetId));
+      healedAny = true;
+    }
+    return step.parameters.alwaysNext === true || healedAny;
+  }
+
+  #heal(
+    step: HealStep,
+    context: CombatOperationContext,
+    healerId: string,
+    target: ResolvedHealTarget,
+  ): void {
     const definiteAmount = step.parameters.amount;
     const attribute = definiteAmount === undefined ? step.parameters.attribute : undefined;
     const attributeSource =
@@ -100,16 +97,16 @@ export class HealOperationExecutor implements CombatOperationExecutor {
       attribute === undefined
         ? 0
         : attributeSource === 'target'
-          ? this.#resolveTargetAttribute(target.operatorId, attribute)
-          : this.dependencies.resolveSourceAttribute(sourceOperatorId, attribute);
+          ? this.#resolveTargetAttribute(target.entityId, attribute)
+          : this.dependencies.resolveSourceAttribute(healerId, attribute);
     const calculation = new HealCalculationContext(
-      sourceOperatorId,
-      target.operatorId,
+      healerId,
+      target.entityId,
       target.vitals,
       Math.fround(Math.fround(attributeValue * multiplier) + addition),
       step.parameters.tags,
-      this.dependencies.resolveHealingIncrease?.('healer', sourceOperatorId) ?? 0,
-      this.dependencies.resolveHealingIncrease?.('receiver', target.operatorId) ?? 0,
+      this.dependencies.resolveHealingIncrease?.('healer', healerId) ?? 0,
+      this.dependencies.resolveHealingIncrease?.('receiver', target.entityId) ?? 0,
     );
     this.dependencies.applyHealModifiers?.('beforeCalculation', 'healer', calculation);
     this.dependencies.applyHealModifiers?.('beforeCalculation', 'receiver', calculation);
@@ -124,8 +121,8 @@ export class HealOperationExecutor implements CombatOperationExecutor {
       frame: this.dependencies.clock.frame,
       time: this.dependencies.clock.time,
       event: 'HealingApplied',
-      sourceId: sourceOperatorId,
-      targetId: target.operatorId,
+      sourceId: healerId,
+      targetId: target.entityId,
       data: {
         attribute: attribute ?? 'definite',
         attributeValue,
@@ -140,8 +137,8 @@ export class HealOperationExecutor implements CombatOperationExecutor {
       },
     });
     const eventBase = {
-      sourceId: sourceOperatorId,
-      targetId: target.operatorId,
+      sourceId: healerId,
+      targetId: target.entityId,
       requestedHealing: result.requestedHealing,
       actualHealing: result.actualHealing,
       overhealing: result.overhealing,
@@ -150,7 +147,6 @@ export class HealOperationExecutor implements CombatOperationExecutor {
     // 原生分别构造两侧 HealContext；每次通知内部原样传递，不共用可被监听器修改的载荷对象。
     this.dependencies.emitSuccessfulHeal?.({ payload: { ...eventBase }, event: 'outputHeal' });
     this.dependencies.emitSuccessfulHeal?.({ payload: { ...eventBase }, event: 'receiveHeal' });
-    return true;
   }
 
   end(step: ResolvedCombatOperationStep, context?: CombatOperationContext): void {
@@ -173,44 +169,11 @@ export class HealOperationExecutor implements CombatOperationExecutor {
     return resolveActionValueOperand(value, context.blackboard);
   }
 
-  #requireBuffOwner(context: CombatOperationContext | undefined): string {
-    if (context?.buffOwnerId === undefined) {
-      throw new Error("heal source 'buffOwner' requires a Buff lifecycle owner");
-    }
-    return context.buffOwnerId;
-  }
-
   #resolveTargetAttribute(targetId: string, attribute: HealCalculationAttribute): number {
     const resolve = this.dependencies.resolveTargetAttribute;
     if (resolve === undefined) {
       throw new Error(`heal target attribute '${attribute}' resolver is not configured`);
     }
     return resolve(targetId, attribute);
-  }
-
-  #resolveContextTarget(
-    step: HealStep,
-    context: CombatOperationContext | undefined,
-  ): ResolvedHealTarget | null {
-    if (context?.targetContext === undefined || step.parameters.contextKey === undefined) {
-      throw new Error("heal target 'contextTarget' requires a combat target context key");
-    }
-    const targets = context.targetContext.get(step.parameters.contextKey);
-    if (targets.length === 0) return null;
-    const target = targets[0];
-    if (targets.length !== 1) {
-      throw new Error(`heal context target '${step.parameters.contextKey}' must be one entity`);
-    }
-    return this.#resolveRuntimeTarget(target);
-  }
-
-  #resolveRuntimeTarget(target: RuntimeTargetRef | undefined): ResolvedHealTarget | null {
-    if (target === undefined) return null;
-    if (target.kind !== 'operator' && target.kind !== 'enemy') {
-      throw new Error('heal runtime target requires an entity with a health ledger');
-    }
-    const resolve = this.dependencies.resolveContextTarget;
-    if (resolve === undefined) throw new Error('current heal target resolver is not configured');
-    return resolve(target.kind === 'enemy' ? 'enemy' : target.operatorId);
   }
 }

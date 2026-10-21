@@ -1,3 +1,5 @@
+import { parseWeaponTypeMask, type WeaponTypeSource } from './weaponType.ts';
+import type { BuffFinishReason } from '../../../../packages/game-data-contract/src/conditions.ts';
 import { readDirectionType } from './targetEnums.ts';
 import {
   nativeActionName,
@@ -62,6 +64,10 @@ function parseAttackTypeMaskSource(value: unknown, path: string): AttackTypeMask
 
 export type NativeConditionSource =
   | (ConditionIdentity & {
+      readonly kind: 'buffFinishReason';
+      readonly reasons: readonly BuffFinishReason[];
+    })
+  | (ConditionIdentity & {
       readonly kind: 'damageTransferredSource';
       readonly tagQuery: TagQuerySource;
       /** 匹配成功时保存部位目标；失败不清空原目标组。 */
@@ -122,6 +128,12 @@ export type NativeConditionSource =
       readonly value: ScalarSource;
     })
   | (ConditionIdentity & {
+      readonly kind: 'globalBuffCount';
+      readonly globalBuffId: string;
+      readonly comparison: string;
+      readonly value: ScalarSource;
+    })
+  | (ConditionIdentity & {
       readonly kind: 'floatCompare';
       readonly comparison: string;
       readonly left: ScalarSource;
@@ -135,6 +147,11 @@ export type NativeConditionSource =
   | (ConditionIdentity & {
       readonly kind: 'mainOperator';
       readonly target: TargetReferenceSource;
+    })
+  | (ConditionIdentity & {
+      readonly kind: 'weaponType';
+      readonly target: TargetReferenceSource;
+      readonly weaponTypes: readonly WeaponTypeSource[];
     })
   | (ConditionIdentity & {
       readonly kind: 'profession';
@@ -279,6 +296,9 @@ export type NativeConditionSource =
       readonly outputKey: string;
     })
   | (ConditionIdentity & {
+      readonly kind: 'damageSkillCastRecorded';
+    })
+  | (ConditionIdentity & {
       readonly kind: 'damageDecorateMask';
       readonly checkType: string;
       readonly mask: number;
@@ -411,6 +431,39 @@ export function parseConditionLeafSource(
         sourceType,
         tagQuery: parseTagQuerySource(condition.tagQuery, `${path}.tagQuery`),
         contextKey: readOptionalReferenceKey(condition.contextKey, `${path}.contextKey`),
+      };
+    }
+    case 'CheckBuffFinishReason': {
+      requireExactFields(
+        condition,
+        new Set([
+          '$type',
+          'isEnable',
+          'priorityLevel',
+          'priorityOffset',
+          'serverActionIndex',
+          'reasonList',
+        ]),
+        path,
+      );
+      const names: Readonly<Record<string, BuffFinishReason>> = {
+        LifeTime: 'lifetime',
+        Ignite: 'ignite',
+        Early: 'early',
+        Dispelled: 'dispelled',
+        Absorbed: 'absorbed',
+        Other: 'other',
+      };
+      return {
+        kind: 'buffFinishReason',
+        sourceType,
+        reasons: requireArray(condition.reasonList, `${path}.reasonList`).map((value, index) => {
+          const name = requireString(value, `${path}.reasonList[${index}]`);
+          const reason = Object.hasOwn(names, name) ? names[name] : undefined;
+          if (reason === undefined)
+            throw new Error(`${path}.reasonList[${index}]: unknown Buff finish reason '${name}'`);
+          return reason;
+        }),
       };
     }
     case 'CheckAbilityEntityFinishReason': {
@@ -670,6 +723,49 @@ export function parseConditionLeafSource(
       };
     case 'CheckMainCharacterCondition':
       return parseMainOperator(condition, path, sourceType);
+    case 'CheckGlobalBuffStackNum':
+      requireExactFields(
+        condition,
+        new Set([
+          '$type',
+          'isEnable',
+          'priorityLevel',
+          'priorityOffset',
+          'serverActionIndex',
+          'buffId',
+          'compareType',
+          'value',
+        ]),
+        path,
+      );
+      return {
+        kind: 'globalBuffCount',
+        sourceType,
+        globalBuffId: requireString(condition.buffId, `${path}.buffId`),
+        comparison: readCompareType(condition.compareType, `${path}.compareType`),
+        value: parseScalarSource(condition.value, `${path}.value`, inheritedBlackboard),
+      };
+    case 'CheckWeaponTypeCondition': {
+      requireExactFields(
+        condition,
+        new Set([
+          '$type',
+          'isEnable',
+          'priorityLevel',
+          'priorityOffset',
+          'serverActionIndex',
+          'checkTarget',
+          'weaponTypes',
+        ]),
+        path,
+      );
+      return {
+        kind: 'weaponType',
+        sourceType,
+        target: parseTargetReferenceSource(condition.checkTarget, `${path}.checkTarget`),
+        weaponTypes: parseWeaponTypeMask(condition.weaponTypes, `${path}.weaponTypes`),
+      };
+    }
     case 'CheckProfession': {
       requireExactFields(
         condition,
@@ -1015,6 +1111,13 @@ export function parseConditionLeafSource(
         saveCurrentDuration: requireBoolean(condition.saveCurDuration, `${path}.saveCurDuration`),
         outputKey: requireString(condition.bbKey, `${path}.bbKey`),
       };
+    case 'CheckHasDamageSkillCastId':
+      requireExactFields(
+        condition,
+        new Set(['$type', 'isEnable', 'priorityLevel', 'priorityOffset', 'serverActionIndex']),
+        path,
+      );
+      return { kind: 'damageSkillCastRecorded', sourceType };
     case 'CheckDamageDecorateMask':
       return {
         kind: 'damageDecorateMask',
@@ -1236,7 +1339,10 @@ function parseEntityCount(
     sourceType,
     ...(parsedTarget === undefined ? {} : { target: parsedTarget }),
     targetSource: readTargetSource(target.targetSource, `${path}.checkTarget.targetSource`),
-    targetGroupKey: readOptionalReferenceKey(target.targetGroupKey, `${path}.checkTarget.targetGroupKey`),
+    targetGroupKey: readOptionalReferenceKey(
+      target.targetGroupKey,
+      `${path}.checkTarget.targetGroupKey`,
+    ),
     minimumCount: requireInteger(condition.minNum, `${path}.minNum`),
     comparison: readCompareType(condition.compareType, `${path}.compareType`),
     containsHittableTarget: requireBoolean(

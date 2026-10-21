@@ -61,6 +61,14 @@ export class RuntimeTargetContext {
     this.set(key, [target]);
   }
 
+  /** Buff 创建等原生复制边沿使用独立容器，之后的写入互不影响。 */
+  snapshot(): RuntimeTargetContextState {
+    const copy = createRuntimeTargetContextState();
+    for (const [key, targets] of this.runtimeState.groups)
+      setRuntimeTargetGroup(copy, key, targets);
+    return copy;
+  }
+
   get(key: string): RuntimeTargetGroup {
     const targets = this.runtimeState.groups.get(key);
     if (targets === undefined) {

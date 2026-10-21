@@ -119,7 +119,7 @@ describe('executeHealthDamage', () => {
       originSkillType: 'comboSkill' as const,
       nonReturnedSpCost: 0,
     },
-  ])('preserves source identity %j without adding it to target contexts', skillCastInfo => {
+  ])('preserves source identity %j in both source and target contexts', skillCastInfo => {
     const output: unknown[] = [];
     const target = new CombatVitals({
       health: 100,
@@ -142,7 +142,7 @@ describe('executeHealthDamage', () => {
       clock: new CombatClock(),
       receipt: { record: () => undefined },
       emitSourceEvent: (_event, payload) => output.push(payload.skillCastInfo),
-      emitTargetEvent: (_event, payload) => expect(payload).not.toHaveProperty('skillCastInfo'),
+      emitTargetEvent: (_event, payload) => expect(payload.skillCastInfo).toEqual(skillCastInfo),
     });
     expect(output).toEqual([skillCastInfo, skillCastInfo]);
   });

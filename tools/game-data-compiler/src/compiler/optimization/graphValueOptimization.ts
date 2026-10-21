@@ -431,6 +431,10 @@ export function pruneGraphValues<Value>(
           ),
         );
         return;
+      case 'setHealthFloor':
+        observe(analyzeStepUsage(action, usageContext));
+        if (action.afterSet) collectReference(action.afterSet, `${path}.afterSet`, false);
+        return;
       case 'playAnimation':
         observe(analyzeStepUsage(action, usageContext));
         // 原生 OnEnd 调用 ExecuteInstant 后不读取返回值。
@@ -964,7 +968,7 @@ export function pruneUnusedGraphEquipmentContributionBlackboard(
           ? contribution
           : removedInitialKeys.length === 0
             ? value
-            : { ...contribution, blackboard: Object.fromEntries(remaining) },
+            : { ...value, blackboard: Object.fromEntries(remaining) },
     report: {
       ...report,
       removedInitialKeys,

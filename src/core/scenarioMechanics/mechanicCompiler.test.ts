@@ -125,17 +125,17 @@ describe('compileMechanics', () => {
     ).toThrow('unknown mechanic parameter');
   });
 
-  it('rejects unresolved equal-priority and level-event ordering', () => {
+  it('preserves equal-priority ability contributions but rejects unresolved level-event ordering', () => {
     const duplicateAbility = adapter({
       compile: input => [...adapter().compile(input), ...adapter().compile(input)],
     });
-    expect(() =>
+    expect(
       compileMechanics(
         document(),
         { getMechanic: () => definition },
         new MechanicAdapterRegistry([duplicateAbility]),
-      ),
-    ).toThrow('equal-priority event ordering is not recovered');
+      ).contributions.map(entry => entry.contributionIndex),
+    ).toEqual([0, 1]);
 
     const duplicateLevel = adapter({
       compile: () => [

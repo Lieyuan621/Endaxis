@@ -45,6 +45,7 @@ import {
 export interface LogicalAbilityEntitySpawnRequest {
   /** 已按原生 OnStart 初始化的生命属性；目录不猜测 HP 默认值或再次求值黑板。 */
   readonly soul?: {
+    readonly canBeDirectlyBuffed: boolean;
     readonly damageTransferType: 'sharedDamage';
     readonly useMainBodyPoise?: boolean;
     readonly mainBody: RuntimeTargetRef;
@@ -322,6 +323,7 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
           ? {}
           : {
               soul: {
+                canBeDirectlyBuffed: request.soul.canBeDirectlyBuffed,
                 damageTransferType: request.soul.damageTransferType,
                 useMainBodyPoise: request.soul.useMainBodyPoise ?? false,
                 mainBody: soulMainBody!,
@@ -683,10 +685,25 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
       : target;
   }
 
+  /** ResolvePartBuffSource 查询实际实例的原生配置，不从来源干员或模板名称推断。 */
+  resolvePartBuffSource(target: RuntimeTargetRef): RuntimeTargetRef {
+    const soul =
+      target.kind === 'abilityEntity'
+        ? this.#instances.get(target.instanceId)?.state.soul
+        : undefined;
+    return soul?.canBeDirectlyBuffed === false ? soul.mainBody : target;
+  }
+
   /** OwnerSoulFinder 读取主体当前关联；停用但尚未释放的灵体仍保留身份。 */
   ownerSoul(target: RuntimeTargetRef): RuntimeTargetRef | undefined {
     const bodyId = runtimeTargetEntityId(this.mainBody(target));
     return bodyId === undefined ? undefined : this.runtimeState.soulParts.get(bodyId);
+  }
+
+  /** 木桩默认攻击优先选择仍存活的灵体；OwnerSoulFinder 本身保留停用实体的原生语义。 */
+  preferredAttackTarget(mainBody: RuntimeTargetRef): RuntimeTargetRef {
+    const soul = this.ownerSoul(mainBody);
+    return soul !== undefined && this.isAlive(soul) === true ? soul : mainBody;
   }
 
   /** 独立生命账本；失衡是否转给主体由伤害路由决定，不能在此替换整个账本。 */

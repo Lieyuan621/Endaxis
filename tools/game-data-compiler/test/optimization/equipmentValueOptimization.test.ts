@@ -134,6 +134,7 @@ describe('有运行入口的装备贡献按键裁剪初值', () => {
       actionGraph: { main: { nodes }, macros: {} },
     };
     const applied = finalizeGearSetDefinition(input);
+    expect(Object.keys(applied.definition)).toEqual(Object.keys(input));
     expect(applied.report.equipmentValues[0]).toMatchObject({
       removedInitialKeys: ['unused'],
       retainedReason: 'runtime-value-access',

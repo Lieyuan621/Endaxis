@@ -25,19 +25,6 @@ export const fluoriteChr_0022_bounda_attack1ActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0022_bounda_attack1_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_1' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -45,6 +32,8 @@ export const fluoriteChr_0022_bounda_attack1ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'nature',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                             tags: ['normalAttack'],
@@ -62,6 +51,19 @@ export const fluoriteChr_0022_bounda_attack1ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0022_bounda_attack1_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_1' } },
+                ],
               },
             },
           ],
@@ -75,7 +77,14 @@ export const fluoriteChr_0022_bounda_attack1ActionGraph = {
         },
         next: 'launchProjectile_1',
       },
-      reachSkillOperableBoundary_3: {
+      overrideBasicAttackMapping_3: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0022_bounda_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_4: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0022_bounda_attack2'] },
@@ -88,6 +97,7 @@ export const fluoriteChr_0022_bounda_attack1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const fluoriteChr_0022_bounda_attack1: SkillDefinition = {
+  actionGraph: fluoriteChr_0022_bounda_attack1ActionGraph,
   key: 'chr_0022_bounda_attack1',
   element: 'nature',
   blackboard: { atk_scale: [0.25, 0.28, 0.3, 0.33, 0.35, 0.38, 0.4, 0.43, 0.45, 0.48, 0.52, 0.56] },
@@ -95,28 +105,16 @@ export const fluoriteChr_0022_bounda_attack1: SkillDefinition = {
   naturalDurationFrames: 132,
   exclusiveFrame: 25,
   offsetRecordFrame: 13,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 10,
-        endFrame: 40,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0022_bounda_attack2',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 22, endFrame: 40, skillIds: ['chr_0022_bounda_attack2'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 13, endFrame: 14, sequence: { $sequence: 'createSpatialPointTargets_2' } },
-    { startFrame: 22, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
+    { startFrame: 10, endFrame: 40, sequence: { $sequence: 'overrideBasicAttackMapping_3' } },
+    { startFrame: 22, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_4' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0022_bounda_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: fluoriteChr_0022_bounda_attack1ActionGraph,
 };
 
 export const fluoriteChr_0022_bounda_attack2ActionGraph = {
@@ -136,19 +134,6 @@ export const fluoriteChr_0022_bounda_attack2ActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0022_bounda_attack2_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_1' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -156,6 +141,8 @@ export const fluoriteChr_0022_bounda_attack2ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'nature',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                             tags: ['normalAttack'],
@@ -173,6 +160,19 @@ export const fluoriteChr_0022_bounda_attack2ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0022_bounda_attack2_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_1' } },
+                ],
               },
             },
           ],
@@ -186,7 +186,14 @@ export const fluoriteChr_0022_bounda_attack2ActionGraph = {
         },
         next: 'launchProjectile_1',
       },
-      reachSkillOperableBoundary_3: {
+      overrideBasicAttackMapping_3: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0022_bounda_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_4: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0022_bounda_attack3'] },
@@ -199,6 +206,7 @@ export const fluoriteChr_0022_bounda_attack2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const fluoriteChr_0022_bounda_attack2: SkillDefinition = {
+  actionGraph: fluoriteChr_0022_bounda_attack2ActionGraph,
   key: 'chr_0022_bounda_attack2',
   element: 'nature',
   blackboard: {
@@ -208,28 +216,16 @@ export const fluoriteChr_0022_bounda_attack2: SkillDefinition = {
   naturalDurationFrames: 106,
   exclusiveFrame: 20,
   offsetRecordFrame: 9,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 10,
-        endFrame: 36,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0022_bounda_attack3',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 15, endFrame: 36, skillIds: ['chr_0022_bounda_attack3'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 9, endFrame: 12, sequence: { $sequence: 'createSpatialPointTargets_2' } },
-    { startFrame: 15, endFrame: 36, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
+    { startFrame: 10, endFrame: 36, sequence: { $sequence: 'overrideBasicAttackMapping_3' } },
+    { startFrame: 15, endFrame: 36, sequence: { $sequence: 'reachSkillOperableBoundary_4' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0022_bounda_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: fluoriteChr_0022_bounda_attack2ActionGraph,
 };
 
 export const fluoriteChr_0022_bounda_attack3ActionGraph = {
@@ -249,19 +245,6 @@ export const fluoriteChr_0022_bounda_attack3ActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0022_bounda_attack3_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 0, atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -309,6 +292,8 @@ export const fluoriteChr_0022_bounda_attack3ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'nature',
                             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack'],
@@ -323,7 +308,7 @@ export const fluoriteChr_0022_bounda_attack3ActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           containsHittableTarget: false,
                           excludeDeadEntity: false,
                           operator: 'greaterOrEqual',
@@ -349,6 +334,19 @@ export const fluoriteChr_0022_bounda_attack3ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0022_bounda_attack3_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atb: 0, atk_scale: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
+                ],
               },
             },
           ],
@@ -362,14 +360,28 @@ export const fluoriteChr_0022_bounda_attack3ActionGraph = {
         },
         next: 'launchProjectile_1',
       },
-      reachSkillOperableBoundary_3: {
+      overrideBasicAttackMapping_3: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0022_bounda_attack4'], priority: 'skill' },
+        },
+        next: null,
+      },
+      overrideBasicAttackMapping_4: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0022_bounda_attack4_1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_5: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0022_bounda_attack4'] },
         },
         next: null,
       },
-      reachSkillOperableBoundary_4: {
+      reachSkillOperableBoundary_6: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0022_bounda_attack4_1'] },
@@ -382,6 +394,7 @@ export const fluoriteChr_0022_bounda_attack3ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const fluoriteChr_0022_bounda_attack3: SkillDefinition = {
+  actionGraph: fluoriteChr_0022_bounda_attack3ActionGraph,
   key: 'chr_0022_bounda_attack3',
   element: 'nature',
   blackboard: {
@@ -392,38 +405,18 @@ export const fluoriteChr_0022_bounda_attack3: SkillDefinition = {
   naturalDurationFrames: 137,
   exclusiveFrame: 25,
   offsetRecordFrame: 9,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 10,
-        endFrame: 24,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0022_bounda_attack4',
-      },
-      {
-        startFrame: 24,
-        endFrame: 30,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0022_bounda_attack4_1',
-      },
-    ],
-    allowedNextSkills: [
-      { startFrame: 18, endFrame: 24, skillIds: ['chr_0022_bounda_attack4'] },
-      { startFrame: 24, endFrame: 30, skillIds: ['chr_0022_bounda_attack4_1'] },
-    ],
-  },
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 9, endFrame: 10, sequence: { $sequence: 'createSpatialPointTargets_2' } },
-    { startFrame: 18, endFrame: 24, sequence: { $sequence: 'reachSkillOperableBoundary_3' } },
-    { startFrame: 24, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_4' } },
+    { startFrame: 10, endFrame: 24, sequence: { $sequence: 'overrideBasicAttackMapping_3' } },
+    { startFrame: 24, endFrame: 30, sequence: { $sequence: 'overrideBasicAttackMapping_4' } },
+    { startFrame: 18, endFrame: 24, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
+    { startFrame: 24, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0022_bounda_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: fluoriteChr_0022_bounda_attack3ActionGraph,
 };
 
 export const fluoriteChr_0022_bounda_attack4ActionGraph = {
@@ -443,19 +436,6 @@ export const fluoriteChr_0022_bounda_attack4ActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0022_bounda_attack4_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 0, atk_scale: 0, attack_poise: 20 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -503,6 +483,8 @@ export const fluoriteChr_0022_bounda_attack4ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'nature',
                             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack', 'normalAttackLastCombo'],
@@ -519,7 +501,7 @@ export const fluoriteChr_0022_bounda_attack4ActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           containsHittableTarget: false,
                           excludeDeadEntity: false,
                           operator: 'greaterOrEqual',
@@ -549,6 +531,19 @@ export const fluoriteChr_0022_bounda_attack4ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0022_bounda_attack4_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atb: 0, atk_scale: 0, attack_poise: 20 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
+                ],
               },
             },
           ],
@@ -577,7 +572,14 @@ export const fluoriteChr_0022_bounda_attack4ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_4: {
+      overrideBasicAttackMapping_4: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0022_bounda_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_5: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0022_bounda_attack1'] },
@@ -590,6 +592,7 @@ export const fluoriteChr_0022_bounda_attack4ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const fluoriteChr_0022_bounda_attack4: SkillDefinition = {
+  actionGraph: fluoriteChr_0022_bounda_attack4ActionGraph,
   key: 'chr_0022_bounda_attack4',
   element: 'nature',
   blackboard: {
@@ -601,28 +604,17 @@ export const fluoriteChr_0022_bounda_attack4: SkillDefinition = {
   naturalDurationFrames: 153,
   exclusiveFrame: 55,
   offsetRecordFrame: 29,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 29,
-        endFrame: 71,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0022_bounda_attack1',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 52, endFrame: 71, skillIds: ['chr_0022_bounda_attack1'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 29, endFrame: 30, sequence: { $sequence: 'createSpatialPointTargets_2' } },
     { startFrame: 26, endFrame: 29, sequence: { $sequence: 'startTimeDilation_3' } },
-    { startFrame: 52, endFrame: 71, sequence: { $sequence: 'reachSkillOperableBoundary_4' } },
+    { startFrame: 29, endFrame: 71, sequence: { $sequence: 'overrideBasicAttackMapping_4' } },
+    { startFrame: 52, endFrame: 71, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: fluoriteChr_0022_bounda_attack4ActionGraph,
 };
 
 export const fluoriteChr_0022_bounda_attack4_1ActionGraph = {
@@ -642,19 +634,6 @@ export const fluoriteChr_0022_bounda_attack4_1ActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0022_bounda_attack4_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 0, atk_scale: 0, attack_poise: 20 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -702,6 +681,8 @@ export const fluoriteChr_0022_bounda_attack4_1ActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'nature',
                             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
                             tags: ['normalAttack', 'normalAttackLastCombo'],
@@ -718,7 +699,7 @@ export const fluoriteChr_0022_bounda_attack4_1ActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           containsHittableTarget: false,
                           excludeDeadEntity: false,
                           operator: 'greaterOrEqual',
@@ -748,6 +729,19 @@ export const fluoriteChr_0022_bounda_attack4_1ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0022_bounda_attack4_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atb: 0, atk_scale: 0, attack_poise: 20 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
+                ],
               },
             },
           ],
@@ -776,7 +770,14 @@ export const fluoriteChr_0022_bounda_attack4_1ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_4: {
+      overrideBasicAttackMapping_4: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0022_bounda_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_5: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0022_bounda_attack1'] },
@@ -789,6 +790,7 @@ export const fluoriteChr_0022_bounda_attack4_1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const fluoriteChr_0022_bounda_attack4_1: SkillDefinition = {
+  actionGraph: fluoriteChr_0022_bounda_attack4_1ActionGraph,
   key: 'chr_0022_bounda_attack4_1',
   element: 'nature',
   blackboard: {
@@ -800,42 +802,39 @@ export const fluoriteChr_0022_bounda_attack4_1: SkillDefinition = {
   naturalDurationFrames: 150,
   exclusiveFrame: 52,
   offsetRecordFrame: 26,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 10,
-        endFrame: 70,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0022_bounda_attack1',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 49, endFrame: 70, skillIds: ['chr_0022_bounda_attack1'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 26, endFrame: 27, sequence: { $sequence: 'createSpatialPointTargets_2' } },
     { startFrame: 23, endFrame: 26, sequence: { $sequence: 'startTimeDilation_3' } },
-    { startFrame: 49, endFrame: 70, sequence: { $sequence: 'reachSkillOperableBoundary_4' } },
+    { startFrame: 10, endFrame: 70, sequence: { $sequence: 'overrideBasicAttackMapping_4' } },
+    { startFrame: 49, endFrame: 70, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0022_bounda_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: fluoriteChr_0022_bounda_attack4_1ActionGraph,
 };
 
 export const fluoriteChr_0022_bounda_power_attackActionGraph = {
   main: {
     nodes: {
       gainFinisherSp_1: {
-        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+        action: {
+          kind: 'gainFinisherSp',
+          parameters: {
+            source: { kind: 'source' },
+            target: { kind: 'inputTarget' },
+            factor: { kind: 'constant', value: 1 },
+          },
+        },
         next: null,
       },
       dealDamage_2: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
@@ -915,6 +914,13 @@ export const fluoriteChr_0022_bounda_power_attackActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_9: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0022_bounda_normal_skill', 'chr_0022_bounda_combo_skill'] },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
@@ -941,15 +947,6 @@ export const fluoriteChr_0022_bounda_power_attack: SkillDefinition = {
   exclusiveFrame: 45,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 22,
-        endFrame: 45,
-        skillIds: ['chr_0022_bounda_normal_skill', 'chr_0022_bounda_combo_skill'],
-      },
-    ],
-  },
   costFrame: 4,
   scheduledSequences: [
     { startFrame: 20, endFrame: 21, sequence: { $sequence: 'dealDamage_2' } },
@@ -957,6 +954,7 @@ export const fluoriteChr_0022_bounda_power_attack: SkillDefinition = {
     { startFrame: 21, endFrame: 25, sequence: { $sequence: 'checkCondition_6' } },
     { startFrame: 0, endFrame: 45, sequence: { $sequence: 'applyBuff_7' } },
     { startFrame: 0, endFrame: 22, sequence: { $sequence: 'applyBuff_8' } },
+    { startFrame: 22, endFrame: 45, sequence: { $sequence: 'reachSkillOperableBoundary_9' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
@@ -967,6 +965,13 @@ export const fluoriteChr_0022_bounda_power_attack: SkillDefinition = {
 export const fluoriteChr_0022_bounda_plunging_attack_endActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_2: {
         action: {
           kind: 'changeResource',
@@ -997,6 +1002,8 @@ export const fluoriteChr_0022_bounda_plunging_attack_endActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'nature',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'plungingAttack'],
@@ -1018,6 +1025,7 @@ export const fluoriteChr_0022_bounda_plunging_attack_endActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const fluoriteChr_0022_bounda_plunging_attack_end: SkillDefinition = {
+  actionGraph: fluoriteChr_0022_bounda_plunging_attack_endActionGraph,
   key: 'chr_0022_bounda_plunging_attack_end',
   element: 'nature',
   blackboard: {
@@ -1029,12 +1037,14 @@ export const fluoriteChr_0022_bounda_plunging_attack_end: SkillDefinition = {
   exclusiveFrame: 20,
   offsetRecordFrame: 0,
   costFrame: 0,
-  scheduledSequences: [{ startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_4' } }],
+  scheduledSequences: [
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_4' } },
+  ],
   defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: fluoriteChr_0022_bounda_plunging_attack_endActionGraph,
 };
 
 export const fluoriteChr_0022_bounda_normal_skillActionGraph = {
@@ -1066,6 +1076,54 @@ export const fluoriteChr_0022_bounda_normal_skillActionGraph = {
             {
               event: 'hit',
               skill: {
+                actionGraph: {
+                  main: {
+                    nodes: {
+                      applyBuff_1: {
+                        action: {
+                          kind: 'applyBuff',
+                          parameters: {
+                            buffs: [
+                              {
+                                buffId: 'buff_common_affixes_slow',
+                                blackboardAssignments: {
+                                  duration: { kind: 'constant', value: 3.1 },
+                                  rate: { kind: 'valueNode', nodeId: 'data_1' },
+                                },
+                              },
+                            ],
+                            targets: { kind: 'inputTarget' },
+                            source: { kind: 'source' },
+                            inheritSourceSkillCastInfo: true,
+                          },
+                        },
+                        next: null,
+                      },
+                      spawnAbilityEntity_2: {
+                        action: {
+                          kind: 'spawnAbilityEntity',
+                          parameters: {
+                            bornAt: { kind: 'inputTarget' },
+                            abilityEntityId: 'abilityentity_chr_0022_bounda_normal_skill',
+                            childSkillId: 'chr_0022_bounda_normal_skill_abilityrange',
+                            source: { kind: 'source' },
+                            inheritActionBlackboard: true,
+                            dieWhenSourceDies: false,
+                            target: 'enemy',
+                          },
+                        },
+                        next: 'applyBuff_1',
+                      },
+                    },
+                    dataNodes: {
+                      data_1: {
+                        type: 'number',
+                        expression: { kind: 'blackboard', key: 'move_speed_scalar' },
+                      },
+                    },
+                  },
+                  macros: {},
+                },
                 skillId: 'chr_0022_bounda_normal_skill_projhit',
                 nativeSkillType: 'normalSkill',
                 naturalDurationFrames: 1,
@@ -1086,53 +1144,6 @@ export const fluoriteChr_0022_bounda_normal_skillActionGraph = {
                 scheduledSequences: [
                   { startFrame: 0, endFrame: 3, sequence: { $sequence: 'spawnAbilityEntity_2' } },
                 ],
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      applyBuff_1: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffs: [
-                              {
-                                buffId: 'buff_common_affixes_slow',
-                                blackboardAssignments: {
-                                  duration: { kind: 'constant', value: 3.1 },
-                                  rate: { kind: 'valueNode', nodeId: 'data_1' },
-                                },
-                              },
-                            ],
-                            targets: { kind: 'fixed', target: 'enemy' },
-                            source: { kind: 'source' },
-                            inheritSourceSkillCastInfo: true,
-                          },
-                        },
-                        next: null,
-                      },
-                      spawnAbilityEntity_2: {
-                        action: {
-                          kind: 'spawnAbilityEntity',
-                          parameters: {
-                            bornAt: { kind: 'fixed', target: 'enemy' },
-                            abilityEntityId: 'abilityentity_chr_0022_bounda_normal_skill',
-                            childSkillId: 'chr_0022_bounda_normal_skill_abilityrange',
-                            inheritActionBlackboard: true,
-                            dieWhenSourceDies: false,
-                            target: 'enemy',
-                          },
-                        },
-                        next: 'applyBuff_1',
-                      },
-                    },
-                    dataNodes: {
-                      data_1: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'move_speed_scalar' },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
               },
             },
           ],
@@ -1174,6 +1185,7 @@ export const fluoriteChr_0022_bounda_normal_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const fluoriteChr_0022_bounda_normal_skill: SkillDefinition = {
+  actionGraph: fluoriteChr_0022_bounda_normal_skillActionGraph,
   key: 'chr_0022_bounda_normal_skill',
   element: 'nature',
   blackboard: {
@@ -1199,12 +1211,31 @@ export const fluoriteChr_0022_bounda_normal_skill: SkillDefinition = {
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: fluoriteChr_0022_bounda_normal_skillActionGraph,
 };
 
 export const fluoriteChr_0022_bounda_combo_skillActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_2: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: {
+            saveToContextKey: 'smart_target',
+            sources: [{ kind: 'fixed', target: 'enemy' }],
+          },
+        },
+        next: null,
+      },
+      ifElse_3: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: 'mergeContextTargets_2' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
       applyElementalInfliction_5: {
         action: {
           kind: 'applyElementalInfliction',
@@ -1224,7 +1255,7 @@ export const fluoriteChr_0022_bounda_combo_skillActionGraph = {
           kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_1' },
+            amount: { kind: 'valueNode', nodeId: 'data_2' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -1237,7 +1268,7 @@ export const fluoriteChr_0022_bounda_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+          condition: { kind: 'conditionNode', nodeId: 'data_3' },
           whenTrue: { $sequence: 'changeResource_7' },
           whenFalse: { $sequence: null },
         },
@@ -1247,11 +1278,13 @@ export const fluoriteChr_0022_bounda_combo_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'smart_target' },
             damageType: 'nature',
-            attackScale: { kind: 'valueNode', nodeId: 'data_3' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_4' },
+            stagger: { kind: 'valueNode', nodeId: 'data_5' },
           },
         },
         next: 'ifElse_8',
@@ -1259,7 +1292,7 @@ export const fluoriteChr_0022_bounda_combo_skillActionGraph = {
       switch_10: {
         action: {
           kind: 'switch',
-          parameters: { choice: { kind: 'valueNode', nodeId: 'data_5' }, alwaysNext: true },
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_6' }, alwaysNext: true },
           options: [
             {
               value: { kind: 'constant', value: 2 },
@@ -1306,14 +1339,14 @@ export const fluoriteChr_0022_bounda_combo_skillActionGraph = {
       checkCondition_13: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
         next: 'startTimeDilation_12',
       },
       checkCondition_14: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
         },
         next: 'checkCondition_13',
       },
@@ -1333,35 +1366,53 @@ export const fluoriteChr_0022_bounda_combo_skillActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_20: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0022_bounda_normal_skill'] },
+        },
+        next: null,
+      },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_2: {
+      data_1: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'smart_target' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'less',
+          value: 1,
+        },
+      },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_3: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'smart_target' },
           containsHittableTarget: false,
           excludeDeadEntity: false,
           operator: 'greaterOrEqual',
           value: 1,
         },
       },
-      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'EntityBB_combo_index' } },
-      data_6: {
-        type: 'boolean',
-        expression: {
-          kind: 'entityCountCompare',
-          target: { kind: 'fixed', target: 'enemy' },
-          containsHittableTarget: false,
-          excludeDeadEntity: false,
-          operator: 'greaterOrEqual',
-          value: 1,
-        },
-      },
+      data_4: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'EntityBB_combo_index' } },
       data_7: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'smart_target' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_8: {
         type: 'boolean',
         expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
       },
@@ -1371,6 +1422,7 @@ export const fluoriteChr_0022_bounda_combo_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const fluoriteChr_0022_bounda_combo_skill: SkillDefinition = {
+  actionGraph: fluoriteChr_0022_bounda_combo_skillActionGraph,
   key: 'chr_0022_bounda_combo_skill',
   element: 'nature',
   blackboard: {
@@ -1383,24 +1435,20 @@ export const fluoriteChr_0022_bounda_combo_skill: SkillDefinition = {
   exclusiveFrame: 24,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 17, endFrame: 56, skillIds: ['chr_0022_bounda_normal_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
+    { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_3' } },
     { startFrame: 15, endFrame: 18, sequence: { $sequence: 'switch_10' } },
     { startFrame: 11, endFrame: 20, sequence: { $sequence: 'startTimeDilation_11' } },
     { startFrame: 16, endFrame: 19, sequence: { $sequence: 'checkCondition_14' } },
     { startFrame: 0, endFrame: 13, sequence: { $sequence: 'startTimeDilation_19' } },
+    { startFrame: 17, endFrame: 56, sequence: { $sequence: 'reachSkillOperableBoundary_20' } },
   ],
   smartTarget: 'trigger',
   cooldownFrames: [1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1140],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
-  actionGraph: fluoriteChr_0022_bounda_combo_skillActionGraph,
 };
 
 export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
@@ -1460,19 +1508,6 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0022_bounda_ultimate_skill_1_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale1: 0, poise: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -1481,7 +1516,7 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
                           kind: 'applyBuff',
                           parameters: {
                             buffs: [{ buffId: 'buff_chr_0022_bounda_ultimate_skill' }],
-                            targets: { kind: 'fixed', target: 'enemy' },
+                            targets: { kind: 'inputTarget' },
                             source: { kind: 'source' },
                             inheritSourceSkillCastInfo: true,
                           },
@@ -1492,6 +1527,8 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'nature',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                             tags: ['ultimateSkill'],
@@ -1512,6 +1549,19 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0022_bounda_ultimate_skill_1_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale1: 0, poise: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
+                ],
               },
             },
           ],
@@ -1532,19 +1582,6 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0022_bounda_ultimate_skill_2_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale2: 0, poise: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -1553,7 +1590,7 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
                           kind: 'applyBuff',
                           parameters: {
                             buffs: [{ buffId: 'buff_chr_0022_bounda_ultimate_skill' }],
-                            targets: { kind: 'fixed', target: 'enemy' },
+                            targets: { kind: 'inputTarget' },
                             source: { kind: 'source' },
                             inheritSourceSkillCastInfo: true,
                           },
@@ -1564,6 +1601,8 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'nature',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                             tags: ['ultimateSkill'],
@@ -1583,6 +1622,19 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0022_bounda_ultimate_skill_2_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale2: 0, poise: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
+                ],
               },
             },
           ],
@@ -1603,19 +1655,6 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0022_bounda_ultimate_skill_3_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale3: 0, poise: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -1624,7 +1663,7 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
                           kind: 'applyBuff',
                           parameters: {
                             buffs: [{ buffId: 'buff_chr_0022_bounda_ultimate_skill' }],
-                            targets: { kind: 'fixed', target: 'enemy' },
+                            targets: { kind: 'inputTarget' },
                             source: { kind: 'source' },
                             inheritSourceSkillCastInfo: true,
                           },
@@ -1635,6 +1674,8 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'nature',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                             tags: ['ultimateSkill'],
@@ -1654,6 +1695,19 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0022_bounda_ultimate_skill_3_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale3: 0, poise: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_2' } },
+                ],
               },
             },
           ],
@@ -1674,19 +1728,6 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0022_bounda_ultimate_skill_4_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale4: 0, poise: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_8' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -1719,7 +1760,7 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
                           kind: 'applyBuff',
                           parameters: {
                             buffs: [{ buffId: 'buff_chr_0022_bounda_ultimate_skill' }],
-                            targets: { kind: 'fixed', target: 'enemy' },
+                            targets: { kind: 'inputTarget' },
                             source: { kind: 'source' },
                             inheritSourceSkillCastInfo: true,
                           },
@@ -1730,6 +1771,8 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'nature',
                             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
                             tags: ['ultimateSkill'],
@@ -1754,7 +1797,7 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'buffStackCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           compareZeroWhenTargetMissing: true,
                           operator: 'greaterOrEqual',
                           value: { kind: 'constant', value: 2 },
@@ -1771,7 +1814,7 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'buffStackCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           compareZeroWhenTargetMissing: true,
                           operator: 'greaterOrEqual',
                           value: { kind: 'constant', value: 2 },
@@ -1783,9 +1826,42 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0022_bounda_ultimate_skill_4_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale4: 0, poise: 0 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_8' } },
+                ],
               },
             },
           ],
+        },
+        next: null,
+      },
+      overrideBasicAttackMapping_9: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0022_bounda_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_10: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: [
+              'chr_0022_bounda_attack1',
+              'chr_0022_bounda_normal_skill',
+              'chr_0022_bounda_combo_skill',
+            ],
+          },
         },
         next: null,
       },
@@ -1795,6 +1871,7 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const fluoriteChr_0022_bounda_ultimate_skill: SkillDefinition = {
+  actionGraph: fluoriteChr_0022_bounda_ultimate_skillActionGraph,
   key: 'chr_0022_bounda_ultimate_skill',
   element: 'nature',
   blackboard: {
@@ -1808,27 +1885,6 @@ export const fluoriteChr_0022_bounda_ultimate_skill: SkillDefinition = {
   naturalDurationFrames: 120,
   exclusiveFrame: 90,
   offsetRecordFrame: 0,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 68,
-        endFrame: 94,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0022_bounda_attack1',
-      },
-    ],
-    allowedNextSkills: [
-      {
-        startFrame: 77,
-        endFrame: 94,
-        skillIds: [
-          'chr_0022_bounda_attack1',
-          'chr_0022_bounda_normal_skill',
-          'chr_0022_bounda_combo_skill',
-        ],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
@@ -1839,6 +1895,8 @@ export const fluoriteChr_0022_bounda_ultimate_skill: SkillDefinition = {
     { startFrame: 63, endFrame: 64, sequence: { $sequence: 'launchProjectile_6' } },
     { startFrame: 67, endFrame: 68, sequence: { $sequence: 'launchProjectile_7' } },
     { startFrame: 72, endFrame: 73, sequence: { $sequence: 'launchProjectile_8' } },
+    { startFrame: 68, endFrame: 94, sequence: { $sequence: 'overrideBasicAttackMapping_9' } },
+    { startFrame: 77, endFrame: 94, sequence: { $sequence: 'reachSkillOperableBoundary_10' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 300,
@@ -1846,7 +1904,6 @@ export const fluoriteChr_0022_bounda_ultimate_skill: SkillDefinition = {
   skillType: 'ultimate',
   levelSource: 'ultimate',
   nativeSkillType: 'ultimateSkill',
-  actionGraph: fluoriteChr_0022_bounda_ultimate_skillActionGraph,
 };
 
 export const fluoriteCommon_character_perfect_dodgeActionGraph = {
@@ -2158,7 +2215,7 @@ const fluoriteBuff3ActionGraph = {
         action: {
           kind: 'adjustSkillCooldown',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
             skill: { kind: 'id', skillId: 'chr_0022_bounda_combo_skill' },
             operation: 'reduce',
             basis: 'absoluteSeconds',
@@ -2672,30 +2729,6 @@ export const fluorite: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 5 },
       maxStackingCount: 1,
       childSkill: {
-        skillId: 'chr_0022_bounda_normal_skill_abilityrange',
-        nativeSkillType: 'normalSkill',
-        naturalDurationFrames: 210,
-        castResource: {
-          costFrame: 0,
-          cooldownSeconds: 0,
-          maxChargeTime: 1,
-          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-        },
-        blackboard: {
-          atk_scale: 1,
-          duration_potential: 0,
-          move_speed_scalar: 0,
-          poise: 20,
-          potential_lv: 0,
-        },
-        scheduledSequences: [
-          { startFrame: 89, endFrame: 90, sequence: { $sequence: 'finishBuffsById_10' } },
-          { startFrame: 90, endFrame: 90, sequence: { $sequence: 'finishOwner_11' } },
-          { startFrame: 149, endFrame: 150, sequence: { $sequence: 'finishBuffsById_20' } },
-          { startFrame: 150, endFrame: 150, sequence: { $sequence: 'finishOwner_11' } },
-          { startFrame: 0, endFrame: 89, sequence: { $sequence: 'jumpTimeline_23' } },
-          { startFrame: 0, endFrame: 89, sequence: { $sequence: 'jumpTimeline_25' } },
-        ],
         actionGraph: {
           main: {
             nodes: {
@@ -2712,7 +2745,7 @@ export const fluorite: OperatorDefinition = {
                         },
                       },
                     ],
-                    targets: { kind: 'fixed', target: 'enemy' },
+                    targets: { kind: 'context', key: 'tar' },
                     source: { kind: 'source' },
                     inheritSourceSkillCastInfo: true,
                   },
@@ -2755,6 +2788,8 @@ export const fluorite: OperatorDefinition = {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'tar' },
                     damageType: 'nature',
                     attackScale: { kind: 'valueNode', nodeId: 'data_6' },
                     tags: ['normalSkill'],
@@ -2777,7 +2812,7 @@ export const fluorite: OperatorDefinition = {
                   kind: 'mergeContextTargets',
                   parameters: {
                     saveToContextKey: 'tar',
-                    sources: [{ kind: 'target', target: 'enemy' }],
+                    sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
                 next: 'applyElementalInfliction_8',
@@ -2825,6 +2860,8 @@ export const fluorite: OperatorDefinition = {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'tar' },
                     damageType: 'nature',
                     attackScale: { kind: 'valueNode', nodeId: 'data_6' },
                     tags: ['normalSkill'],
@@ -2854,7 +2891,7 @@ export const fluorite: OperatorDefinition = {
                   kind: 'mergeContextTargets',
                   parameters: {
                     saveToContextKey: 'tar',
-                    sources: [{ kind: 'target', target: 'enemy' }],
+                    sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
                 next: 'applyElementalInfliction_18',
@@ -2904,7 +2941,7 @@ export const fluorite: OperatorDefinition = {
                 type: 'boolean',
                 expression: {
                   kind: 'entityCountCompare',
-                  target: { kind: 'fixed', target: 'enemy' },
+                  target: { kind: 'context', key: 'tar' },
                   containsHittableTarget: false,
                   excludeDeadEntity: false,
                   operator: 'greaterOrEqual',
@@ -2964,6 +3001,30 @@ export const fluorite: OperatorDefinition = {
           },
           macros: {},
         },
+        skillId: 'chr_0022_bounda_normal_skill_abilityrange',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 210,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: {
+          atk_scale: 1,
+          duration_potential: 0,
+          move_speed_scalar: 0,
+          poise: 20,
+          potential_lv: 0,
+        },
+        scheduledSequences: [
+          { startFrame: 89, endFrame: 90, sequence: { $sequence: 'finishBuffsById_10' } },
+          { startFrame: 90, endFrame: 90, sequence: { $sequence: 'finishOwner_11' } },
+          { startFrame: 149, endFrame: 150, sequence: { $sequence: 'finishBuffsById_20' } },
+          { startFrame: 150, endFrame: 150, sequence: { $sequence: 'finishOwner_11' } },
+          { startFrame: 0, endFrame: 89, sequence: { $sequence: 'jumpTimeline_23' } },
+          { startFrame: 0, endFrame: 89, sequence: { $sequence: 'jumpTimeline_25' } },
+        ],
       },
     },
   },

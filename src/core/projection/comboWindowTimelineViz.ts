@@ -11,6 +11,7 @@ export interface ComboWindowTimelineSegment {
   readonly endFrame: number;
   readonly outcome: ComboWindowTimelineOutcome;
   readonly perfectTiming?: boolean;
+  readonly locked?: boolean;
 }
 
 function requireData(entry: CombatReceiptEntry): Readonly<Record<string, CombatReceiptValue>> {
@@ -65,8 +66,19 @@ export function projectComboWindowTimelineViz(
   const candidateOwners = new Map<number, string>();
   const activeByOperator = new Map<string, ActiveOperatorWindow>();
   const closed: ComboWindowTimelineSegment[] = [];
+  const locks = new Map<number, { startFrame: number; endFrame: number }>();
 
   for (const entry of entries) {
+    if (entry.event === 'ComboLockQueued' || entry.event === 'ComboLockExpired') {
+      const sequence = requireInteger(entry, requireData(entry), 'lockSequence');
+      if (entry.event === 'ComboLockQueued')
+        locks.set(sequence, { startFrame: entry.frame, endFrame });
+      else {
+        const lock = locks.get(sequence);
+        if (lock) lock.endFrame = entry.frame;
+      }
+      continue;
+    }
     if (
       entry.event !== 'ComboWindowOpened' &&
       entry.event !== 'ComboWindowConsumed' &&
@@ -173,12 +185,20 @@ export function projectComboWindowTimelineViz(
     const ranges = (perfect.get(segment.operatorId) ?? []).filter(
       range => range.startFrame < segment.endFrame && range.endFrame > segment.startFrame,
     );
-    if (ranges.length === 0) return [segment];
+    const lockedRanges = [...locks]
+      .filter(
+        ([sequence, range]) =>
+          sequence < segment.sequence &&
+          range.startFrame < segment.endFrame &&
+          range.endFrame > segment.startFrame,
+      )
+      .map(([, range]) => range);
+    if (ranges.length === 0 && lockedRanges.length === 0) return [segment];
     const boundaries = [
       ...new Set([
         segment.startFrame,
         segment.endFrame,
-        ...ranges.flatMap(range => [
+        ...[...ranges, ...lockedRanges].flatMap(range => [
           Math.max(segment.startFrame, range.startFrame),
           Math.min(segment.endFrame, range.endFrame),
         ]),
@@ -190,6 +210,9 @@ export function projectComboWindowTimelineViz(
         ...segment,
         startFrame: start,
         endFrame: end,
+        ...(lockedRanges.some(range => start >= range.startFrame && end <= range.endFrame)
+          ? { locked: true }
+          : {}),
         ...(ranges.some(range => start >= range.startFrame && end <= range.endFrame)
           ? { perfectTiming: true }
           : {}),

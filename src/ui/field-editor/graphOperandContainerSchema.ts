@@ -1,5 +1,5 @@
 import { hasSemanticAlias, sameFieldDeclaration } from '../../core/editor/fieldSemantics.ts';
-import { actionNodeSchemas } from '../action-graph/actionNodeSchemas.generated.ts';
+import { actionNodeSchemas, dataNodeSchemas } from '../action-graph/actionNodeSchemas.generated.ts';
 import type {
   DefinitionFieldSchema,
   DefinitionSchemaReferences,
@@ -18,6 +18,37 @@ export function graphOperandSchemas(
   references: DefinitionSchemaReferences = schema?.references ?? EMPTY_SCHEMA_REFERENCES,
 ): ReadonlySet<DefinitionFieldSchema> | undefined {
   if (!schema || !kind || !path) return;
+  const declared = (
+    actionNodeSchemas[kind as keyof typeof actionNodeSchemas] ?? dataNodeSchemas[kind]
+  )?.fields.find(field => field.path.join('.') === path.join('.'));
+  if (declared?.valueSchema === schema || sameFieldDeclaration(declared?.valueSchema, schema)) {
+    const operands = new Set<DefinitionFieldSchema>();
+    const seen = new Set<DefinitionFieldSchema>();
+    const visit = (input: DefinitionFieldSchema) => {
+      const value = resolveDefinitionSchema(input, references);
+      if (seen.has(value)) return;
+      seen.add(value);
+      if (value.kind === 'object') {
+        const discriminator = value.fields.kind;
+        if (
+          discriminator?.kind === 'enum' &&
+          discriminator.options.length === 1 &&
+          discriminator.options[0] === 'distanceFilter' &&
+          value.fields.threshold
+        ) {
+          const threshold = resolveDefinitionSchema(value.fields.threshold, references);
+          if (hasSemanticAlias(threshold.semantics, 'ActionValueOperand')) operands.add(threshold);
+        }
+        Object.values(value.fields).forEach(visit);
+      } else if (value.kind === 'union') value.variants.forEach(visit);
+      else if (value.kind === 'array') visit(value.element);
+      else if (value.kind === 'record') visit(value.value);
+      else if (value.kind === 'tuple') value.elements.forEach(visit);
+    };
+    visit(schema);
+    if (operands.size > 0) return operands;
+  }
+
   const switchOptions = kind === 'switch' && path.length === 1 && path[0] === 'options';
   if (!switchOptions && (path.length !== 2 || path[0] !== 'parameters')) return;
   const slots: Readonly<Record<string, Readonly<Record<string, readonly string[]>>>> = {
@@ -25,6 +56,7 @@ export function graphOperandSchemas(
     applyBuff: { buffs: ['blackboardAssignments', '*'] },
     aura: { buffs: ['blackboardAssignments', '*'] },
     readSkillSettingData: { items: ['column'] },
+    overrideRawAttributes: { attributes: ['value'] },
   };
   const keys = switchOptions ? ['value'] : slots[kind]?.[String(path[1])];
   const global = kind === 'createGlobalBuff' && path[1] === 'definition';

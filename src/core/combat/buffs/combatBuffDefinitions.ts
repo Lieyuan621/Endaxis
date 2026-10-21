@@ -859,10 +859,12 @@ function parseOptionalPoiseModifiers(
         processors: modifier.processors.map((inputProcessor, processorIndex) => {
           const processorPath = `${modifierPath}.processors[${processorIndex}]`;
           const processor = requireObject(inputProcessor, processorPath);
-          requireOnlyKeys(processor, processorPath, ['kind', 'timing', 'side', 'addition']);
+          requireOnlyKeys(processor, processorPath, ['kind', 'timing', 'side', 'values']);
           if (processor.kind !== 'modifyPoiseScalar') {
             throw new Error(`${processorPath}.kind: unsupported poise processor`);
           }
+          const values = requireObject(processor.values, `${processorPath}.values`);
+          requireOnlyKeys(values, `${processorPath}.values`, ['slot', 'value']);
           return {
             kind: 'modifyPoiseScalar' as const,
             timing: requireEnum(
@@ -875,7 +877,14 @@ function parseOptionalPoiseModifiers(
               ['attacker', 'defender'] as const,
               `${processorPath}.side`,
             ),
-            addition: parseDefinitionNumberOperand(processor.addition, `${processorPath}.addition`),
+            values: {
+              slot: requireEnum(
+                values.slot,
+                ATTRIBUTE_MODIFIER_SLOTS,
+                `${processorPath}.values.slot`,
+              ),
+              value: parseDefinitionNumberOperand(values.value, `${processorPath}.values.value`),
+            },
           };
         }),
       };

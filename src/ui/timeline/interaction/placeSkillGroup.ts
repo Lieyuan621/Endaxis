@@ -124,7 +124,14 @@ export function placeLibrarySkillGroup(input: PlaceSkillGroupInput): PlaceSkillG
   const terminal = policy.terminalSkillKey;
   if (!skills.some(skill => skill.key === terminal))
     throw new Error('placement policy has no terminal skill');
-  if (!Number.isSafeInteger(policy.maxSegments) || policy.maxSegments < skills.length)
+  const fallbackSkillKeys = policy.fallback;
+  if (
+    fallbackSkillKeys[0] !== first.key ||
+    fallbackSkillKeys.at(-1) !== terminal ||
+    fallbackSkillKeys.some(key => !skills.some(skill => skill.key === key))
+  )
+    throw new Error('placement fallback must use group skills and match endpoints');
+  if (!Number.isSafeInteger(policy.maxSegments) || policy.maxSegments < fallbackSkillKeys.length)
     throw new Error('placement policy limit must cover the fallback sequence');
   const seed = placeSkillGroup({ ...input, skillKey: first.key });
   const reservedCastIds = Array.from({ length: policy.maxSegments - 1 }, () =>
@@ -132,10 +139,13 @@ export function placeLibrarySkillGroup(input: PlaceSkillGroupInput): PlaceSkillG
   );
   const fallbackIds = [...seed.skillCastIds, ...reservedCastIds];
   let fallbackIndex = 0;
-  const fallback = placeSkillGroup({
-    ...input,
-    ids: { allocate: () => fallbackIds[fallbackIndex++]! },
-  });
+  const fallback = placeSkillGroupSequence(
+    {
+      ...input,
+      ids: { allocate: () => fallbackIds[fallbackIndex++]! },
+    },
+    fallbackSkillKeys,
+  );
   return {
     ...seed,
     fallback,
@@ -153,6 +163,13 @@ export function placeLibrarySkillGroup(input: PlaceSkillGroupInput): PlaceSkillG
  * 不展开 `LevelValues`，不预编译；技能定义在编译时按当前等级重新解析。
  */
 export function placeSkillGroup(input: PlaceSkillGroupInput): PlaceSkillGroupResult {
+  return placeSkillGroupSequence(input);
+}
+
+function placeSkillGroupSequence(
+  input: PlaceSkillGroupInput,
+  sequence?: readonly string[],
+): PlaceSkillGroupResult {
   if (!Number.isInteger(input.startFrame) || input.startFrame < -input.scenario.battle.prepFrames) {
     throw new RangeError('startFrame must be an integer within the visible timeline');
   }
@@ -173,12 +190,20 @@ export function placeSkillGroup(input: PlaceSkillGroupInput): PlaceSkillGroupRes
     );
   }
 
-  const skills = resolveSkillGroupPlacementSkills(
+  const groupSkills = resolveSkillGroupPlacementSkills(
     group,
     input.operator,
     input.variantKey,
     input.skillKey,
   );
+  const skills =
+    sequence === undefined
+      ? groupSkills
+      : sequence.map(key => {
+          const skill = groupSkills.find(skill => skill.key === key);
+          if (!skill) throw new Error(`fallback references unknown group skill '${key}'`);
+          return skill;
+        });
   const created: SkillCastDocument[] = [];
   const layout = layoutSkillGroupPlacement(skills);
 

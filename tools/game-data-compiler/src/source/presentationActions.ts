@@ -47,6 +47,128 @@ export interface PlaySoundActionSource {
   readonly timeDilationFadeInDurationMilliseconds: number;
 }
 
+export interface ShowSquadTipsActionSource {
+  readonly kind: 'showSquadTips';
+  readonly textId: string;
+}
+
+export interface RewardComboStateActionSource {
+  readonly kind: 'rewardComboState';
+  readonly target: TargetReferenceSource;
+  readonly enabled: boolean;
+  readonly finishByAction: boolean;
+}
+
+/** 1.6.3：只写连携奖励表现标志；保留目标以供编译器证明返回值可安全省略。 */
+export function parseRewardComboStateActionSource(
+  value: unknown,
+  path: string,
+): RewardComboStateActionSource {
+  const action = requireRecord(value, path);
+  requireExactFields(
+    action,
+    new Set([...ACTION_META_FIELDS, 'target', 'isInRewardComboState', 'finishByAction']),
+    path,
+  );
+  return {
+    kind: 'rewardComboState',
+    target: parseTargetReferenceSource(action.target, `${path}.target`),
+    enabled: requireBoolean(action.isInRewardComboState, `${path}.isInRewardComboState`),
+    finishByAction: requireBoolean(action.finishByAction, `${path}.finishByAction`),
+  };
+}
+
+/** 1.6.3 只向 BattleManager 的队伍提示文本列表添加/移除条目。 */
+export function parseShowSquadTipsActionSource(
+  value: unknown,
+  path: string,
+): ShowSquadTipsActionSource {
+  const action = requireRecord(value, path);
+  requireExactFields(action, new Set([...ACTION_META_FIELDS, 'textId']), path);
+  return { kind: 'showSquadTips', textId: requireString(action.textId, `${path}.textId`) };
+}
+
+export interface RefreshHeadBarShowHideActionSource {
+  readonly kind: 'refreshHeadBarShowHide';
+}
+
+/** 原生仅发送头顶血条显示配置刷新事件。 */
+export function parseRefreshHeadBarShowHideActionSource(
+  value: unknown,
+  path: string,
+): RefreshHeadBarShowHideActionSource {
+  requireExactFields(requireRecord(value, path), new Set(ACTION_META_FIELDS), path);
+  return { kind: 'refreshHeadBarShowHide' };
+}
+
+export interface ShakeCountShieldUiActionSource {
+  readonly kind: 'shakeCountShieldUi';
+  readonly target: TargetReferenceSource;
+}
+
+/** 1.6.3 仅在显示计数非零时通知 HUD 播放计数盾抖动。 */
+export function parseShakeCountShieldUiActionSource(
+  value: unknown,
+  path: string,
+): ShakeCountShieldUiActionSource {
+  const action = requireRecord(value, path);
+  requireExactFields(
+    action,
+    new Set([
+      '$type',
+      'isEnable',
+      'priorityLevel',
+      'priorityOffset',
+      'serverActionIndex',
+      'targetSetting',
+    ]),
+    path,
+  );
+  return {
+    kind: 'shakeCountShieldUi',
+    target: parseTargetReferenceSource(action.targetSetting, `${path}.targetSetting`),
+  };
+}
+
+export interface CountShieldUiActionSource {
+  readonly kind: 'countShieldUi';
+  readonly target: TargetReferenceSource;
+  readonly remove: boolean;
+  readonly maximum: ScalarSource;
+  readonly current: ScalarSource;
+}
+
+/** 1.6.3 CountShieldUIAction 只更新 AbilitySystem 的 uiMax/CurCountShield 与 HUD 通知。 */
+export function parseCountShieldUiActionSource(
+  value: unknown,
+  path: string,
+  blackboard: BlackboardLevelValues,
+): CountShieldUiActionSource {
+  const action = requireRecord(value, path);
+  requireExactFields(
+    action,
+    new Set([
+      '$type',
+      'isEnable',
+      'priorityLevel',
+      'priorityOffset',
+      'serverActionIndex',
+      'targetSetting',
+      'removeCountShieldUI',
+      'maxCountShield',
+      'curCountShield',
+    ]),
+    path,
+  );
+  return {
+    kind: 'countShieldUi',
+    target: parseTargetReferenceSource(action.targetSetting, `${path}.targetSetting`),
+    remove: requireBoolean(action.removeCountShieldUI, `${path}.removeCountShieldUI`),
+    maximum: parseScalarSource(action.maxCountShield, `${path}.maxCountShield`, blackboard),
+    current: parseScalarSource(action.curCountShield, `${path}.curCountShield`, blackboard),
+  };
+}
+
 export interface SkillTypeMutationActionSource {
   readonly kind: 'skillTypeMutation';
   readonly target: TargetReferenceSource;

@@ -8,6 +8,13 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const arclightChr_0007_ikut_attack1ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -37,6 +44,8 @@ export const arclightChr_0007_ikut_attack1ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -44,7 +53,14 @@ export const arclightChr_0007_ikut_attack1ActionGraph = {
         },
         next: 'ifElse_4',
       },
-      reachSkillOperableBoundary_6: {
+      overrideBasicAttackMapping_6: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0007_ikut_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_7: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0007_ikut_attack2'] },
@@ -65,6 +81,7 @@ export const arclightChr_0007_ikut_attack1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const arclightChr_0007_ikut_attack1: SkillDefinition = {
+  actionGraph: arclightChr_0007_ikut_attack1ActionGraph,
   key: 'chr_0007_ikut_attack1',
   element: 'physical',
   blackboard: {
@@ -75,28 +92,29 @@ export const arclightChr_0007_ikut_attack1: SkillDefinition = {
   naturalDurationFrames: 64,
   exclusiveFrame: 21,
   offsetRecordFrame: 5,
-  inputWindows: {
-    commandMappings: [
-      { startFrame: 0, endFrame: 26, input: 'basicAttack', targetSkillId: 'chr_0007_ikut_attack2' },
-    ],
-    allowedNextSkills: [{ startFrame: 9, endFrame: 26, skillIds: ['chr_0007_ikut_attack2'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 5, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 9, endFrame: 26, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
+    { startFrame: 0, endFrame: 26, sequence: { $sequence: 'overrideBasicAttackMapping_6' } },
+    { startFrame: 9, endFrame: 26, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0007_ikut_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: arclightChr_0007_ikut_attack1ActionGraph,
 };
 
 export const arclightChr_0007_ikut_attack2ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -126,6 +144,8 @@ export const arclightChr_0007_ikut_attack2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -133,7 +153,14 @@ export const arclightChr_0007_ikut_attack2ActionGraph = {
         },
         next: 'ifElse_4',
       },
-      reachSkillOperableBoundary_6: {
+      overrideBasicAttackMapping_6: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0007_ikut_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_7: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0007_ikut_attack3'] },
@@ -154,6 +181,7 @@ export const arclightChr_0007_ikut_attack2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const arclightChr_0007_ikut_attack2: SkillDefinition = {
+  actionGraph: arclightChr_0007_ikut_attack2ActionGraph,
   key: 'chr_0007_ikut_attack2',
   element: 'physical',
   blackboard: {
@@ -164,28 +192,29 @@ export const arclightChr_0007_ikut_attack2: SkillDefinition = {
   naturalDurationFrames: 74,
   exclusiveFrame: 15,
   offsetRecordFrame: 5,
-  inputWindows: {
-    commandMappings: [
-      { startFrame: 0, endFrame: 26, input: 'basicAttack', targetSkillId: 'chr_0007_ikut_attack3' },
-    ],
-    allowedNextSkills: [{ startFrame: 10, endFrame: 26, skillIds: ['chr_0007_ikut_attack3'] }],
-  },
   costFrame: 8,
   scheduledSequences: [
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 5, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 10, endFrame: 26, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
+    { startFrame: 0, endFrame: 26, sequence: { $sequence: 'overrideBasicAttackMapping_6' } },
+    { startFrame: 10, endFrame: 26, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0007_ikut_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: arclightChr_0007_ikut_attack2ActionGraph,
 };
 
 export const arclightChr_0007_ikut_attack3ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_4: {
         action: {
           kind: 'changeResource',
@@ -216,6 +245,8 @@ export const arclightChr_0007_ikut_attack3ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -223,7 +254,14 @@ export const arclightChr_0007_ikut_attack3ActionGraph = {
         },
         next: 'ifElse_5',
       },
-      reachSkillOperableBoundary_11: {
+      overrideBasicAttackMapping_11: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0007_ikut_attack4'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_12: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0007_ikut_attack4'] },
@@ -244,6 +282,7 @@ export const arclightChr_0007_ikut_attack3ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const arclightChr_0007_ikut_attack3: SkillDefinition = {
+  actionGraph: arclightChr_0007_ikut_attack3ActionGraph,
   key: 'chr_0007_ikut_attack3',
   element: 'physical',
   blackboard: {
@@ -254,24 +293,19 @@ export const arclightChr_0007_ikut_attack3: SkillDefinition = {
   naturalDurationFrames: 71,
   exclusiveFrame: 33,
   offsetRecordFrame: 7,
-  inputWindows: {
-    commandMappings: [
-      { startFrame: 0, endFrame: 30, input: 'basicAttack', targetSkillId: 'chr_0007_ikut_attack4' },
-    ],
-    allowedNextSkills: [{ startFrame: 20, endFrame: 30, skillIds: ['chr_0007_ikut_attack4'] }],
-  },
   costFrame: 12,
   scheduledSequences: [
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 13, endFrame: 14, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 7, endFrame: 8, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 13, endFrame: 14, sequence: { $sequence: 'dealDamage_6' } },
-    { startFrame: 20, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
+    { startFrame: 0, endFrame: 30, sequence: { $sequence: 'overrideBasicAttackMapping_11' } },
+    { startFrame: 20, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0007_ikut_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: arclightChr_0007_ikut_attack3ActionGraph,
 };
 
 export const arclightChr_0007_ikut_attack4ActionGraph = {
@@ -307,6 +341,8 @@ export const arclightChr_0007_ikut_attack4ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -331,7 +367,14 @@ export const arclightChr_0007_ikut_attack4ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_21: {
+      overrideBasicAttackMapping_21: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0007_ikut_attack5'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_22: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0007_ikut_attack5'] },
@@ -352,6 +395,7 @@ export const arclightChr_0007_ikut_attack4ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const arclightChr_0007_ikut_attack4: SkillDefinition = {
+  actionGraph: arclightChr_0007_ikut_attack4ActionGraph,
   key: 'chr_0007_ikut_attack4',
   element: 'physical',
   blackboard: {
@@ -362,28 +406,28 @@ export const arclightChr_0007_ikut_attack4: SkillDefinition = {
   naturalDurationFrames: 77,
   exclusiveFrame: 36,
   offsetRecordFrame: 5,
-  inputWindows: {
-    commandMappings: [
-      { startFrame: 0, endFrame: 40, input: 'basicAttack', targetSkillId: 'chr_0007_ikut_attack5' },
-    ],
-    allowedNextSkills: [{ startFrame: 27, endFrame: 40, skillIds: ['chr_0007_ikut_attack5'] }],
-  },
   costFrame: 8,
   scheduledSequences: [
     { startFrame: 5, endFrame: 20, sequence: { $sequence: 'repeatEachTick_20' } },
-    { startFrame: 27, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_21' } },
+    { startFrame: 0, endFrame: 40, sequence: { $sequence: 'overrideBasicAttackMapping_21' } },
+    { startFrame: 27, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_22' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0007_ikut_attack5',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: arclightChr_0007_ikut_attack4ActionGraph,
 };
 
 export const arclightChr_0007_ikut_attack5ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -413,6 +457,8 @@ export const arclightChr_0007_ikut_attack5ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
@@ -457,7 +503,14 @@ export const arclightChr_0007_ikut_attack5ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_10: {
+      overrideBasicAttackMapping_10: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0007_ikut_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_11: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0007_ikut_attack1'] },
@@ -487,6 +540,7 @@ export const arclightChr_0007_ikut_attack5ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const arclightChr_0007_ikut_attack5: SkillDefinition = {
+  actionGraph: arclightChr_0007_ikut_attack5ActionGraph,
   key: 'chr_0007_ikut_attack5',
   element: 'physical',
   blackboard: {
@@ -498,24 +552,18 @@ export const arclightChr_0007_ikut_attack5: SkillDefinition = {
   naturalDurationFrames: 83,
   exclusiveFrame: 26,
   offsetRecordFrame: 12,
-  inputWindows: {
-    commandMappings: [
-      { startFrame: 0, endFrame: 40, input: 'basicAttack', targetSkillId: 'chr_0007_ikut_attack1' },
-    ],
-    allowedNextSkills: [{ startFrame: 29, endFrame: 40, skillIds: ['chr_0007_ikut_attack1'] }],
-  },
   costFrame: 12,
   scheduledSequences: [
+    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 12, endFrame: 13, sequence: { $sequence: 'dealDamage_5' } },
     { startFrame: 13, endFrame: 14, sequence: { $sequence: 'ifElse_9' } },
-    { startFrame: 29, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_10' } },
+    { startFrame: 0, endFrame: 40, sequence: { $sequence: 'overrideBasicAttackMapping_10' } },
+    { startFrame: 29, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0007_ikut_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: arclightChr_0007_ikut_attack5ActionGraph,
 };
 
 export const arclightChr_0007_ikut_power_attackActionGraph = {
@@ -525,6 +573,9 @@ export const arclightChr_0007_ikut_power_attackActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            alwaysNext: false,
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
@@ -535,13 +586,22 @@ export const arclightChr_0007_ikut_power_attackActionGraph = {
         next: null,
       },
       gainFinisherSp_3: {
-        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+        action: {
+          kind: 'gainFinisherSp',
+          parameters: {
+            source: { kind: 'source' },
+            target: { kind: 'inputTarget' },
+            factor: { kind: 'constant', value: 1 },
+          },
+        },
         next: null,
       },
       dealDamage_4: {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             calculation: 'breakingAttack',
@@ -566,7 +626,14 @@ export const arclightChr_0007_ikut_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_6: {
+      reachSkillOperableBoundary_6: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0007_ikut_normal_skill', 'chr_0007_ikut_combo_skill'] },
+        },
+        next: null,
+      },
+      applyBuff_7: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -579,7 +646,7 @@ export const arclightChr_0007_ikut_power_attackActionGraph = {
         },
         next: null,
       },
-      applyBuff_7: {
+      applyBuff_8: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -599,6 +666,7 @@ export const arclightChr_0007_ikut_power_attackActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const arclightChr_0007_ikut_power_attack: SkillDefinition = {
+  actionGraph: arclightChr_0007_ikut_power_attackActionGraph,
   key: 'chr_0007_ikut_power_attack',
   element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -607,34 +675,32 @@ export const arclightChr_0007_ikut_power_attack: SkillDefinition = {
   exclusiveFrame: 68,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 40,
-        endFrame: 68,
-        skillIds: ['chr_0007_ikut_normal_skill', 'chr_0007_ikut_combo_skill'],
-      },
-    ],
-  },
   costFrame: 4,
   scheduledSequences: [
     { startFrame: 15, endFrame: 15, sequence: { $sequence: 'dealDamage_1' } },
     { startFrame: 23, endFrame: 23, sequence: { $sequence: 'dealDamage_1' } },
     { startFrame: 38, endFrame: 38, sequence: { $sequence: 'dealDamage_4' } },
     { startFrame: 39, endFrame: 39, sequence: { $sequence: 'startTimeDilation_5' } },
-    { startFrame: 0, endFrame: 68, sequence: { $sequence: 'applyBuff_6' } },
-    { startFrame: 0, endFrame: 40, sequence: { $sequence: 'applyBuff_7' } },
+    { startFrame: 40, endFrame: 68, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
+    { startFrame: 0, endFrame: 68, sequence: { $sequence: 'applyBuff_7' } },
+    { startFrame: 0, endFrame: 40, sequence: { $sequence: 'applyBuff_8' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
-  actionGraph: arclightChr_0007_ikut_power_attackActionGraph,
 };
 
 export const arclightChr_0007_ikut_plunging_attack_endActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -665,6 +731,8 @@ export const arclightChr_0007_ikut_plunging_attack_endActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'plungingAttack'],
@@ -686,6 +754,7 @@ export const arclightChr_0007_ikut_plunging_attack_endActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const arclightChr_0007_ikut_plunging_attack_end: SkillDefinition = {
+  actionGraph: arclightChr_0007_ikut_plunging_attack_endActionGraph,
   key: 'chr_0007_ikut_plunging_attack_end',
   element: 'physical',
   blackboard: {
@@ -697,17 +766,26 @@ export const arclightChr_0007_ikut_plunging_attack_end: SkillDefinition = {
   exclusiveFrame: 25,
   offsetRecordFrame: 0,
   costFrame: 0,
-  scheduledSequences: [{ startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } }],
+  scheduledSequences: [
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_5' } },
+  ],
   defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: arclightChr_0007_ikut_plunging_attack_endActionGraph,
 };
 
 export const arclightChr_0007_ikut_normal_skillActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       startTimeDilation_5: {
         action: {
           kind: 'startTimeDilation',
@@ -727,6 +805,9 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            alwaysNext: false,
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalSkill'],
@@ -766,6 +847,8 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalSkill'],
@@ -779,6 +862,9 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            alwaysNext: false,
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalSkill'],
@@ -792,6 +878,8 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalSkill'],
@@ -804,6 +892,8 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'smart_target' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalSkill'],
@@ -838,7 +928,7 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         action: {
           kind: 'finishBuffsByTag',
           parameters: {
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'context', key: 'smart_target' },
             finishSource: { kind: 'source' },
             tagQueryType: 'hasAny',
             buffTags: ['Skill/Character/Common/SpellStatus/Conduct'],
@@ -863,6 +953,8 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalSkill'],
@@ -886,6 +978,8 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'smart_target' },
             damageType: 'electric',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalSkill'],
@@ -943,7 +1037,7 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
       mergeContextTargets_29: {
         action: {
           kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
         },
         next: 'ifElse_28',
       },
@@ -1062,6 +1156,13 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_57: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0007_ikut_normal_skill'] },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
@@ -1083,7 +1184,7 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'smart_target' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/Common/SpellStatus/Conduct'],
         },
@@ -1106,7 +1207,7 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'context', key: 'smart_target' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/Common/SpellStatus/Conduct'],
         },
@@ -1134,6 +1235,7 @@ export const arclightChr_0007_ikut_normal_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const arclightChr_0007_ikut_normal_skill: SkillDefinition = {
+  actionGraph: arclightChr_0007_ikut_normal_skillActionGraph,
   key: 'chr_0007_ikut_normal_skill',
   element: 'electric',
   blackboard: {
@@ -1154,14 +1256,12 @@ export const arclightChr_0007_ikut_normal_skill: SkillDefinition = {
   exclusiveFrame: 164,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 36, endFrame: 60, skillIds: ['chr_0007_ikut_normal_skill'] },
-      { startFrame: 162, endFrame: 188, skillIds: ['chr_0007_ikut_normal_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
+    { startFrame: 19, endFrame: 20, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 24, endFrame: 25, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 112, endFrame: 112, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 118, endFrame: 118, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 19, endFrame: 19, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 24, endFrame: 24, sequence: { $sequence: 'dealDamage_9' } },
     { startFrame: 112, endFrame: 112, sequence: { $sequence: 'dealDamage_6' } },
@@ -1172,13 +1272,14 @@ export const arclightChr_0007_ikut_normal_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 0, sequence: { $sequence: 'ifElse_36' } },
     { startFrame: 4, endFrame: 5, sequence: { $sequence: 'jumpTimeline_38' } },
     { startFrame: 95, endFrame: 95, sequence: { $sequence: 'jumpTimeline_39' } },
+    { startFrame: 36, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_57' } },
+    { startFrame: 162, endFrame: 188, sequence: { $sequence: 'reachSkillOperableBoundary_57' } },
   ],
   smartTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: arclightChr_0007_ikut_normal_skillActionGraph,
 };
 
 export const arclightChr_0007_ikut_combo_skillActionGraph = {
@@ -1234,6 +1335,13 @@ export const arclightChr_0007_ikut_combo_skillActionGraph = {
         },
         next: null,
       },
+      mergeContextTargets_7: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'target', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_10: {
         action: {
           kind: 'changeResource',
@@ -1266,6 +1374,8 @@ export const arclightChr_0007_ikut_combo_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'target' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['comboSkill'],
@@ -1309,6 +1419,8 @@ export const arclightChr_0007_ikut_combo_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'target' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['comboSkill'],
@@ -1321,11 +1433,20 @@ export const arclightChr_0007_ikut_combo_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'target' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
           },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_23: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0007_ikut_normal_skill'] },
         },
         next: null,
       },
@@ -1345,6 +1466,7 @@ export const arclightChr_0007_ikut_combo_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const arclightChr_0007_ikut_combo_skill: SkillDefinition = {
+  actionGraph: arclightChr_0007_ikut_combo_skillActionGraph,
   key: 'chr_0007_ikut_combo_skill',
   element: 'physical',
   blackboard: {
@@ -1358,24 +1480,24 @@ export const arclightChr_0007_ikut_combo_skill: SkillDefinition = {
   exclusiveFrame: 37,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [{ startFrame: 27, endFrame: 60, skillIds: ['chr_0007_ikut_normal_skill'] }],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_opt2' } },
     { startFrame: 0, endFrame: 12, sequence: { $sequence: 'startTimeDilation_5' } },
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_6' } },
+    { startFrame: 17, endFrame: 17, sequence: { $sequence: 'mergeContextTargets_7' } },
+    { startFrame: 21, endFrame: 21, sequence: { $sequence: 'mergeContextTargets_7' } },
+    { startFrame: 25, endFrame: 25, sequence: { $sequence: 'mergeContextTargets_7' } },
     { startFrame: 17, endFrame: 17, sequence: { $sequence: 'changeResource_13' } },
     { startFrame: 21, endFrame: 21, sequence: { $sequence: 'dealDamage_15' } },
     { startFrame: 25, endFrame: 25, sequence: { $sequence: 'dealDamage_16' } },
+    { startFrame: 27, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_23' } },
   ],
   smartTarget: 'input',
   cooldownFrames: 90,
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
-  actionGraph: arclightChr_0007_ikut_combo_skillActionGraph,
 };
 
 export const arclightChr_0007_ikut_ultimate_skillActionGraph = {
@@ -1428,9 +1550,17 @@ export const arclightChr_0007_ikut_ultimate_skillActionGraph = {
             bornAt: { kind: 'owner' },
             abilityEntityId: 'abilityentity_chr_0007_ikut_ultimate_skill',
             childSkillId: 'chr_0007_ikut_ultimate_skill_abentity',
+            source: { kind: 'source' },
             inheritActionBlackboard: true,
             dieWhenSourceDies: false,
           },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_6: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0007_ikut_normal_skill', 'chr_0007_ikut_combo_skill'] },
         },
         next: null,
       },
@@ -1453,15 +1583,6 @@ export const arclightChr_0007_ikut_ultimate_skill: SkillDefinition = {
   naturalDurationFrames: 141,
   exclusiveFrame: 85,
   offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 77,
-        endFrame: 89,
-        skillIds: ['chr_0007_ikut_normal_skill', 'chr_0007_ikut_combo_skill'],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
@@ -1469,6 +1590,7 @@ export const arclightChr_0007_ikut_ultimate_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 55, sequence: { $sequence: 'hideUi_3' } },
     { startFrame: 0, endFrame: 85, sequence: { $sequence: 'applyBuff_4' } },
     { startFrame: 54, endFrame: 55, sequence: { $sequence: 'spawnAbilityEntity_5' } },
+    { startFrame: 77, endFrame: 89, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 450,
@@ -1687,6 +1809,7 @@ const arclightBuff3ActionGraph = {
         action: {
           kind: 'storeSourceAttributeValue',
           parameters: {
+            target: { kind: 'source' },
             attribute: { kind: 'specific', key: 'intellect' },
             stage: 'finalNonConverted',
             useFloor: false,
@@ -2043,29 +2166,25 @@ export const arclight: OperatorDefinition = {
       lifetime: { kind: 'limited', durationSeconds: 5 },
       deathReleaseDelaySeconds: 0.1,
       childSkill: {
-        skillId: 'chr_0007_ikut_ultimate_skill_abentity',
-        nativeSkillType: 'normalSkill',
-        naturalDurationFrames: 150,
-        castResource: {
-          costFrame: 0,
-          cooldownSeconds: 0,
-          maxChargeTime: 1,
-          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-        },
-        blackboard: { atk_scale1: 0.2, atk_scale2: 0, count: 0, poise1: 0, poise2: 0 },
-        scheduledSequences: [
-          { startFrame: 7, endFrame: 8, sequence: { $sequence: 'applyElementalInfliction_3' } },
-          { startFrame: 7, endFrame: 8, sequence: { $sequence: 'forEachContextTarget_5' } },
-          { startFrame: 63, endFrame: 64, sequence: { $sequence: 'dealDamage_6' } },
-          { startFrame: 63, endFrame: 64, sequence: { $sequence: 'forEachContextTarget_11' } },
-        ],
         actionGraph: {
           main: {
             nodes: {
+              mergeContextTargets_1: {
+                action: {
+                  kind: 'mergeContextTargets',
+                  parameters: {
+                    saveToContextKey: 'tar',
+                    sources: [{ kind: 'fixed', target: 'enemy' }],
+                  },
+                },
+                next: null,
+              },
               dealDamage_2: {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'tar' },
                     damageType: 'electric',
                     attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                     tags: ['ultimateSkill'],
@@ -2095,6 +2214,8 @@ export const arclight: OperatorDefinition = {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
+                    attacker: 'actionSource',
+                    target: { kind: 'context', key: 'tar' },
                     damageType: 'electric',
                     attackScale: { kind: 'valueNode', nodeId: 'data_3' },
                     tags: ['ultimateSkill'],
@@ -2163,7 +2284,7 @@ export const arclight: OperatorDefinition = {
                 type: 'boolean',
                 expression: {
                   kind: 'entityTagMatch',
-                  target: { kind: 'fixed', target: 'enemy' },
+                  target: { kind: 'inputTarget' },
                   tagQueryType: 'hasAny',
                   tags: ['Skill/Character/Common/SpellInflict/PulseInflict'],
                 },
@@ -2172,6 +2293,24 @@ export const arclight: OperatorDefinition = {
           },
           macros: {},
         },
+        skillId: 'chr_0007_ikut_ultimate_skill_abentity',
+        nativeSkillType: 'normalSkill',
+        naturalDurationFrames: 150,
+        castResource: {
+          costFrame: 0,
+          cooldownSeconds: 0,
+          maxChargeTime: 1,
+          cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+        },
+        blackboard: { atk_scale1: 0.2, atk_scale2: 0, count: 0, poise1: 0, poise2: 0 },
+        scheduledSequences: [
+          { startFrame: 7, endFrame: 8, sequence: { $sequence: 'mergeContextTargets_1' } },
+          { startFrame: 7, endFrame: 8, sequence: { $sequence: 'applyElementalInfliction_3' } },
+          { startFrame: 63, endFrame: 64, sequence: { $sequence: 'mergeContextTargets_1' } },
+          { startFrame: 7, endFrame: 8, sequence: { $sequence: 'forEachContextTarget_5' } },
+          { startFrame: 63, endFrame: 64, sequence: { $sequence: 'dealDamage_6' } },
+          { startFrame: 63, endFrame: 64, sequence: { $sequence: 'forEachContextTarget_11' } },
+        ],
       },
     },
   },

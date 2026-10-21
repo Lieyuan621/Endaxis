@@ -12,6 +12,9 @@ const NATIVE_ABILITY_EVENT_NAMES = {
   OnHpChange: 'hpChanged',
   OnCustomAbilityEvent: 'customAbilityEvent',
   OnEnterFight: 'enterFight',
+  OnEnemyEnterFight: 'enemyEnterFight',
+  OnCollectAddedBuffBbValue: 'collectAddedBuffBlackboard',
+  OnCollectOutputBuffBbValue: 'collectOutputBuffBlackboard',
   OnOwnerSwitchToCenter: 'ownerSwitchToCenter',
   OnOwnerSwitchToGuard: 'ownerSwitchToGuard',
   OnAddedBuff: 'addedBuff',
@@ -52,6 +55,8 @@ const NATIVE_ABILITY_EVENT_NAMES = {
   OnFinishedBuff: 'finishedBuff',
   OnBuffEndsEarly: 'buffEndsEarly',
   OnBuffEnhanceChanged: 'buffEnhanceChanged',
+  OnBeforeAddedBuff_BeforeImmune: 'beforeAddedBuffBeforeImmune',
+  OnBeforeOutputBuff_BeforeImmune: 'beforeOutputBuffBeforeImmune',
   OnBeforeAddedBuff: 'beforeAddedBuff',
   OnBeforeOutputBuff: 'beforeOutputBuff',
   OnConsumeBuff: 'buffConsumed',
@@ -76,6 +81,9 @@ const NATIVE_ABILITY_EVENT_IDS = {
   3: 'OnOwnerSwitchToGuard',
   5: 'OnCustomAbilityEvent',
   6: 'OnEnterFight',
+  153: 'OnEnemyEnterFight',
+  201: 'OnCollectAddedBuffBbValue',
+  202: 'OnCollectOutputBuffBbValue',
   9: 'OnAddedBuff',
   12: 'OnTakeDamage',
   13: 'OnOutputDamage',
@@ -108,6 +116,8 @@ const NATIVE_ABILITY_EVENT_IDS = {
   145: 'OnPerfectDodge',
   203: 'OnFinishedBuff',
   204: 'OnBuffEndsEarly',
+  1901: 'OnBeforeOutputBuff_BeforeImmune',
+  1902: 'OnBeforeAddedBuff_BeforeImmune',
   205: 'OnBeforeAddedBuff',
   206: 'OnBeforeOutputBuff',
   208: 'OnConsumeBuff',
@@ -141,4 +151,12 @@ export function projectAbilityEvent(event: string | number, sourcePath: string):
     throw new Error(`${sourcePath}: unsupported ability event ${JSON.stringify(event)}`);
   }
   return projected;
+}
+
+/** 已核准的无 Buff 句柄事件；未知事件不能据此省略 Context 查询。 */
+export function nativeAbilityEventHasNoBuffContext(event: string | number | undefined): boolean {
+  const name = typeof event === 'number'
+    ? Object.entries(NATIVE_ABILITY_EVENT_IDS).find(([id]) => Number(id) === event)?.[1]
+    : event;
+  return name === 'OnPoiseZero' || name === 'OnPoiseKnotBreak' || name === 'OnSkillInterrupted';
 }

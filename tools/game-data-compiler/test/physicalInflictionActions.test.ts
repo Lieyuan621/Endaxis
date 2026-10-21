@@ -270,7 +270,8 @@ describe('击倒来源与隐式引用', () => {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'knockDown' as const,
-            target: 'enemy',
+            target: { kind: 'context' },
+            source: { kind: 'source' },
             duration: { kind: 'constant', value: 1.5 },
             force: false,
             isExtra: false,
@@ -297,10 +298,12 @@ describe('击倒来源与隐式引用', () => {
         'fixture',
         createContext(),
       );
-    expect(collectCompiledBuffApplications([project({})])).toEqual([
-      { buffId: 'buff_physical_knockdown', target: 'enemy' },
-      { buffId: 'buff_physical_no_guard', target: 'enemy' },
-    ]);
+    expect(new Set(collectCompiledBuffApplications([project({})]))).toEqual(
+      new Set([
+        { buffId: 'buff_physical_knockdown', target: 'enemy' },
+        { buffId: 'buff_physical_no_guard', target: 'enemy' },
+      ]),
+    );
     expect(collectCompiledBuffApplications([project({ forceKnockDown: true })])).toHaveLength(1);
     expect(collectCompiledBuffApplications([project({ deadOption: 'OnlyDead' })])).toEqual([]);
   });
@@ -338,24 +341,29 @@ describe('击倒来源与隐式引用', () => {
       ).parameters.targetFilter,
     ).toBe('skipAll');
   });
-  it('拒绝未证明的目标组、Buff 宿主和 extra 上下文', () => {
+  it('保留动态 Context、动作 Owner 和 extra，不要求目标静态证明为敌人', () => {
     const action = parseKnockDownActionSource(knockDown(), 'fixture', {});
-    expect(() =>
-      projectKnockDownAction(action, 'fixture', {
-        ...createContext(),
-        staticEnemyTargetGroupKeys: new Set(),
-      }),
-    ).toThrow('source/target');
-    expect(() =>
-      projectKnockDownAction(
-        parseKnockDownActionSource(knockDown({ source: targetFixture('Owner') }), 'fixture', {}),
-        'fixture',
-        { ...createContext(), actionOwnerTarget: 'buffOwner' },
-      ),
-    ).toThrow('source/target');
-    expect(() =>
-      projectKnockDownAction({ ...action, isExtra: true }, 'fixture', createContext()),
-    ).toThrow('extra knock-down');
+    const dynamic = projectKnockDownAction(action, 'fixture', {
+      ...createContext(),
+      staticEnemyTargetGroupKeys: new Set(),
+    });
+    expect(dynamic.parameters.target).toEqual({
+      kind: 'context',
+      key: action.target.targetGroupKey,
+    });
+    const owner = projectKnockDownAction(
+      parseKnockDownActionSource(knockDown({ source: targetFixture('Owner') }), 'fixture', {}),
+      'fixture',
+      { ...createContext(), actionOwnerTarget: 'buffOwner' },
+    );
+    expect(owner.parameters.source).toEqual({ kind: 'owner' });
+    expect(collectCompiledBuffApplications([owner]).map(application => application.source)).toEqual(
+      ['buffOwner', 'buffOwner'],
+    );
+    expect(
+      projectKnockDownAction({ ...action, isExtra: true }, 'fixture', createContext()).parameters
+        .isExtra,
+    ).toBe(true);
   });
 });
 
@@ -379,13 +387,15 @@ describe('断裂与猛击公共物理异常链', () => {
       isExtra: false,
     });
     const projected = projectPhysicalInflictionAction(source, 'fixture', createContext());
-    expect(collectCompiledBuffApplications([projected])).toEqual([
-      { buffId: 'buff_physical_no_guard', target: 'enemy' },
-      {
-        buffId: kind === 'fracture' ? 'buff_physical_fracture' : 'buff_physical_crushed',
-        target: 'enemy',
-      },
-    ]);
+    expect(new Set(collectCompiledBuffApplications([projected]))).toEqual(
+      new Set([
+        { buffId: 'buff_physical_no_guard', target: 'enemy' },
+        {
+          buffId: kind === 'fracture' ? 'buff_physical_fracture' : 'buff_physical_crushed',
+          target: 'enemy',
+        },
+      ]),
+    );
     expect(projected.parameters).not.toHaveProperty('noGuardDefinition');
   });
 
@@ -411,7 +421,7 @@ describe('断裂与猛击公共物理异常链', () => {
     expect(projected.parameters).not.toHaveProperty('noGuardBuffId');
   });
 
-  it('拒绝死亡目标分支与未证明的敌人目标组', () => {
+  it('死亡专用分支仍受场景约束，动态目标通过通用查询保留', () => {
     const dead = parsePhysicalInflictionActionSource(
       physical('fracture', { deadOption: 'OnlyDead' }),
       'fixture',
@@ -427,12 +437,12 @@ describe('断裂与猛击公共物理异常链', () => {
       {},
       'fracture',
     );
-    expect(() =>
+    expect(
       projectPhysicalInflictionAction(source, 'fixture', {
         ...createContext(),
         staticEnemyTargetGroupKeys: new Set(),
-      }),
-    ).toThrow('attacker/target');
+      }).parameters.target,
+    ).toEqual({ kind: 'context', key: source.target.targetGroupKey });
   });
 });
 
@@ -471,10 +481,12 @@ describe('浮空公共物理异常链', () => {
       targetFilter: 'aliveOnly',
       returnWhen: 'success',
     });
-    expect(collectCompiledBuffApplications([projected])).toEqual([
-      { buffId: 'buff_physical_no_guard', target: 'enemy' },
-      { buffId: 'buff_physical_airborne', target: 'enemy' },
-    ]);
+    expect(new Set(collectCompiledBuffApplications([projected]))).toEqual(
+      new Set([
+        { buffId: 'buff_physical_no_guard', target: 'enemy' },
+        { buffId: 'buff_physical_airborne', target: 'enemy' },
+      ]),
+    );
   });
 
   it('强制浮空不引入根破防引用，OnlyDead 保留为固定木桩跳过', () => {

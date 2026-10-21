@@ -137,7 +137,7 @@ describe('standardPlayerDamageCompatibility', () => {
               {
                 kind: 'restrictUltimateEnergyRecovery',
                 parameters: {
-                  target: 'caster',
+                  target: { kind: 'fixed' as const, target: 'caster' as const },
                   allowedRecoveryTags: [],
                   clearUltimateEnergyOnEnd: true,
                 },
@@ -193,7 +193,7 @@ describe('standardPlayerDamageCompatibility', () => {
         kind: 'applyPhysicalInfliction',
         parameters: {
           type: 'knockDown' as const,
-          target: 'enemy',
+          target: { kind: 'fixed' as const, target: 'enemy' as const }, source: { kind: 'fixed' as const, target: 'caster' as const },
           duration: { kind: 'constant', value: 1 },
           force: false,
           isExtra: false,
@@ -369,7 +369,8 @@ describe('standardPlayerDamageCompatibility', () => {
     const healStep: ActionGraphStep = {
       kind: 'heal',
       parameters: {
-        target: 'buffSource',
+        target: { kind: 'source' },
+        healer: { kind: 'source' },
         attribute: 'will',
         multiplier: { kind: 'constant', value: 1 },
         addition: 0,

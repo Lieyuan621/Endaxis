@@ -96,6 +96,7 @@ it.each(['hit', 'reach', 'finish', 'filteredHit', 'emptyHitTargets'] as const)(
     const original = new ProjectileLifecycleRuntime(() => 4);
     const callback: ProjectileCallbackState = {
       event,
+      ...(mode === 'reach' ? { inputTarget: { kind: 'spatialPoint' as const, pointId: 9 } } : {}),
       ...(mode === 'emptyHitTargets' ? { inputTargets: [] } : {}),
       ...(mode === 'filteredHit'
         ? { hitTagFilter: { tagQueryType: 'exceptAny' as const, tags: ['Immune/Physical'] } }
@@ -219,6 +220,8 @@ it.each(['hit', 'reach', 'finish', 'filteredHit', 'emptyHitTargets'] as const)(
     ]);
     expect(saved.instances.get(4)!.callbacks[0]!.host).not.toBeNull();
     const execution = saved.instances.get(4)!.callbacks[0]!.host!.skill.execution;
+    if (mode === 'reach')
+      expect(execution.inputTarget).toEqual({ kind: 'spatialPoint', pointId: 9 });
     const before = execution.passedFrames;
     clock.advanceFrame();
     restored.beginAbilityFrame();

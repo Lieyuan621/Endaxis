@@ -116,6 +116,7 @@ export interface DashEnergyChange {
 }
 
 export interface CombatResourceRuntimeResolvers {
+  readonly maxUltimateEnergy?: (operatorId: string) => number;
   /** 原生每次正向回能时读取目标当前 UltimateSpGainScalar。 */
   readonly ultimateEnergyGainMultiplier?: (operatorId: string) => number;
 }
@@ -171,7 +172,7 @@ export class CombatResources {
       squad: this.runtimeState.squad.map(member => ({
         operatorId: member.operatorId,
         ultimateEnergy: member.ultimateEnergy,
-        maxUltimateEnergy: member.maxUltimateEnergy,
+        maxUltimateEnergy: this.getMaxUltimateEnergy(member.operatorId),
         ultimateEnergyGainMultiplier: member.ultimateEnergyGainMultiplier,
         allowedUltimateEnergyRecoveryTags:
           member.allowedUltimateEnergyRecoveryTags === null
@@ -253,7 +254,7 @@ export class CombatResources {
 
   /** 读取指定队员本场构筑结算后的终结技能量上限。 */
   getMaxUltimateEnergy(operatorId: string): number {
-    return getMaxUltimateEnergy(this.runtimeState, operatorId);
+    return getMaxUltimateEnergy(this.runtimeState, operatorId, this.resolvers);
   }
 
   /**
@@ -277,7 +278,7 @@ export class CombatResources {
     costs: readonly CompiledSkillCost[],
     options: { readonly forceTimelinePayment?: boolean } = {},
   ): SkillPaymentResult {
-    return pay(this.runtimeState, operatorId, costs, options);
+    return pay(this.runtimeState, operatorId, costs, options, this.resolvers);
   }
 
   gainSquadUltimateEnergyFromSkillCost(

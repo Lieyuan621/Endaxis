@@ -245,13 +245,13 @@ export function compileEquipmentSuitRuntimeBatchSource(
     const initializationSequence = graph.sequence(initializationSteps);
     output.push({
       ...definition,
-      actionGraph: { main: graph.finish(), macros: {} },
       skillId: dependency.skillId,
       buffDefinitions: Object.fromEntries(
         Object.entries(buffDefinitions).sort(([left], [right]) => left.localeCompare(right)),
       ),
       ...(enableSteps.length === 0 ? {} : { enableSequence }),
       ...(initializationSteps.length === 0 ? {} : { initializationSequence }),
+      actionGraph: { main: graph.finish(), macros: {} },
     });
   }
   return { definitions: output, diagnostics };

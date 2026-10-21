@@ -1178,11 +1178,6 @@ export function selectBasicAttackTimelineBlockFrames(
   }[],
 ): void {
   const selectedFrames = new Map<string, number>();
-  const selectedTargets = new Map<string, string>();
-  const selectedWindows = new Map<
-    string,
-    readonly { readonly startFrame: number; readonly endFrame: number }[]
-  >();
   const selectRoute = (skillKeys: readonly string[]): void => {
     if (skillKeys.length < 2) return;
     for (let index = 0; index < skillKeys.length; index += 1) {
@@ -1213,28 +1208,6 @@ export function selectBasicAttackTimelineBlockFrames(
         );
       }
       selectedFrames.set(key, frame);
-      const previousTarget = selectedTargets.get(key);
-      if (previousTarget !== undefined && previousTarget !== nextDefinition.key) {
-        throw new Error(
-          `basic attack '${key}' has conflicting ordered continuations '${previousTarget}' and '${nextDefinition.key}'`,
-        );
-      }
-      selectedTargets.set(key, nextDefinition.key);
-      selectedWindows.set(
-        key,
-        candidates
-          .map(item => ({ startFrame: item.startFrame, endFrame: item.endFrame }))
-          .filter(
-            (item, itemIndex, items) =>
-              items.findIndex(
-                candidate =>
-                  candidate.startFrame === item.startFrame && candidate.endFrame === item.endFrame,
-              ) === itemIndex,
-          )
-          .sort(
-            (left, right) => left.startFrame - right.startFrame || left.endFrame - right.endFrame,
-          ),
-      );
     }
   };
   for (const group of groups) {
@@ -1244,29 +1217,9 @@ export function selectBasicAttackTimelineBlockFrames(
   }
   for (const [key, frame] of selectedFrames) {
     const definition = definitions.get(key)!;
-    const continuationSkillId = selectedTargets.get(key)!;
-    const recoveredAllowedNextSkills = (selectedWindows.get(key) ?? []).map(window => ({
-      ...window,
-      skillIds: [continuationSkillId],
-    }));
-    const existingAllowedNextSkills = definition.inputWindows?.allowedNextSkills ?? [];
     definitions.set(key, {
       ...definition,
       timelineBlockFrames: frame,
-      timelineContinuationSkillId: continuationSkillId,
-      inputWindows: {
-        ...definition.inputWindows,
-        allowedNextSkills: [...existingAllowedNextSkills, ...recoveredAllowedNextSkills].filter(
-          (window, windowIndex, windows) =>
-            windows.findIndex(
-              candidate =>
-                candidate.startFrame === window.startFrame &&
-                candidate.endFrame === window.endFrame &&
-                candidate.skillIds.length === window.skillIds.length &&
-                candidate.skillIds.every((id, idIndex) => id === window.skillIds[idIndex]),
-            ) === windowIndex,
-        ),
-      },
     });
   }
 }

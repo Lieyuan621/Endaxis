@@ -4,23 +4,60 @@ import { SkillSlotOperationExecutor } from './skillSlotOperationExecutor';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 
 describe('SkillSlotOperationExecutor', () => {
-  it('结束普攻映射动作只撤销自己的句柄，重复结束无副作用', () => {
+  it('步态约束按动作宿主登记，恢复后的句柄只撤销一次', () => {
+    const finish = vi.fn();
+    const register = vi.fn(() => 7);
+    const executor = new SkillSlotOperationExecutor({
+      changeSkillSlot: vi.fn(),
+      registerMovementGait: register,
+      finishMovementGait: finish,
+      delegate: { execute: vi.fn(() => false), evaluate: vi.fn(() => false) },
+    });
+    const step = {
+      kind: 'limitMovementGait' as const,
+      parameters: { min: 'Walk' as const, max: 'Run' as const },
+    };
+    const context = {
+      blackboard: new ActionBlackboard(),
+      actionOwnerId: 'buff-host',
+      actionRegistrationState: { registrationIds: [] as number[] },
+    };
+    executor.execute(step, context);
+    expect(register).toHaveBeenCalledWith('buff-host', { min: 'Walk', max: 'Run' });
+    const restored = structuredClone(context.actionRegistrationState);
+    const restoredExecutor = new SkillSlotOperationExecutor({
+      changeSkillSlot: vi.fn(),
+      finishMovementGait: finish,
+      delegate: { execute: vi.fn(() => false), evaluate: vi.fn(() => false) },
+    });
+    restoredExecutor.end(step, { ...context, actionRegistrationState: restored });
+    restoredExecutor.end(step, { ...context, actionRegistrationState: restored });
+    expect(finish.mock.calls).toEqual([['buff-host', 7]]);
+  });
+  it.each(['buff', 'skill'] as const)('%s 普攻映射只撤销自己的句柄，重复结束无副作用', priority => {
     const finish = vi.fn();
     const register = vi.fn().mockReturnValueOnce(3).mockReturnValueOnce(4);
     const context = {
       blackboard: new ActionBlackboard(),
       actionRegistrationState: { registrationIds: [] as number[] },
+      ...(priority === 'skill'
+        ? { registerSkillBasicAttackMapping: register, finishSkillBasicAttackMapping: finish }
+        : {}),
     };
     const delegate = { execute: vi.fn(() => false), evaluate: vi.fn(() => false) };
     const executor = new SkillSlotOperationExecutor({
       changeSkillSlot: vi.fn(),
-      overrideBasicAttackMapping: register,
-      finishBasicAttackMapping: finish,
+      ...(priority === 'buff'
+        ? { overrideBasicAttackMapping: register, finishBasicAttackMapping: finish }
+        : {}),
       delegate,
     });
     const step: ResolvedCombatOperationStep = {
       kind: 'overrideBasicAttackMapping',
-      parameters: { skillIds: ['native.heavy', 'native.heavy.next'] },
+      parameters: {
+        skillIds: ['native.heavy', 'native.heavy.next'],
+        ...(priority === 'skill' ? { priority } : {}),
+      },
     };
     executor.execute(step, context);
     expect(register.mock.calls).toEqual([['native.heavy'], ['native.heavy.next']]);

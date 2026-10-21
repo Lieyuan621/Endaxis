@@ -9,6 +9,7 @@ import type { ResourceCurvePoint } from './resourceCurves';
 /** 单场战斗中敌人的失衡曲线。 */
 export interface PoiseCurve {
   readonly resource: 'poise';
+  readonly maximumPoints?: readonly ResourceCurvePoint[];
   readonly maxValue: number;
   readonly points: readonly ResourceCurvePoint[];
 }
@@ -40,7 +41,41 @@ export interface PoiseRecoveredPoint {
 }
 
 /** 曲线消费的两种失衡事实；按回执顺序交错出现。 */
-export type PoiseCurveChange = PoiseChangePoint | PoiseRecoveredPoint;
+interface PoiseMaximumChange {
+  readonly frame: number;
+  readonly time: number;
+  readonly sequence: number;
+  readonly previousPoise: number;
+  readonly currentPoise: number;
+  readonly maxPoise: number;
+}
+export type PoiseCurveChange = PoiseChangePoint | PoiseRecoveredPoint | PoiseMaximumChange;
+
+function projectPoiseMaximumChanges(entries: readonly CombatReceiptEntry[]): PoiseMaximumChange[] {
+  return entries
+    .filter(entry => entry.event === 'MaxPoiseChanged' && entry.targetId === 'enemy')
+    .map(entry => {
+      if (entry.data === undefined) throw new Error('MaxPoiseChanged has no data');
+      return {
+        frame: entry.frame,
+        time: entry.time,
+        sequence: entry.sequence,
+        previousPoise: requireNumber(entry, entry.data, 'previousPoise'),
+        currentPoise: requireNumber(entry, entry.data, 'currentPoise'),
+        maxPoise: requireNumber(entry, entry.data, 'maxPoise'),
+      };
+    });
+}
+
+export function poiseMaximumAt(curve: PoiseCurve, frame: number, sequence = Infinity): number {
+  return (
+    curve.maximumPoints?.findLast(
+      point => point.frame < frame || (point.frame === frame && (point.sequence ?? -1) <= sequence),
+    )?.value ??
+    curve.maximumPoints?.[0]?.value ??
+    curve.maxValue
+  );
+}
 
 function appendAppliedPoint(points: ResourceCurvePoint[], change: PoiseChangePoint): void {
   if (change.currentPoise !== change.previousPoise + change.actualDelta) {
@@ -93,6 +128,7 @@ export function projectPoiseCurveFromReceipt(
   const changes: PoiseCurveChange[] = [
     ...projectPoiseChangePoints(entries),
     ...projectPoiseRecoveredPoints(entries),
+    ...projectPoiseMaximumChanges(entries),
   ];
   changes.sort((left, right) => left.sequence - right.sequence);
   return projectPoiseCurvePoints(initial, changes, initialFrame);
@@ -110,10 +146,13 @@ export function projectPoiseKnotSegments(
   endFrame: number,
 ): readonly PoiseKnotSegment[] {
   if (maxPoise <= 0 || durationFrames <= 0 || knotThresholds.length === 0) return [];
+  const maxima = projectPoiseMaximumChanges(entries);
   return projectPoiseChangePoints(entries).flatMap(change => {
     if (change.frame > endFrame || change.actualDelta >= 0 || change.brokePoise) return [];
     const crossed = knotThresholds.some(threshold => {
-      const remainingPoise = maxPoise * (1 - threshold);
+      const maximum =
+        maxima.findLast(point => point.sequence < change.sequence)?.maxPoise ?? maxPoise;
+      const remainingPoise = maximum * (1 - threshold);
       return change.previousPoise > remainingPoise && change.currentPoise <= remainingPoise;
     });
     return crossed
@@ -131,7 +170,30 @@ function projectPoiseCurvePoints(
     { frame: initialFrame, time: initialFrame / 30, sequence: null, value: initial.poise },
   ];
   let currentValue = initial.poise;
+  let currentMaximum = initial.maxPoise;
+  const maximumPoints: ResourceCurvePoint[] = [
+    { frame: initialFrame, time: initialFrame / 30, sequence: null, value: initial.maxPoise },
+  ];
   for (const change of changes) {
+    if ('maxPoise' in change) {
+      if (change.previousPoise !== currentValue)
+        throw new Error('maximum poise change is discontinuous');
+      currentValue = change.currentPoise;
+      currentMaximum = change.maxPoise;
+      points.push({
+        frame: change.frame,
+        time: change.time,
+        sequence: change.sequence,
+        value: currentValue,
+      });
+      maximumPoints.push({
+        frame: change.frame,
+        time: change.time,
+        sequence: change.sequence,
+        value: currentMaximum,
+      });
+      continue;
+    }
     if ('actualDelta' in change) {
       if (change.previousPoise !== currentValue) {
         throw new Error(
@@ -142,12 +204,13 @@ function projectPoiseCurvePoints(
       currentValue = change.currentPoise;
       continue;
     }
-    appendRecoveredPoint(points, change, initial.maxPoise);
+    appendRecoveredPoint(points, change, currentMaximum);
     currentValue = change.poise;
   }
   return {
     resource: 'poise',
-    maxValue: initial.maxPoise,
+    maxValue: Math.max(...maximumPoints.map(point => point.value)),
+    ...(maximumPoints.length > 1 ? { maximumPoints } : {}),
     points,
   };
 }

@@ -1,4 +1,5 @@
-import type { ActionTargetQuery } from '../../../../packages/game-data-contract/src/conditions';
+import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
+
 import { stringInputExpression } from '../../compiler/compiledGraphData';
 import type { CompiledStringInput, CompiledCondition } from '../../compiler/compiledGraphData.ts';
 
@@ -18,7 +19,7 @@ type CastStep = ResolvedCombatStepForKind<'castSkillDuringAction'>;
 export interface SkillCastOperationExecutorDependencies {
   readonly casterId: string;
   readonly queryTargets?: (
-    query: ActionTargetQuery,
+    query: CompiledTargetQuery,
     context: CombatOperationContext,
   ) => readonly RuntimeTargetRef[];
   readonly interruptCurrentSkill?: (target: RuntimeTargetRef) => void;

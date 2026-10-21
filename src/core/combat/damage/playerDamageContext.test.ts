@@ -64,7 +64,7 @@ describe('PlayerDamageContext', () => {
 
     context.applyModifiers('beforeCalculation');
     expect(context.attackerAttributes.attack).toBe(120);
-    context.setCalculationResult(context.attackerAttributes.attack * 4);
+    context.setCalculationResult(context.attackerAttributes.attack! * 4);
     expect(context.baseValue).toBe(480);
     expect(context.value).toBe(720);
     expect(context.resolveFinalAttackValue()).toBe(1440);

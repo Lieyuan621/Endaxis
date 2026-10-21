@@ -31,8 +31,10 @@ export function applyPoiseModifier(
     return;
   for (const processor of definition.processors) {
     if (processor.timing !== timing) continue;
-    const addition = resolveNumber(processor.addition);
-    if (processor.side === 'attacker') context.outputMultiplier += addition;
-    else context.takenMultiplier += addition;
+    context.modifyScalar(
+      processor.side,
+      processor.values.slot,
+      resolveNumber(processor.values.value),
+    );
   }
 }

@@ -67,6 +67,22 @@ describe('黑板用途的读取对象', () => {
       ).toBe(true);
       const allocated = executor.runtimeState.nextSpatialPointId - before;
       expect(allocated).toBe(query.kind === 'fixedPoint' ? 1 : 0);
+      expect(
+        analyzeStepUsage({
+          kind: 'storeShieldValue',
+          parameters: { target: query, value: 'current', outputKey: 'shield' },
+        }).unknownAccess,
+      ).toBe(allocated > 0);
+      expect(
+        analyzeStepUsage({
+          kind: 'setGlobalCooldown',
+          parameters: {
+            target: query,
+            markerId: 'cooldown',
+            durationSeconds: { kind: 'constant', value: 1 },
+          },
+        }).unknownAccess,
+      ).toBe(allocated > 0);
       for (const condition of [distance, angle]) {
         expect(analyzeConditionUsage(condition).observable).toBe(allocated > 0);
         const optimized = optimizeActionGraphDefinition(
@@ -320,7 +336,7 @@ describe('黑板用途的读取对象', () => {
   });
 
   it('环排序读取查询到的实体板，技能上同名初值可以删除', () => {
-    const query: CombatStepForKind<'findOwnerSpawnedAbilityEntities'> = {
+    const query = {
       kind: 'findOwnerSpawnedAbilityEntities',
       parameters: {
         owner: { kind: 'source' },
@@ -328,7 +344,7 @@ describe('黑板用途的读取对象', () => {
         abilityEntityIds: ['place'],
         circularOrder: { indexBlackboardKey: 'slot', desiredCount: 3, reverseFlag: 1 },
       },
-    };
+    } satisfies CombatStepForKind<'findOwnerSpawnedAbilityEntities'>;
     const input: SkillDefinition = skillFixture({
       key: 'fixture',
       timelineBlockFrames: 1,

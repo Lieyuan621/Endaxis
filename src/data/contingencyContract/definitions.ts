@@ -3,7 +3,7 @@ import {
   contingencyContractInitializationPlans as generatedPlans,
 } from './generated/contingencyContractDefinitions.generated';
 import {
-  seasonTwoPreviewBuffs,
+  seasonTwoEntryBuffs,
   seasonTwoPreviewPlans,
   seasonTwoVariableMetadata,
   seasonTwoDisplayValues,
@@ -14,7 +14,7 @@ import {
   type ContractInitialVariable,
 } from './initialVariables';
 
-export const contingencyContractBuffDefinitions = { ...generatedBuffs, ...seasonTwoPreviewBuffs };
+export const contingencyContractBuffDefinitions = { ...generatedBuffs, ...seasonTwoEntryBuffs };
 export const contingencyContractInitializationPlans = [...generatedPlans, ...seasonTwoPreviewPlans];
 
 // 各期定义在此装配；通用变量读取和覆盖逻辑不依赖任何具体期数。

@@ -187,7 +187,14 @@ describe('HideUI active source projection', () => {
       action: { $sequence: null },
     });
     expect(readResourceActions(compiled, equivalent.whenTrue)).toEqual([
-      { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+      {
+        kind: 'gainFinisherSp',
+        parameters: {
+          source: { kind: 'source' },
+          target: { kind: 'inputTarget' },
+          factor: { kind: 'constant', value: 1 },
+        },
+      },
     ]);
     expect(equivalent.whenFalse).toEqual(equivalent.whenTrue);
     branch.failActions = wrapper([gain(0.75)]);
@@ -379,17 +386,9 @@ describe('player input windows', () => {
       context: ACTIVE_CONTEXT,
     });
 
-    expect(result.inputWindows).toEqual({
-      commandMappings: [
-        {
-          startFrame: 5,
-          endFrame: 8,
-          input: 'basicAttack',
-          targetSkillId: 'native.attack2',
-        },
-      ],
-      allowedNextSkills: [{ startFrame: 5, endFrame: 8, skillIds: ['native.attack2'] }],
-    });
+    expect(result.allowNextSkillTransitions).toEqual([
+      { startFrame: 5, endFrame: 8, skillIds: ['native.attack2'], direct: true },
+    ]);
     expect(result.timelineBlockFrames).toBe(31);
     expect(result.scheduledSequences).toEqual([]);
   });
@@ -486,7 +485,7 @@ describe('主动技能正式时间轴投影', () => {
     ).toMatchObject([
       {
         kind: 'mergeContextTargets',
-        parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+        parameters: { saveToContextKey: 'tar', sources: [{ kind: 'inputTarget' }] },
       },
       {
         kind: 'copyContextTargets',
@@ -506,7 +505,14 @@ describe('主动技能正式时间轴投影', () => {
           },
         },
       },
-      { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+      {
+        kind: 'gainFinisherSp',
+        parameters: {
+          source: { kind: 'source' },
+          target: { kind: 'inputTarget' },
+          factor: { kind: 'constant', value: 1 },
+        },
+      },
     ]);
   });
 
@@ -569,12 +575,19 @@ describe('主动技能正式时间轴投影', () => {
         parameters: {
           condition: {
             kind: 'entityCountCompare',
-            target: { kind: 'fixed', target: 'enemy' },
+            target: { kind: 'context', key: 'tar01' },
             value: 1,
           },
         },
       },
-      { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+      {
+        kind: 'gainFinisherSp',
+        parameters: {
+          source: { kind: 'source' },
+          target: { kind: 'inputTarget' },
+          factor: { kind: 'constant', value: 1 },
+        },
+      },
     ]);
   });
 
@@ -597,7 +610,11 @@ describe('主动技能正式时间轴投影', () => {
     });
     expect(readResourceActions(result, result.scheduledSequences[0]!.sequence).at(-1)).toEqual({
       kind: 'gainFinisherSp',
-      parameters: { factor: 1, recipient: 'team' },
+      parameters: {
+        source: { kind: 'source' },
+        target: { kind: 'context', key: 'mainTar' },
+        factor: { kind: 'constant', value: 1 },
+      },
     });
   });
 
@@ -1344,7 +1361,7 @@ describe('主动技能正式时间轴投影', () => {
       'direction angle still affects combat and cannot be published',
     );
   });
-  it('把干员受伤前监听接到显式受击标记，不吞掉干员输出伤害监听', () => {
+  it('干员受伤前监听保持原生事件阶段，不降为受伤后的受击标记', () => {
     const listener = (abilityEvent: string) =>
       meta('EventListenerAction', {
         abilityActionMap: [{ abilityEvent, actions: [seq([])] }],
@@ -1366,7 +1383,7 @@ describe('主动技能正式时间轴投影', () => {
           responses: [
             {
               key: 'fixture.actionGroupData.timelineActions[0]._sequenceActionData.actionData[0].abilityActionMap[0].actions[0]',
-              event: { kind: 'operatorHit' },
+              event: { kind: 'abilityEvent', event: 'beforeTakeDamage' },
               phase: 'dataAction',
               priority: 0,
               sequence: graphBranch(takeDamageResult.actionGraph!.main, []),
@@ -1567,7 +1584,7 @@ describe('主动技能正式时间轴投影', () => {
         failActions: seq([
           meta('SaveTargetDistanceAction', {
             source: targetFixture('Source'),
-            target: targetFixture('MainTarget'),
+            target: targetFixture('Context', undefined, 'unresolved_distance_target'),
             bbKey: 'unused_distance',
           }),
         ]),
@@ -1649,7 +1666,14 @@ describe('主动技能正式时间轴投影', () => {
           },
         },
       },
-      { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+      {
+        kind: 'gainFinisherSp',
+        parameters: {
+          source: { kind: 'source' },
+          target: { kind: 'inputTarget' },
+          factor: { kind: 'constant', value: 1 },
+        },
+      },
     ]);
   });
 
@@ -1681,14 +1705,18 @@ describe('主动技能正式时间轴投影', () => {
     skill.selectStrategy = 'SelectSmartObject';
     skill.smartTargetSelectStrategy = 'SelectComboSkillTrigger';
 
-    expect(() =>
-      compileActiveSkillRuntimeProjectionSource({
-        value: skill,
-        sourcePath: 'active.unknown-branch',
-        patch: null,
-        context: ACTIVE_CONTEXT,
-      }),
-    ).toThrow('unaudited single-enemy action target group');
+    const result = compileActiveSkillRuntimeProjectionSource({
+      value: skill,
+      sourcePath: 'active.unknown-branch',
+      patch: null,
+      context: ACTIVE_CONTEXT,
+    });
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'ifElse' }),
+        expect.objectContaining({ kind: 'checkCondition' }),
+      ]),
+    );
   });
 
   it('跨调度的敌人目标并集允许把输出自身作为幂等累加输入', () => {
@@ -1745,7 +1773,14 @@ describe('主动技能正式时间轴投影', () => {
           },
         },
       },
-      { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+      {
+        kind: 'gainFinisherSp',
+        parameters: {
+          source: { kind: 'source' },
+          target: { kind: 'inputTarget' },
+          factor: { kind: 'constant', value: 1 },
+        },
+      },
     ]);
   });
 
@@ -1879,6 +1914,7 @@ describe('主动技能正式时间轴投影', () => {
       parameters: expect.objectContaining({
         abilityEntityId: 'abilityentity_fixture',
         target: 'caster',
+        source: { kind: 'owner' },
       }),
     });
   });
@@ -2949,7 +2985,14 @@ describe('主动技能正式时间轴投影', () => {
     });
 
     expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toEqual([
-      { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+      {
+        kind: 'gainFinisherSp',
+        parameters: {
+          source: { kind: 'source' },
+          target: { kind: 'inputTarget' },
+          factor: { kind: 'constant', value: 1 },
+        },
+      },
     ]);
 
     const groupedTargetResult = compileActiveSkillRuntimeProjectionSource({
@@ -2971,7 +3014,20 @@ describe('主动技能正式时间轴投影', () => {
 
     expect(
       readResourceActions(groupedTargetResult, groupedTargetResult.scheduledSequences[0]!.sequence),
-    ).toEqual([{ kind: 'gainFinisherSp', parameters: { factor: 0.75, recipient: 'team' } }]);
+    ).toEqual([
+      {
+        kind: 'mergeContextTargets',
+        parameters: { saveToContextKey: 'myTar', sources: [{ kind: 'inputTarget' }] },
+      },
+      {
+        kind: 'gainFinisherSp',
+        parameters: {
+          source: { kind: 'source' },
+          target: { kind: 'inputTarget' },
+          factor: { kind: 'constant', value: 0.75 },
+        },
+      },
+    ]);
   });
 
   it('裁剪无有效回调的动画，战斗回调保留在原生动画动作内', () => {

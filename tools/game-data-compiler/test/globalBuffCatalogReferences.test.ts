@@ -2,6 +2,25 @@ import { describe, expect, it } from 'vitest';
 import { collectReferencedGlobalBuffIds } from '../scripts/generateGlobalBuffCatalog.ts';
 
 describe('GlobalBuff catalog reference closure', () => {
+  it('ignores disabled native actions and their children while retaining enabled siblings', () => {
+    expect(
+      collectReferencedGlobalBuffIds([
+        {
+          $type: 'Beyond.Gameplay.Core.CheckConditionAction+Data, Gameplay.Beyond',
+          isEnable: false,
+          succeedActions: {
+            actionData: [{ globalBuffId: { id: 'global_buff_removed_template' } }],
+          },
+        },
+        {
+          $type: 'Beyond.Gameplay.Core.CreateGlobalBuffAction+Data, Gameplay.Beyond',
+          isEnable: true,
+          globalBuffs: [{ globalBuffId: { id: 'global_buff_live' } }],
+        },
+      ]),
+    ).toEqual(['global_buff_live']);
+  });
+
   it('collects literal create and finish identities without treating unrelated strings as IDs', () => {
     expect(
       collectReferencedGlobalBuffIds({

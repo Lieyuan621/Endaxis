@@ -2,7 +2,6 @@ import {
   requireArray,
   requireBoolean,
   requireExactFields,
-  requireNonEmptyString,
   requireNumber,
   requireRecord,
   requireString,
@@ -57,7 +56,8 @@ export function parseBlackboardDataPairs(
     const path = `${sourcePath}[${index}]`;
     const entry = requireRecord(rawEntry, path);
     requireExactFields(entry, new Set(['key', 'valueDouble', 'valueStr', 'isDynamic']), path);
-    const key = requireNonEmptyString(entry.key, `${path}.key`);
+    // 原生 Blackboard 按字符串匹配键，空串也是合法键；null 仍不是字符串。
+    const key = requireString(entry.key, `${path}.key`);
     const numericValue = requireNumber(entry.valueDouble, `${path}.valueDouble`);
     // DataPair.isNumericValue 在 valueStr 为 null 或空串时均返回 true。
     // 只归一此数值/字符串联合字段，不改写其他原生字符串的 null。

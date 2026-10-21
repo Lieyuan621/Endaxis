@@ -1,3 +1,4 @@
+import { createActionGraphBuilder } from '../src/compiler/actions/actionGraphBuilder.ts';
 import { describe, expect, it } from 'vitest';
 
 import { parseDamageUnitSource } from '../src/index.ts';
@@ -41,6 +42,117 @@ const BASE_UNIT = {
 } as const;
 
 describe('伤害动作公共载荷', () => {
+  it.each([
+    ['Real', 'true'],
+    ['Fixed', 'fixed'],
+  ] as const)('%s 保留独立伤害类型以及按目标生命上限计算的操作数', (nativeType, damageType) => {
+    const unit = parseDamageUnitSource(
+      {
+        ...BASE_UNIT,
+        damageType: nativeType,
+        simpleCalculation: false,
+        reduceDamageForGuard: false,
+        atkCalculation: {
+          $type: 'Beyond.Gameplay.Core.MultiplyAttributeCalculation, Gameplay.Beyond',
+          valueSource: 'Target',
+          attributeType: 'MaxHp',
+          multiplier: scalarFixture(0, 'consume_dmg_scale'),
+          addition: scalarFixture(0),
+        },
+      },
+      'unit',
+      { consume_dmg_scale: [0.1] },
+    );
+    const operation = compileEventTargetSimpleDamageOperationSource(
+      {
+        kind: 'damage',
+        alwaysNext: false,
+        attacker: 'ActionSource',
+        hitEnvironment: false,
+        target: parseTargetReferenceSource(targetFixture('Target'), 'target'),
+        effectSource: parseTargetReferenceSource(targetFixture('Source'), 'effectSource'),
+        units: [unit],
+      },
+      'damage',
+      {
+        graph: createActionGraphBuilder(),
+        actionTargetTarget: 'actionInputTarget',
+        actionOwnerTarget: 'caster',
+        actionSourceTarget: 'caster',
+      },
+    );
+    expect(operation).toMatchObject({
+      kind: 'dealDamage',
+      parameters: {
+        damageType,
+        calculation: 'attribute',
+        calculationAttribute: 'MaxHp',
+        attributeSource: 'target',
+        attackScale: { kind: 'blackboard', key: 'consume_dmg_scale' },
+      },
+    });
+  });
+  it.each([
+    ['ActionOwner', 'AttackerOrHealer'],
+    ['ActionSource', 'AttackerOrHealer'],
+    ['ActionOwner', 'Target'],
+    ['ActionSource', 'Target'],
+  ] as const)(
+    'LifeDrain 保留 %s、%s 属性来源与 Owner 查询，仍为单个伤害节点',
+    (attacker, valueSource) => {
+      const unit = parseDamageUnitSource(
+        {
+          ...BASE_UNIT,
+          damageType: 'LifeDrain',
+          simpleCalculation: false,
+          reduceDamageForGuard: false,
+          damageDecorateMask: 268435456,
+          ignoreDamageImmuneLevel: 'IgnoreDodgeImmune',
+          atkCalculation: {
+            $type: 'Beyond.Gameplay.Core.MultiplyAttributeCalculation, Gameplay.Beyond',
+            valueSource,
+            attributeType: 'MaxHp',
+            multiplier: scalarFixture(0, 'drain'),
+            addition: scalarFixture(0),
+          },
+        },
+        'unit',
+        { drain: [0.1] },
+      );
+      const operation = compileEventTargetSimpleDamageOperationSource(
+        {
+          kind: 'damage',
+          alwaysNext: false,
+          attacker,
+          hitEnvironment: false,
+          target: parseTargetReferenceSource(targetFixture('Owner'), 'target'),
+          effectSource: parseTargetReferenceSource(targetFixture('Source'), 'effectSource'),
+          units: [unit],
+        },
+        'damage',
+        {
+          graph: createActionGraphBuilder(),
+          actionTargetTarget: 'actionInputTarget',
+          actionOwnerTarget: 'buffOwner',
+          actionSourceTarget: 'caster',
+          fixedBuffOwnerTarget: 'caster',
+        },
+      );
+      expect(operation).toMatchObject({
+        kind: 'dealDamage',
+        parameters: {
+          alwaysNext: false,
+          target: { kind: 'owner' },
+          attacker: attacker === 'ActionOwner' ? 'actionOwner' : 'actionSource',
+          damageType: 'lifeDrain',
+          calculation: 'attribute',
+          calculationAttribute: 'MaxHp',
+          ...(valueSource === 'Target' ? { attributeSource: 'target' } : {}),
+          features: ['dot'],
+        },
+      });
+    },
+  );
   const instantModifier = {
     $type: 'Beyond.Gameplay.Core.InstantModifyAttribute, Gameplay.Beyond',
     modifyTargetSide: 'Attacker',
@@ -149,6 +261,7 @@ describe('伤害动作公共载荷', () => {
         },
         'damage',
         {
+          graph: createActionGraphBuilder(),
           actionOwnerTarget: 'caster',
           actionSourceTarget: 'caster',
           actionTargetTarget,
@@ -158,9 +271,7 @@ describe('伤害动作公共载荷', () => {
 
       expect(operation.parameters.gameplayTags).toEqual(['Damage/TyphoeaSkill/FloatingHit_Weak']);
       expect(operation.parameters.tags).toEqual([]);
-      expect(operation.parameters.target).toBe(
-        actionTargetTarget === 'actionInputTarget' ? 'actionInputTarget' : undefined,
-      );
+      expect(operation.parameters.target).toEqual({ kind: 'inputTarget' });
     },
   );
 

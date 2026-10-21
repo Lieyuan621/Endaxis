@@ -85,12 +85,12 @@ const definition = {
         macros: {},
       },
       skillId: 'sk_wpn_pistol_0005',
-      enableSequence: { $sequence: 'applyBuff_1' },
       blackboard: {
         install_0_crit_up2: [0.02, 0.024, 0.028, 0.032, 0.036, 0.04, 0.044, 0.048, 0.056],
         install_0_dmg_up: [0.035, 0.042, 0.049, 0.056, 0.063, 0.07, 0.077, 0.084, 0.098],
         install_0_duration: [15, 15, 15, 15, 15, 15, 15, 15, 15],
       },
+      enableSequence: { $sequence: 'applyBuff_1' },
     },
   ],
   assetSlug: 'wpn_pistol_0005',

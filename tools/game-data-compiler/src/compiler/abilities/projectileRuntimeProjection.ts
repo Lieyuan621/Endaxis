@@ -602,7 +602,10 @@ export function compileProjectileCallbackSkillSource(input: {
   const timelineActions = graph.actionGroup.timelineActions.map(timeline => {
     const sequence = compileCombatActionSequenceSource(
       timeline.sequence,
-      callbackContext,
+      {
+        ...callbackContext,
+        timelineRange: { startFrame: timeline.startFrame, endFrame: timeline.endFrame },
+      },
       visualOnlyIds,
       extensions,
     );

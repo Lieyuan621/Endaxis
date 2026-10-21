@@ -4,6 +4,7 @@
  */
 import type { CompiledSkillCooldownProgram } from '../../../compiler/combatProgram';
 import type { CombatOperatorProgram } from '../combatRuntimeAssembly';
+import { COMBAT_FRAMES_PER_SECOND } from '../../time/combatClock';
 import { SkillCooldown } from '../../skills/skillCooldown';
 import type { SkillCooldownState } from '../../state/abilityState';
 
@@ -17,6 +18,31 @@ export interface RestoredCombatSkillCooldownBinding {
   readonly skillIds: ReadonlySet<string>;
   readonly cooldown: SkillCooldown;
   readonly configuration: CombatSkillCooldownConfiguration;
+}
+
+function cooldownSkillType(program: CompiledSkillCooldownProgram) {
+  return (
+    program.nativeSkillType ??
+    (program.skillType === 'battleSkill' ? 'normalSkill' : program.skillType)
+  );
+}
+
+/** 原生 Skill.cooldown：连携先乘后加，战技只加；每次预约时读取当前属性。 */
+export function resolveCombatSkillCooldownFrames(
+  operator: CombatOperatorProgram,
+  program: CompiledSkillCooldownProgram,
+  baseFrames: number,
+): number {
+  const read = (attribute: string, fallback: number) =>
+    operator.buffRuntime?.getAttributeValue?.(attribute) ?? fallback;
+  if (cooldownSkillType(program) === 'comboSkill')
+    return (
+      baseFrames * read('ComboSkillCooldownScalar', 1) +
+      read('ComboSkillCooldownFinalAddition', 0) * COMBAT_FRAMES_PER_SECOND
+    );
+  if (cooldownSkillType(program) === 'normalSkill')
+    return baseFrames + read('NormalSkillCooldownAddition', 0) * COMBAT_FRAMES_PER_SECOND;
+  return baseFrames;
 }
 
 export function resolveCombatSkillCooldownConfiguration(
@@ -44,10 +70,12 @@ export function resolveCombatSkillCooldownConfiguration(
       `skill '${program.skillId}' of '${operator.operatorId}' has invalid cooldown multiplier ${multiplier}`,
     );
   }
-  return program.cooldownFrames === undefined
+  return program.cooldownFrames === undefined &&
+    cooldownSkillType(program) !== 'normalSkill' &&
+    cooldownSkillType(program) !== 'comboSkill'
     ? {}
     : {
-        periodFrames: program.cooldownFrames * multiplier,
+        periodFrames: (program.cooldownFrames ?? 0) * multiplier,
         ...(program.costFrame === undefined ? {} : { commitFrame: program.costFrame }),
       };
 }
@@ -121,9 +149,7 @@ export function bindRestoredCombatSkillCooldowns(
     const cooldown = new SkillCooldown(
       definition.configuration.periodFrames,
       definition.configuration.commitFrame,
-      definition.program.skillType === 'comboSkill'
-        ? () => operator.buffRuntime?.getAttributeValue?.('ComboSkillCooldownScalar') ?? 1
-        : undefined,
+      baseFrames => resolveCombatSkillCooldownFrames(operator, definition.program, baseFrames),
       state,
     );
     result.set(skillId, {

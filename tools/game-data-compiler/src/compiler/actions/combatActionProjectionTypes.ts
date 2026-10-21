@@ -55,6 +55,8 @@ export type CompiledBuffConditionSource =
       | 'checkMainCharacter'
       | 'characterTypeIn'
       | 'operatorRoleIn'
+      | 'operatorWeaponTypeIn'
+      | 'globalBuffCountCompare'
       | 'currentBuffStackCompare'
       | 'deckAttributeCompare'
       | 'eventInflictionElementIn'
@@ -70,6 +72,7 @@ export type CompiledBuffConditionSource =
       | 'eventBuffIdMatch'
       | 'ownerSpawnedAbilityEntityPresent'
       | 'eventPhysicalInflictionTypeIn'
+      | 'eventDamageSkillCastRecorded'
       | 'eventDamageTypeIn'
       | 'eventTransferredPartTagsMatch'
       | 'eventHealTagsMatch'
@@ -86,6 +89,7 @@ export type CompiledBuffConditionSource =
       | 'targetStaggered'
       | 'probability'
       | 'eventProjectilePerfectDodgeCooldownEquals'
+      | 'eventBuffFinishReasonIn'
       | 'eventAbilityEntityFinishReasonIn'
       | 'eventProjectileIgnoreImmuneLevelCompare'
     >
@@ -134,12 +138,15 @@ type ContextTargetSource = Parameters<'mergeContextTargets'>['sources'][number];
 type DamageParameters = Pick<
   Parameters<'dealDamage'>,
   | 'target'
+  | 'attacker'
+  | 'alwaysNext'
   | 'damageType'
   | 'attackScale'
   | 'takeAttackSnapshot'
   | 'calculation'
   | 'calculationMultiplier'
   | 'calculationAttribute'
+  | 'attributeSource'
   | 'calculationAddition'
   | 'calculationValue'
   | 'calculationValueScale'
@@ -190,26 +197,8 @@ type DamageParameters = Pick<
 export type CompiledSimpleDamageOperationSource = Step<'dealDamage', DamageParameters>;
 export type CompiledSimplePoiseOperationSource = Step<'dealStagger'>;
 
-type HealParameters = (
-  | {
-      readonly target: 'contextTarget';
-      readonly contextKey: string;
-    }
-  | {
-      readonly target:
-        | 'enemy'
-        | 'caster'
-        | 'buffOwner'
-        | 'controlledOperator'
-        | 'currentTarget'
-        | 'actionInputTarget';
-      readonly contextKey?: never;
-    }
-) & {
-  readonly source?: 'buffOwner';
-  readonly alwaysNext?: boolean;
-  readonly tags: Parameters<'heal'>['tags'];
-} & (
+type HealParameters = Pick<Parameters<'heal'>, 'target' | 'healer' | 'alwaysNext' | 'tags'> &
+  (
     | {
         readonly amount: CompiledActionValueOperandSource;
         readonly attribute?: never;
@@ -218,7 +207,7 @@ type HealParameters = (
       }
     | {
         readonly amount?: never;
-        readonly attribute: 'strength' | 'agility' | 'intellect' | 'will' | 'maxHealth';
+        readonly attribute: NonNullable<Parameters<'heal'>['attribute']>;
         readonly attributeSource?: 'target';
         readonly multiplier: CompiledActionValueOperandSource;
         readonly addition: CompiledActionValueOperandSource;
@@ -261,6 +250,8 @@ export type CompiledBuffStepSource =
   | Step<'startCurrentAbilityEntityChildSkillById'>
   | Step<'startTimeDilation', GlobalTimeDilation | EntityTimeDilation>
   | Step<'setIgnoreGlobalTimeScale'>
+  | Step<'changeOriginSkillToEventContextSkill'>
+  | Step<'terminateAddingBuff'>
   | Step<'hideUi'>
   | Step<
       'startUltimateTimeDilation',
@@ -293,7 +284,11 @@ export type CompiledBuffStepSource =
   | Step<'reachSkillOperableBoundary'>
   | Step<'markCurrentSkillCanDash'>
   | Step<'markCurrentSkillCanInterrupt'>
+  | Step<'storeSquadSlot'>
+  | Step<'storeProfession'>
+  | Step<'storeCharacterTypeCode'>
   | Step<'storeCharacterTypeId'>
+  | Step<'findNextAliveCharacterBySquadSlot'>
   | Step<'findCharacterBySquadSlot'>
   | Step<'storeCharacterTypeBySquadSlot'>
   | Step<'storeCurrentTimelineFrame'>
@@ -404,9 +399,12 @@ export type CompiledBuffStepSource =
     >
   | Step<'storeSourceAttributeValue'>
   | Step<'storeEntityPropertyValue'>
-  | Step<'setHealthFloor'>
+  | (Step<'setHealthFloor'> & { readonly afterSet?: CompiledBuffSequenceSource })
+  | Step<'overrideRawAttributes'>
   | Step<'storeEventHealValues'>
   | Step<'storeEventDamageValue'>
+  | Step<'storeCollectedBuffValue'>
+  | Step<'modifyCollectedBuffValue'>
   | Step<'storeShieldValue'>
   | Step<'calculateActionValue'>
   | Step<'storeRandomInteger'>
@@ -414,6 +412,7 @@ export type CompiledBuffStepSource =
   | Step<'setBuffRemainingDuration'>
   | Step<'setCurrentBuffRemainingDuration'>
   | Step<'refreshCurrentBuffAttributeModifiers'>
+  | Step<'saveDamageSkillCastId'>
   | Step<
       'changeResource',
       Parameters<'changeResource'> & {
@@ -429,6 +428,9 @@ export type CompiledBuffStepSource =
       }
     >
   | Step<'gainFinisherSp'>
+  | Step<'disableNormalSkill'>
+  | Step<'limitMovementGait'>
+  | Step<'queueComboLock'>
   | Step<'restrictUltimateEnergyRecovery'>
   | Step<'adjustSkillCooldown'>
   | Step<'holdBuffsById'>

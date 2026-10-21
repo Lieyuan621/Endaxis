@@ -2,7 +2,7 @@ import { expect, it } from 'vitest';
 import zh from '../../i18n/locales/zh-CN.json';
 import en from '../../i18n/locales/en.json';
 import { i18n } from '../../i18n';
-import { optionName } from './editorNodeText';
+import { optionName, optionValueKey } from './editorNodeText';
 import { actionNodeSchemas, dataNodeSchemas } from './actionNodeSchemas.generated';
 
 it.each([zh, en])('节点、参数和枚举都有完整的用户文案', locale => {
@@ -24,7 +24,10 @@ it.each([zh, en])('节点、参数和枚举都有完整的用户文案', locale 
       expect(entry.name.trim()).not.toBe('');
       for (const option of field.options ?? []) {
         if (typeof option === 'string')
-          expect(text.options[option as keyof typeof text.options], option).toBeTruthy();
+          expect(
+            text.options[optionValueKey(option) as keyof typeof text.options],
+            option,
+          ).toBeTruthy();
       }
     }
   }

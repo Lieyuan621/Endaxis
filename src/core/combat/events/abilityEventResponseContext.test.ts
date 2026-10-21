@@ -112,6 +112,7 @@ it.each(['beforeCastSkill', 'afterSkillApplyCost', 'skillEnd'] as const)(
 
 it.each([
   'enterFight',
+  'enemyEnterFight',
   'ownerSwitchToCenter',
   'ownerSwitchToGuard',
   'ownerHpZero',

@@ -44,7 +44,7 @@ export default defineConfig({
     // Rebuilds create thousands of short-lived source, audit, and WebP files. They are loaded
     // explicitly by the compiler when needed; watching them only causes Windows directory locks
     // and unnecessary dev-server reload work.
-    watch: { ignored: ['**/tmp/**'] },
+    watch: { ignored: ['**/tmp/**', '**/.local/**'] },
   },
   test: {
     // 超时用于发现卡死，不作为性能断言。完整编译和源码扫描在 CI 上可能超过 5 秒。
@@ -58,6 +58,7 @@ export default defineConfig({
     exclude: [
       ...configDefaults.exclude,
       'tmp/**',
+      '.local/**',
       'tests/browser/**',
       'tools/editor/generateActionNodeSchema.test.ts',
     ],

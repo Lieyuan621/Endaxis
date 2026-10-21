@@ -30,7 +30,10 @@ function stringFields(kind: unknown): readonly string[] {
   return [];
 }
 
-function graphExtractor(graph: IntermediateDefinition<ActionGraphDefinition>) {
+function graphExtractor(
+  graph: IntermediateDefinition<ActionGraphDefinition>,
+  location = 'Action graph',
+) {
   const dataNodes: Record<string, ActionGraphDataNode> = {};
   const reserved = new Set(Object.keys(graph.dataNodes ?? {}));
   // 只共享变量读取的定义；各消费点仍在自己的调用作用域中即时求值。
@@ -136,7 +139,7 @@ function graphExtractor(graph: IntermediateDefinition<ActionGraphDefinition>) {
     Object.entries(graph.nodes).map(([id, node]) => {
       if (node.action.kind === 'saveTwoDirectionAngle')
         throw new Error(
-          `Action graph node ${id}: direction angle still affects combat and cannot be published`,
+          `${location} node ${id}: direction angle still affects combat and cannot be published (${node.action.parameters.outputKey})`,
         );
       return [
         id,
@@ -178,15 +181,18 @@ export function extractResourceDataNodes(
 
 /** 图外的技能门禁与事件条件也属于该资源的主图；不建立干员或装备总图。 */
 export function extractDefinitionDataNodes<T>(definition: IntermediateDefinition<T>): T {
-  function visit(value: unknown): unknown {
+  function visit(value: unknown, location = 'definition'): unknown {
     if (!value || typeof value !== 'object') return value;
-    if (Array.isArray(value)) return value.map(visit);
+    if (Array.isArray(value))
+      return value.map((item, index) => visit(item, `${location}[${index}]`));
     const fields = Object.fromEntries(
-      Object.entries(value).map(([key, item]) => [key, visit(item)]),
+      Object.entries(value).map(([key, item]) => [key, visit(item, `${location}.${key}`)]),
     );
     if (!('actionGraph' in fields) || !fields.actionGraph) return fields;
     const resource = fields.actionGraph as IntermediateDefinition<ActionGraphResourceDefinition>;
-    const main = graphExtractor(resource.main);
+    const key = fields.id ?? fields.key;
+    const identity = typeof key === 'string' ? `${location} (${key})` : location;
+    const main = graphExtractor(resource.main, `${identity}.actionGraph.main`);
     if (fields.availability !== undefined) fields.availability = main.input(fields.availability);
     if (fields.switchToBuffCast && typeof fields.switchToBuffCast === 'object') {
       const route = fields.switchToBuffCast as Record<string, unknown>;
@@ -205,7 +211,7 @@ export function extractDefinitionDataNodes<T>(definition: IntermediateDefinition
           id,
           {
             ...macro,
-            graph: extractGraphDataNodes(macro.graph),
+            graph: graphExtractor(macro.graph, `${identity}.actionGraph.macros.${id}`).finish(),
           },
         ]),
       ),

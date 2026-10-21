@@ -1,4 +1,5 @@
-import type { ActionTargetQuery } from '../../../../packages/game-data-contract/src/conditions';
+import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
+
 import type { EnemyPartTransferInfo } from '../state/foundationState';
 import type { CompiledAbilityEntityChildSkillProgram } from '../../compiler/combatProgram';
 import type { CompiledCondition } from '../../compiler/compiledGraphData';
@@ -158,6 +159,8 @@ export interface CombatOperationContext {
   readonly actionOwnerAbilityEntity?: AbilityEntityTargetRef;
   /** 执行到当前步骤时的施法信息；扣费前后的未返还技力可能不同。 */
   readonly skillCastInfo?: CombatSkillCastInfo;
+  /** 原生仅 Buff/Ability 可替换来源施法；写入同一宿主状态，不修改当前事件。 */
+  readonly overrideEnvironmentSkillCastInfo?: (info: CombatSkillCastInfo) => void;
   /** 当前技能时间轴动作可把原生 AttachingSkill Buff 绑定到本次施法。 */
   readonly attachBuffToCurrentSkill?: (buff: BuffApplicationHandle) => void;
   /** InheritBuffAction 把已找到的同一实例从当前技能结束清理集合解除附着。 */
@@ -178,6 +181,7 @@ export interface CombatOperationContext {
   /** 仅由 Buff 实例响应提供；用于保留原生 ActionOwner 身份。 */
   readonly buffOwnerId?: string;
   /** 当前执行伤害的 Buff 实例；与攻击者和来源施法分开记录。 */
+  readonly executingGlobalBuff?: { readonly instanceId: number };
   readonly executingBuff?: {
     readonly buffId: string;
     readonly buffOwnerId: string;
@@ -202,6 +206,8 @@ export interface CombatOperationContext {
   readonly finishParentGlobalBuff?: (reason: 'early' | 'other') => boolean;
   /** Environment BuffCount 查询读取正在执行的当前 Buff 增强层数。 */
   readonly getCurrentBuffEnhanceCount?: () => number;
+  readonly hasCurrentBuffDamageSkillCastId?: (skillCastId: number) => boolean;
+  readonly saveCurrentBuffDamageSkillCastId?: (skillCastId: number) => void;
   /** Environment SaveBuffLifeTime 读取当前实例的剩余秒数；无限时长返回 null。 */
   readonly getCurrentBuffRemainingDuration?: () => number | null;
   /** SetBuffDurationAction 修改当前有限时长实例。 */
@@ -220,6 +226,10 @@ export interface CombatOperationContext {
   readonly canExecuteAction?: () => boolean;
   /** 原生 AllowNext 窗口实际进入活动分支时，通知技能宿主保存本帧候选。 */
   readonly reachSkillOperableBoundary?: (skillIds: readonly string[]) => void;
+  readonly registerAllowedNextSkills?: (skillIds: readonly string[]) => number;
+  readonly finishAllowedNextSkills?: (registrationId: number) => void;
+  readonly registerSkillBasicAttackMapping?: (skillId: string) => number;
+  readonly finishSkillBasicAttackMapping?: (registrationId: number) => void;
   /** 原生 MarkCanDash 只标记当前技能的本次施放。 */
   readonly markCurrentSkillCanDash?: () => void;
   readonly markCurrentSkillCanInterrupt?: () => void;
@@ -239,7 +249,7 @@ export interface CombatOperationExecutor {
   };
   readonly comboWindows?: ComboWindowRuntime;
   readonly queryTargets?: (
-    query: ActionTargetQuery,
+    query: CompiledTargetQuery,
     context: CombatOperationContext,
   ) => RuntimeTargetGroup;
   readonly frame?: () => number;
@@ -457,6 +467,22 @@ export class SkillRuntime {
         : { createCallbackSkillHost: dependencies.createCallbackSkillHost }),
       requestTimelineJump: destinationFrame => this.#requestTimelineJump(destinationFrame),
       reachSkillOperableBoundary: skillIds => this.#reachSkillOperableBoundary(skillIds),
+      registerAllowedNextSkills: skillIds => {
+        const id = this.#execution.nextInputRegistrationId++;
+        this.#execution.allowedNextSkillPacks.set(id, [...skillIds]);
+        return id;
+      },
+      finishAllowedNextSkills: id => {
+        this.#execution.allowedNextSkillPacks.delete(id);
+      },
+      registerSkillBasicAttackMapping: skillId => {
+        const id = this.#execution.nextInputRegistrationId++;
+        this.#execution.basicAttackMappings.set(id, skillId);
+        return id;
+      },
+      finishSkillBasicAttackMapping: id => {
+        this.#execution.basicAttackMappings.delete(id);
+      },
       markCurrentSkillCanDash: () => {
         this.runtimeState.markedCanDash = true;
       },
@@ -475,6 +501,11 @@ export class SkillRuntime {
         )
           return runtime.#execution.preparedSkillCastInfo;
         return runtime.#execution.skillCastId === 0 ? undefined : runtime.skillCastInfo;
+      },
+      overrideEnvironmentSkillCastInfo: info => {
+        runtime.#execution.skillCastId = info.skillCastId;
+        runtime.#execution.inheritedSkillCastInfo = { ...info };
+        runtime.#execution.nonReturnedSpCost = info.nonReturnedSpCost;
       },
       attachBuffToCurrentSkill: buff =>
         runtime.attachBuffToCast(runtime.#execution.skillCastId, buff),
@@ -595,10 +626,6 @@ export class SkillRuntime {
     return this.#program.exclusiveFrame !== undefined;
   }
 
-  get requiresExecutedOperableBoundaryCandidate(): boolean {
-    return this.#program.timelineContinuationSkillId !== undefined;
-  }
-
   get timelineBlockFollowUpSkillId(): string | undefined {
     return this.#program.timelineBlockFollowUpSkillId;
   }
@@ -641,24 +668,24 @@ export class SkillRuntime {
   }
 
   /** 原生 canInterrupt：保护时间已过，或本次施放执行了 MarkCanInterrupt。 */
-  get canInterrupt(): boolean {
-    if (this.#program.exclusiveFrame === undefined) {
-      throw new Error(`skill '${this.#program.skillId}' requires native exclusiveFrame data`);
-    }
+  get canInterrupt(): boolean | undefined {
+    if (this.runtimeState.markedCanInterrupt) return true;
+    if (this.#program.exclusiveFrame === undefined) return undefined;
     // 原生按秒比较 passedTime > exclusiveFrame / 30 + 0.00001。
-    return (
-      this.runtimeState.markedCanInterrupt ||
-      this.#execution.passedFrames > this.#program.exclusiveFrame + 0.0003
-    );
+    return this.#execution.passedFrames > this.#program.exclusiveFrame + 0.0003;
   }
 
   /** 原生 Skill.canDash：先复用 canInterrupt，再读取本次施放的 MarkCanDash 标记。 */
-  get canDash(): boolean {
-    return this.canInterrupt || this.runtimeState.markedCanDash;
+  get canDash(): boolean | undefined {
+    return this.runtimeState.markedCanDash ? true : this.canInterrupt;
   }
 
-  get inputWindows(): CompiledSkillExecutionProgram['inputWindows'] {
-    return this.#program.inputWindows;
+  get activeAllowedNextSkillIds(): readonly string[] {
+    return [...this.#execution.allowedNextSkillPacks.values()].flat();
+  }
+
+  get activeBasicAttackMapping(): string | null {
+    return this.#execution.basicAttackMappings.values().next().value ?? null;
   }
 
   get currentTimelineFrame(): number {
@@ -1204,6 +1231,7 @@ export class SkillRuntime {
       skillType: this.#program.skillType,
       skillId: this.#program.executionSkillId ?? this.#program.skillId,
       skillCastId: this.#execution.skillCastId,
+      skillCastInfo: this.skillCastInfo,
     };
   }
 }

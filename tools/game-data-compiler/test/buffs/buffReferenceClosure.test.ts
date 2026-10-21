@@ -1,3 +1,5 @@
+import { requireRecord, requireArray } from '../../src/source/primitives.ts';
+import { compileStandardStumpBuffClosure } from '../../src/compiler/buffs/standardStumpBuffClosure.ts';
 import { expect, it } from 'vitest';
 import { collectBuffRuntimeClosure } from '../../src/compiler/buffs/buffReferenceClosure.ts';
 import { buffFixture, scalarFixture, targetFixture } from '../sourceFixtures.ts';
@@ -209,4 +211,89 @@ it.each([
 
 it('关键词动态覆盖不能当成声明默认值', () => {
   expect(() => keywordClosure(true, '', 'external')).toThrow(/dynamic Buff references/);
+});
+
+it('生命下限同步回调的Buff依赖及Owner身份进入同一编译闭包', () => {
+  const root = rootBuff();
+  const event = requireRecord(requireArray(root.buffEventAction, 'events')[0], 'event');
+  const sequence = requireRecord(requireArray(event.actions, 'actions')[0], 'sequence');
+  const afterSet = { ...sequence };
+  sequence.actionData = [
+    {
+      $type: 'Beyond.Gameplay.Core.SetHpFloor+Data, Gameplay.Beyond',
+      isEnable: true,
+      priorityLevel: 'Default',
+      priorityOffset: 0,
+      serverActionIndex: 0,
+      useRatio: false,
+      floorValue: scalarFixture(400),
+      floorRatio: scalarFixture(0),
+      actionAfterSet: afterSet,
+    },
+  ];
+  const child = buffFixture({
+    id: 'child',
+    applyTags: [],
+    attributeModifier: {
+      isConvertedAttribute: false,
+      attributeModifiers: [
+        {
+          modifyAttributeType: 'Specific',
+          attributeType: 'MaxHp',
+          formulaItem: 'BaseFinalAddition',
+          param: scalarFixture(-30),
+        },
+      ],
+    },
+  });
+  const result = compileStandardStumpBuffClosure(
+    ['root'],
+    { root, child },
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    new Map([['root', 'caster']]),
+    new Set(['root']),
+  );
+  expect(result.diagnostics.filter(item => item.status === 'blocked')).toEqual([]);
+  expect(Object.keys(result.definitions).sort()).toEqual(['child', 'root']);
+});
+
+it('场景省略的事件不保活子链，但共享创建路径和独立根仍保留', () => {
+  const original = rootBuff();
+  const events = requireArray(original.buffEventAction, 'events');
+  const event = requireRecord(events[0], 'event');
+  const root = buffFixture({
+    id: 'root',
+    applyTags: [],
+    buffEventAction: [],
+    abilityEventAction: [{ abilityEvent: 'OnOwnerDead', actions: event.actions }],
+  });
+  const buffs = {
+    root,
+    active: rootBuff(undefined, { id: 'active' }),
+    child: buffFixture({ id: 'child', applyTags: [] }),
+  };
+  const omitted = new Map([['root', new Set(['OnOwnerDead'])]]);
+  const collect = (roots: string[]) =>
+    [
+      ...collectBuffRuntimeClosure(roots, buffs, undefined, new Set(), new Map(), omitted).keys(),
+    ].sort();
+  expect(collect(['root'])).toEqual(['root']);
+  expect(collect(['root', 'active'])).toEqual(['active', 'child', 'root']);
+  expect(collect(['root', 'child'])).toEqual(['child', 'root']);
+  const result = compileStandardStumpBuffClosure(
+    ['root'],
+    buffs,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    new Map([['root', 'enemy']]),
+    new Set(['root']),
+  );
+  expect(result.diagnostics.filter(item => item.status === 'blocked')).toEqual([]);
+  expect(result.definitions.child).toBeUndefined();
+  expect(result.omittedBuffIds.has('child')).toBe(true);
 });

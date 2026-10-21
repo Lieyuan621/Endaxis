@@ -1,6 +1,9 @@
 /** 产品展示命名；发布到各 Buff 的 presentation，不归属干员或技能。 */
-import type { ImageRef } from '../../../packages/game-data-contract/src/primitives.ts';
+import type { CombatBuffPresentation } from '../../../packages/game-data-contract/src/buffs.ts';
 export const buffPresentationNames: Readonly<Record<string, string>> = {
+  buff_cc_chr_combo_lock_instance: 'contingencyContract.preview.comboLock',
+  buff_cc_chr_disable_normal_skill: 'contingencyContract.preview.battleLock',
+  buff_cc_eny_heal_no_inflict_do_heal: 'contingencyContract.preview.heal',
   buff_chr_0018_dapan_talent_1_preparation: 'effects.name.prepIngredients',
   buff_chr_0023_antal_tageffect: 'effects.name.focus',
   buff_chr_0028_wulfa_normal_bleed: 'effects.name.razorClawmark',
@@ -44,7 +47,25 @@ export const buffPresentationNames: Readonly<Record<string, string>> = {
 };
 
 /** 原生无图标的效果在时间轴上的补充展示，不改变 Buff 行为。 */
-export const buffPresentationIcons: Readonly<Record<string, ImageRef>> = {
-  buff_chr_0036_jsspsi_normal_skill_hitstop: 'endaxis:operators/si/battle_01',
-  buff_common_affixes_combo_trigger: 'endaxis:icons/icon_term_ba_combo',
+export const buffPresentationOverrides: Readonly<Record<string, CombatBuffPresentation>> = {
+  buff_cc_chr_combo_lock_instance: {
+    icon: 'endaxis:contingency_contract/2/lockdown',
+    visible: true,
+    showInSquadIcon: true,
+  },
+  buff_cc_chr_disable_normal_skill: {
+    icon: 'endaxis:contingency_contract/2/silence',
+    visible: true,
+    showInSquadIcon: true,
+  },
+  buff_chr_0036_jsspsi_normal_skill_hitstop: {
+    icon: 'endaxis:operators/si/battle_01',
+    visible: true,
+    showInSquadIcon: true,
+  },
+  buff_common_affixes_combo_trigger: {
+    icon: 'endaxis:icons/icon_term_ba_combo',
+    visible: true,
+    showInSquadIcon: true,
+  },
 };

@@ -512,6 +512,9 @@ function collectLeafReferences(
       );
       return;
     }
+    case 'healthFloor':
+      collectSequenceReferences(leaf.action.actionAfterSet, enabled, output);
+      return;
     case 'presentation': {
       const action = leaf.action;
       if (action.kind !== 'playAnimation' || action.onEnd === undefined) return;

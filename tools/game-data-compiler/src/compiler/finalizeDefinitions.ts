@@ -143,7 +143,10 @@ function prune<T extends EquipmentContributionDefinition>(
   if (result.contribution === value) return { value, report: result.report };
   const { blackboard: _originalBlackboard, ...rest } = value;
   return {
-    value: { ...rest, ...result.contribution },
+    value: {
+      ...(result.contribution.blackboard === undefined ? rest : value),
+      ...result.contribution,
+    },
     report: result.report,
   };
 }

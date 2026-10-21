@@ -1,4 +1,5 @@
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
+import type { DamageType } from '../../game-data/operatorDefinition';
 import type { DamageModifierSide } from '../../../../packages/game-data-contract/src/modifiers';
 /**
  * 有状态伤害上下文进入纯伤害公式前的解析边界。
@@ -6,6 +7,7 @@ import type { DamageModifierSide } from '../../../../packages/game-data-contract
  */
 import {
   usesDamageResistance,
+  usesRawDamageValue,
   type PlayerActiveDamageInput,
   type ResistibleDamageType,
 } from './playerActiveDamage';
@@ -40,6 +42,8 @@ export interface PlayerDamageAttackerSnapshot {
 
 /** 目标方对标准主动伤害公式有影响的属性与状态快照。 */
 export interface PlayerDamageDefenderSnapshot {
+  /** MultiplyAttributeCalculation 在 beforeCalculation 后冻结的目标属性。 */
+  readonly calculationAttributeValue?: number;
   readonly defense: number;
   readonly shelterDamageMultiplier: number;
   /** 敌人固定属性 `BreakingAttackDamageTakenScalar`，只参与处决基础值计算。 */
@@ -75,27 +79,8 @@ export function resolvePlayerActiveDamageInput(
   { step, finalAttackValue, attacker, defender, runtime }: ResolvePlayerActiveDamageInput,
   recordAttribute?: (side: DamageModifierSide, attribute: string) => void,
 ): PlayerActiveDamageInput {
-  if (step.parameters.damageType === 'fixed')
-    return {
-      finalAttackValue,
-      damageType: 'fixed',
-      criticalRate: 0,
-      criticalDamageIncrease: 0,
-      criticalSample: 0,
-      defense: 0,
-      resistancePercent: 0,
-      damageTakenMultiplier: 1,
-      weaknessDamageMultiplier: 1,
-      shelterDamageMultiplier: 0,
-      runtimeExtensionMultiplier: 1,
-      igniteDamageMultiplier: 1,
-      appliesIgniteDamageMultiplier: false,
-      physicalInflictionDamageMultiplier: 1,
-      appliesPhysicalInflictionDamageMultiplier: false,
-    };
-  if (step.parameters.damageType === 'lifeDrain') {
-    throw new Error('life-drain damage uses a separate native calculation branch');
-  }
+  if (usesRawDamageValue(step.parameters.damageType))
+    return rawDamageFormulaInput(step.parameters.damageType, finalAttackValue);
 
   const resistance = usesDamageResistance(step.parameters.damageType)
     ? defender.resistances[step.parameters.damageType]
@@ -128,5 +113,31 @@ export function resolvePlayerActiveDamageInput(
     appliesIgniteDamageMultiplier: runtime.appliesIgniteDamageMultiplier,
     physicalInflictionDamageMultiplier: attacker.physicalInflictionDamageMultiplier,
     appliesPhysicalInflictionDamageMultiplier: runtime.appliesPhysicalInflictionDamageMultiplier,
+  };
+}
+
+/** 原始值路径不读取双方乘区属性；这些单位元只是纯公式的显式输入。 */
+export function rawDamageFormulaInput(
+  damageType: DamageType,
+  finalAttackValue: number,
+): PlayerActiveDamageInput {
+  if (!usesRawDamageValue(damageType))
+    throw new Error('raw damage input requires LifeDrain or Fixed');
+  return {
+    finalAttackValue,
+    damageType,
+    criticalRate: 0,
+    criticalDamageIncrease: 0,
+    criticalSample: 0,
+    defense: 0,
+    resistancePercent: 0,
+    damageTakenMultiplier: 1,
+    weaknessDamageMultiplier: 1,
+    shelterDamageMultiplier: 0,
+    runtimeExtensionMultiplier: 1,
+    igniteDamageMultiplier: 1,
+    appliesIgniteDamageMultiplier: false,
+    physicalInflictionDamageMultiplier: 1,
+    appliesPhysicalInflictionDamageMultiplier: false,
   };
 }

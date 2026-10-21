@@ -1,3 +1,8 @@
+import type { CombatSkillCastInfo } from '../state/foundationState';
+import { CombatBuffContainer } from '../buffs/combatBuffs';
+import { CombatAttributeSet } from '../attributes/combatAttributes';
+import { EventContextConditionExecutor } from '../events/eventContextConditionExecutor';
+import { createStateTestSession } from '../../../test/stateTestSession';
 import { describe, expect, it, vi } from 'vitest';
 import type {
   ActionGraphDefinition,
@@ -11,11 +16,129 @@ import { RuntimeTargetContext } from '../abilities/runtimeTargetContext';
 import { AbilityEventDispatcher } from '../events/abilityEventDispatcher';
 import type { AbilityEventPayloadMap } from '../events/combatAbilityEvent';
 import { CombatSemanticEventRuntime } from '../events/combatSemanticEventRuntime';
+import { createKillEvent } from '../events/killEventTestFixture';
 import { createNativeEventFixture } from '../events/nativeEventTestFixture';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
 import { SkillSlotOperationExecutor } from '../skills/skillSlotOperationExecutor';
 import { ActionBlackboard } from './actionBlackboard';
+import { ActionBlackboardOperationExecutor } from './actionBlackboardOperationExecutor';
+import { CombatVitals } from '../resources/combatVitals';
 import { CombatActionSequenceRuntime } from './combatActionSequenceRuntime';
+
+it('来源替换写回宿主，循环内外读取新施法且快照保留，非技能事件不回退来源', () => {
+  const container = new CombatBuffContainer('owner', new CombatAttributeSet<string>());
+  const buff = container.add({ id: 'host', stackingType: 'unlimited' }, 'source')!;
+  buff.recordBuffAffixSkillCastId(34);
+  const info = {
+    skillCastId: 87,
+    originSkillId: 'event-skill',
+    originCastId: 'event-cast',
+    nonReturnedSpCost: 25,
+  };
+  const targetContext = new RuntimeTargetContext();
+  targetContext.setSingle('items', { kind: 'enemy' });
+  const context = {
+    blackboard: new ActionBlackboard(),
+    targetContext,
+    get skillCastInfo() {
+      return buff.skillCastInfo ?? undefined;
+    },
+    overrideEnvironmentSkillCastInfo: (value: CombatSkillCastInfo) =>
+      buff.overrideSkillCastInfo(value),
+    event: {
+      event: 'afterSkillApplyCost' as const,
+      payload: {
+        sourceId: 'owner',
+        targetId: 'enemy',
+        skillId: 'event-skill',
+        skillCastId: 87,
+        skillCastInfo: info,
+      },
+    },
+  };
+  const seen: unknown[] = [];
+  const executor = new EventContextConditionExecutor({
+    execute: (_step, current) => {
+      seen.push(current?.skillCastInfo);
+      return true;
+    },
+    evaluate: () => false,
+  });
+  const runtime = new CombatActionSequenceRuntime(executor, context);
+  const entry = compileGraphEntry('origin-change', 'loop', {
+    loop: {
+      action: {
+        kind: 'forEachContextTarget',
+        parameters: { targets: { kind: 'context', key: 'items' } },
+        body: { $sequence: 'change' },
+      },
+      next: 'after',
+    },
+    change: {
+      action: { kind: 'changeOriginSkillToEventContextSkill', parameters: {} },
+      next: 'inside',
+    },
+    inside: {
+      action: {
+        kind: 'triggerCustomAbilityEvent',
+        parameters: { eventName: 'inside', eventParam: 0, target: 'caster' },
+      },
+      next: null,
+    },
+    after: {
+      action: {
+        kind: 'triggerCustomAbilityEvent',
+        parameters: { eventName: 'after', eventParam: 0, target: 'caster' },
+      },
+      next: null,
+    },
+  });
+  expect(runtime.createSequence(entry).executeInstant({})).toBe(true);
+  expect(seen).toEqual([info, info]);
+  expect(buff.affixSkillCastId).toBe(34);
+  expect(structuredClone(buff.runtimeState).skillCastInfo).toEqual(info);
+  expect(
+    executor.execute(
+      { kind: 'changeOriginSkillToEventContextSkill', parameters: {} },
+      { ...context, event: undefined, eventSkillCastInfo: { ...info, skillCastId: 99 } },
+    ),
+  ).toBe(false);
+  expect(buff.skillCastInfo).toEqual(info);
+});
+
+it('raw attribute overrides release on graph reset even through an executor without prepare', () => {
+  let active = false;
+  const runtime = new CombatActionSequenceRuntime(
+    {
+      execute: () => {
+        active = true;
+        return true;
+      },
+      end: () => {
+        active = false;
+      },
+      evaluate: () => false,
+    },
+    { blackboard: new ActionBlackboard() },
+  );
+  const entry = compileGraphEntry('raw', 'override', {
+    override: {
+      action: {
+        kind: 'overrideRawAttributes',
+        parameters: {
+          targets: { kind: 'owner' },
+          attributes: [{ attribute: 'PhysicalResistance', value: { kind: 'constant', value: 20 } }],
+        },
+      },
+      next: null,
+    },
+  });
+  const sequence = runtime.createSequence(entry);
+  expect(sequence.tryExecute({})).toBe(true);
+  expect(active).toBe(true);
+  sequence.reset({});
+  expect(active).toBe(false);
+});
 
 function operation(flag: string): ActionGraphStep {
   return {
@@ -2258,24 +2381,39 @@ describe('CombatActionSequenceRuntime', () => {
 
   it('把实际进入分支的有序连段窗口通知给技能宿主', () => {
     const reachSkillOperableBoundary = vi.fn();
+    const registerAllowedNextSkills = vi.fn(() => 12);
+    const finishAllowedNextSkills = vi.fn();
     const fixture = createFixture();
     const runtime = new CombatActionSequenceRuntime(fixture.operations, {
       blackboard: new ActionBlackboard(),
       reachSkillOperableBoundary,
+      registerAllowedNextSkills,
+      finishAllowedNextSkills,
     });
-    const action = runtime.createSequence(
-      chainEntry('operable-boundary', [
-        {
-          kind: 'reachSkillOperableBoundary',
-          parameters: { skillIds: ['native.attack5'] },
-        },
-      ]),
-    );
+    const program = chainEntry('operable-boundary', [
+      {
+        kind: 'reachSkillOperableBoundary',
+        parameters: { skillIds: ['native.attack5'] },
+      },
+    ]);
+    const action = runtime.createSequence(program);
 
     action.execute({});
 
     expect(reachSkillOperableBoundary).toHaveBeenCalledOnce();
     expect(reachSkillOperableBoundary).toHaveBeenCalledWith(['native.attack5']);
+    expect(registerAllowedNextSkills).toHaveBeenCalledWith(['native.attack5']);
+    const restored = runtime.createSequence(
+      program,
+      undefined,
+      structuredClone(action.runtimeState),
+    );
+    restored.end({});
+    expect(registerAllowedNextSkills).toHaveBeenCalledOnce();
+    expect(finishAllowedNextSkills).toHaveBeenCalledExactlyOnceWith(12);
+    restored.reset({});
+    restored.execute({});
+    expect(registerAllowedNextSkills).toHaveBeenCalledTimes(2);
   });
 
   it('条件时间轴跳转在后续 Tick 重试并只在首次通过时请求', () => {
@@ -2439,4 +2577,103 @@ it('末尾 NotNext 跨同一环境入口保留；切面恢复保留待消费策�
   expect(resumed.executeInstant({})).toBe(false);
   expect(resumed.executeInstant({})).toBe(true);
   expect(runtime.createSequence(probe).executeInstant({})).toBe(false);
+});
+
+it('生命下限在回调前安装，回调不继承事件且失败不截断父后继，恢复不重放', () => {
+  const vitals = new CombatVitals({
+    health: 1000,
+    maxHealth: 1000,
+    poise: 0,
+    maxPoise: 0,
+    poiseRecoveryTime: 0,
+    poiseRecoveryTimeMultiplier: 1,
+    poiseBrokenEndTime: 0,
+    poiseImmune: false,
+  });
+  let calls = 0;
+  const delegate: CombatOperationExecutor = {
+    execute: (step, context) => {
+      if (step.kind !== 'triggerCustomAbilityEvent') throw new Error('unexpected step');
+      if (step.parameters.eventName === 'after') {
+        calls++;
+        return true;
+      }
+      expect(context?.event).toBeUndefined();
+      expect(context?.actionInputTarget).toEqual({ kind: 'enemy' });
+      expect(vitals.takeDamage(1000).currentHealth).toBe(400);
+      calls++;
+      return false;
+    },
+    evaluate: () => false,
+  };
+  const operations = new ActionBlackboardOperationExecutor(
+    delegate,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    {
+      read: () => vitals.health,
+      setHealthFloor: (_id, _mode, value) => vitals.requestHealthFloor(value),
+      removeHealthFloor: (_id, handle) => vitals.removeHealthFloor(handle),
+    },
+  );
+  const context = {
+    blackboard: new ActionBlackboard(),
+    actionOwnerId: 'owner',
+    actionInputTarget: { kind: 'enemy' } as const,
+    event: createKillEvent(),
+  };
+  const runtime = new CombatActionSequenceRuntime(operations, context);
+  const entry = compileGraphEntry('floor', 'floor', {
+    floor: {
+      action: {
+        kind: 'setHealthFloor',
+        parameters: {
+          target: 'actionOwner',
+          mode: 'absolute',
+          value: { kind: 'constant', value: 400 },
+        },
+        afterSet: { $sequence: 'callback' },
+      },
+      next: 'after',
+    },
+    callback: { action: operation('callback'), next: null },
+    after: { action: operation('after'), next: null },
+  });
+  const sequence = runtime.createSequence(entry);
+  expect(sequence.tryExecute({})).toBe(true);
+  expect(calls).toBe(2);
+  const saved = createStateTestSession(
+    {
+      vitals: vitals.runtimeState,
+      operations: operations.runtimeState,
+      sequence: sequence.runtimeState,
+    },
+    () => undefined,
+  ).read();
+  const copiedVitals = CombatVitals.bindRuntimeState(saved.vitals);
+  const copiedOperations = new ActionBlackboardOperationExecutor(
+    delegate,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    {
+      read: () => copiedVitals.health,
+      setHealthFloor: (_id, _mode, value) => copiedVitals.requestHealthFloor(value),
+      removeHealthFloor: (_id, handle) => copiedVitals.removeHealthFloor(handle),
+    },
+    { state: saved.operations, programs: operations.programs },
+  );
+  const copiedRuntime = new CombatActionSequenceRuntime(copiedOperations, context);
+  const restored = copiedRuntime.createSequence(entry, context, saved.sequence);
+  expect(calls).toBe(2);
+  restored.end({});
+  expect(copiedVitals.takeDamage(1000).currentHealth).toBe(0);
+  expect(vitals.takeDamage(1000).currentHealth).toBe(400);
 });

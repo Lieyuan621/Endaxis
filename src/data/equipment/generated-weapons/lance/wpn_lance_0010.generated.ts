@@ -54,6 +54,8 @@ const definition = {
               action: {
                 kind: 'dealDamage',
                 parameters: {
+                  attacker: 'actionSource',
+                  target: { kind: 'inputTarget' },
                   damageType: 'physical',
                   attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                   tags: [],

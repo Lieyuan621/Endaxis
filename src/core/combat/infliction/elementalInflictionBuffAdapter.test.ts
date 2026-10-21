@@ -135,17 +135,31 @@ describe('ElementalInflictionBuffAdapter', () => {
       incomingElement: 'nature',
       consumedLayers: 1,
     },
-  ] as const)('$kind 的两侧前置事件早于创建，添加失败不发布成功事件', operation => {
+  ] as const)('$kind 的普通前置事件在添加冷却准入后、创建前执行', operation => {
     const target = new CombatBuffContainer<Attribute>('enemy', new CombatAttributeSet<Attribute>());
     const calls: string[] = [];
-    const add = vi.spyOn(target, 'add').mockImplementationOnce(() => {
-      calls.push('create');
-      return null;
+    const guarded = (
+      definition: CombatBuffDefinition<Attribute>,
+    ): CombatBuffDefinition<Attribute> => ({
+      ...definition,
+      addingCooldownSeconds: 1,
+      actions: {
+        start: () => {
+          calls.push('create');
+        },
+      },
     });
+    const guardedIndex: ElementalInflictionBuffIndex<Attribute> = {
+      ...index,
+      getAttachment: element => guarded(index.getAttachment(element)),
+      getBurst: element => guarded(index.getBurst(element)),
+      getCompoundStatus: (consumed, incoming) =>
+        guarded(index.getCompoundStatus(consumed, incoming)),
+    };
     const adapter = new ElementalInflictionBuffAdapter(
       target,
       'operator',
-      index,
+      guardedIndex,
       undefined,
       () => calls.push('added'),
       undefined,
@@ -158,11 +172,10 @@ describe('ElementalInflictionBuffAdapter', () => {
       },
     );
     adapter.apply(operation);
-    expect(calls).toEqual(['before-output', 'before-added', 'create']);
-    add.mockRestore();
+    expect(calls).toEqual(['before-output', 'before-added', 'create', 'added', 'output']);
     calls.length = 0;
     adapter.apply(operation);
-    expect(calls).toEqual(['before-output', 'before-added', 'added', 'output']);
+    expect(calls).toEqual([]);
   });
 
   it('copies each incoming cast into burst/status Buffs and preserves event ordering', () => {
@@ -325,4 +338,31 @@ describe('ElementalInflictionBuffAdapter', () => {
       target.getInstance(1),
     );
   });
+});
+
+it('元素状态Buff同样经过可取消阶段，取消后没有普通添加事件或实例', () => {
+  const { target } = createAdapter();
+  const ordinary = vi.fn();
+  const recipient = vi.fn();
+  const adapter = new ElementalInflictionBuffAdapter(
+    target,
+    'source',
+    index,
+    undefined,
+    ordinary,
+    undefined,
+    ordinary,
+    ordinary,
+    ordinary,
+    {
+      beforeOutput: e => {
+        e.termination.isTerminated = true;
+      },
+      beforeAdded: recipient,
+    },
+  );
+  adapter.apply({ kind: 'addAttachment', element: 'heat' });
+  expect(target.buffs).toHaveLength(0);
+  expect(ordinary).not.toHaveBeenCalled();
+  expect(recipient).not.toHaveBeenCalled();
 });

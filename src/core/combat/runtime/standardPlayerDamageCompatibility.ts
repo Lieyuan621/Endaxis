@@ -114,6 +114,8 @@ function inspectCondition(
     case 'checkMainCharacter':
     case 'characterTypeIn':
     case 'operatorRoleIn':
+    case 'operatorWeaponTypeIn':
+    case 'globalBuffCountCompare':
     case 'enemyRankIn':
     case 'enemySuperArmorCompare':
     case 'targetDistance':
@@ -351,6 +353,9 @@ function inspectSequence(
       case 'setGlobalCooldown':
       case 'gainSquadUltimateEnergyFromSkillCost':
       case 'gainFinisherSp':
+      case 'disableNormalSkill':
+      case 'limitMovementGait':
+      case 'queueComboLock':
       case 'restrictUltimateEnergyRecovery':
       case 'openComboWindow':
       case 'changeSkillSlot':
@@ -400,6 +405,7 @@ function inspectSequence(
       case 'storeShieldValue':
         return;
       case 'setHealthFloor':
+      case 'overrideRawAttributes':
         return;
       case 'readSkillSettingData':
         // 数值表已在生成阶段内嵌；仅强化计算需要运行面板，不再次依赖原始配置文件。

@@ -11,6 +11,13 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const camilleChr_0033_camille_attack1ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       startTimeDilation_4: {
         action: {
           kind: 'startTimeDilation',
@@ -55,6 +62,8 @@ export const camilleChr_0033_camille_attack1ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -66,6 +75,8 @@ export const camilleChr_0033_camille_attack1ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack'],
@@ -73,7 +84,14 @@ export const camilleChr_0033_camille_attack1ActionGraph = {
         },
         next: 'ifElse_6',
       },
-      reachSkillOperableBoundary_13: {
+      overrideBasicAttackMapping_13: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0033_camille_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_14: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0033_camille_attack2'] },
@@ -95,6 +113,7 @@ export const camilleChr_0033_camille_attack1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const camilleChr_0033_camille_attack1: SkillDefinition = {
+  actionGraph: camilleChr_0033_camille_attack1ActionGraph,
   key: 'chr_0033_camille_attack1',
   element: 'heat',
   blackboard: {
@@ -106,34 +125,31 @@ export const camilleChr_0033_camille_attack1: SkillDefinition = {
   naturalDurationFrames: 118,
   exclusiveFrame: 13,
   offsetRecordFrame: 5,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 29,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0033_camille_attack2',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 12, endFrame: 29, skillIds: ['chr_0033_camille_attack2'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 4, endFrame: 6, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 10, endFrame: 12, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 4, endFrame: 6, sequence: { $sequence: 'dealDamage_7' } },
     { startFrame: 10, endFrame: 12, sequence: { $sequence: 'dealDamage_12' } },
-    { startFrame: 12, endFrame: 29, sequence: { $sequence: 'reachSkillOperableBoundary_13' } },
+    { startFrame: 0, endFrame: 29, sequence: { $sequence: 'overrideBasicAttackMapping_13' } },
+    { startFrame: 12, endFrame: 29, sequence: { $sequence: 'reachSkillOperableBoundary_14' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0033_camille_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: camilleChr_0033_camille_attack1ActionGraph,
 };
 
 export const camilleChr_0033_camille_attack2ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       startTimeDilation_4: {
         action: {
           kind: 'startTimeDilation',
@@ -178,6 +194,8 @@ export const camilleChr_0033_camille_attack2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -189,6 +207,8 @@ export const camilleChr_0033_camille_attack2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['normalAttack'],
@@ -196,7 +216,14 @@ export const camilleChr_0033_camille_attack2ActionGraph = {
         },
         next: 'ifElse_6',
       },
-      reachSkillOperableBoundary_13: {
+      overrideBasicAttackMapping_13: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0033_camille_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_14: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0033_camille_attack3'] },
@@ -218,6 +245,7 @@ export const camilleChr_0033_camille_attack2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const camilleChr_0033_camille_attack2: SkillDefinition = {
+  actionGraph: camilleChr_0033_camille_attack2ActionGraph,
   key: 'chr_0033_camille_attack2',
   element: 'heat',
   blackboard: {
@@ -229,29 +257,19 @@ export const camilleChr_0033_camille_attack2: SkillDefinition = {
   naturalDurationFrames: 124,
   exclusiveFrame: 19,
   offsetRecordFrame: 10,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 34,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0033_camille_attack3',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 15, endFrame: 34, skillIds: ['chr_0033_camille_attack3'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 14, endFrame: 16, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 10, endFrame: 11, sequence: { $sequence: 'dealDamage_7' } },
     { startFrame: 14, endFrame: 16, sequence: { $sequence: 'dealDamage_12' } },
-    { startFrame: 15, endFrame: 34, sequence: { $sequence: 'reachSkillOperableBoundary_13' } },
+    { startFrame: 0, endFrame: 34, sequence: { $sequence: 'overrideBasicAttackMapping_13' } },
+    { startFrame: 15, endFrame: 34, sequence: { $sequence: 'reachSkillOperableBoundary_14' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0033_camille_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: camilleChr_0033_camille_attack2ActionGraph,
 };
 
 export const camilleChr_0033_camille_attack3ActionGraph = {
@@ -301,6 +319,8 @@ export const camilleChr_0033_camille_attack3ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -325,7 +345,14 @@ export const camilleChr_0033_camille_attack3ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_22: {
+      overrideBasicAttackMapping_22: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0033_camille_attack4'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_23: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0033_camille_attack4'] },
@@ -346,6 +373,7 @@ export const camilleChr_0033_camille_attack3ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const camilleChr_0033_camille_attack3: SkillDefinition = {
+  actionGraph: camilleChr_0033_camille_attack3ActionGraph,
   key: 'chr_0033_camille_attack3',
   element: 'heat',
   blackboard: {
@@ -356,28 +384,16 @@ export const camilleChr_0033_camille_attack3: SkillDefinition = {
   naturalDurationFrames: 130,
   exclusiveFrame: 19,
   offsetRecordFrame: 7,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 30,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0033_camille_attack4',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 13, endFrame: 30, skillIds: ['chr_0033_camille_attack4'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 7, endFrame: 22, sequence: { $sequence: 'repeatEachTick_21' } },
-    { startFrame: 13, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_22' } },
+    { startFrame: 0, endFrame: 30, sequence: { $sequence: 'overrideBasicAttackMapping_22' } },
+    { startFrame: 13, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_23' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0033_camille_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: camilleChr_0033_camille_attack3ActionGraph,
 };
 
 export const camilleChr_0033_camille_attack4ActionGraph = {
@@ -404,32 +420,25 @@ export const camilleChr_0033_camille_attack4ActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0033_camille_attack4_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 30,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale_2: 0.1 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'dealDamage_8' } },
-                  { startFrame: 2, endFrame: 3, sequence: { $sequence: 'dealDamage_8' } },
-                  { startFrame: 4, endFrame: 5, sequence: { $sequence: 'dealDamage_8' } },
-                  { startFrame: 6, endFrame: 7, sequence: { $sequence: 'dealDamage_8' } },
-                  { startFrame: 8, endFrame: 9, sequence: { $sequence: 'dealDamage_8' } },
-                  { startFrame: 10, endFrame: 11, sequence: { $sequence: 'dealDamage_8' } },
-                  { startFrame: 12, endFrame: 13, sequence: { $sequence: 'dealDamage_8' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
+                      mergeContextTargets_1: {
+                        action: {
+                          kind: 'mergeContextTargets',
+                          parameters: {
+                            saveToContextKey: 'tar',
+                            sources: [{ kind: 'fixed', target: 'enemy' }],
+                          },
+                        },
+                        next: null,
+                      },
                       dealDamage_8: {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'context', key: 'tar' },
                             damageType: 'heat',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                             tags: ['normalAttack'],
@@ -447,6 +456,40 @@ export const camilleChr_0033_camille_attack4ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0033_camille_attack4_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 30,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale_2: 0.1 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'mergeContextTargets_1' } },
+                  { startFrame: 2, endFrame: 3, sequence: { $sequence: 'mergeContextTargets_1' } },
+                  { startFrame: 4, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+                  { startFrame: 6, endFrame: 7, sequence: { $sequence: 'mergeContextTargets_1' } },
+                  { startFrame: 8, endFrame: 9, sequence: { $sequence: 'mergeContextTargets_1' } },
+                  {
+                    startFrame: 10,
+                    endFrame: 11,
+                    sequence: { $sequence: 'mergeContextTargets_1' },
+                  },
+                  {
+                    startFrame: 12,
+                    endFrame: 13,
+                    sequence: { $sequence: 'mergeContextTargets_1' },
+                  },
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'dealDamage_8' } },
+                  { startFrame: 2, endFrame: 3, sequence: { $sequence: 'dealDamage_8' } },
+                  { startFrame: 4, endFrame: 5, sequence: { $sequence: 'dealDamage_8' } },
+                  { startFrame: 6, endFrame: 7, sequence: { $sequence: 'dealDamage_8' } },
+                  { startFrame: 8, endFrame: 9, sequence: { $sequence: 'dealDamage_8' } },
+                  { startFrame: 10, endFrame: 11, sequence: { $sequence: 'dealDamage_8' } },
+                  { startFrame: 12, endFrame: 13, sequence: { $sequence: 'dealDamage_8' } },
+                ],
               },
             },
           ],
@@ -456,7 +499,7 @@ export const camilleChr_0033_camille_attack4ActionGraph = {
       mergeContextTargets_3: {
         action: {
           kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
         },
         next: null,
       },
@@ -489,6 +532,8 @@ export const camilleChr_0033_camille_attack4ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -496,7 +541,14 @@ export const camilleChr_0033_camille_attack4ActionGraph = {
         },
         next: 'ifElse_6',
       },
-      reachSkillOperableBoundary_8: {
+      overrideBasicAttackMapping_8: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0033_camille_attack5'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_9: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0033_camille_attack5'] },
@@ -517,6 +569,7 @@ export const camilleChr_0033_camille_attack4ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const camilleChr_0033_camille_attack4: SkillDefinition = {
+  actionGraph: camilleChr_0033_camille_attack4ActionGraph,
   key: 'chr_0033_camille_attack4',
   element: 'heat',
   blackboard: {
@@ -528,36 +581,31 @@ export const camilleChr_0033_camille_attack4: SkillDefinition = {
   naturalDurationFrames: 187,
   exclusiveFrame: 29,
   offsetRecordFrame: 12,
-  inputWindows: {
-    commandMappings: [
-      {
-        startFrame: 0,
-        endFrame: 34,
-        input: 'basicAttack',
-        targetSkillId: 'chr_0033_camille_attack5',
-      },
-    ],
-    allowedNextSkills: [{ startFrame: 22, endFrame: 34, skillIds: ['chr_0033_camille_attack5'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'createSpatialPointTargets_1' } },
     { startFrame: 20, endFrame: 21, sequence: { $sequence: 'launchProjectile_2' } },
     { startFrame: 11, endFrame: 15, sequence: { $sequence: 'mergeContextTargets_3' } },
     { startFrame: 11, endFrame: 15, sequence: { $sequence: 'dealDamage_7' } },
-    { startFrame: 22, endFrame: 34, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
+    { startFrame: 0, endFrame: 34, sequence: { $sequence: 'overrideBasicAttackMapping_8' } },
+    { startFrame: 22, endFrame: 34, sequence: { $sequence: 'reachSkillOperableBoundary_9' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0033_camille_attack5',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: camilleChr_0033_camille_attack4ActionGraph,
 };
 
 export const camilleChr_0033_camille_attack5ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       startTimeDilation_3: {
         action: {
           kind: 'startTimeDilation',
@@ -602,6 +650,8 @@ export const camilleChr_0033_camille_attack5ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
@@ -663,6 +713,7 @@ export const camilleChr_0033_camille_attack5ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const camilleChr_0033_camille_attack5: SkillDefinition = {
+  actionGraph: camilleChr_0033_camille_attack5ActionGraph,
   key: 'chr_0033_camille_attack5',
   element: 'heat',
   blackboard: {
@@ -676,6 +727,7 @@ export const camilleChr_0033_camille_attack5: SkillDefinition = {
   offsetRecordFrame: 21,
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 21, endFrame: 23, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 21, endFrame: 23, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 12, endFrame: 15, sequence: { $sequence: 'startTimeDilation_7' } },
   ],
@@ -683,14 +735,20 @@ export const camilleChr_0033_camille_attack5: SkillDefinition = {
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: camilleChr_0033_camille_attack5ActionGraph,
 };
 
 export const camilleChr_0033_camille_power_attackActionGraph = {
   main: {
     nodes: {
       gainFinisherSp_2: {
-        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+        action: {
+          kind: 'gainFinisherSp',
+          parameters: {
+            source: { kind: 'source' },
+            target: { kind: 'inputTarget' },
+            factor: { kind: 'constant', value: 1 },
+          },
+        },
         next: null,
       },
       startTimeDilation_3: {
@@ -744,6 +802,8 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             calculation: 'breakingAttack',
@@ -767,19 +827,6 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0033_camille_power_attack_projhit_witheff',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 3,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale: 0.1 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_1' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -787,6 +834,8 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'heat',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                             calculation: 'breakingAttack',
@@ -806,6 +855,19 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0033_camille_power_attack_projhit_witheff',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 3,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale: 0.1 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_1' } },
+                ],
               },
             },
           ],
@@ -826,19 +888,6 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0033_camille_power_attack_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 3,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale: 0.1 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_1' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -846,6 +895,8 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
                         action: {
                           kind: 'dealDamage',
                           parameters: {
+                            attacker: 'actionSource',
+                            target: { kind: 'inputTarget' },
                             damageType: 'heat',
                             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                             calculation: 'breakingAttack',
@@ -865,6 +916,19 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0033_camille_power_attack_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 3,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: { atk_scale: 0.1 },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_1' } },
+                ],
               },
             },
           ],
@@ -991,6 +1055,19 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_21: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: [
+              'chr_0033_camille_normal_skill',
+              'chr_0033_camille_normal_skill_2',
+              'chr_0033_camille_combo_skill',
+            ],
+          },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: {
@@ -1012,6 +1089,7 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const camilleChr_0033_camille_power_attack: SkillDefinition = {
+  actionGraph: camilleChr_0033_camille_power_attackActionGraph,
   key: 'chr_0033_camille_power_attack',
   element: 'heat',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -1020,19 +1098,6 @@ export const camilleChr_0033_camille_power_attack: SkillDefinition = {
   exclusiveFrame: 50,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 39,
-        endFrame: 46,
-        skillIds: [
-          'chr_0033_camille_normal_skill',
-          'chr_0033_camille_normal_skill_2',
-          'chr_0033_camille_combo_skill',
-        ],
-      },
-    ],
-  },
   costFrame: 4,
   scheduledSequences: [
     { startFrame: 43, endFrame: 44, sequence: { $sequence: 'dealDamage_5' } },
@@ -1047,17 +1112,24 @@ export const camilleChr_0033_camille_power_attack: SkillDefinition = {
     { startFrame: 46, endFrame: 50, sequence: { $sequence: 'ifElse_18' } },
     { startFrame: 0, endFrame: 50, sequence: { $sequence: 'applyBuff_19' } },
     { startFrame: 0, endFrame: 46, sequence: { $sequence: 'applyBuff_20' } },
+    { startFrame: 39, endFrame: 46, sequence: { $sequence: 'reachSkillOperableBoundary_21' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
-  actionGraph: camilleChr_0033_camille_power_attackActionGraph,
 };
 
 export const camilleChr_0033_camille_plunging_attack_endActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -1087,6 +1159,8 @@ export const camilleChr_0033_camille_plunging_attack_endActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack', 'plungingAttack'],
@@ -1108,6 +1182,7 @@ export const camilleChr_0033_camille_plunging_attack_endActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const camilleChr_0033_camille_plunging_attack_end: SkillDefinition = {
+  actionGraph: camilleChr_0033_camille_plunging_attack_endActionGraph,
   key: 'chr_0033_camille_plunging_attack_end',
   element: 'heat',
   blackboard: {
@@ -1119,12 +1194,14 @@ export const camilleChr_0033_camille_plunging_attack_end: SkillDefinition = {
   exclusiveFrame: 15,
   offsetRecordFrame: 0,
   costFrame: 0,
-  scheduledSequences: [{ startFrame: 1, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } }],
+  scheduledSequences: [
+    { startFrame: 1, endFrame: 3, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
+  ],
   defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: camilleChr_0033_camille_plunging_attack_endActionGraph,
 };
 
 export const camilleChr_0033_camille_normal_skillActionGraph = {
@@ -1144,26 +1221,6 @@ export const camilleChr_0033_camille_normal_skillActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0033_camille_normal_skill_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 89,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: {
-                  atk_scale: 0.1,
-                  bat_atk_scale: 0.1,
-                  bat_duration: 30,
-                  poise: 10,
-                  vulnerable_scale: 0,
-                  weak_scale: 0.1,
-                },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'checkCondition_6' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -1221,9 +1278,10 @@ export const camilleChr_0033_camille_normal_skillActionGraph = {
                         action: {
                           kind: 'spawnAbilityEntity',
                           parameters: {
-                            bornAt: { kind: 'fixed', target: 'enemy' },
+                            bornAt: { kind: 'inputTarget' },
                             abilityEntityId: 'abilityentity_chr_0033_camille_normal_skill',
                             childSkillId: 'chr_0033_camille_normal_skill_abilityrange_first',
+                            source: { kind: 'source' },
                             inheritActionBlackboard: true,
                             dieWhenSourceDies: false,
                             target: 'enemy',
@@ -1274,7 +1332,7 @@ export const camilleChr_0033_camille_normal_skillActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           containsHittableTarget: false,
                           excludeDeadEntity: true,
                           operator: 'greaterOrEqual',
@@ -1285,9 +1343,36 @@ export const camilleChr_0033_camille_normal_skillActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0033_camille_normal_skill_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 89,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: {
+                  atk_scale: 0.1,
+                  bat_atk_scale: 0.1,
+                  bat_duration: 30,
+                  poise: 10,
+                  vulnerable_scale: 0,
+                  weak_scale: 0.1,
+                },
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'checkCondition_6' } },
+                ],
               },
             },
           ],
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_7: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0033_camille_combo_skill'] },
         },
         next: null,
       },
@@ -1297,6 +1382,7 @@ export const camilleChr_0033_camille_normal_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const camilleChr_0033_camille_normal_skill: SkillDefinition = {
+  actionGraph: camilleChr_0033_camille_normal_skillActionGraph,
   key: 'chr_0033_camille_normal_skill',
   element: 'heat',
   blackboard: {
@@ -1312,21 +1398,16 @@ export const camilleChr_0033_camille_normal_skill: SkillDefinition = {
   exclusiveFrame: 26,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      { startFrame: 18, endFrame: 34, skillIds: ['chr_0033_camille_combo_skill'] },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 12, endFrame: 13, sequence: { $sequence: 'launchProjectile_1' } },
+    { startFrame: 18, endFrame: 34, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
   ],
   defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: camilleChr_0033_camille_normal_skillActionGraph,
 };
 
 export const camilleChr_0033_camille_combo_skillActionGraph = {
@@ -1377,6 +1458,8 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['comboSkill'],
@@ -1431,6 +1514,8 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['comboSkill'],
@@ -1531,7 +1616,8 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
         action: {
           kind: 'heal',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
+            healer: { kind: 'source' },
             alwaysNext: true,
             tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
             attribute: 'intellect',
@@ -1621,6 +1707,8 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_18' },
             tags: ['comboSkill'],
@@ -1629,6 +1717,15 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
           },
         },
         next: 'ifElse_53',
+      },
+      reachSkillOperableBoundary_59: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: ['chr_0033_camille_normal_skill', 'chr_0033_camille_normal_skill_2'],
+          },
+        },
+        next: null,
       },
       ifElse_opt1: {
         action: {
@@ -1729,7 +1826,7 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/chr_0033_camille/NormalSkillBatTarget'],
         },
@@ -1744,7 +1841,7 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/chr_0033_camille/NormalSkillBatTarget'],
         },
@@ -1755,6 +1852,7 @@ export const camilleChr_0033_camille_combo_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const camilleChr_0033_camille_combo_skill: SkillDefinition = {
+  actionGraph: camilleChr_0033_camille_combo_skillActionGraph,
   key: 'chr_0033_camille_combo_skill',
   element: 'heat',
   blackboard: {
@@ -1775,28 +1873,19 @@ export const camilleChr_0033_camille_combo_skill: SkillDefinition = {
   exclusiveFrame: 63,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 51,
-        endFrame: 63,
-        skillIds: ['chr_0033_camille_normal_skill', 'chr_0033_camille_normal_skill_2'],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_1' } },
     { startFrame: 19, endFrame: 21, sequence: { $sequence: 'repeatEachTick_17' } },
     { startFrame: 27, endFrame: 29, sequence: { $sequence: 'repeatEachTick_22' } },
     { startFrame: 47, endFrame: 50, sequence: { $sequence: 'repeatEachTick_opt4' } },
+    { startFrame: 51, endFrame: 63, sequence: { $sequence: 'reachSkillOperableBoundary_59' } },
   ],
   smartTarget: 'enemy',
   cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 570, 570, 570, 540],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
-  actionGraph: camilleChr_0033_camille_combo_skillActionGraph,
 };
 
 export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
@@ -1874,6 +1963,8 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['comboSkill'],
@@ -1943,6 +2034,8 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
             tags: ['comboSkill'],
@@ -1977,6 +2070,8 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_7' },
             tags: ['comboSkill'],
@@ -2071,7 +2166,8 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
         action: {
           kind: 'heal',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
+            healer: { kind: 'source' },
             alwaysNext: true,
             tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
             attribute: 'intellect',
@@ -2163,6 +2259,8 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_18' },
             tags: ['comboSkill'],
@@ -2171,6 +2269,15 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
           },
         },
         next: 'ifElse_54',
+      },
+      reachSkillOperableBoundary_61: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: ['chr_0033_camille_normal_skill', 'chr_0033_camille_normal_skill_2'],
+          },
+        },
+        next: null,
       },
       ifElse_opt1: {
         action: {
@@ -2277,7 +2384,7 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/chr_0033_camille/NormalSkillBatTarget'],
         },
@@ -2297,6 +2404,7 @@ export const camilleChr_0033_camille_combo_skill_2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const camilleChr_0033_camille_combo_skill_2: SkillDefinition = {
+  actionGraph: camilleChr_0033_camille_combo_skill_2ActionGraph,
   key: 'chr_0033_camille_combo_skill_2',
   element: 'heat',
   blackboard: {
@@ -2320,15 +2428,6 @@ export const camilleChr_0033_camille_combo_skill_2: SkillDefinition = {
   exclusiveFrame: 86,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 79,
-        endFrame: 127,
-        skillIds: ['chr_0033_camille_normal_skill', 'chr_0033_camille_normal_skill_2'],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'finishBuffsById_1' } },
@@ -2338,12 +2437,12 @@ export const camilleChr_0033_camille_combo_skill_2: SkillDefinition = {
     { startFrame: 33, endFrame: 36, sequence: { $sequence: 'repeatEachTick_26' } },
     { startFrame: 49, endFrame: 51, sequence: { $sequence: 'repeatEachTick_31' } },
     { startFrame: 70, endFrame: 73, sequence: { $sequence: 'repeatEachTick_opt5' } },
+    { startFrame: 79, endFrame: 127, sequence: { $sequence: 'reachSkillOperableBoundary_61' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: camilleChr_0033_camille_combo_skill_2ActionGraph,
 };
 
 export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
@@ -2421,6 +2520,8 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['comboSkill'],
@@ -2490,6 +2591,8 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
             tags: ['comboSkill'],
@@ -2524,6 +2627,8 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_7' },
             tags: ['comboSkill'],
@@ -2618,7 +2723,8 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
         action: {
           kind: 'heal',
           parameters: {
-            target: 'caster',
+            target: { kind: 'source' },
+            healer: { kind: 'source' },
             alwaysNext: true,
             tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
             attribute: 'intellect',
@@ -2710,6 +2816,8 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_18' },
             tags: ['comboSkill'],
@@ -2718,6 +2826,15 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
           },
         },
         next: 'ifElse_54',
+      },
+      reachSkillOperableBoundary_61: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: ['chr_0033_camille_normal_skill', 'chr_0033_camille_normal_skill_2'],
+          },
+        },
+        next: null,
       },
       ifElse_opt1: {
         action: {
@@ -2824,7 +2941,7 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'entityTagMatch',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           tagQueryType: 'hasAny',
           tags: ['Skill/Character/chr_0033_camille/NormalSkillBatTarget'],
         },
@@ -2844,6 +2961,7 @@ export const camilleChr_0033_camille_normal_skill_2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const camilleChr_0033_camille_normal_skill_2: SkillDefinition = {
+  actionGraph: camilleChr_0033_camille_normal_skill_2ActionGraph,
   key: 'chr_0033_camille_normal_skill_2',
   element: 'heat',
   blackboard: {
@@ -2867,15 +2985,6 @@ export const camilleChr_0033_camille_normal_skill_2: SkillDefinition = {
   exclusiveFrame: 86,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 79,
-        endFrame: 127,
-        skillIds: ['chr_0033_camille_normal_skill', 'chr_0033_camille_normal_skill_2'],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'finishBuffsById_1' } },
@@ -2885,13 +2994,13 @@ export const camilleChr_0033_camille_normal_skill_2: SkillDefinition = {
     { startFrame: 33, endFrame: 36, sequence: { $sequence: 'repeatEachTick_26' } },
     { startFrame: 49, endFrame: 51, sequence: { $sequence: 'repeatEachTick_31' } },
     { startFrame: 70, endFrame: 73, sequence: { $sequence: 'repeatEachTick_opt5' } },
+    { startFrame: 79, endFrame: 127, sequence: { $sequence: 'reachSkillOperableBoundary_61' } },
   ],
   defaultTarget: 'enemy',
   costs: [],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: camilleChr_0033_camille_normal_skill_2ActionGraph,
 };
 
 export const camilleChr_0033_camille_ultimate_skillActionGraph = {
@@ -2939,6 +3048,8 @@ export const camilleChr_0033_camille_ultimate_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['ultimateSkill'],
@@ -2968,6 +3079,8 @@ export const camilleChr_0033_camille_ultimate_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['ultimateSkill'],
@@ -2998,7 +3111,7 @@ export const camilleChr_0033_camille_ultimate_skillActionGraph = {
           kind: 'applyBuff',
           parameters: {
             buffs: [{ buffId: 'buff_chr_0033_camille_ult_hit' }],
-            targets: { kind: 'fixed', target: 'enemy' },
+            targets: { kind: 'inputTarget' },
             source: { kind: 'source' },
             inheritSourceSkillCastInfo: true,
             asChildBuff: true,
@@ -3069,6 +3182,8 @@ export const camilleChr_0033_camille_ultimate_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['ultimateSkill'],
@@ -3139,6 +3254,19 @@ export const camilleChr_0033_camille_ultimate_skillActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_36: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: {
+            skillIds: [
+              'chr_0033_camille_normal_skill',
+              'chr_0033_camille_normal_skill_2',
+              'chr_0033_camille_combo_skill',
+            ],
+          },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale_1' } },
@@ -3150,7 +3278,7 @@ export const camilleChr_0033_camille_ultimate_skillActionGraph = {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
-          target: { kind: 'fixed', target: 'enemy' },
+          target: { kind: 'inputTarget' },
           compareZeroWhenTargetMissing: true,
           operator: 'lessOrEqual',
           value: { kind: 'constant', value: 0 },
@@ -3163,6 +3291,7 @@ export const camilleChr_0033_camille_ultimate_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const camilleChr_0033_camille_ultimate_skill: SkillDefinition = {
+  actionGraph: camilleChr_0033_camille_ultimate_skillActionGraph,
   key: 'chr_0033_camille_ultimate_skill',
   element: 'heat',
   blackboard: {
@@ -3179,19 +3308,6 @@ export const camilleChr_0033_camille_ultimate_skill: SkillDefinition = {
   naturalDurationFrames: 236,
   exclusiveFrame: 133,
   offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 125,
-        endFrame: 150,
-        skillIds: [
-          'chr_0033_camille_normal_skill',
-          'chr_0033_camille_normal_skill_2',
-          'chr_0033_camille_combo_skill',
-        ],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 69, sequence: { $sequence: 'startTimeDilation_1' } },
@@ -3201,6 +3317,7 @@ export const camilleChr_0033_camille_ultimate_skill: SkillDefinition = {
     { startFrame: 120, endFrame: 124, sequence: { $sequence: 'repeatEachTick_33' } },
     { startFrame: 118, endFrame: 119, sequence: { $sequence: 'applyBuff_34' } },
     { startFrame: 0, endFrame: 133, sequence: { $sequence: 'applyBuff_35' } },
+    { startFrame: 125, endFrame: 150, sequence: { $sequence: 'reachSkillOperableBoundary_36' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 600,
@@ -3208,7 +3325,6 @@ export const camilleChr_0033_camille_ultimate_skill: SkillDefinition = {
   skillType: 'ultimate',
   levelSource: 'ultimate',
   nativeSkillType: 'ultimateSkill',
-  actionGraph: camilleChr_0033_camille_ultimate_skillActionGraph,
 };
 
 export const camilleCommon_character_perfect_dodgeActionGraph = {
@@ -3317,10 +3433,10 @@ const camillePassive1: OperatorPassiveSkillDefinition = {
   key: 'chr_0033_camille_passive_listen_normal_skill',
   blackboard: {},
   enableSequence: { $sequence: 'applyBuff_4' },
+  actionGraph: camillePassive1ActionGraph,
   abilityEventResponses: [
     { event: 'abilityEntityFinished', priority: 0, sequence: { $sequence: 'checkCondition_3' } },
   ],
-  actionGraph: camillePassive1ActionGraph,
 };
 
 const camillePassive2ActionGraph = {
@@ -3445,10 +3561,10 @@ const camillePassive2: OperatorPassiveSkillDefinition = {
   key: 'chr_0033_camille_passive_talent1',
   blackboard: { atk_up: [0.02, 0.04], duration: [40, 40], teammate_rate: [0.25, 0.25] },
   enableSequence: { $sequence: null },
+  actionGraph: camillePassive2ActionGraph,
   abilityEventResponses: [
     { event: 'receiveHeal', priority: 0, sequence: { $sequence: 'calculateActionValue_9' } },
   ],
-  actionGraph: camillePassive2ActionGraph,
 };
 
 const camilleComboCondition1ActionGraph = {
@@ -3723,6 +3839,8 @@ const camilleBuff6ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'owner' },
             damageType: 'heat',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalSkill'],
@@ -3855,19 +3973,6 @@ const camilleBuff8ActionGraph = {
             {
               event: 'hit',
               skill: {
-                skillId: 'chr_0033_camille_normal_skill_projhit_sub',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 89,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: {},
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_5' } },
-                ],
                 actionGraph: {
                   main: {
                     nodes: {
@@ -3922,7 +4027,7 @@ const camilleBuff8ActionGraph = {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
-                          target: { kind: 'fixed', target: 'enemy' },
+                          target: { kind: 'inputTarget' },
                           containsHittableTarget: false,
                           excludeDeadEntity: true,
                           operator: 'greaterOrEqual',
@@ -3933,6 +4038,19 @@ const camilleBuff8ActionGraph = {
                   },
                   macros: {},
                 },
+                skillId: 'chr_0033_camille_normal_skill_projhit_sub',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 89,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: {},
+                scheduledSequences: [
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_5' } },
+                ],
               },
             },
           ],
@@ -3954,7 +4072,7 @@ const camilleBuff8ActionGraph = {
           kind: 'mergeContextTargets',
           parameters: {
             saveToContextKey: 'src',
-            sources: [{ kind: 'abilitySystemSource', owner: 'actionOwner' }],
+            sources: [{ kind: 'abilitySystemSource', owner: { kind: 'owner' } }],
           },
         },
         next: 'ifElse_8',
@@ -4189,6 +4307,7 @@ const camilleBuff12: SkillBuffDefinition = {
     enable: [{ $sequence: 'modifyActionValue_2' }],
     finish: [{ $sequence: 'modifyActionValue_4' }],
   },
+  actionGraph: camilleBuff12ActionGraph,
   skillSlotReplacements: [
     {
       skillSlotKey: 'battleSkill',
@@ -4197,7 +4316,6 @@ const camilleBuff12: SkillBuffDefinition = {
       inheritOriginSkillCooldownProgress: false,
     },
   ],
-  actionGraph: camilleBuff12ActionGraph,
 };
 
 const camilleBuff13ActionGraph = {
@@ -4594,23 +4712,6 @@ export const camille: OperatorDefinition = {
       maxStackingCount: 1,
       childSkills: {
         chr_0033_camille_normal_skill_abilityrange_first: {
-          skillId: 'chr_0033_camille_normal_skill_abilityrange_first',
-          nativeSkillType: 'normalSkill',
-          naturalDurationFrames: 2000,
-          castResource: {
-            costFrame: 0,
-            cooldownSeconds: 0,
-            maxChargeTime: 1,
-            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-          },
-          blackboard: {},
-          scheduledSequences: [
-            { startFrame: 0, endFrame: 36, sequence: { $sequence: 'applyBuff_1' } },
-            { startFrame: 0, endFrame: 2000, sequence: { $sequence: 'applyBuff_2' } },
-            { startFrame: 0, endFrame: 2000, sequence: { $sequence: 'applyBuff_3' } },
-            { startFrame: 3, endFrame: 6, sequence: { $sequence: 'applyBuff_4' } },
-            { startFrame: 0, endFrame: 1, sequence: { $sequence: 'applyElementalInfliction_7' } },
-          ],
           actionGraph: {
             main: {
               nodes: {
@@ -4682,10 +4783,23 @@ export const camille: OperatorDefinition = {
                   },
                   next: null,
                 },
+                mergeContextTargets_5: {
+                  action: {
+                    kind: 'mergeContextTargets',
+                    parameters: {
+                      saveToContextKey: 'tar',
+                      sources: [{ kind: 'fixed', target: 'enemy' }],
+                    },
+                  },
+                  next: null,
+                },
                 dealDamage_6: {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
+                      alwaysNext: false,
+                      attacker: 'actionSource',
+                      target: { kind: 'context', key: 'tar' },
                       damageType: 'heat',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                       tags: ['normalSkill'],
@@ -4717,6 +4831,24 @@ export const camille: OperatorDefinition = {
             },
             macros: {},
           },
+          skillId: 'chr_0033_camille_normal_skill_abilityrange_first',
+          nativeSkillType: 'normalSkill',
+          naturalDurationFrames: 2000,
+          castResource: {
+            costFrame: 0,
+            cooldownSeconds: 0,
+            maxChargeTime: 1,
+            cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+          },
+          blackboard: {},
+          scheduledSequences: [
+            { startFrame: 0, endFrame: 36, sequence: { $sequence: 'applyBuff_1' } },
+            { startFrame: 0, endFrame: 2000, sequence: { $sequence: 'applyBuff_2' } },
+            { startFrame: 0, endFrame: 2000, sequence: { $sequence: 'applyBuff_3' } },
+            { startFrame: 3, endFrame: 6, sequence: { $sequence: 'applyBuff_4' } },
+            { startFrame: 0, endFrame: 1, sequence: { $sequence: 'mergeContextTargets_5' } },
+            { startFrame: 0, endFrame: 1, sequence: { $sequence: 'applyElementalInfliction_7' } },
+          ],
         },
         chr_0033_camille_normal_skill_abilityrange: {
           actionGraph: {
@@ -4787,7 +4919,9 @@ export const camille: OperatorDefinition = {
                   action: {
                     kind: 'dealDamage',
                     parameters: {
-                      target: 'actionInputTarget',
+                      alwaysNext: false,
+                      attacker: 'actionSource',
+                      target: { kind: 'inputTarget' },
                       damageType: 'heat',
                       attackScale: { kind: 'valueNode', nodeId: 'data_1' },
                       tags: ['normalSkill'],
@@ -4833,12 +4967,6 @@ export const camille: OperatorDefinition = {
       },
       passiveSkills: [
         {
-          key: 'chr_0033_camille_passive_normal_skill_ability_entity',
-          blackboard: {},
-          enableSequence: { $sequence: 'applyBuff_6' },
-          abilityEventResponses: [
-            { event: 'addedBuff', priority: 0, sequence: { $sequence: 'checkCondition_5' } },
-          ],
           actionGraph: {
             main: {
               nodes: {
@@ -4867,7 +4995,7 @@ export const camille: OperatorDefinition = {
                     kind: 'mergeContextTargets',
                     parameters: {
                       saveToContextKey: 'src',
-                      sources: [{ kind: 'abilitySystemSource', owner: 'actionOwner' }],
+                      sources: [{ kind: 'abilitySystemSource', owner: { kind: 'owner' } }],
                     },
                   },
                   next: 'applyBuff_1',
@@ -4937,6 +5065,12 @@ export const camille: OperatorDefinition = {
             },
             macros: {},
           },
+          key: 'chr_0033_camille_passive_normal_skill_ability_entity',
+          blackboard: {},
+          enableSequence: { $sequence: 'applyBuff_6' },
+          abilityEventResponses: [
+            { event: 'addedBuff', priority: 0, sequence: { $sequence: 'checkCondition_5' } },
+          ],
         },
       ],
     },

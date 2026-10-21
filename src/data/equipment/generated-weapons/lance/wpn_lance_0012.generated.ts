@@ -234,7 +234,6 @@ const definition = {
           sequence: { $sequence: 'checkCondition_10' },
         },
       ],
-      enableSequence: { $sequence: 'applyBuff_11' },
       blackboard: {
         all_attr_up: [0.08, 0.096, 0.112, 0.128, 0.144, 0.16, 0.176, 0.192, 0.224],
         all_attr_up2: [0.08, 0.096, 0.112, 0.128, 0.144, 0.16, 0.176, 0.192, 0.224],
@@ -242,6 +241,7 @@ const definition = {
         duration: [15, 15, 15, 15, 15, 15, 15, 15, 15],
         install_0_dmg_up: [0.2, 0.24, 0.28, 0.32, 0.36, 0.4, 0.44, 0.48, 0.56],
       },
+      enableSequence: { $sequence: 'applyBuff_11' },
     },
   ],
   assetSlug: 'wpn_lance_0012',

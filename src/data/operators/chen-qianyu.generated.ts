@@ -8,6 +8,13 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const chenQianyuChr_0005_chen_attack1ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_4: {
         action: {
           kind: 'changeResource',
@@ -37,6 +44,8 @@ export const chenQianyuChr_0005_chen_attack1ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -74,6 +83,8 @@ export const chenQianyuChr_0005_chen_attack1ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -81,7 +92,14 @@ export const chenQianyuChr_0005_chen_attack1ActionGraph = {
         },
         next: 'ifElse_9',
       },
-      reachSkillOperableBoundary_11: {
+      overrideBasicAttackMapping_11: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0005_chen_attack2'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_12: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0005_chen_attack2'] },
@@ -106,6 +124,7 @@ export const chenQianyuChr_0005_chen_attack1ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const chenQianyuChr_0005_chen_attack1: SkillDefinition = {
+  actionGraph: chenQianyuChr_0005_chen_attack1ActionGraph,
   key: 'chr_0005_chen_attack1',
   element: 'physical',
   blackboard: {
@@ -116,29 +135,31 @@ export const chenQianyuChr_0005_chen_attack1: SkillDefinition = {
   naturalDurationFrames: 110,
   exclusiveFrame: 19,
   offsetRecordFrame: 8,
-  inputWindows: {
-    commandMappings: [
-      { startFrame: 0, endFrame: 30, input: 'basicAttack', targetSkillId: 'chr_0005_chen_attack2' },
-    ],
-    allowedNextSkills: [{ startFrame: 14, endFrame: 30, skillIds: ['chr_0005_chen_attack2'] }],
-  },
   costFrame: 9,
   scheduledSequences: [
+    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 11, endFrame: 12, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 8, endFrame: 9, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 11, endFrame: 12, sequence: { $sequence: 'dealDamage_10' } },
-    { startFrame: 14, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
+    { startFrame: 0, endFrame: 30, sequence: { $sequence: 'overrideBasicAttackMapping_11' } },
+    { startFrame: 14, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0005_chen_attack2',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: chenQianyuChr_0005_chen_attack1ActionGraph,
 };
 
 export const chenQianyuChr_0005_chen_attack2ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_3: {
         action: {
           kind: 'changeResource',
@@ -168,6 +189,8 @@ export const chenQianyuChr_0005_chen_attack2ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -175,7 +198,14 @@ export const chenQianyuChr_0005_chen_attack2ActionGraph = {
         },
         next: 'ifElse_4',
       },
-      reachSkillOperableBoundary_6: {
+      overrideBasicAttackMapping_6: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0005_chen_attack3'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_7: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0005_chen_attack3'] },
@@ -196,6 +226,7 @@ export const chenQianyuChr_0005_chen_attack2ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const chenQianyuChr_0005_chen_attack2: SkillDefinition = {
+  actionGraph: chenQianyuChr_0005_chen_attack2ActionGraph,
   key: 'chr_0005_chen_attack2',
   element: 'physical',
   blackboard: {
@@ -206,28 +237,29 @@ export const chenQianyuChr_0005_chen_attack2: SkillDefinition = {
   naturalDurationFrames: 127,
   exclusiveFrame: 15,
   offsetRecordFrame: 7,
-  inputWindows: {
-    commandMappings: [
-      { startFrame: 0, endFrame: 26, input: 'basicAttack', targetSkillId: 'chr_0005_chen_attack3' },
-    ],
-    allowedNextSkills: [{ startFrame: 10, endFrame: 26, skillIds: ['chr_0005_chen_attack3'] }],
-  },
   costFrame: 8,
   scheduledSequences: [
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 7, endFrame: 9, sequence: { $sequence: 'dealDamage_5' } },
-    { startFrame: 10, endFrame: 26, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
+    { startFrame: 0, endFrame: 26, sequence: { $sequence: 'overrideBasicAttackMapping_6' } },
+    { startFrame: 10, endFrame: 26, sequence: { $sequence: 'reachSkillOperableBoundary_7' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0005_chen_attack3',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: chenQianyuChr_0005_chen_attack2ActionGraph,
 };
 
 export const chenQianyuChr_0005_chen_attack3ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_4: {
         action: {
           kind: 'changeResource',
@@ -257,6 +289,8 @@ export const chenQianyuChr_0005_chen_attack3ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -294,6 +328,8 @@ export const chenQianyuChr_0005_chen_attack3ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -301,7 +337,14 @@ export const chenQianyuChr_0005_chen_attack3ActionGraph = {
         },
         next: 'ifElse_9',
       },
-      reachSkillOperableBoundary_11: {
+      overrideBasicAttackMapping_11: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0005_chen_attack4'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_12: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0005_chen_attack4'] },
@@ -326,6 +369,7 @@ export const chenQianyuChr_0005_chen_attack3ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const chenQianyuChr_0005_chen_attack3: SkillDefinition = {
+  actionGraph: chenQianyuChr_0005_chen_attack3ActionGraph,
   key: 'chr_0005_chen_attack3',
   element: 'physical',
   blackboard: {
@@ -336,29 +380,31 @@ export const chenQianyuChr_0005_chen_attack3: SkillDefinition = {
   naturalDurationFrames: 135,
   exclusiveFrame: 22,
   offsetRecordFrame: 9,
-  inputWindows: {
-    commandMappings: [
-      { startFrame: 0, endFrame: 30, input: 'basicAttack', targetSkillId: 'chr_0005_chen_attack4' },
-    ],
-    allowedNextSkills: [{ startFrame: 18, endFrame: 30, skillIds: ['chr_0005_chen_attack4'] }],
-  },
   costFrame: 12,
   scheduledSequences: [
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 9, endFrame: 10, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 12, endFrame: 13, sequence: { $sequence: 'dealDamage_10' } },
-    { startFrame: 18, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
+    { startFrame: 0, endFrame: 30, sequence: { $sequence: 'overrideBasicAttackMapping_11' } },
+    { startFrame: 18, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0005_chen_attack4',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: chenQianyuChr_0005_chen_attack3ActionGraph,
 };
 
 export const chenQianyuChr_0005_chen_attack4ActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_4: {
         action: {
           kind: 'changeResource',
@@ -388,6 +434,8 @@ export const chenQianyuChr_0005_chen_attack4ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -425,6 +473,8 @@ export const chenQianyuChr_0005_chen_attack4ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_3' },
             tags: ['normalAttack'],
@@ -432,7 +482,14 @@ export const chenQianyuChr_0005_chen_attack4ActionGraph = {
         },
         next: 'ifElse_9',
       },
-      reachSkillOperableBoundary_11: {
+      overrideBasicAttackMapping_11: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0005_chen_attack5'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_12: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0005_chen_attack5'] },
@@ -457,6 +514,7 @@ export const chenQianyuChr_0005_chen_attack4ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const chenQianyuChr_0005_chen_attack4: SkillDefinition = {
+  actionGraph: chenQianyuChr_0005_chen_attack4ActionGraph,
   key: 'chr_0005_chen_attack4',
   element: 'physical',
   blackboard: {
@@ -467,24 +525,19 @@ export const chenQianyuChr_0005_chen_attack4: SkillDefinition = {
   naturalDurationFrames: 108,
   exclusiveFrame: 30,
   offsetRecordFrame: 4,
-  inputWindows: {
-    commandMappings: [
-      { startFrame: 0, endFrame: 31, input: 'basicAttack', targetSkillId: 'chr_0005_chen_attack5' },
-    ],
-    allowedNextSkills: [{ startFrame: 21, endFrame: 31, skillIds: ['chr_0005_chen_attack5'] }],
-  },
   costFrame: 8,
   scheduledSequences: [
+    { startFrame: 4, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 10, endFrame: 11, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 4, endFrame: 5, sequence: { $sequence: 'dealDamage_6' } },
     { startFrame: 10, endFrame: 11, sequence: { $sequence: 'dealDamage_10' } },
-    { startFrame: 21, endFrame: 31, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
+    { startFrame: 0, endFrame: 31, sequence: { $sequence: 'overrideBasicAttackMapping_11' } },
+    { startFrame: 21, endFrame: 31, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0005_chen_attack5',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: chenQianyuChr_0005_chen_attack4ActionGraph,
 };
 
 export const chenQianyuChr_0005_chen_attack5ActionGraph = {
@@ -548,6 +601,8 @@ export const chenQianyuChr_0005_chen_attack5ActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_5' },
             tags: ['normalAttack', 'normalAttackLastCombo'],
@@ -574,7 +629,14 @@ export const chenQianyuChr_0005_chen_attack5ActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_14: {
+      overrideBasicAttackMapping_14: {
+        action: {
+          kind: 'overrideBasicAttackMapping',
+          parameters: { skillIds: ['chr_0005_chen_attack1'], priority: 'skill' },
+        },
+        next: null,
+      },
+      reachSkillOperableBoundary_15: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0005_chen_attack1'] },
@@ -606,6 +668,7 @@ export const chenQianyuChr_0005_chen_attack5ActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const chenQianyuChr_0005_chen_attack5: SkillDefinition = {
+  actionGraph: chenQianyuChr_0005_chen_attack5ActionGraph,
   key: 'chr_0005_chen_attack5',
   element: 'physical',
   blackboard: {
@@ -618,30 +681,30 @@ export const chenQianyuChr_0005_chen_attack5: SkillDefinition = {
   naturalDurationFrames: 126,
   exclusiveFrame: 42,
   offsetRecordFrame: 16,
-  inputWindows: {
-    commandMappings: [
-      { startFrame: 0, endFrame: 42, input: 'basicAttack', targetSkillId: 'chr_0005_chen_attack1' },
-    ],
-    allowedNextSkills: [{ startFrame: 32, endFrame: 42, skillIds: ['chr_0005_chen_attack1'] }],
-  },
   costFrame: 12,
   scheduledSequences: [
     { startFrame: 16, endFrame: 21, sequence: { $sequence: 'repeatEachTick_13' } },
-    { startFrame: 32, endFrame: 42, sequence: { $sequence: 'reachSkillOperableBoundary_14' } },
+    { startFrame: 0, endFrame: 42, sequence: { $sequence: 'overrideBasicAttackMapping_14' } },
+    { startFrame: 32, endFrame: 42, sequence: { $sequence: 'reachSkillOperableBoundary_15' } },
   ],
   defaultTarget: 'enemy',
-  timelineContinuationSkillId: 'chr_0005_chen_attack1',
   skillType: 'basicAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: chenQianyuChr_0005_chen_attack5ActionGraph,
 };
 
 export const chenQianyuChr_0005_chen_power_attackActionGraph = {
   main: {
     nodes: {
       gainFinisherSp_2: {
-        action: { kind: 'gainFinisherSp', parameters: { factor: 1, recipient: 'team' } },
+        action: {
+          kind: 'gainFinisherSp',
+          parameters: {
+            source: { kind: 'source' },
+            target: { kind: 'inputTarget' },
+            factor: { kind: 'constant', value: 1 },
+          },
+        },
         next: null,
       },
       ifElse_3: {
@@ -658,6 +721,8 @@ export const chenQianyuChr_0005_chen_power_attackActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             calculation: 'breakingAttack',
@@ -696,6 +761,8 @@ export const chenQianyuChr_0005_chen_power_attackActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             calculation: 'breakingAttack',
@@ -756,6 +823,13 @@ export const chenQianyuChr_0005_chen_power_attackActionGraph = {
         },
         next: null,
       },
+      reachSkillOperableBoundary_14: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0005_chen_normal_skill', 'chr_0005_chen_combo_skill'] },
+        },
+        next: null,
+      },
     },
     dataNodes: {
       data_1: {
@@ -777,6 +851,7 @@ export const chenQianyuChr_0005_chen_power_attackActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const chenQianyuChr_0005_chen_power_attack: SkillDefinition = {
+  actionGraph: chenQianyuChr_0005_chen_power_attackActionGraph,
   key: 'chr_0005_chen_power_attack',
   element: 'physical',
   blackboard: { atk_scale: [4, 4.4, 4.8, 5.2, 5.6, 6, 6.4, 6.8, 7.2, 7.7, 8.3, 9] },
@@ -785,15 +860,6 @@ export const chenQianyuChr_0005_chen_power_attack: SkillDefinition = {
   exclusiveFrame: 50,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 30,
-        endFrame: 56,
-        skillIds: ['chr_0005_chen_normal_skill', 'chr_0005_chen_combo_skill'],
-      },
-    ],
-  },
   costFrame: 4,
   scheduledSequences: [
     { startFrame: 29, endFrame: 38, sequence: { $sequence: 'dealDamage_4' } },
@@ -802,17 +868,24 @@ export const chenQianyuChr_0005_chen_power_attack: SkillDefinition = {
     { startFrame: 6, endFrame: 9, sequence: { $sequence: 'ifElse_11' } },
     { startFrame: 0, endFrame: 50, sequence: { $sequence: 'applyBuff_12' } },
     { startFrame: 0, endFrame: 30, sequence: { $sequence: 'applyBuff_13' } },
+    { startFrame: 30, endFrame: 56, sequence: { $sequence: 'reachSkillOperableBoundary_14' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'finisher',
   levelSource: 'basicAttack',
   nativeSkillType: 'breakingAttack',
-  actionGraph: chenQianyuChr_0005_chen_power_attackActionGraph,
 };
 
 export const chenQianyuChr_0005_chen_plunging_attack_endActionGraph = {
   main: {
     nodes: {
+      mergeContextTargets_1: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
+        },
+        next: null,
+      },
       changeResource_2: {
         action: {
           kind: 'changeResource',
@@ -833,6 +906,8 @@ export const chenQianyuChr_0005_chen_plunging_attack_endActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_2' },
             tags: ['normalAttack', 'plungingAttack'],
@@ -850,6 +925,7 @@ export const chenQianyuChr_0005_chen_plunging_attack_endActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const chenQianyuChr_0005_chen_plunging_attack_end: SkillDefinition = {
+  actionGraph: chenQianyuChr_0005_chen_plunging_attack_endActionGraph,
   key: 'chr_0005_chen_plunging_attack_end',
   element: 'physical',
   blackboard: {
@@ -861,12 +937,14 @@ export const chenQianyuChr_0005_chen_plunging_attack_end: SkillDefinition = {
   exclusiveFrame: 20,
   offsetRecordFrame: 0,
   costFrame: 0,
-  scheduledSequences: [{ startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_3' } }],
+  scheduledSequences: [
+    { startFrame: 1, endFrame: 5, sequence: { $sequence: 'mergeContextTargets_1' } },
+    { startFrame: 1, endFrame: 6, sequence: { $sequence: 'dealDamage_3' } },
+  ],
   defaultTarget: 'enemy',
   skillType: 'plungingAttack',
   levelSource: 'basicAttack',
   nativeSkillType: 'attack',
-  actionGraph: chenQianyuChr_0005_chen_plunging_attack_endActionGraph,
 };
 
 export const chenQianyuChr_0005_chen_normal_skillActionGraph = {
@@ -900,7 +978,8 @@ export const chenQianyuChr_0005_chen_normal_skillActionGraph = {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'airborne',
-            target: 'enemy',
+            source: { kind: 'owner' },
+            target: { kind: 'context', key: 'tar' },
             isExtra: false,
             duration: { kind: 'constant', value: 0 },
             height: { kind: 'constant', value: 0 },
@@ -931,6 +1010,8 @@ export const chenQianyuChr_0005_chen_normal_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'context', key: 'tar' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['normalSkill'],
@@ -945,7 +1026,8 @@ export const chenQianyuChr_0005_chen_normal_skillActionGraph = {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'airborne',
-            target: 'enemy',
+            source: { kind: 'owner' },
+            target: { kind: 'context', key: 'tar' },
             isExtra: false,
             duration: { kind: 'valueNode', nodeId: 'data_3' },
             height: { kind: 'constant', value: 2 },
@@ -961,6 +1043,7 @@ export const chenQianyuChr_0005_chen_normal_skillActionGraph = {
         action: {
           kind: 'storeSourceAttributeValue',
           parameters: {
+            target: { kind: 'source' },
             attribute: { kind: 'specific', key: 'strength' },
             stage: 'finalNonConverted',
             useFloor: false,
@@ -975,9 +1058,16 @@ export const chenQianyuChr_0005_chen_normal_skillActionGraph = {
       mergeContextTargets_25: {
         action: {
           kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'target', target: 'enemy' }] },
+          parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
         },
         next: 'storeSourceAttributeValue_24',
+      },
+      reachSkillOperableBoundary_26: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0005_chen_normal_skill'] },
+        },
+        next: null,
       },
     },
     dataNodes: {
@@ -992,6 +1082,7 @@ export const chenQianyuChr_0005_chen_normal_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const chenQianyuChr_0005_chen_normal_skill: SkillDefinition = {
+  actionGraph: chenQianyuChr_0005_chen_normal_skillActionGraph,
   key: 'chr_0005_chen_normal_skill',
   element: 'physical',
   blackboard: {
@@ -1006,20 +1097,17 @@ export const chenQianyuChr_0005_chen_normal_skill: SkillDefinition = {
   exclusiveFrame: 32,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [{ startFrame: 25, endFrame: 54, skillIds: ['chr_0005_chen_normal_skill'] }],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findTargets_18' } },
     { startFrame: 13, endFrame: 14, sequence: { $sequence: 'mergeContextTargets_25' } },
+    { startFrame: 25, endFrame: 54, sequence: { $sequence: 'reachSkillOperableBoundary_26' } },
   ],
   defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
   skillType: 'battleSkill',
   levelSource: 'battleSkill',
   nativeSkillType: 'normalSkill',
-  actionGraph: chenQianyuChr_0005_chen_normal_skillActionGraph,
 };
 
 export const chenQianyuChr_0005_chen_combo_skillActionGraph = {
@@ -1074,6 +1162,8 @@ export const chenQianyuChr_0005_chen_combo_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['comboSkill'],
@@ -1087,7 +1177,8 @@ export const chenQianyuChr_0005_chen_combo_skillActionGraph = {
           kind: 'applyPhysicalInfliction',
           parameters: {
             type: 'airborne',
-            target: 'enemy',
+            source: { kind: 'owner' },
+            target: { kind: 'inputTarget' },
             isExtra: false,
             duration: { kind: 'constant', value: 0 },
             height: { kind: 'constant', value: 0 },
@@ -1108,7 +1199,14 @@ export const chenQianyuChr_0005_chen_combo_skillActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_11: {
+      reachSkillOperableBoundary_11: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0005_chen_normal_skill'] },
+        },
+        next: null,
+      },
+      startTimeDilation_12: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1155,6 +1253,7 @@ export const chenQianyuChr_0005_chen_combo_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const chenQianyuChr_0005_chen_combo_skill: SkillDefinition = {
+  actionGraph: chenQianyuChr_0005_chen_combo_skillActionGraph,
   key: 'chr_0005_chen_combo_skill',
   element: 'physical',
   blackboard: {
@@ -1167,21 +1266,18 @@ export const chenQianyuChr_0005_chen_combo_skill: SkillDefinition = {
   exclusiveFrame: 40,
   offsetRecordFrame: 0,
   dontInterruptCombo: true,
-  inputWindows: {
-    allowedNextSkills: [{ startFrame: 23, endFrame: 40, skillIds: ['chr_0005_chen_normal_skill'] }],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'findTargets_opt1' } },
     { startFrame: 17, endFrame: 27, sequence: { $sequence: 'aura_10' } },
-    { startFrame: 0, endFrame: 16, sequence: { $sequence: 'startTimeDilation_11' } },
+    { startFrame: 23, endFrame: 40, sequence: { $sequence: 'reachSkillOperableBoundary_11' } },
+    { startFrame: 0, endFrame: 16, sequence: { $sequence: 'startTimeDilation_12' } },
   ],
   defaultTarget: 'owner',
   cooldownFrames: [480, 480, 480, 480, 480, 480, 480, 480, 480, 480, 480, 450],
   skillType: 'comboSkill',
   levelSource: 'comboSkill',
   nativeSkillType: 'comboSkill',
-  actionGraph: chenQianyuChr_0005_chen_combo_skillActionGraph,
 };
 
 export const chenQianyuChr_0005_chen_ultimate_skillActionGraph = {
@@ -1218,6 +1314,8 @@ export const chenQianyuChr_0005_chen_ultimate_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['ultimateSkill'],
@@ -1231,6 +1329,8 @@ export const chenQianyuChr_0005_chen_ultimate_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_1' },
             tags: ['ultimateSkill'],
@@ -1270,6 +1370,8 @@ export const chenQianyuChr_0005_chen_ultimate_skillActionGraph = {
         action: {
           kind: 'dealDamage',
           parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
             damageType: 'physical',
             attackScale: { kind: 'valueNode', nodeId: 'data_4' },
             tags: ['ultimateSkill'],
@@ -1289,7 +1391,14 @@ export const chenQianyuChr_0005_chen_ultimate_skillActionGraph = {
         },
         next: 'dealDamage_13',
       },
-      applyBuff_15: {
+      reachSkillOperableBoundary_15: {
+        action: {
+          kind: 'reachSkillOperableBoundary',
+          parameters: { skillIds: ['chr_0005_chen_normal_skill', 'chr_0005_chen_combo_skill'] },
+        },
+        next: null,
+      },
+      applyBuff_16: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1328,6 +1437,7 @@ export const chenQianyuChr_0005_chen_ultimate_skillActionGraph = {
 } as const satisfies ActionGraphResourceDefinition;
 
 export const chenQianyuChr_0005_chen_ultimate_skill: SkillDefinition = {
+  actionGraph: chenQianyuChr_0005_chen_ultimate_skillActionGraph,
   key: 'chr_0005_chen_ultimate_skill',
   element: 'physical',
   blackboard: {
@@ -1342,15 +1452,6 @@ export const chenQianyuChr_0005_chen_ultimate_skill: SkillDefinition = {
   naturalDurationFrames: 264,
   exclusiveFrame: 130,
   offsetRecordFrame: 0,
-  inputWindows: {
-    allowedNextSkills: [
-      {
-        startFrame: 112,
-        endFrame: 130,
-        skillIds: ['chr_0005_chen_normal_skill', 'chr_0005_chen_combo_skill'],
-      },
-    ],
-  },
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 3, sequence: { $sequence: 'startTimeDilation_1' } },
@@ -1363,7 +1464,8 @@ export const chenQianyuChr_0005_chen_ultimate_skill: SkillDefinition = {
     { startFrame: 76, endFrame: 76, sequence: { $sequence: 'dealDamage_5' } },
     { startFrame: 80, endFrame: 80, sequence: { $sequence: 'dealDamage_5' } },
     { startFrame: 103, endFrame: 132, sequence: { $sequence: 'ifElse_14' } },
-    { startFrame: 0, endFrame: 130, sequence: { $sequence: 'applyBuff_15' } },
+    { startFrame: 112, endFrame: 130, sequence: { $sequence: 'reachSkillOperableBoundary_15' } },
+    { startFrame: 0, endFrame: 130, sequence: { $sequence: 'applyBuff_16' } },
   ],
   defaultTarget: 'enemy',
   cooldownFrames: 300,
@@ -1371,7 +1473,6 @@ export const chenQianyuChr_0005_chen_ultimate_skill: SkillDefinition = {
   skillType: 'ultimate',
   levelSource: 'ultimate',
   nativeSkillType: 'ultimateSkill',
-  actionGraph: chenQianyuChr_0005_chen_ultimate_skillActionGraph,
 };
 
 export const chenQianyuCommon_character_perfect_dodgeActionGraph = {
@@ -1641,7 +1742,11 @@ const chenQianyuBuff4ActionGraph = {
       dealStagger_1: {
         action: {
           kind: 'dealStagger',
-          parameters: { value: { kind: 'valueNode', nodeId: 'data_1' } },
+          parameters: {
+            attacker: 'actionSource',
+            target: { kind: 'inputTarget' },
+            value: { kind: 'valueNode', nodeId: 'data_1' },
+          },
         },
         next: null,
       },

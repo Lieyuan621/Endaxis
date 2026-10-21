@@ -6,11 +6,17 @@ export function operationProducer(
   context:
     | Pick<
         CombatOperationContext,
-        'executingBuff' | 'actionOwnerAbilityEntity' | 'actionOwnerId' | 'executionActionId'
+        | 'executingGlobalBuff'
+        | 'executingBuff'
+        | 'actionOwnerAbilityEntity'
+        | 'actionOwnerId'
+        | 'executionActionId'
       >
     | undefined,
   action?: { readonly ownerId: string; readonly actionId?: string },
 ): CombatObjectRef | undefined {
+  if (context?.executingGlobalBuff !== undefined)
+    return { kind: 'globalBuff', instanceId: context.executingGlobalBuff.instanceId };
   if (context?.executingBuff !== undefined)
     return {
       kind: 'buff',

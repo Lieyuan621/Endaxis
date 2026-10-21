@@ -3,6 +3,7 @@ import type { DamageModifierSide } from '../../../../packages/game-data-contract
 import { compileGraphEntry } from '../../../test/compiledGraphEntry';
 import { numberInput } from '../../../test/compiledGraphInputs';
 import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
+import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import type { DamageFeature, DamageTag } from '../../game-data/operatorDefinition';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { CombatActionSequenceRuntime } from '../actions/combatActionSequenceRuntime';
@@ -76,7 +77,12 @@ describe('PlayerDamageOperationExecutor', () => {
     const receipt = new CombatReceiptCollector();
     const nextCriticalSample = vi.fn(() => 0);
     const events: string[] = [];
+    let queriedTargets: readonly RuntimeTargetRef[] = [];
+    let defaultTarget: RuntimeTargetRef = { kind: 'enemy' };
+    const queryTargets = vi.fn(() => queriedTargets);
     const executor = new PlayerDamageOperationExecutor({
+      queryTargets,
+      resolveDefaultDamageTarget: () => defaultTarget,
       sourceOperatorId: 'operator',
       targetId: 'enemy',
       targetVitals,
@@ -92,7 +98,7 @@ describe('PlayerDamageOperationExecutor', () => {
       applyDamageModifiers: () => {},
       clearInstantAttributeModifiers: () => {},
       addInstantAttributeModifier: () => {},
-      emitPreparationEvent: () => {},
+      emitPreparationEvent: event => events.push(event),
       resolvePoiseMultipliers: () => ({ output: 1, taken: 1 }),
       emitHealthSourceEvent: event => {
         events.push(event);
@@ -137,10 +143,142 @@ describe('PlayerDamageOperationExecutor', () => {
       standardCalculation: false,
     });
     expect(receipt.entries.at(-1)?.data).not.toHaveProperty('attack');
+
+    // 原生查询内部的筛选由同一端口处理；空间项不能消耗一次伤害，重复实体仍逐次命中。
+    const selected: ResolvedCombatStepForKind<'dealDamage'> = {
+      ...step,
+      parameters: {
+        ...step.parameters,
+        target: {
+          kind: 'exclude',
+          targets: { kind: 'context', key: 'receivers' },
+          excludeTargets: { kind: 'owner' },
+        },
+      },
+    };
+    // 显式接收组不能被默认选敌替换，即便默认目标已经变为空间对象。
+    defaultTarget = { kind: 'spatialPoint', pointId: 99 };
+    queriedTargets = [{ kind: 'enemy' }, { kind: 'spatialPoint', pointId: 1 }, { kind: 'enemy' }];
+    const beforeQuery = events.length;
+    executor.execute(selected, { blackboard });
+    expect(events.slice(beforeQuery).filter(event => event === 'beforeDamageAction')).toHaveLength(
+      1,
+    );
+    expect(
+      events.slice(beforeQuery).filter(event => event === 'beforeCalculateDamage'),
+    ).toHaveLength(2);
+    expect(queryTargets).toHaveBeenCalledTimes(1);
+    expect(targetVitals.health).toBe(1580);
+    expect(events.filter(event => event === 'takeDamage')).toHaveLength(4);
+    queriedTargets = [{ kind: 'spatialPoint', pointId: 2 }];
+    const beforeEmpty = events.length;
+    expect(executor.execute(selected, { blackboard: new ActionBlackboard() })).toBe(true);
+    queriedTargets = [];
+    expect(
+      executor.execute(
+        { ...selected, parameters: { ...selected.parameters, alwaysNext: false } },
+        { blackboard: new ActionBlackboard() },
+      ),
+    ).toBe(false);
+    expect(events.slice(beforeEmpty)).toEqual(['beforeDamageAction', 'beforeDamageAction']);
+    expect(targetVitals.health).toBe(1580);
+    executor.execute(
+      { ...selected, parameters: { ...selected.parameters, target: 'actionInputTarget' } },
+      { blackboard: new ActionBlackboard() },
+    );
+    expect(targetVitals.health).toBe(1580);
+    // 尚无伤害接收端口的实体必须明确报错，不能套用敌人的生命、护盾和抗性。
+    queriedTargets = [{ kind: 'operator', operatorId: 'other' }];
+    expect(() => executor.execute(selected, { blackboard })).toThrow(
+      "damage target 'other' has no matching damage ports",
+    );
+    expect(targetVitals.health).toBe(1580);
+    defaultTarget = { kind: 'operator', operatorId: 'other' };
+    executor.execute(
+      { ...selected, parameters: { ...selected.parameters, target: { kind: 'owner' } } },
+      { blackboard, actionOwnerId: 'enemy' },
+    );
+    expect(targetVitals.health).toBe(1460);
+    const otherVitals = new CombatVitals({ ...targetVitals.runtimeState, health: 1000 });
+    const targetEvents: string[] = [];
+    const boundExecutor = new PlayerDamageOperationExecutor({
+      ...executor.dependencies,
+      resolveTargetDependencies: (targetId, current) => ({
+        ...current,
+        targetId,
+        targetVitals: otherVitals,
+        absorbHealthDamage: (_type, value) => value / 2,
+        emitHealthTargetEvent: (event, payload) => {
+          expect(payload.targetId).toBe('other');
+          targetEvents.push(event);
+        },
+      }),
+    });
+    queriedTargets = [{ kind: 'operator', operatorId: 'other' }, { kind: 'enemy' }];
+    const beforeMixed = events.length;
+    boundExecutor.execute(selected, { blackboard });
+    expect(otherVitals.health).toBe(940);
+    expect(targetVitals.health).toBe(1340);
+    expect(targetEvents.filter(event => event === 'takeDamage')).toHaveLength(1);
+    expect(events.slice(beforeMixed).filter(event => event === 'beforeDamageAction')).toHaveLength(
+      1,
+    );
+    // 默认选敌同样绑定实际目标，显式敌人目标不受残留输入目标干扰。
+    boundExecutor.execute(step, { blackboard });
+    expect(otherVitals.health).toBe(880);
+    boundExecutor.execute(
+      { ...step, parameters: { ...step.parameters, target: 'enemy' } },
+      {
+        blackboard,
+        actionInputTarget: { kind: 'operator', operatorId: 'other' },
+      },
+    );
+    expect(otherVitals.health).toBe(880);
+    expect(targetVitals.health).toBe(1220);
+
+    // 同一子技能执行器被不同施放调用时，回执不能沿用装配时的旧归属。
+    const reused = new PlayerDamageOperationExecutor({
+      ...executor.dependencies,
+      castId: 'old-cast',
+      skillType: 'battleSkill',
+    });
+    const keyedStep = {
+      ...step,
+      key: 'damage',
+      parameters: { ...step.parameters, target: 'enemy' as const },
+    };
+    for (const castId of ['combo:1', 'combo:2']) {
+      reused.execute(keyedStep, {
+        blackboard,
+        skillCastInfo: {
+          skillCastId: castId === 'combo:1' ? 1 : 2,
+          originSkillId: 'combo',
+          originSkillType: 'comboSkill',
+          originCastId: castId,
+          nonReturnedSpCost: 0,
+        },
+      });
+      expect(receipt.entries.at(-1)?.data).toMatchObject({
+        castId,
+        skillType: 'comboSkill',
+        hitId: deriveHitId(castId, 'damage'),
+      });
+    }
+    reused.execute(keyedStep, {
+      blackboard,
+      skillCastInfo: { skillCastId: 3, originSkillId: 'independent', nonReturnedSpCost: 0 },
+    });
+    expect(receipt.entries.at(-1)?.data).not.toHaveProperty('castId');
+    expect(receipt.entries.at(-1)?.data).not.toHaveProperty('skillType');
+    expect(receipt.entries.at(-1)?.data).not.toHaveProperty('hitId');
   });
-  it.each([false, true])(
-    'SharedDamage 只结算一次主体公式，并在主体事件后检查部位存活（提前结束=%s）',
-    finishDuringBodyEvent => {
+  it.each([
+    { finishDuringBodyEvent: false, defaultTarget: false },
+    { finishDuringBodyEvent: true, defaultTarget: false },
+    { finishDuringBodyEvent: false, defaultTarget: true },
+  ])(
+    'SharedDamage 只结算一次主体公式（提前结束=$finishDuringBodyEvent，默认选目标=$defaultTarget）',
+    ({ finishDuringBodyEvent, defaultTarget }) => {
       const vitals = {
         health: 2000,
         maxHealth: 2000,
@@ -158,6 +296,7 @@ describe('PlayerDamageOperationExecutor', () => {
         source: { kind: 'operator', operatorId: 'caster' },
         definition: { lifetime: { kind: 'infinite' } },
         soul: {
+          canBeDirectlyBuffed: false,
           damageTransferType: 'sharedDamage',
           mainBody: { kind: 'enemy' },
           vitals: { ...vitals, health: 1000, maxHealth: 1000 },
@@ -175,6 +314,7 @@ describe('PlayerDamageOperationExecutor', () => {
         clock: new CombatClock(),
         receipt,
         resolveSharedDamageTransfer: target => entities.sharedDamageTransfer(target),
+        resolveDefaultDamageTarget: () => entities.preferredAttackTarget({ kind: 'enemy' }),
         captureAttributeSnapshots: () => createAttributeSnapshots(),
         criticalSamples: { nextCriticalSample: () => 1 },
         resolveNonRandomRuntimeSnapshot: () => ({
@@ -213,7 +353,13 @@ describe('PlayerDamageOperationExecutor', () => {
         delegate: { execute: () => false, evaluate: () => false },
       });
       executor.execute(
-        { ...DAMAGE_STEP, parameters: { ...DAMAGE_STEP.parameters, target: 'actionInputTarget' } },
+        {
+          ...DAMAGE_STEP,
+          parameters: {
+            ...DAMAGE_STEP.parameters,
+            target: defaultTarget ? undefined : 'actionInputTarget',
+          },
+        },
         {
           blackboard: new ActionBlackboard(),
           actionInputTarget: part,
@@ -672,7 +818,7 @@ describe('PlayerDamageOperationExecutor', () => {
       clearInstantAttributeModifiers: () => undefined,
       emitPreparationEvent: event => {
         if (event === 'beforeDamageAction') {
-          expect(skillExecution.hasOutputDamageBattle).toBe(true);
+          expect(skillExecution.hasOutputDamageBattle).toBe(false);
           expect(targetVitals.health).toBe(1000);
           checkedBeforeDamage = true;
         }
@@ -1222,7 +1368,10 @@ describe('PlayerDamageOperationExecutor', () => {
     expect(targetVitals.health).toBe(1000);
     expect(targetVitals.poise).toBe(40);
     expect(captureAttributeSnapshots).not.toHaveBeenCalled();
-    expect(emitPreparationEvent).not.toHaveBeenCalled();
+    expect(emitPreparationEvent).toHaveBeenCalledExactlyOnceWith(
+      'beforeDamageAction',
+      expect.objectContaining({ sourceId: 'mifu', tags: [], gameplayTags: [], features: [] }),
+    );
     expect(receipt.entries.map(entry => entry.event)).toEqual(['PoiseApplied']);
   });
 
@@ -1333,9 +1482,9 @@ describe('PlayerDamageOperationExecutor', () => {
     // 先计算 120 * 4 * 1.5 * 2 * 1.25，再由 100 点防御将结果减半。
     expect(targetVitals.health).toBe(1100);
     expect(order).toEqual([
-      'capture',
       'beforeDamageAction',
       'beforeCalculateDamage',
+      'capture',
       'beforeCalculation:attacker',
       'beforeCalculation:defender',
       'capture',
@@ -1463,60 +1612,65 @@ describe('PlayerDamageOperationExecutor', () => {
     expect(nextCriticalSample).toHaveBeenCalledTimes(2);
   });
 
-  it('uses a frozen source attribute for MultiplyAttributeCalculation damage', () => {
-    const targetVitals = new CombatVitals({
-      health: 5000,
-      maxHealth: 5000,
-      maxPoise: 100,
-      poise: 100,
-      poiseRecoveryTime: 1,
-      poiseRecoveryTimeMultiplier: 1,
-      poiseBrokenEndTime: 0,
-      poiseImmune: false,
-    });
-    const snapshots = createAttributeSnapshots();
-    const executor = new PlayerDamageOperationExecutor({
-      sourceOperatorId: 'catcher',
-      targetId: 'enemy',
-      targetVitals,
-      clock: new CombatClock(),
-      receipt: new CombatReceiptCollector(),
-      captureAttributeSnapshots: () => ({
-        ...snapshots,
-        attacker: { ...snapshots.attacker, calculationAttributeValue: 200 },
-      }),
-      criticalSamples: { nextCriticalSample: () => 1 },
-      resolveNonRandomRuntimeSnapshot: () => ({
-        runtimeExtensionMultiplier: 1,
-        appliesIgniteDamageMultiplier: false,
-        appliesPhysicalInflictionDamageMultiplier: false,
-      }),
-      applyDamageModifiers: () => undefined,
-      addInstantAttributeModifier: () => undefined,
-      clearInstantAttributeModifiers: () => undefined,
-      emitPreparationEvent: () => undefined,
-      resolvePoiseMultipliers: () => ({ output: 1, taken: 1 }),
-      emitHealthSourceEvent: () => undefined,
-      emitHealthTargetEvent: () => undefined,
-      emitPoiseSourceEvent: () => undefined,
-      emitPoiseTargetEvent: () => undefined,
-      delegate: { execute: vi.fn(() => true), evaluate: vi.fn(() => false) },
-    });
+  it.each([false, true])(
+    'MultiplyAttributeCalculation 使用所选侧的冻结属性，读取目标=%s',
+    readTarget => {
+      const targetVitals = new CombatVitals({
+        health: 5000,
+        maxHealth: 5000,
+        maxPoise: 100,
+        poise: 100,
+        poiseRecoveryTime: 1,
+        poiseRecoveryTimeMultiplier: 1,
+        poiseBrokenEndTime: 0,
+        poiseImmune: false,
+      });
+      const snapshots = createAttributeSnapshots();
+      const executor = new PlayerDamageOperationExecutor({
+        sourceOperatorId: 'catcher',
+        targetId: 'enemy',
+        targetVitals,
+        clock: new CombatClock(),
+        receipt: new CombatReceiptCollector(),
+        captureAttributeSnapshots: () => ({
+          ...snapshots,
+          attacker: { ...snapshots.attacker, calculationAttributeValue: 200 },
+          defender: { ...snapshots.defender, calculationAttributeValue: 400 },
+        }),
+        criticalSamples: { nextCriticalSample: () => 1 },
+        resolveNonRandomRuntimeSnapshot: () => ({
+          runtimeExtensionMultiplier: 1,
+          appliesIgniteDamageMultiplier: false,
+          appliesPhysicalInflictionDamageMultiplier: false,
+        }),
+        applyDamageModifiers: () => undefined,
+        addInstantAttributeModifier: () => undefined,
+        clearInstantAttributeModifiers: () => undefined,
+        emitPreparationEvent: () => undefined,
+        resolvePoiseMultipliers: () => ({ output: 1, taken: 1 }),
+        emitHealthSourceEvent: () => undefined,
+        emitHealthTargetEvent: () => undefined,
+        emitPoiseSourceEvent: () => undefined,
+        emitPoiseTargetEvent: () => undefined,
+        delegate: { execute: vi.fn(() => true), evaluate: vi.fn(() => false) },
+      });
 
-    executor.execute({
-      kind: 'dealDamage',
-      parameters: {
-        damageType: 'physical',
-        calculation: 'attribute',
-        calculationAttribute: 'Def',
-        attackScale: 5,
-        calculationAddition: 300,
-        tags: [],
-      },
-    });
+      executor.execute({
+        kind: 'dealDamage',
+        parameters: {
+          damageType: 'physical',
+          calculation: 'attribute',
+          calculationAttribute: 'Def',
+          ...(readTarget ? { attributeSource: 'target' as const } : {}),
+          attackScale: 5,
+          calculationAddition: 300,
+          tags: [],
+        },
+      });
 
-    expect(targetVitals.health).toBe(3700);
-  });
+      expect(targetVitals.health).toBe(readTarget ? 2700 : 3700);
+    },
+  );
 
   it('delegates operations outside the damage path', () => {
     const delegate = { execute: vi.fn(() => true), evaluate: vi.fn(() => false) };

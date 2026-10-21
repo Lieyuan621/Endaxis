@@ -1,6 +1,7 @@
 import { numberInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it } from 'vitest';
 import { createKillEvent } from './killEventTestFixture';
+import { createEventBuff } from './buffEventTestFixture';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import { EventContextConditionExecutor } from './eventContextConditionExecutor';
 import { GameplayTagRegistry } from '../tags/gameplayTags';
@@ -14,6 +15,106 @@ const terminal = {
 };
 
 describe('EventContextConditionExecutor', () => {
+  it.each(['collectAddedBuffBlackboard', 'collectOutputBuffBlackboard'] as const)(
+    '%s 只修改当前收集黑板，并从监听器实时读取操作数', event => {
+      const executor = new EventContextConditionExecutor(terminal);
+      const blackboard = new ActionBlackboard({ extend: 5 });
+      const collected = new ActionBlackboard({ duration: 3 });
+      const modifiedKeys = new Set<string>();
+      const context = { blackboard, event: { event, payload: {
+        sourceId: 'source', targetId: 'target', buffId: 'new', buffTags: [],
+        blackboard: collected, modifiedKeys,
+      } } };
+      const step = { kind: 'modifyCollectedBuffValue', parameters: {
+        key: 'duration', useDirectValue: false, multiplier: numberInput({ kind: 'constant', value: 2 }),
+        addition: numberInput({ kind: 'blackboard', key: 'extend' }), directValue: numberInput({ kind: 'constant', value: 99 }),
+      } } as const;
+      expect(executor.execute(step, context)).toBe(true);
+      expect(collected.getNumber('duration')).toBe(11);
+      expect(blackboard.getNumber('duration')).toBeUndefined();
+      expect(modifiedKeys).toEqual(new Set(['duration']));
+      expect(executor.execute({ kind: 'storeCollectedBuffValue', parameters: {
+        key: 'duration', outputKey: 'saved',
+      } }, context)).toBe(true);
+      expect(blackboard.getNumber('saved')).toBe(11);
+      blackboard.assignDynamic('extend', 1);
+      executor.execute(step, context);
+      expect(collected.getNumber('duration')).toBe(23);
+      expect(executor.execute({ ...step, parameters: { ...step.parameters, useDirectValue: true } }, context)).toBe(true);
+      expect(collected.getNumber('duration')).toBe(99);
+      expect(executor.execute({ ...step, parameters: { ...step.parameters, key: 'missing' } }, context)).toBe(false);
+      expect(collected.getNumber('missing')).toBeUndefined();
+      expect(executor.execute(step, { blackboard })).toBe(false);
+    },
+  );
+
+  it.each(['finishedBuff', 'buffEndsEarly', 'buffEnhanceChanged'] as const)(
+    '读取 %s 载荷中的 Buff 结束原因',
+    event => {
+      const executor = new EventContextConditionExecutor(terminal);
+      const condition = { kind: 'eventBuffFinishReasonIn', reasons: ['lifetime'] } as const;
+      const payload = {
+        buff: createEventBuff(),
+        buffId: 'test',
+        buffTags: [],
+        sourceId: 'source',
+        targetId: 'target',
+        layerCount: -1,
+        reason: 'lifetime' as const,
+      };
+      const blackboard = new ActionBlackboard();
+      expect(executor.evaluate(condition, { blackboard, event: { event, payload } })).toBe(true);
+      expect(
+        executor.evaluate(condition, {
+          blackboard,
+          event: { event, payload: { ...payload, reason: 'other' } },
+        }),
+      ).toBe(false);
+      expect(executor.evaluate(condition, { blackboard })).toBe(false);
+    },
+  );
+
+  it('伤害施法记录属于 Buff 实例，复制状态后的记录互不影响，缺少伤害上下文不回退施法来源', () => {
+    const buff = createEventBuff();
+    const executor = new EventContextConditionExecutor(terminal);
+    const condition = { kind: 'eventDamageSkillCastRecorded' } as const;
+    const step = { kind: 'saveDamageSkillCastId', parameters: {} } as const;
+    const context = (ids: Set<number>, skillCastId: number) => ({
+      blackboard: new ActionBlackboard(),
+      modifierContext: {
+        kind: 'damage' as const,
+        input: {
+          side: 'defender' as const,
+          sourceId: 'operator',
+          targetId: 'enemy',
+          skillCastId,
+          damageType: 'physical' as const,
+          tags: [],
+          features: [],
+        },
+      },
+      hasCurrentBuffDamageSkillCastId: (id: number) => ids.has(id),
+      saveCurrentBuffDamageSkillCastId: (id: number) => {
+        ids.add(id);
+      },
+    });
+    const original = context(buff.runtimeState.recordedDamageSkillCastIds, 7);
+    expect(executor.evaluate(condition, original)).toBe(false);
+    expect(executor.execute(step, original)).toBe(true);
+    expect(executor.evaluate(condition, original)).toBe(true);
+    const restored = structuredClone(buff.runtimeState);
+    executor.execute(step, context(restored.recordedDamageSkillCastIds, 8));
+    expect(restored.recordedDamageSkillCastIds).toEqual(new Set([7, 8]));
+    expect(buff.runtimeState.recordedDamageSkillCastIds).toEqual(new Set([7]));
+    expect(
+      executor.evaluate(
+        condition,
+        context(createEventBuff().runtimeState.recordedDamageSkillCastIds, 7),
+      ),
+    ).toBe(false);
+    expect(executor.execute(step, { blackboard: new ActionBlackboard() })).toBe(false);
+    expect(executor.evaluate(condition, { blackboard: new ActionBlackboard() })).toBe(false);
+  });
   it('checks the event transferred part and writes its target only after a match', () => {
     let matches = true;
     const inspected: RuntimeTargetRef[] = [];
@@ -1211,4 +1312,3 @@ describe('EventContextConditionExecutor', () => {
     },
   );
 });
-import { createEventBuff } from './buffEventTestFixture';

@@ -2,9 +2,29 @@ import { describe, expect, it } from 'vitest';
 import { SkillCooldown } from './skillCooldown';
 
 describe('SkillCooldown', () => {
+  it('百分比使用已捕获的周期，就绪后设置冷却才重新读取当前修正', () => {
+    let addition = 60;
+    const cooldown = new SkillCooldown(300, 0, base => base * 2 + addition);
+    cooldown.tryReserve();
+    cooldown.advance(60);
+    addition = 0;
+    cooldown.reduceByPeriodRatio(0.5);
+    expect(cooldown.snapshot.remainingFrames).toBe(270);
+    cooldown.setByPeriodRatio(0.5);
+    expect(cooldown.snapshot.remainingFrames).toBe(330);
+    cooldown.advance(330);
+    cooldown.setByPeriodRatio(0.5);
+    expect(cooldown.snapshot.remainingFrames).toBe(300);
+  });
+
+  it('零基础冷却在就绪时设置百分比仍读取原生附加秒数', () => {
+    const cooldown = new SkillCooldown(0, 0, base => base + 300);
+    cooldown.setByPeriodRatio(0.5);
+    expect(cooldown.snapshot.remainingFrames).toBe(150);
+  });
   it('captures a dynamic period multiplier when the cast reserves cooldown', () => {
     let multiplier = 0.4;
-    const cooldown = new SkillCooldown(300, undefined, () => multiplier);
+    const cooldown = new SkillCooldown(300, undefined, baseFrames => baseFrames * multiplier);
 
     expect(cooldown.tryReserve()).toBe(true);
     expect(cooldown.snapshot.remainingFrames).toBe(120);
@@ -15,8 +35,8 @@ describe('SkillCooldown', () => {
   });
 
   it('rejects invalid dynamic period multipliers when reserving', () => {
-    const cooldown = new SkillCooldown(300, undefined, () => 0);
-    expect(() => cooldown.tryReserve()).toThrow(/period multiplier/);
+    const cooldown = new SkillCooldown(300, undefined, () => Number.NaN);
+    expect(() => cooldown.tryReserve()).toThrow(/period must be finite/);
   });
 
   it('does not refund a timeline override when the previous cast finishes before confirmation', () => {
@@ -127,9 +147,9 @@ describe('SkillCooldown', () => {
     cooldown.tryReserve();
     cooldown.advance(10);
 
-    expect(cooldown.reduceByBaseDurationRatio(0.5)).toBe(true);
+    expect(cooldown.reduceByPeriodRatio(0.5)).toBe(true);
     expect(cooldown.snapshot.remainingFrames).toBe(40);
-    expect(cooldown.reduceByBaseDurationRatio(0.5)).toBe(true);
+    expect(cooldown.reduceByPeriodRatio(0.5)).toBe(true);
     expect(cooldown.snapshot.ready).toBe(true);
   });
 
@@ -148,12 +168,25 @@ describe('SkillCooldown', () => {
   it('sets remaining cooldown from either the base ratio or absolute frames', () => {
     const cooldown = new SkillCooldown(100, 0);
 
-    expect(cooldown.setByBaseDurationRatio(0.4)).toBe(true);
+    expect(cooldown.setByPeriodRatio(0.4)).toBe(true);
     expect(cooldown.snapshot.remainingFrames).toBe(40);
     expect(cooldown.setRemainingFrames(12)).toBe(true);
     expect(cooldown.snapshot.remainingFrames).toBe(12);
     expect(cooldown.setRemainingFrames(0)).toBe(true);
     expect(cooldown.snapshot.ready).toBe(true);
+  });
+
+  it('sets a positive native cooldown on a configured zero-period skill', () => {
+    const cooldown = new SkillCooldown(0, 0);
+    expect(cooldown.setRemainingFrames(240)).toBe(true);
+    expect(cooldown.snapshot.remainingFrames).toBe(240);
+    expect(cooldown.tryReserve()).toBe(false);
+    cooldown.advance(240);
+    expect(cooldown.ready).toBe(true);
+    expect(cooldown.setByPeriodRatio(1)).toBe(true);
+    expect(cooldown.snapshot.remainingFrames).toBe(0);
+    // 未配置计时器与已配置零周期不是同一种状态。
+    expect(new SkillCooldown().setRemainingFrames(240)).toBe(false);
   });
 
   it('sets normalized native timer progress across different base durations', () => {

@@ -404,46 +404,50 @@ describe('AbilitySystemRuntime', () => {
     expect(ability.currentSkillId).toBe('first');
   });
 
-  it('Buff 普攻映射覆盖当前技能，重复注册与乱序撤销不复活旧映射', () => {
-    const first = Object.assign(new FixtureRuntime('attack', [], 'basicAttack'), {
-      currentTimelineFrame: 1,
-      inputWindows: {
-        commandMappings: [
-          {
-            startFrame: 0,
-            endFrame: 20,
-            input: 'basicAttack' as const,
-            targetSkillId: 'attack',
+  it.each(['earlier', 'later'] as const)(
+    'Buff 普攻映射先登记优先，撤销 %s 后选择剩余映射',
+    removed => {
+      const first = Object.assign(new FixtureRuntime('attack', [], 'basicAttack'), {
+        currentTimelineFrame: 1,
+        activeBasicAttackMapping: 'attack',
+      });
+      const ability = new AbilitySystemRuntime({
+        skills: [first, new FixtureRuntime('heavy', [], 'basicAttack')],
+        playerActionRoutes: {
+          basicAttack: {
+            kind: 'basicAttack',
+            skillKeys: ['attack', 'heavy'],
+            defaultSkillKey: 'attack',
           },
-        ],
-      },
-    });
-    const ability = new AbilitySystemRuntime({
-      skills: [first, new FixtureRuntime('heavy', [], 'basicAttack')],
-      playerActionRoutes: {
-        basicAttack: {
-          kind: 'basicAttack',
-          skillKeys: ['attack', 'heavy'],
-          defaultSkillKey: 'attack',
         },
-      },
-    });
-    ability.tryStartSkill('attack');
-    const a = ability.overrideBasicAttackMapping('heavy');
-    const b = ability.overrideBasicAttackMapping('heavy');
-    expect(ability.resolvePlayerInputSkill('heavy')).toMatchObject({ status: 'matched' });
-    a.finish();
-    a.finish();
-    expect(ability.resolvePlayerInputSkill('heavy')).toMatchObject({ status: 'matched' });
-    const conflict = ability.overrideBasicAttackMapping('attack');
-    expect(ability.resolvePlayerInputSkill('heavy')).toMatchObject({ status: 'unknown' });
-    conflict.finish();
-    b.finish();
-    expect(ability.resolvePlayerInputSkill('heavy')).toEqual({
-      status: 'mismatched',
-      actualSkillKey: 'attack',
-    });
-  });
+      });
+      ability.tryStartSkill('attack');
+      const a = ability.overrideBasicAttackMapping('heavy');
+      const b = ability.overrideBasicAttackMapping('heavy');
+      expect(ability.resolvePlayerInputSkill('heavy')).toMatchObject({ status: 'matched' });
+      a.finish();
+      a.finish();
+      expect(ability.resolvePlayerInputSkill('heavy')).toMatchObject({ status: 'matched' });
+      const later = ability.overrideBasicAttackMapping('attack');
+      expect(ability.resolvePlayerInputSkill('heavy')).toMatchObject({ status: 'matched' });
+      if (removed === 'earlier') {
+        b.finish();
+        expect(ability.resolvePlayerInputSkill('heavy')).toEqual({
+          status: 'mismatched',
+          actualSkillKey: 'attack',
+        });
+        later.finish();
+      } else {
+        later.finish();
+        expect(ability.resolvePlayerInputSkill('heavy')).toMatchObject({ status: 'matched' });
+        b.finish();
+      }
+      expect(ability.resolvePlayerInputSkill('heavy')).toEqual({
+        status: 'mismatched',
+        actualSkillKey: 'attack',
+      });
+    },
+  );
   it.each(['available', 'unavailable', 'missing'] as const)(
     'projectile callback interrupts before lookup/availability (%s), without a next-skill transition',
     mode => {
@@ -919,21 +923,8 @@ describe('AbilitySystemRuntime', () => {
       new FixtureRuntime('current', [], 'basicAttack', 'cast:current', 30),
       {
         transitionSkillId: 'native.current',
+        activeBasicAttackMapping: 'native.next',
         usesRuntimeOperableBoundary: true,
-        inputWindows: {
-          commandMappings: [
-            {
-              startFrame: 0,
-              endFrame: 8,
-              input: 'basicAttack' as const,
-              targetSkillId: 'native.next',
-            },
-          ],
-          allowedNextSkills: [
-            { startFrame: 0, endFrame: 8, skillIds: ['native.cleanup'] },
-            { startFrame: 5, endFrame: 8, skillIds: ['native.next'] },
-          ],
-        },
         canInterrupt: false,
         markOperableBoundaryReached(frame = localFrame) {
           boundaryFrame ??= frame;
@@ -941,6 +932,9 @@ describe('AbilitySystemRuntime', () => {
       },
     );
     Object.defineProperties(current, {
+      operableBoundaryCandidateSkillIds: {
+        get: () => (localFrame >= 5 ? ['native.next'] : ['native.cleanup']),
+      },
       currentTimelineFrame: { get: () => localFrame },
       passedFrames: { get: () => localFrame },
       reachedOperableBoundaryFrame: { get: () => boundaryFrame },
@@ -987,25 +981,20 @@ describe('AbilitySystemRuntime', () => {
       const current = Object.assign(new FixtureRuntime('current', [], skillType, 'cast', 23), {
         usesRuntimeOperableBoundary: true,
         timelineBlockFollowUpSkillId: followUp,
-        inputWindows: {
-          allowedNextSkills: [
-            { startFrame: followUp === undefined ? 23 : 35, endFrame: 40, skillIds: ['battle'] },
-            { startFrame: followUp === undefined ? 35 : 23, endFrame: 40, skillIds: ['enhanced'] },
-          ],
-          commandMappings: [
-            {
-              startFrame: 0,
-              endFrame: 40,
-              input: 'basicAttack' as const,
-              targetSkillId: 'enhanced',
-            },
-          ],
-        },
+        activeBasicAttackMapping: 'enhanced',
         markOperableBoundaryReached(value = frame) {
           boundary ??= value;
         },
       });
       Object.defineProperties(current, {
+        operableBoundaryCandidateSkillIds: {
+          get: () =>
+            frame >= 35
+              ? ['battle', 'enhanced']
+              : frame >= 23
+                ? [followUp === undefined ? 'battle' : 'enhanced']
+                : [],
+        },
         currentTimelineFrame: { get: () => frame },
         passedFrames: { get: () => frame },
         canInterrupt: { get: () => frame > 40 },
@@ -1049,7 +1038,6 @@ describe('AbilitySystemRuntime', () => {
     const current = Object.assign(new FixtureRuntime('current', [], 'comboSkill', 'cast', 23), {
       usesRuntimeOperableBoundary: true,
       canInterrupt: true,
-      inputWindows: {},
       markOperableBoundaryReached(value = frame) {
         boundary ??= value;
       },
@@ -1438,6 +1426,53 @@ describe('AbilitySystemRuntime', () => {
     });
   });
 
+  it('按活动输入动作判断条件分支，窗口关闭后不再使用静态候选', () => {
+    const attack = Object.assign(new FixtureRuntime('attack', [], 'basicAttack'), {
+      currentTimelineFrame: 5,
+      canInterrupt: false,
+      activeAllowedNextSkillIds: [] as string[],
+      activeBasicAttackMapping: null as string | null,
+    });
+    const ability = new AbilitySystemRuntime({
+      skills: [attack, new FixtureRuntime('next', [], 'basicAttack')],
+      playerActionRoutes: {
+        basicAttack: {
+          kind: 'basicAttack',
+          skillKeys: ['attack', 'next'],
+          defaultSkillKey: 'attack',
+        },
+      },
+    });
+    ability.tryStartSkill('attack');
+    expect(ability.resolvePlayerInputSkill('next')).toEqual({
+      status: 'mismatched',
+      actualSkillKey: 'attack',
+    });
+    expect(ability.evaluatePlayerInputInterruption('next')).toEqual({
+      status: 'blocked',
+      currentSkillKey: 'attack',
+    });
+    attack.activeAllowedNextSkillIds.push('next');
+    attack.activeBasicAttackMapping = 'next';
+    expect(ability.resolvePlayerInputSkill('next')).toEqual({
+      status: 'matched',
+      actualSkillKey: 'next',
+    });
+    expect(ability.evaluatePlayerInputInterruption('next')).toEqual({ status: 'allowed' });
+    attack.activeAllowedNextSkillIds.length = 0;
+    attack.activeBasicAttackMapping = null;
+    expect(ability.resolvePlayerInputSkill('next')).toEqual({
+      status: 'mismatched',
+      actualSkillKey: 'attack',
+    });
+    expect(ability.evaluatePlayerInputInterruption('next')).toEqual({
+      status: 'blocked',
+      currentSkillKey: 'attack',
+    });
+    attack.canInterrupt = true;
+    expect(ability.evaluatePlayerInputInterruption('next')).toEqual({ status: 'allowed' });
+  });
+
   it('mutates the native SkillType independently from the Endaxis skill category', () => {
     const skill = Object.assign(new FixtureRuntime('ending', [], 'ultimate'), {
       nativeSkillType: 'ultimateSkill' as const,
@@ -1455,27 +1490,67 @@ describe('AbilitySystemRuntime', () => {
     expect(() => ability.nativeSkillTypeForSkill('missing')).toThrow('unknown ability skill');
   });
 
+  it('rebuilds mode mappings in persistent layer order after a layer is disabled and re-enabled', () => {
+    const ability = new AbilitySystemRuntime({
+      skills: ['attack', 'first', 'second', 'replacement'].map(
+        id => new FixtureRuntime(id, [], 'basicAttack'),
+      ),
+      playerActionRoutes: {
+        basicAttack: {
+          kind: 'basicAttack',
+          skillKeys: ['attack', 'first', 'second', 'replacement'],
+          defaultSkillKey: 'attack',
+        },
+      },
+      playerActionModes: [
+        {
+          modeId: 'one',
+          modeLayer: 'one',
+          defaultEnabled: false,
+          commandMappings: { basicAttack: { skillId: 'first' } },
+        },
+        {
+          modeId: 'two',
+          modeLayer: 'two',
+          defaultEnabled: false,
+          commandMappings: { basicAttack: { skillId: 'second' } },
+        },
+        {
+          modeId: 'replace',
+          modeLayer: 'one',
+          defaultEnabled: false,
+          commandMappings: { basicAttack: { skillId: 'replacement' } },
+        },
+      ],
+    });
+    const first = ability.activatePlayerActionMode('one');
+    const second = ability.activatePlayerActionMode('two');
+    expect(ability.resolvePlayerInputSkill('first')).toMatchObject({ status: 'matched' });
+    const replace = ability.activatePlayerActionMode('replace');
+    expect(ability.resolvePlayerInputSkill('replacement')).toMatchObject({ status: 'matched' });
+    replace.finish();
+    expect(ability.resolvePlayerInputSkill('first')).toMatchObject({ status: 'matched' });
+    first.finish();
+    expect(ability.resolvePlayerInputSkill('second')).toMatchObject({ status: 'matched' });
+    const reenabled = ability.activatePlayerActionMode('one');
+    expect(ability.resolvePlayerInputSkill('first')).toMatchObject({ status: 'matched' });
+    reenabled.finish();
+    second.finish();
+    expect(ability.resolvePlayerInputSkill('attack')).toMatchObject({ status: 'matched' });
+  });
+
   it('resolves a chained input from native command mapping and allowed-next windows', () => {
     const events: string[] = [];
     let frame = 5;
     const first = new FixtureRuntime('attack1', events, 'basicAttack');
     Object.defineProperties(first, {
       transitionSkillId: { value: 'native.attack1' },
+      activeBasicAttackMapping: { get: () => (frame <= 10 ? 'native.attack2' : null) },
+      activeAllowedNextSkillIds: {
+        get: () => (frame >= 7 && frame <= 10 ? ['native.attack2'] : []),
+      },
       currentTimelineFrame: { get: () => frame },
       canInterrupt: { get: () => false },
-      inputWindows: {
-        value: {
-          commandMappings: [
-            {
-              startFrame: 5,
-              endFrame: 10,
-              input: 'basicAttack',
-              targetSkillId: 'native.attack2',
-            },
-          ],
-          allowedNextSkills: [{ startFrame: 7, endFrame: 10, skillIds: ['native.attack2'] }],
-        },
-      },
     });
     const second = new FixtureRuntime('attack2', events, 'basicAttack');
     Object.defineProperty(second, 'transitionSkillId', { value: 'native.attack2' });
@@ -1520,22 +1595,15 @@ describe('AbilitySystemRuntime', () => {
     });
   });
 
-  it('accepts a preserved basic-attack stage from a non-attack allowed-next window', () => {
+  it('allowed-next permissions do not select a different basic-attack stage', () => {
     const events: string[] = [];
     let frame = 5;
     const battleSkill = new FixtureRuntime('battleSkill', events, 'battleSkill');
     Object.defineProperties(battleSkill, {
       currentTimelineFrame: { get: () => frame },
-      inputWindows: {
-        value: {
-          allowedNextSkills: [
-            {
-              startFrame: 5,
-              endFrame: 10,
-              skillIds: ['native.attack1', 'native.attack2'],
-            },
-          ],
-        },
+      canInterrupt: { value: false },
+      activeAllowedNextSkillIds: {
+        get: () => (frame <= 10 ? ['native.attack1', 'native.attack2'] : []),
       },
     });
     const attack1 = new FixtureRuntime('attack1', events, 'basicAttack');
@@ -1565,8 +1633,8 @@ describe('AbilitySystemRuntime', () => {
 
     ability.tryStartSkill('battleSkill');
     expect(ability.resolvePlayerInputSkill('attack2', 'basicAttack')).toEqual({
-      status: 'matched',
-      actualSkillKey: 'attack2',
+      status: 'mismatched',
+      actualSkillKey: 'attack1',
     });
     expect(ability.evaluatePlayerInputInterruption('attack2')).toEqual({ status: 'allowed' });
 

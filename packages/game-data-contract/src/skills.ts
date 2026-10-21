@@ -274,32 +274,6 @@ export type OperatorPlayerActionRoutes = Readonly<
   Partial<Record<PlayerSkillInput, PlayerActionRouteDefinition>>
 >;
 
-/**
- * 原生 ComboCacheAction 在一段技能局部时间内对攻击操作的映射覆盖。
- * Skill 命令中的战技/连携会把映射中的 skillId 覆盖为当前槽位技能，
- * 终结技不读该映射，因此它们不能作为“选择哪个技能”的证据。
- */
-export interface SkillInputCommandMappingWindow {
-  /** 窗口起始帧，包含该帧。 */
-  readonly startFrame: number;
-  /** 窗口结束帧。 */
-  readonly endFrame: number;
-  /** 此窗口覆盖的玩家操作。 */
-  readonly input: 'basicAttack';
-  /** 空值是原生的“该窗口没有直接技能路由”，不得回退为基础技能。 */
-  readonly targetSkillId: string | null;
-}
-
-/** 原生 AllowNextSkillAction 只授予提前接续许可，不负责选择技能。 */
-export interface SkillAllowedNextWindow {
-  /** 可以提前接续的起始帧。 */
-  readonly startFrame: number;
-  /** 可以提前接续的结束帧。 */
-  readonly endFrame: number;
-  /** 此窗口允许请求的原生技能 ID。 */
-  readonly skillIds: readonly string[];
-}
-
 /** 事件触发器筛选干员自身或全队来源的范围。 */
 export const SKILL_TRIGGER_SCOPES = ['operator', 'team'] as const;
 /** 技能事件触发器检查当前干员还是全队来源。 */
@@ -335,12 +309,6 @@ export interface SkillDefinitionProperties extends SkillActionProgramDefinition 
   smartTarget?: 'enemy' | 'input' | 'trigger';
   /** 时间轴技能块的显示宽度；由可操作边界推导，不对应原生 `durationFrame`。 */
   timelineBlockFrames: number;
-  /**
-   * 基础攻击有序连段中建议的下一技能原生 Skill ID，供技能库递归放置、预览选择，并标记
-   * 已保留实际 AllowNext 动作的定义。正式块宽读取实际动作候选或 canInterrupt，不按该 ID
-   * 预选未来输入。
-   */
-  timelineContinuationSkillId?: string;
   /** 块宽的接续参照技能；覆盖默认接续目标，仅影响显示，不执行该技能。 */
   timelineBlockFollowUpSkillId?: string;
   /**
@@ -354,18 +322,6 @@ export interface SkillDefinitionProperties extends SkillActionProgramDefinition 
   offsetRecordFrame: number;
   /** 原生 SkillData.dontInterruptCombo；主控插入此技能时保留普攻连段。缺省为 false。 */
   dontInterruptCombo?: boolean;
-  /**
-   * 从原生顶层直连输入 Action 保留的操作解析证据。两类窗口职责不同：
-   * commandMappings 选择该操作当前指向的技能，allowedNextSkills 只决定能否提前中断。
-   */
-  inputWindows?: {
-    /** 在指定帧段内覆盖普通攻击操作的技能路由。 */
-    readonly commandMappings?: readonly SkillInputCommandMappingWindow[];
-    /** 在指定帧段内允许提前接续的技能。 */
-    readonly allowedNextSkills?: readonly SkillAllowedNextWindow[];
-    /** 存在条件或嵌套输入 Action；当前输入状态不足时必须返回未知而不是猜测。 */
-    readonly hasConditionalActions?: boolean;
-  };
   /**
    * 技能释放条件只生成合法性诊断；不成立也不会阻止技能进入模拟。
    * 模拟层将用户排入时间轴的动作视为已经成功释放，不得改写或跳过。
@@ -426,8 +382,8 @@ export interface SkillGroupPlacementPolicy {
   terminalSkillKey: string;
   /** 最多放置的技能段数。 */
   maxSegments: number;
-  /** 推测失败时按技能组声明顺序放置。 */
-  fallback: 'sequence';
+  /** 推测失败时放置的独立技能序列，允许重复，不影响技能库展示。 */
+  fallback: readonly string[];
 }
 
 /**

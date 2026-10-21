@@ -96,8 +96,8 @@ export interface CombatActionProjectionContextSource {
   readonly graph: ActionGraphBuilder<CompiledBuffStepSource>;
   /** 完整 Buff 施加链已证明只会解析到纯表现 Buff 的动态 ID 黑板键。 */
   readonly combatInvisibleDynamicBuffBlackboardKeys?: ReadonlySet<string>;
-  /** 仅基础攻击组装配保留 AllowNextSkillAction，用于按实际条件分支发布技能块边界。 */
-  readonly preserveSkillOperableBoundary?: boolean;
+  /** 技能宿主保留输入动作，按实际分支维护命令映射、接续窗口及技能块边界。 */
+  readonly preserveSkillInputActions?: boolean;
   /** 当前 Buff AbilityEvent；仅用于投影原生事件负载条件，不替代公开事件身份。 */
   readonly nativeAbilityEvent?: string | number;
   /** 同步修正宿主提供相应计算包上下文；不代表发生 AbilitySystem 广播。 */
