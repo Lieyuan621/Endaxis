@@ -8672,7 +8672,7 @@ function setMobileGuideFrame(frame: number | null): void {
     :current-scenario-name="scenario.name"
     :scenarios="projectScenarios"
     :max-duration="Math.max(10, Math.round(scenario.battle.durationFrames / PROJECT_FPS))"
-    :allow-long-image="!mobileLayout"
+    :allow-image-export="!mobileLayout"
     @update:visible="showExportDialog = $event"
     @export-json="exportProject"
     @copy-code="copyProjectCode"

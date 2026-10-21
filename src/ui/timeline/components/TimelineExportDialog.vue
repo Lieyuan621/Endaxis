@@ -18,7 +18,7 @@ const props = defineProps<{
   currentScenarioName: string;
   scenarios: readonly { id: string; name: string }[];
   maxDuration: number;
-  allowLongImage?: boolean;
+  allowImageExport?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -214,7 +214,10 @@ function imageOptions() {
         </div>
       </section>
 
-      <section class="project-transfer-section project-transfer-section--image">
+      <section
+        v-if="allowImageExport !== false"
+        class="project-transfer-section project-transfer-section--image"
+      >
         <header class="project-transfer-section__header">
           <div>
             <h3>{{ t('timeline.export.imageSectionTitle') }}</h3>
@@ -257,7 +260,6 @@ function imageOptions() {
             </span>
           </EaButton>
           <EaButton
-            v-if="allowLongImage !== false"
             class="export-action-card"
             size="lg"
             type="button"

@@ -45,7 +45,11 @@ const props = defineProps<{
   randomMode: 'expected' | 'sampled';
   automaticControlSwitches: boolean;
   comboSkillPriorityEnabled: boolean;
-  comboSkillPriorityOperators: readonly { id: string | null; name: string; avatar: string | null }[];
+  comboSkillPriorityOperators: readonly {
+    id: string | null;
+    name: string;
+    avatar: string | null;
+  }[];
   configurationReadOnly?: boolean;
   globalRandomSeed: number;
   labels: {
@@ -111,21 +115,35 @@ const renaming = ref(false);
 const { t } = useI18n({ useScope: 'global' });
 const renameDraft = ref('');
 const renameInput = ref<{ focus: () => void; select: () => void } | null>(null);
+const projectMenuOpen = ref(false);
 const moreMenuOpen = ref(false);
 const displayMenuOpen = ref(false);
 usePopoverInteractionBoundary(
   useInteractionSession(),
-  () => moreMenuOpen.value || displayMenuOpen.value,
+  () => projectMenuOpen.value || moreMenuOpen.value || displayMenuOpen.value,
   () => {
+    projectMenuOpen.value = false;
     moreMenuOpen.value = false;
     displayMenuOpen.value = false;
   },
 );
+watch(projectMenuOpen, open => {
+  if (open) {
+    displayMenuOpen.value = false;
+    moreMenuOpen.value = false;
+  }
+});
 watch(displayMenuOpen, open => {
-  if (open) moreMenuOpen.value = false;
+  if (open) {
+    projectMenuOpen.value = false;
+    moreMenuOpen.value = false;
+  }
 });
 watch(moreMenuOpen, open => {
-  if (open) displayMenuOpen.value = false;
+  if (open) {
+    projectMenuOpen.value = false;
+    displayMenuOpen.value = false;
+  }
 });
 const scenarioTabs = ref<HTMLElement | null>(null);
 const scenarioTabsMaskStyle = ref({ maskImage: 'none', WebkitMaskImage: 'none' });
@@ -158,10 +176,14 @@ function cancelRename(): void {
   renameDraft.value = props.scenarioName;
 }
 
-function runProjectAction(action: 'open' | 'receive' | 'reset' | 'assetWorkspace'): void {
+function runProjectAction(
+  action: 'open' | 'receive' | 'export' | 'reset' | 'assetWorkspace',
+): void {
+  projectMenuOpen.value = false;
   moreMenuOpen.value = false;
   if (action === 'open') emit('open');
   else if (action === 'receive') emit('receive');
+  else if (action === 'export') emit('export');
   else if (action === 'assetWorkspace') emit('assetWorkspace');
   else emit('reset');
 }
@@ -310,14 +332,94 @@ onBeforeUnmount(() => {
         </svg>
         {{ labels.analysis }}
       </EaButton>
-      <EaButton size="sm" type="button" class="command-button--export" @click="$emit('export')">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M14 3h7v7" />
-          <path d="M10 14L21 3" />
-          <path d="M21 14v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h7" />
-        </svg>
-        {{ labels.export }}
-      </EaButton>
+      <EaPopover
+        v-model:visible="projectMenuOpen"
+        placement="bottom-end"
+        trigger="click"
+        :width="280"
+        :show-arrow="true"
+        popper-class="header-more-popper"
+      >
+        <template #reference>
+          <EaButton
+            size="sm"
+            type="button"
+            :title="t('timeline.header.sectionProject')"
+            :aria-label="t('timeline.header.sectionProject')"
+            :aria-expanded="projectMenuOpen"
+            :data-keyboard-shortcut-scope="projectMenuOpen ? 'overlay' : undefined"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 6h7l2 2h9v11H3z" />
+            </svg>
+            {{ t('timeline.header.sectionProject') }}
+          </EaButton>
+        </template>
+        <div class="header-more-panel header-project-panel" data-keyboard-shortcut-scope="overlay">
+          <section class="header-more-section">
+            <div class="header-project-actions">
+              <EaButton
+                size="sm"
+                type="button"
+                class="header-more-action header-project-action"
+                :title="t('timeline.header.loadTooltip')"
+                @click="runProjectAction('open')"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                <span>{{ labels.open }}</span>
+              </EaButton>
+              <EaButton
+                size="sm"
+                type="button"
+                class="header-more-action header-project-action"
+                :title="t('timeline.header.receiveTooltip')"
+                @click="runProjectAction('receive')"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <polyline points="9 11 12 14 22 4" />
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                </svg>
+                <span>{{ t('common.receive') }}</span>
+              </EaButton>
+              <EaButton
+                size="sm"
+                type="button"
+                class="header-more-action header-project-action header-project-action--wide"
+                @click="runProjectAction('export')"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M14 3h7v7" />
+                  <path d="M10 14L21 3" />
+                  <path d="M21 14v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h7" />
+                </svg>
+                <span>{{ labels.export }}</span>
+              </EaButton>
+            </div>
+          </section>
+          <section class="header-more-section">
+            <EaButton
+              variant="danger"
+              size="sm"
+              type="button"
+              class="header-more-action header-project-action"
+              :title="t('timeline.header.resetTooltip')"
+              @click="runProjectAction('reset')"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <polyline points="3 6 5 6 21 6" />
+                <path
+                  d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                />
+              </svg>
+              <span>{{ labels.reset }}</span>
+            </EaButton>
+          </section>
+        </div>
+      </EaPopover>
       <EaPopover
         v-model:visible="displayMenuOpen"
         placement="bottom-end"
@@ -578,54 +680,6 @@ onBeforeUnmount(() => {
                   <rect x="1" y="1" width="14" height="14" rx="2" />
                   <polyline v-if="connectionToolEnabled" points="3,8 6.5,11.5 13,4.5" />
                 </svg>
-              </EaButton>
-            </div>
-          </section>
-          <section class="header-more-section">
-            <h4 class="header-more-section__title">{{ t('timeline.header.sectionProject') }}</h4>
-            <div class="header-more-actions">
-              <EaButton
-                size="sm"
-                type="button"
-                class="header-more-action"
-                :title="t('timeline.header.loadTooltip')"
-                @click="runProjectAction('open')"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                <span>{{ labels.open }}</span>
-              </EaButton>
-              <EaButton
-                size="sm"
-                type="button"
-                class="header-more-action"
-                :title="t('timeline.header.receiveTooltip')"
-                @click="runProjectAction('receive')"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <polyline points="9 11 12 14 22 4" />
-                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-                </svg>
-                <span>{{ t('common.receive') }}</span>
-              </EaButton>
-              <EaButton
-                variant="danger"
-                size="sm"
-                type="button"
-                class="header-more-action"
-                :title="t('timeline.header.resetTooltip')"
-                @click="runProjectAction('reset')"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <polyline points="3 6 5 6 21 6" />
-                  <path
-                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-                  />
-                </svg>
-                <span>{{ labels.reset }}</span>
               </EaButton>
             </div>
           </section>
@@ -1024,10 +1078,14 @@ onBeforeUnmount(() => {
   letter-spacing: 0.5px;
 }
 
-.header-more-actions {
-  display: flex;
-  flex-wrap: wrap;
+.header-project-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
+}
+
+.header-project-action--wide {
+  grid-column: 1 / -1;
 }
 
 .header-more-action.ea-button {
@@ -1041,6 +1099,11 @@ onBeforeUnmount(() => {
   --ea-control-border-hover: var(--ea-border-strong);
   --ea-control-fg-hover: var(--ea-fg);
   backdrop-filter: none;
+}
+
+.header-project-action.ea-button {
+  width: 100%;
+  min-width: 0;
 }
 
 .header-more-pref-row {

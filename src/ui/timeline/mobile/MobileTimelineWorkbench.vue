@@ -870,103 +870,77 @@ function setScenario(value: EaSelectValue | EaSelectValue[]): void {
             </template>
             <div class="mobile-more-panel">
               <section class="mobile-more-section">
-                <h4 class="mobile-more-section__title">{{ t('common.language') }}</h4>
-                <div class="mobile-locale" role="group" :aria-label="t('common.language')">
+                <h4 class="mobile-more-section__title">
+                  {{ t('timeline.header.sectionProject') }}
+                </h4>
+                <div class="mobile-project-actions">
                   <EaButton
                     size="sm"
-                    class="mobile-locale__btn"
-                    :pressed="locale === 'zh-CN'"
-                    @click="emit('setLocale', 'zh-CN')"
-                    >{{ t('locale.zhCN') }}</EaButton
+                    class="mobile-project-action"
+                    @click="
+                      moreOpen = false;
+                      emit('openProject');
+                    "
+                    ><svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" /></svg
+                    ><span>{{ t('common.load') }}</span></EaButton
                   ><EaButton
                     size="sm"
-                    class="mobile-locale__btn"
-                    :pressed="locale === 'en'"
-                    @click="emit('setLocale', 'en')"
-                    >{{ t('locale.en') }}</EaButton
-                  >
-                </div>
-                <div class="mobile-appearance-row">
-                  <span class="mobile-appearance-row__label">{{ t('common.appearance') }}</span>
-                  <div
-                    class="mobile-appearance-row__btns"
-                    role="group"
-                    :aria-label="t('common.appearance')"
-                  >
-                    <EaButton
-                      size="sm"
-                      class="mobile-appearance-btn"
-                      :pressed="appearance === 'light'"
-                      :title="t('common.appearanceLight')"
-                      :aria-label="t('common.appearanceLight')"
-                      @click="emit('setAppearance', 'light')"
-                      ><TimelineAppearanceIcon mode="light" /></EaButton
-                    ><EaButton
-                      size="sm"
-                      class="mobile-appearance-btn"
-                      :pressed="appearance === 'dark'"
-                      :title="t('common.appearanceDark')"
-                      :aria-label="t('common.appearanceDark')"
-                      @click="emit('setAppearance', 'dark')"
-                      ><TimelineAppearanceIcon mode="dark"
-                    /></EaButton>
-                  </div>
-                </div>
-              </section>
-              <section class="mobile-more-section">
-                <h4 class="mobile-more-section__title">
-                  {{ t('timeline.mobile.timeSettings.title') }}
-                </h4>
-                <div class="mobile-time-settings">
-                  <label class="mobile-time-setting-row"
-                    ><span>{{ t('timeline.mobile.timeSettings.prepDuration') }}</span
-                    ><span class="mobile-time-setting-row__control"
-                      ><EaNumberInput
-                        v-model="prepDraft"
-                        size="sm"
-                        :min="0"
-                        :step="0.5"
-                        :precision="2"
-                        controls-position="right"
-                        @change="emit('setPrepFrames', Math.round(prepDraft * 30))"
-                      />{{ t('timeline.mobile.timeSettings.seconds') }}</span
-                    ></label
-                  ><label class="mobile-time-setting-row"
-                    ><span>{{ t('timeline.mobile.timeSettings.battleDuration') }}</span
-                    ><span class="mobile-time-setting-row__control"
-                      ><EaNumberInput
-                        v-model="durationDraft"
-                        size="sm"
-                        :min="1"
-                        :step="10"
-                        :precision="0"
-                        controls-position="right"
-                        @change="emit('setDurationFrames', Math.round(durationDraft * 30))"
-                      />{{ t('timeline.mobile.timeSettings.seconds') }}</span
-                    ></label
-                  >
-                </div>
-                <EaButton
-                  class="header-more-check-row header-more-check-row--compact mobile-prep-setting"
-                  :pressed="prepExpanded"
-                  @click="emit('togglePrep')"
-                  ><svg
-                    viewBox="0 0 16 16"
-                    width="12"
-                    height="12"
-                    fill="none"
-                    stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
-                    stroke-width="1.5"
-                    aria-hidden="true"
-                  >
-                    <rect x="1" y="1" width="14" height="14" rx="2" />
-                    <polyline
-                      v-if="prepExpanded"
-                      points="3,8 6.5,11.5 13,4.5"
+                    class="mobile-project-action"
+                    @click="
+                      moreOpen = false;
+                      emit('receiveProject');
+                    "
+                    ><svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
                       stroke-width="2"
-                    /></svg
-                  ><span>{{ t('timeline.mobile.timeSettings.expandPrep') }}</span></EaButton
-                >
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <polyline points="9 11 12 14 22 4" />
+                      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg
+                    ><span>{{ t('timeline.mobile.import') }}</span></EaButton
+                  ><EaButton
+                    size="sm"
+                    class="mobile-project-action mobile-project-action--export"
+                    @click="
+                      moreOpen = false;
+                      emit('exportProject');
+                    "
+                    ><svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M14 3h7v7" />
+                      <path d="M10 14L21 3" />
+                      <path d="M21 14v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h7" /></svg
+                    ><span>{{ t('common.export') }}</span></EaButton
+                  >
+                </div>
               </section>
               <section class="mobile-more-section">
                 <h4 class="mobile-more-section__title">{{ t('timeline.mobile.display.title') }}</h4>
@@ -1075,7 +1049,107 @@ function setScenario(value: EaSelectValue | EaSelectValue[]): void {
                 </div>
               </section>
               <section class="mobile-more-section">
-                <h4 class="mobile-more-section__title">{{ t('display.keycapMode') }}</h4>
+                <h4 class="mobile-more-section__title">
+                  {{ t('timeline.mobile.timeSettings.title') }}
+                </h4>
+                <div class="mobile-time-settings">
+                  <label class="mobile-time-setting-row"
+                    ><span>{{ t('timeline.mobile.timeSettings.prepDuration') }}</span
+                    ><span class="mobile-time-setting-row__control"
+                      ><EaNumberInput
+                        v-model="prepDraft"
+                        size="sm"
+                        :min="0"
+                        :step="0.5"
+                        :precision="2"
+                        controls-position="right"
+                        @change="emit('setPrepFrames', Math.round(prepDraft * 30))"
+                      />{{ t('timeline.mobile.timeSettings.seconds') }}</span
+                    ></label
+                  ><label class="mobile-time-setting-row"
+                    ><span>{{ t('timeline.mobile.timeSettings.battleDuration') }}</span
+                    ><span class="mobile-time-setting-row__control"
+                      ><EaNumberInput
+                        v-model="durationDraft"
+                        size="sm"
+                        :min="1"
+                        :step="10"
+                        :precision="0"
+                        controls-position="right"
+                        @change="emit('setDurationFrames', Math.round(durationDraft * 30))"
+                      />{{ t('timeline.mobile.timeSettings.seconds') }}</span
+                    ></label
+                  >
+                </div>
+                <EaButton
+                  class="header-more-check-row header-more-check-row--compact mobile-prep-setting"
+                  :pressed="prepExpanded"
+                  @click="emit('togglePrep')"
+                  ><svg
+                    viewBox="0 0 16 16"
+                    width="12"
+                    height="12"
+                    fill="none"
+                    stroke="color-mix(in srgb, var(--ea-gold) 85%, transparent)"
+                    stroke-width="1.5"
+                    aria-hidden="true"
+                  >
+                    <rect x="1" y="1" width="14" height="14" rx="2" />
+                    <polyline
+                      v-if="prepExpanded"
+                      points="3,8 6.5,11.5 13,4.5"
+                      stroke-width="2"
+                    /></svg
+                  ><span>{{ t('timeline.mobile.timeSettings.expandPrep') }}</span></EaButton
+                >
+              </section>
+              <section class="mobile-more-section">
+                <h4 class="mobile-more-section__title">{{ t('timeline.header.sectionPrefs') }}</h4>
+                <h5 class="mobile-more-subtitle">{{ t('common.language') }}</h5>
+                <div class="mobile-locale" role="group" :aria-label="t('common.language')">
+                  <EaButton
+                    size="sm"
+                    class="mobile-locale__btn"
+                    :pressed="locale === 'zh-CN'"
+                    @click="emit('setLocale', 'zh-CN')"
+                    >{{ t('locale.zhCN') }}</EaButton
+                  ><EaButton
+                    size="sm"
+                    class="mobile-locale__btn"
+                    :pressed="locale === 'en'"
+                    @click="emit('setLocale', 'en')"
+                    >{{ t('locale.en') }}</EaButton
+                  >
+                </div>
+                <div class="mobile-appearance-row">
+                  <span class="mobile-appearance-row__label">{{ t('common.appearance') }}</span>
+                  <div
+                    class="mobile-appearance-row__btns"
+                    role="group"
+                    :aria-label="t('common.appearance')"
+                  >
+                    <EaButton
+                      size="sm"
+                      class="mobile-appearance-btn"
+                      :pressed="appearance === 'light'"
+                      :title="t('common.appearanceLight')"
+                      :aria-label="t('common.appearanceLight')"
+                      @click="emit('setAppearance', 'light')"
+                      ><TimelineAppearanceIcon mode="light" /></EaButton
+                    ><EaButton
+                      size="sm"
+                      class="mobile-appearance-btn"
+                      :pressed="appearance === 'dark'"
+                      :title="t('common.appearanceDark')"
+                      :aria-label="t('common.appearanceDark')"
+                      @click="emit('setAppearance', 'dark')"
+                      ><TimelineAppearanceIcon mode="dark"
+                    /></EaButton>
+                  </div>
+                </div>
+                <h5 class="mobile-more-subtitle mobile-more-subtitle--spaced">
+                  {{ t('display.keycapMode') }}
+                </h5>
                 <EaSelect
                   size="sm"
                   :model-value="keycapMode"
@@ -1092,73 +1166,8 @@ function setScenario(value: EaSelectValue | EaSelectValue[]): void {
                 />
               </section>
               <section class="mobile-more-section">
-                <div class="mobile-project-actions">
+                <div class="mobile-project-actions mobile-project-actions--danger">
                   <EaButton
-                    size="sm"
-                    class="mobile-project-action"
-                    @click="
-                      moreOpen = false;
-                      emit('openProject');
-                    "
-                    ><svg
-                      viewBox="0 0 24 24"
-                      width="14"
-                      height="14"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="7 10 12 15 17 10" />
-                      <line x1="12" y1="15" x2="12" y2="3" /></svg
-                    ><span>{{ t('common.load') }}</span></EaButton
-                  ><EaButton
-                    size="sm"
-                    class="mobile-project-action"
-                    @click="
-                      moreOpen = false;
-                      emit('receiveProject');
-                    "
-                    ><svg
-                      viewBox="0 0 24 24"
-                      width="14"
-                      height="14"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                    >
-                      <polyline points="9 11 12 14 22 4" />
-                      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg
-                    ><span>{{ t('timeline.mobile.import') }}</span></EaButton
-                  ><EaButton
-                    size="sm"
-                    class="mobile-project-action"
-                    @click="
-                      moreOpen = false;
-                      emit('exportProject');
-                    "
-                    ><svg
-                      viewBox="0 0 24 24"
-                      width="14"
-                      height="14"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M14 3h7v7" />
-                      <path d="M10 14L21 3" />
-                      <path d="M21 14v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h7" /></svg
-                    ><span>{{ t('common.export') }}</span></EaButton
-                  ><EaButton
                     size="sm"
                     variant="danger"
                     class="mobile-project-action"
@@ -2018,6 +2027,15 @@ function setScenario(value: EaSelectValue | EaSelectValue[]): void {
   font-weight: 700;
   letter-spacing: 0.5px;
 }
+.mobile-more-subtitle {
+  margin: 0;
+  color: var(--ea-fg-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+.mobile-more-subtitle--spaced {
+  margin-top: 4px;
+}
 .mobile-locale {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2116,6 +2134,12 @@ function setScenario(value: EaSelectValue | EaSelectValue[]): void {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+}
+.mobile-project-actions--danger {
+  grid-template-columns: minmax(0, 1fr);
+}
+.mobile-project-action--export {
+  grid-column: 1 / -1;
 }
 .mobile-project-action.ea-button {
   width: 100%;

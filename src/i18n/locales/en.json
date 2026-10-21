@@ -3111,7 +3111,6 @@
     },
     "analysis": {
       "button": "Analysis",
-      "tooltip": "View damage analysis for current timeline",
       "dialogTitle": "Damage Analysis",
       "damageByOperator": "Damage by Operator",
       "damageByElement": "Damage by Element",
@@ -3123,10 +3122,6 @@
       "dps": "DPS",
       "noData": "No damage data available. Add actions to the timeline first.",
       "contributionByOperator": "Contribution by Operator",
-      "lmdiModeStacks": "By Stacks",
-      "lmdiModeStacksTip": "Breach, electrification, and corrosion contribution are split between the trigger and the infliction stack providers.",
-      "lmdiModeApplier": "By Applier",
-      "lmdiModeApplierTip": "Breach, electrification, and corrosion contribution go entirely to the operator who triggered the reaction.",
       "damage": "Damage",
       "buff": "Buff",
       "warning": "Damage analysis is for team optimization only. Please do not use it to attack others.",
@@ -3184,8 +3179,6 @@
       "smallImageExported": "Small image exported: {filename}"
     },
     "header": {
-      "display": "Display",
-      "displayTooltip": "Timeline display and guide line",
       "more": "More",
       "moreTooltip": "Editing tools, scenario settings, and user preferences",
       "sectionEditTools": "Editing tools",
@@ -3198,8 +3191,6 @@
       "sectionViewLayers": "Layers",
       "sectionViewBehavior": "View behavior",
       "sectionViewOperators": "Operators",
-      "cursorGuide": "Guide line",
-      "buffLayout": "Buff layout",
       "editTools": {
         "boxSelect": "Box select",
         "connection": "Connection editing"
@@ -3291,29 +3282,18 @@
       }
     },
     "import": {
-      "dialogAlert": "Warning: Importing will overwrite all current project data. It is recommended to save first.",
-      "dialogConfirm": "Confirm overwrite and import",
       "dialogHint": "Please paste the data code:",
       "dialogPlaceholder": "Paste long string here...",
-      "dialogTitle": "Import Project",
-      "dropHint": "Drag file to import",
-      "failed": "Loading failed: {msg}",
-      "pngNoData": "This image does not contain valid ENDAXIS project data",
-      "pngSuccess": "Successfully loaded project from image!",
-      "projectLoaded": "Project loaded successfully!"
+      "dialogTitle": "Import Project"
     },
     "share": {
       "copied": "Share code copied to clipboard! You can send it to friends to import.",
       "copyFailed": "Failed to generate share code: {msg}",
-      "inputRequired": "Please enter the share code",
-      "imported": "Successfully imported shared plan!",
       "importFailed": "Invalid share code format or corrupted data"
     },
     "mobile": {
       "time": "Time",
       "import": "Import",
-      "importing": "Importing...",
-      "more": "More",
       "undo": "Undo",
       "redo": "Redo",
       "loadout": {
@@ -3328,8 +3308,7 @@
         "title": "Operator Skill Library",
         "selectTrack": "Select a track to add skills",
         "empty": "This operator has no placeable skills",
-        "placeHint": "Tap a position on the highlighted track to place",
-        "placed": "Placed “{name}”"
+        "placeHint": "Tap a position on the highlighted track to place"
       },
       "timeSettings": {
         "title": "Timeline Settings",
@@ -3340,7 +3319,6 @@
       },
       "display": {
         "title": "Timeline Display",
-        "showAllAttackSegments": "All basic attack segments",
         "showAnomalies": "Anomalies",
         "showDurationBars": "Duration bars",
         "showFreezeEffects": "Freeze effects",
@@ -3349,20 +3327,14 @@
       },
       "actionInfo": {
         "title": "Skill Info",
-        "notFound": "Skill not found (the scenario may have changed or data was updated)",
         "start": "Start Time",
         "end": "End Time",
         "duration": "Timeline block duration",
-        "spCost": "SP Cost",
-        "cooldown": "Cooldown",
-        "gaugeCost": "Ult Gauge Cost",
-        "hits": "Hit Points",
         "totalDamage": "Total Damage",
         "damageHit": "Hit {index}",
         "noDamage": "No damage was dealt in the current simulation",
         "disable": "Disable Skill",
-        "enable": "Enable Skill",
-        "delete": "Delete Skill"
+        "enable": "Enable Skill"
       },
       "app": {
         "timeline": "Timeline",
@@ -3407,14 +3379,6 @@
       "snapModeFrame": "1 Frame (1/60s)",
       "snapPrecision": "Snap Precision: {mode}",
       "undo": "Undo"
-    },
-    "customDefinition": {
-      "customizeOperator": "Customize operator",
-      "editOperator": "Edit operator definition",
-      "customizeWeapon": "Customize weapon",
-      "editWeapon": "Edit weapon definition",
-      "customizeGear": "Customize gear",
-      "editGear": "Edit gear definition"
     },
     "markerContext": {
       "title": "Timeline marker",
@@ -4558,17 +4522,8 @@
       "empty": "No matching weapons"
     },
     "gearDialog": {
-      "title": "Configure gear",
-      "searchPlaceholder": "Search by name, set, or defense",
-      "empty": "No matching gear",
       "defense": "Defense",
-      "noSet": "No set",
-      "slots": {
-        "armor": "Armor",
-        "gloves": "Gloves",
-        "accessory1": "Accessory 1",
-        "accessory2": "Accessory 2"
-      }
+      "noSet": "No set"
     },
     "simulating": "Simulating…",
     "simulationPreviousResult": "Showing previous results (outdated)",
