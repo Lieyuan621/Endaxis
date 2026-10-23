@@ -12,8 +12,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0029_lbmob_dungeon',
-        templateId: 'eny-0029-lbmob',
+        source: {
+          stageId: 'dung_ss01',
+          enemyId: 'eny_0029_lbmob_dungeon',
+          templateId: 'eny-0029-lbmob',
+        },
         level: 70,
         nameKey: 'enemy_eny_0029_lbmob_dungeon',
         usesBaseDefinition: false,
@@ -21,8 +24,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: true },
       },
       {
-        id: 'eny_0033_lbhunt_dungeon',
-        templateId: 'eny-0033-lbhunt',
+        source: {
+          stageId: 'dung_ss01',
+          enemyId: 'eny_0033_lbhunt_dungeon',
+          templateId: 'eny-0033-lbhunt',
+        },
         level: 70,
         nameKey: 'enemy_eny_0033_lbhunt_dungeon',
         usesBaseDefinition: false,
@@ -30,8 +36,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: true },
       },
       {
-        id: 'eny_0074_lbshield',
-        templateId: 'eny-0074-lbshield',
+        source: {
+          stageId: 'dung_ss01',
+          enemyId: 'eny_0074_lbshield',
+          templateId: 'eny-0074-lbshield',
+        },
         level: 70,
         nameKey: 'enemy_eny_0074_lbshield',
         usesBaseDefinition: true,
@@ -39,8 +48,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0018_lbtough_dungeon',
-        templateId: 'eny-0018-lbtough',
+        source: {
+          stageId: 'dung_ss01',
+          enemyId: 'eny_0018_lbtough_dungeon',
+          templateId: 'eny-0018-lbtough',
+        },
         level: 70,
         nameKey: 'enemy_eny_0018_lbtough_dungeon',
         usesBaseDefinition: false,
@@ -48,8 +60,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: true },
       },
       {
-        id: 'eny_0075_lbroshan',
-        templateId: 'eny-0075-lbroshan',
+        source: {
+          stageId: 'dung_ss01',
+          enemyId: 'eny_0075_lbroshan',
+          templateId: 'eny-0075-lbroshan',
+        },
         level: 70,
         nameKey: 'enemy_eny_0075_lbroshan',
         usesBaseDefinition: true,
@@ -70,8 +85,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0058_agdisk_dungeon',
-        templateId: 'eny-0058-agdisk',
+        source: {
+          stageId: 'dung_ss02',
+          enemyId: 'eny_0058_agdisk_dungeon',
+          templateId: 'eny-0058-agdisk',
+        },
         level: 70,
         nameKey: 'enemy_eny_0058_agdisk_dungeon',
         usesBaseDefinition: false,
@@ -79,8 +97,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: true },
       },
       {
-        id: 'eny_0077_agshield',
-        templateId: 'eny-0077-agshield',
+        source: {
+          stageId: 'dung_ss02',
+          enemyId: 'eny_0077_agshield',
+          templateId: 'eny-0077-agshield',
+        },
         level: 70,
         nameKey: 'enemy_eny_0077_agshield',
         usesBaseDefinition: true,
@@ -88,8 +109,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0063_agmelee2',
-        templateId: 'eny-0063-agmelee2',
+        source: {
+          stageId: 'dung_ss02',
+          enemyId: 'eny_0063_agmelee2',
+          templateId: 'eny-0063-agmelee2',
+        },
         level: 70,
         nameKey: 'enemy_eny_0063_agmelee2',
         usesBaseDefinition: true,
@@ -97,8 +121,7 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0076_agfly',
-        templateId: 'eny-0076-agfly',
+        source: { stageId: 'dung_ss02', enemyId: 'eny_0076_agfly', templateId: 'eny-0076-agfly' },
         level: 70,
         nameKey: 'enemy_eny_0076_agfly',
         usesBaseDefinition: true,
@@ -106,8 +129,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0025_agrange_dungeon',
-        templateId: 'eny-0025-agrange',
+        source: {
+          stageId: 'dung_ss02',
+          enemyId: 'eny_0025_agrange_dungeon',
+          templateId: 'eny-0025-agrange',
+        },
         level: 70,
         nameKey: 'enemy_eny_0025_agrange_dungeon',
         usesBaseDefinition: false,
@@ -128,8 +154,7 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0098_sandb2',
-        templateId: 'eny-0098-sandb2',
+        source: { stageId: 'dung_ss03', enemyId: 'eny_0098_sandb2', templateId: 'eny-0098-sandb2' },
         level: 70,
         nameKey: 'enemy_eny_0098_sandb2',
         usesBaseDefinition: true,
@@ -137,8 +162,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0083_hstiger',
-        templateId: 'eny-0083-hstiger',
+        source: {
+          stageId: 'dung_ss03',
+          enemyId: 'eny_0083_hstiger',
+          templateId: 'eny-0083-hstiger',
+        },
         level: 70,
         nameKey: 'enemy_eny_0083_hstiger',
         usesBaseDefinition: true,
@@ -146,8 +174,7 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0092_slbomb',
-        templateId: 'eny-0092-slbomb',
+        source: { stageId: 'dung_ss03', enemyId: 'eny_0092_slbomb', templateId: 'eny-0092-slbomb' },
         level: 70,
         nameKey: 'enemy_eny_0092_slbomb',
         usesBaseDefinition: true,
@@ -155,8 +182,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0100_slimerg2',
-        templateId: 'eny-0100-slimerg2',
+        source: {
+          stageId: 'dung_ss03',
+          enemyId: 'eny_0100_slimerg2',
+          templateId: 'eny-0100-slimerg2',
+        },
         level: 70,
         nameKey: 'enemy_eny_0100_slimerg2',
         usesBaseDefinition: true,
@@ -177,8 +207,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0072_slimeml',
-        templateId: 'eny-0072-slimeml',
+        source: {
+          stageId: 'dung_ss04',
+          enemyId: 'eny_0072_slimeml',
+          templateId: 'eny-0072-slimeml',
+        },
         level: 70,
         nameKey: 'enemy_eny_0072_slimeml',
         usesBaseDefinition: true,
@@ -186,8 +219,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0099_slimeml2',
-        templateId: 'eny-0099-slimeml2',
+        source: {
+          stageId: 'dung_ss04',
+          enemyId: 'eny_0099_slimeml2',
+          templateId: 'eny-0099-slimeml2',
+        },
         level: 70,
         nameKey: 'enemy_eny_0099_slimeml2',
         usesBaseDefinition: true,
@@ -195,8 +231,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0073_slimerg',
-        templateId: 'eny-0073-slimerg',
+        source: {
+          stageId: 'dung_ss04',
+          enemyId: 'eny_0073_slimerg',
+          templateId: 'eny-0073-slimerg',
+        },
         level: 70,
         nameKey: 'enemy_eny_0073_slimerg',
         usesBaseDefinition: true,
@@ -204,8 +243,7 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0109_hshog2',
-        templateId: 'eny-0109-hshog2',
+        source: { stageId: 'dung_ss04', enemyId: 'eny_0109_hshog2', templateId: 'eny-0109-hshog2' },
         level: 70,
         nameKey: 'enemy_eny_0109_hshog2',
         usesBaseDefinition: true,
@@ -213,8 +251,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0102_hstiger2',
-        templateId: 'eny-0102-hstiger2',
+        source: {
+          stageId: 'dung_ss04',
+          enemyId: 'eny_0102_hstiger2',
+          templateId: 'eny-0102-hstiger2',
+        },
         level: 70,
         nameKey: 'enemy_eny_0102_hstiger2',
         usesBaseDefinition: true,
@@ -235,8 +276,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0087_wgslime',
-        templateId: 'eny-0087-wgslime',
+        source: {
+          stageId: 'dung_ss05',
+          enemyId: 'eny_0087_wgslime',
+          templateId: 'eny-0087-wgslime',
+        },
         level: 70,
         nameKey: 'enemy_eny_0087_wgslime',
         usesBaseDefinition: true,
@@ -244,8 +288,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0089_wgreflec',
-        templateId: 'eny-0089-wgreflec',
+        source: {
+          stageId: 'dung_ss05',
+          enemyId: 'eny_0089_wgreflec',
+          templateId: 'eny-0089-wgreflec',
+        },
         level: 70,
         nameKey: 'enemy_eny_0089_wgreflec',
         usesBaseDefinition: true,
@@ -253,8 +300,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0088_wgthorns',
-        templateId: 'eny-0088-wgthorns',
+        source: {
+          stageId: 'dung_ss05',
+          enemyId: 'eny_0088_wgthorns',
+          templateId: 'eny-0088-wgthorns',
+        },
         level: 70,
         nameKey: 'enemy_eny_0088_wgthorns',
         usesBaseDefinition: true,
@@ -262,8 +312,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0090_wgabyss',
-        templateId: 'eny-0090-wgabyss',
+        source: {
+          stageId: 'dung_ss05',
+          enemyId: 'eny_0090_wgabyss',
+          templateId: 'eny-0090-wgabyss',
+        },
         level: 70,
         nameKey: 'enemy_eny_0090_wgabyss',
         usesBaseDefinition: true,
@@ -271,8 +324,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0107_wgshoal2',
-        templateId: 'eny-0107-wgshoal2',
+        source: {
+          stageId: 'dung_ss05',
+          enemyId: 'eny_0107_wgshoal2',
+          templateId: 'eny-0107-wgshoal2',
+        },
         level: 70,
         nameKey: 'enemy_eny_0107_wgshoal2',
         usesBaseDefinition: true,
@@ -293,8 +349,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0117_klhound',
-        templateId: 'eny-0117-klhound',
+        source: {
+          stageId: 'dung_ss06',
+          enemyId: 'eny_0117_klhound',
+          templateId: 'eny-0117-klhound',
+        },
         level: 70,
         nameKey: 'enemy_eny_0117_klhound',
         usesBaseDefinition: true,
@@ -302,8 +361,7 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0121_klbud',
-        templateId: 'eny-0121-klbud',
+        source: { stageId: 'dung_ss06', enemyId: 'eny_0121_klbud', templateId: 'eny-0121-klbud' },
         level: 70,
         nameKey: 'enemy_eny_0121_klbud',
         usesBaseDefinition: true,
@@ -311,8 +369,7 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0123_klcap',
-        templateId: 'eny-0123-klcap',
+        source: { stageId: 'dung_ss06', enemyId: 'eny_0123_klcap', templateId: 'eny-0123-klcap' },
         level: 70,
         nameKey: 'enemy_eny_0123_klcap',
         usesBaseDefinition: true,
@@ -320,8 +377,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0133_inklion',
-        templateId: 'eny-0133-inklion',
+        source: {
+          stageId: 'dung_ss06',
+          enemyId: 'eny_0133_inklion',
+          templateId: 'eny-0133-inklion',
+        },
         level: 70,
         nameKey: 'enemy_eny_0133_inklion',
         usesBaseDefinition: true,
@@ -342,8 +402,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0051_rodin',
-        templateId: 'eny-0051-rodin',
+        source: {
+          stageId: 'dung01_bossrush01_01',
+          enemyId: 'eny_0051_rodin',
+          templateId: 'eny-0051-rodin',
+        },
         level: 40,
         nameKey: 'enemy_eny_0051_rodin',
         usesBaseDefinition: true,
@@ -364,8 +427,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0051_rodin',
-        templateId: 'eny-0051-rodin',
+        source: {
+          stageId: 'dung01_bossrush01_02',
+          enemyId: 'eny_0051_rodin',
+          templateId: 'eny-0051-rodin',
+        },
         level: 60,
         nameKey: 'enemy_eny_0051_rodin',
         usesBaseDefinition: true,
@@ -386,8 +452,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0051_rodin',
-        templateId: 'eny-0051-rodin',
+        source: {
+          stageId: 'dung01_bossrush01_03',
+          enemyId: 'eny_0051_rodin',
+          templateId: 'eny-0051-rodin',
+        },
         level: 80,
         nameKey: 'enemy_eny_0051_rodin',
         usesBaseDefinition: true,
@@ -408,8 +477,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0051_rodin',
-        templateId: 'eny-0051-rodin',
+        source: {
+          stageId: 'dung01_bossrush01_04',
+          enemyId: 'eny_0051_rodin',
+          templateId: 'eny-0051-rodin',
+        },
         level: 90,
         nameKey: 'enemy_eny_0051_rodin',
         usesBaseDefinition: true,
@@ -430,8 +502,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0045_agtrinit',
-        templateId: 'eny-0045-agtrinit',
+        source: {
+          stageId: 'dung01_bossrush02_01',
+          enemyId: 'eny_0045_agtrinit',
+          templateId: 'eny-0045-agtrinit',
+        },
         level: 60,
         nameKey: 'enemy_eny_0045_agtrinit',
         usesBaseDefinition: true,
@@ -452,8 +527,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0045_agtrinit',
-        templateId: 'eny-0045-agtrinit',
+        source: {
+          stageId: 'dung01_bossrush02_02',
+          enemyId: 'eny_0045_agtrinit',
+          templateId: 'eny-0045-agtrinit',
+        },
         level: 80,
         nameKey: 'enemy_eny_0045_agtrinit',
         usesBaseDefinition: true,
@@ -474,8 +552,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0045_agtrinit',
-        templateId: 'eny-0045-agtrinit',
+        source: {
+          stageId: 'dung01_bossrush02_03',
+          enemyId: 'eny_0045_agtrinit',
+          templateId: 'eny-0045-agtrinit',
+        },
         level: 90,
         nameKey: 'enemy_eny_0045_agtrinit',
         usesBaseDefinition: true,
@@ -496,8 +577,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0052_palesent',
-        templateId: 'eny-0052-palesent',
+        source: {
+          stageId: 'dung01_bossrush03_01',
+          enemyId: 'eny_0052_palesent',
+          templateId: 'eny-0052-palesent',
+        },
         level: 60,
         nameKey: 'enemy_eny_0052_palesent',
         usesBaseDefinition: true,
@@ -518,8 +602,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0052_palesent',
-        templateId: 'eny-0052-palesent',
+        source: {
+          stageId: 'dung01_bossrush03_02',
+          enemyId: 'eny_0052_palesent',
+          templateId: 'eny-0052-palesent',
+        },
         level: 80,
         nameKey: 'enemy_eny_0052_palesent',
         usesBaseDefinition: true,
@@ -540,8 +627,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0052_palesent',
-        templateId: 'eny-0052-palesent',
+        source: {
+          stageId: 'dung01_bossrush03_03',
+          enemyId: 'eny_0052_palesent',
+          templateId: 'eny-0052-palesent',
+        },
         level: 90,
         nameKey: 'enemy_eny_0052_palesent',
         usesBaseDefinition: true,
@@ -562,8 +652,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0072_slimeml',
-        templateId: 'eny-0072-slimeml',
+        source: {
+          stageId: 'dung01_charbreak01',
+          enemyId: 'eny_0072_slimeml',
+          templateId: 'eny-0072-slimeml',
+        },
         level: 10,
         nameKey: 'enemy_eny_0072_slimeml',
         usesBaseDefinition: false,
@@ -571,8 +664,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0025_agrange',
-        templateId: 'eny-0025-agrange',
+        source: {
+          stageId: 'dung01_charbreak01',
+          enemyId: 'eny_0025_agrange',
+          templateId: 'eny-0025-agrange',
+        },
         level: 10,
         nameKey: 'enemy_eny_0025_agrange',
         usesBaseDefinition: false,
@@ -580,8 +676,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0073_slimerg',
-        templateId: 'eny-0073-slimerg',
+        source: {
+          stageId: 'dung01_charbreak01',
+          enemyId: 'eny_0073_slimerg',
+          templateId: 'eny-0073-slimerg',
+        },
         level: 10,
         nameKey: 'enemy_eny_0073_slimerg',
         usesBaseDefinition: false,
@@ -602,8 +701,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0072_slimeml',
-        templateId: 'eny-0072-slimeml',
+        source: {
+          stageId: 'dung01_charbreak02',
+          enemyId: 'eny_0072_slimeml',
+          templateId: 'eny-0072-slimeml',
+        },
         level: 35,
         nameKey: 'enemy_eny_0072_slimeml',
         usesBaseDefinition: false,
@@ -611,8 +713,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0025_agrange',
-        templateId: 'eny-0025-agrange',
+        source: {
+          stageId: 'dung01_charbreak02',
+          enemyId: 'eny_0025_agrange',
+          templateId: 'eny-0025-agrange',
+        },
         level: 35,
         nameKey: 'enemy_eny_0025_agrange',
         usesBaseDefinition: false,
@@ -620,8 +725,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0099_slimeml2',
-        templateId: 'eny-0099-slimeml2',
+        source: {
+          stageId: 'dung01_charbreak02',
+          enemyId: 'eny_0099_slimeml2',
+          templateId: 'eny-0099-slimeml2',
+        },
         level: 35,
         nameKey: 'enemy_eny_0099_slimeml2',
         usesBaseDefinition: false,
@@ -629,8 +737,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0064_agrange2',
-        templateId: 'eny-0064-agrange2',
+        source: {
+          stageId: 'dung01_charbreak02',
+          enemyId: 'eny_0064_agrange2',
+          templateId: 'eny-0064-agrange2',
+        },
         level: 35,
         nameKey: 'enemy_eny_0064_agrange2',
         usesBaseDefinition: false,
@@ -651,8 +762,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0072_slimeml',
-        templateId: 'eny-0072-slimeml',
+        source: {
+          stageId: 'dung01_charbreak03',
+          enemyId: 'eny_0072_slimeml',
+          templateId: 'eny-0072-slimeml',
+        },
         level: 55,
         nameKey: 'enemy_eny_0072_slimeml',
         usesBaseDefinition: false,
@@ -660,8 +774,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0025_agrange',
-        templateId: 'eny-0025-agrange',
+        source: {
+          stageId: 'dung01_charbreak03',
+          enemyId: 'eny_0025_agrange',
+          templateId: 'eny-0025-agrange',
+        },
         level: 55,
         nameKey: 'enemy_eny_0025_agrange',
         usesBaseDefinition: false,
@@ -669,8 +786,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0099_slimeml2',
-        templateId: 'eny-0099-slimeml2',
+        source: {
+          stageId: 'dung01_charbreak03',
+          enemyId: 'eny_0099_slimeml2',
+          templateId: 'eny-0099-slimeml2',
+        },
         level: 55,
         nameKey: 'enemy_eny_0099_slimeml2',
         usesBaseDefinition: false,
@@ -691,8 +811,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0072_slimeml',
-        templateId: 'eny-0072-slimeml',
+        source: {
+          stageId: 'dung01_charbreak04',
+          enemyId: 'eny_0072_slimeml',
+          templateId: 'eny-0072-slimeml',
+        },
         level: 70,
         nameKey: 'enemy_eny_0072_slimeml',
         usesBaseDefinition: false,
@@ -700,8 +823,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0099_slimeml2',
-        templateId: 'eny-0099-slimeml2',
+        source: {
+          stageId: 'dung01_charbreak04',
+          enemyId: 'eny_0099_slimeml2',
+          templateId: 'eny-0099-slimeml2',
+        },
         level: 70,
         nameKey: 'enemy_eny_0099_slimeml2',
         usesBaseDefinition: false,
@@ -709,8 +835,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0007_mimicw',
-        templateId: 'eny-0007-mimicw',
+        source: {
+          stageId: 'dung01_charbreak04',
+          enemyId: 'eny_0007_mimicw',
+          templateId: 'eny-0007-mimicw',
+        },
         level: 70,
         nameKey: 'enemy_eny_0007_mimicw',
         usesBaseDefinition: false,
@@ -731,8 +860,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0072_slimeml',
-        templateId: 'eny-0072-slimeml',
+        source: {
+          stageId: 'dung01_charbreak05',
+          enemyId: 'eny_0072_slimeml',
+          templateId: 'eny-0072-slimeml',
+        },
         level: 80,
         nameKey: 'enemy_eny_0072_slimeml',
         usesBaseDefinition: false,
@@ -740,8 +872,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0064_agrange2',
-        templateId: 'eny-0064-agrange2',
+        source: {
+          stageId: 'dung01_charbreak05',
+          enemyId: 'eny_0064_agrange2',
+          templateId: 'eny-0064-agrange2',
+        },
         level: 80,
         nameKey: 'enemy_eny_0064_agrange2',
         usesBaseDefinition: false,
@@ -749,8 +884,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0070_agscorp2',
-        templateId: 'eny-0070-agscorp2',
+        source: {
+          stageId: 'dung01_charbreak05',
+          enemyId: 'eny_0070_agscorp2',
+          templateId: 'eny-0070-agscorp2',
+        },
         level: 80,
         nameKey: 'enemy_eny_0070_agscorp2',
         usesBaseDefinition: false,
@@ -771,8 +909,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0021_agmelee',
-        templateId: 'eny-0021-agmelee',
+        source: {
+          stageId: 'dung01_exp01',
+          enemyId: 'eny_0021_agmelee',
+          templateId: 'eny-0021-agmelee',
+        },
         level: 10,
         nameKey: 'enemy_eny_0021_agmelee',
         usesBaseDefinition: false,
@@ -780,8 +921,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0073_slimerg',
-        templateId: 'eny-0073-slimerg',
+        source: {
+          stageId: 'dung01_exp01',
+          enemyId: 'eny_0073_slimerg',
+          templateId: 'eny-0073-slimerg',
+        },
         level: 10,
         nameKey: 'enemy_eny_0073_slimerg',
         usesBaseDefinition: false,
@@ -789,8 +933,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0063_agmelee2',
-        templateId: 'eny-0063-agmelee2',
+        source: {
+          stageId: 'dung01_exp01',
+          enemyId: 'eny_0063_agmelee2',
+          templateId: 'eny-0063-agmelee2',
+        },
         level: 10,
         nameKey: 'enemy_eny_0063_agmelee2',
         usesBaseDefinition: false,
@@ -811,8 +958,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0021_agmelee',
-        templateId: 'eny-0021-agmelee',
+        source: {
+          stageId: 'dung01_exp02',
+          enemyId: 'eny_0021_agmelee',
+          templateId: 'eny-0021-agmelee',
+        },
         level: 35,
         nameKey: 'enemy_eny_0021_agmelee',
         usesBaseDefinition: false,
@@ -820,8 +970,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0073_slimerg',
-        templateId: 'eny-0073-slimerg',
+        source: {
+          stageId: 'dung01_exp02',
+          enemyId: 'eny_0073_slimerg',
+          templateId: 'eny-0073-slimerg',
+        },
         level: 35,
         nameKey: 'enemy_eny_0073_slimerg',
         usesBaseDefinition: false,
@@ -829,8 +982,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0100_slimerg2',
-        templateId: 'eny-0100-slimerg2',
+        source: {
+          stageId: 'dung01_exp02',
+          enemyId: 'eny_0100_slimerg2',
+          templateId: 'eny-0100-slimerg2',
+        },
         level: 35,
         nameKey: 'enemy_eny_0100_slimerg2',
         usesBaseDefinition: false,
@@ -838,8 +994,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0063_agmelee2',
-        templateId: 'eny-0063-agmelee2',
+        source: {
+          stageId: 'dung01_exp02',
+          enemyId: 'eny_0063_agmelee2',
+          templateId: 'eny-0063-agmelee2',
+        },
         level: 35,
         nameKey: 'enemy_eny_0063_agmelee2',
         usesBaseDefinition: false,
@@ -860,8 +1019,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0063_agmelee2',
-        templateId: 'eny-0063-agmelee2',
+        source: {
+          stageId: 'dung01_exp03',
+          enemyId: 'eny_0063_agmelee2',
+          templateId: 'eny-0063-agmelee2',
+        },
         level: 55,
         nameKey: 'enemy_eny_0063_agmelee2',
         usesBaseDefinition: false,
@@ -869,8 +1031,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0073_slimerg',
-        templateId: 'eny-0073-slimerg',
+        source: {
+          stageId: 'dung01_exp03',
+          enemyId: 'eny_0073_slimerg',
+          templateId: 'eny-0073-slimerg',
+        },
         level: 55,
         nameKey: 'enemy_eny_0073_slimerg',
         usesBaseDefinition: false,
@@ -878,8 +1043,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0007_mimicw',
-        templateId: 'eny-0007-mimicw',
+        source: {
+          stageId: 'dung01_exp03',
+          enemyId: 'eny_0007_mimicw',
+          templateId: 'eny-0007-mimicw',
+        },
         level: 55,
         nameKey: 'enemy_eny_0007_mimicw',
         usesBaseDefinition: false,
@@ -887,8 +1055,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0021_agmelee',
-        templateId: 'eny-0021-agmelee',
+        source: {
+          stageId: 'dung01_exp03',
+          enemyId: 'eny_0021_agmelee',
+          templateId: 'eny-0021-agmelee',
+        },
         level: 55,
         nameKey: 'enemy_eny_0021_agmelee',
         usesBaseDefinition: false,
@@ -909,8 +1080,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0021_agmelee',
-        templateId: 'eny-0021-agmelee',
+        source: {
+          stageId: 'dung01_exp04',
+          enemyId: 'eny_0021_agmelee',
+          templateId: 'eny-0021-agmelee',
+        },
         level: 70,
         nameKey: 'enemy_eny_0021_agmelee',
         usesBaseDefinition: true,
@@ -918,8 +1092,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0100_slimerg2',
-        templateId: 'eny-0100-slimerg2',
+        source: {
+          stageId: 'dung01_exp04',
+          enemyId: 'eny_0100_slimerg2',
+          templateId: 'eny-0100-slimerg2',
+        },
         level: 70,
         nameKey: 'enemy_eny_0100_slimerg2',
         usesBaseDefinition: true,
@@ -927,8 +1104,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0023_aghornb',
-        templateId: 'eny-0023-aghornb',
+        source: {
+          stageId: 'dung01_exp04',
+          enemyId: 'eny_0023_aghornb',
+          templateId: 'eny-0023-aghornb',
+        },
         level: 70,
         nameKey: 'enemy_eny_0023_aghornb',
         usesBaseDefinition: true,
@@ -949,8 +1129,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0021_agmelee',
-        templateId: 'eny-0021-agmelee',
+        source: {
+          stageId: 'dung01_exp05',
+          enemyId: 'eny_0021_agmelee',
+          templateId: 'eny-0021-agmelee',
+        },
         level: 80,
         nameKey: 'enemy_eny_0021_agmelee',
         usesBaseDefinition: false,
@@ -958,8 +1141,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0076_agfly',
-        templateId: 'eny-0076-agfly',
+        source: {
+          stageId: 'dung01_exp05',
+          enemyId: 'eny_0076_agfly',
+          templateId: 'eny-0076-agfly',
+        },
         level: 80,
         nameKey: 'enemy_eny_0076_agfly',
         usesBaseDefinition: false,
@@ -967,8 +1153,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0070_agscorp2',
-        templateId: 'eny-0070-agscorp2',
+        source: {
+          stageId: 'dung01_exp05',
+          enemyId: 'eny_0070_agscorp2',
+          templateId: 'eny-0070-agscorp2',
+        },
         level: 80,
         nameKey: 'enemy_eny_0070_agscorp2',
         usesBaseDefinition: false,
@@ -989,8 +1178,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0050_hound',
-        templateId: 'eny-0050-hound',
+        source: {
+          stageId: 'dung01_gold01',
+          enemyId: 'eny_0050_hound',
+          templateId: 'eny-0050-hound',
+        },
         level: 10,
         nameKey: 'enemy_eny_0050_hound',
         usesBaseDefinition: false,
@@ -998,8 +1190,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0033_lbhunt',
-        templateId: 'eny-0033-lbhunt',
+        source: {
+          stageId: 'dung01_gold01',
+          enemyId: 'eny_0033_lbhunt',
+          templateId: 'eny-0033-lbhunt',
+        },
         level: 10,
         nameKey: 'enemy_eny_0033_lbhunt',
         usesBaseDefinition: false,
@@ -1020,8 +1215,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0050_hound',
-        templateId: 'eny-0050-hound',
+        source: {
+          stageId: 'dung01_gold02',
+          enemyId: 'eny_0050_hound',
+          templateId: 'eny-0050-hound',
+        },
         level: 35,
         nameKey: 'enemy_eny_0050_hound',
         usesBaseDefinition: false,
@@ -1029,8 +1227,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0067_hound2',
-        templateId: 'eny-0067-hound2',
+        source: {
+          stageId: 'dung01_gold02',
+          enemyId: 'eny_0067_hound2',
+          templateId: 'eny-0067-hound2',
+        },
         level: 35,
         nameKey: 'enemy_eny_0067_hound2',
         usesBaseDefinition: false,
@@ -1038,8 +1239,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0033_lbhunt',
-        templateId: 'eny-0033-lbhunt',
+        source: {
+          stageId: 'dung01_gold02',
+          enemyId: 'eny_0033_lbhunt',
+          templateId: 'eny-0033-lbhunt',
+        },
         level: 35,
         nameKey: 'enemy_eny_0033_lbhunt',
         usesBaseDefinition: false,
@@ -1060,8 +1264,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0050_hound',
-        templateId: 'eny-0050-hound',
+        source: {
+          stageId: 'dung01_gold03',
+          enemyId: 'eny_0050_hound',
+          templateId: 'eny-0050-hound',
+        },
         level: 55,
         nameKey: 'enemy_eny_0050_hound',
         usesBaseDefinition: false,
@@ -1069,8 +1276,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0067_hound2',
-        templateId: 'eny-0067-hound2',
+        source: {
+          stageId: 'dung01_gold03',
+          enemyId: 'eny_0067_hound2',
+          templateId: 'eny-0067-hound2',
+        },
         level: 55,
         nameKey: 'enemy_eny_0067_hound2',
         usesBaseDefinition: false,
@@ -1078,8 +1288,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0033_lbhunt',
-        templateId: 'eny-0033-lbhunt',
+        source: {
+          stageId: 'dung01_gold03',
+          enemyId: 'eny_0033_lbhunt',
+          templateId: 'eny-0033-lbhunt',
+        },
         level: 55,
         nameKey: 'enemy_eny_0033_lbhunt',
         usesBaseDefinition: false,
@@ -1087,8 +1300,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0049_rogue',
-        templateId: 'eny-0049-rogue',
+        source: {
+          stageId: 'dung01_gold03',
+          enemyId: 'eny_0049_rogue',
+          templateId: 'eny-0049-rogue',
+        },
         level: 55,
         nameKey: 'enemy_eny_0049_rogue',
         usesBaseDefinition: false,
@@ -1109,8 +1325,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0066_lbhunt2',
-        templateId: 'eny-0066-lbhunt2',
+        source: {
+          stageId: 'dung01_gold04',
+          enemyId: 'eny_0066_lbhunt2',
+          templateId: 'eny-0066-lbhunt2',
+        },
         level: 70,
         nameKey: 'enemy_eny_0066_lbhunt2',
         usesBaseDefinition: true,
@@ -1118,8 +1337,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0046_lbshamman',
-        templateId: 'eny-0046-lbshamman',
+        source: {
+          stageId: 'dung01_gold04',
+          enemyId: 'eny_0046_lbshamman',
+          templateId: 'eny-0046-lbshamman',
+        },
         level: 70,
         nameKey: 'enemy_eny_0046_lbshamman',
         usesBaseDefinition: true,
@@ -1127,8 +1349,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0050_hound',
-        templateId: 'eny-0050-hound',
+        source: {
+          stageId: 'dung01_gold04',
+          enemyId: 'eny_0050_hound',
+          templateId: 'eny-0050-hound',
+        },
         level: 70,
         nameKey: 'enemy_eny_0050_hound',
         usesBaseDefinition: true,
@@ -1136,8 +1361,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0067_hound2',
-        templateId: 'eny-0067-hound2',
+        source: {
+          stageId: 'dung01_gold04',
+          enemyId: 'eny_0067_hound2',
+          templateId: 'eny-0067-hound2',
+        },
         level: 70,
         nameKey: 'enemy_eny_0067_hound2',
         usesBaseDefinition: true,
@@ -1158,8 +1386,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0059_erhound',
-        templateId: 'eny-0059-erhound',
+        source: {
+          stageId: 'dung01_gold05',
+          enemyId: 'eny_0059_erhound',
+          templateId: 'eny-0059-erhound',
+        },
         level: 80,
         nameKey: 'enemy_eny_0059_erhound',
         usesBaseDefinition: true,
@@ -1167,8 +1398,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0067_hound2',
-        templateId: 'eny-0067-hound2',
+        source: {
+          stageId: 'dung01_gold05',
+          enemyId: 'eny_0067_hound2',
+          templateId: 'eny-0067-hound2',
+        },
         level: 80,
         nameKey: 'enemy_eny_0067_hound2',
         usesBaseDefinition: true,
@@ -1176,8 +1410,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0047_firebat',
-        templateId: 'eny-0047-firebat',
+        source: {
+          stageId: 'dung01_gold05',
+          enemyId: 'eny_0047_firebat',
+          templateId: 'eny-0047-firebat',
+        },
         level: 80,
         nameKey: 'enemy_eny_0047_firebat',
         usesBaseDefinition: true,
@@ -1198,8 +1435,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0029_lbmob',
-        templateId: 'eny-0029-lbmob',
+        source: {
+          stageId: 'dung01_skill01',
+          enemyId: 'eny_0029_lbmob',
+          templateId: 'eny-0029-lbmob',
+        },
         level: 10,
         nameKey: 'enemy_eny_0029_lbmob',
         usesBaseDefinition: false,
@@ -1207,8 +1447,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0074_lbshield',
-        templateId: 'eny-0074-lbshield',
+        source: {
+          stageId: 'dung01_skill01',
+          enemyId: 'eny_0074_lbshield',
+          templateId: 'eny-0074-lbshield',
+        },
         level: 10,
         nameKey: 'enemy_eny_0074_lbshield',
         usesBaseDefinition: false,
@@ -1216,8 +1459,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0033_lbhunt',
-        templateId: 'eny-0033-lbhunt',
+        source: {
+          stageId: 'dung01_skill01',
+          enemyId: 'eny_0033_lbhunt',
+          templateId: 'eny-0033-lbhunt',
+        },
         level: 10,
         nameKey: 'enemy_eny_0033_lbhunt',
         usesBaseDefinition: false,
@@ -1238,8 +1484,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0029_lbmob',
-        templateId: 'eny-0029-lbmob',
+        source: {
+          stageId: 'dung01_skill02',
+          enemyId: 'eny_0029_lbmob',
+          templateId: 'eny-0029-lbmob',
+        },
         level: 35,
         nameKey: 'enemy_eny_0029_lbmob',
         usesBaseDefinition: false,
@@ -1247,8 +1496,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0074_lbshield',
-        templateId: 'eny-0074-lbshield',
+        source: {
+          stageId: 'dung01_skill02',
+          enemyId: 'eny_0074_lbshield',
+          templateId: 'eny-0074-lbshield',
+        },
         level: 35,
         nameKey: 'enemy_eny_0074_lbshield',
         usesBaseDefinition: false,
@@ -1256,8 +1508,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0033_lbhunt',
-        templateId: 'eny-0033-lbhunt',
+        source: {
+          stageId: 'dung01_skill02',
+          enemyId: 'eny_0033_lbhunt',
+          templateId: 'eny-0033-lbhunt',
+        },
         level: 35,
         nameKey: 'enemy_eny_0033_lbhunt',
         usesBaseDefinition: false,
@@ -1265,8 +1520,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0065_lbmob2',
-        templateId: 'eny-0065-lbmob2',
+        source: {
+          stageId: 'dung01_skill02',
+          enemyId: 'eny_0065_lbmob2',
+          templateId: 'eny-0065-lbmob2',
+        },
         level: 35,
         nameKey: 'enemy_eny_0065_lbmob2',
         usesBaseDefinition: false,
@@ -1287,8 +1545,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0033_lbhunt',
-        templateId: 'eny-0033-lbhunt',
+        source: {
+          stageId: 'dung01_skill03',
+          enemyId: 'eny_0033_lbhunt',
+          templateId: 'eny-0033-lbhunt',
+        },
         level: 55,
         nameKey: 'enemy_eny_0033_lbhunt',
         usesBaseDefinition: true,
@@ -1296,8 +1557,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0074_lbshield',
-        templateId: 'eny-0074-lbshield',
+        source: {
+          stageId: 'dung01_skill03',
+          enemyId: 'eny_0074_lbshield',
+          templateId: 'eny-0074-lbshield',
+        },
         level: 55,
         nameKey: 'enemy_eny_0074_lbshield',
         usesBaseDefinition: true,
@@ -1305,8 +1569,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0029_lbmob',
-        templateId: 'eny-0029-lbmob',
+        source: {
+          stageId: 'dung01_skill03',
+          enemyId: 'eny_0029_lbmob',
+          templateId: 'eny-0029-lbmob',
+        },
         level: 55,
         nameKey: 'enemy_eny_0029_lbmob',
         usesBaseDefinition: true,
@@ -1327,8 +1594,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0033_lbhunt',
-        templateId: 'eny-0033-lbhunt',
+        source: {
+          stageId: 'dung01_skill04',
+          enemyId: 'eny_0033_lbhunt',
+          templateId: 'eny-0033-lbhunt',
+        },
         level: 70,
         nameKey: 'enemy_eny_0033_lbhunt',
         usesBaseDefinition: false,
@@ -1336,8 +1606,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0074_lbshield',
-        templateId: 'eny-0074-lbshield',
+        source: {
+          stageId: 'dung01_skill04',
+          enemyId: 'eny_0074_lbshield',
+          templateId: 'eny-0074-lbshield',
+        },
         level: 70,
         nameKey: 'enemy_eny_0074_lbshield',
         usesBaseDefinition: false,
@@ -1345,8 +1618,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0065_lbmob2',
-        templateId: 'eny-0065-lbmob2',
+        source: {
+          stageId: 'dung01_skill04',
+          enemyId: 'eny_0065_lbmob2',
+          templateId: 'eny-0065-lbmob2',
+        },
         level: 70,
         nameKey: 'enemy_eny_0065_lbmob2',
         usesBaseDefinition: false,
@@ -1367,8 +1643,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0065_lbmob2',
-        templateId: 'eny-0065-lbmob2',
+        source: {
+          stageId: 'dung01_skill05',
+          enemyId: 'eny_0065_lbmob2',
+          templateId: 'eny-0065-lbmob2',
+        },
         level: 80,
         nameKey: 'enemy_eny_0065_lbmob2',
         usesBaseDefinition: false,
@@ -1376,8 +1655,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0074_lbshield',
-        templateId: 'eny-0074-lbshield',
+        source: {
+          stageId: 'dung01_skill05',
+          enemyId: 'eny_0074_lbshield',
+          templateId: 'eny-0074-lbshield',
+        },
         level: 80,
         nameKey: 'enemy_eny_0074_lbshield',
         usesBaseDefinition: false,
@@ -1385,8 +1667,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0046_lbshamman',
-        templateId: 'eny-0046-lbshamman',
+        source: {
+          stageId: 'dung01_skill05',
+          enemyId: 'eny_0046_lbshamman',
+          templateId: 'eny-0046-lbshamman',
+        },
         level: 80,
         nameKey: 'enemy_eny_0046_lbshamman',
         usesBaseDefinition: false,
@@ -1407,8 +1692,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0021_agmelee',
-        templateId: 'eny-0021-agmelee',
+        source: {
+          stageId: 'dung01_wpbreak01',
+          enemyId: 'eny_0021_agmelee',
+          templateId: 'eny-0021-agmelee',
+        },
         level: 10,
         nameKey: 'enemy_eny_0021_agmelee',
         usesBaseDefinition: false,
@@ -1416,8 +1704,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0025_agrange',
-        templateId: 'eny-0025-agrange',
+        source: {
+          stageId: 'dung01_wpbreak01',
+          enemyId: 'eny_0025_agrange',
+          templateId: 'eny-0025-agrange',
+        },
         level: 10,
         nameKey: 'enemy_eny_0025_agrange',
         usesBaseDefinition: false,
@@ -1438,8 +1729,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0021_agmelee',
-        templateId: 'eny-0021-agmelee',
+        source: {
+          stageId: 'dung01_wpbreak02',
+          enemyId: 'eny_0021_agmelee',
+          templateId: 'eny-0021-agmelee',
+        },
         level: 35,
         nameKey: 'enemy_eny_0021_agmelee',
         usesBaseDefinition: true,
@@ -1447,8 +1741,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0064_agrange2',
-        templateId: 'eny-0064-agrange2',
+        source: {
+          stageId: 'dung01_wpbreak02',
+          enemyId: 'eny_0064_agrange2',
+          templateId: 'eny-0064-agrange2',
+        },
         level: 35,
         nameKey: 'enemy_eny_0064_agrange2',
         usesBaseDefinition: true,
@@ -1456,8 +1753,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0076_agfly',
-        templateId: 'eny-0076-agfly',
+        source: {
+          stageId: 'dung01_wpbreak02',
+          enemyId: 'eny_0076_agfly',
+          templateId: 'eny-0076-agfly',
+        },
         level: 35,
         nameKey: 'enemy_eny_0076_agfly',
         usesBaseDefinition: true,
@@ -1478,8 +1778,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0101_agfly2',
-        templateId: 'eny-0101-agfly2',
+        source: {
+          stageId: 'dung01_wpbreak03',
+          enemyId: 'eny_0101_agfly2',
+          templateId: 'eny-0101-agfly2',
+        },
         level: 55,
         nameKey: 'enemy_eny_0101_agfly2',
         usesBaseDefinition: false,
@@ -1487,8 +1790,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0064_agrange2',
-        templateId: 'eny-0064-agrange2',
+        source: {
+          stageId: 'dung01_wpbreak03',
+          enemyId: 'eny_0064_agrange2',
+          templateId: 'eny-0064-agrange2',
+        },
         level: 55,
         nameKey: 'enemy_eny_0064_agrange2',
         usesBaseDefinition: false,
@@ -1496,8 +1802,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0021_agmelee',
-        templateId: 'eny-0021-agmelee',
+        source: {
+          stageId: 'dung01_wpbreak03',
+          enemyId: 'eny_0021_agmelee',
+          templateId: 'eny-0021-agmelee',
+        },
         level: 55,
         nameKey: 'enemy_eny_0021_agmelee',
         usesBaseDefinition: false,
@@ -1505,8 +1814,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0076_agfly',
-        templateId: 'eny-0076-agfly',
+        source: {
+          stageId: 'dung01_wpbreak03',
+          enemyId: 'eny_0076_agfly',
+          templateId: 'eny-0076-agfly',
+        },
         level: 55,
         nameKey: 'enemy_eny_0076_agfly',
         usesBaseDefinition: false,
@@ -1527,8 +1839,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0064_agrange2',
-        templateId: 'eny-0064-agrange2',
+        source: {
+          stageId: 'dung01_wpbreak04',
+          enemyId: 'eny_0064_agrange2',
+          templateId: 'eny-0064-agrange2',
+        },
         level: 70,
         nameKey: 'enemy_eny_0064_agrange2',
         usesBaseDefinition: false,
@@ -1536,8 +1851,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0101_agfly2',
-        templateId: 'eny-0101-agfly2',
+        source: {
+          stageId: 'dung01_wpbreak04',
+          enemyId: 'eny_0101_agfly2',
+          templateId: 'eny-0101-agfly2',
+        },
         level: 70,
         nameKey: 'enemy_eny_0101_agfly2',
         usesBaseDefinition: false,
@@ -1545,8 +1863,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0027_agscorp',
-        templateId: 'eny-0027-agscorp',
+        source: {
+          stageId: 'dung01_wpbreak04',
+          enemyId: 'eny_0027_agscorp',
+          templateId: 'eny-0027-agscorp',
+        },
         level: 70,
         nameKey: 'enemy_eny_0027_agscorp',
         usesBaseDefinition: false,
@@ -1567,8 +1888,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0021_agmelee',
-        templateId: 'eny-0021-agmelee',
+        source: {
+          stageId: 'dung01_wpbreak05',
+          enemyId: 'eny_0021_agmelee',
+          templateId: 'eny-0021-agmelee',
+        },
         level: 80,
         nameKey: 'enemy_eny_0021_agmelee',
         usesBaseDefinition: false,
@@ -1576,8 +1900,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0073_slimerg',
-        templateId: 'eny-0073-slimerg',
+        source: {
+          stageId: 'dung01_wpbreak05',
+          enemyId: 'eny_0073_slimerg',
+          templateId: 'eny-0073-slimerg',
+        },
         level: 80,
         nameKey: 'enemy_eny_0073_slimerg',
         usesBaseDefinition: false,
@@ -1585,8 +1912,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0069_aghornb2',
-        templateId: 'eny-0069-aghornb2',
+        source: {
+          stageId: 'dung01_wpbreak05',
+          enemyId: 'eny_0069_aghornb2',
+          templateId: 'eny-0069-aghornb2',
+        },
         level: 80,
         nameKey: 'enemy_eny_0069_aghornb2',
         usesBaseDefinition: false,
@@ -1607,8 +1937,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0029_lbmob',
-        templateId: 'eny-0029-lbmob',
+        source: {
+          stageId: 'dung01_wpexp01',
+          enemyId: 'eny_0029_lbmob',
+          templateId: 'eny-0029-lbmob',
+        },
         level: 10,
         nameKey: 'enemy_eny_0029_lbmob',
         usesBaseDefinition: false,
@@ -1616,8 +1949,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0074_lbshield',
-        templateId: 'eny-0074-lbshield',
+        source: {
+          stageId: 'dung01_wpexp01',
+          enemyId: 'eny_0074_lbshield',
+          templateId: 'eny-0074-lbshield',
+        },
         level: 10,
         nameKey: 'enemy_eny_0074_lbshield',
         usesBaseDefinition: false,
@@ -1638,8 +1974,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0029_lbmob',
-        templateId: 'eny-0029-lbmob',
+        source: {
+          stageId: 'dung01_wpexp02',
+          enemyId: 'eny_0029_lbmob',
+          templateId: 'eny-0029-lbmob',
+        },
         level: 35,
         nameKey: 'enemy_eny_0029_lbmob',
         usesBaseDefinition: false,
@@ -1647,8 +1986,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0074_lbshield',
-        templateId: 'eny-0074-lbshield',
+        source: {
+          stageId: 'dung01_wpexp02',
+          enemyId: 'eny_0074_lbshield',
+          templateId: 'eny-0074-lbshield',
+        },
         level: 35,
         nameKey: 'enemy_eny_0074_lbshield',
         usesBaseDefinition: false,
@@ -1656,8 +1998,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0065_lbmob2',
-        templateId: 'eny-0065-lbmob2',
+        source: {
+          stageId: 'dung01_wpexp02',
+          enemyId: 'eny_0065_lbmob2',
+          templateId: 'eny-0065-lbmob2',
+        },
         level: 35,
         nameKey: 'enemy_eny_0065_lbmob2',
         usesBaseDefinition: false,
@@ -1678,8 +2023,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0029_lbmob',
-        templateId: 'eny-0029-lbmob',
+        source: {
+          stageId: 'dung01_wpexp03',
+          enemyId: 'eny_0029_lbmob',
+          templateId: 'eny-0029-lbmob',
+        },
         level: 55,
         nameKey: 'enemy_eny_0029_lbmob',
         usesBaseDefinition: false,
@@ -1687,8 +2035,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0074_lbshield',
-        templateId: 'eny-0074-lbshield',
+        source: {
+          stageId: 'dung01_wpexp03',
+          enemyId: 'eny_0074_lbshield',
+          templateId: 'eny-0074-lbshield',
+        },
         level: 55,
         nameKey: 'enemy_eny_0074_lbshield',
         usesBaseDefinition: false,
@@ -1696,8 +2047,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0059_erhound',
-        templateId: 'eny-0059-erhound',
+        source: {
+          stageId: 'dung01_wpexp03',
+          enemyId: 'eny_0059_erhound',
+          templateId: 'eny-0059-erhound',
+        },
         level: 55,
         nameKey: 'enemy_eny_0059_erhound',
         usesBaseDefinition: false,
@@ -1718,8 +2072,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0059_erhound',
-        templateId: 'eny-0059-erhound',
+        source: {
+          stageId: 'dung01_wpexp04',
+          enemyId: 'eny_0059_erhound',
+          templateId: 'eny-0059-erhound',
+        },
         level: 70,
         nameKey: 'enemy_eny_0059_erhound',
         usesBaseDefinition: false,
@@ -1727,8 +2084,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0060_lbmad',
-        templateId: 'eny-0060-lbmad',
+        source: {
+          stageId: 'dung01_wpexp04',
+          enemyId: 'eny_0060_lbmad',
+          templateId: 'eny-0060-lbmad',
+        },
         level: 70,
         nameKey: 'enemy_eny_0060_lbmad',
         usesBaseDefinition: false,
@@ -1736,8 +2096,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0047_firebat',
-        templateId: 'eny-0047-firebat',
+        source: {
+          stageId: 'dung01_wpexp04',
+          enemyId: 'eny_0047_firebat',
+          templateId: 'eny-0047-firebat',
+        },
         level: 70,
         nameKey: 'enemy_eny_0047_firebat',
         usesBaseDefinition: false,
@@ -1758,8 +2121,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0060_lbmad',
-        templateId: 'eny-0060-lbmad',
+        source: {
+          stageId: 'dung01_wpexp05',
+          enemyId: 'eny_0060_lbmad',
+          templateId: 'eny-0060-lbmad',
+        },
         level: 80,
         nameKey: 'enemy_eny_0060_lbmad',
         usesBaseDefinition: false,
@@ -1767,8 +2133,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0074_lbshield',
-        templateId: 'eny-0074-lbshield',
+        source: {
+          stageId: 'dung01_wpexp05',
+          enemyId: 'eny_0074_lbshield',
+          templateId: 'eny-0074-lbshield',
+        },
         level: 80,
         nameKey: 'enemy_eny_0074_lbshield',
         usesBaseDefinition: false,
@@ -1776,8 +2145,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0065_lbmob2',
-        templateId: 'eny-0065-lbmob2',
+        source: {
+          stageId: 'dung01_wpexp05',
+          enemyId: 'eny_0065_lbmob2',
+          templateId: 'eny-0065-lbmob2',
+        },
         level: 80,
         nameKey: 'enemy_eny_0065_lbmob2',
         usesBaseDefinition: false,
@@ -1785,8 +2157,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0047_firebat',
-        templateId: 'eny-0047-firebat',
+        source: {
+          stageId: 'dung01_wpexp05',
+          enemyId: 'eny_0047_firebat',
+          templateId: 'eny-0047-firebat',
+        },
         level: 80,
         nameKey: 'enemy_eny_0047_firebat',
         usesBaseDefinition: false,
@@ -1807,8 +2182,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0081_ruanyi',
-        templateId: 'eny-0081-ruanyi',
+        source: {
+          stageId: 'dung02_bossrush01_01',
+          enemyId: 'eny_0081_ruanyi',
+          templateId: 'eny-0081-ruanyi',
+        },
         level: 70,
         nameKey: 'enemy_eny_0081_ruanyi',
         usesBaseDefinition: true,
@@ -1829,8 +2207,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0081_ruanyi',
-        templateId: 'eny-0081-ruanyi',
+        source: {
+          stageId: 'dung02_bossrush01_02',
+          enemyId: 'eny_0081_ruanyi',
+          templateId: 'eny-0081-ruanyi',
+        },
         level: 80,
         nameKey: 'enemy_eny_0081_ruanyi',
         usesBaseDefinition: true,
@@ -1851,8 +2232,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0081_ruanyi',
-        templateId: 'eny-0081-ruanyi',
+        source: {
+          stageId: 'dung02_bossrush01_03',
+          enemyId: 'eny_0081_ruanyi',
+          templateId: 'eny-0081-ruanyi',
+        },
         level: 90,
         nameKey: 'enemy_eny_0081_ruanyi',
         usesBaseDefinition: true,
@@ -1873,8 +2257,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0078_nefarp1',
-        templateId: 'eny-0078-nefarp1',
+        source: {
+          stageId: 'dung02_bossrush02_01',
+          enemyId: 'eny_0078_nefarp1',
+          templateId: 'eny-0078-nefarp1',
+        },
         level: 70,
         nameKey: 'enemy_eny_0078_nefarp1',
         usesBaseDefinition: true,
@@ -1895,8 +2282,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0078_nefarp1',
-        templateId: 'eny-0078-nefarp1',
+        source: {
+          stageId: 'dung02_bossrush02_02',
+          enemyId: 'eny_0078_nefarp1',
+          templateId: 'eny-0078-nefarp1',
+        },
         level: 80,
         nameKey: 'enemy_eny_0078_nefarp1',
         usesBaseDefinition: true,
@@ -1917,8 +2307,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0078_nefarp1',
-        templateId: 'eny-0078-nefarp1',
+        source: {
+          stageId: 'dung02_bossrush02_03',
+          enemyId: 'eny_0078_nefarp1',
+          templateId: 'eny-0078-nefarp1',
+        },
         level: 90,
         nameKey: 'enemy_eny_0078_nefarp1',
         usesBaseDefinition: true,
@@ -1939,8 +2332,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0125_fdcentur',
-        templateId: 'eny-0125-fdcentur',
+        source: {
+          stageId: 'dung02_bossrush03_01',
+          enemyId: 'eny_0125_fdcentur',
+          templateId: 'eny-0125-fdcentur',
+        },
         level: 70,
         nameKey: 'enemy_eny_0125_fdcentur',
         usesBaseDefinition: true,
@@ -1961,8 +2357,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0125_fdcentur',
-        templateId: 'eny-0125-fdcentur',
+        source: {
+          stageId: 'dung02_bossrush03_02',
+          enemyId: 'eny_0125_fdcentur',
+          templateId: 'eny-0125-fdcentur',
+        },
         level: 80,
         nameKey: 'enemy_eny_0125_fdcentur',
         usesBaseDefinition: true,
@@ -1983,8 +2382,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0125_fdcentur',
-        templateId: 'eny-0125-fdcentur',
+        source: {
+          stageId: 'dung02_bossrush03_03',
+          enemyId: 'eny_0125_fdcentur',
+          templateId: 'eny-0125-fdcentur',
+        },
         level: 90,
         nameKey: 'enemy_eny_0125_fdcentur',
         usesBaseDefinition: true,
@@ -2005,8 +2407,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0134_jsspsi',
-        templateId: 'eny-0134-jsspsi',
+        source: {
+          stageId: 'dung02_bossrush04_01',
+          enemyId: 'eny_0134_jsspsi',
+          templateId: 'eny-0134-jsspsi',
+        },
         level: 70,
         nameKey: 'enemy_eny_0134_jsspsi',
         usesBaseDefinition: true,
@@ -2027,8 +2432,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0134_jsspsi',
-        templateId: 'eny-0134-jsspsi',
+        source: {
+          stageId: 'dung02_bossrush04_02',
+          enemyId: 'eny_0134_jsspsi',
+          templateId: 'eny-0134-jsspsi',
+        },
         level: 80,
         nameKey: 'enemy_eny_0134_jsspsi',
         usesBaseDefinition: true,
@@ -2049,8 +2457,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0134_jsspsi',
-        templateId: 'eny-0134-jsspsi',
+        source: {
+          stageId: 'dung02_bossrush04_03',
+          enemyId: 'eny_0134_jsspsi',
+          templateId: 'eny-0134-jsspsi',
+        },
         level: 90,
         nameKey: 'enemy_eny_0134_jsspsi',
         usesBaseDefinition: true,
@@ -2071,8 +2482,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0114_jzmking',
-        templateId: 'eny-0114-jzmking',
+        source: {
+          stageId: 'dung02_minibossrush01_01',
+          enemyId: 'eny_0114_jzmking',
+          templateId: 'eny-0114-jzmking',
+        },
         level: 75,
         nameKey: 'enemy_eny_0114_jzmking',
         usesBaseDefinition: true,
@@ -2093,8 +2507,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0114_jzmking',
-        templateId: 'eny-0114-jzmking',
+        source: {
+          stageId: 'dung02_minibossrush01_02',
+          enemyId: 'eny_0114_jzmking',
+          templateId: 'eny-0114-jzmking',
+        },
         level: 90,
         nameKey: 'enemy_eny_0114_jzmking',
         usesBaseDefinition: true,
@@ -2115,8 +2532,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0120_klbear',
-        templateId: 'eny-0120-klbear',
+        source: {
+          stageId: 'dung02_minibossrush02_01',
+          enemyId: 'eny_0120_klbear',
+          templateId: 'eny-0120-klbear',
+        },
         level: 75,
         nameKey: 'enemy_eny_0120_klbear',
         usesBaseDefinition: true,
@@ -2137,8 +2557,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0120_klbear',
-        templateId: 'eny-0120-klbear',
+        source: {
+          stageId: 'dung02_minibossrush02_02',
+          enemyId: 'eny_0120_klbear',
+          templateId: 'eny-0120-klbear',
+        },
         level: 90,
         nameKey: 'enemy_eny_0120_klbear',
         usesBaseDefinition: true,
@@ -2159,8 +2582,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0127_bigents',
-        templateId: 'eny-0127-bigents',
+        source: {
+          stageId: 'dung02_minibossrush03_01',
+          enemyId: 'eny_0127_bigents',
+          templateId: 'eny-0127-bigents',
+        },
         level: 75,
         nameKey: 'enemy_eny_0127_bigents',
         usesBaseDefinition: true,
@@ -2181,8 +2607,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0127_bigents',
-        templateId: 'eny-0127-bigents',
+        source: {
+          stageId: 'dung02_minibossrush03_02',
+          enemyId: 'eny_0127_bigents',
+          templateId: 'eny-0127-bigents',
+        },
         level: 90,
         nameKey: 'enemy_eny_0127_bigents',
         usesBaseDefinition: true,
@@ -2203,8 +2632,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0023_aghornb_hdg001',
-        templateId: 'eny-0023-aghornb',
+        source: {
+          stageId: 'indie_hard001',
+          enemyId: 'eny_0023_aghornb_hdg001',
+          templateId: 'eny-0023-aghornb',
+        },
         level: 60,
         nameKey: 'enemy_eny_0023_aghornb_hdg001',
         usesBaseDefinition: false,
@@ -2225,8 +2657,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0023_aghornb_hdg001_assult',
-        templateId: 'eny-0023-aghornb',
+        source: {
+          stageId: 'indie_hard001_s',
+          enemyId: 'eny_0023_aghornb_hdg001_assult',
+          templateId: 'eny-0023-aghornb',
+        },
         level: 90,
         nameKey: 'enemy_eny_0023_aghornb_hdg001_assult',
         usesBaseDefinition: false,
@@ -2247,8 +2682,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0021_agmelee',
-        templateId: 'eny-0021-agmelee',
+        source: {
+          stageId: 'indie_hard002',
+          enemyId: 'eny_0021_agmelee',
+          templateId: 'eny-0021-agmelee',
+        },
         level: 60,
         nameKey: 'enemy_eny_0021_agmelee',
         usesBaseDefinition: false,
@@ -2256,8 +2694,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0027_agscorp_hdg002',
-        templateId: 'eny-0027-agscorp',
+        source: {
+          stageId: 'indie_hard002',
+          enemyId: 'eny_0027_agscorp_hdg002',
+          templateId: 'eny-0027-agscorp',
+        },
         level: 60,
         nameKey: 'enemy_eny_0027_agscorp_hdg002',
         usesBaseDefinition: false,
@@ -2278,8 +2719,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0076_agfly',
-        templateId: 'eny-0076-agfly',
+        source: {
+          stageId: 'indie_hard002_s',
+          enemyId: 'eny_0076_agfly',
+          templateId: 'eny-0076-agfly',
+        },
         level: 90,
         nameKey: 'enemy_eny_0076_agfly',
         usesBaseDefinition: false,
@@ -2287,8 +2731,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0064_agrange2_hdg002_assult',
-        templateId: 'eny-0064-agrange2',
+        source: {
+          stageId: 'indie_hard002_s',
+          enemyId: 'eny_0064_agrange2_hdg002_assult',
+          templateId: 'eny-0064-agrange2',
+        },
         level: 90,
         nameKey: 'enemy_eny_0064_agrange2_hdg002_assult',
         usesBaseDefinition: false,
@@ -2296,8 +2743,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: true, bornBuffs: false },
       },
       {
-        id: 'eny_0027_agscorp_hdg002_assult',
-        templateId: 'eny-0027-agscorp',
+        source: {
+          stageId: 'indie_hard002_s',
+          enemyId: 'eny_0027_agscorp_hdg002_assult',
+          templateId: 'eny-0027-agscorp',
+        },
         level: 90,
         nameKey: 'enemy_eny_0027_agscorp_hdg002_assult',
         usesBaseDefinition: false,
@@ -2318,8 +2768,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0077_agshield_hdg003',
-        templateId: 'eny-0077-agshield',
+        source: {
+          stageId: 'indie_hard003',
+          enemyId: 'eny_0077_agshield_hdg003',
+          templateId: 'eny-0077-agshield',
+        },
         level: 60,
         nameKey: 'enemy_eny_0077_agshield_hdg003',
         usesBaseDefinition: false,
@@ -2340,8 +2793,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0077_agshield_hdg003',
-        templateId: 'eny-0077-agshield',
+        source: {
+          stageId: 'indie_hard003_s',
+          enemyId: 'eny_0077_agshield_hdg003',
+          templateId: 'eny-0077-agshield',
+        },
         level: 90,
         nameKey: 'enemy_eny_0077_agshield_hdg003',
         usesBaseDefinition: false,
@@ -2362,8 +2818,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0018_lbtough_hdg004',
-        templateId: 'eny-0018-lbtough',
+        source: {
+          stageId: 'indie_hard004',
+          enemyId: 'eny_0018_lbtough_hdg004',
+          templateId: 'eny-0018-lbtough',
+        },
         level: 60,
         nameKey: 'enemy_eny_0018_lbtough_hdg004',
         usesBaseDefinition: false,
@@ -2371,8 +2830,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: true, bornBuffs: true },
       },
       {
-        id: 'eny_0048_hvybow_hdg004',
-        templateId: 'eny-0048-hvybow',
+        source: {
+          stageId: 'indie_hard004',
+          enemyId: 'eny_0048_hvybow_hdg004',
+          templateId: 'eny-0048-hvybow',
+        },
         level: 60,
         nameKey: 'enemy_eny_0048_hvybow_hdg004',
         usesBaseDefinition: false,
@@ -2393,8 +2855,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0018_lbtough_hdg004_assult',
-        templateId: 'eny-0018-lbtough',
+        source: {
+          stageId: 'indie_hard004_s',
+          enemyId: 'eny_0018_lbtough_hdg004_assult',
+          templateId: 'eny-0018-lbtough',
+        },
         level: 90,
         nameKey: 'enemy_eny_0018_lbtough_hdg004_assult',
         usesBaseDefinition: false,
@@ -2402,8 +2867,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: true, bornBuffs: true },
       },
       {
-        id: 'eny_0048_hvybow_hdg004_assult',
-        templateId: 'eny-0048-hvybow',
+        source: {
+          stageId: 'indie_hard004_s',
+          enemyId: 'eny_0048_hvybow_hdg004_assult',
+          templateId: 'eny-0048-hvybow',
+        },
         level: 90,
         nameKey: 'enemy_eny_0048_hvybow_hdg004_assult',
         usesBaseDefinition: false,
@@ -2424,8 +2892,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0033_lbhunt_hdg005',
-        templateId: 'eny-0033-lbhunt',
+        source: {
+          stageId: 'indie_hard005',
+          enemyId: 'eny_0033_lbhunt_hdg005',
+          templateId: 'eny-0033-lbhunt',
+        },
         level: 60,
         nameKey: 'enemy_eny_0033_lbhunt_hdg005',
         usesBaseDefinition: false,
@@ -2433,8 +2904,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: true, bornBuffs: true },
       },
       {
-        id: 'eny_0066_lbhunt2_hdg005',
-        templateId: 'eny-0066-lbhunt2',
+        source: {
+          stageId: 'indie_hard005',
+          enemyId: 'eny_0066_lbhunt2_hdg005',
+          templateId: 'eny-0066-lbhunt2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0066_lbhunt2_hdg005',
         usesBaseDefinition: false,
@@ -2442,8 +2916,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: true, bornBuffs: true },
       },
       {
-        id: 'eny_0007_mimicw_hdg005',
-        templateId: 'eny-0007-mimicw',
+        source: {
+          stageId: 'indie_hard005',
+          enemyId: 'eny_0007_mimicw_hdg005',
+          templateId: 'eny-0007-mimicw',
+        },
         level: 60,
         nameKey: 'enemy_eny_0007_mimicw_hdg005',
         usesBaseDefinition: false,
@@ -2464,8 +2941,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0033_lbhunt_hdg005',
-        templateId: 'eny-0033-lbhunt',
+        source: {
+          stageId: 'indie_hard005_s',
+          enemyId: 'eny_0033_lbhunt_hdg005',
+          templateId: 'eny-0033-lbhunt',
+        },
         level: 90,
         nameKey: 'enemy_eny_0033_lbhunt_hdg005',
         usesBaseDefinition: false,
@@ -2473,8 +2953,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: true, bornBuffs: true },
       },
       {
-        id: 'eny_0066_lbhunt2_hdg005',
-        templateId: 'eny-0066-lbhunt2',
+        source: {
+          stageId: 'indie_hard005_s',
+          enemyId: 'eny_0066_lbhunt2_hdg005',
+          templateId: 'eny-0066-lbhunt2',
+        },
         level: 90,
         nameKey: 'enemy_eny_0066_lbhunt2_hdg005',
         usesBaseDefinition: false,
@@ -2482,8 +2965,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: true, bornBuffs: true },
       },
       {
-        id: 'eny_0007_mimicw_hdg005',
-        templateId: 'eny-0007-mimicw',
+        source: {
+          stageId: 'indie_hard005_s',
+          enemyId: 'eny_0007_mimicw_hdg005',
+          templateId: 'eny-0007-mimicw',
+        },
         level: 90,
         nameKey: 'enemy_eny_0007_mimicw_hdg005',
         usesBaseDefinition: false,
@@ -2504,8 +2990,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0050_hound',
-        templateId: 'eny-0050-hound',
+        source: {
+          stageId: 'indie_hard006',
+          enemyId: 'eny_0050_hound',
+          templateId: 'eny-0050-hound',
+        },
         level: 60,
         nameKey: 'enemy_eny_0050_hound',
         usesBaseDefinition: false,
@@ -2513,8 +3002,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0050_hound',
-        templateId: 'eny-0050-hound',
+        source: {
+          stageId: 'indie_hard006',
+          enemyId: 'eny_0050_hound',
+          templateId: 'eny-0050-hound',
+        },
         level: 60,
         nameKey: 'enemy_eny_0050_hound',
         usesBaseDefinition: false,
@@ -2522,8 +3014,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0067_hound2',
-        templateId: 'eny-0067-hound2',
+        source: {
+          stageId: 'indie_hard006',
+          enemyId: 'eny_0067_hound2',
+          templateId: 'eny-0067-hound2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0067_hound2',
         usesBaseDefinition: false,
@@ -2531,8 +3026,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0066_lbhunt2',
-        templateId: 'eny-0066-lbhunt2',
+        source: {
+          stageId: 'indie_hard006',
+          enemyId: 'eny_0066_lbhunt2',
+          templateId: 'eny-0066-lbhunt2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0066_lbhunt2',
         usesBaseDefinition: false,
@@ -2540,8 +3038,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0074_lbshield',
-        templateId: 'eny-0074-lbshield',
+        source: {
+          stageId: 'indie_hard006',
+          enemyId: 'eny_0074_lbshield',
+          templateId: 'eny-0074-lbshield',
+        },
         level: 60,
         nameKey: 'enemy_eny_0074_lbshield',
         usesBaseDefinition: false,
@@ -2549,8 +3050,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0075_lbroshan',
-        templateId: 'eny-0075-lbroshan',
+        source: {
+          stageId: 'indie_hard006',
+          enemyId: 'eny_0075_lbroshan',
+          templateId: 'eny-0075-lbroshan',
+        },
         level: 60,
         nameKey: 'enemy_eny_0075_lbroshan',
         usesBaseDefinition: false,
@@ -2571,8 +3075,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0050_hound',
-        templateId: 'eny-0050-hound',
+        source: {
+          stageId: 'indie_hard006_s',
+          enemyId: 'eny_0050_hound',
+          templateId: 'eny-0050-hound',
+        },
         level: 90,
         nameKey: 'enemy_eny_0050_hound',
         usesBaseDefinition: false,
@@ -2580,8 +3087,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0059_erhound',
-        templateId: 'eny-0059-erhound',
+        source: {
+          stageId: 'indie_hard006_s',
+          enemyId: 'eny_0059_erhound',
+          templateId: 'eny-0059-erhound',
+        },
         level: 90,
         nameKey: 'enemy_eny_0059_erhound',
         usesBaseDefinition: false,
@@ -2589,8 +3099,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0074_lbshield',
-        templateId: 'eny-0074-lbshield',
+        source: {
+          stageId: 'indie_hard006_s',
+          enemyId: 'eny_0074_lbshield',
+          templateId: 'eny-0074-lbshield',
+        },
         level: 90,
         nameKey: 'enemy_eny_0074_lbshield',
         usesBaseDefinition: false,
@@ -2598,8 +3111,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0049_rogue',
-        templateId: 'eny-0049-rogue',
+        source: {
+          stageId: 'indie_hard006_s',
+          enemyId: 'eny_0049_rogue',
+          templateId: 'eny-0049-rogue',
+        },
         level: 90,
         nameKey: 'enemy_eny_0049_rogue',
         usesBaseDefinition: false,
@@ -2607,8 +3123,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0075_lbroshan',
-        templateId: 'eny-0075-lbroshan',
+        source: {
+          stageId: 'indie_hard006_s',
+          enemyId: 'eny_0075_lbroshan',
+          templateId: 'eny-0075-lbroshan',
+        },
         level: 90,
         nameKey: 'enemy_eny_0075_lbroshan',
         usesBaseDefinition: false,
@@ -2629,8 +3148,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0054_hsmino_hdg007',
-        templateId: 'eny-0054-hsmino',
+        source: {
+          stageId: 'indie_hard007',
+          enemyId: 'eny_0054_hsmino_hdg007',
+          templateId: 'eny-0054-hsmino',
+        },
         level: 60,
         nameKey: 'enemy_eny_0054_hsmino_hdg007',
         usesBaseDefinition: false,
@@ -2651,8 +3173,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0054_hsmino_hdg007',
-        templateId: 'eny-0054-hsmino',
+        source: {
+          stageId: 'indie_hard007_s',
+          enemyId: 'eny_0054_hsmino_hdg007',
+          templateId: 'eny-0054-hsmino',
+        },
         level: 90,
         nameKey: 'enemy_eny_0054_hsmino_hdg007',
         usesBaseDefinition: false,
@@ -2673,8 +3198,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0085_hsrogue_hard',
-        templateId: 'eny-0104-hsrogue2',
+        source: {
+          stageId: 'indie_hard008',
+          enemyId: 'eny_0085_hsrogue_hard',
+          templateId: 'eny-0104-hsrogue2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0085_hsrogue_hard',
         usesBaseDefinition: false,
@@ -2682,8 +3210,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: true, attributeModifiers: false, bornBuffs: true },
       },
       {
-        id: 'eny_0055_hscrane_hard',
-        templateId: 'eny-0055-hscrane',
+        source: {
+          stageId: 'indie_hard008',
+          enemyId: 'eny_0055_hscrane_hard',
+          templateId: 'eny-0055-hscrane',
+        },
         level: 60,
         nameKey: 'enemy_eny_0055_hscrane_hard',
         usesBaseDefinition: false,
@@ -2704,8 +3235,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0085_hsrogue_hard',
-        templateId: 'eny-0104-hsrogue2',
+        source: {
+          stageId: 'indie_hard008_s',
+          enemyId: 'eny_0085_hsrogue_hard',
+          templateId: 'eny-0104-hsrogue2',
+        },
         level: 90,
         nameKey: 'enemy_eny_0085_hsrogue_hard',
         usesBaseDefinition: false,
@@ -2713,8 +3247,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: true, attributeModifiers: false, bornBuffs: true },
       },
       {
-        id: 'eny_0055_hscrane_hard',
-        templateId: 'eny-0055-hscrane',
+        source: {
+          stageId: 'indie_hard008_s',
+          enemyId: 'eny_0055_hscrane_hard',
+          templateId: 'eny-0055-hscrane',
+        },
         level: 90,
         nameKey: 'enemy_eny_0055_hscrane_hard',
         usesBaseDefinition: false,
@@ -2735,8 +3272,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0047_firebat_hdg009',
-        templateId: 'eny-0047-firebat',
+        source: {
+          stageId: 'indie_hard009',
+          enemyId: 'eny_0047_firebat_hdg009',
+          templateId: 'eny-0047-firebat',
+        },
         level: 60,
         nameKey: 'enemy_eny_0047_firebat_hdg009',
         usesBaseDefinition: false,
@@ -2757,8 +3297,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0047_firebat_hdg009',
-        templateId: 'eny-0047-firebat',
+        source: {
+          stageId: 'indie_hard009_s',
+          enemyId: 'eny_0047_firebat_hdg009',
+          templateId: 'eny-0047-firebat',
+        },
         level: 90,
         nameKey: 'enemy_eny_0047_firebat_hdg009',
         usesBaseDefinition: false,
@@ -2779,8 +3322,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0087_wgslime_hdg010',
-        templateId: 'eny-0087-wgslime',
+        source: {
+          stageId: 'indie_hard010',
+          enemyId: 'eny_0087_wgslime_hdg010',
+          templateId: 'eny-0087-wgslime',
+        },
         level: 60,
         nameKey: 'enemy_eny_0087_wgslime_hdg010',
         usesBaseDefinition: false,
@@ -2788,8 +3334,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: true, attributeModifiers: true, bornBuffs: false },
       },
       {
-        id: 'eny_0105_wgslime2_hdg010',
-        templateId: 'eny-0105-wgslime2',
+        source: {
+          stageId: 'indie_hard010',
+          enemyId: 'eny_0105_wgslime2_hdg010',
+          templateId: 'eny-0105-wgslime2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0105_wgslime2_hdg010',
         usesBaseDefinition: false,
@@ -2810,8 +3359,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0087_wgslime_hdg010',
-        templateId: 'eny-0087-wgslime',
+        source: {
+          stageId: 'indie_hard010_s',
+          enemyId: 'eny_0087_wgslime_hdg010',
+          templateId: 'eny-0087-wgslime',
+        },
         level: 90,
         nameKey: 'enemy_eny_0087_wgslime_hdg010',
         usesBaseDefinition: false,
@@ -2819,8 +3371,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: true, attributeModifiers: true, bornBuffs: false },
       },
       {
-        id: 'eny_0105_wgslime2_hdg010',
-        templateId: 'eny-0105-wgslime2',
+        source: {
+          stageId: 'indie_hard010_s',
+          enemyId: 'eny_0105_wgslime2_hdg010',
+          templateId: 'eny-0105-wgslime2',
+        },
         level: 90,
         nameKey: 'enemy_eny_0105_wgslime2_hdg010',
         usesBaseDefinition: false,
@@ -2841,8 +3396,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0090_wgabyss_hdg011',
-        templateId: 'eny-0090-wgabyss',
+        source: {
+          stageId: 'indie_hard011',
+          enemyId: 'eny_0090_wgabyss_hdg011',
+          templateId: 'eny-0090-wgabyss',
+        },
         level: 60,
         nameKey: 'enemy_eny_0090_wgabyss_hdg011',
         usesBaseDefinition: false,
@@ -2863,8 +3421,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0090_wgabyss_hdg011',
-        templateId: 'eny-0090-wgabyss',
+        source: {
+          stageId: 'indie_hard011_s',
+          enemyId: 'eny_0090_wgabyss_hdg011',
+          templateId: 'eny-0090-wgabyss',
+        },
         level: 90,
         nameKey: 'enemy_eny_0090_wgabyss_hdg011',
         usesBaseDefinition: false,
@@ -2885,8 +3446,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0093_hshog_hdg',
-        templateId: 'eny-0093-hshog',
+        source: {
+          stageId: 'indie_hard012',
+          enemyId: 'eny_0093_hshog_hdg',
+          templateId: 'eny-0093-hshog',
+        },
         level: 60,
         nameKey: 'enemy_eny_0093_hshog_hdg',
         usesBaseDefinition: false,
@@ -2894,8 +3458,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: true, attributeModifiers: false, bornBuffs: true },
       },
       {
-        id: 'eny_0109_hshog2_hdg',
-        templateId: 'eny-0109-hshog2',
+        source: {
+          stageId: 'indie_hard012',
+          enemyId: 'eny_0109_hshog2_hdg',
+          templateId: 'eny-0109-hshog2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0109_hshog2_hdg',
         usesBaseDefinition: false,
@@ -2916,8 +3483,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0093_hshog_hdg',
-        templateId: 'eny-0093-hshog',
+        source: {
+          stageId: 'indie_hard012_s',
+          enemyId: 'eny_0093_hshog_hdg',
+          templateId: 'eny-0093-hshog',
+        },
         level: 90,
         nameKey: 'enemy_eny_0093_hshog_hdg',
         usesBaseDefinition: false,
@@ -2925,8 +3495,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: true, attributeModifiers: false, bornBuffs: true },
       },
       {
-        id: 'eny_0109_hshog2_hdg',
-        templateId: 'eny-0109-hshog2',
+        source: {
+          stageId: 'indie_hard012_s',
+          enemyId: 'eny_0109_hshog2_hdg',
+          templateId: 'eny-0109-hshog2',
+        },
         level: 90,
         nameKey: 'enemy_eny_0109_hshog2_hdg',
         usesBaseDefinition: false,
@@ -2947,8 +3520,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0059_erhound',
-        templateId: 'eny-0059-erhound',
+        source: {
+          stageId: 'indie_hard013',
+          enemyId: 'eny_0059_erhound',
+          templateId: 'eny-0059-erhound',
+        },
         level: 60,
         nameKey: 'enemy_eny_0059_erhound',
         usesBaseDefinition: false,
@@ -2956,8 +3532,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0060_lbmad',
-        templateId: 'eny-0060-lbmad',
+        source: {
+          stageId: 'indie_hard013',
+          enemyId: 'eny_0060_lbmad',
+          templateId: 'eny-0060-lbmad',
+        },
         level: 60,
         nameKey: 'enemy_eny_0060_lbmad',
         usesBaseDefinition: false,
@@ -2978,8 +3557,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0059_erhound',
-        templateId: 'eny-0059-erhound',
+        source: {
+          stageId: 'indie_hard013_s',
+          enemyId: 'eny_0059_erhound',
+          templateId: 'eny-0059-erhound',
+        },
         level: 90,
         nameKey: 'enemy_eny_0059_erhound',
         usesBaseDefinition: false,
@@ -2987,8 +3569,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0060_lbmad',
-        templateId: 'eny-0060-lbmad',
+        source: {
+          stageId: 'indie_hard013_s',
+          enemyId: 'eny_0060_lbmad',
+          templateId: 'eny-0060-lbmad',
+        },
         level: 90,
         nameKey: 'enemy_eny_0060_lbmad',
         usesBaseDefinition: false,
@@ -3009,8 +3594,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0099_slimeml2',
-        templateId: 'eny-0099-slimeml2',
+        source: {
+          stageId: 'indie_hard014',
+          enemyId: 'eny_0099_slimeml2',
+          templateId: 'eny-0099-slimeml2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0099_slimeml2',
         usesBaseDefinition: false,
@@ -3018,8 +3606,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0100_slimerg2',
-        templateId: 'eny-0100-slimerg2',
+        source: {
+          stageId: 'indie_hard014',
+          enemyId: 'eny_0100_slimerg2',
+          templateId: 'eny-0100-slimerg2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0100_slimerg2',
         usesBaseDefinition: false,
@@ -3027,8 +3618,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0108_slbomb2_hdg014',
-        templateId: 'eny-0108-slbomb2',
+        source: {
+          stageId: 'indie_hard014',
+          enemyId: 'eny_0108_slbomb2_hdg014',
+          templateId: 'eny-0108-slbomb2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0108_slbomb2_hdg014',
         usesBaseDefinition: false,
@@ -3036,8 +3630,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: true, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0098_sandb2',
-        templateId: 'eny-0098-sandb2',
+        source: {
+          stageId: 'indie_hard014',
+          enemyId: 'eny_0098_sandb2',
+          templateId: 'eny-0098-sandb2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0098_sandb2',
         usesBaseDefinition: false,
@@ -3058,8 +3655,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0099_slimeml2',
-        templateId: 'eny-0099-slimeml2',
+        source: {
+          stageId: 'indie_hard014_s',
+          enemyId: 'eny_0099_slimeml2',
+          templateId: 'eny-0099-slimeml2',
+        },
         level: 90,
         nameKey: 'enemy_eny_0099_slimeml2',
         usesBaseDefinition: false,
@@ -3067,8 +3667,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0100_slimerg2',
-        templateId: 'eny-0100-slimerg2',
+        source: {
+          stageId: 'indie_hard014_s',
+          enemyId: 'eny_0100_slimerg2',
+          templateId: 'eny-0100-slimerg2',
+        },
         level: 90,
         nameKey: 'enemy_eny_0100_slimerg2',
         usesBaseDefinition: false,
@@ -3076,8 +3679,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0108_slbomb2_hdg014',
-        templateId: 'eny-0108-slbomb2',
+        source: {
+          stageId: 'indie_hard014_s',
+          enemyId: 'eny_0108_slbomb2_hdg014',
+          templateId: 'eny-0108-slbomb2',
+        },
         level: 90,
         nameKey: 'enemy_eny_0108_slbomb2_hdg014',
         usesBaseDefinition: false,
@@ -3085,8 +3691,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: true, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0098_sandb2',
-        templateId: 'eny-0098-sandb2',
+        source: {
+          stageId: 'indie_hard014_s',
+          enemyId: 'eny_0098_sandb2',
+          templateId: 'eny-0098-sandb2',
+        },
         level: 90,
         nameKey: 'enemy_eny_0098_sandb2',
         usesBaseDefinition: false,
@@ -3107,8 +3716,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0058_agdisk',
-        templateId: 'eny-0058-agdisk',
+        source: {
+          stageId: 'indie_hard015',
+          enemyId: 'eny_0058_agdisk',
+          templateId: 'eny-0058-agdisk',
+        },
         level: 60,
         nameKey: 'enemy_eny_0058_agdisk',
         usesBaseDefinition: true,
@@ -3129,8 +3741,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0058_agdisk',
-        templateId: 'eny-0058-agdisk',
+        source: {
+          stageId: 'indie_hard015_s',
+          enemyId: 'eny_0058_agdisk',
+          templateId: 'eny-0058-agdisk',
+        },
         level: 90,
         nameKey: 'enemy_eny_0058_agdisk',
         usesBaseDefinition: true,
@@ -3151,8 +3766,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0046_lbshamman_hdg016',
-        templateId: 'eny-0046-lbshamman',
+        source: {
+          stageId: 'indie_hard016',
+          enemyId: 'eny_0046_lbshamman_hdg016',
+          templateId: 'eny-0046-lbshamman',
+        },
         level: 60,
         nameKey: 'enemy_eny_0046_lbshamman_hdg016',
         usesBaseDefinition: false,
@@ -3173,8 +3791,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0046_lbshamman_hdg016',
-        templateId: 'eny-0046-lbshamman',
+        source: {
+          stageId: 'indie_hard016_s',
+          enemyId: 'eny_0046_lbshamman_hdg016',
+          templateId: 'eny-0046-lbshamman',
+        },
         level: 90,
         nameKey: 'enemy_eny_0046_lbshamman_hdg016',
         usesBaseDefinition: false,
@@ -3195,8 +3816,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0095_ethillu',
-        templateId: 'eny-0095-ethillu',
+        source: {
+          stageId: 'indie_hard017',
+          enemyId: 'eny_0095_ethillu',
+          templateId: 'eny-0095-ethillu',
+        },
         level: 60,
         nameKey: 'enemy_eny_0095_ethillu',
         usesBaseDefinition: true,
@@ -3217,8 +3841,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0095_ethillu',
-        templateId: 'eny-0095-ethillu',
+        source: {
+          stageId: 'indie_hard017_s',
+          enemyId: 'eny_0095_ethillu',
+          templateId: 'eny-0095-ethillu',
+        },
         level: 90,
         nameKey: 'enemy_eny_0095_ethillu',
         usesBaseDefinition: true,
@@ -3239,8 +3866,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0082_hsbear_hdg018',
-        templateId: 'eny-0082-hsbear',
+        source: {
+          stageId: 'indie_hard018',
+          enemyId: 'eny_0082_hsbear_hdg018',
+          templateId: 'eny-0082-hsbear',
+        },
         level: 60,
         nameKey: 'enemy_eny_0082_hsbear_hdg018',
         usesBaseDefinition: false,
@@ -3261,8 +3891,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0082_hsbear_hdg018',
-        templateId: 'eny-0082-hsbear',
+        source: {
+          stageId: 'indie_hard018_s',
+          enemyId: 'eny_0082_hsbear_hdg018',
+          templateId: 'eny-0082-hsbear',
+        },
         level: 90,
         nameKey: 'enemy_eny_0082_hsbear_hdg018',
         usesBaseDefinition: false,
@@ -3283,8 +3916,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0088_wgthorns',
-        templateId: 'eny-0088-wgthorns',
+        source: {
+          stageId: 'indie_hard019',
+          enemyId: 'eny_0088_wgthorns',
+          templateId: 'eny-0088-wgthorns',
+        },
         level: 60,
         nameKey: 'enemy_eny_0088_wgthorns',
         usesBaseDefinition: true,
@@ -3292,8 +3928,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0089_wgreflec',
-        templateId: 'eny-0089-wgreflec',
+        source: {
+          stageId: 'indie_hard019',
+          enemyId: 'eny_0089_wgreflec',
+          templateId: 'eny-0089-wgreflec',
+        },
         level: 60,
         nameKey: 'enemy_eny_0089_wgreflec',
         usesBaseDefinition: true,
@@ -3314,8 +3953,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0088_wgthorns',
-        templateId: 'eny-0088-wgthorns',
+        source: {
+          stageId: 'indie_hard019_s',
+          enemyId: 'eny_0088_wgthorns',
+          templateId: 'eny-0088-wgthorns',
+        },
         level: 90,
         nameKey: 'enemy_eny_0088_wgthorns',
         usesBaseDefinition: true,
@@ -3323,8 +3965,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0089_wgreflec',
-        templateId: 'eny-0089-wgreflec',
+        source: {
+          stageId: 'indie_hard019_s',
+          enemyId: 'eny_0089_wgreflec',
+          templateId: 'eny-0089-wgreflec',
+        },
         level: 90,
         nameKey: 'enemy_eny_0089_wgreflec',
         usesBaseDefinition: true,
@@ -3345,8 +3990,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0107_wgshoal2',
-        templateId: 'eny-0107-wgshoal2',
+        source: {
+          stageId: 'indie_hard020',
+          enemyId: 'eny_0107_wgshoal2',
+          templateId: 'eny-0107-wgshoal2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0107_wgshoal2',
         usesBaseDefinition: true,
@@ -3367,8 +4015,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0107_wgshoal2',
-        templateId: 'eny-0107-wgshoal2',
+        source: {
+          stageId: 'indie_hard020_s',
+          enemyId: 'eny_0107_wgshoal2',
+          templateId: 'eny-0107-wgshoal2',
+        },
         level: 90,
         nameKey: 'enemy_eny_0107_wgshoal2',
         usesBaseDefinition: true,
@@ -3389,8 +4040,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0102_hstiger2_hdg021',
-        templateId: 'eny-0102-hstiger2',
+        source: {
+          stageId: 'indie_hard021',
+          enemyId: 'eny_0102_hstiger2_hdg021',
+          templateId: 'eny-0102-hstiger2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0102_hstiger2_hdg021',
         usesBaseDefinition: false,
@@ -3411,8 +4065,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0102_hstiger2_hdg021',
-        templateId: 'eny-0102-hstiger2',
+        source: {
+          stageId: 'indie_hard021_s',
+          enemyId: 'eny_0102_hstiger2_hdg021',
+          templateId: 'eny-0102-hstiger2',
+        },
         level: 90,
         nameKey: 'enemy_eny_0102_hstiger2_hdg021',
         usesBaseDefinition: false,
@@ -3433,8 +4090,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0046_lbshamman_hdg022',
-        templateId: 'eny-0046-lbshamman',
+        source: {
+          stageId: 'indie_hard022',
+          enemyId: 'eny_0046_lbshamman_hdg022',
+          templateId: 'eny-0046-lbshamman',
+        },
         level: 60,
         nameKey: 'enemy_eny_0046_lbshamman_hdg022',
         usesBaseDefinition: false,
@@ -3442,8 +4102,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: true, attributeModifiers: false, bornBuffs: true },
       },
       {
-        id: 'eny_0065_lbmob2',
-        templateId: 'eny-0065-lbmob2',
+        source: {
+          stageId: 'indie_hard022',
+          enemyId: 'eny_0065_lbmob2',
+          templateId: 'eny-0065-lbmob2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0065_lbmob2',
         usesBaseDefinition: false,
@@ -3451,8 +4114,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0066_lbhunt2',
-        templateId: 'eny-0066-lbhunt2',
+        source: {
+          stageId: 'indie_hard022',
+          enemyId: 'eny_0066_lbhunt2',
+          templateId: 'eny-0066-lbhunt2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0066_lbhunt2',
         usesBaseDefinition: false,
@@ -3473,8 +4139,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0046_lbshamman_hdg022',
-        templateId: 'eny-0046-lbshamman',
+        source: {
+          stageId: 'indie_hard022_s',
+          enemyId: 'eny_0046_lbshamman_hdg022',
+          templateId: 'eny-0046-lbshamman',
+        },
         level: 90,
         nameKey: 'enemy_eny_0046_lbshamman_hdg022',
         usesBaseDefinition: false,
@@ -3482,8 +4151,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: true, attributeModifiers: false, bornBuffs: true },
       },
       {
-        id: 'eny_0065_lbmob2',
-        templateId: 'eny-0065-lbmob2',
+        source: {
+          stageId: 'indie_hard022_s',
+          enemyId: 'eny_0065_lbmob2',
+          templateId: 'eny-0065-lbmob2',
+        },
         level: 90,
         nameKey: 'enemy_eny_0065_lbmob2',
         usesBaseDefinition: false,
@@ -3491,8 +4163,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0066_lbhunt2',
-        templateId: 'eny-0066-lbhunt2',
+        source: {
+          stageId: 'indie_hard022_s',
+          enemyId: 'eny_0066_lbhunt2',
+          templateId: 'eny-0066-lbhunt2',
+        },
         level: 90,
         nameKey: 'enemy_eny_0066_lbhunt2',
         usesBaseDefinition: false,
@@ -3513,8 +4188,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0113_jzogre_hdg023',
-        templateId: 'eny-0113-jzogre',
+        source: {
+          stageId: 'indie_hard023',
+          enemyId: 'eny_0113_jzogre_hdg023',
+          templateId: 'eny-0113-jzogre',
+        },
         level: 60,
         nameKey: 'enemy_eny_0113_jzogre_hdg023',
         usesBaseDefinition: false,
@@ -3522,8 +4200,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: true, attributeModifiers: false, bornBuffs: true },
       },
       {
-        id: 'eny_0112_jzmonk',
-        templateId: 'eny-0112-jzmonk',
+        source: {
+          stageId: 'indie_hard023',
+          enemyId: 'eny_0112_jzmonk',
+          templateId: 'eny-0112-jzmonk',
+        },
         level: 60,
         nameKey: 'enemy_eny_0112_jzmonk',
         usesBaseDefinition: true,
@@ -3544,8 +4225,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0113_jzogre_hdg023',
-        templateId: 'eny-0113-jzogre',
+        source: {
+          stageId: 'indie_hard023_s',
+          enemyId: 'eny_0113_jzogre_hdg023',
+          templateId: 'eny-0113-jzogre',
+        },
         level: 90,
         nameKey: 'enemy_eny_0113_jzogre_hdg023',
         usesBaseDefinition: false,
@@ -3553,8 +4237,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: true, attributeModifiers: false, bornBuffs: true },
       },
       {
-        id: 'eny_0112_jzmonk',
-        templateId: 'eny-0112-jzmonk',
+        source: {
+          stageId: 'indie_hard023_s',
+          enemyId: 'eny_0112_jzmonk',
+          templateId: 'eny-0112-jzmonk',
+        },
         level: 90,
         nameKey: 'enemy_eny_0112_jzmonk',
         usesBaseDefinition: true,
@@ -3575,8 +4262,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0114_jzmking_hdg024',
-        templateId: 'eny-0114-jzmking',
+        source: {
+          stageId: 'indie_hard024',
+          enemyId: 'eny_0114_jzmking_hdg024',
+          templateId: 'eny-0114-jzmking',
+        },
         level: 60,
         nameKey: 'enemy_eny_0114_jzmking_hdg024',
         usesBaseDefinition: false,
@@ -3597,8 +4287,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0114_jzmking_hdg024',
-        templateId: 'eny-0114-jzmking',
+        source: {
+          stageId: 'indie_hard024_s',
+          enemyId: 'eny_0114_jzmking_hdg024',
+          templateId: 'eny-0114-jzmking',
+        },
         level: 90,
         nameKey: 'enemy_eny_0114_jzmking_hdg024',
         usesBaseDefinition: false,
@@ -3619,8 +4312,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0054_hsmino',
-        templateId: 'eny-0054-hsmino',
+        source: {
+          stageId: 'indie_hard025',
+          enemyId: 'eny_0054_hsmino',
+          templateId: 'eny-0054-hsmino',
+        },
         level: 60,
         nameKey: 'enemy_eny_0054_hsmino',
         usesBaseDefinition: true,
@@ -3628,8 +4324,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0055_hscrane',
-        templateId: 'eny-0055-hscrane',
+        source: {
+          stageId: 'indie_hard025',
+          enemyId: 'eny_0055_hscrane',
+          templateId: 'eny-0055-hscrane',
+        },
         level: 60,
         nameKey: 'enemy_eny_0055_hscrane',
         usesBaseDefinition: true,
@@ -3637,8 +4336,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0085_hsrogue',
-        templateId: 'eny-0085-hsrogue',
+        source: {
+          stageId: 'indie_hard025',
+          enemyId: 'eny_0085_hsrogue',
+          templateId: 'eny-0085-hsrogue',
+        },
         level: 60,
         nameKey: 'enemy_eny_0085_hsrogue',
         usesBaseDefinition: true,
@@ -3646,8 +4348,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0053_hsmob',
-        templateId: 'eny-0053-hsmob',
+        source: {
+          stageId: 'indie_hard025',
+          enemyId: 'eny_0053_hsmob',
+          templateId: 'eny-0053-hsmob',
+        },
         level: 60,
         nameKey: 'enemy_eny_0053_hsmob',
         usesBaseDefinition: true,
@@ -3655,8 +4360,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0084_hshunt',
-        templateId: 'eny-0084-hshunt',
+        source: {
+          stageId: 'indie_hard025',
+          enemyId: 'eny_0084_hshunt',
+          templateId: 'eny-0084-hshunt',
+        },
         level: 60,
         nameKey: 'enemy_eny_0084_hshunt',
         usesBaseDefinition: true,
@@ -3677,8 +4385,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0054_hsmino',
-        templateId: 'eny-0054-hsmino',
+        source: {
+          stageId: 'indie_hard025_s',
+          enemyId: 'eny_0054_hsmino',
+          templateId: 'eny-0054-hsmino',
+        },
         level: 90,
         nameKey: 'enemy_eny_0054_hsmino',
         usesBaseDefinition: true,
@@ -3686,8 +4397,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0055_hscrane',
-        templateId: 'eny-0055-hscrane',
+        source: {
+          stageId: 'indie_hard025_s',
+          enemyId: 'eny_0055_hscrane',
+          templateId: 'eny-0055-hscrane',
+        },
         level: 90,
         nameKey: 'enemy_eny_0055_hscrane',
         usesBaseDefinition: true,
@@ -3695,8 +4409,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0085_hsrogue',
-        templateId: 'eny-0085-hsrogue',
+        source: {
+          stageId: 'indie_hard025_s',
+          enemyId: 'eny_0085_hsrogue',
+          templateId: 'eny-0085-hsrogue',
+        },
         level: 90,
         nameKey: 'enemy_eny_0085_hsrogue',
         usesBaseDefinition: true,
@@ -3704,8 +4421,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0053_hsmob',
-        templateId: 'eny-0053-hsmob',
+        source: {
+          stageId: 'indie_hard025_s',
+          enemyId: 'eny_0053_hsmob',
+          templateId: 'eny-0053-hsmob',
+        },
         level: 90,
         nameKey: 'enemy_eny_0053_hsmob',
         usesBaseDefinition: true,
@@ -3713,8 +4433,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0084_hshunt',
-        templateId: 'eny-0084-hshunt',
+        source: {
+          stageId: 'indie_hard025_s',
+          enemyId: 'eny_0084_hshunt',
+          templateId: 'eny-0084-hshunt',
+        },
         level: 90,
         nameKey: 'enemy_eny_0084_hshunt',
         usesBaseDefinition: true,
@@ -3735,8 +4458,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0118_klhog_hdg026',
-        templateId: 'eny-0118-klhog',
+        source: {
+          stageId: 'indie_hard026',
+          enemyId: 'eny_0118_klhog_hdg026',
+          templateId: 'eny-0118-klhog',
+        },
         level: 60,
         nameKey: 'enemy_eny_0118_klhog_hdg026',
         usesBaseDefinition: false,
@@ -3744,8 +4470,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0119_kltiger_hdg026',
-        templateId: 'eny-0119-kltiger',
+        source: {
+          stageId: 'indie_hard026',
+          enemyId: 'eny_0119_kltiger_hdg026',
+          templateId: 'eny-0119-kltiger',
+        },
         level: 60,
         nameKey: 'enemy_eny_0119_kltiger_hdg026',
         usesBaseDefinition: false,
@@ -3766,8 +4495,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0118_klhog_hdg026',
-        templateId: 'eny-0118-klhog',
+        source: {
+          stageId: 'indie_hard026_s',
+          enemyId: 'eny_0118_klhog_hdg026',
+          templateId: 'eny-0118-klhog',
+        },
         level: 90,
         nameKey: 'enemy_eny_0118_klhog_hdg026',
         usesBaseDefinition: false,
@@ -3775,8 +4507,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0119_kltiger_hdg026',
-        templateId: 'eny-0119-kltiger',
+        source: {
+          stageId: 'indie_hard026_s',
+          enemyId: 'eny_0119_kltiger_hdg026',
+          templateId: 'eny-0119-kltiger',
+        },
         level: 90,
         nameKey: 'enemy_eny_0119_kltiger_hdg026',
         usesBaseDefinition: false,
@@ -3797,8 +4532,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0124_kltdcap_hdg027',
-        templateId: 'eny-0124-kltdcap',
+        source: {
+          stageId: 'indie_hard027',
+          enemyId: 'eny_0124_kltdcap_hdg027',
+          templateId: 'eny-0124-kltdcap',
+        },
         level: 60,
         nameKey: 'enemy_eny_0124_kltdcap_hdg027',
         usesBaseDefinition: false,
@@ -3819,8 +4557,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0124_kltdcap_hdg027',
-        templateId: 'eny-0124-kltdcap',
+        source: {
+          stageId: 'indie_hard027_s',
+          enemyId: 'eny_0124_kltdcap_hdg027',
+          templateId: 'eny-0124-kltdcap',
+        },
         level: 90,
         nameKey: 'enemy_eny_0124_kltdcap_hdg027',
         usesBaseDefinition: false,
@@ -3841,8 +4582,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0117_klhound',
-        templateId: 'eny-0117-klhound',
+        source: {
+          stageId: 'indie_hard028',
+          enemyId: 'eny_0117_klhound',
+          templateId: 'eny-0117-klhound',
+        },
         level: 60,
         nameKey: 'enemy_eny_0117_klhound',
         usesBaseDefinition: true,
@@ -3850,8 +4594,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0121_klbud',
-        templateId: 'eny-0121-klbud',
+        source: {
+          stageId: 'indie_hard028',
+          enemyId: 'eny_0121_klbud',
+          templateId: 'eny-0121-klbud',
+        },
         level: 60,
         nameKey: 'enemy_eny_0121_klbud',
         usesBaseDefinition: true,
@@ -3859,8 +4606,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0122_kltdbud',
-        templateId: 'eny-0122-kltdbud',
+        source: {
+          stageId: 'indie_hard028',
+          enemyId: 'eny_0122_kltdbud',
+          templateId: 'eny-0122-kltdbud',
+        },
         level: 60,
         nameKey: 'enemy_eny_0122_kltdbud',
         usesBaseDefinition: true,
@@ -3868,8 +4618,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0123_klcap_hdg028',
-        templateId: 'eny-0123-klcap',
+        source: {
+          stageId: 'indie_hard028',
+          enemyId: 'eny_0123_klcap_hdg028',
+          templateId: 'eny-0123-klcap',
+        },
         level: 60,
         nameKey: 'enemy_eny_0123_klcap_hdg028',
         usesBaseDefinition: false,
@@ -3890,8 +4643,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0117_klhound',
-        templateId: 'eny-0117-klhound',
+        source: {
+          stageId: 'indie_hard028_s',
+          enemyId: 'eny_0117_klhound',
+          templateId: 'eny-0117-klhound',
+        },
         level: 90,
         nameKey: 'enemy_eny_0117_klhound',
         usesBaseDefinition: true,
@@ -3899,8 +4655,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0121_klbud',
-        templateId: 'eny-0121-klbud',
+        source: {
+          stageId: 'indie_hard028_s',
+          enemyId: 'eny_0121_klbud',
+          templateId: 'eny-0121-klbud',
+        },
         level: 90,
         nameKey: 'enemy_eny_0121_klbud',
         usesBaseDefinition: true,
@@ -3908,8 +4667,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0122_kltdbud',
-        templateId: 'eny-0122-kltdbud',
+        source: {
+          stageId: 'indie_hard028_s',
+          enemyId: 'eny_0122_kltdbud',
+          templateId: 'eny-0122-kltdbud',
+        },
         level: 90,
         nameKey: 'enemy_eny_0122_kltdbud',
         usesBaseDefinition: true,
@@ -3917,8 +4679,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0123_klcap_hdg028',
-        templateId: 'eny-0123-klcap',
+        source: {
+          stageId: 'indie_hard028_s',
+          enemyId: 'eny_0123_klcap_hdg028',
+          templateId: 'eny-0123-klcap',
+        },
         level: 90,
         nameKey: 'enemy_eny_0123_klcap_hdg028',
         usesBaseDefinition: false,
@@ -3939,8 +4704,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0070_agscorp2',
-        templateId: 'eny-0070-agscorp2',
+        source: {
+          stageId: 'indie_hard029',
+          enemyId: 'eny_0070_agscorp2',
+          templateId: 'eny-0070-agscorp2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0070_agscorp2',
         usesBaseDefinition: true,
@@ -3961,8 +4729,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0070_agscorp2',
-        templateId: 'eny-0070-agscorp2',
+        source: {
+          stageId: 'indie_hard029_s',
+          enemyId: 'eny_0070_agscorp2',
+          templateId: 'eny-0070-agscorp2',
+        },
         level: 90,
         nameKey: 'enemy_eny_0070_agscorp2',
         usesBaseDefinition: true,
@@ -3983,8 +4754,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0120_klbear',
-        templateId: 'eny-0120-klbear',
+        source: {
+          stageId: 'indie_hard030',
+          enemyId: 'eny_0120_klbear',
+          templateId: 'eny-0120-klbear',
+        },
         level: 60,
         nameKey: 'enemy_eny_0120_klbear',
         usesBaseDefinition: true,
@@ -3992,8 +4766,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0122_kltdbud',
-        templateId: 'eny-0122-kltdbud',
+        source: {
+          stageId: 'indie_hard030',
+          enemyId: 'eny_0122_kltdbud',
+          templateId: 'eny-0122-kltdbud',
+        },
         level: 60,
         nameKey: 'enemy_eny_0122_kltdbud',
         usesBaseDefinition: true,
@@ -4014,8 +4791,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0120_klbear',
-        templateId: 'eny-0120-klbear',
+        source: {
+          stageId: 'indie_hard030_s',
+          enemyId: 'eny_0120_klbear',
+          templateId: 'eny-0120-klbear',
+        },
         level: 90,
         nameKey: 'enemy_eny_0120_klbear',
         usesBaseDefinition: true,
@@ -4023,8 +4803,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0122_kltdbud',
-        templateId: 'eny-0122-kltdbud',
+        source: {
+          stageId: 'indie_hard030_s',
+          enemyId: 'eny_0122_kltdbud',
+          templateId: 'eny-0122-kltdbud',
+        },
         level: 90,
         nameKey: 'enemy_eny_0122_kltdbud',
         usesBaseDefinition: true,
@@ -4045,8 +4828,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0128_babyents',
-        templateId: 'eny-0128-babyents',
+        source: {
+          stageId: 'indie_hard031',
+          enemyId: 'eny_0128_babyents',
+          templateId: 'eny-0128-babyents',
+        },
         level: 60,
         nameKey: 'enemy_eny_0128_babyents',
         usesBaseDefinition: true,
@@ -4067,8 +4853,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0128_babyents',
-        templateId: 'eny-0128-babyents',
+        source: {
+          stageId: 'indie_hard031_s',
+          enemyId: 'eny_0128_babyents',
+          templateId: 'eny-0128-babyents',
+        },
         level: 90,
         nameKey: 'enemy_eny_0128_babyents',
         usesBaseDefinition: true,
@@ -4089,8 +4878,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0127_bigents',
-        templateId: 'eny-0127-bigents',
+        source: {
+          stageId: 'indie_hard032',
+          enemyId: 'eny_0127_bigents',
+          templateId: 'eny-0127-bigents',
+        },
         level: 60,
         nameKey: 'enemy_eny_0127_bigents',
         usesBaseDefinition: true,
@@ -4111,8 +4903,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0127_bigents',
-        templateId: 'eny-0127-bigents',
+        source: {
+          stageId: 'indie_hard032_s',
+          enemyId: 'eny_0127_bigents',
+          templateId: 'eny-0127-bigents',
+        },
         level: 90,
         nameKey: 'enemy_eny_0127_bigents',
         usesBaseDefinition: true,
@@ -4133,8 +4928,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0129_slwood',
-        templateId: 'eny-0129-slwood',
+        source: {
+          stageId: 'indie_hard033',
+          enemyId: 'eny_0129_slwood',
+          templateId: 'eny-0129-slwood',
+        },
         level: 60,
         nameKey: 'enemy_eny_0129_slwood',
         usesBaseDefinition: true,
@@ -4155,8 +4953,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0129_slwood',
-        templateId: 'eny-0129-slwood',
+        source: {
+          stageId: 'indie_hard033_s',
+          enemyId: 'eny_0129_slwood',
+          templateId: 'eny-0129-slwood',
+        },
         level: 90,
         nameKey: 'enemy_eny_0129_slwood',
         usesBaseDefinition: true,
@@ -4177,8 +4978,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0106_wgthorns2_race001',
-        templateId: 'eny-0106-wgthorns2',
+        source: {
+          stageId: 'indie_battletower001',
+          enemyId: 'eny_0106_wgthorns2_race001',
+          templateId: 'eny-0106-wgthorns2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0106_wgthorns2_race001',
         usesBaseDefinition: false,
@@ -4186,8 +4990,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0105_wgslime2_race001',
-        templateId: 'eny-0105-wgslime2',
+        source: {
+          stageId: 'indie_battletower001',
+          enemyId: 'eny_0105_wgslime2_race001',
+          templateId: 'eny-0105-wgslime2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0105_wgslime2_race001',
         usesBaseDefinition: false,
@@ -4195,8 +5002,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0091_wgshoal_nearspecial',
-        templateId: 'eny-0091-wgshoal',
+        source: {
+          stageId: 'indie_battletower001',
+          enemyId: 'eny_0091_wgshoal_nearspecial',
+          templateId: 'eny-0091-wgshoal',
+        },
         level: 60,
         nameKey: 'enemy_eny_0091_wgshoal_nearspecial',
         usesBaseDefinition: false,
@@ -4217,8 +5027,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0106_wgthorns2_race001',
-        templateId: 'eny-0106-wgthorns2',
+        source: {
+          stageId: 'indie_battletower001_ex',
+          enemyId: 'eny_0106_wgthorns2_race001',
+          templateId: 'eny-0106-wgthorns2',
+        },
         level: 90,
         nameKey: 'enemy_eny_0106_wgthorns2_race001',
         usesBaseDefinition: false,
@@ -4226,8 +5039,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0105_wgslime2_race001',
-        templateId: 'eny-0105-wgslime2',
+        source: {
+          stageId: 'indie_battletower001_ex',
+          enemyId: 'eny_0105_wgslime2_race001',
+          templateId: 'eny-0105-wgslime2',
+        },
         level: 90,
         nameKey: 'enemy_eny_0105_wgslime2_race001',
         usesBaseDefinition: false,
@@ -4235,8 +5051,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0091_wgshoal_nearspecial',
-        templateId: 'eny-0091-wgshoal',
+        source: {
+          stageId: 'indie_battletower001_ex',
+          enemyId: 'eny_0091_wgshoal_nearspecial',
+          templateId: 'eny-0091-wgshoal',
+        },
         level: 90,
         nameKey: 'enemy_eny_0091_wgshoal_nearspecial',
         usesBaseDefinition: false,
@@ -4257,8 +5076,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0106_wgthorns2_race001',
-        templateId: 'eny-0106-wgthorns2',
+        source: {
+          stageId: 'indie_battletower001_s',
+          enemyId: 'eny_0106_wgthorns2_race001',
+          templateId: 'eny-0106-wgthorns2',
+        },
         level: 75,
         nameKey: 'enemy_eny_0106_wgthorns2_race001',
         usesBaseDefinition: false,
@@ -4266,8 +5088,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0105_wgslime2_race001',
-        templateId: 'eny-0105-wgslime2',
+        source: {
+          stageId: 'indie_battletower001_s',
+          enemyId: 'eny_0105_wgslime2_race001',
+          templateId: 'eny-0105-wgslime2',
+        },
         level: 75,
         nameKey: 'enemy_eny_0105_wgslime2_race001',
         usesBaseDefinition: false,
@@ -4275,8 +5100,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0091_wgshoal_nearspecial',
-        templateId: 'eny-0091-wgshoal',
+        source: {
+          stageId: 'indie_battletower001_s',
+          enemyId: 'eny_0091_wgshoal_nearspecial',
+          templateId: 'eny-0091-wgshoal',
+        },
         level: 75,
         nameKey: 'enemy_eny_0091_wgshoal_nearspecial',
         usesBaseDefinition: false,
@@ -4297,8 +5125,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0092_slbomb_race003',
-        templateId: 'eny-0092-slbomb',
+        source: {
+          stageId: 'indie_battletower002',
+          enemyId: 'eny_0092_slbomb_race003',
+          templateId: 'eny-0092-slbomb',
+        },
         level: 60,
         nameKey: 'enemy_eny_0092_slbomb_race003',
         usesBaseDefinition: false,
@@ -4306,8 +5137,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0073_slimerg_race002',
-        templateId: 'eny-0073-slimerg',
+        source: {
+          stageId: 'indie_battletower002',
+          enemyId: 'eny_0073_slimerg_race002',
+          templateId: 'eny-0073-slimerg',
+        },
         level: 60,
         nameKey: 'enemy_eny_0073_slimerg_race002',
         usesBaseDefinition: false,
@@ -4315,8 +5149,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0050_hound_race002',
-        templateId: 'eny-0050-hound',
+        source: {
+          stageId: 'indie_battletower002',
+          enemyId: 'eny_0050_hound_race002',
+          templateId: 'eny-0050-hound',
+        },
         level: 60,
         nameKey: 'enemy_eny_0050_hound_race002',
         usesBaseDefinition: false,
@@ -4324,8 +5161,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0096_hsmob2_race002',
-        templateId: 'eny-0096-hsmob2',
+        source: {
+          stageId: 'indie_battletower002',
+          enemyId: 'eny_0096_hsmob2_race002',
+          templateId: 'eny-0096-hsmob2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0096_hsmob2_race002',
         usesBaseDefinition: false,
@@ -4346,8 +5186,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0092_slbomb_race003',
-        templateId: 'eny-0092-slbomb',
+        source: {
+          stageId: 'indie_battletower002_ex',
+          enemyId: 'eny_0092_slbomb_race003',
+          templateId: 'eny-0092-slbomb',
+        },
         level: 90,
         nameKey: 'enemy_eny_0092_slbomb_race003',
         usesBaseDefinition: false,
@@ -4355,8 +5198,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0073_slimerg_race002',
-        templateId: 'eny-0073-slimerg',
+        source: {
+          stageId: 'indie_battletower002_ex',
+          enemyId: 'eny_0073_slimerg_race002',
+          templateId: 'eny-0073-slimerg',
+        },
         level: 90,
         nameKey: 'enemy_eny_0073_slimerg_race002',
         usesBaseDefinition: false,
@@ -4364,8 +5210,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0050_hound_race002',
-        templateId: 'eny-0050-hound',
+        source: {
+          stageId: 'indie_battletower002_ex',
+          enemyId: 'eny_0050_hound_race002',
+          templateId: 'eny-0050-hound',
+        },
         level: 90,
         nameKey: 'enemy_eny_0050_hound_race002',
         usesBaseDefinition: false,
@@ -4373,8 +5222,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0096_hsmob2_race002',
-        templateId: 'eny-0096-hsmob2',
+        source: {
+          stageId: 'indie_battletower002_ex',
+          enemyId: 'eny_0096_hsmob2_race002',
+          templateId: 'eny-0096-hsmob2',
+        },
         level: 90,
         nameKey: 'enemy_eny_0096_hsmob2_race002',
         usesBaseDefinition: false,
@@ -4395,8 +5247,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0092_slbomb_race003',
-        templateId: 'eny-0092-slbomb',
+        source: {
+          stageId: 'indie_battletower002_s',
+          enemyId: 'eny_0092_slbomb_race003',
+          templateId: 'eny-0092-slbomb',
+        },
         level: 75,
         nameKey: 'enemy_eny_0092_slbomb_race003',
         usesBaseDefinition: false,
@@ -4404,8 +5259,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0073_slimerg_race002',
-        templateId: 'eny-0073-slimerg',
+        source: {
+          stageId: 'indie_battletower002_s',
+          enemyId: 'eny_0073_slimerg_race002',
+          templateId: 'eny-0073-slimerg',
+        },
         level: 75,
         nameKey: 'enemy_eny_0073_slimerg_race002',
         usesBaseDefinition: false,
@@ -4413,8 +5271,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0050_hound_race002',
-        templateId: 'eny-0050-hound',
+        source: {
+          stageId: 'indie_battletower002_s',
+          enemyId: 'eny_0050_hound_race002',
+          templateId: 'eny-0050-hound',
+        },
         level: 75,
         nameKey: 'enemy_eny_0050_hound_race002',
         usesBaseDefinition: false,
@@ -4422,8 +5283,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0096_hsmob2_race002',
-        templateId: 'eny-0096-hsmob2',
+        source: {
+          stageId: 'indie_battletower002_s',
+          enemyId: 'eny_0096_hsmob2_race002',
+          templateId: 'eny-0096-hsmob2',
+        },
         level: 75,
         nameKey: 'enemy_eny_0096_hsmob2_race002',
         usesBaseDefinition: false,
@@ -4444,8 +5308,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0033_lbhunt_hdg005',
-        templateId: 'eny-0033-lbhunt',
+        source: {
+          stageId: 'indie_battletower003',
+          enemyId: 'eny_0033_lbhunt_hdg005',
+          templateId: 'eny-0033-lbhunt',
+        },
         level: 60,
         nameKey: 'enemy_eny_0033_lbhunt_hdg005',
         usesBaseDefinition: false,
@@ -4453,8 +5320,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: true, bornBuffs: true },
       },
       {
-        id: 'eny_0095_ethillu_race003',
-        templateId: 'eny-0095-ethillu',
+        source: {
+          stageId: 'indie_battletower003',
+          enemyId: 'eny_0095_ethillu_race003',
+          templateId: 'eny-0095-ethillu',
+        },
         level: 60,
         nameKey: 'enemy_eny_0095_ethillu_race003',
         usesBaseDefinition: false,
@@ -4475,8 +5345,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0033_lbhunt_hdg005',
-        templateId: 'eny-0033-lbhunt',
+        source: {
+          stageId: 'indie_battletower003_ex',
+          enemyId: 'eny_0033_lbhunt_hdg005',
+          templateId: 'eny-0033-lbhunt',
+        },
         level: 90,
         nameKey: 'enemy_eny_0033_lbhunt_hdg005',
         usesBaseDefinition: false,
@@ -4484,8 +5357,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: true, bornBuffs: true },
       },
       {
-        id: 'eny_0095_ethillu_race003',
-        templateId: 'eny-0095-ethillu',
+        source: {
+          stageId: 'indie_battletower003_ex',
+          enemyId: 'eny_0095_ethillu_race003',
+          templateId: 'eny-0095-ethillu',
+        },
         level: 90,
         nameKey: 'enemy_eny_0095_ethillu_race003',
         usesBaseDefinition: false,
@@ -4506,8 +5382,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0033_lbhunt_hdg005',
-        templateId: 'eny-0033-lbhunt',
+        source: {
+          stageId: 'indie_battletower003_s',
+          enemyId: 'eny_0033_lbhunt_hdg005',
+          templateId: 'eny-0033-lbhunt',
+        },
         level: 75,
         nameKey: 'enemy_eny_0033_lbhunt_hdg005',
         usesBaseDefinition: false,
@@ -4515,8 +5394,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: true, bornBuffs: true },
       },
       {
-        id: 'eny_0095_ethillu_race003',
-        templateId: 'eny-0095-ethillu',
+        source: {
+          stageId: 'indie_battletower003_s',
+          enemyId: 'eny_0095_ethillu_race003',
+          templateId: 'eny-0095-ethillu',
+        },
         level: 75,
         nameKey: 'enemy_eny_0095_ethillu_race003',
         usesBaseDefinition: false,
@@ -4537,8 +5419,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0068_lbtough2',
-        templateId: 'eny-0068-lbtough2',
+        source: {
+          stageId: 'indie_battletower004',
+          enemyId: 'eny_0068_lbtough2',
+          templateId: 'eny-0068-lbtough2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0068_lbtough2',
         usesBaseDefinition: false,
@@ -4559,8 +5444,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0068_lbtough2',
-        templateId: 'eny-0068-lbtough2',
+        source: {
+          stageId: 'indie_battletower004_ex',
+          enemyId: 'eny_0068_lbtough2',
+          templateId: 'eny-0068-lbtough2',
+        },
         level: 90,
         nameKey: 'enemy_eny_0068_lbtough2',
         usesBaseDefinition: false,
@@ -4581,8 +5469,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0068_lbtough2',
-        templateId: 'eny-0068-lbtough2',
+        source: {
+          stageId: 'indie_battletower004_s',
+          enemyId: 'eny_0068_lbtough2',
+          templateId: 'eny-0068-lbtough2',
+        },
         level: 75,
         nameKey: 'enemy_eny_0068_lbtough2',
         usesBaseDefinition: false,
@@ -4603,8 +5494,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0093_hshog_race005',
-        templateId: 'eny-0093-hshog',
+        source: {
+          stageId: 'indie_battletower005',
+          enemyId: 'eny_0093_hshog_race005',
+          templateId: 'eny-0093-hshog',
+        },
         level: 60,
         nameKey: 'enemy_eny_0093_hshog_race005',
         usesBaseDefinition: false,
@@ -4612,8 +5506,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0055_hscrane_race005',
-        templateId: 'eny-0055-hscrane',
+        source: {
+          stageId: 'indie_battletower005',
+          enemyId: 'eny_0055_hscrane_race005',
+          templateId: 'eny-0055-hscrane',
+        },
         level: 60,
         nameKey: 'enemy_eny_0055_hscrane_race005',
         usesBaseDefinition: false,
@@ -4634,8 +5531,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0093_hshog_race005',
-        templateId: 'eny-0093-hshog',
+        source: {
+          stageId: 'indie_battletower005_ex',
+          enemyId: 'eny_0093_hshog_race005',
+          templateId: 'eny-0093-hshog',
+        },
         level: 90,
         nameKey: 'enemy_eny_0093_hshog_race005',
         usesBaseDefinition: false,
@@ -4643,8 +5543,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0055_hscrane_race005',
-        templateId: 'eny-0055-hscrane',
+        source: {
+          stageId: 'indie_battletower005_ex',
+          enemyId: 'eny_0055_hscrane_race005',
+          templateId: 'eny-0055-hscrane',
+        },
         level: 90,
         nameKey: 'enemy_eny_0055_hscrane_race005',
         usesBaseDefinition: false,
@@ -4665,8 +5568,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0093_hshog_race005',
-        templateId: 'eny-0093-hshog',
+        source: {
+          stageId: 'indie_battletower005_s',
+          enemyId: 'eny_0093_hshog_race005',
+          templateId: 'eny-0093-hshog',
+        },
         level: 75,
         nameKey: 'enemy_eny_0093_hshog_race005',
         usesBaseDefinition: false,
@@ -4674,8 +5580,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0055_hscrane_race005',
-        templateId: 'eny-0055-hscrane',
+        source: {
+          stageId: 'indie_battletower005_s',
+          enemyId: 'eny_0055_hscrane_race005',
+          templateId: 'eny-0055-hscrane',
+        },
         level: 75,
         nameKey: 'enemy_eny_0055_hscrane_race005',
         usesBaseDefinition: false,
@@ -4696,8 +5605,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0074_lbshield_race006',
-        templateId: 'eny-0074-lbshield',
+        source: {
+          stageId: 'indie_battletower006',
+          enemyId: 'eny_0074_lbshield_race006',
+          templateId: 'eny-0074-lbshield',
+        },
         level: 60,
         nameKey: 'enemy_eny_0074_lbshield_race006',
         usesBaseDefinition: false,
@@ -4705,8 +5617,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0023_aghornb_race006',
-        templateId: 'eny-0023-aghornb',
+        source: {
+          stageId: 'indie_battletower006',
+          enemyId: 'eny_0023_aghornb_race006',
+          templateId: 'eny-0023-aghornb',
+        },
         level: 60,
         nameKey: 'enemy_eny_0023_aghornb_race006',
         usesBaseDefinition: false,
@@ -4714,8 +5629,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0047_firebat_race006',
-        templateId: 'eny-0047-firebat',
+        source: {
+          stageId: 'indie_battletower006',
+          enemyId: 'eny_0047_firebat_race006',
+          templateId: 'eny-0047-firebat',
+        },
         level: 60,
         nameKey: 'enemy_eny_0047_firebat_race006',
         usesBaseDefinition: false,
@@ -4723,8 +5641,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0018_lbtough_race006',
-        templateId: 'eny-0018-lbtough',
+        source: {
+          stageId: 'indie_battletower006',
+          enemyId: 'eny_0018_lbtough_race006',
+          templateId: 'eny-0018-lbtough',
+        },
         level: 60,
         nameKey: 'enemy_eny_0018_lbtough_race006',
         usesBaseDefinition: false,
@@ -4745,8 +5666,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0074_lbshield_race006',
-        templateId: 'eny-0074-lbshield',
+        source: {
+          stageId: 'indie_battletower006_ex',
+          enemyId: 'eny_0074_lbshield_race006',
+          templateId: 'eny-0074-lbshield',
+        },
         level: 90,
         nameKey: 'enemy_eny_0074_lbshield_race006',
         usesBaseDefinition: false,
@@ -4754,8 +5678,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0023_aghornb_race006',
-        templateId: 'eny-0023-aghornb',
+        source: {
+          stageId: 'indie_battletower006_ex',
+          enemyId: 'eny_0023_aghornb_race006',
+          templateId: 'eny-0023-aghornb',
+        },
         level: 90,
         nameKey: 'enemy_eny_0023_aghornb_race006',
         usesBaseDefinition: false,
@@ -4763,8 +5690,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0047_firebat_race006',
-        templateId: 'eny-0047-firebat',
+        source: {
+          stageId: 'indie_battletower006_ex',
+          enemyId: 'eny_0047_firebat_race006',
+          templateId: 'eny-0047-firebat',
+        },
         level: 90,
         nameKey: 'enemy_eny_0047_firebat_race006',
         usesBaseDefinition: false,
@@ -4772,8 +5702,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0018_lbtough_race006',
-        templateId: 'eny-0018-lbtough',
+        source: {
+          stageId: 'indie_battletower006_ex',
+          enemyId: 'eny_0018_lbtough_race006',
+          templateId: 'eny-0018-lbtough',
+        },
         level: 90,
         nameKey: 'enemy_eny_0018_lbtough_race006',
         usesBaseDefinition: false,
@@ -4794,8 +5727,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0074_lbshield_race006',
-        templateId: 'eny-0074-lbshield',
+        source: {
+          stageId: 'indie_battletower006_s',
+          enemyId: 'eny_0074_lbshield_race006',
+          templateId: 'eny-0074-lbshield',
+        },
         level: 75,
         nameKey: 'enemy_eny_0074_lbshield_race006',
         usesBaseDefinition: false,
@@ -4803,8 +5739,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0023_aghornb_race006',
-        templateId: 'eny-0023-aghornb',
+        source: {
+          stageId: 'indie_battletower006_s',
+          enemyId: 'eny_0023_aghornb_race006',
+          templateId: 'eny-0023-aghornb',
+        },
         level: 75,
         nameKey: 'enemy_eny_0023_aghornb_race006',
         usesBaseDefinition: false,
@@ -4812,8 +5751,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0047_firebat_race006',
-        templateId: 'eny-0047-firebat',
+        source: {
+          stageId: 'indie_battletower006_s',
+          enemyId: 'eny_0047_firebat_race006',
+          templateId: 'eny-0047-firebat',
+        },
         level: 75,
         nameKey: 'enemy_eny_0047_firebat_race006',
         usesBaseDefinition: false,
@@ -4821,8 +5763,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0018_lbtough_race006',
-        templateId: 'eny-0018-lbtough',
+        source: {
+          stageId: 'indie_battletower006_s',
+          enemyId: 'eny_0018_lbtough_race006',
+          templateId: 'eny-0018-lbtough',
+        },
         level: 75,
         nameKey: 'enemy_eny_0018_lbtough_race006',
         usesBaseDefinition: false,
@@ -4843,8 +5788,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0082_hsbear_race007',
-        templateId: 'eny-0082-hsbear',
+        source: {
+          stageId: 'indie_battletower007',
+          enemyId: 'eny_0082_hsbear_race007',
+          templateId: 'eny-0082-hsbear',
+        },
         level: 60,
         nameKey: 'enemy_eny_0082_hsbear_race007',
         usesBaseDefinition: false,
@@ -4865,8 +5813,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0082_hsbear_race007',
-        templateId: 'eny-0082-hsbear',
+        source: {
+          stageId: 'indie_battletower007_ex',
+          enemyId: 'eny_0082_hsbear_race007',
+          templateId: 'eny-0082-hsbear',
+        },
         level: 90,
         nameKey: 'enemy_eny_0082_hsbear_race007',
         usesBaseDefinition: false,
@@ -4887,8 +5838,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0082_hsbear_race007',
-        templateId: 'eny-0082-hsbear',
+        source: {
+          stageId: 'indie_battletower007_s',
+          enemyId: 'eny_0082_hsbear_race007',
+          templateId: 'eny-0082-hsbear',
+        },
         level: 75,
         nameKey: 'enemy_eny_0082_hsbear_race007',
         usesBaseDefinition: false,
@@ -4909,8 +5863,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0007_mimicw',
-        templateId: 'eny-0007-mimicw',
+        source: {
+          stageId: 'indie_battletower008',
+          enemyId: 'eny_0007_mimicw',
+          templateId: 'eny-0007-mimicw',
+        },
         level: 60,
         nameKey: 'enemy_eny_0007_mimicw',
         usesBaseDefinition: false,
@@ -4918,8 +5875,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0027_agscorp',
-        templateId: 'eny-0027-agscorp',
+        source: {
+          stageId: 'indie_battletower008',
+          enemyId: 'eny_0027_agscorp',
+          templateId: 'eny-0027-agscorp',
+        },
         level: 60,
         nameKey: 'enemy_eny_0027_agscorp',
         usesBaseDefinition: false,
@@ -4927,8 +5887,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0048_hvybow',
-        templateId: 'eny-0048-hvybow',
+        source: {
+          stageId: 'indie_battletower008',
+          enemyId: 'eny_0048_hvybow',
+          templateId: 'eny-0048-hvybow',
+        },
         level: 60,
         nameKey: 'enemy_eny_0048_hvybow',
         usesBaseDefinition: false,
@@ -4936,8 +5899,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0073_slimerg',
-        templateId: 'eny-0073-slimerg',
+        source: {
+          stageId: 'indie_battletower008',
+          enemyId: 'eny_0073_slimerg',
+          templateId: 'eny-0073-slimerg',
+        },
         level: 60,
         nameKey: 'enemy_eny_0073_slimerg',
         usesBaseDefinition: false,
@@ -4958,8 +5924,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0007_mimicw',
-        templateId: 'eny-0007-mimicw',
+        source: {
+          stageId: 'indie_battletower008_ex',
+          enemyId: 'eny_0007_mimicw',
+          templateId: 'eny-0007-mimicw',
+        },
         level: 90,
         nameKey: 'enemy_eny_0007_mimicw',
         usesBaseDefinition: false,
@@ -4967,8 +5936,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0027_agscorp',
-        templateId: 'eny-0027-agscorp',
+        source: {
+          stageId: 'indie_battletower008_ex',
+          enemyId: 'eny_0027_agscorp',
+          templateId: 'eny-0027-agscorp',
+        },
         level: 90,
         nameKey: 'enemy_eny_0027_agscorp',
         usesBaseDefinition: false,
@@ -4976,8 +5948,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0048_hvybow',
-        templateId: 'eny-0048-hvybow',
+        source: {
+          stageId: 'indie_battletower008_ex',
+          enemyId: 'eny_0048_hvybow',
+          templateId: 'eny-0048-hvybow',
+        },
         level: 90,
         nameKey: 'enemy_eny_0048_hvybow',
         usesBaseDefinition: false,
@@ -4985,8 +5960,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0073_slimerg',
-        templateId: 'eny-0073-slimerg',
+        source: {
+          stageId: 'indie_battletower008_ex',
+          enemyId: 'eny_0073_slimerg',
+          templateId: 'eny-0073-slimerg',
+        },
         level: 90,
         nameKey: 'enemy_eny_0073_slimerg',
         usesBaseDefinition: false,
@@ -5007,8 +5985,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0007_mimicw',
-        templateId: 'eny-0007-mimicw',
+        source: {
+          stageId: 'indie_battletower008_s',
+          enemyId: 'eny_0007_mimicw',
+          templateId: 'eny-0007-mimicw',
+        },
         level: 75,
         nameKey: 'enemy_eny_0007_mimicw',
         usesBaseDefinition: false,
@@ -5016,8 +5997,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0027_agscorp',
-        templateId: 'eny-0027-agscorp',
+        source: {
+          stageId: 'indie_battletower008_s',
+          enemyId: 'eny_0027_agscorp',
+          templateId: 'eny-0027-agscorp',
+        },
         level: 75,
         nameKey: 'enemy_eny_0027_agscorp',
         usesBaseDefinition: false,
@@ -5025,8 +6009,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0048_hvybow',
-        templateId: 'eny-0048-hvybow',
+        source: {
+          stageId: 'indie_battletower008_s',
+          enemyId: 'eny_0048_hvybow',
+          templateId: 'eny-0048-hvybow',
+        },
         level: 75,
         nameKey: 'enemy_eny_0048_hvybow',
         usesBaseDefinition: false,
@@ -5034,8 +6021,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0073_slimerg',
-        templateId: 'eny-0073-slimerg',
+        source: {
+          stageId: 'indie_battletower008_s',
+          enemyId: 'eny_0073_slimerg',
+          templateId: 'eny-0073-slimerg',
+        },
         level: 75,
         nameKey: 'enemy_eny_0073_slimerg',
         usesBaseDefinition: false,
@@ -5056,8 +6046,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0007_mimicw',
-        templateId: 'eny-0007-mimicw',
+        source: {
+          stageId: 'indie_battletower009',
+          enemyId: 'eny_0007_mimicw',
+          templateId: 'eny-0007-mimicw',
+        },
         level: 60,
         nameKey: 'enemy_eny_0007_mimicw',
         usesBaseDefinition: false,
@@ -5065,8 +6058,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0122_kltdbud_tower009',
-        templateId: 'eny-0122-kltdbud',
+        source: {
+          stageId: 'indie_battletower009',
+          enemyId: 'eny_0122_kltdbud_tower009',
+          templateId: 'eny-0122-kltdbud',
+        },
         level: 60,
         nameKey: 'enemy_eny_0122_kltdbud_tower009',
         usesBaseDefinition: false,
@@ -5087,8 +6083,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0007_mimicw',
-        templateId: 'eny-0007-mimicw',
+        source: {
+          stageId: 'indie_battletower009_ex',
+          enemyId: 'eny_0007_mimicw',
+          templateId: 'eny-0007-mimicw',
+        },
         level: 90,
         nameKey: 'enemy_eny_0007_mimicw',
         usesBaseDefinition: false,
@@ -5096,8 +6095,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0122_kltdbud_tower009',
-        templateId: 'eny-0122-kltdbud',
+        source: {
+          stageId: 'indie_battletower009_ex',
+          enemyId: 'eny_0122_kltdbud_tower009',
+          templateId: 'eny-0122-kltdbud',
+        },
         level: 90,
         nameKey: 'enemy_eny_0122_kltdbud_tower009',
         usesBaseDefinition: false,
@@ -5118,8 +6120,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0007_mimicw',
-        templateId: 'eny-0007-mimicw',
+        source: {
+          stageId: 'indie_battletower009_s',
+          enemyId: 'eny_0007_mimicw',
+          templateId: 'eny-0007-mimicw',
+        },
         level: 75,
         nameKey: 'enemy_eny_0007_mimicw',
         usesBaseDefinition: false,
@@ -5127,8 +6132,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0122_kltdbud_tower009',
-        templateId: 'eny-0122-kltdbud',
+        source: {
+          stageId: 'indie_battletower009_s',
+          enemyId: 'eny_0122_kltdbud_tower009',
+          templateId: 'eny-0122-kltdbud',
+        },
         level: 75,
         nameKey: 'enemy_eny_0122_kltdbud_tower009',
         usesBaseDefinition: false,
@@ -5149,8 +6157,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0118_klhog_tower010',
-        templateId: 'eny-0118-klhog',
+        source: {
+          stageId: 'indie_battletower010',
+          enemyId: 'eny_0118_klhog_tower010',
+          templateId: 'eny-0118-klhog',
+        },
         level: 60,
         nameKey: 'enemy_eny_0118_klhog_tower010',
         usesBaseDefinition: false,
@@ -5158,8 +6169,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0089_wgreflec_tower010',
-        templateId: 'eny-0089-wgreflec',
+        source: {
+          stageId: 'indie_battletower010',
+          enemyId: 'eny_0089_wgreflec_tower010',
+          templateId: 'eny-0089-wgreflec',
+        },
         level: 60,
         nameKey: 'enemy_eny_0089_wgreflec_tower010',
         usesBaseDefinition: false,
@@ -5180,8 +6194,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0118_klhog_tower010',
-        templateId: 'eny-0118-klhog',
+        source: {
+          stageId: 'indie_battletower010_ex',
+          enemyId: 'eny_0118_klhog_tower010',
+          templateId: 'eny-0118-klhog',
+        },
         level: 90,
         nameKey: 'enemy_eny_0118_klhog_tower010',
         usesBaseDefinition: false,
@@ -5189,8 +6206,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0089_wgreflec_tower010',
-        templateId: 'eny-0089-wgreflec',
+        source: {
+          stageId: 'indie_battletower010_ex',
+          enemyId: 'eny_0089_wgreflec_tower010',
+          templateId: 'eny-0089-wgreflec',
+        },
         level: 90,
         nameKey: 'enemy_eny_0089_wgreflec_tower010',
         usesBaseDefinition: false,
@@ -5211,8 +6231,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0118_klhog_tower010',
-        templateId: 'eny-0118-klhog',
+        source: {
+          stageId: 'indie_battletower010_s',
+          enemyId: 'eny_0118_klhog_tower010',
+          templateId: 'eny-0118-klhog',
+        },
         level: 75,
         nameKey: 'enemy_eny_0118_klhog_tower010',
         usesBaseDefinition: false,
@@ -5220,8 +6243,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0089_wgreflec_tower010',
-        templateId: 'eny-0089-wgreflec',
+        source: {
+          stageId: 'indie_battletower010_s',
+          enemyId: 'eny_0089_wgreflec_tower010',
+          templateId: 'eny-0089-wgreflec',
+        },
         level: 75,
         nameKey: 'enemy_eny_0089_wgreflec_tower010',
         usesBaseDefinition: false,
@@ -5242,8 +6268,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0023_aghornb_tower011',
-        templateId: 'eny-0023-aghornb',
+        source: {
+          stageId: 'indie_battletower011',
+          enemyId: 'eny_0023_aghornb_tower011',
+          templateId: 'eny-0023-aghornb',
+        },
         level: 60,
         nameKey: 'enemy_eny_0023_aghornb_tower011',
         usesBaseDefinition: false,
@@ -5251,8 +6280,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0047_firebat_tower011',
-        templateId: 'eny-0047-firebat',
+        source: {
+          stageId: 'indie_battletower011',
+          enemyId: 'eny_0047_firebat_tower011',
+          templateId: 'eny-0047-firebat',
+        },
         level: 60,
         nameKey: 'enemy_eny_0047_firebat_tower011',
         usesBaseDefinition: false,
@@ -5260,8 +6292,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0093_hshog_tower011',
-        templateId: 'eny-0093-hshog',
+        source: {
+          stageId: 'indie_battletower011',
+          enemyId: 'eny_0093_hshog_tower011',
+          templateId: 'eny-0093-hshog',
+        },
         level: 60,
         nameKey: 'enemy_eny_0093_hshog_tower011',
         usesBaseDefinition: false,
@@ -5282,8 +6317,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0023_aghornb_tower011',
-        templateId: 'eny-0023-aghornb',
+        source: {
+          stageId: 'indie_battletower011_ex',
+          enemyId: 'eny_0023_aghornb_tower011',
+          templateId: 'eny-0023-aghornb',
+        },
         level: 90,
         nameKey: 'enemy_eny_0023_aghornb_tower011',
         usesBaseDefinition: false,
@@ -5291,8 +6329,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0047_firebat_tower011',
-        templateId: 'eny-0047-firebat',
+        source: {
+          stageId: 'indie_battletower011_ex',
+          enemyId: 'eny_0047_firebat_tower011',
+          templateId: 'eny-0047-firebat',
+        },
         level: 90,
         nameKey: 'enemy_eny_0047_firebat_tower011',
         usesBaseDefinition: false,
@@ -5300,8 +6341,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0093_hshog_tower011',
-        templateId: 'eny-0093-hshog',
+        source: {
+          stageId: 'indie_battletower011_ex',
+          enemyId: 'eny_0093_hshog_tower011',
+          templateId: 'eny-0093-hshog',
+        },
         level: 90,
         nameKey: 'enemy_eny_0093_hshog_tower011',
         usesBaseDefinition: false,
@@ -5322,8 +6366,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0023_aghornb_tower011',
-        templateId: 'eny-0023-aghornb',
+        source: {
+          stageId: 'indie_battletower011_s',
+          enemyId: 'eny_0023_aghornb_tower011',
+          templateId: 'eny-0023-aghornb',
+        },
         level: 75,
         nameKey: 'enemy_eny_0023_aghornb_tower011',
         usesBaseDefinition: false,
@@ -5331,8 +6378,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0047_firebat_tower011',
-        templateId: 'eny-0047-firebat',
+        source: {
+          stageId: 'indie_battletower011_s',
+          enemyId: 'eny_0047_firebat_tower011',
+          templateId: 'eny-0047-firebat',
+        },
         level: 75,
         nameKey: 'enemy_eny_0047_firebat_tower011',
         usesBaseDefinition: false,
@@ -5340,8 +6390,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0093_hshog_tower011',
-        templateId: 'eny-0093-hshog',
+        source: {
+          stageId: 'indie_battletower011_s',
+          enemyId: 'eny_0093_hshog_tower011',
+          templateId: 'eny-0093-hshog',
+        },
         level: 75,
         nameKey: 'enemy_eny_0093_hshog_tower011',
         usesBaseDefinition: false,
@@ -5362,8 +6415,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0063_agmelee2',
-        templateId: 'eny-0063-agmelee2',
+        source: {
+          stageId: 'indie_battletower012',
+          enemyId: 'eny_0063_agmelee2',
+          templateId: 'eny-0063-agmelee2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0063_agmelee2',
         usesBaseDefinition: false,
@@ -5371,8 +6427,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0101_agfly2',
-        templateId: 'eny-0101-agfly2',
+        source: {
+          stageId: 'indie_battletower012',
+          enemyId: 'eny_0101_agfly2',
+          templateId: 'eny-0101-agfly2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0101_agfly2',
         usesBaseDefinition: false,
@@ -5380,8 +6439,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0021_agmelee',
-        templateId: 'eny-0021-agmelee',
+        source: {
+          stageId: 'indie_battletower012',
+          enemyId: 'eny_0021_agmelee',
+          templateId: 'eny-0021-agmelee',
+        },
         level: 60,
         nameKey: 'enemy_eny_0021_agmelee',
         usesBaseDefinition: false,
@@ -5389,8 +6451,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0071_sandb',
-        templateId: 'eny-0071-sandb',
+        source: {
+          stageId: 'indie_battletower012',
+          enemyId: 'eny_0071_sandb',
+          templateId: 'eny-0071-sandb',
+        },
         level: 60,
         nameKey: 'enemy_eny_0071_sandb',
         usesBaseDefinition: false,
@@ -5411,8 +6476,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0063_agmelee2',
-        templateId: 'eny-0063-agmelee2',
+        source: {
+          stageId: 'indie_battletower012_ex',
+          enemyId: 'eny_0063_agmelee2',
+          templateId: 'eny-0063-agmelee2',
+        },
         level: 90,
         nameKey: 'enemy_eny_0063_agmelee2',
         usesBaseDefinition: false,
@@ -5420,8 +6488,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0101_agfly2',
-        templateId: 'eny-0101-agfly2',
+        source: {
+          stageId: 'indie_battletower012_ex',
+          enemyId: 'eny_0101_agfly2',
+          templateId: 'eny-0101-agfly2',
+        },
         level: 90,
         nameKey: 'enemy_eny_0101_agfly2',
         usesBaseDefinition: false,
@@ -5429,8 +6500,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0021_agmelee',
-        templateId: 'eny-0021-agmelee',
+        source: {
+          stageId: 'indie_battletower012_ex',
+          enemyId: 'eny_0021_agmelee',
+          templateId: 'eny-0021-agmelee',
+        },
         level: 90,
         nameKey: 'enemy_eny_0021_agmelee',
         usesBaseDefinition: false,
@@ -5438,8 +6512,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0071_sandb',
-        templateId: 'eny-0071-sandb',
+        source: {
+          stageId: 'indie_battletower012_ex',
+          enemyId: 'eny_0071_sandb',
+          templateId: 'eny-0071-sandb',
+        },
         level: 90,
         nameKey: 'enemy_eny_0071_sandb',
         usesBaseDefinition: false,
@@ -5460,8 +6537,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0063_agmelee2',
-        templateId: 'eny-0063-agmelee2',
+        source: {
+          stageId: 'indie_battletower012_s',
+          enemyId: 'eny_0063_agmelee2',
+          templateId: 'eny-0063-agmelee2',
+        },
         level: 75,
         nameKey: 'enemy_eny_0063_agmelee2',
         usesBaseDefinition: false,
@@ -5469,8 +6549,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0101_agfly2',
-        templateId: 'eny-0101-agfly2',
+        source: {
+          stageId: 'indie_battletower012_s',
+          enemyId: 'eny_0101_agfly2',
+          templateId: 'eny-0101-agfly2',
+        },
         level: 75,
         nameKey: 'enemy_eny_0101_agfly2',
         usesBaseDefinition: false,
@@ -5478,8 +6561,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0021_agmelee',
-        templateId: 'eny-0021-agmelee',
+        source: {
+          stageId: 'indie_battletower012_s',
+          enemyId: 'eny_0021_agmelee',
+          templateId: 'eny-0021-agmelee',
+        },
         level: 75,
         nameKey: 'enemy_eny_0021_agmelee',
         usesBaseDefinition: false,
@@ -5487,8 +6573,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0071_sandb',
-        templateId: 'eny-0071-sandb',
+        source: {
+          stageId: 'indie_battletower012_s',
+          enemyId: 'eny_0071_sandb',
+          templateId: 'eny-0071-sandb',
+        },
         level: 75,
         nameKey: 'enemy_eny_0071_sandb',
         usesBaseDefinition: false,
@@ -5509,8 +6598,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0018_lbtough_tower013',
-        templateId: 'eny-0018-lbtough',
+        source: {
+          stageId: 'indie_battletower013',
+          enemyId: 'eny_0018_lbtough_tower013',
+          templateId: 'eny-0018-lbtough',
+        },
         level: 60,
         nameKey: 'enemy_eny_0018_lbtough_tower013',
         usesBaseDefinition: false,
@@ -5518,8 +6610,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: true, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0054_hsmino_tower013',
-        templateId: 'eny-0054-hsmino',
+        source: {
+          stageId: 'indie_battletower013',
+          enemyId: 'eny_0054_hsmino_tower013',
+          templateId: 'eny-0054-hsmino',
+        },
         level: 60,
         nameKey: 'enemy_eny_0054_hsmino_tower013',
         usesBaseDefinition: false,
@@ -5540,8 +6635,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0018_lbtough_tower013',
-        templateId: 'eny-0018-lbtough',
+        source: {
+          stageId: 'indie_battletower013_ex',
+          enemyId: 'eny_0018_lbtough_tower013',
+          templateId: 'eny-0018-lbtough',
+        },
         level: 90,
         nameKey: 'enemy_eny_0018_lbtough_tower013',
         usesBaseDefinition: false,
@@ -5549,8 +6647,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: true, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0054_hsmino_tower013',
-        templateId: 'eny-0054-hsmino',
+        source: {
+          stageId: 'indie_battletower013_ex',
+          enemyId: 'eny_0054_hsmino_tower013',
+          templateId: 'eny-0054-hsmino',
+        },
         level: 90,
         nameKey: 'enemy_eny_0054_hsmino_tower013',
         usesBaseDefinition: false,
@@ -5571,8 +6672,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0018_lbtough_tower013',
-        templateId: 'eny-0018-lbtough',
+        source: {
+          stageId: 'indie_battletower013_s',
+          enemyId: 'eny_0018_lbtough_tower013',
+          templateId: 'eny-0018-lbtough',
+        },
         level: 75,
         nameKey: 'enemy_eny_0018_lbtough_tower013',
         usesBaseDefinition: false,
@@ -5580,8 +6684,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: true, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0054_hsmino_tower013',
-        templateId: 'eny-0054-hsmino',
+        source: {
+          stageId: 'indie_battletower013_s',
+          enemyId: 'eny_0054_hsmino_tower013',
+          templateId: 'eny-0054-hsmino',
+        },
         level: 75,
         nameKey: 'enemy_eny_0054_hsmino_tower013',
         usesBaseDefinition: false,
@@ -5602,8 +6709,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0112_jzmonk_tower014',
-        templateId: 'eny-0112-jzmonk',
+        source: {
+          stageId: 'indie_battletower014',
+          enemyId: 'eny_0112_jzmonk_tower014',
+          templateId: 'eny-0112-jzmonk',
+        },
         level: 60,
         nameKey: 'enemy_eny_0112_jzmonk_tower014',
         usesBaseDefinition: false,
@@ -5611,8 +6721,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0113_jzogre_tower014',
-        templateId: 'eny-0113-jzogre',
+        source: {
+          stageId: 'indie_battletower014',
+          enemyId: 'eny_0113_jzogre_tower014',
+          templateId: 'eny-0113-jzogre',
+        },
         level: 60,
         nameKey: 'enemy_eny_0113_jzogre_tower014',
         usesBaseDefinition: false,
@@ -5633,8 +6746,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0112_jzmonk_tower014',
-        templateId: 'eny-0112-jzmonk',
+        source: {
+          stageId: 'indie_battletower014_ex',
+          enemyId: 'eny_0112_jzmonk_tower014',
+          templateId: 'eny-0112-jzmonk',
+        },
         level: 90,
         nameKey: 'enemy_eny_0112_jzmonk_tower014',
         usesBaseDefinition: false,
@@ -5642,8 +6758,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0113_jzogre_tower014',
-        templateId: 'eny-0113-jzogre',
+        source: {
+          stageId: 'indie_battletower014_ex',
+          enemyId: 'eny_0113_jzogre_tower014',
+          templateId: 'eny-0113-jzogre',
+        },
         level: 90,
         nameKey: 'enemy_eny_0113_jzogre_tower014',
         usesBaseDefinition: false,
@@ -5664,8 +6783,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0112_jzmonk_tower014',
-        templateId: 'eny-0112-jzmonk',
+        source: {
+          stageId: 'indie_battletower014_s',
+          enemyId: 'eny_0112_jzmonk_tower014',
+          templateId: 'eny-0112-jzmonk',
+        },
         level: 75,
         nameKey: 'enemy_eny_0112_jzmonk_tower014',
         usesBaseDefinition: false,
@@ -5673,8 +6795,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0113_jzogre_tower014',
-        templateId: 'eny-0113-jzogre',
+        source: {
+          stageId: 'indie_battletower014_s',
+          enemyId: 'eny_0113_jzogre_tower014',
+          templateId: 'eny-0113-jzogre',
+        },
         level: 75,
         nameKey: 'enemy_eny_0113_jzogre_tower014',
         usesBaseDefinition: false,
@@ -5695,8 +6820,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0120_klbear_tower015',
-        templateId: 'eny-0120-klbear',
+        source: {
+          stageId: 'indie_battletower015',
+          enemyId: 'eny_0120_klbear_tower015',
+          templateId: 'eny-0120-klbear',
+        },
         level: 60,
         nameKey: 'enemy_eny_0120_klbear_tower015',
         usesBaseDefinition: false,
@@ -5717,8 +6845,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0120_klbear_tower015',
-        templateId: 'eny-0120-klbear',
+        source: {
+          stageId: 'indie_battletower015_ex',
+          enemyId: 'eny_0120_klbear_tower015',
+          templateId: 'eny-0120-klbear',
+        },
         level: 90,
         nameKey: 'enemy_eny_0120_klbear_tower015',
         usesBaseDefinition: false,
@@ -5739,8 +6870,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0120_klbear_tower015',
-        templateId: 'eny-0120-klbear',
+        source: {
+          stageId: 'indie_battletower015_s',
+          enemyId: 'eny_0120_klbear_tower015',
+          templateId: 'eny-0120-klbear',
+        },
         level: 75,
         nameKey: 'enemy_eny_0120_klbear_tower015',
         usesBaseDefinition: false,
@@ -5761,8 +6895,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0124_kltdcap_tower016',
-        templateId: 'eny-0124-kltdcap',
+        source: {
+          stageId: 'indie_battletower016',
+          enemyId: 'eny_0124_kltdcap_tower016',
+          templateId: 'eny-0124-kltdcap',
+        },
         level: 60,
         nameKey: 'enemy_eny_0124_kltdcap_tower016',
         usesBaseDefinition: false,
@@ -5783,8 +6920,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0124_kltdcap_tower016',
-        templateId: 'eny-0124-kltdcap',
+        source: {
+          stageId: 'indie_battletower016_ex',
+          enemyId: 'eny_0124_kltdcap_tower016',
+          templateId: 'eny-0124-kltdcap',
+        },
         level: 90,
         nameKey: 'enemy_eny_0124_kltdcap_tower016',
         usesBaseDefinition: false,
@@ -5805,8 +6945,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0124_kltdcap_tower016',
-        templateId: 'eny-0124-kltdcap',
+        source: {
+          stageId: 'indie_battletower016_s',
+          enemyId: 'eny_0124_kltdcap_tower016',
+          templateId: 'eny-0124-kltdcap',
+        },
         level: 75,
         nameKey: 'enemy_eny_0124_kltdcap_tower016',
         usesBaseDefinition: false,
@@ -5827,8 +6970,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0066_lbhunt2_hdg005',
-        templateId: 'eny-0066-lbhunt2',
+        source: {
+          stageId: 'indie_battletower017',
+          enemyId: 'eny_0066_lbhunt2_hdg005',
+          templateId: 'eny-0066-lbhunt2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0066_lbhunt2_hdg005',
         usesBaseDefinition: false,
@@ -5836,8 +6982,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: true, bornBuffs: true },
       },
       {
-        id: 'eny_0075_lbroshan_settlement',
-        templateId: 'eny-0075-lbroshan',
+        source: {
+          stageId: 'indie_battletower017',
+          enemyId: 'eny_0075_lbroshan_settlement',
+          templateId: 'eny-0075-lbroshan',
+        },
         level: 60,
         nameKey: 'enemy_eny_0075_lbroshan_settlement',
         usesBaseDefinition: false,
@@ -5858,8 +7007,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0066_lbhunt2_hdg005',
-        templateId: 'eny-0066-lbhunt2',
+        source: {
+          stageId: 'indie_battletower017_ex',
+          enemyId: 'eny_0066_lbhunt2_hdg005',
+          templateId: 'eny-0066-lbhunt2',
+        },
         level: 90,
         nameKey: 'enemy_eny_0066_lbhunt2_hdg005',
         usesBaseDefinition: false,
@@ -5867,8 +7019,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: true, bornBuffs: true },
       },
       {
-        id: 'eny_0075_lbroshan_settlement',
-        templateId: 'eny-0075-lbroshan',
+        source: {
+          stageId: 'indie_battletower017_ex',
+          enemyId: 'eny_0075_lbroshan_settlement',
+          templateId: 'eny-0075-lbroshan',
+        },
         level: 90,
         nameKey: 'enemy_eny_0075_lbroshan_settlement',
         usesBaseDefinition: false,
@@ -5889,8 +7044,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0066_lbhunt2_hdg005',
-        templateId: 'eny-0066-lbhunt2',
+        source: {
+          stageId: 'indie_battletower017_s',
+          enemyId: 'eny_0066_lbhunt2_hdg005',
+          templateId: 'eny-0066-lbhunt2',
+        },
         level: 75,
         nameKey: 'enemy_eny_0066_lbhunt2_hdg005',
         usesBaseDefinition: false,
@@ -5898,8 +7056,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: true, bornBuffs: true },
       },
       {
-        id: 'eny_0075_lbroshan_settlement',
-        templateId: 'eny-0075-lbroshan',
+        source: {
+          stageId: 'indie_battletower017_s',
+          enemyId: 'eny_0075_lbroshan_settlement',
+          templateId: 'eny-0075-lbroshan',
+        },
         level: 75,
         nameKey: 'enemy_eny_0075_lbroshan_settlement',
         usesBaseDefinition: false,
@@ -5920,8 +7081,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0055_hscrane',
-        templateId: 'eny-0055-hscrane',
+        source: {
+          stageId: 'indie_battletower018',
+          enemyId: 'eny_0055_hscrane',
+          templateId: 'eny-0055-hscrane',
+        },
         level: 60,
         nameKey: 'enemy_eny_0055_hscrane',
         usesBaseDefinition: false,
@@ -5929,8 +7093,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0093_hshog',
-        templateId: 'eny-0093-hshog',
+        source: {
+          stageId: 'indie_battletower018',
+          enemyId: 'eny_0093_hshog',
+          templateId: 'eny-0093-hshog',
+        },
         level: 60,
         nameKey: 'enemy_eny_0093_hshog',
         usesBaseDefinition: false,
@@ -5938,8 +7105,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0070_agscorp2',
-        templateId: 'eny-0070-agscorp2',
+        source: {
+          stageId: 'indie_battletower018',
+          enemyId: 'eny_0070_agscorp2',
+          templateId: 'eny-0070-agscorp2',
+        },
         level: 60,
         nameKey: 'enemy_eny_0070_agscorp2',
         usesBaseDefinition: false,
@@ -5960,8 +7130,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0055_hscrane',
-        templateId: 'eny-0055-hscrane',
+        source: {
+          stageId: 'indie_battletower018_ex',
+          enemyId: 'eny_0055_hscrane',
+          templateId: 'eny-0055-hscrane',
+        },
         level: 90,
         nameKey: 'enemy_eny_0055_hscrane',
         usesBaseDefinition: false,
@@ -5969,8 +7142,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0093_hshog',
-        templateId: 'eny-0093-hshog',
+        source: {
+          stageId: 'indie_battletower018_ex',
+          enemyId: 'eny_0093_hshog',
+          templateId: 'eny-0093-hshog',
+        },
         level: 90,
         nameKey: 'enemy_eny_0093_hshog',
         usesBaseDefinition: false,
@@ -5978,8 +7154,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0070_agscorp2',
-        templateId: 'eny-0070-agscorp2',
+        source: {
+          stageId: 'indie_battletower018_ex',
+          enemyId: 'eny_0070_agscorp2',
+          templateId: 'eny-0070-agscorp2',
+        },
         level: 90,
         nameKey: 'enemy_eny_0070_agscorp2',
         usesBaseDefinition: false,
@@ -6000,8 +7179,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0055_hscrane',
-        templateId: 'eny-0055-hscrane',
+        source: {
+          stageId: 'indie_battletower018_s',
+          enemyId: 'eny_0055_hscrane',
+          templateId: 'eny-0055-hscrane',
+        },
         level: 75,
         nameKey: 'enemy_eny_0055_hscrane',
         usesBaseDefinition: false,
@@ -6009,8 +7191,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0093_hshog',
-        templateId: 'eny-0093-hshog',
+        source: {
+          stageId: 'indie_battletower018_s',
+          enemyId: 'eny_0093_hshog',
+          templateId: 'eny-0093-hshog',
+        },
         level: 75,
         nameKey: 'enemy_eny_0093_hshog',
         usesBaseDefinition: false,
@@ -6018,8 +7203,11 @@ export const generatedEnemyStages = [
         differences: { attributeTemplate: false, attributeModifiers: false, bornBuffs: false },
       },
       {
-        id: 'eny_0070_agscorp2',
-        templateId: 'eny-0070-agscorp2',
+        source: {
+          stageId: 'indie_battletower018_s',
+          enemyId: 'eny_0070_agscorp2',
+          templateId: 'eny-0070-agscorp2',
+        },
         level: 75,
         nameKey: 'enemy_eny_0070_agscorp2',
         usesBaseDefinition: false,
@@ -6040,8 +7228,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0127_bigents_tower019',
-        templateId: 'eny-0127-bigents',
+        source: {
+          stageId: 'indie_battletower019',
+          enemyId: 'eny_0127_bigents_tower019',
+          templateId: 'eny-0127-bigents',
+        },
         level: 60,
         nameKey: 'enemy_eny_0127_bigents_tower019',
         usesBaseDefinition: false,
@@ -6062,8 +7253,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0127_bigents_tower019',
-        templateId: 'eny-0127-bigents',
+        source: {
+          stageId: 'indie_battletower019_ex',
+          enemyId: 'eny_0127_bigents_tower019',
+          templateId: 'eny-0127-bigents',
+        },
         level: 90,
         nameKey: 'enemy_eny_0127_bigents_tower019',
         usesBaseDefinition: false,
@@ -6084,8 +7278,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0127_bigents_tower019',
-        templateId: 'eny-0127-bigents',
+        source: {
+          stageId: 'indie_battletower019_s',
+          enemyId: 'eny_0127_bigents_tower019',
+          templateId: 'eny-0127-bigents',
+        },
         level: 75,
         nameKey: 'enemy_eny_0127_bigents_tower019',
         usesBaseDefinition: false,
@@ -6106,8 +7303,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0074_lbshield',
-        templateId: 'eny-0074-lbshield',
+        source: {
+          stageId: 'indie_battletower020',
+          enemyId: 'eny_0074_lbshield',
+          templateId: 'eny-0074-lbshield',
+        },
         level: 60,
         nameKey: 'enemy_eny_0074_lbshield',
         usesBaseDefinition: false,
@@ -6128,8 +7328,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0074_lbshield',
-        templateId: 'eny-0074-lbshield',
+        source: {
+          stageId: 'indie_battletower020_ex',
+          enemyId: 'eny_0074_lbshield',
+          templateId: 'eny-0074-lbshield',
+        },
         level: 90,
         nameKey: 'enemy_eny_0074_lbshield',
         usesBaseDefinition: false,
@@ -6150,8 +7353,11 @@ export const generatedEnemyStages = [
     sort: 0,
     enemies: [
       {
-        id: 'eny_0074_lbshield',
-        templateId: 'eny-0074-lbshield',
+        source: {
+          stageId: 'indie_battletower020_s',
+          enemyId: 'eny_0074_lbshield',
+          templateId: 'eny-0074-lbshield',
+        },
         level: 75,
         nameKey: 'enemy_eny_0074_lbshield',
         usesBaseDefinition: false,

@@ -125,6 +125,10 @@ describe('enemy data generation', () => {
     await writeJson(join(root, 'WikiGroupTable.json'), { wiki_type_monster: { list: [] } });
     const result = await generateEnemyStageCatalog(args);
     const content = await readFile(result.output, 'utf8');
+    expect(result.stages[0]!.enemies.map(enemy => enemy.source)).toEqual([
+      { stageId: 'stage', enemyId: 'eny_base', templateId: 'eny-base' },
+      { stageId: 'stage', enemyId: 'eny_variant', templateId: 'eny-base' },
+    ]);
     expect(content).toContain('usesBaseDefinition: true');
     expect(content).toContain('usesBaseDefinition: false');
     expect(content).toContain('bornBuffs: true');

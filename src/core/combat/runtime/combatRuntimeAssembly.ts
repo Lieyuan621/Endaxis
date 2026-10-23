@@ -372,6 +372,13 @@ export interface AbilityEntityBuffRuntime extends BuffOperationTarget {
 export interface CombatEnemyProgram {
   readonly source:
     | { readonly kind: 'prefab'; readonly enemyId: string; readonly level: number }
+    | {
+        readonly kind: 'stage';
+        readonly stageId: string;
+        readonly enemyId: string;
+        readonly templateId: string;
+        readonly level: number;
+      }
     | { readonly kind: 'custom'; readonly level: number };
   readonly rank: EnemyRank;
   readonly health: number;

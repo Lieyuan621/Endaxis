@@ -1,9 +1,10 @@
 /**
  * 敌人在版本化游戏数据中的只读定义。
- * 存档只保存定义身份、等级和用户手动覆盖的值；名称由本地化层按 `id` 解析。
+ * 存档保存原生来源、等级及完整数值快照；名称和图片由本地化与定义层解析。
  */
 import { ENEMY_LEVELS, type EnemyLevelHp } from '../../../packages/game-data-contract/src/index';
 import type { ImageRef } from '../../../packages/game-data-contract/src/primitives';
+import type { EnemyDocument } from '../project/schema';
 import type { EnemyRank } from './enemyRank';
 import type { DamageElement } from './operatorDefinition';
 export { ENEMY_LEVELS };
@@ -45,4 +46,10 @@ export interface EnemyDefinition {
 /** 只接受定义中明确存在的等级节点，避免把推测插值伪装成游戏数据。 */
 export function getEnemyHpAtLevel(definition: EnemyDefinition, level: number): number | null {
   return definition.levelHp[level] ?? null;
+}
+
+/** 关卡实例只依赖基础模板资料；关卡修正数值由存档快照提供。 */
+export function getEnemySourceDefinitionId(source: EnemyDocument['source']): string | null {
+  if (source.kind === 'custom') return null;
+  return source.kind === 'stage' ? source.templateId : source.enemyId;
 }

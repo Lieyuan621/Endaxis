@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { StageEnemyIdentity } from '../../../core/project/schema';
 import { resolveImage } from '../../imageResources';
 import EnemyStagePicker from './EnemyStagePicker.vue';
 import zhCategories from '../../../i18n/game-locales/zh/enemies.json';
@@ -94,7 +95,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  selectDefinition: [enemyId: string, level: number];
+  selectDefinition: [enemyId: string, level: number, stage?: StageEnemyIdentity];
   selectCustom: [level: number];
   save: [values: EnemyEditableValues];
 }>();
@@ -114,9 +115,11 @@ const draft = reactive<EnemyEditableValues>(cloneEditorDefinition(props.enemy.ed
 const activeName = computed(() =>
   props.enemy.source.kind === 'custom'
     ? props.labels.custom
-    : props.definition === null
-      ? props.labels.unknown
-      : props.nameOf(props.definition.id),
+    : props.enemy.source.kind === 'stage'
+      ? props.nameOf(props.enemy.source.enemyId.replaceAll('_', '-'))
+      : props.definition === null
+        ? props.labels.unknown
+        : props.nameOf(props.definition.id),
 );
 const resistanceSummary = computed(() =>
   EDITABLE_RESISTANCE_DAMAGE_TYPES.map(type => ({
@@ -314,8 +317,8 @@ function removeKnotThreshold(index: number): void {
           :enemies="enemies"
           :name-of="nameOf"
           @select="
-            (id, level) => {
-              emit('selectDefinition', id, level);
+            (id, level, stage) => {
+              emit('selectDefinition', id, level, stage);
               selectorVisible = false;
             }
           "

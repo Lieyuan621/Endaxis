@@ -9,6 +9,15 @@ import {
 import { PROJECT_SCHEMA_VERSION, type TrackDocument } from './schema';
 import { validateProjectDocument } from './validation';
 
+it('旧存档的敌人 edited 字段不参与校验，新存档不再生成该字段', () => {
+  const project = createEmptyProject({ createdWith: 'test' });
+  expect(project.scenarios[0]!.enemy).not.toHaveProperty('edited');
+  const enemy = { ...project.scenarios[0]!.enemy, edited: 'obsolete value' };
+  expect(
+    parseProjectDocument({ ...project, scenarios: [{ ...project.scenarios[0]!, enemy }] }).ok,
+  ).toBe(true);
+});
+
 function createTrack(): TrackDocument {
   return {
     id: 'track:0',

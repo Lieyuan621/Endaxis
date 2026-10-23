@@ -343,7 +343,7 @@ export async function generateEnemyDefinitions(args: Arguments) {
             enemy =>
               stageCatalog.stageAttributes.find(
                 entry => entry.id.replaceAll('_', '-') === enemy.definitionId,
-              )?.id ?? enemy.id,
+              )?.id ?? enemy.source.enemyId,
           ),
       ),
     ),

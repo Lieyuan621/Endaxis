@@ -3965,8 +3965,8 @@ function enemyName(enemyId: string): string {
 }
 
 const enemyHudName = computed(() =>
-  scenario.value.enemy.source.kind === 'prefab'
-    ? enemyName(scenario.value.enemy.source.enemyId)
+  scenario.value.enemy.source.kind !== 'custom'
+    ? enemyName(scenario.value.enemy.source.enemyId.replaceAll('_', '-'))
     : t('resourceMonitor.enemy.custom'),
 );
 

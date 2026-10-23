@@ -9,7 +9,7 @@ import stageEn from '../i18n/game-locales/en/stages.json';
 const stageEnemyNames = new Map(
   generatedEnemyStages.flatMap(stage =>
     stage.enemies.flatMap(enemy => [
-      [enemy.id.replaceAll('_', '-'), enemy] as const,
+      [enemy.source.enemyId.replaceAll('_', '-'), enemy] as const,
       [enemy.definitionId, enemy] as const,
     ]),
   ),
@@ -354,11 +354,12 @@ export function getGearSetGameDescription(slug: string, locale?: string | null) 
 
 export function getEnemyGameName(slug: string, locale?: string | null): string {
   const stageEnemy = stageEnemyNames.get(slug);
-  if (stageEnemy && stageEnemy.templateId !== slug) {
+  if (stageEnemy && stageEnemy.source.templateId !== slug) {
     const names: Record<string, string> =
       normalizeLocale(locale ?? i18n.global.locale.value) === 'en' ? stageEn : stageZh;
     return (
-      readTrimmedText(names[stageEnemy.nameKey]) || getEnemyGameName(stageEnemy.templateId, locale)
+      readTrimmedText(names[stageEnemy.nameKey]) ||
+      getEnemyGameName(stageEnemy.source.templateId, locale)
     );
   }
   const entry = getEnemyEntry(slug, locale);

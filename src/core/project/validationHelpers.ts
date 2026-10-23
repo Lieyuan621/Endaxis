@@ -73,29 +73,6 @@ export function validateFiniteNumberRecord(
   }
 }
 
-export function validateEditedFields(
-  value: unknown,
-  allowed: ReadonlySet<string>,
-  path: string,
-  issues: ValidationIssue[],
-): void {
-  if (!Array.isArray(value)) {
-    issues.push({ path, message: 'expected an array' });
-    return;
-  }
-  const seen = new Set<string>();
-  value.forEach((entry, index) => {
-    if (typeof entry !== 'string' || !allowed.has(entry)) {
-      issues.push({ path: `${path}[${index}]`, message: 'unexpected editable field' });
-      return;
-    }
-    if (seen.has(entry)) {
-      issues.push({ path: `${path}[${index}]`, message: 'duplicate editable field' });
-    }
-    seen.add(entry);
-  });
-}
-
 export function requireEnum(
   value: unknown,
   allowed: ReadonlySet<string>,

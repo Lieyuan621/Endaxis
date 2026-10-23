@@ -42,7 +42,6 @@ export function createEmptyScenario(id: string, name: string): ScenarioDocument 
           finisherSpRecovery: 100,
         },
       },
-      edited: [],
     },
     battle: {
       prepFrames: 150,

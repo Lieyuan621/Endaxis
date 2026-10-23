@@ -1,21 +1,14 @@
 /**
  * 将敌人预制体默认值转换为项目实例，并提供不可变的敌人覆盖命令。
- * 切换定义会重新捕获完整默认值；单项编辑只记录用户接管的字段，不修改定义。
+ * 切换定义会重新捕获完整默认值；单项编辑只修改实例数值，不修改定义。
  */
 import { getEnemyHpAtLevel, type EnemyDefinition } from '../../core/game-data/enemyDefinition';
 import type {
   EnemyDocument,
-  EnemyEditableField,
+  StageEnemyIdentity,
   EnemyEditableValues,
   ScenarioDocument,
 } from '../../core/project/schema';
-
-function addEditedField(
-  edited: readonly EnemyEditableField[],
-  field: EnemyEditableField,
-): EnemyEditableField[] {
-  return edited.includes(field) ? [...edited] : [...edited, field];
-}
 
 function secondsToFrames(seconds: number, fps: number): number {
   if (!Number.isInteger(fps) || fps <= 0) throw new Error('project FPS must be a positive integer');
@@ -27,13 +20,16 @@ export function createDefinitionEnemyDocument(
   definition: EnemyDefinition,
   level: number,
   fps: number,
+  stage?: StageEnemyIdentity,
 ): EnemyDocument {
   const hp = getEnemyHpAtLevel(definition, level);
   if (hp === null) {
     throw new Error(`enemy '${definition.id}' has no HP value at level ${level}`);
   }
   return {
-    source: { kind: 'prefab', enemyId: definition.id, level },
+    source: stage
+      ? { kind: 'stage', ...stage, level }
+      : { kind: 'prefab', enemyId: definition.id, level },
     rank: definition.rank,
     editable: {
       hp,
@@ -49,7 +45,6 @@ export function createDefinitionEnemyDocument(
         finisherSpRecovery: definition.stagger.finisherSpRecovery,
       },
     },
-    edited: [],
   };
 }
 
@@ -81,26 +76,25 @@ export function createCustomEnemyDocument(level = 90): EnemyDocument {
         finisherSpRecovery: 100,
       },
     },
-    edited: [],
   };
 }
 
-/** 把属性弹窗的一次确认合并为一次场景修改，并逐字段记录本次新增的用户覆盖。 */
+/** 把属性弹窗的一次确认合并为一次场景修改，并隔离编辑草稿。 */
 export function replaceEnemyEditableValues(
   scenario: ScenarioDocument,
   values: EnemyEditableValues,
 ): ScenarioDocument {
   const current = scenario.enemy.editable;
-  const changedFields: EnemyEditableField[] = [];
+  let changed = false;
   for (const field of ['hp', 'defense', 'superArmor', 'finisherMultiplier'] as const) {
-    if (current[field] !== values[field]) changedFields.push(field);
+    if (current[field] !== values[field]) changed = true;
   }
   const resistanceKeys = new Set([
     ...Object.keys(current.resistances),
     ...Object.keys(values.resistances),
   ]);
   if ([...resistanceKeys].some(key => current.resistances[key] !== values.resistances[key])) {
-    changedFields.push('resistances');
+    changed = true;
   }
   for (const field of [
     'maximum',
@@ -117,10 +111,10 @@ export function replaceEnemyEditableValues(
           )
         : current.stagger[field] === values.stagger[field];
     if (!unchanged) {
-      changedFields.push(`stagger.${field}`);
+      changed = true;
     }
   }
-  if (changedFields.length === 0) return scenario;
+  if (!changed) return scenario;
 
   return {
     ...scenario,
@@ -134,9 +128,6 @@ export function replaceEnemyEditableValues(
           knotThresholds: [...values.stagger.knotThresholds],
         },
       },
-      edited: changedFields.reduce<EnemyEditableField[]>(addEditedField, [
-        ...scenario.enemy.edited,
-      ]),
     },
   };
 }

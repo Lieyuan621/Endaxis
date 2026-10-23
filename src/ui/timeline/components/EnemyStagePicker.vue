@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { StageEnemyIdentity } from '../../../core/project/schema';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { EaButton, EaInput, EaSelect } from '@/design-system';
@@ -11,7 +12,7 @@ const props = defineProps<{
   enemies: readonly EnemyDefinition[];
   nameOf: (id: string) => string;
 }>();
-const emit = defineEmits<{ select: [id: string, level: number] }>();
+const emit = defineEmits<{ select: [id: string, level: number, source: StageEnemyIdentity] }>();
 const { t } = useI18n();
 const { t: stageName } = useI18n({
   useScope: 'local',
@@ -40,7 +41,10 @@ const stages = computed(() =>
       stageName(stage.nameKey),
       stageName(stage.seriesNameKey),
       stageName(stage.difficultyNameKey),
-      ...stage.enemies.flatMap(enemy => [stageName(enemy.nameKey), props.nameOf(enemy.templateId)]),
+      ...stage.enemies.flatMap(enemy => [
+        stageName(enemy.nameKey),
+        props.nameOf(enemy.source.templateId),
+      ]),
     ]
       .join(' ')
       .toLocaleLowerCase();
@@ -76,7 +80,7 @@ function unavailable(entry: Entry): string | undefined {
 }
 function select(entry: Entry) {
   if (!unavailable(entry) && entry.level !== null && entry.definitionId)
-    emit('select', entry.definitionId, entry.level);
+    emit('select', entry.definitionId, entry.level, entry.source);
 }
 </script>
 
@@ -118,13 +122,13 @@ function select(entry: Entry) {
             <small v-if="difficulty(activeStage)">{{ difficulty(activeStage) }}</small>
             <div
               v-for="(entry, index) in activeStage.enemies"
-              :key="`${entry.id}:${index}`"
+              :key="`${entry.source.enemyId}:${index}`"
               class="stage-enemy"
             >
               <slot
                 name="enemy"
-                :definition="definitions.get(entry.definitionId ?? entry.templateId)"
-                :display-name="stageName(entry.nameKey) || nameOf(entry.templateId)"
+                :definition="definitions.get(entry.definitionId ?? entry.source.templateId)"
+                :display-name="stageName(entry.nameKey) || nameOf(entry.source.templateId)"
                 :level="entry.level"
                 :unavailable="unavailable(entry)"
                 :select="() => select(entry)"

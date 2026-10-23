@@ -248,29 +248,22 @@ export interface EnemyEditableValues {
   stagger: EnemyStaggerEditableValues;
 }
 
-export const ENEMY_EDITABLE_FIELDS = [
-  'hp',
-  'defense',
-  'superArmor',
-  'finisherMultiplier',
-  'resistances',
-  'stagger.maximum',
-  'stagger.knotThresholds',
-  'stagger.knotBreakDurationFrames',
-  'stagger.brokenDurationFrames',
-  'stagger.finisherSpRecovery',
-] as const;
-/** 用户可以覆盖的敌人默认值路径。 */
-export type EnemyEditableField = (typeof ENEMY_EDITABLE_FIELDS)[number];
+/** 原生关卡与敌人条目身份；模板 ID 用于基础资料查询，不包含刷怪配置哈希。 */
+export interface StageEnemyIdentity {
+  stageId: string;
+  enemyId: string;
+  templateId: string;
+}
 
-/** 场景中的敌人：来自定义（prefab）的实例，或自定义敌人配置。 */
+/** 场景中的敌人：基础预制体、原生关卡敌人，或自定义配置；均保存完整数值。 */
 export interface EnemyDocument {
-  source: { kind: 'prefab'; enemyId: string; level: number } | { kind: 'custom'; level: number };
+  source:
+    | { kind: 'prefab'; enemyId: string; level: number }
+    | ({ kind: 'stage'; level: number } & StageEnemyIdentity)
+    | { kind: 'custom'; level: number };
   /** 场景实例捕获的原生战斗等级；运行时不回查敌人定义。 */
   rank: EnemyRank;
   editable: EnemyEditableValues;
-  /** `editable` 中被用户改离已捕获默认值的键。 */
-  edited: EnemyEditableField[];
 }
 
 /** 循环分界线 */

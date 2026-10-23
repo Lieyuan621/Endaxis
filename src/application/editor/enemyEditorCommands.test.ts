@@ -27,7 +27,7 @@ describe('enemyEditorCommands', () => {
         brokenDurationFrames: Math.round(definition.stagger.brokenDurationSeconds * 30),
       },
     });
-    expect(enemy.edited).toEqual([]);
+    expect(enemy).not.toHaveProperty('edited');
   });
 
   it('拒绝定义未提供的敌人等级，而不自行插值', () => {
@@ -38,9 +38,8 @@ describe('enemyEditorCommands', () => {
     );
   });
 
-  it('整值确认保留已有接管字段，按实际差异记录新覆盖并隔离草稿', () => {
+  it('整值确认保持幂等并隔离草稿', () => {
     const scenario = createEmptyScenario('scenario:enemy', '敌人场景');
-    scenario.enemy.edited = ['defense', 'hp'];
     const before = structuredClone(scenario);
     const values = structuredClone(scenario.enemy.editable);
     values.hp = 1000;
@@ -50,13 +49,7 @@ describe('enemyEditorCommands', () => {
 
     const updated = replaceEnemyEditableValues(scenario, values);
 
-    expect(updated.enemy.edited).toEqual([
-      'defense',
-      'hp',
-      'resistances',
-      'stagger.maximum',
-      'stagger.knotThresholds',
-    ]);
+    expect(updated.enemy).not.toHaveProperty('edited');
     expect(updated.enemy.editable).toEqual(values);
     expect(scenario).toEqual(before);
     expect(replaceEnemyEditableValues(updated, structuredClone(values))).toBe(updated);
@@ -71,7 +64,6 @@ describe('enemyEditorCommands', () => {
     expect(createCustomEnemyDocument(80)).toMatchObject({
       source: { kind: 'custom', level: 80 },
       rank: 'mob',
-      edited: [],
     });
   });
 });

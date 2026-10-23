@@ -4,6 +4,7 @@
  * 主线程已经为了编辑器选择器加载了完整游戏数据。本文件从中选出当前场景实际引用的定义，
  * Worker 收到后恢复为只读查询仓库，避免在第二个 JavaScript 运行环境中再次加载全部生成数据。
  */
+import { getEnemySourceDefinitionId } from '../../core/game-data/enemyDefinition';
 import type {
   CommonDefinitionSource,
   GameDataRepository,
@@ -61,8 +62,8 @@ export function scenarioSimulationGameDataSelectionKey(scenario: ScenarioDocumen
       if (instance !== null) identities.add(`gear:${instance.gearSlug}`);
     }
   }
-  if (scenario.enemy.source.kind === 'prefab')
-    identities.add(`enemy:${scenario.enemy.source.enemyId}`);
+  const enemyId = getEnemySourceDefinitionId(scenario.enemy.source);
+  if (enemyId !== null) identities.add(`enemy:${enemyId}`);
   for (const selection of scenario.mechanics.selections)
     identities.add(`mechanic:${selection.mechanicId}`);
   for (const effect of scenario.globalConfig.effects ?? [])
@@ -108,8 +109,9 @@ export function captureScenarioSimulationGameData(
     }
   }
 
-  if (scenario.enemy.source.kind === 'prefab') {
-    const id = scenario.enemy.source.enemyId;
+  const enemyId = getEnemySourceDefinitionId(scenario.enemy.source);
+  if (enemyId !== null) {
+    const id = enemyId;
     addDefinition(enemies, id, requireDefinition(repository.getEnemy(id), 'enemy', id));
   }
   for (const selection of scenario.mechanics.selections) {

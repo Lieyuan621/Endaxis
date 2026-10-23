@@ -190,8 +190,11 @@ export async function generateEnemyStageCatalog(args: {
               const scopedId = buffs.length ? `${enemyId}__${id}__${signature}` : undefined;
               if (scopedId) stageAttributes.push({ id: scopedId, enemyId, buffs });
               return {
-                id: enemyId,
-                templateId: (enemy?.templateId ?? enemyId).replaceAll('_', '-'),
+                source: {
+                  stageId: id,
+                  enemyId,
+                  templateId: enemy.templateId.replaceAll('_', '-'),
+                },
                 level: stage.enemyLevels[index] ?? null,
                 nameKey: name(`enemy_${enemyId}`, displays[enemyId]?.name, ''),
                 // 保留变体身份；第一阶段仅模拟其属性差异，不执行出生 Buff 的机制。

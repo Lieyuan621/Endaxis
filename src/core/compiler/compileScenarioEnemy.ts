@@ -64,17 +64,10 @@ function compileDefenderAttributes(enemy: EnemyDocument): PlayerDamageDefenderSn
 
 /** 编译单敌人场景中的完整静态敌人程序。 */
 export function compileScenarioEnemy(enemy: EnemyDocument): CombatEnemyProgram {
-  const source =
-    enemy.source.kind === 'prefab'
-      ? {
-          kind: 'prefab' as const,
-          enemyId: enemy.source.enemyId,
-          level: requireNonNegativeInteger(enemy.source.level, 'enemy.source.level'),
-        }
-      : {
-          kind: 'custom' as const,
-          level: requireNonNegativeInteger(enemy.source.level, 'enemy.source.level'),
-        };
+  const source = {
+    ...enemy.source,
+    level: requireNonNegativeInteger(enemy.source.level, 'enemy.source.level'),
+  };
   if (source.level === 0) throw new RangeError('enemy.source.level must be positive');
 
   return {

@@ -18,7 +18,6 @@ interface LegacyProjectImporter {
   migrate(input: unknown): LegacyMigrationResult;
 }
 import {
-  ENEMY_EDITABLE_FIELDS,
   PROJECT_FPS,
   PROJECT_KIND,
   PROJECT_SCHEMA_VERSION,
@@ -454,7 +453,6 @@ function migrateScenario(
           finisherSpRecovery: number(constants.executionRecovery) ?? 100,
         },
       },
-      edited: [...ENEMY_EDITABLE_FIELDS],
     },
     battle: {
       prepFrames: integer(source.prepDuration) ?? 0,

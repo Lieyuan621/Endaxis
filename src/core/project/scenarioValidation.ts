@@ -2,7 +2,7 @@
  * 顶层项目校验器使用的场景内部一致性规则。
  * 这里只检查持久化结构和引用关系，不应调用游戏数据或执行战斗规则。
  */
-import { ENEMY_EDITABLE_FIELDS, type JsonObject } from './schema';
+import { type JsonObject } from './schema';
 import { validateScenarioBuff } from '../game-data/validateGlobalEffectDefinition';
 import { ENEMY_RANKS } from '../game-data/enemyRank';
 import {
@@ -12,12 +12,10 @@ import {
   requireNonNegativeInteger,
   requirePositiveInteger,
   requireString,
-  validateEditedFields,
   validateFiniteNumberRecord,
   type ValidationIssue,
 } from './validationHelpers';
 
-const enemyEditableFields = new Set<string>(ENEMY_EDITABLE_FIELDS);
 const enemyRanks = new Set<string>(ENEMY_RANKS);
 
 export function validateOperatorInstance(
@@ -80,6 +78,10 @@ export function validateEnemy(value: unknown, path: string, issues: ValidationIs
   } else if (value.source.kind === 'prefab') {
     requireString(value.source, 'enemyId', `${path}.source`, issues);
     requirePositiveInteger(value.source.level, `${path}.source.level`, issues);
+  } else if (value.source.kind === 'stage') {
+    for (const key of ['stageId', 'enemyId', 'templateId'])
+      requireString(value.source, key, `${path}.source`, issues);
+    requirePositiveInteger(value.source.level, `${path}.source.level`, issues);
   } else if (value.source.kind === 'custom') {
     requirePositiveInteger(value.source.level, `${path}.source.level`, issues);
   } else {
@@ -140,7 +142,6 @@ export function validateEnemy(value: unknown, path: string, issues: ValidationIs
       );
     }
   }
-  validateEditedFields(value.edited, enemyEditableFields, `${path}.edited`, issues);
 }
 
 export function validateBattle(value: unknown, path: string, issues: ValidationIssue[]): void {
