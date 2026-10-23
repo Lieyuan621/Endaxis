@@ -1,0 +1,17 @@
+{
+  "name": "endaxis-desktop",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Endaxis 游戏内提示条桌面悬浮窗（Electron 外壳）",
+  "main": "main.cjs",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "start": "node launch.cjs",
+    "test": "node --test *.test.cjs"
+  },
+  "devDependencies": {
+    "electron": "^44.9.0"
+  }
+}

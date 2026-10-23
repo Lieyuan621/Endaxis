@@ -60,6 +60,7 @@ const props = defineProps<{
     analysis: string;
     open: string;
     export: string;
+    overlay: string;
     more: string;
     reset: string;
     view: string;
@@ -91,6 +92,7 @@ const emit = defineEmits<{
   receive: [];
   assetWorkspace: [];
   export: [];
+  openOverlay: [];
   rename: [name: string];
   duplicate: [];
   delete: [];
@@ -420,6 +422,19 @@ onBeforeUnmount(() => {
           </section>
         </div>
       </EaPopover>
+      <EaButton
+        size="sm"
+        type="button"
+        class="command-button--overlay"
+        @click="$emit('openOverlay')"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="2.5" y="4.5" width="19" height="12" rx="2" />
+          <path d="M8 20h8" />
+          <path d="M12 16.5V20" />
+        </svg>
+        {{ labels.overlay }}
+      </EaButton>
       <EaPopover
         v-model:visible="displayMenuOpen"
         placement="bottom-end"

@@ -17,6 +17,7 @@ import {
   type Component,
 } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 import { primaryModifier } from '../keyboard/primaryModifier';
 import {
   ActiveScenarioEditorSession,
@@ -95,6 +96,8 @@ import TimelineCursorGuide, {
   type TimelineCursorGaugeRow,
 } from './components/TimelineCursorGuide.vue';
 import TimelineHeaderToolbar from './components/TimelineHeaderToolbar.vue';
+import { useOverlayI18n } from '../overlay/messages';
+import { exportEditorOverlay } from '../overlay/exportEditorOverlay';
 import TimelineRuler from './components/TimelineRuler.vue';
 import type { TimelineShareTrack } from './components/TimelineShareCard.vue';
 import TimelineTrackHeader from './components/TimelineTrackHeader.vue';
@@ -737,6 +740,26 @@ const onlySkillsSelected = computed(
 const selectedCastId = computed(() => actionSelection.value.primaryId);
 const showDamageAnalysis = ref(false);
 const showExportDialog = ref(false);
+
+const { t: overlayT } = useOverlayI18n();
+const overlayRouter = useRouter();
+
+/** 仅导出当前完整模拟结果；HUD 不参与项目编辑或规则计算。 */
+function openOverlay() {
+  void exportEditorOverlay({
+    href: overlayRouter.resolve({ name: 'Overlay' }).href,
+    repository: editorGameDataRepository,
+    ensureCurrentSimulation,
+    read: () => ({
+      project: projectSession.snapshot.project,
+      published: publishedSimulation.value,
+      revision: projectRevision.value,
+      locale: locale.value === 'zh-CN' ? 'zh-CN' : 'en',
+    }),
+    message: key => overlayT(`overlay.${key}`),
+    onError: message => ElMessage.error(message),
+  });
+}
 const showReceiveDialog = ref(false);
 const receivingProjectCode = ref(false);
 const showSmallImageExport = ref(false);
@@ -6882,6 +6905,7 @@ function setMobileGuideFrame(frame: number | null): void {
           analysis: t('timeline.analysis.button'),
           open: t('common.load'),
           export: t('common.export'),
+          overlay: overlayT('overlay.open'),
           more: t('timeline.header.more'),
           reset: t('common.reset'),
           view: t('timeline.header.sectionViewLayers'),
@@ -6924,6 +6948,7 @@ function setMobileGuideFrame(frame: number | null): void {
         @receive="requestReceiveProject"
         @asset-workspace="openAssetWorkspace"
         @export="showExportDialog = true"
+        @open-overlay="openOverlay"
         @reset="resetDialogVisible = true"
         @toggle-view-layer="toggleTimelineViewLayer"
         @toggle-operator-effects="toggleOperatorEffectsVisibility"

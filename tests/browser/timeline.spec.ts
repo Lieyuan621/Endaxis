@@ -225,10 +225,13 @@ for (const menuName of ['更多', '显示']) {
     const block = page.locator('.timeline-action-block').first();
     const before = await box(block);
     const menu = page.getByRole('button', { name: menuName, exact: true });
+    const panel = page.locator(
+      menuName === '更多'
+        ? '.header-more-panel:not(.header-project-panel)'
+        : '.timeline-display-menu',
+    );
     await menu.click();
-    await expect(
-      page.locator(menuName === '更多' ? '.header-more-panel' : '.timeline-display-menu'),
-    ).toBeVisible();
+    await expect(panel).toBeVisible();
     await page.mouse.move(before.x + 10, before.y + 25);
     await page.mouse.down();
     await page.mouse.move(before.x + 110, before.y + 25, { steps: 10 });
@@ -240,9 +243,7 @@ for (const menuName of ['更多', '显示']) {
     await page.mouse.move(dropped.x + 180, dropped.y + 25);
     await expect.poll(async () => (await box(block)).x).toBeCloseTo(dropped.x, 0);
     await menu.click();
-    await expect(
-      page.locator(menuName === '更多' ? '.header-more-panel' : '.timeline-display-menu'),
-    ).toBeVisible();
+    await expect(panel).toBeVisible();
     await page.mouse.move(dropped.x + 10, dropped.y + 25);
     await page.mouse.down();
     await page.mouse.move(dropped.x + 70, dropped.y + 25, { steps: 10 });

@@ -96,6 +96,12 @@ const routes: RouteRecordRaw[] = [
       gameTextFamilies: ALL_GAME_TEXT_FAMILIES,
     },
   },
+  {
+    // 独立提示窗口仅读取编辑器导出的 HUD 快照。
+    path: '/overlay',
+    name: 'Overlay',
+    component: () => import('../ui/overlay/OverlayView.vue'),
+  },
 ];
 
 const router = createRouter({
