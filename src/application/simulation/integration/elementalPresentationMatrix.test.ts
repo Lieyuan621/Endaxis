@@ -29,6 +29,41 @@ import {
 const attachmentIds = new Set(
   elementalAttachments.buffs.filter(b => b.role?.kind === 'elementalAttachment').map(b => b.id),
 );
+
+it.each([
+  { layers: [3, 1], final: -14.4 },
+  { layers: [1, 3], final: -20 },
+])(
+  'corrosion retains accumulated reduction when reapplied with $layers layers',
+  async ({ layers, final }) => {
+    const elements: InflictionElement[] = [
+      ...Array<InflictionElement>(layers[0]!).fill('cryo'),
+      'nature',
+      ...Array<InflictionElement>(layers[1]!).fill('cryo'),
+      'nature',
+    ];
+    const { receipts } = await run(elements, 90);
+    const changes = receipts.filter(
+      entry =>
+        entry.data?.buffId === 'buff_common_natural_cryst_triggered_wrapper' &&
+        entry.buffAttributeEffects?.some(effect => effect.attribute === 'PhysicalResistance'),
+    );
+    const value = (entry: (typeof changes)[number]) =>
+      entry.buffAttributeEffects!.find(effect => effect.attribute === 'PhysicalResistance')!.value;
+    const replacement = changes.find(
+      entry => entry.event === 'BuffApplied' && entry.frame === 452,
+    )!;
+    expect(replacement).toBeDefined();
+    expect(value(replacement)).toBeCloseTo(value(changes[changes.indexOf(replacement) - 1]!));
+    expect(value(changes.at(-1)!)).toBeCloseTo(final);
+    if (layers[1] === 1) {
+      expect(changes.filter(entry => entry.frame > replacement.frame)).toHaveLength(0);
+    } else {
+      expect(value(changes.at(-1)!)).toBeLessThan(value(replacement));
+    }
+  },
+);
+
 it('does not connect an expired attachment to a new instance', async () => {
   const { segments, viz } = await run(['heat', 'heat'], 900);
   const attachments = segments.filter(s => attachmentIds.has(s.buffId));
@@ -223,12 +258,22 @@ it('retains burning damage identity through the complete simulation pipeline', a
 it.each(compoundStatusFactories.factories)(
   'projects conversion $consumedElement → $incomingElement',
   async factory => {
-    const { segments, viz } = await run([factory.consumedElement, factory.incomingElement]);
+    const { segments, viz, receipts } = await run([
+      factory.consumedElement,
+      factory.incomingElement,
+    ]);
     expect(viz.attachmentConversions).toHaveLength(1);
     const links = projectAttachmentConversionLinks(segments, viz.attachmentConversions!);
     expect(links.size).toBe(1);
     const [head, tail] = [...links][0]!;
     expect(tail.buffId).toBe(factory.createdBuff.buffId);
+    expect(receipts).toContainEqual(
+      expect.objectContaining({
+        event: 'DamageApplied',
+        frame: tail.startFrame,
+        data: expect.objectContaining({ buffId: tail.buffId, damageType: factory.incomingElement }),
+      }),
+    );
     expect(head.endFrame).toBe(tail.startFrame);
     expect(tail.endFrame).toBeLessThan(1800);
     expect(viz.markers.filter(m => m.kind === 'attachmentTrigger')).toEqual([

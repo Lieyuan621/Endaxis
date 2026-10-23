@@ -6,7 +6,10 @@ import { validateActionGraphResource } from '../../action-graph/actionGraphValid
 import { createActionGraphCompilation } from '../../compiler/compileActionGraph';
 import type { CombatOperationExecutor } from '../skills/skillRuntime';
 import type { CombatSkillCastInfo } from '../state/foundationState';
-import { attachBuffModifierSequences } from './buffLifecycleSequenceRuntime';
+import {
+  attachBuffLifecycleSequences,
+  attachBuffModifierSequences,
+} from './buffLifecycleSequenceRuntime';
 import type { BuffLifecycleOperationSource } from './buffOperationExecutor';
 import type { BuffKeywordEnhancementDefinition } from './combatBuffs';
 
@@ -75,8 +78,8 @@ export interface CombatBuffDefinitionAttributeReadRequest {
 
 /** 把定义语义角色和动作编译为核心定义时使用的受控端口。 */
 export interface CombatBuffDefinitionCompilerPorts<Key extends string> {
-  /** 条件图读取宿主所在战斗的完整操作链；实例状态由公共 Buff 动作宿主管理。 */
-  readonly resolveConditionOperations?: (
+  /** 生命周期和条件图共用宿主所在战斗的完整操作链。 */
+  readonly resolveLifecycleOperations?: (
     source: BuffLifecycleOperationSource,
   ) => CombatOperationExecutor;
   readonly emitElementalInflictionStarted: (
@@ -112,6 +115,12 @@ export interface CombatBuffDefinitionCompilerPorts<Key extends string> {
     readonly sourceActionId: string;
   }) => void;
 }
+
+// 切面恢复必须复用原编译图的操作身份目录；生命周期宿主仍由每个环境独立绑定。
+const definitionGraphCompilations = new WeakMap<
+  CombatBuffDefinitionEntry,
+  ReturnType<typeof createActionGraphCompilation>
+>();
 
 /** 元素附着运行时适配器使用的已编译索引。 */
 export class CompiledCombatBuffDefinitions<
@@ -172,11 +181,22 @@ export class CompiledCombatBuffDefinitions<
     const hasConditions = [entry.damageModifiers, entry.healModifiers, entry.poiseModifiers].some(
       modifiers => modifiers?.some(modifier => modifier.condition !== undefined),
     );
-    if (hasConditions && entry.actionGraph === undefined)
-      throw new Error(`buff '${entry.id}' modifier conditions require their own action graph`);
-    const compilation = hasConditions
-      ? createActionGraphCompilation(entry.actionGraph!, 1, `${this.revision}:${entry.id}`)
-      : undefined;
+    if (
+      (hasConditions || entry.lifecycleSequences !== undefined) &&
+      entry.actionGraph === undefined
+    )
+      throw new Error(
+        `buff '${entry.id}' lifecycle or modifier sequences require their own action graph`,
+      );
+    let compilation = definitionGraphCompilations.get(entry);
+    if ((hasConditions || entry.lifecycleSequences !== undefined) && compilation === undefined) {
+      compilation = createActionGraphCompilation(
+        entry.actionGraph!,
+        1,
+        `${this.revision}:${entry.id}`,
+      );
+      definitionGraphCompilations.set(entry, compilation);
+    }
     const compileConditions = (
       modifiers: readonly { readonly condition?: ActionGraphReference }[] | undefined,
       kind: string,
@@ -239,23 +259,48 @@ export class CompiledCombatBuffDefinitions<
       sustainedProtection: entry.sustainedProtection,
       actions: compileLifecycleActions(entry, ports),
     };
-    if (hasConditions) {
-      definition = attachBuffModifierSequences(
-        definition,
-        conditions,
-        (buff, actionSourceId, skillCastInfo, operations) => {
-          if (ports.resolveConditionOperations === undefined)
-            throw new Error(`buff '${entry.id}' condition operation chain is not configured`);
-          return ports.resolveConditionOperations({
-            ownerId: buff.owner.ownerId,
-            sourceId: actionSourceId ?? buff.sourceId,
-            definitionOwnerId: buff.definitionOwnerId,
-            sourceActionId: buff.sourceActionId,
-            skillCastInfo: skillCastInfo === undefined ? buff.skillCastInfo : skillCastInfo,
-            operations,
-          });
-        },
-      );
+    if (hasConditions || entry.lifecycleSequences !== undefined) {
+      const resolveOperations: Parameters<typeof attachBuffLifecycleSequences<Key>>[2] = (
+        buff,
+        actionSourceId,
+        skillCastInfo,
+        operations,
+      ) => {
+        if (ports.resolveLifecycleOperations === undefined)
+          throw new Error(`buff '${entry.id}' lifecycle operation chain is not configured`);
+        return ports.resolveLifecycleOperations({
+          ownerId: buff.owner.ownerId,
+          sourceId: actionSourceId ?? buff.sourceId,
+          definitionOwnerId: buff.definitionOwnerId,
+          sourceActionId: buff.sourceActionId,
+          skillCastInfo: skillCastInfo === undefined ? buff.skillCastInfo : skillCastInfo,
+          operations,
+        });
+      };
+      if (entry.lifecycleSequences !== undefined) {
+        const sequences = Object.fromEntries(
+          Object.entries(entry.lifecycleSequences).map(([event, references]) => [
+            event,
+            references.map((reference: ActionGraphReference, index: number) =>
+              compilation!.compileEntry(reference, `${entry.id}.${event}[${index}]`),
+            ),
+          ]),
+        );
+        definition = attachBuffLifecycleSequences(
+          definition,
+          sequences,
+          resolveOperations,
+          undefined,
+          [],
+          undefined,
+          [],
+          [],
+          [],
+          conditions,
+        );
+      } else {
+        definition = attachBuffModifierSequences(definition, conditions, resolveOperations);
+      }
     }
     this.#definitions.set(entry.id, definition);
     this.registerRole(entry.role, definition);
@@ -327,6 +372,7 @@ export function parseCombatBuffDefinitionEntry(
   requireOnlyKeys(entry, path, [
     'id',
     'actionGraph',
+    'lifecycleSequences',
     'affixSkillCastIdentity',
     'presentation',
     'childPresentations',
@@ -407,7 +453,52 @@ export function parseCombatBuffDefinitionEntry(
     ...parseOptionalSustainedProtection(entry, path),
     ...parseOptionalRole(entry, path),
     ...parseOptionalActions(entry, path),
+    ...parseOptionalLifecycleSequences(entry, path),
     ...parseOptionalSpellBurst(entry, path),
+  };
+}
+
+function parseOptionalLifecycleSequences(
+  entry: Readonly<Record<string, unknown>>,
+  path: string,
+): Pick<CombatBuffDefinitionEntry, 'lifecycleSequences'> {
+  if (entry.lifecycleSequences === undefined) return {};
+  const sequences = requireObject(entry.lifecycleSequences, `${path}.lifecycleSequences`);
+  requireOnlyKeys(sequences, `${path}.lifecycleSequences`, [
+    'start',
+    'enable',
+    'disable',
+    'beforeEnhance',
+    'trigger',
+    'enhanceChanged',
+    'afterEnhance',
+    'finish',
+    'dispelled',
+    'release',
+  ]);
+  return {
+    lifecycleSequences: Object.fromEntries(
+      Object.entries(sequences).map(([event, value]) => {
+        if (!Array.isArray(value))
+          throw new Error(`${path}.${event}: expected sequence references`);
+        return [
+          event,
+          value.map((item, index) => {
+            const reference = requireObject(item, `${path}.${event}[${index}]`);
+            requireOnlyKeys(reference, path, ['$sequence']);
+            return {
+              $sequence:
+                reference.$sequence === null
+                  ? null
+                  : requireNonEmptyString(
+                      reference.$sequence,
+                      `${path}.${event}[${index}].$sequence`,
+                    ),
+            };
+          }),
+        ];
+      }),
+    ),
   };
 }
 

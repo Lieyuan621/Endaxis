@@ -638,8 +638,10 @@ export interface CombatBuffDefinitionDamageModifier {
 
 /** 外部 Buff 文档中的一项完整 Buff 定义。 */
 export interface CombatBuffDefinitionEntry extends BuffDefinitionProperties {
-  /** 此 Buff 的修正条件动作图；条件入口只能引用本资源中的动作。 */
+  /** 此 Buff 的生命周期与修正条件动作图；入口只能引用本资源中的动作。 */
   readonly actionGraph?: ActionGraphResourceDefinition;
+  /** 与技能 Buff 共用的生命周期序列；不能与 actions 混用。 */
+  readonly lifecycleSequences?: SkillBuffLifecycleSequences;
   /** Buff 的全局唯一 ID。 */
   readonly id: string;
   /** 允许的最大强化层数或叠加实例数。 */

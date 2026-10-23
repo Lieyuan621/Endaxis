@@ -3122,7 +3122,6 @@
     },
     "analysis": {
       "button": "分析",
-      "tooltip": "查看当前排轴的伤害分析",
       "dialogTitle": "伤害分析",
       "damageByOperator": "按干员分类",
       "damageByElement": "按伤害类型分类",
@@ -3134,10 +3133,6 @@
       "dps": "DPS（仅供参考）",
       "noData": "暂无伤害数据。请先在排轴中添加技能。",
       "contributionByOperator": "干员贡献",
-      "lmdiModeStacks": "按叠层",
-      "lmdiModeStacksTip": "破防、导电、腐蚀的收益，按叠层的比例分配。",
-      "lmdiModeApplier": "按施加者",
-      "lmdiModeApplierTip": "破防、导电、腐蚀的收益，全部归功于触发者。",
       "damage": "伤害",
       "buff": "增益",
       "warning": "伤害统计仅供优化配队使用，请勿用来拉踩攻击他人。",
@@ -3195,8 +3190,6 @@
       "smallImageExported": "小图已导出：{filename}"
     },
     "header": {
-      "display": "显示",
-      "displayTooltip": "时间轴显示与辅助线",
       "more": "更多",
       "moreTooltip": "编辑工具、方案设置与用户偏好",
       "sectionEditTools": "编辑工具",
@@ -3209,8 +3202,6 @@
       "sectionViewLayers": "显示内容",
       "sectionViewBehavior": "视图行为",
       "sectionViewOperators": "干员",
-      "cursorGuide": "辅助线",
-      "buffLayout": "Buff 排布",
       "editTools": {
         "boxSelect": "框选",
         "connection": "连线编辑"
@@ -3302,29 +3293,18 @@
       }
     },
     "import": {
-      "dialogAlert": "警告：导入将覆盖当前所有工程数据，建议先保存。",
-      "dialogConfirm": "确认覆盖并导入",
       "dialogHint": "请粘贴数据码：",
       "dialogPlaceholder": "在此粘贴长字符串...",
-      "dialogTitle": "导入项目",
-      "dropHint": "释放文件以导入",
-      "failed": "加载失败：{msg}",
-      "pngNoData": "该图片未包含有效的 Endaxis 项目数据",
-      "pngSuccess": "从图片加载项目成功！",
-      "projectLoaded": "项目加载成功！"
+      "dialogTitle": "导入项目"
     },
     "share": {
       "copied": "分享码已复制到剪贴板！可发给好友导入。",
       "copyFailed": "分享码生成失败：{msg}",
-      "inputRequired": "请输入分享码",
-      "imported": "成功导入分享的方案！",
       "importFailed": "分享码格式错误或数据损坏"
     },
     "mobile": {
       "time": "时间",
       "import": "导入",
-      "importing": "导入中...",
-      "more": "更多",
       "undo": "撤销",
       "redo": "重做",
       "loadout": {
@@ -3339,8 +3319,7 @@
         "title": "干员技能库",
         "selectTrack": "选择轨道后添加技能",
         "empty": "当前干员没有可放置的技能",
-        "placeHint": "轻触已高亮的轨道位置进行放置",
-        "placed": "已放置“{name}”"
+        "placeHint": "轻触已高亮的轨道位置进行放置"
       },
       "timeSettings": {
         "title": "时间轴设置",
@@ -3351,7 +3330,6 @@
       },
       "display": {
         "title": "时间轴显示",
-        "showAllAttackSegments": "普攻全部段数",
         "showAnomalies": "异常",
         "showDurationBars": "持续时间",
         "showFreezeEffects": "冻屏效果",
@@ -3360,20 +3338,14 @@
       },
       "actionInfo": {
         "title": "技能信息",
-        "notFound": "未找到该技能（可能已切换方案或数据已更新）",
         "start": "开始时间",
         "end": "结束时间",
         "duration": "技能块时长",
-        "spCost": "技力消耗",
-        "cooldown": "冷却时间",
-        "gaugeCost": "充能消耗",
-        "hits": "判定点数",
         "totalDamage": "总伤害",
         "damageHit": "判定点 {index}",
         "noDamage": "当前模拟中未产生伤害",
         "disable": "停用技能",
-        "enable": "启用技能",
-        "delete": "删除技能"
+        "enable": "启用技能"
       },
       "app": {
         "timeline": "时间轴",
@@ -3418,14 +3390,6 @@
       "snapModeFrame": "1帧 (1/60s)",
       "snapPrecision": "吸附精度：{mode}",
       "undo": "已撤销"
-    },
-    "customDefinition": {
-      "customizeOperator": "自定义干员",
-      "editOperator": "编辑干员定义",
-      "customizeWeapon": "自定义武器",
-      "editWeapon": "编辑武器定义",
-      "customizeGear": "自定义装备",
-      "editGear": "编辑装备定义"
     },
     "markerContext": {
       "title": "时间轴标记",
@@ -4569,17 +4533,8 @@
       "empty": "没有符合条件的武器"
     },
     "gearDialog": {
-      "title": "配置装备",
-      "searchPlaceholder": "搜索装备名称、套装或防御力",
-      "empty": "没有符合条件的装备",
       "defense": "防御力",
-      "noSet": "无套装",
-      "slots": {
-        "armor": "护甲",
-        "gloves": "护手",
-        "accessory1": "配件 1",
-        "accessory2": "配件 2"
-      }
+      "noSet": "无套装"
     },
     "simulating": "模拟中…",
     "simulationPreviousResult": "当前显示上次结果（已过期）",

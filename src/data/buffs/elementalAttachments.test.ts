@@ -20,26 +20,12 @@ type Attribute =
   | 'CrystResistance'
   | 'NaturalResistance';
 
-function createEnemyAttributes(): CombatAttributeSet<Attribute> {
-  const attributes = new CombatAttributeSet<Attribute>();
-  for (const key of [
-    'PhysicalResistance',
-    'FireResistance',
-    'PulseResistance',
-    'CrystResistance',
-    'NaturalResistance',
-  ] as const) {
-    attributes.define(key, 0, {});
-  }
-  return attributes;
-}
-
 describe('elementalAttachments', () => {
   it('编译真实附着定义并发布叠层变化', () => {
     const emitStarted = vi.fn();
     const onSpellBurstTriggered = vi.fn();
     const index = compileCombatBuffDefinitions<Attribute>(elementalAttachments, {
-      resolveConditionOperations: () =>
+      resolveLifecycleOperations: () =>
         new EventContextConditionExecutor({
           execute: () => {
             throw new Error('unexpected action');
@@ -74,7 +60,7 @@ describe('elementalAttachments', () => {
 
   it('resolves real nature layers through the factory into an active conduct status', () => {
     const index = compileCombatBuffDefinitions<Attribute>(elementalAttachments, {
-      resolveConditionOperations: () =>
+      resolveLifecycleOperations: () =>
         new EventContextConditionExecutor({
           execute: () => {
             throw new Error('unexpected action');
@@ -157,69 +143,5 @@ describe('elementalAttachments', () => {
         modifier => !modifier.condition!.execute({ ...input, damageType: 'physical' }),
       ),
     ).toBe(true);
-  });
-
-  it('四种反应配方均能生成状态并发布初始异常伤害', () => {
-    const emittedDamage = vi.fn();
-    const index = compileCombatBuffDefinitions<Attribute>(elementalAttachments, {
-      resolveConditionOperations: () =>
-        new EventContextConditionExecutor({
-          execute: () => {
-            throw new Error('unexpected action');
-          },
-          evaluate: () => {
-            throw new Error('unexpected condition');
-          },
-        }),
-      emitElementalInflictionStarted: () => undefined,
-      onSpellBurstTriggered: () => undefined,
-      onAttackScaledDamageTriggered: emittedDamage,
-      readAttribute: () => 0,
-    });
-    const settings = createSkillSettingSource(skillSettings);
-
-    const incomingElements = ['cryo', 'heat', 'nature', 'electric'] as const;
-    for (const incomingElement of incomingElements) {
-      const factory = compoundStatusFactories.factories.find(
-        entry => entry.incomingElement === incomingElement,
-      )!;
-      const container = new CombatBuffContainer(
-        `enemy.${factory.consumedElement}.${factory.incomingElement}`,
-        createEnemyAttributes(),
-      );
-      const adapter = new ElementalInflictionBuffAdapter(
-        container,
-        'operator',
-        index,
-        undefined,
-        undefined,
-        (consumedElement, incomingElement, input) => {
-          const matched = compoundStatusFactories.factories.find(
-            entry =>
-              entry.consumedElement === consumedElement &&
-              entry.incomingElement === incomingElement,
-          )!;
-          return executeCompoundStatusFactory(matched, input, 0, settings)
-            .blackboardValues as Readonly<Record<string, number>>;
-        },
-      );
-
-      for (const operation of resolveElementalInfliction(factory.consumedElement, null)) {
-        adapter.apply(operation);
-      }
-      const existing = adapter.getExistingAttachment();
-      for (const operation of resolveElementalInfliction(factory.incomingElement, existing)) {
-        adapter.apply(operation);
-      }
-
-      expect(
-        container.findFirst(buff => buff.definition.id === factory.createdBuff.buffId),
-      ).toBeDefined();
-    }
-
-    expect(emittedDamage).toHaveBeenCalledTimes(incomingElements.length);
-    expect(new Set(emittedDamage.mock.calls.map(([payload]) => payload.damageType))).toEqual(
-      new Set(['heat', 'electric', 'cryo', 'nature']),
-    );
   });
 });

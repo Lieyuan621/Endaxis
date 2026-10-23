@@ -1,5 +1,23 @@
 import { test, expect, box, openPerlica, startPlacement, placeBasicGroup } from './helpers';
 
+test('桌面项目菜单集中加载、接收、导出与重置，并与显示菜单互斥', async ({ page }) => {
+  await page.goto('/timeline');
+  const projectButton = page.getByRole('button', { name: '项目', exact: true });
+  const displayButton = page.getByRole('button', { name: '显示', exact: true });
+  const projectPanel = page.locator('.header-project-panel');
+
+  await projectButton.click();
+  await expect(projectPanel.locator('.header-project-action')).toHaveCount(4);
+  await displayButton.click();
+  await expect(projectPanel).not.toBeVisible();
+  await expect(page.locator('.timeline-display-menu')).toBeVisible();
+
+  await projectButton.click();
+  await projectPanel.getByRole('button', { name: '导出', exact: true }).click();
+  await expect(projectPanel).not.toBeVisible();
+  await expect(page.locator('.export-dialog-shell')).toBeVisible();
+});
+
 test('方案各自保留会话内滚动和缩放，新方案使用默认视图', async ({ page }) => {
   await page.goto('/timeline');
   await page.getByRole('button', { name: 'SCALE +', exact: true }).click();
@@ -207,10 +225,13 @@ for (const menuName of ['更多', '显示']) {
     const block = page.locator('.timeline-action-block').first();
     const before = await box(block);
     const menu = page.getByRole('button', { name: menuName, exact: true });
+    const panel = page.locator(
+      menuName === '更多'
+        ? '.header-more-panel:not(.header-project-panel)'
+        : '.timeline-display-menu',
+    );
     await menu.click();
-    await expect(
-      page.locator(menuName === '更多' ? '.header-more-panel' : '.timeline-display-menu'),
-    ).toBeVisible();
+    await expect(panel).toBeVisible();
     await page.mouse.move(before.x + 10, before.y + 25);
     await page.mouse.down();
     await page.mouse.move(before.x + 110, before.y + 25, { steps: 10 });
@@ -222,9 +243,7 @@ for (const menuName of ['更多', '显示']) {
     await page.mouse.move(dropped.x + 180, dropped.y + 25);
     await expect.poll(async () => (await box(block)).x).toBeCloseTo(dropped.x, 0);
     await menu.click();
-    await expect(
-      page.locator(menuName === '更多' ? '.header-more-panel' : '.timeline-display-menu'),
-    ).toBeVisible();
+    await expect(panel).toBeVisible();
     await page.mouse.move(dropped.x + 10, dropped.y + 25);
     await page.mouse.down();
     await page.mouse.move(dropped.x + 70, dropped.y + 25, { steps: 10 });

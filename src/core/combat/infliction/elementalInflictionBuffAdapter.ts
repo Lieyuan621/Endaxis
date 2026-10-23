@@ -136,12 +136,23 @@ export class ElementalInflictionBuffAdapter<Key extends string> {
           secondElement,
           inputBlackboard,
         );
+        // 原生自然 wrapper 在 CreateBuffAction 替换旧状态之前读取首个 Corrupt Buff。
+        // 只继承累计值；新来源的起始值、增长速度、上限和持续时间仍由本次配方决定。
+        const previousCorrosion =
+          secondElement === 'nature'
+            ? this.target.findFirstByTags(['Skill/Character/Common/SpellStatus/Corrupt'])
+            : undefined;
         return this.add(this.index.getCompoundStatus(firstElement, secondElement), {
           ...addOptions,
           blackboardValues: {
             ...addOptions?.blackboardValues,
             ...inputBlackboard,
             ...factoryBlackboard,
+            ...(previousCorrosion === undefined
+              ? {}
+              : {
+                  def_decrease: previousCorrosion.blackboard.getNumber('def_decrease') ?? 0,
+                }),
           },
         });
     }
