@@ -27,6 +27,7 @@ import type { EnemyEffectViz } from '../../../core/projection/enemyEffectViz';
 import type { PositionedDisplayBuffTimelineSegment } from '../../../core/projection/buffTimelineViz';
 import type { EnemyCombatHudSnapshot as EnemyCombatHudSnapshotModel } from '../../../core/projection/combatHudSnapshot';
 import EnemyCombatHudSnapshot from './EnemyCombatHudSnapshot.vue';
+import BuffStatusIconStrip from './BuffStatusIconStrip.vue';
 import { resolveBuffDisplayName } from './buffDisplayName';
 import { resolveBuffEffectSummary, showBuffLayerBadge } from './buffDisplayName';
 import type { BuffDetailTarget } from './buffDetail';
@@ -384,25 +385,14 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
       :poise-knot-thresholds="poiseKnotThresholds"
       :labels="hudLabels"
     >
-      <span v-if="visibleLastHitBuffs.length > 0" class="last-hit-buffs">
-        <button
-          v-for="buff in visibleLastHitBuffs"
-          :key="buff.buffId"
-          type="button"
-          class="anomaly-icon-box last-hit-buff"
-          :title="buff.tooltip"
-          @click.stop="emit('open-buff-detail', buff.detail)"
-        >
-          <img v-if="buff.icon" :src="buff.icon" class="anomaly-icon" alt="" />
-          <span v-else class="buff-fallback">+</span>
-          <span v-if="showBuffLayerBadge(buff)" class="anomaly-stacks">{{
-            Math.max(1, buff.layers)
-          }}</span>
-        </button>
-        <strong v-if="lastHitBuffOverflow > 0" class="last-hit-buff-more">
-          +{{ lastHitBuffOverflow }}
-        </strong>
-      </span>
+      <BuffStatusIconStrip
+        :buffs="visibleLastHitBuffs"
+        :overflow="lastHitBuffOverflow"
+        @select="
+          id =>
+            emit('open-buff-detail', visibleLastHitBuffs.find(buff => buff.buffId === id)!.detail)
+        "
+      />
     </EnemyCombatHudSnapshot>
     <div class="enemy-timed-effects">
       <button
@@ -593,30 +583,6 @@ const lastHitBuffOverflow = computed(() => lastHitSummary.value.overflow);
   position: absolute;
   z-index: 30;
   inset: 0 auto auto 0;
-}
-
-.last-hit-buffs {
-  margin-top: 2px;
-  min-height: 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-}
-
-.anomaly-icon-box.last-hit-buff {
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  flex: 0 0 18px;
-  padding: 0;
-}
-
-.last-hit-buff-more {
-  color: var(--ea-fg-muted, rgb(255 255 255 / 55%));
-  font:
-    700 10px/1 'Roboto Mono',
-    monospace;
 }
 
 .attachment-item {

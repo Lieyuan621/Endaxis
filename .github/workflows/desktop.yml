@@ -1,0 +1,109 @@
+name: Desktop application
+
+on:
+  pull_request:
+    paths:
+      - 'desktop/**'
+      - 'src/**'
+      - 'public/**'
+      - 'packages/**'
+      - 'tools/editor/**'
+      - 'tests/browser/helpers.ts'
+      - 'package*.json'
+      - 'tsconfig*.json'
+      - 'vite.shared.ts'
+      - '.github/workflows/desktop.yml'
+  push:
+    paths:
+      - 'desktop/**'
+      - 'src/**'
+      - 'public/**'
+      - 'packages/**'
+      - 'tools/editor/**'
+      - 'tests/browser/helpers.ts'
+      - 'package*.json'
+      - 'tsconfig*.json'
+      - 'vite.shared.ts'
+      - '.github/workflows/desktop.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: ${{ matrix.os }} / Node 22.12.0
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    env:
+      HUSKY: '0'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22.12.0'
+          cache: npm
+      - name: Install renderer and shared dependencies
+        run: npm ci
+      # 原生单元测试使用 API mock；检查任务无需安装 Electron 或打包器。
+      - name: Test native application and feature lifecycles
+        run: npm --prefix desktop test
+      - name: Check desktop renderer types
+        run: npm run type-check:desktop
+      - name: Test desktop renderer
+        run: npm run test:desktop -- --maxWorkers=1
+
+  windows-portable:
+    name: Windows portable package
+    needs: check
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      HUSKY: '0'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22.12.0'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            desktop/package-lock.json
+      - name: Install renderer dependencies
+        run: npm ci
+      - name: Install Electron and packaging dependencies
+        run: npm ci --prefix desktop
+      - name: Build renderer and package Windows ZIP
+        id: package
+        run: npm run package:desktop
+      # Playwright 使用打包后的 EXE；不安装 Chromium/WebKit，也不连接开发服务器。
+      - name: Test packaged Windows application
+        run: npm run test:desktop:windows
+      - name: Upload portable ZIP
+        if: always() && steps.package.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Endaxis-windows-x64
+          path: desktop/release/Endaxis-*-windows-x64.zip
+          retention-days: 14
+          if-no-files-found: error
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-windows-failure
+          path: test-results/desktop/
+          retention-days: 14
+          if-no-files-found: ignore

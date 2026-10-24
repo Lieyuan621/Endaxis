@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="" class="dark" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      rel="icon"
+      type="image/webp"
+      href="/logo-white.webp"
+      media="(prefers-color-scheme: dark)"
+    />
+    <link rel="icon" type="image/webp" href="/logo.webp" media="(prefers-color-scheme: light)" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Endaxis - 《明日方舟：终末地》排轴工具</title>
+    <script>
+      (function () {
+        // 模块加载前只适配原生首帧遮罩；标记契约同 src/platform/runtimeEnvironment.ts。
+        // 此处不能选择布局或推断输入能力，避免启动代码变成第二套运行环境判断。
+        document.documentElement.classList.toggle(
+          'native-app',
+          /\bEndaxisApp\//i.test(navigator.userAgent || ''),
+        );
+        try {
+          var theme = localStorage.getItem('endaxis:appearance:v1') === 'light' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.classList.toggle('dark', theme === 'dark');
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+    <style>
+      html,
+      body,
+      #app {
+        width: 100%;
+        min-height: 100%;
+        margin: 0;
+        background: #111113;
+      }
+
+      html[data-theme='light'],
+      html[data-theme='light'] body,
+      html[data-theme='light'] #app {
+        background: #f0f0f0;
+      }
+
+      /* Keep the boot view's dimensions stable before the app's global CSS arrives. */
+      .boot-loader,
+      .boot-loader *,
+      .boot-loader *::before,
+      .boot-loader *::after {
+        box-sizing: border-box;
+      }
+
+      .boot-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #1e1f22;
+        color: #00e5ff;
+        font-family:
+          'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+          'Courier New', monospace;
+        letter-spacing: 1px;
+      }
+
+      .boot-loader .panel {
+        min-width: 280px;
+        max-width: 520px;
+        padding: 22px 26px;
+        border: 1px solid rgba(255, 215, 0, 0.22);
+        background: rgba(0, 0, 0, 0.25);
+        box-shadow: none;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .boot-loader .spinner {
+        width: 22px;
+        height: 22px;
+        border: 2px solid rgba(255, 215, 0, 0.25);
+        border-top-color: #ffd700;
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+        flex: 0 0 auto;
+      }
+
+      .boot-loader .message {
+        font-weight: 900;
+        font-size: 13px;
+        line-height: 1.3;
+        color: #00e5ff;
+      }
+
+      /* Match the surface revealed after the initial view is ready. */
+      html[data-theme='light'] .boot-loader {
+        background: #e0e0e0;
+      }
+
+      @media (max-width: 768px) and (pointer: coarse) {
+        .boot-loader {
+          background: #18181c;
+        }
+
+        html[data-theme='light'] .boot-loader {
+          background: #f0f0f0;
+        }
+      }
+
+      html.native-app .boot-loader {
+        background: #0b0c10;
+      }
+
+      html.native-app .boot-loader .panel {
+        display: none;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .boot-loader .spinner {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="boot-loader" class="boot-loader" role="status" aria-live="polite" aria-busy="true">
+      <div class="panel">
+        <div class="spinner" aria-hidden="true"></div>
+        <div class="message">正在加载...</div>
+      </div>
+    </div>
+    <div id="app"></div>
+    <script type="module" src="/desktop/renderer/editor/main.ts"></script>
+  </body>
+</html>

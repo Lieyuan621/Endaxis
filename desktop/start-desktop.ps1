@@ -90,7 +90,7 @@ function Invoke-EndaxisDesktopLauncher {
     }
     [System.IO.File]::AppendAllText($summaryLog, "Node: $node ($versionText)`r`n")
 
-    $nativeArguments = @((Join-Path $Root 'desktop\launch.cjs')) + @($Arguments)
+    $nativeArguments = @((Join-Path $Root 'desktop\app\launch.cjs')) + @($Arguments)
     $commandLine = ($nativeArguments | ForEach-Object { ConvertTo-EndaxisNativeArgument $_ }) -join ' '
     $child = Start-Process -FilePath $node -ArgumentList $commandLine -WorkingDirectory $Root -WindowStyle Hidden -Wait -PassThru -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog
     [System.IO.File]::AppendAllText($summaryLog, "Finished: $(Get-Date -Format o)`r`nExit code: $($child.ExitCode)`r`n")

@@ -1,0 +1,4 @@
+{
+  "extends": "../../tests/browser/tsconfig.json",
+  "include": ["../playwright.config.ts", "./**/*.ts"]
+}

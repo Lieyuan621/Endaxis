@@ -1,6 +1,6 @@
 # Axis HUD PR 记录 / Pull Request Record
 
-> 可将本页内容复制到 `axis-hud` 分支对应的 Pull Request。/ Copy this record into the Pull Request for the `axis-hud` branch.
+> 本页为早期 PR 的历史记录，不代表当前交付状态。提示条现为桌面专有功能；当前入口与验证命令见[使用说明](../overlay-user-guide.md)。/ This is a historical PR record. The HUD is now desktop-only; see the [current guide](../overlay-user-guide.md) for supported entry points and validation commands.
 
 ## PR 标题 / Title
 
@@ -39,7 +39,7 @@ HUD 只消费已完成的模拟结果，不重跑模拟；不读取、注入或�
 ### 文档
 
 - [中英文使用手册](../overlay-user-guide.md)
-- [桌面功能与开发说明](../overlay.md)
+- [桌面功能与开发说明](../architecture/desktop.md)
 
 ### 验证记录
 
@@ -79,7 +79,7 @@ The HUD consumes a completed simulation result; it does not rerun the simulator 
 ### Documentation
 
 - [Bilingual user guide](../overlay-user-guide.md)
-- [Desktop implementation and development notes](../overlay.md)
+- [Desktop implementation and development notes](../architecture/desktop.md)
 
 ### Validation record
 

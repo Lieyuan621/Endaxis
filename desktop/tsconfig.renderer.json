@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "../node_modules/.tmp/tsconfig.desktop-renderer.tsbuildinfo"
+  },
+  "include": [
+    "../src/env.d.ts",
+    "renderer/**/*.ts",
+    "renderer/**/*.vue",
+    "features/*/renderer/**/*.ts",
+    "features/*/renderer/**/*.vue",
+    "i18n/**/*.ts"
+  ]
+}

@@ -10,6 +10,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:desktop": "vite build --config desktop/vite.config.ts",
+    "package:desktop": "npm run build:desktop && npm --prefix desktop run package",
+    "type-check:desktop": "vue-tsc --noEmit -p desktop/tsconfig.renderer.json --incremental false && vue-tsc --noEmit -p desktop/tests/tsconfig.json --incremental false",
+    "test:desktop": "vitest run --config desktop/vite.config.ts",
+    "test:desktop:windows": "playwright test --config desktop/playwright.config.ts",
     "preview": "vite preview",
     "download:game-data:sources": "node --experimental-strip-types tools/game-data-compiler/scripts/downloadGameDataSources.ts",
     "rebuild:game-data": "node --experimental-strip-types tools/game-data-compiler/scripts/rebuildGameData.ts",

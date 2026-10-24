@@ -1,0 +1,38 @@
+{
+  "appId": "com.endaxis.desktop",
+  "productName": "Endaxis",
+  "asar": true,
+  "electronDist": "node_modules/electron/dist",
+  "electronLanguages": ["zh-CN", "en-US"],
+  "directories": {
+    "output": "release"
+  },
+  "files": [
+    "assets/icon.ico",
+    "app/**/*.cjs",
+    "features/overlay/main/**/*.cjs",
+    "features/overlay/main/input-feedback.ps1",
+    "features/overlay/preload/**/*.cjs",
+    "features/overlay/picker/**/*",
+    "i18n/**/*.json",
+    "i18n/**/*.cjs",
+    "dist/**/*",
+    "package.json",
+    "!**/*.test.cjs",
+    "!app/launch.cjs",
+    "!app/server.cjs"
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "zip",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "icon": "assets/icon.ico"
+  },
+  "artifactName": "Endaxis-${version}-windows-${arch}.zip",
+  "npmRebuild": false
+}

@@ -17,7 +17,6 @@ import {
   type Component,
 } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
 import { primaryModifier } from '../keyboard/primaryModifier';
 import {
   ActiveScenarioEditorSession,
@@ -96,8 +95,11 @@ import TimelineCursorGuide, {
   type TimelineCursorGaugeRow,
 } from './components/TimelineCursorGuide.vue';
 import TimelineHeaderToolbar from './components/TimelineHeaderToolbar.vue';
-import { useOverlayI18n } from '../overlay/messages';
-import { exportEditorOverlay } from '../overlay/exportEditorOverlay';
+import type {
+  TimelineEditorProps,
+  TimelineEditorEvents,
+  TimelineExportContext,
+} from './timelineEditorHost';
 import TimelineRuler from './components/TimelineRuler.vue';
 import type { TimelineShareTrack } from './components/TimelineShareCard.vue';
 import TimelineTrackHeader from './components/TimelineTrackHeader.vue';
@@ -226,7 +228,6 @@ import {
   projectSkillCastInterruptionFrames,
   projectTimelineTimeDilationBands,
 } from '../../core/projection/timelineDisplayTime';
-import type { ProjectGameDataRepository } from '../../data/projectGameDataRepository';
 import { sharedBuffAssetId } from '../asset-workspace/workspaceReferenceChoices';
 import type { WorkspaceAssetSave, WorkspaceAssetSource } from '../asset-workspace/workspaceSession';
 import type { ReferenceChoices } from '../definition-editor/fieldInputConfig';
@@ -741,25 +742,6 @@ const selectedCastId = computed(() => actionSelection.value.primaryId);
 const showDamageAnalysis = ref(false);
 const showExportDialog = ref(false);
 
-const { t: overlayT } = useOverlayI18n();
-const overlayRouter = useRouter();
-
-/** 仅导出当前完整模拟结果；HUD 不参与项目编辑或规则计算。 */
-function openOverlay() {
-  void exportEditorOverlay({
-    href: overlayRouter.resolve({ name: 'Overlay' }).href,
-    repository: editorGameDataRepository,
-    ensureCurrentSimulation,
-    read: () => ({
-      project: projectSession.snapshot.project,
-      published: publishedSimulation.value,
-      revision: projectRevision.value,
-      locale: locale.value === 'zh-CN' ? 'zh-CN' : 'en',
-    }),
-    message: key => overlayT(`overlay.${key}`),
-    onError: message => ElMessage.error(message),
-  });
-}
 const showReceiveDialog = ref(false);
 const receivingProjectCode = ref(false);
 const showSmallImageExport = ref(false);
@@ -901,17 +883,10 @@ const markerContextTarget = ref<{
     | { kind: 'consumableUse'; id: string; label: string };
 } | null>(null);
 /** 初始方案只在挂载时读取；编辑会话不回写调用方传入的对象。 */
-const props = defineProps<{
-  initialScenario?: ScenarioDocument;
-  initialProject?: unknown;
-  gameDataRepository: ProjectGameDataRepository;
-  browserPersistenceEnabled?: boolean;
-  browserRestoreError?: string;
-  browserRestoreRaw?: string;
-}>();
-const emit = defineEmits<{
-  projectChange: [project: EndaxisProjectDocument];
-  initialReady: [];
+const props = defineProps<TimelineEditorProps>();
+const emit = defineEmits<TimelineEditorEvents>();
+defineSlots<{
+  'toolbar-actions'?: (props: { context: TimelineExportContext }) => unknown;
 }>();
 const gameDataRepository = props.gameDataRepository;
 const consumables = gameDataRepository.getConsumables();
@@ -1995,6 +1970,16 @@ const {
   scenario,
   service: simulationService,
 });
+const timelineExportContext: TimelineExportContext = {
+  repository: editorGameDataRepository,
+  ensureCurrentSimulation,
+  read: () => ({
+    project: projectSession.snapshot.project,
+    published: publishedSimulation.value,
+    revision: projectRevision.value,
+    locale: locale.value === 'zh-CN' ? 'zh-CN' : 'en',
+  }),
+};
 let initialReadyEmitted = false;
 watch(
   [simulationRun, simulationError],
@@ -6905,7 +6890,6 @@ function setMobileGuideFrame(frame: number | null): void {
           analysis: t('timeline.analysis.button'),
           open: t('common.load'),
           export: t('common.export'),
-          overlay: overlayT('overlay.open'),
           more: t('timeline.header.more'),
           reset: t('common.reset'),
           view: t('timeline.header.sectionViewLayers'),
@@ -6948,7 +6932,6 @@ function setMobileGuideFrame(frame: number | null): void {
         @receive="requestReceiveProject"
         @asset-workspace="openAssetWorkspace"
         @export="showExportDialog = true"
-        @open-overlay="openOverlay"
         @reset="resetDialogVisible = true"
         @toggle-view-layer="toggleTimelineViewLayer"
         @toggle-operator-effects="toggleOperatorEffectsVisibility"
@@ -6962,7 +6945,11 @@ function setMobileGuideFrame(frame: number | null): void {
         @set-global-random-seed="setGlobalRandomSeed"
         @roll-global-random-seed="rollGlobalRandomSeed"
         @clear-selection="clearTimelineSelection"
-      />
+      >
+        <template #extra-actions>
+          <slot name="toolbar-actions" :context="timelineExportContext" />
+        </template>
+      </TimelineHeaderToolbar>
     </template>
 
     <div class="timeline-workspace">

@@ -2,16 +2,19 @@
   "name": "endaxis-desktop",
   "private": true,
   "version": "0.1.0",
-  "description": "Endaxis 游戏内提示条桌面悬浮窗（Electron 外壳）",
-  "main": "main.cjs",
+  "description": "Endaxis desktop application",
+  "main": "app/main.cjs",
   "engines": {
     "node": ">=22.12.0"
   },
   "scripts": {
-    "start": "node launch.cjs",
-    "test": "node --test *.test.cjs"
+    "start": "node app/launch.cjs",
+    "test": "node --test app/*.test.cjs features/overlay/main/*.test.cjs",
+    "package": "electron-builder --config build/electron-builder.json --win zip --x64",
+    "package:dir": "electron-builder --config build/electron-builder.json --win --x64 --dir"
   },
   "devDependencies": {
-    "electron": "^44.9.0"
+    "electron": "44.9.0",
+    "electron-builder": "26.15.3"
   }
 }

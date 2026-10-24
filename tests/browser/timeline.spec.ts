@@ -2,6 +2,9 @@ import { test, expect, box, openPerlica, startPlacement, placeBasicGroup } from 
 
 test('桌面项目菜单集中加载、接收、导出与重置，并与显示菜单互斥', async ({ page }) => {
   await page.goto('/timeline');
+  await expect(page.locator('#boot-loader')).toHaveCount(0);
+  await expect(page.locator('.command-button--overlay')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '游戏内提示', exact: true })).toHaveCount(0);
   const projectButton = page.getByRole('button', { name: '项目', exact: true });
   const displayButton = page.getByRole('button', { name: '显示', exact: true });
   const projectPanel = page.locator('.header-project-panel');

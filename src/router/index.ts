@@ -3,6 +3,7 @@ import {
   createWebHashHistory,
   createWebHistory,
   type RouteRecordRaw,
+  type RouteRecordSingleView,
 } from 'vue-router';
 import { ALL_GAME_TEXT_FAMILIES, ensureLocaleResources, i18n } from '../i18n';
 import type { GameTextFamily } from '../i18n/localeResourceLoaders';
@@ -84,37 +85,38 @@ async function prepareSavedTimelineRoute(to: {
   }
 }
 
-const routes: RouteRecordRaw[] = [
-  { path: '/', redirect: '/timeline' },
-  {
-    path: '/timeline',
-    name: 'Timeline',
-    component: () => import('../ui/timeline/TimelineEditor.vue'),
-    props: timelineRouteProps,
-    beforeEnter: prepareSavedTimelineRoute,
-    meta: {
-      gameTextFamilies: ALL_GAME_TEXT_FAMILIES,
+export interface TimelineRouterOptions {
+  /** 宿主可包装编辑器；项目恢复、资源准备与语言守卫仍由共享路由负责。 */
+  readonly timelineComponent?: RouteRecordSingleView['component'];
+}
+
+export function createTimelineRouter(options: TimelineRouterOptions = {}) {
+  const routes: RouteRecordRaw[] = [
+    { path: '/', redirect: '/timeline' },
+    {
+      path: '/timeline',
+      name: 'Timeline',
+      component: options.timelineComponent ?? (() => import('../ui/timeline/TimelineEditor.vue')),
+      props: timelineRouteProps,
+      beforeEnter: prepareSavedTimelineRoute,
+      meta: {
+        gameTextFamilies: ALL_GAME_TEXT_FAMILIES,
+      },
     },
-  },
-  {
-    // 独立提示窗口仅读取编辑器导出的 HUD 快照。
-    path: '/overlay',
-    name: 'Overlay',
-    component: () => import('../ui/overlay/OverlayView.vue'),
-  },
-];
+  ];
 
-const router = createRouter({
-  history:
-    typeof window !== 'undefined' && window.location.hostname === 'appassets.androidplatform.net'
-      ? createWebHashHistory('/')
-      : createWebHistory('/'),
-  routes,
-});
+  const router = createRouter({
+    history:
+      typeof window !== 'undefined' && window.location.hostname === 'appassets.androidplatform.net'
+        ? createWebHashHistory('/')
+        : createWebHistory('/'),
+    routes,
+  });
 
-router.beforeEach(async to => {
-  const families = (to.meta.gameTextFamilies ?? []) as readonly GameTextFamily[];
-  await ensureLocaleResources(i18n.global.locale.value, families);
-});
+  router.beforeEach(async to => {
+    const families = (to.meta.gameTextFamilies ?? []) as readonly GameTextFamily[];
+    await ensureLocaleResources(i18n.global.locale.value, families);
+  });
 
-export default router;
+  return router;
+}

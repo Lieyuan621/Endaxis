@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Endaxis</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        color: #fff;
+        font:
+          15px/1.5 system-ui,
+          sans-serif;
+        user-select: none;
+      }
+      #screen {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+      #selection-area {
+        position: fixed;
+        inset: 0;
+        cursor: crosshair;
+        touch-action: none;
+      }
+      #selection {
+        position: absolute;
+        border: 2px solid #fdd900;
+        box-shadow: 0 0 0 99999px #0006;
+        pointer-events: none;
+      }
+      #help {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        width: max-content;
+        max-width: calc(100vw - 32px);
+        transform: translateX(-50%);
+        padding: 12px 18px;
+        background: #101722ee;
+        border: 1px solid #ffffff55;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px #0009;
+        cursor: default;
+      }
+      #help p {
+        margin: 0 0 8px;
+      }
+      #help small {
+        color: #b9c8dc;
+      }
+      #actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 8px;
+      }
+      button {
+        padding: 6px 14px;
+        border: 1px solid #ffffff66;
+        border-radius: 4px;
+        background: #24364b;
+        color: #fff;
+        font: inherit;
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      button:focus-visible {
+        outline: 2px solid #fdd900;
+        outline-offset: 2px;
+      }
+      #status {
+        color: #fdd900;
+        min-width: 12em;
+      }
+      #help.at-bottom {
+        top: auto;
+        bottom: 20px;
+      }
+    </style>
+    <script defer src="./region-picker.js"></script>
+  </head>
+  <body>
+    <img id="screen" alt="" draggable="false" />
+    <div id="selection-area">
+      <div id="selection" hidden></div>
+    </div>
+    <div id="help" class="at-bottom">
+      <p><strong id="heading"></strong></p>
+      <small id="description"></small>
+      <div id="actions">
+        <button id="confirm" type="button" disabled></button>
+        <button id="cancel" type="button"></button>
+        <span id="status" role="status"></span>
+      </div>
+    </div>
+  </body>
+</html>
