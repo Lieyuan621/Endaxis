@@ -10,8 +10,11 @@
   "scripts": {
     "start": "node app/launch.cjs",
     "test": "node --test app/*.test.cjs features/overlay/main/*.test.cjs",
-    "package": "electron-builder --config build/electron-builder.json --win zip --x64",
-    "package:dir": "electron-builder --config build/electron-builder.json --win --x64 --dir"
+    "install:runtime": "install-electron",
+    "prepackage": "npm run install:runtime",
+    "prepackage:dir": "npm run install:runtime",
+    "package": "electron-builder --config build/electron-builder.json --win zip --x64 --publish never",
+    "package:dir": "electron-builder --config build/electron-builder.json --win --x64 --dir --publish never"
   },
   "devDependencies": {
     "electron": "44.9.0",
