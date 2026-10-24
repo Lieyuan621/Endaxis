@@ -22,11 +22,6 @@ export interface OperatorProgressionDefinitionContext {
   readonly installedPassiveSkillSourcePaths?: ReadonlySet<string>;
   /** 当前整名候选已安装的被动技能身份，供潜能黑板修正绑定。 */
   readonly passiveSkillKeys?: ReadonlySet<string>;
-  /** 被动通过 OnCollectOutputBuffBbValue 投影为反应修正时，黑板补丁继续绑定同一语义。 */
-  readonly reactionPassiveInputs?: ReadonlyMap<
-    string,
-    { readonly durationKey: string; readonly effectivenessKey: string }
-  >;
 }
 
 type Progression = Pick<
@@ -218,20 +213,6 @@ function compileModifier(
     throw new Error(`${entry.sourcePath}: ${reason}`);
   };
   if (entry.kind === 'skillBlackboardModifier') {
-    const reactionInput = context.reactionPassiveInputs?.get(entry.skillId);
-    if (reactionInput !== undefined) {
-      if (entry.stringValue !== '' || entry.activeCondition !== null || entry.operation !== 'add')
-        fail('collected Buff reaction modifier only supports unconditional numeric addition');
-      if (entry.blackboardKey === reactionInput.durationKey) {
-        return [{ kind: 'addReactionDuration', reaction: 'corrosion', seconds: entry.numberValue }];
-      }
-      if (entry.blackboardKey === reactionInput.effectivenessKey) {
-        return [
-          { kind: 'addReactionEffectiveness', reaction: 'corrosion', value: entry.numberValue },
-        ];
-      }
-      fail(`unknown collected Buff reaction input ${JSON.stringify(entry.blackboardKey)}`);
-    }
     if (context.passiveSkillKeys?.has(entry.skillId)) {
       if (entry.stringValue !== '') fail('string passive blackboard modifier is not supported');
       if (entry.activeCondition !== null)

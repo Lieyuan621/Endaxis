@@ -39,7 +39,7 @@ it.each(['enemy', 'operator'] as const)('%s 的等级属性按场景初始化并
   const target =
     entityId === 'enemy'
       ? environment.runtimeOptions.enemyBuffRuntime
-      : environment.runtimeOptions.createOperatorBuffRuntime!('operator', context.panel, []);
+      : environment.runtimeOptions.createOperatorBuffRuntime!('operator', context.panel);
   if (!(target instanceof BuffDefinitionOperationTarget)) throw new Error('fixture');
   const base = entityId === 'enemy' ? context.enemy.source.level : context.panel.level;
   const read = () =>
@@ -1076,19 +1076,15 @@ it('显式攻击者使用所选干员的面板和事件端口，保留原技能�
   const environment = createEnvironment();
   const executor = environment.runtimeOptions.createOperationExecutor(context);
   if (context.panel === undefined) throw new Error('fixture panel');
-  environment.runtimeOptions.createOperatorBuffRuntime!(
-    'other',
-    {
-      ...context.panel,
-      operatorId: 'other',
-      attack: 1400,
-      attackBeforeAttributeScalar: 1400,
-      criticalRate: 0,
-      staggerDamagePercent: 1,
-      combatModifiers: [],
-    },
-    [],
-  );
+  environment.runtimeOptions.createOperatorBuffRuntime!('other', {
+    ...context.panel,
+    operatorId: 'other',
+    attack: 1400,
+    attackBeforeAttributeScalar: 1400,
+    criticalRate: 0,
+    staggerDamagePercent: 1,
+    combatModifiers: [],
+  });
   const originalPreparation = vi.fn();
   const selectedPreparation = vi.fn();
   environment.eventsFor('operator').registerAction('beforeDamageAction', 0, originalPreparation);
@@ -1247,11 +1243,7 @@ it.each([
   });
   const context = createContext();
   const executor = environment.runtimeOptions.createOperationExecutor(context);
-  const source = environment.runtimeOptions.createOperatorBuffRuntime!(
-    'operator',
-    context.panel,
-    [],
-  );
+  const source = environment.runtimeOptions.createOperatorBuffRuntime!('operator', context.panel);
   if (!(source instanceof BuffDefinitionOperationTarget)) throw new Error('fixture');
   source.container.add(
     {
@@ -1374,121 +1366,6 @@ it('新Buff先接收侧收集再来源侧收集，寿命读取修改结果；刷
   expect(state.modifiedBlackboardKeys).toEqual(new Set(['duration']));
   target.applyScoped(request);
   expect(order).toHaveLength(2);
-});
-
-it.each([15, 0, -1])('腐蚀输出收集仅延长正时长%s，并只提高减抗上限', duration => {
-  const environment = createEnvironment();
-  environment.runtimeOptions.createOperationExecutor(createContext());
-  environment.runtimeOptions.createOperatorBuffRuntime!('operator', createContext().panel, [
-    { reaction: 'corrosion', durationSecondsAddition: 10, effectivenessAddition: 0.2 },
-  ]);
-  const target = environment.runtimeOptions.enemyBuffRuntime;
-  if (!(target instanceof BuffDefinitionOperationTarget)) throw new Error('fixture');
-  const input = {
-    duration,
-    max_def_decrease: 0.2,
-    start_def_decrease: 0.05,
-    def_decrease_tick: 0.01,
-  };
-  target.apply({
-    buffId: 'collected-corrosion',
-    sourceId: 'operator',
-    blackboardValues: input,
-    definition: {
-      stackingType: 'stack',
-      durationSeconds: { blackboardKey: 'duration' },
-      applyTags: ['Skill/Character/Common/SpellStatus/Corrupt'],
-    },
-  });
-  const buff = target.container.buffs[0]!;
-  expect(buff.blackboard.getNumber('duration')).toBe(duration > 0 ? duration + 10 : duration);
-  expect(buff.blackboard.getNumber('max_def_decrease')).toBeCloseTo(0.24);
-  expect(buff.blackboard.getNumber('start_def_decrease')).toBe(0.05);
-  expect(buff.blackboard.getNumber('def_decrease_tick')).toBe(0.01);
-  expect(input.duration).toBe(duration);
-});
-
-it('反应工厂创建的腐蚀也经过公共收集，时长与上限不会重复加成', () => {
-  // 使用明确的工厂输入隔离创建链，不依赖某个干员战技是否实际施加附着。
-  const values = {
-    duration: 15,
-    max_def_decrease: 0.2,
-    start_def_decrease: 0.05,
-    def_decrease_tick: 0.01,
-  };
-  const environment = new StandardPlayerDamageEnvironment({
-    criticalSamples: { nextCriticalSample: () => 1 },
-    resolveNonRandomRuntimeSnapshot: () => ({
-      runtimeExtensionMultiplier: 1,
-      appliesIgniteDamageMultiplier: false,
-      appliesPhysicalInflictionDamageMultiplier: false,
-    }),
-    enemyVitals: createEnemyCombatVitals(testEnemy),
-    spellInflictionSettings: skillSettings,
-    elementalInflictionDocument: {
-      schemaVersion: 1,
-      revision: 'test',
-      buffs: [
-        {
-          id: 'attachment.electric',
-          stackingType: 'enhanceAndRefresh',
-          durationSeconds: 10,
-          role: { kind: 'elementalAttachment', element: 'electric' },
-        },
-        {
-          id: 'status.corrosion',
-          stackingType: 'stack',
-          durationSeconds: { blackboardKey: 'duration' },
-          applyTags: ['Skill/Character/Common/SpellStatus/Corrupt'],
-          role: { kind: 'compoundStatus', consumedElement: 'electric', incomingElement: 'nature' },
-        },
-      ],
-    },
-    compoundStatusFactories: {
-      schemaVersion: 1,
-      revision: 'test',
-      factories: [
-        {
-          id: 'factory.corrosion',
-          consumedElement: 'electric',
-          incomingElement: 'nature',
-          durationSeconds: 0.1,
-          blackboard: values,
-          skillSettingLookups: [],
-          createdBuff: {
-            buffId: 'status.corrosion',
-            blackboardAssignments: Object.keys(values).map(key => ({
-              targetKey: key,
-              inputKey: key,
-            })),
-          },
-        },
-      ],
-    },
-  });
-  const context = createContext();
-  const executor = environment.runtimeOptions.createOperationExecutor(context);
-  environment.runtimeOptions.createOperatorBuffRuntime!('operator', context.panel, [
-    { reaction: 'corrosion', durationSecondsAddition: 10, effectivenessAddition: 0.2 },
-  ]);
-  for (const element of ['electric', 'nature'] as const) {
-    expect(
-      executor.execute({
-        kind: 'applyElementalInfliction',
-        parameters: { element, isExtra: false },
-      }),
-    ).toBe(true);
-  }
-  const target = environment.runtimeOptions.enemyBuffRuntime;
-  if (!(target instanceof BuffDefinitionOperationTarget)) throw new Error('fixture');
-  const buff = target.container.buffs.find(
-    buff => buff.blackboard.getNumber('max_def_decrease') !== undefined,
-  )!;
-  expect(buff).toBeDefined();
-  expect(buff.blackboard.getNumber('duration')).toBe(25);
-  expect(buff.blackboard.getNumber('max_def_decrease')).toBeCloseTo(0.24);
-  expect(buff.blackboard.getNumber('start_def_decrease')).toBe(0.05);
-  expect(buff.blackboard.getNumber('def_decrease_tick')).toBe(0.01);
 });
 
 it.each(['criticalRate', 'criticalDamageIncrease'] as const)(

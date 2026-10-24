@@ -35,7 +35,6 @@ import type {
   CombatSkillCastInfo,
 } from '../state/foundationState';
 import type { BuffContainerState } from '../state/instanceState';
-import type { CombatOperatorProgram } from './combatRuntimeAssembly';
 /**
  * 标准战斗环境：一场模拟里敌人的元素附着、反应和 Buff 都由它管；
  * 敌人生命与失衡账本由场景装配层创建并以明确依赖注入，本环境只持有同一实例。
@@ -402,10 +401,6 @@ export class StandardPlayerDamageEnvironment {
   >();
   readonly #postSkillRequestListenerState: ReturnType<typeof createPostSkillRequestListenerState>;
   readonly #inflictionAdapters = new Map<string, ElementalInflictionBuffAdapter<string>>();
-  readonly #reactionModifiers = new Map<
-    string,
-    NonNullable<CombatOperatorProgram['reactionModifiers']>
-  >();
   #resolveAbilitySystemSourceId: (entityId: string) => string = entityId => entityId;
   #resolveSharedDamageTransfer: PlayerDamageOperationDependencies['resolveSharedDamageTransfer'];
   #resolveProjectileRuntimeDependencies:
@@ -510,28 +505,6 @@ export class StandardPlayerDamageEnvironment {
           modifiedKeys,
           skillCastInfo,
         );
-        // 原生来源侧收集发生在 Buff.Reset；直接施加与反应创建共用此处。
-        const modifier = this.#reactionModifiers
-          .get(sourceId)
-          ?.find(m => m.reaction === 'corrosion');
-        if (
-          modifier === undefined ||
-          !this.#enemyBuffs.tagRegistry.query(
-            definition.applyTags ?? [],
-            ['Skill/Character/Common/SpellStatus/Corrupt'],
-            'hasAny',
-          )
-        )
-          return;
-        const duration = blackboard.getNumber('duration');
-        if (duration !== undefined && duration > 0)
-          blackboard.assignDynamic('duration', duration + modifier.durationSecondsAddition);
-        const maximum = blackboard.getNumber('max_def_decrease');
-        if (maximum !== undefined)
-          blackboard.assignDynamic(
-            'max_def_decrease',
-            maximum * (1 + modifier.effectivenessAddition),
-          );
       },
       undefined,
       restoredEnemyBuffs,
@@ -648,9 +621,7 @@ export class StandardPlayerDamageEnvironment {
       get enemyVitalsRuntime() {
         return vitalsRuntimeOf();
       },
-      createOperatorBuffRuntime: (operatorId, panel, reactionModifiers, restoredState) => {
-        if (reactionModifiers !== undefined)
-          this.#reactionModifiers.set(operatorId, reactionModifiers);
+      createOperatorBuffRuntime: (operatorId, panel, restoredState) => {
         if (panel !== undefined) {
           this.#operatorPanels.set(operatorId, panel);
           this.#ensureOperatorVitals(operatorId, panel);
@@ -1467,29 +1438,7 @@ export class StandardPlayerDamageEnvironment {
                     `but the registered definition is '${definition.id}'`,
                 );
               }
-              const blackboard = { ...result.blackboardValues } as Record<string, number>;
-              // 腐蚀已由有原生事件证据的公共初始化入口处理；其他既有反应配置保持原入口。
-              const reaction =
-                incomingElement === 'electric'
-                  ? 'electrification'
-                  : incomingElement === 'cryo'
-                    ? 'frozen'
-                    : incomingElement === 'heat'
-                      ? 'burning'
-                      : null;
-              const modifier = this.#reactionModifiers
-                .get(operatorId)
-                ?.find(m => m.reaction === reaction);
-              if (modifier !== undefined) {
-                if (typeof blackboard.duration !== 'number')
-                  throw new Error(`reaction '${reaction}' has no numeric duration output`);
-                if (modifier.effectivenessAddition !== 0)
-                  throw new Error(
-                    `reaction '${reaction}' effectiveness modifier has no connected factory output`,
-                  );
-                blackboard.duration += modifier.durationSecondsAddition;
-              }
-              return blackboard;
+              return { ...result.blackboardValues } as Record<string, number>;
             };
       adapter = new ElementalInflictionBuffAdapter(
         this.#enemyBuffs,

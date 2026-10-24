@@ -5118,7 +5118,7 @@ describe('CombatRuntimeAssembly', () => {
 
     assembly.advanceFrames(3);
     expect(createOperatorBuffRuntime).toHaveBeenCalledOnce();
-    expect(createOperatorBuffRuntime).toHaveBeenCalledWith('operator', undefined, undefined);
+    expect(createOperatorBuffRuntime).toHaveBeenCalledWith('operator', undefined);
     expect(advanceFrame).toHaveBeenCalledTimes(3);
   });
 

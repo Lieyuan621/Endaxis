@@ -223,7 +223,6 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       progression.talentPassiveSkillRequests,
       input.passiveSkills.definitions,
       input.gameplayTagRegistry,
-      input.loadBuff,
       input.predefinedTagQueries,
     );
   });
@@ -236,7 +235,6 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       progression.potentialPassiveSkillRequests,
       input.passiveSkills.definitions,
       input.gameplayTagRegistry,
-      input.loadBuff,
       input.predefinedTagQueries,
     );
   });
@@ -246,7 +244,6 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
       [request],
       input.passiveSkills.definitions,
       input.gameplayTagRegistry,
-      input.loadBuff,
       input.predefinedTagQueries,
     ),
   );
@@ -259,14 +256,7 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
     ...basePassivePlans.flatMap(plan => plan.definitions.map(definition => definition.key)),
     ...talentPassivePlans.flatMap(plan => plan.definitions.map(definition => definition.key)),
     ...potentialPassivePlans.flatMap(plan => plan.definitions.map(definition => definition.key)),
-    ...talentPassivePlans.flatMap(plan => plan.semanticPassiveKeys),
-    ...potentialPassivePlans.flatMap(plan => plan.semanticPassiveKeys),
   ]);
-  const reactionPassiveInputs = new Map(
-    [...talentPassivePlans, ...potentialPassivePlans, ...basePassivePlans].flatMap(plan => [
-      ...plan.reactionPassiveInputs,
-    ]),
-  );
   const runtimeReplacementSkillKeys = new Set(input.runtimeReplacementSkillKeys ?? []);
   const knownSkillKeys = new Set(skillLibrary.activeSkills.entries.map(skill => skill.key));
   for (const key of runtimeReplacementSkillKeys) {
@@ -284,16 +274,13 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
     ),
     installedPassiveSkillSourcePaths,
     passiveSkillKeys,
-    reactionPassiveInputs,
   };
   const talents = input.talentBindings.map((binding, index) => {
     const definition = compileOperatorTalentDefinition(progression, binding, context);
     const plan = talentPassivePlans[index]!;
     const passiveSkills = plan.definitions;
-    const modifiers = [...(definition.modifiers ?? []), ...plan.modifiers];
     return {
       ...definition,
-      ...(modifiers.length ? { modifiers } : {}),
       ...(passiveSkills.length ? { passiveSkills } : {}),
     };
   });
@@ -301,10 +288,8 @@ export function assembleOperatorDefinition(input: OperatorDefinitionAssemblyInpu
     const definition = compileOperatorPotentialDefinition(progression, binding, context);
     const plan = potentialPassivePlans[index]!;
     const passiveSkills = plan.definitions;
-    const modifiers = [...(definition.modifiers ?? []), ...plan.modifiers];
     return {
       ...definition,
-      ...(modifiers.length ? { modifiers } : {}),
       ...(passiveSkills.length ? { passiveSkills } : {}),
     };
   });

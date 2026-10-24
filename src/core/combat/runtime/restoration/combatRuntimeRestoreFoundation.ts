@@ -174,7 +174,6 @@ export function bindRestoredCombatRuntimeFoundation(
     const target = createOperatorBuffRuntime(
       operatorId,
       program.panel,
-      program.reactionModifiers,
       operatorBuffStates.get(operatorId),
     );
     if (target.runtimeState !== operatorBuffStates.get(operatorId)) {

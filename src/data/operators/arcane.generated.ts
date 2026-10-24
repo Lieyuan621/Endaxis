@@ -3534,6 +3534,44 @@ const arcanePassive2: OperatorPassiveSkillDefinition = {
   actionGraph: arcanePassive2ActionGraph,
 };
 
+const arcanePassive3ActionGraph = {
+  main: {
+    nodes: {
+      applyBuff_1: {
+        action: {
+          kind: 'applyBuff',
+          parameters: {
+            buffs: [
+              {
+                buffId: 'buff_chr_0032_lizhiyan_talent2',
+                blackboardAssignments: {
+                  corrupt_rate: { kind: 'valueNode', nodeId: 'data_1' },
+                  duration_add: { kind: 'valueNode', nodeId: 'data_2' },
+                },
+              },
+            ],
+            targets: { kind: 'fixed', target: 'caster' },
+            inheritSourceSkillCastInfo: false,
+          },
+        },
+        next: null,
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'corrupt_rate' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'duration_add' } },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const arcanePassive3: OperatorPassiveSkillDefinition = {
+  key: 'chr_0032_lizhiyan_talent2',
+  blackboard: { corrupt_rate: [0.05, 0.1], duration_add: [5, 10] },
+  enableSequence: { $sequence: 'applyBuff_1' },
+  actionGraph: arcanePassive3ActionGraph,
+};
+
 const arcaneComboCondition1ActionGraph = {
   main: {
     nodes: {
@@ -5904,9 +5942,93 @@ const arcaneBuff20: SkillBuffDefinition = {
 const arcaneBuff21ActionGraph = {
   main: {
     nodes: {
-      finishOwner_1: {
-        action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
+      modifyCollectedBuffValue_5: {
+        action: {
+          kind: 'modifyCollectedBuffValue',
+          parameters: {
+            key: 'max_def_decrease',
+            useDirectValue: false,
+            multiplier: { kind: 'valueNode', nodeId: 'data_1' },
+            addition: { kind: 'constant', value: 0 },
+            directValue: { kind: 'constant', value: 0 },
+          },
+        },
         next: null,
+      },
+      calculateActionValue_6: {
+        action: {
+          kind: 'calculateActionValue',
+          parameters: {
+            key: 'final_corrupt_rate',
+            operation: 'add',
+            left: { kind: 'valueNode', nodeId: 'data_2' },
+            right: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'modifyCollectedBuffValue_5',
+      },
+      modifyCollectedBuffValue_4: {
+        action: {
+          kind: 'modifyCollectedBuffValue',
+          parameters: {
+            key: 'duration',
+            useDirectValue: false,
+            multiplier: { kind: 'constant', value: 1 },
+            addition: { kind: 'valueNode', nodeId: 'data_3' },
+            directValue: { kind: 'constant', value: 0 },
+          },
+        },
+        next: 'calculateActionValue_6',
+      },
+      ifElse_7: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
+          whenTrue: { $sequence: 'modifyCollectedBuffValue_4' },
+          whenFalse: { $sequence: 'calculateActionValue_6' },
+        },
+        next: null,
+      },
+      storeCollectedBuffValue_8: {
+        action: {
+          kind: 'storeCollectedBuffValue',
+          parameters: { key: 'duration', outputKey: 'duration_dynamic' },
+        },
+        next: 'ifElse_7',
+      },
+      checkCondition_9: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+        },
+        next: 'storeCollectedBuffValue_8',
+      },
+    },
+    dataNodes: {
+      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'final_corrupt_rate' } },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'corrupt_rate' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'duration_add' } },
+      data_4: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'duration_dynamic', fallback: 0 },
+      },
+      data_5: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_4' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_6: {
+        type: 'boolean',
+        expression: {
+          kind: 'eventBuffTagsMatch',
+          match: 'hasAny',
+          buffTags: ['Skill/Character/Common/SpellStatus/Corrupt'],
+        },
       },
     },
   },
@@ -5916,6 +6038,36 @@ const arcaneBuff21ActionGraph = {
 const arcaneBuff21: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
+  maxStackCount: 3,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { corrupt_rate: 0.1, duration_add: 5, duration_dynamic: 0, final_corrupt_rate: 0 },
+  attributeModifiers: [],
+  abilityEventResponses: [
+    {
+      event: 'collectOutputBuffBlackboard',
+      priority: 0,
+      sequence: { $sequence: 'checkCondition_9' },
+    },
+  ],
+  actionGraph: arcaneBuff21ActionGraph,
+};
+
+const arcaneBuff22ActionGraph = {
+  main: {
+    nodes: {
+      finishOwner_1: {
+        action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
+        next: null,
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const arcaneBuff22: SkillBuffDefinition = {
+  stackingType: 'unique',
+  priority: 0,
   maxStackCount: 1,
   durationSeconds: 1.5,
   applyTags: [],
@@ -5923,10 +6075,10 @@ const arcaneBuff21: SkillBuffDefinition = {
   blackboard: {},
   attributeModifiers: [],
   lifecycleSequences: { finish: [{ $sequence: 'finishOwner_1' }] },
-  actionGraph: arcaneBuff21ActionGraph,
+  actionGraph: arcaneBuff22ActionGraph,
 };
 
-const arcaneBuff22ActionGraph = {
+const arcaneBuff23ActionGraph = {
   main: {
     nodes: {
       calculateActionValue_1: {
@@ -6319,7 +6471,7 @@ const arcaneBuff22ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const arcaneBuff22: SkillBuffDefinition = {
+const arcaneBuff23: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -6332,200 +6484,6 @@ const arcaneBuff22: SkillBuffDefinition = {
     { event: 'beforeTakeDamage', priority: 0, sequence: { $sequence: 'checkCondition_7' } },
     { event: 'beforeTakeDamage', priority: 0, sequence: { $sequence: 'checkCondition_35' } },
     { event: 'poiseZero', priority: 0, sequence: { $sequence: 'modifyActionValue_36' } },
-  ],
-  actionGraph: arcaneBuff22ActionGraph,
-};
-
-const arcaneBuff23ActionGraph = {
-  main: {
-    nodes: {
-      findOwnerSpawnedAbilityEntities_1: {
-        action: {
-          kind: 'findOwnerSpawnedAbilityEntities',
-          parameters: {
-            saveToContextKey: 'placesorted',
-            abilityEntityIds: ['abilityentity_chr_0032_lizhiyan_ultimate_skill_place'],
-            owner: { kind: 'source' },
-            circularOrder: {
-              indexBlackboardKey: 'EntityBB_index',
-              desiredCount: 8,
-              reverseFlag: 1,
-            },
-          },
-        },
-        next: null,
-      },
-      pickContextTarget_2: {
-        action: {
-          kind: 'pickContextTarget',
-          parameters: {
-            sourceContextKey: 'placesorted',
-            saveToContextKey: 'fifth',
-            index: { kind: 'constant', value: 4 },
-          },
-        },
-        next: null,
-      },
-      pickContextTarget_3: {
-        action: {
-          kind: 'pickContextTarget',
-          parameters: {
-            sourceContextKey: 'placesorted',
-            saveToContextKey: 'forth',
-            index: { kind: 'constant', value: 3 },
-          },
-        },
-        next: 'pickContextTarget_2',
-      },
-      pickContextTarget_4: {
-        action: {
-          kind: 'pickContextTarget',
-          parameters: {
-            sourceContextKey: 'placesorted',
-            saveToContextKey: 'third',
-            index: { kind: 'constant', value: 2 },
-          },
-        },
-        next: 'pickContextTarget_3',
-      },
-      pickContextTarget_5: {
-        action: {
-          kind: 'pickContextTarget',
-          parameters: {
-            sourceContextKey: 'placesorted',
-            saveToContextKey: 'second',
-            index: { kind: 'constant', value: 1 },
-          },
-        },
-        next: 'pickContextTarget_4',
-      },
-      pickContextTarget_6: {
-        action: {
-          kind: 'pickContextTarget',
-          parameters: {
-            sourceContextKey: 'placesorted',
-            saveToContextKey: 'first',
-            index: { kind: 'constant', value: 0 },
-          },
-        },
-        next: 'pickContextTarget_5',
-      },
-      mergeContextTargets_7: {
-        action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'fifth', sources: [] },
-        },
-        next: 'pickContextTarget_6',
-      },
-      mergeContextTargets_8: {
-        action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'forth', sources: [] },
-        },
-        next: 'mergeContextTargets_7',
-      },
-      mergeContextTargets_9: {
-        action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'third', sources: [] },
-        },
-        next: 'mergeContextTargets_8',
-      },
-      mergeContextTargets_10: {
-        action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'second', sources: [] },
-        },
-        next: 'mergeContextTargets_9',
-      },
-      mergeContextTargets_11: {
-        action: {
-          kind: 'mergeContextTargets',
-          parameters: { saveToContextKey: 'first', sources: [] },
-        },
-        next: 'mergeContextTargets_10',
-      },
-      spawnAbilityEntity_12: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            bornAt: { kind: 'context', key: 'first' },
-            abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_laser',
-            childSkillId: 'chr_0032_lizhiyan_ultimate_skill_laser',
-            source: { kind: 'source' },
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: false,
-            target: 'currentAbilityEntity',
-          },
-        },
-        next: null,
-      },
-      spawnAbilityEntity_13: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            bornAt: { kind: 'context', key: 'second' },
-            abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_laser',
-            childSkillId: 'chr_0032_lizhiyan_ultimate_skill_laser',
-            source: { kind: 'source' },
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: false,
-            target: 'currentAbilityEntity',
-          },
-        },
-        next: null,
-      },
-      spawnAbilityEntity_14: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            bornAt: { kind: 'context', key: 'third' },
-            abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_laser',
-            childSkillId: 'chr_0032_lizhiyan_ultimate_skill_laser',
-            source: { kind: 'source' },
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: false,
-            target: 'currentAbilityEntity',
-          },
-        },
-        next: null,
-      },
-      spawnAbilityEntity_15: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            bornAt: { kind: 'context', key: 'forth' },
-            abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_laser',
-            childSkillId: 'chr_0032_lizhiyan_ultimate_skill_laser',
-            source: { kind: 'source' },
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: false,
-            target: 'currentAbilityEntity',
-          },
-        },
-        next: null,
-      },
-    },
-  },
-  macros: {},
-} as const satisfies ActionGraphResourceDefinition;
-
-const arcaneBuff23: SkillBuffDefinition = {
-  stackingType: 'unlimited',
-  priority: 0,
-  maxStackCount: 1,
-  durationSeconds: 2,
-  applyTags: [],
-  extendTags: [],
-  blackboard: { atk_scale_laser: 10 },
-  attributeModifiers: [],
-  scheduledSequences: [
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_1' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'mergeContextTargets_11' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'spawnAbilityEntity_12' } },
-    { startFrame: 4, endFrame: 7, sequence: { $sequence: 'spawnAbilityEntity_13' } },
-    { startFrame: 8, endFrame: 11, sequence: { $sequence: 'spawnAbilityEntity_14' } },
-    { startFrame: 12, endFrame: 15, sequence: { $sequence: 'spawnAbilityEntity_15' } },
   ],
   actionGraph: arcaneBuff23ActionGraph,
 };
@@ -6543,7 +6501,7 @@ const arcaneBuff24ActionGraph = {
             circularOrder: {
               indexBlackboardKey: 'EntityBB_index',
               desiredCount: 8,
-              reverseFlag: -1,
+              reverseFlag: 1,
             },
           },
         },
@@ -6727,6 +6685,200 @@ const arcaneBuff24: SkillBuffDefinition = {
 const arcaneBuff25ActionGraph = {
   main: {
     nodes: {
+      findOwnerSpawnedAbilityEntities_1: {
+        action: {
+          kind: 'findOwnerSpawnedAbilityEntities',
+          parameters: {
+            saveToContextKey: 'placesorted',
+            abilityEntityIds: ['abilityentity_chr_0032_lizhiyan_ultimate_skill_place'],
+            owner: { kind: 'source' },
+            circularOrder: {
+              indexBlackboardKey: 'EntityBB_index',
+              desiredCount: 8,
+              reverseFlag: -1,
+            },
+          },
+        },
+        next: null,
+      },
+      pickContextTarget_2: {
+        action: {
+          kind: 'pickContextTarget',
+          parameters: {
+            sourceContextKey: 'placesorted',
+            saveToContextKey: 'fifth',
+            index: { kind: 'constant', value: 4 },
+          },
+        },
+        next: null,
+      },
+      pickContextTarget_3: {
+        action: {
+          kind: 'pickContextTarget',
+          parameters: {
+            sourceContextKey: 'placesorted',
+            saveToContextKey: 'forth',
+            index: { kind: 'constant', value: 3 },
+          },
+        },
+        next: 'pickContextTarget_2',
+      },
+      pickContextTarget_4: {
+        action: {
+          kind: 'pickContextTarget',
+          parameters: {
+            sourceContextKey: 'placesorted',
+            saveToContextKey: 'third',
+            index: { kind: 'constant', value: 2 },
+          },
+        },
+        next: 'pickContextTarget_3',
+      },
+      pickContextTarget_5: {
+        action: {
+          kind: 'pickContextTarget',
+          parameters: {
+            sourceContextKey: 'placesorted',
+            saveToContextKey: 'second',
+            index: { kind: 'constant', value: 1 },
+          },
+        },
+        next: 'pickContextTarget_4',
+      },
+      pickContextTarget_6: {
+        action: {
+          kind: 'pickContextTarget',
+          parameters: {
+            sourceContextKey: 'placesorted',
+            saveToContextKey: 'first',
+            index: { kind: 'constant', value: 0 },
+          },
+        },
+        next: 'pickContextTarget_5',
+      },
+      mergeContextTargets_7: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'fifth', sources: [] },
+        },
+        next: 'pickContextTarget_6',
+      },
+      mergeContextTargets_8: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'forth', sources: [] },
+        },
+        next: 'mergeContextTargets_7',
+      },
+      mergeContextTargets_9: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'third', sources: [] },
+        },
+        next: 'mergeContextTargets_8',
+      },
+      mergeContextTargets_10: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'second', sources: [] },
+        },
+        next: 'mergeContextTargets_9',
+      },
+      mergeContextTargets_11: {
+        action: {
+          kind: 'mergeContextTargets',
+          parameters: { saveToContextKey: 'first', sources: [] },
+        },
+        next: 'mergeContextTargets_10',
+      },
+      spawnAbilityEntity_12: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'context', key: 'first' },
+            abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_laser',
+            childSkillId: 'chr_0032_lizhiyan_ultimate_skill_laser',
+            source: { kind: 'source' },
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+            target: 'currentAbilityEntity',
+          },
+        },
+        next: null,
+      },
+      spawnAbilityEntity_13: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'context', key: 'second' },
+            abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_laser',
+            childSkillId: 'chr_0032_lizhiyan_ultimate_skill_laser',
+            source: { kind: 'source' },
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+            target: 'currentAbilityEntity',
+          },
+        },
+        next: null,
+      },
+      spawnAbilityEntity_14: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'context', key: 'third' },
+            abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_laser',
+            childSkillId: 'chr_0032_lizhiyan_ultimate_skill_laser',
+            source: { kind: 'source' },
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+            target: 'currentAbilityEntity',
+          },
+        },
+        next: null,
+      },
+      spawnAbilityEntity_15: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'context', key: 'forth' },
+            abilityEntityId: 'abilityentity_chr_0032_lizhiyan_ultimate_skill_laser',
+            childSkillId: 'chr_0032_lizhiyan_ultimate_skill_laser',
+            source: { kind: 'source' },
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+            target: 'currentAbilityEntity',
+          },
+        },
+        next: null,
+      },
+    },
+  },
+  macros: {},
+} as const satisfies ActionGraphResourceDefinition;
+
+const arcaneBuff25: SkillBuffDefinition = {
+  stackingType: 'unlimited',
+  priority: 0,
+  maxStackCount: 1,
+  durationSeconds: 2,
+  applyTags: [],
+  extendTags: [],
+  blackboard: { atk_scale_laser: 10 },
+  attributeModifiers: [],
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_1' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'mergeContextTargets_11' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'spawnAbilityEntity_12' } },
+    { startFrame: 4, endFrame: 7, sequence: { $sequence: 'spawnAbilityEntity_13' } },
+    { startFrame: 8, endFrame: 11, sequence: { $sequence: 'spawnAbilityEntity_14' } },
+    { startFrame: 12, endFrame: 15, sequence: { $sequence: 'spawnAbilityEntity_15' } },
+  ],
+  actionGraph: arcaneBuff25ActionGraph,
+};
+
+const arcaneBuff26ActionGraph = {
+  main: {
+    nodes: {
       setCharacterPassiveUiValue_1: {
         action: {
           kind: 'setCharacterPassiveUiValue',
@@ -6754,7 +6906,7 @@ const arcaneBuff25ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const arcaneBuff25: SkillBuffDefinition = {
+const arcaneBuff26: SkillBuffDefinition = {
   stackingType: 'enhance',
   priority: 0,
   maxStackCount: 3,
@@ -6766,10 +6918,10 @@ const arcaneBuff25: SkillBuffDefinition = {
     start: [{ $sequence: 'setCharacterPassiveUiValue_3' }],
     enhanceChanged: [{ $sequence: 'readBuffStackCount_2' }],
   },
-  actionGraph: arcaneBuff25ActionGraph,
+  actionGraph: arcaneBuff26ActionGraph,
 };
 
-const arcaneBuff26ActionGraph = {
+const arcaneBuff27ActionGraph = {
   main: {
     nodes: {
       restrictUltimateEnergyRecovery_1: {
@@ -6944,7 +7096,7 @@ const arcaneBuff26ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const arcaneBuff26: SkillBuffDefinition = {
+const arcaneBuff27: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -6968,7 +7120,7 @@ const arcaneBuff26: SkillBuffDefinition = {
     enable: [{ $sequence: 'restrictUltimateEnergyRecovery_1' }],
     finish: [{ $sequence: 'setCharacterPassiveUiValue_4' }],
   },
-  actionGraph: arcaneBuff26ActionGraph,
+  actionGraph: arcaneBuff27ActionGraph,
   skillSlotReplacements: [
     {
       skillSlotKey: 'ultimate',
@@ -6979,7 +7131,7 @@ const arcaneBuff26: SkillBuffDefinition = {
   ],
 };
 
-const arcaneBuff27ActionGraph = {
+const arcaneBuff28ActionGraph = {
   main: {
     nodes: {
       finishOwner_1: {
@@ -7014,7 +7166,7 @@ const arcaneBuff27ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const arcaneBuff27: SkillBuffDefinition = {
+const arcaneBuff28: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 1,
@@ -7023,10 +7175,10 @@ const arcaneBuff27: SkillBuffDefinition = {
   blackboard: {},
   attributeModifiers: [],
   lifecycleSequences: { finish: [{ $sequence: 'finishBuffsById_2' }] },
-  actionGraph: arcaneBuff27ActionGraph,
+  actionGraph: arcaneBuff28ActionGraph,
 };
 
-const arcaneBuff28ActionGraph = {
+const arcaneBuff29ActionGraph = {
   main: {
     nodes: {
       setCharacterPassiveUiValue_1: {
@@ -7237,7 +7389,7 @@ const arcaneBuff28ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const arcaneBuff28: SkillBuffDefinition = {
+const arcaneBuff29: SkillBuffDefinition = {
   stackingType: 'refresh',
   priority: 0,
   maxStackCount: 1,
@@ -7260,7 +7412,7 @@ const arcaneBuff28: SkillBuffDefinition = {
   abilityEventResponses: [
     { event: 'addedBuff', priority: 0, sequence: { $sequence: 'ifElse_16' } },
   ],
-  actionGraph: arcaneBuff28ActionGraph,
+  actionGraph: arcaneBuff29ActionGraph,
   skillSlotReplacements: [
     {
       skillSlotKey: 'ultimate',
@@ -7271,7 +7423,7 @@ const arcaneBuff28: SkillBuffDefinition = {
   ],
 };
 
-const arcaneBuff29ActionGraph = {
+const arcaneBuff30ActionGraph = {
   main: {
     nodes: {
       changeResource_11: {
@@ -7471,7 +7623,7 @@ const arcaneBuff29ActionGraph = {
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const arcaneBuff29: SkillBuffDefinition = {
+const arcaneBuff30: SkillBuffDefinition = {
   stackingType: 'stack',
   priority: 0,
   maxStackCount: 1,
@@ -7484,15 +7636,15 @@ const arcaneBuff29: SkillBuffDefinition = {
   blackboard: { atk_scale_laser: 0, usp_step: 0 },
   attributeModifiers: [],
   lifecycleSequences: { trigger: [{ $sequence: 'checkCondition_24' }] },
-  actionGraph: arcaneBuff29ActionGraph,
+  actionGraph: arcaneBuff30ActionGraph,
 };
 
-const arcaneBuff30ActionGraph = {
+const arcaneBuff31ActionGraph = {
   main: { nodes: {} },
   macros: {},
 } as const satisfies ActionGraphResourceDefinition;
 
-const arcaneBuff30: SkillBuffDefinition = {
+const arcaneBuff31: SkillBuffDefinition = {
   stackingType: 'unique',
   priority: 0,
   maxStackCount: 3,
@@ -7500,7 +7652,7 @@ const arcaneBuff30: SkillBuffDefinition = {
   extendTags: [],
   blackboard: {},
   attributeModifiers: [],
-  actionGraph: arcaneBuff30ActionGraph,
+  actionGraph: arcaneBuff31ActionGraph,
 };
 
 export const arcane: OperatorDefinition = {
@@ -7792,13 +7944,7 @@ export const arcane: OperatorDefinition = {
       ],
       passiveSkills: [arcanePassive2],
     },
-    {
-      levels: 2,
-      modifiers: [
-        { kind: 'addReactionDuration', reaction: 'corrosion', seconds: [5, 10] },
-        { kind: 'addReactionEffectiveness', reaction: 'corrosion', value: [0.05, 0.1] },
-      ],
-    },
+    { levels: 2, passiveSkills: [arcanePassive3] },
   ],
   potentials: [
     {
@@ -7871,8 +8017,20 @@ export const arcane: OperatorDefinition = {
     {
       levels: 1,
       modifiers: [
-        { kind: 'addReactionDuration', reaction: 'corrosion', seconds: 5 },
-        { kind: 'addReactionEffectiveness', reaction: 'corrosion', value: 0.2 },
+        {
+          kind: 'patchPassiveBlackboard',
+          passiveSkillKey: 'chr_0032_lizhiyan_talent2',
+          blackboardKey: 'duration_add',
+          operation: 'add',
+          value: 5,
+        },
+        {
+          kind: 'patchPassiveBlackboard',
+          passiveSkillKey: 'chr_0032_lizhiyan_talent2',
+          blackboardKey: 'corrupt_rate',
+          operation: 'add',
+          value: 0.2,
+        },
       ],
     },
     {
@@ -7954,16 +8112,17 @@ export const arcane: OperatorDefinition = {
     buff_chr_0032_lizhiyan_talent1: arcaneBuff18,
     buff_chr_0032_lizhiyan_talent1_enhance: arcaneBuff19,
     buff_chr_0032_lizhiyan_talent1_vulnerable: arcaneBuff20,
-    buff_chr_0032_lizhiyan_ultimate_skill_abilityentity_finish_self: arcaneBuff21,
-    buff_chr_0032_lizhiyan_ultimate_skill_inaura: arcaneBuff22,
-    buff_chr_0032_lizhiyan_ultimate_skill_inaura_laser1: arcaneBuff23,
-    buff_chr_0032_lizhiyan_ultimate_skill_inaura_laser2: arcaneBuff24,
-    buff_chr_0032_lizhiyan_ultimate_skill_layer: arcaneBuff25,
-    buff_chr_0032_lizhiyan_ultimate_skill_listener: arcaneBuff26,
-    buff_chr_0032_lizhiyan_ultimate_skill_listener_abilityentity: arcaneBuff27,
-    buff_chr_0032_lizhiyan_ultimate_skill_listener_owner: arcaneBuff28,
-    buff_chr_0032_lizhiyan_ultimate_skill_target_mark: arcaneBuff29,
-    buff_chr_0032_lizhiyan_ultimate_skill_time_dilation_listener: arcaneBuff30,
+    buff_chr_0032_lizhiyan_talent2: arcaneBuff21,
+    buff_chr_0032_lizhiyan_ultimate_skill_abilityentity_finish_self: arcaneBuff22,
+    buff_chr_0032_lizhiyan_ultimate_skill_inaura: arcaneBuff23,
+    buff_chr_0032_lizhiyan_ultimate_skill_inaura_laser1: arcaneBuff24,
+    buff_chr_0032_lizhiyan_ultimate_skill_inaura_laser2: arcaneBuff25,
+    buff_chr_0032_lizhiyan_ultimate_skill_layer: arcaneBuff26,
+    buff_chr_0032_lizhiyan_ultimate_skill_listener: arcaneBuff27,
+    buff_chr_0032_lizhiyan_ultimate_skill_listener_abilityentity: arcaneBuff28,
+    buff_chr_0032_lizhiyan_ultimate_skill_listener_owner: arcaneBuff29,
+    buff_chr_0032_lizhiyan_ultimate_skill_target_mark: arcaneBuff30,
+    buff_chr_0032_lizhiyan_ultimate_skill_time_dilation_listener: arcaneBuff31,
   },
   abilityEntityDefinitions: {
     abilityentity_chr_0032_lizhiyan_combo_skill: {

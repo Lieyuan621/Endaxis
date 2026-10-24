@@ -13,7 +13,6 @@ import type {
 import { isEmptyActionProgram } from '../../compiler/actionProgramInspection';
 import type { ResolvedCombatStepParameters } from '../../compiler/combatProgram';
 import type { CompiledStepParameters } from '../../compiler/compiledGraphData';
-import type { CompiledOperatorReactionModifier } from '../../compiler/compileOperatorUpgrades';
 import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
 import type {
   ComboSkillPriority,
@@ -332,8 +331,6 @@ export interface CombatOperatorProgram {
   readonly passivePrograms?: readonly CompiledOperatorPassiveProgram[];
   /** 构筑启用的养成事件监听器；按养成声明顺序注册到数据动作阶段。 */
   readonly upgradeEventPrograms?: readonly CompiledOperatorUpgradeEventProgram[];
-  /** 复合元素状态由环境创建；这里保存当前构筑对其持续时间和效能的静态修正。 */
-  readonly reactionModifiers?: readonly CompiledOperatorReactionModifier[];
   /** 原生附着事件的常驻条件；不按技能块重复注册，不替代旧语义连携规则。 */
   readonly comboConditionPrograms?: readonly CompiledComboSkillConditionProgram[];
   /** 原生多目标候选选择策略；当前单敌人投影只保留事实，不执行评分差异。 */
@@ -593,7 +590,6 @@ export interface CombatRuntimeEnvironmentOptions extends CombatRuntimeInputRules
   readonly createOperatorBuffRuntime?: (
     operatorId: string,
     panel?: ResolvedOperatorPanel,
-    reactionModifiers?: CombatOperatorProgram['reactionModifiers'],
     /** 恢复分支的容器数据；提供时必须直接绑定，不能重新初始化面板属性或实体黑板。 */
     restoredState?: BuffContainerState<string>,
   ) => OperatorBuffRuntime;
@@ -1623,11 +1619,7 @@ export class CombatRuntimeAssembly {
       }
       const buffRuntime =
         operator.buffRuntime ??
-        options.createOperatorBuffRuntime?.(
-          operator.operatorId,
-          operator.panel,
-          operator.reactionModifiers,
-        );
+        options.createOperatorBuffRuntime?.(operator.operatorId, operator.panel);
       const runtimeOperator =
         buffRuntime === operator.buffRuntime ? operator : { ...operator, buffRuntime };
       this.#operators.set(operator.operatorId, runtimeOperator);

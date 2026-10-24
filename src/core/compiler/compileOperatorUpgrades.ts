@@ -6,7 +6,6 @@ import type { ActionGraphReference } from '../../../packages/game-data-contract/
 import type { BuildCondition } from '../../../packages/game-data-contract/src/conditions';
 import { isOperatorPassiveAbilityEvent } from '../game-data/definitionGuards.ts';
 import type {
-  ElementalReaction,
   LevelValues,
   OperatorAttribute,
   OperatorDefinition,
@@ -37,49 +36,6 @@ export interface ActiveOperatorUpgrade {
   readonly index: number;
   readonly level: number;
   readonly definition: OperatorUpgradeDefinition;
-}
-
-/** 由构筑静态解析、在该干员创建复合元素状态时使用的语义修正。 */
-export interface CompiledOperatorReactionModifier {
-  readonly reaction: ElementalReaction;
-  readonly durationSecondsAddition: number;
-  readonly effectivenessAddition: number;
-}
-
-export function compileOperatorReactionModifiers(
-  upgrades: readonly ActiveOperatorUpgrade[],
-): readonly CompiledOperatorReactionModifier[] {
-  const totals = new Map<
-    ElementalReaction,
-    { durationSecondsAddition: number; effectivenessAddition: number }
-  >();
-  for (const upgrade of upgrades) {
-    (upgrade.definition.modifiers ?? []).forEach((modifier, modifierIndex) => {
-      if (modifier.kind !== 'addReactionDuration' && modifier.kind !== 'addReactionEffectiveness') {
-        return;
-      }
-      const path = `${upgrade.source} '${upgrade.index}'.modifiers[${modifierIndex}]`;
-      const current = totals.get(modifier.reaction) ?? {
-        durationSecondsAddition: 0,
-        effectivenessAddition: 0,
-      };
-      if (modifier.kind === 'addReactionDuration') {
-        current.durationSecondsAddition += resolveUpgradeLevelValue(
-          modifier.seconds,
-          upgrade.level,
-          `${path}.seconds`,
-        );
-      } else {
-        current.effectivenessAddition += resolveUpgradeLevelValue(
-          modifier.value,
-          upgrade.level,
-          `${path}.value`,
-        );
-      }
-      totals.set(modifier.reaction, current);
-    });
-  }
-  return [...totals.entries()].map(([reaction, values]) => ({ reaction, ...values }));
 }
 
 /** 解析构筑当前实际启用的养成项；返回顺序固定为天赋声明顺序、潜能解锁顺序。 */
@@ -578,10 +534,6 @@ export function applyOperatorUpgradeSkillPatches(
       }
       if (modifier.kind === 'addConditionalDamage') {
         patched = addConditionalDamage(patched, modifier, upgrade.level, path);
-        continue;
-      }
-      if (modifier.kind === 'addReactionDuration' || modifier.kind === 'addReactionEffectiveness') {
-        // 反应由复合状态工厂创建，不属于某个技能步骤；场景编译器会把静态汇总交给战斗环境。
         continue;
       }
       throw new Error(`${path} kind '${modifier.kind}' is not connected to skill compilation`);

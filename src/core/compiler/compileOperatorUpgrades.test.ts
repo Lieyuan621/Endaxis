@@ -12,7 +12,6 @@ import type { OperatorInstanceDocument } from '../project/schema';
 import type { OperatorUpgradeDefinition } from '../game-data/operatorDefinition';
 import {
   applyOperatorUpgradeSkillPatches,
-  compileOperatorReactionModifiers,
   compileOperatorInitializationPrograms,
   compileOperatorUpgradeEventPrograms,
   compileOperatorPassivePrograms,
@@ -119,40 +118,6 @@ function program(
 }
 
 describe('operator upgrade compilation', () => {
-  it('在技能补丁之外按养成等级聚合元素反应时长和效果修正', () => {
-    const [modifier] = compileOperatorReactionModifiers([
-      {
-        source: 'talent',
-        index: 0,
-        level: 2,
-        definition: {
-          levels: 2,
-          modifiers: [
-            { kind: 'addReactionDuration', reaction: 'corrosion', seconds: [5, 10] },
-            { kind: 'addReactionEffectiveness', reaction: 'corrosion', value: [0.05, 0.1] },
-          ],
-        },
-      },
-      {
-        source: 'potential',
-        index: 0,
-        level: 1,
-        definition: {
-          levels: 1,
-          modifiers: [
-            { kind: 'addReactionDuration', reaction: 'corrosion', seconds: 5 },
-            { kind: 'addReactionEffectiveness', reaction: 'corrosion', value: 0.2 },
-          ],
-        },
-      },
-    ]);
-    expect(modifier).toMatchObject({
-      reaction: 'corrosion',
-      durationSecondsAddition: 15,
-    });
-    expect(modifier?.effectivenessAddition).toBeCloseTo(0.3);
-  });
-
   it('compiles direct upgrade initialization separately from passive skills', () => {
     const programs = compileOperatorInitializationPrograms(
       [

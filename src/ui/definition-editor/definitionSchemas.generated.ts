@@ -169,12 +169,6 @@ const schema_4589467e4874 = {
   semantics: schema_4107b248d073,
   description: '只有此修正安装在指定一方时才启用。',
 } as const;
-const schema_1a1ced796366 = {
-  kind: 'enum',
-  options: ['electrification', 'corrosion'],
-  semantics: schema_4107b248d073,
-  description: '目标元素反应。',
-} as const;
 const schema_0695876eae6b = {
   kind: 'enum',
   options: ['defender', 'attacker'],
@@ -3821,49 +3815,11 @@ export const definitionSchemas = {
                 value: { kind: 'number', description: '加入的数值。' },
               },
             },
-            {
-              kind: 'object',
-              fields: {
-                kind: {
-                  kind: 'enum',
-                  options: ['addReactionDuration'],
-                  description: '增加指定元素反应的持续时间。',
-                },
-                reaction: schema_1a1ced796366,
-                seconds: {
-                  kind: 'union',
-                  variants: schema_1235728272b5,
-                  semantics: schema_f27fc5f4f63d,
-                  description: '单个秒数或按养成等级排列的秒数。',
-                },
-              },
-            },
-            {
-              kind: 'object',
-              fields: {
-                kind: {
-                  kind: 'enum',
-                  options: ['addReactionEffectiveness'],
-                  description: '增加指定元素反应的效果系数。',
-                },
-                reaction: schema_1a1ced796366,
-                value: {
-                  kind: 'union',
-                  variants: schema_1235728272b5,
-                  semantics: schema_f27fc5f4f63d,
-                  description: '单个加值或按养成等级排列的加值。',
-                },
-              },
-            },
           ],
-          semantics: {
-            unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
-          },
+          semantics: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}] },
         },
         semantics: {
-          arrayElement: {
-            unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
-          },
+          arrayElement: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}] },
         },
         optional: true,
         description: '各等级提供的结构化修正。',

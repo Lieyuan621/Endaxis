@@ -44,6 +44,7 @@ it('腐蚀重复施加在正式切面恢复后仍继承累计减抗', async () =
     ['battleSkill', 'battleSkill', 191],
     ['battleSkill', 'battleSkill', 743],
   ]);
+  scenario.tracks[1]!.operator!.talentStates = { '1': 2 };
   scenario.tracks[2] = track('tangtang', [
     ['battleSkill', 'battleSkill', 3],
     ['battleSkill', 'battleSkill', 79],
@@ -56,7 +57,17 @@ it('腐蚀重复施加在正式切面恢复后仍继承累计减抗', async () =
       cast.id = `${item.id}:${index}`;
     });
   }
-  const result = await createEditorSimulationService().simulate(scenario, 1400);
+  const session = createEditorSimulationService().createCombatSession(scenario);
+  session.advanceToFrame(700);
+  const corrosion = [...session.runtime.readState().enemy.buffs!.instances.values()].find(
+    item => item.identity.definitionId === 'buff_common_natural_cryst_triggered_wrapper',
+  );
+  expect(corrosion?.blackboard.values.get('duration')).toBe(25);
+  const restored = session.fork(session.runtime.save());
+  session.advanceToFrame(1400);
+  restored.advanceToFrame(1400);
+  const result = session.collectResult();
+  expect(restored.collectResult()).toEqual(result);
   const effects = result.receiptEntries.filter(
     entry =>
       entry.data?.buffId === 'buff_common_natural_cryst_triggered_wrapper' &&
@@ -370,26 +381,42 @@ it.each([true, false])('赛希晶体仅被主控重击消费且正确保留来�
   ).toMatchObject({ sourceId: 'xaihi', frame: carrier!.frame });
 });
 
-it('诀直接创建腐蚀时，天赋与潜能只延长一次寿命', async () => {
-  for (const upgraded of [false, true]) {
+it('诀腐蚀天赋按等级与潜能修改时长和减抗上限，切面恢复不重复收集', () => {
+  let baseMaximum = 0;
+  for (const [talent, potential, seconds, effectiveness] of [
+    [0, 0, 15, 1],
+    [1, 0, 20, 1.05],
+    [2, 0, 25, 1.1],
+    [0, 5, 15, 1],
+    [2, 5, 30, 1.3],
+  ] as const) {
     const scenario = createEmptyScenario('arcane-corrosion', '直接创建腐蚀');
     const operator = track('arcane', [['ultimate', 'ultimate', 1]]);
-    operator.operator!.potential = upgraded ? 5 : 0;
-    operator.operator!.talentStates = upgraded ? { '0': 2, '1': 2 } : {};
+    operator.operator!.potential = potential;
+    operator.operator!.talentStates = { '1': talent };
     scenario.tracks[0] = operator;
-    const result = await new ScenarioSimulationService({
-      index: gameDataRepository,
-      spellInflictionSettings: skillSettings,
-      resources,
-    }).simulate(scenario, 1500);
-    const entries = result.receiptEntries.filter(
-      e => e.data?.buffId === 'buff_common_natural_natural_corrupt_do',
-    );
+    const session = createEditorSimulationService().createCombatSession(scenario);
+    session.advanceToFrame(150);
+    const buff = [...session.runtime.readState().enemy.buffs!.instances.values()].find(
+      item => item.identity.definitionId === 'buff_common_natural_natural_corrupt_do',
+    )!;
+    expect(buff).toBeDefined();
+    const maximum = buff.blackboard.values.get('max_def_decrease');
+    expect(typeof maximum).toBe('number');
+    if (talent === 0) baseMaximum = maximum as number;
+    expect(maximum).toBeCloseTo(baseMaximum * effectiveness);
+    const restored = session.fork(session.runtime.save());
+    session.advanceToFrame(1500);
+    restored.advanceToFrame(1500);
+    expect(restored.collectResult()).toEqual(session.collectResult());
+    const entries = session
+      .collectResult()
+      .receiptEntries.filter(e => e.data?.buffId === 'buff_common_natural_natural_corrupt_do');
     const start = entries.find(e => e.event === 'BuffApplied');
     const end = entries.find(e => e.event === 'BuffFinished');
     expect(start).toBeDefined();
     expect(end).toBeDefined();
-    expect(end!.frame - start!.frame).toBe((upgraded ? 30 : 15) * 30);
+    expect(end!.frame - start!.frame).toBe(seconds * 30);
   }
 });
 

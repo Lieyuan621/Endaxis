@@ -42,7 +42,6 @@ import {
   applyOperatorUpgradeSkillPatches,
   compileOperatorInitializationPrograms,
   compileOperatorPassivePrograms,
-  compileOperatorReactionModifiers,
   compileOperatorUpgradeEventPrograms,
   resolveActiveOperatorUpgrades,
 } from './compileOperatorUpgrades';
@@ -481,7 +480,6 @@ function compileResolvedTimelineTracks(
         compileUpgrade,
       ),
       upgradeEventPrograms: compileOperatorUpgradeEventPrograms(active, compileUpgrade),
-      reactionModifiers: compileOperatorReactionModifiers(active),
       skills: [],
       ...(skillCasts.length ? { skillCasts } : {}),
     });

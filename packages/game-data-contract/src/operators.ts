@@ -12,7 +12,6 @@ import type { BuildCondition, CombatConditionExpression } from './conditions.ts'
 import type {
   CombatResource,
   DamageElement,
-  ElementalReaction,
   ImageRef,
   LevelValues,
   OperatorAttribute,
@@ -249,22 +248,6 @@ export type UpgradeModifierDefinition =
       operation: 'flat' | 'percent';
       /** 加入的数值。 */
       value: number;
-    }
-  | {
-      /** 增加指定元素反应的持续时间。 */
-      kind: 'addReactionDuration';
-      /** 目标元素反应。 */
-      reaction: ElementalReaction;
-      /** 单个秒数或按养成等级排列的秒数。 */
-      seconds: LevelValues;
-    }
-  | {
-      /** 增加指定元素反应的效果系数。 */
-      kind: 'addReactionEffectiveness';
-      /** 目标元素反应。 */
-      reaction: ElementalReaction;
-      /** 单个加值或按养成等级排列的加值。 */
-      value: LevelValues;
     };
 
 /** `UpgradeModifierDefinition` 中全部修正种类，供校验和分派使用。 */
@@ -283,8 +266,6 @@ export const UPGRADE_MODIFIER_KINDS = [
   'modifyBasePanelStat',
   'addStaticDamageIncrease',
   'addStaticHealingIncrease',
-  'addReactionDuration',
-  'addReactionEffectiveness',
 ] as const satisfies readonly UpgradeModifierDefinition['kind'][];
 
 /** 一种天赋或潜能修正。 */
