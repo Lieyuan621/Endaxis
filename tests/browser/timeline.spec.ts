@@ -1,5 +1,23 @@
 import { test, expect, box, openPerlica, startPlacement, placeBasicGroup } from './helpers';
 
+test('桌面项目菜单集中加载、接收、导出与重置，并与显示菜单互斥', async ({ page }) => {
+  await page.goto('/timeline');
+  const projectButton = page.getByRole('button', { name: '项目', exact: true });
+  const displayButton = page.getByRole('button', { name: '显示', exact: true });
+  const projectPanel = page.locator('.header-project-panel');
+
+  await projectButton.click();
+  await expect(projectPanel.locator('.header-project-action')).toHaveCount(4);
+  await displayButton.click();
+  await expect(projectPanel).not.toBeVisible();
+  await expect(page.locator('.timeline-display-menu')).toBeVisible();
+
+  await projectButton.click();
+  await projectPanel.getByRole('button', { name: '导出', exact: true }).click();
+  await expect(projectPanel).not.toBeVisible();
+  await expect(page.locator('.export-dialog-shell')).toBeVisible();
+});
+
 test('方案各自保留会话内滚动和缩放，新方案使用默认视图', async ({ page }) => {
   await page.goto('/timeline');
   await page.getByRole('button', { name: 'SCALE +', exact: true }).click();
