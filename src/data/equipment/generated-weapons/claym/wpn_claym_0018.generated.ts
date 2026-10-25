@@ -208,7 +208,7 @@ const definition = {
       maxTriggerCount: 1,
       applyTags: [],
       extendTags: [],
-      blackboard: { imbue_scale: 0 },
+      blackboard: { duration: 0, imbue_scale: 0 },
       attributeModifiers: [],
       lifecycleSequences: { enable: [{ $sequence: 'applyBuff_2' }] },
       actionGraph: {

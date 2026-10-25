@@ -3,6 +3,7 @@ import path from 'node:path';
 import ts from 'typescript';
 import { compileGameLocales, operatorLocaleIdentities, type LocaleTables } from './gameLocales.ts';
 import { requireRecord } from '../../source/primitives.ts';
+import { formatGeneratedSource } from '../../compiler/publication/formatGeneratedSource.ts';
 
 export interface GameLocaleCandidateInput {
   readonly tableRoot: string;
@@ -133,17 +134,12 @@ export async function generateGameLocaleCandidate(input: GameLocaleCandidateInpu
     const directory = path.join(input.output, language);
     await fs.mkdir(directory, { recursive: true });
     for (const [name, document] of Object.entries(documents)) {
-      const json = JSON.stringify(document, null, 2);
-      // 等级与对应显示值横排，便于比较同一字段随等级的变化。
-      const formatted =
-        name === 'operators'
-          ? json.replace(
-              /("(?:levels|values)": )\[\n((?:\s*(?:"(?:\\.|[^"\\])*"|-?\d+(?:\.\d+)?)(?:,)?\n)+)\s*\]/g,
-              (_match, key: string, items: string) =>
-                `${key}[${(JSON.parse(`[${items}]`) as (string | number)[]).map(value => JSON.stringify(value)).join(', ')}]`,
-            )
-          : json;
-      await fs.writeFile(path.join(directory, `${name}.json`), `${formatted}\n`, 'utf8');
+      const output = path.join(directory, `${name}.json`);
+      await fs.writeFile(
+        output,
+        await formatGeneratedSource(JSON.stringify(document), output),
+        'utf8',
+      );
     }
   }
 }

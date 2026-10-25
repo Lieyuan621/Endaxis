@@ -1024,10 +1024,10 @@ export const lastRiteChr_0026_lastrite_normal_skillActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0026_lastrite_normal_skill',
             source: 'actionOwner',
             recycleDelaySeconds: 1,
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'operator' }] },
           },
           callbacks: [
             {
@@ -1306,7 +1306,29 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
         },
         next: 'dealDamage_7',
       },
-      finishBuffsByTag_9: {
+      triggerCustomAbilityEvent_10: {
+        action: {
+          kind: 'triggerCustomAbilityEvent',
+          parameters: {
+            eventName: 'SiComboSkillTrigger',
+            eventParam: { kind: 'valueNode', nodeId: 'data_2' },
+            target: { kind: 'characterTeam', excludeOwner: false },
+            source: { kind: 'owner' },
+          },
+        },
+        next: null,
+      },
+      ifElse_12: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_7' },
+          whenTrue: { $sequence: 'triggerCustomAbilityEvent_10' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
+      finishBuffsByTag_13: {
         action: {
           kind: 'finishBuffsByTag',
           parameters: {
@@ -1319,36 +1341,46 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
         },
         next: null,
       },
-      dealDamage_10: {
+      ifElse_14: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_8' },
+          whenTrue: { $sequence: 'ifElse_12' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'finishBuffsByTag_13',
+      },
+      dealDamage_15: {
         action: {
           kind: 'dealDamage',
           parameters: {
             attacker: 'actionSource',
             target: { kind: 'inputTarget' },
             damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_6' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_9' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_7' },
+            stagger: { kind: 'valueNode', nodeId: 'data_10' },
           },
         },
-        next: 'finishBuffsByTag_9',
+        next: 'ifElse_14',
       },
-      dealDamage_11: {
+      dealDamage_16: {
         action: {
           kind: 'dealDamage',
           parameters: {
             attacker: 'actionSource',
             target: { kind: 'inputTarget' },
             damageType: 'cryo',
-            attackScale: { kind: 'valueNode', nodeId: 'data_8' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_11' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
           },
         },
-        next: 'dealDamage_10',
+        next: 'dealDamage_15',
       },
-      modifyActionValue_12: {
+      modifyActionValue_17: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -1357,21 +1389,21 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
             value: { kind: 'valueNode', nodeId: 'data_2' },
           },
         },
-        next: 'dealDamage_11',
+        next: 'dealDamage_16',
       },
-      calculateActionValue_13: {
+      calculateActionValue_18: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
             key: 'final_combo_atkscale',
             operation: 'multiply',
-            left: { kind: 'valueNode', nodeId: 'data_9' },
+            left: { kind: 'valueNode', nodeId: 'data_12' },
             right: { kind: 'valueNode', nodeId: 'data_2' },
           },
         },
-        next: 'modifyActionValue_12',
+        next: 'modifyActionValue_17',
       },
-      readBuffStackCount_14: {
+      readBuffStackCount_19: {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
@@ -1384,24 +1416,24 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
             },
           },
         },
-        next: 'calculateActionValue_13',
+        next: 'calculateActionValue_18',
       },
-      forEachContextTarget_15: {
+      forEachContextTarget_20: {
         action: {
           kind: 'forEachContextTarget',
           parameters: { targets: { kind: 'fixed', target: 'enemy' } },
-          body: { $sequence: 'readBuffStackCount_14' },
+          body: { $sequence: 'readBuffStackCount_19' },
         },
         next: null,
       },
-      mergeContextTargets_16: {
+      mergeContextTargets_21: {
         action: {
           kind: 'mergeContextTargets',
           parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
         },
-        next: 'forEachContextTarget_15',
+        next: 'forEachContextTarget_20',
       },
-      applyBuff_17: {
+      applyBuff_22: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -1413,23 +1445,23 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_18: {
+      ifElse_23: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_10' },
-          whenTrue: { $sequence: 'applyBuff_17' },
+          condition: { kind: 'conditionNode', nodeId: 'data_13' },
+          whenTrue: { $sequence: 'applyBuff_22' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      changeResource_21: {
+      changeResource_26: {
         action: {
           kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
             amount: { kind: 'valueNode', nodeId: 'data_1' },
-            coefficient: { kind: 'valueNode', nodeId: 'data_11' },
+            coefficient: { kind: 'valueNode', nodeId: 'data_14' },
             source: { kind: 'source' },
             targets: { kind: 'source' },
             ultimateRecoveryTag: 'Skill/Character/chr_0026_lastrite',
@@ -1437,7 +1469,7 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
         },
         next: null,
       },
-      changeResource_20: {
+      changeResource_25: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -1451,27 +1483,27 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_23: {
+      ifElse_28: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_13' },
-          whenTrue: { $sequence: 'changeResource_20' },
-          whenFalse: { $sequence: 'changeResource_21' },
+          condition: { kind: 'conditionNode', nodeId: 'data_16' },
+          whenTrue: { $sequence: 'changeResource_25' },
+          whenFalse: { $sequence: 'changeResource_26' },
         },
         next: null,
       },
-      ifElse_24: {
+      ifElse_29: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_15' },
-          whenTrue: { $sequence: 'ifElse_23' },
+          condition: { kind: 'conditionNode', nodeId: 'data_18' },
+          whenTrue: { $sequence: 'ifElse_28' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      startTimeDilation_25: {
+      startTimeDilation_30: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1486,17 +1518,17 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_26: {
+      ifElse_31: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_16' },
-          whenTrue: { $sequence: 'startTimeDilation_25' },
+          condition: { kind: 'conditionNode', nodeId: 'data_19' },
+          whenTrue: { $sequence: 'startTimeDilation_30' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      startTimeDilation_27: {
+      startTimeDilation_32: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -1512,7 +1544,7 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
         },
         next: null,
       },
-      reachSkillOperableBoundary_28: {
+      reachSkillOperableBoundary_33: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0026_lastrite_normal_skill'] },
@@ -1535,42 +1567,65 @@ export const lastRiteChr_0026_lastrite_combo_skillActionGraph = {
       },
       data_4: { type: 'number', expression: { kind: 'blackboard', key: 'usp_base' } },
       data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
-      data_7: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'final_combo_atkscale' } },
-      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale3' } },
-      data_10: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
-      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'infliction_num_total' } },
-      data_12: {
+      data_6: {
         type: 'number',
-        expression: { kind: 'blackboard', key: 'infliction_num_total', fallback: 0 },
+        expression: { kind: 'blackboard', key: 'infliction_num', fallback: 0 },
       },
-      data_13: {
+      data_7: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_12' },
+          left: { kind: 'valueNode', nodeId: 'data_6' },
+          operator: 'greater',
+          right: { kind: 'constant', value: 0 },
+        },
+      },
+      data_8: {
+        type: 'boolean',
+        expression: {
+          kind: 'healthCompare',
+          target: { kind: 'inputTarget' },
+          valueType: 'ratio',
+          operator: 'lessOrEqual',
+          value: { kind: 'constant', value: 0 },
+        },
+      },
+      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale2' } },
+      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'final_combo_atkscale' } },
+      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale3' } },
+      data_13: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_14: { type: 'number', expression: { kind: 'blackboard', key: 'infliction_num_total' } },
+      data_15: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'infliction_num_total', fallback: 0 },
+      },
+      data_16: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_15' },
           operator: 'greaterOrEqual',
           right: { kind: 'constant', value: 4 },
         },
       },
-      data_14: {
+      data_17: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'recover_usp', fallback: 0 },
       },
-      data_15: {
+      data_18: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_14' },
+          left: { kind: 'valueNode', nodeId: 'data_17' },
           operator: 'equal',
           right: { kind: 'constant', value: 0 },
         },
       },
-      data_16: {
+      data_19: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
@@ -1604,13 +1659,14 @@ export const lastRiteChr_0026_lastrite_combo_skill: SkillDefinition = {
   scheduledSequences: [
     { startFrame: 2, endFrame: 3, sequence: { $sequence: 'mergeContextTargets_1' } },
     { startFrame: 13, endFrame: 13, sequence: { $sequence: 'readBuffStackCount_8' } },
-    { startFrame: 63, endFrame: 63, sequence: { $sequence: 'mergeContextTargets_16' } },
-    { startFrame: 2, endFrame: 3, sequence: { $sequence: 'ifElse_18' } },
-    { startFrame: 63, endFrame: 63, sequence: { $sequence: 'ifElse_24' } },
-    { startFrame: 64, endFrame: 64, sequence: { $sequence: 'ifElse_26' } },
-    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_27' } },
-    { startFrame: 65, endFrame: 91, sequence: { $sequence: 'reachSkillOperableBoundary_28' } },
+    { startFrame: 63, endFrame: 63, sequence: { $sequence: 'mergeContextTargets_21' } },
+    { startFrame: 2, endFrame: 3, sequence: { $sequence: 'ifElse_23' } },
+    { startFrame: 63, endFrame: 63, sequence: { $sequence: 'ifElse_29' } },
+    { startFrame: 64, endFrame: 64, sequence: { $sequence: 'ifElse_31' } },
+    { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_32' } },
+    { startFrame: 65, endFrame: 91, sequence: { $sequence: 'reachSkillOperableBoundary_33' } },
   ],
+  defaultTarget: 'enemy',
   smartTarget: 'trigger',
   cooldownFrames: [270, 270, 270, 270, 270, 270, 270, 270, 270, 270, 270, 240],
   skillType: 'comboSkill',
@@ -1813,18 +1869,7 @@ export const lastRiteChr_0026_lastrite_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      findTargets_opt1: {
-        action: {
-          kind: 'findTargets',
-          parameters: {
-            owner: { kind: 'owner' },
-            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
-            saveToContextKey: 'maintar',
-          },
-        },
-        next: null,
-      },
-      ifElse_opt2: {
+      ifElse_opt3: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
@@ -1834,7 +1879,7 @@ export const lastRiteChr_0026_lastrite_ultimate_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_opt3: {
+      ifElse_opt4: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
@@ -1842,9 +1887,9 @@ export const lastRiteChr_0026_lastrite_ultimate_skillActionGraph = {
           whenTrue: { $sequence: 'dealDamage_24' },
           whenFalse: { $sequence: 'dealDamage_25' },
         },
-        next: 'ifElse_opt2',
+        next: 'ifElse_opt3',
       },
-      repeatEachTick_opt4: {
+      repeatEachTick_opt5: {
         action: {
           kind: 'repeatEachTick',
           parameters: {
@@ -1857,7 +1902,18 @@ export const lastRiteChr_0026_lastrite_ultimate_skillActionGraph = {
               targetTriggerIntervalSeconds: 0.033,
             },
           },
-          body: { $sequence: 'ifElse_opt3' },
+          body: { $sequence: 'ifElse_opt4' },
+        },
+        next: null,
+      },
+      findTargets_opt1: {
+        action: {
+          kind: 'findTargets',
+          parameters: {
+            owner: { kind: 'owner' },
+            query: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'maintar',
+          },
         },
         next: null,
       },
@@ -1919,8 +1975,8 @@ export const lastRiteChr_0026_lastrite_ultimate_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 85, sequence: { $sequence: 'startUltimateTimeDilation_11' } },
     { startFrame: 0, endFrame: 85, sequence: { $sequence: 'hideUi_12' } },
     { startFrame: 0, endFrame: 172, sequence: { $sequence: 'applyBuff_13' } },
-    { startFrame: 86, endFrame: 89, sequence: { $sequence: 'repeatEachTick_opt4' } },
-    { startFrame: 105, endFrame: 108, sequence: { $sequence: 'repeatEachTick_opt4' } },
+    { startFrame: 86, endFrame: 89, sequence: { $sequence: 'repeatEachTick_opt5' } },
+    { startFrame: 105, endFrame: 108, sequence: { $sequence: 'repeatEachTick_opt5' } },
     { startFrame: 134, endFrame: 137, sequence: { $sequence: 'repeatEachTick_41' } },
     { startFrame: 86, endFrame: 86, sequence: { $sequence: 'startTimeDilation_42' } },
     { startFrame: 86, endFrame: 170, sequence: { $sequence: 'overrideBasicAttackMapping_43' } },
@@ -3363,6 +3419,71 @@ export const lastRite: OperatorDefinition = {
     buff_chr_0026_lastrite_talent_1_vul: lastRiteBuff11,
   },
   abilityEntityDefinitions: {},
+  projectileDefinitions: {
+    projectile_chr_0026_lastrite_normal_skill: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 20 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 0.65,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              distanceScaleCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 20,
+                  value: 1.5,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.5 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+  },
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },
 } as const satisfies OperatorDefinition;
 

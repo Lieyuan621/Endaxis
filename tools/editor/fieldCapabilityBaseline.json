@@ -104,7 +104,10 @@
       "reason": "structured-editor-pending",
       "phase": "P4",
       "category": "structured-editor",
-      "keys": ["action/launchProjectile/parameters/entityAssignments"]
+      "keys": [
+        "action/launchProjectile/parameters/entityAssignments",
+        "action/createSpatialPointTargets/parameters/randomDistribution"
+      ]
     }
   ],
   "resolvedDefinitionDepthPositions": [
@@ -285,8 +288,6 @@
     "action/heal/parameters/tags",
     "action/holdBuffsById/parameters/buffIds",
     "action/inheritBuffById/parameters/inheritToNextSkillIds",
-    "action/launchProjectile/parameters/finish",
-    "action/launchProjectile/parameters/hit",
     "action/mergeContextTargets/parameters/sources",
     "action/reachSkillOperableBoundary/parameters/skillIds",
     "action/readBuffBlackboard/parameters/query",

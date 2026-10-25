@@ -2456,6 +2456,11 @@ export const imageCatalog: readonly {
     category: 'icons',
   },
   {
+    ref: 'endaxis:icons/icon_battle_buff_atk_down',
+    path: '/icons/icon_battle_buff_atk_down.webp',
+    category: 'icons',
+  },
+  {
     ref: 'endaxis:icons/icon_battle_buff_atk_up',
     path: '/icons/icon_battle_buff_atk_up.webp',
     category: 'icons',
@@ -2581,6 +2586,11 @@ export const imageCatalog: readonly {
     category: 'icons',
   },
   {
+    ref: 'endaxis:icons/icon_battle_chr_no_lastcombo_weak',
+    path: '/icons/icon_battle_chr_no_lastcombo_weak.webp',
+    category: 'icons',
+  },
+  {
     ref: 'endaxis:icons/icon_battle_combo_skill_dmg_up',
     path: '/icons/icon_battle_combo_skill_dmg_up.webp',
     category: 'icons',
@@ -2588,6 +2598,11 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:icons/icon_battle_conduct',
     path: '/icons/icon_battle_conduct.webp',
+    category: 'icons',
+  },
+  {
+    ref: 'endaxis:icons/icon_battle_continuous_healing',
+    path: '/icons/icon_battle_continuous_healing.webp',
     category: 'icons',
   },
   {
@@ -2678,6 +2693,11 @@ export const imageCatalog: readonly {
   {
     ref: 'endaxis:icons/icon_battle_frozen',
     path: '/icons/icon_battle_frozen.webp',
+    category: 'icons',
+  },
+  {
+    ref: 'endaxis:icons/icon_battle_heal_no_infliction_or_noguard',
+    path: '/icons/icon_battle_heal_no_infliction_or_noguard.webp',
     category: 'icons',
   },
   {

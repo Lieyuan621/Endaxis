@@ -107,7 +107,33 @@ export function finalizeOperatorDefinition(
       ),
     },
   );
-  return { operator: result.value, report: result.report };
+  if (mode !== 'apply') return { operator: result.value, report: result.report };
+  const usedProjectiles = new Set<string>();
+  const collectProjectiles = (value: unknown): void => {
+    if (value === null || typeof value !== 'object') return;
+    if ('kind' in value && value.kind === 'launchProjectile' && 'parameters' in value) {
+      const parameters = value.parameters as Contract.CombatStepParameters['launchProjectile'];
+      usedProjectiles.add(parameters.projectileId);
+    }
+    Object.values(value).forEach(collectProjectiles);
+  };
+  collectProjectiles(result.value);
+  const { projectileDefinitions, ...operatorFields } = result.value;
+  const projectiles = Object.fromEntries(
+    [...usedProjectiles].sort().map(id => {
+      const definition = projectileDefinitions?.[id];
+      if (!definition)
+        throw new Error(`operator '${operator.slug}': missing ProjectileData '${id}'`);
+      return [id, definition];
+    }),
+  );
+  return {
+    operator: {
+      ...operatorFields,
+      ...(usedProjectiles.size ? { projectileDefinitions: projectiles } : {}),
+    },
+    report: result.report,
+  };
 }
 
 export function finalizeCommonBuffDefinitions(

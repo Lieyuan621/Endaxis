@@ -1,3 +1,4 @@
+import type { SkillDefinition as PublishedSkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
 import { extractResourceDataNodes } from '../../src/compiler/extractGraphDataNodes.ts';
 import { COMPILED_BUFF_CAPTURED_TARGET_GROUPS } from '../../src/compiler/buffs/compiledBuffMetadata.ts';
 import { skillFixture } from '../../../../src/test/skillFixture';
@@ -664,7 +665,7 @@ describe('独立资源图构建与优化', () => {
       scheduledSequences: resource.entries.map(sequence => ({ startFrame: 0, sequence })),
       actionGraph: resource.actionGraph,
     };
-    const result = finalizeDefinitionResources(definition, mode);
+    const result = finalizeDefinitionResources<PublishedSkillDefinition>(definition, mode);
     expect(result.report.resourceValues.flatMap(item => item.removedWrites).length).toBeGreaterThan(
       10,
     );
@@ -677,7 +678,7 @@ describe('独立资源图构建与优化', () => {
       expect(result.value.scheduledSequences).toEqual([]);
     } else expect(result.value).toEqual(definition);
     expect(
-      finalizeDefinitionResources(definition, 'off', () => {
+      finalizeDefinitionResources<PublishedSkillDefinition>(definition, 'off', () => {
         throw new Error('关闭优化时不应裁剪');
       }).value,
     ).toEqual(definition);

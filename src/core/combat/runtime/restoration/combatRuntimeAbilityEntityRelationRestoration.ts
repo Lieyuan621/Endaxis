@@ -159,7 +159,9 @@ export function bindRestoredCombatRuntimeAbilityEntityRelations(
             skillHostGroup: options.entities.runtime.childSkillHosts(target),
             ownerOperatorId: owner.ownerId,
             semanticEvents: options.foundation.semanticEvents,
-            ...(owner.skillCastInfo == null ? {} : { inheritedSkillCastInfo: owner.skillCastInfo }),
+            ...(state.inheritedSkillCastInfo === undefined
+              ? {}
+              : { inheritedSkillCastInfo: state.inheritedSkillCastInfo }),
             addAbilityChildBuff: child => options.entities.runtime.addChildBuff(target, child),
             programId: binding.id,
             damageSnapshotProgram: binding.damageSnapshots,

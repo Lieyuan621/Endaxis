@@ -19,6 +19,24 @@ function createRuntime() {
 }
 
 describe('LogicalAbilityEntityRuntime', () => {
+  it('出生位置复制为快照，来源移动及切面恢复都不会重新解析位置', () => {
+    const runtime = createRuntime();
+    const position: [number, number, number] = [12, 2, 0];
+    const entity = runtime.spawn({
+      abilityEntityId: 'stationary',
+      ownerId: 'caster',
+      source: { kind: 'operator', operatorId: 'caster' },
+      definition: { lifetime: { kind: 'infinite' } },
+      position,
+    });
+    position[0] = 30;
+    expect(runtime.runtimeState.instances.get(entity.instanceId)?.position).toEqual([12, 2, 0]);
+    const restored = new LogicalAbilityEntityRuntime({
+      restoredState: structuredClone(runtime.runtimeState),
+    });
+    expect(restored.runtimeState.instances.get(entity.instanceId)?.position).toEqual([12, 2, 0]);
+  });
+
   it('出生初始化写入的黑板先于子技能可见，初始化失败不启动子技能', () => {
     const runtime = createRuntime();
     const start = vi.fn();

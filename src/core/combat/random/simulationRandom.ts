@@ -18,6 +18,26 @@ export interface RandomSampleRequest {
   readonly expectedSequenceId?: string;
 }
 
+/** 连续范围取样；期望模式返回中点，随机模式使用独立且可恢复的流。 */
+export interface RangeSampleSource {
+  nextRangeSample(request?: RandomSampleRequest): number;
+}
+
+/** 原生浮点 Range：相同端点仍消耗样本，每步运算使用单精度。 */
+export function sampleFloatRange(
+  source: RangeSampleSource,
+  minimum: number,
+  maximum: number,
+  castId?: string,
+): number {
+  const sample = source.nextRangeSample(castId === undefined ? undefined : { castId });
+  if (!Number.isFinite(sample) || sample < 0 || sample > 1)
+    throw new RangeError('Float range requires a sample in [0, 1]');
+  const lower = Math.fround(minimum);
+  const width = Math.fround(Math.fround(maximum) - lower);
+  return Math.fround(Math.fround(width * Math.fround(sample)) + lower);
+}
+
 export interface SimulationRandomSettings {
   readonly mode: SimulationRandomMode;
   /** 32 位无符号整数。相同场景、种子和执行顺序得到相同结果。 */
@@ -28,7 +48,9 @@ export interface SimulationRandomSettings {
  * 把伤害与概率取样端口绑定到当前分支的随机状态。
  * getState 每次取样时解析当前数据，不跨调用缓存分支状态；恢复或回退后同一对象可立即读取新分支。
  */
-export class SimulationRandomSource implements CriticalSampleSource, ProbabilitySampleSource {
+export class SimulationRandomSource
+  implements CriticalSampleSource, ProbabilitySampleSource, RangeSampleSource
+{
   readonly #settings: SimulationRandomSettings;
   readonly #getState: () => SimulationRandomState;
 
@@ -59,7 +81,14 @@ export class SimulationRandomSource implements CriticalSampleSource, Probability
     return this.#next('probability', request);
   }
 
-  #next(kind: 'critical' | 'probability', request: RandomSampleRequest | undefined): number {
+  nextRangeSample(request?: RandomSampleRequest): number {
+    return this.#settings.mode === 'expected' ? 0.5 : this.#next('range', request);
+  }
+
+  #next(
+    kind: 'critical' | 'probability' | 'range',
+    request: RandomSampleRequest | undefined,
+  ): number {
     const castId = request?.castId;
     const state = this.#getState();
     const castSeed =
@@ -103,7 +132,7 @@ export function submitSimulationCastSeed(
 export function takeSimulationRandomSample(
   state: SimulationRandomState,
   settings: { readonly mode: SimulationRandomMode; readonly globalSeed: number },
-  kind: 'critical' | 'probability',
+  kind: 'critical' | 'probability' | 'range',
   request?: RandomSampleRequest & { readonly castSeed?: number },
 ): number {
   bindSimulationRandomConfiguration(state, settings);

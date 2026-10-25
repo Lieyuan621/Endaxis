@@ -489,7 +489,8 @@
       "operatorPassiveSkill": "Passive skill",
       "operatorUpgrade": "Talent or potential",
       "weaponTrait": "Weapon trait",
-      "gearTrait": "Gear trait"
+      "gearTrait": "Gear trait",
+      "projectile": "Projectile"
     },
     "fields": {
       "levels": "Number of levels",
@@ -960,7 +961,7 @@
       },
       "hit": {
         "name": "Hit settings",
-        "help": "First-tick collision settings; omit for no collision callback."
+        "help": "Set hit limits, repeat intervals and target filters."
       },
       "finishOnHit": {
         "name": "Finish on hit",
@@ -1471,7 +1472,7 @@
         "help": "Fixed value added after scaling."
       },
       "targetKey": {
-        "name": "Result Variable"
+        "name": "Preset point name"
       },
       "property": {
         "name": "Property",
@@ -1577,10 +1578,6 @@
         "name": "Repeat Interval",
         "help": "Execute immediately, then repeat at the configured interval."
       },
-      "finish": {
-        "name": "Finish Condition",
-        "help": "Configure projectile arrival or timeout."
-      },
       "recycleDelaySeconds": {
         "name": "Recycle Delay (s)",
         "help": "Seconds to retain the object after it finishes."
@@ -1672,10 +1669,6 @@
       "inheritParent": {
         "name": "Copy Outer Variables",
         "help": "Copy outer values on entry, overriding matching initial values. No later synchronization."
-      },
-      "entityInitialValues": {
-        "name": "Owner Initial Values",
-        "help": "Initial variables held by the projectile or other owner."
       },
       "entityAssignments": {
         "name": "Owner Assignments",
@@ -1898,6 +1891,33 @@
       "healer": {
         "name": "Healer",
         "help": "Select the healer independently. Current target refers to the recipient in the current healing iteration."
+      },
+      "origin": {
+        "name": "Position Source"
+      },
+      "offset": {
+        "name": "Position Offset"
+      },
+      "randomDistribution": {
+        "name": "Random Distribution"
+      },
+      "input": {
+        "name": "Input Value"
+      },
+      "flight": {
+        "name": "Flight Parameters"
+      },
+      "projectileId": {
+        "name": "Projectile resource"
+      },
+      "launch": {
+        "name": "Launch targets"
+      },
+      "hitTarget": {
+        "name": "Arrival hit target"
+      },
+      "segmentTargets": {
+        "name": "Segment targets"
       }
     },
     "help": "Help",
@@ -1927,6 +1947,10 @@
       "storeEventDamageValue": {
         "name": "Read event damage",
         "help": "Write the selected damage event value to the blackboard, or zero without context."
+      },
+      "storeRandomFloat": {
+        "name": "Store random float",
+        "help": "Sample a number from the specified range and write it to a variable."
       },
       "storeRandomInteger": {
         "name": "Store random integer",
@@ -2651,6 +2675,14 @@
       "limitMovementGait": {
         "name": "Limit movement gait",
         "help": "Write the owner's shared gait limit. A maximum below Sprint marks dodge inputs as forced. The limit clears after all gait actions end."
+      },
+      "evaluateCurve": {
+        "name": "Read Curve Value",
+        "help": "Read the curve at the input position and save the result to a variable."
+      },
+      "saveTargetDistance": {
+        "name": "Save Target Distance",
+        "help": "Measure the distance between two targets and save it to a variable."
       }
     },
     "open": "Edit skill graph",
@@ -3301,6 +3333,8 @@
       "sectionEditTools": "Editing tools",
       "sectionProject": "Project",
       "sectionScenarioSettings": "Scenario settings",
+      "operatorEnemyDistance": "Distance (m)",
+      "operatorEnemyDistanceHelp": "Distance from operators to the enemy, affecting when projectiles hit.",
       "sectionPrefs": "User preferences",
       "automaticControlSwitches": "Automatic control switching",
       "comboSkillPriority": "Combo skill priority",

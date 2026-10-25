@@ -1221,6 +1221,7 @@ export const daPanChr_0018_dapan_combo_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_7' } },
     { startFrame: 24, endFrame: 59, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
   ],
+  defaultTarget: 'enemy',
   smartTarget: 'trigger',
   cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 570],
   skillType: 'comboSkill',
@@ -1786,7 +1787,7 @@ const daPanBuff3: SkillBuffDefinition = {
   maxStackCount: 2,
   applyTags: [],
   extendTags: [],
-  blackboard: { cd_reduce: 0.5 },
+  blackboard: { cd_reduce: 0.5, duration: 15 },
   attributeModifiers: [],
   lifecycleSequences: { enable: [{ $sequence: 'skillAffix_1' }] },
   abilityEventResponses: [

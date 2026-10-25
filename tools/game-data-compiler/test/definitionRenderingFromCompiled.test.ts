@@ -9,7 +9,7 @@ import {
 } from '../scripts/generateWeaponDefinitions.ts';
 import { renderGearDefinitionsFromCompiled } from '../scripts/generateGearDefinitions.ts';
 import { renderGearSetDefinitionsFromCompiled } from '../scripts/generateGearSetDefinitions.ts';
-import { formatGeneratedSource } from '../scripts/formatGeneratedSource.ts';
+import { formatGeneratedSource } from '../src/compiler/publication/formatGeneratedSource.ts';
 import { activeSkillFixture, equipmentFixture } from './sourceFixtures.ts';
 
 const roots: string[] = [];

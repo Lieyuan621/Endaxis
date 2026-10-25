@@ -8,6 +8,7 @@ export * from './primitives.ts';
 export * from './gameplayTags.ts';
 export * from './abilityEvents.ts';
 export * from './actions.ts';
+export * from './projectiles.ts';
 export * from './conditions.ts';
 export * from './skills.ts';
 export * from './buffs.ts';

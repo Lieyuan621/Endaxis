@@ -1,3 +1,5 @@
+import { stationaryProjectileFlight, pointProjectileFlight } from '../../../test/projectileFlight';
+
 import { expect, it, vi } from 'vitest';
 import type { CompiledAbilityEntityChildSkillProgram } from '../../../compiler/combatProgram';
 import { ActionBlackboard } from '../../actions/actionBlackboard';
@@ -15,7 +17,7 @@ import { TimeDilationRuntime } from '../../time/timeDilationRuntime';
 it('恢复后的投射物寿命读取自己的局部停顿，并随停顿解除恢复速度', () => {
   const original = new ProjectileLifecycleRuntime(() => 4);
   original.launch({
-    finishDelaySeconds: 1,
+    flight: stationaryProjectileFlight(1),
     recycleDelaySeconds: 0,
     resolveTickDeltaSeconds: () => 1 / 30,
     finish: () => {},
@@ -39,6 +41,9 @@ it('恢复后的投射物寿命读取自己的局部停顿，并随停顿解除�
     state: structuredClone(original.runtimeState),
   });
   bindRestoredCombatProjectileRelations({
+    sampleRange: () => () => {
+      throw new Error('unexpected trajectory sample');
+    },
     projectiles: restored,
     foundation: { shared: { timeDilation } } as never,
     entities: { targets: new Map() } as never,
@@ -65,6 +70,9 @@ it('空投射物目录的关系阶段保持无操作', () => {
 
   expect(() =>
     bindRestoredCombatProjectileRelations({
+      sampleRange: () => () => {
+        throw new Error('unexpected trajectory sample');
+      },
       projectiles,
       foundation: {} as never,
       entities: { targets: new Map() } as never,
@@ -97,10 +105,6 @@ it.each(['hit', 'reach', 'finish', 'filteredHit', 'emptyHitTargets'] as const)(
     const callback: ProjectileCallbackState = {
       event,
       ...(mode === 'reach' ? { inputTarget: { kind: 'spatialPoint' as const, pointId: 9 } } : {}),
-      ...(mode === 'emptyHitTargets' ? { inputTargets: [] } : {}),
-      ...(mode === 'filteredHit'
-        ? { hitTagFilter: { tagQueryType: 'exceptAny' as const, tags: ['Immune/Physical'] } }
-        : {}),
       programId: original.callbackPrograms.register(program),
       definitionOperatorId: 'definition-owner',
       skillId: program.skillId,
@@ -114,17 +118,25 @@ it.each(['hit', 'reach', 'finish', 'filteredHit', 'emptyHitTargets'] as const)(
       host: null,
     };
     original.launch({
+      hitTargets: {
+        targets: mode === 'emptyHitTargets' ? [] : [{ kind: 'enemy' }],
+        ...(mode === 'filteredHit'
+          ? { hitTagFilter: { tagQueryType: 'exceptAny' as const, tags: ['Immune/Physical'] } }
+          : {}),
+      },
       callbacks: [callback],
       callbackPrograms: [program],
-      finishDelaySeconds:
-        mode === 'filteredHit' || mode === 'emptyHitTargets' ? 10 : 'firstTickReach',
+      flight: stationaryProjectileFlight(10, true),
+      ...(mode === 'filteredHit' || mode === 'emptyHitTargets'
+        ? {}
+        : { flight: pointProjectileFlight }),
       ...(event === 'hit'
         ? {
-            firstTickHit: {
+            hitPolicy: {
               finishOnHit: mode === 'emptyHitTargets',
               retryRejectedHit: mode === 'filteredHit',
             },
-            hit: () => true,
+            hit: () => 1,
           }
         : {}),
       recycleDelaySeconds: 0,
@@ -177,7 +189,12 @@ it.each(['hit', 'reach', 'finish', 'filteredHit', 'emptyHitTargets'] as const)(
       return factory(...args);
     });
     const requestedOwners: string[] = [];
+    const matchesHitTags = vi.fn(() => acceptsHit);
     bindRestoredCombatProjectileRelations({
+      matchesHitTags,
+      sampleRange: () => () => {
+        throw new Error('unexpected trajectory sample');
+      },
       projectiles: restored,
       foundation,
       entities: { targets: new Map() } as never,
@@ -200,11 +217,13 @@ it.each(['hit', 'reach', 'finish', 'filteredHit', 'emptyHitTargets'] as const)(
       restored.advanceFrame();
       expect(createHost).not.toHaveBeenCalled();
       expect(restored.getUnfinishedTargets()).toEqual([{ kind: 'abilityEntity', instanceId: 4 }]);
-      expect(evaluate.mock.calls[0]?.[0]).toMatchObject({
-        kind: 'entityTagMatch',
-        target: { kind: 'inputTarget' },
-        tags: ['Immune/Physical'],
-      });
+      expect(matchesHitTags).toHaveBeenCalledWith(
+        { kind: 'enemy' },
+        {
+          tagQueryType: 'exceptAny',
+          tags: ['Immune/Physical'],
+        },
+      );
       acceptsHit = true;
     }
     restored.advanceFrame();
@@ -221,7 +240,11 @@ it.each(['hit', 'reach', 'finish', 'filteredHit', 'emptyHitTargets'] as const)(
     expect(saved.instances.get(4)!.callbacks[0]!.host).not.toBeNull();
     const execution = saved.instances.get(4)!.callbacks[0]!.host!.skill.execution;
     if (mode === 'reach')
-      expect(execution.inputTarget).toEqual({ kind: 'spatialPoint', pointId: 9 });
+      expect(execution.inputTarget).toEqual({
+        kind: 'spatialPoint',
+        pointId: 9,
+        position: [0, 0, 0],
+      });
     const before = execution.passedFrames;
     clock.advanceFrame();
     restored.beginAbilityFrame();

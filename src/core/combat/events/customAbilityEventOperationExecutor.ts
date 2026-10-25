@@ -8,6 +8,7 @@ import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 
 import type { CombatOperationContext, CombatOperationExecutor } from '../skills/skillRuntime';
+import { resolveActionValueOperand } from '../actions/actionBlackboard';
 
 type TriggerStep = ResolvedCombatStepForKind<'triggerCustomAbilityEvent'>;
 
@@ -58,6 +59,11 @@ export class CustomAbilityEventOperationExecutor implements CombatOperationExecu
             .map(runtimeTargetEntityId)
             .filter((id): id is string => id !== undefined);
     if (receivers.length === 0) return;
+    const input = step.parameters.eventParam;
+    if (typeof input !== 'number' && context === undefined)
+      throw new Error('custom ability event parameter requires an action context');
+    const eventParam =
+      typeof input === 'number' ? input : resolveActionValueOperand(input, context!.blackboard);
     let eventSourceId = this.dependencies.sourceId;
     if (typeof step.parameters.source === 'object') {
       const source = this.#query(step.parameters.source, context)[0];
@@ -78,7 +84,7 @@ export class CustomAbilityEventOperationExecutor implements CombatOperationExecu
         sourceId: eventSourceId,
         targetId: receiverId,
         eventName: step.parameters.eventName,
-        eventParam: step.parameters.eventParam,
+        eventParam,
       });
   }
 

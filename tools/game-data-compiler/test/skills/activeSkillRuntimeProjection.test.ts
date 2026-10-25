@@ -1611,7 +1611,19 @@ describe('主动技能正式时间轴投影', () => {
     expect(readResourceActions(result, branch.whenFalse)).toEqual([]);
     // 相同组名没有入口目标保证时，不得凭名字裁剪另一个分支。
     skill.selectStrategy = 'SelectObject';
-    expect(compile).toThrow('unresolved target-distance endpoint');
+    const unresolved = compile();
+    const unresolvedBranch = readResourceActions(
+      unresolved,
+      unresolved.scheduledSequences[0]!.sequence,
+    )[0]!;
+    expect(unresolvedBranch.kind).toBe('ifElse');
+    if (unresolvedBranch.kind !== 'ifElse') throw new Error('missing branch');
+    expect(readResourceActions(unresolved, unresolvedBranch.whenFalse)).toMatchObject([
+      {
+        kind: 'saveTargetDistance',
+        parameters: { target: { kind: 'context', key: 'unresolved_distance_target' } },
+      },
+    ]);
   });
 
   it('零距离恒真分支排除不可达的空间写入，并传播唯一敌人 Context', () => {
@@ -1919,69 +1931,181 @@ describe('主动技能正式时间轴投影', () => {
     });
   });
 
-  it.each([false, true])('RandomPointFinder 跨 Context 保留点数（新版二维尺寸=%s）', withExtent => {
-    const randomPoint = meta('FindTargetAction', {
-      targetGroupKey: 'random-points',
-      center: 'ContextTarget',
-      centerContextKey: 'anchor',
-      useCenterEntityMountPoint: false,
-      centerMountPoint: 'None',
-      centerToGround: false,
-      selectorOwner: 'ActionOwner',
-      selectorOwnerContextKey: '',
-      selectorData: {
-        finderData: {
-          $type: 'Beyond.Gameplay.Core.Selector+RandomPointFinder+Data, Gameplay.Beyond',
-          pointNum: scalarFixture(2),
-          shape: 'Sector',
-          ...(withExtent ? { extent2D: { x: scalarFixture(0), y: scalarFixture(0) } } : {}),
-          localPlaneRotationEulers: {
-            x: scalarFixture(-90),
-            y: scalarFixture(0),
-            z: scalarFixture(0),
+  it.each(
+    ['SourceToTarget', 'TargetToSource'].flatMap(direction => [
+      { direction, dynamic: false },
+      { direction, dynamic: true },
+    ]),
+  )(
+    '固定落点以敌人为 Owner 计算 %s，不误用干员朝向',
+    ({ direction: selectorDirection, dynamic }) => {
+      const point = {
+        ...fixedPoint('launchPos'),
+        center: 'CurrentTarget',
+        selectorOwner: 'CurrentTarget',
+        target: 'ActionSource',
+        selectorDirection,
+      };
+      const result = compileActiveSkillRuntimeProjectionSource({
+        value: activeWithActions([
+          point,
+          {
+            ...spawnAbilityEntity('spawned'),
+            bornAt: targetFixture('Context', undefined, 'launchPos'),
           },
-          radius: scalarFixture(1.6),
-          minRadius: scalarFixture(0.4),
-          angle: scalarFixture(180),
-          useExtraJitter: false,
-          snapToNavMesh: false,
+        ]),
+        sourcePath: 'active.enemy-owner-point',
+        patch: null,
+        context: {
+          ...ACTIVE_CONTEXT,
+          ...(dynamic ? { actionTargetTarget: 'actionInputTarget' as const } : {}),
         },
-        validatorData: [],
-        postProcessorData: [],
-      },
-      selectorDirection: 'SourceForward',
-      target: 'ActionSource',
-      contextKey: '',
-      useAdvancedDirectionSetting: false,
-      advancedSelectorDirection: {
-        directionType: 'SourceForward',
-        sourceMountPoint: 'None',
-        targetMountPoint: 'None',
-        customSourceAndTarget: false,
-        clampToXZ: true,
-        invertDirection: false,
-      },
-    });
+      });
+      expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toContainEqual({
+        kind: 'createSpatialPointTargets',
+        parameters: {
+          saveToContextKey: 'launchPos',
+          count: { kind: 'constant', value: 1 },
+          origin: { kind: 'inputTarget' },
+          offset: {
+            local: [
+              { kind: 'constant', value: 0 },
+              { kind: 'constant', value: 0 },
+              { kind: 'constant', value: 6 },
+            ],
+            facing: dynamic
+              ? {
+                  source: { kind: 'inputTarget' },
+                  target: { kind: 'source' },
+                  invert: selectorDirection === 'TargetToSource',
+                }
+              : selectorDirection === 'SourceToTarget'
+                ? 'enemyToOperator'
+                : 'operatorToEnemy',
+            rotation: [0, 0, 0, 1],
+            centerOnGround: false,
+          },
+        },
+      });
+    },
+  );
+
+  it.each([false, true])(
+    'RandomPointFinder 跨 Context 保留点数（镜头朝向与新版二维尺寸=%s）',
+    withExtent => {
+      const randomPoint = meta('FindTargetAction', {
+        targetGroupKey: 'random-points',
+        center: 'ContextTarget',
+        centerContextKey: 'anchor',
+        useCenterEntityMountPoint: false,
+        centerMountPoint: 'None',
+        centerToGround: false,
+        selectorOwner: 'ActionOwner',
+        selectorOwnerContextKey: '',
+        selectorData: {
+          finderData: {
+            $type: 'Beyond.Gameplay.Core.Selector+RandomPointFinder+Data, Gameplay.Beyond',
+            pointNum: scalarFixture(2),
+            shape: 'Sector',
+            ...(withExtent ? { extent2D: { x: scalarFixture(0), y: scalarFixture(0) } } : {}),
+            localPlaneRotationEulers: {
+              x: scalarFixture(-90),
+              y: scalarFixture(0),
+              z: scalarFixture(0),
+            },
+            radius: scalarFixture(1.6),
+            minRadius: scalarFixture(0.4),
+            angle: scalarFixture(180),
+            useExtraJitter: false,
+            snapToNavMesh: false,
+          },
+          validatorData: [],
+          postProcessorData: [],
+        },
+        selectorDirection: withExtent ? 'CameraForward' : 'SourceForward',
+        target: 'ActionSource',
+        contextKey: '',
+        useAdvancedDirectionSetting: false,
+        advancedSelectorDirection: {
+          directionType: 'SourceForward',
+          sourceMountPoint: 'None',
+          targetMountPoint: 'None',
+          customSourceAndTarget: false,
+          clampToXZ: true,
+          invertDirection: false,
+        },
+      });
+      const result = compileActiveSkillRuntimeProjectionSource({
+        value: activeWithActions([
+          fixedPoint('anchor'),
+          randomPoint,
+          entityCount('random-points'),
+          meta('GainBreakingAttackAtb', {
+            source: targetFixture('Source'),
+            target: targetFixture('Target'),
+            factor: scalarFixture(1),
+          }),
+        ]),
+        sourcePath: 'active.context-random-point',
+        patch: null,
+        context: ACTIVE_CONTEXT,
+      });
+      // 没有消费者时无需解释镜头方向，也不能恢复无效的空间计算。
+      expect(() =>
+        compileActiveSkillRuntimeProjectionSource({
+          value: activeWithActions([
+            fixedPoint('anchor'),
+            { ...randomPoint, selectorDirection: 'CameraForward' },
+          ]),
+          sourcePath: 'active.unused-random-point',
+          patch: null,
+          context: ACTIVE_CONTEXT,
+        }),
+      ).not.toThrow();
+      expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toContainEqual({
+        kind: 'createSpatialPointTargets',
+        parameters: {
+          saveToContextKey: 'random-points',
+          count: { kind: 'constant', value: 2 },
+          origin: { kind: 'context', key: 'anchor' },
+          randomDistribution: {
+            shape: 'sector',
+            radius: { kind: 'constant', value: 1.6 },
+            minimumRadius: { kind: 'constant', value: 0.4 },
+            angleDegrees: { kind: 'constant', value: 180 },
+            localPlaneRotation: [-90, 0, 0].map(value => ({ kind: 'constant', value })),
+            centerOnGround: false,
+          },
+        },
+      });
+    },
+  );
+
+  it('实体转位置保留来源查询，供后续消费者读取执行时的位置快照', () => {
     const result = compileActiveSkillRuntimeProjectionSource({
       value: activeWithActions([
-        fixedPoint('anchor'),
-        randomPoint,
-        entityCount('random-points'),
-        meta('GainBreakingAttackAtb', {
-          source: targetFixture('Source'),
-          target: targetFixture('Target'),
-          factor: scalarFixture(1),
+        meta('ConvertToTargetContext', {
+          convertFrom: targetFixture('Source'),
+          targetGroupKey: 'tarPos',
+          operationType: 'ConvertEntityToPosition',
+          translateOperation: 'Rotate180DegAroundRef',
+          translationRef: 'ActionSource',
+          translationDeg: 0,
+          excludeTarget: 'ActionSource',
+          blackboardVector3: { x: scalarFixture(0), y: scalarFixture(0), z: scalarFixture(0) },
         }),
+        entityCount('tarPos'),
       ]),
-      sourcePath: 'active.context-random-point',
+      sourcePath: 'active.entity-position',
       patch: null,
       context: ACTIVE_CONTEXT,
     });
     expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toContainEqual({
       kind: 'createSpatialPointTargets',
       parameters: {
-        saveToContextKey: 'random-points',
-        count: { kind: 'constant', value: 2 },
+        saveToContextKey: 'tarPos',
+        count: { kind: 'constant', value: 1 },
+        origin: { kind: 'source' },
       },
     });
   });
@@ -2026,10 +2150,34 @@ describe('主动技能正式时间轴投影', () => {
         context: ACTIVE_CONTEXT,
       });
     const result = compile();
-    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toContainEqual({
-      kind: 'createSpatialPointTargets',
-      parameters: { saveToContextKey: 'point', count: { kind: 'constant', value: 1 } },
+
+    Object.assign(point, {
+      selectorDirection: 'SourceForward',
+      useAdvancedDirectionSetting: false,
     });
+    const positioned = compile();
+    expect(
+      readResourceActions(positioned, positioned.scheduledSequences[0]!.sequence),
+    ).toContainEqual({
+      kind: 'createSpatialPointTargets',
+      parameters: {
+        saveToContextKey: 'point',
+        count: { kind: 'constant', value: 1 },
+        origin: { kind: 'mainCharacter' },
+        offset: {
+          local: [
+            { kind: 'constant', value: 0 },
+            { kind: 'constant', value: 0 },
+            { kind: 'constant', value: 2.2 },
+          ],
+          facing: 'operatorToEnemy',
+          centerOnGround: false,
+        },
+      },
+    });
+    expect(readResourceActions(result, result.scheduledSequences[0]!.sequence)).toEqual(
+      readResourceActions(positioned, positioned.scheduledSequences[0]!.sequence),
+    );
     // 动态组可以为空，所以不能同样归约为必定存在的中心。
     point.center = 'ContextTarget';
     expect(compile).toThrow('unaudited single-enemy action target group');
@@ -2771,11 +2919,16 @@ describe('主动技能正式时间轴投影', () => {
           kind: 'finishOwner',
           parameters: {
             targets: {
-              kind: 'ownerSpawned',
-              objectType: 'abilityEntity',
-              owner: { kind: selectorOwner === 'ActionOwner' ? 'owner' : 'source' },
-              abilityEntityIds: ['abilityentity_matching'],
-              sameSourceSkillCast: false,
+              kind: 'tagFilter',
+              tagQueryType: 'hasAny',
+              tags: ['Test/Tag123'],
+              targets: {
+                kind: 'ownerSpawned',
+                objectType: 'abilityEntity',
+                owner: { kind: selectorOwner === 'ActionOwner' ? 'owner' : 'source' },
+                abilityEntityIds: ['abilityentity_matching', 'abilityentity_other'],
+                sameSourceSkillCast: false,
+              },
             },
           },
         },

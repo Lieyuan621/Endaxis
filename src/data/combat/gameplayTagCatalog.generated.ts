@@ -1,6 +1,6 @@
 /**
  * 由已核验的 GameplayTagConfig / GameplayTagConfigSet 来源生成；只输出可读路径。
- * Source SHA-256: 1A068EF5477210403C2497F70CC15799E3C096AE094F542903ED1D171C1F1427
+ * Source SHA-256: 192CB868D764734E02FF26E3D7F5317D391A24A42E63724897C9299B59A12BDA
  * Do not edit by hand; rerun npm run generate:game-data:gameplay-tags.
  */
 export const GAMEPLAY_TAG_PATHS = Object.freeze([

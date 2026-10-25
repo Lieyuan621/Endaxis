@@ -3,10 +3,8 @@ import type { CombatFaction } from '../../../../packages/game-data-contract/src/
 import { CombatVitals, type CombatVitalsSnapshot } from '../resources/combatVitals';
 import type { LogicalAbilityEntityFinishReason } from '../state/foundationState';
 /**
- * 零空间、单敌人模型中的逻辑能力实体目录。
- *
- * 它不保存坐标、碰撞体或朝向；所有空间查找均从同一活动实例集合开始，
- * 然后只应用 owner、生成期已解析的实体身份和存活等仍有战斗意义的筛选。
+ * 单敌人模型中的逻辑能力实体目录，保存出生位置但不模拟实体移动和碰撞体。
+ * 目标筛选仍使用宿主、实体身份和存活状态。
  */
 import type {
   AbilityEntityTargetRef,
@@ -43,6 +41,7 @@ import {
 } from './logicalAbilityEntityExecution';
 
 export interface LogicalAbilityEntitySpawnRequest {
+  readonly position?: LogicalAbilityEntityState['position'];
   /** 已按原生 OnStart 初始化的生命属性；目录不猜测 HP 默认值或再次求值黑板。 */
   readonly soul?: {
     readonly canBeDirectlyBuffed: boolean;
@@ -319,6 +318,7 @@ export class LogicalAbilityEntityRuntime implements FrameRuntime {
       ...(soulVitals === undefined ? {} : { soulVitals }),
       identity: Object.freeze({ instanceId, abilityEntityId: request.abilityEntityId }),
       state: {
+        ...(request.position === undefined ? {} : { position: [...request.position] as const }),
         ...(request.soul === undefined
           ? {}
           : {

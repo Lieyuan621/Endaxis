@@ -1,4 +1,8 @@
 import {
+  EMPTY_GRAPH_IMPORTS,
+  type ActionGraphImports,
+} from '../../../../src/core/compiler/actionGraphImports.ts';
+import {
   extractGraphDataNodes,
   extractResourceDataNodes,
 } from '../../src/compiler/extractGraphDataNodes.ts';
@@ -17,11 +21,14 @@ export function compileGraphSequence(
   graph: ActionGraphDefinition | ActionGraphResourceDefinition,
   skillLevel = 1,
   revision = 'test-support',
+  resourceImports: ActionGraphImports = EMPTY_GRAPH_IMPORTS,
 ): CompiledGraphEntry {
   const compilation = createActionGraphCompilation(
     'main' in graph ? extractResourceDataNodes(graph) : extractGraphDataNodes(graph),
     skillLevel,
     revision,
+    {},
+    resourceImports,
   );
   const compiled = compilation.compileEntry(entry, revision);
   compilation.compileAll();

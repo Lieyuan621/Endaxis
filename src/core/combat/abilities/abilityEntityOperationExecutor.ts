@@ -40,6 +40,9 @@ import type { ActionValueCalculation, PostSkillCastRequest } from '../state/foun
 type RuntimeOperation = ResolvedCombatOperationStep;
 
 interface AbilityEntityRuntimeDependencies {
+  readonly resolvePosition?: (
+    target: RuntimeTargetRef,
+  ) => LogicalAbilityEntitySpawnRequest['position'];
   readonly resolveOperations: (
     state: CombatOperationHostState,
     program: CompiledAbilityEntityChildSkillProgram,
@@ -373,6 +376,7 @@ export class AbilityEntityOperationExecutor implements CombatOperationExecutor {
         soul = this.#childRuntimeDependencies.prepareSoul(target, definition.soul);
       }
       const entity = this.#entities.spawn({
+        position: this.#childRuntimeDependencies?.resolvePosition?.(bornTargets[bornIndex]!),
         ...(soul === undefined ? {} : { soul }),
         initialize: entity => {
           if (definition.soul !== undefined)

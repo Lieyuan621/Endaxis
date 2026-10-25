@@ -181,7 +181,7 @@ export function collectRandomPointTargetGroupKeys(
     if (randomWrites.length === 0) continue;
     if (
       randomWrites.length !== writes.length ||
-      randomWrites.some(write => write.finderRandomPointCount === undefined)
+      randomWrites.some(write => write.finderRandomPoint === undefined)
     )
       // 混合写入不满足纯随机点证明；各写入仍由原动作投影处理。
       continue;

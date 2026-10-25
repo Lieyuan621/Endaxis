@@ -266,6 +266,13 @@ describe('ScenarioSimulationService', () => {
         expect(actualData).toEqual(expectedData);
         expect([...actualHistory.entries()]).toEqual([...expectedHistory.entries()]);
       }
+      const changedDistance = structuredClone(scenario);
+      changedDistance.battle.operatorEnemyDistanceMeters = 10;
+      const actual = await service.simulate(changedDistance, 200);
+      const expected = await full.simulate(changedDistance, 200);
+      expect(samples.at(-1)?.resumedFromFrame).toBeNull();
+      expect(actual.receiptEntries).toEqual(expected.receiptEntries);
+      expect(actual.finalResources).toEqual(expected.finalResources);
     } finally {
       service.clearCache();
       full.clearCache();
@@ -1128,6 +1135,7 @@ describe('ScenarioSimulationService', () => {
 
   it('连携技按原生公共 Buff 链施加导电并保留完整持续时间', async () => {
     const scenario = createPerlicaScenario();
+    scenario.battle.operatorEnemyDistanceMeters = 0;
     const placed = placeSkillGroup({
       scenario,
       trackIndex: 0,
@@ -1160,6 +1168,7 @@ describe('ScenarioSimulationService', () => {
 
   it('由队友末段普攻开启佩丽卡窗口并在后续输入中消费', async () => {
     const { scenario, attacker } = createTwoOperatorComboScenario();
+    scenario.battle.operatorEnemyDistanceMeters = 0;
     let nextId = 0;
     const ids = { allocate: (kind: string) => `${kind}:${++nextId}` };
     const withTrigger = placeSkillGroup({
@@ -1454,7 +1463,11 @@ describe('ScenarioSimulationService', () => {
     expect(cursor.entries).toHaveLength(1);
     expect(cursor.entries[0]!.data!.castId).toBe(input.castId);
     driver.advanceToFrame(30);
-    expect(branch.runtime.readReceipts(cursor.cursor, new Set(['SkillStarted'])).entries).toEqual([
+    expect(
+      branch.runtime
+        .readReceipts(cursor.cursor, new Set(['SkillStarted']))
+        .entries.filter(entry => entry.data?.castId === input.castId),
+    ).toEqual([
       expect.objectContaining({
         data: { skillId: perlica.plungingAttack!.endSkillId, castId: input.castId },
       }),

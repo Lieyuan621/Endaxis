@@ -6,7 +6,7 @@ import {
   renderMovementSettingCatalogModule,
 } from '../src/source/movementSettingCatalogSource.ts';
 import { writeAtomicBytes } from './downloadGameDataSources.ts';
-import { formatGeneratedSource } from './formatGeneratedSource.ts';
+import { formatGeneratedSource } from '../src/compiler/publication/formatGeneratedSource.ts';
 
 export async function generateMovementSettingCatalog(args: {
   readonly sourceUrl: string;

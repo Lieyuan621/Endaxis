@@ -44,8 +44,13 @@ const props = defineProps<{
   appearance: 'light' | 'dark';
   randomMode: 'expected' | 'sampled';
   automaticControlSwitches: boolean;
+  operatorEnemyDistanceMeters: number;
   comboSkillPriorityEnabled: boolean;
-  comboSkillPriorityOperators: readonly { id: string | null; name: string; avatar: string | null }[];
+  comboSkillPriorityOperators: readonly {
+    id: string | null;
+    name: string;
+    avatar: string | null;
+  }[];
   configurationReadOnly?: boolean;
   globalRandomSeed: number;
   labels: {
@@ -103,6 +108,7 @@ const emit = defineEmits<{
   toggleComboSkillPriority: [];
   setComboSkillPriorityOrder: [order: string[]];
   setGlobalRandomSeed: [seed: number];
+  setOperatorEnemyDistance: [meters: number];
   rollGlobalRandomSeed: [];
   clearSelection: [];
 }>();
@@ -644,6 +650,28 @@ onBeforeUnmount(() => {
           </section>
           <section class="header-more-section">
             <h4 class="header-more-section__title">{{ labels.scenarioSettings }}</h4>
+            <label
+              class="header-more-mode-row"
+              :title="t('timeline.header.operatorEnemyDistanceHelp')"
+            >
+              <span>{{ t('timeline.header.operatorEnemyDistance') }}</span>
+              <EaNumberInput
+                class="header-more-number-input"
+                :model-value="operatorEnemyDistanceMeters"
+                :aria-label="t('timeline.header.operatorEnemyDistance')"
+                :disabled="configurationReadOnly"
+                :min="0"
+                :step="1"
+                size="sm"
+                controls-position="right"
+                @change="
+                  value =>
+                    value !== undefined &&
+                    Number.isFinite(value) &&
+                    emit('setOperatorEnemyDistance', value)
+                "
+              />
+            </label>
             <div class="header-more-checklist">
               <EaButton
                 type="button"
@@ -710,7 +738,7 @@ onBeforeUnmount(() => {
             <div v-if="randomMode === 'sampled'" class="header-more-pref-row">
               <span>{{ t('timeline.random.globalSeed') }}</span>
               <EaNumberInput
-                class="header-more-seed-input"
+                class="header-more-number-input"
                 :min="0"
                 :max="0xffffffff"
                 :step="1"
@@ -1051,7 +1079,7 @@ onBeforeUnmount(() => {
   gap: 6px;
 }
 
-.header-more-seed-input {
+.header-more-number-input {
   width: 126px;
 }
 

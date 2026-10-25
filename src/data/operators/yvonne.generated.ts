@@ -11,6 +11,51 @@ import type { OperatorDefinition } from '../../../packages/game-data-contract/sr
 export const yvonneChr_0017_yvonne_combo_skillActionGraph = {
   main: {
     nodes: {
+      spawnAbilityEntity_opt1: {
+        action: {
+          kind: 'spawnAbilityEntity',
+          parameters: {
+            bornAt: { kind: 'context', key: 'cent' },
+            abilityEntityId: 'abilityentity_chr_0017_yvonne_combo_skill',
+            childSkillId: 'chr_0017_yvonne_combo_skill_abilityrange',
+            source: { kind: 'source' },
+            inheritActionBlackboard: true,
+            dieWhenSourceDies: false,
+          },
+        },
+        next: null,
+      },
+      createSpatialPointTargets_opt2: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'cent',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'smart_target' },
+            offset: {
+              local: [
+                { kind: 'constant', value: -0.5 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: -0.5 },
+              ],
+              facing: { source: { kind: 'owner' }, target: { kind: 'source' }, invert: false },
+              rotation: [0, 0, 0, 1],
+              centerOnGround: true,
+            },
+          },
+        },
+        next: 'spawnAbilityEntity_opt1',
+      },
+      ifElse_opt3: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: 'createSpatialPointTargets_opt2' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
       startTimeDilation_10: {
         action: {
           kind: 'startTimeDilation',
@@ -47,37 +92,6 @@ export const yvonneChr_0017_yvonne_combo_skillActionGraph = {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0017_yvonne_normal_skill'] },
-        },
-        next: null,
-      },
-      spawnAbilityEntity_opt1: {
-        action: {
-          kind: 'spawnAbilityEntity',
-          parameters: {
-            bornAt: { kind: 'context', key: 'cent' },
-            abilityEntityId: 'abilityentity_chr_0017_yvonne_combo_skill',
-            childSkillId: 'chr_0017_yvonne_combo_skill_abilityrange',
-            source: { kind: 'source' },
-            inheritActionBlackboard: true,
-            dieWhenSourceDies: false,
-          },
-        },
-        next: null,
-      },
-      createSpatialPointTargets_opt2: {
-        action: {
-          kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'cent', count: { kind: 'constant', value: 1 } },
-        },
-        next: 'spawnAbilityEntity_opt1',
-      },
-      ifElse_opt3: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_1' },
-          whenTrue: { $sequence: 'createSpatialPointTargets_opt2' },
-          whenFalse: { $sequence: null },
         },
         next: null,
       },
@@ -120,6 +134,7 @@ export const yvonneChr_0017_yvonne_combo_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 5, sequence: { $sequence: 'startTimeDilation_15' } },
     { startFrame: 19, endFrame: 56, sequence: { $sequence: 'reachSkillOperableBoundary_16' } },
   ],
+  defaultTarget: 'enemy',
   smartTarget: 'trigger',
   cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 570, 570, 570, 540],
   skillType: 'comboSkill',
@@ -135,10 +150,9 @@ export const yvonneChr_0017_yvonne_attack1ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0017_yvonne_attack1',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -311,10 +325,9 @@ export const yvonneChr_0017_yvonne_attack2ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0017_yvonne_attack1',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -433,10 +446,9 @@ export const yvonneChr_0017_yvonne_attack2ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0017_yvonne_attack2_robot',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -602,6 +614,103 @@ export const yvonneChr_0017_yvonne_attack2: SkillDefinition = {
   nativeSkillType: 'attack',
 };
 
+const yvonneChr_0017_yvonne_attack3ActionGraphCallback1 = {
+  actionGraph: {
+    main: {
+      nodes: {
+        changeResource_3: {
+          action: {
+            kind: 'changeResource',
+            parameters: {
+              resource: 'sp',
+              amount: { kind: 'valueNode', nodeId: 'data_1' },
+              coefficient: { kind: 'constant', value: 0.3333333 },
+              source: { kind: 'source' },
+              targets: { kind: 'source' },
+              onlyMainOperator: true,
+              spGainKind: 'gain',
+              spGainSource: 'normalAttack',
+            },
+          },
+          next: null,
+        },
+        checkCondition_1: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          },
+          next: null,
+        },
+        checkCondition_2: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          },
+          next: 'checkCondition_1',
+        },
+        ifElse_4: {
+          action: {
+            kind: 'ifElse',
+            parameters: { alwaysNext: true },
+            condition: { kind: 'conditionNode', nodeId: 'data_4' },
+            whenTrue: { $sequence: 'changeResource_3' },
+            whenFalse: { $sequence: null },
+          },
+          next: null,
+        },
+        dealDamage_5: {
+          action: {
+            kind: 'dealDamage',
+            parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
+              damageType: 'cryo',
+              attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+              tags: ['normalAttack'],
+            },
+          },
+          next: 'ifElse_4',
+        },
+      },
+      dataNodes: {
+        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+        data_2: {
+          type: 'boolean',
+          expression: {
+            kind: 'entityCountCompare',
+            target: { kind: 'inputTarget' },
+            containsHittableTarget: false,
+            excludeDeadEntity: false,
+            operator: 'greaterOrEqual',
+            value: 1,
+          },
+        },
+        data_3: {
+          type: 'boolean',
+          expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+        },
+        data_4: {
+          type: 'boolean',
+          expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_2' } },
+        },
+        data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      },
+    },
+    macros: {},
+  },
+  skillId: 'chr_0017_yvonne_attack3_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 1,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: { atb: 0, atk_scale: 0 },
+  scheduledSequences: [{ startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } }],
+} as const;
+
 export const yvonneChr_0017_yvonne_attack3ActionGraph = {
   main: {
     nodes: {
@@ -610,120 +719,37 @@ export const yvonneChr_0017_yvonne_attack3ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0017_yvonne_attack3',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
-          callbacks: [
-            {
-              event: 'hit',
-              skill: {
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      changeResource_3: {
-                        action: {
-                          kind: 'changeResource',
-                          parameters: {
-                            resource: 'sp',
-                            amount: { kind: 'valueNode', nodeId: 'data_1' },
-                            coefficient: { kind: 'constant', value: 0.3333333 },
-                            source: { kind: 'source' },
-                            targets: { kind: 'source' },
-                            onlyMainOperator: true,
-                            spGainKind: 'gain',
-                            spGainSource: 'normalAttack',
-                          },
-                        },
-                        next: null,
-                      },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                        },
-                        next: null,
-                      },
-                      checkCondition_2: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                        },
-                        next: 'checkCondition_1',
-                      },
-                      ifElse_4: {
-                        action: {
-                          kind: 'ifElse',
-                          parameters: { alwaysNext: true },
-                          condition: { kind: 'conditionNode', nodeId: 'data_4' },
-                          whenTrue: { $sequence: 'changeResource_3' },
-                          whenFalse: { $sequence: null },
-                        },
-                        next: null,
-                      },
-                      dealDamage_5: {
-                        action: {
-                          kind: 'dealDamage',
-                          parameters: {
-                            attacker: 'actionSource',
-                            target: { kind: 'inputTarget' },
-                            damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
-                            tags: ['normalAttack'],
-                          },
-                        },
-                        next: 'ifElse_4',
-                      },
-                    },
-                    dataNodes: {
-                      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-                      data_2: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'entityCountCompare',
-                          target: { kind: 'inputTarget' },
-                          containsHittableTarget: false,
-                          excludeDeadEntity: false,
-                          operator: 'greaterOrEqual',
-                          value: 1,
-                        },
-                      },
-                      data_3: {
-                        type: 'boolean',
-                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
-                      },
-                      data_4: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'checkActionResult',
-                          action: { $sequence: 'checkCondition_2' },
-                        },
-                      },
-                      data_5: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale' },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-                skillId: 'chr_0017_yvonne_attack3_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 0, atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
-                ],
-              },
-            },
-          ],
+          callbacks: [{ event: 'hit', skill: yvonneChr_0017_yvonne_attack3ActionGraphCallback1 }],
+        },
+        next: null,
+      },
+      launchProjectile_2: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0017_yvonne_attack3_2',
+            recycleDelaySeconds: 0.0333333350718021,
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+          },
+          callbacks: [{ event: 'hit', skill: yvonneChr_0017_yvonne_attack3ActionGraphCallback1 }],
+        },
+        next: null,
+      },
+      launchProjectile_3: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0017_yvonne_attack3_3',
+            recycleDelaySeconds: 0.0333333350718021,
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+          },
+          callbacks: [{ event: 'hit', skill: yvonneChr_0017_yvonne_attack3ActionGraphCallback1 }],
         },
         next: null,
       },
@@ -768,8 +794,8 @@ export const yvonneChr_0017_yvonne_attack3: SkillDefinition = {
   costFrame: 9,
   scheduledSequences: [
     { startFrame: 6, endFrame: 6, sequence: { $sequence: 'launchProjectile_1' } },
-    { startFrame: 9, endFrame: 9, sequence: { $sequence: 'launchProjectile_1' } },
-    { startFrame: 12, endFrame: 12, sequence: { $sequence: 'launchProjectile_1' } },
+    { startFrame: 9, endFrame: 9, sequence: { $sequence: 'launchProjectile_2' } },
+    { startFrame: 12, endFrame: 12, sequence: { $sequence: 'launchProjectile_3' } },
     { startFrame: 0, endFrame: 34, sequence: { $sequence: 'overrideBasicAttackMapping_4' } },
     { startFrame: 20, endFrame: 34, sequence: { $sequence: 'reachSkillOperableBoundary_5' } },
     { startFrame: 0, endFrame: 34, sequence: { $sequence: 'reachSkillOperableBoundary_6' } },
@@ -788,10 +814,9 @@ export const yvonneChr_0017_yvonne_attack4ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0017_yvonne_attack4',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -1250,10 +1275,9 @@ export const yvonneChr_0017_yvonne_power_attackActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0017_yvonne_power_attack',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { onReach: true, finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -1847,6 +1871,7 @@ export const yvonneChr_0017_yvonne_normal_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 2, sequence: { $sequence: 'applyBuff_3' } },
     { startFrame: 34, endFrame: 56, sequence: { $sequence: 'reachSkillOperableBoundary_21' } },
   ],
+  defaultTarget: 'enemy',
   smartTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
   skillType: 'battleSkill',
@@ -2126,10 +2151,9 @@ export const yvonneChr_0017_yvonne_ult_attack1_1ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0017_yvonne_ult_attack1',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -2420,10 +2444,10 @@ export const yvonneChr_0017_yvonne_ult_attack2_1ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0017_yvonne_ult_attack2',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            targets: { kind: 'context', contextKey: 'maintar' },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -2541,10 +2565,10 @@ export const yvonneChr_0017_yvonne_ult_attack2_1ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0017_yvonne_ult_attack1',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            targets: { kind: 'context', contextKey: 'maintar' },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -2893,10 +2917,10 @@ export const yvonneChr_0017_yvonne_ult_attack2_2ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0017_yvonne_ult_attack1',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            targets: { kind: 'context', contextKey: 'maintar' },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -3273,10 +3297,9 @@ export const yvonneChr_0017_yvonne_ult_attack3_1ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0017_yvonne_ult_attack1',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -3363,10 +3386,9 @@ export const yvonneChr_0017_yvonne_ult_attack3_1ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0017_yvonne_ult_attack2',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -3852,10 +3874,9 @@ export const yvonneChr_0017_yvonne_ult_attack3_2ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0017_yvonne_ult_attack1',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -3942,10 +3963,9 @@ export const yvonneChr_0017_yvonne_ult_attack3_2ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0017_yvonne_ult_attack2',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -4421,7 +4441,7 @@ export const yvonneChr_0017_yvonne_ult_attack3_2: SkillDefinition = {
 export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
   main: {
     nodes: {
-      finishBuffsByTag_9: {
+      finishBuffsByTag_10: {
         action: {
           kind: 'finishBuffsByTag',
           parameters: {
@@ -4434,7 +4454,7 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
         },
         next: null,
       },
-      dealDamage_10: {
+      dealDamage_11: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -4475,27 +4495,27 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
             ],
           },
         },
-        next: 'finishBuffsByTag_9',
+        next: 'finishBuffsByTag_10',
       },
-      ifElse_11: {
+      ifElse_12: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_6' },
-          whenTrue: { $sequence: 'dealDamage_10' },
+          whenTrue: { $sequence: 'dealDamage_11' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      forEachContextTarget_15: {
+      forEachContextTarget_16: {
         action: {
           kind: 'forEachContextTarget',
           parameters: { targets: { kind: 'fixed', target: 'enemy' } },
-          body: { $sequence: 'ifElse_11' },
+          body: { $sequence: 'ifElse_12' },
         },
         next: null,
       },
-      dealDamage_16: {
+      dealDamage_17: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -4539,9 +4559,9 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
             staggerOnlyWhenCasterControlled: true,
           },
         },
-        next: 'forEachContextTarget_15',
+        next: 'forEachContextTarget_16',
       },
-      dealDamage_6: {
+      dealDamage_7: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -4552,27 +4572,27 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
             tags: ['normalAttack'],
           },
         },
-        next: 'finishBuffsByTag_9',
+        next: 'finishBuffsByTag_10',
       },
-      ifElse_7: {
+      ifElse_8: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_9' },
-          whenTrue: { $sequence: 'dealDamage_6' },
+          whenTrue: { $sequence: 'dealDamage_7' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      forEachContextTarget_13: {
+      forEachContextTarget_14: {
         action: {
           kind: 'forEachContextTarget',
           parameters: { targets: { kind: 'fixed', target: 'enemy' } },
-          body: { $sequence: 'ifElse_7' },
+          body: { $sequence: 'ifElse_8' },
         },
         next: null,
       },
-      dealDamage_14: {
+      dealDamage_15: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -4586,26 +4606,26 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
             staggerOnlyWhenCasterControlled: true,
           },
         },
-        next: 'forEachContextTarget_13',
+        next: 'forEachContextTarget_14',
       },
-      ifElse_17: {
+      ifElse_18: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_10' },
-          whenTrue: { $sequence: 'dealDamage_14' },
-          whenFalse: { $sequence: 'dealDamage_16' },
+          whenTrue: { $sequence: 'dealDamage_15' },
+          whenFalse: { $sequence: 'dealDamage_17' },
         },
         next: null,
       },
-      mergeContextTargets_18: {
+      mergeContextTargets_19: {
         action: {
           kind: 'mergeContextTargets',
           parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
         },
-        next: 'ifElse_17',
+        next: 'ifElse_18',
       },
-      finishBuffsById_19: {
+      finishBuffsById_20: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
@@ -4617,7 +4637,7 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
         },
         next: null,
       },
-      startTimeDilation_20: {
+      startTimeDilation_21: {
         action: {
           kind: 'startTimeDilation',
           parameters: {
@@ -4632,14 +4652,14 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
         },
         next: null,
       },
-      checkCondition_21: {
+      checkCondition_22: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
         },
-        next: 'startTimeDilation_20',
+        next: 'startTimeDilation_21',
       },
-      applyBuff_22: {
+      applyBuff_23: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -4651,7 +4671,7 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
         },
         next: null,
       },
-      finishBuffsById_23: {
+      finishBuffsById_24: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
@@ -4666,7 +4686,7 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
         },
         next: null,
       },
-      calculateActionValue_25: {
+      calculateActionValue_26: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
@@ -4678,7 +4698,7 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
         },
         next: null,
       },
-      calculateActionValue_26: {
+      calculateActionValue_27: {
         action: {
           kind: 'calculateActionValue',
           parameters: {
@@ -4688,19 +4708,19 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
             right: { kind: 'constant', value: 0 },
           },
         },
-        next: 'calculateActionValue_25',
+        next: 'calculateActionValue_26',
       },
-      ifElse_27: {
+      ifElse_28: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_14' },
-          whenTrue: { $sequence: 'calculateActionValue_26' },
+          whenTrue: { $sequence: 'calculateActionValue_27' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      readBuffBlackboard_28: {
+      readBuffBlackboard_29: {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
@@ -4710,9 +4730,9 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
             outputKey: 'crit_rate_up',
           },
         },
-        next: 'ifElse_27',
+        next: 'ifElse_28',
       },
-      modifyActionValue_29: {
+      modifyActionValue_30: {
         action: {
           kind: 'modifyActionValue',
           parameters: {
@@ -4721,9 +4741,9 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
             value: { kind: 'valueNode', nodeId: 'data_15' },
           },
         },
-        next: 'readBuffBlackboard_28',
+        next: 'readBuffBlackboard_29',
       },
-      readBuffStackCount_30: {
+      readBuffStackCount_31: {
         action: {
           kind: 'readBuffStackCount',
           parameters: {
@@ -4732,9 +4752,9 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
             query: { kind: 'id', buffIds: ['buff_chr_0017_yvonne_ultimate_skill_layer'] },
           },
         },
-        next: 'modifyActionValue_29',
+        next: 'modifyActionValue_30',
       },
-      readBuffBlackboard_31: {
+      readBuffBlackboard_32: {
         action: {
           kind: 'readBuffBlackboard',
           parameters: {
@@ -4744,9 +4764,9 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
             outputKey: 'normal_dmg_up',
           },
         },
-        next: 'readBuffStackCount_30',
+        next: 'readBuffStackCount_31',
       },
-      applyBuff_32: {
+      applyBuff_33: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -4758,7 +4778,7 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
         },
         next: null,
       },
-      findOwnerSpawnedAbilityEntities_33: {
+      findOwnerSpawnedAbilityEntities_34: {
         action: {
           kind: 'findOwnerSpawnedAbilityEntities',
           parameters: {
@@ -4772,9 +4792,9 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
             maxTargets: 1,
           },
         },
-        next: 'applyBuff_32',
+        next: 'applyBuff_33',
       },
-      applyBuff_39: {
+      applyBuff_40: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -4787,17 +4807,17 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
         },
         next: null,
       },
-      ifElse_42: {
+      ifElse_43: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_16' },
-          whenTrue: { $sequence: 'applyBuff_39' },
+          whenTrue: { $sequence: 'applyBuff_40' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      inheritBuffById_41: {
+      inheritBuffById_42: {
         action: {
           kind: 'inheritBuffById',
           parameters: {
@@ -4810,17 +4830,17 @@ export const yvonneChr_0017_yvonne_ult_attack_endActionGraph = {
         },
         next: null,
       },
-      ifElse_43: {
+      ifElse_44: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_17' },
-          whenTrue: { $sequence: 'inheritBuffById_41' },
-          whenFalse: { $sequence: 'ifElse_42' },
+          whenTrue: { $sequence: 'inheritBuffById_42' },
+          whenFalse: { $sequence: 'ifElse_43' },
         },
         next: null,
       },
-      finishBuffsById_44: {
+      finishBuffsById_45: {
         action: {
           kind: 'finishBuffsById',
           parameters: {
@@ -4944,17 +4964,17 @@ export const yvonneChr_0017_yvonne_ult_attack_end: SkillDefinition = {
   offsetRecordFrame: 28,
   costFrame: 9,
   scheduledSequences: [
-    { startFrame: 28, endFrame: 60, sequence: { $sequence: 'mergeContextTargets_18' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_19' } },
-    { startFrame: 29, endFrame: 32, sequence: { $sequence: 'checkCondition_21' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'applyBuff_22' } },
-    { startFrame: 28, endFrame: 31, sequence: { $sequence: 'finishBuffsById_23' } },
-    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'readBuffBlackboard_31' } },
-    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_33' } },
-    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_33' } },
-    { startFrame: 17, endFrame: 18, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_33' } },
-    { startFrame: 0, endFrame: 67, sequence: { $sequence: 'ifElse_43' } },
-    { startFrame: 67, endFrame: 70, sequence: { $sequence: 'finishBuffsById_44' } },
+    { startFrame: 28, endFrame: 60, sequence: { $sequence: 'mergeContextTargets_19' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'finishBuffsById_20' } },
+    { startFrame: 29, endFrame: 32, sequence: { $sequence: 'checkCondition_22' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'applyBuff_23' } },
+    { startFrame: 28, endFrame: 31, sequence: { $sequence: 'finishBuffsById_24' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'readBuffBlackboard_32' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_34' } },
+    { startFrame: 12, endFrame: 13, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_34' } },
+    { startFrame: 17, endFrame: 18, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_34' } },
+    { startFrame: 0, endFrame: 67, sequence: { $sequence: 'ifElse_44' } },
+    { startFrame: 67, endFrame: 70, sequence: { $sequence: 'finishBuffsById_45' } },
   ],
   defaultTarget: 'enemy',
   skillType: 'basicAttack',
@@ -5514,7 +5534,7 @@ const yvonneBuff2: SkillBuffDefinition = {
   maxTriggerCount: 999,
   applyTags: [],
   extendTags: [],
-  blackboard: { atk_scale_boom: 0, count: 0, had_added_usp: 0, poise: 0, usp: 0 },
+  blackboard: { atk_scale_boom: 0, count: 0, duration: 0, had_added_usp: 0, poise: 0, usp: 0 },
   attributeModifiers: [],
   lifecycleSequences: {
     trigger: [{ $sequence: 'mergeContextTargets_8' }],
@@ -5610,33 +5630,61 @@ const yvonneBuff4: SkillBuffDefinition = {
 const yvonneBuff5ActionGraph = {
   main: {
     nodes: {
-      createSpatialPointTargets_2: {
+      createSpatialPointTargets_3: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'tarPos', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'tarPos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+          },
         },
         next: null,
       },
-      ifElse_3: {
+      createSpatialPointTargets_2: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'tarPos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'owner' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 6 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
+        },
+        next: null,
+      },
+      ifElse_4: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_1' },
           whenTrue: { $sequence: 'createSpatialPointTargets_2' },
-          whenFalse: { $sequence: null },
+          whenFalse: { $sequence: 'createSpatialPointTargets_3' },
         },
         next: null,
       },
-      launchProjectile_4: {
+      launchProjectile_5: {
         action: {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 5,
+            projectileId: 'projectile_chr_0017_yvonne_normal_skill',
             source: 'actionOwner',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            targets: { kind: 'context', contextKey: 'tarPos' },
+            launch: {
+              start: { side: 'operator' },
+              segmentTargets: [{ target: { kind: 'context', key: 'tarPos' } }],
+            },
           },
           callbacks: [
             {
@@ -6234,12 +6282,12 @@ const yvonneBuff5ActionGraph = {
         },
         next: null,
       },
-      checkCondition_5: {
+      checkCondition_6: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
-        next: 'launchProjectile_4',
+        next: 'launchProjectile_5',
       },
     },
     dataNodes: {
@@ -6288,8 +6336,8 @@ const yvonneBuff5: SkillBuffDefinition = {
   },
   attributeModifiers: [],
   lifecycleSequences: {
-    start: [{ $sequence: 'ifElse_3' }],
-    finish: [{ $sequence: 'checkCondition_5' }],
+    start: [{ $sequence: 'ifElse_4' }],
+    finish: [{ $sequence: 'checkCondition_6' }],
   },
   actionGraph: yvonneBuff5ActionGraph,
 };
@@ -7904,6 +7952,1161 @@ export const yvonne: OperatorDefinition = {
         blackboard: {},
         scheduledSequences: [],
       },
+    },
+  },
+  projectileDefinitions: {
+    projectile_chr_0017_yvonne_attack1: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 70 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 20 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0017_yvonne_attack2_robot: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 45 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 20 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0017_yvonne_attack3: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 30 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 0.2,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0.33333334,
+                },
+                {
+                  time: 0.05,
+                  value: 0.2,
+                  inTangent: 0,
+                  outTangent: Number.POSITIVE_INFINITY,
+                  weightedMode: 0,
+                  inWeight: 0.33333334,
+                  outWeight: 0.33333334,
+                },
+                {
+                  time: 0.06,
+                  value: 1.1,
+                  inTangent: Number.POSITIVE_INFINITY,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0.33333334,
+                  outWeight: 0.33333334,
+                },
+                {
+                  time: 0.2125,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0.33333334,
+                  outWeight: 0.33333334,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0.33333334,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0 },
+                      { kind: 'constant', value: 0 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 10 },
+                      { kind: 'constant', value: 10 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.15 },
+                      { kind: 'constant', value: 0.15 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.15 },
+                      { kind: 'constant', value: 0.15 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 80 },
+                      { kind: 'constant', value: 80 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.05 },
+                      { kind: 'constant', value: 0.05 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0017_yvonne_attack3_2: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 30 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 0.2,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0.33333334,
+                },
+                {
+                  time: 0.05,
+                  value: 0.2,
+                  inTangent: 0,
+                  outTangent: Number.POSITIVE_INFINITY,
+                  weightedMode: 0,
+                  inWeight: 0.33333334,
+                  outWeight: 0.33333334,
+                },
+                {
+                  time: 0.06,
+                  value: 1.1,
+                  inTangent: Number.POSITIVE_INFINITY,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0.33333334,
+                  outWeight: 0.33333334,
+                },
+                {
+                  time: 0.2125,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0.33333334,
+                  outWeight: 0.33333334,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0.33333334,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: -0.1 },
+                      { kind: 'constant', value: -0.1 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 100 },
+                      { kind: 'constant', value: 100 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.25 },
+                      { kind: 'constant', value: 0.25 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.15 },
+                      { kind: 'constant', value: 0.15 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 90 },
+                      { kind: 'constant', value: 90 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.05 },
+                      { kind: 'constant', value: 0.05 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0017_yvonne_attack3_3: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 30 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 0.2,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0.33333334,
+                },
+                {
+                  time: 0.05,
+                  value: 0.2,
+                  inTangent: 0,
+                  outTangent: Number.POSITIVE_INFINITY,
+                  weightedMode: 0,
+                  inWeight: 0.33333334,
+                  outWeight: 0.33333334,
+                },
+                {
+                  time: 0.06,
+                  value: 1.1,
+                  inTangent: Number.POSITIVE_INFINITY,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0.33333334,
+                  outWeight: 0.33333334,
+                },
+                {
+                  time: 0.2125,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0.33333334,
+                  outWeight: 0.33333334,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0.33333334,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.05 },
+                      { kind: 'constant', value: 0.05 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 170 },
+                      { kind: 'constant', value: 170 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.15 },
+                      { kind: 'constant', value: 0.15 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.15 },
+                      { kind: 'constant', value: 0.15 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 100 },
+                      { kind: 'constant', value: 100 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.05 },
+                      { kind: 'constant', value: 0.05 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0017_yvonne_attack4: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 50 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1.3,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0.33333334,
+                  outWeight: 0.33333334,
+                },
+                {
+                  time: 0.19999999,
+                  value: 0.99308205,
+                  inTangent: -0.10807678,
+                  outTangent: Number.POSITIVE_INFINITY,
+                  weightedMode: 0,
+                  inWeight: 0.33333334,
+                  outWeight: 0.33333334,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0.008647442,
+                  outTangent: 0.008647442,
+                  weightedMode: 0,
+                  inWeight: 0.33333334,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0017_yvonne_normal_skill: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
+              speed: { kind: 'constant', value: 15 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0.33333334,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0.33333334,
+                  outWeight: 0,
+                },
+              ],
+              distanceScaleCurve: [
+                {
+                  time: 0,
+                  value: 5,
+                  inTangent: 0,
+                  outTangent: -0.99992746,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 0.5,
+                  value: 4.5454545,
+                  inTangent: -0.8265553,
+                  outTangent: -0.82635874,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 4.1666665,
+                  inTangent: -0.6947205,
+                  outTangent: -0.69427484,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1.5,
+                  value: 3.846154,
+                  inTangent: -0.59174156,
+                  outTangent: -0.59199333,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 2,
+                  value: 3.5714285,
+                  inTangent: -0.5102284,
+                  outTangent: -0.50997734,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 2.5,
+                  value: 3.3333333,
+                  inTangent: -0.44439197,
+                  outTangent: -0.4444122,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 3,
+                  value: 3.125,
+                  inTangent: -0.39069209,
+                  outTangent: -0.3905296,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 3.5,
+                  value: 2.9411762,
+                  inTangent: -0.34627932,
+                  outTangent: -0.34594533,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 4,
+                  value: 2.7777777,
+                  inTangent: -0.30863103,
+                  outTangent: -0.30851364,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 4.5,
+                  value: 2.631579,
+                  inTangent: -0.277059,
+                  outTangent: -0.2770424,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 5,
+                  value: 2.4999998,
+                  inTangent: -0.25000682,
+                  outTangent: -0.24986266,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 6,
+                  value: 2.2727273,
+                  inTangent: -0.20663704,
+                  outTangent: -0.2067089,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 7,
+                  value: 2.0833333,
+                  inTangent: -0.17359932,
+                  outTangent: -0.17356871,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 8,
+                  value: 1.9230767,
+                  inTangent: -0.14794514,
+                  outTangent: -0.14781952,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 9,
+                  value: 1.7857143,
+                  inTangent: -0.1275527,
+                  outTangent: -0.12767315,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 10,
+                  value: 1.6666666,
+                  inTangent: -0.11107734,
+                  outTangent: -0.11110305,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 11,
+                  value: 1.5624999,
+                  inTangent: -0.097803585,
+                  outTangent: -0.0976324,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 12,
+                  value: 1.4705882,
+                  inTangent: -0.086511426,
+                  outTangent: -0.08654594,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 13,
+                  value: 1.3888888,
+                  inTangent: -0.07715237,
+                  outTangent: -0.07712841,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 14,
+                  value: 1.3157893,
+                  inTangent: -0.06939484,
+                  outTangent: -0.06914139,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 15,
+                  value: 1.2499999,
+                  inTangent: -0.06259545,
+                  outTangent: -0.06258488,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 16,
+                  value: 1.1904761,
+                  inTangent: -0.05668332,
+                  outTangent: -0.05662441,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 17,
+                  value: 1.1363635,
+                  inTangent: -0.05163067,
+                  outTangent: -0.05161762,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 18,
+                  value: 1.0869564,
+                  inTangent: -0.047234155,
+                  outTangent: -0.047206875,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 19,
+                  value: 1.0416665,
+                  inTangent: -0.04338704,
+                  outTangent: -0.043392178,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 20,
+                  value: 1,
+                  inTangent: -0.039877094,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'parabola',
+                definition: {
+                  kind: 'vertexDuration',
+                  durationSeconds: { kind: 'constant', value: 1 },
+                  vertexOffsetMeters: { kind: 'constant', value: 1.7 },
+                },
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: false,
+        keepMovingOnReach: true,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0017_yvonne_power_attack: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
+              speed: { kind: 'constant', value: 15 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0.33333334,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0.33333334,
+                  outWeight: 0,
+                },
+              ],
+              distanceScaleCurve: [
+                {
+                  time: 0,
+                  value: 5,
+                  inTangent: 0,
+                  outTangent: -0.99992746,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 0.5,
+                  value: 4.5454545,
+                  inTangent: -0.8265553,
+                  outTangent: -0.82635874,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 4.1666665,
+                  inTangent: -0.6947205,
+                  outTangent: -0.69427484,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1.5,
+                  value: 3.846154,
+                  inTangent: -0.59174156,
+                  outTangent: -0.59199333,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 2,
+                  value: 3.5714285,
+                  inTangent: -0.5102284,
+                  outTangent: -0.50997734,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 2.5,
+                  value: 3.3333333,
+                  inTangent: -0.44439197,
+                  outTangent: -0.4444122,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 3,
+                  value: 3.125,
+                  inTangent: -0.39069209,
+                  outTangent: -0.3905296,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 3.5,
+                  value: 2.9411762,
+                  inTangent: -0.34627932,
+                  outTangent: -0.34594533,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 4,
+                  value: 2.7777777,
+                  inTangent: -0.30863103,
+                  outTangent: -0.30851364,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 4.5,
+                  value: 2.631579,
+                  inTangent: -0.277059,
+                  outTangent: -0.2770424,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 5,
+                  value: 2.4999998,
+                  inTangent: -0.25000682,
+                  outTangent: -0.24986266,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 6,
+                  value: 2.2727273,
+                  inTangent: -0.20663704,
+                  outTangent: -0.2067089,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 7,
+                  value: 2.0833333,
+                  inTangent: -0.17359932,
+                  outTangent: -0.17356871,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 8,
+                  value: 1.9230767,
+                  inTangent: -0.14794514,
+                  outTangent: -0.14781952,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 9,
+                  value: 1.7857143,
+                  inTangent: -0.1275527,
+                  outTangent: -0.12767315,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 10,
+                  value: 1.6666666,
+                  inTangent: -0.11107734,
+                  outTangent: -0.11110305,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 11,
+                  value: 1.5624999,
+                  inTangent: -0.097803585,
+                  outTangent: -0.0976324,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 12,
+                  value: 1.4705882,
+                  inTangent: -0.086511426,
+                  outTangent: -0.08654594,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 13,
+                  value: 1.3888888,
+                  inTangent: -0.07715237,
+                  outTangent: -0.07712841,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 14,
+                  value: 1.3157893,
+                  inTangent: -0.06939484,
+                  outTangent: -0.06914139,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 15,
+                  value: 1.2499999,
+                  inTangent: -0.06259545,
+                  outTangent: -0.06258488,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 16,
+                  value: 1.1904761,
+                  inTangent: -0.05668332,
+                  outTangent: -0.05662441,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 17,
+                  value: 1.1363635,
+                  inTangent: -0.05163067,
+                  outTangent: -0.05161762,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 18,
+                  value: 1.0869564,
+                  inTangent: -0.047234155,
+                  outTangent: -0.047206875,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 19,
+                  value: 1.0416665,
+                  inTangent: -0.04338704,
+                  outTangent: -0.043392178,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 20,
+                  value: 1,
+                  inTangent: -0.039877094,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'parabola',
+                definition: {
+                  kind: 'vertexDuration',
+                  durationSeconds: { kind: 'constant', value: 1 },
+                  vertexOffsetMeters: { kind: 'constant', value: 0.5 },
+                },
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.5 },
+      },
+      blackboard: {},
+      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0017_yvonne_ult_attack1: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 70 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 20 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0017_yvonne_ult_attack2: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 70 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 20 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
     },
   },
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },

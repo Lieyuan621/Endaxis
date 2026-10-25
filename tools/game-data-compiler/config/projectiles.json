@@ -1,0 +1,24 @@
+{
+  "projectile_chr_0035_liino_normal_attack_02": {
+    "skipEnemyCollision": true,
+    "reason": "战技上射至自身上空的中转阶段；固定端点模型不让敌人碰撞提前截断到达流程。后续攻击弹仍正常碰撞。"
+  },
+  "projectile_chr_0035_liino_normal_attack_03": {
+    "skipEnemyCollision": true,
+    "reason": "战技上射至自身上空的中转阶段；固定端点模型不让敌人碰撞提前截断到达流程。后续攻击弹仍正常碰撞。"
+  },
+  "projectile_chr_0012_avywen_combo_skill_lance_back": {
+    "collisionRadiusMeters": {
+      "expected": 1.5,
+      "replacement": 2.6
+    },
+    "reason": "回收雷枪的点目标碰撞补偿：覆盖 0～5 米固定站距的侧枪回收路径，不模拟敌人体积；保留飞行、命中次数与回收到达规则。"
+  },
+  "projectile_chr_0012_avywen_ultimate_skill_lance_back": {
+    "collisionRadiusMeters": {
+      "expected": 1.5,
+      "replacement": 2.6
+    },
+    "reason": "回收雷枪的点目标碰撞补偿：覆盖 0～5 米固定站距的侧枪回收路径，不模拟敌人体积；保留飞行、命中次数与回收到达规则。"
+  }
+}

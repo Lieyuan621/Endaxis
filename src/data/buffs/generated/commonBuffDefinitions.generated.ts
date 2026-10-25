@@ -599,7 +599,7 @@ const commonBuff_buff_common_affixes_skillimbue: SkillBuffDefinition = {
   maxTriggerCount: 1,
   applyTags: ['Skill/Character/Common/Affixes/skillimbue'],
   extendTags: [],
-  blackboard: { imbue_scale: 0.3 },
+  blackboard: { duration: 0, imbue_scale: 0.3 },
   attributeModifiers: [],
   lifecycleSequences: { enable: [{ $sequence: 'applyBuff_2' }] },
   actionGraph: commonBuff_buff_common_affixes_skillimbue$actionGraph,
@@ -1415,7 +1415,7 @@ const commonBuff_buff_common_burning_status: SkillBuffDefinition = {
   maxTriggerCount: 9999,
   applyTags: [],
   extendTags: [],
-  blackboard: { burning_atk_scale: 0 },
+  blackboard: { burning_atk_scale: 0, duration: 20 },
   attributeModifiers: [],
   lifecycleSequences: { trigger: [{ $sequence: 'dealDamage_1' }] },
   actionGraph: commonBuff_buff_common_burning_status$actionGraph,
@@ -1641,7 +1641,7 @@ const commonBuff_buff_common_cryst_cryst_triggered: SkillBuffDefinition = {
   maxTriggerCount: 1,
   applyTags: ['Skill/Character/Common/SpellBurst/CrystBurst'],
   extendTags: [],
-  blackboard: { atk_scale: 0 },
+  blackboard: { atk_scale: 0, duration: 20 },
   attributeModifiers: [],
   lifecycleSequences: {
     trigger: [{ $sequence: 'triggerSpellBurst_1' }, { $sequence: 'readSkillSettingData_3' }],
@@ -2566,7 +2566,7 @@ const commonBuff_buff_common_fire_fire_triggered: SkillBuffDefinition = {
   maxTriggerCount: 1,
   applyTags: ['Skill/Character/Common/SpellBurst/FireBurst'],
   extendTags: [],
-  blackboard: { atk_scale: 0 },
+  blackboard: { atk_scale: 0, duration: 20 },
   attributeModifiers: [],
   lifecycleSequences: {
     trigger: [{ $sequence: 'triggerSpellBurst_1' }, { $sequence: 'readSkillSettingData_3' }],
@@ -3143,7 +3143,7 @@ const commonBuff_buff_common_natural_natural_triggered: SkillBuffDefinition = {
   maxTriggerCount: 1,
   applyTags: ['Skill/Character/Common/SpellBurst/NaturalBurst'],
   extendTags: [],
-  blackboard: { atk_scale: 0 },
+  blackboard: { atk_scale: 0, duration: 20 },
   attributeModifiers: [],
   lifecycleSequences: {
     trigger: [{ $sequence: 'triggerSpellBurst_1' }, { $sequence: 'readSkillSettingData_3' }],
@@ -3218,7 +3218,7 @@ const commonBuff_buff_common_natural_natural_triggered_typhoea: SkillBuffDefinit
   maxTriggerCount: 1,
   applyTags: ['Skill/Character/Common/SpellBurst/NaturalBurst'],
   extendTags: [],
-  blackboard: { atk_scale: 0, damage_enhence: 1 },
+  blackboard: { atk_scale: 0, damage_enhence: 1, duration: 20 },
   attributeModifiers: [],
   lifecycleSequences: {
     trigger: [{ $sequence: 'triggerSpellBurst_1' }, { $sequence: 'readSkillSettingData_4' }],
@@ -4021,7 +4021,7 @@ const commonBuff_buff_common_pulse_pulse_triggered: SkillBuffDefinition = {
   maxTriggerCount: 1,
   applyTags: ['Skill/Character/Common/SpellBurst/PulseBurst'],
   extendTags: [],
-  blackboard: { atk_scale: 0 },
+  blackboard: { atk_scale: 0, duration: 20 },
   attributeModifiers: [],
   lifecycleSequences: {
     trigger: [{ $sequence: 'triggerSpellBurst_1' }, { $sequence: 'readSkillSettingData_3' }],

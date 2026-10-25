@@ -1,3 +1,5 @@
+import { sampleRandomPointPositions } from './randomPointPositions';
+import { offsetSpatialPoint, spatialPointDirection } from './spatialPointPosition';
 import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
 import type { BuffLookupQuery } from '../../../../packages/game-data-contract/src/conditions';
 import type { CompiledCondition } from '../../compiler/compiledGraphData.ts';
@@ -67,6 +69,12 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
     readonly resolveAbilityEntityObjectType?: (instanceId: number) => CombatObjectType,
     readonly listUnfinishedProjectiles?: () => readonly RuntimeTargetRef[],
     readonly targetQueries?: {
+      matchesTags?(
+        target: RuntimeTargetRef,
+        query: Extract<CompiledTargetQuery, { kind: 'tagFilter' }>,
+      ): boolean | undefined;
+      sampleRange?(minimum: number, maximum: number, castId?: string): number;
+      position?(target: RuntimeTargetRef): readonly [number, number, number] | undefined;
       /** 固定地面模型中实体当前的离地高度；没有坐标的句柄返回 undefined。 */
       height?(target: RuntimeTargetRef): number | undefined;
       mainBody?(target: RuntimeTargetRef): RuntimeTargetRef;
@@ -88,6 +96,14 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
   ) {}
 
   execute(step: ResolvedCombatOperationStep, context?: CombatOperationContext): boolean {
+    if (step.kind === 'saveTargetDistance') {
+      if (!context) throw new Error('saveTargetDistance requires an action context');
+      const source = this.queryTargets(step.parameters.source, context)[0];
+      const target = this.queryTargets(step.parameters.target, context)[0];
+      if (!source || !target) return true;
+      context.blackboard.assignDynamic(step.parameters.outputKey, this.#distance(source, target));
+      return true;
+    }
     if (step.kind === 'pickContextTarget') {
       if (context?.targetContext === undefined) {
         throw new Error('Context target selection requires a combat target context');
@@ -110,10 +126,20 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
         height === undefined ? undefined : height + step.parameters.startHeightOffset;
       const hit =
         distance !== undefined && distance >= 0 && distance <= step.parameters.maxDistance;
+      const position = source && this.targetQueries.position?.(source);
       // 命中位置拥有空间点身份，不能放入 enemy 身份作为代替。
       context.targetContext.set(
         step.parameters.saveToContextKey,
-        hit ? [{ kind: 'spatialPoint', pointId: this.runtimeState.nextSpatialPointId++ }] : [],
+        hit
+          ? [
+              {
+                kind: 'spatialPoint',
+                pointId: this.runtimeState.nextSpatialPointId++,
+                // 垂直地面探测沿用固定地面高度，保留来源的水平位置。
+                ...(position ? { position: [position[0], 0, position[2]] as const } : {}),
+              },
+            ]
+          : [],
       );
       return hit;
     }
@@ -209,14 +235,77 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
         throw new Error('createSpatialPointTargets requires a combat target context');
       }
       const count = resolveActionValueOperand(step.parameters.count, context.blackboard);
-      if (!Number.isInteger(count) || count < 0) {
+      if (
+        step.parameters.randomDistribution === undefined &&
+        (!Number.isInteger(count) || count < 0)
+      ) {
         throw new RangeError('spatial point count must be a non-negative integer');
+      }
+      const origins =
+        step.parameters.origin === undefined
+          ? undefined
+          : this.queryTargets(step.parameters.origin, context);
+      if (origins !== undefined && origins.length > 1)
+        throw new Error('spatial point origin must resolve to at most one target');
+      const origin = origins?.[0];
+      let position = origin === undefined ? undefined : this.targetQueries?.position?.(origin);
+      if (position && step.parameters.offset) {
+        const offset = step.parameters.offset;
+        position = offsetSpatialPoint(
+          position,
+          offset.local.map(value => resolveActionValueOperand(value, context.blackboard)),
+          offset,
+          spatialPointDirection(offset.facing, query => {
+            const target = this.queryTargets(query, context)[0];
+            const value = target && this.targetQueries?.position?.(target);
+            if (!value) throw new Error('spatial point direction requires a known position');
+            return value;
+          }),
+        );
+      }
+      const distribution = step.parameters.randomDistribution;
+      if (distribution !== undefined) {
+        if (origins !== undefined && origin === undefined) {
+          context.targetContext.set(step.parameters.saveToContextKey, []);
+          return true;
+        }
+        if (!position) throw new Error('random projectile point requires a known center position');
+        const sample = this.targetQueries?.sampleRange;
+        if (!sample) throw new Error('random projectile point requires a range sample source');
+        const value = (input: typeof distribution.radius) =>
+          resolveActionValueOperand(input, context.blackboard);
+        const points = sampleRandomPointPositions(
+          count,
+          [position[0], distribution.centerOnGround ? 0 : position[1], position[2]],
+          distribution.shape,
+          value(distribution.minimumRadius),
+          value(distribution.radius),
+          value(distribution.angleDegrees),
+          [
+            value(distribution.localPlaneRotation[0]),
+            value(distribution.localPlaneRotation[1]),
+            value(distribution.localPlaneRotation[2]),
+          ],
+          (minimum, maximum) => sample(minimum, maximum, context.skillCastInfo?.originCastId),
+        );
+        context.targetContext.set(
+          step.parameters.saveToContextKey,
+          points.map(position => ({
+            kind: 'spatialPoint',
+            pointId: this.runtimeState.nextSpatialPointId++,
+            position,
+          })),
+        );
+        return true;
       }
       context.targetContext.set(
         step.parameters.saveToContextKey,
-        Array.from({ length: count }, () => ({
+        Array.from({ length: origins !== undefined && origin === undefined ? 0 : count }, () => ({
           kind: 'spatialPoint' as const,
           pointId: this.runtimeState.nextSpatialPointId++,
+          ...(position === undefined
+            ? {}
+            : { position: [...position] as [number, number, number] }),
         })),
       );
       return true;
@@ -238,6 +327,14 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
     }
     context.targetContext.set(step.parameters.saveToContextKey, targets);
     return true;
+  }
+
+  #distance(source: RuntimeTargetRef, target: RuntimeTargetRef): number {
+    if (!this.targetQueries?.position) throw new Error('target distance requires position queries');
+    const from = this.targetQueries.position(source);
+    const to = this.targetQueries.position(target);
+    if (!from || !to) throw new Error('target distance requires known endpoint positions');
+    return Math.fround(Math.hypot(from[0] - to[0], from[1] - to[1], from[2] - to[2]));
   }
 
   #excludeTargets(
@@ -351,8 +448,7 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
       const source = this.queryTargets(condition.source, context)[0];
       const target = this.queryTargets(condition.target, context)[0];
       if (!source || !target) return false;
-      // 场景没有位置和碰撞体积，实体与空间点的位置、半径均按0处理。
-      // 目标解析仍执行，不能把缺失目标也当成距离0。
+      // 固定距离只用于投射物；技能范围仍采用双方处于有效范围内的零距离近似。
       const distance = 0;
       return condition.lessThan
         ? distance <= Math.fround(condition.distance)
@@ -395,10 +491,19 @@ export class TargetContextOperationExecutor implements CombatOperationExecutor {
     if (direct !== undefined) return direct;
     if (query.kind === 'distanceFilter') {
       const targets = this.queryTargets(query.targets, context);
-      if (!this.queryTargets(query.center, context)[0]) return [];
+      const center = this.queryTargets(query.center, context)[0];
+      if (!center) return [];
       const threshold = resolveActionValueOperand(query.threshold, context.blackboard);
-      // 固定木桩的实体与空间点均处于零空间；仍解析中心及动态阈值。
+      // 范围筛选保留既有近似，不随投射物飞行距离改变。
       return compareCombatNumbers(0, Math.fround(threshold), query.operator) ? targets : [];
+    }
+    if (query.kind === 'tagFilter') {
+      if (!this.targetQueries?.matchesTags) throw new Error('TagValidator requires entity tags');
+      return this.queryTargets(query.targets, context).filter(
+        target =>
+          target.kind === 'spatialPoint' ||
+          this.targetQueries!.matchesTags!(target, query) !== false,
+      );
     }
     if (query.kind === 'buffFilter') {
       if (!this.targetQueries?.hasMatchingBuff)

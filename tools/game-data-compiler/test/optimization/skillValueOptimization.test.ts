@@ -1,3 +1,4 @@
+import { stationaryProjectileFlight } from '../../../../src/core/test/projectileFlight';
 import { createNativeEventFixture } from '../../../../src/core/combat/events/nativeEventTestFixture';
 import { skillFixture } from '../../../../src/test/skillFixture';
 import { extractResourceDataNodes } from '../../src/compiler/extractGraphDataNodes.ts';
@@ -129,6 +130,59 @@ function executeSkillPrograms(input: SkillDefinition): readonly number[] {
 }
 
 describe('技能黑板和算术写入裁剪', () => {
+  it.each([false, true])('距离与曲线链只在结果被消费时保留：%s', consumed => {
+    const input = skill(
+      nodes => [
+        {
+          startFrame: 0,
+          sequence: chain(nodes, 'main', [
+            {
+              kind: 'saveTargetDistance',
+              parameters: {
+                source: { kind: 'owner' },
+                target: { kind: 'battleMainTarget' },
+                outputKey: 'distance',
+              },
+            },
+            {
+              kind: 'evaluateCurve',
+              parameters: {
+                key: 'speed',
+                input: board('distance'),
+                curve: [
+                  {
+                    time: 0,
+                    value: 1,
+                    inTangent: 1,
+                    outTangent: 1,
+                    weightedMode: 0,
+                    inWeight: 1 / 3,
+                    outWeight: 1 / 3,
+                  },
+                  {
+                    time: 10,
+                    value: 11,
+                    inTangent: 1,
+                    outTangent: 1,
+                    weightedMode: 0,
+                    inWeight: 1 / 3,
+                    outWeight: 1 / 3,
+                  },
+                ],
+              },
+            },
+            ...(consumed ? [spend('speed')] : [signal]),
+          ]),
+        },
+      ],
+      { distance: 0, speed: 0 },
+    );
+    const result = pruneUnusedGraphSkillValues(input).skill;
+    const kinds = Object.values(result.actionGraph.main.nodes).map(node => node.action.kind);
+    expect(kinds.includes('saveTargetDistance')).toBe(consumed);
+    expect(kinds.includes('evaluateCurve')).toBe(consumed);
+  });
+
   it.each([false, true])('无人读取的逻辑点及距离写入可删，动态数量的读取仍保留：%s', dynamic => {
     const input = skill(
       nodes => {
@@ -519,9 +573,11 @@ describe('技能黑板和算术写入裁剪', () => {
       {
         kind: 'launchProjectile',
         parameters: {
+          projectileId: 'fixture_projectile',
+          flight: stationaryProjectileFlight(1),
           inheritActionBlackboard: false,
           entityAssignments: { EntityBB_payload: board('payload') },
-          finish: 1,
+
           recycleDelaySeconds: 0,
         },
         callbacks: [],

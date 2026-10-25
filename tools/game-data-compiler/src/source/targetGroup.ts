@@ -1,4 +1,4 @@
-import { readActionTarget } from './targetEnums.ts';
+import { readActionTarget, readDirectionType } from './targetEnums.ts';
 import { parseAdvancedDirectionSource, type AdvancedDirectionSource } from './spatial.ts';
 import { parseBuffFindSettingsSource } from './buffFindSettings.ts';
 import {
@@ -24,6 +24,9 @@ import {
   type ColliderShapeSource,
   type TargetReferenceSource,
   type SpatialPointFinderSource,
+  type PointFinderOffsetSource,
+  type RandomPointFinderSource,
+  type FixedPointFinderSource,
 } from './target.ts';
 import { parseTagQuerySource, type TagQuerySource } from './tagQuery.ts';
 import type { BlackboardLevelValues } from './scalar.ts';
@@ -57,10 +60,7 @@ export interface TargetGroupInputSource extends TargetReferenceSource {
   readonly finderProjectileShape?: ColliderShapeSource;
   readonly finderOwnerPartsQuery: TagQuerySource | null;
   readonly finderPointBlackboardKeys?: readonly string[];
-  readonly finderRandomPointCount?: {
-    readonly value: number;
-    readonly blackboardKey: string | null;
-  };
+  readonly finderRandomPoint?: RandomPointFinderSource;
   readonly validatorTypes: readonly string[];
   readonly postProcessorTypes: readonly string[];
   readonly priorityFilters: readonly PriorityFilterSource[];
@@ -78,6 +78,10 @@ export interface TargetGroupInputSource extends TargetReferenceSource {
 }
 
 export interface TargetGroupWriteSource {
+  readonly selectorDirection?: string;
+  readonly centerToGround?: boolean;
+  readonly enableAdvancedDirection?: boolean;
+  readonly advancedDirection?: AdvancedDirectionSource;
   readonly startFrame: number;
   readonly endFrame: number;
   readonly actionIndex: number;
@@ -102,10 +106,7 @@ export interface TargetGroupWriteSource {
   readonly finderProjectileShape?: ColliderShapeSource;
   readonly finderOwnerPartsQuery: TagQuerySource | null;
   readonly finderPointBlackboardKeys?: readonly string[];
-  readonly finderRandomPointCount?: {
-    readonly value: number;
-    readonly blackboardKey: string | null;
-  };
+  readonly finderRandomPoint?: RandomPointFinderSource;
   readonly validatorTypes: readonly string[];
   readonly postProcessorTypes: readonly string[];
   readonly inputTargets: readonly TargetGroupInputSource[];
@@ -119,7 +120,9 @@ export interface TargetGroupWriteSource {
   }[];
   readonly excludeTargets?: readonly TargetReferenceSource[];
   readonly finderFixedPointSnapToNavmesh: boolean | null;
+  readonly finderFixedPoint?: FixedPointFinderSource;
   readonly finderSpatialPoint?: SpatialPointFinderSource;
+  readonly finderPointOffset?: PointFinderOffsetSource;
   readonly center: string | null;
   readonly centerContextKey: string;
   readonly selectorOwner: string | null;
@@ -494,10 +497,9 @@ function parseConvertToTargetContextAction(
     ...(summary.finderPointBlackboardKeys.length === 0
       ? {}
       : { finderPointBlackboardKeys: summary.finderPointBlackboardKeys }),
-    ...(summary.finderRandomPointCount === null
-      ? {}
-      : { finderRandomPointCount: summary.finderRandomPointCount }),
+    ...(summary.finderRandomPoint === null ? {} : { finderRandomPoint: summary.finderRandomPoint }),
     ...(summary.finderSpatialPoint ? { finderSpatialPoint: summary.finderSpatialPoint } : {}),
+    ...(summary.finderPointOffset ? { finderPointOffset: summary.finderPointOffset } : {}),
     validatorTypes: summary.validatorTypes,
     postProcessorTypes: summary.postProcessorTypes,
     priorityFilters: summary.priorityFilters,
@@ -557,9 +559,7 @@ function parseConvertToTargetContextAction(
     ...(summary.finderPointBlackboardKeys.length === 0
       ? {}
       : { finderPointBlackboardKeys: summary.finderPointBlackboardKeys }),
-    ...(summary.finderRandomPointCount === null
-      ? {}
-      : { finderRandomPointCount: summary.finderRandomPointCount }),
+    ...(summary.finderRandomPoint === null ? {} : { finderRandomPoint: summary.finderRandomPoint }),
     validatorTypes: summary.validatorTypes,
     postProcessorTypes: summary.postProcessorTypes,
     priorityFilters: summary.priorityFilters,
@@ -639,9 +639,7 @@ function parseFindTargetAction(
     ...(summary.finderPointBlackboardKeys.length === 0
       ? {}
       : { finderPointBlackboardKeys: summary.finderPointBlackboardKeys }),
-    ...(summary.finderRandomPointCount === null
-      ? {}
-      : { finderRandomPointCount: summary.finderRandomPointCount }),
+    ...(summary.finderRandomPoint === null ? {} : { finderRandomPoint: summary.finderRandomPoint }),
     validatorTypes: summary.validatorTypes,
     postProcessorTypes: summary.postProcessorTypes,
     intervalSeconds,
@@ -652,7 +650,32 @@ function parseFindTargetAction(
       : { targetContainsParents: summary.targetContainsParents }),
     ...(summary.excludeTargets.length === 0 ? {} : { excludeTargets: summary.excludeTargets }),
     finderFixedPointSnapToNavmesh,
+    ...(summary.finderFixedPoint === null ? {} : { finderFixedPoint: summary.finderFixedPoint }),
     ...(summary.finderSpatialPoint ? { finderSpatialPoint: summary.finderSpatialPoint } : {}),
+    ...(summary.finderPointOffset ? { finderPointOffset: summary.finderPointOffset } : {}),
+    ...(summary.finderRandomPoint === null &&
+    summary.finderFixedPoint === null &&
+    !summary.finderPointOffset
+      ? {}
+      : {
+          selectorDirection: readDirectionType(
+            action.selectorDirection,
+            `${path}.selectorDirection`,
+          ),
+          centerToGround: requireBoolean(action.centerToGround, `${path}.centerToGround`),
+          enableAdvancedDirection: requireBoolean(
+            action.useAdvancedDirectionSetting,
+            `${path}.useAdvancedDirectionSetting`,
+          ),
+          ...(action.useAdvancedDirectionSetting === true
+            ? {
+                advancedDirection: parseAdvancedDirectionSource(
+                  action.advancedSelectorDirection,
+                  `${path}.advancedSelectorDirection`,
+                ),
+              }
+            : {}),
+        }),
     center: readActionTarget(action.center, `${path}.center`),
     centerContextKey: readOptionalReferenceKey(action.centerContextKey, `${path}.centerContextKey`),
     selectorOwner: readActionTarget(action.selectorOwner, `${path}.selectorOwner`),

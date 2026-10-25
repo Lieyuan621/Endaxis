@@ -7,10 +7,9 @@ import {
 } from '../combatProjectionCommon.ts';
 import type { NativeActionNodeSource } from '../../source/controlFlow.ts';
 import type { KnownNativeActionLeafSource } from '../../source/actionLeaf.ts';
-import type { TimeScaleCurveKeyDefinition } from '../../../../../packages/game-data-contract/src/conditions.ts';
 import type { CompiledBuffStepSource } from './combatActionProjectionTypes.ts';
 
-import type { TimeDilationCurveKeySource } from '../../source/timeDilationActions.ts';
+import { projectAnimationCurveKeys } from '../animationCurveProjection.ts';
 import type { TargetGroupActionSource } from '../../source/targetGroup.ts';
 import type { TargetReferenceSource } from '../../source/target.ts';
 import { projectNativeTagQueryType } from '../../source/tagQuery.ts';
@@ -45,23 +44,6 @@ import {
 
 /** 实体、时间膨胀、目标组和显式投射物扩展的叶子分派。
  * 本层按原顺序处理特殊分支，剩余动作委托普通叶子投影；目标组状态只沿调用返回。 */
-
-/** 原生层保留整数；在输出边界检查契约可表达的权重模式，不断言、不截位或补默认值。 */
-function projectTimeDilationCurveKeys(
-  keys: readonly TimeDilationCurveKeySource[],
-  sourcePath: string,
-): readonly TimeScaleCurveKeyDefinition[] {
-  return keys.map((key, index) => {
-    const { weightedMode } = key;
-    // AnimationCurveEvaluator：WeightedIn=1、WeightedOut=2，仅支持 0..3。
-    if (weightedMode !== 0 && weightedMode !== 1 && weightedMode !== 2 && weightedMode !== 3) {
-      throw new Error(
-        `${sourcePath}.timeScaleCurve[${index}].weightedMode: unsupported value ${weightedMode}`,
-      );
-    }
-    return { ...key, weightedMode };
-  });
-}
 
 export function compileBuffLeafNode(
   node: NativeActionNodeSource<KnownNativeActionLeafSource>,
@@ -271,11 +253,10 @@ export function compileBuffLeafNode(
           }
         : context,
     );
-    const usesPointGroup =
-      target.targetSource === 'Context' &&
-      context.randomPointTargetGroupKeys?.has(target.targetGroupKey) === true;
+    // 原生逐个消费目标视图；合并的固定落点与随机点具有相同的发射基数语义。
+    const usesTargetGroup = target.targetSource === 'Context' && target.targetGroupKey !== '';
     return {
-      steps: usesPointGroup
+      steps: usesTargetGroup
         ? withProjectileTargets(compiled, { kind: 'context', contextKey: target.targetGroupKey })
         : compiled,
       state: partyTargetGroups,
@@ -567,11 +548,16 @@ export function compileBuffLeafNode(
   }
   if (node.body.value.family === 'abilityEntityTarget') {
     const target = node.body.value.action.target;
+    const targetsEnemy =
+      (target.targetSource === 'Target' &&
+        target.targetGroupKey === '' &&
+        context.actionTargetTarget === 'enemy') ||
+      (target.targetSource === 'Context' &&
+        (partyTargetGroups.get(target.targetGroupKey) === 'enemy' ||
+          context.staticEnemyTargetGroupKeys?.has(target.targetGroupKey) === true));
     if (
       context.actionOwnerTarget !== 'currentAbilityEntity' ||
-      context.actionTargetTarget !== 'enemy' ||
-      target.targetSource !== 'Target' ||
-      target.targetGroupKey !== '' ||
+      !targetsEnemy ||
       target.finderType !== null ||
       target.validatorTypes.length !== 0 ||
       target.postProcessorTypes.length !== 0 ||
@@ -579,10 +565,14 @@ export function compileBuffLeafNode(
       target.shuffleTargets.length !== 0 ||
       target.distanceValidators.length !== 0
     ) {
-      throw new Error(`${node.sourcePath}: unsupported AbilityEntity target mutation`);
+      throw new Error(
+        `${node.sourcePath}: unsupported AbilityEntity target mutation ` +
+          `(owner=${context.actionOwnerTarget}, target=${context.actionTargetTarget}, ` +
+          `selection=${target.targetSource}:${target.targetGroupKey}, group=${partyTargetGroups.get(target.targetGroupKey)})`,
+      );
     }
-    // SetAbilityEntityTarget 把输入 Target 的独立副本写回当前
-    // AbilityEntityController。Endaxis 只有一个敌人实例，当前输入与后续 Finder 都已严格投影为
+    // SetAbilityEntityTarget 把选定目标的独立副本写回当前
+    // AbilityEntityController。输入或上下文组已证明为唯一敌人，后续 Finder 也投影为
     // 同一 enemy，故这次赋值不改变可观察目标身份；不向其他目标形状推广该省略。
     return { steps: [], state: partyTargetGroups };
   }
@@ -687,7 +677,7 @@ export function compileBuffLeafNode(
                 action.directCurveKeys.length > 0
                   ? {
                       kind: 'inline',
-                      keys: projectTimeDilationCurveKeys(action.directCurveKeys, node.sourcePath),
+                      keys: projectAnimationCurveKeys(action.directCurveKeys, node.sourcePath),
                     }
                   : { kind: 'named', key: action.curveKey },
               finishByAction: false,
@@ -726,7 +716,7 @@ export function compileBuffLeafNode(
                 action.directCurveKeys.length > 0
                   ? {
                       kind: 'inline',
-                      keys: projectTimeDilationCurveKeys(action.directCurveKeys, node.sourcePath),
+                      keys: projectAnimationCurveKeys(action.directCurveKeys, node.sourcePath),
                     }
                   : { kind: 'named', key: action.curveKey },
               finishByAction: false,
@@ -826,7 +816,7 @@ export function compileBuffLeafNode(
                 action.directCurveKeys.length > 0
                   ? {
                       kind: 'inline',
-                      keys: projectTimeDilationCurveKeys(action.directCurveKeys, node.sourcePath),
+                      keys: projectAnimationCurveKeys(action.directCurveKeys, node.sourcePath),
                     }
                   : { kind: 'named', key: action.curveKey },
               finishByAction: false,
@@ -1121,7 +1111,7 @@ export function compileBuffLeafNode(
                 ? { kind: 'named', key: action.curveKey }
                 : {
                     kind: 'inline',
-                    keys: projectTimeDilationCurveKeys(action.inlineCurveKeys, node.sourcePath),
+                    keys: projectAnimationCurveKeys(action.inlineCurveKeys, node.sourcePath),
                   },
               finishByAction: action.finishByAction,
               targets,
@@ -1279,7 +1269,7 @@ export function compileBuffLeafNode(
               priority,
               curve: {
                 kind: 'inline',
-                keys: projectTimeDilationCurveKeys(action.inlineCurveKeys, node.sourcePath),
+                keys: projectAnimationCurveKeys(action.inlineCurveKeys, node.sourcePath),
               },
               finishByAction: action.finishByAction,
               ignoredTargets: ['caster'],
@@ -1315,7 +1305,7 @@ export function compileBuffLeafNode(
               priority,
               curve: {
                 kind: 'inline',
-                keys: projectTimeDilationCurveKeys(action.inlineCurveKeys, node.sourcePath),
+                keys: projectAnimationCurveKeys(action.inlineCurveKeys, node.sourcePath),
               },
               finishByAction: action.finishByAction,
               ignoredTargets: [],
@@ -1358,7 +1348,7 @@ export function compileBuffLeafNode(
             priority,
             curve: {
               kind: 'inline',
-              keys: projectTimeDilationCurveKeys(action.inlineCurveKeys, node.sourcePath),
+              keys: projectAnimationCurveKeys(action.inlineCurveKeys, node.sourcePath),
             },
             finishByAction: action.finishByAction,
             ignoredTargets: ['controlled'],
@@ -1477,7 +1467,10 @@ export function compileBuffLeafNode(
       const detail = write.targetPostProcessor;
       const inputTarget = input !== undefined && isPlainTargetGroupInput(input, 'Target');
       const group = inputTarget
-        ? 'runtimeTargets'
+        ? context.actionOwnerTarget === 'currentAbilityEntity' &&
+          context.actionTargetTarget === 'enemy'
+          ? 'enemy'
+          : 'runtimeTargets'
         : input && partyTargetGroups.get(input.targetGroupKey);
       if (
         detail !== undefined &&
@@ -1885,17 +1878,7 @@ export function compileBuffLeafNode(
         rawQuery[0],
         `${node.sourcePath}.validatorTagQueries[0]`,
       );
-      const owner =
-        write.selectorOwner === 'ActionOwner'
-          ? { kind: 'owner' as const }
-          : write.selectorOwner === 'ActionSource'
-            ? { kind: 'source' as const }
-            : write.selectorOwner === 'MainCharacter'
-              ? { kind: 'mainCharacter' as const }
-              : write.selectorOwner === 'ContextTarget'
-                ? { kind: 'context' as const, key: write.selectorOwnerContextKey }
-                : null;
-      if (owner === null) throw new Error(`${node.sourcePath}: unsupported selector owner`);
+      const owner = projectSelectorOwner(write, node.sourcePath);
       const nextGroups = new Map(partyTargetGroups);
       nextGroups.set(write.targetGroupKey, 'dynamicEnemy');
       return {
@@ -2191,6 +2174,83 @@ export function compileBuffLeafNode(
     ) {
       const nextGroups = new Map(partyTargetGroups);
       nextGroups.set(write.targetGroupKey, 'spatialPoint');
+      const fixed = write.finderFixedPoint;
+      const directionOwnerIsEnemy =
+        ['CurrentTarget', 'InputTarget'].includes(write.selectorOwner ?? '') &&
+        context.actionTargetTarget === 'enemy';
+      const directionTargetsOperator =
+        write.directionTarget === 'ActionSource' && context.actionSourceTarget === 'caster';
+      const reverseFixedDirection = directionOwnerIsEnemy && directionTargetsOperator;
+      const directionTargetsEnemy =
+        (write.directionTarget === 'ContextTarget' &&
+          (context.staticEnemyTargetGroupKeys?.has(write.directionContextKey) === true ||
+            partyTargetGroups.get(write.directionContextKey) === 'enemy')) ||
+        (['InputTarget', 'CurrentTarget'].includes(write.directionTarget ?? '') &&
+          context.actionTargetTarget === 'enemy');
+      const advanced = write.advancedDirection;
+      const directionTarget =
+        write.directionTarget === 'ActionOwner'
+          ? { kind: 'owner' as const }
+          : write.directionTarget === 'ActionSource'
+            ? { kind: 'source' as const }
+            : write.directionTarget === 'ContextTarget' && write.directionContextKey
+              ? { kind: 'context' as const, key: write.directionContextKey }
+              : ['CurrentTarget', 'InputTarget'].includes(write.directionTarget ?? '')
+                ? { kind: 'inputTarget' as const }
+                : undefined;
+      const facing =
+        write.enableAdvancedDirection &&
+        advanced?.customSourceAndTarget &&
+        advanced.clampToXZ &&
+        advanced.source &&
+        advanced.target &&
+        ['SourceToTarget', 'TargetToSource'].includes(advanced.directionType)
+          ? {
+              source: projectActionTargetQuery(
+                advanced.source,
+                context,
+                `${node.sourcePath}.direction.source`,
+              ),
+              target: projectActionTargetQuery(
+                advanced.target,
+                context,
+                `${node.sourcePath}.direction.target`,
+              ),
+              invert: advanced.invertDirection !== (advanced.directionType === 'TargetToSource'),
+            }
+          : !write.enableAdvancedDirection &&
+              directionTarget !== undefined &&
+              ['SourceToTarget', 'TargetToSource'].includes(write.selectorDirection ?? '') &&
+              !reverseFixedDirection
+            ? {
+                source: projectSelectorOwner(write, node.sourcePath),
+                target: directionTarget,
+                invert: write.selectorDirection === 'TargetToSource',
+              }
+            : undefined;
+      const knownOffset =
+        fixed !== undefined &&
+        // 固定端点模型不还原导航网格修正，但仍保留中心与显式偏移。
+        (facing !== undefined ||
+          fixed.positionOffset.every(value => value === 0) ||
+          (!write.enableAdvancedDirection &&
+            context.actionSourceTarget === 'caster' &&
+            (['SourceForward', 'CameraForward'].includes(write.selectorDirection ?? '') ||
+              ((directionTargetsEnemy || reverseFixedDirection) &&
+                ['SourceToTarget', 'TargetToSource'].includes(write.selectorDirection ?? '')))));
+      const centerOrigin = !knownOffset
+        ? undefined
+        : write.center === 'ActionOwner'
+          ? { kind: 'owner' as const }
+          : write.center === 'ActionSource'
+            ? { kind: 'source' as const }
+            : write.center === 'MainCharacter'
+              ? { kind: 'mainCharacter' as const }
+              : write.center === 'ContextTarget' && write.centerContextKey
+                ? { kind: 'context' as const, key: write.centerContextKey }
+                : ['InputTarget', 'CurrentTarget'].includes(write.center ?? '')
+                  ? { kind: 'inputTarget' as const }
+                  : undefined;
       return {
         steps:
           context.materializedTargetGroupKeys?.has(write.targetGroupKey) === true
@@ -2200,6 +2260,30 @@ export function compileBuffLeafNode(
                   parameters: {
                     saveToContextKey: write.targetGroupKey,
                     count: { kind: 'constant', value: 1 },
+                    ...(write.finderSpatialPoint?.kind === 'ownerMountPoint'
+                      ? { origin: projectSelectorOwner(write, node.sourcePath) }
+                      : centerOrigin === undefined
+                        ? {}
+                        : { origin: centerOrigin }),
+                    ...(centerOrigin !== undefined && fixed !== undefined
+                      ? {
+                          offset: {
+                            local: [
+                              { kind: 'constant' as const, value: fixed.positionOffset[0] },
+                              { kind: 'constant' as const, value: fixed.positionOffset[1] },
+                              { kind: 'constant' as const, value: fixed.positionOffset[2] },
+                            ] as const,
+                            facing:
+                              facing ??
+                              ((write.selectorDirection === 'TargetToSource') !==
+                              reverseFixedDirection
+                                ? ('enemyToOperator' as const)
+                                : ('operatorToEnemy' as const)),
+                            rotation: fixed.rotationOffset,
+                            centerOnGround: write.centerToGround ?? false,
+                          },
+                        }
+                      : {}),
                   },
                 },
               ]
@@ -2210,7 +2294,7 @@ export function compileBuffLeafNode(
     if (
       write.producerType === 'FindTargetAction' &&
       write.finderType === 'RandomPointFinder' &&
-      write.finderRandomPointCount !== undefined &&
+      write.finderRandomPoint !== undefined &&
       context.randomPointTargetGroupKeys?.has(write.targetGroupKey) === true &&
       write.validatorTypes.length === 0 &&
       write.postProcessorTypes.length === 0 &&
@@ -2230,21 +2314,83 @@ export function compileBuffLeafNode(
       write.selectorOwner === 'ActionOwner' &&
       write.selectorOwnerContextKey === ''
     ) {
-      // 零空间模型丢弃扇形坐标与 NavMesh 吸附，但 pointNum 决定投射物及回调次数，不能消去。
+      const random = write.finderRandomPoint;
       const nextGroups = new Map(partyTargetGroups);
       nextGroups.set(write.targetGroupKey, 'spatialPoint');
+      if (context.materializedTargetGroupKeys?.has(write.targetGroupKey) !== true)
+        return { steps: [], state: nextGroups };
+      const zeroRadius = [random.radius, random.minimumRadius].every(
+        value => value.blackboardKey === null && value.value === 0,
+      );
+      // 零半径圆形的旋转不改变位置；保留采样次数，但无需建立目标朝向模型。
+      const directionIndependent =
+        zeroRadius &&
+        random.shape === 'Circle' &&
+        random.localPlaneRotation.every(
+          value => value.blackboardKey === null && Number.isFinite(value.value),
+        );
+      // 固定距离模型将投射物路径使用的镜头朝向近似为朝向敌人。
+      const operatorToEnemy =
+        context.actionSourceTarget === 'caster' &&
+        context.actionTargetTarget === 'enemy' &&
+        ['InputTarget', 'CurrentTarget'].includes(write.directionTarget ?? '');
+      if (
+        write.enableAdvancedDirection ||
+        (!['SourceForward', 'CameraForward'].includes(write.selectorDirection ?? '') &&
+          !(
+            (directionIndependent || operatorToEnemy) &&
+            write.selectorDirection === 'SourceToTarget'
+          ))
+      )
+        throw new Error(
+          `${node.sourcePath}: random projectile points require a supported fixed direction`,
+        );
+      if (random.shape !== 'Circle' && random.shape !== 'Sector')
+        throw new Error(
+          `${node.sourcePath}: unsupported random projectile point shape ${random.shape}`,
+        );
+      const operand = (value: typeof random.count) =>
+        value.blackboardKey === null
+          ? { kind: 'constant' as const, value: value.value }
+          : { kind: 'blackboard' as const, key: value.blackboardKey };
+      const origin =
+        write.center === 'ContextTarget'
+          ? { kind: 'context' as const, key: write.centerContextKey }
+          : write.center === 'InputTarget'
+            ? { kind: 'inputTarget' as const }
+            : write.center === 'ActionSource'
+              ? { kind: 'source' as const }
+              : { kind: 'owner' as const };
+      // 场景没有地形；导航吸附保留生成位置，不能改变点数或把位置归零。
+
       const sourceCount =
-        write.finderRandomPointCount.blackboardKey === null
-          ? { kind: 'constant' as const, value: write.finderRandomPointCount.value }
+        write.finderRandomPoint.count.blackboardKey === null
+          ? { kind: 'constant' as const, value: write.finderRandomPoint.count.value }
           : {
               kind: 'blackboard' as const,
-              key: write.finderRandomPointCount.blackboardKey,
+              key: write.finderRandomPoint.count.blackboardKey,
             };
       return {
         steps: [
           {
             kind: 'createSpatialPointTargets',
-            parameters: { saveToContextKey: write.targetGroupKey, count: sourceCount },
+            parameters: {
+              saveToContextKey: write.targetGroupKey,
+              count: sourceCount,
+              origin,
+              randomDistribution: {
+                shape: random.shape === 'Circle' ? 'circle' : 'sector',
+                radius: operand(random.radius),
+                minimumRadius: operand(random.minimumRadius),
+                angleDegrees: operand(random.angle),
+                localPlaneRotation: [
+                  operand(random.localPlaneRotation[0]),
+                  operand(random.localPlaneRotation[1]),
+                  operand(random.localPlaneRotation[2]),
+                ],
+                centerOnGround: write.centerToGround ?? false,
+              },
+            },
           },
         ],
         state: nextGroups,
@@ -2283,6 +2429,29 @@ export function compileBuffLeafNode(
       // FindTargetAction 高级方向空目标回退见 0741163B..07411676；中心自身仍必须可解析。
       const nextGroups = new Map(partyTargetGroups);
       nextGroups.set(write.targetGroupKey, 'spatialPoint');
+      const pointOffset = write.finderPointOffset;
+      const knownDirection =
+        !write.enableAdvancedDirection &&
+        context.actionSourceTarget === 'caster' &&
+        (['SourceForward', 'CameraForward'].includes(write.selectorDirection ?? '') ||
+          (['SourceToTarget', 'TargetToSource'].includes(write.selectorDirection ?? '') &&
+            ((write.directionTarget === 'ContextTarget' &&
+              (context.staticEnemyTargetGroupKeys?.has(write.directionContextKey) === true ||
+                partyTargetGroups.get(write.directionContextKey) === 'enemy')) ||
+              (['InputTarget', 'CurrentTarget'].includes(write.directionTarget ?? '') &&
+                context.actionTargetTarget === 'enemy'))));
+      const positionKnown =
+        knownDirection &&
+        pointOffset !== undefined &&
+        pointOffset.rotation.every(value => value.blackboardKey === null && value.value === 0);
+      const origin =
+        write.center === 'MainCharacter'
+          ? { kind: 'mainCharacter' as const }
+          : write.center === 'ActionSource'
+            ? { kind: 'source' as const }
+            : write.center === 'ContextTarget'
+              ? { kind: 'context' as const, key: write.centerContextKey }
+              : { kind: 'inputTarget' as const };
       return {
         steps:
           context.materializedTargetGroupKeys?.has(write.targetGroupKey) === true
@@ -2292,6 +2461,23 @@ export function compileBuffLeafNode(
                   parameters: {
                     saveToContextKey: write.targetGroupKey,
                     count: { kind: 'constant', value: 1 },
+                    ...(positionKnown
+                      ? {
+                          origin,
+                          offset: {
+                            local: [
+                              actionValueOperand(pointOffset.position[0]),
+                              actionValueOperand(pointOffset.position[1]),
+                              actionValueOperand(pointOffset.position[2]),
+                            ] as const,
+                            facing:
+                              write.selectorDirection === 'TargetToSource'
+                                ? ('enemyToOperator' as const)
+                                : ('operatorToEnemy' as const),
+                            centerOnGround: write.centerToGround ?? false,
+                          },
+                        }
+                      : {}),
                   },
                 },
               ]
@@ -2303,7 +2489,9 @@ export function compileBuffLeafNode(
       write.producerType === 'ConvertToTargetContext' &&
       write.conversionOperation === 'ConvertEntityToPosition' &&
       write.inputTargets.length === 1 &&
-      ((['Source', 'Owner', 'Target'].includes(write.inputTargets[0]?.targetSource ?? '') &&
+      (((['Source', 'Owner'].includes(write.inputTargets[0]?.targetSource ?? '') ||
+        (write.inputTargets[0]?.targetSource === 'Target' &&
+          context.actionTargetTarget === 'enemy')) &&
         write.inputTargets[0]?.targetGroupKey === '') ||
         (write.inputTargets[0]?.targetSource === 'Context' &&
           write.inputTargets[0].targetGroupKey !== '' &&
@@ -2318,12 +2506,36 @@ export function compileBuffLeafNode(
       write.inputTargets[0]?.finderSpawnedObjectType === null &&
       write.inputTargets[0]?.validatorTagQueries.length === 0
     ) {
-      // 原生 ConvertEntityToPosition 只把来源句柄中的实体身份替换为当时的位置。
-      // 已证明的唯一木桩 Context 在零空间模型中因此精确投影为一个空间点；该点仍不能
-      // 反向冒充敌人实体。Rossi 的 smart_target -> TarPos 只供移动动作消费。
+      // 此分支只处理唯一实体；位置必须在转换时保存，不能跟随来源移动。
       const nextGroups = new Map(partyTargetGroups);
       nextGroups.set(write.targetGroupKey, 'spatialPoint');
-      return { steps: [], state: nextGroups };
+      const input = write.inputTargets[0]!;
+      return {
+        steps:
+          context.materializedTargetGroupKeys?.has(write.targetGroupKey) === true
+            ? [
+                {
+                  kind: 'createSpatialPointTargets',
+                  parameters: {
+                    saveToContextKey: write.targetGroupKey,
+                    count: { kind: 'constant', value: 1 },
+                    origin:
+                      input.targetSource === 'Context'
+                        ? { kind: 'context', key: input.targetGroupKey }
+                        : {
+                            kind:
+                              input.targetSource === 'Source'
+                                ? 'source'
+                                : input.targetSource === 'Owner'
+                                  ? 'owner'
+                                  : 'inputTarget',
+                          },
+                  },
+                },
+              ]
+            : [],
+        state: nextGroups,
+      };
     }
     if (
       ((isStaticSingleEnemyTargetGroup(write) ||
@@ -2707,4 +2919,25 @@ function withProjectileTargets(
 ): CompiledBuffStepSource[] {
   const [step] = steps;
   return [{ ...step, parameters: { ...step.parameters, targets } }];
+}
+
+function projectSelectorOwner(
+  write: Pick<TargetGroupActionSource, 'selectorOwner' | 'selectorOwnerContextKey'>,
+  path: string,
+) {
+  switch (write.selectorOwner) {
+    case 'CurrentTarget':
+    case 'InputTarget':
+      return { kind: 'inputTarget' as const };
+    case 'ActionOwner':
+      return { kind: 'owner' as const };
+    case 'ActionSource':
+      return { kind: 'source' as const };
+    case 'MainCharacter':
+      return { kind: 'mainCharacter' as const };
+    case 'ContextTarget':
+      return { kind: 'context' as const, key: write.selectorOwnerContextKey };
+    default:
+      throw new Error(`${path}: unsupported selector owner ${write.selectorOwner}`);
+  }
 }

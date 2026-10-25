@@ -53,6 +53,58 @@ function createActiveSkillContext(): CombatActionProjectionContextSource {
 /** 每次叶子编译使用独立图构建器；结果中的分支引用在该图内解析。 */
 const leafContext = createActiveSkillContext;
 
+it('能力实体目标写入只省略已证明非空的敌人别名，不能省略可能为空的筛选组', () => {
+  const action = parseKnownNativeActionLeafSource(
+    {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.SetAbilityEntityTarget+Data, Gameplay.Beyond',
+      targetSettings: { ...targetFixture('Context'), targetGroupKey: 'body' },
+    },
+    'fixture.setEntityTarget',
+    {},
+  );
+  const context = withProjectionGraph({
+    actionOwnerTarget: 'currentAbilityEntity',
+    actionSourceTarget: 'caster',
+    actionTargetTarget: 'enemy',
+  });
+  const replace = parseKnownNativeActionLeafSource(
+    {
+      ...META,
+      $type: 'Beyond.Gameplay.Core.TargetPostProcessorAction+Data, Gameplay.Beyond',
+      target: targetFixture('Target'),
+      source: targetFixture('Source'),
+      centerPos: targetFixture('Target'),
+      direction: {
+        directionType: 'SourceForward',
+        sourceMountPoint: 'None',
+        targetMountPoint: 'None',
+        customSourceAndTarget: false,
+        clampToXZ: true,
+        invertDirection: false,
+      },
+      validatorData: [],
+      postProcessorData: [
+        { $type: 'Beyond.Gameplay.Core.Selector+ReplacePartWithMainBody+Data, Gameplay.Beyond' },
+      ],
+      targetGroupKey: 'body',
+    },
+    'fixture.replacePart',
+    {},
+  );
+  const replaced = compileBuffLeafNode(node(replace), new Set(), new Map(), {
+    ...context,
+    actionTargetTarget: 'enemy',
+  });
+  expect(compileBuffLeafNode(node(action), new Set(), replaced.state, context).steps).toEqual([]);
+  expect(() =>
+    compileBuffLeafNode(node(action), new Set(), new Map([['body', 'dynamicEnemy']]), context),
+  ).toThrow('target mutation');
+  expect(() =>
+    compileBuffLeafNode(node(action), new Set(), new Map([['body', 'empty']]), context),
+  ).toThrow('target mutation');
+});
+
 it('MoveGaitAction 保留干员闪避所需约束，敌人步态不进入木桩运行时', () => {
   const sequence = parseKnownNativeActionSequenceSource(
     {
@@ -964,6 +1016,17 @@ describe('施法输入限制与木桩物理控制投影', () => {
     };
     expect(isStaticSingleEnemyTargetGroup(base as never)).toBe(false);
     expect(isDynamicSingleEnemyTagTargetGroup(base as never)).toBe(true);
+    const aimed = {
+      ...base,
+      finderType: 'TyphoeaArcherySelectedFinder',
+      validatorTagQueries: [['HasAny', [-980923073]]],
+    };
+    expect(isStaticSingleEnemyTargetGroup(aimed as never)).toBe(true);
+    expect(isDynamicSingleEnemyTagTargetGroup(aimed as never)).toBe(false);
+    // 同一选敌器上的其他战斗标签仍须动态检查。
+    const filtered = { ...aimed, validatorTagQueries: base.validatorTagQueries };
+    expect(isStaticSingleEnemyTargetGroup(filtered as never)).toBe(false);
+    expect(isDynamicSingleEnemyTagTargetGroup(filtered as never)).toBe(true);
     const action = { family: 'targetGroup' as const, action: base } as ReturnType<
       typeof parseKnownNativeActionLeafSource
     >;
@@ -1356,14 +1419,20 @@ describe('施法输入限制与木桩物理控制投影', () => {
   });
 
   it.each([
-    ['当前主目标', targetFixture('MainTarget'), new Map()],
-    ['输入目标的序列化残留组名', targetFixture('Target', undefined, 'stale_target'), new Map()],
+    ['当前主目标', targetFixture('MainTarget'), new Map(), { kind: 'battleMainTarget' }],
+    [
+      '输入目标的序列化残留组名',
+      targetFixture('Target', undefined, 'stale_target'),
+      new Map(),
+      { kind: 'inputTarget' },
+    ],
     [
       '已解析空间点',
       targetFixture('Context', undefined, 'target_position'),
       new Map([['target_position', 'spatialPoint' as const]]),
+      { kind: 'context', key: 'target_position' },
     ],
-  ])('零空间距离允许%s作为已证明端点', (_name, target, groups) => {
+  ])('保存距离保留%s的查询身份', (_name, target, groups, query) => {
     const action = parseKnownNativeActionLeafSource(
       {
         ...META,
@@ -1380,11 +1449,11 @@ describe('施法输入限制与木桩物理控制投影', () => {
     ).toEqual({
       steps: [
         {
-          kind: 'modifyActionValue',
+          kind: 'saveTargetDistance',
           parameters: {
-            key: 'effect_z_scale',
-            operation: 'assign',
-            value: { kind: 'constant', value: 0 },
+            source: { kind: 'owner' },
+            target: query,
+            outputKey: 'effect_z_scale',
           },
         },
       ],
@@ -1392,7 +1461,7 @@ describe('施法输入限制与木桩物理控制投影', () => {
     });
   });
 
-  it('零空间距离允许主动技能入口已经证明的 smart_target 作为端点', () => {
+  it('保存距离仍读取 smart_target 当前内容，不用静态敌人证明替代查询', () => {
     const action = parseKnownNativeActionLeafSource(
       {
         ...META,
@@ -1412,11 +1481,11 @@ describe('施法输入限制与木桩物理控制投影', () => {
     ).toEqual({
       steps: [
         {
-          kind: 'modifyActionValue',
+          kind: 'saveTargetDistance',
           parameters: {
-            key: 'distance',
-            operation: 'assign',
-            value: { kind: 'constant', value: 0 },
+            source: { kind: 'owner' },
+            target: { kind: 'context', key: 'smart_target' },
+            outputKey: 'distance',
           },
         },
       ],

@@ -1,4 +1,5 @@
-import type { ResolvedAbilityEntityDefinition } from './combatProgram';
+import { EMPTY_GRAPH_IMPORTS, type ActionGraphImports } from './actionGraphImports';
+export type { ActionGraphImports } from './actionGraphImports';
 import type {
   ActionGraphDefinition,
   ActionGraphResourceDefinition,
@@ -13,10 +14,6 @@ import {
   type ActionGraphCompilation,
 } from './compileActionGraph';
 
-export type ImportedAbilityEntityDefinitions = Readonly<
-  Record<string, ResolvedAbilityEntityDefinition>
->;
-const EMPTY_IMPORTS: ImportedAbilityEntityDefinitions = Object.freeze({});
 const EMPTY_ENTITIES: OperatorAbilityEntityDefinitions = Object.freeze({});
 
 /**
@@ -30,11 +27,14 @@ export class ActionGraphDefinitionRepository {
   >();
   readonly #entityDefinitions = new WeakMap<
     OperatorAbilityEntityDefinitions,
-    WeakMap<ImportedAbilityEntityDefinitions, Map<number, ImportedAbilityEntityDefinitions>>
+    WeakMap<
+      ActionGraphImports,
+      WeakMap<ActionGraphImports['projectiles'], Map<number, ActionGraphImports>>
+    >
   >();
   readonly #mergedImports = new WeakMap<
-    ImportedAbilityEntityDefinitions,
-    WeakMap<ImportedAbilityEntityDefinitions, ImportedAbilityEntityDefinitions>
+    ActionGraphImports,
+    WeakMap<ActionGraphImports, ActionGraphImports>
   >();
 
   /** 公共资源集合随定义仓库发布，不随场景或技能落点重新建立。 */
@@ -53,35 +53,50 @@ export class ActionGraphDefinitionRepository {
   compileAbilityEntities(
     definitions: OperatorAbilityEntityDefinitions = EMPTY_ENTITIES,
     level: number,
-    external: ImportedAbilityEntityDefinitions = EMPTY_IMPORTS,
-  ): ImportedAbilityEntityDefinitions {
+    external: ActionGraphImports = EMPTY_GRAPH_IMPORTS,
+    projectiles: ActionGraphImports['projectiles'] = external.projectiles,
+  ): ActionGraphImports {
     if (!Number.isSafeInteger(level) || level < 0) throw new Error('invalid entity skill level');
     this.#publish(definitions);
+    this.#publish(external.projectiles);
+    this.#publish(projectiles);
     Object.freeze(external);
     let contexts = this.#entityDefinitions.get(definitions);
     if (!contexts) this.#entityDefinitions.set(definitions, (contexts = new WeakMap()));
-    let levels = contexts.get(external);
-    if (!levels) contexts.set(external, (levels = new Map()));
+    let projectileContexts = contexts.get(external);
+    if (!projectileContexts) contexts.set(external, (projectileContexts = new WeakMap()));
+    let levels = projectileContexts.get(projectiles);
+    if (!levels) projectileContexts.set(projectiles, (levels = new Map()));
     let compiled = levels.get(level);
     if (!compiled) {
-      compiled = compileIndependentAbilityEntityDefinitions(definitions, level, this, external);
+      const imports =
+        projectiles === external.projectiles
+          ? external
+          : {
+              abilityEntities: external.abilityEntities,
+              projectiles: Object.freeze({ ...external.projectiles, ...projectiles }),
+            };
+      compiled = compileIndependentAbilityEntityDefinitions(definitions, level, this, imports);
       levels.set(level, compiled);
     }
     return compiled;
   }
 
   /** 保留两侧资源自身的身份，仅复用供引用查找的合并表。 */
-  mergeAbilityEntityImports(
-    external: ImportedAbilityEntityDefinitions = EMPTY_IMPORTS,
-    local: ImportedAbilityEntityDefinitions = EMPTY_IMPORTS,
-  ): ImportedAbilityEntityDefinitions {
+  mergeResourceImports(
+    external: ActionGraphImports = EMPTY_GRAPH_IMPORTS,
+    local: ActionGraphImports = EMPTY_GRAPH_IMPORTS,
+  ): ActionGraphImports {
     Object.freeze(external);
     Object.freeze(local);
     let locals = this.#mergedImports.get(external);
     if (!locals) this.#mergedImports.set(external, (locals = new WeakMap()));
     let merged = locals.get(local);
     if (!merged) {
-      merged = Object.freeze({ ...external, ...local });
+      merged = Object.freeze({
+        abilityEntities: Object.freeze({ ...external.abilityEntities, ...local.abilityEntities }),
+        projectiles: Object.freeze({ ...external.projectiles, ...local.projectiles }),
+      });
       locals.set(local, merged);
     }
     return merged;
@@ -106,19 +121,20 @@ export class ActionGraphDefinitionRepository {
     return prepared;
   };
 
-  /** 是否需要实体依赖目录是固定图结构属性，与技能等级和摆放位置无关。 */
-  requiresAbilityEntityImports(graph: ActionGraphResourceDefinition): boolean {
-    return this.#prepare(graph).spawnsAbilityEntity;
+  /** 是否引用外部资源由图结构决定，与技能等级和摆放位置无关。 */
+  requiresResourceImports(graph: ActionGraphResourceDefinition): boolean {
+    return this.#prepare(graph).requiresResourceImports;
   }
 
   compile(
     graph: ActionGraphDefinition | ActionGraphResourceDefinition,
     level: number,
     entities: OperatorAbilityEntityDefinitions = EMPTY_ENTITIES,
-    imports: ImportedAbilityEntityDefinitions = EMPTY_IMPORTS,
+    imports: ActionGraphImports = EMPTY_GRAPH_IMPORTS,
   ): ActionGraphCompilation {
     this.#publish(graph);
     this.#publish(entities);
+    this.#publish(imports.projectiles);
     let contexts = this.#graphs.get(graph);
     if (!contexts) {
       contexts = new WeakMap();

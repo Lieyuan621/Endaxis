@@ -1,3 +1,4 @@
+import type { RangeSampleSource } from '../random/simulationRandom';
 import { bindOperatorResistanceDerivation } from '../attributes/operatorAttackAttributes';
 import type { BeforeBuffImmunityEvents } from '../buffs/buffApplicationEvents';
 import { ABILITY_EVENTS } from '../../../../packages/game-data-contract/src/abilityEvents';
@@ -269,6 +270,7 @@ type EnvironmentOptions = Pick<
   | 'resolveVitals'
   | 'resolveOperatorVitals'
   | 'probabilitySamples'
+  | 'rangeSamples'
   | 'readSourceAttributeValue'
   | 'emitOperatorEnterFight'
   | 'clearPendingAbilityEvents'
@@ -307,6 +309,7 @@ export interface StandardPlayerDamageEnvironmentOptions {
   readonly criticalSamples: CriticalSampleSource;
   /** RandomUtil.Dice 的独立样本源，不与暴击随机流混用。 */
   readonly probabilitySamples?: ProbabilitySampleSource;
+  readonly rangeSamples?: RangeSampleSource;
   readonly randomMode?: SimulationRandomMode;
   /** 必须与两个样本端口实际消费的状态一致；自定义源不能用空状态冒充。 */
   readonly randomState?: SimulationRandomState;
@@ -567,6 +570,7 @@ export class StandardPlayerDamageEnvironment {
     // 对象字面量中的 getter 会把自己的 this 绑定为字面量本身，因此用箭头闭包引用环境实例。
     const vitalsRuntimeOf = (): FrameRuntime | null => this.#enemyVitalsRuntime;
     this.runtimeOptions = {
+      ...(options.rangeSamples === undefined ? {} : { rangeSamples: options.rangeSamples }),
       ...(options.probabilitySamples === undefined
         ? {}
         : { probabilitySamples: options.probabilitySamples }),

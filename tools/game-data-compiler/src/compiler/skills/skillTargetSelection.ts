@@ -27,12 +27,8 @@ export function compileSkillTargetSelection(source: SkillTargetSelectionHeaderSo
   return {
     source,
     definition: {
-      ...(source.selectStrategy === 'SelectSmartObject'
-        ? {}
-        : {
-            defaultTarget:
-              source.selectStrategy === 'NoTarget' ? ('owner' as const) : ('enemy' as const),
-          }),
+      // GetDefaultTarget 同样处理智能策略；施放输入与 smart_target 独立保存。
+      defaultTarget: source.selectStrategy === 'NoTarget' ? ('owner' as const) : ('enemy' as const),
       ...(smartTarget === undefined ? {} : { smartTarget }),
     },
     projection: 'fixed-dummy-normal-targeting' as const,

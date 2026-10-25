@@ -1,3 +1,9 @@
+import {
+  GAME_LOCALE_FILES,
+  GAME_LOCALE_REBUILD_OUTPUTS,
+  GAME_DATA_PUBLISH_DIRECTORY_OUTPUTS,
+  GAME_DATA_PUBLISH_FILE_OUTPUTS,
+} from './gameDataOutputs.ts';
 import fs from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
@@ -22,7 +28,7 @@ import { generateBattleCommandMappingCatalog } from './generateBattleCommandMapp
 import { generateMovementSettingCatalog } from './generateMovementSettingCatalog.ts';
 import { generateHitStopCurveCatalog } from './generateHitStopCurveCatalog.ts';
 import { generateSkillSettingCatalog } from './generateSkillSettingCatalog.ts';
-import { formatGeneratedCandidate, formatGeneratedSource } from './formatGeneratedSource.ts';
+import { formatGeneratedCandidate } from '../src/compiler/publication/formatGeneratedSource.ts';
 import { generateGlobalBuffCatalog } from './generateGlobalBuffCatalog.ts';
 import { generateContingencyContractLocales } from './generateContingencyContractLocales.ts';
 import { generateCombatDefinitionCandidates } from './generateCombatDefinitionCandidates.ts';
@@ -48,19 +54,11 @@ import {
 } from '../src/domains/locales/gameLocaleCandidate.ts';
 
 const PROJECT_ROOT = path.resolve(import.meta.dirname, '../../..');
-const GAME_LOCALE_FILES = ['zh', 'en'].flatMap(locale =>
-  [
-    'operators',
-    'terms',
-    'weapons',
-    'gearsets',
-    'gearpieces',
-    'enemies',
-    'contingency-contracts',
-    'consumables',
-  ].map(name => `${locale}/${name}.json`),
-);
-const GAME_LOCALE_REBUILD_OUTPUTS = GAME_LOCALE_FILES.map(file => `src/i18n/game-locales/${file}`);
+const CONTINGENCY_CONTRACT_OUTPUTS = [
+  'src/data/contingencyContract/generated',
+  'public/contingency_contract',
+  ...['zh', 'en'].map(locale => `src/i18n/game-locales/${locale}/contingency-contracts.json`),
+];
 
 export interface RebuildArguments {
   /** 与来源同版本的字段/枚举目录；数字枚举只在读取视图中解码。 */
@@ -72,45 +70,13 @@ export interface RebuildArguments {
   readonly workers: number;
   readonly tablesOnly: boolean;
   readonly publish: boolean;
+  /** 保留已发布的合约定义、文本及图标，其余领域仍完整生成和验收。 */
+  readonly skipContingencyContract?: boolean;
   /** 显式本机 VFS 通用 worker，不执行 HTTP 响应中的命令。 */
   readonly unityWorker?: string;
 }
 
 export const GAME_DATA_CANDIDATE_TSCONFIG = 'tsconfig.app.json';
-
-const GAME_DATA_PUBLISH_DIRECTORY_OUTPUTS = [
-  'src/data/buffs/generated',
-  'src/data/equipment/generated',
-  'src/data/equipment/generated-weapons',
-  'src/data/equipment/generated-gear-sets',
-  'src/data/enemies/generated',
-  'src/data/contingencyContract/generated',
-  'src/data/consumables/generated',
-  // These roots contain referenced game-derived WebP files plus the four explicitly audited
-  // project defaults. Replacing the roots removes stale, no-longer-referenced game icons.
-  'public/equipment',
-  'public/consumables',
-  'public/contingency_contract',
-  'public/enemies',
-  'public/icons',
-  'public/operators',
-  'public/weapons',
-] as const;
-
-const GAME_DATA_PUBLISH_FILE_OUTPUTS = [
-  'src/imageCatalog.generated.ts',
-  ...OPERATOR_DEFINITION_OUTPUTS,
-  'src/data/combat/gameplayTagCatalog.generated.ts',
-  'src/data/combat/gameplayTagPredefine.generated.ts',
-  'src/data/combat/hitStopCurveCatalog.generated.ts',
-  'src/data/combat/timeDilationCatalog.generated.ts',
-  'src/data/combat/battleCommandMappingCatalog.generated.ts',
-  'src/data/combat/movementSettingCatalog.generated.ts',
-  'src/data/combat/skillSettings.generated.ts',
-  ...GAME_LOCALE_REBUILD_OUTPUTS,
-  'src/i18n/game-locales/zh/stages.json',
-  'src/i18n/game-locales/en/stages.json',
-] as const;
 
 /** 游戏派生产物不等于整个 src/data 或 public；混合文件不能直接登记为可删除目录。 */
 export const GAME_DATA_REBUILD_BOUNDARIES = [
@@ -426,6 +392,15 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
         const contingencyContractLocaleRoot = path.join(candidateRoot, 'src/i18n/game-locales');
         let contingencyContractGlobalBuffIds: readonly string[] = [];
         const contingencyContractOkay = await stage('contingency-contract-locales', async () => {
+          if (args.skipContingencyContract) {
+            // 保留资源进入候选校验，但不得以本次版本的生成结果发布。
+            for (const relative of CONTINGENCY_CONTRACT_OUTPUTS) {
+              const destination = path.join(candidateRoot, relative);
+              await fs.mkdir(path.dirname(destination), { recursive: true });
+              await fs.cp(path.join(root, relative), destination, { recursive: true });
+            }
+            return { preserved: CONTINGENCY_CONTRACT_OUTPUTS, regenerated: false };
+          }
           const input = {
             tableRoot: path.join(sourceRoot, 'TableCfg-current'),
             revision: snapshot!.version,
@@ -563,6 +538,7 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
           };
         });
         const operatorCandidateInput = {
+          skipContingencyContract: args.skipContingencyContract,
           nativeJsonEncoding,
           gameplayTagPredefineTable: path.join(
             sourceRoot,
@@ -933,8 +909,14 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
         ...(await publishGameDataCandidate({
           projectRoot: root,
           candidateRoot,
-          directoryOutputs: GAME_DATA_PUBLISH_DIRECTORY_OUTPUTS,
-          fileOutputs: GAME_DATA_PUBLISH_FILE_OUTPUTS,
+          directoryOutputs: GAME_DATA_PUBLISH_DIRECTORY_OUTPUTS.filter(
+            output =>
+              !args.skipContingencyContract || !CONTINGENCY_CONTRACT_OUTPUTS.includes(output),
+          ),
+          fileOutputs: GAME_DATA_PUBLISH_FILE_OUTPUTS.filter(
+            output =>
+              !args.skipContingencyContract || !CONTINGENCY_CONTRACT_OUTPUTS.includes(output),
+          ),
         })),
         note: '全部候选门禁和来源冻结检查通过后，逐文件同步专用生成/图片目录并精确替换混合目录中的语言与全局文件；过期文件删除，任一失败由预先备份逆序恢复。',
       }));
@@ -950,13 +932,16 @@ export async function rebuildGameData(args: RebuildArguments, projectRoot = PROJ
           },
         }),
     sourcePolicy: 'akedb-primary-vfs-fallback',
-    fullRebuild: published,
+    fullRebuild: published && !args.skipContingencyContract,
     published,
+    preservedOutputs: args.skipContingencyContract ? CONTINGENCY_CONTRACT_OUTPUTS : [],
     requestedScope: args.tablesOnly
       ? 'tables-and-gear-candidate'
-      : args.publish
-        ? 'full-and-publish'
-        : 'full-candidate',
+      : args.skipContingencyContract
+        ? 'all-except-contingency-contract'
+        : args.publish
+          ? 'full-and-publish'
+          : 'full-candidate',
     runRoot,
     sourceRoot,
     candidateRoot,
@@ -1088,6 +1073,7 @@ async function exportCandidateGameLocales(input: GameLocaleCandidateInput) {
     'gearpieces.json',
     'gearsets.json',
     'operators.json',
+    'stages.json',
     'terms.json',
     'weapons.json',
   ];
@@ -1102,8 +1088,6 @@ async function exportCandidateGameLocales(input: GameLocaleCandidateInput) {
     counts[locale] = {};
     for (const file of expectedFiles) {
       const output = path.join(directory, file);
-      const formatted = await formatGeneratedSource(await fs.readFile(output, 'utf8'), output);
-      await fs.writeFile(output, formatted, 'utf8');
       const document = requireRecord(await readJson(output), `${locale}/${file}`);
       const count = Object.keys(document).length;
       if (count === 0) throw new Error(`${locale}/${file}: empty locale document`);
@@ -1191,6 +1175,7 @@ export function parseRebuildArguments(values: readonly string[]): RebuildArgumen
   const entries = new Map<string, string>();
   let tablesOnly = false;
   let publish = false;
+  let skipContingencyContract = false;
   const allowed = new Set([
     '--native-json-schema',
     '--source-root',
@@ -1202,6 +1187,10 @@ export function parseRebuildArguments(values: readonly string[]): RebuildArgumen
   ]);
   for (let i = 0; i < values.length; i++) {
     const flag = values[i]!;
+    if (flag === '--skip-contingency-contract' && !skipContingencyContract) {
+      skipContingencyContract = true;
+      continue;
+    }
     if (flag === '--tables-only' && !tablesOnly) {
       tablesOnly = true;
       continue;
@@ -1233,6 +1222,7 @@ export function parseRebuildArguments(values: readonly string[]): RebuildArgumen
     workers,
     tablesOnly,
     publish,
+    skipContingencyContract,
     ...(entries.has('--unity-worker')
       ? { unityWorker: path.resolve(entries.get('--unity-worker')!) }
       : {}),

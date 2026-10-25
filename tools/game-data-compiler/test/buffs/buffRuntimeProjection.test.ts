@@ -1420,7 +1420,13 @@ describe('公共 Buff 运行时投影', () => {
           actions: [
             leaf(
               'condition',
-              { kind: 'floatCompare', left: { blackboardKey: 'distance' } },
+              {
+                kind: 'floatCompare',
+                sourceType: 'CompareFloat',
+                comparison: 'GT',
+                left: { value: 0, blackboardKey: 'distance', levelValues: null },
+                right: { value: 0, blackboardKey: null, levelValues: null },
+              },
               'SkillData.spatial.compare',
             ),
           ],
@@ -1444,7 +1450,16 @@ describe('公共 Buff 运行时投影', () => {
             kind: 'ifElse' as const,
             condition: {
               ...flags,
-              actions: [leaf('condition', { kind: 'mainOperator' }, 'SkillData.spatial.owner')],
+              actions: [
+                leaf(
+                  'condition',
+                  {
+                    kind: 'mainOperator',
+                    target: parseTargetReferenceSource(targetFixture('Owner'), 'owner'),
+                  },
+                  'SkillData.spatial.owner',
+                ),
+              ],
             },
             whenTrue: {
               ...flags,
@@ -1453,8 +1468,11 @@ describe('公共 Buff 运行时投影', () => {
                   'spatialMeasurement',
                   {
                     kind: 'targetDistance',
-                    source: { targetSource: 'Context', targetGroupKey: 'presentation_only' },
-                    target: { targetSource: 'Source', targetGroupKey: '' },
+                    source: parseTargetReferenceSource(
+                      targetFixture('Context', undefined, 'presentation_only'),
+                      'source',
+                    ),
+                    target: parseTargetReferenceSource(targetFixture('Source'), 'target'),
                     outputKey: 'distance',
                   },
                   'SkillData.spatial.distance',
@@ -1468,14 +1486,6 @@ describe('公共 Buff 运行时投影', () => {
         },
       ],
     };
-    expect(() =>
-      projectSequence(source as never, {
-        gameplayTagRegistry: fixtureGameplayTagRegistry,
-        actionOwnerTarget: 'caster',
-        actionSourceTarget: 'caster',
-        actionTargetTarget: 'enemy',
-      }),
-    ).toThrow('unresolved target-distance endpoint');
     const context = {
       gameplayTagRegistry: fixtureGameplayTagRegistry,
       actionOwnerTarget: 'caster' as const,
@@ -1484,9 +1494,12 @@ describe('公共 Buff 运行时投影', () => {
       isBlackboardKeyUnusedByExternalResources: (key: string) => key === 'distance',
     };
     // 单个入口不能证明其他生命周期没有读取，即使已经排除外部资源。
-    expect(() => projectSequence(source as never, context)).toThrow(
-      'unresolved target-distance endpoint',
-    );
+    const unoptimized = projectSequence(source as never, context);
+    expect(
+      Object.values(unoptimized.graph.nodes).some(
+        node => node.action.kind === 'saveTargetDistance',
+      ),
+    ).toBe(true);
     const optimized = simplifyNativeSequences(
       { start: source },
       context.isBlackboardKeyUnusedByExternalResources,
@@ -1498,9 +1511,10 @@ describe('公共 Buff 运行时投影', () => {
       context.isBlackboardKeyUnusedByExternalResources,
       'resource',
     );
-    expect(() => projectSequence(withLaterReader.start as never, context)).toThrow(
-      'unresolved target-distance endpoint',
-    );
+    const retained = projectSequence(withLaterReader.start as never, context);
+    expect(
+      Object.values(retained.graph.nodes).some(node => node.action.kind === 'saveTargetDistance'),
+    ).toBe(true);
   });
 
   it('角色受伤监听保留实际来源和持续伤害守卫，不能假定仅来自敌方直接攻击', () => {
@@ -5558,6 +5572,18 @@ it('Buff 的随机点查询保留空间点数量，不冒充敌人目标', () =>
   });
   expect(lifecycleSteps(definition, 'enable')).toContainEqual({
     kind: 'createSpatialPointTargets',
-    parameters: { saveToContextKey: 'randomPos', count: { kind: 'constant', value: 1 } },
+    parameters: {
+      saveToContextKey: 'randomPos',
+      count: { kind: 'constant', value: 1 },
+      origin: { kind: 'owner' },
+      randomDistribution: {
+        shape: 'circle',
+        radius: { kind: 'blackboard', key: 'radius' },
+        minimumRadius: { kind: 'blackboard', key: 'radius_min' },
+        angleDegrees: { kind: 'constant', value: 0 },
+        localPlaneRotation: [0, 0, 0].map(value => ({ kind: 'constant', value })),
+        centerOnGround: true,
+      },
+    },
   });
 });

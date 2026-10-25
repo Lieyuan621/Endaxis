@@ -1,3 +1,10 @@
+import {
+  stationaryProjectileDefinition,
+  returningProjectileDefinition,
+  pointProjectileLaunch,
+  returnProjectileLaunch,
+} from '../../test/projectileFlight';
+
 import type { CombatSkillCastInfo } from '../state/foundationState';
 import { CombatBuffContainer } from '../buffs/combatBuffs';
 import { CombatAttributeSet } from '../attributes/combatAttributes';
@@ -468,13 +475,25 @@ it('恢复条件动作的执行状态，不重新检查或重放后继', () => {
   expect(execute).toHaveBeenCalledTimes(2);
 });
 
+const projectileDefinitions = {
+  returning: returningProjectileDefinition(2),
+  stationary: stationaryProjectileDefinition(1),
+  sourceProbe: stationaryProjectileDefinition(2),
+};
+
 const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
   dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
-  graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
+  graph: createActionGraphCompilation(
+    { nodes, dataNodes },
+    1,
+    revision,
+    {},
+    { abilityEntities: {}, projectiles: projectileDefinitions },
+  ).compileAll(),
   entry,
   callSite: revision,
 });
@@ -1008,7 +1027,9 @@ describe('CombatActionSequenceRuntime', () => {
         kind: 'launchProjectile',
         parameters: {
           inheritActionBlackboard: true,
-          finish: { reachAfterTicks: 2, maxDurationSeconds: 2 },
+
+          projectileId: 'returning',
+          launch: returnProjectileLaunch,
           recycleDelaySeconds: 0,
         },
         callbacks: [],
@@ -1623,7 +1644,6 @@ describe('CombatActionSequenceRuntime', () => {
         launchProjectile: schedule,
       },
     );
-    const finish = { reachAfterTicks: 2, maxDurationSeconds: 2 };
     const launches = runtime.createSequence(
       compileGraphEntry('projectile-launch-count', 'loop', {
         loop: {
@@ -1637,7 +1657,14 @@ describe('CombatActionSequenceRuntime', () => {
         launch: {
           action: {
             kind: 'launchProjectile',
-            parameters: { inheritActionBlackboard: true, finish, recycleDelaySeconds: 1.5, source },
+            parameters: {
+              projectileId: 'sourceProbe',
+              launch: pointProjectileLaunch,
+              inheritActionBlackboard: true,
+
+              recycleDelaySeconds: 1.5,
+              source,
+            },
             callbacks: [],
           },
           next: null,
@@ -1652,7 +1679,6 @@ describe('CombatActionSequenceRuntime', () => {
     if (count > 0)
       expect(schedule).toHaveBeenCalledWith(
         expect.objectContaining({
-          finish,
           recycleDelaySeconds: 1.5,
           sourceId: expectedSource,
           callbacks: [],
@@ -1663,14 +1689,22 @@ describe('CombatActionSequenceRuntime', () => {
   it('投射物固定发射点与目标集合后逐对发射，白名单保留空间点身份', () => {
     const selected = [{ kind: 'spatialPoint' as const, pointId: 7 }];
     const queryTargets = vi.fn(() => selected);
-    const launchProjectile = vi.fn(() => {
-      targetContext.set('points', []);
-      return {
-        target: { kind: 'abilityEntity' as const, instanceId: 1 },
-        instanceId: 1,
-        onReset: () => ({ registrationId: 0, dispose: () => {} }),
-      };
-    });
+    const endpoints: unknown[] = [];
+    const launchProjectile = vi.fn(
+      (request: Parameters<import('../skills/skillRuntime').LaunchProjectile>[0]) => {
+        const query = { kind: 'context', key: 'points' } as const;
+        endpoints.push([
+          request.resolveFlightTargets?.(query, 'start'),
+          request.resolveFlightTargets?.(query, 'target'),
+        ]);
+        targetContext.set('points', []);
+        return {
+          target: { kind: 'abilityEntity' as const, instanceId: 1 },
+          instanceId: 1,
+          onReset: () => ({ registrationId: 0, dispose: () => {} }),
+        };
+      },
+    );
     const targetContext = new RuntimeTargetContext();
     targetContext.set('points', [
       { kind: 'spatialPoint', pointId: 8 },
@@ -1687,8 +1721,10 @@ describe('CombatActionSequenceRuntime', () => {
             action: {
               kind: 'launchProjectile',
               parameters: {
+                projectileId: 'stationary',
+                launch: pointProjectileLaunch,
                 inheritActionBlackboard: false,
-                finish: 1,
+
                 targets: { kind: 'context', contextKey: 'points' },
                 emitters: { kind: 'context', contextKey: 'points' },
                 onlyHitTargets: { kind: 'inputTarget' },
@@ -1703,6 +1739,13 @@ describe('CombatActionSequenceRuntime', () => {
     selected.length = 0;
     expect(queryTargets).toHaveBeenCalledOnce();
     expect(launchProjectile).toHaveBeenCalledTimes(4);
+    const point = (pointId: number) => [{ kind: 'spatialPoint', pointId }];
+    expect(endpoints).toEqual([
+      [point(8), point(8)],
+      [point(8), point(9)],
+      [point(9), point(8)],
+      [point(9), point(9)],
+    ]);
     expect(launchProjectile).toHaveBeenLastCalledWith(
       expect.objectContaining({
         onlyHitTargets: [{ kind: 'spatialPoint', pointId: 7 }],

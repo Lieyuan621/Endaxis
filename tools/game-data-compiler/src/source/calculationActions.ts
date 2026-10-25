@@ -24,17 +24,18 @@ export interface SaveTwoDirectionAngleActionSource {
   readonly outputKey: string;
 }
 
+export interface CurveEvaluateFloatActionSource {
+  readonly kind: 'evaluateCurve';
+  readonly input: ScalarSource;
+  readonly outputKey: string;
+  readonly curve: readonly TimeDilationCurveKeySource[];
+}
+
 export type PresentationCalculationActionSource =
   | {
       /** 玩家移动输入的有符号角度；仅可在其全部保留消费者消失后从战斗程序省略。 */
       readonly kind: 'saveMoveAxisAngle';
       readonly outputKey: string;
-    }
-  | {
-      readonly kind: 'evaluateCurve';
-      readonly input: ScalarSource;
-      readonly outputKey: string;
-      readonly curve: readonly TimeDilationCurveKeySource[];
     }
   | {
       readonly kind: 'saveCameraAngle';
@@ -144,7 +145,7 @@ export function parseCurveEvaluateFloatActionSource(
   value: unknown,
   path: string,
   inheritedBlackboard: BlackboardLevelValues,
-): PresentationCalculationActionSource {
+): CurveEvaluateFloatActionSource {
   const action = requireRecord(value, path);
   requireExactFields(
     action,

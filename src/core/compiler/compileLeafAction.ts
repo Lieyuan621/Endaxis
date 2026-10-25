@@ -71,7 +71,10 @@ const LEAF_ACTION_KINDS = [
   'storeShieldValue',
   'modifyActionValue',
   'storeRandomInteger',
+  'storeRandomFloat',
   'calculateActionValue',
+  'evaluateCurve',
+  'saveTargetDistance',
   'storeSourceAttributeValue',
   'storeEntityPropertyValue',
   'recoverDashEnergy',
@@ -454,7 +457,13 @@ export function compileLeafAction(
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'modifyActionValue':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'storeRandomFloat':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'storeRandomInteger':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'saveTargetDistance':
+      return { ...keyed, kind: step.kind, parameters: step.parameters };
+    case 'evaluateCurve':
       return { ...keyed, kind: step.kind, parameters: step.parameters };
     case 'calculateActionValue':
       return { ...keyed, kind: step.kind, parameters: step.parameters };

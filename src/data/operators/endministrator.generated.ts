@@ -234,6 +234,7 @@ export const endministratorChr_0003_endminf_combo_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 4, sequence: { $sequence: 'ifElse_11' } },
     { startFrame: 23, endFrame: 54, sequence: { $sequence: 'reachSkillOperableBoundary_12' } },
   ],
+  defaultTarget: 'enemy',
   smartTarget: 'input',
   cooldownFrames: [480, 480, 480, 480, 480, 480, 480, 480, 480, 480, 480, 450],
   skillType: 'comboSkill',

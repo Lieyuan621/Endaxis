@@ -96,12 +96,14 @@ it('不继承施法来源的实体仍恢复创建时的定义，不选同名的�
 
 it('统一恢复能力实体子技能和直属子 Buff，且不重放子技能开始', () => {
   const clock = new CombatClock();
-  const createCallbackSkillHost = createCallbackSkillHostFactory({
-    clock,
-    receipt: new CombatReceiptCollector(),
-    definitionOperatorId: 'operator',
-    allocateSkillCastId: () => 1,
-  });
+  const createCallbackSkillHost = vi.fn(
+    createCallbackSkillHostFactory({
+      clock,
+      receipt: new CombatReceiptCollector(),
+      definitionOperatorId: 'operator',
+      allocateSkillCastId: () => 1,
+    }),
+  );
   const programs = new AbilityEntityChildSkillPrograms();
   const binding = programs.register(childProgram);
   const original = new LogicalAbilityEntityRuntime({});
@@ -109,6 +111,7 @@ it('统一恢复能力实体子技能和直属子 Buff，且不重放子技能�
     abilityEntityId: 'orb',
     ownerId: 'operator',
     source: { kind: 'operator', operatorId: 'operator' },
+    skillCastInfo: { skillCastId: 99, originSkillId: 'parent', nonReturnedSpCost: 0 },
     definition: {
       lifetime: { kind: 'infinite' },
       childSkill: { skillId: childProgram.skillId },
@@ -179,6 +182,8 @@ it('统一恢复能力实体子技能和直属子 Buff，且不重放子技能�
   });
 
   expect(execute).not.toHaveBeenCalled();
+  // 实体继承了父技能，但这个独立子技能没有继承；恢复不能补上父来源。
+  expect(createCallbackSkillHost.mock.lastCall?.[1].skillCastInfo).toBeUndefined();
   clock.advanceFrame();
   restoredRuntime.advanceFrame();
   expect(execute).toHaveBeenCalledOnce();

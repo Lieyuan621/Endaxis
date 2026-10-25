@@ -13,9 +13,14 @@ export const avywennaChr_0012_avywen_combo_skillActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickBlock',
+            projectileId: 'projectile_chr_0012_avywen_combo_skill_lance_out',
             recycleDelaySeconds: 30,
+            targets: { kind: 'context', contextKey: 'lance_land_pos' },
+            launch: {
+              start: { side: 'operator' },
+              segmentTargets: [{ target: { kind: 'context', key: 'lance_land_pos' } }],
+              landingAtTarget: true,
+            },
           },
           callbacks: [
             {
@@ -81,6 +86,17 @@ export const avywennaChr_0012_avywen_combo_skillActionGraph = {
           parameters: {
             saveToContextKey: 'lance_land_pos3',
             count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+            offset: {
+              local: [
+                { kind: 'constant', value: -3 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 5 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
           },
         },
         next: 'mergeContextTargets_2',
@@ -91,6 +107,17 @@ export const avywennaChr_0012_avywen_combo_skillActionGraph = {
           parameters: {
             saveToContextKey: 'lance_land_pos2',
             count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 6 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
           },
         },
         next: 'createSpatialPointTargets_3',
@@ -101,6 +128,17 @@ export const avywennaChr_0012_avywen_combo_skillActionGraph = {
           parameters: {
             saveToContextKey: 'lance_land_pos1',
             count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 3 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 5 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
           },
         },
         next: 'createSpatialPointTargets_4',
@@ -1416,10 +1454,12 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: { EntityBB_talent0: 0 },
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0012_avywen_combo_skill_lance_back',
             recycleDelaySeconds: 0.5,
-            hit: { finishOnHit: false },
+            launch: {
+              start: { target: { kind: 'context', key: 'launchPos' } },
+              segmentTargets: [{ side: 'operator' }],
+            },
           },
           callbacks: [
             {
@@ -1589,7 +1629,25 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
       createSpatialPointTargets_20: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'launchPos', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'launchPos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'inputTarget' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0.2 },
+                { kind: 'constant', value: -4 },
+              ],
+              facing: {
+                source: { kind: 'inputTarget' },
+                target: { kind: 'source' },
+                invert: false,
+              },
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
         },
         next: 'launchProjectile_19',
       },
@@ -1643,10 +1701,12 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: { EntityBB_talent0: 0 },
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0012_avywen_ultimate_skill_lance_back',
             recycleDelaySeconds: 0.5,
-            hit: { finishOnHit: false },
+            launch: {
+              start: { target: { kind: 'context', key: 'launchPos' } },
+              segmentTargets: [{ side: 'operator' }],
+            },
           },
           callbacks: [
             {
@@ -1843,7 +1903,25 @@ export const avywennaChr_0012_avywen_normal_skillActionGraph = {
       createSpatialPointTargets_28: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'launchPos', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'launchPos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'inputTarget' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0.4 },
+                { kind: 'constant', value: -4 },
+              ],
+              facing: {
+                source: { kind: 'inputTarget' },
+                target: { kind: 'source' },
+                invert: false,
+              },
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
         },
         next: 'launchProjectile_27',
       },
@@ -2045,7 +2123,25 @@ export const avywennaChr_0012_avywen_ultimate_skillActionGraph = {
       createSpatialPointTargets_3: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'TelePos', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'TelePos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'MainTar' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 4 },
+              ],
+              facing: {
+                source: { kind: 'context', key: 'MainTar' },
+                target: { kind: 'context', key: 'MainChar' },
+                invert: false,
+              },
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
         },
         next: null,
       },
@@ -2101,9 +2197,14 @@ export const avywennaChr_0012_avywen_ultimate_skillActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickBlock',
+            projectileId: 'projectile_chr_0012_avywen_ultimate_skill_lance_out',
             recycleDelaySeconds: 30,
+            targets: { kind: 'context', contextKey: 'UltiLancePos' },
+            launch: {
+              start: { side: 'operator' },
+              segmentTargets: [{ target: { kind: 'context', key: 'UltiLancePos' } }],
+              landingAtTarget: true,
+            },
           },
           callbacks: [
             {
@@ -2152,7 +2253,21 @@ export const avywennaChr_0012_avywen_ultimate_skillActionGraph = {
       createSpatialPointTargets_11: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'UltiLancePos', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'UltiLancePos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 8 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
         },
         next: 'launchProjectile_10',
       },
@@ -3001,6 +3116,246 @@ export const avywenna: OperatorDefinition = {
         nameKey: 'effects.name.thunderlanceEx',
         placement: 'operator',
       },
+    },
+  },
+  projectileDefinitions: {
+    projectile_chr_0012_avywen_combo_skill_lance_back: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: 10 } },
+              speed: { kind: 'constant', value: 35 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              distanceScaleCurve: [
+                {
+                  time: 0,
+                  value: 0.3,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 30,
+                  value: 3,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 2.6 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 10 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.5 },
+      },
+      blackboard: { EntityBB_talent0: 0 },
+      hit: { finishOnHit: false, maxHitCount: -1 },
+    },
+    projectile_chr_0012_avywen_combo_skill_lance_out: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
+              speed: { kind: 'constant', value: 50 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'parabola',
+                definition: { kind: 'speedGravity', gravity: { kind: 'constant', value: 250 } },
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.01 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 10 },
+        finishDistanceMeters: { kind: 'constant', value: 20 },
+        finishOnReach: false,
+        keepMovingOnReach: true,
+        reachRadiusMeters: { kind: 'constant', value: 0.01 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: false, maxHitCount: -1 },
+    },
+    projectile_chr_0012_avywen_ultimate_skill_lance_back: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: 10 } },
+              speed: { kind: 'constant', value: 35 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              distanceScaleCurve: [
+                {
+                  time: 0,
+                  value: 0.3,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 30,
+                  value: 3,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 2.6 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 10 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.5 },
+      },
+      blackboard: { EntityBB_talent0: 0 },
+      hit: { finishOnHit: false, maxHitCount: -1 },
+    },
+    projectile_chr_0012_avywen_ultimate_skill_lance_out: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
+              speed: { kind: 'constant', value: 70 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'parabola',
+                definition: { kind: 'speedGravity', gravity: { kind: 'constant', value: 250 } },
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.01 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 10 },
+        finishDistanceMeters: { kind: 'constant', value: 30 },
+        finishOnReach: false,
+        keepMovingOnReach: true,
+        reachRadiusMeters: { kind: 'constant', value: 0.01 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: false, maxHitCount: -1 },
     },
   },
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },

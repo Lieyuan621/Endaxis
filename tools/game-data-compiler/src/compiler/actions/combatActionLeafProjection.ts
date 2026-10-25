@@ -1,3 +1,4 @@
+import { projectAnimationCurveKeys } from '../animationCurveProjection.ts';
 import type {
   BuffApplicationSource,
   BuffApplicationTarget,
@@ -271,6 +272,7 @@ export function compileActionNode(
       'finisherSpGain',
       'presentation',
       'presentationCalculation',
+      'curveCalculation',
       'directionAngle',
       'spatial',
       'spatialMeasurement',
@@ -514,11 +516,7 @@ export function compileActionNode(
         action.targets.targetGroupKey === '' &&
         context.actionOwnerTarget === 'buffOwner' &&
         context.fixedBuffOwnerTarget === 'caster');
-    if (
-      action.eventName.blackboardKey !== null ||
-      action.eventName.value.length === 0 ||
-      action.eventParam.blackboardKey !== null
-    ) {
+    if (action.eventName.blackboardKey !== null || action.eventName.value.length === 0) {
       throw new Error(`${node.sourcePath}: unsupported custom ability event source/target/value`);
     }
     return [
@@ -526,7 +524,10 @@ export function compileActionNode(
         kind: 'triggerCustomAbilityEvent',
         parameters: {
           eventName: action.eventName.value,
-          eventParam: action.eventParam.value,
+          eventParam:
+            action.eventParam.blackboardKey === null
+              ? action.eventParam.value
+              : actionValueOperand(action.eventParam),
           target: targetIsCaster
             ? 'caster'
             : projectActionTargetQuery(action.targets, context, `${node.sourcePath}.targets`),
@@ -1443,19 +1444,13 @@ export function compileActionNode(
   }
   if (node.body.value.family === 'spatialMeasurement') {
     const action = node.body.value.action;
-    if (
-      !isProvenSpatialMeasurementEndpoint(action.source, partyTargetGroups, context) ||
-      !isProvenSpatialMeasurementEndpoint(action.target, partyTargetGroups, context)
-    ) {
-      throw new Error(`${node.sourcePath}: unresolved target-distance endpoint`);
-    }
     return [
       {
-        kind: 'modifyActionValue',
+        kind: 'saveTargetDistance',
         parameters: {
-          key: action.outputKey,
-          operation: 'assign',
-          value: { kind: 'constant', value: 0 },
+          source: projectActionTargetQuery(action.source, context, `${node.sourcePath}.source`),
+          target: projectActionTargetQuery(action.target, context, `${node.sourcePath}.target`),
+          outputKey: action.outputKey,
         },
       },
     ];
@@ -1727,6 +1722,20 @@ export function compileActionNode(
     return [];
   }
   if (node.body.value.family === 'presentationCalculation') return [];
+  if (node.body.value.family === 'curveCalculation') {
+    const action = node.body.value.action;
+    if (context.combatInvisiblePresentationBlackboardKeys?.has(action.outputKey)) return [];
+    return [
+      {
+        kind: 'evaluateCurve',
+        parameters: {
+          key: action.outputKey,
+          input: actionValueOperand(action.input),
+          curve: projectAnimationCurveKeys(action.curve, node.sourcePath),
+        },
+      },
+    ];
+  }
   if (node.body.value.family === 'directionAngle') {
     const action = node.body.value.action;
     return [
@@ -1769,6 +1778,17 @@ export function compileActionNode(
       return [
         {
           kind: 'storeRandomInteger',
+          parameters: {
+            key: action.targetKey,
+            minimum: actionValueOperand(action.minimum),
+            maximum: actionValueOperand(action.maximum),
+          },
+        },
+      ];
+    if (action.randomType === 'Float')
+      return [
+        {
+          kind: 'storeRandomFloat',
           parameters: {
             key: action.targetKey,
             minimum: actionValueOperand(action.minimum),
@@ -2034,38 +2054,6 @@ function isPlainTargetReference(
 
 function isMainEnemySearch(target: TargetReferenceSource): boolean {
   return isUniqueEnemyMainTargetInstantSearch(target);
-}
-
-function isProvenSpatialMeasurementEndpoint(
-  target: TargetReferenceSource,
-  targetGroups: ReadonlyMap<string, ProjectedTargetGroup>,
-  context: CombatActionProjectionContextSource,
-): boolean {
-  if (target.targetSource === 'Owner' && target.targetGroupKey === '')
-    return context.actionOwnerTarget !== 'unavailable';
-  if (target.targetSource === 'Source' && target.targetGroupKey === '') return true;
-  // 主控始终取当前队伍的主控实体；固定模型中它与其余实体共处零空间。
-  // 直接身份分支不读取残留的 Context 键。
-  if (target.targetSource === 'MainCharacter') return true;
-  // MainTarget 读取当前主目标，不依赖 Context；与其他有效实体一样投影到零空间。
-  if (target.targetSource === 'MainTarget') return true;
-  // GetTargetsView 的 Target 分支直接读取输入目标；序列化残留 group key 不参与寻址。
-  if (target.targetSource === 'Target') return true;
-  if (target.targetSource === 'InstantSearch' && target.finderType !== null) {
-    // 项目模型把所有已解析范围查找视为能找到其场景实例，并把任意两端距离统一为 0。
-    // 这里只承认载荷内联携带的真实 finder；命名 Context 仍必须由前序写入证明。
-    return true;
-  }
-  if (target.targetSource === 'Context' && target.targetGroupKey !== '')
-    // 零空间模型把实体间、实体到点及点到点距离统一投影为 0；但 Context 身份仍须
-    // 由先前目标组写入证明，不能凭非空字符串臆造端点。
-    return (
-      targetGroups.has(target.targetGroupKey) ||
-      context.guaranteedSingletonZeroSpaceTargetGroupKeys?.has(target.targetGroupKey) === true ||
-      context.staticEnemyTargetGroupKeys?.has(target.targetGroupKey) === true ||
-      context.staticZeroSpaceTargetGroupKeys?.has(target.targetGroupKey) === true
-    );
-  return false;
 }
 
 /** 命名组到施加目标的显式归属；新增组必须决定是否可直接作为 Buff 接收者。 */

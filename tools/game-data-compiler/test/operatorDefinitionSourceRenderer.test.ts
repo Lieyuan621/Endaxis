@@ -1,3 +1,4 @@
+import { stationaryProjectileFlight } from '../../../src/core/test/projectileFlight';
 import { ActionGraphDefinitionRepository } from '../../../src/core/compiler/actionGraphDefinitionRepository.ts';
 import { describe, expect, it } from 'vitest';
 import ts from 'typescript';
@@ -61,7 +62,7 @@ describe('independent operator resource renderer', () => {
     const launch = (skill: typeof callback, next: string | null) => ({
       action: {
         kind: 'launchProjectile',
-        parameters: { finish: 'firstTickReach' },
+        parameters: { flight: stationaryProjectileFlight(1) },
         callbacks: [{ event: 'hit', skill }],
       },
       next,

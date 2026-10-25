@@ -3,8 +3,8 @@ import type { GameplayTagPredefineDocument } from '../../../packages/game-data-c
 
 export const GAMEPLAY_TAG_PREDEFINE: GameplayTagPredefineDocument = {
   schemaVersion: 1,
-  revision: '1.6.3',
-  sourceSha256: 'ba90aa4cb663507cfb846b13af70c42bbe79eb86dfc79e44933970e3583f5558',
+  revision: '1.6.4@11262943-8',
+  sourceSha256: '1d6c0a4d664ff61f557db29a6d4165fd023fe0e9c1786512da766e2afe946600',
   tags: {
     Stun: 'Status/Immobilized/Stunned',
     DamageImmuneByLevel: 'Immune/Damage',

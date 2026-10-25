@@ -1200,3 +1200,62 @@ it('retains inputs but interrupts A4 before its first hit during another operato
     ),
   ).toBe(true);
 });
+
+it.each([true, false])(
+  '提弗洛斯浮空连携在单敌人模型中瞄准敌人并支持切面恢复：主控 %s',
+  async controlled => {
+    const scenario = createEmptyScenario('typhoeus-reach-target', '连携到达目标');
+    const owner = track('typhoeus', [
+      ['battleSkill', 'battleSkill', 10],
+      ['comboSkill', 'comboSkill', 100],
+    ]);
+    owner.skillCasts[1]!.source = {
+      kind: 'operatorSkill',
+      skillGroupKey: 'floatingComboSkill',
+      skillKey: 'chr_0034_typhoea_combo_skillfloating',
+    };
+    scenario.tracks[0] = controlled ? owner : track('arcane', []);
+    if (!controlled) scenario.tracks[1] = owner;
+    const session = createEditorSimulationService().createCombatSession(scenario);
+    session.advanceToFrame(136);
+    const restored = session.fork(session.runtime.save());
+    session.advanceToFrame(230);
+    restored.advanceToFrame(230);
+    const run = session.collectResult();
+    expect(restored.collectResult()).toEqual(run);
+    const hits = run.receiptEntries.filter(
+      e =>
+        e.event === 'DamageApplied' &&
+        String(e.data?.stepKey).includes('chr_0034_typhoea_combo_01_projhit'),
+    );
+    expect(
+      run.receiptEntries.some(
+        e => e.event === 'ProjectileLaunched' && e.data?.castId === 'typhoeus:comboSkill',
+      ),
+    ).toBe(true);
+    // 主控瞄准与非主控主目标均使用场景敌人。
+    expect(hits.length).toBe(1);
+  },
+);
+
+it.each([0, 10])('梨诺战技上射到达后继续攻击，飞行切面不重复发射：%s 米', async distance => {
+  const scenario = createEmptyScenario('liino-ascent', '梨诺上射');
+  scenario.battle.operatorEnemyDistanceMeters = distance;
+  scenario.tracks[0] = track('liino', [['battleSkill', 'battleSkill', 10]]);
+  const session = createEditorSimulationService().createCombatSession(scenario);
+  session.advanceToFrame(34);
+  const restored = session.fork(session.runtime.save());
+  session.advanceToFrame(300);
+  restored.advanceToFrame(300);
+  const run = session.collectResult();
+  expect(restored.collectResult()).toEqual(run);
+  const hits = run.receiptEntries.filter(
+    e =>
+      e.event === 'DamageApplied' &&
+      /chr_0035_liino_normal_skill_projhit(?:_02)?(?:[^a-zA-Z0-9_]|$)/.test(
+        String(e.data?.stepKey),
+      ),
+  );
+  expect(hits).toHaveLength(6);
+  expect(hits.every(e => e.frame > 34)).toBe(true);
+});

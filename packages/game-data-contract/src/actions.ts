@@ -1,3 +1,4 @@
+import type { ProjectileLaunchDefinition } from './projectiles.ts';
 import type { ActionEntitySelection, ActionTargetQuery, BuffLookupQuery } from './conditions.ts';
 import type { NativeSkillType } from './skills.ts';
 /**
@@ -15,8 +16,10 @@ import type {
   ActionValueCalculationOperation,
   ActionValueOperand,
   ActionValueOperation,
+  SpatialPointOffsetDefinition,
   CombatCondition,
   TimeScaleCurveDefinition,
+  TimeScaleCurveKeyDefinition,
 } from './conditions.ts';
 import type {
   AttributeModifierSlot,
@@ -285,12 +288,24 @@ export interface CombatStepParameters {
           readonly excludeCurrentTarget?: true;
         };
   };
-  /** 在零空间模型中只保存随机空间点的数量与稳定临时身份，不保存坐标。 */
+  /** 生成带稳定身份的空间点，位置在执行查询时确定。 */
   createSpatialPointTargets: {
+    /** 点的位置来源；挂点在固定距离模型中取所属对象的位置。 */
+    origin?: ActionTargetQuery;
+    offset?: SpatialPointOffsetDefinition;
     /** 保存临时空间点目标的动作环境键。 */
     saveToContextKey: string;
     /** 要创建的空间点数量。 */
     count: ActionValueOperand;
+    /** 固定朝向为干员面向敌人；地形与导航网格不在场景模型内。 */
+    randomDistribution?: {
+      shape: 'circle' | 'sector';
+      radius: ActionValueOperand;
+      minimumRadius: ActionValueOperand;
+      angleDegrees: ActionValueOperand;
+      localPlaneRotation: readonly [ActionValueOperand, ActionValueOperand, ActionValueOperand];
+      centerOnGround: boolean;
+    };
   };
   /** 按 owner 与生成期已解析的实体身份查询，并保存为本次释放的 Context 目标组。 */
   findOwnerSpawnedAbilityEntities: {
@@ -420,7 +435,7 @@ export interface CombatStepParameters {
     /** 发布的自定义事件名称。 */
     eventName: string;
     /** 随事件发送的浮点参数。 */
-    eventParam: number;
+    eventParam: number | ActionValueOperand;
     /** 逐个接收事件的目标；空集合不发布事件。 */
     target: 'caster' | ActionTargetQuery;
     /** 事件来源取查询的第一个目标；省略时使用施放者。 */
@@ -1058,6 +1073,25 @@ export interface CombatStepParameters {
     /** 运算输入值。 */
     value: ActionValueOperand;
   };
+  /** 按输入值读取曲线，结果显著变化时写入动作变量。 */
+  evaluateCurve: {
+    /** 保存曲线结果的动作变量。 */
+    key: string;
+    input: ActionValueOperand;
+    curve: readonly TimeScaleCurveKeyDefinition[];
+  };
+  /** 保存两个首目标的位置距离；任一目标不存在时不写入。 */
+  saveTargetDistance: {
+    source: ActionTargetQuery;
+    target: ActionTargetQuery;
+    outputKey: string;
+  };
+  /** 在浮点范围内取样并写入变量；允许反向范围。 */
+  storeRandomFloat: {
+    key: string;
+    minimum: ActionValueOperand;
+    maximum: ActionValueOperand;
+  };
   /** 执行时从左闭右开的整数范围取样并写入动作黑板；端点按原生容差向上取整。 */
   storeRandomInteger: {
     /** 保存随机结果的动作黑板键。 */
@@ -1266,6 +1300,9 @@ export interface CombatStepParameters {
   };
   /** 发射一个独立投射物；所有事件回调共享这一个对象的寿命和实体黑板。 */
   launchProjectile: {
+    /** 按原生移动参数推进；零距离也使用同一套飞行和碰撞规则。 */
+    projectileId: string;
+    launch: ProjectileLaunchDefinition;
     /** 发射时解析的碰撞白名单；空间点不具备可命中的实体身份。 */
     onlyHitTargets?: ActionTargetQuery;
     /** 每个目标各发射一枚；count 用于已折算为数量的零空间目标。省略时发射一枚。 */
@@ -1274,38 +1311,16 @@ export interface CombatStepParameters {
     emitters?: { kind: 'context'; contextKey: string };
     /** 发射时复制动作黑板的 direct 值，供本投射物回调使用。 */
     inheritActionBlackboard: boolean;
-    /** 每个投射物独立的实体黑板初值。 */
-    entityInitialValues?: Readonly<Record<string, number>>;
     /** 发射时求值一次，再写入投射物实体黑板。 */
     entityAssignments?: Readonly<Record<string, ActionValueOperand>>;
     /** 投射物归属动作来源（默认）或动作宿主；Buff 的二者可能不同。 */
     source?: 'actionSource' | 'actionOwner';
     /** 订阅发射来源的时间倍率和忽略全局缩放开关，直到投射物回收。 */
     syncTimeScale?: boolean;
-    /** 正数表示超时秒数；到达规则只用于生成器已证明的零距离移动。 */
-    finish:
-      | number
-      | 'firstTickReach'
-      /** 零空间落地近似：首个投射物 Tick 执行阻挡回调并结束飞行。 */
-      | 'firstTickBlock'
-      | {
-          reachAfterTicks: number;
-          maxDurationSeconds: number;
-          /** false 表示到达只触发回调，仍等待命中上限或寿命到期才结束。 */
-          finishOnReach?: boolean;
-        };
     /** 结束后的回收等待，取所有启用回调的最大技能时长。 */
     recycleDelaySeconds?: number;
-    /** 已证明的首 Tick 碰撞；省略表示没有碰撞回调。 */
-    hit?: {
-      /** 到达时直接命中发射目标，不执行碰撞阵营过滤。 */
-      onReach?: boolean;
-      /** 发射时锁定的到达目标；省略时为敌人。 */
-      target?: 'controlledOperator' | 'allOperators' | 'currentTarget';
-      finishOnHit: boolean;
-      hitTagFilter?: { tagQueryType: GameplayTagQueryType; tags: readonly GameplayTag[] };
-      retryRejectedHit?: boolean;
-    };
+    /** 到达时绑定的角色目标；省略时使用资源的碰撞阵营。 */
+    hitTarget?: 'controlledOperator' | 'currentTarget';
   };
   /** 为当前干员开启固定五秒的连携候选；下一段技能身份随候选进入场景级队列。 */
   openComboWindow:
@@ -1490,7 +1505,10 @@ export const COMBAT_STEP_KINDS = [
   'storeShieldValue',
   'modifyActionValue',
   'storeRandomInteger',
+  'storeRandomFloat',
   'calculateActionValue',
+  'evaluateCurve',
+  'saveTargetDistance',
   'storeSourceAttributeValue',
   'storeEntityPropertyValue',
   'setHealthFloor',

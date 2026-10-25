@@ -1,3 +1,4 @@
+import type { ProjectileHitDefinition } from '../../../../packages/game-data-contract/src/projectiles';
 /**
  * 战斗中动态创建的实例数据。
  *
@@ -9,12 +10,13 @@ import type {
   BuffStackingType,
 } from '../../../../packages/game-data-contract/src/buffs';
 import type { GameplayTag } from '../../../../packages/game-data-contract/src/gameplayTags';
+import type { ProjectileMovementState } from './projectileMovementState';
 import type {
   AbilityEntityTargetRef,
   LogicalAbilityEntityDefinition,
   RuntimeTargetRef,
 } from '../../game-data/logicalAbilityEntity';
-import type { CombatStepParameters, DamageType } from '../../game-data/operatorDefinition';
+import type { DamageType } from '../../game-data/operatorDefinition';
 import type {
   AbilityEntityChildSkillState,
   CallbackSkillHostState,
@@ -137,6 +139,8 @@ export interface AbilityEntitySoulState {
 
 /** 能力实体的身份、寿命、标记、子技能与黑板数据。 */
 export interface LogicalAbilityEntityState {
+  /** 出生时的位置快照，不随来源移动或回收而改变。 */
+  readonly position?: readonly [number, number, number];
   /** 创建时实际使用的固定定义槽位；与是否继承伤害施法来源无关。 */
   readonly definitionProgramId?: number;
   buffContainerCreated: boolean;
@@ -179,14 +183,8 @@ export interface LogicalAbilityEntityDirectoryState {
 export interface ProjectileCallbackState {
   /** 回调输入目标；launch 为投射物自身，hit 不得在执行时重新选择主控。 */
   inputTarget?: RuntimeTargetRef;
-  /** 同一投射物依次命中的友方目标；回调复用同一技能宿主及其冷却。 */
-  inputTargets?: readonly RuntimeTargetRef[];
   /** 启动本程序的原生事件；恢复沿用该字段，不根据是否已有宿主猜测。 */
   readonly event: 'launch' | 'hit' | 'block' | 'reach' | 'finish';
-  /** 本次发射的碰撞标签条件；只保存纯数据，恢复时重新绑定当前分支的判断逻辑。 */
-  readonly hitTagFilter?: NonNullable<
-    CombatStepParameters['launchProjectile']['hit']
-  >['hitTagFilter'];
   programId: number | null;
   readonly definitionOperatorId: string;
   readonly skillId: string;
@@ -195,20 +193,31 @@ export interface ProjectileCallbackState {
   host: CallbackSkillHostState | null;
 }
 
+export interface ProjectileHitTargets {
+  /** 实体 ID 对应上次命中时间；不允许重复时仅用于记录已命中目标。 */
+  hitTimes?: Map<string, number>;
+  readonly targets: readonly RuntimeTargetRef[];
+  readonly hitTagFilter?: ProjectileHitDefinition['hitTagFilter'];
+}
+
 export interface ProjectileLifetimeState {
+  /** 轨迹随机取样沿用发射动作的施法身份，不依赖是否配置回调技能。 */
+  readonly originCastId?: string;
+  readonly movement: ProjectileMovementState;
   readonly entityBlackboard: ActionBlackboardState;
   buffs: BuffContainerState | null;
   readonly callbacks: readonly ProjectileCallbackState[];
+  readonly hitTargets?: ProjectileHitTargets;
   readonly instanceId: number;
   source?: RuntimeTargetRef;
   phase: 'active' | 'finished' | 'marked' | 'reset';
   remainingSeconds: number;
-  remainingReachTicks: number | null;
-  /** 已发射但尚未执行的零空间落地，恢复时不得丢失或重复执行。 */
-  pendingBlock?: boolean;
   readonly finishOnReach: boolean;
-  /** 从首 Tick 开始的单目标碰撞；pending 表示仍待成功命中，拒绝后是否重试由数据明确指定。 */
-  firstTickHit: {
+  /** 碰撞检测状态；各目标的重复命中准入由 hitTargets 单独记录。 */
+  hitState: {
+    readonly maxHitCount?: number;
+    hitCount?: number;
+    readonly repeatIntervalSeconds?: number;
     readonly onReach?: boolean;
     pending: boolean;
     readonly finishOnHit: boolean;

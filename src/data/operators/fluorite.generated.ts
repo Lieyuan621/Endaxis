@@ -16,10 +16,12 @@ export const fluoriteChr_0022_bounda_attack1ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0022_bounda_attack1',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: {
+              start: { target: { kind: 'context', key: 'emit_pos' } },
+              segmentTargets: [{ side: 'enemy' }],
+            },
           },
           callbacks: [
             {
@@ -73,7 +75,21 @@ export const fluoriteChr_0022_bounda_attack1ActionGraph = {
       createSpatialPointTargets_2: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'emit_pos', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'emit_pos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 1.4 },
+                { kind: 'constant', value: 0.95 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
         },
         next: 'launchProjectile_1',
       },
@@ -125,10 +141,12 @@ export const fluoriteChr_0022_bounda_attack2ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0022_bounda_attack1',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: {
+              start: { target: { kind: 'context', key: 'emit_pos' } },
+              segmentTargets: [{ side: 'enemy' }],
+            },
           },
           callbacks: [
             {
@@ -182,7 +200,21 @@ export const fluoriteChr_0022_bounda_attack2ActionGraph = {
       createSpatialPointTargets_2: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'emit_pos', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'emit_pos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+            offset: {
+              local: [
+                { kind: 'constant', value: -0.1 },
+                { kind: 'constant', value: 1.4 },
+                { kind: 'constant', value: 0.5 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
         },
         next: 'launchProjectile_1',
       },
@@ -236,10 +268,12 @@ export const fluoriteChr_0022_bounda_attack3ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0022_bounda_attack1',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: {
+              start: { target: { kind: 'context', key: 'emit_pos' } },
+              segmentTargets: [{ side: 'enemy' }],
+            },
           },
           callbacks: [
             {
@@ -356,7 +390,21 @@ export const fluoriteChr_0022_bounda_attack3ActionGraph = {
       createSpatialPointTargets_2: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'emit_pos', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'emit_pos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 1.3 },
+                { kind: 'constant', value: 0.5 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
         },
         next: 'launchProjectile_1',
       },
@@ -427,10 +475,12 @@ export const fluoriteChr_0022_bounda_attack4ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0022_bounda_attack4',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: {
+              start: { target: { kind: 'context', key: 'emit_pos' } },
+              segmentTargets: [{ side: 'enemy' }],
+            },
           },
           callbacks: [
             {
@@ -553,7 +603,21 @@ export const fluoriteChr_0022_bounda_attack4ActionGraph = {
       createSpatialPointTargets_2: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'emit_pos', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'emit_pos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+            offset: {
+              local: [
+                { kind: 'constant', value: -0.1 },
+                { kind: 'constant', value: 1.3 },
+                { kind: 'constant', value: 0.5 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
         },
         next: 'launchProjectile_1',
       },
@@ -625,10 +689,12 @@ export const fluoriteChr_0022_bounda_attack4_1ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0022_bounda_attack4',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: {
+              start: { target: { kind: 'context', key: 'emit_pos' } },
+              segmentTargets: [{ side: 'enemy' }],
+            },
           },
           callbacks: [
             {
@@ -751,7 +817,21 @@ export const fluoriteChr_0022_bounda_attack4_1ActionGraph = {
       createSpatialPointTargets_2: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'emit_pos', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'emit_pos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+            offset: {
+              local: [
+                { kind: 'constant', value: -0.1 },
+                { kind: 'constant', value: 1.3 },
+                { kind: 'constant', value: 0.5 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
         },
         next: 'launchProjectile_1',
       },
@@ -1067,10 +1147,12 @@ export const fluoriteChr_0022_bounda_normal_skillActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 3,
+            projectileId: 'projectile_chr_0022_bounda_normal_skill',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: {
+              start: { target: { kind: 'context', key: 'start' } },
+              segmentTargets: [{ target: { kind: 'context', key: 'emitpos' } }, { side: 'enemy' }],
+            },
           },
           callbacks: [
             {
@@ -1153,14 +1235,42 @@ export const fluoriteChr_0022_bounda_normal_skillActionGraph = {
       createSpatialPointTargets_3: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'emitpos', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'emitpos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 1.25 },
+                { kind: 'constant', value: 0.7 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
         },
         next: 'launchProjectile_2',
       },
       createSpatialPointTargets_4: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'start', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'start',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+            offset: {
+              local: [
+                { kind: 'constant', value: -0.2 },
+                { kind: 'constant', value: 2 },
+                { kind: 'constant', value: 0.4 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
         },
         next: 'createSpatialPointTargets_3',
       },
@@ -1444,6 +1554,7 @@ export const fluoriteChr_0022_bounda_combo_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 13, sequence: { $sequence: 'startTimeDilation_19' } },
     { startFrame: 17, endFrame: 56, sequence: { $sequence: 'reachSkillOperableBoundary_20' } },
   ],
+  defaultTarget: 'enemy',
   smartTarget: 'trigger',
   cooldownFrames: [1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1140],
   skillType: 'comboSkill',
@@ -1499,10 +1610,9 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0022_bounda_ultimate_skill_1',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: false },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -1573,10 +1683,9 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0022_bounda_ultimate_skill_1',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: false },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -1646,10 +1755,9 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0022_bounda_ultimate_skill_1',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: false },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -1719,10 +1827,9 @@ export const fluoriteChr_0022_bounda_ultimate_skillActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0022_bounda_ultimate_skill_1',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: false },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -2832,11 +2939,22 @@ export const fluorite: OperatorDefinition = {
                 },
                 next: 'mergeContextTargets_9',
               },
-              finishOwner_11: {
+              createSpatialPointTargets_11: {
+                action: {
+                  kind: 'createSpatialPointTargets',
+                  parameters: {
+                    saveToContextKey: 'pos',
+                    count: { kind: 'constant', value: 1 },
+                    origin: { kind: 'owner' },
+                  },
+                },
+                next: 'finishBuffsById_10',
+              },
+              finishOwner_12: {
                 action: { kind: 'finishOwner', parameters: { targets: { kind: 'owner' } } },
                 next: null,
               },
-              ifElse_15: {
+              ifElse_16: {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
@@ -2846,7 +2964,7 @@ export const fluorite: OperatorDefinition = {
                 },
                 next: null,
               },
-              ifElse_16: {
+              ifElse_17: {
                 action: {
                   kind: 'ifElse',
                   parameters: { alwaysNext: true },
@@ -2854,9 +2972,9 @@ export const fluorite: OperatorDefinition = {
                   whenTrue: { $sequence: 'applyBuff_2' },
                   whenFalse: { $sequence: null },
                 },
-                next: 'ifElse_15',
+                next: 'ifElse_16',
               },
-              dealDamage_17: {
+              dealDamage_18: {
                 action: {
                   kind: 'dealDamage',
                   parameters: {
@@ -2875,18 +2993,18 @@ export const fluorite: OperatorDefinition = {
                     ],
                     stagger: { kind: 'valueNode', nodeId: 'data_7' },
                   },
-                  key: 'abilityentity_chr_0022_bounda_normal_skill:chr_0022_bounda_normal_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_17/action',
+                  key: 'abilityentity_chr_0022_bounda_normal_skill:chr_0022_bounda_normal_skill_abilityrange:/childSkill/actionGraph/main/nodes/dealDamage_18/action',
                 },
-                next: 'ifElse_16',
+                next: 'ifElse_17',
               },
-              applyElementalInfliction_18: {
+              applyElementalInfliction_19: {
                 action: {
                   kind: 'applyElementalInfliction',
                   parameters: { element: 'nature', isExtra: false },
                 },
-                next: 'dealDamage_17',
+                next: 'dealDamage_18',
               },
-              mergeContextTargets_19: {
+              mergeContextTargets_20: {
                 action: {
                   kind: 'mergeContextTargets',
                   parameters: {
@@ -2894,9 +3012,9 @@ export const fluorite: OperatorDefinition = {
                     sources: [{ kind: 'fixed', target: 'enemy' }],
                   },
                 },
-                next: 'applyElementalInfliction_18',
+                next: 'applyElementalInfliction_19',
               },
-              finishBuffsById_20: {
+              finishBuffsById_21: {
                 action: {
                   kind: 'finishBuffsById',
                   parameters: {
@@ -2909,9 +3027,20 @@ export const fluorite: OperatorDefinition = {
                     reason: 'other',
                   },
                 },
-                next: 'mergeContextTargets_19',
+                next: 'mergeContextTargets_20',
               },
-              jumpTimeline_23: {
+              createSpatialPointTargets_22: {
+                action: {
+                  kind: 'createSpatialPointTargets',
+                  parameters: {
+                    saveToContextKey: 'pos',
+                    count: { kind: 'constant', value: 1 },
+                    origin: { kind: 'owner' },
+                  },
+                },
+                next: 'finishBuffsById_21',
+              },
+              jumpTimeline_25: {
                 action: {
                   kind: 'jumpTimeline',
                   parameters: { destinationFrame: 89 },
@@ -2919,7 +3048,7 @@ export const fluorite: OperatorDefinition = {
                 },
                 next: null,
               },
-              jumpTimeline_25: {
+              jumpTimeline_27: {
                 action: {
                   kind: 'jumpTimeline',
                   parameters: { destinationFrame: 149 },
@@ -3018,14 +3147,278 @@ export const fluorite: OperatorDefinition = {
           potential_lv: 0,
         },
         scheduledSequences: [
-          { startFrame: 89, endFrame: 90, sequence: { $sequence: 'finishBuffsById_10' } },
-          { startFrame: 90, endFrame: 90, sequence: { $sequence: 'finishOwner_11' } },
-          { startFrame: 149, endFrame: 150, sequence: { $sequence: 'finishBuffsById_20' } },
-          { startFrame: 150, endFrame: 150, sequence: { $sequence: 'finishOwner_11' } },
-          { startFrame: 0, endFrame: 89, sequence: { $sequence: 'jumpTimeline_23' } },
+          { startFrame: 89, endFrame: 90, sequence: { $sequence: 'createSpatialPointTargets_11' } },
+          { startFrame: 90, endFrame: 90, sequence: { $sequence: 'finishOwner_12' } },
+          {
+            startFrame: 149,
+            endFrame: 150,
+            sequence: { $sequence: 'createSpatialPointTargets_22' },
+          },
+          { startFrame: 150, endFrame: 150, sequence: { $sequence: 'finishOwner_12' } },
           { startFrame: 0, endFrame: 89, sequence: { $sequence: 'jumpTimeline_25' } },
+          { startFrame: 0, endFrame: 89, sequence: { $sequence: 'jumpTimeline_27' } },
         ],
       },
+    },
+  },
+  projectileDefinitions: {
+    projectile_chr_0022_bounda_attack1: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 70 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 20 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0022_bounda_attack4: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 70 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 20 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0022_bounda_normal_skill: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: 'first',
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
+              speed: { kind: 'constant', value: 3.8 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.1 },
+                      { kind: 'constant', value: 0.1 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 90 },
+                      { kind: 'constant', value: 90 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.174 },
+                      { kind: 'constant', value: 0.174 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.327 },
+                      { kind: 'constant', value: 0.327 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 90 },
+                      { kind: 'constant', value: 90 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.2 },
+                      { kind: 'constant', value: 0.2 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+          {
+            targetKey: 'TargetPoint',
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
+              speed: { kind: 'constant', value: 38 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1.05,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0.33333334,
+                },
+                {
+                  time: 1,
+                  value: 1.05,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0.33333334,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'parabola',
+                definition: { kind: 'speedGravity', gravity: { kind: 'constant', value: 100 } },
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.4 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 3 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: false,
+        keepMovingOnReach: true,
+        reachRadiusMeters: { kind: 'constant', value: 0.4 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0022_bounda_ultimate_skill_1: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 70 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.3 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 20 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.3 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: false, maxHitCount: 10 },
     },
   },
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },

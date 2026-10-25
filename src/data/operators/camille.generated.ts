@@ -402,7 +402,21 @@ export const camilleChr_0033_camille_attack4ActionGraph = {
       createSpatialPointTargets_1: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'point', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'point',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 6 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
         },
         next: null,
       },
@@ -411,10 +425,9 @@ export const camilleChr_0033_camille_attack4ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: { reachAfterTicks: 1, maxDurationSeconds: 0.5, finishOnReach: false },
+            projectileId: 'projectile_chr_0033_camille_attack4',
             recycleDelaySeconds: 1,
-            hit: { onReach: true, finishOnHit: false },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'operator' }] },
           },
           callbacks: [
             {
@@ -737,6 +750,45 @@ export const camilleChr_0033_camille_attack5: SkillDefinition = {
   nativeSkillType: 'attack',
 };
 
+const camilleChr_0033_camille_power_attackActionGraphCallback2 = {
+  actionGraph: {
+    main: {
+      nodes: {
+        dealDamage_1: {
+          action: {
+            kind: 'dealDamage',
+            parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
+              damageType: 'heat',
+              attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+              calculation: 'breakingAttack',
+              calculationMultiplier: 0.05,
+              tags: ['normalAttack', 'powerAttack'],
+            },
+          },
+          next: null,
+        },
+      },
+      dataNodes: {
+        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      },
+    },
+    macros: {},
+  },
+  skillId: 'chr_0033_camille_power_attack_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 3,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: { atk_scale: 0.1 },
+  scheduledSequences: [{ startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_1' } }],
+} as const;
+
 export const camilleChr_0033_camille_power_attackActionGraph = {
   main: {
     nodes: {
@@ -818,10 +870,26 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: { reachAfterTicks: 2, maxDurationSeconds: 5, finishOnReach: false },
+            projectileId: 'projectile_chr_0033_camille_power_attack',
             recycleDelaySeconds: 0.100000001490116,
-            hit: { onReach: true, finishOnHit: true },
+            launch: {
+              start: { side: 'operator' },
+              segmentTargets: [
+                {
+                  target: { kind: 'fixed', target: 'enemy' },
+                  offset: {
+                    centerOnGround: false,
+                    local: [
+                      { kind: 'constant', value: -2.5 },
+                      { kind: 'constant', value: 1 },
+                      { kind: 'constant', value: 1.2 },
+                    ],
+                    facing: 'enemyToOperator',
+                  },
+                },
+                { side: 'enemy' },
+              ],
+            },
           },
           callbacks: [
             {
@@ -879,58 +947,189 @@ export const camilleChr_0033_camille_power_attackActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: { reachAfterTicks: 2, maxDurationSeconds: 5, finishOnReach: false },
+            projectileId: 'projectile_chr_0033_camille_power_attack_R_blue',
             recycleDelaySeconds: 0.100000001490116,
-            hit: { onReach: true, finishOnHit: true },
+            launch: {
+              start: { side: 'operator' },
+              segmentTargets: [
+                {
+                  target: { kind: 'fixed', target: 'enemy' },
+                  offset: {
+                    centerOnGround: false,
+                    local: [
+                      { kind: 'constant', value: -2.1 },
+                      { kind: 'constant', value: 2.5 },
+                      { kind: 'constant', value: 1.5 },
+                    ],
+                    facing: 'enemyToOperator',
+                  },
+                },
+                { side: 'enemy' },
+              ],
+            },
           },
           callbacks: [
-            {
-              event: 'hit',
-              skill: {
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      dealDamage_1: {
-                        action: {
-                          kind: 'dealDamage',
-                          parameters: {
-                            attacker: 'actionSource',
-                            target: { kind: 'inputTarget' },
-                            damageType: 'heat',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                            calculation: 'breakingAttack',
-                            calculationMultiplier: 0.05,
-                            tags: ['normalAttack', 'powerAttack'],
-                          },
-                        },
-                        next: null,
-                      },
-                    },
-                    dataNodes: {
-                      data_1: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale' },
-                      },
-                    },
+            { event: 'hit', skill: camilleChr_0033_camille_power_attackActionGraphCallback2 },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_8: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0033_camille_power_attack_R_red',
+            recycleDelaySeconds: 0.100000001490116,
+            launch: {
+              start: { side: 'operator' },
+              segmentTargets: [
+                {
+                  target: { kind: 'fixed', target: 'enemy' },
+                  offset: {
+                    centerOnGround: false,
+                    local: [
+                      { kind: 'constant', value: -2.1 },
+                      { kind: 'constant', value: 1 },
+                      { kind: 'constant', value: 1.5 },
+                    ],
+                    facing: 'enemyToOperator',
                   },
-                  macros: {},
                 },
-                skillId: 'chr_0033_camille_power_attack_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 3,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale: 0.1 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_1' } },
-                ],
-              },
+                { side: 'enemy' },
+              ],
             },
+          },
+          callbacks: [
+            { event: 'hit', skill: camilleChr_0033_camille_power_attackActionGraphCallback2 },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_9: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0033_camille_power_attack_R_blue',
+            recycleDelaySeconds: 0.100000001490116,
+            launch: {
+              start: { side: 'operator' },
+              segmentTargets: [
+                {
+                  target: { kind: 'fixed', target: 'enemy' },
+                  offset: {
+                    centerOnGround: false,
+                    local: [
+                      { kind: 'constant', value: -2.1 },
+                      { kind: 'constant', value: 1.4 },
+                      { kind: 'constant', value: 1.5 },
+                    ],
+                    facing: 'enemyToOperator',
+                  },
+                },
+                { side: 'enemy' },
+              ],
+            },
+          },
+          callbacks: [
+            { event: 'hit', skill: camilleChr_0033_camille_power_attackActionGraphCallback2 },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_10: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0033_camille_power_attack_L_red',
+            recycleDelaySeconds: 0.100000001490116,
+            launch: {
+              start: { side: 'operator' },
+              segmentTargets: [
+                {
+                  target: { kind: 'fixed', target: 'enemy' },
+                  offset: {
+                    centerOnGround: false,
+                    local: [
+                      { kind: 'constant', value: 2.5 },
+                      { kind: 'constant', value: 1 },
+                      { kind: 'constant', value: 2 },
+                    ],
+                    facing: 'enemyToOperator',
+                  },
+                },
+                { side: 'enemy' },
+              ],
+            },
+          },
+          callbacks: [
+            { event: 'hit', skill: camilleChr_0033_camille_power_attackActionGraphCallback2 },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_11: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0033_camille_power_attack_L_blue',
+            recycleDelaySeconds: 0.100000001490116,
+            launch: {
+              start: { side: 'operator' },
+              segmentTargets: [
+                {
+                  target: { kind: 'fixed', target: 'enemy' },
+                  offset: {
+                    centerOnGround: false,
+                    local: [
+                      { kind: 'constant', value: 2.5 },
+                      { kind: 'constant', value: 1.8 },
+                      { kind: 'constant', value: 2 },
+                    ],
+                    facing: 'enemyToOperator',
+                  },
+                },
+                { side: 'enemy' },
+              ],
+            },
+          },
+          callbacks: [
+            { event: 'hit', skill: camilleChr_0033_camille_power_attackActionGraphCallback2 },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_12: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0033_camille_power_attack_L_red',
+            recycleDelaySeconds: 0.100000001490116,
+            launch: {
+              start: { side: 'operator' },
+              segmentTargets: [
+                {
+                  target: { kind: 'fixed', target: 'enemy' },
+                  offset: {
+                    centerOnGround: false,
+                    local: [
+                      { kind: 'constant', value: 2.5 },
+                      { kind: 'constant', value: 2.5 },
+                      { kind: 'constant', value: 2 },
+                    ],
+                    facing: 'enemyToOperator',
+                  },
+                },
+                { side: 'enemy' },
+              ],
+            },
+          },
+          callbacks: [
+            { event: 'hit', skill: camilleChr_0033_camille_power_attackActionGraphCallback2 },
           ],
         },
         next: null,
@@ -1103,11 +1302,11 @@ export const camilleChr_0033_camille_power_attack: SkillDefinition = {
     { startFrame: 43, endFrame: 44, sequence: { $sequence: 'dealDamage_5' } },
     { startFrame: 3, endFrame: 4, sequence: { $sequence: 'launchProjectile_6' } },
     { startFrame: 4, endFrame: 5, sequence: { $sequence: 'launchProjectile_7' } },
-    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'launchProjectile_7' } },
-    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'launchProjectile_7' } },
-    { startFrame: 3, endFrame: 4, sequence: { $sequence: 'launchProjectile_7' } },
-    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'launchProjectile_7' } },
-    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'launchProjectile_7' } },
+    { startFrame: 6, endFrame: 7, sequence: { $sequence: 'launchProjectile_8' } },
+    { startFrame: 8, endFrame: 9, sequence: { $sequence: 'launchProjectile_9' } },
+    { startFrame: 3, endFrame: 4, sequence: { $sequence: 'launchProjectile_10' } },
+    { startFrame: 5, endFrame: 6, sequence: { $sequence: 'launchProjectile_11' } },
+    { startFrame: 7, endFrame: 8, sequence: { $sequence: 'launchProjectile_12' } },
     { startFrame: 40, endFrame: 43, sequence: { $sequence: 'ifElse_15' } },
     { startFrame: 46, endFrame: 50, sequence: { $sequence: 'ifElse_18' } },
     { startFrame: 0, endFrame: 50, sequence: { $sequence: 'applyBuff_19' } },
@@ -1212,10 +1411,9 @@ export const camilleChr_0033_camille_normal_skillActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: { reachAfterTicks: 1, maxDurationSeconds: 5, finishOnReach: false },
+            projectileId: 'projectile_chr_0033_camille_normal_skill',
             recycleDelaySeconds: 2.96666669845581,
-            hit: { onReach: true, finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -1224,7 +1422,7 @@ export const camilleChr_0033_camille_normal_skillActionGraph = {
                 actionGraph: {
                   main: {
                     nodes: {
-                      applyBuff_1: {
+                      applyBuff_8: {
                         action: {
                           kind: 'applyBuff',
                           parameters: {
@@ -1236,7 +1434,7 @@ export const camilleChr_0033_camille_normal_skillActionGraph = {
                         },
                         next: null,
                       },
-                      startTimeDilation_2: {
+                      startTimeDilation_9: {
                         action: {
                           kind: 'startTimeDilation',
                           parameters: {
@@ -1249,9 +1447,9 @@ export const camilleChr_0033_camille_normal_skillActionGraph = {
                             targets: ['enemy', 'caster'],
                           },
                         },
-                        next: 'applyBuff_1',
+                        next: 'applyBuff_8',
                       },
-                      applyBuff_3: {
+                      applyBuff_10: {
                         action: {
                           kind: 'applyBuff',
                           parameters: {
@@ -1261,9 +1459,9 @@ export const camilleChr_0033_camille_normal_skillActionGraph = {
                             inheritSourceSkillCastInfo: true,
                           },
                         },
-                        next: 'startTimeDilation_2',
+                        next: 'startTimeDilation_9',
                       },
-                      modifyActionValue_4: {
+                      modifyActionValue_11: {
                         action: {
                           kind: 'modifyActionValue',
                           parameters: {
@@ -1272,9 +1470,9 @@ export const camilleChr_0033_camille_normal_skillActionGraph = {
                             value: { kind: 'constant', value: 1 },
                           },
                         },
-                        next: 'applyBuff_3',
+                        next: 'applyBuff_10',
                       },
-                      spawnAbilityEntity_5: {
+                      spawnAbilityEntity_12: {
                         action: {
                           kind: 'spawnAbilityEntity',
                           parameters: {
@@ -1296,14 +1494,58 @@ export const camilleChr_0033_camille_normal_skillActionGraph = {
                             },
                           },
                         },
-                        next: 'modifyActionValue_4',
+                        next: 'modifyActionValue_11',
                       },
-                      checkCondition_6: {
+                      spawnAbilityEntity_6: {
+                        action: {
+                          kind: 'spawnAbilityEntity',
+                          parameters: {
+                            bornAt: { kind: 'context', key: 'soul_tar' },
+                            abilityEntityId: 'abilityentity_chr_0033_camille_normal_skill',
+                            childSkillId: 'chr_0033_camille_normal_skill_abilityrange_first',
+                            source: { kind: 'source' },
+                            inheritActionBlackboard: true,
+                            dieWhenSourceDies: false,
+                            target: { kind: 'context', key: 'soul_tar' },
+                            saveToContextKey: 'Camille_Bat',
+                            blackboardAssignments: {
+                              EntityBB_bat_duration: { kind: 'valueNode', nodeId: 'data_1' },
+                              EntityBB_bat_atk_scale: { kind: 'valueNode', nodeId: 'data_2' },
+                              EntityBB_atk_scale: { kind: 'valueNode', nodeId: 'data_3' },
+                              EntityBB_poise: { kind: 'valueNode', nodeId: 'data_4' },
+                              EntityBB_weak_scale: { kind: 'valueNode', nodeId: 'data_5' },
+                              EntityBB_vulnerable_scale: { kind: 'valueNode', nodeId: 'data_6' },
+                            },
+                          },
+                        },
+                        next: 'modifyActionValue_11',
+                      },
+                      copyContextTargets_7: {
+                        action: {
+                          kind: 'copyContextTargets',
+                          parameters: {
+                            source: { kind: 'inputTarget' },
+                            saveToContextKey: 'soul_tar',
+                          },
+                        },
+                        next: 'spawnAbilityEntity_6',
+                      },
+                      ifElse_13: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { kind: 'conditionNode', nodeId: 'data_7' },
+                          whenTrue: { $sequence: 'copyContextTargets_7' },
+                          whenFalse: { $sequence: 'spawnAbilityEntity_12' },
+                        },
+                        next: null,
+                      },
+                      checkCondition_14: {
                         action: {
                           kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
                         },
-                        next: 'spawnAbilityEntity_5',
+                        next: 'ifElse_13',
                       },
                     },
                     dataNodes: {
@@ -1329,6 +1571,15 @@ export const camilleChr_0033_camille_normal_skillActionGraph = {
                         expression: { kind: 'blackboard', key: 'vulnerable_scale' },
                       },
                       data_7: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityTagMatch',
+                          target: { kind: 'inputTarget' },
+                          tagQueryType: 'hasAny',
+                          tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoul'],
+                        },
+                      },
+                      data_8: {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
@@ -1361,7 +1612,7 @@ export const camilleChr_0033_camille_normal_skillActionGraph = {
                   weak_scale: 0.1,
                 },
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'checkCondition_6' } },
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'checkCondition_14' } },
                 ],
               },
             },
@@ -1881,6 +2132,7 @@ export const camilleChr_0033_camille_combo_skill: SkillDefinition = {
     { startFrame: 47, endFrame: 50, sequence: { $sequence: 'repeatEachTick_opt4' } },
     { startFrame: 51, endFrame: 63, sequence: { $sequence: 'reachSkillOperableBoundary_59' } },
   ],
+  defaultTarget: 'enemy',
   smartTarget: 'enemy',
   cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 570, 570, 570, 540],
   skillType: 'comboSkill',
@@ -3962,12 +4214,11 @@ const camilleBuff8ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0033_camille_normal_skill_last',
             source: 'actionOwner',
             recycleDelaySeconds: 2.96666669845581,
-            hit: { onReach: true, finishOnHit: true },
             targets: { kind: 'context', contextKey: 'resettar' },
+            launch: { start: { target: { kind: 'owner' } }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -3976,7 +4227,7 @@ const camilleBuff8ActionGraph = {
                 actionGraph: {
                   main: {
                     nodes: {
-                      applyBuff_4: {
+                      applyBuff_9: {
                         action: {
                           kind: 'applyBuff',
                           parameters: {
@@ -3988,7 +4239,7 @@ const camilleBuff8ActionGraph = {
                         },
                         next: null,
                       },
-                      modifyActionValue_2: {
+                      modifyActionValue_5: {
                         action: {
                           kind: 'modifyActionValue',
                           parameters: {
@@ -3999,7 +4250,7 @@ const camilleBuff8ActionGraph = {
                         },
                         next: null,
                       },
-                      castSkillDuringAction_3: {
+                      castSkillDuringAction_6: {
                         action: {
                           kind: 'castSkillDuringAction',
                           parameters: {
@@ -4009,21 +4260,63 @@ const camilleBuff8ActionGraph = {
                             inheritSourceSkillCastInfo: false,
                           },
                         },
-                        next: 'modifyActionValue_2',
+                        next: 'modifyActionValue_5',
                       },
-                      ifElse_5: {
+                      castSkillDuringAction_3: {
+                        action: {
+                          kind: 'castSkillDuringAction',
+                          parameters: {
+                            skillId: 'chr_0033_camille_normal_skill_abilityrange',
+                            targetContextKey: 'soul_tar',
+                            target: 'context',
+                            skipApplyCost: false,
+                            inheritSourceSkillCastInfo: false,
+                          },
+                        },
+                        next: 'modifyActionValue_5',
+                      },
+                      copyContextTargets_4: {
+                        action: {
+                          kind: 'copyContextTargets',
+                          parameters: {
+                            source: { kind: 'inputTarget' },
+                            saveToContextKey: 'soul_tar',
+                          },
+                        },
+                        next: 'castSkillDuringAction_3',
+                      },
+                      ifElse_8: {
                         action: {
                           kind: 'ifElse',
                           parameters: { alwaysNext: true },
                           condition: { kind: 'conditionNode', nodeId: 'data_1' },
-                          whenTrue: { $sequence: 'castSkillDuringAction_3' },
-                          whenFalse: { $sequence: 'applyBuff_4' },
+                          whenTrue: { $sequence: 'copyContextTargets_4' },
+                          whenFalse: { $sequence: 'castSkillDuringAction_6' },
+                        },
+                        next: null,
+                      },
+                      ifElse_10: {
+                        action: {
+                          kind: 'ifElse',
+                          parameters: { alwaysNext: true },
+                          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+                          whenTrue: { $sequence: 'ifElse_8' },
+                          whenFalse: { $sequence: 'applyBuff_9' },
                         },
                         next: null,
                       },
                     },
                     dataNodes: {
                       data_1: {
+                        type: 'boolean',
+                        expression: {
+                          kind: 'entityTagMatch',
+                          target: { kind: 'inputTarget' },
+                          tagQueryType: 'hasAny',
+                          tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoul'],
+                        },
+                      },
+                      data_2: {
                         type: 'boolean',
                         expression: {
                           kind: 'entityCountCompare',
@@ -4049,7 +4342,7 @@ const camilleBuff8ActionGraph = {
                 },
                 blackboard: {},
                 scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_5' } },
+                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'ifElse_10' } },
                 ],
               },
             },
@@ -5073,6 +5366,687 @@ export const camille: OperatorDefinition = {
           ],
         },
       ],
+    },
+  },
+  projectileDefinitions: {
+    projectile_chr_0033_camille_attack4: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'none' },
+              speed: { kind: 'constant', value: 0 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        finishDurationSeconds: { kind: 'constant', value: 0.5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: false,
+        keepMovingOnReach: true,
+        reachRadiusMeters: { kind: 'constant', value: 0.5 },
+      },
+      blackboard: {},
+      hit: { onReach: true, finishOnHit: false, maxHitCount: -1 },
+    },
+    projectile_chr_0033_camille_normal_skill: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 50 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 1.3679806,
+                  outTangent: 1.3679806,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0.034226187,
+                },
+                {
+                  time: 1,
+                  value: 1.5,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: false,
+        keepMovingOnReach: true,
+        reachRadiusMeters: { kind: 'constant', value: 0.5 },
+      },
+      blackboard: {},
+      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0033_camille_normal_skill_last: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'always' },
+              speed: { kind: 'constant', value: 25 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.5 },
+      },
+      blackboard: {},
+      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0033_camille_power_attack: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: 'MidPoint1',
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 20 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 1.3679806,
+                  outTangent: 1.3679806,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0.034226187,
+                },
+                {
+                  time: 1,
+                  value: 1.5,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.5 },
+                      { kind: 'constant', value: 0.5 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 150 },
+                      { kind: 'constant', value: 160 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.4 },
+                      { kind: 'constant', value: 0.4 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+          {
+            targetKey: 'TargetPoint',
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 20 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.5 },
+                      { kind: 'constant', value: 0.5 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 200 },
+                      { kind: 'constant', value: 210 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.8 },
+                      { kind: 'constant', value: 0.8 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: false,
+        keepMovingOnReach: true,
+        reachRadiusMeters: { kind: 'constant', value: 0.5 },
+      },
+      blackboard: {},
+      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0033_camille_power_attack_L_blue: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: 'MidPoint1',
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 15 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.5 },
+                      { kind: 'constant', value: 0.5 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: -15 },
+                      { kind: 'constant', value: 15 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.4 },
+                      { kind: 'constant', value: 0.4 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+          {
+            targetKey: 'TargetPoint',
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 15 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.5 },
+                      { kind: 'constant', value: 0.5 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: -15 },
+                      { kind: 'constant', value: 15 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.4 },
+                      { kind: 'constant', value: 0.4 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: false,
+        keepMovingOnReach: true,
+        reachRadiusMeters: { kind: 'constant', value: 0.5 },
+      },
+      blackboard: {},
+      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0033_camille_power_attack_L_red: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: 'MidPoint1',
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 20 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.5 },
+                      { kind: 'constant', value: 0.5 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: -15 },
+                      { kind: 'constant', value: 15 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.4 },
+                      { kind: 'constant', value: 0.4 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+          {
+            targetKey: 'TargetPoint',
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 20 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.5 },
+                      { kind: 'constant', value: 0.5 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: -15 },
+                      { kind: 'constant', value: 15 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.4 },
+                      { kind: 'constant', value: 0.4 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: false,
+        keepMovingOnReach: true,
+        reachRadiusMeters: { kind: 'constant', value: 0.5 },
+      },
+      blackboard: {},
+      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0033_camille_power_attack_R_blue: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: 'MidPoint1',
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 20 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.5 },
+                      { kind: 'constant', value: 0.5 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 150 },
+                      { kind: 'constant', value: 210 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.4 },
+                      { kind: 'constant', value: 0.4 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+          {
+            targetKey: 'TargetPoint',
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 20 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.5 },
+                      { kind: 'constant', value: 0.5 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 150 },
+                      { kind: 'constant', value: 210 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.4 },
+                      { kind: 'constant', value: 0.4 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: false,
+        keepMovingOnReach: true,
+        reachRadiusMeters: { kind: 'constant', value: 0.5 },
+      },
+      blackboard: {},
+      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0033_camille_power_attack_R_red: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: 'MidPoint1',
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 15 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.5 },
+                      { kind: 'constant', value: 0.5 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 150 },
+                      { kind: 'constant', value: 210 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.4 },
+                      { kind: 'constant', value: 0.4 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+          {
+            targetKey: 'TargetPoint',
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 15 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.5 },
+                      { kind: 'constant', value: 0.5 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 150 },
+                      { kind: 'constant', value: 210 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.4 },
+                      { kind: 'constant', value: 0.4 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: false,
+        keepMovingOnReach: true,
+        reachRadiusMeters: { kind: 'constant', value: 0.5 },
+      },
+      blackboard: {},
+      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
     },
   },
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },

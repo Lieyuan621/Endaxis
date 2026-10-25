@@ -506,7 +506,8 @@
       "operatorPassiveSkill": "常驻被动",
       "operatorUpgrade": "天赋或潜能",
       "weaponTrait": "武器技能",
-      "gearTrait": "装备词条"
+      "gearTrait": "装备词条",
+      "projectile": "投射物"
     },
     "fields": {
       "levels": "等级数量",
@@ -977,7 +978,7 @@
       },
       "hit": {
         "name": "命中设置",
-        "help": "首个 Tick 的碰撞设置；省略表示没有碰撞回调。"
+        "help": "设置投射物命中次数、重复间隔和目标过滤。"
       },
       "finishOnHit": {
         "name": "命中后结束",
@@ -1488,7 +1489,7 @@
         "help": "换算完成后加上的固定数值。"
       },
       "targetKey": {
-        "name": "结果变量"
+        "name": "预设点名称"
       },
       "property": {
         "name": "读取项目",
@@ -1594,10 +1595,6 @@
         "name": "执行间隔",
         "help": "首次立即执行，此后按指定间隔重复。"
       },
-      "finish": {
-        "name": "结束条件",
-        "help": "设置投射物到达或超时的结束规则。"
-      },
       "recycleDelaySeconds": {
         "name": "回收延迟（秒）",
         "help": "结束后继续保留对象引用的秒数。"
@@ -1689,10 +1686,6 @@
       "inheritParent": {
         "name": "复制外层变量",
         "help": "开始时复制外层变量，并覆盖同名初值。之后不自动同步。"
-      },
-      "entityInitialValues": {
-        "name": "所属对象初值",
-        "help": "设置投射物等对象持有的变量初值。"
       },
       "entityAssignments": {
         "name": "所属对象赋值",
@@ -1915,6 +1908,33 @@
       "healer": {
         "name": "治疗者",
         "help": "独立选择治疗者；当前目标表示本次循环的被治疗者。"
+      },
+      "origin": {
+        "name": "位置来源"
+      },
+      "offset": {
+        "name": "位置偏移"
+      },
+      "randomDistribution": {
+        "name": "随机分布"
+      },
+      "input": {
+        "name": "输入值"
+      },
+      "flight": {
+        "name": "飞行参数"
+      },
+      "projectileId": {
+        "name": "投射物资源"
+      },
+      "launch": {
+        "name": "发射目标"
+      },
+      "hitTarget": {
+        "name": "到达命中目标"
+      },
+      "segmentTargets": {
+        "name": "各阶段目标"
       }
     },
     "help": "查看说明",
@@ -1944,6 +1964,10 @@
       "storeEventDamageValue": {
         "name": "读取事件伤害值",
         "help": "读取当前伤害事件的数值并写入黑板；没有上下文时写入零。"
+      },
+      "storeRandomFloat": {
+        "name": "保存随机小数",
+        "help": "从指定范围取一个随机小数并写入变量。"
       },
       "storeRandomInteger": {
         "name": "保存随机整数",
@@ -2668,6 +2692,14 @@
       "limitMovementGait": {
         "name": "限制步态",
         "help": "写入宿主共用步态限制；最大步态低于冲刺时，闪避输入会标为强制执行。全部限制动作结束后清除。"
+      },
+      "evaluateCurve": {
+        "name": "读取曲线数值",
+        "help": "根据输入位置读取曲线上的数值，并保存到指定变量。"
+      },
+      "saveTargetDistance": {
+        "name": "保存目标距离",
+        "help": "计算两个目标之间的距离，并保存到指定变量。"
       }
     },
     "open": "编辑技能图",
@@ -3318,6 +3350,8 @@
       "sectionEditTools": "编辑工具",
       "sectionProject": "项目",
       "sectionScenarioSettings": "方案设置",
+      "operatorEnemyDistance": "双方距离（米）",
+      "operatorEnemyDistanceHelp": "干员到敌人的距离，影响投射物的命中时机",
       "sectionPrefs": "用户偏好",
       "automaticControlSwitches": "自动切换主控",
       "comboSkillPriority": "连携技优先级设置",

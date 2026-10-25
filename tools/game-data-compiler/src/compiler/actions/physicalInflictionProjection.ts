@@ -95,7 +95,8 @@ export function physicalInflictionParameters<
     if (query.kind === 'inputTarget') return context.actionTargetTarget ?? 'unknown';
     if (query.kind === 'characterTeam' || query.kind === 'mainCharacter') return 'caster';
     if (query.kind === 'battleMainTarget' || query.kind === 'enemyByTags') return 'enemy';
-    if (query.kind === 'buffFilter' || query.kind === 'exclude') return kind(query.targets);
+    if (query.kind === 'buffFilter' || query.kind === 'tagFilter' || query.kind === 'exclude')
+      return kind(query.targets);
     return 'unknown';
   };
   const source = kind(parameters.source);

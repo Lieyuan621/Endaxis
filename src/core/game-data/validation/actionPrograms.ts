@@ -1804,10 +1804,25 @@ function validateCombatStep(
       requireEnum(parameters, 'operation', ACTION_VALUE_OPERATIONS_SET, `${path}.parameters`, out);
       validateActionValueOperand(parameters.value, `${path}.parameters.value`, out);
       break;
+    case 'storeRandomFloat':
     case 'storeRandomInteger':
       requireString(parameters, 'key', `${path}.parameters`, out);
       validateActionValueOperand(parameters.minimum, `${path}.parameters.minimum`, out);
       validateActionValueOperand(parameters.maximum, `${path}.parameters.maximum`, out);
+      break;
+    case 'evaluateCurve':
+      requireString(parameters, 'key', `${path}.parameters`, out);
+      validateActionValueOperand(parameters.input, `${path}.parameters.input`, out);
+      validateTimeScaleCurve(
+        { kind: 'inline', keys: parameters.curve },
+        `${path}.parameters.curve`,
+        out,
+      );
+      break;
+    case 'saveTargetDistance':
+      requireString(parameters, 'outputKey', `${path}.parameters`, out);
+      validateTargetQuery(parameters.source, `${path}.parameters.source`, out);
+      validateTargetQuery(parameters.target, `${path}.parameters.target`, out);
       break;
     case 'calculateActionValue':
       requireString(parameters, 'key', `${path}.parameters`, out);
@@ -1993,7 +2008,7 @@ function validateCombatStep(
       if (parameters.onlyHitTargets !== undefined)
         validateTargetQuery(parameters.onlyHitTargets, `${path}.parameters.onlyHitTargets`, out);
       requireBoolean(parameters, 'inheritActionBlackboard', `${path}.parameters`, out);
-      validateEntityBlackboardInputs(parameters, path, out);
+      validateEntityBlackboardAssignments(parameters, path, out);
       for (const field of ['targets', 'emitters']) {
         if (parameters[field] === undefined) continue;
         const targetsPath = `${path}.parameters.${field}`;
@@ -2009,23 +2024,6 @@ function validateCombatStep(
         push(out, `${path}.parameters.source`, 'expected actionSource or actionOwner');
       if (parameters.syncTimeScale !== undefined)
         requireBoolean(parameters, 'syncTimeScale', `${path}.parameters`, out);
-      const finishPath = `${path}.parameters.finish`;
-      if (typeof parameters.finish === 'number') {
-        if (!Number.isFinite(parameters.finish) || parameters.finish <= 0)
-          push(out, finishPath, 'expected a positive finite number');
-      } else if (parameters.finish !== 'firstTickReach' && parameters.finish !== 'firstTickBlock') {
-        const timing = asRecord(parameters.finish, finishPath, out);
-        if (timing !== null) {
-          const ticks = requireFiniteNumber(timing, 'reachAfterTicks', finishPath, out);
-          const duration = requireFiniteNumber(timing, 'maxDurationSeconds', finishPath, out);
-          if (timing.finishOnReach !== undefined)
-            requireBoolean(timing, 'finishOnReach', finishPath, out);
-          if (ticks !== null && (!Number.isSafeInteger(ticks) || ticks < 1))
-            push(out, `${finishPath}.reachAfterTicks`, 'expected a positive safe integer');
-          if (duration !== null && duration <= 0)
-            push(out, `${finishPath}.maxDurationSeconds`, 'expected a positive number');
-        }
-      }
       if (parameters.recycleDelaySeconds !== undefined) {
         const delay = requireFiniteNumber(
           parameters,
@@ -2036,35 +2034,12 @@ function validateCombatStep(
         if (delay !== null && delay < 0)
           push(out, `${path}.parameters.recycleDelaySeconds`, 'expected a non-negative number');
       }
-      if (parameters.hit !== undefined) {
-        const hitPath = `${path}.parameters.hit`;
-        const hit = asRecord(parameters.hit, hitPath, out);
-        if (hit !== null) {
-          requireBoolean(hit, 'finishOnHit', hitPath, out);
-          if (hit.onReach !== undefined) requireBoolean(hit, 'onReach', hitPath, out);
-          if (
-            hit.target !== undefined &&
-            hit.target !== 'controlledOperator' &&
-            hit.target !== 'allOperators' &&
-            hit.target !== 'currentTarget'
-          )
-            push(
-              out,
-              `${hitPath}.target`,
-              'expected controlledOperator, allOperators or currentTarget',
-            );
-          if (hit.retryRejectedHit !== undefined)
-            requireBoolean(hit, 'retryRejectedHit', hitPath, out);
-          if (hit.hitTagFilter !== undefined) {
-            const filterPath = `${hitPath}.hitTagFilter`;
-            const filter = asRecord(hit.hitTagFilter, filterPath, out);
-            if (filter !== null) {
-              requireEnum(filter, 'tagQueryType', TAG_QUERY_TYPES_SET, filterPath, out);
-              validateGameplayTags(filter.tags, `${filterPath}.tags`, out, true);
-            }
-          }
-        }
-      }
+      if (
+        parameters.hitTarget !== undefined &&
+        parameters.hitTarget !== 'controlledOperator' &&
+        parameters.hitTarget !== 'currentTarget'
+      )
+        push(out, `${path}.parameters.hitTarget`, 'expected controlledOperator or currentTarget');
       break;
     }
     case 'openComboWindow':
@@ -2125,7 +2100,9 @@ function validateCombatStep(
       break;
     case 'triggerCustomAbilityEvent':
       requireString(parameters, 'eventName', `${path}.parameters`, out);
-      requireFiniteNumber(parameters, 'eventParam', `${path}.parameters`, out);
+      if (typeof parameters.eventParam === 'number')
+        requireFiniteNumber(parameters, 'eventParam', `${path}.parameters`, out);
+      else validateActionValueOperand(parameters.eventParam, `${path}.parameters.eventParam`, out);
       if (typeof parameters.target === 'object') {
         validateTargetQuery(parameters.target, `${path}.parameters.target`, out);
       } else {
@@ -2856,27 +2833,12 @@ export function validateActionGraphContexts(
     });
 }
 
-/** 独立实例的实体板初值与发射时赋值共用字段规则。 */
-function validateEntityBlackboardInputs(
+/** 发射时写入实体黑板的赋值。 */
+function validateEntityBlackboardAssignments(
   parameters: Record<string, unknown>,
   path: string,
   out: SkillDefinitionValidationIssue[],
 ): void {
-  if (parameters.entityInitialValues !== undefined) {
-    const entityInitialValues = asRecord(
-      parameters.entityInitialValues,
-      `${path}.parameters.entityInitialValues`,
-      out,
-    );
-    if (entityInitialValues !== null) {
-      Object.entries(entityInitialValues).forEach(([key, value]) => {
-        if (!key.startsWith('EntityBB_')) {
-          push(out, `${path}.parameters.entityInitialValues.${key}`, "expected an 'EntityBB_' key");
-        }
-        validateLevelValues(value, `${path}.parameters.entityInitialValues.${key}`, out);
-      });
-    }
-  }
   if (parameters.entityAssignments !== undefined) {
     const entityAssignments = asRecord(
       parameters.entityAssignments,

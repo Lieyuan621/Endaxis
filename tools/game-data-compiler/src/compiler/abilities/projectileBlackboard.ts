@@ -33,6 +33,7 @@ export function compileProjectileBlackboardSource(input: {
     readonly entityBlackboard: readonly DeclaredBlackboardValueSource[];
   } | null;
   readonly invocations: readonly ProjectileCallbackInvocationSource[];
+  readonly movementBlackboardReads?: ReadonlySet<string>;
   /** 仅限调用方已由完整 ProjectileData 证明不需要实体黑板的特殊回调。 */
   readonly allowMissingEntityBlackboardEvidence?: boolean;
   /** Block 结束飞行时不会触发超时 Finish，二者可复用同一技能而无重入。 */
@@ -40,14 +41,15 @@ export function compileProjectileBlackboardSource(input: {
 }): ProjectileBlackboardSource {
   const { sourcePath, launch, template, invocations } = input;
   const projectedInvocations = invocations;
-  const callbackEntityBlackboardKeys = new Set(
-    projectedInvocations.flatMap(invocation => [
+  const callbackEntityBlackboardKeys = new Set([
+    ...[...(input.movementBlackboardReads ?? [])].filter(key => key.startsWith('EntityBB_')),
+    ...projectedInvocations.flatMap(invocation => [
       ...invocation.declaredBlackboard
         .filter(value => value.key.startsWith('EntityBB_'))
         .map(value => value.key),
       ...collectEntityBlackboardReads(invocation.program.reachableActions(invocation.sequence)),
     ]),
-  );
+  ]);
   const callbackReadsEntityBlackboard = callbackEntityBlackboardKeys.size > 0;
   if (
     template === null &&
@@ -147,6 +149,7 @@ export function omitDeadSingleEnemyBounceBookkeeping(
   graph: ActionGraphBuilder<CompiledBuffStepSource>,
   sequence: CompiledBuffSequenceSource,
   laterActions: readonly CompiledBuffStepSource[],
+  movementBlackboardReads: ReadonlySet<string> = new Set(),
 ): CompiledBuffSequenceSource {
   const actions = graph.actions(sequence);
   const retained = actions.filter((step, index, steps) => {
@@ -171,7 +174,9 @@ export function omitDeadSingleEnemyBounceBookkeeping(
       ...graph.reachableActions(graph.sequence(steps.slice(index + 1))),
       ...laterActions,
     ];
-    return writes.some(key => containsStringValue(remaining, key));
+    return writes.some(
+      key => movementBlackboardReads.has(key) || containsStringValue(remaining, key),
+    );
   });
   return retained.length === actions.length ? sequence : graph.sequence(retained);
 }

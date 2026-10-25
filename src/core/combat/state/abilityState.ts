@@ -363,6 +363,8 @@ export interface CallbackSkillHostState {
 
 /** 能力实体的一次子技能执行数据。 */
 export interface AbilityEntityChildSkillState {
+  /** 创建子技能时实际继承的来源；独立子技能不使用实体的父技能来源。 */
+  readonly inheritedSkillCastInfo?: CombatSkillCastInfo;
   readonly programId: number;
   readonly skillId: string;
   readonly host: CallbackSkillHostState;

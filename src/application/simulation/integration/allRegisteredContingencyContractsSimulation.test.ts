@@ -243,7 +243,7 @@ describe('危机合约生效词条的开局装配', () => {
     const heal = healing.receiptEntries.find(
       entry => entry.event === 'HealingApplied' && entry.targetId === 'enemy',
     );
-    expect(heal?.data?.requestedHealing).toBeCloseTo(20000, 1);
+    expect(heal?.data?.requestedHealing).toBeCloseTo(50000, 1);
     healingOnly.mechanics.selections[0]!.parameters = {
       healRatioPerSecond: 0.07,
       healDelaySeconds: 1,

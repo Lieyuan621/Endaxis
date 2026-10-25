@@ -8,7 +8,7 @@ import type { GameplayTagPredefineDocument } from '../../../packages/game-data-c
 import { parseGameplayTagPredefineTableSource } from '../src/source/gameplayTagPredefineTable.ts';
 import { compileGameplayTagPredefine } from '../src/compiler/catalogs/gameplayTagPredefine.ts';
 import { writeAtomicBytes } from './downloadGameDataSources.ts';
-import { formatGeneratedSource } from './formatGeneratedSource.ts';
+import { formatGeneratedSource } from '../src/compiler/publication/formatGeneratedSource.ts';
 
 // 生成内容描述的是未来正式文件，而不是候选暂存文件的物理位置。
 const GAMEPLAY_TAG_CONTRACT_IMPORT = '../../../packages/game-data-contract/src/gameplayTags.ts';

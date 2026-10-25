@@ -1,24 +1,31 @@
-import type { CompiledStepParameters } from '../../compiler/compiledGraphData.ts';
-import type { ProjectileCallbackState } from '../state/instanceState';
-/**
- * 投射物寿命的无状态算法。每次调用显式接收当前数据和本次步进的宿主端口。
- * 保留原生结束、标记回收、reset 三个阶段及 float32 运算；不推导空间命中或更改技能规则。
- */
-
+import type { ProjectileCallbackState, ProjectileHitTargets } from '../state/instanceState';
+import type { ResolvedProjectileFlight } from '../state/projectileMovementState';
+import {
+  advanceProjectileMovement,
+  createProjectileMovement,
+  projectileDistanceExceeded,
+  projectileCollidesWithTarget,
+  type ProjectileRangeSample,
+  resolveProjectileValue,
+} from './projectileMovementExecution';
 import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
 import { createActionBlackboardState, type ActionBlackboardState } from '../state/foundationState';
-import type { ProjectileLifecycleState } from '../state/instanceState';
-
-export type ProjectileFinishTiming = CompiledStepParameters['launchProjectile']['finish'];
+import type { ProjectileLifecycleState, ProjectileLifetimeState } from '../state/instanceState';
 
 export interface ProjectileLaunchData {
+  readonly originCastId?: string;
+  readonly sampleRange?: ProjectileRangeSample;
+  readonly flight: ResolvedProjectileFlight;
+  readonly operatorEnemyDistanceMeters?: number;
   readonly entityBlackboard?: ActionBlackboardState;
   readonly callbacks?: readonly ProjectileCallbackState[];
+  readonly hitTargets?: ProjectileHitTargets;
   readonly source?: RuntimeTargetRef;
-  readonly finishDelaySeconds: ProjectileFinishTiming;
   readonly recycleDelaySeconds: number;
-  /** 仅用于编译器已证明的单目标至多一次命中；命中过滤由 hit 端口执行。 */
-  readonly firstTickHit?: {
+  /** 命中次数与检测规则；逐目标过滤由 hit 端口执行。 */
+  readonly hitPolicy?: {
+    readonly maxHitCount?: number;
+    readonly repeatIntervalSeconds?: number;
     readonly finishOnHit: boolean;
     readonly retryRejectedHit?: boolean;
     readonly onReach?: boolean;
@@ -31,27 +38,22 @@ export function launchProjectile(
   instanceId: number,
   request: ProjectileLaunchData,
 ): void {
-  const finishOnFirstTick = request.finishDelaySeconds === 'firstTickReach';
-  const blockOnFirstTick = request.finishDelaySeconds === 'firstTickBlock';
-  if (request.firstTickHit?.retryRejectedHit && typeof request.finishDelaySeconds !== 'number')
-    throw new Error('retrying projectile hits requires a duration-only lifetime');
-  const segmented =
-    typeof request.finishDelaySeconds === 'object' ? request.finishDelaySeconds : null;
-  if (
-    segmented !== null &&
-    (!Number.isSafeInteger(segmented.reachAfterTicks) || segmented.reachAfterTicks < 1)
-  )
-    throw new RangeError('projectile reach tick count must be a positive safe integer');
+  const blackboard = request.entityBlackboard ?? createActionBlackboardState();
+  const movement = createProjectileMovement(
+    request.flight,
+    request.operatorEnemyDistanceMeters ?? 0,
+    blackboard,
+    request.sampleRange,
+  );
+  if (request.hitPolicy && !request.hitPolicy.onReach && !request.flight.collision)
+    throw new Error(
+      'projectile flight collision shape must be projected before enabling collision hits',
+    );
   const finishDelay = Math.fround(
-    segmented?.maxDurationSeconds ??
-      (typeof request.finishDelaySeconds === 'number' ? request.finishDelaySeconds : 0),
+    resolveProjectileValue(request.flight.finishDurationSeconds, blackboard),
   );
   const recycleDelay = Math.fround(request.recycleDelaySeconds);
-  if (
-    !finishOnFirstTick &&
-    !blockOnFirstTick &&
-    (!Number.isFinite(finishDelay) || finishDelay <= 0)
-  )
+  if (!Number.isFinite(finishDelay) || finishDelay <= 0)
     throw new RangeError('projectile finish delay must be positive and finite');
   if (!Number.isFinite(recycleDelay) || request.recycleDelaySeconds < 0)
     throw new RangeError('projectile recycle delay must be non-negative and finite');
@@ -60,18 +62,18 @@ export function launchProjectile(
   if (state.instances.has(instanceId))
     throw new Error(`duplicate projectile AbilityEntity instance id '${instanceId}'`);
   state.instances.set(instanceId, {
+    originCastId: request.originCastId,
     callbacks: request.callbacks ?? [],
-    entityBlackboard: request.entityBlackboard ?? createActionBlackboardState(),
+    hitTargets: request.hitTargets,
+    entityBlackboard: blackboard,
+    movement,
     buffs: null,
     instanceId,
     ...(request.source === undefined ? {} : { source: { ...request.source } }),
     phase: 'active',
     remainingSeconds: finishDelay,
-    remainingReachTicks: finishOnFirstTick ? 1 : (segmented?.reachAfterTicks ?? null),
-    ...(blockOnFirstTick ? { pendingBlock: true } : {}),
-    finishOnReach: segmented?.finishOnReach ?? true,
-    firstTickHit:
-      request.firstTickHit === undefined ? null : { pending: true, ...request.firstTickHit },
+    finishOnReach: request.flight.finishOnReach,
+    hitState: request.hitPolicy === undefined ? null : { pending: true, ...request.hitPolicy },
     recycleDelaySeconds: recycleDelay,
     resetListeners: new Map(),
   });
@@ -108,27 +110,82 @@ export function finishProjectileByAction(
   if (instance.phase === 'active') {
     instance.phase = 'finished';
     instance.remainingSeconds = instance.recycleDelaySeconds;
-    instance.remainingReachTicks = null;
-    instance.pendingBlock = false;
-    if (instance.firstTickHit) instance.firstTickHit.pending = false;
+    if (instance.hitState) instance.hitState.pending = false;
   }
   return true;
 }
 
 /** 端口只在推进过程中使用，不保存在状态中。相互触发的事件仍然同步执行。 */
 export interface ProjectileLifecycleHost {
+  sampleRange?(instanceId: number, minimum: number, maximum: number): number;
   resolveTickDeltaSeconds(instanceId: number): number | null;
   /** 到达回调发生在结束标记之前；持续时间耗尽不会触发到达。 */
   reach?(instanceId: number): void;
   block?(instanceId: number): void;
-  /** 返回是否实际命中；被过滤的碰撞不能触发命中次数上限导致的结束。 */
-  hit?(instanceId: number): boolean;
+  /** 返回实际接受的目标数；被过滤的目标不累计命中次数。 */
+  hit?(instanceId: number): number;
   finish(instanceId: number): void;
   beforeReset(instanceId: number): void;
   resolveResetHandler(handlerId: number): () => void;
   released(instanceId: number): void;
 }
 
+/** 回调可以主动销毁弹体；其结果优先于命中次数导致的结束。 */
+function applyCollisionHit(
+  instance: ProjectileLifetimeState,
+  host: ProjectileLifecycleHost,
+): boolean {
+  const hitState = instance.hitState!;
+  hitState.pending = false;
+  if (host.hit === undefined) throw new Error('projectile collision requires a hit port');
+  const hit = host.hit(instance.instanceId);
+  if (instance.phase !== 'active') return true;
+  if (hitState.repeatIntervalSeconds !== undefined || hitState.retryRejectedHit)
+    hitState.pending = true;
+  if (!hit || !recordProjectileHit(instance, hit)) return false;
+  instance.phase = 'finished';
+  instance.remainingSeconds = instance.recycleDelaySeconds;
+  host.finish(instance.instanceId);
+  return true;
+}
+
+function recordProjectileHit(instance: ProjectileLifetimeState, count: number): boolean {
+  const hit = instance.hitState!;
+  hit.hitCount = (hit.hitCount ?? 0) + count;
+  const maximum = hit.maxHitCount ?? (hit.finishOnHit ? 1 : -1);
+  return maximum > 0 && hit.hitCount >= maximum;
+}
+
+/** 回调取得事件发生时的位置快照，后续移动或回收不改变已传出的空间点。 */
+function captureCallbackPosition(
+  instance: ProjectileLifetimeState,
+  event: 'reach' | 'block',
+): void {
+  const position =
+    event === 'reach' ? instance.movement.targetPosition : instance.movement.position;
+  for (const callback of instance.callbacks) {
+    if (callback.event !== event || callback.inputTarget?.kind !== 'spatialPoint') continue;
+    callback.inputTarget = { ...callback.inputTarget, position: [...position] };
+  }
+}
+
+function applyMovementCollision(
+  instance: ProjectileLifetimeState,
+  host: ProjectileLifecycleHost,
+  skipCollision: boolean | undefined,
+): boolean {
+  const movement = instance.movement;
+  return (
+    instance.phase === 'active' &&
+    !skipCollision &&
+    !!instance.hitState?.pending &&
+    !instance.hitState.onReach &&
+    projectileCollidesWithTarget(movement, instance.entityBlackboard) &&
+    applyCollisionHit(instance, host)
+  );
+}
+
+/** 推进移动与碰撞；结束、标记回收和重置分别处理，回调由当前步进宿主提供。 */
 export function advanceProjectileLifetimes(
   state: ProjectileLifecycleState,
   host: ProjectileLifecycleHost,
@@ -161,50 +218,74 @@ export function advanceProjectileLifetimes(
     // 首个移动 Tick 先碰撞再移动/到达。命中回调执行时对象还未结束，查找应能看见它。
     if (
       instance.phase === 'active' &&
-      instance.firstTickHit?.pending &&
-      !instance.firstTickHit.onReach
+      instance.hitState?.pending &&
+      !instance.hitState.onReach &&
+      instance.movement.firstTick &&
+      !instance.movement.definition.segments[instance.movement.segmentIndex]!.skipCollision &&
+      projectileCollidesWithTarget(instance.movement, instance.entityBlackboard, true)
     ) {
-      instance.firstTickHit.pending = false;
-      if (host.hit === undefined) throw new Error('projectile first-tick hit requires a hit port');
-      const hit = host.hit(instance.instanceId);
-      if (instance.phase !== 'active') continue;
-      if (!hit && instance.firstTickHit.retryRejectedHit) instance.firstTickHit.pending = true;
-      if (hit && instance.firstTickHit.finishOnHit) {
-        instance.phase = 'finished';
-        instance.remainingReachTicks = null;
-        instance.remainingSeconds = instance.recycleDelaySeconds;
-        host.finish(instance.instanceId);
-        continue;
-      }
+      if (applyCollisionHit(instance, host)) continue;
     }
-    if (instance.phase === 'active' && instance.pendingBlock) {
-      instance.pendingBlock = false;
-      host.block?.(instance.instanceId);
-      if (instance.phase !== 'active') continue;
-      instance.phase = 'finished';
-      instance.remainingReachTicks = null;
-      instance.remainingSeconds = instance.recycleDelaySeconds;
-      // 原生 Block 已执行落地技能；以 Block 原因结束不再执行超时 Finish 技能。
-      continue;
-    }
+    const movement = instance.phase === 'active' ? instance.movement : undefined;
+    const skipCollision = movement?.definition.segments[movement.segmentIndex]!.skipCollision;
+    const reachedByMovement =
+      movement !== undefined &&
+      advanceProjectileMovement(
+        movement,
+        instance.entityBlackboard,
+        nativeDelta,
+        host.sampleRange === undefined
+          ? undefined
+          : (minimum, maximum) => host.sampleRange!(instance.instanceId, minimum, maximum),
+      );
+    const collisionAfterReach = reachedByMovement && !movement?.definition.hitBeforeReach;
+    if (!collisionAfterReach && applyMovementCollision(instance, host, skipCollision)) continue;
     // 原生 Update 使用 remaining <= 0，不能套用 isReady 的 epsilon。
     instance.remainingSeconds = Math.max(0, Math.fround(instance.remainingSeconds - nativeDelta));
-    if (instance.phase === 'active' && instance.remainingReachTicks !== null)
-      instance.remainingReachTicks--;
-    if (instance.remainingSeconds > 0 && instance.remainingReachTicks !== 0) continue;
+    let exceededDistance =
+      movement !== undefined && projectileDistanceExceeded(movement, instance.entityBlackboard);
+    if (instance.remainingSeconds > 0 && !reachedByMovement && !exceededDistance) continue;
     if (instance.phase === 'active') {
-      const reached = instance.remainingReachTicks === 0;
-      instance.remainingReachTicks = null;
+      const reached = reachedByMovement;
+      if (reached && movement?.definition.landingAtTarget) {
+        captureCallbackPosition(instance, 'block');
+        host.block?.(instance.instanceId);
+        if (instance.phase !== 'active') continue;
+        instance.phase = 'finished';
+        instance.remainingSeconds = instance.recycleDelaySeconds;
+        continue;
+      }
       let finishedByHit = false;
-      if (reached && instance.firstTickHit?.pending && instance.firstTickHit.onReach) {
-        instance.firstTickHit.pending = false;
+      // _TriggerReach 先施放 Reach 技能，随后才执行 hitOnReach。
+      if (reached) {
+        captureCallbackPosition(instance, 'reach');
+        host.reach?.(instance.instanceId);
+      }
+      if (instance.phase !== 'active') continue;
+      if (reached && instance.hitState?.pending && instance.hitState.onReach) {
+        instance.hitState.pending = false;
         if (host.hit === undefined) throw new Error('projectile reach hit requires a hit port');
-        finishedByHit = host.hit(instance.instanceId) && instance.firstTickHit.finishOnHit;
+        const count = host.hit(instance.instanceId);
+        finishedByHit = count > 0 && recordProjectileHit(instance, count);
         if (instance.phase !== 'active') continue;
       }
-      if (reached) host.reach?.(instance.instanceId);
-      if (instance.phase !== 'active') continue;
-      if (reached && !instance.finishOnReach && !finishedByHit && instance.remainingSeconds > 0)
+      // Reach/Hit 技能可以写实体变量，距离上限必须读取回调后的值。
+      if (movement !== undefined && reached)
+        exceededDistance = projectileDistanceExceeded(movement, instance.entityBlackboard);
+      if (
+        collisionAfterReach &&
+        !instance.finishOnReach &&
+        !finishedByHit &&
+        applyMovementCollision(instance, host, skipCollision)
+      )
+        continue;
+      if (
+        reached &&
+        !instance.finishOnReach &&
+        !finishedByHit &&
+        !exceededDistance &&
+        instance.remainingSeconds > 0
+      )
         continue;
       instance.phase = 'finished';
       instance.remainingSeconds = instance.recycleDelaySeconds;

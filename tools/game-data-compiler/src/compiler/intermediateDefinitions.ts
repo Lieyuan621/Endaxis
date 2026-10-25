@@ -30,19 +30,32 @@ type AnalysisStep = {
 };
 
 /** 中间图允许内联输入及尚待证明无用途的原生计算。 */
-export type IntermediateDefinition<T> = T extends Contract.ActionGraphNode
-  ? { [K in keyof T]: K extends 'action' ? ActionGraphStep : IntermediateDefinition<T[K]> }
-  : T extends { readonly kind: 'valueNode' }
-    ? ActionValueOperand
-    : T extends { readonly kind: 'conditionNode' }
-      ? CombatCondition
-      : T extends { readonly kind: 'stringNode' }
-        ? ActionStringOperand
-        : T extends readonly unknown[]
-          ? { [K in keyof T]: IntermediateDefinition<T[K]> }
-          : T extends object
+export type IntermediateDefinition<T> = T extends {
+  projectileId: string;
+  launch: Contract.ProjectileLaunchDefinition;
+}
+  ? | T
+    | (IntermediateDefinition<Omit<T, 'launch'>> & {
+        /** 用途分析仍需看到模板变量读取；正式发布时只保留端点绑定。 */
+        flight: IntermediateDefinition<Contract.ProjectileFlightDefinition>;
+        entityInitialValues?: Readonly<Record<string, number>>;
+        hit?: Omit<Contract.ProjectileHitDefinition, 'target'> & {
+          target?: 'controlledOperator' | 'allOperators' | 'currentTarget';
+        };
+      })
+  : T extends Contract.ActionGraphNode
+    ? { [K in keyof T]: K extends 'action' ? ActionGraphStep : IntermediateDefinition<T[K]> }
+    : T extends { readonly kind: 'valueNode' }
+      ? ActionValueOperand
+      : T extends { readonly kind: 'conditionNode' }
+        ? CombatCondition
+        : T extends { readonly kind: 'stringNode' }
+          ? ActionStringOperand
+          : T extends readonly unknown[]
             ? { [K in keyof T]: IntermediateDefinition<T[K]> }
-            : T;
+            : T extends object
+              ? { [K in keyof T]: IntermediateDefinition<T[K]> }
+              : T;
 
 export type ActionValueOperand = Contract.ActionValueOperand | Contract.ActionValueExpression;
 export type ActionStringOperand = Contract.ActionStringOperand | Contract.ActionStringExpression;

@@ -1,3 +1,4 @@
+import { stationaryProjectileDefinition, pointProjectileLaunch } from '../../test/projectileFlight';
 import { expect, it, vi } from 'vitest';
 import type {
   ActionGraphDefinition,
@@ -24,13 +25,21 @@ import { CombatRuntimeAssembly, type CombatOperatorProgram } from './combatRunti
 import { CombatRuntimeSession } from './combatRuntimeSession';
 import { StandardPlayerDamageEnvironment } from './standardPlayerDamageEnvironment';
 
+const projectileDefinitions = { stationary: stationaryProjectileDefinition(0.1) };
+
 const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
   dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
-  graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
+  graph: createActionGraphCompilation(
+    { nodes, dataNodes },
+    1,
+    revision,
+    {},
+    { abilityEntities: {}, projectiles: projectileDefinitions },
+  ).compileAll(),
   entry,
   callSite: revision,
 });
@@ -344,7 +353,13 @@ it.each([0, 4, 6])('投射物在第 %i 帧分支恢复后保留伤害的技能�
         sequence: chainEntry('launch', [
           {
             kind: 'launchProjectile',
-            parameters: { inheritActionBlackboard: true, finish: 0.1, recycleDelaySeconds: 0.5 },
+            parameters: {
+              projectileId: 'stationary',
+              launch: pointProjectileLaunch,
+              inheritActionBlackboard: true,
+
+              recycleDelaySeconds: 0.5,
+            },
             callbacks: [
               {
                 event: 'finish',

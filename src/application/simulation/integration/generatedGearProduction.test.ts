@@ -108,6 +108,7 @@ describe('generated gear production integration', () => {
         },
         endFrame,
         criticalSamples: new ExplicitCriticalSampleSource(Array.from({ length: 200 }, () => 1)),
+        rangeSamples: { nextRangeSample: () => 0.5 },
         elementalInflictionDocument: elementalAttachments,
         resolveNonRandomRuntimeSnapshot: () => ({
           runtimeExtensionMultiplier: 1,
@@ -215,6 +216,7 @@ describe('generated gear production integration', () => {
       },
       endFrame: 260,
       criticalSamples: new ExplicitCriticalSampleSource(Array.from({ length: 40 }, () => 1)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       elementalInflictionDocument: elementalAttachments,
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -305,6 +307,7 @@ describe('generated gear production integration', () => {
       },
       endFrame: 260,
       criticalSamples: new ExplicitCriticalSampleSource(Array.from({ length: 40 }, () => 1)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       elementalInflictionDocument: elementalAttachments,
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -367,6 +370,7 @@ function runWithGear(gearSlug: string, damageTraitLevel: number) {
     },
     endFrame: 100,
     criticalSamples: new ExplicitCriticalSampleSource(Array.from({ length: 20 }, () => 1)),
+    rangeSamples: { nextRangeSample: () => 0.5 },
     resolveNonRandomRuntimeSnapshot: () => ({
       runtimeExtensionMultiplier: 1,
       appliesIgniteDamageMultiplier: false,

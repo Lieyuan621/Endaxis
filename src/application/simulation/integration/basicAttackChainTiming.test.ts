@@ -449,6 +449,7 @@ describe('generated basic attack chain input timing', () => {
   });
   it('compacts Perlica heavy attack then battle skill despite the anchor input warning', async () => {
     const scenario = createChain(perlica);
+    scenario.battle.operatorEnemyDistanceMeters = 0;
     scenario.tracks[0]!.skillCasts = scenario.tracks[0]!.skillCasts.slice(-1);
     scenario.tracks[0]!.skillCasts[0]!.placement.startFrame = 1;
     const placed = placeSkillGroup({

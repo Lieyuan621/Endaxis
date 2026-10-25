@@ -27,6 +27,7 @@ export function collectCombatInvisiblePresentationAssignmentKeys(
         'presentationCalculation',
         'blackboardMutation',
         'blackboardCalculation',
+        'curveCalculation',
         'condition',
         'spatial',
       ].includes(node.body.value.family),
@@ -39,6 +40,9 @@ export function collectCombatInvisiblePresentationAssignmentKeys(
       }
       if (node.body.value.family === 'blackboardCalculation') {
         return [node.body.value.action.key];
+      }
+      if (node.body.value.family === 'curveCalculation') {
+        return [node.body.value.action.outputKey];
       }
       if (node.body.value.family === 'presentationCalculation') {
         const action = node.body.value.action;
@@ -87,6 +91,7 @@ export function collectCombatInvisiblePresentationAssignmentKeys(
           if (isCombatInvisiblePresentationLeaf(child)) return true;
           if (hasUninspectedBlackboardConsumer && !isUnusedByExternalResources?.(key)) return false;
           if (leaf.family === 'presentationCalculation') return true;
+          if (leaf.family === 'curveCalculation') return candidates.has(leaf.action.outputKey);
           if (leaf.family === 'spatial') return leaf.action.kind === 'selfRotate';
           return (
             leaf.family === 'blackboardMutation' &&
@@ -150,6 +155,10 @@ export function collectCombatInvisiblePresentationAssignmentKeys(
                 node.body.value.action.addend?.blackboardKey ?? null,
               ].includes(key) &&
               candidates.has(node.body.value.action.key)) ||
+            (node.body.value.family === 'curveCalculation' &&
+              (node.body.value.action.outputKey === key ||
+                (node.body.value.action.input.blackboardKey === key &&
+                  candidates.has(node.body.value.action.outputKey)))) ||
             (node.body.value.family === 'presentationCalculation' &&
               ('outputKeys' in node.body.value.action
                 ? node.body.value.action.outputKeys.includes(key)
@@ -173,11 +182,15 @@ export function collectCombatInvisiblePresentationAssignmentKeys(
       const forwardsIntoPresentationCandidate = leafNodes.some(
         node =>
           node.body.kind === 'leaf' &&
-          ((node.body.value.family === 'blackboardMutation' &&
-            node.body.value.action.key !== key &&
-            node.body.value.action.directValue &&
-            node.body.value.action.value.blackboardKey === key &&
-            candidates.has(node.body.value.action.key)) ||
+          ((node.body.value.family === 'curveCalculation' &&
+            node.body.value.action.outputKey !== key &&
+            node.body.value.action.input.blackboardKey === key &&
+            candidates.has(node.body.value.action.outputKey)) ||
+            (node.body.value.family === 'blackboardMutation' &&
+              node.body.value.action.key !== key &&
+              node.body.value.action.directValue &&
+              node.body.value.action.value.blackboardKey === key &&
+              candidates.has(node.body.value.action.key)) ||
             (node.body.value.family === 'blackboardCalculation' &&
               node.body.value.action.key !== key &&
               [
@@ -187,12 +200,17 @@ export function collectCombatInvisiblePresentationAssignmentKeys(
               ].includes(key) &&
               candidates.has(node.body.value.action.key))),
       );
+      // 表现消费者可能已被上一轮裁剪；仍须清理其计算链，不能要求消费者继续存在。
+      const outputHasNoConsumer =
+        isUnusedByExternalResources?.(key) === true &&
+        nodes.every(node => !usages.get(node)!.reads.has(key));
       if (
         !leafReferencesAreCombatInvisible ||
         !switchesArePresentationOnly ||
         (consumers.length === 0 &&
           presentationLeafConsumers.length === 0 &&
           presentationIfElseConsumers.length === 0 &&
+          !outputHasNoConsumer &&
           !forwardsIntoPresentationCandidate)
       ) {
         candidates.delete(key);
@@ -253,8 +271,15 @@ export function collectCombatInvisibleRandomKeys(
         presentationOnlyTargetGroups.has(node.body.value.action.targetGroupKey)
       )
         return true;
-      if (node.body.kind === 'leaf' && node.body.value.family === 'blackboardCalculation') {
-        const outputKey = node.body.value.action.key;
+      if (
+        node.body.kind === 'leaf' &&
+        (node.body.value.family === 'blackboardCalculation' ||
+          node.body.value.family === 'curveCalculation')
+      ) {
+        const outputKey =
+          node.body.value.family === 'curveCalculation'
+            ? node.body.value.action.outputKey
+            : node.body.value.action.key;
         if (!canDiscardOutput(outputKey)) return false;
         const outputHasNoOtherConsumer = nodes.every(
           candidate => candidate === node || !usages.get(candidate)!.reads.has(outputKey),

@@ -1,7 +1,7 @@
 import type { GraphSharedEntityValueUsage } from '../src/compiler/optimization/graphValueOptimization.ts';
 import { GameplayTagRegistry } from '../src/source/nativeGameplayTags.ts';
 import { readGameplayTagPaths } from './readGameplayTagPaths.ts';
-import { formatGeneratedSource } from './formatGeneratedSource.ts';
+import { formatGeneratedSource } from '../src/compiler/publication/formatGeneratedSource.ts';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

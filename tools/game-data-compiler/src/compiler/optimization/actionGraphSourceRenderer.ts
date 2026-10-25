@@ -38,7 +38,7 @@ export function assertFiniteNumbers(value: unknown, path: string): void {
 }
 
 /** 只负责 TS 输出；程序必须在来源编译阶段完成构图，禁止在渲染时补转。 */
-export function renderValue(value: unknown, context: RenderContext): string {
+export function renderValue(value: unknown, context: RenderContext, path = '$'): string {
   if (isRaw(value)) return value.rawExpression;
   if (
     value !== null &&
@@ -60,11 +60,12 @@ export function renderValue(value: unknown, context: RenderContext): string {
     return renderNumber(value);
   }
   if (Array.isArray(value)) {
-    return `[${value.map(item => renderValue(item, context)).join(', ')}]`;
+    return `[${value.map((item, index) => renderValue(item, context, `${path}[${index}]`)).join(', ')}]`;
   }
+  if (value === undefined) throw new Error(`cannot render undefined at ${path}`);
   const record = requireRecord(value);
   return `{${Object.entries(record)
-    .map(([key, item]) => `${JSON.stringify(key)}: ${renderValue(item, context)}`)
+    .map(([key, item]) => `${JSON.stringify(key)}: ${renderValue(item, context, `${path}.${key}`)}`)
     .join(', ')}}`;
 }
 

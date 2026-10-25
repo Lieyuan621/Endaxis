@@ -693,8 +693,8 @@ export {
   type ProjectileCallbackInvocationSource,
 } from './compiler/abilities/projectileBlackboard.ts';
 export {
-  createZeroDistanceProjectileProjectionExtensionSource,
-  type ZeroDistanceProjectileProjectionCatalogSource,
+  createProjectileProjectionExtensionSource,
+  type ProjectileProjectionCatalogSource,
 } from './compiler/abilities/projectileRuntimeProjection.ts';
 export {
   parseProjectileRuntimeSource,

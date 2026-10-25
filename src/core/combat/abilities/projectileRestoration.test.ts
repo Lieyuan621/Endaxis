@@ -1,3 +1,9 @@
+import {
+  stationaryProjectileFlight,
+  landingProjectileFlight,
+  returnProjectileFlight,
+} from '../../test/projectileFlight';
+
 /** 联合验证投射物寿命、回调技能和回执恢复；保存点覆盖命中前后。 */
 import { expect, it, vi } from 'vitest';
 import { ProjectileLifecycleRuntime } from './projectileLifecycleRuntime';
@@ -18,12 +24,12 @@ it('命中回调中的动作结束不会再触发超时结束技能', () => {
   const runtime = new ProjectileLifecycleRuntime();
   const finish = vi.fn();
   const ref = runtime.launch({
-    finishDelaySeconds: 10,
+    flight: stationaryProjectileFlight(10, true),
     recycleDelaySeconds: 1,
-    firstTickHit: { finishOnHit: true },
+    hitPolicy: { finishOnHit: true },
     hit: () => {
       runtime.finishByAction(ref.target);
-      return true;
+      return 1;
     },
     finish,
     beforeReset: () => {},
@@ -46,7 +52,8 @@ it('动作结束投射物不施放结束技能，恢复后仍按同一延迟回�
   const original = new ProjectileLifecycleRuntime(() => 1);
   const ref = original.launch({
     ...ports,
-    finishDelaySeconds: 'firstTickBlock',
+
+    flight: landingProjectileFlight,
     recycleDelaySeconds: 0.05,
   });
   expect(original.finishByAction(ref.target)).toBe(true);
@@ -163,8 +170,8 @@ it.each(
     original.launch({
       callbacks: [data],
       callbackPrograms: [program],
-      finishDelaySeconds:
-        event === 'block' ? 'firstTickBlock' : { reachAfterTicks: 2, maxDurationSeconds: 1 },
+
+      flight: event === 'block' ? landingProjectileFlight : returnProjectileFlight,
       recycleDelaySeconds: 0.1,
       ...originalPorts,
     });

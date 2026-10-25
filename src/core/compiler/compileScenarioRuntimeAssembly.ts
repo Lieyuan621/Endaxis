@@ -530,6 +530,7 @@ export function compileScenarioRuntimeAssembly(
     ...options.environment,
     initialFrame,
     squadSlotCount: scenario.tracks.length,
+    operatorEnemyDistanceMeters: scenario.battle.operatorEnemyDistanceMeters ?? 0,
     operatorControl: {
       initialOperatorId: initialControlledOperatorId,
       automaticSwitches: scenario.battle.automaticControlSwitches !== false,

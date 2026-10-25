@@ -630,6 +630,7 @@ export const mifuChr_0031_mifu_combo_skill: SkillDefinition = {
     { startFrame: 35, endFrame: 73, sequence: { $sequence: 'reachSkillOperableBoundary_41' } },
     { startFrame: 35, endFrame: 73, sequence: { $sequence: 'reachSkillOperableBoundary_42' } },
   ],
+  defaultTarget: 'enemy',
   smartTarget: 'trigger',
   cooldownFrames: [600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 570],
   skillType: 'comboSkill',
@@ -2208,7 +2209,7 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
         },
         next: null,
       },
-      mergeContextTargets_16: {
+      mergeContextTargets_17: {
         action: {
           kind: 'mergeContextTargets',
           parameters: {
@@ -2218,7 +2219,7 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
         },
         next: null,
       },
-      changeResource_17: {
+      changeResource_18: {
         action: {
           kind: 'changeResource',
           parameters: {
@@ -2233,7 +2234,7 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
         },
         next: null,
       },
-      forEachContextTarget_21: {
+      forEachContextTarget_22: {
         action: {
           kind: 'forEachContextTarget',
           parameters: { targets: { kind: 'fixed', target: 'enemy' } },
@@ -2241,7 +2242,7 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
         },
         next: null,
       },
-      jumpTimeline_20: {
+      jumpTimeline_21: {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 105 },
@@ -2249,41 +2250,41 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
         },
         next: null,
       },
-      checkCondition_18: {
+      checkCondition_19: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
         },
         next: null,
       },
-      checkCondition_19: {
+      checkCondition_20: {
         action: {
           kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
         },
-        next: 'checkCondition_18',
-      },
-      ifElse_22: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_4' },
-          whenTrue: { $sequence: 'jumpTimeline_20' },
-          whenFalse: { $sequence: 'forEachContextTarget_21' },
-        },
-        next: null,
+        next: 'checkCondition_19',
       },
       ifElse_23: {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
+          whenTrue: { $sequence: 'jumpTimeline_21' },
+          whenFalse: { $sequence: 'forEachContextTarget_22' },
+        },
+        next: null,
+      },
+      ifElse_24: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
           condition: { kind: 'conditionNode', nodeId: 'data_5' },
-          whenTrue: { $sequence: 'ifElse_22' },
+          whenTrue: { $sequence: 'ifElse_23' },
           whenFalse: { $sequence: null },
         },
         next: null,
       },
-      applyBuff_24: {
+      applyBuff_25: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2293,9 +2294,9 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'ifElse_23',
+        next: 'ifElse_24',
       },
-      dealDamage_25: {
+      dealDamage_26: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -2307,27 +2308,119 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
             features: ['canBreakWeakness'],
           },
         },
-        next: 'applyBuff_24',
-      },
-      checkCondition_26: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-        },
-        next: 'dealDamage_25',
+        next: 'applyBuff_25',
       },
       checkCondition_27: {
         action: {
           kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+        },
+        next: 'dealDamage_26',
+      },
+      checkCondition_28: {
+        action: {
+          kind: 'checkCondition',
           parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
         },
-        next: 'checkCondition_26',
+        next: 'checkCondition_27',
       },
-      markCurrentSkillCanInterrupt_28: {
+      markCurrentSkillCanInterrupt_29: {
         action: { kind: 'markCurrentSkillCanInterrupt', parameters: {} },
         next: null,
       },
-      applyBuff_37: {
+      createSpatialPointTargets_31: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'targetpos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'inputTarget' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
+        },
+        next: null,
+      },
+      modifyActionValue_32: {
+        action: {
+          kind: 'modifyActionValue',
+          parameters: {
+            key: 'effect_z_scale',
+            operation: 'divide',
+            value: { kind: 'constant', value: 8 },
+          },
+        },
+        next: null,
+      },
+      saveTargetDistance_33: {
+        action: {
+          kind: 'saveTargetDistance',
+          parameters: {
+            source: { kind: 'owner' },
+            target: { kind: 'context', key: 'targetpos' },
+            outputKey: 'effect_z_scale',
+          },
+        },
+        next: 'modifyActionValue_32',
+      },
+      ifElse_34: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_10' },
+          whenTrue: { $sequence: 'createSpatialPointTargets_31' },
+          whenFalse: { $sequence: null },
+        },
+        next: 'saveTargetDistance_33',
+      },
+      saveTargetDistance_35: {
+        action: {
+          kind: 'saveTargetDistance',
+          parameters: {
+            source: { kind: 'owner' },
+            target: { kind: 'inputTarget' },
+            outputKey: 'effect_z_scale',
+          },
+        },
+        next: 'ifElse_34',
+      },
+      checkCondition_36: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
+        },
+        next: 'saveTargetDistance_35',
+      },
+      createSpatialPointTargets_37: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'targetpos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'owner' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 8 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
+        },
+        next: 'checkCondition_36',
+      },
+      applyBuff_38: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -2339,43 +2432,43 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
         },
         next: null,
       },
-      jumpTimeline_38: {
+      jumpTimeline_39: {
         action: {
           kind: 'jumpTimeline',
           parameters: { destinationFrame: 204 },
-          condition: { kind: 'conditionNode', nodeId: 'data_9' },
+          condition: { kind: 'conditionNode', nodeId: 'data_12' },
         },
         next: null,
       },
-      overrideBasicAttackMapping_39: {
+      overrideBasicAttackMapping_40: {
         action: {
           kind: 'overrideBasicAttackMapping',
           parameters: { skillIds: ['chr_0031_mifu_attack2'], priority: 'skill' },
         },
         next: null,
       },
-      reachSkillOperableBoundary_40: {
+      reachSkillOperableBoundary_41: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0031_mifu_normalskill_2'] },
         },
         next: null,
       },
-      reachSkillOperableBoundary_42: {
+      reachSkillOperableBoundary_43: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0031_mifu_attack2'] },
         },
         next: null,
       },
-      reachSkillOperableBoundary_44: {
+      reachSkillOperableBoundary_45: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0031_mifu_powerattack'] },
         },
         next: null,
       },
-      reachSkillOperableBoundary_46: {
+      reachSkillOperableBoundary_47: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0031_mifu_combo_skill'] },
@@ -2421,7 +2514,7 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
       },
       data_4: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_19' } },
+        expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_20' } },
       },
       data_5: {
         type: 'boolean',
@@ -2451,6 +2544,30 @@ export const mifuChr_0031_mifu_normalskill_1ActionGraph = {
         },
       },
       data_9: {
+        type: 'number',
+        expression: { kind: 'blackboard', key: 'effect_z_scale', fallback: 0 },
+      },
+      data_10: {
+        type: 'boolean',
+        expression: {
+          kind: 'actionValueCompare',
+          left: { kind: 'valueNode', nodeId: 'data_9' },
+          operator: 'lessOrEqual',
+          right: { kind: 'constant', value: 8 },
+        },
+      },
+      data_11: {
+        type: 'boolean',
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'inputTarget' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
+      },
+      data_12: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: null } },
       },
@@ -2463,7 +2580,10 @@ export const mifuChr_0031_mifu_normalskill_1: SkillDefinition = {
   actionGraph: mifuChr_0031_mifu_normalskill_1ActionGraph,
   key: 'chr_0031_mifu_normalskill_1',
   element: 'physical',
-  blackboard: { atk_scale: [0.67, 0.73, 0.8, 0.87, 0.93, 1, 1.07, 1.13, 1.2, 1.28, 1.38, 1.5] },
+  blackboard: {
+    atk_scale: [0.67, 0.73, 0.8, 0.87, 0.93, 1, 1.07, 1.13, 1.2, 1.28, 1.38, 1.5],
+    effect_z_scale: 1,
+  },
   timelineBlockFrames: 11,
   naturalDurationFrames: 203,
   exclusiveFrame: 125,
@@ -2474,21 +2594,22 @@ export const mifuChr_0031_mifu_normalskill_1: SkillDefinition = {
     { startFrame: 11, endFrame: 38, sequence: { $sequence: 'applyBuff_6' } },
     { startFrame: 105, endFrame: 156, sequence: { $sequence: 'applyBuff_6' } },
     { startFrame: 0, endFrame: 0, sequence: { $sequence: 'findTargets_opt1' } },
-    { startFrame: 4, endFrame: 4, sequence: { $sequence: 'mergeContextTargets_16' } },
-    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'changeResource_17' } },
-    { startFrame: 7, endFrame: 12, sequence: { $sequence: 'checkCondition_27' } },
-    { startFrame: 25, endFrame: 31, sequence: { $sequence: 'markCurrentSkillCanInterrupt_28' } },
-    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'applyBuff_37' } },
-    { startFrame: 104, endFrame: 104, sequence: { $sequence: 'jumpTimeline_38' } },
-    { startFrame: 0, endFrame: 131, sequence: { $sequence: 'overrideBasicAttackMapping_39' } },
-    { startFrame: 11, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_40' } },
-    { startFrame: 115, endFrame: 131, sequence: { $sequence: 'reachSkillOperableBoundary_40' } },
-    { startFrame: 11, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_42' } },
-    { startFrame: 115, endFrame: 131, sequence: { $sequence: 'reachSkillOperableBoundary_42' } },
-    { startFrame: 11, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_44' } },
-    { startFrame: 115, endFrame: 131, sequence: { $sequence: 'reachSkillOperableBoundary_44' } },
-    { startFrame: 11, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_46' } },
-    { startFrame: 115, endFrame: 131, sequence: { $sequence: 'reachSkillOperableBoundary_46' } },
+    { startFrame: 4, endFrame: 4, sequence: { $sequence: 'mergeContextTargets_17' } },
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'changeResource_18' } },
+    { startFrame: 7, endFrame: 12, sequence: { $sequence: 'checkCondition_28' } },
+    { startFrame: 25, endFrame: 31, sequence: { $sequence: 'markCurrentSkillCanInterrupt_29' } },
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'createSpatialPointTargets_37' } },
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'applyBuff_38' } },
+    { startFrame: 104, endFrame: 104, sequence: { $sequence: 'jumpTimeline_39' } },
+    { startFrame: 0, endFrame: 131, sequence: { $sequence: 'overrideBasicAttackMapping_40' } },
+    { startFrame: 11, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_41' } },
+    { startFrame: 115, endFrame: 131, sequence: { $sequence: 'reachSkillOperableBoundary_41' } },
+    { startFrame: 11, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_43' } },
+    { startFrame: 115, endFrame: 131, sequence: { $sequence: 'reachSkillOperableBoundary_43' } },
+    { startFrame: 11, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_45' } },
+    { startFrame: 115, endFrame: 131, sequence: { $sequence: 'reachSkillOperableBoundary_45' } },
+    { startFrame: 11, endFrame: 30, sequence: { $sequence: 'reachSkillOperableBoundary_47' } },
+    { startFrame: 115, endFrame: 131, sequence: { $sequence: 'reachSkillOperableBoundary_47' } },
   ],
   defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
@@ -2947,6 +3068,7 @@ export const mifuChr_0031_mifu_normalskill_2: SkillDefinition = {
     { startFrame: 28, endFrame: 62, sequence: { $sequence: 'reachSkillOperableBoundary_35' } },
     { startFrame: 28, endFrame: 62, sequence: { $sequence: 'reachSkillOperableBoundary_36' } },
   ],
+  defaultTarget: 'enemy',
   smartTarget: 'enemy',
   costs: [{ resource: 'sp', value: 50 }],
   icon: 'endaxis:operators/mifu/battle_02',
@@ -3511,6 +3633,7 @@ export const mifuChr_0031_mifu_normalskill_3: SkillDefinition = {
     { startFrame: 25, endFrame: 25, sequence: { $sequence: 'ifElse_22' } },
     { startFrame: 26, endFrame: 26, sequence: { $sequence: 'forEachContextTarget_37' } },
   ],
+  defaultTarget: 'enemy',
   smartTarget: 'enemy',
   costs: [{ resource: 'sp', value: 50 }],
   icon: 'endaxis:operators/mifu/battle_03',

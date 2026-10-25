@@ -4,6 +4,241 @@ import type { ActionGraphResourceDefinition } from '../../../packages/game-data-
 import type { SkillDefinition } from '../../../packages/game-data-contract/src/skills';
 import type { SkillBuffDefinition } from '../../../packages/game-data-contract/src/buffs';
 import type { OperatorDefinition } from '../../../packages/game-data-contract/src/operators';
+const xaihiChr_0011_seraph_combo_skillActionGraphCallback1 = {
+  actionGraph: {
+    main: {
+      nodes: {
+        applyBuff_2: {
+          action: {
+            kind: 'applyBuff',
+            parameters: {
+              buffs: [
+                {
+                  buffId: 'buff_chr_0011_seraph_talent_1_crystup',
+                  copiedBlackboardAssignments: { cryst_up: 'cryst_up', duration: 'duration' },
+                },
+              ],
+              targets: { kind: 'inputTarget' },
+              source: { kind: 'source' },
+              inheritSourceSkillCastInfo: true,
+            },
+          },
+          next: null,
+        },
+        ifElse_4: {
+          action: {
+            kind: 'ifElse',
+            parameters: { alwaysNext: true },
+            condition: { kind: 'conditionNode', nodeId: 'data_1' },
+            whenTrue: { $sequence: 'applyBuff_2' },
+            whenFalse: { $sequence: null },
+          },
+          next: null,
+        },
+        ifElse_5: {
+          action: {
+            kind: 'ifElse',
+            parameters: { alwaysNext: true },
+            condition: { kind: 'conditionNode', nodeId: 'data_3' },
+            whenTrue: { $sequence: 'ifElse_4' },
+            whenFalse: { $sequence: null },
+          },
+          next: null,
+        },
+        checkCondition_6: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+          },
+          next: null,
+        },
+        checkCondition_7: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+          },
+          next: 'checkCondition_6',
+        },
+        changeResource_11: {
+          action: {
+            kind: 'changeResource',
+            parameters: {
+              resource: 'ultimateEnergy',
+              amount: { kind: 'valueNode', nodeId: 'data_8' },
+              coefficient: { kind: 'constant', value: 1 },
+              source: { kind: 'source' },
+              targets: { kind: 'source' },
+            },
+          },
+          next: null,
+        },
+        startTimeDilation_12: {
+          action: {
+            kind: 'startTimeDilation',
+            parameters: {
+              scope: 'entity',
+              durationSeconds: { kind: 'constant', value: 0.2 },
+              slot: 'TimeDilation/Layer/Entity/HitStop',
+              priority: 10,
+              curve: { kind: 'named', key: 'char_hard_stop' },
+              finishByAction: false,
+              targets: ['enemy', 'caster'],
+            },
+          },
+          next: 'changeResource_11',
+        },
+        ifElse_13: {
+          action: {
+            kind: 'ifElse',
+            parameters: { alwaysNext: true },
+            condition: { kind: 'conditionNode', nodeId: 'data_9' },
+            whenTrue: { $sequence: 'startTimeDilation_12' },
+            whenFalse: { $sequence: null },
+          },
+          next: null,
+        },
+        dealDamage_14: {
+          action: {
+            kind: 'dealDamage',
+            parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
+              damageType: 'cryo',
+              attackScale: { kind: 'valueNode', nodeId: 'data_10' },
+              tags: ['comboSkill'],
+              features: ['canBreakWeakness'],
+              stagger: { kind: 'valueNode', nodeId: 'data_11' },
+            },
+          },
+          next: 'ifElse_13',
+        },
+        applyElementalInfliction_15: {
+          action: {
+            kind: 'applyElementalInfliction',
+            parameters: { element: 'cryo', isExtra: false },
+          },
+          next: 'dealDamage_14',
+        },
+        modifyActionValue_opt1: {
+          action: {
+            kind: 'modifyActionValue',
+            parameters: {
+              key: 'EntityBB_bounced',
+              operation: 'assign',
+              value: { kind: 'constant', value: 1 },
+            },
+          },
+          next: null,
+        },
+        ifElse_opt2: {
+          action: {
+            kind: 'ifElse',
+            parameters: { alwaysNext: true },
+            condition: { kind: 'conditionNode', nodeId: 'data_12' },
+            whenTrue: { $sequence: 'modifyActionValue_opt1' },
+            whenFalse: { $sequence: null },
+          },
+          next: 'applyElementalInfliction_15',
+        },
+      },
+      dataNodes: {
+        data_1: {
+          type: 'boolean',
+          expression: {
+            kind: 'entityTagMatch',
+            target: { kind: 'inputTarget' },
+            tagQueryType: 'hasAny',
+            tags: [
+              'Skill/Character/Common/SpellInflict/CrystInflict',
+              'Skill/Character/Common/SpellStatus/Frozen',
+            ],
+          },
+        },
+        data_2: {
+          type: 'number',
+          expression: { kind: 'blackboard', key: 'exist_talent_1', fallback: 0 },
+        },
+        data_3: {
+          type: 'boolean',
+          expression: {
+            kind: 'actionValueCompare',
+            left: { kind: 'valueNode', nodeId: 'data_2' },
+            operator: 'greaterOrEqual',
+            right: { kind: 'constant', value: 1 },
+          },
+        },
+        data_4: {
+          type: 'number',
+          expression: { kind: 'blackboard', key: 'EntityBB_bounced', fallback: 0 },
+        },
+        data_5: {
+          type: 'boolean',
+          expression: {
+            kind: 'actionValueCompare',
+            left: { kind: 'valueNode', nodeId: 'data_4' },
+            operator: 'equal',
+            right: { kind: 'constant', value: 0 },
+          },
+        },
+        data_6: {
+          type: 'number',
+          expression: { kind: 'blackboard', key: 'potential_3', fallback: 0 },
+        },
+        data_7: {
+          type: 'boolean',
+          expression: {
+            kind: 'actionValueCompare',
+            left: { kind: 'valueNode', nodeId: 'data_6' },
+            operator: 'equal',
+            right: { kind: 'constant', value: 1 },
+          },
+        },
+        data_8: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+        data_9: {
+          type: 'boolean',
+          expression: {
+            kind: 'entityCountCompare',
+            target: { kind: 'inputTarget' },
+            containsHittableTarget: false,
+            excludeDeadEntity: false,
+            operator: 'greaterOrEqual',
+            value: 1,
+          },
+        },
+        data_10: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+        data_11: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+        data_12: {
+          type: 'boolean',
+          expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_7' } },
+        },
+      },
+    },
+    macros: {},
+  },
+  skillId: 'chr_0011_seraph_combo_skill_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 1,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: {
+    atk_scale: 0,
+    cryst_up: 0,
+    duration: 0,
+    exist_talent_1: 0,
+    poise: 0,
+    potential_3: 0,
+    usp: 0,
+  },
+  scheduledSequences: [
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_5' } },
+    { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_opt2' } },
+  ],
+} as const;
+
 export const xaihiChr_0011_seraph_combo_skillActionGraph = {
   main: {
     nodes: {
@@ -28,7 +263,21 @@ export const xaihiChr_0011_seraph_combo_skillActionGraph = {
       createSpatialPointTargets_4: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'mainchr' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 2 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: true,
+            },
+          },
         },
         next: null,
       },
@@ -89,261 +338,62 @@ export const xaihiChr_0011_seraph_combo_skillActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0011_seraph_combo_skill',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { onReach: true, finishOnHit: true },
+            targets: { kind: 'context', contextKey: 'main' },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
-            {
-              event: 'hit',
-              skill: {
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      applyBuff_2: {
-                        action: {
-                          kind: 'applyBuff',
-                          parameters: {
-                            buffs: [
-                              {
-                                buffId: 'buff_chr_0011_seraph_talent_1_crystup',
-                                copiedBlackboardAssignments: {
-                                  cryst_up: 'cryst_up',
-                                  duration: 'duration',
-                                },
-                              },
-                            ],
-                            targets: { kind: 'inputTarget' },
-                            source: { kind: 'source' },
-                            inheritSourceSkillCastInfo: true,
-                          },
-                        },
-                        next: null,
-                      },
-                      ifElse_4: {
-                        action: {
-                          kind: 'ifElse',
-                          parameters: { alwaysNext: true },
-                          condition: { kind: 'conditionNode', nodeId: 'data_1' },
-                          whenTrue: { $sequence: 'applyBuff_2' },
-                          whenFalse: { $sequence: null },
-                        },
-                        next: null,
-                      },
-                      ifElse_5: {
-                        action: {
-                          kind: 'ifElse',
-                          parameters: { alwaysNext: true },
-                          condition: { kind: 'conditionNode', nodeId: 'data_3' },
-                          whenTrue: { $sequence: 'ifElse_4' },
-                          whenFalse: { $sequence: null },
-                        },
-                        next: null,
-                      },
-                      checkCondition_6: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
-                        },
-                        next: null,
-                      },
-                      checkCondition_7: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
-                        },
-                        next: 'checkCondition_6',
-                      },
-                      changeResource_11: {
-                        action: {
-                          kind: 'changeResource',
-                          parameters: {
-                            resource: 'ultimateEnergy',
-                            amount: { kind: 'valueNode', nodeId: 'data_8' },
-                            coefficient: { kind: 'constant', value: 1 },
-                            source: { kind: 'source' },
-                            targets: { kind: 'source' },
-                          },
-                        },
-                        next: null,
-                      },
-                      startTimeDilation_12: {
-                        action: {
-                          kind: 'startTimeDilation',
-                          parameters: {
-                            scope: 'entity',
-                            durationSeconds: { kind: 'constant', value: 0.2 },
-                            slot: 'TimeDilation/Layer/Entity/HitStop',
-                            priority: 10,
-                            curve: { kind: 'named', key: 'char_hard_stop' },
-                            finishByAction: false,
-                            targets: ['enemy', 'caster'],
-                          },
-                        },
-                        next: 'changeResource_11',
-                      },
-                      ifElse_13: {
-                        action: {
-                          kind: 'ifElse',
-                          parameters: { alwaysNext: true },
-                          condition: { kind: 'conditionNode', nodeId: 'data_9' },
-                          whenTrue: { $sequence: 'startTimeDilation_12' },
-                          whenFalse: { $sequence: null },
-                        },
-                        next: null,
-                      },
-                      dealDamage_14: {
-                        action: {
-                          kind: 'dealDamage',
-                          parameters: {
-                            attacker: 'actionSource',
-                            target: { kind: 'inputTarget' },
-                            damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_10' },
-                            tags: ['comboSkill'],
-                            features: ['canBreakWeakness'],
-                            stagger: { kind: 'valueNode', nodeId: 'data_11' },
-                          },
-                        },
-                        next: 'ifElse_13',
-                      },
-                      applyElementalInfliction_15: {
-                        action: {
-                          kind: 'applyElementalInfliction',
-                          parameters: { element: 'cryo', isExtra: false },
-                        },
-                        next: 'dealDamage_14',
-                      },
-                      modifyActionValue_opt1: {
-                        action: {
-                          kind: 'modifyActionValue',
-                          parameters: {
-                            key: 'EntityBB_bounced',
-                            operation: 'assign',
-                            value: { kind: 'constant', value: 1 },
-                          },
-                        },
-                        next: null,
-                      },
-                      ifElse_opt2: {
-                        action: {
-                          kind: 'ifElse',
-                          parameters: { alwaysNext: true },
-                          condition: { kind: 'conditionNode', nodeId: 'data_12' },
-                          whenTrue: { $sequence: 'modifyActionValue_opt1' },
-                          whenFalse: { $sequence: null },
-                        },
-                        next: 'applyElementalInfliction_15',
-                      },
-                    },
-                    dataNodes: {
-                      data_1: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'entityTagMatch',
-                          target: { kind: 'inputTarget' },
-                          tagQueryType: 'hasAny',
-                          tags: [
-                            'Skill/Character/Common/SpellInflict/CrystInflict',
-                            'Skill/Character/Common/SpellStatus/Frozen',
-                          ],
-                        },
-                      },
-                      data_2: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'exist_talent_1', fallback: 0 },
-                      },
-                      data_3: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_2' },
-                          operator: 'greaterOrEqual',
-                          right: { kind: 'constant', value: 1 },
-                        },
-                      },
-                      data_4: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'EntityBB_bounced', fallback: 0 },
-                      },
-                      data_5: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_4' },
-                          operator: 'equal',
-                          right: { kind: 'constant', value: 0 },
-                        },
-                      },
-                      data_6: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'potential_3', fallback: 0 },
-                      },
-                      data_7: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'actionValueCompare',
-                          left: { kind: 'valueNode', nodeId: 'data_6' },
-                          operator: 'equal',
-                          right: { kind: 'constant', value: 1 },
-                        },
-                      },
-                      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-                      data_9: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'entityCountCompare',
-                          target: { kind: 'inputTarget' },
-                          containsHittableTarget: false,
-                          excludeDeadEntity: false,
-                          operator: 'greaterOrEqual',
-                          value: 1,
-                        },
-                      },
-                      data_10: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale' },
-                      },
-                      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-                      data_12: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'checkActionResult',
-                          action: { $sequence: 'checkCondition_7' },
-                        },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-                skillId: 'chr_0011_seraph_combo_skill_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: {
-                  atk_scale: 0,
-                  cryst_up: 0,
-                  duration: 0,
-                  exist_talent_1: 0,
-                  poise: 0,
-                  potential_3: 0,
-                  usp: 0,
-                },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_5' } },
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'ifElse_opt2' } },
-                ],
-              },
-            },
+            { event: 'hit', skill: xaihiChr_0011_seraph_combo_skillActionGraphCallback1 },
           ],
         },
         next: 'applyBuff_13',
+      },
+      launchProjectile_11: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0011_seraph_combo_skill',
+            recycleDelaySeconds: 0.0333333350718021,
+            targets: { kind: 'context', contextKey: 'main' },
+            launch: {
+              start: { target: { kind: 'context', key: 'ball' } },
+              segmentTargets: [{ side: 'enemy' }],
+            },
+          },
+          callbacks: [
+            { event: 'hit', skill: xaihiChr_0011_seraph_combo_skillActionGraphCallback1 },
+          ],
+        },
+        next: 'applyBuff_13',
+      },
+      ifElse_15: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_2' },
+          whenTrue: { $sequence: 'launchProjectile_11' },
+          whenFalse: { $sequence: 'launchProjectile_14' },
+        },
+        next: null,
+      },
+      findOwnerSpawnedAbilityEntities_16: {
+        action: {
+          kind: 'findOwnerSpawnedAbilityEntities',
+          parameters: {
+            saveToContextKey: 'ball',
+            abilityEntityIds: [
+              'abilityentity_chr_0011_seraph_normal_skill',
+              'abilityentity_chr_0011_seraph_normal_skill_02',
+              'abilityentity_chr_0011_seraph_normal_skill_03',
+              'abilityentity_chr_0011_seraph_normal_skill_buff',
+              'abilityentity_chr_0027_tangtang_normal_skill_02_02',
+            ],
+            owner: { kind: 'owner' },
+          },
+        },
+        next: 'ifElse_15',
       },
       finishBuffsById_17: {
         action: {
@@ -384,33 +434,6 @@ export const xaihiChr_0011_seraph_combo_skillActionGraph = {
         },
         next: null,
       },
-      ifElse_opt1: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_2' },
-          whenTrue: { $sequence: 'launchProjectile_14' },
-          whenFalse: { $sequence: 'launchProjectile_14' },
-        },
-        next: null,
-      },
-      findOwnerSpawnedAbilityEntities_opt2: {
-        action: {
-          kind: 'findOwnerSpawnedAbilityEntities',
-          parameters: {
-            saveToContextKey: 'ball',
-            abilityEntityIds: [
-              'abilityentity_chr_0011_seraph_normal_skill',
-              'abilityentity_chr_0011_seraph_normal_skill_02',
-              'abilityentity_chr_0011_seraph_normal_skill_03',
-              'abilityentity_chr_0011_seraph_normal_skill_buff',
-              'abilityentity_chr_0027_tangtang_normal_skill_02_02',
-            ],
-            owner: { kind: 'owner' },
-          },
-        },
-        next: 'ifElse_opt1',
-      },
     },
     dataNodes: {
       data_1: {
@@ -426,7 +449,14 @@ export const xaihiChr_0011_seraph_combo_skillActionGraph = {
       },
       data_2: {
         type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+        expression: {
+          kind: 'entityCountCompare',
+          target: { kind: 'context', key: 'ball' },
+          containsHittableTarget: false,
+          excludeDeadEntity: false,
+          operator: 'greaterOrEqual',
+          value: 1,
+        },
       },
     },
   },
@@ -454,11 +484,7 @@ export const xaihiChr_0011_seraph_combo_skill: SkillDefinition = {
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 24, sequence: { $sequence: 'findTargets_7' } },
-    {
-      startFrame: 24,
-      endFrame: 25,
-      sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_opt2' },
-    },
+    { startFrame: 24, endFrame: 25, sequence: { $sequence: 'findOwnerSpawnedAbilityEntities_16' } },
     { startFrame: 0, endFrame: 1, sequence: { $sequence: 'finishBuffsById_17' } },
     { startFrame: 0, endFrame: 24, sequence: { $sequence: 'startTimeDilation_18' } },
     { startFrame: 25, endFrame: 60, sequence: { $sequence: 'reachSkillOperableBoundary_19' } },
@@ -478,10 +504,9 @@ export const xaihiChr_0011_seraph_attack1ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0011_seraph_normal_attack',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -646,10 +671,9 @@ export const xaihiChr_0011_seraph_attack2ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0011_seraph_normal_attack2',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -814,10 +838,9 @@ export const xaihiChr_0011_seraph_attack3ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0011_seraph_normal_attack3_true',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -974,6 +997,103 @@ export const xaihiChr_0011_seraph_attack3: SkillDefinition = {
   nativeSkillType: 'attack',
 };
 
+const xaihiChr_0011_seraph_attack4ActionGraphCallback1 = {
+  actionGraph: {
+    main: {
+      nodes: {
+        changeResource_3: {
+          action: {
+            kind: 'changeResource',
+            parameters: {
+              resource: 'sp',
+              amount: { kind: 'valueNode', nodeId: 'data_1' },
+              coefficient: { kind: 'constant', value: 0.5 },
+              source: { kind: 'source' },
+              targets: { kind: 'source' },
+              onlyMainOperator: true,
+              spGainKind: 'gain',
+              spGainSource: 'normalAttack',
+            },
+          },
+          next: null,
+        },
+        checkCondition_1: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          },
+          next: null,
+        },
+        checkCondition_2: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          },
+          next: 'checkCondition_1',
+        },
+        ifElse_4: {
+          action: {
+            kind: 'ifElse',
+            parameters: { alwaysNext: true },
+            condition: { kind: 'conditionNode', nodeId: 'data_4' },
+            whenTrue: { $sequence: 'changeResource_3' },
+            whenFalse: { $sequence: null },
+          },
+          next: null,
+        },
+        dealDamage_5: {
+          action: {
+            kind: 'dealDamage',
+            parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
+              damageType: 'cryo',
+              attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+              tags: ['normalAttack'],
+            },
+          },
+          next: 'ifElse_4',
+        },
+      },
+      dataNodes: {
+        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+        data_2: {
+          type: 'boolean',
+          expression: {
+            kind: 'entityCountCompare',
+            target: { kind: 'inputTarget' },
+            containsHittableTarget: false,
+            excludeDeadEntity: false,
+            operator: 'greaterOrEqual',
+            value: 1,
+          },
+        },
+        data_3: {
+          type: 'boolean',
+          expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+        },
+        data_4: {
+          type: 'boolean',
+          expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_2' } },
+        },
+        data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      },
+    },
+    macros: {},
+  },
+  skillId: 'chr_0011_seraph_attack4_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 1,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: { atb: 0, atk_scale: 0 },
+  scheduledSequences: [{ startFrame: 0, endFrame: 4, sequence: { $sequence: 'dealDamage_5' } }],
+} as const;
+
 export const xaihiChr_0011_seraph_attack4ActionGraph = {
   main: {
     nodes: {
@@ -982,120 +1102,24 @@ export const xaihiChr_0011_seraph_attack4ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0011_seraph_normal_attack3',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
-          callbacks: [
-            {
-              event: 'hit',
-              skill: {
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      changeResource_3: {
-                        action: {
-                          kind: 'changeResource',
-                          parameters: {
-                            resource: 'sp',
-                            amount: { kind: 'valueNode', nodeId: 'data_1' },
-                            coefficient: { kind: 'constant', value: 0.5 },
-                            source: { kind: 'source' },
-                            targets: { kind: 'source' },
-                            onlyMainOperator: true,
-                            spGainKind: 'gain',
-                            spGainSource: 'normalAttack',
-                          },
-                        },
-                        next: null,
-                      },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                        },
-                        next: null,
-                      },
-                      checkCondition_2: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                        },
-                        next: 'checkCondition_1',
-                      },
-                      ifElse_4: {
-                        action: {
-                          kind: 'ifElse',
-                          parameters: { alwaysNext: true },
-                          condition: { kind: 'conditionNode', nodeId: 'data_4' },
-                          whenTrue: { $sequence: 'changeResource_3' },
-                          whenFalse: { $sequence: null },
-                        },
-                        next: null,
-                      },
-                      dealDamage_5: {
-                        action: {
-                          kind: 'dealDamage',
-                          parameters: {
-                            attacker: 'actionSource',
-                            target: { kind: 'inputTarget' },
-                            damageType: 'cryo',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
-                            tags: ['normalAttack'],
-                          },
-                        },
-                        next: 'ifElse_4',
-                      },
-                    },
-                    dataNodes: {
-                      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-                      data_2: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'entityCountCompare',
-                          target: { kind: 'inputTarget' },
-                          containsHittableTarget: false,
-                          excludeDeadEntity: false,
-                          operator: 'greaterOrEqual',
-                          value: 1,
-                        },
-                      },
-                      data_3: {
-                        type: 'boolean',
-                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
-                      },
-                      data_4: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'checkActionResult',
-                          action: { $sequence: 'checkCondition_2' },
-                        },
-                      },
-                      data_5: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale' },
-                      },
-                    },
-                  },
-                  macros: {},
-                },
-                skillId: 'chr_0011_seraph_attack4_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 0, atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 4, sequence: { $sequence: 'dealDamage_5' } },
-                ],
-              },
-            },
-          ],
+          callbacks: [{ event: 'hit', skill: xaihiChr_0011_seraph_attack4ActionGraphCallback1 }],
+        },
+        next: null,
+      },
+      launchProjectile_2: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0011_seraph_normal_attack3_02',
+            recycleDelaySeconds: 0.0333333350718021,
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+          },
+          callbacks: [{ event: 'hit', skill: xaihiChr_0011_seraph_attack4ActionGraphCallback1 }],
         },
         next: null,
       },
@@ -1133,7 +1157,7 @@ export const xaihiChr_0011_seraph_attack4: SkillDefinition = {
   costFrame: 12,
   scheduledSequences: [
     { startFrame: 12, endFrame: 12, sequence: { $sequence: 'launchProjectile_1' } },
-    { startFrame: 7, endFrame: 7, sequence: { $sequence: 'launchProjectile_1' } },
+    { startFrame: 7, endFrame: 7, sequence: { $sequence: 'launchProjectile_2' } },
     { startFrame: 0, endFrame: 33, sequence: { $sequence: 'overrideBasicAttackMapping_3' } },
     { startFrame: 21, endFrame: 33, sequence: { $sequence: 'reachSkillOperableBoundary_4' } },
   ],
@@ -2970,6 +2994,461 @@ export const xaihi: OperatorDefinition = {
           { startFrame: 600, endFrame: 603, sequence: { $sequence: 'ifElse_6' } },
         ],
       },
+    },
+  },
+  projectileDefinitions: {
+    projectile_chr_0011_seraph_combo_skill: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 45 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 0.8,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.5 },
+      },
+      blackboard: {},
+      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0011_seraph_normal_attack: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 22 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.05 },
+                      { kind: 'constant', value: 0.05 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 32 },
+                      { kind: 'constant', value: 32 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.102 },
+                      { kind: 'constant', value: 0.102 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.166 },
+                      { kind: 'constant', value: 0.166 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 32 },
+                      { kind: 'constant', value: 32 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.075 },
+                      { kind: 'constant', value: 0.075 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0011_seraph_normal_attack2: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 24 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.4 },
+                      { kind: 'constant', value: 0.4 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 170 },
+                      { kind: 'constant', value: 170 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.11 },
+                      { kind: 'constant', value: 0.11 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.6 },
+                      { kind: 'constant', value: 0.6 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 170 },
+                      { kind: 'constant', value: 170 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.22 },
+                      { kind: 'constant', value: 0.22 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0011_seraph_normal_attack3: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 36 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.01 },
+                      { kind: 'constant', value: 0.01 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 150 },
+                      { kind: 'constant', value: 150 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.06 },
+                      { kind: 'constant', value: 0.06 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.36 },
+                      { kind: 'constant', value: 0.36 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 150 },
+                      { kind: 'constant', value: 150 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.05 },
+                      { kind: 'constant', value: 0.05 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0011_seraph_normal_attack3_02: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 36 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.01 },
+                      { kind: 'constant', value: 0.01 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 30 },
+                      { kind: 'constant', value: 30 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.06 },
+                      { kind: 'constant', value: 0.06 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.08 },
+                      { kind: 'constant', value: 0.08 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 30 },
+                      { kind: 'constant', value: 30 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.05 },
+                      { kind: 'constant', value: 0.05 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0011_seraph_normal_attack3_true: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 22 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.4 },
+                      { kind: 'constant', value: 0.4 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 32 },
+                      { kind: 'constant', value: 32 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.11 },
+                      { kind: 'constant', value: 0.11 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.6 },
+                      { kind: 'constant', value: 0.6 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 32 },
+                      { kind: 'constant', value: 32 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.22 },
+                      { kind: 'constant', value: 0.22 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
     },
   },
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },

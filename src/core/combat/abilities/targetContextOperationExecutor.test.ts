@@ -1,3 +1,4 @@
+import { stationaryProjectileFlight } from '../../test/projectileFlight';
 import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
 import { describe, expect, it, vi } from 'vitest';
 import { numberInput } from '../../../test/compiledGraphInputs';
@@ -32,6 +33,209 @@ function vitals(health: number): CombatVitals {
 }
 
 describe('TargetContextOperationExecutor', () => {
+  it('飞行参数读取实际距离，范围判断保留近似，缺少目标时保留原值', () => {
+    const executor = new TargetContextOperationExecutor(
+      'caster',
+      terminal,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      {
+        position: target => (target.kind === 'enemy' ? [12, 0, 0] : [0, 0, 0]),
+        mainTarget: () => ({ kind: 'enemy' }),
+        ownerSpawned: () => [],
+        ownerSpawnedProjectiles: () => [],
+      },
+    );
+    const context = {
+      blackboard: new ActionBlackboard({ distance: 99 }),
+      targetContext: new RuntimeTargetContext(),
+    };
+    const source = { kind: 'fixed' as const, target: 'caster' as const };
+    const target = { kind: 'fixed' as const, target: 'enemy' as const };
+    expect(
+      executor.execute(
+        { kind: 'saveTargetDistance', parameters: { source, target, outputKey: 'distance' } },
+        context,
+      ),
+    ).toBe(true);
+    expect(context.blackboard.getNumber('distance')).toBe(12);
+    expect(
+      executor.evaluate(
+        {
+          kind: 'targetDistance',
+          source,
+          target,
+          distance: 10,
+          lessThan: true,
+          includeTargetRadius: false,
+          containsHittableObject: false,
+        },
+        context,
+      ),
+    ).toBe(true);
+    executor.execute(
+      {
+        kind: 'saveTargetDistance',
+        parameters: { source, target: { kind: 'context', key: 'missing' }, outputKey: 'distance' },
+      },
+      context,
+    );
+    expect(context.blackboard.getNumber('distance')).toBe(12);
+  });
+
+  it('距离筛选保留范围近似，标签筛选保留不能锁定的目标', () => {
+    let marked = false;
+    const executor = new TargetContextOperationExecutor(
+      'caster',
+      terminal,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      {
+        position: target => (target.kind === 'enemy' ? [3, 4, 0] : [0, 0, 0]),
+        mainTarget: () => ({ kind: 'enemy' }),
+        ownerSpawned: () => [],
+        matchesTags: target => (target.kind === 'enemy' ? marked : undefined),
+      },
+    );
+    const context = {
+      blackboard: new ActionBlackboard(),
+      targetContext: new RuntimeTargetContext(),
+    };
+    const enemy = { kind: 'enemy' } as const;
+    const point = { kind: 'spatialPoint', pointId: 1 } as const;
+    context.targetContext.set('targets', [enemy, point]);
+    const distanceQuery: CompiledTargetQuery = {
+      kind: 'distanceFilter',
+      targets: { kind: 'fixed', target: 'enemy' },
+      center: { kind: 'fixed', target: 'caster' },
+      operator: 'lessOrEqual',
+      threshold: numberInput({ kind: 'constant', value: 3 }),
+      clampToXZ: false,
+    };
+    expect(executor.queryTargets(distanceQuery, context)).toEqual([enemy]);
+    expect(executor.queryTargets({ ...distanceQuery, clampToXZ: true }, context)).toEqual([enemy]);
+    const tagQuery: CompiledTargetQuery = {
+      kind: 'tagFilter',
+      targets: { kind: 'context', key: 'targets' },
+      tags: ['Status/Marked'],
+      tagQueryType: 'hasAny',
+    };
+    expect(executor.queryTargets(tagQuery, context)).toEqual([point]);
+    marked = true;
+    expect(executor.queryTargets(tagQuery, context)).toEqual([enemy, point]);
+    expect(context.targetContext.get('targets')).toEqual([enemy, point]);
+  });
+
+  it('随机飞行端点保留中心和旋转，按角度后半径采样且不在后续读取时重抽', () => {
+    const ranges: [number, number][] = [];
+    const executor = new TargetContextOperationExecutor(
+      'caster',
+      terminal,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      {
+        position: () => [10, 7, 0],
+        sampleRange: (minimum, maximum) => {
+          ranges.push([minimum, maximum]);
+          return (minimum + maximum) / 2;
+        },
+        mainTarget: () => undefined,
+        ownerSpawned: () => [],
+      },
+    );
+    const targetContext = new RuntimeTargetContext();
+    const value = (value: number) => numberInput({ kind: 'constant', value });
+    executor.execute(
+      {
+        kind: 'createSpatialPointTargets',
+        parameters: {
+          saveToContextKey: 'points',
+          origin: { kind: 'fixed', target: 'enemy' },
+          count: value(1),
+          randomDistribution: {
+            shape: 'sector',
+            radius: value(3),
+            minimumRadius: value(1),
+            angleDegrees: value(180),
+            localPlaneRotation: [value(-90), value(0), value(0)],
+            centerOnGround: true,
+          },
+        },
+      },
+      { blackboard: new ActionBlackboard(), targetContext },
+    );
+    expect(ranges).toHaveLength(2);
+    expect(ranges[0]![0]).toBeCloseTo(0);
+    expect(ranges[0]![1]).toBeCloseTo(Math.PI);
+    expect(ranges[1]).toEqual([1, 3]);
+    const point = targetContext.get('points')[0]!;
+    expect(point.kind).toBe('spatialPoint');
+    if (point.kind !== 'spatialPoint') throw new Error('expected a spatial point');
+    expect(point.position![0]).toBeCloseTo(10);
+    expect(point.position![1]).toBeCloseTo(2);
+    expect(point.position![2]).toBeCloseTo(0);
+    expect(structuredClone(point)).toEqual(point);
+    expect(targetContext.get('points')[0]).toBe(point);
+    expect(ranges).toHaveLength(2);
+  });
+  it.each([false, true])(
+    '空间点保存执行时的位置，来源移动不改变点，空查询不创建点（偏移=%s）',
+    withOffset => {
+      const position: [number, number, number] = [12, 0, 0];
+      const executor = new TargetContextOperationExecutor(
+        'caster',
+        terminal,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        {
+          position: () => position,
+          mainTarget: () => undefined,
+          ownerSpawned: () => [],
+        },
+      );
+      const targetContext = new RuntimeTargetContext();
+      targetContext.setSingle('anchor', { kind: 'enemy' });
+      const context = { blackboard: new ActionBlackboard(), targetContext };
+      const step = {
+        kind: 'createSpatialPointTargets' as const,
+        parameters: {
+          saveToContextKey: 'point',
+          count: numberInput({ kind: 'constant', value: 1 }),
+          origin: { kind: 'context' as const, key: 'anchor' },
+          ...(withOffset
+            ? {
+                offset: {
+                  local: [
+                    numberInput({ kind: 'constant', value: 0 }),
+                    numberInput({ kind: 'constant', value: 2 }),
+                    numberInput({ kind: 'constant', value: 3 }),
+                  ] as const,
+                  facing: 'operatorToEnemy' as const,
+                  centerOnGround: true,
+                },
+              }
+            : {}),
+        },
+      };
+      executor.execute(step, context);
+      const saved = targetContext.get('point');
+      position[0] = 99;
+      targetContext.set('anchor', []);
+      expect(saved).toEqual([
+        { kind: 'spatialPoint', pointId: 1, position: withOffset ? [15, 2, 0] : [12, 0, 0] },
+      ]);
+      executor.execute(step, context);
+      expect(targetContext.get('point')).toEqual([]);
+    },
+  );
   it('picks one stable Context handle by a blackboard index and overwrites the output group', () => {
     const executor = new TargetContextOperationExecutor('caster', terminal);
     const targetContext = new RuntimeTargetContext();
@@ -490,7 +694,7 @@ describe('TargetContextOperationExecutor', () => {
     const projectiles = new ProjectileLifecycleRuntime();
     const launch = () =>
       projectiles.launch({
-        finishDelaySeconds: 1,
+        flight: stationaryProjectileFlight(1),
         recycleDelaySeconds: 1,
         resolveTickDeltaSeconds: () => 1,
         finish: () => {},
@@ -886,7 +1090,19 @@ describe('TargetContextOperationExecutor', () => {
 });
 
 it('距离过滤每次读取阈值，空结果覆盖旧目标且缺少中心不当作零距离', () => {
-  const executor = new TargetContextOperationExecutor('caster', terminal);
+  const executor = new TargetContextOperationExecutor(
+    'caster',
+    terminal,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    {
+      position: () => [0, 0, 0],
+      mainTarget: () => ({ kind: 'enemy' }),
+      ownerSpawned: () => [],
+    },
+  );
   const targetContext = new RuntimeTargetContext();
   targetContext.setSingle('center', { kind: 'enemy' });
   const blackboard = new ActionBlackboard({ threshold: -1 });

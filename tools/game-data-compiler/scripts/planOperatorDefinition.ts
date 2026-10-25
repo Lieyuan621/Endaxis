@@ -449,9 +449,11 @@ export function projectOperatorDefinition(
     ...candidate,
     operator: {
       ...candidate.operator,
+      projectileDefinitions: Object.fromEntries(args.sources.projectileDefinitions),
       ...(modes === undefined ? {} : { playerActionModes: modes }),
     },
     activeSkills,
+    audit: { ...candidate.audit, resourcePatches: [...args.sources.resourcePatches.values()] },
   };
 }
 
@@ -462,7 +464,10 @@ export function planOperatorDefinition(input: Parameters<typeof projectOperatorD
   return {
     ...candidate,
     operator: optimized.operator,
-    audit: { ...candidate.audit, optimization: optimized.report },
+    audit: {
+      ...candidate.audit,
+      optimization: optimized.report,
+    },
   };
 }
 

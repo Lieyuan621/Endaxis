@@ -1,8 +1,9 @@
+import { applyProjectileResourcePatch } from '../src/patches/projectiles.ts';
 import { describe, expect, it } from 'vitest';
 import type { SkillCastResourceDefinition } from '../../../packages/game-data-contract/src/skills.ts';
 import {
   compileProjectileCallbackSkillSource,
-  createZeroDistanceProjectileProjectionExtensionSource,
+  createProjectileProjectionExtensionSource,
 } from '../src/compiler/abilities/projectileRuntimeProjection.ts';
 import {
   createActionGraphBuilder,
@@ -13,12 +14,134 @@ import type { CombatActionProjectionContextSource } from '../src/compiler/combat
 import type { KnownNativeActionLeafSource } from '../src/source/actionLeaf.ts';
 import type { NativeActionNodeSource } from '../src/source/controlFlow.ts';
 import { gameplayTagIdFromPath } from '../src/source/nativeGameplayTags.ts';
+import type { ProjectileMoveModeSource } from '../src/source/projectileMovement.ts';
 import type { ProjectileRuntimeSource } from '../src/source/projectileRuntime.ts';
 import type { ProjectileLaunchActionSource } from '../src/source/referenceActions.ts';
 import type { SkillActionGraphSource } from '../src/source/skillActionGraph.ts';
 import { parseTargetReferenceSource } from '../src/source/target.ts';
-import { targetFixture } from './sourceFixtures.ts';
+import { scalarFixture, targetFixture } from './sourceFixtures.ts';
 import { returnProjectionContext } from './support/avywennaReturnProjection.ts';
+import {
+  projectProjectileFlightSource,
+  projectProjectileFlightTemplateSource,
+} from '../src/compiler/abilities/projectileFlightProjection.ts';
+
+it('投射物 PointFinder 保留中心贴地和偏移，交由现有端点解析计算', () => {
+  const input = reachInput();
+  const target = parseTargetReferenceSource(
+    {
+      ...targetFixture('InstantSearch', {
+        finderData: {
+          $type: 'Beyond.Gameplay.Core.Selector+PointFinder+Data, Gameplay.Beyond',
+          positionOffset: { x: scalarFixture(0), y: scalarFixture(2), z: scalarFixture(3) },
+          rotationOffset: { x: scalarFixture(0), y: scalarFixture(0), z: scalarFixture(0) },
+        },
+        validatorData: [],
+        postProcessorData: [],
+      }),
+      centerType: 'CurrentTarget',
+      centerToGround: true,
+      selectorDirection: 'TargetToSource',
+    },
+    'fixture.point',
+  );
+  const flight = projectProjectileFlightSource(
+    input.runtime,
+    { ...input.launch, target },
+    {
+      ...input.projectionContext,
+      graph: createActionGraphBuilder<CompiledBuffStepSource>(),
+    },
+    'fixture',
+  );
+  expect(flight.segments[0]?.target).toEqual({
+    target: { kind: 'fixed', target: 'enemy' },
+    offset: {
+      centerOnGround: true,
+      facing: 'enemyToOperator',
+      local: [0, 2, 3].map(value => ({ kind: 'constant', value })),
+    },
+  });
+});
+
+it('分段飞行只要求实际使用的端点可解析，不能把未知端点默认为敌人', () => {
+  const input = reachInput();
+  const unknown = parseTargetReferenceSource(targetFixture('Context'), 'fixture.unknown');
+  const launch = {
+    ...input.launch,
+    target: unknown,
+    presetPoints: [{ key: 'unused', point: unknown }],
+  };
+  const runtime = {
+    ...input.runtime,
+    useSegmentMove: true,
+    moveSegments: [
+      {
+        startPointKey: 'LaunchPoint',
+        endPointKey: 'LaunchPoint',
+        moveModeId: 'Default',
+        earlyNextByDuration: false,
+        segmentDuration: 0,
+        skipHitAndBlockDetection: false,
+      },
+    ],
+  };
+  const context = {
+    ...input.projectionContext,
+    graph: createActionGraphBuilder<CompiledBuffStepSource>(),
+  };
+  expect(
+    projectProjectileFlightSource(runtime, launch, context, 'fixture').segments[0]?.target,
+  ).toEqual({ side: 'operator' });
+  expect(() =>
+    projectProjectileFlightSource(
+      { ...runtime, useSegmentMove: false },
+      launch,
+      context,
+      'fixture',
+    ),
+  ).toThrow('unsupported action target Context');
+  expect(() =>
+    projectProjectileFlightSource(
+      { ...runtime, moveSegments: [{ ...runtime.moveSegments[0]!, endPointKey: 'unused' }] },
+      launch,
+      context,
+      'fixture',
+    ),
+  ).toThrow('unsupported action target Context');
+});
+
+const scalar = { value: 1, blackboardKey: null, levelValues: null };
+const curve = { keys: [], preInfinity: 2, postInfinity: 2 };
+const point = {
+  usePresetPoint: false,
+  presetPointKey: '',
+  xRatioRange: [scalar, scalar],
+  yzAngleRange: [scalar, scalar],
+  yzRadiusRange: [scalar, scalar],
+  scaledYzRadius: false,
+} as const;
+const straightMovement: ProjectileMoveModeSource = {
+  moveType: 0,
+  traceType: 0,
+  traceTime: scalar,
+  traceUntilDistance: scalar,
+  speed: scalar,
+  speedCurve: curve,
+  useSpeedScaleWithDistance: false,
+  speedScaleWithDistance: curve,
+  lockVelocityToXZ: false,
+  groundedMove: false,
+  limitAngularSpeed: false,
+  angularSpeed: scalar,
+  angularSpeedCurve: curve,
+  parabolaDef: 0,
+  travelDuration: scalar,
+  vertexYOffset: scalar,
+  gravity: scalar,
+  bezierMidPoint1: point,
+  bezierMidPoint2: point,
+};
 
 type ProjectileFixture = {
   sourcePath: string;
@@ -43,7 +166,7 @@ function projectFixture(
   },
 ) {
   const graph = input.hitGraph ?? input.reachGraph;
-  const project = createZeroDistanceProjectileProjectionExtensionSource({
+  const project = createProjectileProjectionExtensionSource({
     catalog: {
       runtimes: new Map([[input.runtime.projectileId, input.runtime]]),
       templates: new Map([[input.template.projectileId, input.template]]),
@@ -125,6 +248,7 @@ function reachInput(): ProjectileFixture {
       useHitBlockReachOrder: false,
       hitOnReach: false,
       allowHitSameTarget: false,
+      hitIntervalPerTarget: 0,
       maxHitCount: -1,
       collisionDetectTiming: 0,
       hitAndBlockDetectDelayTime: 0,
@@ -146,7 +270,7 @@ function reachInput(): ProjectileFixture {
       },
       presetPointKeys: ['LaunchPoint', 'TargetPoint'],
       useSegmentMove: false,
-      moveModeTypes: new Map([['Default', 0]]),
+      moveModes: new Map([['Default', straightMovement]]),
       moveSegments: [],
     },
   };
@@ -204,7 +328,10 @@ describe('独立到达回调的编译', () => {
     if (launch?.kind !== 'launchProjectile') throw new Error('expected projectile');
     expect(launch.parameters).toMatchObject({
       onlyHitTargets: { kind: 'inputTarget' },
-      finish: 'firstTickReach',
+      flight: {
+        finishOnReach: true,
+        finishDurationSeconds: { kind: 'constant', value: input.runtime.finishDuration },
+      },
     });
   });
 
@@ -242,12 +369,14 @@ describe('独立到达回调的编译', () => {
       finishOnReach: false,
       finishOnBlock: true,
       blockLayerDef: { value: 1, name: 'WallAndGround' },
-      colliderShape: { shapeType: 1, radius: 1, extent: [0, 0, 0] },
+      colliderShape: { shapeType: 1, radius: 1, center: [0, 0, 0] as const, extent: [0, 0, 0] },
     };
     expect(projectFixture(input).steps).toEqual([
       expect.objectContaining({
         kind: 'launchProjectile',
-        parameters: expect.objectContaining({ finish: 'firstTickBlock' }),
+        parameters: expect.objectContaining({
+          flight: expect.objectContaining({ landingAtTarget: true }),
+        }),
         callbacks: [expect.objectContaining({ event: 'block' })],
       }),
     ]);
@@ -256,7 +385,7 @@ describe('独立到达回调的编译', () => {
         ...input,
         runtime: { ...input.runtime, hitAndBlockDetectDelayTime: 1 },
       }),
-    ).toThrow('outside the proven zero-distance block shape');
+    ).toThrow('projectile collision delay requires lifecycle projection');
     input.launch = {
       ...input.launch,
       callbacks: [
@@ -267,7 +396,9 @@ describe('独立到达回调的编译', () => {
     expect(projectFixture(input).steps).toEqual([
       expect.objectContaining({
         kind: 'launchProjectile',
-        parameters: expect.objectContaining({ finish: 'firstTickBlock' }),
+        parameters: expect.objectContaining({
+          flight: expect.objectContaining({ landingAtTarget: true }),
+        }),
         callbacks: [
           expect.objectContaining({ event: 'block' }),
           expect.objectContaining({ event: 'finish' }),
@@ -320,9 +451,8 @@ describe('独立到达回调的编译', () => {
     expect(scope.steps[0]).toMatchObject({
       kind: 'launchProjectile',
       parameters: {
-        finish: {
-          reachAfterTicks: 1,
-          maxDurationSeconds: input.runtime.finishDuration,
+        flight: {
+          finishDurationSeconds: { kind: 'constant', value: input.runtime.finishDuration },
           finishOnReach: false,
         },
       },
@@ -357,7 +487,12 @@ it.each([
     ...input.runtime,
     maxHitCount,
     finishOnReach: false,
-    colliderShape: { shapeType: 1, radius: 1, extent: [0, 0, 0] as const },
+    colliderShape: {
+      shapeType: 1,
+      radius: 1,
+      center: [0, 0, 0] as const,
+      extent: [0, 0, 0] as const,
+    },
     targetFilter: {
       ...input.runtime.targetFilter,
       autoSetTargetFaction: true,
@@ -368,7 +503,7 @@ it.each([
         : null,
     },
   };
-  const project = createZeroDistanceProjectileProjectionExtensionSource({
+  const project = createProjectileProjectionExtensionSource({
     catalog: {
       runtimes: new Map([['projectile', runtime]]),
       templates: new Map([['projectile', input.template!]]),
@@ -385,13 +520,14 @@ it.each([
   expect(steps).toHaveLength(1);
   const action = steps[0]!;
   if (action.kind !== 'launchProjectile') throw new Error('expected independent hit');
-  expect(action.parameters).toEqual({
+  expect(action.parameters).toMatchObject({
     inheritActionBlackboard: launch.assignBlackboard,
     entityInitialValues: {},
-    finish: 10,
+    flight: { finishDurationSeconds: { kind: 'constant', value: 10 } },
     recycleDelaySeconds: 1,
     hit: {
       finishOnHit: maxHitCount === 1,
+      maxHitCount,
       ...(filtered
         ? {
             hitTagFilter: { tagQueryType: 'exceptAny', tags: ['Immune/Physical'] },
@@ -409,6 +545,59 @@ it.each([
   ]);
 });
 
+it.each([false, true])('空阵营掩码只禁止实体碰撞，不禁止到达命中（hitOnReach=%s）', hitOnReach => {
+  const input = reachInput();
+  const action = projectFixture({
+    ...input,
+    launch: { ...input.launch, callbacks: [{ event: 'hit', enabled: true, skillId: 'callback' }] },
+    runtime: {
+      ...input.runtime,
+      hitOnReach,
+      maxHitCount: 1,
+      colliderShape: { shapeType: 1, radius: 1, center: [0, 0, 0], extent: [0, 0, 0] },
+      targetFilter: {
+        ...input.runtime.targetFilter,
+        autoSetTargetFaction: false,
+        targetFactionType: 0,
+      },
+    },
+  }).steps[0]!;
+  if (!('flight' in action.parameters)) throw new Error('expected projected flight');
+  expect(action.parameters.flight?.collision).toBeUndefined();
+  expect(action.callbacks.some(callback => callback.event === 'hit')).toBe(hitOnReach);
+  expect(action.parameters.hit !== undefined).toBe(hitOnReach);
+});
+
+it('无命中回调时仍保留影响寿命的碰撞计数和标签条件', () => {
+  const input = reachInput();
+  const result = projectFixture({
+    ...input,
+    runtime: {
+      ...input.runtime,
+      maxHitCount: 1,
+      hitOnReach: false,
+      finishOnReach: false,
+      colliderShape: { shapeType: 1, radius: 1, center: [0, 0, 0], extent: [0, 0, 0] },
+      targetFilter: {
+        ...input.runtime.targetFilter,
+        autoSetTargetFaction: true,
+        factionTarget: 1,
+        filterGameplayTag: true,
+        gameplayTagQuery: {
+          queryType: 'exceptAny',
+          tagIds: [gameplayTagIdFromPath('Immune/Physical')],
+        },
+      },
+    },
+  });
+  const action = result.steps[0]!;
+  expect(action.callbacks.some(callback => callback.event === 'hit')).toBe(false);
+  expect('hit' in action.parameters ? action.parameters.hit : undefined).toMatchObject({
+    maxHitCount: 1,
+    hitTagFilter: { tagQueryType: 'exceptAny', tags: ['Immune/Physical'] },
+  });
+});
+
 it('飞向主控的投射物仍按碰撞阵营决定命中对象', () => {
   const input = reachInput();
   const scope = projectFixture({
@@ -422,7 +611,7 @@ it('飞向主控的投射物仍按碰撞阵营决定命中对象', () => {
       ...input.runtime,
       finishOnReach: false,
       maxHitCount: 1,
-      colliderShape: { shapeType: 1, radius: 1, extent: [0, 0, 0] },
+      colliderShape: { shapeType: 1, radius: 1, center: [0, 0, 0] as const, extent: [0, 0, 0] },
       targetFilter: { ...input.runtime.targetFilter, autoSetTargetFaction: true, factionTarget: 1 },
     },
   });
@@ -446,7 +635,7 @@ it.each([false, true])(
           useHitBlockReachOrder,
           useSegmentMove: true,
           allowHitSameTarget: true,
-          colliderShape: { shapeType: 1, radius: 1, extent: [0, 0, 0] },
+          colliderShape: { shapeType: 1, radius: 1, center: [0, 0, 0] as const, extent: [0, 0, 0] },
           targetFilter: {
             ...input.runtime.targetFilter,
             autoSetTargetFaction: true,
@@ -472,9 +661,12 @@ it.each([false, true])(
           ],
         },
       });
-    if (useHitBlockReachOrder)
-      expect(project).toThrow('outside the proven zero-distance first-tick shape');
-    else expect(project().steps[0]!.kind).toBe('launchProjectile');
+    const action = project().steps[0]!;
+    expect(action.kind).toBe('launchProjectile');
+    if (!('flight' in action.parameters)) throw new Error('expected projected flight');
+    expect(action.parameters.flight?.hitBeforeReach).toBe(useHitBlockReachOrder);
+    expect(action.parameters.flight?.segments).toHaveLength(2);
+    expect(action.parameters.hit?.repeatIntervalSeconds).toBe(input.runtime.hitIntervalPerTarget);
   },
 );
 
@@ -695,4 +887,74 @@ describe('complete projectile callback skill source', () => {
       }),
     ).toThrow('invalid callback durationFrame');
   });
+});
+
+it.each(['02', '03', 'attack'])('梨诺只省略上射弹的敌人碰撞：%s', suffix => {
+  const input = reachInput();
+  const projectileId =
+    suffix === 'attack'
+      ? 'projectile_chr_0035_liino_normal_attack'
+      : `projectile_chr_0035_liino_normal_attack_${suffix}`;
+  const flight = projectProjectileFlightSource(
+    {
+      ...input.runtime,
+      projectileId,
+      colliderShape: { shapeType: 1, radius: 0.2, center: [0, 0, 0], extent: [0, 0, 0] },
+      targetFilter: { ...input.runtime.targetFilter, autoSetTargetFaction: true, factionTarget: 1 },
+    },
+    { ...input.launch, projectileId },
+    { ...input.projectionContext, graph: createActionGraphBuilder<CompiledBuffStepSource>() },
+    'fixture',
+  );
+  expect(flight.collision !== undefined).toBe(suffix === 'attack');
+  expect(flight.segments).toHaveLength(1);
+});
+
+it('投射物模板保留变量身份，不吸收发射动作的目标或赋值', () => {
+  const input = reachInput();
+  const runtime = {
+    ...input.runtime,
+    finishDistance: {
+      ...input.runtime.finishDistance,
+      value: 20,
+      blackboardKey: 'EntityBB_maxDistance',
+    },
+  };
+  const template = projectProjectileFlightTemplateSource(runtime, 'fixture');
+  expect(template.finishDistanceMeters).toEqual({ blackboardKey: 'EntityBB_maxDistance' });
+  expect(template).not.toHaveProperty('start');
+  expect(template.segments[0]).not.toHaveProperty('target');
+  const flight = projectProjectileFlightSource(
+    runtime,
+    input.launch,
+    { ...input.projectionContext, graph: createActionGraphBuilder<CompiledBuffStepSource>() },
+    'fixture',
+  );
+  expect(flight.finishDistanceMeters).toEqual({ kind: 'blackboard', key: 'EntityBB_maxDistance' });
+  expect(template.finishDistanceMeters).toEqual({ blackboardKey: 'EntityBB_maxDistance' });
+});
+
+it('回收雷枪补丁只改工作副本半径，原生结构变化时拒绝生成', () => {
+  const base = reachInput().runtime;
+  const source: ProjectileRuntimeSource = {
+    ...base,
+    projectileId: 'projectile_chr_0012_avywen_combo_skill_lance_back',
+    colliderShape: { shapeType: 1, radius: 1.5, center: [0, 0, 0], extent: [0, 0, 0] },
+    targetFilter: { ...base.targetFilter, autoSetTargetFaction: true, factionTarget: 1 },
+  };
+  expect(applyProjectileResourcePatch(base)).toBe(base);
+  expect(applyProjectileResourcePatch(source)).toEqual({
+    ...source,
+    colliderShape: { ...source.colliderShape, radius: 2.6 },
+  });
+  expect(source.colliderShape?.radius).toBe(1.5);
+  expect(() => applyProjectileResourcePatch({ ...source, hitOnReach: true })).toThrow(
+    'patch expected',
+  );
+  expect(() =>
+    applyProjectileResourcePatch({
+      ...source,
+      colliderShape: { ...source.colliderShape!, radius: 2 },
+    }),
+  ).toThrow('patch expected');
 });

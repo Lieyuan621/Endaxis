@@ -24,7 +24,8 @@ function targetQueryValueInputs(query: ActionTargetQuery): ActionValueOperand[] 
       ...targetQueryValueInputs(query.targets),
       ...targetQueryValueInputs(query.center),
     ];
-  if (query.kind === 'buffFilter') return targetQueryValueInputs(query.targets);
+  if (query.kind === 'buffFilter' || query.kind === 'tagFilter')
+    return targetQueryValueInputs(query.targets);
   if (query.kind === 'exclude')
     return [
       ...targetQueryValueInputs(query.targets),
@@ -33,9 +34,75 @@ function targetQueryValueInputs(query: ActionTargetQuery): ActionValueOperand[] 
   return [];
 }
 
+function spatialDirectionQueries(
+  offset: CombatStepParameters['createSpatialPointTargets']['offset'],
+): ActionTargetQuery[] {
+  return offset && typeof offset.facing === 'object'
+    ? [offset.facing.source, offset.facing.target]
+    : [];
+}
+
+/** 飞行和碰撞参数在投射物生命周期内求值，仍依赖发射动作的变量。 */
+function projectileValueInputs(
+  parameters: CombatStepParameters['launchProjectile'],
+): ActionValueOperand[] {
+  const inputs = Object.values(parameters.entityAssignments ?? {});
+  const flight = 'flight' in parameters ? parameters.flight : undefined;
+  if (parameters.onlyHitTargets) inputs.push(...targetQueryValueInputs(parameters.onlyHitTargets));
+  if (!flight) return inputs;
+  const point = (value: typeof flight.start) => {
+    if ('target' in value)
+      inputs.push(
+        ...targetQueryValueInputs(value.target),
+        ...(value.offset?.local ?? []),
+        ...spatialDirectionQueries(value.offset).flatMap(targetQueryValueInputs),
+      );
+  };
+  point(flight.start);
+  inputs.push(flight.finishDurationSeconds, flight.finishDistanceMeters, flight.reachRadiusMeters);
+  for (const segment of flight.segments) {
+    point(segment.target);
+    if (segment.earlyNextAfterSeconds) inputs.push(segment.earlyNextAfterSeconds);
+    const { movement } = segment;
+    inputs.push(movement.speed);
+    if (movement.trace.kind === 'duration') inputs.push(movement.trace.seconds);
+    if (movement.trace.kind === 'distance') inputs.push(movement.trace.meters);
+    const path = movement.path;
+    if (path.kind === 'parabola') {
+      if (path.definition.kind === 'speedGravity') inputs.push(path.definition.gravity);
+      else inputs.push(path.definition.durationSeconds, path.definition.vertexOffsetMeters);
+    }
+    if (path.kind === 'bezier') {
+      for (const control of path.controlPoints)
+        inputs.push(
+          ...control.distanceRatioRange,
+          ...control.angleDegreesRange,
+          ...control.radiusMetersRange,
+        );
+    }
+  }
+  const collision = flight.collision;
+  if (collision) {
+    point(collision.target);
+    if (collision.kind === 'sphere') inputs.push(collision.radiusMeters);
+    else if (collision.kind === 'box')
+      inputs.push(...collision.centerMeters, ...collision.halfExtentsMeters);
+    else
+      inputs.push(
+        collision.innerRadiusMeters,
+        collision.outerRadiusMeters,
+        collision.innerRadiusSpeed,
+        collision.outerRadiusSpeed,
+        collision.heightMeters,
+      );
+  }
+  return inputs;
+}
+
 /** 这些查询只读取已有目标身份，不创建位置或修改目标组。 */
 export function isReadOnlyTargetQuery(query: ActionTargetQuery): boolean {
-  if (query.kind === 'buffFilter') return isReadOnlyTargetQuery(query.targets);
+  if (query.kind === 'buffFilter' || query.kind === 'tagFilter')
+    return isReadOnlyTargetQuery(query.targets);
   if (query.kind === 'exclude')
     return isReadOnlyTargetQuery(query.targets) && isReadOnlyTargetQuery(query.excludeTargets);
   if (query.kind === 'mainTarget' || query.kind === 'abilitySystemSource')
@@ -397,6 +464,8 @@ export function analyzeStepUsage(
     observable: true,
   });
   switch (step.kind) {
+    case 'launchProjectile':
+      return effect(projectileValueInputs(step.parameters));
     case 'findTargets':
       return effect(targetQueryValueInputs(step.parameters.query));
     case 'invertNextResult':
@@ -409,6 +478,24 @@ export function analyzeStepUsage(
         ...actionValueUsage(step.parameters.value),
         // assignDynamic 的 epsilon 判断也会读取目的键，assign 也不能当成无条件覆盖。
         reads: new Set([...actionValueUsage(step.parameters.value).reads, step.parameters.key]),
+        writes: new Set([step.parameters.key]),
+        observable: true,
+      };
+    case 'storeRandomFloat':
+    case 'storeRandomInteger':
+      return {
+        ...mergeDefinitionValueUsage([
+          actionValueUsage(step.parameters.minimum),
+          actionValueUsage(step.parameters.maximum),
+        ]),
+        writes: new Set([step.parameters.key]),
+        // 随机流推进可被后续动作观察，不能只按目的变量是否被读取消除。
+        observable: true,
+      };
+    case 'evaluateCurve':
+      return {
+        ...actionValueUsage(step.parameters.input),
+        reads: new Set([...actionValueUsage(step.parameters.input).reads, step.parameters.key]),
         writes: new Set([step.parameters.key]),
         observable: true,
       };
@@ -455,8 +542,28 @@ export function analyzeStepUsage(
         ? usage
         : { ...usage, unknownAccess: true };
     }
-    case 'createSpatialPointTargets':
-      return effect([step.parameters.count]);
+    case 'createSpatialPointTargets': {
+      const { count, origin, randomDistribution } = step.parameters;
+      const directionQueries = spatialDirectionQueries(step.parameters.offset);
+      const usage = effect([
+        count,
+        ...(step.parameters.offset?.local ?? []),
+        ...directionQueries.flatMap(targetQueryValueInputs),
+        ...(origin === undefined ? [] : targetQueryValueInputs(origin)),
+        ...(randomDistribution === undefined
+          ? []
+          : [
+              randomDistribution.radius,
+              randomDistribution.minimumRadius,
+              randomDistribution.angleDegrees,
+              ...randomDistribution.localPlaneRotation,
+            ]),
+      ]);
+      return (origin === undefined || isReadOnlyTargetQuery(origin)) &&
+        directionQueries.every(isReadOnlyTargetQuery)
+        ? usage
+        : { ...usage, unknownAccess: true };
+    }
     case 'pickContextTarget':
       return effect([step.parameters.index]);
     case 'findOwnerSpawnedAbilityEntities': {
@@ -555,6 +662,19 @@ export function analyzeStepUsage(
         ...effect([], [step.parameters.outputKey]),
         reads: new Set([step.parameters.outputKey]),
       };
+    case 'saveTargetDistance': {
+      const usage = effect(
+        [
+          ...targetQueryValueInputs(step.parameters.source),
+          ...targetQueryValueInputs(step.parameters.target),
+        ],
+        [step.parameters.outputKey],
+      );
+      return isReadOnlyTargetQuery(step.parameters.source) &&
+        isReadOnlyTargetQuery(step.parameters.target)
+        ? usage
+        : { ...usage, unknownAccess: true };
+    }
     case 'readBuffStackCount':
     case 'storeCharacterTypeId':
     case 'storeCurrentTimelineFrame':
@@ -724,7 +844,6 @@ export function analyzeStepUsage(
     case 'startCurrentAbilityEntityChildSkillById':
     case 'applyElementalInfliction':
     case 'triggerSpellBurst':
-    case 'triggerCustomAbilityEvent':
     case 'triggerCharacterInflictionEvent':
     case 'recordPerfectDodge':
     case 'finishParentGlobalBuff':
@@ -752,6 +871,8 @@ export function analyzeStepUsage(
     case 'changeNativeSkillType':
     case 'inheritSkillCastInfoForBasicAttack':
       return effect();
+    case 'triggerCustomAbilityEvent':
+      return effect([step.parameters.eventParam]);
     case 'gainFinisherSp': {
       const usage = effect([step.parameters.factor]);
       return isReadOnlyTargetQuery(step.parameters.source) &&

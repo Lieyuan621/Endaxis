@@ -18,7 +18,6 @@ import type { BlackboardReceiverSource } from '../src/compiler/references/extern
 import { parseAbilityEntityBlackboardReceiverSource } from '../src/source/abilityEntity.ts';
 import type { DeclaredBlackboardValueSource } from '../src/source/blackboard.ts';
 import {
-  parseProjectileRuntimeSource,
   parseProjectileBlackboardReceiverSource,
   type ProjectileRuntimeSource,
 } from '../src/source/projectileRuntime.ts';
@@ -30,7 +29,7 @@ import {
   prepareSkillDefinitionInputSource,
   assertNoUnprojectedSkillRootEffects,
 } from '../src/compiler/skills/skillDefinitionInput.ts';
-import { createZeroDistanceProjectileProjectionExtensionSource } from '../src/compiler/abilities/projectileRuntimeProjection.ts';
+import { createProjectileProjectionExtensionSource } from '../src/compiler/abilities/projectileRuntimeProjection.ts';
 import {
   compileOperatorActiveSkillRuntimeDefinitionSource,
   renderOperatorActiveSkillRuntimeDefinitionSource,
@@ -210,16 +209,7 @@ export function prepareProjectileProjection(
   const callbackGraphs = closure.callbackGraphs;
   const callbackIds = [...callbackGraphs.keys()].sort();
   const runtimeCatalog = new Map(
-    projectileIds.map(
-      id =>
-        [
-          id,
-          parseProjectileRuntimeSource(
-            readJson(path.resolve(args.sourceRoot, 'ProjectileData', `${id}.json`)),
-            `ProjectileData.${id}`,
-          ),
-        ] as const,
-    ),
+    projectileIds.map(id => [id, sources.projectileRuntime(args.sourceRoot, id)] as const),
   );
   const templateCatalog = collectDecodedProjectileBlackboards(runtimeCatalog);
   const priorities = sources.timeDilationPriorities(args.timeDilationCatalog);
@@ -232,7 +222,8 @@ export function prepareProjectileProjection(
   let compileProjectileLaunch: NonNullable<
     CombatActionProjectionExtensionsSource['compileProjectileLaunch']
   >;
-  compileProjectileLaunch = createZeroDistanceProjectileProjectionExtensionSource({
+  compileProjectileLaunch = createProjectileProjectionExtensionSource({
+    registerProjectile: sources.registerProjectile,
     catalog: {
       runtimes: runtimeCatalog,
       templates: templateCatalog,
@@ -305,8 +296,7 @@ export function planOperatorActiveSkillRuntime(
   const callbackIds = [...callbackGraphs.keys()].sort();
   const runtimeCatalog = new Map(
     projectileIds.map(id => {
-      const value = readJson(path.resolve(args.sourceRoot, 'ProjectileData', `${id}.json`));
-      return [id, parseProjectileRuntimeSource(value, `ProjectileData.${id}`)] as const;
+      return [id, sources.projectileRuntime(args.sourceRoot, id)] as const;
     }),
   );
   const templateCatalog = collectDecodedProjectileBlackboards(runtimeCatalog);
@@ -502,7 +492,8 @@ export function planOperatorActiveSkillRuntime(
     ),
   );
   let projectile: NonNullable<CombatActionProjectionExtensionsSource['compileProjectileLaunch']>;
-  projectile = createZeroDistanceProjectileProjectionExtensionSource({
+  projectile = createProjectileProjectionExtensionSource({
+    registerProjectile: sources.registerProjectile,
     catalog: {
       runtimes: runtimeCatalog,
       templates: templateCatalog,
@@ -768,6 +759,10 @@ export function planOperatorActiveSkillRuntime(
           {
             skillId,
             projectileIds,
+            resourcePatches: projectileIds.flatMap(id => {
+              const record = sources.resourcePatches.get(id);
+              return record ? [record] : [];
+            }),
             callbackIds,
             runtimeBuffIds: [...runtimeBuffIds].sort(),
             supplementalBuffIds: [...args.supplementalBuffIds].sort(),

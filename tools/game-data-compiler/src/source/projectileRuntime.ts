@@ -16,6 +16,7 @@ import { parseScalarSource, type ScalarSource } from './scalar.ts';
 import { parseBlackboardDataPairs, type DeclaredBlackboardValueSource } from './blackboard.ts';
 import { parseActiveSkillTypesSource } from './activeSkillTypes.ts';
 import { parseAbilitySystemReferences } from './abilitySystemReferences.ts';
+import { parseProjectileMoveModes, type ProjectileMoveModeSource } from './projectileMovement.ts';
 
 /**
  * 完整 AbilitySystem 的黑板接收者。ProjectileComponent 尚未解码的末段只有特效/声音配置，
@@ -51,6 +52,7 @@ export interface ProjectileRuntimeSource {
   readonly useHitBlockReachOrder: boolean;
   readonly hitOnReach: boolean;
   readonly allowHitSameTarget: boolean;
+  readonly hitIntervalPerTarget: number;
   readonly maxHitCount: number;
   readonly collisionDetectTiming: number;
   readonly hitAndBlockDetectDelayTime: number;
@@ -60,6 +62,7 @@ export interface ProjectileRuntimeSource {
   readonly colliderShape: {
     readonly shapeType: number;
     readonly radius: number;
+    readonly center: readonly [number, number, number];
     readonly extent: readonly [number, number, number];
     readonly ring?: {
       readonly initialOuterRadius: number;
@@ -91,8 +94,8 @@ export interface ProjectileRuntimeSource {
   };
   readonly presetPointKeys: readonly string[];
   readonly useSegmentMove: boolean;
-  /** move mode id -> ProjectileMoveType numeric value; missing partial tail entries stay absent. */
-  readonly moveModeTypes: ReadonlyMap<string, number>;
+  /** 原生移动模式；动态参数保留变量身份，由对应实例读取。 */
+  readonly moveModes: ReadonlyMap<string, ProjectileMoveModeSource>;
   readonly moveSegments: readonly {
     readonly startPointKey: string;
     readonly moveModeId: string;
@@ -160,7 +163,8 @@ export function parseProjectileRuntimeSource(
       ),
     };
   });
-  const moveModeTypes = parseProjectileMoveModeTypes(root.tail, `${path}.tail`);
+  const tail = requireRecord(root.tail, `${path}.tail`);
+  const moveModes = parseProjectileMoveModes(tail.moveModeDict, `${path}.tail.moveModeDict`);
   return {
     projectileId: requireNonEmptyString(root.id, `${path}.id`),
     // 1.6.3 移除该开关，OnTick(04FEB600) 固定在碰撞后触发 Reach。
@@ -194,6 +198,7 @@ export function parseProjectileRuntimeSource(
       : { finishOnBlock: requireBoolean(root.finishOnBlock, `${path}.finishOnBlock`) }),
     hitOnReach: requireBoolean(root.hitOnReach, `${path}.hitOnReach`),
     allowHitSameTarget: requireBoolean(root.allowHitSameTarget, `${path}.allowHitSameTarget`),
+    hitIntervalPerTarget: requireNumber(root.hitIntervalPerTarget, `${path}.hitIntervalPerTarget`),
     maxHitCount: requireInteger(
       requireRecord(root.maxHitCount, `${path}.maxHitCount`).valueIntCandidate,
       `${path}.maxHitCount.valueIntCandidate`,
@@ -227,6 +232,10 @@ export function parseProjectileRuntimeSource(
             extent: parseDirectBlackboardVector3(
               colliderShape.extent,
               `${path}.colliderShapeData.extent`,
+            ),
+            center: parseDirectBlackboardVector3(
+              colliderShape.center,
+              `${path}.colliderShapeData.center`,
             ),
             ring:
               shapeType.value === 3
@@ -307,31 +316,9 @@ export function parseProjectileRuntimeSource(
       (entry, index) => requireNonEmptyString(entry, `${path}.presetPointKeys[${index}]`),
     ),
     useSegmentMove: requireBoolean(root.useSegmentMove, `${path}.useSegmentMove`),
-    moveModeTypes,
+    moveModes,
     moveSegments: segments,
   };
-}
-
-function parseProjectileMoveModeTypes(value: unknown, path: string): ReadonlyMap<string, number> {
-  if (value === undefined) return new Map();
-  const tail = requireRecord(value, path);
-  if (tail.moveModeDict === undefined) return new Map();
-  const dictionary = requireRecord(tail.moveModeDict, `${path}.moveModeDict`);
-  const values = requireArray(dictionary.values, `${path}.moveModeDict.values`);
-  const result = new Map<string, number>();
-  values.forEach((entry, index) => {
-    const entryPath = `${path}.moveModeDict.values[${index}]`;
-    const mode = requireRecord(entry, entryPath);
-    const id = requireNonEmptyString(mode.key, `${entryPath}.key`);
-    const moveType = requireInteger(
-      requireRecord(mode.moveType, `${entryPath}.moveType`).value,
-      `${entryPath}.moveType.value`,
-    );
-    if (result.has(id))
-      throw new Error(`${entryPath}.key: duplicate move mode ${JSON.stringify(id)}`);
-    result.set(id, moveType);
-  });
-  return result;
 }
 
 /** ProjectileData 的二进制解码器保留枚举数值和标签哈希包装，形状不同于动作 JSON。 */

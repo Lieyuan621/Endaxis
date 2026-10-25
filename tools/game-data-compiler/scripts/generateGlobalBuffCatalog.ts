@@ -40,7 +40,26 @@ export async function generateGlobalBuffCatalog(args: {
       `${id}.asset`,
       expectedPath,
     );
-    const response = await fetch(sourceUrl);
+    let response: Response;
+    try {
+      response = await fetch(sourceUrl);
+    } catch (error) {
+      // 扫描全部 Buff 会包含未进入生产闭包的模板；VFS 无法解码时记录缺口。
+      // 明确要求的模板仍须成功，后续编译若真正引用缺失模板也会失败。
+      if (
+        !args.tolerateUnsupportedAdditionalIdentities ||
+        configuredIdSet.has(id) ||
+        args.additionalIdentities?.includes(id)
+      )
+        throw error;
+      unsupportedAssets.push({
+        id,
+        path: expectedPath,
+        sourceUrl,
+        reason: `VFS export unavailable: ${error instanceof Error ? error.message : String(error)}`,
+      });
+      continue;
+    }
     if (!response.ok) throw new Error(`${sourceUrl}: HTTP ${response.status}`);
     const preview = (await response.json()) as {
       asset?: { Name?: unknown; Container?: unknown };

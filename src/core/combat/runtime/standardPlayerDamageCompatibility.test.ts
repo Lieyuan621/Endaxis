@@ -1,3 +1,4 @@
+import { stationaryProjectileDefinition, pointProjectileLaunch } from '../../test/projectileFlight';
 import { describe, expect, it } from 'vitest';
 import type {
   ActionGraphDefinition,
@@ -9,13 +10,21 @@ import { createActionGraphCompilation } from '../../compiler/compileActionGraph'
 import type { CombatOperatorProgram } from './combatRuntimeAssembly';
 import { inspectStandardPlayerDamageCompatibility } from './standardPlayerDamageCompatibility';
 
+const projectileDefinitions = { stationary: stationaryProjectileDefinition(0.1) };
+
 const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
   dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
-  graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
+  graph: createActionGraphCompilation(
+    { nodes, dataNodes },
+    1,
+    revision,
+    {},
+    { abilityEntities: {}, projectiles: projectileDefinitions },
+  ).compileAll(),
   entry,
   callSite: revision,
 });
@@ -116,6 +125,22 @@ function compatibilityInput(
 }
 
 describe('standardPlayerDamageCompatibility', () => {
+  it('允许完整重放执行投射物路径所需的目标距离读取', () => {
+    const sequence = chainEntry('compat-projectile-distance', [
+      {
+        kind: 'saveTargetDistance',
+        parameters: {
+          source: { kind: 'source' },
+          target: { kind: 'inputTarget' },
+          outputKey: 'distance',
+        },
+      },
+    ]);
+    expect(
+      inspectStandardPlayerDamageCompatibility(compatibilityInput(operator(sequence))),
+    ).toEqual([]);
+  });
+
   it('accepts the native skill-local Dash window marker in a scheduled skill', () => {
     expect(
       inspectStandardPlayerDamageCompatibility(
@@ -193,7 +218,8 @@ describe('standardPlayerDamageCompatibility', () => {
         kind: 'applyPhysicalInfliction',
         parameters: {
           type: 'knockDown' as const,
-          target: { kind: 'fixed' as const, target: 'enemy' as const }, source: { kind: 'fixed' as const, target: 'caster' as const },
+          target: { kind: 'fixed' as const, target: 'enemy' as const },
+          source: { kind: 'fixed' as const, target: 'caster' as const },
           duration: { kind: 'constant', value: 1 },
           force: false,
           isExtra: false,
@@ -641,7 +667,13 @@ describe('standardPlayerDamageCompatibility', () => {
             'step-0': {
               action: {
                 kind: 'launchProjectile',
-                parameters: { inheritActionBlackboard: true, finish: 0.1, recycleDelaySeconds: 0 },
+                parameters: {
+                  projectileId: 'stationary',
+                  launch: pointProjectileLaunch,
+                  inheritActionBlackboard: true,
+
+                  recycleDelaySeconds: 0,
+                },
                 callbacks: [
                   {
                     event: 'finish',

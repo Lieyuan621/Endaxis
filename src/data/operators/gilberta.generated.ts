@@ -16,10 +16,12 @@ export const gilbertaChr_0013_aglina_attack1ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0013_aglina_normal_attack1',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: {
+              start: { target: { kind: 'context', key: 'tar' } },
+              segmentTargets: [{ side: 'enemy' }],
+            },
           },
           callbacks: [
             {
@@ -136,7 +138,21 @@ export const gilbertaChr_0013_aglina_attack1ActionGraph = {
       createSpatialPointTargets_2: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'tar', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'tar',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0.4 },
+                { kind: 'constant', value: 1.56 },
+                { kind: 'constant', value: 0.35 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
         },
         next: 'launchProjectile_1',
       },
@@ -191,10 +207,9 @@ export const gilbertaChr_0013_aglina_attack2ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0013_aglina_normal_attack2',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -314,10 +329,9 @@ export const gilbertaChr_0013_aglina_attack3ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0013_aglina_normal_attack3',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -476,6 +490,106 @@ export const gilbertaChr_0013_aglina_attack3: SkillDefinition = {
   nativeSkillType: 'attack',
 };
 
+const gilbertaChr_0013_aglina_attack4ActionGraphCallback2 = {
+  actionGraph: {
+    main: {
+      nodes: {
+        changeResource_3: {
+          action: {
+            kind: 'changeResource',
+            parameters: {
+              resource: 'sp',
+              amount: { kind: 'valueNode', nodeId: 'data_1' },
+              coefficient: { kind: 'constant', value: 0.3334 },
+              source: { kind: 'source' },
+              targets: { kind: 'source' },
+              spGainKind: 'gain',
+              spGainSource: 'normalAttack',
+            },
+          },
+          next: null,
+        },
+        checkCondition_1: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
+          },
+          next: null,
+        },
+        checkCondition_2: {
+          action: {
+            kind: 'checkCondition',
+            parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
+          },
+          next: 'checkCondition_1',
+        },
+        ifElse_4: {
+          action: {
+            kind: 'ifElse',
+            parameters: { alwaysNext: true },
+            condition: { kind: 'conditionNode', nodeId: 'data_4' },
+            whenTrue: { $sequence: 'changeResource_3' },
+            whenFalse: { $sequence: null },
+          },
+          next: null,
+        },
+        dealDamage_5: {
+          action: {
+            kind: 'dealDamage',
+            parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
+              damageType: 'nature',
+              attackScale: { kind: 'valueNode', nodeId: 'data_5' },
+              tags: ['normalAttack'],
+              stagger: { kind: 'valueNode', nodeId: 'data_6' },
+              staggerMultiplier: { kind: 'constant', value: 0.33 },
+              staggerOnlyWhenCasterControlled: true,
+            },
+          },
+          next: 'ifElse_4',
+        },
+      },
+      dataNodes: {
+        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
+        data_2: {
+          type: 'boolean',
+          expression: {
+            kind: 'entityCountCompare',
+            target: { kind: 'inputTarget' },
+            containsHittableTarget: false,
+            excludeDeadEntity: false,
+            operator: 'greaterOrEqual',
+            value: 1,
+          },
+        },
+        data_3: {
+          type: 'boolean',
+          expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
+        },
+        data_4: {
+          type: 'boolean',
+          expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_2' } },
+        },
+        data_5: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+        data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
+      },
+    },
+    macros: {},
+  },
+  skillId: 'chr_0013_aglina_attack4_projhit_2',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 1,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: { atb: 0, atk_scale: 0, poise: 0 },
+  scheduledSequences: [{ startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } }],
+} as const;
+
 export const gilbertaChr_0013_aglina_attack4ActionGraph = {
   main: {
     nodes: {
@@ -484,10 +598,9 @@ export const gilbertaChr_0013_aglina_attack4ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0013_aglina_normal_attack4',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -609,123 +722,24 @@ export const gilbertaChr_0013_aglina_attack4ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0013_aglina_normal_attack4_2',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
-          callbacks: [
-            {
-              event: 'hit',
-              skill: {
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      changeResource_3: {
-                        action: {
-                          kind: 'changeResource',
-                          parameters: {
-                            resource: 'sp',
-                            amount: { kind: 'valueNode', nodeId: 'data_1' },
-                            coefficient: { kind: 'constant', value: 0.3334 },
-                            source: { kind: 'source' },
-                            targets: { kind: 'source' },
-                            spGainKind: 'gain',
-                            spGainSource: 'normalAttack',
-                          },
-                        },
-                        next: null,
-                      },
-                      checkCondition_1: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_2' } },
-                        },
-                        next: null,
-                      },
-                      checkCondition_2: {
-                        action: {
-                          kind: 'checkCondition',
-                          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_3' } },
-                        },
-                        next: 'checkCondition_1',
-                      },
-                      ifElse_4: {
-                        action: {
-                          kind: 'ifElse',
-                          parameters: { alwaysNext: true },
-                          condition: { kind: 'conditionNode', nodeId: 'data_4' },
-                          whenTrue: { $sequence: 'changeResource_3' },
-                          whenFalse: { $sequence: null },
-                        },
-                        next: null,
-                      },
-                      dealDamage_5: {
-                        action: {
-                          kind: 'dealDamage',
-                          parameters: {
-                            attacker: 'actionSource',
-                            target: { kind: 'inputTarget' },
-                            damageType: 'nature',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_5' },
-                            tags: ['normalAttack'],
-                            stagger: { kind: 'valueNode', nodeId: 'data_6' },
-                            staggerMultiplier: { kind: 'constant', value: 0.33 },
-                            staggerOnlyWhenCasterControlled: true,
-                          },
-                        },
-                        next: 'ifElse_4',
-                      },
-                    },
-                    dataNodes: {
-                      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atb' } },
-                      data_2: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'entityCountCompare',
-                          target: { kind: 'inputTarget' },
-                          containsHittableTarget: false,
-                          excludeDeadEntity: false,
-                          operator: 'greaterOrEqual',
-                          value: 1,
-                        },
-                      },
-                      data_3: {
-                        type: 'boolean',
-                        expression: { kind: 'checkMainCharacter', target: { kind: 'source' } },
-                      },
-                      data_4: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'checkActionResult',
-                          action: { $sequence: 'checkCondition_2' },
-                        },
-                      },
-                      data_5: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale' },
-                      },
-                      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-                    },
-                  },
-                  macros: {},
-                },
-                skillId: 'chr_0013_aglina_attack4_projhit_2',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atb: 0, atk_scale: 0, poise: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 3, sequence: { $sequence: 'dealDamage_5' } },
-                ],
-              },
-            },
-          ],
+          callbacks: [{ event: 'hit', skill: gilbertaChr_0013_aglina_attack4ActionGraphCallback2 }],
+        },
+        next: null,
+      },
+      launchProjectile_3: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0013_aglina_normal_attack4_1',
+            recycleDelaySeconds: 0.0333333350718021,
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
+          },
+          callbacks: [{ event: 'hit', skill: gilbertaChr_0013_aglina_attack4ActionGraphCallback2 }],
         },
         next: null,
       },
@@ -765,7 +779,7 @@ export const gilbertaChr_0013_aglina_attack4: SkillDefinition = {
   scheduledSequences: [
     { startFrame: 23, endFrame: 23, sequence: { $sequence: 'launchProjectile_1' } },
     { startFrame: 25, endFrame: 25, sequence: { $sequence: 'launchProjectile_2' } },
-    { startFrame: 27, endFrame: 27, sequence: { $sequence: 'launchProjectile_2' } },
+    { startFrame: 27, endFrame: 27, sequence: { $sequence: 'launchProjectile_3' } },
     { startFrame: 0, endFrame: 50, sequence: { $sequence: 'overrideBasicAttackMapping_7' } },
     { startFrame: 40, endFrame: 50, sequence: { $sequence: 'reachSkillOperableBoundary_8' } },
   ],
@@ -978,7 +992,21 @@ export const gilbertaChr_0013_aglina_normal_skillActionGraph = {
       createSpatialPointTargets_5: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'targetPos', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'targetPos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'targetPos' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: true,
+            },
+          },
         },
         next: null,
       },
@@ -1292,6 +1320,47 @@ export const gilbertaChr_0013_aglina_normal_skill: SkillDefinition = {
 export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
   main: {
     nodes: {
+      createSpatialPointTargets_1: {
+        action: {
+          kind: 'createSpatialPointTargets',
+          parameters: {
+            saveToContextKey: 'triggerpos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'triggerpos' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: true,
+            },
+          },
+        },
+        next: null,
+      },
+      copyContextTargets_2: {
+        action: {
+          kind: 'copyContextTargets',
+          parameters: {
+            source: { kind: 'mainTarget', owner: { kind: 'owner' } },
+            saveToContextKey: 'triggerpos',
+          },
+        },
+        next: 'createSpatialPointTargets_1',
+      },
+      ifElse_3: {
+        action: {
+          kind: 'ifElse',
+          parameters: { alwaysNext: true },
+          condition: { kind: 'conditionNode', nodeId: 'data_1' },
+          whenTrue: { $sequence: 'copyContextTargets_2' },
+          whenFalse: { $sequence: null },
+        },
+        next: null,
+      },
       heal_6: {
         action: {
           kind: 'heal',
@@ -1301,8 +1370,8 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
             alwaysNext: true,
             tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
             attribute: 'intellect',
-            multiplier: { kind: 'valueNode', nodeId: 'data_1' },
-            addition: { kind: 'valueNode', nodeId: 'data_2' },
+            multiplier: { kind: 'valueNode', nodeId: 'data_2' },
+            addition: { kind: 'valueNode', nodeId: 'data_3' },
           },
         },
         next: null,
@@ -1316,8 +1385,8 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
             alwaysNext: true,
             tags: ['Skill/Character/Common/Heal/ComboSkillHeal'],
             attribute: 'intellect',
-            multiplier: { kind: 'valueNode', nodeId: 'data_1' },
-            addition: { kind: 'valueNode', nodeId: 'data_2' },
+            multiplier: { kind: 'valueNode', nodeId: 'data_2' },
+            addition: { kind: 'valueNode', nodeId: 'data_3' },
           },
         },
         next: null,
@@ -1326,7 +1395,7 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_3' },
+          condition: { kind: 'conditionNode', nodeId: 'data_4' },
           whenTrue: { $sequence: 'heal_5' },
           whenFalse: { $sequence: 'heal_6' },
         },
@@ -1346,7 +1415,7 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_4' },
+          condition: { kind: 'conditionNode', nodeId: 'data_5' },
           whenTrue: { $sequence: 'heal_6' },
           whenFalse: { $sequence: 'findCharacterTeamTargets_10' },
         },
@@ -1355,14 +1424,14 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
       checkCondition_11: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
         },
         next: null,
       },
       checkCondition_12: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
         },
         next: 'checkCondition_11',
       },
@@ -1371,7 +1440,7 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
           kind: 'changeResource',
           parameters: {
             resource: 'ultimateEnergy',
-            amount: { kind: 'valueNode', nodeId: 'data_8' },
+            amount: { kind: 'valueNode', nodeId: 'data_9' },
             coefficient: { kind: 'constant', value: 1 },
             source: { kind: 'source' },
             targets: { kind: 'source' },
@@ -1383,7 +1452,7 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
         action: {
           kind: 'ifElse',
           parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_9' },
+          condition: { kind: 'conditionNode', nodeId: 'data_10' },
           whenTrue: { $sequence: 'ifElse_13' },
           whenFalse: { $sequence: null },
         },
@@ -1396,10 +1465,10 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
             attacker: 'actionSource',
             target: { kind: 'context', key: 'tar' },
             damageType: 'nature',
-            attackScale: { kind: 'valueNode', nodeId: 'data_10' },
+            attackScale: { kind: 'valueNode', nodeId: 'data_11' },
             tags: ['comboSkill'],
             features: ['canBreakWeakness'],
-            stagger: { kind: 'valueNode', nodeId: 'data_11' },
+            stagger: { kind: 'valueNode', nodeId: 'data_12' },
           },
         },
         next: 'ifElse_15',
@@ -1459,31 +1528,15 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
         },
         next: null,
       },
-      copyContextTargets_opt1: {
-        action: {
-          kind: 'copyContextTargets',
-          parameters: {
-            source: { kind: 'mainTarget', owner: { kind: 'owner' } },
-            saveToContextKey: 'triggerpos',
-          },
-        },
-        next: null,
-      },
-      ifElse_opt2: {
-        action: {
-          kind: 'ifElse',
-          parameters: { alwaysNext: true },
-          condition: { kind: 'conditionNode', nodeId: 'data_12' },
-          whenTrue: { $sequence: 'copyContextTargets_opt1' },
-          whenFalse: { $sequence: null },
-        },
-        next: null,
-      },
     },
     dataNodes: {
-      data_1: { type: 'number', expression: { kind: 'blackboard', key: 'heal_scale' } },
-      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'heal_const' } },
-      data_3: {
+      data_1: {
+        type: 'boolean',
+        expression: { kind: 'checkActionResult', action: { $sequence: null } },
+      },
+      data_2: { type: 'number', expression: { kind: 'blackboard', key: 'heal_scale' } },
+      data_3: { type: 'number', expression: { kind: 'blackboard', key: 'heal_const' } },
+      data_4: {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
@@ -1493,7 +1546,7 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
           value: { kind: 'constant', value: 0.99 },
         },
       },
-      data_4: {
+      data_5: {
         type: 'boolean',
         expression: {
           kind: 'healthCompare',
@@ -1503,7 +1556,7 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
           value: { kind: 'constant', value: 0.99 },
         },
       },
-      data_5: {
+      data_6: {
         type: 'boolean',
         expression: {
           kind: 'entityCountCompare',
@@ -1514,30 +1567,26 @@ export const gilbertaChr_0013_aglina_combo_skillActionGraph = {
           value: 2,
         },
       },
-      data_6: {
+      data_7: {
         type: 'number',
         expression: { kind: 'blackboard', key: 'heal_const', fallback: 0 },
       },
-      data_7: {
+      data_8: {
         type: 'boolean',
         expression: {
           kind: 'actionValueCompare',
-          left: { kind: 'valueNode', nodeId: 'data_6' },
+          left: { kind: 'valueNode', nodeId: 'data_7' },
           operator: 'greater',
           right: { kind: 'constant', value: 0 },
         },
       },
-      data_8: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
-      data_9: {
+      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'usp' } },
+      data_10: {
         type: 'boolean',
         expression: { kind: 'checkActionResult', action: { $sequence: 'checkCondition_12' } },
       },
-      data_10: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
-      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
-      data_12: {
-        type: 'boolean',
-        expression: { kind: 'checkActionResult', action: { $sequence: null } },
-      },
+      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'poise' } },
     },
   },
   macros: {},
@@ -1561,7 +1610,7 @@ export const gilbertaChr_0013_aglina_combo_skill: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'ifElse_opt2' } },
+    { startFrame: 0, endFrame: 0, sequence: { $sequence: 'ifElse_3' } },
     { startFrame: 48, endFrame: 50, sequence: { $sequence: 'mergeContextTargets_18' } },
     { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_19' } },
     { startFrame: 53, endFrame: 72, sequence: { $sequence: 'reachSkillOperableBoundary_20' } },
@@ -1595,7 +1644,21 @@ export const gilbertaChr_0013_aglina_ultimate_skillActionGraph = {
       createSpatialPointTargets_2: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'triggerpos', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'triggerpos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'triggerpos' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: true,
+            },
+          },
         },
         next: null,
       },
@@ -2732,6 +2795,486 @@ export const gilberta: OperatorDefinition = {
         },
         scheduledSequences: [{ startFrame: 0, endFrame: 180, sequence: { $sequence: 'aura_1' } }],
       },
+    },
+  },
+  projectileDefinitions: {
+    projectile_chr_0013_aglina_normal_attack1: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: 1 } },
+              speed: { kind: 'constant', value: 40 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 0.7,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: -0.01 },
+                      { kind: 'constant', value: -0.01 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 160 },
+                      { kind: 'constant', value: 160 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0 },
+                      { kind: 'constant', value: 0 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: -0.01 },
+                      { kind: 'constant', value: -0.01 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 160 },
+                      { kind: 'constant', value: 160 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.1 },
+                      { kind: 'constant', value: 0.1 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 3 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0013_aglina_normal_attack2: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: 1 } },
+              speed: { kind: 'constant', value: 70 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 3 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0013_aglina_normal_attack3: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: 1 } },
+              speed: { kind: 'constant', value: 50 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 3 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0013_aglina_normal_attack4: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 220 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 0.1,
+                  inTangent: 0.1778325,
+                  outTangent: 0.1778325,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0.29895374,
+                },
+                {
+                  time: 0.06693256,
+                  value: 0.13061862,
+                  inTangent: 0.67198205,
+                  outTangent: 0.67198205,
+                  weightedMode: 0,
+                  inWeight: 0.20693268,
+                  outWeight: 0.33333334,
+                },
+                {
+                  time: 0.20093995,
+                  value: 0.79082984,
+                  inTangent: 0.5854273,
+                  outTangent: 0.5854273,
+                  weightedMode: 0,
+                  inWeight: 0.33333334,
+                  outWeight: 0.04175974,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0.07910394,
+                  outTangent: 0.07910394,
+                  weightedMode: 0,
+                  inWeight: 0.28595674,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.175 },
+                      { kind: 'constant', value: 0.175 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: -5 },
+                      { kind: 'constant', value: -15 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.44 },
+                      { kind: 'constant', value: 0.44 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.88 },
+                      { kind: 'constant', value: 0.88 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: -5 },
+                      { kind: 'constant', value: -15 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.077 },
+                      { kind: 'constant', value: 0.077 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0013_aglina_normal_attack4_1: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 220 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 0.1,
+                  inTangent: 0.1778325,
+                  outTangent: 0.1778325,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0.29895374,
+                },
+                {
+                  time: 0.06693256,
+                  value: 0.13061862,
+                  inTangent: 0.67198205,
+                  outTangent: 0.67198205,
+                  weightedMode: 0,
+                  inWeight: 0.20693268,
+                  outWeight: 0.33333334,
+                },
+                {
+                  time: 0.20093995,
+                  value: 0.79082984,
+                  inTangent: 0.5854273,
+                  outTangent: 0.5854273,
+                  weightedMode: 0,
+                  inWeight: 0.33333334,
+                  outWeight: 0.04175974,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0.07910394,
+                  outTangent: 0.07910394,
+                  weightedMode: 0,
+                  inWeight: 0.28595674,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.175 },
+                      { kind: 'constant', value: 0.175 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 85 },
+                      { kind: 'constant', value: 95 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.44 },
+                      { kind: 'constant', value: 0.44 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.88 },
+                      { kind: 'constant', value: 0.88 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 85 },
+                      { kind: 'constant', value: 95 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.077 },
+                      { kind: 'constant', value: 0.077 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0013_aglina_normal_attack4_2: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 220 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 0.1,
+                  inTangent: 0.1778325,
+                  outTangent: 0.1778325,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0.29895374,
+                },
+                {
+                  time: 0.06693256,
+                  value: 0.13061862,
+                  inTangent: 0.67198205,
+                  outTangent: 0.67198205,
+                  weightedMode: 0,
+                  inWeight: 0.20693268,
+                  outWeight: 0.33333334,
+                },
+                {
+                  time: 0.20093995,
+                  value: 0.79082984,
+                  inTangent: 0.5854273,
+                  outTangent: 0.5854273,
+                  weightedMode: 0,
+                  inWeight: 0.33333334,
+                  outWeight: 0.04175974,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0.07910394,
+                  outTangent: 0.07910394,
+                  weightedMode: 0,
+                  inWeight: 0.28595674,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.175 },
+                      { kind: 'constant', value: 0.175 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 185 },
+                      { kind: 'constant', value: 195 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.44 },
+                      { kind: 'constant', value: 0.44 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.88 },
+                      { kind: 'constant', value: 0.88 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: 185 },
+                      { kind: 'constant', value: 195 },
+                    ],
+                    radiusMetersRange: [
+                      { kind: 'constant', value: 0.077 },
+                      { kind: 'constant', value: 0.077 },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
     },
   },
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },

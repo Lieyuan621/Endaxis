@@ -75,7 +75,7 @@ describe('生成武器的正式模拟门禁', () => {
     ).toBe(false);
     expect(baseline.executionDiagnostics).toEqual([]);
   });
-  it('艾维文娜连续排轴：三把连携枪由战技回收并执行正式回调伤害', async () => {
+  it('艾维文娜连续排轴：三次连携的九把枪由战技回收并执行正式回调伤害', async () => {
     const weapon = candidates.find(item => item.slug === 'wpn_lance_0006')!;
     const result = await simulateWeapon(
       weapon,
@@ -89,10 +89,9 @@ describe('生成武器的正式模拟门禁', () => {
       entry =>
         entry.event === 'DamageApplied' &&
         entry.sourceId === 'track:weapon-owner' &&
-        // 发射后的下一次投射物 Tick 执行回收回调，不在发射动作内同步展开。
-        entry.frame === 459,
+        String(entry.data?.stepKey).includes('chr_0012_avywen_combo_skill_lance_back'),
     );
-    expect(returnHits).toHaveLength(3);
+    expect(returnHits).toHaveLength(9);
     expect(returnHits.every(entry => entry.data?.damageType === 'electric')).toBe(true);
   });
   it.each([

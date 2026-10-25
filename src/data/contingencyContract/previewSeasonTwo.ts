@@ -7,15 +7,16 @@ import type { OperatorBuffDefinitions } from '../../../packages/game-data-contra
 import type { ContingencyContractTagDefinition } from '../../../packages/game-data-contract/src/mechanics';
 import type { ContractVariableConstraints } from './initialVariables';
 
-/** 前瞻手填值，非正式游戏数据。行为使用原生 Buff，词条组合和默认参数仍待正式表确认。 */
+/** 采用对应原生 Buff 的默认参数；试用词条组合仍待正式合约表确认。 */
 export const seasonTwoPreviewValues = {
-  comboDamageBonus: 0.5,
+  comboDamageBonus: 1,
   comboCount: 2,
-  lockSeconds: 9,
+  lockSeconds: 10,
+  // 自然恢复尚未核准原生入口，暂保留试用值。
   spRecoveryBonus: 1,
   spGainBonus: 0.5,
   healDelaySeconds: 5,
-  healRatioPerSecond: 0.02,
+  healRatioPerSecond: 0.05,
 } as const;
 
 /** 仅预览期需要的输入边界；初始值仍从初始化图读取。 */

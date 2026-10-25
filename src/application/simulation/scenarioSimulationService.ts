@@ -410,6 +410,7 @@ export class ScenarioSimulationService {
         : { continuationPlanCastIds, continuationPlanMode }),
       criticalSamples: this.#options.criticalSamples ?? randomSource,
       probabilitySamples: this.#options.probabilitySamples ?? randomSource,
+      rangeSamples: randomSource,
       randomMode: randomSettings.mode,
       simulationRandomSettings: randomSettings,
       ...(this.#options.criticalSamples === undefined &&

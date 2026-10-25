@@ -36,7 +36,8 @@ const REFERENCE_DECLARATIONS: Readonly<
   Record<
     string,
     {
-      readonly kind: 'gearSet' | 'buff' | 'skillGroup' | 'skillSlot' | 'skill' | 'abilityEntity';
+      readonly kind:
+        'gearSet' | 'buff' | 'skillGroup' | 'skillSlot' | 'skill' | 'abilityEntity' | 'projectile';
       readonly files: readonly string[];
     }
   >
@@ -72,6 +73,7 @@ const REFERENCE_DECLARATIONS: Readonly<
   stableSkillKeys: { kind: 'skill', files: ['skills'] },
   normalAttackSkillKeys: { kind: 'skill', files: ['skills'] },
   abilityEntityId: { kind: 'abilityEntity', files: ['actions', 'operators'] },
+  projectileId: { kind: 'projectile', files: ['actions'] },
   skillKeys: { kind: 'skill', files: ['skills'] },
   triggerBuffIds: { kind: 'buff', files: ['actions', 'buffs'] },
   buffIds: { kind: 'buff', files: ['actions', 'operators', 'conditions', 'modifiers'] },

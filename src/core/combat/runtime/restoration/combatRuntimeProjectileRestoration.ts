@@ -5,6 +5,7 @@
  * 操作链；命中前的回调仍保持未创建，命中后的回调宿主从保存技能帧继续。
  */
 import type { CallbackSkillHostFactory } from '../../abilities/callbackSkillHost';
+import type { ProjectileRangeSample } from '../../abilities/projectileMovementExecution';
 import { logicalAbilityEntityRuntimeId } from '../../../game-data/logicalAbilityEntity';
 import type { ProjectileCallbackPrograms } from '../../abilities/projectileCallbackPrograms';
 import {
@@ -59,6 +60,10 @@ export function createRestoredCombatProjectileDirectory(options: {
 }
 
 export function bindRestoredCombatProjectileRelations(options: {
+  readonly matchesHitTags?: NonNullable<
+    Parameters<typeof bindProjectileCallbackLifecycle>[2]
+  >['matchesTags'];
+  readonly sampleRange: (castId: string | undefined) => ProjectileRangeSample;
   readonly projectiles: ProjectileLifecycleRuntime;
   readonly foundation: RestoredCombatRuntimeFoundation;
   readonly entities: RestoredCombatAbilityEntityDirectory;
@@ -103,7 +108,19 @@ export function bindRestoredCombatProjectileRelations(options: {
         );
       });
       return {
-        ...bindProjectileCallbackLifecycle(callbacks, resolveTickDeltaSeconds),
+        sampleRange: options.sampleRange(state.originCastId),
+        ...bindProjectileCallbackLifecycle(
+          callbacks,
+          resolveTickDeltaSeconds,
+          state.hitTargets === undefined
+            ? undefined
+            : {
+                state: state.hitTargets,
+                matchesTags: options.matchesHitTags,
+                repeatIntervalSeconds: state.hitState?.repeatIntervalSeconds,
+                resolveTimeSeconds: () => options.foundation.shared.clock.time,
+              },
+        ),
         released: () =>
           options.foundation.shared.timeDilation?.releaseInheritedEntityScale(
             logicalAbilityEntityRuntimeId(instanceId),

@@ -1292,6 +1292,7 @@ export const lifengChr_0015_lifeng_combo_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 25, sequence: { $sequence: 'startTimeDilation_23' } },
     { startFrame: 50, endFrame: 89, sequence: { $sequence: 'reachSkillOperableBoundary_24' } },
   ],
+  defaultTarget: 'enemy',
   smartTarget: 'trigger',
   cooldownFrames: [480, 480, 480, 480, 480, 480, 480, 480, 480, 480, 480, 450],
   skillType: 'comboSkill',
@@ -1352,7 +1353,21 @@ export const lifengChr_0015_lifeng_ultimate_skillActionGraph = {
       createSpatialPointTargets_6: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'mainpos', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'mainpos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 8 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: true,
+            },
+          },
         },
         next: 'mergeContextTargets_5',
       },

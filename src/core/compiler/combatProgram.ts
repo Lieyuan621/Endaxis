@@ -1,3 +1,7 @@
+import type {
+  ProjectileFlightDefinition,
+  ProjectileHitDefinition,
+} from '../../../packages/game-data-contract/src/projectiles';
 import type { OperatorPassiveSkillDefinition } from '../../../packages/game-data-contract/src/operators';
 import type {
   ComboSkillConditionDefinition,
@@ -275,8 +279,11 @@ export interface ResolvedCombatStepParameters {
   storeEventDamageValue: CompiledStepParameters['storeEventDamageValue'];
   storeShieldValue: CompiledStepParameters['storeShieldValue'];
   modifyActionValue: CompiledStepParameters['modifyActionValue'];
+  storeRandomFloat: CompiledStepParameters['storeRandomFloat'];
   storeRandomInteger: CompiledStepParameters['storeRandomInteger'];
   calculateActionValue: CompiledStepParameters['calculateActionValue'];
+  evaluateCurve: CompiledStepParameters['evaluateCurve'];
+  saveTargetDistance: CompiledStepParameters['saveTargetDistance'];
   storeSourceAttributeValue: CompiledStepParameters['storeSourceAttributeValue'];
   storeEntityPropertyValue: CompiledStepParameters['storeEntityPropertyValue'];
   setHealthFloor: CompiledStepParameters['setHealthFloor'];
@@ -308,7 +315,16 @@ export interface ResolvedCombatStepParameters {
   switch: CompiledStepParameters['switch'];
   once: CompiledStepParameters['once'];
   repeatEachTick: CompiledStepParameters['repeatEachTick'];
-  launchProjectile: CompiledStepParameters['launchProjectile'];
+  launchProjectile: Omit<
+    CompiledStepParameters['launchProjectile'],
+    'projectileId' | 'launch' | 'hitTarget'
+  > & {
+    readonly entityInitialValues?: Readonly<Record<string, number>>;
+    readonly hit?: Omit<ProjectileHitDefinition, 'target'> & {
+      target?: 'controlledOperator' | 'allOperators' | 'currentTarget';
+    };
+    readonly flight: CompiledInputs<ProjectileFlightDefinition>;
+  };
   openComboWindow: CompiledStepParameters['openComboWindow'];
   playAnimation: CompiledStepParameters['playAnimation'];
   showComboRingQte: CompiledStepParameters['showComboRingQte'];
@@ -477,8 +493,11 @@ export const COMBAT_STEP_EXECUTION_ROUTES = {
   storeEventDamageValue: 'operation',
   storeShieldValue: 'operation',
   modifyActionValue: 'operation',
+  storeRandomFloat: 'operation',
   storeRandomInteger: 'operation',
   calculateActionValue: 'operation',
+  evaluateCurve: 'operation',
+  saveTargetDistance: 'operation',
   storeSourceAttributeValue: 'operation',
   storeEntityPropertyValue: 'operation',
   setHealthFloor: 'operation',

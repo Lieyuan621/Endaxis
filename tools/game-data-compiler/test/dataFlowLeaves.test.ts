@@ -266,6 +266,18 @@ describe('目标组单动作解析', () => {
     expect(parseTargetGroupActionSource(action, 'fixture.action')).toMatchObject({
       finderType: 'PointFinder',
       finderPointBlackboardKeys: ['pull_offset'],
+      finderPointOffset: {
+        position: [
+          { value: 0, blackboardKey: null },
+          { value: 0, blackboardKey: null },
+          { value: 0, blackboardKey: 'pull_offset' },
+        ],
+        rotation: [
+          { value: 0, blackboardKey: null },
+          { value: 0, blackboardKey: null },
+          { value: 0, blackboardKey: null },
+        ],
+      },
     });
   });
 

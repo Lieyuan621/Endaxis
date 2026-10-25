@@ -8,7 +8,7 @@ import type { BuffOperationTarget } from '../../buffs/buffOperationExecutor';
 import { CombatSemanticEventRuntime } from '../../events/combatSemanticEventRuntime';
 import type { CriticalSampleSource } from '../../random/criticalSampleSource';
 import type { ProbabilitySampleSource } from '../../random/probabilitySampleSource';
-import type { SimulationRandomMode } from '../../random/simulationRandom';
+import type { SimulationRandomMode, RangeSampleSource } from '../../random/simulationRandom';
 import {
   SimulationRandomSource,
   type SimulationRandomSettings,
@@ -40,12 +40,14 @@ type RestoredCombatEnvironmentBase = Omit<
   | 'restoredBuffStates'
   | 'criticalSamples'
   | 'probabilitySamples'
+  | 'rangeSamples'
   | 'randomMode'
 >;
 
 type DirectRestoredCombatEnvironmentInput = RestoredCombatEnvironmentBase & {
   readonly criticalSamples: CriticalSampleSource;
   readonly probabilitySamples?: ProbabilitySampleSource;
+  readonly rangeSamples?: RangeSampleSource;
   readonly randomMode?: SimulationRandomMode;
   readonly simulationRandomSettings?: never;
 };
@@ -56,6 +58,7 @@ export type RestoredCombatEnvironmentInput =
       readonly simulationRandomSettings: SimulationRandomSettings;
       readonly criticalSamples?: never;
       readonly probabilitySamples?: never;
+      readonly rangeSamples?: never;
       readonly randomMode?: never;
     });
 
@@ -138,6 +141,7 @@ export function bindRestoredCombatRuntimeFoundation(
           ...environmentInput,
           criticalSamples: restoredRandomSource!,
           probabilitySamples: restoredRandomSource!,
+          rangeSamples: restoredRandomSource!,
           randomMode: simulationRandomSettings!.mode,
           randomState,
           ...restorationOptions,

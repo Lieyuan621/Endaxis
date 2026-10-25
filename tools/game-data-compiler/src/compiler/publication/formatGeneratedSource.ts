@@ -6,15 +6,28 @@ import { format, resolveConfig } from 'prettier';
 export async function formatGeneratedSource(content: string, output: string): Promise<string> {
   // 候选可以位于仓库外，仍使用编译器所属仓库的规范，不能随输出目录变化。
   const options = await resolveConfig(
-    path.resolve(import.meta.dirname, '../../../.prettierrc.json'),
+    path.resolve(import.meta.dirname, '../../../../../.prettierrc.json'),
   );
-  return format(content, { ...options, filepath: output });
+  const formatted = await format(content, { ...options, filepath: output });
+  return /\/(?:zh|en)\/operators\.json$/.test(output.replaceAll('\\', '/'))
+    ? formatLevelValueArrays(formatted)
+    : formatted;
+}
+
+/** 等级及对应显示值横排；标准 JSON 排版后应用，防止全量格式化再次拆行。 */
+function formatLevelValueArrays(json: string): string {
+  return json.replace(
+    /("(?:levels|values)": )\[\n((?:\s*(?:"(?:\\.|[^"\\])*"|-?\d+(?:\.\d+)?)(?:,)?\n)+)\s*\]/g,
+    (_match, key: string, items: string) =>
+      `${key}[${(JSON.parse(`[${items}]`) as (string | number)[]).map(value => JSON.stringify(value)).join(', ')}]`,
+  );
 }
 
 /** 只遍历正式发布清单，逐文件格式化，避免并行载入整批大型干员定义。 */
 export async function formatGeneratedCandidate(
   candidateRoot: string,
   outputs: readonly string[],
+  options: { readonly check?: boolean } = {},
 ): Promise<{ readonly fileCount: number }> {
   let fileCount = 0;
 
@@ -29,8 +42,10 @@ export async function formatGeneratedCandidate(
     if (!output.endsWith('.ts') && !output.endsWith('.json')) return;
     const source = await fs.readFile(output, 'utf8');
     const formatted = await formatGeneratedSource(source, output);
-    if (source.replaceAll('\r\n', '\n') !== formatted)
+    if (source.replaceAll('\r\n', '\n') !== formatted) {
+      if (options.check) throw new Error(`Generated formatting differs: ${output}`);
       await fs.writeFile(output, formatted, 'utf8');
+    }
     fileCount += 1;
   }
 

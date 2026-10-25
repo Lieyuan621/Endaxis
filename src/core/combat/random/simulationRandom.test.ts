@@ -18,6 +18,26 @@ function createSourceWithCastSeed(globalSeed: number, castId: string, seed: numb
 }
 
 describe('SimulationRandomSource', () => {
+  it('轨迹范围取样沿用种子和切面，但不改变伤害与概率流', () => {
+    const settings = { mode: 'sampled' as const, globalSeed: 123 };
+    const state = createSimulationRandomState();
+    submitSimulationCastSeed(state, 'shot', 7);
+    const source = new SimulationRandomSource(settings, () => state);
+    source.nextRangeSample({ castId: 'shot' });
+    const restoredState = structuredClone(state);
+    const restored = new SimulationRandomSource(settings, () => restoredState);
+    expect(restored.nextRangeSample({ castId: 'shot' })).toBe(
+      source.nextRangeSample({ castId: 'shot' }),
+    );
+    const reference = createSource(settings);
+    expect(source.nextCriticalSample()).toBe(reference.nextCriticalSample());
+    expect(source.nextProbabilitySample()).toBe(reference.nextProbabilitySample());
+    expect(createSource({ mode: 'expected', globalSeed: 123 }).nextRangeSample()).toBe(0.5);
+    expect(() => submitSimulationCastSeed(restoredState, 'shot', 99)).toThrow(
+      'cannot change submitted',
+    );
+  });
+
   it('截面后提交不同种子，不改过去、不推进全局流，恢复保留已提交选择', () => {
     let state = createSimulationRandomState();
     const settings = { mode: 'sampled' as const, globalSeed: 123 };

@@ -97,6 +97,14 @@ describe('enemy data generation', () => {
       eny_variant: { ...base, bornBuffs: ['buff_variant'] },
     });
     await writeJson(join(root, 'DungeonTable.json'), {
+      stage_b: {
+        dungeonCategory: 'dungeon_bossrush',
+        dungeonSeriesId: 'series',
+        dungeonName: { text: 'Stage B' },
+        enemyIds: ['eny_base'],
+        enemyLevels: [90],
+        sortId: 2,
+      },
       stage: {
         dungeonCategory: 'dungeon_bossrush',
         dungeonSeriesId: 'series',
@@ -122,6 +130,9 @@ describe('enemy data generation', () => {
       localeDirectory: join(root, 'locales'),
       check: false,
     };
+    await writeJson(join(root, 'DungeonSeriesTable.json'), {
+      series: { name: { text: 'Series' } },
+    });
     await writeJson(join(root, 'WikiGroupTable.json'), { wiki_type_monster: { list: [] } });
     const result = await generateEnemyStageCatalog(args);
     const content = await readFile(result.output, 'utf8');
@@ -144,6 +155,9 @@ describe('enemy data generation', () => {
       expect(messages[stageNameKey]).toBe('Stage');
       expect(messages[result.stages[0]!.difficultyNameKey]).toBe('Level II');
     }
+    const dungeonPath = join(root, 'DungeonTable.json');
+    const dungeons = JSON.parse(await readFile(dungeonPath, 'utf8'));
+    await writeJson(dungeonPath, Object.fromEntries(Object.entries(dungeons).reverse()));
     await generateEnemyStageCatalog({ ...args, check: true });
     const englishPath = join(args.localeDirectory, 'en', 'stages.json');
     const english = await readFile(englishPath, 'utf8');

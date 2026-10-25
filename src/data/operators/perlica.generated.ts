@@ -13,10 +13,9 @@ export const perlicaChr_0004_pelica_attack1ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0004_pelica_normal_attack1',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -180,10 +179,9 @@ export const perlicaChr_0004_pelica_attack2ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0004_pelica_normal_attack2',
             recycleDelaySeconds: 0.100000001490116,
-            hit: { finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -316,10 +314,9 @@ export const perlicaChr_0004_pelica_attack3ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0004_pelica_normal_attack3',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -485,10 +482,9 @@ export const perlicaChr_0004_pelica_attack4ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0004_pelica_normal_attack4',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: true },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -801,6 +797,21 @@ export const perlicaChr_0004_pelica_power_attack: SkillDefinition = {
   nativeSkillType: 'breakingAttack',
 };
 
+const perlicaChr_0004_pelica_plunging_attack_endActionGraphCallback1 = {
+  actionGraph: { main: { nodes: {} }, macros: {} },
+  skillId: 'chr_0004_pelica_plunging_attack_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 1,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: {},
+  scheduledSequences: [],
+} as const;
+
 export const perlicaChr_0004_pelica_plunging_attack_endActionGraph = {
   main: {
     nodes: {
@@ -845,10 +856,13 @@ export const perlicaChr_0004_pelica_plunging_attack_endActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0004_pelica_plunging_attack',
             recycleDelaySeconds: 0.0333333350718021,
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'operator' }] },
           },
-          callbacks: [],
+          callbacks: [
+            { event: 'hit', skill: perlicaChr_0004_pelica_plunging_attack_endActionGraphCallback1 },
+          ],
         },
         next: null,
       },
@@ -857,10 +871,13 @@ export const perlicaChr_0004_pelica_plunging_attack_endActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0004_pelica_plunging_attack',
             recycleDelaySeconds: 0.0333333350718021,
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'operator' }] },
           },
-          callbacks: [],
+          callbacks: [
+            { event: 'hit', skill: perlicaChr_0004_pelica_plunging_attack_endActionGraphCallback1 },
+          ],
         },
         next: 'launchProjectile_4',
       },
@@ -869,10 +886,13 @@ export const perlicaChr_0004_pelica_plunging_attack_endActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0004_pelica_plunging_attack',
             recycleDelaySeconds: 0.0333333350718021,
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'operator' }] },
           },
-          callbacks: [],
+          callbacks: [
+            { event: 'hit', skill: perlicaChr_0004_pelica_plunging_attack_endActionGraphCallback1 },
+          ],
         },
         next: 'launchProjectile_5',
       },
@@ -881,10 +901,13 @@ export const perlicaChr_0004_pelica_plunging_attack_endActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0004_pelica_plunging_attack',
             recycleDelaySeconds: 0.0333333350718021,
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'operator' }] },
           },
-          callbacks: [],
+          callbacks: [
+            { event: 'hit', skill: perlicaChr_0004_pelica_plunging_attack_endActionGraphCallback1 },
+          ],
         },
         next: 'launchProjectile_6',
       },
@@ -924,7 +947,7 @@ export const perlicaChr_0004_pelica_plunging_attack_end: SkillDefinition = {
 export const perlicaChr_0004_pelica_normal_skillActionGraph = {
   main: {
     nodes: {
-      applyBuff_3: {
+      applyBuff_4: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -936,7 +959,7 @@ export const perlicaChr_0004_pelica_normal_skillActionGraph = {
         },
         next: null,
       },
-      dealDamage_4: {
+      dealDamage_5: {
         action: {
           kind: 'dealDamage',
           parameters: {
@@ -949,23 +972,23 @@ export const perlicaChr_0004_pelica_normal_skillActionGraph = {
             stagger: { kind: 'valueNode', nodeId: 'data_2' },
           },
         },
-        next: 'applyBuff_3',
+        next: 'applyBuff_4',
       },
-      applyElementalInfliction_5: {
+      applyElementalInfliction_6: {
         action: {
           kind: 'applyElementalInfliction',
           parameters: { element: 'electric', isExtra: false },
         },
-        next: 'dealDamage_4',
+        next: 'dealDamage_5',
       },
-      mergeContextTargets_6: {
+      mergeContextTargets_7: {
         action: {
           kind: 'mergeContextTargets',
           parameters: { saveToContextKey: 'tar', sources: [{ kind: 'fixed', target: 'enemy' }] },
         },
-        next: 'applyElementalInfliction_5',
+        next: 'applyElementalInfliction_6',
       },
-      reachSkillOperableBoundary_20: {
+      reachSkillOperableBoundary_21: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0004_pelica_normal_skill'] },
@@ -996,8 +1019,8 @@ export const perlicaChr_0004_pelica_normal_skill: SkillDefinition = {
   dontInterruptCombo: true,
   costFrame: 0,
   scheduledSequences: [
-    { startFrame: 13, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_6' } },
-    { startFrame: 28, endFrame: 54, sequence: { $sequence: 'reachSkillOperableBoundary_20' } },
+    { startFrame: 13, endFrame: 13, sequence: { $sequence: 'mergeContextTargets_7' } },
+    { startFrame: 28, endFrame: 54, sequence: { $sequence: 'reachSkillOperableBoundary_21' } },
   ],
   defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
@@ -1034,10 +1057,10 @@ export const perlicaChr_0004_pelica_combo_skillActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: { EntityBB_bounced: 0 },
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0004_pelica_combo_skill',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { onReach: true, finishOnHit: true },
+            targets: { kind: 'context', contextKey: 'tar' },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
           callbacks: [
             {
@@ -1894,6 +1917,291 @@ export const perlica: OperatorDefinition = {
           { startFrame: 54, endFrame: 54, sequence: { $sequence: 'finishOwner_1' } },
         ],
       },
+    },
+  },
+  projectileDefinitions: {
+    projectile_chr_0004_pelica_combo_skill: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 40 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.5 },
+      },
+      blackboard: { EntityBB_bounced: 0 },
+      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0004_pelica_normal_attack1: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: 1 } },
+              speed: { kind: 'constant', value: 40 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 1 },
+        finishDistanceMeters: { kind: 'constant', value: 20 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0004_pelica_normal_attack2: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: 1 } },
+              speed: { kind: 'constant', value: 52 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 1 },
+        finishDistanceMeters: { kind: 'constant', value: 20 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0004_pelica_normal_attack3: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: 1 } },
+              speed: { kind: 'constant', value: 50 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 1 },
+        finishDistanceMeters: { kind: 'constant', value: 20 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0004_pelica_normal_attack4: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: 1 } },
+              speed: { kind: 'constant', value: 70 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 1 },
+        finishDistanceMeters: { kind: 'constant', value: 20 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0004_pelica_plunging_attack: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: 1 } },
+              speed: { kind: 'constant', value: 50 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'sphere',
+          target: { side: 'enemy' },
+          radiusMeters: { kind: 'constant', value: 0.2 },
+        },
+        finishDurationSeconds: { kind: 'constant', value: 1 },
+        finishDistanceMeters: { kind: 'constant', value: 20 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.2 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: true, maxHitCount: 1 },
     },
   },
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },

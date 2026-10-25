@@ -168,6 +168,7 @@ function isPresentationSelectionNode(
       'spatialMeasurement',
       'blackboardMutation',
       'blackboardCalculation',
+      'curveCalculation',
     ].includes(body.value.family);
   }
   if (body.kind === 'actionWithCallback') {

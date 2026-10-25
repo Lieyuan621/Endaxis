@@ -123,6 +123,9 @@ export class AbilityEntityChildSkillRuntime implements LogicalAbilityEntityChild
       },
     );
     this.runtimeState = restored?.state ?? {
+      ...(dependencies.inheritedSkillCastInfo === undefined
+        ? {}
+        : { inheritedSkillCastInfo: { ...dependencies.inheritedSkillCastInfo } }),
       programId: dependencies.programId,
       skillId: program.skillId,
       host: this.#host.runtimeState,

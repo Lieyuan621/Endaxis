@@ -1,3 +1,4 @@
+import type { RangeSampleSource } from '../../core/combat/random/simulationRandom';
 import type { ActionExecutionTrace } from '../../core/combat/actions/actionExecutionTrace';
 import type { CombatReceiptView } from '../../core/combat/receipt/combatReceiptHistory';
 import type { ResolvedCombatStepForKind } from '../../core/compiler/combatProgram';
@@ -61,6 +62,7 @@ export interface RunStandardPlayerDamageScenarioInput {
   readonly endFrame: number;
   readonly criticalSamples: CriticalSampleSource;
   readonly probabilitySamples?: ProbabilitySampleSource;
+  readonly rangeSamples?: RangeSampleSource;
   readonly randomMode?: SimulationRandomMode;
   readonly randomState?: StandardPlayerDamageEnvironmentOptions['randomState'];
   /** 存在完整随机状态时用于恢复分支重建样本源；自定义无状态样本端口省略。 */
@@ -163,6 +165,7 @@ export function prepareStandardPlayerDamageScenarioRuntime(
     criticalSamples: input.criticalSamples,
     ...(input.randomState === undefined ? {} : { randomState: input.randomState }),
     randomMode: input.randomMode,
+    ...(input.rangeSamples === undefined ? {} : { rangeSamples: input.rangeSamples }),
     ...(input.probabilitySamples === undefined
       ? {}
       : { probabilitySamples: input.probabilitySamples }),
@@ -215,6 +218,7 @@ export function prepareStandardPlayerDamageScenarioRuntime(
       ...restoredEnvironmentBase,
       criticalSamples: input.criticalSamples,
       randomMode: input.randomMode,
+      ...(input.rangeSamples === undefined ? {} : { rangeSamples: input.rangeSamples }),
       ...(input.probabilitySamples === undefined
         ? {}
         : { probabilitySamples: input.probabilitySamples }),

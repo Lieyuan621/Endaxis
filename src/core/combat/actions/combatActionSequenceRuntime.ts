@@ -286,7 +286,10 @@ class ProjectileLaunchStep extends StatelessCombatStep {
     const selected = targets
       ? parent.targetContext!.get(targets.contextKey).map(target => ({ ...target }))
       : undefined;
-    const emitterCount = emitters ? parent.targetContext!.get(emitters.contextKey).length : 1;
+    const emitterTargets = emitters
+      ? parent.targetContext!.get(emitters.contextKey).map(target => ({ ...target }))
+      : undefined;
+    const emitterCount = emitterTargets?.length ?? 1;
     const filter = this.step.parameters.onlyHitTargets;
     if (filter && !this.runtime.operations.queryTargets)
       throw new Error('projectile hit filter requires a target query');
@@ -307,9 +310,15 @@ class ProjectileLaunchStep extends StatelessCombatStep {
             { ...parent, currentTarget: target, actionInputTarget: target },
             prepared.forkEntityScope(),
             onlyHitTargets,
+            emitterTargets?.[emitterIndex],
           );
       } else {
-        this.launchSingle(parent, prepared.forkEntityScope(), onlyHitTargets);
+        this.launchSingle(
+          parent,
+          prepared.forkEntityScope(),
+          onlyHitTargets,
+          emitterTargets?.[emitterIndex],
+        );
       }
     }
     return true;
@@ -319,6 +328,7 @@ class ProjectileLaunchStep extends StatelessCombatStep {
     parent: CombatOperationContext,
     blackboard: ActionBlackboard,
     onlyHitTargets?: readonly RuntimeTargetRef[],
+    emitter?: RuntimeTargetRef,
   ): void {
     const launch = parent.launchProjectile!;
     const sourceId =
@@ -350,42 +360,51 @@ class ProjectileLaunchStep extends StatelessCombatStep {
         blackboard: context.blackboard.runtimeState,
         skillCastInfo: context.skillCastInfo ?? null,
         host: null,
-        ...(event === 'hit' && this.step.parameters.hit?.hitTagFilter !== undefined
-          ? { hitTagFilter: this.step.parameters.hit.hitTagFilter }
-          : {}),
       };
       return {
         program: skill,
-        runtime: new ProjectileCallbackRuntime(
-          state,
-          () => {
-            if (entity === undefined) throw new Error('projectile callback started before launch');
-            return createHost(
-              skill,
-              {
-                ...context,
-                actionInputTarget: state.inputTarget,
-                actionOwnerId: `ability-entity:${entity.instanceId}`,
-                actionSourceId: sourceId,
-                actionOwnerAbilityEntity: entity,
-              },
-              this.runtime.operations,
-            );
-          },
-          () =>
-            state.hitTagFilter === undefined ||
-            this.runtime.operations.evaluate(
-              { kind: 'entityTagMatch', target: { kind: 'inputTarget' }, ...state.hitTagFilter },
-              { ...context, actionInputTarget: state.inputTarget },
-            ),
-        ),
+        runtime: new ProjectileCallbackRuntime(state, () => {
+          if (entity === undefined) throw new Error('projectile callback started before launch');
+          return createHost(
+            skill,
+            {
+              ...context,
+              actionInputTarget: state.inputTarget,
+              actionOwnerId: `ability-entity:${entity.instanceId}`,
+              actionSourceId: sourceId,
+              actionOwnerAbilityEntity: entity,
+            },
+            this.runtime.operations,
+          );
+        }),
       };
     });
     entity = launch({
+      resolveFlightValue: value => resolveActionValueOperand(value, parent.blackboard),
+      resolveFlightTargets: (query, role) => {
+        // 一次发射绑定遍历中的单个端点；两组查询可以使用同一个 Context 键。
+        if (query.kind === 'context') {
+          if (
+            role === 'start' &&
+            query.key === this.step.parameters.emitters?.contextKey &&
+            emitter
+          )
+            return [emitter];
+          if (
+            role === 'target' &&
+            query.key === this.step.parameters.targets?.contextKey &&
+            parent.currentTarget
+          )
+            return [parent.currentTarget];
+        }
+        if (!this.runtime.operations.queryTargets)
+          throw new Error('projectile endpoint requires target queries');
+        return this.runtime.operations.queryTargets(query, parent);
+      },
       entityBlackboard: blackboard.runtimeState.entity!,
       onlyHitTargets,
       syncTimeScale: this.step.parameters.syncTimeScale,
-      finish: this.step.parameters.finish,
+      flight: this.step.parameters.flight,
       recycleDelaySeconds: this.step.parameters.recycleDelaySeconds ?? 0,
       callbacks,
       skillCastInfo: parent.skillCastInfo,

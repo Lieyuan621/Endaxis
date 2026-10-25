@@ -1,7 +1,7 @@
 import type { ActionGraphReference } from '../../../packages/game-data-contract/src/actionGraph';
 import type {
   ActionGraphDefinitionRepository,
-  ImportedAbilityEntityDefinitions,
+  ActionGraphImports,
 } from './actionGraphDefinitionRepository';
 import type { CompiledComboSkillConditionProgram } from './combatProgram';
 import type { OperatorDefinition } from '../game-data/operatorDefinition';
@@ -11,7 +11,7 @@ import { validateComboSkillConditions } from '../game-data/validateComboSkillCon
 /** 正式定义进入编译程序；引用在这里严格解析，不依赖是否存在技能块。 */
 interface ComboGraphContext {
   readonly programs: ActionGraphDefinitionRepository;
-  readonly importsForLevel?: (level: number) => ImportedAbilityEntityDefinitions;
+  readonly importsForLevel?: (level: number) => ActionGraphImports;
 }
 export function compileOperatorComboSkillConditions(
   operator: OperatorDefinition,

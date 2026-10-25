@@ -1,3 +1,5 @@
+import type { ResolvedCombatStepForKind } from '../../compiler/combatProgram';
+import type { CompiledValueInput } from '../../compiler/compiledGraphData';
 import type { CompiledTargetQuery } from '../../compiler/compiledGraphData';
 
 import type { EnemyPartTransferInfo } from '../state/foundationState';
@@ -8,10 +10,7 @@ import type { RuntimeTargetGroup } from '../../game-data/logicalAbilityEntity';
 import type { DamageElement } from '../../game-data/operatorDefinition';
 import type { CallbackSkillHostFactory } from '../abilities/callbackSkillHost';
 import type { ProjectileCallbackRuntime } from '../abilities/projectileCallbackRuntime';
-import type {
-  ProjectileFinishTiming,
-  ProjectileLifetimeReference,
-} from '../abilities/projectileLifecycleRuntime';
+import type { ProjectileLifetimeReference } from '../abilities/projectileLifecycleRuntime';
 import type { ActionExecutionTrace } from '../actions/actionExecutionTrace';
 import type { AuraInfluenceOperations } from '../buffs/buffOperationExecutor';
 import type { DamageModifierConditionInput } from '../damage/damageModifiers';
@@ -51,9 +50,14 @@ import {
 
 /** 发射动作只提交一次请求；回调技能及其宿主都归该投射物持有。 */
 export type LaunchProjectile = (request: {
+  readonly resolveFlightTargets?: (
+    query: CompiledTargetQuery,
+    role: 'start' | 'target',
+  ) => readonly RuntimeTargetRef[];
+  readonly resolveFlightValue?: (value: CompiledValueInput) => number;
   readonly entityBlackboard: ActionBlackboardState;
   readonly syncTimeScale?: boolean;
-  readonly finish: ProjectileFinishTiming;
+  readonly flight: ResolvedCombatStepForKind<'launchProjectile'>['parameters']['flight'];
   readonly recycleDelaySeconds: number;
   readonly callbacks: readonly {
     readonly runtime: ProjectileCallbackRuntime;
@@ -62,7 +66,7 @@ export type LaunchProjectile = (request: {
   readonly skillCastInfo?: CombatSkillCastInfo;
   readonly sourceId?: string;
   readonly producedBy?: CombatObjectRef;
-  readonly hit?: CompiledStepParameters['launchProjectile']['hit'];
+  readonly hit?: ResolvedCombatStepForKind<'launchProjectile'>['parameters']['hit'];
   readonly hitTarget?: RuntimeTargetRef;
   readonly onlyHitTargets?: readonly RuntimeTargetRef[];
 }) => ProjectileLifetimeReference;

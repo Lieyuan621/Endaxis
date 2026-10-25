@@ -54,6 +54,8 @@ export function createEmptyScenario(id: string, name: string): ScenarioDocument 
       cycleBoundaries: [],
       controlSwitches: [],
       automaticControlSwitches: true,
+      // 新方案采用近距离站位；旧存档缺省值仍由加载流程按 0 米处理。
+      operatorEnemyDistanceMeters: 3,
       externalEventMarkers: [],
       dodgeMarkers: [],
     },

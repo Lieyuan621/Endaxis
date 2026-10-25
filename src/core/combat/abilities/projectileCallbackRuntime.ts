@@ -1,4 +1,6 @@
-/** 绑定投射物回调宿主；对应事件发生时才施放，恢复已有宿主时不再次施放。 */
+import { runtimeTargetEntityId } from '../../game-data/logicalAbilityEntity';
+import type { RuntimeTargetRef } from '../../game-data/logicalAbilityEntity';
+import type { ProjectileHitTargets } from '../state/instanceState';
 import { ActionBlackboard } from '../actions/actionBlackboard';
 import type { BuffApplicationHandle } from '../buffs/buffOperationExecutor';
 import type {
@@ -12,10 +14,21 @@ import type { CallbackSkillHost } from './callbackSkillHost';
 import type { ProjectileCallbackPrograms } from './projectileCallbackPrograms';
 import type { ProjectileHostPorts } from './projectileLifecycleRuntime';
 
-/** 新建与恢复共用事件绑定；所有回调使用同一投射物时钟。 */
+export interface ProjectileHitBinding {
+  readonly state: ProjectileHitTargets;
+  readonly repeatIntervalSeconds?: number;
+  readonly resolveTimeSeconds?: () => number;
+  readonly matchesTags?: (
+    target: RuntimeTargetRef,
+    query: NonNullable<ProjectileHitTargets['hitTagFilter']>,
+  ) => boolean;
+}
+
+/** 新建与恢复共用事件绑定；命中历史随投射物状态保存。 */
 export function bindProjectileCallbackLifecycle(
   callbacks: readonly ProjectileCallbackRuntime[],
   resolveTickDeltaSeconds: () => number | null,
+  hit?: ProjectileHitBinding,
 ): ProjectileHostPorts {
   const start = (event: 'block' | 'reach' | 'finish') => {
     for (const callback of callbacks) if (callback.runtimeState.event === event) callback.start();
@@ -25,9 +38,38 @@ export function bindProjectileCallbackLifecycle(
     reach: () => start('reach'),
     block: () => start('block'),
     hit: () => {
-      let accepted = false;
-      for (const callback of callbacks)
-        if (callback.runtimeState.event === 'hit' && callback.hit()) accepted = true;
+      if (!hit) return 0;
+      let accepted = 0;
+      const state = hit.state;
+      for (const target of state.targets) {
+        const key =
+          target.kind === 'spatialPoint'
+            ? `point:${target.pointId}`
+            : runtimeTargetEntityId(target);
+        if (key === undefined) continue;
+        if (state.hitTagFilter) {
+          if (!hit.matchesTags) throw new Error('projectile hit filtering requires target tags');
+          if (!hit.matchesTags(target, state.hitTagFilter)) continue;
+        }
+        const interval = hit.repeatIntervalSeconds;
+        const previous = state.hitTimes?.get(key);
+        if (previous !== undefined && interval === undefined) continue;
+        let now = 0;
+        if (interval !== undefined) {
+          const time = hit.resolveTimeSeconds?.();
+          if (time === undefined || !Number.isFinite(time))
+            throw new Error('repeated projectile hits require the scene clock');
+          now = Math.fround(time);
+          if (previous !== undefined) {
+            const elapsed = Math.fround(now - previous);
+            if (elapsed < Math.fround(interval - 0.00001) || Math.abs(elapsed) <= 0.00001) continue;
+          }
+        }
+        (state.hitTimes ??= new Map()).set(key, now);
+        accepted++;
+        for (const callback of callbacks)
+          if (callback.runtimeState.event === 'hit') callback.hit(target);
+      }
       return accepted;
     },
     finish: () => start('finish'),
@@ -68,27 +110,19 @@ export function restoreProjectileCallback(
     actionSourceId: sourceId ?? `ability-entity:${instanceId}`,
     ...dependencies,
   };
-  return new ProjectileCallbackRuntime(
-    state,
-    saved =>
-      dependencies.createCallbackSkillHost(
-        program,
-        context,
-        operations,
-        saved === null
-          ? undefined
-          : {
-              state: saved,
-              damageSnapshotProgram: programs.resolveDamageSnapshots(state.programId!),
-              resolveAttachedBuff,
-            },
-      ),
-    () =>
-      state.hitTagFilter === undefined ||
-      operations.evaluate(
-        { kind: 'entityTagMatch', target: { kind: 'inputTarget' }, ...state.hitTagFilter },
-        context,
-      ),
+  return new ProjectileCallbackRuntime(state, saved =>
+    dependencies.createCallbackSkillHost(
+      program,
+      context,
+      operations,
+      saved === null
+        ? undefined
+        : {
+            state: saved,
+            damageSnapshotProgram: programs.resolveDamageSnapshots(state.programId!),
+            resolveAttachedBuff,
+          },
+    ),
   );
 }
 
@@ -98,7 +132,6 @@ export class ProjectileCallbackRuntime {
   constructor(
     readonly runtimeState: ProjectileCallbackState,
     readonly createHost: (saved: CallbackSkillHostState | null) => CallbackSkillHost,
-    readonly acceptsHit: () => boolean = () => true,
   ) {
     if (
       runtimeState.event !== 'hit' &&
@@ -125,11 +158,8 @@ export class ProjectileCallbackRuntime {
     this.#host.start(inputTarget);
   }
 
-  hit(): boolean {
-    if (!this.acceptsHit()) return false;
-    const targets = this.runtimeState.inputTargets ?? [this.runtimeState.inputTarget];
-    for (const target of targets) this.#startHost(target);
-    return targets.length > 0;
+  hit(target: RuntimeTargetRef): void {
+    this.#startHost(target);
   }
 
   advance(deltaSeconds: number): void {

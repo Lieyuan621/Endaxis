@@ -6,7 +6,7 @@ import {
   renderTimeDilationCatalogModule,
 } from '../src/source/timeDilationCatalogSource.ts';
 import { writeAtomicBytes } from './downloadGameDataSources.ts';
-import { formatGeneratedSource } from './formatGeneratedSource.ts';
+import { formatGeneratedSource } from '../src/compiler/publication/formatGeneratedSource.ts';
 import { readGameplayTagPaths } from './readGameplayTagPaths.ts';
 
 export async function generateTimeDilationCatalog(args: {

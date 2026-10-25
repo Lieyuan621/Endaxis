@@ -39,6 +39,10 @@ SkillData/BuffData 使用数字枚举编码时，通过 `--native-json-schema '<
 合约来源。该模式将公共实体变量的外部读取视为未知，保守保留可能被合约读取的字段；
 不能据此声称已验证新版合约，统一完整重建仍默认包含合约。
 
+统一重建也支持显式 `--skip-contingency-contract`，用于无法获取服务端合约配置时更新其余全部领域。
+该模式将当前合约定义、双语文本和专属图标复制到候选中参与校验，但排除在发布清单之外；
+报告通过 `preservedOutputs` 列明保留范围，`fullRebuild` 保持 false，`published` 表示其余领域是否发布成功。
+
 ### 2. 审阅范围与配置
 
 先看报告中的 `sources`、`source-coverage`、`content-inventory`、`operator-refresh-review` 及各领域 `comparison`。逐项核对新增、修改、删除与阻塞项；非玩家记录、表现变体和未知技能不能自动当作可用内容加入。
@@ -55,7 +59,7 @@ SkillData/BuffData 使用数字枚举编码时，通过 `--native-json-schema '<
 | `config/buffPresentationNames.ts`                | Buff 自身需要明确本地化名称或补充展示图标        |
 | `config/contingencyContractSimulationScope.json` | 确认合约效果的模拟范围                           |
 | `config/enemies/runtime-defaults.json`           | 有依据的敌人运行默认值变化                       |
-| `config/enemies/hidden-enemies.json`       | 敌人隐藏状态；分类与顺序由原生图鉴表生成               |
+| `config/enemies/hidden-enemies.json`             | 敌人隐藏状态；分类与顺序由原生图鉴表生成         |
 
 普通技能、天赋和潜能不逐项配置编译器，编译路径从原始动作推断。路由关系和递归技能组等确需人工确认的配置保留在对象定义中。递归放置策略必须校验起止技能、段数预算和回退序列，不按干员名称分派。
 
@@ -94,7 +98,11 @@ npm run rebuild:game-data -- --source-root '<冻结来源目录>' --version '<�
 
 ## 输出与边界
 
-完整干员生成到 `src/data/operators/<slug>.generated.ts`。武器、装备、套装、系统机制、Buff、敌人及物品写入各自登记的正式目录；本地化与图片随候选一起验证。生成流程统一格式化 TypeScript，数字数组保持紧凑。
+完整干员生成到 `src/data/operators/<slug>.generated.ts`。武器、装备、套装、系统机制、Buff、敌人及物品写入各自登记的正式目录；本地化与图片随候选一起验证。
+
+生成与全量格式化共用 `src/compiler/publication/formatGeneratedSource.ts`，领域生成器不另设排版后处理。统一入口先应用仓库 Prettier 规则，再将干员文本的等级及数值数组保持横排；重复生成和全量格式化必须得到相同文本，不在发布后单独修格式。
+
+`npm run format:game-data` 按正式发布清单格式化全部游戏产物；加 `-- --check` 只检查，不写文件。仓库的 `format`、`format:check` 也包含此步骤，使用同一份发布清单，不另维护待格式化文件列表。
 
 所有游戏图片输出 WebP；时间轴导出 PNG 不属于本工具。套装最终定义保存图标路径，配置只选择装备 ID，不覆盖原生 Buff 图标。
 
@@ -120,3 +128,23 @@ node --max-old-space-size=2048 --experimental-strip-types tools/game-data-compil
 ```
 
 检查串行加载两路，比较完整模拟事实而不持有整批回执。优化规则和公共类型归属见[游戏数据架构](../../docs/architecture/game-data.md)。
+
+## 资源补丁
+
+`src/patches/projectiles.ts` 在原生投射物解析后、正式投影前应用 `config/projectiles.json`。
+原始文件与来源哈希不变；`OperatorPlanningSources` 在一名干员的规划中按资源路径只解析、应用一次，
+所有引用方共用工作副本，结束规划后释放。生成审计的 `resourcePatches` 记录资源、原因和修改值。
+已有的梨诺跳过敌人碰撞配置也从同一补丁目录读取，但仍在投影阶段控制碰撞范围。
+
+补丁按原生资源 ID 定位，不按生成节点编号定位。不匹配的资源不受影响；被补丁命中的资源必须满足
+预期结构，否则生成失败。复杂变换写在此目录的 TypeScript 中，不扩展 JSON 为通用脚本语言，
+也不把补丁执行器带入正式契约和运行时。
+
+艾维文娜两种回收雷枪保留原生 1.5 米半径证据，生成副本改为 2.6 米。该近似只补偿点敌人：
+连携侧枪落点为前方 5 米、侧向 3 米，召回起点向外延伸 4 米并抬高 0.2 米。
+五米站距下敌人到回收线段的最近距离约 2.58 米，取向上到一位小数的 2.6 米。
+此值用于覆盖 0～5 米近距离站位，不承诺任意距离必中，也不是原生敌人体型参数。
+终结技回收采用相同补偿。补丁检查球形、原半径、中心、直线路径、敌对目标及回收生命周期关键字段。
+
+扩大半径会让原本能命中的雷枪更早接触敌人，这是体积补偿的明确影响；不修改路径、速度、
+回收到达时刻、回能规则或命中次数。其他投射物及原生规格库不修改。

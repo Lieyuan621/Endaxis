@@ -1076,7 +1076,7 @@ function graphStepUsage(
       // 自身初值，回调体的读取必须上传为父板读取；回调黑板默认值不是父板读取。
       return {
         ...mergeDefinitionValueUsage([
-          ...Object.values(action.parameters.entityAssignments ?? {}).map(actionValueUsage),
+          analyzeStepUsage(action, context),
           ...action.callbacks.flatMap(callback =>
             callback.skill.scheduledSequences.map(item =>
               analyzeGraphSequenceUsage(callback.skill.actionGraph.main, item.sequence, context),

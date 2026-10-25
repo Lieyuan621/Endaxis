@@ -93,8 +93,8 @@ it('正式下落攻击从起跳经过起手再执行落地技能', async () => {
     const session = createEditorSimulationService().createCombatSession(scenario);
     session.advanceToFrame(10);
     const restored = session.fork(session.runtime.save());
-    session.advanceToFrame(180);
-    restored.advanceToFrame(180);
+    expect(() => session.advanceToFrame(180), operator.slug).not.toThrow();
+    expect(() => restored.advanceToFrame(180), operator.slug).not.toThrow();
     const result = session.collectResult();
     expect(restored.collectResult(), operator.slug).toEqual(result);
     const starts = result.receiptEntries.filter(
@@ -500,13 +500,19 @@ function numberedPlacementIds(prefix: string) {
 }
 
 describe('registered generated operators', () => {
-  it.each(['battleSkill', 'comboSkill', 'ultimate'])(
-    '噗切娜 %s 的专属行为可经页面模拟入口执行',
-    async skillGroupKey => {
+  it.each([
+    ['battleSkill', 0],
+    ...[0, 2, 10, 30].flatMap(distance =>
+      ['comboSkill', 'ultimate'].map(group => [group, distance] as const),
+    ),
+  ] as const)(
+    '噗切娜 %s 在 %s 米的专属行为可经页面模拟入口执行',
+    async (skillGroupKey, distance) => {
       const operator = gameDataRepository.getOperator('purrchena');
       if (!operator) throw new Error('purrchena is not registered');
       const scenario = createEmptyScenario('scenario:purrchena', '新干员正式入口');
       scenario.battle.durationFrames = 600;
+      scenario.battle.operatorEnemyDistanceMeters = distance;
       scenario.tracks[0] = {
         id: 'track:purrchena',
         operator: createDefaultOperatorInstance(operator),
@@ -640,6 +646,7 @@ describe('registered generated operators', () => {
         scenario: placed,
         endFrame: 60,
         criticalSamples: new ExplicitCriticalSampleSource([1]),
+        rangeSamples: { nextRangeSample: () => 0.5 },
         elementalInflictionDocument: elementalAttachments,
         resolveNonRandomRuntimeSnapshot: () => ({
           runtimeExtensionMultiplier: 1,
@@ -713,6 +720,7 @@ describe('registered generated operators', () => {
         scenario: ended,
         endFrame: 240,
         criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
+        rangeSamples: { nextRangeSample: () => 0.5 },
         elementalInflictionDocument: elementalAttachments,
         resolveNonRandomRuntimeSnapshot: () => ({
           runtimeExtensionMultiplier: 1,
@@ -830,6 +838,7 @@ describe('registered generated operators', () => {
       scenario: combo,
       endFrame: 120,
       criticalSamples: new ExplicitCriticalSampleSource(Array(100).fill(1)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       elementalInflictionDocument: elementalAttachments,
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -903,6 +912,7 @@ describe('registered generated operators', () => {
         scenario: simulatedScenario,
         endFrame: 650,
         criticalSamples: new ExplicitCriticalSampleSource(Array(100).fill(1)),
+        rangeSamples: { nextRangeSample: () => 0.5 },
         elementalInflictionDocument: elementalAttachments,
         resolveNonRandomRuntimeSnapshot: () => ({
           runtimeExtensionMultiplier: 1,
@@ -1016,6 +1026,7 @@ describe('registered generated operators', () => {
           scenario: placed,
           endFrame: 80,
           criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
+          rangeSamples: { nextRangeSample: () => 0.5 },
           elementalInflictionDocument: elementalAttachments,
           resolveNonRandomRuntimeSnapshot: () => ({
             runtimeExtensionMultiplier: 1,
@@ -1084,6 +1095,7 @@ describe('registered generated operators', () => {
         scenario: placed,
         endFrame: 150,
         criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
+        rangeSamples: { nextRangeSample: () => 0.5 },
         elementalInflictionDocument: elementalAttachments,
         resolveNonRandomRuntimeSnapshot: () => ({
           runtimeExtensionMultiplier: 1,
@@ -1153,6 +1165,7 @@ describe('registered generated operators', () => {
       scenario: placed,
       endFrame: 90,
       criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       elementalInflictionDocument: elementalAttachments,
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -1170,17 +1183,16 @@ describe('registered generated operators', () => {
       },
     });
 
-    expect(result.receiptEntries).toContainEqual(
-      expect.objectContaining({
-        event: 'AbilityEntitySpawned',
-        // 第46帧发射后，由下一次投射物 Tick 落地生成枪。
-        frame: 47,
-        sourceId: 'track:avywenna:ultimate',
-        data: expect.objectContaining({
-          abilityEntityId: 'abilityentity_chr_0012_avywen_ultimate_skill_lance',
-        }),
-      }),
+    const lances = result.receiptEntries.filter(
+      entry =>
+        entry.event === 'AbilityEntitySpawned' &&
+        entry.data?.abilityEntityId === 'abilityentity_chr_0012_avywen_ultimate_skill_lance',
     );
+    expect(lances).toHaveLength(1);
+    // 落地回调应在发射后执行，不再要求零距离下首 Tick 落地。
+    const launch = result.receiptEntries.find(entry => entry.event === 'ProjectileLaunched');
+    expect(launch).toBeDefined();
+    expect(lances[0]!.frame).toBeGreaterThan(launch!.frame);
     expect(result.receiptEntries).toContainEqual(
       expect.objectContaining({
         event: 'DamageApplied',
@@ -1237,6 +1249,7 @@ describe('registered generated operators', () => {
       scenario,
       endFrame: 120,
       criticalSamples: new ExplicitCriticalSampleSource(Array(40).fill(1)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       elementalInflictionDocument: elementalAttachments,
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -1259,15 +1272,21 @@ describe('registered generated operators', () => {
         entry => entry.event === 'DamageApplied' && entry.sourceId === 'track:avywenna:return',
       ).length,
     ).toBeGreaterThanOrEqual(3);
-    expect(result.receiptEntries).toContainEqual(
-      expect.objectContaining({
-        event: 'DamageApplied',
-        // 回收弹体在第47帧发射，下一次投射物 Tick 命中。
-        frame: 48,
-        sourceId: 'track:avywenna:return',
-        targetId: 'enemy',
-      }),
+    const called = result.receiptEntries.filter(
+      entry =>
+        entry.event === 'BuffCreated' &&
+        entry.data?.buffId === 'buff_chr_0012_avywen_lance_becalled',
     );
+    const returnedHits = result.receiptEntries.filter(
+      entry =>
+        entry.event === 'DamageApplied' &&
+        String(entry.data?.stepKey).includes('chr_0012_avywen_combo_skill_lance_back'),
+    );
+    // 三个落点各生成一把枪，每个回收对象只产生一次回收命中。
+    expect(called).toHaveLength(3);
+    expect(new Set(called.map(entry => entry.targetId)).size).toBe(3);
+    expect(returnedHits).toHaveLength(called.length);
+    expect(returnedHits.every(entry => entry.frame > called[0]!.frame)).toBe(true);
   });
 
   it('applies Xaihi ultimate Crystal enhancement to a later basic attack', () => {
@@ -1367,6 +1386,7 @@ describe('registered generated operators', () => {
         scenario: placed,
         endFrame: 180,
         criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
+        rangeSamples: { nextRangeSample: () => 0.5 },
         elementalInflictionDocument: elementalAttachments,
         resolveNonRandomRuntimeSnapshot: () => ({
           runtimeExtensionMultiplier: 1,
@@ -1450,6 +1470,7 @@ describe('registered generated operators', () => {
       scenario: placed,
       endFrame: 180,
       criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       elementalInflictionDocument: elementalAttachments,
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -1536,6 +1557,7 @@ describe('registered generated operators', () => {
         scenario: placed,
         endFrame: 660,
         criticalSamples: new ExplicitCriticalSampleSource(Array(80).fill(1)),
+        rangeSamples: { nextRangeSample: () => 0.5 },
         elementalInflictionDocument: elementalAttachments,
         resolveNonRandomRuntimeSnapshot: () => ({
           runtimeExtensionMultiplier: 1,
@@ -1631,6 +1653,7 @@ describe('registered generated operators', () => {
       scenario: placed,
       endFrame: 180,
       criticalSamples: new ExplicitCriticalSampleSource(Array(80).fill(1)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       elementalInflictionDocument: elementalAttachments,
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -1798,6 +1821,7 @@ describe('registered generated operators', () => {
         scenario: placed,
         endFrame: 180,
         criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
+        rangeSamples: { nextRangeSample: () => 0.5 },
         elementalInflictionDocument: elementalAttachments,
         resolveNonRandomRuntimeSnapshot: () => ({
           runtimeExtensionMultiplier: 1,
@@ -1890,6 +1914,7 @@ describe('registered generated operators', () => {
         scenario: placed,
         endFrame: 1310,
         criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
+        rangeSamples: { nextRangeSample: () => 0.5 },
         elementalInflictionDocument: elementalAttachments,
         spellInflictionSettings: skillSettings,
         resolveNonRandomRuntimeSnapshot: () => ({
@@ -1923,6 +1948,7 @@ describe('registered generated operators', () => {
 
   it('runs all four Fluorite ultimate projectile hits with the native per-target marker', () => {
     const scenario = createEmptyScenario('scenario:fluorite:ultimate', '萤石终结技完整回归');
+    scenario.battle.operatorEnemyDistanceMeters = 0;
     scenario.battle.durationFrames = 120;
     scenario.enemy.editable.hp = 10_000_000;
     scenario.tracks[0] = {
@@ -1954,6 +1980,7 @@ describe('registered generated operators', () => {
       scenario: placed,
       endFrame: 120,
       criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       elementalInflictionDocument: elementalAttachments,
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -2068,6 +2095,7 @@ describe('registered generated operators', () => {
         scenario: placed,
         endFrame: 500,
         criticalSamples: new ExplicitCriticalSampleSource(Array(80).fill(1)),
+        rangeSamples: { nextRangeSample: () => 0.5 },
         resolveNonRandomRuntimeSnapshot: () => ({
           runtimeExtensionMultiplier: 1,
           appliesIgniteDamageMultiplier: false,
@@ -2175,6 +2203,7 @@ describe('registered generated operators', () => {
       scenario: placed,
       endFrame: 360,
       criticalSamples: new ExplicitCriticalSampleSource(Array(80).fill(1)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       elementalInflictionDocument: elementalAttachments,
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -2337,6 +2366,7 @@ describe('registered generated operators', () => {
         scenario: placed,
         endFrame: 300,
         criticalSamples: new ExplicitCriticalSampleSource(Array(40).fill(1)),
+        rangeSamples: { nextRangeSample: () => 0.5 },
         elementalInflictionDocument: elementalAttachments,
         resolveNonRandomRuntimeSnapshot: () => ({
           runtimeExtensionMultiplier: 1,
@@ -2423,6 +2453,7 @@ describe('registered generated operators', () => {
       scenario: placed,
       endFrame: 300,
       criticalSamples: new ExplicitCriticalSampleSource(Array(40).fill(1)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       probabilitySamples: new ExplicitProbabilitySampleSource(Array(40).fill(1)),
       elementalInflictionDocument: elementalAttachments,
       resolveNonRandomRuntimeSnapshot: () => ({
@@ -2586,6 +2617,7 @@ describe('registered generated operators', () => {
       scenario,
       endFrame: 0,
       criticalSamples: new ExplicitCriticalSampleSource([]),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       elementalInflictionDocument: elementalAttachments,
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -2665,6 +2697,7 @@ describe('registered generated operators', () => {
       scenario: placed,
       endFrame: 60,
       criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       probabilitySamples: new ExplicitProbabilitySampleSource(Array(20).fill(0)),
       elementalInflictionDocument: elementalAttachments,
       resolveNonRandomRuntimeSnapshot: () => ({
@@ -2748,6 +2781,7 @@ describe('registered generated operators', () => {
       scenario: placed,
       endFrame: 90,
       criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       probabilitySamples: new ExplicitProbabilitySampleSource(Array(20).fill(0)),
       elementalInflictionDocument: elementalAttachments,
       resolveNonRandomRuntimeSnapshot: () => ({
@@ -2825,6 +2859,7 @@ describe('registered generated operators', () => {
       scenario: placed,
       endFrame: 90,
       criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       probabilitySamples: new ExplicitProbabilitySampleSource(Array(20).fill(0)),
       elementalInflictionDocument: elementalAttachments,
       resolveNonRandomRuntimeSnapshot: () => ({
@@ -2907,6 +2942,7 @@ describe('registered generated operators', () => {
         scenario: placed,
         endFrame: 90,
         criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
+        rangeSamples: { nextRangeSample: () => 0.5 },
         probabilitySamples: new ExplicitProbabilitySampleSource(Array(20).fill(0)),
         elementalInflictionDocument: elementalAttachments,
         resolveNonRandomRuntimeSnapshot: () => ({
@@ -2998,6 +3034,7 @@ describe('registered generated operators', () => {
       scenario: placed,
       endFrame: 150,
       criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       elementalInflictionDocument: elementalAttachments,
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -3094,6 +3131,7 @@ describe('registered generated operators', () => {
         scenario: placed,
         endFrame: 1_340,
         criticalSamples: new ExplicitCriticalSampleSource(Array(40).fill(1)),
+        rangeSamples: { nextRangeSample: () => 0.5 },
         elementalInflictionDocument: elementalAttachments,
         resolveNonRandomRuntimeSnapshot: () => ({
           runtimeExtensionMultiplier: 1,
@@ -3175,6 +3213,7 @@ describe('registered generated operators', () => {
       scenario: placed,
       endFrame: 180,
       criticalSamples: new ExplicitCriticalSampleSource(Array(40).fill(1)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       elementalInflictionDocument: elementalAttachments,
       spellInflictionSettings: {
         schemaVersion: 1,
@@ -3275,6 +3314,7 @@ describe('registered generated operators', () => {
       scenario: placed,
       endFrame: 150,
       criticalSamples: new ExplicitCriticalSampleSource(Array(40).fill(1)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       elementalInflictionDocument: elementalAttachments,
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -3389,6 +3429,7 @@ describe('registered generated operators', () => {
       scenario,
       endFrame: 240,
       criticalSamples: new ExplicitCriticalSampleSource(Array(100).fill(1)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       probabilitySamples: new ExplicitProbabilitySampleSource(Array(100).fill(1)),
       elementalInflictionDocument: elementalAttachments,
       spellInflictionSettings: skillSettings,
@@ -3476,6 +3517,7 @@ describe('registered generated operators', () => {
       scenario: placed,
       endFrame: 90,
       criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       elementalInflictionDocument: elementalAttachments,
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -3530,6 +3572,7 @@ describe('registered generated operators', () => {
       scenario: placed,
       endFrame: 80,
       criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       elementalInflictionDocument: elementalAttachments,
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
@@ -3590,6 +3633,7 @@ describe('registered generated operators', () => {
       scenario: placed,
       endFrame: 150,
       criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       elementalInflictionDocument: elementalAttachments,
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,

@@ -6,7 +6,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type * as GeneratedSourceFormatter from '../scripts/formatGeneratedSource.ts';
+import type * as GeneratedSourceFormatter from '../src/compiler/publication/formatGeneratedSource.ts';
 
 const mocks = vi.hoisted(() => ({
   combat: vi.fn(),
@@ -27,7 +27,7 @@ vi.mock('../scripts/generateCombatDefinitionCandidates.ts', () => ({
   generateCombatDefinitionCandidates: mocks.combat,
 }));
 // 本测试只验证重建阶段编排；格式化器对正式输出清单的遍历另行验证。
-vi.mock('../scripts/formatGeneratedSource.ts', async importOriginal => ({
+vi.mock('../src/compiler/publication/formatGeneratedSource.ts', async importOriginal => ({
   ...(await importOriginal<typeof GeneratedSourceFormatter>()),
   formatGeneratedCandidate: async () => ({ fileCount: 0 }),
 }));
@@ -141,6 +141,7 @@ const localeFiles = [
   'gearpieces',
   'gearsets',
   'operators',
+  'stages',
   'terms',
   'weapons',
 ];
@@ -273,6 +274,36 @@ async function setup() {
 }
 
 describe('完整重建的统一战斗定义阶段', () => {
+  it('显式保留合约时仍验收其他领域，发布清单不覆盖合约', async () => {
+    const { root, args } = await setup();
+    const preserved = [
+      'src/data/contingencyContract/generated/fixture.json',
+      'public/contingency_contract/fixture.json',
+      'src/i18n/game-locales/zh/contingency-contracts.json',
+      'src/i18n/game-locales/en/contingency-contracts.json',
+    ];
+    for (const file of preserved) await json(path.join(root, file), { previous: 'contract' });
+    const { report, exitCode } = await rebuildGameData(
+      { ...args, skipContingencyContract: true },
+      root,
+    );
+    expect(exitCode).toBe(0);
+    expect(report).toMatchObject({ published: true, fullRebuild: false });
+    expect(mocks.combat.mock.calls[0]![0].skipContingencyContract).toBe(true);
+    expect(mocks.operatorSimulation).toHaveBeenCalledTimes(1);
+    expect(mocks.equipmentSimulation).toHaveBeenCalledTimes(1);
+    const publication = mocks.publish.mock.calls[0]![0];
+    expect(new Set(publication.fileOutputs).size).toBe(publication.fileOutputs.length);
+    for (const output of report.preservedOutputs) {
+      expect(publication.directoryOutputs).not.toContain(output);
+      expect(publication.fileOutputs).not.toContain(output);
+    }
+    for (const file of preserved)
+      expect(JSON.parse(await fs.readFile(path.join(root, file), 'utf8'))).toEqual({
+        previous: 'contract',
+      });
+  });
+
   it('仅调用两轮联合入口，第二轮通过后才开启候选验证和发布', async () => {
     const { root, sourceRoot, args } = await setup();
     const helper = path.join(root, 'src/data/operators/helper.ts');

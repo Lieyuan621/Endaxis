@@ -189,7 +189,7 @@ describe('compileSkill', () => {
       { self: entity },
       new ActionGraphDefinitionRepository(),
     );
-    const compiled = resolve(1).self!;
+    const compiled = resolve(1).abilityEntities.self!;
     const entry = compiled.childSkill!.timelineActions[0]!.sequence;
     expect(entry.graph.abilityEntityDefinitions.self).toBe(compiled);
   });
@@ -233,11 +233,13 @@ describe('compileSkill', () => {
       new ActionGraphDefinitionRepository(),
     );
     const definitions = resolve(1);
-    const firstGraph = definitions.first!.childSkill!.timelineActions[0]!.sequence.graph;
-    const secondGraph = definitions.second!.childSkill!.timelineActions[0]!.sequence.graph;
+    const firstGraph =
+      definitions.abilityEntities.first!.childSkill!.timelineActions[0]!.sequence.graph;
+    const secondGraph =
+      definitions.abilityEntities.second!.childSkill!.timelineActions[0]!.sequence.graph;
     expect(firstGraph).not.toBe(secondGraph);
-    expect(firstGraph.abilityEntityDefinitions.second).toBe(definitions.second);
-    expect(secondGraph.abilityEntityDefinitions.first).toBe(definitions.first);
+    expect(firstGraph.abilityEntityDefinitions.second).toBe(definitions.abilityEntities.second);
+    expect(secondGraph.abilityEntityDefinitions.first).toBe(definitions.abilityEntities.first);
     expect(resolve(1)).toBe(definitions);
   });
 
@@ -386,7 +388,8 @@ describe('compileSkill', () => {
   it('keeps physical infliction Buff references without embedding definitions', () => {
     const parameters = {
       type: 'fracture' as const,
-      target: { kind: 'fixed' as const, target: 'enemy' as const }, source: { kind: 'fixed' as const, target: 'caster' as const },
+      target: { kind: 'fixed' as const, target: 'enemy' as const },
+      source: { kind: 'fixed' as const, target: 'caster' as const },
       isExtra: false,
     };
     const skill = linearSkill({
@@ -669,7 +672,7 @@ describe('compileSkill', () => {
       skillLevel: 2,
       skill,
       programs: new ActionGraphDefinitionRepository(),
-      importedAbilityEntityDefinitions: imports,
+      resourceImports: imports,
     });
 
     expect(rootActionSteps(program.timelineActions[0]?.sequence!)[0]).toEqual({

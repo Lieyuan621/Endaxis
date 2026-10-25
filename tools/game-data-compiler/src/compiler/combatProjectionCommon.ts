@@ -260,6 +260,7 @@ export function requireActionOwnerProjection(
  * 过滤和后处理必须已证明不改变这个单元素集合；未解析的原生字段不能视为通过。
  */
 export function isStaticSingleEnemyTargetGroup(write: TargetGroupActionSource): boolean {
+  if (isSingleEnemyArcherySelection(write)) return true;
   const hasDistanceValidator = write.validatorTypes.includes('DistanceValidator');
   const fixedModelValidatorsPass =
     write.validatorTypes.every(
@@ -331,6 +332,7 @@ export function isCurrentTargetRestrictedSingleEnemyTargetGroup(
  * 但是否为空必须在动作执行时读取敌人当前 GameplayTag，不能升级成静态敌人证明。
  */
 export function isDynamicSingleEnemyTagTargetGroup(write: TargetGroupActionSource): boolean {
+  if (isSingleEnemyArcherySelection(write)) return false;
   // AllEnemyFinder / InFightEnemyFinder 只遍历敌人目录，不包含 Soul 能力实体。木桩正生命门禁恒通过，
   // 但标签仍动态读取；其他生命阈值及可选中墨影的 Finder 不得套用该简化。
   const hpValidators = write.hpRatioValidators ?? [];
@@ -417,6 +419,24 @@ export function zeroDistanceValidatorsAlwaysPass(write: TargetGroupActionSource)
       values.every(value => (distance.compareType === 'LT' ? value > 0 : value >= 0))
     );
   });
+}
+
+/** 单敌人模型默认瞄准敌人；仅省略弓箭选敌的 Locked 标签，不省略战斗标签筛选。 */
+function isSingleEnemyArcherySelection(write: TargetGroupActionSource): boolean {
+  if (write.finderType !== 'TyphoeaArcherySelectedFinder' || write.validatorTypes.length !== 1)
+    return false;
+  const query = write.validatorTagQueries[0];
+  return (
+    write.producerType === 'FindTargetAction' &&
+    write.finderType === 'TyphoeaArcherySelectedFinder' &&
+    write.validatorTypes.length === 1 &&
+    write.validatorTypes[0] === 'TagValidator' &&
+    write.validatorTagQueries.length === 1 &&
+    query?.[0] === 'HasAny' &&
+    query[1].length === 1 &&
+    query[1][0] === -980923073 && // Skill/Character/chr_0034_typhoea/Locked
+    postProcessingKeepsSingleEnemy(write)
+  );
 }
 
 function isSingleEnemyFinder(write: TargetGroupActionSource): boolean {

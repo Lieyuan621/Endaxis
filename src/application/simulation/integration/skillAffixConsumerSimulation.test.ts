@@ -9,6 +9,7 @@ import { createEditorSimulationService } from '../testSupport/editorSimulationSe
 
 it.each([false, true])('伊冯正式战技 SkillAffix 生命周期 interruption=%s', interrupted => {
   const scenario = createEmptyScenario('affix:yvonne', '伊冯 SkillAffix 生命周期');
+  scenario.battle.operatorEnemyDistanceMeters = 0;
   scenario.battle.durationFrames = 300;
   scenario.enemy.editable.hp = 1e9;
   scenario.tracks[0] = {
@@ -47,6 +48,7 @@ it.each([false, true])('伊冯正式战技 SkillAffix 生命周期 interruption=
     }).scenario;
   const result = runStandardPlayerDamageScenarioSimulation({
     scenario: placed,
+    rangeSamples: { nextRangeSample: () => 0.5 },
     endFrame: 300,
     criticalSamples: new ExplicitCriticalSampleSource(Array(100).fill(1)),
     resolveNonRandomRuntimeSnapshot: () => ({

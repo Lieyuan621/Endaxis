@@ -1,3 +1,4 @@
+import { stationaryProjectileFlight } from '../../test/projectileFlight';
 import { ProjectileLifecycleRuntime } from './projectileLifecycleRuntime';
 import { numberInput } from '../../../test/compiledGraphInputs';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
@@ -60,7 +61,7 @@ describe('AbilityEntityOperationExecutor', () => {
     const finishSkill = vi.fn();
     const sourceProjectile = projectiles.launch({
       source: { kind: 'operator', operatorId: 'source' },
-      finishDelaySeconds: 10,
+      flight: stationaryProjectileFlight(10),
       recycleDelaySeconds: 1,
       finish: finishSkill,
       beforeReset: () => {},
@@ -196,6 +197,10 @@ describe('AbilityEntityOperationExecutor', () => {
     );
     const delegate = { execute: () => false, evaluate: () => false, queryTargets };
     const executor = new AbilityEntityOperationExecutor('owner', entities, delegate, {
+      resolvePosition: target => {
+        if (target.kind !== 'spatialPoint') throw new Error('expected birth point');
+        return [target.pointId, 0, 0];
+      },
       resolveOperations: () => delegate,
       installPassiveSkills: () => {
         expect(targetContext.get('birth').every(target => target.kind === 'spatialPoint')).toBe(
@@ -224,6 +229,15 @@ describe('AbilityEntityOperationExecutor', () => {
     expect(targetContext.get('birth')).toHaveLength(2);
     const created = entities.findOwnerSpawned({ ownerId: 'owner' });
     expect(created).toHaveLength(2);
+    expect(
+      created.map(entity => {
+        if (entity.kind !== 'abilityEntity') throw new Error('expected spawned ability entity');
+        return entities.runtimeState.instances.get(entity.instanceId)?.position;
+      }),
+    ).toEqual([
+      [1, 0, 0],
+      [2, 0, 0],
+    ]);
     expect(created.map(entity => entities.snapshot(entity).target)).toEqual([
       { kind: 'enemy' },
       { kind: 'operator', operatorId: 'ally' },

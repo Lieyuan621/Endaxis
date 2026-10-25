@@ -25,12 +25,14 @@ export async function verifyGameDataSnapshot(root: string, catalog: GameDataSour
     const logicalPath = requireNonEmptyString(entry.logicalPath, 'entry.logicalPath');
     // A logical name is not an arbitrary filesystem path (also rejects Windows drive/ADS syntax).
     if (
-      !/^[A-Za-z0-9_-]+\/[A-Za-z0-9_.-]+\.json$/.test(logicalPath) ||
+      !/^[A-Za-z0-9_-]+\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+\.json$/.test(logicalPath) ||
       logicalPath.includes('..')
     ) {
       throw new Error(`unsafe source logical path: ${logicalPath}`);
     }
-    const [collection, file] = logicalPath.split('/') as [string, string];
+    const separator = logicalPath.indexOf('/');
+    const collection = logicalPath.slice(0, separator);
+    const file = logicalPath.slice(separator + 1);
     const directory =
       collection === 'TableCfg-current' ? 'TableCfg-current' : catalog.jsonCollections[collection];
     const isTable =
@@ -53,8 +55,11 @@ export async function verifyGameDataSnapshot(root: string, catalog: GameDataSour
     if (entry.provider !== 'akedb' && entry.provider !== 'vfs-index-browser') {
       throw new Error(`unknown source provider: ${logicalPath}`);
     }
-    if (collection === 'BuffData' && entry.provider !== 'akedb') {
-      throw new Error(`BuffData must come from AKEDB: ${logicalPath}`);
+    if (
+      (collection === 'BuffData' || collection === 'SpawnerConfig') &&
+      entry.provider !== 'akedb'
+    ) {
+      throw new Error(`${collection} must come from AKEDB: ${logicalPath}`);
     }
     if (
       entry.provider === 'vfs-index-browser' &&
@@ -116,7 +121,11 @@ export async function verifyGameDataSnapshot(root: string, catalog: GameDataSour
     if (inventory && inventory.files !== count)
       throw new Error(`collection inventory count mismatch: ${collection}`);
     if (!inventory || count === 0) missingInputs.push(`${collection}/<inventory>`);
-    else if (collection !== 'BuffData' && inventory.vfs !== 'available')
+    else if (
+      collection !== 'BuffData' &&
+      collection !== 'SpawnerConfig' &&
+      inventory.vfs !== 'available'
+    )
       missingInputs.push(`${collection}/<VFS inventory unavailable>`);
   }
   return {

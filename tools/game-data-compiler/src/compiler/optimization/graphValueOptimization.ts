@@ -190,6 +190,7 @@ function pruneUnobservedConditionComputations<Value>(
       if (
         step.kind !== 'modifyActionValue' &&
         step.kind !== 'calculateActionValue' &&
+        step.kind !== 'evaluateCurve' &&
         step.kind !== 'saveTwoDirectionAngle'
       ) {
         safe = false;
@@ -318,11 +319,13 @@ export function pruneGraphValues<Value>(
     switch (action.kind) {
       case 'modifyActionValue':
       case 'calculateActionValue':
+      case 'evaluateCurve':
+      case 'saveTargetDistance':
       case 'saveTwoDirectionAngle': {
         // 动作参数统一交给用途分析，不另建图专用读写规则。
         const usage = analyzeStepUsage(action, usageContext);
         const outputKey =
-          action.kind === 'saveTwoDirectionAngle'
+          action.kind === 'saveTwoDirectionAngle' || action.kind === 'saveTargetDistance'
             ? action.parameters.outputKey
             : action.parameters.key;
         const candidate: GraphWriteCandidate = {
@@ -336,9 +339,11 @@ export function pruneGraphValues<Value>(
         const operands =
           action.kind === 'modifyActionValue'
             ? [action.parameters.value]
-            : action.kind === 'calculateActionValue'
-              ? [action.parameters.left, action.parameters.right]
-              : [];
+            : action.kind === 'evaluateCurve'
+              ? [action.parameters.input]
+              : action.kind === 'calculateActionValue'
+                ? [action.parameters.left, action.parameters.right]
+                : [];
         const canResolveInputs = operands.every(
           operand =>
             operand.kind === 'constant' ||
@@ -346,13 +351,17 @@ export function pruneGraphValues<Value>(
               (operand.fallback !== undefined || Object.hasOwn(initial, operand.key))),
         );
         const queryMayHaveEffects =
-          action.kind === 'saveTwoDirectionAngle' &&
-          [
-            action.parameters.direction1Source,
-            action.parameters.direction1Target,
-            action.parameters.direction2Source,
-            action.parameters.direction2Target,
-          ].some(query => !isReadOnlyTargetQuery(query));
+          action.kind === 'saveTargetDistance'
+            ? [action.parameters.source, action.parameters.target].some(
+                query => !isReadOnlyTargetQuery(query),
+              )
+            : action.kind === 'saveTwoDirectionAngle' &&
+              [
+                action.parameters.direction1Source,
+                action.parameters.direction1Target,
+                action.parameters.direction2Source,
+                action.parameters.direction2Target,
+              ].some(query => !isReadOnlyTargetQuery(query));
         // EntityBB_ 是原生动态写入路由，不是对象特例；它可能被同一实体的其他技能读取。
         if (
           action.key !== undefined ||
@@ -471,7 +480,7 @@ export function pruneGraphValues<Value>(
         // 回调沿自己的图分析；回调 direct 板继承创建时父快照，回调体读取上传为父板读取。
         observe(
           mergeDefinitionValueUsage([
-            ...Object.values(action.parameters.entityAssignments ?? {}).map(actionValueUsage),
+            analyzeStepUsage(action, usageContext),
             ...action.callbacks.flatMap(callback =>
               callback.skill.scheduledSequences.map(item =>
                 analyzeGraphSequenceUsage(
@@ -642,7 +651,7 @@ export function pruneGraphValues<Value>(
           connect(action.body, [...after, ...repeats]);
           reads.set(id, new Set());
         } else if (action.kind === 'createSpatialPointTargets') {
-          // 创建逻辑点只读取数量并更新目标组，不发布事件或传出变量快照。
+          // 创建空间点读取数量和位置参数并更新目标组，不发布事件。
           // 不能把它当成读取整张变量表，否则分支中无用的距离写入永远无法消除。
           reads.set(id, analyzeStepUsage(action, usageContext).reads);
         } else if (!candidateByNode.has(id)) {

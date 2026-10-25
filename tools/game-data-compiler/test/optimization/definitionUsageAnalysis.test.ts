@@ -28,6 +28,79 @@ import { pruneUnusedGraphSkillValues } from '../../src/compiler/optimization/gra
 import { extractGraphDataNodes } from '../../src/compiler/extractGraphDataNodes.ts';
 
 describe('黑板用途的读取对象', () => {
+  it('发射动作保留飞行参数读取，避免裁剪速度和路径变量', () => {
+    const read = (key: string) => ({ kind: 'blackboard' as const, key });
+    const action: CombatStepForKind<'launchProjectile'> = {
+      kind: 'launchProjectile',
+      callbacks: [],
+      parameters: {
+        projectileId: 'fixture_projectile',
+        inheritActionBlackboard: true,
+
+        flight: {
+          start: { side: 'operator' },
+          segments: [
+            {
+              target: { side: 'enemy' },
+              skipCollision: false,
+              movement: {
+                speed: read('speed'),
+                speedCurve: [],
+                trace: { kind: 'duration', seconds: read('trace') },
+                path: {
+                  kind: 'parabola',
+                  definition: { kind: 'speedGravity', gravity: read('gravity') },
+                },
+              },
+            },
+          ],
+          finishDurationSeconds: read('duration'),
+          finishDistanceMeters: read('distance'),
+          reachRadiusMeters: read('reach'),
+          finishOnReach: true,
+          keepMovingOnReach: false,
+          collision: { kind: 'sphere', target: { side: 'enemy' }, radiusMeters: read('radius') },
+        },
+      },
+    };
+    const expected = new Set([
+      'speed',
+      'trace',
+      'gravity',
+      'duration',
+      'distance',
+      'reach',
+      'radius',
+    ]);
+    expect(analyzeStepUsage(action).reads).toEqual(expected);
+    const graph = { nodes: { launch: { action, next: null } } };
+    expect(analyzeGraphSequenceUsage(graph, { $sequence: 'launch' }).reads).toEqual(expected);
+  });
+
+  it('随机空间点保留全部几何变量读取，不只保留点数', () => {
+    const read = (key: string) => ({ kind: 'blackboard' as const, key });
+    const usage = analyzeStepUsage({
+      kind: 'createSpatialPointTargets',
+      parameters: {
+        saveToContextKey: 'points',
+        count: read('count'),
+        origin: { kind: 'source' },
+        randomDistribution: {
+          shape: 'sector',
+          radius: read('radius'),
+          minimumRadius: read('minimumRadius'),
+          angleDegrees: read('angle'),
+          localPlaneRotation: [read('rx'), read('ry'), read('rz')],
+          centerOnGround: true,
+        },
+      },
+    });
+    expect(usage.reads).toEqual(
+      new Set(['count', 'radius', 'minimumRadius', 'angle', 'rx', 'ry', 'rz']),
+    );
+    expect(usage.unknownAccess).toBe(false);
+  });
+
   it('距离与方向检查的目标查询可分配位置身份，不能当成纯比较删除', () => {
     const executor = new TargetContextOperationExecutor('ally', {
       execute: () => false,

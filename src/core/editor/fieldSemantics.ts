@@ -26,7 +26,7 @@ export type FieldDeclarationId =
   | 'SkillGlobalBuffChildDefinition.blackboardAssignments';
 
 export type FieldReferenceKind =
-  'gearSet' | 'buff' | 'skillGroup' | 'skillSlot' | 'skill' | 'abilityEntity';
+  'gearSet' | 'buff' | 'skillGroup' | 'skillSlot' | 'skill' | 'abilityEntity' | 'projectile';
 
 export interface FieldDeclarationMetadata {
   readonly declaration?: FieldDeclarationId;

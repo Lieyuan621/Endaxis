@@ -2319,6 +2319,7 @@ export const pogranichnikChr_0029_pograni_combo_skill: SkillDefinition = {
     { startFrame: 400, endFrame: 418, sequence: { $sequence: 'startTimeDilation_89' } },
     { startFrame: 600, endFrame: 619, sequence: { $sequence: 'startTimeDilation_90' } },
   ],
+  defaultTarget: 'enemy',
   smartTarget: 'trigger',
   cooldownFrames: [540, 540, 540, 540, 540, 540, 540, 540, 540, 540, 540, 510],
   skillType: 'comboSkill',

@@ -1,4 +1,5 @@
 import { projectSelectorBuffValidators } from './selectorBuffProjection.ts';
+import { projectNativeTagQueryType } from '../../source/tagQuery.ts';
 import type { SkillInterruptReason } from '../../../../../packages/game-data-contract/src/conditions.ts';
 import type { SkillType } from '../../../../../packages/game-data-contract/src/primitives.ts';
 import { projectWeaponType } from '../build/weaponType.ts';
@@ -903,6 +904,31 @@ export function projectActionTargetQuery(
       context,
       path,
     );
+  }
+  if (target.targetSource === 'InstantSearch' && target.validatorTypes.includes('TagValidator')) {
+    if (
+      target.validatorTagQueries.length !==
+      target.validatorTypes.filter(type => type === 'TagValidator').length
+    )
+      throw new Error(`${path}: incomplete TagValidator sources`);
+    let query = projectActionTargetQuery(
+      {
+        ...target,
+        validatorTypes: target.validatorTypes.filter(type => type !== 'TagValidator'),
+        validatorTagQueries: [],
+      },
+      context,
+      path,
+    );
+    for (const [queryType, tagIds] of target.validatorTagQueries) {
+      query = {
+        kind: 'tagFilter',
+        targets: query,
+        tags: projectGameplayTags(tagIds, context, path),
+        tagQueryType: projectNativeTagQueryType(queryType, path),
+      };
+    }
+    return query;
   }
   if (isPartyInstantSearch(target)) return { kind: 'characterTeam', excludeOwner: false };
   if (isPartyExceptOwnerInstantSearch(target)) return { kind: 'characterTeam', excludeOwner: true };

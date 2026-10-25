@@ -104,6 +104,13 @@ export type ActionTargetQuery =
       /** 排除的 selector owner；省略时使用动作 Owner，不能替换成定义所属干员。 */
       readonly owner?: ActionEntitySelection;
     }
+  /** 按实体当前标签筛选，匹配部位的 Buff 归属但保留原始目标身份。 */
+  | {
+      readonly kind: 'tagFilter';
+      readonly targets: ActionTargetQuery;
+      readonly tags: readonly GameplayTag[];
+      readonly tagQueryType: GameplayTagQueryType;
+    }
   /** 原生ExcludeTarget后处理：先求候选，再求排除组并按归一化实体身份移除。 */
   | {
       readonly kind: 'exclude';
@@ -140,10 +147,22 @@ export type ActionTargetQuery =
       readonly sameSourceSkillCast: boolean;
     };
 
-/**
- * 技能可用性、条件动作、Buff 修正和事件响应使用的布尔输入。
- * 固定真假直接保存；其余判断通过本图的布尔数据节点连接。
- */
+/** 固定端点场景中的显式位置偏移；不包含骨骼挂点偏移。 */
+export interface SpatialPointOffsetDefinition {
+  readonly local: readonly [ActionValueOperand, ActionValueOperand, ActionValueOperand];
+  readonly facing:
+    | 'operatorToEnemy'
+    | 'enemyToOperator'
+    | {
+        /** 已保存的两个位置决定水平朝向，不模拟角色转身。 */
+        readonly source: ActionTargetQuery;
+        readonly target: ActionTargetQuery;
+        readonly invert: boolean;
+      };
+  readonly rotation?: readonly [number, number, number, number];
+  readonly centerOnGround?: boolean;
+}
+
 export const ABILITY_ENTITY_FINISH_REASONS = [
   'other',
   'lifetime',
@@ -154,6 +173,10 @@ export const ABILITY_ENTITY_FINISH_REASONS = [
 ] as const;
 export type AbilityEntityFinishReason = (typeof ABILITY_ENTITY_FINISH_REASONS)[number];
 
+/**
+ * 技能可用性、条件动作、Buff 修正和事件响应使用的布尔输入。
+ * 固定真假直接保存；其余判断通过本图的布尔数据节点连接。
+ */
 export type CombatCondition =
   | { readonly kind: 'constant'; readonly value: boolean }
   | { readonly kind: 'conditionNode'; readonly nodeId: string };

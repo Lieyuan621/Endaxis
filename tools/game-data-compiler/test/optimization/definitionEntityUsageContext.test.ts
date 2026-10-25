@@ -1,3 +1,8 @@
+import type { SkillDefinition as PublishedSkillDefinition } from '../../../../packages/game-data-contract/src/skills.ts';
+import {
+  stationaryProjectileFlight,
+  stationaryProjectileDefinition,
+} from '../../../../src/core/test/projectileFlight';
 import { TargetContextOperationExecutor } from '../../../../src/core/combat/abilities/targetContextOperationExecutor.ts';
 import { extractDefinitionDataNodes } from '../../src/compiler/extractGraphDataNodes.ts';
 import { skillFixture } from '../../../../src/test/skillFixture';
@@ -135,7 +140,13 @@ const spawn = (
 });
 const callback = (body: GraphSequenceSource): CombatStepForKind<'launchProjectile'> => ({
   kind: 'launchProjectile',
-  parameters: { inheritActionBlackboard: true, finish: 1, recycleDelaySeconds: 1 },
+  parameters: {
+    projectileId: 'fixture_projectile',
+    flight: stationaryProjectileFlight(1),
+    inheritActionBlackboard: true,
+
+    recycleDelaySeconds: 1,
+  },
   callbacks: [
     {
       event: 'finish',
@@ -561,7 +572,16 @@ describe('跨技能黑板用途', () => {
       );
       runtime
         .createSequence(
-          compileGraphSequence(source.scheduledSequences[0]!.sequence, source.actionGraph),
+          compileGraphSequence(
+            source.scheduledSequences[0]!.sequence,
+            source.actionGraph,
+            1,
+            'test-support',
+            {
+              abilityEntities: {},
+              projectiles: { fixture_projectile: stationaryProjectileDefinition(1) },
+            },
+          ),
         )
         .executeInstant({});
       blackboard.assign({ value: 100 });
@@ -740,7 +760,16 @@ describe('跨技能黑板用途', () => {
       });
       runtime
         .createSequence(
-          compileGraphSequence(source.scheduledSequences[0]!.sequence, source.actionGraph),
+          compileGraphSequence(
+            source.scheduledSequences[0]!.sequence,
+            source.actionGraph,
+            1,
+            'test-support',
+            {
+              abilityEntities: {},
+              projectiles: { fixture_projectile: stationaryProjectileDefinition(1) },
+            },
+          ),
         )
         .executeInstant({});
       for (const slot of [0, 1])
@@ -1029,7 +1058,7 @@ describe('跨技能黑板用途', () => {
   });
   it('嵌在动作中的投射物回调也按独立技能裁剪，不依赖干员目录入口', () => {
     const value = skill([callback(program([assign('unused', 2), spend('value')]))], {});
-    const result = finalizeDefinitionResources(value, 'apply');
+    const result = finalizeDefinitionResources<PublishedSkillDefinition>(value, 'apply');
     const launch = Object.values(result.value.actionGraph.main.nodes).find(
       node => node.action.kind === 'launchProjectile',
     )!.action;

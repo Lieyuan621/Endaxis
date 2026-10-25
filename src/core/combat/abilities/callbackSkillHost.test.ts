@@ -158,7 +158,6 @@ it('多目标命中复用回调宿主，并逐次传递各自的输入目标', (
   const callback = new ProjectileCallbackRuntime(
     {
       event: 'hit',
-      inputTargets: targets,
       programId: null,
       definitionOperatorId: 'owner',
       skillId: program.skillId,
@@ -168,11 +167,11 @@ it('多目标命中复用回调宿主，并逐次传递各自的输入目标', (
     },
     factory,
   );
-  expect(callback.hit()).toBe(true);
+  targets.forEach(target => callback.hit(target));
   expect(factory).toHaveBeenCalledOnce();
   expect(seen).toEqual(targets);
   callback.advance(COMBAT_FRAME_INTERVAL);
-  callback.hit();
+  targets.forEach(target => callback.hit(target));
   expect(factory).toHaveBeenCalledOnce();
   expect(seen).toEqual([...targets, ...targets]);
 });

@@ -6440,6 +6440,13 @@ function setGlobalRandomSeed(globalSeed: number): void {
   }));
 }
 
+function setOperatorEnemyDistance(operatorEnemyDistanceMeters: number): void {
+  commitScenario('setOperatorEnemyDistance', current => ({
+    ...current,
+    battle: { ...current.battle, operatorEnemyDistanceMeters },
+  }));
+}
+
 function rollGlobalRandomSeed(): void {
   setGlobalRandomSeed(globalThis.crypto.getRandomValues(new Uint32Array(1))[0]!);
 }
@@ -6896,6 +6903,8 @@ function setMobileGuideFrame(frame: number | null): void {
         :appearance="appearance"
         :random-mode="scenario.battle.random?.mode ?? 'expected'"
         :automatic-control-switches="scenario.battle.automaticControlSwitches !== false"
+        :operator-enemy-distance-meters="scenario.battle.operatorEnemyDistanceMeters ?? 0"
+        @set-operator-enemy-distance="setOperatorEnemyDistance"
         :combo-skill-priority-enabled="scenario.battle.comboSkillPriority?.enabled ?? false"
         :combo-skill-priority-operators="comboSkillPriorityOperators"
         :global-random-seed="scenario.battle.random?.globalSeed ?? 0"

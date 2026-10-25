@@ -1,4 +1,8 @@
 import { expect, it } from 'vitest';
+import {
+  stationaryProjectileDefinition,
+  pointProjectileLaunch,
+} from '../../../test/projectileFlight';
 import { AbilityEntityChildSkillPrograms } from '../../abilities/abilityEntityChildSkillPrograms';
 import { LogicalAbilityEntityRuntime } from '../../abilities/logicalAbilityEntityRuntime';
 import { ProjectileCallbackPrograms } from '../../abilities/projectileCallbackPrograms';
@@ -322,7 +326,13 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
     'schedule-callback': {
       action: {
         kind: 'launchProjectile' as const,
-        parameters: { inheritActionBlackboard: true, finish: 0.05, recycleDelaySeconds: 0.05 },
+        parameters: {
+          projectileId: 'restoration',
+          launch: pointProjectileLaunch,
+          inheritActionBlackboard: true,
+
+          recycleDelaySeconds: 0.05,
+        },
         callbacks: [
           {
             event: 'finish' as const,
@@ -402,7 +412,16 @@ it('正式装配从活动技能切面恢复后继续得到相同逐帧结果', (
     timelineActions: [
       {
         startFrame: 0,
-        sequence: compileGraphEntry('skill-main', 'apply-persistent', skillSequenceNodes),
+        sequence: compileGraphEntry(
+          'skill-main',
+          'apply-persistent',
+          skillSequenceNodes,
+          {},
+          {
+            abilityEntities: {},
+            projectiles: { restoration: stationaryProjectileDefinition(0.05) },
+          },
+        ),
       },
     ],
   };

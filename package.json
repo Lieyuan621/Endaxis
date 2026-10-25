@@ -46,8 +46,9 @@
     "audit:game-data:candidate-equipment": "node --experimental-strip-types tools/game-data-compiler/scripts/auditCandidateEquipment.ts",
     "audit:game-data:enemies": "node --experimental-strip-types tools/game-data-compiler/scripts/auditCandidateEnemyDefinitions.ts",
     "verify:real-timeline-checkpoints": "node --experimental-strip-types tools/performance/verify-real-timeline-checkpoints.ts",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format": "prettier --write . && npm run format:game-data",
+    "format:check": "prettier --check . && npm run format:game-data -- --check",
+    "format:game-data": "node --experimental-strip-types tools/game-data-compiler/scripts/formatGameData.ts",
     "prepare": "husky"
   },
   "dependencies": {

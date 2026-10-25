@@ -1,3 +1,10 @@
+import {
+  stationaryProjectileDefinition,
+  pointProjectileDefinition,
+  pointProjectileLaunch,
+} from '../../test/projectileFlight';
+import { stationaryProjectileFlight } from '../../test/projectileFlight';
+
 import { describe, expect, it, vi } from 'vitest';
 import type {
   ActionGraphDefinition,
@@ -66,13 +73,26 @@ const gilbertaBattleSkill = gilbertaGeneratedOperator.skills.find(
   skill => skill.key === 'chr_0013_aglina_normal_skill',
 ) as SkillDefinition;
 
+const projectileDefinitions = {
+  point: pointProjectileDefinition,
+  hitPoint: { ...pointProjectileDefinition, hit: { finishOnHit: true } },
+  brief: stationaryProjectileDefinition(0.01),
+  stationary: stationaryProjectileDefinition(0.1),
+};
+
 const compileGraphEntry = (
   revision: string,
   entry: string | null,
   nodes: Record<string, ActionGraphNode>,
   dataNodes: ActionGraphDefinition['dataNodes'] = {},
 ): ResolvedActionSequence => ({
-  graph: createActionGraphCompilation({ nodes, dataNodes }, 1, revision).compileAll(),
+  graph: createActionGraphCompilation(
+    { nodes, dataNodes },
+    1,
+    revision,
+    {},
+    { abilityEntities: {}, projectiles: projectileDefinitions },
+  ).compileAll(),
   entry,
   callSite: revision,
 });
@@ -1382,9 +1402,10 @@ describe('CombatRuntimeAssembly', () => {
           parameters: {
             inheritActionBlackboard: true,
             source,
-            finish: event === 'reach' ? 'firstTickReach' : event === 'hit' ? 10 : 0.01,
+
+            projectileId: event === 'hit' ? 'hitPoint' : event === 'reach' ? 'point' : 'brief',
+            launch: pointProjectileLaunch,
             recycleDelaySeconds: 10,
-            ...(event === 'hit' ? { hit: { finishOnHit: true } } : {}),
           },
           callbacks: [{ event, skill: callbackSkill }],
         },
@@ -1530,8 +1551,10 @@ describe('CombatRuntimeAssembly', () => {
                   action: {
                     kind: 'launchProjectile',
                     parameters: {
+                      projectileId: 'stationary',
+                      launch: pointProjectileLaunch,
                       inheritActionBlackboard: true,
-                      finish: 0.1,
+
                       recycleDelaySeconds: 0,
                     },
                     callbacks: [
@@ -1642,7 +1665,9 @@ describe('CombatRuntimeAssembly', () => {
                       kind: 'launchProjectile',
                       parameters: {
                         inheritActionBlackboard: true,
-                        finish: 'firstTickReach',
+
+                        projectileId: 'point',
+                        launch: pointProjectileLaunch,
                         recycleDelaySeconds,
                       },
                       callbacks: [],
@@ -1705,7 +1730,7 @@ describe('CombatRuntimeAssembly', () => {
     });
     calls.length = 0;
     const projectile = assembly.projectileLifetimes.launch({
-      finishDelaySeconds: 0.01,
+      flight: stationaryProjectileFlight(0.01),
       recycleDelaySeconds: 0,
       resolveTickDeltaSeconds: () => 1 / 30,
       finish: () => calls.push('finish-callback'),
@@ -2804,7 +2829,9 @@ describe('CombatRuntimeAssembly', () => {
                                 kind: 'launchProjectile',
                                 parameters: {
                                   inheritActionBlackboard: true,
-                                  finish: 'firstTickReach',
+
+                                  projectileId: 'point',
+                                  launch: pointProjectileLaunch,
                                 },
                                 callbacks: [],
                               },
@@ -3194,7 +3221,7 @@ describe('CombatRuntimeAssembly', () => {
       skillLevel: 1,
       skill: gilbertaBattleSkill,
       programs,
-      importedAbilityEntityDefinitions: createIndependentAbilityEntityImportResolver(
+      resourceImports: createIndependentAbilityEntityImportResolver(
         gilbertaGeneratedOperator.abilityEntityDefinitions ?? {},
         programs,
       )(1),

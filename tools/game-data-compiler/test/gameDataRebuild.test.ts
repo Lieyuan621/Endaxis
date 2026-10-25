@@ -262,6 +262,40 @@ describe('本地来源快照重新核验', () => {
     ).rejects.toThrow('BuffData must come from AKEDB');
   });
 
+  it('接受 AKEDB 专供的分目录刷怪配置，并拒绝替换成 VFS 来源', async () => {
+    const { sourceRoot, catalog, ledger, ledgerPath } = await setup();
+    const logicalPath = 'SpawnerConfig/level01/spawner.json';
+    await json(path.join(sourceRoot, logicalPath), {});
+    const entry = {
+      logicalPath,
+      provider: 'akedb',
+      version: 'test@1',
+      byteLength: 2,
+      sha256: hash('{}'),
+    };
+    ledger.entries.push(entry);
+    ledger.entries.sort((a, b) => a.logicalPath.localeCompare(b.logicalPath));
+    ledger.snapshotSha256 = hash(
+      ledger.entries.map(e => `${e.logicalPath}\0${e.sha256}\n`).join(''),
+    );
+    (ledger.inventories as unknown[]).push({
+      collection: 'SpawnerConfig',
+      files: 1,
+      vfs: 'not-used',
+    });
+    const completeCatalog = { ...catalog, jsonCollections: { SpawnerConfig: 'SpawnerConfig' } };
+    await json(ledgerPath, ledger);
+    expect(await verifyGameDataSnapshot(sourceRoot, completeCatalog)).toMatchObject({
+      missingInputs: [],
+      resourceCount: 6,
+    });
+    entry.provider = 'vfs-index-browser';
+    await json(ledgerPath, ledger);
+    await expect(verifyGameDataSnapshot(sourceRoot, completeCatalog)).rejects.toThrow(
+      'SpawnerConfig must come from AKEDB',
+    );
+  });
+
   it('核对所有字节/条目/整批哈希，同时保留缺失集合与混源证据边界', async () => {
     const { sourceRoot, catalog } = await setup();
     expect(await verifyGameDataSnapshot(sourceRoot, catalog)).toMatchObject({

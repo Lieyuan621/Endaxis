@@ -407,7 +407,10 @@ export type CompiledBuffStepSource =
   | Step<'modifyCollectedBuffValue'>
   | Step<'storeShieldValue'>
   | Step<'calculateActionValue'>
+  | Step<'evaluateCurve'>
+  | Step<'saveTargetDistance'>
   | Step<'storeRandomInteger'>
+  | Step<'storeRandomFloat'>
   | Step<'readBuffRemainingDuration'>
   | Step<'setBuffRemainingDuration'>
   | Step<'setCurrentBuffRemainingDuration'>

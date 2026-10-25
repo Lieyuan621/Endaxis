@@ -12,7 +12,7 @@ import {
 } from './generateOperatorDefinitionCandidates.ts';
 import { compileEntityValueConsumers } from './compileEntityValueConsumers.ts';
 import { renderWeaponDefinitionsFromCompiled } from './generateWeaponDefinitions.ts';
-import { formatGeneratedSource } from './formatGeneratedSource.ts';
+import { formatGeneratedSource } from '../src/compiler/publication/formatGeneratedSource.ts';
 import { renderGearDefinitionsFromCompiled } from './generateGearDefinitions.ts';
 import { renderGearSetDefinitionsFromCompiled } from './generateGearSetDefinitions.ts';
 import { renderContingencyContractDefinitionsFromCompiled } from './generateContingencyContractDefinitions.ts';

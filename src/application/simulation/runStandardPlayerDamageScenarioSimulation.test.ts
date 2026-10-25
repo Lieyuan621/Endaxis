@@ -263,7 +263,8 @@ describe('标准入口普通倒地装配', () => {
               kind: 'applyPhysicalInfliction' as const,
               parameters: {
                 type: 'knockDown' as const,
-                target: { kind: 'fixed' as const, target: 'enemy' as const }, source: { kind: 'fixed' as const, target: 'caster' as const },
+                target: { kind: 'fixed' as const, target: 'enemy' as const },
+                source: { kind: 'fixed' as const, target: 'caster' as const },
                 duration: { kind: 'constant' as const, value: 0.1 },
                 force: false,
                 isExtra: false,
@@ -1483,6 +1484,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       }).scenario;
       return runStandardPlayerDamageScenarioSimulation({
         scenario: withFollowUp,
+        rangeSamples: { nextRangeSample: () => 0.5 },
         endFrame: 1100,
         criticalSamples: new ExplicitCriticalSampleSource(Array(200).fill(1)),
         resolveNonRandomRuntimeSnapshot: () => ({
@@ -1850,6 +1852,7 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       scenario: placed,
       endFrame: 260,
       criticalSamples: new ExplicitCriticalSampleSource(Array(100).fill(0)),
+      rangeSamples: { nextRangeSample: () => 0.5 },
       resolveNonRandomRuntimeSnapshot: () => ({
         runtimeExtensionMultiplier: 1,
         appliesIgniteDamageMultiplier: false,
@@ -3169,8 +3172,11 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
   });
 
   it('runs every generated Perlica skill type through the production simulation flow', () => {
+    const scenario = placeGeneratedPerlicaFlow(perlicaFormalOperator);
+    // 此回归验证重叠目标下的完整回调链，不依赖新方案的默认交战距离。
+    scenario.battle.operatorEnemyDistanceMeters = 0;
     const result = runStandardPlayerDamageScenarioSimulation({
-      scenario: placeGeneratedPerlicaFlow(perlicaFormalOperator),
+      scenario,
       endFrame: 350,
       criticalSamples: new ExplicitCriticalSampleSource(Array(20).fill(1)),
       resolveNonRandomRuntimeSnapshot: () => ({
@@ -3217,6 +3223,10 @@ describe('runStandardPlayerDamageScenarioSimulation', () => {
       'chr_0004_pelica_ultimate_skill_abilityrange',
       'chr_0004_pelica_plunging_attack_start',
       'chr_0004_pelica_plunging_attack_end',
+      'chr_0004_pelica_plunging_attack_projhit',
+      'chr_0004_pelica_plunging_attack_projhit',
+      'chr_0004_pelica_plunging_attack_projhit',
+      'chr_0004_pelica_plunging_attack_projhit',
       'chr_0004_pelica_power_attack',
     ]);
     expect(result.receiptEntries.some(entry => entry.event === 'ComboWindowOpened')).toBe(true);

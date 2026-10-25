@@ -1098,28 +1098,84 @@ export const siChr_0036_jsspsi_plunging_attack_endActionGraph = {
       createSpatialPointTargets_31: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos4', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos4',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 2 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0.85 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
         },
         next: 'spawnAbilityEntity_30',
       },
       createSpatialPointTargets_32: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos3', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos3',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+            offset: {
+              local: [
+                { kind: 'constant', value: -2 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0.85 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
         },
         next: 'createSpatialPointTargets_31',
       },
       createSpatialPointTargets_33: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos2', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos2',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 1 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
         },
         next: 'createSpatialPointTargets_32',
       },
       createSpatialPointTargets_34: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos1', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos1',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0.85 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
         },
         next: 'createSpatialPointTargets_33',
       },
@@ -1150,7 +1206,6 @@ export const siChr_0036_jsspsi_plunging_attack_end: SkillDefinition = {
     atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
     ayao_pos1: 1,
     ayao_pos2: 1,
-    display_atk_scale: [0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.28, 1.36, 1.44, 1.54, 1.66, 1.8],
   },
   timelineBlockFrames: 9,
   naturalDurationFrames: 175,
@@ -1238,7 +1293,7 @@ export const siChr_0036_jsspsi_normal_skillActionGraph = {
         },
         next: 'modifyActionValue_5',
       },
-      spawnAbilityEntity_15: {
+      spawnAbilityEntity_17: {
         action: {
           kind: 'spawnAbilityEntity',
           parameters: {
@@ -1261,14 +1316,32 @@ export const siChr_0036_jsspsi_normal_skillActionGraph = {
         },
         next: null,
       },
-      createSpatialPointTargets_16: {
+      createSpatialPointTargets_18: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos1', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos1',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+              ],
+              facing: {
+                source: { kind: 'source' },
+                target: { kind: 'inputTarget' },
+                invert: false,
+              },
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
         },
-        next: 'spawnAbilityEntity_15',
+        next: 'spawnAbilityEntity_17',
       },
-      reachSkillOperableBoundary_17: {
+      reachSkillOperableBoundary_19: {
         action: {
           kind: 'reachSkillOperableBoundary',
           parameters: { skillIds: ['chr_0036_jsspsi_normal_skill_1'] },
@@ -1310,8 +1383,8 @@ export const siChr_0036_jsspsi_normal_skill: SkillDefinition = {
   costFrame: 0,
   scheduledSequences: [
     { startFrame: 0, endFrame: 0, sequence: { $sequence: 'modifyActionValue_6' } },
-    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'createSpatialPointTargets_16' } },
-    { startFrame: 34, endFrame: 53, sequence: { $sequence: 'reachSkillOperableBoundary_17' } },
+    { startFrame: 9, endFrame: 10, sequence: { $sequence: 'createSpatialPointTargets_18' } },
+    { startFrame: 34, endFrame: 53, sequence: { $sequence: 'reachSkillOperableBoundary_19' } },
   ],
   defaultTarget: 'enemy',
   costs: [{ resource: 'sp', value: 100 }],
@@ -1667,7 +1740,25 @@ export const siChr_0036_jsspsi_combo_skillActionGraph = {
       createSpatialPointTargets_12: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos3', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos3',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'smart_target' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0.5 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0.5 },
+              ],
+              facing: {
+                source: { kind: 'mainCharacter' },
+                target: { kind: 'context', key: 'smart_target' },
+                invert: false,
+              },
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
         },
         next: 'spawnAbilityEntity_11',
       },
@@ -1702,7 +1793,25 @@ export const siChr_0036_jsspsi_combo_skillActionGraph = {
       createSpatialPointTargets_14: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos2', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos2',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'context', key: 'smart_target' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: -0.5 },
+              ],
+              facing: {
+                source: { kind: 'source' },
+                target: { kind: 'context', key: 'smart_target' },
+                invert: false,
+              },
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
         },
         next: 'spawnAbilityEntity_13',
       },
@@ -1847,6 +1956,7 @@ export const siChr_0036_jsspsi_combo_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 21, sequence: { $sequence: 'startTimeDilation_28' } },
     { startFrame: 20, endFrame: 81, sequence: { $sequence: 'reachSkillOperableBoundary_29' } },
   ],
+  defaultTarget: 'enemy',
   smartTarget: 'input',
   cooldownFrames: [480, 480, 480, 480, 480, 480, 480, 480, 480, 480, 480, 450],
   skillType: 'comboSkill',
@@ -3290,7 +3400,7 @@ const siBuff12: SkillBuffDefinition = {
   maxTriggerCount: 1,
   applyTags: [],
   extendTags: ['Skill/Character/chr_0036_jsspsi/soul/SoulBuff'],
-  blackboard: { ink_damage: 0, ink_poise: 0 },
+  blackboard: { duration: 0, ink_damage: 0, ink_poise: 0 },
   attributeModifiers: [],
   actionGraph: siBuff12ActionGraph,
 };
@@ -3593,17 +3703,20 @@ const siBuff23ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: { EntityBB_ink_boom_poise: 0, EntityBB_ink_damage: 0 },
             entityAssignments: {
               EntityBB_ink_damage: { kind: 'valueNode', nodeId: 'data_1' },
               EntityBB_ink_boom_poise: { kind: 'valueNode', nodeId: 'data_2' },
             },
+            projectileId: 'projectile_chr_0036_jsspsi_normal_skill_inkboom',
             emitters: { kind: 'context', contextKey: 'soul_display' },
             targets: { kind: 'context', contextKey: 'soul_display' },
             onlyHitTargets: { kind: 'context', key: 'benti' },
-            finish: 'firstTickReach',
             source: 'actionOwner',
             recycleDelaySeconds: 4.06666660308838,
+            launch: {
+              start: { target: { kind: 'context', key: 'soul_display' } },
+              segmentTargets: [{ target: { kind: 'context', key: 'soul_display' } }],
+            },
           },
           callbacks: [
             {
@@ -4376,13 +4489,17 @@ const siBuff25ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: { EntityBB_ink_boom_poise: 0, EntityBB_ink_damage: 0 },
             entityAssignments: {
               EntityBB_ink_damage: { kind: 'valueNode', nodeId: 'data_5' },
               EntityBB_ink_boom_poise: { kind: 'valueNode', nodeId: 'data_6' },
             },
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0036_jsspsi_normal_skill_inkboom',
             recycleDelaySeconds: 1.06666672229767,
+            targets: { kind: 'context', contextKey: 'pos1' },
+            launch: {
+              start: { target: { kind: 'context', key: 'pos1' } },
+              segmentTargets: [{ target: { kind: 'context', key: 'pos1' } }],
+            },
           },
           callbacks: [
             {
@@ -4567,7 +4684,11 @@ const siBuff25ActionGraph = {
       createSpatialPointTargets_14: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos1', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos1',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'owner' },
+          },
         },
         next: 'checkCondition_13',
       },
@@ -4882,7 +5003,21 @@ const siBuff25ActionGraph = {
       createSpatialPointTargets_58: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'soul_pos', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'soul_pos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'owner' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: true,
+            },
+          },
         },
         next: 'spawnAbilityEntity_57',
       },
@@ -4954,7 +5089,11 @@ const siBuff25ActionGraph = {
       createSpatialPointTargets_70: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'pos1', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'pos1',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'owner' },
+          },
         },
         next: 'ifElse_69',
       },
@@ -8417,7 +8556,21 @@ export const si: OperatorDefinition = {
                 createSpatialPointTargets_2: {
                   action: {
                     kind: 'createSpatialPointTargets',
-                    parameters: { saveToContextKey: 'pos2', count: { kind: 'constant', value: 1 } },
+                    parameters: {
+                      saveToContextKey: 'pos2',
+                      count: { kind: 'constant', value: 1 },
+                      origin: { kind: 'source' },
+                      offset: {
+                        local: [
+                          { kind: 'constant', value: 0 },
+                          { kind: 'constant', value: 0 },
+                          { kind: 'constant', value: 0 },
+                        ],
+                        facing: 'operatorToEnemy',
+                        rotation: [0, 0, 0, 1],
+                        centerOnGround: false,
+                      },
+                    },
                   },
                   next: 'spawnAbilityEntity_1',
                 },
@@ -8439,7 +8592,21 @@ export const si: OperatorDefinition = {
                 createSpatialPointTargets_4: {
                   action: {
                     kind: 'createSpatialPointTargets',
-                    parameters: { saveToContextKey: 'pos2', count: { kind: 'constant', value: 1 } },
+                    parameters: {
+                      saveToContextKey: 'pos2',
+                      count: { kind: 'constant', value: 1 },
+                      origin: { kind: 'source' },
+                      offset: {
+                        local: [
+                          { kind: 'constant', value: 0 },
+                          { kind: 'constant', value: 0 },
+                          { kind: 'constant', value: 0 },
+                        ],
+                        facing: 'operatorToEnemy',
+                        rotation: [0, 0, 0, 1],
+                        centerOnGround: false,
+                      },
+                    },
                   },
                   next: 'spawnAbilityEntity_3',
                 },
@@ -8884,7 +9051,21 @@ export const si: OperatorDefinition = {
                 createSpatialPointTargets_2: {
                   action: {
                     kind: 'createSpatialPointTargets',
-                    parameters: { saveToContextKey: 'pos2', count: { kind: 'constant', value: 1 } },
+                    parameters: {
+                      saveToContextKey: 'pos2',
+                      count: { kind: 'constant', value: 1 },
+                      origin: { kind: 'source' },
+                      offset: {
+                        local: [
+                          { kind: 'constant', value: 0 },
+                          { kind: 'constant', value: 0 },
+                          { kind: 'constant', value: 0 },
+                        ],
+                        facing: 'operatorToEnemy',
+                        rotation: [0, 0, 0, 1],
+                        centerOnGround: false,
+                      },
+                    },
                   },
                   next: 'spawnAbilityEntity_1',
                 },
@@ -8906,7 +9087,21 @@ export const si: OperatorDefinition = {
                 createSpatialPointTargets_4: {
                   action: {
                     kind: 'createSpatialPointTargets',
-                    parameters: { saveToContextKey: 'pos2', count: { kind: 'constant', value: 1 } },
+                    parameters: {
+                      saveToContextKey: 'pos2',
+                      count: { kind: 'constant', value: 1 },
+                      origin: { kind: 'inputTarget' },
+                      offset: {
+                        local: [
+                          { kind: 'constant', value: 3 },
+                          { kind: 'constant', value: 0 },
+                          { kind: 'constant', value: -3 },
+                        ],
+                        facing: 'operatorToEnemy',
+                        rotation: [0, 0, 0, 1],
+                        centerOnGround: false,
+                      },
+                    },
                   },
                   next: 'spawnAbilityEntity_3',
                 },
@@ -12749,6 +12944,78 @@ export const si: OperatorDefinition = {
           ],
         },
       },
+    },
+  },
+  projectileDefinitions: {
+    projectile_chr_0036_jsspsi_normal_skill_inkboom: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: 1 } },
+              speed: { kind: 'constant', value: 10 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: -0.16636658,
+                  inTangent: -9.13791,
+                  outTangent: -9.13791,
+                  weightedMode: 2,
+                  inWeight: 0,
+                  outWeight: 0.22273041,
+                },
+                {
+                  time: 0.037126683,
+                  value: -0.37301192,
+                  inTangent: 2.4244597,
+                  outTangent: 2.4244597,
+                  weightedMode: 3,
+                  inWeight: 0.43932098,
+                  outWeight: 0.4191062,
+                },
+                {
+                  time: 0.08089589,
+                  value: -0.011574984,
+                  inTangent: 15.255259,
+                  outTangent: 15.255259,
+                  weightedMode: 3,
+                  inWeight: 0.362584,
+                  outWeight: 0.25580117,
+                },
+                {
+                  time: 0.3906686,
+                  value: 4.5271974,
+                  inTangent: 3.7731607,
+                  outTangent: 3.7731607,
+                  weightedMode: 3,
+                  inWeight: 0.40332413,
+                  outWeight: 0.25529352,
+                },
+                {
+                  time: 1,
+                  value: 7.897827,
+                  inTangent: 3.035455,
+                  outTangent: 3.035455,
+                  weightedMode: 1,
+                  inWeight: 0.5517751,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        finishDurationSeconds: { kind: 'constant', value: 3 },
+        finishDistanceMeters: { kind: 'constant', value: 200 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.5 },
+      },
+      blackboard: { EntityBB_ink_boom_poise: 0, EntityBB_ink_damage: 0 },
+      hit: { finishOnHit: true, maxHitCount: 1 },
     },
   },
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },

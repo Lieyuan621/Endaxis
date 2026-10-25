@@ -1,3 +1,12 @@
+import {
+  stationaryProjectileFlight,
+  pointProjectileFlight,
+  returnProjectileFlight,
+  landingProjectileFlight,
+} from '../../test/projectileFlight';
+
+import { bindProjectileCallbackLifecycle } from './projectileCallbackRuntime';
+import type { ProjectileHitTargets } from '../state/instanceState';
 import { describe, expect, it, vi } from 'vitest';
 import { ProjectileLifecycleRuntime } from './projectileLifecycleRuntime';
 import { AbilityEntityInstanceIdAllocator } from './abilityEntityInstanceIdAllocator';
@@ -14,7 +23,12 @@ describe('ProjectileLifecycleRuntime', () => {
       beforeReset: () => events.push('reset'),
     };
     const original = new ProjectileLifecycleRuntime();
-    original.launch({ ...host, finishDelaySeconds: 'firstTickBlock', recycleDelaySeconds: 0 });
+    original.launch({
+      ...host,
+
+      flight: landingProjectileFlight,
+      recycleDelaySeconds: 0,
+    });
     expect(events).toEqual([]);
     const restored = new ProjectileLifecycleRuntime(() => 2, {
       state: structuredClone(original.runtimeState),
@@ -36,7 +50,7 @@ describe('ProjectileLifecycleRuntime', () => {
   it('到达不结束的投射物恢复后不重复到达，并等待原寿命到期', () => {
     const original = new ProjectileLifecycleRuntime();
     const reach = vi.fn();
-    const hit = vi.fn(() => true);
+    const hit = vi.fn(() => 1);
     const finish = vi.fn();
     const host = {
       resolveTickDeltaSeconds: () => 0.25,
@@ -47,8 +61,9 @@ describe('ProjectileLifecycleRuntime', () => {
     };
     original.launch({
       ...host,
-      finishDelaySeconds: { reachAfterTicks: 1, maxDurationSeconds: 1, finishOnReach: false },
-      firstTickHit: { onReach: true, finishOnHit: false },
+
+      flight: { ...pointProjectileFlight, finishOnReach: false },
+      hitPolicy: { onReach: true, finishOnHit: false },
       recycleDelaySeconds: 0,
     });
     original.advanceFrame();
@@ -73,13 +88,13 @@ describe('ProjectileLifecycleRuntime', () => {
     const runtime = new ProjectileLifecycleRuntime();
     const events: string[] = [];
     const projectile = runtime.launch({
-      finishDelaySeconds: { reachAfterTicks: 2, maxDurationSeconds: 10 },
+      flight: { ...returnProjectileFlight, finishDurationSeconds: { kind: 'constant', value: 10 } },
       recycleDelaySeconds: 0,
-      firstTickHit: { finishOnHit: true, onReach: true },
+      hitPolicy: { finishOnHit: true, onReach: true },
       resolveTickDeltaSeconds: () => 0.1,
       hit: () => {
         events.push('hit');
-        return true;
+        return 1;
       },
       reach: () => events.push('reach'),
       finish: () => events.push('finish'),
@@ -90,50 +105,59 @@ describe('ProjectileLifecycleRuntime', () => {
     runtime.advanceFrame();
     expect(events).toEqual([]);
     runtime.advanceFrame();
-    expect(events).toEqual(['hit', 'reach', 'finish']);
+    expect(events).toEqual(['reach', 'hit', 'finish']);
     runtime.advanceFrame();
     runtime.advanceFrame();
-    expect(events).toEqual(['hit', 'reach', 'finish', 'beforeReset', 'reset', 'released']);
+    expect(events).toEqual(['reach', 'hit', 'finish', 'beforeReset', 'reset', 'released']);
   });
-  it('过滤失败后保存恢复仍能重试，首次成功后不再命中', () => {
+  it('部分目标首次被拒绝后继续重试，切面保留已经命中的目标', () => {
+    let allowSecond = false;
+    const hitTargets: ProjectileHitTargets = {
+      targets: [
+        { kind: 'operator', operatorId: 'a' },
+        { kind: 'operator', operatorId: 'b' },
+      ],
+      hitTagFilter: { tags: ['Immune/Physical'], tagQueryType: 'exceptAny' },
+    };
+    const bind = (state: ProjectileHitTargets) =>
+      bindProjectileCallbackLifecycle([], () => 0.1, {
+        state,
+        matchesTags: target =>
+          target.kind === 'operator' && (target.operatorId === 'a' || allowSecond),
+      });
     const original = new ProjectileLifecycleRuntime();
     original.launch({
-      finishDelaySeconds: 1,
+      ...bind(hitTargets),
+      hitTargets,
+      flight: stationaryProjectileFlight(1, true),
       recycleDelaySeconds: 0,
-      firstTickHit: { finishOnHit: false, retryRejectedHit: true },
-      resolveTickDeltaSeconds: () => 0.1,
-      hit: () => false,
-      finish: () => {},
-      beforeReset: () => {},
+      hitPolicy: { finishOnHit: false, retryRejectedHit: true },
     });
     original.advanceFrame();
-    const hit = vi.fn(() => true);
+    const state = structuredClone(original.runtimeState);
+    expect(state.instances.get(1)!.hitState!.hitCount).toBe(1);
     const restored = new ProjectileLifecycleRuntime(() => 2, {
-      state: structuredClone(original.runtimeState),
-      resolveHost: () => ({
-        resolveTickDeltaSeconds: () => 0.1,
-        hit,
-        finish: () => {},
-        beforeReset: () => {},
-      }),
+      state,
+      resolveHost: id => bind(state.instances.get(id)!.hitTargets!),
     });
+    allowSecond = true;
     restored.advanceFrame();
     restored.advanceFrame();
-    expect(hit).toHaveBeenCalledOnce();
+    expect(state.instances.get(1)!.hitState!.hitCount).toBe(2);
     expect(restored.getUnfinishedTargets()).toHaveLength(1);
   });
   it('首 Tick 命中先于到达，命中本身不结束持续投射物', () => {
     const runtime = new ProjectileLifecycleRuntime();
     const events: string[] = [];
     const projectile = runtime.launch({
-      finishDelaySeconds: 1,
+      flight: stationaryProjectileFlight(1, true),
       recycleDelaySeconds: 0,
-      firstTickHit: { finishOnHit: false },
+      hitPolicy: { finishOnHit: false },
       resolveTickDeltaSeconds: () => 0.25,
       hit: () => {
         expect(runtime.getUnfinishedTargets()).toEqual([projectile.target]);
         events.push('hit');
-        return true;
+        return 1;
       },
       finish: () => events.push('finish'),
       beforeReset: () => {},
@@ -149,13 +173,13 @@ describe('ProjectileLifecycleRuntime', () => {
     const runtime = new ProjectileLifecycleRuntime();
     const events: string[] = [];
     runtime.launch({
-      finishDelaySeconds: 'firstTickReach',
+      flight: pointProjectileFlight,
       recycleDelaySeconds: 1,
-      firstTickHit: { finishOnHit: true },
+      hitPolicy: { finishOnHit: true },
       resolveTickDeltaSeconds: () => 0.1,
       hit: () => {
         events.push('collision');
-        return accepted;
+        return accepted ? 1 : 0;
       },
       reach: () => events.push('reach'),
       finish: () => events.push('finish'),
@@ -168,16 +192,16 @@ describe('ProjectileLifecycleRuntime', () => {
   it.each([0, 1])('首 Tick 命中前后保存并恢复，不漏掉也不重放：已推进 %s 帧', ticks => {
     const original = new ProjectileLifecycleRuntime();
     original.launch({
-      finishDelaySeconds: 10,
+      flight: stationaryProjectileFlight(10, true),
       recycleDelaySeconds: 1,
-      firstTickHit: { finishOnHit: false },
+      hitPolicy: { finishOnHit: false },
       resolveTickDeltaSeconds: () => 0.1,
-      hit: () => true,
+      hit: () => 1,
       finish: () => {},
       beforeReset: () => {},
     });
     for (let index = 0; index < ticks; index++) original.advanceFrame();
-    const hit = vi.fn(() => true);
+    const hit = vi.fn(() => 1);
     const restored = new ProjectileLifecycleRuntime(() => 2, {
       state: structuredClone(original.runtimeState),
       resolveHost: () => ({
@@ -192,13 +216,13 @@ describe('ProjectileLifecycleRuntime', () => {
     expect(hit).toHaveBeenCalledTimes(ticks === 0 ? 1 : 0);
   });
 
-  it.each(['firstTickReach', { reachAfterTicks: 2, maxDurationSeconds: 5 }] as const)(
+  it.each([pointProjectileFlight, returnProjectileFlight])(
     '到达回调能查到自身，结束回调不能：%j',
-    finishDelaySeconds => {
+    flight => {
       const runtime = new ProjectileLifecycleRuntime();
       const seen: string[] = [];
       const projectile = runtime.launch({
-        finishDelaySeconds,
+        flight,
         recycleDelaySeconds: 1,
         resolveTickDeltaSeconds: () => 0.1,
         reach: () => {
@@ -212,7 +236,7 @@ describe('ProjectileLifecycleRuntime', () => {
         beforeReset: () => {},
       });
       runtime.advanceFrame();
-      if (typeof finishDelaySeconds === 'object') runtime.advanceFrame();
+      if (flight.segments.length > 1) runtime.advanceFrame();
       expect(seen).toEqual(['reach', 'finish']);
     },
   );
@@ -222,7 +246,8 @@ describe('ProjectileLifecycleRuntime', () => {
     const reach = vi.fn();
     const finish = vi.fn();
     runtime.launch({
-      finishDelaySeconds: { reachAfterTicks: 10, maxDurationSeconds: 0.1 },
+      operatorEnemyDistanceMeters: 100,
+      flight: { ...pointProjectileFlight, finishDurationSeconds: { kind: 'constant', value: 0.1 } },
       recycleDelaySeconds: 1,
       resolveTickDeltaSeconds: () => 0.1,
       reach,
@@ -237,7 +262,7 @@ describe('ProjectileLifecycleRuntime', () => {
   it.each([1, 2])('到达前后第 %s Tick 保存，恢复不丢失也不重放到达回调', ticks => {
     const original = new ProjectileLifecycleRuntime();
     original.launch({
-      finishDelaySeconds: { reachAfterTicks: 2, maxDurationSeconds: 5 },
+      flight: { ...returnProjectileFlight, finishDurationSeconds: { kind: 'constant', value: 5 } },
       recycleDelaySeconds: 1,
       resolveTickDeltaSeconds: () => 0.1,
       reach: () => {},
@@ -267,7 +292,7 @@ describe('ProjectileLifecycleRuntime', () => {
     const foundDuringFinish: unknown[] = [];
     const launch = (finishDelaySeconds: number) =>
       runtime.launch({
-        finishDelaySeconds,
+        flight: stationaryProjectileFlight(finishDelaySeconds),
         recycleDelaySeconds: 1,
         resolveTickDeltaSeconds: () => 0.5,
         finish: () => foundDuringFinish.push(runtime.getUnfinishedTargets()),
@@ -291,7 +316,7 @@ describe('ProjectileLifecycleRuntime', () => {
     const oldCalls: string[] = [];
     const original = new ProjectileLifecycleRuntime(() => 10);
     const ref = original.launch({
-      finishDelaySeconds: { reachAfterTicks: 2, maxDurationSeconds: 5 },
+      flight: { ...returnProjectileFlight, finishDurationSeconds: { kind: 'constant', value: 5 } },
       recycleDelaySeconds: 0,
       resolveTickDeltaSeconds: () => 0.1,
       finish: () => oldCalls.push('finish'),
@@ -332,7 +357,7 @@ describe('ProjectileLifecycleRuntime', () => {
   it('can defer restored relation binding until every projectile host exists', () => {
     const original = new ProjectileLifecycleRuntime(() => 10);
     original.launch({
-      finishDelaySeconds: 'firstTickReach',
+      flight: pointProjectileFlight,
       recycleDelaySeconds: 0,
       resolveTickDeltaSeconds: () => 0.1,
       finish: () => {},
@@ -370,7 +395,7 @@ describe('ProjectileLifecycleRuntime', () => {
   it('可在宿主关系提交前按原编号接回 reset 处理函数', () => {
     const original = new ProjectileLifecycleRuntime(() => 10);
     const reference = original.launch({
-      finishDelaySeconds: 'firstTickReach',
+      flight: pointProjectileFlight,
       recycleDelaySeconds: 0,
       resolveTickDeltaSeconds: () => 1,
       finish: () => {},
@@ -396,7 +421,7 @@ describe('ProjectileLifecycleRuntime', () => {
   it('已回收对象的旧引用不能因外部分配器复用编号而重新绑定', () => {
     const runtime = new ProjectileLifecycleRuntime(() => 1);
     const request = {
-      finishDelaySeconds: 'firstTickReach' as const,
+      flight: pointProjectileFlight,
       recycleDelaySeconds: 0,
       resolveTickDeltaSeconds: () => 0,
       finish: () => {},
@@ -421,7 +446,10 @@ describe('ProjectileLifecycleRuntime', () => {
       let delta: number | null = null;
       const calls: string[] = [];
       const entity = runtime.launch({
-        finishDelaySeconds: { reachAfterTicks: 2, maxDurationSeconds: 2 },
+        flight: {
+          ...returnProjectileFlight,
+          finishDurationSeconds: { kind: 'constant', value: 2 },
+        },
         recycleDelaySeconds: 0,
         resolveTickDeltaSeconds: () => delta,
         finish: () => calls.push('finish'),
@@ -444,7 +472,11 @@ describe('ProjectileLifecycleRuntime', () => {
     const runtime = new ProjectileLifecycleRuntime();
     let finished = false;
     runtime.launch({
-      finishDelaySeconds: { reachAfterTicks: 4, maxDurationSeconds: 0.5 },
+      operatorEnemyDistanceMeters: 100,
+      flight: {
+        ...returnProjectileFlight,
+        finishDurationSeconds: { kind: 'constant', value: 0.5 },
+      },
       recycleDelaySeconds: 0,
       resolveTickDeltaSeconds: () => 0.5,
       finish: () => {
@@ -460,7 +492,7 @@ describe('ProjectileLifecycleRuntime', () => {
     let delta: number | null = null;
     const calls: string[] = [];
     const projectile = runtime.launch({
-      finishDelaySeconds: 'firstTickReach',
+      flight: pointProjectileFlight,
       recycleDelaySeconds: 0,
       resolveTickDeltaSeconds: () => delta,
       finish: () => calls.push('finish'),
@@ -485,7 +517,7 @@ describe('ProjectileLifecycleRuntime', () => {
     const seen: unknown[] = [];
     const projectile = runtime.launch({
       source,
-      finishDelaySeconds: 1,
+      flight: stationaryProjectileFlight(1),
       recycleDelaySeconds: 0,
       resolveTickDeltaSeconds: () => 1,
       finish: () => seen.push(runtime.findSource(projectile.target.instanceId)),
@@ -505,7 +537,7 @@ describe('ProjectileLifecycleRuntime', () => {
     const projectiles = new ProjectileLifecycleRuntime(() => ids.allocate());
     const entities = new LogicalAbilityEntityRuntime({ allocateInstanceId: () => ids.allocate() });
     const projectile = projectiles.launch({
-      finishDelaySeconds: 1,
+      flight: stationaryProjectileFlight(1),
       recycleDelaySeconds: 0,
       resolveTickDeltaSeconds: () => 1,
       finish: () => {},
@@ -526,7 +558,7 @@ describe('ProjectileLifecycleRuntime', () => {
     const calls: string[] = [];
     const launch = (name: string) =>
       runtime.launch({
-        finishDelaySeconds: 10,
+        flight: stationaryProjectileFlight(10),
         recycleDelaySeconds: 0,
         resolveTickDeltaSeconds: () => 1,
         finish: () => {},
@@ -547,7 +579,7 @@ describe('ProjectileLifecycleRuntime', () => {
     const runtime = new ProjectileLifecycleRuntime();
     const calls: string[] = [];
     runtime.launch({
-      finishDelaySeconds: 1,
+      flight: stationaryProjectileFlight(1),
       recycleDelaySeconds: 0,
       resolveTickDeltaSeconds: () => 1,
       finish: () => calls.push('finish'),
@@ -569,7 +601,7 @@ describe('ProjectileLifecycleRuntime', () => {
     const runtime = new ProjectileLifecycleRuntime();
     let ticks = 0;
     runtime.launch({
-      finishDelaySeconds: 1,
+      flight: stationaryProjectileFlight(1),
       recycleDelaySeconds: 0,
       resolveTickDeltaSeconds: () => null,
       finish: () => {},
@@ -586,7 +618,7 @@ describe('ProjectileLifecycleRuntime', () => {
     const runtime = new ProjectileLifecycleRuntime();
     let finishes = 0;
     runtime.launch({
-      finishDelaySeconds: 0.3,
+      flight: stationaryProjectileFlight(0.3),
       recycleDelaySeconds: 0,
       resolveTickDeltaSeconds: () => 0.1,
       finish: () => finishes++,
@@ -604,7 +636,7 @@ describe('ProjectileLifecycleRuntime', () => {
     let delta = 0.999999;
     let finishes = 0;
     runtime.launch({
-      finishDelaySeconds: 1,
+      flight: stationaryProjectileFlight(1),
       recycleDelaySeconds: 0,
       resolveTickDeltaSeconds: () => delta,
       finish: () => finishes++,
@@ -621,7 +653,7 @@ describe('ProjectileLifecycleRuntime', () => {
     const runtime = new ProjectileLifecycleRuntime();
     const trace: string[] = [];
     const projectile = runtime.launch({
-      finishDelaySeconds: 1,
+      flight: stationaryProjectileFlight(1),
       recycleDelaySeconds: 0.5,
       resolveTickDeltaSeconds: () => 0.5,
       finish: () => trace.push('finish'),
@@ -648,7 +680,7 @@ describe('ProjectileLifecycleRuntime', () => {
     let delta: number | null = 1;
     const trace: string[] = [];
     runtime.launch({
-      finishDelaySeconds: 1,
+      flight: stationaryProjectileFlight(1),
       recycleDelaySeconds: 0,
       resolveTickDeltaSeconds: () => delta,
       finish: () => trace.push('finish'),
@@ -670,7 +702,7 @@ describe('ProjectileLifecycleRuntime', () => {
     const runtime = new ProjectileLifecycleRuntime();
     let resets = 0;
     const projectile = runtime.launch({
-      finishDelaySeconds: 1,
+      flight: stationaryProjectileFlight(1),
       recycleDelaySeconds: 0,
       resolveTickDeltaSeconds: () => 1,
       finish: () => {},
@@ -690,7 +722,7 @@ describe('ProjectileLifecycleRuntime', () => {
     const runtime = new ProjectileLifecycleRuntime();
     const trace: string[] = [];
     const request = {
-      finishDelaySeconds: 1,
+      flight: stationaryProjectileFlight(1),
       recycleDelaySeconds: 0,
       resolveTickDeltaSeconds: () => 1,
       beforeReset: () => {},

@@ -58,7 +58,9 @@ export async function compileEntityValueConsumers(
   const consumables = compileConsumableDefinitionsFromFiles(args);
   usage.addBuffDefinitions(consumables.buffDefinitions);
   await rendering?.consumables(consumables);
-  return usage.finish();
+  const result = usage.finish();
+  // 未重编的合约仍可能读取实体变量，不能把它们当作没有外部消费者。
+  return args.skipContingencyContract ? { ...result, unknownAccess: true } : result;
 }
 
 async function weapons(

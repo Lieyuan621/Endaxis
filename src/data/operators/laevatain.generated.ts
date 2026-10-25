@@ -158,11 +158,30 @@ export const laevatainChr_0016_laevat_combo_skillActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0016_laevat_combo_skill_indicator',
             recycleDelaySeconds: 0.0333333350718021,
             targets: { kind: 'context', contextKey: 'tar' },
+            launch: { start: { side: 'operator' }, segmentTargets: [{ side: 'enemy' }] },
           },
-          callbacks: [],
+          callbacks: [
+            {
+              event: 'hit',
+              skill: {
+                actionGraph: { main: { nodes: {} }, macros: {} },
+                skillId: 'chr_0016_laevat_combo_skill_indicator_projhit',
+                nativeSkillType: 'normalSkill',
+                naturalDurationFrames: 1,
+                castResource: {
+                  costFrame: 0,
+                  cooldownSeconds: 0,
+                  maxChargeTime: 1,
+                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+                },
+                blackboard: {},
+                scheduledSequences: [],
+              },
+            },
+          ],
         },
         next: 'applyBuff_14',
       },
@@ -308,7 +327,21 @@ export const laevatainChr_0016_laevat_combo_skillActionGraph = {
       createSpatialPointTargets_29: {
         action: {
           kind: 'createSpatialPointTargets',
-          parameters: { saveToContextKey: 'right_pos', count: { kind: 'constant', value: 1 } },
+          parameters: {
+            saveToContextKey: 'right_pos',
+            count: { kind: 'constant', value: 1 },
+            origin: { kind: 'source' },
+            offset: {
+              local: [
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 0 },
+                { kind: 'constant', value: 100 },
+              ],
+              facing: 'operatorToEnemy',
+              rotation: [0, 0, 0, 1],
+              centerOnGround: false,
+            },
+          },
         },
         next: 'findTargets_28',
       },
@@ -424,6 +457,7 @@ export const laevatainChr_0016_laevat_combo_skill: SkillDefinition = {
     { startFrame: 0, endFrame: 15, sequence: { $sequence: 'startTimeDilation_33' } },
     { startFrame: 41, endFrame: 85, sequence: { $sequence: 'reachSkillOperableBoundary_34' } },
   ],
+  defaultTarget: 'enemy',
   smartTarget: 'trigger',
   cooldownFrames: [300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 270],
   skillType: 'comboSkill',
@@ -791,6 +825,71 @@ export const laevatainChr_0016_laevat_attack3: SkillDefinition = {
   nativeSkillType: 'attack',
 };
 
+const laevatainChr_0016_laevat_attack4ActionGraphCallback1 = {
+  actionGraph: {
+    main: {
+      nodes: {
+        dealDamage_3: {
+          action: {
+            kind: 'dealDamage',
+            parameters: {
+              attacker: 'actionSource',
+              target: { kind: 'inputTarget' },
+              damageType: 'heat',
+              attackScale: { kind: 'valueNode', nodeId: 'data_1' },
+              tags: ['normalAttack'],
+            },
+          },
+          next: null,
+        },
+        anyCondition_4: {
+          action: {
+            kind: 'anyCondition',
+            parameters: {},
+            conditions: [
+              { kind: 'conditionNode', nodeId: 'data_2' },
+              { kind: 'conditionNode', nodeId: 'data_3' },
+            ],
+          },
+          next: 'dealDamage_3',
+        },
+      },
+      dataNodes: {
+        data_1: { type: 'number', expression: { kind: 'blackboard', key: 'atk_scale' } },
+        data_2: {
+          type: 'boolean',
+          expression: {
+            kind: 'targetObjectTypeMatch',
+            target: { kind: 'inputTarget' },
+            objectTypes: ['enemy'],
+          },
+        },
+        data_3: {
+          type: 'boolean',
+          expression: {
+            kind: 'entityTagMatch',
+            target: { kind: 'inputTarget' },
+            tagQueryType: 'hasAny',
+            tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoul'],
+          },
+        },
+      },
+    },
+    macros: {},
+  },
+  skillId: 'chr_0016_laevat_attack_5_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 1,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: { atk_scale: 0 },
+  scheduledSequences: [{ startFrame: 0, endFrame: 1, sequence: { $sequence: 'anyCondition_4' } }],
+} as const;
+
 export const laevatainChr_0016_laevat_attack4ActionGraph = {
   main: {
     nodes: {
@@ -799,84 +898,61 @@ export const laevatainChr_0016_laevat_attack4ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            entityInitialValues: {},
-            finish: 'firstTickReach',
+            projectileId: 'projectile_chr_0016_laevat_attack_5',
             recycleDelaySeconds: 0.0333333350718021,
-            hit: { finishOnHit: false },
+            launch: {
+              start: { side: 'operator' },
+              segmentTargets: [
+                {
+                  target: { kind: 'source' },
+                  offset: {
+                    local: [
+                      { kind: 'constant', value: 0 },
+                      { kind: 'constant', value: -1 },
+                      { kind: 'constant', value: -11 },
+                    ],
+                    facing: 'operatorToEnemy',
+                    rotation: [0, 1, 0, -4.371139e-8],
+                    centerOnGround: false,
+                  },
+                },
+              ],
+            },
           },
           callbacks: [
-            {
-              event: 'hit',
-              skill: {
-                actionGraph: {
-                  main: {
-                    nodes: {
-                      dealDamage_3: {
-                        action: {
-                          kind: 'dealDamage',
-                          parameters: {
-                            attacker: 'actionSource',
-                            target: { kind: 'inputTarget' },
-                            damageType: 'heat',
-                            attackScale: { kind: 'valueNode', nodeId: 'data_1' },
-                            tags: ['normalAttack'],
-                          },
-                        },
-                        next: null,
-                      },
-                      anyCondition_4: {
-                        action: {
-                          kind: 'anyCondition',
-                          parameters: {},
-                          conditions: [
-                            { kind: 'conditionNode', nodeId: 'data_2' },
-                            { kind: 'conditionNode', nodeId: 'data_3' },
-                          ],
-                        },
-                        next: 'dealDamage_3',
-                      },
-                    },
-                    dataNodes: {
-                      data_1: {
-                        type: 'number',
-                        expression: { kind: 'blackboard', key: 'atk_scale' },
-                      },
-                      data_2: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'targetObjectTypeMatch',
-                          target: { kind: 'inputTarget' },
-                          objectTypes: ['enemy'],
-                        },
-                      },
-                      data_3: {
-                        type: 'boolean',
-                        expression: {
-                          kind: 'entityTagMatch',
-                          target: { kind: 'inputTarget' },
-                          tagQueryType: 'hasAny',
-                          tags: ['Skill/Character/chr_0036_jsspsi/soul/inksoul'],
-                        },
-                      },
-                    },
+            { event: 'hit', skill: laevatainChr_0016_laevat_attack4ActionGraphCallback1 },
+          ],
+        },
+        next: null,
+      },
+      launchProjectile_2: {
+        action: {
+          kind: 'launchProjectile',
+          parameters: {
+            inheritActionBlackboard: true,
+            projectileId: 'projectile_chr_0016_laevat_attack_4_2',
+            recycleDelaySeconds: 0.0333333350718021,
+            launch: {
+              start: { side: 'operator' },
+              segmentTargets: [
+                {
+                  target: { kind: 'source' },
+                  offset: {
+                    local: [
+                      { kind: 'constant', value: 0 },
+                      { kind: 'constant', value: -1 },
+                      { kind: 'constant', value: -10 },
+                    ],
+                    facing: 'operatorToEnemy',
+                    rotation: [0, 1, 0, -4.371139e-8],
+                    centerOnGround: false,
                   },
-                  macros: {},
                 },
-                skillId: 'chr_0016_laevat_attack_5_projhit',
-                nativeSkillType: 'normalSkill',
-                naturalDurationFrames: 1,
-                castResource: {
-                  costFrame: 0,
-                  cooldownSeconds: 0,
-                  maxChargeTime: 1,
-                  cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
-                },
-                blackboard: { atk_scale: 0 },
-                scheduledSequences: [
-                  { startFrame: 0, endFrame: 1, sequence: { $sequence: 'anyCondition_4' } },
-                ],
-              },
+              ],
             },
+          },
+          callbacks: [
+            { event: 'hit', skill: laevatainChr_0016_laevat_attack4ActionGraphCallback1 },
           ],
         },
         next: null,
@@ -998,7 +1074,7 @@ export const laevatainChr_0016_laevat_attack4: SkillDefinition = {
   costFrame: 8,
   scheduledSequences: [
     { startFrame: 12, endFrame: 14, sequence: { $sequence: 'launchProjectile_1' } },
-    { startFrame: 19, endFrame: 21, sequence: { $sequence: 'launchProjectile_1' } },
+    { startFrame: 19, endFrame: 21, sequence: { $sequence: 'launchProjectile_2' } },
     { startFrame: 6, endFrame: 7, sequence: { $sequence: 'mergeContextTargets_3' } },
     { startFrame: 6, endFrame: 7, sequence: { $sequence: 'dealDamage_9' } },
     { startFrame: 5, endFrame: 45, sequence: { $sequence: 'overrideBasicAttackMapping_10' } },
@@ -4085,7 +4161,13 @@ const laevatainBuff6: SkillBuffDefinition = {
   maxStackCount: { blackboardKey: 'max_stack' },
   applyTags: [],
   extendTags: [],
-  blackboard: { count: 0, ignore_fire_resist: 0, ignore_fire_resist_duration: 0, max_stack: 4 },
+  blackboard: {
+    count: 0,
+    duration: 0,
+    ignore_fire_resist: 0,
+    ignore_fire_resist_duration: 0,
+    max_stack: 4,
+  },
   attributeModifiers: [],
   lifecycleSequences: {
     start: [{ $sequence: 'setCharacterPassiveUiValue_5' }, { $sequence: 'readBuffBlackboard_7' }],
@@ -4129,7 +4211,7 @@ const laevatainBuff7: SkillBuffDefinition = {
   maxStackCount: 5,
   applyTags: [],
   extendTags: [],
-  blackboard: { ignore_fire_resist: 0, ignore_fire_resist_duration: 0 },
+  blackboard: { duration: 0, ignore_fire_resist: 0, ignore_fire_resist_duration: 0 },
   attributeModifiers: [],
   lifecycleSequences: { start: [{ $sequence: null }, { $sequence: 'applyBuff_2' }] },
   actionGraph: laevatainBuff7ActionGraph,
@@ -4147,7 +4229,7 @@ const laevatainBuff8: SkillBuffDefinition = {
   durationSeconds: 2,
   applyTags: [],
   extendTags: [],
-  blackboard: {},
+  blackboard: { duration: 0 },
   attributeModifiers: [],
   actionGraph: laevatainBuff8ActionGraph,
 };
@@ -4296,6 +4378,21 @@ const laevatainBuff11: SkillBuffDefinition = {
   actionGraph: laevatainBuff11ActionGraph,
 };
 
+const laevatainBuff12ActionGraphCallback1 = {
+  actionGraph: { main: { nodes: {} }, macros: {} },
+  skillId: 'chr_0016_laevat_absorb_projhit',
+  nativeSkillType: 'normalSkill',
+  naturalDurationFrames: 150,
+  castResource: {
+    costFrame: 0,
+    cooldownSeconds: 0,
+    maxChargeTime: 1,
+    cost: { resource: 'ultimateEnergy', value: 0, availabilityThreshold: 0 },
+  },
+  blackboard: {},
+  scheduledSequences: [],
+} as const;
+
 const laevatainBuff12ActionGraph = {
   main: {
     nodes: {
@@ -4403,10 +4500,15 @@ const laevatainBuff12ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            finish: 'firstTickReach',
+            entityAssignments: {
+              EntityBB_curve_rate: { kind: 'valueNode', nodeId: 'data_5' },
+              EntityBB_speed: { kind: 'valueNode', nodeId: 'data_6' },
+            },
+            projectileId: 'projectile_chr_0016_laevat_absorb',
             recycleDelaySeconds: 5,
+            launch: { start: { side: 'enemy' }, segmentTargets: [{ side: 'operator' }] },
           },
-          callbacks: [],
+          callbacks: [{ event: 'hit', skill: laevatainBuff12ActionGraphCallback1 }],
         },
         next: 'checkCondition_30',
       },
@@ -4439,7 +4541,7 @@ const laevatainBuff12ActionGraph = {
       checkCondition_34: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_5' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
         },
         next: 'finishBuffsByTag_33',
       },
@@ -4448,10 +4550,15 @@ const laevatainBuff12ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            finish: 'firstTickReach',
+            entityAssignments: {
+              EntityBB_curve_rate: { kind: 'valueNode', nodeId: 'data_5' },
+              EntityBB_speed: { kind: 'valueNode', nodeId: 'data_6' },
+            },
+            projectileId: 'projectile_chr_0016_laevat_absorb',
             recycleDelaySeconds: 5,
+            launch: { start: { side: 'enemy' }, segmentTargets: [{ side: 'operator' }] },
           },
-          callbacks: [],
+          callbacks: [{ event: 'hit', skill: laevatainBuff12ActionGraphCallback1 }],
         },
         next: 'checkCondition_27',
       },
@@ -4484,7 +4591,7 @@ const laevatainBuff12ActionGraph = {
       checkCondition_21: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_6' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
         },
         next: 'finishBuffsByTag_20',
       },
@@ -4493,10 +4600,15 @@ const laevatainBuff12ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            finish: 'firstTickReach',
+            entityAssignments: {
+              EntityBB_curve_rate: { kind: 'valueNode', nodeId: 'data_5' },
+              EntityBB_speed: { kind: 'valueNode', nodeId: 'data_6' },
+            },
+            projectileId: 'projectile_chr_0016_laevat_absorb',
             recycleDelaySeconds: 5,
+            launch: { start: { side: 'enemy' }, segmentTargets: [{ side: 'operator' }] },
           },
-          callbacks: [],
+          callbacks: [{ event: 'hit', skill: laevatainBuff12ActionGraphCallback1 }],
         },
         next: 'checkCondition_24',
       },
@@ -4529,7 +4641,7 @@ const laevatainBuff12ActionGraph = {
       checkCondition_11: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_7' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_9' } },
         },
         next: 'finishBuffsByTag_10',
       },
@@ -4538,10 +4650,15 @@ const laevatainBuff12ActionGraph = {
           kind: 'launchProjectile',
           parameters: {
             inheritActionBlackboard: true,
-            finish: 'firstTickReach',
+            entityAssignments: {
+              EntityBB_curve_rate: { kind: 'valueNode', nodeId: 'data_5' },
+              EntityBB_speed: { kind: 'valueNode', nodeId: 'data_6' },
+            },
+            projectileId: 'projectile_chr_0016_laevat_absorb',
             recycleDelaySeconds: 5,
+            launch: { start: { side: 'enemy' }, segmentTargets: [{ side: 'operator' }] },
           },
-          callbacks: [],
+          callbacks: [{ event: 'hit', skill: laevatainBuff12ActionGraphCallback1 }],
         },
         next: null,
       },
@@ -4573,14 +4690,14 @@ const laevatainBuff12ActionGraph = {
       checkCondition_4: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_8' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
         },
         next: 'finishBuffsByTag_3',
       },
       switch_35: {
         action: {
           kind: 'switch',
-          parameters: { choice: { kind: 'valueNode', nodeId: 'data_9' }, alwaysNext: true },
+          parameters: { choice: { kind: 'valueNode', nodeId: 'data_11' }, alwaysNext: true },
           options: [
             { value: { kind: 'constant', value: 1 }, sequence: { $sequence: 'checkCondition_4' } },
             { value: { kind: 'constant', value: 2 }, sequence: { $sequence: 'checkCondition_11' } },
@@ -4613,7 +4730,83 @@ const laevatainBuff12ActionGraph = {
         },
         next: null,
       },
-      findTargets_39: {
+      evaluateCurve_38: {
+        action: {
+          kind: 'evaluateCurve',
+          parameters: {
+            key: 'speed',
+            input: { kind: 'valueNode', nodeId: 'data_12' },
+            curve: [
+              {
+                time: 0,
+                value: 5,
+                inTangent: 1.27122056,
+                outTangent: 1.27122056,
+                weightedMode: 0,
+                inWeight: 0.333333343,
+                outWeight: 0.0466497019,
+              },
+              {
+                time: 24.916748,
+                value: 51.3303528,
+                inTangent: 1.05348063,
+                outTangent: 1.05348063,
+                weightedMode: 1,
+                inWeight: 0.319762468,
+                outWeight: 0.333333343,
+              },
+            ],
+          },
+        },
+        next: 'forEachContextTarget_37',
+      },
+      evaluateCurve_39: {
+        action: {
+          kind: 'evaluateCurve',
+          parameters: {
+            key: 'curve_rate',
+            input: { kind: 'valueNode', nodeId: 'data_12' },
+            curve: [
+              {
+                time: 0,
+                value: 5,
+                inTangent: -0.0114842318,
+                outTangent: -0.0114842318,
+                weightedMode: 0,
+                inWeight: 0.333333343,
+                outWeight: 0.07303134,
+              },
+              {
+                time: 8.305298,
+                value: 0.3,
+                inTangent: -0.03005288,
+                outTangent: -0.03005288,
+                weightedMode: 1,
+                inWeight: 0.543851256,
+                outWeight: 0.333333343,
+              },
+            ],
+          },
+        },
+        next: 'evaluateCurve_38',
+      },
+      saveTargetDistance_40: {
+        action: {
+          kind: 'saveTargetDistance',
+          parameters: {
+            source: { kind: 'inputTarget' },
+            target: {
+              kind: 'tagFilter',
+              targets: { kind: 'characterTeam', excludeOwner: false },
+              tags: ['Skill/Character/chr_0016_laevat'],
+              tagQueryType: 'hasAny',
+            },
+            outputKey: 'distance',
+          },
+        },
+        next: 'evaluateCurve_39',
+      },
+      findTargets_41: {
         action: {
           kind: 'findTargets',
           parameters: {
@@ -4626,9 +4819,9 @@ const laevatainBuff12ActionGraph = {
             saveToContextKey: 'fire_inflicted',
           },
         },
-        next: 'forEachContextTarget_37',
+        next: 'saveTargetDistance_40',
       },
-      applyBuff_40: {
+      applyBuff_42: {
         action: {
           kind: 'applyBuff',
           parameters: {
@@ -4638,35 +4831,35 @@ const laevatainBuff12ActionGraph = {
             inheritSourceSkillCastInfo: true,
           },
         },
-        next: 'findTargets_39',
-      },
-      checkCondition_41: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_10' } },
-        },
-        next: 'applyBuff_40',
-      },
-      checkCondition_42: {
-        action: {
-          kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_11' } },
-        },
-        next: 'checkCondition_41',
+        next: 'findTargets_41',
       },
       checkCondition_43: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_12' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
         },
-        next: 'checkCondition_42',
+        next: 'applyBuff_42',
       },
       checkCondition_44: {
         action: {
           kind: 'checkCondition',
-          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_13' } },
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_14' } },
         },
         next: 'checkCondition_43',
+      },
+      checkCondition_45: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_15' } },
+        },
+        next: 'checkCondition_44',
+      },
+      checkCondition_46: {
+        action: {
+          kind: 'checkCondition',
+          parameters: { condition: { kind: 'conditionNode', nodeId: 'data_16' } },
+        },
+        next: 'checkCondition_45',
       },
     },
     dataNodes: {
@@ -4704,28 +4897,8 @@ const laevatainBuff12ActionGraph = {
           buffIds: ['buff_chr_0016_laevat_energy'],
         },
       },
-      data_5: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'source' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'less',
-          value: { kind: 'valueNode', nodeId: 'data_1' },
-          buffIds: ['buff_chr_0016_laevat_energy'],
-        },
-      },
-      data_6: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'source' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'less',
-          value: { kind: 'valueNode', nodeId: 'data_1' },
-          buffIds: ['buff_chr_0016_laevat_energy'],
-        },
-      },
+      data_5: { type: 'number', expression: { kind: 'blackboard', key: 'curve_rate' } },
+      data_6: { type: 'number', expression: { kind: 'blackboard', key: 'speed' } },
       data_7: {
         type: 'boolean',
         expression: {
@@ -4748,19 +4921,7 @@ const laevatainBuff12ActionGraph = {
           buffIds: ['buff_chr_0016_laevat_energy'],
         },
       },
-      data_9: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
-      data_10: {
-        type: 'boolean',
-        expression: {
-          kind: 'buffIdStackCompare',
-          target: { kind: 'owner' },
-          compareZeroWhenTargetMissing: true,
-          operator: 'equal',
-          value: { kind: 'constant', value: 0 },
-          buffIds: ['buff_chr_0016_laevat_passive_teammate_cd'],
-        },
-      },
-      data_11: {
+      data_9: {
         type: 'boolean',
         expression: {
           kind: 'buffIdStackCompare',
@@ -4771,11 +4932,46 @@ const laevatainBuff12ActionGraph = {
           buffIds: ['buff_chr_0016_laevat_energy'],
         },
       },
-      data_12: {
+      data_10: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'less',
+          value: { kind: 'valueNode', nodeId: 'data_1' },
+          buffIds: ['buff_chr_0016_laevat_energy'],
+        },
+      },
+      data_11: { type: 'number', expression: { kind: 'blackboard', key: 'count' } },
+      data_12: { type: 'number', expression: { kind: 'blackboard', key: 'distance' } },
+      data_13: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'owner' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'equal',
+          value: { kind: 'constant', value: 0 },
+          buffIds: ['buff_chr_0016_laevat_passive_teammate_cd'],
+        },
+      },
+      data_14: {
+        type: 'boolean',
+        expression: {
+          kind: 'buffIdStackCompare',
+          target: { kind: 'source' },
+          compareZeroWhenTargetMissing: true,
+          operator: 'less',
+          value: { kind: 'valueNode', nodeId: 'data_1' },
+          buffIds: ['buff_chr_0016_laevat_energy'],
+        },
+      },
+      data_15: {
         type: 'boolean',
         expression: { kind: 'checkMainCharacter', target: { kind: 'owner' } },
       },
-      data_13: {
+      data_16: {
         type: 'boolean',
         expression: {
           kind: 'eventDamageTagsMatch',
@@ -4794,10 +4990,10 @@ const laevatainBuff12: SkillBuffDefinition = {
   maxStackCount: 1,
   applyTags: [],
   extendTags: [],
-  blackboard: { count: 0, max_stack: 0 },
+  blackboard: { count: 0, curve_rate: 0, distance: 0, max_stack: 0, speed: 0 },
   attributeModifiers: [],
   abilityEventResponses: [
-    { event: 'beforeOutputDamage', priority: 0, sequence: { $sequence: 'checkCondition_44' } },
+    { event: 'beforeOutputDamage', priority: 0, sequence: { $sequence: 'checkCondition_46' } },
   ],
   actionGraph: laevatainBuff12ActionGraph,
 };
@@ -6049,6 +6245,227 @@ export const laevatain: OperatorDefinition = {
           { startFrame: 62, endFrame: 62, sequence: { $sequence: 'mergeContextTargets_77' } },
         ],
       },
+    },
+  },
+  projectileDefinitions: {
+    projectile_chr_0016_laevat_absorb: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: 3 } },
+              speed: { blackboardKey: 'EntityBB_speed' },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 0,
+                  inTangent: 7.229448,
+                  outTangent: 7.229448,
+                  weightedMode: 2,
+                  inWeight: 0,
+                  outWeight: 0.14586857,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: -0.0036421942,
+                  outTangent: -0.0036421942,
+                  weightedMode: 1,
+                  inWeight: 0.88495576,
+                  outWeight: 0,
+                },
+              ],
+              path: {
+                kind: 'bezier',
+                controlPoints: [
+                  {
+                    distanceRatioRange: [
+                      { kind: 'constant', value: 0.4 },
+                      { kind: 'constant', value: 0.6 },
+                    ],
+                    angleDegreesRange: [
+                      { kind: 'constant', value: -10 },
+                      { kind: 'constant', value: 45 },
+                    ],
+                    radiusMetersRange: [
+                      { blackboardKey: 'EntityBB_curve_rate' },
+                      { blackboardKey: 'EntityBB_curve_rate' },
+                    ],
+                    scaleWithDistance: true,
+                  },
+                ],
+              },
+            },
+            skipCollision: false,
+          },
+        ],
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 200 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.5 },
+      },
+      blackboard: { EntityBB_curve_rate: 1, EntityBB_speed: 5 },
+      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
+    },
+    projectile_chr_0016_laevat_attack_4_2: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
+              speed: { kind: 'constant', value: 30 },
+              speedCurve: [
+                {
+                  time: -0.0014419556,
+                  value: 0.97849274,
+                  inTangent: -0.2044187,
+                  outTangent: -0.2044187,
+                  weightedMode: 2,
+                  inWeight: 0,
+                  outWeight: 0.5988456,
+                },
+                {
+                  time: 1,
+                  value: 0,
+                  inTangent: -2.312567,
+                  outTangent: -2.312567,
+                  weightedMode: 0,
+                  inWeight: 0.04184705,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'box',
+          target: { side: 'enemy' },
+          centerMeters: [
+            { kind: 'constant', value: 0 },
+            { kind: 'constant', value: 0 },
+            { kind: 'constant', value: 0 },
+          ],
+          halfExtentsMeters: [
+            { kind: 'constant', value: 3 },
+            { kind: 'constant', value: 0.5 },
+            { kind: 'constant', value: 1 },
+          ],
+        },
+        finishDurationSeconds: { kind: 'constant', value: 2 },
+        finishDistanceMeters: { kind: 'constant', value: 30 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.5 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: false, maxHitCount: 999 },
+    },
+    projectile_chr_0016_laevat_attack_5: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: 0 } },
+              speed: { kind: 'constant', value: 30 },
+              speedCurve: [
+                {
+                  time: -0.0014419556,
+                  value: 0.97849274,
+                  inTangent: -0.2044187,
+                  outTangent: -0.2044187,
+                  weightedMode: 2,
+                  inWeight: 0,
+                  outWeight: 0.5988456,
+                },
+                {
+                  time: 1,
+                  value: 0,
+                  inTangent: -2.312567,
+                  outTangent: -2.312567,
+                  weightedMode: 0,
+                  inWeight: 0.04184705,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        collision: {
+          kind: 'box',
+          target: { side: 'enemy' },
+          centerMeters: [
+            { kind: 'constant', value: 0 },
+            { kind: 'constant', value: 0 },
+            { kind: 'constant', value: 0 },
+          ],
+          halfExtentsMeters: [
+            { kind: 'constant', value: 3 },
+            { kind: 'constant', value: 0.5 },
+            { kind: 'constant', value: 1 },
+          ],
+        },
+        finishDurationSeconds: { kind: 'constant', value: 2 },
+        finishDistanceMeters: { kind: 'constant', value: 30 },
+        finishOnReach: true,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.5 },
+      },
+      blackboard: {},
+      hit: { finishOnHit: false, maxHitCount: 999 },
+    },
+    projectile_chr_0016_laevat_combo_skill_indicator: {
+      flight: {
+        hitBeforeReach: true,
+        segments: [
+          {
+            targetKey: null,
+            movement: {
+              trace: { kind: 'duration', seconds: { kind: 'constant', value: -1 } },
+              speed: { kind: 'constant', value: 27 },
+              speedCurve: [
+                {
+                  time: 0,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+                {
+                  time: 1,
+                  value: 1,
+                  inTangent: 0,
+                  outTangent: 0,
+                  weightedMode: 0,
+                  inWeight: 0,
+                  outWeight: 0,
+                },
+              ],
+              path: { kind: 'straight' },
+            },
+            skipCollision: false,
+          },
+        ],
+        finishDurationSeconds: { kind: 'constant', value: 5 },
+        finishDistanceMeters: { kind: 'constant', value: 100 },
+        finishOnReach: false,
+        keepMovingOnReach: false,
+        reachRadiusMeters: { kind: 'constant', value: 0.5 },
+      },
+      blackboard: {},
+      hit: { onReach: true, finishOnHit: true, maxHitCount: 1 },
     },
   },
   conversionSupport: { completeness: 'complete', missingCapabilities: [] },

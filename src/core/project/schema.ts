@@ -331,6 +331,8 @@ export interface BattleDocument {
   };
   /** 方案级输入规则；省略时默认开启自动切换。自动切换回执不作为标记持久化。 */
   automaticControlSwitches?: boolean;
+  /** 双方固定距离，单位米；旧存档省略时为 0。不模拟角色移动。 */
+  operatorEnemyDistanceMeters?: number;
   /** 仅仲裁同帧触发的连携；身份为方案轨道 ID，关闭时保留编辑顺序。 */
   comboSkillPriority?: { enabled: boolean; operatorOrder: string[] };
   cycleBoundaries: CycleBoundaryDocument[];

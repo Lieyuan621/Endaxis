@@ -19,6 +19,7 @@ const schema_85be103572e6 = {
   description: '同一事件有多项响应时的执行优先级。',
 } as const;
 const schema_b522eccb8a5a = { arrayElement: schema_6675b27ea82d } as const;
+const schema_d09e9bd69613 = { kind: 'string', semantics: { aliases: ['GameplayTag'] } } as const;
 const schema_1f21df9328c5 = {
   kind: 'opaque',
   fallback: { reason: 'owned-resource-boundary' },
@@ -28,10 +29,18 @@ const schema_cb135381615b = {
   fallback: { reason: 'no-present-type' },
   optional: true,
 } as const;
+const schema_fe9d86385180 = {
+  kind: 'object',
+  fields: { kind: { kind: 'enum', options: ['godEntity'] } },
+} as const;
 const schema_82e7efa7b3e1 = {
   kind: 'array',
   element: { kind: 'number' },
   semantics: { arrayElement: {} },
+} as const;
+const schema_d8ede1716a2a = {
+  kind: 'object',
+  fields: { kind: { kind: 'enum', options: ['mainCharacter'] } },
 } as const;
 const schema_28e83f505977 = {
   kind: 'string',
@@ -53,6 +62,10 @@ const schema_d3218d8006c9 = [
   'ether',
   'fixed',
 ] as const;
+const schema_3f1f28d28cf1 = {
+  kind: 'object',
+  fields: { kind: { kind: 'enum', options: ['battleMainTarget'] } },
+} as const;
 const schema_7e5b67c1428e = {
   kind: 'number',
   description: '原生 SkillData.offsetRecordFrame；到达时把下一段普攻提交为连段偏移目标。',
@@ -65,6 +78,10 @@ const schema_f8c7f6f975a2 = {
 const schema_4d4ef7cf5451 = {
   kind: 'number',
   description: '原生 SkillData.exclusiveFrame；只在需要读取当前技能可中断状态时参与运行时判断。',
+} as const;
+const schema_5181454529c1 = {
+  kind: 'object',
+  fields: { kind: { kind: 'enum', options: ['unfinishedProjectiles'] } },
 } as const;
 const schema_a7c632da5929 = [
   'comboSkill',
@@ -91,6 +108,32 @@ const schema_f5e87a023be7 = {
   description: '原生 `CastData.startCdFrame`；配置消耗时编译器要求此字段存在。',
 } as const;
 const schema_1235728272b5 = [{ kind: 'number' }, schema_82e7efa7b3e1] as const;
+const schema_9102b742f523 = {
+  kind: 'object',
+  fields: { kind: { kind: 'enum', options: ['context'] }, key: { kind: 'string' } },
+} as const;
+const schema_9f1a345c4b40 = {
+  unionVariants: [
+    {},
+    {},
+    schema_0027e97043bf,
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+  ],
+} as const;
 const schema_09fb5d26cbd4 = {
   kind: 'enum',
   options: ['enemy', 'operator'],
@@ -144,6 +187,11 @@ const schema_e68fec116cc1 = {
   options: ['operator', 'team'],
   semantics: schema_4107b248d073,
   description: '检查当前干员还是全队来源。',
+} as const;
+const schema_ba2446e55894 = {
+  kind: 'enum',
+  options: ['hasAny', 'hasAll', 'exceptAny', 'exceptAll'],
+  semantics: schema_36938d66df11,
 } as const;
 const schema_e458b6c303c5 = [
   { kind: 'number' },
@@ -227,12 +275,32 @@ const schema_9f9a48979ad6 = [
   'baseFinalAddition',
   'baseFinalMultiplier',
 ] as const;
+const schema_219aae68fb24 = {
+  kind: 'object',
+  fields: {
+    kind: {
+      kind: 'enum',
+      options: ['inputTarget', 'owner', 'source'],
+      semantics: schema_0027e97043bf,
+    },
+  },
+} as const;
 const schema_fc3a41049475 = {
   kind: 'enum',
   options: ['enemy', 'owner'],
   semantics: schema_4107b248d073,
   optional: true,
   description: '默认施放的目标；省略时由调用方提供，不能回退到敌人。',
+} as const;
+const schema_0297e4084967 = {
+  kind: 'array',
+  element: schema_d09e9bd69613,
+  semantics: { arrayElement: { aliases: ['GameplayTag'] } },
+} as const;
+const schema_37f9929c3797 = {
+  kind: 'enum',
+  options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
+  semantics: schema_43d88f577f05,
 } as const;
 const schema_b6bff737c6f5 = {
   kind: 'opaque',
@@ -286,6 +354,13 @@ const schema_b05d7d181f20 = {
   optional: true,
   description:
     '技能释放条件只生成合法性诊断；不成立也不会阻止技能进入模拟。\n模拟层将用户排入时间轴的动作视为已经成功释放，不得改写或跳过。',
+} as const;
+const schema_ce980d4a91aa = {
+  kind: 'object',
+  fields: {
+    kind: { kind: 'enum', options: ['fixed'] },
+    target: { kind: 'enum', options: ['enemy', 'caster'], semantics: schema_4107b248d073 },
+  },
 } as const;
 const schema_813faccfbcb3 = {
   kind: 'union',
@@ -356,7 +431,7 @@ const schema_a361791fb8fc = {
 } as const;
 const schema_863b2cb8a77f = {
   kind: 'array',
-  element: { kind: 'string', semantics: { aliases: ['GameplayTag'] } },
+  element: schema_d09e9bd69613,
   semantics: { arrayElement: { aliases: ['GameplayTag'] } },
   optional: true,
   description: 'Buff 到期但被延长逻辑暂时阻止结束时，临时挂到所属实体的标签。',
@@ -370,7 +445,7 @@ const schema_261fb5fd5774 = {
 } as const;
 const schema_8b88c642c1c1 = {
   kind: 'array',
-  element: { kind: 'string', semantics: { aliases: ['GameplayTag'] } },
+  element: schema_d09e9bd69613,
   semantics: { arrayElement: { aliases: ['GameplayTag'] } },
   optional: true,
   description: 'Buff 的分类标签；启用时同时挂到所属实体，并用于按标签查找、计数和结束 Buff。',
@@ -424,6 +499,20 @@ const schema_d7eeb3cea02e = {
   options: schema_2c482dec22dd,
   semantics: schema_06112e0554b3,
   description: '`_InitSkills` 创建实例时得到的原生初值；之后可由 ChangeSkillType 改写。',
+} as const;
+const schema_7faea13d41df = {
+  kind: 'union',
+  variants: [
+    {
+      kind: 'object',
+      fields: { kind: { kind: 'enum', options: ['constant'] }, value: { kind: 'number' } },
+    },
+    {
+      kind: 'object',
+      fields: { blackboardKey: { kind: 'string' }, fallback: { kind: 'number', optional: true } },
+    },
+  ],
+  semantics: { aliases: ['ActionValueOperand'] },
 } as const;
 const schema_766ffb12ccde = {
   kind: 'union',
@@ -489,6 +578,19 @@ const schema_ff2061aceb44 = {
   semantics: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}] },
   description: '再次施加同一叠加组的 Buff 时，决定新建实例、加层、刷新时长或拒绝施加。',
 } as const;
+const schema_c8ed0646f980 = {
+  kind: 'object',
+  fields: {
+    kind: { kind: 'enum', options: ['enemyByTags'] },
+    tagQueryType: schema_ba2446e55894,
+    tags: schema_0297e4084967,
+  },
+} as const;
+const schema_24173195fde8 = {
+  kind: 'union',
+  variants: [schema_219aae68fb24, schema_d8ede1716a2a, schema_9102b742f523],
+  semantics: schema_0027e97043bf,
+} as const;
 const schema_3c8414c0c980 = {
   kind: 'array',
   element: {
@@ -541,6 +643,22 @@ const schema_123ad80e4366 = {
   optional: true,
   description: '技能释放时消耗的资源。',
 } as const;
+const schema_d52ef263129d = {
+  kind: 'object',
+  fields: { kind: { kind: 'enum', options: ['ownerSoul'] }, owner: schema_24173195fde8 },
+} as const;
+const schema_a1a0a4f92503 = {
+  kind: 'object',
+  fields: { kind: { kind: 'enum', options: ['mainTarget'] }, owner: schema_24173195fde8 },
+} as const;
+const schema_8051e3be4988 = {
+  kind: 'object',
+  fields: { kind: { kind: 'enum', options: ['abilitySystemSource'] }, owner: schema_24173195fde8 },
+} as const;
+const schema_f6898be8a2b6 = {
+  kind: 'object',
+  fields: { kind: { kind: 'enum', options: ['abilityEntityTarget'] }, owner: schema_24173195fde8 },
+} as const;
 const schema_bc69b4196c34 = {
   kind: {
     kind: 'enum',
@@ -548,11 +666,7 @@ const schema_bc69b4196c34 = {
     description: '构筑条件只比较当前干员最终面板中的两项四维，不进行战斗目标查询。',
   },
   left: schema_d05567ea48ad,
-  operator: {
-    kind: 'enum',
-    options: ['equal', 'notEqual', 'greater', 'greaterOrEqual', 'less', 'lessOrEqual'],
-    semantics: schema_43d88f577f05,
-  },
+  operator: schema_37f9929c3797,
   right: schema_d05567ea48ad,
 } as const;
 const schema_1ff0b8a1d665 = {
@@ -585,6 +699,20 @@ const schema_1ff0b8a1d665 = {
   optional: true,
   description: '每次启用时换入、停用或结束时还原；生命周期归当前 Buff 实例所有。',
 } as const;
+const schema_48aea22588c2 = {
+  kind: 'object',
+  fields: {
+    kind: { kind: 'enum', options: ['characterTeam'] },
+    excludeOwner: { kind: 'boolean' },
+    owner: {
+      kind: 'union',
+      variants: [schema_219aae68fb24, schema_d8ede1716a2a, schema_9102b742f523],
+      semantics: schema_0027e97043bf,
+      optional: true,
+      description: '排除的 selector owner；省略时使用动作 Owner，不能替换成定义所属干员。',
+    },
+  },
+} as const;
 const schema_83ec40a16922 = {
   kind: 'object',
   fields: {
@@ -607,6 +735,17 @@ const schema_83ec40a16922 = {
   },
   optional: true,
   description: '元素爆发 Buff 触发伤害时使用的爆发类型、伤害类型和倍率来源。',
+} as const;
+const schema_1cc9a7c8b38f = {
+  kind: 'object',
+  fields: {
+    kind: { kind: 'enum', options: ['factionHitBox'] },
+    factionTarget: { kind: 'enum', options: ['ally', 'anti'], semantics: schema_4107b248d073 },
+    owner: schema_24173195fde8,
+    checkAlive: { kind: 'boolean' },
+    containsUnmarkable: { kind: 'boolean' },
+    replacePartsWithMainBodies: { kind: 'boolean' },
+  },
 } as const;
 const schema_741e6ba26ed9 = {
   kind: 'object',
@@ -632,6 +771,36 @@ const schema_741e6ba26ed9 = {
   },
   optional: true,
   description: 'Buff 启用期间提供的霸体值和抗冲击值，可作用于持有者或 Buff 来源。',
+} as const;
+const schema_4e9f60abe9e2 = {
+  kind: 'tuple',
+  elements: [schema_7faea13d41df, schema_7faea13d41df],
+  minLength: 2,
+  semantics: {
+    tuple: {
+      elements: [
+        { semantics: { aliases: ['ActionValueOperand'] } },
+        { semantics: { aliases: ['ActionValueOperand'] } },
+      ],
+      minLength: 2,
+    },
+  },
+} as const;
+const schema_335b330cf50f = {
+  kind: 'object',
+  fields: {
+    kind: { kind: 'enum', options: ['ownerSpawned'] },
+    owner: schema_24173195fde8,
+    objectType: { kind: 'enum', options: ['abilityEntity', 'all'], semantics: schema_4107b248d073 },
+    abilityEntityIds: {
+      kind: 'array',
+      element: { kind: 'string', referenceKind: 'abilityEntity' },
+      semantics: { arrayElement: {} },
+      referenceKind: 'abilityEntity',
+      optional: true,
+    },
+    sameSourceSkillCast: { kind: 'boolean' },
+  },
 } as const;
 const schema_79be2adc5b0c = {
   nameKey: {
@@ -733,6 +902,17 @@ const schema_86ccf8004067 = {
   optional: true,
   description: 'Buff 自身的图标、颜色、排序位置和进度条等显示设置。\n不参与战斗计算的显示信息。',
 } as const;
+const schema_7948009e4e8b = {
+  kind: 'object',
+  fields: {
+    kind: { kind: 'enum', options: ['distanceFilter'] },
+    targets: { kind: 'ref', ref: 'field_df8311907551abcd90f4', semantics: schema_9f1a345c4b40 },
+    center: { kind: 'ref', ref: 'field_7e9f7f1196d04ad6f3fe', semantics: schema_9f1a345c4b40 },
+    operator: schema_37f9929c3797,
+    threshold: schema_7faea13d41df,
+    clampToXZ: { kind: 'boolean' },
+  },
+} as const;
 const schema_0dfab30a4bb5 = {
   kind: 'union',
   variants: [
@@ -786,6 +966,44 @@ const schema_0dfab30a4bb5 = {
   ],
   semantics: schema_4107b248d073,
   optional: true,
+} as const;
+const schema_3257fb62b1fe = {
+  kind: 'object',
+  fields: {
+    kind: {
+      kind: 'enum',
+      options: ['buffFilter'],
+      description: '原生 BuffValidator，在候选集合上动态筛选，不另起行为动作。',
+    },
+    targets: { kind: 'ref', ref: 'field_897ed5dfa77dd486828b', semantics: schema_9f1a345c4b40 },
+    query: {
+      kind: 'union',
+      variants: [
+        {
+          kind: 'object',
+          fields: {
+            kind: { kind: 'enum', options: ['id'] },
+            buffIds: {
+              kind: 'array',
+              element: schema_d056c7fa0b76,
+              semantics: { arrayElement: {} },
+              referenceKind: 'buff',
+            },
+          },
+        },
+        {
+          kind: 'object',
+          fields: {
+            kind: { kind: 'enum', options: ['tag'] },
+            buffTags: schema_0297e4084967,
+            tagQueryType: schema_ba2446e55894,
+          },
+        },
+      ],
+      semantics: schema_4107b248d073,
+    },
+    requireBuff: { kind: 'boolean' },
+  },
 } as const;
 const schema_e5c0475d6e2a = {
   kind: 'object',
@@ -912,6 +1130,21 @@ const schema_37edd074d3b3 = {
   description:
     '指定的其他 Buff 成功加入同一持有者时，对当前 Buff 的关键词倍率执行赋值、加法或乘法。',
 } as const;
+const schema_a25f038e94dc = {
+  kind: 'tuple',
+  elements: [schema_7faea13d41df, schema_7faea13d41df, schema_7faea13d41df],
+  minLength: 3,
+  semantics: {
+    tuple: {
+      elements: [
+        { semantics: { aliases: ['ActionValueOperand'] } },
+        { semantics: { aliases: ['ActionValueOperand'] } },
+        { semantics: { aliases: ['ActionValueOperand'] } },
+      ],
+      minLength: 3,
+    },
+  },
+} as const;
 const schema_822e7f4d19cb = {
   kind: 'array',
   element: {
@@ -991,6 +1224,15 @@ const schema_78c333188111 = {
   semantics: { arrayElement: {} },
   optional: true,
   description: 'Buff 启用期间注册到目标或来源身上的属性修正。',
+} as const;
+const schema_5704011571b6 = {
+  kind: 'object',
+  fields: {
+    kind: { kind: 'enum', options: ['fixedPoint'] },
+    owner: schema_24173195fde8,
+    center: schema_24173195fde8,
+    directionTarget: schema_24173195fde8,
+  },
 } as const;
 const schema_f15fd9ff6614 = {
   kind: 'array',
@@ -1415,7 +1657,7 @@ const schema_695735acb918 = {
   },
   bornTags: {
     kind: 'array',
-    element: { kind: 'string', semantics: { aliases: ['GameplayTag'] } },
+    element: schema_d09e9bd69613,
     semantics: { arrayElement: { aliases: ['GameplayTag'] } },
     optional: true,
     description:
@@ -1530,7 +1772,7 @@ const schema_695735acb918 = {
     description: '能力实体启用期间安装的被动技能。',
   },
 } as const;
-const schema_ba7ffbe1374d = [
+const schema_191322e2c456 = [
   {
     kind: 'object',
     fields: {
@@ -1538,12 +1780,12 @@ const schema_ba7ffbe1374d = [
       event: {
         kind: 'enum',
         options: [
-          'addedBuff',
           'beforeTakeDamage',
           'beforeAddedBuffBeforeImmune',
           'beforeOutputBuffBeforeImmune',
           'beforeAddedBuff',
           'outputBuff',
+          'addedBuff',
         ],
         semantics: schema_43d88f577f05,
         description: '允许直接订阅的能力事件。',
@@ -1883,7 +2125,7 @@ const schema_82e5aab4422c = [
     },
   },
 ] as const;
-const schema_f5d33894b2ca = {
+const schema_fc9f7be4ecbe = {
   kind: 'array',
   element: {
     kind: 'object',
@@ -1891,7 +2133,7 @@ const schema_f5d33894b2ca = {
       key: { kind: 'string', description: '事件响应在当前技能中的唯一名称。' },
       event: {
         kind: 'union',
-        variants: schema_ba7ffbe1374d,
+        variants: schema_191322e2c456,
         semantics: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}] },
         description: '要监听的战斗事件及其筛选参数。',
       },
@@ -1931,7 +2173,7 @@ const schema_879701005051 = {
   optional: true,
   description: '构筑阶段持续生效的属性修正。',
 } as const;
-const schema_6c8a8fd281ab = {
+const schema_e01432f29cb0 = {
   kind: 'array',
   element: {
     kind: 'union',
@@ -1949,7 +2191,7 @@ const schema_6c8a8fd281ab = {
           sequence: schema_b6bff737c6f5,
           event: {
             kind: 'union',
-            variants: schema_ba7ffbe1374d,
+            variants: schema_191322e2c456,
             semantics: { unionVariants: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}] },
             description: '监听一项语义战斗事件。',
           },
@@ -1981,7 +2223,6 @@ const schema_6c8a8fd281ab = {
           abilityEvent: {
             kind: 'enum',
             options: [
-              'addedBuff',
               'enterFight',
               'beforeOutputDamage',
               'beforeOutputPhysicalInfliction',
@@ -1994,6 +2235,7 @@ const schema_6c8a8fd281ab = {
               'afterSkillApplyCost',
               'beforeOutputBuff',
               'outputBuff',
+              'addedBuff',
               'buffEnhanceChanged',
               'buffConsumed',
               'skillSpGained',
@@ -2011,6 +2253,51 @@ const schema_6c8a8fd281ab = {
   semantics: { arrayElement: schema_4107b248d073 },
   optional: true,
   description: '装备能力注册的战斗事件响应。',
+} as const;
+const schema_441724215a82 = {
+  kind: 'union',
+  variants: [
+    schema_7948009e4e8b,
+    schema_3257fb62b1fe,
+    schema_219aae68fb24,
+    schema_d8ede1716a2a,
+    schema_9102b742f523,
+    schema_3f1f28d28cf1,
+    schema_fe9d86385180,
+    schema_5181454529c1,
+    schema_ce980d4a91aa,
+    schema_c8ed0646f980,
+    schema_48aea22588c2,
+    {
+      kind: 'object',
+      fields: {
+        kind: { kind: 'enum', options: ['tagFilter'] },
+        targets: { kind: 'ref', ref: 'field_8e298b25bc2c3eba6483', semantics: schema_9f1a345c4b40 },
+        tags: schema_0297e4084967,
+        tagQueryType: schema_ba2446e55894,
+      },
+    },
+    {
+      kind: 'object',
+      fields: {
+        kind: { kind: 'enum', options: ['exclude'] },
+        targets: { kind: 'ref', ref: 'field_45ccbf4f67a217155395', semantics: schema_9f1a345c4b40 },
+        excludeTargets: {
+          kind: 'ref',
+          ref: 'field_615d361b000c27d19f18',
+          semantics: schema_9f1a345c4b40,
+        },
+      },
+    },
+    schema_a1a0a4f92503,
+    schema_8051e3be4988,
+    schema_f6898be8a2b6,
+    schema_d52ef263129d,
+    schema_1cc9a7c8b38f,
+    schema_5704011571b6,
+    schema_335b330cf50f,
+  ],
+  semantics: schema_9f1a345c4b40,
 } as const;
 const schema_d028c033d7a7 = {
   key: { kind: 'string', description: '词条在该装备中的唯一名称。' },
@@ -2062,6 +2349,990 @@ const schema_d028c033d7a7 = {
     ],
     semantics: schema_4107b248d073,
     description: '每条原生装备词条都有且只有一份 displayAttrModifiers 展示定义。',
+  },
+} as const;
+const schema_8916811681fb = {
+  kind: 'object',
+  fields: {
+    kind: { kind: 'enum', options: ['exclude'] },
+    targets: {
+      kind: 'union',
+      variants: [
+        schema_7948009e4e8b,
+        schema_3257fb62b1fe,
+        schema_219aae68fb24,
+        schema_d8ede1716a2a,
+        schema_9102b742f523,
+        schema_3f1f28d28cf1,
+        schema_fe9d86385180,
+        schema_5181454529c1,
+        schema_ce980d4a91aa,
+        schema_c8ed0646f980,
+        schema_48aea22588c2,
+        {
+          kind: 'object',
+          fields: {
+            kind: { kind: 'enum', options: ['tagFilter'] },
+            targets: {
+              kind: 'ref',
+              ref: 'field_8e298b25bc2c3eba6483',
+              semantics: schema_9f1a345c4b40,
+            },
+            tags: schema_0297e4084967,
+            tagQueryType: schema_ba2446e55894,
+          },
+        },
+        {
+          kind: 'object',
+          fields: {
+            kind: { kind: 'enum', options: ['exclude'] },
+            targets: {
+              kind: 'ref',
+              ref: 'field_45ccbf4f67a217155395',
+              semantics: schema_9f1a345c4b40,
+            },
+            excludeTargets: schema_441724215a82,
+          },
+        },
+        schema_a1a0a4f92503,
+        schema_8051e3be4988,
+        schema_f6898be8a2b6,
+        schema_d52ef263129d,
+        schema_1cc9a7c8b38f,
+        schema_5704011571b6,
+        schema_335b330cf50f,
+      ],
+      semantics: schema_9f1a345c4b40,
+    },
+    excludeTargets: schema_441724215a82,
+  },
+} as const;
+const schema_4d8c15ea4cc1 = {
+  kind: 'object',
+  fields: {
+    kind: { kind: 'enum', options: ['tagFilter'] },
+    targets: {
+      kind: 'union',
+      variants: [
+        schema_7948009e4e8b,
+        schema_3257fb62b1fe,
+        schema_219aae68fb24,
+        schema_d8ede1716a2a,
+        schema_9102b742f523,
+        schema_3f1f28d28cf1,
+        schema_fe9d86385180,
+        schema_5181454529c1,
+        schema_ce980d4a91aa,
+        schema_c8ed0646f980,
+        schema_48aea22588c2,
+        {
+          kind: 'object',
+          fields: {
+            kind: { kind: 'enum', options: ['tagFilter'] },
+            targets: {
+              kind: 'ref',
+              ref: 'field_8e298b25bc2c3eba6483',
+              semantics: schema_9f1a345c4b40,
+            },
+            tags: schema_0297e4084967,
+            tagQueryType: schema_ba2446e55894,
+          },
+        },
+        schema_8916811681fb,
+        schema_a1a0a4f92503,
+        schema_8051e3be4988,
+        schema_f6898be8a2b6,
+        schema_d52ef263129d,
+        schema_1cc9a7c8b38f,
+        schema_5704011571b6,
+        schema_335b330cf50f,
+      ],
+      semantics: schema_9f1a345c4b40,
+    },
+    tags: schema_0297e4084967,
+    tagQueryType: schema_ba2446e55894,
+  },
+} as const;
+const schema_b005e90aaff3 = {
+  kind: 'union',
+  variants: [
+    schema_7948009e4e8b,
+    {
+      kind: 'object',
+      fields: {
+        kind: {
+          kind: 'enum',
+          options: ['buffFilter'],
+          description: '原生 BuffValidator，在候选集合上动态筛选，不另起行为动作。',
+        },
+        targets: {
+          kind: 'union',
+          variants: [
+            schema_7948009e4e8b,
+            schema_3257fb62b1fe,
+            schema_219aae68fb24,
+            schema_d8ede1716a2a,
+            schema_9102b742f523,
+            schema_3f1f28d28cf1,
+            schema_fe9d86385180,
+            schema_5181454529c1,
+            schema_ce980d4a91aa,
+            schema_c8ed0646f980,
+            schema_48aea22588c2,
+            schema_4d8c15ea4cc1,
+            schema_8916811681fb,
+            schema_a1a0a4f92503,
+            schema_8051e3be4988,
+            schema_f6898be8a2b6,
+            schema_d52ef263129d,
+            schema_1cc9a7c8b38f,
+            schema_5704011571b6,
+            schema_335b330cf50f,
+          ],
+          semantics: schema_9f1a345c4b40,
+        },
+        query: {
+          kind: 'union',
+          variants: [
+            {
+              kind: 'object',
+              fields: {
+                kind: { kind: 'enum', options: ['id'] },
+                buffIds: {
+                  kind: 'array',
+                  element: schema_d056c7fa0b76,
+                  semantics: { arrayElement: {} },
+                  referenceKind: 'buff',
+                },
+              },
+            },
+            {
+              kind: 'object',
+              fields: {
+                kind: { kind: 'enum', options: ['tag'] },
+                buffTags: schema_0297e4084967,
+                tagQueryType: schema_ba2446e55894,
+              },
+            },
+          ],
+          semantics: schema_4107b248d073,
+        },
+        requireBuff: { kind: 'boolean' },
+      },
+    },
+    schema_219aae68fb24,
+    schema_d8ede1716a2a,
+    schema_9102b742f523,
+    schema_3f1f28d28cf1,
+    schema_fe9d86385180,
+    schema_5181454529c1,
+    schema_ce980d4a91aa,
+    schema_c8ed0646f980,
+    schema_48aea22588c2,
+    schema_4d8c15ea4cc1,
+    schema_8916811681fb,
+    schema_a1a0a4f92503,
+    schema_8051e3be4988,
+    schema_f6898be8a2b6,
+    schema_d52ef263129d,
+    schema_1cc9a7c8b38f,
+    schema_5704011571b6,
+    schema_335b330cf50f,
+  ],
+  semantics: schema_9f1a345c4b40,
+} as const;
+const schema_4390c6a747bc = {
+  field_615d361b000c27d19f18: schema_441724215a82,
+  field_45ccbf4f67a217155395: {
+    kind: 'union',
+    variants: [
+      schema_7948009e4e8b,
+      schema_3257fb62b1fe,
+      schema_219aae68fb24,
+      schema_d8ede1716a2a,
+      schema_9102b742f523,
+      schema_3f1f28d28cf1,
+      schema_fe9d86385180,
+      schema_5181454529c1,
+      schema_ce980d4a91aa,
+      schema_c8ed0646f980,
+      schema_48aea22588c2,
+      {
+        kind: 'object',
+        fields: {
+          kind: { kind: 'enum', options: ['tagFilter'] },
+          targets: {
+            kind: 'ref',
+            ref: 'field_8e298b25bc2c3eba6483',
+            semantics: schema_9f1a345c4b40,
+          },
+          tags: schema_0297e4084967,
+          tagQueryType: schema_ba2446e55894,
+        },
+      },
+      {
+        kind: 'object',
+        fields: {
+          kind: { kind: 'enum', options: ['exclude'] },
+          targets: {
+            kind: 'ref',
+            ref: 'field_45ccbf4f67a217155395',
+            semantics: schema_9f1a345c4b40,
+          },
+          excludeTargets: schema_441724215a82,
+        },
+      },
+      schema_a1a0a4f92503,
+      schema_8051e3be4988,
+      schema_f6898be8a2b6,
+      schema_d52ef263129d,
+      schema_1cc9a7c8b38f,
+      schema_5704011571b6,
+      schema_335b330cf50f,
+    ],
+    semantics: schema_9f1a345c4b40,
+  },
+  field_8e298b25bc2c3eba6483: {
+    kind: 'union',
+    variants: [
+      schema_7948009e4e8b,
+      schema_3257fb62b1fe,
+      schema_219aae68fb24,
+      schema_d8ede1716a2a,
+      schema_9102b742f523,
+      schema_3f1f28d28cf1,
+      schema_fe9d86385180,
+      schema_5181454529c1,
+      schema_ce980d4a91aa,
+      schema_c8ed0646f980,
+      schema_48aea22588c2,
+      {
+        kind: 'object',
+        fields: {
+          kind: { kind: 'enum', options: ['tagFilter'] },
+          targets: {
+            kind: 'ref',
+            ref: 'field_8e298b25bc2c3eba6483',
+            semantics: schema_9f1a345c4b40,
+          },
+          tags: schema_0297e4084967,
+          tagQueryType: schema_ba2446e55894,
+        },
+      },
+      schema_8916811681fb,
+      schema_a1a0a4f92503,
+      schema_8051e3be4988,
+      schema_f6898be8a2b6,
+      schema_d52ef263129d,
+      schema_1cc9a7c8b38f,
+      schema_5704011571b6,
+      schema_335b330cf50f,
+    ],
+    semantics: schema_9f1a345c4b40,
+  },
+  field_897ed5dfa77dd486828b: {
+    kind: 'union',
+    variants: [
+      schema_7948009e4e8b,
+      schema_3257fb62b1fe,
+      schema_219aae68fb24,
+      schema_d8ede1716a2a,
+      schema_9102b742f523,
+      schema_3f1f28d28cf1,
+      schema_fe9d86385180,
+      schema_5181454529c1,
+      schema_ce980d4a91aa,
+      schema_c8ed0646f980,
+      schema_48aea22588c2,
+      schema_4d8c15ea4cc1,
+      schema_8916811681fb,
+      schema_a1a0a4f92503,
+      schema_8051e3be4988,
+      schema_f6898be8a2b6,
+      schema_d52ef263129d,
+      schema_1cc9a7c8b38f,
+      schema_5704011571b6,
+      schema_335b330cf50f,
+    ],
+    semantics: schema_9f1a345c4b40,
+  },
+  field_7e9f7f1196d04ad6f3fe: schema_b005e90aaff3,
+  field_df8311907551abcd90f4: {
+    kind: 'union',
+    variants: [
+      {
+        kind: 'object',
+        fields: {
+          kind: { kind: 'enum', options: ['distanceFilter'] },
+          targets: {
+            kind: 'ref',
+            ref: 'field_df8311907551abcd90f4',
+            semantics: schema_9f1a345c4b40,
+          },
+          center: schema_b005e90aaff3,
+          operator: schema_37f9929c3797,
+          threshold: schema_7faea13d41df,
+          clampToXZ: { kind: 'boolean' },
+        },
+      },
+      {
+        kind: 'object',
+        fields: {
+          kind: {
+            kind: 'enum',
+            options: ['buffFilter'],
+            description: '原生 BuffValidator，在候选集合上动态筛选，不另起行为动作。',
+          },
+          targets: {
+            kind: 'union',
+            variants: [
+              schema_7948009e4e8b,
+              schema_3257fb62b1fe,
+              schema_219aae68fb24,
+              schema_d8ede1716a2a,
+              schema_9102b742f523,
+              schema_3f1f28d28cf1,
+              schema_fe9d86385180,
+              schema_5181454529c1,
+              schema_ce980d4a91aa,
+              schema_c8ed0646f980,
+              schema_48aea22588c2,
+              schema_4d8c15ea4cc1,
+              schema_8916811681fb,
+              schema_a1a0a4f92503,
+              schema_8051e3be4988,
+              schema_f6898be8a2b6,
+              schema_d52ef263129d,
+              schema_1cc9a7c8b38f,
+              schema_5704011571b6,
+              schema_335b330cf50f,
+            ],
+            semantics: schema_9f1a345c4b40,
+          },
+          query: {
+            kind: 'union',
+            variants: [
+              {
+                kind: 'object',
+                fields: {
+                  kind: { kind: 'enum', options: ['id'] },
+                  buffIds: {
+                    kind: 'array',
+                    element: schema_d056c7fa0b76,
+                    semantics: { arrayElement: {} },
+                    referenceKind: 'buff',
+                  },
+                },
+              },
+              {
+                kind: 'object',
+                fields: {
+                  kind: { kind: 'enum', options: ['tag'] },
+                  buffTags: schema_0297e4084967,
+                  tagQueryType: schema_ba2446e55894,
+                },
+              },
+            ],
+            semantics: schema_4107b248d073,
+          },
+          requireBuff: { kind: 'boolean' },
+        },
+      },
+      schema_219aae68fb24,
+      schema_d8ede1716a2a,
+      schema_9102b742f523,
+      schema_3f1f28d28cf1,
+      schema_fe9d86385180,
+      schema_5181454529c1,
+      schema_ce980d4a91aa,
+      schema_c8ed0646f980,
+      schema_48aea22588c2,
+      schema_4d8c15ea4cc1,
+      schema_8916811681fb,
+      schema_a1a0a4f92503,
+      schema_8051e3be4988,
+      schema_f6898be8a2b6,
+      schema_d52ef263129d,
+      schema_1cc9a7c8b38f,
+      schema_5704011571b6,
+      schema_335b330cf50f,
+    ],
+    semantics: schema_9f1a345c4b40,
+  },
+} as const;
+const schema_81e49a880703 = [
+  {
+    kind: 'object',
+    fields: {
+      kind: { kind: 'enum', options: ['distanceFilter'] },
+      targets: {
+        kind: 'union',
+        variants: [
+          {
+            kind: 'object',
+            fields: {
+              kind: { kind: 'enum', options: ['distanceFilter'] },
+              targets: {
+                kind: 'ref',
+                ref: 'field_df8311907551abcd90f4',
+                semantics: schema_9f1a345c4b40,
+              },
+              center: schema_b005e90aaff3,
+              operator: schema_37f9929c3797,
+              threshold: schema_7faea13d41df,
+              clampToXZ: { kind: 'boolean' },
+            },
+          },
+          {
+            kind: 'object',
+            fields: {
+              kind: {
+                kind: 'enum',
+                options: ['buffFilter'],
+                description: '原生 BuffValidator，在候选集合上动态筛选，不另起行为动作。',
+              },
+              targets: {
+                kind: 'union',
+                variants: [
+                  schema_7948009e4e8b,
+                  schema_3257fb62b1fe,
+                  schema_219aae68fb24,
+                  schema_d8ede1716a2a,
+                  schema_9102b742f523,
+                  schema_3f1f28d28cf1,
+                  schema_fe9d86385180,
+                  schema_5181454529c1,
+                  schema_ce980d4a91aa,
+                  schema_c8ed0646f980,
+                  schema_48aea22588c2,
+                  schema_4d8c15ea4cc1,
+                  schema_8916811681fb,
+                  schema_a1a0a4f92503,
+                  schema_8051e3be4988,
+                  schema_f6898be8a2b6,
+                  schema_d52ef263129d,
+                  schema_1cc9a7c8b38f,
+                  schema_5704011571b6,
+                  schema_335b330cf50f,
+                ],
+                semantics: schema_9f1a345c4b40,
+              },
+              query: {
+                kind: 'union',
+                variants: [
+                  {
+                    kind: 'object',
+                    fields: {
+                      kind: { kind: 'enum', options: ['id'] },
+                      buffIds: {
+                        kind: 'array',
+                        element: schema_d056c7fa0b76,
+                        semantics: { arrayElement: {} },
+                        referenceKind: 'buff',
+                      },
+                    },
+                  },
+                  {
+                    kind: 'object',
+                    fields: {
+                      kind: { kind: 'enum', options: ['tag'] },
+                      buffTags: schema_0297e4084967,
+                      tagQueryType: schema_ba2446e55894,
+                    },
+                  },
+                ],
+                semantics: schema_4107b248d073,
+              },
+              requireBuff: { kind: 'boolean' },
+            },
+          },
+          schema_219aae68fb24,
+          schema_d8ede1716a2a,
+          schema_9102b742f523,
+          schema_3f1f28d28cf1,
+          schema_fe9d86385180,
+          schema_5181454529c1,
+          schema_ce980d4a91aa,
+          schema_c8ed0646f980,
+          schema_48aea22588c2,
+          schema_4d8c15ea4cc1,
+          schema_8916811681fb,
+          schema_a1a0a4f92503,
+          schema_8051e3be4988,
+          schema_f6898be8a2b6,
+          schema_d52ef263129d,
+          schema_1cc9a7c8b38f,
+          schema_5704011571b6,
+          schema_335b330cf50f,
+        ],
+        semantics: schema_9f1a345c4b40,
+      },
+      center: schema_b005e90aaff3,
+      operator: schema_37f9929c3797,
+      threshold: schema_7faea13d41df,
+      clampToXZ: { kind: 'boolean' },
+    },
+  },
+  {
+    kind: 'object',
+    fields: {
+      kind: {
+        kind: 'enum',
+        options: ['buffFilter'],
+        description: '原生 BuffValidator，在候选集合上动态筛选，不另起行为动作。',
+      },
+      targets: {
+        kind: 'union',
+        variants: [
+          schema_7948009e4e8b,
+          schema_3257fb62b1fe,
+          schema_219aae68fb24,
+          schema_d8ede1716a2a,
+          schema_9102b742f523,
+          schema_3f1f28d28cf1,
+          schema_fe9d86385180,
+          schema_5181454529c1,
+          schema_ce980d4a91aa,
+          schema_c8ed0646f980,
+          schema_48aea22588c2,
+          schema_4d8c15ea4cc1,
+          schema_8916811681fb,
+          schema_a1a0a4f92503,
+          schema_8051e3be4988,
+          schema_f6898be8a2b6,
+          schema_d52ef263129d,
+          schema_1cc9a7c8b38f,
+          schema_5704011571b6,
+          schema_335b330cf50f,
+        ],
+        semantics: schema_9f1a345c4b40,
+      },
+      query: {
+        kind: 'union',
+        variants: [
+          {
+            kind: 'object',
+            fields: {
+              kind: { kind: 'enum', options: ['id'] },
+              buffIds: {
+                kind: 'array',
+                element: schema_d056c7fa0b76,
+                semantics: { arrayElement: {} },
+                referenceKind: 'buff',
+              },
+            },
+          },
+          {
+            kind: 'object',
+            fields: {
+              kind: { kind: 'enum', options: ['tag'] },
+              buffTags: schema_0297e4084967,
+              tagQueryType: schema_ba2446e55894,
+            },
+          },
+        ],
+        semantics: schema_4107b248d073,
+      },
+      requireBuff: { kind: 'boolean' },
+    },
+  },
+  schema_219aae68fb24,
+  schema_d8ede1716a2a,
+  schema_9102b742f523,
+  schema_3f1f28d28cf1,
+  schema_fe9d86385180,
+  schema_5181454529c1,
+  schema_ce980d4a91aa,
+  schema_c8ed0646f980,
+  schema_48aea22588c2,
+  schema_4d8c15ea4cc1,
+  schema_8916811681fb,
+  schema_a1a0a4f92503,
+  schema_8051e3be4988,
+  schema_f6898be8a2b6,
+  schema_d52ef263129d,
+  schema_1cc9a7c8b38f,
+  schema_5704011571b6,
+  schema_335b330cf50f,
+] as const;
+const schema_a5e1f1f21e68 = {
+  kind: 'union',
+  variants: [
+    {
+      kind: 'object',
+      fields: {
+        side: { kind: 'enum', options: ['enemy', 'operator'], semantics: schema_4107b248d073 },
+      },
+    },
+    {
+      kind: 'object',
+      fields: {
+        target: { kind: 'union', variants: schema_81e49a880703, semantics: schema_9f1a345c4b40 },
+        offset: {
+          kind: 'object',
+          fields: {
+            local: schema_a25f038e94dc,
+            facing: {
+              kind: 'union',
+              variants: [
+                {
+                  kind: 'enum',
+                  options: ['operatorToEnemy', 'enemyToOperator'],
+                  semantics: schema_4107b248d073,
+                },
+                {
+                  kind: 'object',
+                  fields: {
+                    source: {
+                      kind: 'union',
+                      variants: schema_81e49a880703,
+                      semantics: schema_9f1a345c4b40,
+                      description: '已保存的两个位置决定水平朝向，不模拟角色转身。',
+                    },
+                    target: {
+                      kind: 'union',
+                      variants: schema_81e49a880703,
+                      semantics: schema_9f1a345c4b40,
+                    },
+                    invert: { kind: 'boolean' },
+                  },
+                },
+              ],
+              semantics: schema_0027e97043bf,
+            },
+            rotation: {
+              kind: 'tuple',
+              elements: [
+                { kind: 'number' },
+                { kind: 'number' },
+                { kind: 'number' },
+                { kind: 'number' },
+              ],
+              minLength: 4,
+              semantics: {
+                tuple: {
+                  elements: [
+                    { semantics: {} },
+                    { semantics: {} },
+                    { semantics: {} },
+                    { semantics: {} },
+                  ],
+                  minLength: 4,
+                },
+              },
+              optional: true,
+            },
+            centerOnGround: { kind: 'boolean', optional: true },
+          },
+          optional: true,
+          description: '资源明确配置的路径点偏移，不包含骨骼挂点偏移。',
+        },
+      },
+    },
+  ],
+  semantics: schema_4107b248d073,
+} as const;
+const schema_33a5cbb73f36 = {
+  flight: {
+    kind: 'object',
+    fields: {
+      hitBeforeReach: {
+        kind: 'boolean',
+        optional: true,
+        description: '原生 useHitBlockReachOrder；省略时先到达再碰撞。',
+      },
+      collision: {
+        kind: 'union',
+        variants: [
+          {
+            kind: 'object',
+            fields: {
+              target: schema_a5e1f1f21e68,
+              kind: { kind: 'enum', options: ['sphere'] },
+              radiusMeters: schema_7faea13d41df,
+            },
+          },
+          {
+            kind: 'object',
+            fields: {
+              target: schema_a5e1f1f21e68,
+              kind: { kind: 'enum', options: ['box'] },
+              centerMeters: {
+                kind: 'tuple',
+                elements: [schema_7faea13d41df, schema_7faea13d41df, schema_7faea13d41df],
+                minLength: 3,
+                semantics: {
+                  tuple: {
+                    elements: [
+                      { semantics: { aliases: ['ActionValueOperand'] } },
+                      { semantics: { aliases: ['ActionValueOperand'] } },
+                      { semantics: { aliases: ['ActionValueOperand'] } },
+                    ],
+                    minLength: 3,
+                  },
+                },
+                description: '原生局部坐标：X 横向、Y 竖向、Z 向前；这不是发射挂点偏移。',
+              },
+              halfExtentsMeters: schema_a25f038e94dc,
+            },
+          },
+          {
+            kind: 'object',
+            fields: {
+              target: schema_a5e1f1f21e68,
+              kind: { kind: 'enum', options: ['ring'] },
+              innerRadiusMeters: schema_7faea13d41df,
+              outerRadiusMeters: schema_7faea13d41df,
+              innerRadiusSpeed: schema_7faea13d41df,
+              outerRadiusSpeed: schema_7faea13d41df,
+              heightMeters: schema_7faea13d41df,
+            },
+          },
+        ],
+        semantics: schema_0027e97043bf,
+        optional: true,
+        description: '固定端点模型以目标位置作为碰撞点，不还原角色碰撞体。',
+      },
+      finishDurationSeconds: schema_7faea13d41df,
+      finishDistanceMeters: schema_7faea13d41df,
+      finishOnReach: { kind: 'boolean' },
+      keepMovingOnReach: { kind: 'boolean' },
+      reachRadiusMeters: schema_7faea13d41df,
+      segments: {
+        kind: 'array',
+        element: {
+          kind: 'object',
+          fields: {
+            movement: {
+              kind: 'object',
+              fields: {
+                trace: {
+                  kind: 'union',
+                  variants: [
+                    { kind: 'object', fields: { kind: { kind: 'enum', options: ['none'] } } },
+                    { kind: 'object', fields: { kind: { kind: 'enum', options: ['always'] } } },
+                    {
+                      kind: 'object',
+                      fields: {
+                        kind: { kind: 'enum', options: ['duration'] },
+                        seconds: schema_7faea13d41df,
+                      },
+                    },
+                    {
+                      kind: 'object',
+                      fields: {
+                        kind: { kind: 'enum', options: ['distance'] },
+                        meters: schema_7faea13d41df,
+                      },
+                    },
+                  ],
+                  semantics: schema_36938d66df11,
+                },
+                speed: schema_7faea13d41df,
+                speedCurve: {
+                  kind: 'array',
+                  element: {
+                    kind: 'object',
+                    fields: {
+                      time: { kind: 'number', description: '关键点在曲线中的横坐标。' },
+                      value: { kind: 'number', description: '关键点的时间倍率值。' },
+                      inTangent: { kind: 'number', description: '进入该点时的切线斜率。' },
+                      outTangent: { kind: 'number', description: '离开该点时的切线斜率。' },
+                      weightedMode: {
+                        kind: 'enum',
+                        options: [0, 1, 3, 2],
+                        semantics: schema_36938d66df11,
+                        description: 'Unity 对左右切线权重的启用模式。',
+                      },
+                      inWeight: { kind: 'number', description: '左切线权重。' },
+                      outWeight: { kind: 'number', description: '右切线权重。' },
+                    },
+                  },
+                  semantics: { arrayElement: {} },
+                },
+                distanceScaleCurve: {
+                  kind: 'array',
+                  element: {
+                    kind: 'object',
+                    fields: {
+                      time: { kind: 'number', description: '关键点在曲线中的横坐标。' },
+                      value: { kind: 'number', description: '关键点的时间倍率值。' },
+                      inTangent: { kind: 'number', description: '进入该点时的切线斜率。' },
+                      outTangent: { kind: 'number', description: '离开该点时的切线斜率。' },
+                      weightedMode: {
+                        kind: 'enum',
+                        options: [0, 1, 3, 2],
+                        semantics: schema_36938d66df11,
+                        description: 'Unity 对左右切线权重的启用模式。',
+                      },
+                      inWeight: { kind: 'number', description: '左切线权重。' },
+                      outWeight: { kind: 'number', description: '右切线权重。' },
+                    },
+                  },
+                  semantics: { arrayElement: {} },
+                  optional: true,
+                },
+                path: {
+                  kind: 'union',
+                  variants: [
+                    { kind: 'object', fields: { kind: { kind: 'enum', options: ['straight'] } } },
+                    {
+                      kind: 'object',
+                      fields: {
+                        kind: { kind: 'enum', options: ['parabola'] },
+                        definition: {
+                          kind: 'union',
+                          variants: [
+                            {
+                              kind: 'object',
+                              fields: {
+                                kind: { kind: 'enum', options: ['speedGravity'] },
+                                gravity: schema_7faea13d41df,
+                              },
+                            },
+                            {
+                              kind: 'object',
+                              fields: {
+                                kind: { kind: 'enum', options: ['vertexDuration'] },
+                                durationSeconds: schema_7faea13d41df,
+                                vertexOffsetMeters: schema_7faea13d41df,
+                              },
+                            },
+                          ],
+                          semantics: schema_4107b248d073,
+                        },
+                      },
+                    },
+                    {
+                      kind: 'object',
+                      fields: {
+                        kind: { kind: 'enum', options: ['bezier'] },
+                        controlPoints: {
+                          kind: 'union',
+                          variants: [
+                            {
+                              kind: 'tuple',
+                              elements: [
+                                {
+                                  kind: 'object',
+                                  fields: {
+                                    distanceRatioRange: schema_4e9f60abe9e2,
+                                    angleDegreesRange: schema_4e9f60abe9e2,
+                                    radiusMetersRange: schema_4e9f60abe9e2,
+                                    scaleWithDistance: { kind: 'boolean' },
+                                  },
+                                },
+                              ],
+                              minLength: 1,
+                              semantics: { tuple: { elements: [{ semantics: {} }], minLength: 1 } },
+                            },
+                            {
+                              kind: 'tuple',
+                              elements: [
+                                {
+                                  kind: 'object',
+                                  fields: {
+                                    distanceRatioRange: schema_4e9f60abe9e2,
+                                    angleDegreesRange: schema_4e9f60abe9e2,
+                                    radiusMetersRange: schema_4e9f60abe9e2,
+                                    scaleWithDistance: { kind: 'boolean' },
+                                  },
+                                },
+                                {
+                                  kind: 'object',
+                                  fields: {
+                                    distanceRatioRange: schema_4e9f60abe9e2,
+                                    angleDegreesRange: schema_4e9f60abe9e2,
+                                    radiusMetersRange: schema_4e9f60abe9e2,
+                                    scaleWithDistance: { kind: 'boolean' },
+                                  },
+                                },
+                              ],
+                              minLength: 2,
+                              semantics: {
+                                tuple: {
+                                  elements: [{ semantics: {} }, { semantics: {} }],
+                                  minLength: 2,
+                                },
+                              },
+                            },
+                          ],
+                          semantics: {
+                            unionVariants: [
+                              { tuple: { elements: [{ semantics: {} }], minLength: 1 } },
+                              {
+                                tuple: {
+                                  elements: [{ semantics: {} }, { semantics: {} }],
+                                  minLength: 2,
+                                },
+                              },
+                            ],
+                          },
+                          description: '原生控制点范围，在每段开始时求值和取样。',
+                        },
+                      },
+                    },
+                  ],
+                  semantics: schema_0027e97043bf,
+                },
+              },
+            },
+            earlyNextAfterSeconds: {
+              kind: 'union',
+              variants: [
+                {
+                  kind: 'object',
+                  fields: {
+                    kind: { kind: 'enum', options: ['constant'] },
+                    value: { kind: 'number' },
+                  },
+                },
+                {
+                  kind: 'object',
+                  fields: {
+                    blackboardKey: { kind: 'string' },
+                    fallback: { kind: 'number', optional: true },
+                  },
+                },
+              ],
+              semantics: { aliases: ['ActionValueOperand'] },
+              optional: true,
+            },
+            skipCollision: { kind: 'boolean' },
+            targetKey: {
+              kind: 'union',
+              variants: [{ kind: 'null' }, { kind: 'string' }],
+              semantics: schema_4107b248d073,
+              description: 'null 使用发射动作的目标；其他值引用该动作的具名预设点。',
+            },
+          },
+        },
+        semantics: { arrayElement: {} },
+      },
+    },
+  },
+  hit: {
+    kind: 'object',
+    fields: {
+      onReach: { kind: 'boolean', optional: true },
+      target: { kind: 'enum', options: ['allOperators'], optional: true },
+      finishOnHit: { kind: 'boolean' },
+      maxHitCount: { kind: 'number', optional: true },
+      repeatIntervalSeconds: { kind: 'number', optional: true },
+      hitTagFilter: {
+        kind: 'object',
+        fields: { tagQueryType: schema_ba2446e55894, tags: schema_0297e4084967 },
+        optional: true,
+      },
+      retryRejectedHit: { kind: 'boolean', optional: true },
+    },
+    optional: true,
+  },
+  blackboard: {
+    kind: 'record',
+    value: { kind: 'number' },
+    semantics: { recordValue: {} },
+    description: '回调和移动实际读取的实体黑板初值。',
   },
 } as const;
 export const definitionSchemas = {
@@ -2362,6 +3633,13 @@ export const definitionSchemas = {
         optional: true,
         description: '干员级能力实体蓝图；子技能按引用它的技能等级编译。',
       },
+      projectileDefinitions: {
+        kind: 'record',
+        value: { kind: 'object', fields: schema_33a5cbb73f36 },
+        semantics: { recordValue: {} },
+        optional: true,
+        description: '按原生 ProjectileData 身份组织的独立资源。',
+      },
       comboSkillConditions: {
         kind: 'array',
         element: schema_1f21df9328c5,
@@ -2591,6 +3869,7 @@ export const definitionSchemas = {
         description: '未提供时视为人工审核完成；宽松转换产物必须显式携带该字段。',
       },
     },
+    references: schema_4390c6a747bc,
   },
   weapon: {
     kind: 'object',
@@ -2713,7 +3992,7 @@ export const definitionSchemas = {
       },
       actionGraph: schema_d4e3ff1ae98a,
       modifiers: schema_879701005051,
-      eventHandlers: schema_6c8a8fd281ab,
+      eventHandlers: schema_e01432f29cb0,
       blackboard: schema_e4e214b79007,
       enableSequence: schema_3d1bf8fec70a,
       initializationSequence: schema_5721ad030ce6,
@@ -2857,7 +4136,7 @@ export const definitionSchemas = {
           costs: schema_123ad80e4366,
           costFrame: schema_f5e87a023be7,
           switchToBuffCast: schema_e5c0475d6e2a,
-          eventHandlers: schema_f5d33894b2ca,
+          eventHandlers: schema_fc9f7be4ecbe,
           blackboard: schema_dcc3197d8b15,
           scheduledSequences: schema_3c8414c0c980,
           icon: schema_1f8380bd8e96,
@@ -2921,7 +4200,7 @@ export const definitionSchemas = {
           costs: schema_123ad80e4366,
           costFrame: schema_f5e87a023be7,
           switchToBuffCast: schema_e5c0475d6e2a,
-          eventHandlers: schema_f5d33894b2ca,
+          eventHandlers: schema_fc9f7be4ecbe,
           blackboard: schema_dcc3197d8b15,
           scheduledSequences: schema_3c8414c0c980,
           icon: schema_1f8380bd8e96,
@@ -3230,7 +4509,6 @@ export const definitionSchemas = {
                 event: {
                   kind: 'enum',
                   options: [
-                    'addedBuff',
                     'enterFight',
                     'enemyEnterFight',
                     'collectAddedBuffBlackboard',
@@ -3279,6 +4557,7 @@ export const definitionSchemas = {
                     'beforeOutputBuffBeforeImmune',
                     'beforeAddedBuff',
                     'outputBuff',
+                    'addedBuff',
                     'finishedBuff',
                     'buffEndsEarly',
                     'afterOutputWeaknessTriggered',
@@ -3388,6 +4667,7 @@ export const definitionSchemas = {
     semantics: schema_4107b248d073,
   },
   abilityEntity: { kind: 'object', fields: schema_695735acb918 },
+  projectile: { kind: 'object', fields: schema_33a5cbb73f36, references: schema_4390c6a747bc },
   abilityEntityChildSkill: {
     kind: 'object',
     fields: {
@@ -3507,10 +4787,10 @@ export const definitionSchemas = {
             event: {
               kind: 'enum',
               options: [
-                'addedBuff',
                 'abilityEntitySpawned',
                 'abilityEntityFinished',
                 'receiveHeal',
+                'addedBuff',
                 'skillSpGained',
               ],
               semantics: schema_18ab763e1525,
@@ -3971,7 +5251,7 @@ export const definitionSchemas = {
       levelCount: { kind: 'number', description: '这条词条可以解析的等级数量。' },
       actionGraph: schema_d4e3ff1ae98a,
       modifiers: schema_879701005051,
-      eventHandlers: schema_6c8a8fd281ab,
+      eventHandlers: schema_e01432f29cb0,
       blackboard: schema_e4e214b79007,
       enableSequence: schema_3d1bf8fec70a,
       initializationSequence: schema_5721ad030ce6,

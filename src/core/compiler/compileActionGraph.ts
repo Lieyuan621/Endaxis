@@ -1,3 +1,4 @@
+import { EMPTY_GRAPH_IMPORTS, type ActionGraphImports } from './actionGraphImports';
 import type { ResolvedCombatStepParameters } from './combatProgram';
 import { resolveLevelValue } from './compileActionValues';
 import type { CompiledGraphStepForKind, CompiledValueInput } from './compiledGraphData.ts';
@@ -186,7 +187,7 @@ function bindResourceGraphs(resource: ActionGraphResourceDefinition) {
   };
 }
 
-function graphSpawnsAbilityEntity(
+function graphRequiresResourceImports(
   definition: ActionGraphDefinition | ActionGraphResourceDefinition,
 ): boolean {
   const pending: object[] = [definition];
@@ -195,7 +196,11 @@ function graphSpawnsAbilityEntity(
     const value = pending.pop()!;
     if (visited.has(value)) continue;
     visited.add(value);
-    if ('kind' in value && value.kind === 'spawnAbilityEntity') return true;
+    if (
+      'kind' in value &&
+      (value.kind === 'spawnAbilityEntity' || value.kind === 'launchProjectile')
+    )
+      return true;
     // 外部回调、实体子技能和 Buff 自有图也可能生成实体。
     for (const child of Object.values(value))
       if (child !== null && typeof child === 'object') pending.push(child);
@@ -212,7 +217,7 @@ export function prepareActionGraphDefinition(
   const dependencies = validateActionGraph(graph);
   const compiled = compileGraphData(graph);
   return {
-    spawnsAbilityEntity: graphSpawnsAbilityEntity(definition),
+    requiresResourceImports: graphRequiresResourceImports(definition),
     resource,
     graph: compiled,
     dependencies,
@@ -227,7 +232,7 @@ export function createActionGraphCompilation(
   skillLevel: number,
   revision: string = `compiled-program:${nextCompiledProgramIdentity++}`,
   abilityEntityDefinitions: Readonly<Record<string, AbilityEntityDefinition>> = {},
-  importedAbilityEntityDefinitions: Readonly<Record<string, ResolvedAbilityEntityDefinition>> = {},
+  resourceImports: ActionGraphImports = EMPTY_GRAPH_IMPORTS,
   childResources = new WeakMap<ActionGraphResourceDefinition, ActionGraphCompilation>(),
   prepare: typeof prepareActionGraphDefinition = prepareActionGraphDefinition,
 ): ActionGraphCompilation {
@@ -265,7 +270,7 @@ export function createActionGraphCompilation(
         skillLevel,
         undefined,
         abilityEntityDefinitions,
-        importedAbilityEntityDefinitions,
+        resourceImports,
         childResources,
         prepare,
       );
@@ -280,10 +285,10 @@ export function createActionGraphCompilation(
     const source = Object.hasOwn(abilityEntityDefinitions, id)
       ? abilityEntityDefinitions[id]
       : undefined;
-    if (Object.hasOwn(importedAbilityEntityDefinitions, id)) {
+    if (Object.hasOwn(resourceImports.abilityEntities, id)) {
       if (source) throw new Error(`${path}: duplicate imported AbilityEntity definition '${id}'`);
       // Imported templates retain entries bound to their owning compiled program.
-      entities[id] = importedAbilityEntityDefinitions[id]!;
+      entities[id] = resourceImports.abilityEntities[id]!;
       return;
     }
     if (!source) throw new Error(`${path}: AbilityEntity definition '${id}' does not exist`);
@@ -382,6 +387,7 @@ export function createActionGraphCompilation(
           bindInternalEntry,
           resolveEntity,
           bindResource,
+          resourceImports.projectiles,
         );
       } else if (isLeafCombatStep(node.action)) {
         const compiled = compileLeafAction(node.action, skillLevel, `graph.${id}`);

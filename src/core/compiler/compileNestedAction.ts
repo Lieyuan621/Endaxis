@@ -1,3 +1,5 @@
+import { compileProjectileFlight } from './compileProjectileFlight';
+import type { ActionGraphImports } from './actionGraphImports';
 import type { CompiledStepForKind } from './compiledGraphData.ts';
 /** 携带内联宿主的动作编译；入口绑定由调用方提供，不依赖树编译器。 */
 import type { CombatStepKind, LevelValues } from '../game-data/operatorDefinition';
@@ -30,6 +32,7 @@ export function compileNestedAction(
   compileEntry: (source: ActionGraphReference, path: string) => CompiledGraphEntry,
   resolveEntity: (id: string, path: string) => void,
   bindResource: BindProgramResource,
+  projectiles: ActionGraphImports['projectiles'],
 ): ResolvedCombatStepForKind<NestedActionKind> {
   const definitions = createProgramDefinitionCompiler(skillLevel, compileEntry, bindResource);
   const keyed = step.key === undefined ? {} : { key: step.key };
@@ -44,26 +47,30 @@ export function compileNestedAction(
           : { afterSet: compileEntry(step.afterSet, `${path}.afterSet`) }),
       };
     case 'launchProjectile': {
-      const timing = step.parameters.finish;
-      if (typeof timing === 'number') {
-        if (!Number.isFinite(timing) || timing <= 0)
-          throw new RangeError(`${path}: invalid projectile duration`);
-      } else if (
-        timing !== 'firstTickReach' &&
-        timing !== 'firstTickBlock' &&
-        (!Number.isSafeInteger(timing.reachAfterTicks) ||
-          timing.reachAfterTicks < 1 ||
-          !Number.isFinite(timing.maxDurationSeconds) ||
-          timing.maxDurationSeconds <= 0)
-      ) {
-        throw new RangeError(`${path}: invalid projectile reach timing`);
-      }
+      const { projectileId, launch, hitTarget, ...parameters } = step.parameters;
+      const template = projectiles[projectileId];
+      if (!template) throw new Error(`${path}: missing ProjectileData '${projectileId}'`);
+      const flight = compileProjectileFlight(projectileId, template.flight, launch);
+      const tracksHits =
+        step.callbacks.some(route => route.event === 'hit') ||
+        ((template.hit?.maxHitCount ?? 0) > 0 &&
+          (template.hit?.onReach || template.flight.collision !== undefined));
+      const hit =
+        template.hit && tracksHits
+          ? { ...template.hit, ...(hitTarget === undefined ? {} : { target: hitTarget }) }
+          : undefined;
       const recycle = step.parameters.recycleDelaySeconds ?? 0;
       if (!Number.isFinite(recycle) || recycle < 0)
         throw new RangeError(`${path}: invalid projectile recycle delay`);
       return {
         ...keyed,
         ...step,
+        parameters: {
+          ...parameters,
+          flight,
+          entityInitialValues: template.blackboard,
+          ...(hit === undefined ? {} : { hit }),
+        },
         callbacks: step.callbacks.map(({ event, skill }, index) => ({
           event,
           skill: definitions.childSkill(skill, `${path}.callbacks[${index}].skill`),

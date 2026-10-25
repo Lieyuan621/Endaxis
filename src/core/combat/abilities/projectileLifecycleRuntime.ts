@@ -3,6 +3,7 @@
  * 数据只保存投射物、回调程序和 reset 订阅的稳定身份；恢复装配按这些身份重新连接宿主行为。
  */
 import type { CompiledAbilityEntityChildSkillProgram } from '../../compiler/combatProgram';
+import type { ProjectileRangeSample } from './projectileMovementExecution';
 import type {
   AbilityEntityTargetRef,
   RuntimeTargetRef,
@@ -23,20 +24,19 @@ import {
   type ProjectileLaunchData,
 } from './projectileLifecycleExecution';
 
-export type { ProjectileFinishTiming } from './projectileLifecycleExecution';
-
 /** 引用一个具体投射物，来源技能结束后它仍可独立存活。 */
 export type ProjectileLifetimeReference = AbilityResetReference & {
   readonly target: AbilityEntityTargetRef;
 };
 
 export interface ProjectileHostPorts {
+  readonly sampleRange?: ProjectileRangeSample;
   /** reset 引用通知完成后解除 RootComponent 持有的外部关系。 */
   readonly released?: () => void;
   readonly resolveTickDeltaSeconds: () => number | null;
   readonly reach?: () => void;
   readonly block?: () => void;
-  readonly hit?: () => boolean;
+  readonly hit?: () => number;
   readonly finish: () => void;
   readonly beforeReset: () => void;
   readonly abilityRuntime?: FrameRuntime;
@@ -125,10 +125,10 @@ export class ProjectileLifecycleRuntime implements FrameRuntime {
       try {
         const ports = options.resolveHost(id);
         if (ports === undefined) throw new Error(`missing projectile host ${id}`);
-        if (instance.firstTickHit?.pending && ports.hit === undefined)
-          throw new Error(`projectile ${id} first-tick hit requires a hit port`);
-        if (instance.pendingBlock && ports.block === undefined)
-          throw new Error(`projectile ${id} pending landing requires a block port`);
+        if (instance.hitState?.pending && ports.hit === undefined)
+          throw new Error(`projectile ${id} hit policy requires a hit port`);
+        if (instance.movement.definition.landingAtTarget && ports.block === undefined)
+          throw new Error(`projectile ${id} landing flight requires a block port`);
         const resetRegistrations = new Set(instance.resetListeners.values());
         for (const handlerId of resetRegistrations) {
           if (resetHandlers.has(handlerId)) {
@@ -250,7 +250,7 @@ export class ProjectileLifecycleRuntime implements FrameRuntime {
       readonly resolveTickDeltaSeconds: () => number | null;
       readonly reach?: () => void;
       readonly block?: () => void;
-      readonly hit?: () => boolean;
+      readonly hit?: () => number;
       readonly finish: () => void;
       readonly beforeReset: () => void;
       readonly released?: () => void;
@@ -258,8 +258,8 @@ export class ProjectileLifecycleRuntime implements FrameRuntime {
     },
   ): ProjectileLifetimeReference {
     this.#requireRelations();
-    if (request.firstTickHit !== undefined && request.hit === undefined)
-      throw new Error('projectile first-tick hit requires a hit port');
+    if (request.hitPolicy !== undefined && request.hit === undefined)
+      throw new Error('projectile hit policy requires a hit port');
     const callbacks = request.callbacks ?? [];
     if (callbacks.length !== (request.callbackPrograms?.length ?? 0))
       throw new Error('projectile callbacks require matching fixed programs');
@@ -272,6 +272,7 @@ export class ProjectileLifecycleRuntime implements FrameRuntime {
     const instanceId = this.#allocateInstanceId();
     launchProjectile(this.#state, instanceId, request);
     const binding: ProjectileHostBinding = {
+      ...(request.sampleRange === undefined ? {} : { sampleRange: request.sampleRange }),
       resolveTickDeltaSeconds: request.resolveTickDeltaSeconds,
       ...(request.reach === undefined ? {} : { reach: request.reach }),
       ...(request.block === undefined ? {} : { block: request.block }),
@@ -309,12 +310,17 @@ export class ProjectileLifecycleRuntime implements FrameRuntime {
   advanceFrame(): void {
     this.#requireRelations();
     advanceProjectileLifetimes(this.#state, {
+      sampleRange: (id, minimum, maximum) => {
+        const sample = this.#bindings.get(id)!.sampleRange;
+        if (!sample) throw new Error(`projectile ${id} requires a range sample source`);
+        return sample(minimum, maximum);
+      },
       resolveTickDeltaSeconds: id => this.#bindings.get(id)!.resolveTickDeltaSeconds(),
       reach: id => this.#bindings.get(id)!.reach?.(),
       block: id => this.#bindings.get(id)!.block?.(),
       hit: id => {
         const hit = this.#bindings.get(id)!.hit;
-        if (hit === undefined) throw new Error('projectile first-tick hit requires a hit port');
+        if (hit === undefined) throw new Error('projectile hit policy requires a hit port');
         return hit();
       },
       finish: id => this.#bindings.get(id)!.finish(),

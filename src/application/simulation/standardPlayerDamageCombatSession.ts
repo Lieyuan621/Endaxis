@@ -101,6 +101,7 @@ function createRestoreAssembly(
       ...(compiled.consumableUses === undefined ? {} : { consumableUses: compiled.consumableUses }),
       ...(compiled.inputs === undefined ? {} : { inputs: compiled.inputs }),
       operatorControl: compiled.operatorControl,
+      operatorEnemyDistanceMeters: compiled.operatorEnemyDistanceMeters,
       ...(compiled.dodgeInputs === undefined ? {} : { dodgeInputs: compiled.dodgeInputs }),
       ...getCombatRuntimeInputRules(compiled),
       ...(compiled.skillInputGroups === undefined

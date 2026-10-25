@@ -72,6 +72,7 @@ import {
   parseSaveMoveAxisAngleActionSource,
   parseSaveTwoDirectionAngleActionSource,
   type PresentationCalculationActionSource,
+  type CurveEvaluateFloatActionSource,
 } from './calculationActions.ts';
 import {
   parseChannelingCastingActionSource,
@@ -549,6 +550,7 @@ export type KnownNativeActionLeafSource =
         | SkillAiMoveActionSource;
     }
   | { readonly family: 'spatialMeasurement'; readonly action: SaveTargetDistanceActionSource }
+  | { readonly family: 'curveCalculation'; readonly action: CurveEvaluateFloatActionSource }
   | { readonly family: 'resource'; readonly action: ResourceGainActionSource }
   | { readonly family: 'dashEnergyRecovery'; readonly action: DashEnergyRecoveryActionSource }
   | { readonly family: 'battleDetailRecord'; readonly action: BattleDetailRecordActionSource }
@@ -1291,7 +1293,7 @@ export function tryParseKnownNativeActionLeafSource(
       };
     case 'CurveEvaluateFloat':
       return {
-        family: 'presentationCalculation',
+        family: 'curveCalculation',
         action: parseCurveEvaluateFloatActionSource(value, path, inheritedBlackboard),
       };
     case 'CameraRotateAction':

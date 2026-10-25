@@ -141,13 +141,32 @@ function graphExtractor(
         throw new Error(
           `${location} node ${id}: direction angle still affects combat and cannot be published (${node.action.parameters.outputKey})`,
         );
-      return [
-        id,
-        {
-          ...node,
-          action: visit(node.action),
-        },
-      ];
+      let action: unknown = node.action;
+      if (node.action.kind === 'launchProjectile' && 'flight' in node.action.parameters) {
+        const {
+          flight,
+          entityInitialValues: _templateInitialValues,
+          hit,
+          ...parameters
+        } = node.action.parameters;
+        action = {
+          ...node.action,
+          parameters: {
+            ...parameters,
+            ...(hit?.target === 'controlledOperator' || hit?.target === 'currentTarget'
+              ? { hitTarget: hit.target }
+              : {}),
+            launch: {
+              start: flight.start,
+              segmentTargets: flight.segments.map(segment => segment.target),
+              ...(flight.landingAtTarget === undefined
+                ? {}
+                : { landingAtTarget: flight.landingAtTarget }),
+            },
+          },
+        };
+      }
+      return [id, { ...node, action: visit(action) }];
     }),
   );
   return {

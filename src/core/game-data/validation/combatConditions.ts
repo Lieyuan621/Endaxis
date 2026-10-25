@@ -503,6 +503,7 @@ export function validateTargetQuery(
       'characterTeam',
       'exclude',
       'buffFilter',
+      'tagFilter',
       'distanceFilter',
       'mainTarget',
       'abilitySystemSource',
@@ -517,6 +518,11 @@ export function validateTargetQuery(
   );
   if (query.kind === 'context') requireString(query, 'key', path, out);
   if (query.kind === 'enemyByTags') {
+    requireEnum(query, 'tagQueryType', TAG_QUERY_TYPES_SET, path, out);
+    validateGameplayTags(query.tags, `${path}.tags`, out);
+  }
+  if (query.kind === 'tagFilter') {
+    validateTargetQuery(query.targets, `${path}.targets`, out);
     requireEnum(query, 'tagQueryType', TAG_QUERY_TYPES_SET, path, out);
     validateGameplayTags(query.tags, `${path}.tags`, out);
   }

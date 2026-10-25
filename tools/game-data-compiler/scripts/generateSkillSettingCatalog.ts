@@ -6,7 +6,7 @@ import {
   renderSkillSettingDocument,
 } from '../src/source/skillSettingDumpSource.ts';
 import { writeAtomicBytes } from './downloadGameDataSources.ts';
-import { formatGeneratedSource } from './formatGeneratedSource.ts';
+import { formatGeneratedSource } from '../src/compiler/publication/formatGeneratedSource.ts';
 
 export async function generateSkillSettingCatalog(args: {
   readonly sourceUrl: string;
