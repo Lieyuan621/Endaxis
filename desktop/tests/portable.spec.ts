@@ -63,8 +63,12 @@ test('便携程序共享编辑器、销毁提示条与设置，移动目录后�
     await editor.bringToFront();
     await expect(editor.locator('#boot-loader')).toHaveCount(0);
     await placeBasicGroup(editor);
+    // 拖放的第一组动作在约 4 秒处，超出默认的 3 秒预览；暂停时也要能验证图标。
     await editor.evaluate(() =>
-      localStorage.setItem('endaxis_overlay_prefs_v1', JSON.stringify({ startDelaySeconds: 0 })),
+      localStorage.setItem(
+        'endaxis_overlay_prefs_v1',
+        JSON.stringify({ startDelaySeconds: 0, secondsAhead: 10 }),
+      ),
     );
     const openingHud = nextWindow('/overlay');
     const openingToolbar = nextWindow('/overlay-toolbar');
