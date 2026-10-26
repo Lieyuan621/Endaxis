@@ -128,7 +128,10 @@ test('便携程序共享编辑器、销毁提示条与设置，移动目录后�
     application = undefined;
 
     const relocated = path.join(temporary, '移动后的便携版 B');
-    await fs.rename(directory, relocated);
+    // Windows 可能在进程退出后短暂保留文件句柄；仍必须实际移动成功才能继续。
+    await expect(async () => {
+      await fs.rename(directory, relocated);
+    }).toPass({ timeout: 10_000, intervals: [100, 250, 500] });
     directory = relocated;
     const restored = await launch();
     await expect(restored.locator('.timeline-action-block')).toHaveCount(4);
