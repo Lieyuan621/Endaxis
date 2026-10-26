@@ -63,8 +63,12 @@ test('便携程序共享编辑器、销毁提示条与设置，移动目录后�
     await editor.bringToFront();
     await expect(editor.locator('#boot-loader')).toHaveCount(0);
     await placeBasicGroup(editor);
+    // 拖放的第一组动作在约 4 秒处，超出默认的 3 秒预览；暂停时也要能验证图标。
     await editor.evaluate(() =>
-      localStorage.setItem('endaxis_overlay_prefs_v1', JSON.stringify({ startDelaySeconds: 0 })),
+      localStorage.setItem(
+        'endaxis_overlay_prefs_v1',
+        JSON.stringify({ startDelaySeconds: 0, secondsAhead: 10 }),
+      ),
     );
     const openingHud = nextWindow('/overlay');
     const openingToolbar = nextWindow('/overlay-toolbar');
@@ -124,7 +128,10 @@ test('便携程序共享编辑器、销毁提示条与设置，移动目录后�
     application = undefined;
 
     const relocated = path.join(temporary, '移动后的便携版 B');
-    await fs.rename(directory, relocated);
+    // Windows 可能在进程退出后短暂保留文件句柄；仍必须实际移动成功才能继续。
+    await expect(async () => {
+      await fs.rename(directory, relocated);
+    }).toPass({ timeout: 10_000, intervals: [100, 250, 500] });
     directory = relocated;
     const restored = await launch();
     await expect(restored.locator('.timeline-action-block')).toHaveCount(4);
